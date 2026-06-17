@@ -371,7 +371,7 @@
       "expected_standard_state": "resume_state_loaded_after_liveness_check_and_progress_only_proof_rejected",
       "failure_injection": "dead_daemon_lock_duplicate_resume_and_progress_only_background_log",
       "fake_ai_artifacts": [
-        "heartbeat_resume_event",
+        "manual_resume_event",
         "resume_reentry",
         "background_artifacts"
       ],
@@ -501,7 +501,7 @@
       "evidence_role": "primary_shadow_rehearsal",
       "evidence_status": "passed",
       "evidence_test": "FlowPilotShadowLauncherChaosReplayTests.test_malformed_fake_ai_package_generator_rejects_finite_bad_classes",
-      "expected_standard_state": "bad_packages_blocked_or_quarantined_without_startup_activation",
+      "expected_standard_state": "bad_packages_blocked_or_quarantined_without_startup_runtime_ready",
       "failure_injection": "finite_generated_bad_fake_ai_packages",
       "fake_ai_artifacts": [
         "missing_runtime_envelope",
@@ -533,7 +533,7 @@
       "required_evidence": [
         "finite_bad_package_class_list",
         "each_bad_package_rejected",
-        "startup_activation_flag_still_false"
+        "startup_runtime_ready_not_falsely_recorded"
       ],
       "soak_cycle_bound": 1,
       "surface": "malformed_packages"

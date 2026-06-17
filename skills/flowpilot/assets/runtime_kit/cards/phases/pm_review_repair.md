@@ -10,6 +10,19 @@ runtime_context: Treat the runtime delivery envelope as the live source for the 
 -->
 # PM Review Repair Phase
 
+## Current Repair Submission Checklist
+
+After ACK, open the assigned PM repair packet and use the returned
+`submission_checklist` or packet `minimal_valid_shape` as the current submit
+shape. If the packet declares `repair_evidence_obligations`, the PM decision
+body must include `repair_obligation_disposition` with one row for every
+obligation id before `submit-result`.
+
+Do not submit only `decision` and `reason` when the current packet skeleton
+contains additional fields. `reason` text, summaries, registry entries,
+historical result ids, and partial authorized-body reads are explanation or
+navigation only; they do not close repair evidence obligations.
+
 ## Role Capability Reminder
 
 - Formal work products must live in run-scoped files or project artifacts. Handoff messages point to artifacts with paths/hashes, changed paths when applicable, output contract, inspection notes, and PM Suggestion Items; the message body is not the sole work product.
@@ -39,6 +52,18 @@ The cited FlowGuard operator report must answer the active FlowGuard Work Order 
 current `flowguard_report_freshness`; progress-only, stale, skipped, or
 unaccepted reports cannot justify repair closure or route mutation.
 
+When PM requests a FlowGuard recheck for a Reviewer blocker, the request must
+remain tied to the blocker. Name the blocker id, subject packet/result, required
+semantic focus, and forbidden pass boundary in the current repair or recheck
+contract. A FlowGuard report that only checks result shape, field presence,
+current-contract mechanics, or role boundary cannot close a subject-bound
+Reviewer blocker. If the recheck needs the FlowGuard operator to prove the
+blocked result actually satisfies the semantic repair requirement, the runtime
+must attach the blocker-bound structured result contract profile
+`flowguard.semantic_recheck_required` and its binding, plus body context that
+explains the semantic focus. Do not leave the requirement only in prose, and do
+not rely on body context to create hidden mechanical fields.
+
 If the repair phase was entered because Controller delivered a router
 `control_blocker`, read the blocker artifact first. Treat
 `control_plane_reissue` as a malformed control-plane output that should be
@@ -52,14 +77,18 @@ If the blocker is caused by non-replayable package scripts, package handoff
 defects, event-authority contradictions, or evidence-entry defects, and the
 normal PM repair lane cannot form a legal next action, prefer existing
 Controller break-glass repair before user stop / `stop_for_user`.
-If runtime metadata says the same current route node has repeated the same
-blocker problem more than five consecutive times, do not issue another ordinary
-PM repair decision packet, route mutation, or same-scope repair packet merely
-to try again. Treat that threshold as a control-plane diagnosis point:
+If runtime metadata says the same repair lineage has repeated the same blocker
+problem more than five consecutive times, do not issue another ordinary PM
+repair decision packet, route mutation, or same-scope repair packet merely to
+try again. Treat that threshold as a control-plane diagnosis point:
 Controller break-glass must decide whether the threshold is a false alarm that
 can return to normal repair, a repairable FlowPilot control-plane fault, or a
 stop condition. Similar blocker classes spread across different route nodes do
 not trigger this threshold by themselves.
+This five-attempt threshold is only for ordinary same-lineage repair loops.
+Terminal supplemental repair contracts use the runtime's separate three-round
+cap; after the third supplemental round, PM must not open another supplemental
+contract for the same terminal gap.
 
 Before choosing repair or mutation, read the latest route-memory prior path
 context and the reviewer block source path. Do not create a repair node from
@@ -72,6 +101,16 @@ Reviewer `blocking_findings[].required_repair` and role summaries to avoid
 repeating the same small defect in each new repair node. If the summary is
 missing from a role result, treat that as a runtime result-contract issue, not
 as permission for PM to infer the role's sealed findings.
+
+When the PM repair packet includes `authorized_result_reads`, open the packet
+through runtime and read every delivered blocker, target, and upstream result
+body before selecting a repair path. A repair choice based only on
+`recent_role_report_summary`, PM prose, or the latest single result body is not
+valid when the runtime delivered more related bodies. When the packet includes
+`repair_evidence_obligations`, include `repair_obligation_disposition` for
+every obligation id in the decision body; reason text, summaries, registry
+entries, and old result references do not close those obligations by
+themselves.
 
 If PM runs a focused repair-strategy self-interrogation, write a
 `flowpilot.self_interrogation_record.v1` with scope `repair` and register it
@@ -93,50 +132,80 @@ mutation. Send the capability change through FlowGuard operator product-model fi
 FlowGuard operator process-model, then Reviewer route challenge before execution continues.
 
 Apply Minimum Sufficient Complexity to repair strategy. Choose the smallest
-repair that can close the blocker and restore the frozen contract. Prefer
-sender reissue or localized repair when that fully fixes the issue. Insert a
-sibling node, split a finding, rebuild a subtree, or bubble impact upward only
-when the blocker cannot be closed by the smaller repair, when evidence has
-become stale, or when the route structure itself is wrong. Record why the
-smaller repair was insufficient.
+current-contract decision that can close the blocker and restore the frozen
+contract. Use `repair_current_scope` when the current route node or current
+packet scope should be replaced by a fresh repair scope. Use
+`repair_parent_scope` only when the explicit parent scope is the faulty unit and
+include `repair_parent_scope_contract` with `source_parent_node_id`,
+`inherit_existing_children: true`, and non-empty `repair_child_specs[]`. Old
+children/results become inherited history only; the replacement parent must run
+the new repair child specs as current child work. Use `redesign_route` only when
+the route structure itself is wrong and a strict `route_plan` is required.
+Record why the smaller current-contract decision was insufficient.
 
-Do not create a repair node merely to repair wording, missing plan fields,
-missing projection rows, result-matrix gaps, evidence-reference gaps, or a
-supplementable worker/FlowGuard operator report. Those are same-node repair candidates:
-PM may revise the current plan, ask the original role to issue a fresh
-supplement or replacement result using the old artifact as context, and return
-the repaired artifact to the same reviewer gate. The old blocked artifact may
-explain context, but it is stale and must not become passing evidence.
+For a terminal backward replay blocker, a continuing PM repair decision must
+write a current `supplemental_repair_contract`. Do not edit the frozen original
+contract. The supplemental contract must cite the frozen `contract_hash`, the
+current terminal blocker id, and the Reviewer gap result id; it must list every
+original-goal/high-standard gap PM is adding as `repair_items[]`. Each item
+must name `gap_kind`, `original_goal_link`, `reviewer_gap`, `required_repair`,
+`owner_repair_node_id`, `acceptance_item_ids`, `required_evidence`, and
+`status: "open"`. If the decision uses `redesign_route`, the route plan nodes
+must project the same `supplemental_repair_contract_ids` and
+`supplemental_repair_item_ids`; otherwise the repair is not dispatchable.
+Runtime allows at most three supplemental repair rounds for the same terminal
+gap. After the third round, PM must choose a legal terminal disposition, stop
+for the user, or route a new PM decision from the current blocker context.
+When the Reviewer blocker comes from terminal final-artifact hygiene review, use
+`gap_kind: "final_artifact_hygiene_gap"` and include a `hygiene_category`
+such as `code_maintainability`, `test_coverage`, `model_coverage`,
+`document_cleanup`, `ui_polish`, `artifact_lineage`,
+`process_ledger_cleanup`, or `other`. A `clean_delivery_required_repair` is
+not a mere suggestion; PM must either repair it, waive with authority, mutate
+route, or stop. `pm_decision_support` and `future_contract_candidate` findings
+belong in PM suggestion disposition unless PM explicitly imports them into the
+supplemental contract.
+Terminal supplemental repair is capped at three rounds by runtime. When round
+three is exhausted, stop rather than issuing another PM repair decision.
+
+Do not use PM repair decisions to paper over malformed result shapes, missing
+required fields, missing projection rows, result-matrix gaps, or
+evidence-reference gaps. If Runtime has already issued a current mechanical
+reissue packet, answer that current packet. If the blocker is semantic and
+requires repair work, choose `repair_current_scope`, `repair_parent_scope`,
+`redesign_route`, `waive_with_authority`, or `stop_for_user`. The old blocked
+artifact may explain context, but it is stale and must not become passing
+evidence.
 
 For reviewer-blocked repair or reissue work, prefer returning the packet to the
 same worker who produced the blocked result so the repair keeps local context,
 unless that worker is unavailable, the issue shows a fundamental
 misunderstanding, or the repair has become separable new work.
 
-Allowed PM decisions:
+Allowed PM repair decisions are exactly:
 
-- revise the current PM-owned plan and return it for recheck;
-- request sender reissue;
-- issue a repair packet to the correct role;
-- mutate route and invalidate stale evidence;
-- use Controller break-glass for FlowPilot control-plane blocker repair when the
-  normal repair lane cannot form a legal next action;
-- use Controller break-glass when runtime shows the same current route node has
-  repeated the same blocker problem more than five consecutive times, rather
-  than opening a sixth ordinary PM repair decision for the same node/problem
-  loop;
-- stop for user when a human decision is required;
-- quarantine contaminated evidence.
+- `repair_current_scope`;
+- `repair_parent_scope` with `repair_parent_scope_contract`;
+- `redesign_route` with strict `route_plan`;
+- `waive_with_authority` with `authority_ref`;
+- `stop_for_user`.
 
-For mutation or repair, record route version impact, stale evidence, affected
-ancestors, and the rerun target before new work starts.
+Use Controller break-glass for FlowPilot control-plane blocker repair when the
+normal repair lane cannot form a legal next action, or when runtime shows the
+same repair lineage has repeated the same blocker problem more than five
+consecutive times rather than opening a sixth ordinary PM repair decision for
+the same lineage/problem loop.
+
+For mutation or repair, record route version impact, invalidate stale evidence,
+affected ancestors, and the rerun target before new work starts.
 
 For route mutation, include `repair_return_to_node_id`, identifying the
 mainline node the repair is meant to rejoin. Router treats mutation as a fresh
 route-check boundary: old FlowGuard operator/Reviewer route approvals become
 stale and the changed route must pass route checks again before execution
 continues. Also include `why_current_node_cannot_contain_repair` when the repair
-phase chooses route mutation instead of same-node repair.
+phase chooses route mutation instead of `repair_current_scope` or
+`repair_parent_scope`.
 
 Mutation or repair output must include `prior_path_context_review` showing the
 history considered and why this repair does not repeat a superseded or failed
@@ -181,7 +250,7 @@ Choose the executable plan kind deliberately:
 
 Use `await_existing_event` only for an event with an existing current producer;
 use `operation_replay` only for a safe recorded operation replay. Unsupported replay
-aliases are not valid repair plan kinds.
+plan kinds are invalid.
 
 Do not mark the node complete until repair evidence passes the required review
 and the PM reruns the relevant node, parent, or terminal gate from current
@@ -200,9 +269,12 @@ Router state and submit the runtime-generated envelope directly to Router with
 compact `body_ref` and `runtime_receipt_ref` metadata. Path/hash-only chat
 envelopes are not the live handoff path.
 
-Preferred path: use `flowpilot_new.py open-packet --output-type
-pm_control_blocker_repair_decision --role project_manager --agent-id
-<agent-id>` and then `flowpilot_new.py submit-result --lease-id <lease-id> --packet-id <packet-id> --body <sealed_result_summary>`. Lower-level `role_output_runtime.py` commands only validate local mechanics. Live handoff must use `flowpilot_new.py submit-result --lease-id <lease-id> --packet-id <packet-id> --body <sealed_result_summary>` so Router records the event. The runtime
+Preferred path: use `flowpilot_new.py open-packet --lease-id <lease-id>
+--packet-id <packet-id>` to get the current `submission_checklist`, then use
+`flowpilot_new.py submit-result --lease-id <lease-id> --packet-id <packet-id>
+--body <sealed_result_summary>` with the same lease and packet id. Do not
+invent an output type, role name, or agent id for packet open. Live handoff
+must use the current packet runtime so Router records the event. The runtime
 writes the mechanical skeleton, explicit empty arrays, generic quality-pack
 checklist rows when declared, body hash, receipt, and role-output ledger
 record. PM still owns the repair action, rerun target, transaction choice,

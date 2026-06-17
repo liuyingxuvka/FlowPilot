@@ -685,6 +685,7 @@ class ControlBlockersRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.deliver_expected_card(root, "pm.material_scan")
         router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
         material_index = read_json(run_root / "material" / "material_scan_packets.json")
+        self.ensure_current_role_agent_for_role(root, "worker")
         state = read_json(router.run_state_path(run_root))
         blocker = router._write_control_blocker(  # type: ignore[attr-defined]
             root,
@@ -714,6 +715,11 @@ class ControlBlockersRuntimeTests(FlowPilotRouterRuntimeTestBase):
         )
 
         action = self.next_after_display_sync(root)
+        if action["action_type"] == "open_current_role_agent":
+            self.assertEqual(action["required_before_action_type"], "relay_material_scan_packets")
+            self.assertEqual(action["operation_replay_source"], "current_material_generation_role_binding_precondition")
+            router.apply_action(root, "open_current_role_agent", self.payload_for_action(action))
+            action = self.next_after_display_sync(root)
         self.assertEqual(action["action_type"], "relay_material_scan_packets")
         self.assertEqual(action["operation_replay_source"], "current_material_generation_next_action")
         self.assertEqual(action["packet_ids"], [record["packet_id"] for record in material_index["packets"]])

@@ -78,6 +78,31 @@ guard classification is `none`.
 - depth_evidence_refs: <paths-commands-screenshots-direct-review-or-not-applicable>
 - why_existence_only_evidence_is_not_the_claim: <brief-explanation-or-not-applicable>
 
+## Acceptance Item Result Matrix
+
+For every source packet `Acceptance Item Projection` row, return one matching
+row. Missing rows mean the packet did not close its assigned acceptance slice.
+
+- acceptance_item_id: <acc-id>
+- status: <accepted|blocked|waived|superseded|not_applicable_with_reason>
+- evidence_refs: <paths-commands-screenshots-review-or-waiver-ref>
+- quality_floor_met: <true|false>
+- low_quality_failure_patterns_checked: <list>
+- remaining_gap_or_repair_needed: <none-or-specific-gap>
+
+## Supplemental Repair Result Matrix
+
+For every source packet `Supplemental Repair Projection` row, return one
+matching row. Missing rows mean the packet did not close its assigned terminal
+supplemental repair item.
+
+- supplemental_contract_id: <contract-id-or-none>
+- repair_item_id: <repair-item-id-or-none>
+- status: <accepted|blocked|waived|superseded|not_applicable_with_reason>
+- evidence_refs: <paths-commands-screenshots-review-or-waiver-ref>
+- required_repair_satisfied: <true|false>
+- remaining_gap_or_repair_needed: <none-or-specific-gap>
+
 ## Structure Hygiene Delta
 
 When the source packet includes a `Structure Hygiene Delta Requirement`, report

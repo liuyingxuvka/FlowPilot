@@ -1,0 +1,1477 @@
+{
+  "bridge": {
+    "break_glass_safety_fuse_row_count": 1,
+    "break_glass_threshold": 5,
+    "coverage_boundary": "Executable bridge rows prove deterministic fake-AI body, Runtime/CLI, event-log, convergence, and freshness coverage only. They do not prove live AI semantic quality or product completion.",
+    "covered_miss_families": [
+      "accepted_packet_reassignment",
+      "ai_facing_contract_driven_fake_ai_cartesian_retry",
+      "ai_facing_semantic_recheck_contract_projection",
+      "ai_facing_semantic_recheck_corrected_retry",
+      "ai_facing_semantic_recheck_near_synonym_feedback",
+      "dead_lease",
+      "flowguard_semantic_recheck_repair_obligation_consumption",
+      "missing_ack",
+      "missing_current_evidence_refs",
+      "moved_deleted_old_stage_fields",
+      "old_alias_rejection",
+      "orphan_runner_summary",
+      "public_cli_worker_lifetime",
+      "route_mutation_without_frontier_rewrite",
+      "same_class_repeat_threshold_glassbreak",
+      "same_class_repeats_before_threshold",
+      "slow_reviewer_progress",
+      "stale_node_evidence",
+      "terminal_final_blockers",
+      "terminal_route_segment_replay",
+      "terminal_supplemental_repair_contract_lineage",
+      "unsupported_side_command",
+      "wrong_flowguard_target",
+      "wrong_role_lease"
+    ],
+    "evidence_level_counts": {
+      "fake_body_contract": 4,
+      "long_chain_convergence": 3,
+      "runtime_cli_replay": 16,
+      "source_contract": 1
+    },
+    "findings": [],
+    "live_ai_semantic_quality_proven": false,
+    "missing_miss_families": [],
+    "model_id": "flowpilot_executable_matrix_coverage",
+    "ok": true,
+    "ordinary_recovery_row_count": 23,
+    "product_completion_proven": false,
+    "required_bridge_fields": [
+      "bridge_case_id",
+      "packet_family",
+      "fake_body_class",
+      "runtime_entrypoints",
+      "expected_outcome",
+      "event_log_evidence",
+      "convergence_rule",
+      "break_glass_expectation",
+      "evidence_command",
+      "freshness_receipt_id"
+    ],
+    "required_miss_families": [
+      "missing_current_evidence_refs",
+      "moved_deleted_old_stage_fields",
+      "terminal_route_segment_replay",
+      "terminal_final_blockers",
+      "terminal_supplemental_repair_contract_lineage",
+      "ai_facing_semantic_recheck_contract_projection",
+      "ai_facing_semantic_recheck_near_synonym_feedback",
+      "ai_facing_semantic_recheck_corrected_retry",
+      "ai_facing_contract_driven_fake_ai_cartesian_retry",
+      "flowguard_semantic_recheck_repair_obligation_consumption",
+      "old_alias_rejection",
+      "wrong_role_lease",
+      "missing_ack",
+      "stale_node_evidence",
+      "wrong_flowguard_target",
+      "dead_lease",
+      "route_mutation_without_frontier_rewrite",
+      "slow_reviewer_progress",
+      "accepted_packet_reassignment",
+      "orphan_runner_summary",
+      "unsupported_side_command",
+      "public_cli_worker_lifetime",
+      "same_class_repeats_before_threshold",
+      "same_class_repeat_threshold_glassbreak"
+    ],
+    "required_miss_family_count": 24,
+    "result_type": "flowpilot_executable_matrix_coverage",
+    "row_count": 24,
+    "rows": [
+      {
+        "attempt_count": 1,
+        "break_glass_expectation": "forbidden",
+        "break_glass_triggered": false,
+        "bridge_case_id": "missing_current_evidence_refs_reissue",
+        "convergence_rule": "ordinary_repair_by_second_attempt",
+        "coverage_boundary": "non_live_executable_control_flow",
+        "coverage_shard_id": "",
+        "event_log_evidence": [
+          "result_contract_rejected",
+          "current_packet_reissued",
+          "controller_wait_preserved"
+        ],
+        "evidence_command": "python -m unittest tests.test_flowpilot_fake_project_rehearsal",
+        "evidence_current": true,
+        "evidence_level": "runtime_cli_replay",
+        "evidence_path": "simulations/flowpilot_fake_project_rehearsal_scenarios.py",
+        "evidence_status": "passed",
+        "evidence_test_name": "missing_current_result_fields_reissue",
+        "expected_outcome": "mechanical_reissue_then_accept_after_current_evidence_refs",
+        "fake_ai_body_consumed": true,
+        "fake_body_class": "missing_required_current_evidence_refs",
+        "freshness_receipt": {
+          "current": true,
+          "freshness_receipt_id": "receipt.flowpilot_executable_matrix_coverage.missing_current_evidence_refs_reissue",
+          "missing_sources": [],
+          "result_artifact_path": "",
+          "result_mtime": null,
+          "source_max_mtime": 1781686547.8380194,
+          "source_paths": [
+            "simulations/flowpilot_fake_project_rehearsal_scenarios.py",
+            "tests/test_flowpilot_fake_project_rehearsal.py",
+            "skills/flowpilot/assets/flowpilot_core_runtime/packet_result_contracts.py"
+          ],
+          "stale_against_sources": false
+        },
+        "freshness_receipt_id": "receipt.flowpilot_executable_matrix_coverage.missing_current_evidence_refs_reissue",
+        "live_ai_semantic_quality_proven": false,
+        "miss_family_id": "missing_current_evidence_refs",
+        "model_cell_id": "packet_result_contract.task.node.missing_required_field.current_evidence_refs",
+        "model_only_source_allowed": false,
+        "packet_family": "task.node",
+        "product_completion_proven": false,
+        "runtime_entrypoints": [
+          "ack",
+          "submit-result",
+          "status",
+          "foreground-duty"
+        ],
+        "runtime_receipt_required": true,
+        "same_failure_class_no_progress": false,
+        "source_paths": [
+          "simulations/flowpilot_fake_project_rehearsal_scenarios.py",
+          "tests/test_flowpilot_fake_project_rehearsal.py",
+          "skills/flowpilot/assets/flowpilot_core_runtime/packet_result_contracts.py"
+        ],
+        "testmesh_child_id": "executable_matrix_runtime_cli_replay"
+      },
+      {
+        "attempt_count": 1,
+        "break_glass_expectation": "forbidden",
+        "break_glass_triggered": false,
+        "bridge_case_id": "moved_deleted_old_stage_fields_rejected",
+        "convergence_rule": "mechanical_reject_before_state_mutation",
+        "coverage_boundary": "non_live_executable_control_flow",
+        "coverage_shard_id": "",
+        "event_log_evidence": [
+          "deleted_field_rejected",
+          "current_stage_matrix_row_named"
+        ],
+        "evidence_command": "python -m unittest tests.test_flowpilot_fake_project_rehearsal",
+        "evidence_current": true,
+        "evidence_level": "fake_body_contract",
+        "evidence_path": "tests/test_flowpilot_contract_surface_reduction.py",
+        "evidence_status": "passed",
+        "evidence_test_name": "test_deleted_and_moved_fields_are_not_success_requirements",
+        "expected_outcome": "reject_old_stage_field_without_translation",
+        "fake_ai_body_consumed": true,
+        "fake_body_class": "old_stage_field_or_deleted_field_present",
+        "freshness_receipt": {
+          "current": true,
+          "freshness_receipt_id": "receipt.flowpilot_executable_matrix_coverage.moved_deleted_old_stage_fields_rejected",
+          "missing_sources": [],
+          "result_artifact_path": "",
+          "result_mtime": null,
+          "source_max_mtime": 1781676278.4872873,
+          "source_paths": [
+            "tests/test_flowpilot_contract_surface_reduction.py",
+            "skills/flowpilot/assets/flowpilot_core_runtime/packet_stage_evidence_matrix.py"
+          ],
+          "stale_against_sources": false
+        },
+        "freshness_receipt_id": "receipt.flowpilot_executable_matrix_coverage.moved_deleted_old_stage_fields_rejected",
+        "live_ai_semantic_quality_proven": false,
+        "miss_family_id": "moved_deleted_old_stage_fields",
+        "model_cell_id": "contract_surface_reduction.deleted_and_moved_fields",
+        "model_only_source_allowed": false,
+        "packet_family": "stage_evidence_matrix",
+        "product_completion_proven": false,
+        "runtime_entrypoints": [
+          "submit-result",
+          "status"
+        ],
+        "runtime_receipt_required": true,
+        "same_failure_class_no_progress": false,
+        "source_paths": [
+          "tests/test_flowpilot_contract_surface_reduction.py",
+          "skills/flowpilot/assets/flowpilot_core_runtime/packet_stage_evidence_matrix.py"
+        ],
+        "testmesh_child_id": "executable_matrix_fake_body_contracts"
+      },
+      {
+        "attempt_count": 1,
+        "break_glass_expectation": "forbidden",
+        "break_glass_triggered": false,
+        "bridge_case_id": "terminal_route_segment_replay_current_targets",
+        "convergence_rule": "terminal_review_current_subject_only",
+        "coverage_boundary": "non_live_executable_control_flow",
+        "coverage_shard_id": "",
+        "event_log_evidence": [
+          "current_segment_targets_opened",
+          "route_segment_replay_written"
+        ],
+        "evidence_command": "python -m unittest tests.test_flowpilot_fake_project_rehearsal",
+        "evidence_current": true,
+        "evidence_level": "fake_body_contract",
+        "evidence_path": "tests/test_flowpilot_fake_project_rehearsal.py",
+        "evidence_status": "passed",
+        "evidence_test_name": "test_terminal_backward_replay_fake_body_uses_current_segment_targets",
+        "expected_outcome": "terminal_replay_uses_current_segment_targets",
+        "fake_ai_body_consumed": true,
+        "fake_body_class": "terminal_backward_replay_current_segment_targets",
+        "freshness_receipt": {
+          "current": true,
+          "freshness_receipt_id": "receipt.flowpilot_executable_matrix_coverage.terminal_route_segment_replay_current_targets",
+          "missing_sources": [],
+          "result_artifact_path": "",
+          "result_mtime": null,
+          "source_max_mtime": 1781673923.5200868,
+          "source_paths": [
+            "tests/test_flowpilot_fake_project_rehearsal.py",
+            "simulations/flowpilot_fake_project_rehearsal_cli.py"
+          ],
+          "stale_against_sources": false
+        },
+        "freshness_receipt_id": "receipt.flowpilot_executable_matrix_coverage.terminal_route_segment_replay_current_targets",
+        "live_ai_semantic_quality_proven": false,
+        "miss_family_id": "terminal_route_segment_replay",
+        "model_cell_id": "terminal_backward_replay.route_segment_replay",
+        "model_only_source_allowed": false,
+        "packet_family": "review.terminal_backward_replay",
+        "product_completion_proven": false,
+        "runtime_entrypoints": [
+          "open-packet",
+          "ack",
+          "submit-result"
+        ],
+        "runtime_receipt_required": true,
+        "same_failure_class_no_progress": false,
+        "source_paths": [
+          "tests/test_flowpilot_fake_project_rehearsal.py",
+          "simulations/flowpilot_fake_project_rehearsal_cli.py"
+        ],
+        "testmesh_child_id": "executable_matrix_fake_body_contracts"
+      },
+      {
+        "attempt_count": 1,
+        "break_glass_expectation": "forbidden",
+        "break_glass_triggered": false,
+        "bridge_case_id": "terminal_final_blockers_current_empty_list",
+        "convergence_rule": "terminal_blockers_explicit_not_implicit_glassbreak",
+        "coverage_boundary": "non_live_executable_control_flow",
+        "coverage_shard_id": "",
+        "event_log_evidence": [
+          "current_segment_targets_opened",
+          "final_blockers_written"
+        ],
+        "evidence_command": "python -m unittest tests.test_flowpilot_fake_project_rehearsal",
+        "evidence_current": true,
+        "evidence_level": "fake_body_contract",
+        "evidence_path": "tests/test_flowpilot_fake_project_rehearsal.py",
+        "evidence_status": "passed",
+        "evidence_test_name": "final_blockers",
+        "expected_outcome": "terminal_final_blockers_are_current_and_explicit",
+        "fake_ai_body_consumed": true,
+        "fake_body_class": "terminal_final_blockers_current_list",
+        "freshness_receipt": {
+          "current": true,
+          "freshness_receipt_id": "receipt.flowpilot_executable_matrix_coverage.terminal_final_blockers_current_empty_list",
+          "missing_sources": [],
+          "result_artifact_path": "",
+          "result_mtime": null,
+          "source_max_mtime": 1781673923.5200868,
+          "source_paths": [
+            "tests/test_flowpilot_fake_project_rehearsal.py",
+            "simulations/flowpilot_fake_project_rehearsal_cli.py"
+          ],
+          "stale_against_sources": false
+        },
+        "freshness_receipt_id": "receipt.flowpilot_executable_matrix_coverage.terminal_final_blockers_current_empty_list",
+        "live_ai_semantic_quality_proven": false,
+        "miss_family_id": "terminal_final_blockers",
+        "model_cell_id": "terminal_backward_replay.final_blockers",
+        "model_only_source_allowed": false,
+        "packet_family": "review.terminal_backward_replay",
+        "product_completion_proven": false,
+        "runtime_entrypoints": [
+          "open-packet",
+          "ack",
+          "submit-result"
+        ],
+        "runtime_receipt_required": true,
+        "same_failure_class_no_progress": false,
+        "source_paths": [
+          "tests/test_flowpilot_fake_project_rehearsal.py",
+          "simulations/flowpilot_fake_project_rehearsal_cli.py"
+        ],
+        "testmesh_child_id": "executable_matrix_fake_body_contracts"
+      },
+      {
+        "attempt_count": 1,
+        "break_glass_expectation": "forbidden",
+        "break_glass_triggered": false,
+        "bridge_case_id": "terminal_supplemental_repair_lineage",
+        "convergence_rule": "repair_contract_lineage_then_recheck",
+        "coverage_boundary": "non_live_executable_control_flow",
+        "coverage_shard_id": "",
+        "event_log_evidence": [
+          "terminal_replay_blocked",
+          "supplemental_contract_id_bound",
+          "repair_packet_issued"
+        ],
+        "evidence_command": "python -m unittest tests.test_flowpilot_fake_project_rehearsal",
+        "evidence_current": true,
+        "evidence_level": "runtime_cli_replay",
+        "evidence_path": "tests/test_flowpilot_fake_project_rehearsal.py",
+        "evidence_status": "passed",
+        "evidence_test_name": "test_blackbox_terminal_supplemental_repair_uses_public_cli",
+        "expected_outcome": "supplemental_repair_packet_preserves_current_lineage",
+        "fake_ai_body_consumed": true,
+        "fake_body_class": "terminal_supplemental_repair_contract_lineage",
+        "freshness_receipt": {
+          "current": true,
+          "freshness_receipt_id": "receipt.flowpilot_executable_matrix_coverage.terminal_supplemental_repair_lineage",
+          "missing_sources": [],
+          "result_artifact_path": "",
+          "result_mtime": null,
+          "source_max_mtime": 1781673923.5200868,
+          "source_paths": [
+            "tests/test_flowpilot_fake_project_rehearsal.py",
+            "simulations/flowpilot_fake_project_rehearsal_scenarios.py"
+          ],
+          "stale_against_sources": false
+        },
+        "freshness_receipt_id": "receipt.flowpilot_executable_matrix_coverage.terminal_supplemental_repair_lineage",
+        "live_ai_semantic_quality_proven": false,
+        "miss_family_id": "terminal_supplemental_repair_contract_lineage",
+        "model_cell_id": "terminal_supplemental_repair.contract_lineage",
+        "model_only_source_allowed": false,
+        "packet_family": "pm_repair_decision",
+        "product_completion_proven": false,
+        "runtime_entrypoints": [
+          "ack",
+          "submit-result",
+          "status",
+          "foreground-duty"
+        ],
+        "runtime_receipt_required": true,
+        "same_failure_class_no_progress": false,
+        "source_paths": [
+          "tests/test_flowpilot_fake_project_rehearsal.py",
+          "simulations/flowpilot_fake_project_rehearsal_scenarios.py"
+        ],
+        "testmesh_child_id": "executable_matrix_runtime_cli_replay"
+      },
+      {
+        "attempt_count": 1,
+        "break_glass_expectation": "forbidden",
+        "break_glass_triggered": false,
+        "bridge_case_id": "flowguard_semantic_recheck_consumes_repair_obligations",
+        "convergence_rule": "repair_packet_then_flowguard_semantic_recheck",
+        "coverage_boundary": "non_live_executable_control_flow",
+        "coverage_shard_id": "",
+        "event_log_evidence": [
+          "repair_obligation_bound",
+          "semantic_recheck_packet_issued",
+          "obligation_consumed"
+        ],
+        "evidence_command": "python -m unittest tests.test_flowpilot_fake_project_rehearsal",
+        "evidence_current": true,
+        "evidence_level": "runtime_cli_replay",
+        "evidence_path": "tests/test_flowpilot_core_runtime.py",
+        "evidence_status": "passed",
+        "evidence_test_name": "test_repair_packet_and_flowguard_recheck_must_consume_repair_obligations",
+        "expected_outcome": "flowguard_recheck_blocks_until_repair_obligation_consumed",
+        "fake_ai_body_consumed": true,
+        "fake_body_class": "semantic_recheck_must_consume_repair_obligations",
+        "freshness_receipt": {
+          "current": true,
+          "freshness_receipt_id": "receipt.flowpilot_executable_matrix_coverage.flowguard_semantic_recheck_consumes_repair_obligations",
+          "missing_sources": [],
+          "result_artifact_path": "",
+          "result_mtime": null,
+          "source_max_mtime": 1781686547.8500628,
+          "source_paths": [
+            "tests/test_flowpilot_core_runtime.py",
+            "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py"
+          ],
+          "stale_against_sources": false
+        },
+        "freshness_receipt_id": "receipt.flowpilot_executable_matrix_coverage.flowguard_semantic_recheck_consumes_repair_obligations",
+        "live_ai_semantic_quality_proven": false,
+        "miss_family_id": "flowguard_semantic_recheck_repair_obligation_consumption",
+        "model_cell_id": "control_plane.flowguard_check_packet.missing_repair_obligation_consumption",
+        "model_only_source_allowed": false,
+        "packet_family": "flowguard_check",
+        "product_completion_proven": false,
+        "runtime_entrypoints": [
+          "ack",
+          "submit-result",
+          "open-packet",
+          "status"
+        ],
+        "runtime_receipt_required": true,
+        "same_failure_class_no_progress": false,
+        "source_paths": [
+          "tests/test_flowpilot_core_runtime.py",
+          "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py"
+        ],
+        "testmesh_child_id": "executable_matrix_runtime_cli_replay"
+      },
+      {
+        "attempt_count": 1,
+        "break_glass_expectation": "forbidden",
+        "break_glass_triggered": false,
+        "bridge_case_id": "ai_facing_semantic_recheck_contract_projection",
+        "convergence_rule": "projection_before_first_result",
+        "coverage_boundary": "ai_facing_contract_projection_not_live_ai_quality",
+        "coverage_shard_id": "",
+        "event_log_evidence": [
+          "current_handoff_contract_projected",
+          "allowed_value_options_projected",
+          "minimal_valid_shape_projected"
+        ],
+        "evidence_command": "python -m unittest -v tests.test_flowpilot_ai_contract_projection",
+        "evidence_current": true,
+        "evidence_level": "runtime_cli_replay",
+        "evidence_path": "tests/test_flowpilot_ai_contract_projection.py",
+        "evidence_status": "passed",
+        "evidence_test_name": "test_semantic_recheck_contract_projects_ai_facing_fields_and_options",
+        "expected_outcome": "conditional_semantic_recheck_fields_are_visible_before_submit",
+        "fake_ai_body_consumed": true,
+        "fake_body_class": "semantic_recheck_ai_facing_projection",
+        "freshness_receipt": {
+          "current": true,
+          "freshness_receipt_id": "receipt.flowpilot_executable_matrix_coverage.ai_facing_semantic_recheck_contract_projection",
+          "missing_sources": [],
+          "result_artifact_path": "",
+          "result_mtime": null,
+          "source_max_mtime": 1781686547.8500628,
+          "source_paths": [
+            "tests/test_flowpilot_ai_contract_projection.py",
+            "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+            "skills/flowpilot/assets/flowpilot_core_runtime/packet_stage_evidence_matrix.py"
+          ],
+          "stale_against_sources": false
+        },
+        "freshness_receipt_id": "receipt.flowpilot_executable_matrix_coverage.ai_facing_semantic_recheck_contract_projection",
+        "live_ai_semantic_quality_proven": false,
+        "miss_family_id": "ai_facing_semantic_recheck_contract_projection",
+        "model_cell_id": "control_plane.flowguard_check_packet.ai_facing_semantic_recheck_projection",
+        "model_only_source_allowed": false,
+        "packet_family": "flowguard_check",
+        "product_completion_proven": false,
+        "runtime_entrypoints": [
+          "issue-packet",
+          "open-packet",
+          "status"
+        ],
+        "runtime_receipt_required": true,
+        "same_failure_class_no_progress": false,
+        "source_paths": [
+          "tests/test_flowpilot_ai_contract_projection.py",
+          "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+          "skills/flowpilot/assets/flowpilot_core_runtime/packet_stage_evidence_matrix.py"
+        ],
+        "testmesh_child_id": "executable_matrix_ai_contract_projection"
+      },
+      {
+        "attempt_count": 1,
+        "break_glass_expectation": "forbidden",
+        "break_glass_triggered": false,
+        "bridge_case_id": "ai_facing_semantic_recheck_near_synonym_feedback",
+        "convergence_rule": "bad_package_reissue_with_exact_field_names",
+        "coverage_boundary": "ai_facing_reissue_feedback_not_live_ai_quality",
+        "coverage_shard_id": "",
+        "event_log_evidence": [
+          "forbidden_synonym_fields_seen",
+          "current_packet_reissued",
+          "semantic_minimal_shape_projected"
+        ],
+        "evidence_command": "python -m unittest -v tests.test_flowpilot_ai_contract_projection",
+        "evidence_current": true,
+        "evidence_level": "runtime_cli_replay",
+        "evidence_path": "tests/test_flowpilot_ai_contract_projection.py",
+        "evidence_status": "passed",
+        "evidence_test_name": "test_semantic_recheck_near_synonyms_reissue_with_correct_minimal_shape",
+        "expected_outcome": "near_synonym_fields_are_rejected_with_correct_minimal_shape",
+        "fake_ai_body_consumed": true,
+        "fake_body_class": "semantic_recheck_near_synonym_bad_package",
+        "freshness_receipt": {
+          "current": true,
+          "freshness_receipt_id": "receipt.flowpilot_executable_matrix_coverage.ai_facing_semantic_recheck_near_synonym_feedback",
+          "missing_sources": [],
+          "result_artifact_path": "",
+          "result_mtime": null,
+          "source_max_mtime": 1781686547.8500628,
+          "source_paths": [
+            "tests/test_flowpilot_ai_contract_projection.py",
+            "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py"
+          ],
+          "stale_against_sources": false
+        },
+        "freshness_receipt_id": "receipt.flowpilot_executable_matrix_coverage.ai_facing_semantic_recheck_near_synonym_feedback",
+        "live_ai_semantic_quality_proven": false,
+        "miss_family_id": "ai_facing_semantic_recheck_near_synonym_feedback",
+        "model_cell_id": "control_plane.flowguard_check_result.semantic_recheck_near_synonym_feedback",
+        "model_only_source_allowed": false,
+        "packet_family": "flowguard_check",
+        "product_completion_proven": false,
+        "runtime_entrypoints": [
+          "ack",
+          "submit-result",
+          "status",
+          "current-contract-reissue"
+        ],
+        "runtime_receipt_required": true,
+        "same_failure_class_no_progress": false,
+        "source_paths": [
+          "tests/test_flowpilot_ai_contract_projection.py",
+          "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py"
+        ],
+        "testmesh_child_id": "executable_matrix_ai_contract_projection"
+      },
+      {
+        "attempt_count": 1,
+        "break_glass_expectation": "forbidden",
+        "break_glass_triggered": false,
+        "bridge_case_id": "ai_facing_semantic_recheck_wrong_value_then_corrected_retry",
+        "convergence_rule": "ordinary_repair_by_second_attempt",
+        "coverage_boundary": "wrong_then_corrected_fake_ai_retry",
+        "coverage_shard_id": "",
+        "event_log_evidence": [
+          "allowed_value_violation_reported",
+          "current_packet_reissued",
+          "corrected_retry_accepted"
+        ],
+        "evidence_command": "python -m unittest -v tests.test_flowpilot_ai_contract_projection",
+        "evidence_current": true,
+        "evidence_level": "long_chain_convergence",
+        "evidence_path": "tests/test_flowpilot_ai_contract_projection.py",
+        "evidence_status": "passed",
+        "evidence_test_name": "test_semantic_recheck_wrong_value_then_corrected_retry_returns_to_legal_path",
+        "expected_outcome": "wrong_value_reissue_then_corrected_retry_accepts_before_glassbreak",
+        "fake_ai_body_consumed": true,
+        "fake_body_class": "semantic_recheck_wrong_value_then_corrected_retry",
+        "freshness_receipt": {
+          "current": true,
+          "freshness_receipt_id": "receipt.flowpilot_executable_matrix_coverage.ai_facing_semantic_recheck_wrong_value_then_corrected_retry",
+          "missing_sources": [],
+          "result_artifact_path": "",
+          "result_mtime": null,
+          "source_max_mtime": 1781686547.8500628,
+          "source_paths": [
+            "tests/test_flowpilot_ai_contract_projection.py",
+            "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py"
+          ],
+          "stale_against_sources": false
+        },
+        "freshness_receipt_id": "receipt.flowpilot_executable_matrix_coverage.ai_facing_semantic_recheck_wrong_value_then_corrected_retry",
+        "live_ai_semantic_quality_proven": false,
+        "miss_family_id": "ai_facing_semantic_recheck_corrected_retry",
+        "model_cell_id": "control_plane.flowguard_check_result.semantic_recheck_corrected_retry",
+        "model_only_source_allowed": false,
+        "packet_family": "flowguard_check",
+        "product_completion_proven": false,
+        "runtime_entrypoints": [
+          "ack",
+          "submit-result",
+          "status",
+          "current-contract-reissue"
+        ],
+        "runtime_receipt_required": true,
+        "same_failure_class_no_progress": false,
+        "source_paths": [
+          "tests/test_flowpilot_ai_contract_projection.py",
+          "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py"
+        ],
+        "testmesh_child_id": "executable_matrix_ai_contract_projection"
+      },
+      {
+        "attempt_count": 1,
+        "break_glass_expectation": "forbidden",
+        "break_glass_triggered": false,
+        "bridge_case_id": "ai_facing_contract_driven_fake_ai_cartesian_retry",
+        "convergence_rule": "cartesian_wrong_value_rows_repair_by_second_attempt",
+        "coverage_boundary": "contract_driven_fake_ai_cartesian_control_flow",
+        "coverage_shard_id": "",
+        "event_log_evidence": [
+          "packet_local_contract_read_by_fake_ai_responder",
+          "wrong_value_generated_for_each_allowed_value_options_field",
+          "current_reissue_feedback_repaired_by_minimal_valid_shape",
+          "glassbreak_absent_before_threshold"
+        ],
+        "evidence_command": "python -m unittest -v tests.test_flowpilot_ai_contract_projection",
+        "evidence_current": true,
+        "evidence_level": "long_chain_convergence",
+        "evidence_path": "tests/test_flowpilot_ai_contract_projection.py",
+        "evidence_status": "passed",
+        "evidence_test_name": "test_contract_driven_fake_ai_wrong_value_rows_repair_each_finite_option",
+        "expected_outcome": "contract_driven_fake_ai_enumerates_visible_finite_options_and_repairs_each_wrong_value",
+        "fake_ai_body_consumed": true,
+        "fake_body_class": "contract_driven_fake_ai_responder_all_visible_options",
+        "freshness_receipt": {
+          "current": true,
+          "freshness_receipt_id": "receipt.flowpilot_executable_matrix_coverage.ai_facing_contract_driven_fake_ai_cartesian_retry",
+          "missing_sources": [],
+          "result_artifact_path": "",
+          "result_mtime": null,
+          "source_max_mtime": 1781686547.8500628,
+          "source_paths": [
+            "tests/test_flowpilot_ai_contract_projection.py",
+            "simulations/flowpilot_contract_driven_fake_ai.py",
+            "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+            "skills/flowpilot/assets/flowpilot_core_runtime/packet_result_contracts.py"
+          ],
+          "stale_against_sources": false
+        },
+        "freshness_receipt_id": "receipt.flowpilot_executable_matrix_coverage.ai_facing_contract_driven_fake_ai_cartesian_retry",
+        "live_ai_semantic_quality_proven": false,
+        "miss_family_id": "ai_facing_contract_driven_fake_ai_cartesian_retry",
+        "model_cell_id": "control_plane.flowguard_check_result.contract_driven_fake_ai_cartesian_retry",
+        "model_only_source_allowed": false,
+        "packet_family": "flowguard_check",
+        "product_completion_proven": false,
+        "runtime_entrypoints": [
+          "issue-packet",
+          "ack",
+          "submit-result",
+          "current-contract-reissue"
+        ],
+        "runtime_receipt_required": true,
+        "same_failure_class_no_progress": false,
+        "source_paths": [
+          "tests/test_flowpilot_ai_contract_projection.py",
+          "simulations/flowpilot_contract_driven_fake_ai.py",
+          "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+          "skills/flowpilot/assets/flowpilot_core_runtime/packet_result_contracts.py"
+        ],
+        "testmesh_child_id": "executable_matrix_ai_contract_projection"
+      },
+      {
+        "attempt_count": 1,
+        "break_glass_expectation": "forbidden",
+        "break_glass_triggered": false,
+        "bridge_case_id": "old_alias_reason_rejected",
+        "convergence_rule": "mechanical_alias_rejection",
+        "coverage_boundary": "non_live_executable_control_flow",
+        "coverage_shard_id": "",
+        "event_log_evidence": [
+          "forbidden_field_rejected",
+          "decision_reason_required"
+        ],
+        "evidence_command": "python -m unittest tests.test_flowpilot_fake_project_rehearsal",
+        "evidence_current": true,
+        "evidence_level": "fake_body_contract",
+        "evidence_path": "tests/test_flowpilot_control_plane_contracts.py",
+        "evidence_status": "passed",
+        "evidence_test_name": "test_pm_package_disposition_rejects_reason_alias_for_decision_reason",
+        "expected_outcome": "reject_alias_without_translation_or_fallback",
+        "fake_ai_body_consumed": true,
+        "fake_body_class": "reason_alias_instead_of_decision_reason",
+        "freshness_receipt": {
+          "current": true,
+          "freshness_receipt_id": "receipt.flowpilot_executable_matrix_coverage.old_alias_reason_rejected",
+          "missing_sources": [],
+          "result_artifact_path": "",
+          "result_mtime": null,
+          "source_max_mtime": 1781676073.1115735,
+          "source_paths": [
+            "tests/test_flowpilot_control_plane_contracts.py",
+            "skills/flowpilot/assets/flowpilot_core_runtime/packet_stage_evidence_matrix.py"
+          ],
+          "stale_against_sources": false
+        },
+        "freshness_receipt_id": "receipt.flowpilot_executable_matrix_coverage.old_alias_reason_rejected",
+        "live_ai_semantic_quality_proven": false,
+        "miss_family_id": "old_alias_rejection",
+        "model_cell_id": "historical_failure.history.research_packet_recipient_role_alias.legacy_alias",
+        "model_only_source_allowed": false,
+        "packet_family": "pm_disposition",
+        "product_completion_proven": false,
+        "runtime_entrypoints": [
+          "submit-result",
+          "status"
+        ],
+        "runtime_receipt_required": true,
+        "same_failure_class_no_progress": false,
+        "source_paths": [
+          "tests/test_flowpilot_control_plane_contracts.py",
+          "skills/flowpilot/assets/flowpilot_core_runtime/packet_stage_evidence_matrix.py"
+        ],
+        "testmesh_child_id": "executable_matrix_fake_body_contracts"
+      },
+      {
+        "attempt_count": 1,
+        "break_glass_expectation": "forbidden",
+        "break_glass_triggered": false,
+        "bridge_case_id": "wrong_role_lease_rejected",
+        "convergence_rule": "reject_before_current_packet_mutation",
+        "coverage_boundary": "non_live_executable_control_flow",
+        "coverage_shard_id": "",
+        "event_log_evidence": [
+          "lease_role_mismatch",
+          "packet_status_preserved",
+          "recovery_packet_issued"
+        ],
+        "evidence_command": "python -m unittest tests.test_flowpilot_fake_project_rehearsal",
+        "evidence_current": true,
+        "evidence_level": "runtime_cli_replay",
+        "evidence_path": "simulations/flowpilot_fake_project_rehearsal_scenarios.py",
+        "evidence_status": "passed",
+        "evidence_test_name": "wrong_role_recovery",
+        "expected_outcome": "wrong_role_lease_rejected_without_packet_mutation",
+        "fake_ai_body_consumed": true,
+        "fake_body_class": "wrong_role_lease_attempt",
+        "freshness_receipt": {
+          "current": true,
+          "freshness_receipt_id": "receipt.flowpilot_executable_matrix_coverage.wrong_role_lease_rejected",
+          "missing_sources": [],
+          "result_artifact_path": "",
+          "result_mtime": null,
+          "source_max_mtime": 1781673923.5200868,
+          "source_paths": [
+            "simulations/flowpilot_fake_project_rehearsal_scenarios.py",
+            "tests/test_flowpilot_fake_project_rehearsal.py"
+          ],
+          "stale_against_sources": false
+        },
+        "freshness_receipt_id": "receipt.flowpilot_executable_matrix_coverage.wrong_role_lease_rejected",
+        "live_ai_semantic_quality_proven": false,
+        "miss_family_id": "wrong_role_lease",
+        "model_cell_id": "fake_project.wrong_role_lease",
+        "model_only_source_allowed": false,
+        "packet_family": "lease",
+        "product_completion_proven": false,
+        "runtime_entrypoints": [
+          "ack",
+          "open-packet",
+          "submit-result"
+        ],
+        "runtime_receipt_required": true,
+        "same_failure_class_no_progress": false,
+        "source_paths": [
+          "simulations/flowpilot_fake_project_rehearsal_scenarios.py",
+          "tests/test_flowpilot_fake_project_rehearsal.py"
+        ],
+        "testmesh_child_id": "executable_matrix_runtime_cli_replay"
+      },
+      {
+        "attempt_count": 1,
+        "break_glass_expectation": "forbidden",
+        "break_glass_triggered": false,
+        "bridge_case_id": "missing_ack_result_blocked",
+        "convergence_rule": "ack_required_before_result_consumption",
+        "coverage_boundary": "non_live_executable_control_flow",
+        "coverage_shard_id": "",
+        "event_log_evidence": [
+          "missing_ack_blocker",
+          "result_blocked",
+          "controller_stop_disallowed"
+        ],
+        "evidence_command": "python -m unittest tests.test_flowpilot_fake_project_rehearsal",
+        "evidence_current": true,
+        "evidence_level": "runtime_cli_replay",
+        "evidence_path": "simulations/flowpilot_fake_project_rehearsal_scenarios.py",
+        "evidence_status": "passed",
+        "evidence_test_name": "missing_ack_block",
+        "expected_outcome": "missing_ack_blocks_result_and_preserves_wait",
+        "fake_ai_body_consumed": true,
+        "fake_body_class": "submit_result_without_ack",
+        "freshness_receipt": {
+          "current": true,
+          "freshness_receipt_id": "receipt.flowpilot_executable_matrix_coverage.missing_ack_result_blocked",
+          "missing_sources": [],
+          "result_artifact_path": "",
+          "result_mtime": null,
+          "source_max_mtime": 1781673923.5200868,
+          "source_paths": [
+            "simulations/flowpilot_fake_project_rehearsal_scenarios.py",
+            "tests/test_flowpilot_fake_project_rehearsal.py"
+          ],
+          "stale_against_sources": false
+        },
+        "freshness_receipt_id": "receipt.flowpilot_executable_matrix_coverage.missing_ack_result_blocked",
+        "live_ai_semantic_quality_proven": false,
+        "miss_family_id": "missing_ack",
+        "model_cell_id": "fake_project.missing_ack",
+        "model_only_source_allowed": false,
+        "packet_family": "task.result_submission",
+        "product_completion_proven": false,
+        "runtime_entrypoints": [
+          "submit-result",
+          "status",
+          "foreground-duty"
+        ],
+        "runtime_receipt_required": true,
+        "same_failure_class_no_progress": false,
+        "source_paths": [
+          "simulations/flowpilot_fake_project_rehearsal_scenarios.py",
+          "tests/test_flowpilot_fake_project_rehearsal.py"
+        ],
+        "testmesh_child_id": "executable_matrix_runtime_cli_replay"
+      },
+      {
+        "attempt_count": 1,
+        "break_glass_expectation": "forbidden",
+        "break_glass_triggered": false,
+        "bridge_case_id": "stale_node_evidence_rejected",
+        "convergence_rule": "reject_stale_node_evidence_before_completion",
+        "coverage_boundary": "non_live_executable_control_flow",
+        "coverage_shard_id": "",
+        "event_log_evidence": [
+          "stale_node_evidence_accepted_hazard_detected",
+          "current_node_wait_preserved"
+        ],
+        "evidence_command": "python -m unittest tests.test_flowpilot_fake_project_rehearsal",
+        "evidence_current": true,
+        "evidence_level": "runtime_cli_replay",
+        "evidence_path": "tests/test_flowpilot_fake_project_rehearsal.py",
+        "evidence_status": "passed",
+        "evidence_test_name": "stale_node_evidence_accepted",
+        "expected_outcome": "stale_node_evidence_rejected_and_current_node_wait_preserved",
+        "fake_ai_body_consumed": true,
+        "fake_body_class": "stale_node_evidence_submission",
+        "freshness_receipt": {
+          "current": true,
+          "freshness_receipt_id": "receipt.flowpilot_executable_matrix_coverage.stale_node_evidence_rejected",
+          "missing_sources": [],
+          "result_artifact_path": "",
+          "result_mtime": null,
+          "source_max_mtime": 1781673923.5200868,
+          "source_paths": [
+            "tests/test_flowpilot_fake_project_rehearsal.py",
+            "simulations/flowpilot_fake_project_rehearsal_scenarios.py"
+          ],
+          "stale_against_sources": false
+        },
+        "freshness_receipt_id": "receipt.flowpilot_executable_matrix_coverage.stale_node_evidence_rejected",
+        "live_ai_semantic_quality_proven": false,
+        "miss_family_id": "stale_node_evidence",
+        "model_cell_id": "recursive_route.stale_node_evidence",
+        "model_only_source_allowed": false,
+        "packet_family": "route_node_evidence",
+        "product_completion_proven": false,
+        "runtime_entrypoints": [
+          "submit-result",
+          "status",
+          "foreground-duty"
+        ],
+        "runtime_receipt_required": true,
+        "same_failure_class_no_progress": false,
+        "source_paths": [
+          "tests/test_flowpilot_fake_project_rehearsal.py",
+          "simulations/flowpilot_fake_project_rehearsal_scenarios.py"
+        ],
+        "testmesh_child_id": "executable_matrix_runtime_cli_replay"
+      },
+      {
+        "attempt_count": 1,
+        "break_glass_expectation": "forbidden",
+        "break_glass_triggered": false,
+        "bridge_case_id": "wrong_flowguard_target_rejected",
+        "convergence_rule": "target_identity_match_required",
+        "coverage_boundary": "non_live_executable_control_flow",
+        "coverage_shard_id": "",
+        "event_log_evidence": [
+          "wrong_flowguard_target_accepted_hazard_detected",
+          "review_gate_preserved"
+        ],
+        "evidence_command": "python -m unittest tests.test_flowpilot_fake_project_rehearsal",
+        "evidence_current": true,
+        "evidence_level": "runtime_cli_replay",
+        "evidence_path": "tests/test_flowpilot_fake_project_rehearsal.py",
+        "evidence_status": "passed",
+        "evidence_test_name": "wrong_flowguard_target_accepted",
+        "expected_outcome": "wrong_flowguard_target_rejected_before_review",
+        "fake_ai_body_consumed": true,
+        "fake_body_class": "wrong_flowguard_target_result",
+        "freshness_receipt": {
+          "current": true,
+          "freshness_receipt_id": "receipt.flowpilot_executable_matrix_coverage.wrong_flowguard_target_rejected",
+          "missing_sources": [],
+          "result_artifact_path": "",
+          "result_mtime": null,
+          "source_max_mtime": 1781673923.5200868,
+          "source_paths": [
+            "tests/test_flowpilot_fake_project_rehearsal.py",
+            "simulations/flowpilot_fake_project_rehearsal_scenarios.py"
+          ],
+          "stale_against_sources": false
+        },
+        "freshness_receipt_id": "receipt.flowpilot_executable_matrix_coverage.wrong_flowguard_target_rejected",
+        "live_ai_semantic_quality_proven": false,
+        "miss_family_id": "wrong_flowguard_target",
+        "model_cell_id": "recursive_route.wrong_flowguard_target",
+        "model_only_source_allowed": false,
+        "packet_family": "flowguard_check",
+        "product_completion_proven": false,
+        "runtime_entrypoints": [
+          "ack",
+          "submit-result",
+          "status"
+        ],
+        "runtime_receipt_required": true,
+        "same_failure_class_no_progress": false,
+        "source_paths": [
+          "tests/test_flowpilot_fake_project_rehearsal.py",
+          "simulations/flowpilot_fake_project_rehearsal_scenarios.py"
+        ],
+        "testmesh_child_id": "executable_matrix_runtime_cli_replay"
+      },
+      {
+        "attempt_count": 1,
+        "break_glass_expectation": "forbidden",
+        "break_glass_triggered": false,
+        "bridge_case_id": "dead_lease_does_not_advance_node",
+        "convergence_rule": "dead_lease_recovery_before_node_advance",
+        "coverage_boundary": "non_live_executable_control_flow",
+        "coverage_shard_id": "",
+        "event_log_evidence": [
+          "dead_lease_advances_node_hazard_detected",
+          "lease_reissue_required"
+        ],
+        "evidence_command": "python -m unittest tests.test_flowpilot_fake_project_rehearsal",
+        "evidence_current": true,
+        "evidence_level": "runtime_cli_replay",
+        "evidence_path": "tests/test_flowpilot_fake_project_rehearsal.py",
+        "evidence_status": "passed",
+        "evidence_test_name": "dead_lease_advances_node",
+        "expected_outcome": "dead_lease_forces_reissue_or_replace_without_advancing_node",
+        "fake_ai_body_consumed": true,
+        "fake_body_class": "dead_lease_result_attempt",
+        "freshness_receipt": {
+          "current": true,
+          "freshness_receipt_id": "receipt.flowpilot_executable_matrix_coverage.dead_lease_does_not_advance_node",
+          "missing_sources": [],
+          "result_artifact_path": "",
+          "result_mtime": null,
+          "source_max_mtime": 1781673923.5200868,
+          "source_paths": [
+            "tests/test_flowpilot_fake_project_rehearsal.py",
+            "simulations/flowpilot_fake_project_rehearsal_scenarios.py"
+          ],
+          "stale_against_sources": false
+        },
+        "freshness_receipt_id": "receipt.flowpilot_executable_matrix_coverage.dead_lease_does_not_advance_node",
+        "live_ai_semantic_quality_proven": false,
+        "miss_family_id": "dead_lease",
+        "model_cell_id": "recursive_route.dead_lease",
+        "model_only_source_allowed": false,
+        "packet_family": "lease",
+        "product_completion_proven": false,
+        "runtime_entrypoints": [
+          "submit-result",
+          "status",
+          "foreground-duty"
+        ],
+        "runtime_receipt_required": true,
+        "same_failure_class_no_progress": false,
+        "source_paths": [
+          "tests/test_flowpilot_fake_project_rehearsal.py",
+          "simulations/flowpilot_fake_project_rehearsal_scenarios.py"
+        ],
+        "testmesh_child_id": "executable_matrix_runtime_cli_replay"
+      },
+      {
+        "attempt_count": 1,
+        "break_glass_expectation": "forbidden",
+        "break_glass_triggered": false,
+        "bridge_case_id": "route_mutation_requires_frontier_rewrite",
+        "convergence_rule": "route_mutation_gate_then_frontier_refresh",
+        "coverage_boundary": "non_live_executable_control_flow",
+        "coverage_shard_id": "",
+        "event_log_evidence": [
+          "route_mutation_without_frontier_rewrite_hazard",
+          "frontier_rewrite_required"
+        ],
+        "evidence_command": "python -m unittest tests.test_flowpilot_fake_project_rehearsal",
+        "evidence_current": true,
+        "evidence_level": "runtime_cli_replay",
+        "evidence_path": "tests/test_flowpilot_fake_project_rehearsal.py",
+        "evidence_status": "passed",
+        "evidence_test_name": "route_mutation_without_frontier_rewrite",
+        "expected_outcome": "route_mutation_blocked_until_current_frontier_rewritten",
+        "fake_ai_body_consumed": true,
+        "fake_body_class": "route_mutation_without_current_frontier_rewrite",
+        "freshness_receipt": {
+          "current": true,
+          "freshness_receipt_id": "receipt.flowpilot_executable_matrix_coverage.route_mutation_requires_frontier_rewrite",
+          "missing_sources": [],
+          "result_artifact_path": "",
+          "result_mtime": null,
+          "source_max_mtime": 1781673923.5200868,
+          "source_paths": [
+            "tests/test_flowpilot_fake_project_rehearsal.py",
+            "simulations/flowpilot_fake_project_rehearsal_scenarios.py"
+          ],
+          "stale_against_sources": false
+        },
+        "freshness_receipt_id": "receipt.flowpilot_executable_matrix_coverage.route_mutation_requires_frontier_rewrite",
+        "live_ai_semantic_quality_proven": false,
+        "miss_family_id": "route_mutation_without_frontier_rewrite",
+        "model_cell_id": "fake_project.route_mutation_frontier",
+        "model_only_source_allowed": false,
+        "packet_family": "route_mutation",
+        "product_completion_proven": false,
+        "runtime_entrypoints": [
+          "ack",
+          "submit-result",
+          "status",
+          "foreground-duty"
+        ],
+        "runtime_receipt_required": true,
+        "same_failure_class_no_progress": false,
+        "source_paths": [
+          "tests/test_flowpilot_fake_project_rehearsal.py",
+          "simulations/flowpilot_fake_project_rehearsal_scenarios.py"
+        ],
+        "testmesh_child_id": "executable_matrix_runtime_cli_replay"
+      },
+      {
+        "attempt_count": 1,
+        "break_glass_expectation": "forbidden",
+        "break_glass_triggered": false,
+        "bridge_case_id": "slow_reviewer_progress_preserved",
+        "convergence_rule": "progress_is_not_completion_and_not_glassbreak",
+        "coverage_boundary": "non_live_executable_control_flow",
+        "coverage_shard_id": "",
+        "event_log_evidence": [
+          "progress_recorded",
+          "reviewer_wait_preserved",
+          "replacement_not_issued"
+        ],
+        "evidence_command": "python -m unittest tests.test_flowpilot_fake_project_rehearsal",
+        "evidence_current": true,
+        "evidence_level": "runtime_cli_replay",
+        "evidence_path": "simulations/flowpilot_fake_project_rehearsal_scenarios.py",
+        "evidence_status": "passed",
+        "evidence_test_name": "slow_reviewer_progress_preserved",
+        "expected_outcome": "slow_reviewer_progress_preserves_wait_without_replacement",
+        "fake_ai_body_consumed": true,
+        "fake_body_class": "slow_reviewer_progress_update",
+        "freshness_receipt": {
+          "current": true,
+          "freshness_receipt_id": "receipt.flowpilot_executable_matrix_coverage.slow_reviewer_progress_preserved",
+          "missing_sources": [],
+          "result_artifact_path": "",
+          "result_mtime": null,
+          "source_max_mtime": 1781673923.5200868,
+          "source_paths": [
+            "simulations/flowpilot_fake_project_rehearsal_scenarios.py",
+            "tests/test_flowpilot_fake_project_rehearsal.py"
+          ],
+          "stale_against_sources": false
+        },
+        "freshness_receipt_id": "receipt.flowpilot_executable_matrix_coverage.slow_reviewer_progress_preserved",
+        "live_ai_semantic_quality_proven": false,
+        "miss_family_id": "slow_reviewer_progress",
+        "model_cell_id": "fake_project.slow_reviewer_progress",
+        "model_only_source_allowed": false,
+        "packet_family": "review",
+        "product_completion_proven": false,
+        "runtime_entrypoints": [
+          "ack",
+          "progress",
+          "status",
+          "foreground-duty"
+        ],
+        "runtime_receipt_required": true,
+        "same_failure_class_no_progress": false,
+        "source_paths": [
+          "simulations/flowpilot_fake_project_rehearsal_scenarios.py",
+          "tests/test_flowpilot_fake_project_rehearsal.py"
+        ],
+        "testmesh_child_id": "executable_matrix_runtime_cli_replay"
+      },
+      {
+        "attempt_count": 1,
+        "break_glass_expectation": "forbidden",
+        "break_glass_triggered": false,
+        "bridge_case_id": "accepted_packet_reassignment_rejected",
+        "convergence_rule": "monotonic_packet_acceptance",
+        "coverage_boundary": "non_live_executable_control_flow",
+        "coverage_shard_id": "",
+        "event_log_evidence": [
+          "accepted_packet_reassignment_blocked",
+          "accepted_result_preserved"
+        ],
+        "evidence_command": "python -m unittest tests.test_flowpilot_fake_project_rehearsal",
+        "evidence_current": true,
+        "evidence_level": "runtime_cli_replay",
+        "evidence_path": "simulations/flowpilot_fake_project_rehearsal_scenarios.py",
+        "evidence_status": "passed",
+        "evidence_test_name": "accepted_packet_reassignment_rejected",
+        "expected_outcome": "accepted_packet_cannot_be_reassigned",
+        "fake_ai_body_consumed": true,
+        "fake_body_class": "accepted_packet_reassignment_attempt",
+        "freshness_receipt": {
+          "current": true,
+          "freshness_receipt_id": "receipt.flowpilot_executable_matrix_coverage.accepted_packet_reassignment_rejected",
+          "missing_sources": [],
+          "result_artifact_path": "",
+          "result_mtime": null,
+          "source_max_mtime": 1781673923.5200868,
+          "source_paths": [
+            "simulations/flowpilot_fake_project_rehearsal_scenarios.py",
+            "tests/test_flowpilot_fake_project_rehearsal.py"
+          ],
+          "stale_against_sources": false
+        },
+        "freshness_receipt_id": "receipt.flowpilot_executable_matrix_coverage.accepted_packet_reassignment_rejected",
+        "live_ai_semantic_quality_proven": false,
+        "miss_family_id": "accepted_packet_reassignment",
+        "model_cell_id": "fake_project.accepted_packet_reassignment",
+        "model_only_source_allowed": false,
+        "packet_family": "packet_assignment",
+        "product_completion_proven": false,
+        "runtime_entrypoints": [
+          "ack",
+          "submit-result",
+          "status"
+        ],
+        "runtime_receipt_required": true,
+        "same_failure_class_no_progress": false,
+        "source_paths": [
+          "simulations/flowpilot_fake_project_rehearsal_scenarios.py",
+          "tests/test_flowpilot_fake_project_rehearsal.py"
+        ],
+        "testmesh_child_id": "executable_matrix_runtime_cli_replay"
+      },
+      {
+        "attempt_count": 1,
+        "break_glass_expectation": "forbidden",
+        "break_glass_triggered": false,
+        "bridge_case_id": "orphan_runner_summary_routes_recovery",
+        "convergence_rule": "orphan_evidence_recovery_duty",
+        "coverage_boundary": "non_live_executable_control_flow",
+        "coverage_shard_id": "",
+        "event_log_evidence": [
+          "orphan_evidence_projected",
+          "recover_or_reissue_duty",
+          "packet_not_auto_accepted"
+        ],
+        "evidence_command": "python -m unittest tests.test_flowpilot_fake_project_rehearsal",
+        "evidence_current": true,
+        "evidence_level": "runtime_cli_replay",
+        "evidence_path": "simulations/flowpilot_fake_project_rehearsal_scenarios.py",
+        "evidence_status": "passed",
+        "evidence_test_name": "orphan_runner_summary_recovery",
+        "expected_outcome": "orphan_summary_routes_recovery_not_auto_accept",
+        "fake_ai_body_consumed": true,
+        "fake_body_class": "orphan_runner_summary_without_packet_binding",
+        "freshness_receipt": {
+          "current": true,
+          "freshness_receipt_id": "receipt.flowpilot_executable_matrix_coverage.orphan_runner_summary_routes_recovery",
+          "missing_sources": [],
+          "result_artifact_path": "",
+          "result_mtime": null,
+          "source_max_mtime": 1781673923.5200868,
+          "source_paths": [
+            "simulations/flowpilot_fake_project_rehearsal_scenarios.py",
+            "tests/test_flowpilot_fake_project_rehearsal.py"
+          ],
+          "stale_against_sources": false
+        },
+        "freshness_receipt_id": "receipt.flowpilot_executable_matrix_coverage.orphan_runner_summary_routes_recovery",
+        "live_ai_semantic_quality_proven": false,
+        "miss_family_id": "orphan_runner_summary",
+        "model_cell_id": "fake_project.orphan_runner_summary",
+        "model_only_source_allowed": false,
+        "packet_family": "runner_summary",
+        "product_completion_proven": false,
+        "runtime_entrypoints": [
+          "ack",
+          "status",
+          "foreground-duty"
+        ],
+        "runtime_receipt_required": true,
+        "same_failure_class_no_progress": false,
+        "source_paths": [
+          "simulations/flowpilot_fake_project_rehearsal_scenarios.py",
+          "tests/test_flowpilot_fake_project_rehearsal.py"
+        ],
+        "testmesh_child_id": "executable_matrix_runtime_cli_replay"
+      },
+      {
+        "attempt_count": 1,
+        "break_glass_expectation": "forbidden",
+        "break_glass_triggered": false,
+        "bridge_case_id": "unsupported_side_command_rejected",
+        "convergence_rule": "unsupported_command_rejects_without_fallback",
+        "coverage_boundary": "non_live_executable_control_flow",
+        "coverage_shard_id": "",
+        "event_log_evidence": [
+          "help_surface_absent",
+          "invalid_choice_returned"
+        ],
+        "evidence_command": "python -m unittest tests.test_flowpilot_fake_project_rehearsal",
+        "evidence_current": true,
+        "evidence_level": "runtime_cli_replay",
+        "evidence_path": "simulations/flowpilot_fake_project_rehearsal_scenarios.py",
+        "evidence_status": "passed",
+        "evidence_test_name": "unsupported_side_command",
+        "expected_outcome": "unsupported_side_command_rejected_by_public_cli",
+        "fake_ai_body_consumed": true,
+        "fake_body_class": "unsupported_side_command_complete_flowguard",
+        "freshness_receipt": {
+          "current": true,
+          "freshness_receipt_id": "receipt.flowpilot_executable_matrix_coverage.unsupported_side_command_rejected",
+          "missing_sources": [],
+          "result_artifact_path": "",
+          "result_mtime": null,
+          "source_max_mtime": 1781673923.5200868,
+          "source_paths": [
+            "simulations/flowpilot_fake_project_rehearsal_scenarios.py",
+            "tests/test_flowpilot_fake_project_rehearsal.py",
+            "simulations/flowpilot_fake_project_rehearsal_cli.py"
+          ],
+          "stale_against_sources": false
+        },
+        "freshness_receipt_id": "receipt.flowpilot_executable_matrix_coverage.unsupported_side_command_rejected",
+        "live_ai_semantic_quality_proven": false,
+        "miss_family_id": "unsupported_side_command",
+        "model_cell_id": "fake_project.unsupported_side_command",
+        "model_only_source_allowed": false,
+        "packet_family": "public_cli",
+        "product_completion_proven": false,
+        "runtime_entrypoints": [
+          "--help",
+          "complete-flowguard"
+        ],
+        "runtime_receipt_required": true,
+        "same_failure_class_no_progress": false,
+        "source_paths": [
+          "simulations/flowpilot_fake_project_rehearsal_scenarios.py",
+          "tests/test_flowpilot_fake_project_rehearsal.py",
+          "simulations/flowpilot_fake_project_rehearsal_cli.py"
+        ],
+        "testmesh_child_id": "executable_matrix_runtime_cli_replay"
+      },
+      {
+        "attempt_count": 1,
+        "break_glass_expectation": "forbidden",
+        "break_glass_triggered": false,
+        "bridge_case_id": "public_cli_worker_lifetime_bounded",
+        "convergence_rule": "public_cli_one_shot_lifetime_boundary",
+        "coverage_boundary": "non_live_executable_control_flow",
+        "coverage_shard_id": "",
+        "event_log_evidence": [
+          "one_shot_command_declared",
+          "worker_lifetime_bounded"
+        ],
+        "evidence_command": "python -m unittest tests.test_flowpilot_fake_project_rehearsal",
+        "evidence_current": true,
+        "evidence_level": "source_contract",
+        "evidence_path": "simulations/flowpilot_fake_project_rehearsal_cli.py",
+        "evidence_status": "passed",
+        "evidence_test_name": "ONE_SHOT_PUBLIC_CLI_COMMANDS",
+        "expected_outcome": "public_cli_worker_exits_after_one_shot_open_packet",
+        "fake_ai_body_consumed": false,
+        "fake_body_class": "one_shot_public_cli_command_boundary",
+        "freshness_receipt": {
+          "current": true,
+          "freshness_receipt_id": "receipt.flowpilot_executable_matrix_coverage.public_cli_worker_lifetime_bounded",
+          "missing_sources": [],
+          "result_artifact_path": "",
+          "result_mtime": null,
+          "source_max_mtime": 1781673923.5200868,
+          "source_paths": [
+            "simulations/flowpilot_fake_project_rehearsal_cli.py",
+            "tests/test_flowpilot_fake_project_rehearsal.py"
+          ],
+          "stale_against_sources": false
+        },
+        "freshness_receipt_id": "receipt.flowpilot_executable_matrix_coverage.public_cli_worker_lifetime_bounded",
+        "live_ai_semantic_quality_proven": false,
+        "miss_family_id": "public_cli_worker_lifetime",
+        "model_cell_id": "fake_project.public_cli_worker_lifetime",
+        "model_only_source_allowed": false,
+        "packet_family": "public_cli",
+        "product_completion_proven": false,
+        "runtime_entrypoints": [
+          "open-packet"
+        ],
+        "runtime_receipt_required": false,
+        "same_failure_class_no_progress": false,
+        "source_paths": [
+          "simulations/flowpilot_fake_project_rehearsal_cli.py",
+          "tests/test_flowpilot_fake_project_rehearsal.py"
+        ],
+        "testmesh_child_id": "executable_matrix_source_contracts"
+      },
+      {
+        "attempt_count": 4,
+        "break_glass_expectation": "forbidden",
+        "break_glass_triggered": false,
+        "bridge_case_id": "same_class_repeats_one_to_four_do_not_glassbreak",
+        "convergence_rule": "attempts_1_to_4_normal_repair_or_blocker_lane",
+        "coverage_boundary": "ordinary_recovery_before_break_glass_threshold",
+        "coverage_shard_id": "",
+        "event_log_evidence": [
+          "same_root_loop_key_recorded",
+          "repair_delta_required",
+          "glassbreak_absent"
+        ],
+        "evidence_command": "python -m unittest tests.test_flowpilot_fake_project_rehearsal",
+        "evidence_current": true,
+        "evidence_level": "runtime_cli_replay",
+        "evidence_path": "tests/test_flowpilot_core_runtime.py",
+        "evidence_status": "passed",
+        "evidence_test_name": "test_break_glass_counts_same_flowguard_root_cause_across_surface_gates",
+        "expected_outcome": "ordinary_control_repair_lane_until_attempt_four",
+        "fake_ai_body_consumed": true,
+        "fake_body_class": "same_class_no_delta_repeat_before_threshold",
+        "freshness_receipt": {
+          "current": true,
+          "freshness_receipt_id": "receipt.flowpilot_executable_matrix_coverage.same_class_repeats_one_to_four_do_not_glassbreak",
+          "missing_sources": [],
+          "result_artifact_path": "",
+          "result_mtime": null,
+          "source_max_mtime": 1781675657.8140433,
+          "source_paths": [
+            "tests/test_flowpilot_core_runtime.py",
+            "simulations/flowpilot_contract_exhaustion_mesh_model.py"
+          ],
+          "stale_against_sources": false
+        },
+        "freshness_receipt_id": "receipt.flowpilot_executable_matrix_coverage.same_class_repeats_one_to_four_do_not_glassbreak",
+        "live_ai_semantic_quality_proven": false,
+        "miss_family_id": "same_class_repeats_before_threshold",
+        "model_cell_id": "control_plane.break_glass_loop.same_root_no_delta_retry.before_threshold",
+        "model_only_source_allowed": false,
+        "packet_family": "break_glass_loop",
+        "product_completion_proven": false,
+        "runtime_entrypoints": [
+          "submit-result",
+          "status",
+          "foreground-duty"
+        ],
+        "runtime_receipt_required": true,
+        "same_failure_class_no_progress": true,
+        "source_paths": [
+          "tests/test_flowpilot_core_runtime.py",
+          "simulations/flowpilot_contract_exhaustion_mesh_model.py"
+        ],
+        "testmesh_child_id": "executable_matrix_runtime_cli_replay"
+      },
+      {
+        "attempt_count": 5,
+        "break_glass_expectation": "required_at_fifth_repeat",
+        "break_glass_triggered": true,
+        "bridge_case_id": "same_class_repeat_five_triggers_glassbreak",
+        "convergence_rule": "attempt_5_same_class_no_progress_requires_break_glass",
+        "coverage_boundary": "break_glass_safety_fuse_only",
+        "coverage_shard_id": "",
+        "event_log_evidence": [
+          "same_root_loop_key_recorded",
+          "fifth_attempt_detected",
+          "glassbreak_incident_opened"
+        ],
+        "evidence_command": "python -m unittest tests.test_flowpilot_fake_project_rehearsal",
+        "evidence_current": true,
+        "evidence_level": "long_chain_convergence",
+        "evidence_path": "tests/test_flowpilot_core_runtime.py",
+        "evidence_status": "passed",
+        "evidence_test_name": "test_break_glass_counts_same_flowguard_root_cause_across_surface_gates",
+        "expected_outcome": "glassbreak_safety_fuse_after_fifth_same_class_no_progress",
+        "fake_ai_body_consumed": true,
+        "fake_body_class": "same_class_no_delta_repeat_at_threshold",
+        "freshness_receipt": {
+          "current": true,
+          "freshness_receipt_id": "receipt.flowpilot_executable_matrix_coverage.same_class_repeat_five_triggers_glassbreak",
+          "missing_sources": [],
+          "result_artifact_path": "",
+          "result_mtime": null,
+          "source_max_mtime": 1781675657.8140433,
+          "source_paths": [
+            "tests/test_flowpilot_core_runtime.py",
+            "simulations/flowpilot_contract_exhaustion_mesh_model.py",
+            "tests/test_flowpilot_controller_break_glass.py"
+          ],
+          "stale_against_sources": false
+        },
+        "freshness_receipt_id": "receipt.flowpilot_executable_matrix_coverage.same_class_repeat_five_triggers_glassbreak",
+        "live_ai_semantic_quality_proven": false,
+        "miss_family_id": "same_class_repeat_threshold_glassbreak",
+        "model_cell_id": "control_plane.break_glass_loop.same_root_no_delta_retry.at_threshold",
+        "model_only_source_allowed": false,
+        "packet_family": "break_glass_loop",
+        "product_completion_proven": false,
+        "runtime_entrypoints": [
+          "submit-result",
+          "status",
+          "foreground-duty",
+          "controller-break-glass"
+        ],
+        "runtime_receipt_required": true,
+        "same_failure_class_no_progress": true,
+        "source_paths": [
+          "tests/test_flowpilot_core_runtime.py",
+          "simulations/flowpilot_contract_exhaustion_mesh_model.py",
+          "tests/test_flowpilot_controller_break_glass.py"
+        ],
+        "testmesh_child_id": "executable_matrix_break_glass_safety_fuse"
+      }
+    ],
+    "testmesh_child_counts": {
+      "executable_matrix_ai_contract_projection": 4,
+      "executable_matrix_break_glass_safety_fuse": 1,
+      "executable_matrix_fake_body_contracts": 4,
+      "executable_matrix_runtime_cli_replay": 14,
+      "executable_matrix_source_contracts": 1
+    }
+  },
+  "flowguard": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "reachability_failures": [],
+    "summary": "sequences=2 initial_states=1 traces=72",
+    "violation_count": 0
+  },
+  "known_bad": {
+    "cases": {
+      "fifth_same_class_repeat_must_glassbreak": {
+        "actual_codes": [
+          "fifth_same_class_repeat_missing_glassbreak",
+          "missing_required_miss_family_bridge_row"
+        ],
+        "expected_codes": [
+          "fifth_same_class_repeat_missing_glassbreak"
+        ]
+      },
+      "live_ai_quality_overclaim_forbidden": {
+        "actual_codes": [
+          "bridge_row_overclaims_live_ai_semantic_quality",
+          "missing_required_miss_family_bridge_row"
+        ],
+        "expected_codes": [
+          "bridge_row_overclaims_live_ai_semantic_quality"
+        ]
+      },
+      "model_only_row_cannot_satisfy_executable_bridge": {
+        "actual_codes": [
+          "missing_required_miss_family_bridge_row",
+          "model_only_matrix_cannot_satisfy_executable_bridge"
+        ],
+        "expected_codes": [
+          "model_only_matrix_cannot_satisfy_executable_bridge"
+        ]
+      },
+      "ordinary_recovery_cannot_enter_glassbreak": {
+        "actual_codes": [
+          "glassbreak_triggered_before_threshold",
+          "missing_required_miss_family_bridge_row",
+          "ordinary_recovery_entered_glassbreak"
+        ],
+        "expected_codes": [
+          "glassbreak_triggered_before_threshold",
+          "ordinary_recovery_entered_glassbreak"
+        ]
+      }
+    },
+    "missing_expected_codes": {},
+    "ok": true
+  },
+  "model_id": "flowpilot_executable_matrix_coverage",
+  "ok": true
+}

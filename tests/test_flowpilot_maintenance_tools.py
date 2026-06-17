@@ -266,6 +266,45 @@ if args.json_out:
         self.assertEqual(payload, {"ok": True})
         self.assertIsNone(metadata["parse_error"])
 
+    def test_coverage_sweep_resolves_root_simulations_result_path(self) -> None:
+        script_path = ROOT / "simulations" / "run_flowpilot_field_mesh_checks.py"
+        result_path = run_flowguard_coverage_sweep._declared_result_path(
+            script_path,
+            'RESULTS_PATH = ROOT / "simulations" / "flowpilot_field_mesh_results.json"',
+        )
+
+        self.assertEqual(
+            result_path,
+            ROOT / "simulations" / "flowpilot_field_mesh_results.json",
+        )
+
+    def test_coverage_sweep_runs_final_confidence_as_repository_only_diagnostic(self) -> None:
+        script_path = ROOT / "simulations" / "run_flowpilot_final_confidence_gate_checks.py"
+        completed = subprocess.CompletedProcess(
+            args=[],
+            returncode=0,
+            stdout='{"ok": true}\n',
+            stderr="",
+        )
+        with mock.patch.object(
+            run_flowguard_coverage_sweep.subprocess,
+            "run",
+            return_value=completed,
+        ) as run_mock:
+            payload, metadata = run_flowguard_coverage_sweep._run_runner(
+                script_path,
+                script_path.read_text(encoding="utf-8"),
+                timeout_seconds=10,
+            )
+
+        command = run_mock.call_args.args[0]
+        self.assertIn("--run-checks", command)
+        self.assertIn("--repository-confidence-only", command)
+        self.assertIn("--json-out", command)
+        self.assertIn("flowpilot_final_confidence_gate_results.json", " ".join(command))
+        self.assertEqual(payload, {"ok": True})
+        self.assertIsNone(metadata["parse_error"])
+
     def test_maintenance_map_records_owner_modules_tiers_and_diagnostic_status(self) -> None:
         report = flowpilot_maintenance_map.build_report(ROOT)
 

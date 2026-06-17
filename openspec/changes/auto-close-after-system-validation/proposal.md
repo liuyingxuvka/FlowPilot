@@ -7,7 +7,7 @@ validation passes, asking another AI role to close the same subject adds a hop
 without adding independent judgement.
 
 The closure step still matters. It is the point where FlowPilot records that a
-subject is done, clears the accounting, applies any staged high-risk PM
+subject is done, clears the accounting, applies any staged PM continue-repair
 decision, and moves to the next work packet. This change moves that closure
 step into a system-owned action after system validation.
 

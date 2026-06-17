@@ -16,6 +16,7 @@ from typing import Any, Mapping, Sequence
 
 DECISION_FULL = "full_confidence"
 DECISION_RELEASE_CONVERGED = "release_convergence_with_deferred_structure_splits"
+DECISION_REPOSITORY_ONLY = "repository_confidence_only"
 DECISION_BLOCKED = "blocked"
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -25,6 +26,7 @@ DEFAULT_RESULT_PATHS = {
     "event_idempotency": ROOT / "simulations" / "flowpilot_event_idempotency_results.json",
     "model_test_alignment": ROOT / "simulations" / "flowpilot_model_test_alignment_results.json",
     "known_friction": ROOT / "simulations" / "flowpilot_known_friction_regression_matrix_results.json",
+    "terminal_return": ROOT / "simulations" / "flowpilot_terminal_return_preflight_results.json",
 }
 
 SUBCHECK_COMMANDS = {
@@ -45,6 +47,7 @@ SUBCHECK_COMMANDS = {
         "flowpilot_known_friction_regression_matrix_results.json",
     ),
 }
+TERMINAL_RETURN_RESULT_FILENAME = "flowpilot_terminal_return_preflight_results.json"
 
 
 def load_json(path: Path) -> tuple[dict[str, Any] | None, str | None]:
@@ -232,11 +235,87 @@ def evaluate_known_friction(path: Path, payload: Mapping[str, Any] | None, load_
     return row
 
 
+def evaluate_terminal_return(path: Path, payload: Mapping[str, Any] | None, load_error: str | None) -> dict[str, Any]:
+    row = _row("terminal_return", path)
+    if load_error or payload is None:
+        row["blockers"].append(load_error or "missing_evidence")
+        return row
+
+    preflight = payload.get("final_return_preflight")
+    foreground = payload.get("foreground_duty")
+    next_action = payload.get("next_action")
+    if not isinstance(preflight, Mapping):
+        row["blockers"].append("final_return_preflight_missing")
+        return row
+    if not isinstance(foreground, Mapping):
+        foreground = {}
+    if not isinstance(next_action, Mapping):
+        next_action = {}
+
+    runtime_blockers = [
+        str(item)
+        for item in preflight.get("blockers", [])
+        if isinstance(item, str) and item
+    ]
+    allowed = preflight.get("allowed") is True
+    foreground_action = foreground.get("action")
+    controller_stop_allowed = (
+        foreground.get("controller_stop_allowed") is True
+        and preflight.get("controller_stop_allowed") is True
+    )
+    next_action_type = preflight.get("next_action_type") or next_action.get("action_type")
+
+    row["details"].update(
+        {
+            "top_level_ok": bool(payload.get("ok")),
+            "allowed": allowed,
+            "foreground_action": foreground_action,
+            "controller_stop_allowed": controller_stop_allowed,
+            "preflight_controller_stop_allowed": preflight.get("controller_stop_allowed"),
+            "foreground_controller_stop_allowed": foreground.get("controller_stop_allowed"),
+            "next_action_type": next_action_type,
+            "runtime_blockers": runtime_blockers,
+            "closure_decision": preflight.get("closure_decision"),
+            "guard_decision": preflight.get("guard_decision"),
+            "run_id": foreground.get("run_id"),
+        }
+    )
+
+    row["blockers"].extend(runtime_blockers)
+    if not allowed:
+        row["blockers"].append("terminal_return_not_allowed")
+    if foreground_action != "terminal_return":
+        row["blockers"].append("foreground_duty_not_terminal_return")
+    if not controller_stop_allowed:
+        row["blockers"].append("controller_stop_not_allowed")
+    if next_action_type:
+        row["blockers"].append(f"next_action:{next_action_type}")
+
+    row["ok"] = not row["blockers"]
+    row["status"] = DECISION_FULL if row["ok"] else DECISION_BLOCKED
+    return row
+
+
+def terminal_return_scoped_out_row() -> dict[str, Any]:
+    row = _row("terminal_return", ROOT / "simulations" / TERMINAL_RETURN_RESULT_FILENAME)
+    row["ok"] = True
+    row["status"] = DECISION_REPOSITORY_ONLY
+    row["details"].update(
+        {
+            "scoped_out": True,
+            "reason": "repository_confidence_only: terminal-return authority was explicitly scoped out",
+            "formal_exit_authority": False,
+        }
+    )
+    return row
+
+
 EVALUATORS = {
     "control_plane": evaluate_control_plane,
     "event_idempotency": evaluate_event_idempotency,
     "model_test_alignment": evaluate_model_test_alignment,
     "known_friction": evaluate_known_friction,
+    "terminal_return": evaluate_terminal_return,
 }
 
 
@@ -244,10 +323,14 @@ def evaluate_final_confidence(
     result_paths: Mapping[str, Path],
     *,
     subcheck_runs: Sequence[Mapping[str, Any]] = (),
+    terminal_return_required: bool = True,
 ) -> dict[str, Any]:
     run_by_name = {str(run.get("name")): run for run in subcheck_runs if isinstance(run, Mapping)}
     evidence_rows: list[dict[str, Any]] = []
-    for name in ("control_plane", "event_idempotency", "model_test_alignment", "known_friction"):
+    required_names = ["control_plane", "event_idempotency", "model_test_alignment", "known_friction"]
+    if terminal_return_required:
+        required_names.append("terminal_return")
+    for name in required_names:
         path = result_paths[name]
         payload, load_error = load_json(path)
         row = EVALUATORS[name](path, payload, load_error)
@@ -258,10 +341,16 @@ def evaluate_final_confidence(
             row["details"]["subcheck_stdout_path"] = run.get("stdout_path")
             row["details"]["subcheck_stderr_path"] = run.get("stderr_path")
             if exit_code != 0:
-                row["blockers"].append("subcheck_failed")
+                row["blockers"].append(
+                    "terminal_return_preflight_command_nonzero"
+                    if name == "terminal_return"
+                    else "subcheck_failed"
+                )
                 row["ok"] = False
                 row["status"] = DECISION_BLOCKED
         evidence_rows.append(row)
+    if not terminal_return_required:
+        evidence_rows.append(terminal_return_scoped_out_row())
 
     blockers = [
         {
@@ -275,21 +364,35 @@ def evaluate_final_confidence(
     ]
     ok = not blockers
     release_converged = ok and any(row["status"] == DECISION_RELEASE_CONVERGED for row in evidence_rows)
+    repository_only = ok and not terminal_return_required
     decision = (
         DECISION_BLOCKED
         if not ok
+        else DECISION_REPOSITORY_ONLY
+        if repository_only
         else DECISION_RELEASE_CONVERGED
         if release_converged
         else DECISION_FULL
     )
+    terminal_row = next((row for row in evidence_rows if row["name"] == "terminal_return"), {})
+    formal_exit_authority = bool(
+        terminal_return_required
+        and ok
+        and terminal_row.get("ok")
+        and terminal_row.get("status") == DECISION_FULL
+    )
     return {
         "ok": ok,
         "decision": decision,
+        "claim_scope": "formal_exit" if terminal_return_required else "repository_only",
+        "formal_exit_authority": formal_exit_authority,
         "summary": (
-            "FULL: all required final-confidence evidence is current and passing"
+            "FULL: all required final-confidence and terminal-return evidence is current and passing"
             if decision == DECISION_FULL
             else "RELEASE_CONVERGED: required evidence passes with explicitly deferred structure split debt"
             if decision == DECISION_RELEASE_CONVERGED
+            else "REPOSITORY_ONLY: repository evidence is current; terminal-return authority was scoped out"
+            if decision == DECISION_REPOSITORY_ONLY
             else f"BLOCKED: {len(blockers)} required evidence source(s) are not full confidence"
         ),
         "evidence_rows": evidence_rows,
@@ -298,10 +401,12 @@ def evaluate_final_confidence(
 
 
 def result_paths_for_dir(results_dir: Path) -> dict[str, Path]:
-    return {
+    paths = {
         name: results_dir / filename
         for name, (_, filename) in SUBCHECK_COMMANDS.items()
     }
+    paths["terminal_return"] = results_dir / TERMINAL_RETURN_RESULT_FILENAME
+    return paths
 
 
 def _display_command(
@@ -330,6 +435,7 @@ def run_required_subchecks(
     *,
     live_root: Path | None = None,
     source_root: Path | None = None,
+    terminal_return_required: bool = True,
 ) -> list[dict[str, Any]]:
     results_dir.mkdir(parents=True, exist_ok=True)
     run_rows: list[dict[str, Any]] = []
@@ -362,7 +468,75 @@ def run_required_subchecks(
                 "stderr_path": str(err_path),
             }
         )
+    if terminal_return_required:
+        run_rows.append(run_terminal_return_preflight(results_dir, live_root=live_root))
     return run_rows
+
+
+def _parse_json_text(text: str) -> tuple[dict[str, Any] | None, str | None]:
+    stripped = text.strip()
+    if not stripped:
+        return None, "empty output"
+    try:
+        value = json.loads(stripped)
+    except json.JSONDecodeError:
+        start = stripped.find("{")
+        end = stripped.rfind("}")
+        if start < 0 or end <= start:
+            return None, "output did not contain a JSON object"
+        try:
+            value = json.loads(stripped[start : end + 1])
+        except json.JSONDecodeError as exc:
+            return None, f"invalid JSON output: {exc}"
+    if not isinstance(value, dict):
+        return None, "JSON output was not an object"
+    return value, None
+
+
+def run_terminal_return_preflight(
+    results_dir: Path,
+    *,
+    live_root: Path | None = None,
+) -> dict[str, Any]:
+    results_dir.mkdir(parents=True, exist_ok=True)
+    json_path = results_dir / TERMINAL_RETURN_RESULT_FILENAME
+    out_path = results_dir / "terminal_return.out.txt"
+    err_path = results_dir / "terminal_return.err.txt"
+    json_path.unlink(missing_ok=True)
+    root_arg = live_root if live_root is not None else ROOT
+    command = [
+        sys.executable,
+        "skills/flowpilot/assets/flowpilot_new.py",
+        "--root",
+        str(root_arg),
+        "--json",
+        "final-preflight",
+    ]
+    with out_path.open("w", encoding="utf-8", errors="replace") as out_file, err_path.open(
+        "w", encoding="utf-8", errors="replace"
+    ) as err_file:
+        completed = subprocess.run(command, cwd=ROOT, stdout=out_file, stderr=err_file, check=False)
+    payload, parse_error = _parse_json_text(out_path.read_text(encoding="utf-8", errors="replace"))
+    if payload is None:
+        payload = {
+            "ok": False,
+            "parse_error": parse_error,
+        }
+    payload["terminal_return_preflight_command"] = _display_command(
+        command,
+        live_root=live_root,
+    )
+    payload["terminal_return_preflight_exit_code"] = completed.returncode
+    write_json(json_path, payload)
+    return {
+        "name": "terminal_return",
+        "command": _display_command(command, live_root=live_root),
+        "exit_code": completed.returncode,
+        "json_path": str(json_path),
+        "stdout_path": str(out_path),
+        "stderr_path": str(err_path),
+        "parse_error": parse_error,
+    }
 
 
 def write_json(path: Path, payload: Mapping[str, Any]) -> None:
@@ -374,9 +548,11 @@ __all__ = [
     "DECISION_BLOCKED",
     "DECISION_FULL",
     "DECISION_RELEASE_CONVERGED",
+    "DECISION_REPOSITORY_ONLY",
     "DEFAULT_RESULT_PATHS",
     "evaluate_final_confidence",
     "result_paths_for_dir",
     "run_required_subchecks",
+    "run_terminal_return_preflight",
     "write_json",
 ]

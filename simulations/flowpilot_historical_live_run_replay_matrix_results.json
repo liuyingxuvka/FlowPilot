@@ -12,7 +12,8 @@
     "route_mutation_stale_evidence",
     "missing_skill_standard_result_matrix",
     "stale_ui_projection",
-    "windows_lock_partial_json"
+    "windows_lock_partial_json",
+    "contract_surface_reduction_mainline_regression"
   ],
   "known_bad_cases": [
     {
@@ -407,13 +408,64 @@
           "surface": "background_proof_edges"
         }
       ]
+    },
+    {
+      "expected_codes": [
+        "missing_run_20260613_baseline",
+        "missing_contract_surface_packet_family",
+        "missing_first_packet_failure_regression",
+        "contract_surface_shortcut_not_forbidden"
+      ],
+      "name": "contract_surface_missing_packet_family_and_regression",
+      "rows": [
+        {
+          "confidence_boundary": "known bad fixture only",
+          "destructive_live_state_mutation": false,
+          "entrypoints": [
+            "run_snapshot_loader",
+            "real_router_runtime"
+          ],
+          "evidence_current": true,
+          "evidence_role": "primary_historical_replay",
+          "evidence_status": "passed",
+          "evidence_test": "KnownBad.test_case",
+          "expected_standard_state": "blocked_until_repair",
+          "failure_package": "known bad fixture",
+          "fake_ai_artifacts": [
+            "later_first_packet_terminal_evidence_blocker"
+          ],
+          "finite_package_classes": [
+            "contract_surface_reduction_mainline_regression"
+          ],
+          "forbidden_shortcuts": [
+            "restore_historical_field_shape"
+          ],
+          "historical_snapshot_required": true,
+          "live_ai_semantic_quality_proven": false,
+          "phase_sequence": [
+            "task.high_standard_contract"
+          ],
+          "priority": "P0",
+          "production_replay_adapter_present": false,
+          "production_replay_adapter_required": false,
+          "protected_state_invariant": "bad input cannot mutate protected state",
+          "replay_id": "contract.surface.run_20260613_mainline_and_first_packet_failure",
+          "required_evidence": [
+            "task.high_standard_contract"
+          ],
+          "source_records": [
+            "docs/flowpilot_contract_surface_reduction_baseline.md"
+          ],
+          "surface": "contract_surface_reduction_baseline"
+        }
+      ]
     }
   ],
   "ok": true,
-  "required_replay_count": 11,
-  "required_surface_count": 11,
+  "required_replay_count": 12,
+  "required_surface_count": 12,
   "result_type": "flowpilot_historical_live_run_replay_matrix",
-  "row_count": 11,
+  "row_count": 12,
   "rows": [
     {
       "confidence_boundary": "proves stale snapshot authority handling, not every archived schema variant",
@@ -618,6 +670,82 @@
         "runtime_receipt"
       ],
       "surface": "relay_receipt_mechanics"
+    },
+    {
+      "confidence_boundary": "proves the contracted mainline package lifecycle and named first-packet regression; does not restore historical field shape or prove live AI semantic quality",
+      "destructive_live_state_mutation": false,
+      "entrypoints": [
+        "packet_stage_evidence_matrix",
+        "packet_result_contracts",
+        "runtime.current_handoff_contract",
+        "historical_live_run_replay_matrix",
+        "historical_live_run_replay_tests"
+      ],
+      "evidence_current": true,
+      "evidence_role": "primary_historical_replay",
+      "evidence_status": "passed",
+      "evidence_test": "FlowPilotHistoricalLiveRunReplayTests.test_contract_surface_reduction_baseline_keeps_success_mainline_and_rejects_first_packet_terminal_evidence",
+      "expected_standard_state": "run-20260613-140526 is accepted only as a process-route baseline; the later first-packet terminal-evidence blocker is invalid under the reduced high-standard contract; all 12 mainline packet families are covered",
+      "failure_package": "later high-standard first packet is blocked for terminal, worker, or model-detail evidence that belongs to later packet families",
+      "fake_ai_artifacts": [
+        "run_20260613_success_mainline_process_baseline",
+        "later_first_packet_terminal_evidence_blocker",
+        "all_mainline_packet_family_replay_fixture"
+      ],
+      "finite_package_classes": [
+        "contract_surface_reduction_mainline_regression"
+      ],
+      "forbidden_shortcuts": [
+        "restore_historical_field_shape",
+        "treat_first_packet_as_terminal_replay",
+        "require_flowguard_model_detail_in_pm_packet",
+        "skip_mainline_packet_family_coverage"
+      ],
+      "historical_snapshot_required": true,
+      "live_ai_semantic_quality_proven": false,
+      "phase_sequence": [
+        "task.high_standard_contract",
+        "task.discovery",
+        "task.skill_standard",
+        "task.planning",
+        "task.node_acceptance_plan",
+        "task.node",
+        "flowguard_check.post_result",
+        "review.any_current_subject",
+        "pm_repair_decision.pm_repair_decision",
+        "pm_disposition.node_pm_disposition",
+        "task.parent_backward_replay",
+        "review.terminal_backward_replay"
+      ],
+      "priority": "P0",
+      "production_replay_adapter_present": false,
+      "production_replay_adapter_required": false,
+      "protected_state_invariant": "moved or deleted future-stage fields cannot block early high-standard packets, and historical field shape cannot be promoted into the current contract",
+      "replay_id": "contract.surface.run_20260613_mainline_and_first_packet_failure",
+      "required_evidence": [
+        "run-20260613-140526_process_route_baseline",
+        "historical_success_not_field_shape_authority",
+        "first_packet_terminal_evidence_blocker_invalid",
+        "task.high_standard_contract",
+        "task.discovery",
+        "task.skill_standard",
+        "task.planning",
+        "task.node_acceptance_plan",
+        "task.node",
+        "flowguard_check.post_result",
+        "review.any_current_subject",
+        "pm_repair_decision.pm_repair_decision",
+        "pm_disposition.node_pm_disposition",
+        "task.parent_backward_replay",
+        "review.terminal_backward_replay"
+      ],
+      "source_records": [
+        "WorldGurd_20260613/.flowpilot/runs/run-20260613-140526",
+        "docs/flowpilot_contract_surface_reduction_baseline.md",
+        "later_first_packet_failure_report",
+        "openspec/changes/reduce-flowpilot-contract-surface"
+      ],
+      "surface": "contract_surface_reduction_baseline"
     },
     {
       "confidence_boundary": "bounded peer proof isolation, not an unbounded load test",
@@ -976,12 +1104,13 @@
     }
   ],
   "rows_by_priority": {
-    "P0": 4,
+    "P0": 5,
     "P1": 4,
     "P2": 3
   },
   "rows_by_surface": {
     "background_proof_edges": 1,
+    "contract_surface_reduction_baseline": 1,
     "historical_snapshot": 1,
     "host_role_lifecycle": 1,
     "install_split_brain": 1,

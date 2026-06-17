@@ -8,7 +8,7 @@ from collections import deque
 from pathlib import Path
 from typing import Any
 
-from flowguard import Explorer
+from flowguard.explorer import Explorer
 
 import flowpilot_terminal_state_monotonicity_model as model
 

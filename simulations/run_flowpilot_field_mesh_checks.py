@@ -10,7 +10,7 @@ from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any
 
-from flowguard import Explorer
+from flowguard.explorer import Explorer
 
 import flowpilot_field_contract_model as parent_contracts
 import flowpilot_field_mesh_model as model
@@ -309,6 +309,9 @@ def _critical_bindings(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
         terminal = field_path.split(".")[-1].replace("[]", "")
         field_seen = terminal in fields or any(item.endswith(f".{terminal}") for item in fields)
         validator = str(contract["validator"])
+        validator_terms = {validator}
+        if "." in validator:
+            validator_terms.add(validator.rsplit(".", 1)[-1])
         if validator in {"current_task_liveness_review"}:
             validator_seen = True
         else:
@@ -324,7 +327,7 @@ def _critical_bindings(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
                     except UnicodeDecodeError:
                         text = ""
                     source_text_cache[rel] = text
-                if validator in text:
+                if any(term in text for term in validator_terms):
                     validator_seen = True
                     break
         bindings.append(

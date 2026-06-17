@@ -40,10 +40,25 @@ allowed by the packet/card contract so PM or Router can decide.
 
 When the FlowGuard packet includes `authorized_result_reads`, use the
 authorized input materials delivered by `flowpilot_new.py open-packet` before
-submitting the FlowGuard report. The delivered result body is the current
-subject artifact for modeling. Controller-visible summaries or PM navigation
-summaries may orient you, but they do not replace the delivered body,
-hash-checked evidence, or FlowGuard model evidence.
+submitting the FlowGuard report. Read every delivered result/report body; each
+body is current subject or context material for modeling. Read blocker, target,
+and upstream context bodies when the runtime delivers more than one.
+Controller-visible summaries or PM navigation summaries may orient you, but
+they do not replace all delivered bodies, hash-checked evidence, or FlowGuard
+model evidence.
+
+When the FlowGuard packet's `current_handoff_contract.required_report_contract`
+or `submission_checklist` requires `semantic_recheck`, fill exactly that
+structured result shape. Use the exact field names, finite options, field type
+requirements, and result ids exposed there. A `semantic_recheck_contract` in
+the packet body is modeling context that explains the blocker and semantic
+focus; it is not a hidden source of mechanical field names. For a pass, the
+structured `semantic_recheck` must prove subject-bound semantic coverage of the
+same blocker and consume every required result id or repair obligation id named
+by the checklist. Do not pass from field shape, current-contract mechanics,
+result shape, role boundary, or other packet-surface facts alone. If coverage
+cannot be proved, return `passed: false` with concrete `blockers[]` and
+PM-actionable `pm_suggestion_items[]`.
 
 ## FlowGuard Work Order Execution
 
@@ -132,6 +147,27 @@ continuation, and completion conditions. For mixed work, explicitly name which
 parts are product behavior obligations and which parts are process/order
 obligations.
 
+When the current subject includes an `acceptance_item_registry`,
+`acceptance_item_ids`, or `acceptance_item_projection`, model whether each
+active item has a reachable owner node, a sufficient evidence path, a reviewer
+or FlowGuard gate, PM disposition, and final replay segment when required.
+Treat orphan items, unknown item ids, route redesigns that drop items, and
+items that can close only through generic prose or stale evidence as blockers.
+
+When the packet body includes `subject_stage_evidence_matrix`, read it before
+choosing blockers. Require only `current_required_fields`; fields outside the
+current packet contract are not missing PM work. Use `allowed_value_options`
+as the finite menu for any field it names: choose exactly one listed value and
+do not invent synonyms, prose variants, extra enum values, or blank
+placeholders. Use `allowed_blocker_classes`, `blocker_next_actions`, and
+`blocker_repair_packet_contracts` when you block.
+For PM-owned substantive blockers, `blocker_next_actions` routes to the PM
+repair-decision packet; it does not choose PM's repair branch for PM.
+Do not block a preplanning contract-definition package or plan package for
+missing Worker outputs, target-product proof, post-result FlowGuard evidence,
+or final backward replay evidence unless the subject result claims those
+artifacts already exist.
+
 The PM packet boundary is a hard scope boundary, not a low-standard target.
 Within the requested model boundary, use the simplest high-quality FlowGuard
 modeling approach that answers PM's decision question. If a better idea would
@@ -168,33 +204,12 @@ formal gate. Read the corresponding handoff letter or packet/result envelope
 first, then inspect the formal artifact refs, paths, hashes, changed paths,
 output contract, and PM Suggestion Items it cites.
 
-Your report is PM decision support, not a no-risk certificate. Include:
-
-- PM request id and model boundary answered;
-- product scenarios, process scenarios, invariants, hazards, transitions, and
-  contracts relevant to PM's question;
-- commands run and counterexamples or absence of counterexamples;
-- `model_obligations`: FlowGuard scenarios, invariants, hazards, transitions,
-  and contracts relevant to PM's decision;
-- `ordinary_test_evidence`: ordinary tests, replays, or manual commands bound
-  to those obligations;
-- `missing_test_kinds`: required happy, failure, edge, negative, or replay
-  evidence that is absent, stale, skipped, or not passing;
-- `conformance_boundary`: whether the result is abstract model evidence only,
-  ordinary test evidence, conformance replay, or a bounded combination;
-- `residual_blindspots`: risks not closed by the model and ordinary tests;
-- `background_artifact_completion`: for every cited long/background test, list
-  log root, stdout, stderr, combined, exit, and meta paths, exit code, latest
-  update time, completion status, and valid proof reuse;
-- `evidence_consistency`: machine-readable hard-status summary. Set
-  `self_check_passed` only when the report's contract self-check booleans are
-  true; set `child_reports_all_passed` false and list
-  `blocking_child_reports` when any child model/test/development-process report
-  says blocked, missing code contract, revalidation required, stale, failed, or
-  not ok; set `hard_evidence_decision` to `pass` only when hard evidence can
-  support top-level `passed: true`;
-- PM review-required hotspots;
-- confidence boundary and recommendations.
+Your report is PM decision support, not a no-risk certificate. Put detailed
+model scenarios, invariants, commands, counterexamples, skipped-check reasons,
+background log completion, confidence limits, and semantic recheck evidence in
+the packet-owned FlowGuard evidence artifact or in PM suggestion items when PM
+needs to act on them. Do not add those details as extra top-level result
+fields.
 
 Include a soft `PM Note` with exactly these labels: `In-scope quality choice`
 and `PM consideration`. Use `none` when there is no useful note. The note is PM
@@ -208,11 +223,11 @@ when a formal model-gate finding inside PM's requested model boundary shows the
 current gate's minimum standard cannot be guaranteed.
 
 Before returning any report envelope, read the source packet's
-`output_contract` and write a `Contract Self-Check` section in the sealed
-report body. If required commands, modeled boundary, scenarios, invariants,
-skipped-check reasons, model-test alignment fields, background artifact
-completion for cited long tests, evidence consistency, or confidence boundary
-are missing or blocked, return `blocked` or `needs_pm` instead of a pass.
+`output_contract` and write the required `contract_self_check` object in the
+sealed result body. This is the required Contract Self-Check. If modeled
+boundary is missing, evidence is stale or blocked, or the packet-owned evidence
+artifact cannot support the result, set `passed: false` and return concrete
+`blockers[]` instead of adding new top-level fields.
 
 Every formal FlowGuard result body you submit must include top-level
 `pm_visible_summary` as a non-empty list of short strings written by you. This
@@ -220,6 +235,26 @@ summary must say what the model/check found, whether it passed or blocked, and
 the concrete PM-facing repair guidance when blocked. Runtime validates and
 relays these exact strings; it will not summarize your sealed FlowGuard report
 for you.
+
+Every formal FlowGuard packet result body must use this current top-level
+shape:
+
+```json
+{
+  "pm_visible_summary": ["<short PM-visible result summary>"],
+  "reviewed_by_role": "flowguard_operator",
+  "passed": false,
+  "modeled_boundary": "<scope modeled>",
+  "blockers": [],
+  "pm_suggestion_items": [],
+  "contract_self_check": {
+    "all_required_fields_present": true,
+    "exact_field_names_used": true,
+    "empty_required_arrays_explicit": true,
+    "runtime_mechanical_validation_passed": true
+  }
+}
+```
 
 When your model result supports a gate pass, block, waiver, skip, local repair,
 route mutation, or completion effect, write a file-backed `GateDecision` body

@@ -84,6 +84,13 @@ If any answer is unclear, first reduce the repair plan instead of expanding the
 runtime shape. Avoid recreating old-router complexity through many specialized
 candidate records, compatibility surfaces, or role-specific state machines.
 
+For FlowPilot current-contract repairs, also follow
+`docs/flowpilot_current_contract_repair_discipline.md`. That document is the
+durable rule set for future agents: shrink wrong requirements back to their
+owning stage, keep role boundaries clean, cover all package and blocker repair
+families, carry repeated-repair lineage, and leave old names only in
+forbidden/deleted lists, negative tests, or historical labels.
+
 ## FlowGuard Project Topology
 
 This mature FlowGuard project maintains an automatically generated project
@@ -197,7 +204,7 @@ Project FlowGuard record:
 - Human log: `docs/flowguard_adoption_log.md`
 
 Current adoption record:
-- FlowGuard package version: `0.47.2`
+- FlowGuard package version: `0.51.0`
 - FlowGuard schema version: `1.0`
 
 Before non-trivial work:
@@ -237,11 +244,18 @@ and old-field disposition.
 UI runnable claims and file/work-package claims need current UI click-through
 or artifact-payload evidence gates before broad done/release confidence.
 
-After non-trivial FlowGuard-managed work, run or record a maintenance scan when
-changed artifacts, skipped routes, stale evidence, or split/reduction signals
-may require an owning route such as Model-Test Alignment,
-DevelopmentProcessFlow, Architecture Reduction, StructureMesh, ModelMesh,
-TestMesh, or AgentWorkflowRehearsal.
+Non-trivial rough-plan discussion, multi-skill/tool workflow setup, staged
+execution, install/sync, release/archive/publish, post-change owner scans, and
+final process claims enter `flowguard-development-process-flow` first as the
+development-process simulator. Record `plan_detailing`, `agent_workflow`, and
+`execution_freshness` modes; delegate to PlanDetailing or
+AgentWorkflowRehearsal only when explicit or simulator-selected.
+
+After non-trivial FlowGuard-managed work, let DevelopmentProcessFlow consume
+post-change scan signals for changed artifacts, skipped routes, stale evidence,
+open obligations, or split/reduction pressure. The scan output routes each gap
+to the owning specialist, such as Model-Test Alignment, Architecture
+Reduction, StructureMesh, ModelMesh, TestMesh, or AgentWorkflowRehearsal.
 
 Do not create a fake local FlowGuard replacement. Do not claim full FlowGuard
 completion from an AGENTS/manifest/log update alone; executable model checks,

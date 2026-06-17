@@ -1,18 +1,60 @@
 {
   "classification_counts": {
-    "boundary_expected_or_informational": 139,
-    "modeled_current_live_hit_fix_runtime_or_current_state": 1,
-    "runner_unparsed_or_unavailable": 1
+    "boundary_expected_or_informational": 146
   },
   "coverage_tier_counts": {
     "abstract_strong_live_mapping_weaker": 8,
-    "coverage_strong": 36,
+    "coverage_strong": 42,
     "specialized_assertion_or_local_hazard": 7,
-    "supporting_model_owned": 89
+    "supporting_model_owned": 93
   },
-  "existing_result_read_count": 108,
-  "finding_count": 140,
+  "existing_result_read_count": 119,
+  "finding_count": 146,
   "finding_ledger": [
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "release_suite_deferred",
+      "item_id": "",
+      "message": "release-only suite acceptance_router_release_tiers is deferred for routine confidence",
+      "metadata": {
+        "background": false,
+        "command": "python scripts/run_test_tier.py --tier router-packets/router-route/router-terminal/integration/release/final-confidence",
+        "duration_seconds": null,
+        "evidence_current": false,
+        "evidence_tier": "candidate_only",
+        "exit_code": null,
+        "has_exit_artifact": true,
+        "has_result_artifact": true,
+        "layer": "child",
+        "log_root": "",
+        "not_run_reason": "full release tier evidence is visible but not required for routine confidence",
+        "owned_leaf_cell_ids": [
+          "formal_exit_terminal_return_missing",
+          "formal_exit_startup_intake_blocks"
+        ],
+        "owns_side_effects": [],
+        "owns_state": [],
+        "progress_only": false,
+        "proof_artifact": null,
+        "release_required": true,
+        "result_path": "tmp/test_background acceptance tier artifacts",
+        "result_reused": false,
+        "result_status": "not_run",
+        "reuse_ticket": null,
+        "selected_count": 0,
+        "skipped_count": 0,
+        "skipped_visible": true,
+        "stale_reasons": [],
+        "suite_id": "acceptance_router_release_tiers",
+        "test_count": 0,
+        "timeout_seconds": null
+      },
+      "runner": "flowpilot_acceptance_testmesh",
+      "section": "abstract",
+      "section_path": "report",
+      "severity": "warning",
+      "suite_id": "acceptance_router_release_tiers"
+    },
     {
       "classification": "boundary_expected_or_informational",
       "code": "function_block_owner_not_registered",
@@ -933,7 +975,7 @@
       "packet_status": "accepted",
       "runner": "flowpilot_core_runtime",
       "section": "abstract",
-      "section_path": "scenarios.10.details.accepted_packet_lease_health",
+      "section_path": "scenarios.11.details.accepted_packet_lease_health",
       "stale_assigned_lease": false
     },
     {
@@ -951,7 +993,7 @@
       "packet_status": "accepted",
       "runner": "flowpilot_core_runtime",
       "section": "abstract",
-      "section_path": "scenarios.10.details.preflight.accepted_packet_lease_health",
+      "section_path": "scenarios.11.details.preflight.accepted_packet_lease_health",
       "stale_assigned_lease": false
     },
     {
@@ -966,11 +1008,11 @@
         "in_scope": true,
         "metadata": {
           "freshness": {
-            "max_source_mtime": 1780214647.1861956,
+            "max_source_mtime": 1781511334.969014,
             "missing_sources": [],
             "result": "simulations/flowpilot_route_mutation_activation_results.json",
             "result_missing": false,
-            "result_mtime": 1779900565.8423657,
+            "result_mtime": 1781245777.4640543,
             "sources": [
               "simulations\\flowpilot_route_mutation_activation_model.py",
               "simulations\\run_flowpilot_route_mutation_activation_checks.py",
@@ -1017,11 +1059,11 @@
         "in_scope": true,
         "metadata": {
           "freshness": {
-            "max_source_mtime": 1780214647.1861956,
+            "max_source_mtime": 1781511334.969014,
             "missing_sources": [],
             "result": "simulations/flowpilot_route_mutation_activation_results.json",
             "result_missing": false,
-            "result_mtime": 1779900565.8423657,
+            "result_mtime": 1781245777.4640543,
             "sources": [
               "simulations\\flowpilot_route_mutation_activation_model.py",
               "simulations\\run_flowpilot_route_mutation_activation_checks.py",
@@ -1068,11 +1110,11 @@
         "in_scope": true,
         "metadata": {
           "freshness": {
-            "max_source_mtime": 1780214647.1861956,
+            "max_source_mtime": 1781511334.969014,
             "missing_sources": [],
             "result": "simulations/flowpilot_route_mutation_activation_results.json",
             "result_missing": false,
-            "result_mtime": 1779900565.8423657,
+            "result_mtime": 1781245777.4640543,
             "sources": [
               "simulations\\flowpilot_route_mutation_activation_model.py",
               "simulations\\run_flowpilot_route_mutation_activation_checks.py",
@@ -1114,12 +1156,266 @@
       "message": "maturation signal is stale and cannot support a current model claim",
       "metadata": {
         "current": false,
+        "description": "Prompt assets and manifests must be model-visible contract inputs.",
+        "evidence_id": "simulations/flowpilot_prompt_boundary_results.json",
+        "in_scope": true,
+        "metadata": {
+          "freshness": {
+            "max_source_mtime": 1781638239.935354,
+            "missing_sources": [],
+            "result": "simulations/flowpilot_prompt_boundary_results.json",
+            "result_missing": false,
+            "result_mtime": 1781605351.2739556,
+            "sources": [
+              "simulations\\flowpilot_prompt_boundary_model.py",
+              "simulations\\run_flowpilot_prompt_boundary_checks.py",
+              "skills\\flowpilot\\assets\\runtime_kit\\prompts\\manifest.json",
+              "openspec\\changes\\adopt-flowguard-model-maturation\\specs\\flowpilot-prompt-boundary-policy\\spec.md"
+            ]
+          },
+          "json": {
+            "confidence": "",
+            "decision": "",
+            "ok": true,
+            "result": "simulations/flowpilot_prompt_boundary_results.json",
+            "result_type": ""
+          }
+        },
+        "model_id": "flowpilot_prompt_boundary",
+        "required": true,
+        "resolved": false,
+        "risk_id": "prompt_asset_drift_not_seen_by_code_scan",
+        "signal_id": "prompt_assets_are_contract_inputs",
+        "signal_type": "missing_code_boundary_observation",
+        "source_route": "flowpilot_prompt_boundary_policy",
+        "suggested_actions": [
+          "add_code_boundary_observation",
+          "add_model_obligation"
+        ]
+      },
+      "model_id": "flowpilot_prompt_boundary",
+      "risk_id": "prompt_asset_drift_not_seen_by_code_scan",
+      "runner": "flowpilot_model_maturation",
+      "section": "abstract",
+      "section_path": "current",
+      "severity": "blocker",
+      "signal_id": "prompt_assets_are_contract_inputs"
+    },
+    {
+      "action": "add_code_boundary_observation",
+      "classification": "boundary_expected_or_informational",
+      "code": "model_upgrade_required",
+      "message": "unresolved in-scope maturation signal requires model upgrade action",
+      "metadata": {
+        "current": false,
+        "description": "Prompt assets and manifests must be model-visible contract inputs.",
+        "evidence_id": "simulations/flowpilot_prompt_boundary_results.json",
+        "in_scope": true,
+        "metadata": {
+          "freshness": {
+            "max_source_mtime": 1781638239.935354,
+            "missing_sources": [],
+            "result": "simulations/flowpilot_prompt_boundary_results.json",
+            "result_missing": false,
+            "result_mtime": 1781605351.2739556,
+            "sources": [
+              "simulations\\flowpilot_prompt_boundary_model.py",
+              "simulations\\run_flowpilot_prompt_boundary_checks.py",
+              "skills\\flowpilot\\assets\\runtime_kit\\prompts\\manifest.json",
+              "openspec\\changes\\adopt-flowguard-model-maturation\\specs\\flowpilot-prompt-boundary-policy\\spec.md"
+            ]
+          },
+          "json": {
+            "confidence": "",
+            "decision": "",
+            "ok": true,
+            "result": "simulations/flowpilot_prompt_boundary_results.json",
+            "result_type": ""
+          }
+        },
+        "model_id": "flowpilot_prompt_boundary",
+        "required": true,
+        "resolved": false,
+        "risk_id": "prompt_asset_drift_not_seen_by_code_scan",
+        "signal_id": "prompt_assets_are_contract_inputs",
+        "signal_type": "missing_code_boundary_observation",
+        "source_route": "flowpilot_prompt_boundary_policy",
+        "suggested_actions": [
+          "add_code_boundary_observation",
+          "add_model_obligation"
+        ]
+      },
+      "model_id": "flowpilot_prompt_boundary",
+      "risk_id": "prompt_asset_drift_not_seen_by_code_scan",
+      "runner": "flowpilot_model_maturation",
+      "section": "abstract",
+      "section_path": "current",
+      "severity": "blocker",
+      "signal_id": "prompt_assets_are_contract_inputs"
+    },
+    {
+      "action": "add_model_obligation",
+      "classification": "boundary_expected_or_informational",
+      "code": "model_upgrade_required",
+      "message": "unresolved in-scope maturation signal requires model upgrade action",
+      "metadata": {
+        "current": false,
+        "description": "Prompt assets and manifests must be model-visible contract inputs.",
+        "evidence_id": "simulations/flowpilot_prompt_boundary_results.json",
+        "in_scope": true,
+        "metadata": {
+          "freshness": {
+            "max_source_mtime": 1781638239.935354,
+            "missing_sources": [],
+            "result": "simulations/flowpilot_prompt_boundary_results.json",
+            "result_missing": false,
+            "result_mtime": 1781605351.2739556,
+            "sources": [
+              "simulations\\flowpilot_prompt_boundary_model.py",
+              "simulations\\run_flowpilot_prompt_boundary_checks.py",
+              "skills\\flowpilot\\assets\\runtime_kit\\prompts\\manifest.json",
+              "openspec\\changes\\adopt-flowguard-model-maturation\\specs\\flowpilot-prompt-boundary-policy\\spec.md"
+            ]
+          },
+          "json": {
+            "confidence": "",
+            "decision": "",
+            "ok": true,
+            "result": "simulations/flowpilot_prompt_boundary_results.json",
+            "result_type": ""
+          }
+        },
+        "model_id": "flowpilot_prompt_boundary",
+        "required": true,
+        "resolved": false,
+        "risk_id": "prompt_asset_drift_not_seen_by_code_scan",
+        "signal_id": "prompt_assets_are_contract_inputs",
+        "signal_type": "missing_code_boundary_observation",
+        "source_route": "flowpilot_prompt_boundary_policy",
+        "suggested_actions": [
+          "add_code_boundary_observation",
+          "add_model_obligation"
+        ]
+      },
+      "model_id": "flowpilot_prompt_boundary",
+      "risk_id": "prompt_asset_drift_not_seen_by_code_scan",
+      "runner": "flowpilot_model_maturation",
+      "section": "abstract",
+      "section_path": "current",
+      "severity": "blocker",
+      "signal_id": "prompt_assets_are_contract_inputs"
+    },
+    {
+      "action": "refresh_evidence",
+      "classification": "boundary_expected_or_informational",
+      "code": "model_maturation_signal_stale",
+      "message": "maturation signal is stale and cannot support a current model claim",
+      "metadata": {
+        "current": false,
+        "description": "Protocol contract conformance result must be current for the model and checker.",
+        "evidence_id": "simulations/protocol_contract_conformance_results.json",
+        "in_scope": true,
+        "metadata": {
+          "freshness": {
+            "max_source_mtime": 1781511335.5647907,
+            "missing_sources": [],
+            "result": "simulations/protocol_contract_conformance_results.json",
+            "result_missing": false,
+            "result_mtime": 1781289988.3609345,
+            "sources": [
+              "simulations\\flowpilot_protocol_contract_conformance_model.py",
+              "simulations\\run_protocol_contract_conformance_checks.py"
+            ]
+          },
+          "json": {
+            "confidence": "",
+            "decision": "",
+            "ok": true,
+            "result": "simulations/protocol_contract_conformance_results.json",
+            "result_type": ""
+          }
+        },
+        "model_id": "flowpilot_protocol_contract_conformance",
+        "required": true,
+        "resolved": false,
+        "risk_id": "protocol_contract_result_stale",
+        "signal_id": "protocol_contract_conformance_fresh",
+        "signal_type": "stale_evidence",
+        "source_route": "existing_model_preflight",
+        "suggested_actions": [
+          "refresh_evidence"
+        ]
+      },
+      "model_id": "flowpilot_protocol_contract_conformance",
+      "risk_id": "protocol_contract_result_stale",
+      "runner": "flowpilot_model_maturation",
+      "section": "abstract",
+      "section_path": "current",
+      "severity": "blocker",
+      "signal_id": "protocol_contract_conformance_fresh"
+    },
+    {
+      "action": "refresh_evidence",
+      "classification": "boundary_expected_or_informational",
+      "code": "model_upgrade_required",
+      "message": "unresolved in-scope maturation signal requires model upgrade action",
+      "metadata": {
+        "current": false,
+        "description": "Protocol contract conformance result must be current for the model and checker.",
+        "evidence_id": "simulations/protocol_contract_conformance_results.json",
+        "in_scope": true,
+        "metadata": {
+          "freshness": {
+            "max_source_mtime": 1781511335.5647907,
+            "missing_sources": [],
+            "result": "simulations/protocol_contract_conformance_results.json",
+            "result_missing": false,
+            "result_mtime": 1781289988.3609345,
+            "sources": [
+              "simulations\\flowpilot_protocol_contract_conformance_model.py",
+              "simulations\\run_protocol_contract_conformance_checks.py"
+            ]
+          },
+          "json": {
+            "confidence": "",
+            "decision": "",
+            "ok": true,
+            "result": "simulations/protocol_contract_conformance_results.json",
+            "result_type": ""
+          }
+        },
+        "model_id": "flowpilot_protocol_contract_conformance",
+        "required": true,
+        "resolved": false,
+        "risk_id": "protocol_contract_result_stale",
+        "signal_id": "protocol_contract_conformance_fresh",
+        "signal_type": "stale_evidence",
+        "source_route": "existing_model_preflight",
+        "suggested_actions": [
+          "refresh_evidence"
+        ]
+      },
+      "model_id": "flowpilot_protocol_contract_conformance",
+      "risk_id": "protocol_contract_result_stale",
+      "runner": "flowpilot_model_maturation",
+      "section": "abstract",
+      "section_path": "current",
+      "severity": "blocker",
+      "signal_id": "protocol_contract_conformance_fresh"
+    },
+    {
+      "action": "refresh_evidence",
+      "classification": "boundary_expected_or_informational",
+      "code": "model_maturation_signal_stale",
+      "message": "maturation signal is stale and cannot support a current model claim",
+      "metadata": {
+        "current": false,
         "description": "Singleton-vs-plural authority gaps must be model-visible before broad confidence.",
         "evidence_id": "simulations/flowpilot_singleton_identity_results.json",
         "in_scope": true,
         "metadata": {
           "freshness": {
-            "max_source_mtime": 1780663141.4496834,
+            "max_source_mtime": 1781511335.0745442,
             "missing_sources": [],
             "result": "simulations/flowpilot_singleton_identity_results.json",
             "result_missing": false,
@@ -1172,7 +1468,7 @@
         "in_scope": true,
         "metadata": {
           "freshness": {
-            "max_source_mtime": 1780663141.4496834,
+            "max_source_mtime": 1781511335.0745442,
             "missing_sources": [],
             "result": "simulations/flowpilot_singleton_identity_results.json",
             "result_missing": false,
@@ -1225,7 +1521,7 @@
         "in_scope": true,
         "metadata": {
           "freshness": {
-            "max_source_mtime": 1780663141.4496834,
+            "max_source_mtime": 1781511335.0745442,
             "missing_sources": [],
             "result": "simulations/flowpilot_singleton_identity_results.json",
             "result_missing": false,
@@ -1278,7 +1574,7 @@
         "in_scope": true,
         "metadata": {
           "freshness": {
-            "max_source_mtime": 1780663141.4496834,
+            "max_source_mtime": 1781511335.0745442,
             "missing_sources": [],
             "result": "simulations/flowpilot_singleton_identity_results.json",
             "result_missing": false,
@@ -1331,11 +1627,11 @@
         "in_scope": true,
         "metadata": {
           "freshness": {
-            "max_source_mtime": 1780667460.6449254,
+            "max_source_mtime": 1781511335.1230755,
             "missing_sources": [],
             "result": "simulations/flowpilot_startup_control_results.json",
             "result_missing": false,
-            "result_mtime": 1779900641.3928554,
+            "result_mtime": 1780790092.0489395,
             "sources": [
               "simulations\\flowpilot_startup_control_model.py",
               "simulations\\run_flowpilot_startup_control_checks.py"
@@ -1380,11 +1676,11 @@
         "in_scope": true,
         "metadata": {
           "freshness": {
-            "max_source_mtime": 1780667460.6449254,
+            "max_source_mtime": 1781511335.1230755,
             "missing_sources": [],
             "result": "simulations/flowpilot_startup_control_results.json",
             "result_missing": false,
-            "result_mtime": 1779900641.3928554,
+            "result_mtime": 1780790092.0489395,
             "sources": [
               "simulations\\flowpilot_startup_control_model.py",
               "simulations\\run_flowpilot_startup_control_checks.py"
@@ -1429,7 +1725,7 @@
         "in_scope": true,
         "metadata": {
           "freshness": {
-            "max_source_mtime": 1780218029.2678812,
+            "max_source_mtime": 1781511333.6581612,
             "missing_sources": [],
             "result": "simulations/flowpilot_dispatch_recipient_gate_results.json",
             "result_missing": false,
@@ -1478,7 +1774,7 @@
         "in_scope": true,
         "metadata": {
           "freshness": {
-            "max_source_mtime": 1780218029.2678812,
+            "max_source_mtime": 1781511333.6581612,
             "missing_sources": [],
             "result": "simulations/flowpilot_dispatch_recipient_gate_results.json",
             "result_missing": false,
@@ -1514,41 +1810,6 @@
       "section_path": "current",
       "severity": "blocker",
       "signal_id": "dispatch_recipient_gate_evidence_fresh"
-    },
-    {
-      "classification": "modeled_current_live_hit_fix_runtime_or_current_state",
-      "current_run_can_continue": false,
-      "decision": "model_coverage_insufficient",
-      "id": "flowpilot_model_mesh.no_current_run_id",
-      "message": "Current FlowPilot run is not permitted to continue: no_current_run_id",
-      "reason": "no_current_run_id",
-      "run_id": null,
-      "runner": "flowpilot_model_mesh",
-      "section": "live",
-      "section_path": "live_run_projection",
-      "severity": "blocking"
-    },
-    {
-      "classification": "boundary_expected_or_informational",
-      "code": "needs_structure_split",
-      "dedupe_key": "flowpilot_router_work_packets_parallel|defer_structure_split|needs_structure_split",
-      "kind": "public_facade",
-      "maturation_actions": [
-        "split_child_model"
-      ],
-      "maturation_signal_type": "duplicate_primary_edge_path",
-      "message": "flowpilot_router_work_packets_parallel has 324 lines, above the 320 line diagnostic threshold",
-      "name": "flowpilot_router_work_packets_parallel",
-      "path": "skills/flowpilot/assets/flowpilot_router_work_packets_parallel.py",
-      "priority_score": 29,
-      "release_relevance": "runtime_contract",
-      "repair_type": "defer_structure_split",
-      "runner": "flowpilot_model_test_alignment",
-      "section": "abstract",
-      "section_path": "full_model_test_code_diagnostic",
-      "severity": "medium",
-      "surface_id": "asset:flowpilot_router_work_packets_parallel",
-      "surface_owner": "flowpilot_router_work_packets_parallel"
     },
     {
       "classification": "boundary_expected_or_informational",
@@ -1985,9 +2246,12 @@
             "allowed_side_effects": [],
             "allowed_state_writes": [],
             "boundary_id": "",
+            "business_intent": "",
+            "business_path_id": "",
             "child_model_id": "",
             "code_contract_id": "",
             "exact": true,
+            "expected_terminal": "",
             "input_case": "",
             "leaf_model_id": "",
             "metadata": {},
@@ -2622,6 +2886,27 @@
       "severity": "blocker"
     },
     {
+      "classification": "boundary_expected_or_informational",
+      "completed_node_count": 0,
+      "id": "route_nodes_never_activated",
+      "review_pass_count": 0,
+      "route_node_count": 0,
+      "runner": "flowpilot_process_liveness",
+      "section": "abstract",
+      "section_path": "current_run_projection",
+      "severity": "info",
+      "summary": "no route nodes were activated, so per-node execution and reviewer coverage cannot be claimed"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "id": "normal_completion_not_claimed",
+      "runner": "flowpilot_process_liveness",
+      "section": "abstract",
+      "section_path": "current_run_projection",
+      "severity": "info",
+      "summary": "normal route-wide completion was not claimed for the current run"
+    },
+    {
       "candidate_id": "packet_result_family_shared_kernel_candidate",
       "classification": "boundary_expected_or_informational",
       "code": "risky_candidate_kept",
@@ -2752,10 +3037,10 @@
       "step_index": 1
     }
   ],
-  "ok": false,
+  "ok": true,
   "read_only": true,
-  "read_only_execution_count": 32,
-  "runner_count": 140,
+  "read_only_execution_count": 31,
+  "runner_count": 150,
   "runners": [
     {
       "coverage_tier": "abstract_strong_live_mapping_weaker",
@@ -2955,6 +3240,96 @@
     },
     {
       "coverage_tier": "supporting_model_owned",
+      "finding_count": 1,
+      "findings": [
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "release_suite_deferred",
+          "item_id": "",
+          "message": "release-only suite acceptance_router_release_tiers is deferred for routine confidence",
+          "metadata": {
+            "background": false,
+            "command": "python scripts/run_test_tier.py --tier router-packets/router-route/router-terminal/integration/release/final-confidence",
+            "duration_seconds": null,
+            "evidence_current": false,
+            "evidence_tier": "candidate_only",
+            "exit_code": null,
+            "has_exit_artifact": true,
+            "has_result_artifact": true,
+            "layer": "child",
+            "log_root": "",
+            "not_run_reason": "full release tier evidence is visible but not required for routine confidence",
+            "owned_leaf_cell_ids": [
+              "formal_exit_terminal_return_missing",
+              "formal_exit_startup_intake_blocks"
+            ],
+            "owns_side_effects": [],
+            "owns_state": [],
+            "progress_only": false,
+            "proof_artifact": null,
+            "release_required": true,
+            "result_path": "tmp/test_background acceptance tier artifacts",
+            "result_reused": false,
+            "result_status": "not_run",
+            "reuse_ticket": null,
+            "selected_count": 0,
+            "skipped_count": 0,
+            "skipped_visible": true,
+            "stale_reasons": [],
+            "suite_id": "acceptance_router_release_tiers",
+            "test_count": 0,
+            "timeout_seconds": null
+          },
+          "runner": "flowpilot_acceptance_testmesh",
+          "section": "abstract",
+          "section_path": "report",
+          "severity": "warning",
+          "suite_id": "acceptance_router_release_tiers"
+        }
+      ],
+      "metadata": {
+        "exit_code": null,
+        "mode": "read_existing_result",
+        "parse_error": null,
+        "reason": "runner writes result files by default",
+        "result_path": "simulations/flowpilot_acceptance_testmesh_results.json"
+      },
+      "ok": true,
+      "parsed": true,
+      "read_only_mode": "read_existing_result",
+      "runner": "flowpilot_acceptance_testmesh",
+      "script": "simulations/run_flowpilot_acceptance_testmesh_checks.py",
+      "sections": {
+        "abstract": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "hazards": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "live": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "progress": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "source": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        }
+      },
+      "skipped_checks": {}
+    },
+    {
+      "coverage_tier": "supporting_model_owned",
       "finding_count": 0,
       "findings": [],
       "metadata": {
@@ -3089,6 +3464,51 @@
           ],
           "ok": true,
           "present": true
+        },
+        "source": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        }
+      },
+      "skipped_checks": {}
+    },
+    {
+      "coverage_tier": "coverage_strong",
+      "finding_count": 0,
+      "findings": [],
+      "metadata": {
+        "exit_code": null,
+        "mode": "read_existing_result",
+        "parse_error": null,
+        "reason": "runner writes result files by default",
+        "result_path": "simulations/flowpilot_cartesian_control_plane_exhaustion_results.json"
+      },
+      "ok": true,
+      "parsed": true,
+      "read_only_mode": "read_existing_result",
+      "runner": "flowpilot_cartesian_control_plane_exhaustion",
+      "script": "simulations/run_flowpilot_cartesian_control_plane_exhaustion_checks.py",
+      "sections": {
+        "abstract": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "hazards": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "live": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "progress": {
+          "keys": [],
+          "ok": null,
+          "present": false
         },
         "source": {
           "keys": [],
@@ -4369,6 +4789,51 @@
       "finding_count": 0,
       "findings": [],
       "metadata": {
+        "exit_code": null,
+        "mode": "read_existing_result",
+        "parse_error": null,
+        "reason": "runner writes result files by default",
+        "result_path": "simulations/flowpilot_contract_exhaustion_mesh_results.json"
+      },
+      "ok": true,
+      "parsed": true,
+      "read_only_mode": "read_existing_result",
+      "runner": "flowpilot_contract_exhaustion_mesh",
+      "script": "simulations/run_flowpilot_contract_exhaustion_mesh_checks.py",
+      "sections": {
+        "abstract": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "hazards": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "live": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "progress": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "source": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        }
+      },
+      "skipped_checks": {}
+    },
+    {
+      "coverage_tier": "coverage_strong",
+      "finding_count": 0,
+      "findings": [],
+      "metadata": {
         "command": [
           "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
           "simulations\\run_flowpilot_control_plane_friction_checks.py"
@@ -4422,7 +4887,6 @@
       },
       "skipped_checks": {
         "default_results_file": "skipped_with_reason: no --json-out path was provided",
-        "live_run_audit": "skipped_with_reason: .flowpilot/current.json is missing; no current live-run audit can be claimed",
         "production_mutation": "skipped_with_reason: this model check is read-only and does not repair FlowPilot runtime artifacts"
       }
     },
@@ -4919,7 +5383,7 @@
           "packet_status": "accepted",
           "runner": "flowpilot_core_runtime",
           "section": "abstract",
-          "section_path": "scenarios.10.details.accepted_packet_lease_health",
+          "section_path": "scenarios.11.details.accepted_packet_lease_health",
           "stale_assigned_lease": false
         },
         {
@@ -4937,7 +5401,7 @@
           "packet_status": "accepted",
           "runner": "flowpilot_core_runtime",
           "section": "abstract",
-          "section_path": "scenarios.10.details.preflight.accepted_packet_lease_health",
+          "section_path": "scenarios.11.details.preflight.accepted_packet_lease_health",
           "stale_assigned_lease": false
         }
       ],
@@ -5084,9 +5548,53 @@
       },
       "skipped_checks": {
         "default_results_file": "skipped_with_reason: no --json-out path was provided",
-        "live_run_audit": "skipped_with_reason: no current FlowPilot run root is selected; live-run evidence is unavailable",
         "production_mutation": "skipped_with_reason: user requested model upgrade, scan, and minimal repair strategy before production code edits"
       }
+    },
+    {
+      "coverage_tier": "coverage_strong",
+      "finding_count": 0,
+      "findings": [],
+      "metadata": {
+        "exit_code": null,
+        "mode": "read_existing_result",
+        "parse_error": null,
+        "reason": "runner writes result files by default",
+        "result_path": "simulations/flowpilot_current_contract_cartesian_matrix_results.json"
+      },
+      "ok": true,
+      "parsed": true,
+      "read_only_mode": "read_existing_result",
+      "runner": "flowpilot_current_contract_cartesian_matrix",
+      "script": "simulations/run_flowpilot_current_contract_cartesian_matrix_checks.py",
+      "sections": {
+        "abstract": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "hazards": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "live": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "progress": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "source": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        }
+      },
+      "skipped_checks": {}
     },
     {
       "coverage_tier": "supporting_model_owned",
@@ -5352,7 +5860,7 @@
         }
       },
       "skipped_checks": {
-        "live_run_projection": "skipped_with_reason: no .flowpilot/current.json found"
+        "live_run_projection": "skipped_with_reason: current run does not have runtime scheduler/action ledgers"
       }
     },
     {
@@ -5990,6 +6498,51 @@
       "skipped_checks": {}
     },
     {
+      "coverage_tier": "coverage_strong",
+      "finding_count": 0,
+      "findings": [],
+      "metadata": {
+        "exit_code": null,
+        "mode": "read_existing_result",
+        "parse_error": null,
+        "reason": "runner writes result files by default",
+        "result_path": "simulations/flowpilot_executable_matrix_coverage_results.json"
+      },
+      "ok": true,
+      "parsed": true,
+      "read_only_mode": "read_existing_result",
+      "runner": "flowpilot_executable_matrix_coverage",
+      "script": "simulations/run_flowpilot_executable_matrix_coverage_checks.py",
+      "sections": {
+        "abstract": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "hazards": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "live": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "progress": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "source": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        }
+      },
+      "skipped_checks": {}
+    },
+    {
       "coverage_tier": "supporting_model_owned",
       "finding_count": 0,
       "findings": [],
@@ -6035,20 +6588,120 @@
       "skipped_checks": {}
     },
     {
+      "coverage_tier": "supporting_model_owned",
+      "finding_count": 0,
+      "findings": [],
+      "metadata": {
+        "exit_code": null,
+        "mode": "read_existing_result",
+        "parse_error": null,
+        "reason": "runner writes result files by default",
+        "result_path": "simulations/flowpilot_field_contract_results.json"
+      },
+      "ok": true,
+      "parsed": true,
+      "read_only_mode": "read_existing_result",
+      "runner": "flowpilot_field_contract",
+      "script": "simulations/run_flowpilot_field_contract_checks.py",
+      "sections": {
+        "abstract": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "hazards": {
+          "keys": [
+            "hazard_checks"
+          ],
+          "ok": true,
+          "present": true
+        },
+        "live": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "progress": {
+          "keys": [
+            "progress"
+          ],
+          "ok": true,
+          "present": true
+        },
+        "source": {
+          "keys": [
+            "source_alignment"
+          ],
+          "ok": true,
+          "present": true
+        }
+      },
+      "skipped_checks": {}
+    },
+    {
+      "coverage_tier": "supporting_model_owned",
+      "finding_count": 0,
+      "findings": [],
+      "metadata": {
+        "exit_code": null,
+        "mode": "read_existing_result",
+        "parse_error": null,
+        "reason": "runner writes result files by default",
+        "result_path": "simulations/flowpilot_field_mesh_results.json"
+      },
+      "ok": true,
+      "parsed": true,
+      "read_only_mode": "read_existing_result",
+      "runner": "flowpilot_field_mesh",
+      "script": "simulations/run_flowpilot_field_mesh_checks.py",
+      "sections": {
+        "abstract": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "hazards": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "live": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "progress": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "source": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        }
+      },
+      "skipped_checks": {}
+    },
+    {
       "coverage_tier": "coverage_strong",
       "finding_count": 0,
       "findings": [],
       "metadata": {
         "command": [
           "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
-          "simulations\\run_flowpilot_final_confidence_gate_checks.py"
+          "simulations\\run_flowpilot_final_confidence_gate_checks.py",
+          "--run-checks",
+          "--repository-confidence-only",
+          "--json-out",
+          "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\simulations\\flowpilot_final_confidence_gate_results.json"
         ],
-        "exit_code": 1,
+        "exit_code": 0,
         "mode": "executed_read_only",
         "parse_error": null,
         "stderr_tail": ""
       },
-      "ok": false,
+      "ok": true,
       "parsed": true,
       "read_only_mode": "executed_read_only",
       "runner": "flowpilot_final_confidence_gate",
@@ -6601,7 +7254,7 @@
     },
     {
       "coverage_tier": "supporting_model_owned",
-      "finding_count": 11,
+      "finding_count": 16,
       "findings": [
         {
           "action": "refresh_evidence",
@@ -6615,11 +7268,11 @@
             "in_scope": true,
             "metadata": {
               "freshness": {
-                "max_source_mtime": 1780214647.1861956,
+                "max_source_mtime": 1781511334.969014,
                 "missing_sources": [],
                 "result": "simulations/flowpilot_route_mutation_activation_results.json",
                 "result_missing": false,
-                "result_mtime": 1779900565.8423657,
+                "result_mtime": 1781245777.4640543,
                 "sources": [
                   "simulations\\flowpilot_route_mutation_activation_model.py",
                   "simulations\\run_flowpilot_route_mutation_activation_checks.py",
@@ -6666,11 +7319,11 @@
             "in_scope": true,
             "metadata": {
               "freshness": {
-                "max_source_mtime": 1780214647.1861956,
+                "max_source_mtime": 1781511334.969014,
                 "missing_sources": [],
                 "result": "simulations/flowpilot_route_mutation_activation_results.json",
                 "result_missing": false,
-                "result_mtime": 1779900565.8423657,
+                "result_mtime": 1781245777.4640543,
                 "sources": [
                   "simulations\\flowpilot_route_mutation_activation_model.py",
                   "simulations\\run_flowpilot_route_mutation_activation_checks.py",
@@ -6717,11 +7370,11 @@
             "in_scope": true,
             "metadata": {
               "freshness": {
-                "max_source_mtime": 1780214647.1861956,
+                "max_source_mtime": 1781511334.969014,
                 "missing_sources": [],
                 "result": "simulations/flowpilot_route_mutation_activation_results.json",
                 "result_missing": false,
-                "result_mtime": 1779900565.8423657,
+                "result_mtime": 1781245777.4640543,
                 "sources": [
                   "simulations\\flowpilot_route_mutation_activation_model.py",
                   "simulations\\run_flowpilot_route_mutation_activation_checks.py",
@@ -6763,12 +7416,266 @@
           "message": "maturation signal is stale and cannot support a current model claim",
           "metadata": {
             "current": false,
+            "description": "Prompt assets and manifests must be model-visible contract inputs.",
+            "evidence_id": "simulations/flowpilot_prompt_boundary_results.json",
+            "in_scope": true,
+            "metadata": {
+              "freshness": {
+                "max_source_mtime": 1781638239.935354,
+                "missing_sources": [],
+                "result": "simulations/flowpilot_prompt_boundary_results.json",
+                "result_missing": false,
+                "result_mtime": 1781605351.2739556,
+                "sources": [
+                  "simulations\\flowpilot_prompt_boundary_model.py",
+                  "simulations\\run_flowpilot_prompt_boundary_checks.py",
+                  "skills\\flowpilot\\assets\\runtime_kit\\prompts\\manifest.json",
+                  "openspec\\changes\\adopt-flowguard-model-maturation\\specs\\flowpilot-prompt-boundary-policy\\spec.md"
+                ]
+              },
+              "json": {
+                "confidence": "",
+                "decision": "",
+                "ok": true,
+                "result": "simulations/flowpilot_prompt_boundary_results.json",
+                "result_type": ""
+              }
+            },
+            "model_id": "flowpilot_prompt_boundary",
+            "required": true,
+            "resolved": false,
+            "risk_id": "prompt_asset_drift_not_seen_by_code_scan",
+            "signal_id": "prompt_assets_are_contract_inputs",
+            "signal_type": "missing_code_boundary_observation",
+            "source_route": "flowpilot_prompt_boundary_policy",
+            "suggested_actions": [
+              "add_code_boundary_observation",
+              "add_model_obligation"
+            ]
+          },
+          "model_id": "flowpilot_prompt_boundary",
+          "risk_id": "prompt_asset_drift_not_seen_by_code_scan",
+          "runner": "flowpilot_model_maturation",
+          "section": "abstract",
+          "section_path": "current",
+          "severity": "blocker",
+          "signal_id": "prompt_assets_are_contract_inputs"
+        },
+        {
+          "action": "add_code_boundary_observation",
+          "classification": "boundary_expected_or_informational",
+          "code": "model_upgrade_required",
+          "message": "unresolved in-scope maturation signal requires model upgrade action",
+          "metadata": {
+            "current": false,
+            "description": "Prompt assets and manifests must be model-visible contract inputs.",
+            "evidence_id": "simulations/flowpilot_prompt_boundary_results.json",
+            "in_scope": true,
+            "metadata": {
+              "freshness": {
+                "max_source_mtime": 1781638239.935354,
+                "missing_sources": [],
+                "result": "simulations/flowpilot_prompt_boundary_results.json",
+                "result_missing": false,
+                "result_mtime": 1781605351.2739556,
+                "sources": [
+                  "simulations\\flowpilot_prompt_boundary_model.py",
+                  "simulations\\run_flowpilot_prompt_boundary_checks.py",
+                  "skills\\flowpilot\\assets\\runtime_kit\\prompts\\manifest.json",
+                  "openspec\\changes\\adopt-flowguard-model-maturation\\specs\\flowpilot-prompt-boundary-policy\\spec.md"
+                ]
+              },
+              "json": {
+                "confidence": "",
+                "decision": "",
+                "ok": true,
+                "result": "simulations/flowpilot_prompt_boundary_results.json",
+                "result_type": ""
+              }
+            },
+            "model_id": "flowpilot_prompt_boundary",
+            "required": true,
+            "resolved": false,
+            "risk_id": "prompt_asset_drift_not_seen_by_code_scan",
+            "signal_id": "prompt_assets_are_contract_inputs",
+            "signal_type": "missing_code_boundary_observation",
+            "source_route": "flowpilot_prompt_boundary_policy",
+            "suggested_actions": [
+              "add_code_boundary_observation",
+              "add_model_obligation"
+            ]
+          },
+          "model_id": "flowpilot_prompt_boundary",
+          "risk_id": "prompt_asset_drift_not_seen_by_code_scan",
+          "runner": "flowpilot_model_maturation",
+          "section": "abstract",
+          "section_path": "current",
+          "severity": "blocker",
+          "signal_id": "prompt_assets_are_contract_inputs"
+        },
+        {
+          "action": "add_model_obligation",
+          "classification": "boundary_expected_or_informational",
+          "code": "model_upgrade_required",
+          "message": "unresolved in-scope maturation signal requires model upgrade action",
+          "metadata": {
+            "current": false,
+            "description": "Prompt assets and manifests must be model-visible contract inputs.",
+            "evidence_id": "simulations/flowpilot_prompt_boundary_results.json",
+            "in_scope": true,
+            "metadata": {
+              "freshness": {
+                "max_source_mtime": 1781638239.935354,
+                "missing_sources": [],
+                "result": "simulations/flowpilot_prompt_boundary_results.json",
+                "result_missing": false,
+                "result_mtime": 1781605351.2739556,
+                "sources": [
+                  "simulations\\flowpilot_prompt_boundary_model.py",
+                  "simulations\\run_flowpilot_prompt_boundary_checks.py",
+                  "skills\\flowpilot\\assets\\runtime_kit\\prompts\\manifest.json",
+                  "openspec\\changes\\adopt-flowguard-model-maturation\\specs\\flowpilot-prompt-boundary-policy\\spec.md"
+                ]
+              },
+              "json": {
+                "confidence": "",
+                "decision": "",
+                "ok": true,
+                "result": "simulations/flowpilot_prompt_boundary_results.json",
+                "result_type": ""
+              }
+            },
+            "model_id": "flowpilot_prompt_boundary",
+            "required": true,
+            "resolved": false,
+            "risk_id": "prompt_asset_drift_not_seen_by_code_scan",
+            "signal_id": "prompt_assets_are_contract_inputs",
+            "signal_type": "missing_code_boundary_observation",
+            "source_route": "flowpilot_prompt_boundary_policy",
+            "suggested_actions": [
+              "add_code_boundary_observation",
+              "add_model_obligation"
+            ]
+          },
+          "model_id": "flowpilot_prompt_boundary",
+          "risk_id": "prompt_asset_drift_not_seen_by_code_scan",
+          "runner": "flowpilot_model_maturation",
+          "section": "abstract",
+          "section_path": "current",
+          "severity": "blocker",
+          "signal_id": "prompt_assets_are_contract_inputs"
+        },
+        {
+          "action": "refresh_evidence",
+          "classification": "boundary_expected_or_informational",
+          "code": "model_maturation_signal_stale",
+          "message": "maturation signal is stale and cannot support a current model claim",
+          "metadata": {
+            "current": false,
+            "description": "Protocol contract conformance result must be current for the model and checker.",
+            "evidence_id": "simulations/protocol_contract_conformance_results.json",
+            "in_scope": true,
+            "metadata": {
+              "freshness": {
+                "max_source_mtime": 1781511335.5647907,
+                "missing_sources": [],
+                "result": "simulations/protocol_contract_conformance_results.json",
+                "result_missing": false,
+                "result_mtime": 1781289988.3609345,
+                "sources": [
+                  "simulations\\flowpilot_protocol_contract_conformance_model.py",
+                  "simulations\\run_protocol_contract_conformance_checks.py"
+                ]
+              },
+              "json": {
+                "confidence": "",
+                "decision": "",
+                "ok": true,
+                "result": "simulations/protocol_contract_conformance_results.json",
+                "result_type": ""
+              }
+            },
+            "model_id": "flowpilot_protocol_contract_conformance",
+            "required": true,
+            "resolved": false,
+            "risk_id": "protocol_contract_result_stale",
+            "signal_id": "protocol_contract_conformance_fresh",
+            "signal_type": "stale_evidence",
+            "source_route": "existing_model_preflight",
+            "suggested_actions": [
+              "refresh_evidence"
+            ]
+          },
+          "model_id": "flowpilot_protocol_contract_conformance",
+          "risk_id": "protocol_contract_result_stale",
+          "runner": "flowpilot_model_maturation",
+          "section": "abstract",
+          "section_path": "current",
+          "severity": "blocker",
+          "signal_id": "protocol_contract_conformance_fresh"
+        },
+        {
+          "action": "refresh_evidence",
+          "classification": "boundary_expected_or_informational",
+          "code": "model_upgrade_required",
+          "message": "unresolved in-scope maturation signal requires model upgrade action",
+          "metadata": {
+            "current": false,
+            "description": "Protocol contract conformance result must be current for the model and checker.",
+            "evidence_id": "simulations/protocol_contract_conformance_results.json",
+            "in_scope": true,
+            "metadata": {
+              "freshness": {
+                "max_source_mtime": 1781511335.5647907,
+                "missing_sources": [],
+                "result": "simulations/protocol_contract_conformance_results.json",
+                "result_missing": false,
+                "result_mtime": 1781289988.3609345,
+                "sources": [
+                  "simulations\\flowpilot_protocol_contract_conformance_model.py",
+                  "simulations\\run_protocol_contract_conformance_checks.py"
+                ]
+              },
+              "json": {
+                "confidence": "",
+                "decision": "",
+                "ok": true,
+                "result": "simulations/protocol_contract_conformance_results.json",
+                "result_type": ""
+              }
+            },
+            "model_id": "flowpilot_protocol_contract_conformance",
+            "required": true,
+            "resolved": false,
+            "risk_id": "protocol_contract_result_stale",
+            "signal_id": "protocol_contract_conformance_fresh",
+            "signal_type": "stale_evidence",
+            "source_route": "existing_model_preflight",
+            "suggested_actions": [
+              "refresh_evidence"
+            ]
+          },
+          "model_id": "flowpilot_protocol_contract_conformance",
+          "risk_id": "protocol_contract_result_stale",
+          "runner": "flowpilot_model_maturation",
+          "section": "abstract",
+          "section_path": "current",
+          "severity": "blocker",
+          "signal_id": "protocol_contract_conformance_fresh"
+        },
+        {
+          "action": "refresh_evidence",
+          "classification": "boundary_expected_or_informational",
+          "code": "model_maturation_signal_stale",
+          "message": "maturation signal is stale and cannot support a current model claim",
+          "metadata": {
+            "current": false,
             "description": "Singleton-vs-plural authority gaps must be model-visible before broad confidence.",
             "evidence_id": "simulations/flowpilot_singleton_identity_results.json",
             "in_scope": true,
             "metadata": {
               "freshness": {
-                "max_source_mtime": 1780663141.4496834,
+                "max_source_mtime": 1781511335.0745442,
                 "missing_sources": [],
                 "result": "simulations/flowpilot_singleton_identity_results.json",
                 "result_missing": false,
@@ -6821,7 +7728,7 @@
             "in_scope": true,
             "metadata": {
               "freshness": {
-                "max_source_mtime": 1780663141.4496834,
+                "max_source_mtime": 1781511335.0745442,
                 "missing_sources": [],
                 "result": "simulations/flowpilot_singleton_identity_results.json",
                 "result_missing": false,
@@ -6874,7 +7781,7 @@
             "in_scope": true,
             "metadata": {
               "freshness": {
-                "max_source_mtime": 1780663141.4496834,
+                "max_source_mtime": 1781511335.0745442,
                 "missing_sources": [],
                 "result": "simulations/flowpilot_singleton_identity_results.json",
                 "result_missing": false,
@@ -6927,7 +7834,7 @@
             "in_scope": true,
             "metadata": {
               "freshness": {
-                "max_source_mtime": 1780663141.4496834,
+                "max_source_mtime": 1781511335.0745442,
                 "missing_sources": [],
                 "result": "simulations/flowpilot_singleton_identity_results.json",
                 "result_missing": false,
@@ -6980,11 +7887,11 @@
             "in_scope": true,
             "metadata": {
               "freshness": {
-                "max_source_mtime": 1780667460.6449254,
+                "max_source_mtime": 1781511335.1230755,
                 "missing_sources": [],
                 "result": "simulations/flowpilot_startup_control_results.json",
                 "result_missing": false,
-                "result_mtime": 1779900641.3928554,
+                "result_mtime": 1780790092.0489395,
                 "sources": [
                   "simulations\\flowpilot_startup_control_model.py",
                   "simulations\\run_flowpilot_startup_control_checks.py"
@@ -7029,11 +7936,11 @@
             "in_scope": true,
             "metadata": {
               "freshness": {
-                "max_source_mtime": 1780667460.6449254,
+                "max_source_mtime": 1781511335.1230755,
                 "missing_sources": [],
                 "result": "simulations/flowpilot_startup_control_results.json",
                 "result_missing": false,
-                "result_mtime": 1779900641.3928554,
+                "result_mtime": 1780790092.0489395,
                 "sources": [
                   "simulations\\flowpilot_startup_control_model.py",
                   "simulations\\run_flowpilot_startup_control_checks.py"
@@ -7078,7 +7985,7 @@
             "in_scope": true,
             "metadata": {
               "freshness": {
-                "max_source_mtime": 1780218029.2678812,
+                "max_source_mtime": 1781511333.6581612,
                 "missing_sources": [],
                 "result": "simulations/flowpilot_dispatch_recipient_gate_results.json",
                 "result_missing": false,
@@ -7127,7 +8034,7 @@
             "in_scope": true,
             "metadata": {
               "freshness": {
-                "max_source_mtime": 1780218029.2678812,
+                "max_source_mtime": 1781511333.6581612,
                 "missing_sources": [],
                 "result": "simulations/flowpilot_dispatch_recipient_gate_results.json",
                 "result_missing": false,
@@ -7211,22 +8118,8 @@
     },
     {
       "coverage_tier": "coverage_strong",
-      "finding_count": 1,
-      "findings": [
-        {
-          "classification": "modeled_current_live_hit_fix_runtime_or_current_state",
-          "current_run_can_continue": false,
-          "decision": "model_coverage_insufficient",
-          "id": "flowpilot_model_mesh.no_current_run_id",
-          "message": "Current FlowPilot run is not permitted to continue: no_current_run_id",
-          "reason": "no_current_run_id",
-          "run_id": null,
-          "runner": "flowpilot_model_mesh",
-          "section": "live",
-          "section_path": "live_run_projection",
-          "severity": "blocking"
-        }
-      ],
+      "finding_count": 0,
+      "findings": [],
       "metadata": {
         "command": [
           "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
@@ -7235,7 +8128,7 @@
         "exit_code": 0,
         "mode": "executed_read_only",
         "parse_error": null,
-        "stderr_tail": "[flowguard] start phase=explore work_total=2 progress_steps=10\n[flowguard] progress 50% work=1/2 traces=26 violations=0\n[flowguard] progress 100% work=2/2 traces=78 violations=0\n"
+        "stderr_tail": "[flowguard] start phase=explore work_total=2 progress_steps=10\n[flowguard] progress 50% work=1/2 traces=35 violations=0\n[flowguard] progress 100% work=2/2 traces=105 violations=0\n"
       },
       "ok": true,
       "parsed": true,
@@ -7280,30 +8173,8 @@
     },
     {
       "coverage_tier": "coverage_strong",
-      "finding_count": 35,
+      "finding_count": 34,
       "findings": [
-        {
-          "classification": "boundary_expected_or_informational",
-          "code": "needs_structure_split",
-          "dedupe_key": "flowpilot_router_work_packets_parallel|defer_structure_split|needs_structure_split",
-          "kind": "public_facade",
-          "maturation_actions": [
-            "split_child_model"
-          ],
-          "maturation_signal_type": "duplicate_primary_edge_path",
-          "message": "flowpilot_router_work_packets_parallel has 324 lines, above the 320 line diagnostic threshold",
-          "name": "flowpilot_router_work_packets_parallel",
-          "path": "skills/flowpilot/assets/flowpilot_router_work_packets_parallel.py",
-          "priority_score": 29,
-          "release_relevance": "runtime_contract",
-          "repair_type": "defer_structure_split",
-          "runner": "flowpilot_model_test_alignment",
-          "section": "abstract",
-          "section_path": "full_model_test_code_diagnostic",
-          "severity": "medium",
-          "surface_id": "asset:flowpilot_router_work_packets_parallel",
-          "surface_owner": "flowpilot_router_work_packets_parallel"
-        },
         {
           "classification": "boundary_expected_or_informational",
           "code": "missing_test_evidence",
@@ -7739,9 +8610,12 @@
                 "allowed_side_effects": [],
                 "allowed_state_writes": [],
                 "boundary_id": "",
+                "business_intent": "",
+                "business_path_id": "",
                 "child_model_id": "",
                 "code_contract_id": "",
                 "exact": true,
+                "expected_terminal": "",
                 "input_case": "",
                 "leaf_model_id": "",
                 "metadata": {},
@@ -9230,8 +10104,30 @@
     },
     {
       "coverage_tier": "supporting_model_owned",
-      "finding_count": 0,
-      "findings": [],
+      "finding_count": 2,
+      "findings": [
+        {
+          "classification": "boundary_expected_or_informational",
+          "completed_node_count": 0,
+          "id": "route_nodes_never_activated",
+          "review_pass_count": 0,
+          "route_node_count": 0,
+          "runner": "flowpilot_process_liveness",
+          "section": "abstract",
+          "section_path": "current_run_projection",
+          "severity": "info",
+          "summary": "no route nodes were activated, so per-node execution and reviewer coverage cannot be claimed"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "id": "normal_completion_not_claimed",
+          "runner": "flowpilot_process_liveness",
+          "section": "abstract",
+          "section_path": "current_run_projection",
+          "severity": "info",
+          "summary": "normal route-wide completion was not claimed for the current run"
+        }
+      ],
       "metadata": {
         "command": [
           "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
@@ -9239,26 +10135,31 @@
           "--json",
           "--no-write-results"
         ],
-        "exit_code": null,
+        "exit_code": 0,
         "mode": "executed_read_only",
-        "parse_error": "runner timed out after 60 seconds",
-        "stderr_tail": "[flowguard] start phase=explore work_total=90 progress_steps=10\n[flowguard] progress 10% work=9/90 traces=45 violations=0\n[flowguard] progress 20% work=18/90 traces=237 violations=0\n[flowguard] progress 30% work=27/90 traces=813 violations=0\n[flowguard] progress 40% work=36/90 traces=2102 violations=0\n[flowguard] progress 50% work=45/90 traces=4716 violations=0\n[flowguard] progress 60% work=54/90 traces=9604 violations=0\n[flowguard] progress 70% work=63/90 traces=17782 violations=0\n[flowguard] progress 80% work=72/90 traces=29518 violations=0\n[flowguard] progress 90% work=81/90 traces=44818 violations=0\n"
+        "parse_error": null,
+        "stderr_tail": "[flowguard] start phase=explore work_total=90 progress_steps=10\n[flowguard] progress 10% work=9/90 traces=45 violations=0\n[flowguard] progress 20% work=18/90 traces=237 violations=0\n[flowguard] progress 30% work=27/90 traces=813 violations=0\n[flowguard] progress 40% work=36/90 traces=2102 violations=0\n[flowguard] progress 50% work=45/90 traces=4716 violations=0\n[flowguard] progress 60% work=54/90 traces=9604 violations=0\n[flowguard] progress 70% work=63/90 traces=17782 violations=0\n[flowguard] progress 80% work=72/90 traces=29518 violations=0\n[flowguard] progress 90% work=81/90 traces=44818 violations=0\n[flowguard] progress 100% work=90/90 traces=63682 violations=0\n"
       },
-      "ok": false,
-      "parsed": false,
+      "ok": true,
+      "parsed": true,
       "read_only_mode": "executed_read_only",
       "runner": "flowpilot_process_liveness",
       "script": "simulations/run_flowpilot_process_liveness_checks.py",
       "sections": {
         "abstract": {
-          "keys": [],
-          "ok": null,
-          "present": false
+          "keys": [
+            "safe_graph",
+            "flowguard_explorer"
+          ],
+          "ok": true,
+          "present": true
         },
         "hazards": {
-          "keys": [],
-          "ok": null,
-          "present": false
+          "keys": [
+            "hazard_checks"
+          ],
+          "ok": true,
+          "present": true
         },
         "live": {
           "keys": [],
@@ -9266,9 +10167,12 @@
           "present": false
         },
         "progress": {
-          "keys": [],
-          "ok": null,
-          "present": false
+          "keys": [
+            "progress",
+            "loop"
+          ],
+          "ok": true,
+          "present": true
         },
         "source": {
           "keys": [],
@@ -9689,6 +10593,53 @@
           "keys": [],
           "ok": null,
           "present": false
+        },
+        "hazards": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "live": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "progress": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "source": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        }
+      },
+      "skipped_checks": {}
+    },
+    {
+      "coverage_tier": "coverage_strong",
+      "finding_count": 0,
+      "findings": [],
+      "metadata": {
+        "exit_code": null,
+        "mode": "read_existing_result",
+        "parse_error": null,
+        "reason": "runner writes result files by default",
+        "result_path": "simulations/flowpilot_rejection_liveness_matrix_results.json"
+      },
+      "ok": true,
+      "parsed": true,
+      "read_only_mode": "read_existing_result",
+      "runner": "flowpilot_rejection_liveness_matrix",
+      "script": "simulations/run_flowpilot_rejection_liveness_matrix_checks.py",
+      "sections": {
+        "abstract": {
+          "keys": [
+            "graph"
+          ],
+          "ok": true,
+          "present": true
         },
         "hazards": {
           "keys": [],
@@ -10183,6 +11134,55 @@
           "keys": [],
           "ok": null,
           "present": false
+        },
+        "source": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        }
+      },
+      "skipped_checks": {}
+    },
+    {
+      "coverage_tier": "coverage_strong",
+      "finding_count": 0,
+      "findings": [],
+      "metadata": {
+        "exit_code": null,
+        "mode": "read_existing_result",
+        "parse_error": null,
+        "reason": "runner writes result files by default",
+        "result_path": "simulations/flowpilot_route_authority_singularity_results.json"
+      },
+      "ok": true,
+      "parsed": true,
+      "read_only_mode": "read_existing_result",
+      "runner": "flowpilot_route_authority_singularity",
+      "script": "simulations/run_flowpilot_route_authority_singularity_checks.py",
+      "sections": {
+        "abstract": {
+          "keys": [
+            "safe_graph"
+          ],
+          "ok": true,
+          "present": true
+        },
+        "hazards": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "live": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "progress": {
+          "keys": [
+            "progress"
+          ],
+          "ok": true,
+          "present": true
         },
         "source": {
           "keys": [],
@@ -11102,18 +12102,15 @@
       "finding_count": 0,
       "findings": [],
       "metadata": {
-        "command": [
-          "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
-          "simulations\\run_flowpilot_startup_control_checks.py"
-        ],
-        "exit_code": 0,
-        "mode": "executed_read_only",
+        "exit_code": null,
+        "mode": "read_existing_result",
         "parse_error": null,
-        "stderr_tail": "[flowguard] start phase=explore work_total=24 progress_steps=10\n[flowguard] progress 10% work=3/24 traces=14 violations=0\n[flowguard] progress 20% work=5/24 traces=55 violations=0\n[flowguard] progress 30% work=8/24 traces=204 violations=0\n[flowguard] progress 40% work=10/24 traces=385 violations=0\n[flowguard] progress 50% work=12/24 traces=650 violations=0\n[flowguard] progress 60% work=15/24 traces=1326 violations=0\n[flowguard] progress 70% work=17/24 traces=2290 violations=0\n[flowguard] progress 80% work=20/24 traces=5830 violations=0\n[flowguard] progress 90% work=22/24 traces=11312 violations=0\n[flowguard] progress 100% work=24/24 traces=21920 violations=0\n"
+        "reason": "runner writes result files by default",
+        "result_path": "simulations/flowpilot_startup_control_results.json"
       },
       "ok": true,
       "parsed": true,
-      "read_only_mode": "executed_read_only",
+      "read_only_mode": "read_existing_result",
       "runner": "flowpilot_startup_control",
       "script": "simulations/run_flowpilot_startup_control_checks.py",
       "sections": {
@@ -11151,7 +12148,7 @@
         }
       },
       "skipped_checks": {
-        "conformance_replay": "skipped_with_reason: this abstract startup-control model has no production replay adapter in the allowed write set"
+        "conformance_replay": "skipped_with_reason: abstract startup-control model; production coverage comes from router startup runtime tests"
       }
     },
     {
@@ -11590,6 +12587,51 @@
           ],
           "ok": true,
           "present": true
+        },
+        "source": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        }
+      },
+      "skipped_checks": {}
+    },
+    {
+      "coverage_tier": "supporting_model_owned",
+      "finding_count": 0,
+      "findings": [],
+      "metadata": {
+        "exit_code": null,
+        "mode": "read_existing_result",
+        "parse_error": null,
+        "reason": "runner writes result files by default",
+        "result_path": "simulations/flowpilot_terminal_supplemental_repair_results.json"
+      },
+      "ok": true,
+      "parsed": true,
+      "read_only_mode": "read_existing_result",
+      "runner": "flowpilot_terminal_supplemental_repair",
+      "script": "simulations/run_flowpilot_terminal_supplemental_repair_checks.py",
+      "sections": {
+        "abstract": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "hazards": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "live": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "progress": {
+          "keys": [],
+          "ok": null,
+          "present": false
         },
         "source": {
           "keys": [],

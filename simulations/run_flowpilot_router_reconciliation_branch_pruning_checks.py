@@ -9,7 +9,7 @@ from dataclasses import asdict
 from pathlib import Path
 from typing import Any
 
-from flowguard import Explorer
+from flowguard.explorer import Explorer
 
 import flowpilot_router_reconciliation_branch_pruning_model as model
 

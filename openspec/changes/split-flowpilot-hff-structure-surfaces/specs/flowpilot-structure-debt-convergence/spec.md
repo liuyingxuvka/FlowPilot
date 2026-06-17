@@ -18,6 +18,15 @@ below their diagnostic thresholds and covered by current validation evidence.
 - **AND** `scripts/flowguard_project_topology.py` SHALL no longer appear as a
   `needs_structure_split` finding.
 
+#### Scenario: Final runtime-contract split findings are closed
+
+- **WHEN** the model-test alignment diagnostics are regenerated after the final
+  router child module split pass
+- **THEN** `skills/flowpilot/assets/flowpilot_router_route_artifacts_architecture_product.py`
+  SHALL no longer appear as a `needs_structure_split` finding
+- **AND** `skills/flowpilot/assets/flowpilot_router_work_packets_next_actions.py`
+  SHALL no longer appear as a `needs_structure_split` finding.
+
 #### Scenario: Public parents remain current-path entrypoints
 
 - **WHEN** each parent file is split

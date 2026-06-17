@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from flowguard import Explorer
+from flowguard.explorer import Explorer
 
 try:  # pragma: no cover
     from . import flowpilot_recursive_route_execution_model as model

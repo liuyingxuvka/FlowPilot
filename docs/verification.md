@@ -158,6 +158,30 @@ Run:
 python scripts/smoke_flowpilot.py
 ```
 
+For shorter runs or timeout diagnosis, list and run smoke groups:
+
+```powershell
+python scripts/smoke_flowpilot.py --list-groups
+python scripts/smoke_flowpilot.py --fast --group core
+python scripts/smoke_flowpilot.py --fast --group friction
+python scripts/smoke_flowpilot.py --fast --group daemon
+python scripts/smoke_flowpilot.py --fast --group parents
+python scripts/smoke_flowpilot.py --fast --group structure
+python scripts/smoke_flowpilot.py --fast --group topology
+```
+
+Group boundaries:
+
+- `core`: card instruction coverage, release tooling, startup PM review,
+  command refinement, reviewer challenge, and prompt isolation.
+- `friction`: control-plane and cross-plane friction checks.
+- `daemon`: persistent router daemon, daemon startup lock, controller actions,
+  wait liveness, terminal projection, and control transaction registry.
+- `parents`: model mesh, meta, capability, and hierarchy checks.
+- `structure`: structure maintenance, router facade split, similarity
+  convergence, and model-test alignment.
+- `topology`: project topology orientation, build, and check.
+
 Expected:
 
 - release tooling simulation passes;

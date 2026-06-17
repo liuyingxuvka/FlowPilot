@@ -28,6 +28,7 @@ import packet_runtime
 import role_output_runtime
 from flowpilot_prompt_store import PromptStoreError, card_manifest_entry, load_card_manifest_from_run
 from flowpilot_router_errors import RouterError, RouterLedgerCorruptionError, RouterLedgerWriteInProgress
+from flowpilot_router_work_packets_next_actions import _open_current_role_agent_for_packet_plan
 
 _DEFAULT_SENTINEL = object()
 _BOUND_ROUTER: ModuleType | None = None
@@ -226,6 +227,9 @@ def _next_current_node_packet_action(router: ModuleType, project_root: Path, run
             relay_allowed_reads.append(project_relative(project_root, grant_path))
             grant_extra = {'current_node_write_grant_path': project_relative(project_root, grant_path), 'current_node_write_grant_hash': hashlib.sha256(grant_path.read_bytes()).hexdigest()}
         active_holder_plan, active_holder_allowed_writes = router._current_node_active_holder_lease_plan(project_root, run_root, run_state, records, frontier)
+        role_binding_action = _open_current_role_agent_for_packet_plan(router, project_root, run_root, run_state, active_holder_plan, packet_family='current_node', next_action_type='relay_current_node_packet')
+        if role_binding_action:
+            return role_binding_action
         runtime_relay_operations = router._packet_runtime_relay_operations(project_root, run_state, records, packet_family='current_node', postcondition='current_node_packet_relayed', active_holder_plan=active_holder_plan)
         if not run_state.get('ledger_check_requested'):
             return make_action(action_type='relay_current_node_packet', actor='controller', label='current_node_packet_relayed_after_router_direct_preflight_with_ledger_check', summary='Check the packet ledger and relay every current-node batch packet without opening packet bodies.', allowed_reads=[project_relative(project_root, run_root / 'packet_ledger.json'), *relay_allowed_reads], allowed_writes=[project_relative(project_root, router.run_state_path(run_root)), project_relative(project_root, run_root / 'packet_ledger.json'), *active_holder_allowed_writes], to_role=','.join(sorted({str(record.get('to_role')) for record in records})), extra={'packet_ids': [record.get('packet_id') for record in records], 'postcondition': 'current_node_packet_relayed', 'controller_visibility': 'packet_envelope_only', 'sealed_body_reads_allowed': False, 'combined_ledger_check_and_relay': True, 'ledger_check_receipt_required': True, 'active_holder_fast_lane': active_holder_plan, 'runtime_relay_operations': runtime_relay_operations, **grant_extra})

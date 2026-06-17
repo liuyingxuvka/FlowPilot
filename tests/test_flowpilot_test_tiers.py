@@ -157,7 +157,7 @@ class FlowPilotTestTierTests(unittest.TestCase):
         self.assertTrue(integration_commands["flowguard_coverage_sweep"].background_recommended)
         self.assertEqual(
             list(integration_commands["flowguard_coverage_sweep"].command)[-2:],
-            ["--timeout-seconds", "60"],
+            ["--timeout-seconds", "300"],
         )
 
         release_commands = {
@@ -176,6 +176,14 @@ class FlowPilotTestTierTests(unittest.TestCase):
         self.assertIn(
             "run_flowpilot_final_confidence_gate_checks.py",
             " ".join(final_confidence_commands["flowpilot_final_confidence_gate"].command),
+        )
+        self.assertNotIn(
+            "--repository-confidence-only",
+            final_confidence_commands["flowpilot_final_confidence_gate"].command,
+        )
+        self.assertIn(
+            "terminal-return",
+            final_confidence_commands["flowpilot_final_confidence_gate"].description,
         )
 
     def test_background_artifact_classifier_distinguishes_final_evidence_states(self) -> None:
@@ -231,6 +239,8 @@ class FlowPilotTestTierTests(unittest.TestCase):
         text = self.command_text("fast")
         self.assertIn("run_flowpilot_slow_test_contract_checks.py", text)
         self.assertIn("run_flowpilot_model_test_alignment_checks.py", text)
+        self.assertIn("run_flowpilot_contract_exhaustion_mesh_checks.py", text)
+        self.assertIn("run_flowpilot_cartesian_control_plane_exhaustion_checks.py", text)
         self.assertIn("run_flowpilot_project_topology_orientation_checks.py", text)
         self.assertIn("scripts/flowguard_project_topology.py", text)
         self.assertIn("tests/test_flowguard_project_topology.py", text)
@@ -339,7 +349,7 @@ class FlowPilotTestTierTests(unittest.TestCase):
         self.assertIn("router_startup_bootstrap_core", command_names)
         self.assertIn("router_startup_bootstrap_reconciliation", command_names)
         self.assertIn("router_startup_bootstrap_intake", command_names)
-        self.assertIn("router_startup_bootstrap_review", command_names)
+        self.assertIn("router_startup_bootstrap_runtime_release", command_names)
         self.assertIn("router_startup_bootstrap_fact_manual_resume", command_names)
         self.assertIn("router_startup_daemon", command_names)
         self.assertIn("router_foreground", command_names)
@@ -355,18 +365,40 @@ class FlowPilotTestTierTests(unittest.TestCase):
         self.assertIn("router_packet_runtime", command_names)
         self.assertIn("router_packets_material", command_names)
         self.assertIn("router_packets_current_node_direct", command_names)
-        self.assertIn("router_packets_current_node_dispatch", command_names)
-        self.assertIn("router_packets_current_node_result_audit", command_names)
-        self.assertIn("router_packets_current_node_result_decision", command_names)
-        self.assertIn("router_packets_batch_and_grants", command_names)
+        self.assertIn("router_packets_current_node_dispatch_relay", command_names)
+        self.assertIn("router_packets_current_node_dispatch_worker_binding", command_names)
+        self.assertIn("router_packets_current_node_dispatch_unready_leaf", command_names)
+        self.assertIn("router_packets_result_audit_completion", command_names)
+        self.assertIn("router_packets_result_audit_reviewer_map", command_names)
+        self.assertIn("router_packets_result_audit_rejection", command_names)
+        self.assertIn("router_packets_result_decision_review_card", command_names)
+        self.assertIn("router_packets_result_decision_relay", command_names)
+        self.assertIn("router_packets_result_decision_pm_repair", command_names)
+        self.assertIn("router_packets_batch_existing_results", command_names)
+        self.assertIn("router_packets_batch_duplicate_worker", command_names)
+        self.assertIn("router_packets_batch_full_wait_missing_roles", command_names)
+        self.assertIn("router_packets_grant_result_requires_write", command_names)
+        self.assertIn("router_packets_grant_unresolved_node_entry", command_names)
         self.assertIn("router_packet_result_family", command_names)
         self.assertIn("router_cards", command_names)
         self.assertIn("router_ack_return", command_names)
         self.assertIn("router_boundaries", command_names)
-        self.assertIn("router_route_mutation_draft_activation", command_names)
-        self.assertIn("router_route_mutation_model_miss_triage", command_names)
-        self.assertIn("router_route_mutation_acceptance_repair", command_names)
-        self.assertIn("router_route_mutation_preconditions", command_names)
+        self.assertIn("router_route_mutation_draft_policy", command_names)
+        self.assertIn("router_route_mutation_draft_activation_reviewed", command_names)
+        self.assertIn("router_route_mutation_draft_missing_active_node", command_names)
+        self.assertIn("router_route_mutation_model_miss_refs", command_names)
+        self.assertIn("router_route_mutation_model_miss_unlocks", command_names)
+        self.assertIn("router_route_mutation_model_miss_non_authorizing", command_names)
+        self.assertIn("router_route_mutation_model_miss_out_of_scope", command_names)
+        self.assertIn("router_route_mutation_model_miss_role_work", command_names)
+        self.assertIn("router_route_mutation_model_miss_closed_triage", command_names)
+        self.assertIn("router_route_mutation_model_miss_delivery", command_names)
+        self.assertIn("router_route_mutation_model_miss_stale_wait", command_names)
+        self.assertIn("router_route_mutation_acceptance_revise", command_names)
+        self.assertIn("router_route_mutation_acceptance_model_miss", command_names)
+        self.assertIn("router_route_mutation_preconditions_final_ledger", command_names)
+        self.assertIn("router_route_mutation_preconditions_topology_reset", command_names)
+        self.assertIn("router_route_mutation_preconditions_root_gap", command_names)
         self.assertIn("router_route_mutation_transactions", command_names)
         self.assertIn("router_route_mutation_topology", command_names)
         self.assertIn("router_route_mutation_sibling_replacement", command_names)
@@ -392,14 +424,23 @@ class FlowPilotTestTierTests(unittest.TestCase):
         self.assertIn("router_pm_role_work_waits", command_names)
         self.assertIn("router_quality_gates_background_manifest", command_names)
         self.assertIn("router_quality_gates_decisions", command_names)
-        self.assertIn("router_quality_gates_evidence_artifacts", command_names)
-        self.assertIn("router_quality_gates_route_model", command_names)
+        self.assertIn("router_quality_gates_evidence_package", command_names)
+        self.assertIn("router_quality_gates_route_check_reports", command_names)
+        self.assertIn("router_quality_gates_route_check_delivery", command_names)
+        self.assertIn("router_quality_gates_router_owned_proof", command_names)
+        self.assertIn("router_quality_gates_artifact_validation", command_names)
+        self.assertIn("router_quality_gates_model_miss_sync", command_names)
+        self.assertIn("router_quality_gates_node_acceptance_plan", command_names)
+        self.assertIn("router_quality_gates_route_repair_reopens_draft", command_names)
+        self.assertIn("router_quality_gates_root_contract", command_names)
+        self.assertIn("router_quality_gates_route_draft_product_model", command_names)
         self.assertIn("router_quality_gates_node_contracts", command_names)
         self.assertIn("router_material_modeling_intake", command_names)
         self.assertIn("router_material_modeling_scan_relay", command_names)
         self.assertIn("router_material_modeling_modelability", command_names)
         self.assertNotIn("router_packets_cards_ack", command_names)
         self.assertNotIn("router_startup_runtime", command_names)
+        self.assertNotIn("router_startup_bootstrap_review", command_names)
         self.assertNotIn("router_dispatch_gate", command_names)
         self.assertNotIn("router_foreground_controller", command_names)
         self.assertNotIn("router_packets", command_names)
@@ -424,7 +465,7 @@ class FlowPilotTestTierTests(unittest.TestCase):
                 "router_startup_bootstrap_core",
                 "router_startup_bootstrap_reconciliation",
                 "router_startup_bootstrap_intake",
-                "router_startup_bootstrap_review",
+                "router_startup_bootstrap_runtime_release",
                 "router_startup_bootstrap_fact_manual_resume",
                 "router_startup_daemon",
             ],
@@ -453,10 +494,20 @@ class FlowPilotTestTierTests(unittest.TestCase):
                 "router_packet_runtime",
                 "router_packets_material",
                 "router_packets_current_node_direct",
-                "router_packets_current_node_dispatch",
-                "router_packets_current_node_result_audit",
-                "router_packets_current_node_result_decision",
-                "router_packets_batch_and_grants",
+                "router_packets_current_node_dispatch_relay",
+                "router_packets_current_node_dispatch_worker_binding",
+                "router_packets_current_node_dispatch_unready_leaf",
+                "router_packets_result_audit_completion",
+                "router_packets_result_audit_reviewer_map",
+                "router_packets_result_audit_rejection",
+                "router_packets_result_decision_review_card",
+                "router_packets_result_decision_relay",
+                "router_packets_result_decision_pm_repair",
+                "router_packets_batch_existing_results",
+                "router_packets_batch_duplicate_worker",
+                "router_packets_batch_full_wait_missing_roles",
+                "router_packets_grant_result_requires_write",
+                "router_packets_grant_unresolved_node_entry",
                 "router_packet_result_family",
                 "router_cards",
                 "router_ack_return",
@@ -466,9 +517,9 @@ class FlowPilotTestTierTests(unittest.TestCase):
         self.assertIn("tests.test_flowpilot_packet_runtime", command_text)
         self.assertIn("tests.router_runtime.packets", command_text)
         self.assertIn("-k current_node_direct", command_text)
-        self.assertIn("-k current_node_completion", command_text)
-        self.assertIn("router_packets_current_node_result_audit", [command.name for command in commands])
-        self.assertIn("router_packets_current_node_result_decision", [command.name for command in commands])
+        self.assertIn("-k test_current_node_completion_requires_reviewer_passed_packet_audit", command_text)
+        self.assertIn("router_packets_result_audit_completion", [command.name for command in commands])
+        self.assertIn("router_packets_result_decision_review_card", [command.name for command in commands])
         self.assertIn("tests.router_runtime.cards", command_text)
         self.assertIn("tests.router_runtime.ack_return", command_text)
 
@@ -482,8 +533,16 @@ class FlowPilotTestTierTests(unittest.TestCase):
                 "router_pm_role_work_waits",
                 "router_quality_gates_background_manifest",
                 "router_quality_gates_decisions",
-                "router_quality_gates_evidence_artifacts",
-                "router_quality_gates_route_model",
+                "router_quality_gates_evidence_package",
+                "router_quality_gates_route_check_reports",
+                "router_quality_gates_route_check_delivery",
+                "router_quality_gates_router_owned_proof",
+                "router_quality_gates_artifact_validation",
+                "router_quality_gates_model_miss_sync",
+                "router_quality_gates_node_acceptance_plan",
+                "router_quality_gates_route_repair_reopens_draft",
+                "router_quality_gates_root_contract",
+                "router_quality_gates_route_draft_product_model",
                 "router_quality_gates_node_contracts",
                 "router_material_modeling_intake",
                 "router_material_modeling_scan_relay",
@@ -540,6 +599,16 @@ class FlowPilotTestTierTests(unittest.TestCase):
                     continue
                 for module_name in modules:
                     module_ids = ids_for_module(module_name)
+                    for pattern in patterns:
+                        pattern_matches = {
+                            test_id
+                            for test_id in module_ids
+                            if unittest_k_matches(test_id, pattern)
+                        }
+                        self.assertTrue(
+                            pattern_matches,
+                            f"{command.name} pattern {pattern!r} matches no tests in {module_name}",
+                        )
                     matched = {
                         test_id
                         for test_id in module_ids
@@ -576,10 +645,22 @@ class FlowPilotTestTierTests(unittest.TestCase):
             [command.name for command in commands],
             [
                 "router_boundaries",
-                "router_route_mutation_draft_activation",
-                "router_route_mutation_model_miss_triage",
-                "router_route_mutation_acceptance_repair",
-                "router_route_mutation_preconditions",
+                "router_route_mutation_draft_policy",
+                "router_route_mutation_draft_activation_reviewed",
+                "router_route_mutation_draft_missing_active_node",
+                "router_route_mutation_model_miss_refs",
+                "router_route_mutation_model_miss_unlocks",
+                "router_route_mutation_model_miss_non_authorizing",
+                "router_route_mutation_model_miss_out_of_scope",
+                "router_route_mutation_model_miss_role_work",
+                "router_route_mutation_model_miss_closed_triage",
+                "router_route_mutation_model_miss_delivery",
+                "router_route_mutation_model_miss_stale_wait",
+                "router_route_mutation_acceptance_revise",
+                "router_route_mutation_acceptance_model_miss",
+                "router_route_mutation_preconditions_final_ledger",
+                "router_route_mutation_preconditions_topology_reset",
+                "router_route_mutation_preconditions_root_gap",
                 "router_route_mutation_transactions",
                 "router_route_mutation_topology",
                 "router_route_mutation_sibling_replacement",
@@ -672,12 +753,70 @@ class FlowPilotTestTierTests(unittest.TestCase):
         self.assertIsInstance(args, list)
         self.assertEqual(Path(args[1]).resolve(), ROOT / "scripts" / "run_test_tier.py")
         self.assertIn("--background-child", args)
+        self.assertIn("--background-child-timeout-seconds", args)
+
+    def test_unittest_shard_runner_uses_or_semantics_and_rejects_stale_patterns(self) -> None:
+        good = subprocess.run(
+            [
+                sys.executable,
+                "scripts/test_tier/unittest_shard.py",
+                "-k",
+                "test_main_list_tiers_json_uses_public_cli_contract",
+                "-k",
+                "test_main_release_dry_run_json_marks_release_only_commands",
+                "tests.test_flowpilot_test_tiers",
+            ],
+            cwd=ROOT,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            **run_test_tier._hidden_process_kwargs(),
+        )
+        self.assertEqual(good.returncode, 0, good.stderr)
+        self.assertIn("Ran 2 tests", good.stderr)
+
+        stale = subprocess.run(
+            [
+                sys.executable,
+                "scripts/test_tier/unittest_shard.py",
+                "-k",
+                "test_pattern_that_no_longer_exists",
+                "tests.test_flowpilot_test_tiers",
+            ],
+            cwd=ROOT,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            **run_test_tier._hidden_process_kwargs(),
+        )
+        self.assertNotEqual(stale.returncode, 0)
+        self.assertIn("stale unittest shard pattern", stale.stderr)
+
+    def test_background_child_timeout_writes_failed_artifact(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="flowpilot-tier-timeout-") as tmp_name:
+            exit_code = run_test_tier.run_background_child(
+                "timeout_fixture",
+                (sys.executable, "-c", "import time; time.sleep(5)"),
+                log_root=Path(tmp_name),
+                timeout_seconds=1,
+            )
+            paths = run_test_tier.artifact_paths(Path(tmp_name), "timeout_fixture")
+            meta = json.loads(paths["meta"].read_text(encoding="utf-8"))
+
+            self.assertEqual(exit_code, run_test_tier.BACKGROUND_CHILD_TIMEOUT_EXIT_CODE)
+            self.assertEqual(meta["status"], "failed")
+            self.assertTrue(meta["timed_out"])
+            self.assertEqual(meta["failure_reason"], "background_child_timeout")
+            self.assertEqual(
+                paths["exit"].read_text(encoding="utf-8").strip(),
+                str(run_test_tier.BACKGROUND_CHILD_TIMEOUT_EXIT_CODE),
+            )
 
     def test_background_supervisor_records_launch_failures(self) -> None:
         original_launch = run_test_tier._launch_background
         try:
             with tempfile.TemporaryDirectory(prefix="flowpilot-tier-supervisor-") as tmp_name:
-                def fail_launch(command, *, log_root):  # type: ignore[no-untyped-def]
+                def fail_launch(command, *, log_root, timeout_seconds=None):  # type: ignore[no-untyped-def]
                     raise RuntimeError(f"artifact locked for {command.name}")
 
                 run_test_tier._launch_background = fail_launch
@@ -770,9 +909,12 @@ class FlowPilotTestTierTests(unittest.TestCase):
         self.assertTrue(report["ok"], report)
         rejected = set(report["scenario_review"]["hazard_scenarios_rejected"])
         self.assertIn("background_progress_only_claimed_pass", rejected)
+        self.assertIn("background_running_without_timeout_guard", rejected)
+        self.assertIn("json_write_readback_can_hang_control_gate", rejected)
         self.assertIn("root_pytest_scans_backup_tests", rejected)
         self.assertIn("router_slice_import_broken_counted_green", rejected)
         self.assertIn("router_child_tier_duplicates_k_shards", rejected)
+        self.assertIn("router_child_tier_stale_k_pattern", rejected)
         self.assertIn("release_public_check_races_model_proofs", rejected)
         self.assertEqual(report["background_artifact_contract"], ["out", "err", "combined", "exit", "meta"])
 

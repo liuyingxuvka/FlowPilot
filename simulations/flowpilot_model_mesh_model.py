@@ -39,6 +39,7 @@ EVIDENCE_ORDER = {
 
 REPAIR_OUTCOME_KEYS = ("success", "blocker", "protocol_blocker")
 LEAF_ONLY_REPAIR_EVENTS = {"pm_registers_current_node_packet"}
+TERMINAL_LIFECYCLE_STATES = {"stopped_by_user", "cancelled", "terminal", "completed", "complete"}
 
 
 @dataclass(frozen=True)
@@ -82,6 +83,16 @@ class State:
     legal_next_action_policy_registered: bool = True
     legal_next_action_projected: bool = True
     legal_next_action_conformant: bool = True
+    route_authority_singularity_registered: bool = True
+    route_authority_projected: bool = True
+    route_authority_conformant: bool = True
+    route_authority_owner_unique: bool = True
+    route_authority_wrong_path_rejected: bool = True
+    route_authority_repair_feedback_present: bool = True
+    route_authority_fallback_rejected: bool = True
+    route_authority_no_delta_repeat_absorbed: bool = True
+    repeated_lifecycle_action_absorbed: bool = True
+    lifecycle_guard_control_plane_stuck: bool = False
 
 
 @dataclass(frozen=True)
@@ -250,6 +261,45 @@ SCENARIOS: Dict[str, State] = {
         _valid_live_state("legal_next_action_conformance_failed"),
         legal_next_action_conformant=False,
     ),
+    "route_authority_model_missing": replace(
+        _valid_live_state("route_authority_model_missing"),
+        route_authority_singularity_registered=False,
+        route_authority_projected=False,
+        route_authority_conformant=False,
+    ),
+    "route_authority_projection_missing": replace(
+        _valid_live_state("route_authority_projection_missing"),
+        route_authority_projected=False,
+    ),
+    "route_authority_owner_conflict": replace(
+        _valid_live_state("route_authority_owner_conflict"),
+        route_authority_owner_unique=False,
+    ),
+    "route_authority_wrong_path_accepted": replace(
+        _valid_live_state("route_authority_wrong_path_accepted"),
+        route_authority_wrong_path_rejected=False,
+    ),
+    "route_authority_repair_feedback_missing": replace(
+        _valid_live_state("route_authority_repair_feedback_missing"),
+        route_authority_repair_feedback_present=False,
+    ),
+    "route_authority_fallback_accepted": replace(
+        _valid_live_state("route_authority_fallback_accepted"),
+        route_authority_fallback_rejected=False,
+    ),
+    "route_authority_no_delta_repeat_accepted": replace(
+        _valid_live_state("route_authority_no_delta_repeat_accepted"),
+        route_authority_no_delta_repeat_absorbed=False,
+    ),
+    "repeated_lifecycle_action_not_absorbed": replace(
+        _valid_live_state("repeated_lifecycle_action_not_absorbed"),
+        repeated_lifecycle_action_absorbed=False,
+    ),
+    "lifecycle_guard_stuck_claimed_safe": replace(
+        _valid_live_state("lifecycle_guard_stuck_claimed_safe"),
+        lifecycle_guard_control_plane_stuck=True,
+        status_summary_reports_blocked=True,
+    ),
 }
 
 VALID_SCENARIOS = {
@@ -321,6 +371,26 @@ def mesh_failures(state: State) -> List[str]:
             failures.append("legal_next_action_projection_missing")
         if not state.legal_next_action_conformant:
             failures.append("legal_next_action_conformance_failed")
+        if not state.route_authority_singularity_registered:
+            failures.append("route_authority_singularity_model_not_registered")
+        if not state.route_authority_projected:
+            failures.append("route_authority_projection_missing")
+        if not state.route_authority_conformant:
+            failures.append("route_authority_conformance_failed")
+        if not state.route_authority_owner_unique:
+            failures.append("route_authority_owner_conflict")
+        if not state.route_authority_wrong_path_rejected:
+            failures.append("route_authority_wrong_path_not_rejected")
+        if not state.route_authority_repair_feedback_present:
+            failures.append("route_authority_repair_feedback_missing")
+        if not state.route_authority_fallback_rejected:
+            failures.append("route_authority_fallback_not_rejected")
+        if not state.route_authority_no_delta_repeat_absorbed:
+            failures.append("route_authority_no_delta_repeat_not_absorbed")
+        if not state.repeated_lifecycle_action_absorbed:
+            failures.append("repeated_lifecycle_action_must_block_mesh_green")
+        if state.lifecycle_guard_control_plane_stuck:
+            failures.append("lifecycle_guard_stuck_must_block_mesh_green")
 
     if state.decision in BLOCKING_DECISIONS:
         if state.safe_to_continue_claimed:
@@ -733,6 +803,185 @@ def _legal_next_action_conformant(router_state: Any, frontier: Any, policy: Any)
     return True
 
 
+def _route_authority_model_registered(project_root: Path) -> bool:
+    return (
+        (project_root / "simulations" / "flowpilot_route_authority_singularity_model.py").exists()
+        and (project_root / "simulations" / "run_flowpilot_route_authority_singularity_checks.py").exists()
+    )
+
+
+def _route_authority_projection_required(router_state: Any, frontier: Any) -> bool:
+    pending_action = _dict_get(router_state, ["pending_action"], None)
+    if _pending_action_requires_legal_projection(pending_action):
+        return True
+    active = _dict_get(router_state, ["active_control_blocker"], None)
+    if isinstance(active, Mapping) and active.get("route_authority_rejection"):
+        return True
+    latest_path = _dict_get(router_state, ["latest_control_blocker_path"], None)
+    return isinstance(latest_path, str) and "control-blocker" in latest_path and not _dict_get(frontier, ["terminal"], False)
+
+
+def _route_authority_snapshot_from_router_state(router_state: Any) -> Any:
+    pending_action = _dict_get(router_state, ["pending_action"], None)
+    for path in (
+        ["route_authority_snapshot"],
+        ["legal_next_actions", "route_authority_snapshot"],
+        ["extra", "route_authority_snapshot"],
+        ["extra", "legal_next_actions", "route_authority_snapshot"],
+    ):
+        snapshot = _dict_get(pending_action, path, None)
+        if isinstance(snapshot, Mapping):
+            return snapshot
+    active = _dict_get(router_state, ["active_control_blocker"], None)
+    snapshot = _dict_get(active, ["route_authority_rejection"], None)
+    if isinstance(snapshot, Mapping):
+        return snapshot
+    snapshot = _dict_get(router_state, ["route_authority_snapshot"], None)
+    if isinstance(snapshot, Mapping):
+        return snapshot
+    return None
+
+
+def _route_authority_projected(router_state: Any, frontier: Any, project_root: Path) -> bool:
+    if not _route_authority_model_registered(project_root):
+        return False
+    if not _route_authority_projection_required(router_state, frontier):
+        return True
+    snapshot = _route_authority_snapshot_from_router_state(router_state)
+    return isinstance(snapshot, Mapping)
+
+
+def _route_authority_conformant(router_state: Any, frontier: Any, project_root: Path) -> bool:
+    if not _route_authority_projected(router_state, frontier, project_root):
+        return False
+    snapshot = _route_authority_snapshot_from_router_state(router_state)
+    if not isinstance(snapshot, Mapping):
+        return True
+    legal_ids = snapshot.get("legal_action_ids")
+    forbidden_ids = snapshot.get("forbidden_action_ids")
+    return (
+        snapshot.get("fallback_or_alias_translation_allowed") is False
+        and isinstance(snapshot.get("current_owner"), str)
+        and snapshot.get("current_owner") not in {"", "owner_missing", "owner_conflict"}
+        and isinstance(legal_ids, list)
+        and all(isinstance(item, str) and item for item in legal_ids)
+        and isinstance(forbidden_ids, list)
+        and isinstance(snapshot.get("required_repair_command"), str)
+        and bool(snapshot.get("required_repair_command"))
+    )
+
+
+def _route_authority_repair_feedback_present(router_state: Any) -> bool:
+    active = _dict_get(router_state, ["active_control_blocker"], None)
+    rejection = _dict_get(active, ["route_authority_rejection"], None)
+    if not isinstance(rejection, Mapping):
+        return True
+    return (
+        bool(rejection.get("current_owner"))
+        and isinstance(rejection.get("legal_action_ids"), list)
+        and isinstance(rejection.get("forbidden_action_ids"), list)
+        and bool(rejection.get("required_repair_command"))
+        and rejection.get("fallback_or_alias_translation_allowed") is False
+    )
+
+
+def _repeated_lifecycle_action_absorbed(ledger: Any) -> bool:
+    if not isinstance(ledger, Mapping):
+        return True
+    guard = ledger.get("lifecycle_guard")
+    if not isinstance(guard, Mapping):
+        history = ledger.get("lifecycle_guard_history")
+        if isinstance(history, list) and history and isinstance(history[-1], Mapping):
+            guard = history[-1]
+        else:
+            return True
+    config = ledger.get("lifecycle_guard_config") if isinstance(ledger.get("lifecycle_guard_config"), Mapping) else {}
+    try:
+        threshold = int(config.get("max_repeated_action_without_event") or 3)
+    except (TypeError, ValueError):
+        threshold = 3
+    action_key = str(guard.get("action_key") or "")
+    if not action_key:
+        return True
+    observed_event_count = guard.get("observed_event_count")
+    try:
+        repeated_count = int(guard.get("repeated_count") or 1)
+    except (TypeError, ValueError):
+        repeated_count = 1
+    decision = str(guard.get("decision") or "")
+    next_action = guard.get("next_action") if isinstance(guard.get("next_action"), Mapping) else {}
+    action_class = str(guard.get("next_action_class") or next_action.get("next_action_class") or "")
+    history = ledger.get("lifecycle_guard_history") if isinstance(ledger.get("lifecycle_guard_history"), list) else []
+    prior_stuck_same_action = any(
+        isinstance(row, Mapping)
+        and row.get("action_key") == action_key
+        and row.get("observed_event_count") == observed_event_count
+        and row.get("decision") == "control_plane_stuck"
+        for row in history
+    )
+    if decision == "control_plane_stuck":
+        return True
+    if prior_stuck_same_action:
+        return False
+    return not (
+        repeated_count >= threshold
+        and action_class not in {"role_dispatch", "router_internal"}
+        and decision not in {
+            "terminal_return",
+            "wait_for_ack",
+            "wait_for_result",
+            "wait_for_resume",
+            "resume_reconcile",
+        }
+    )
+
+
+def _lifecycle_guard_control_plane_stuck(ledger: Any) -> bool:
+    if not isinstance(ledger, Mapping):
+        return False
+    guard = ledger.get("lifecycle_guard")
+    if isinstance(guard, Mapping) and guard.get("decision") == "control_plane_stuck":
+        return True
+    foreground = ledger.get("foreground_duty")
+    if not isinstance(foreground, Mapping):
+        return False
+    if foreground.get("action") == "control_plane_blocker":
+        return True
+    if foreground.get("lifecycle_guard_decision") == "control_plane_stuck":
+        return True
+    preflight = foreground.get("final_return_preflight")
+    blockers = preflight.get("blockers") if isinstance(preflight, Mapping) else []
+    return isinstance(blockers, Sequence) and "guard_decision:control_plane_stuck" in blockers
+
+
+def _terminal_lifecycle_run(current_state: Any, router_state: Any, ledger: Any, run_id: str | None) -> bool:
+    current_matches = isinstance(current_state, Mapping) and str(current_state.get("run_id") or "") == str(
+        run_id or ""
+    )
+    if current_matches:
+        for key in ("status", "lifecycle_state", "terminal_lifecycle_status", "ledger_lifecycle_state"):
+            if current_state.get(key) in TERMINAL_LIFECYCLE_STATES:
+                return True
+    if isinstance(router_state, Mapping) and router_state.get("status") in TERMINAL_LIFECYCLE_STATES:
+        return True
+    if not isinstance(ledger, Mapping):
+        return False
+    terminal_lifecycle = ledger.get("terminal_lifecycle")
+    if isinstance(terminal_lifecycle, Mapping):
+        if terminal_lifecycle.get("terminal") is True:
+            return True
+        if terminal_lifecycle.get("status") in TERMINAL_LIFECYCLE_STATES:
+            return True
+        if terminal_lifecycle.get("state") in TERMINAL_LIFECYCLE_STATES:
+            return True
+    lifecycle_guard = ledger.get("lifecycle_guard")
+    if isinstance(lifecycle_guard, Mapping) and lifecycle_guard.get("decision") == "terminal_return":
+        next_action = lifecycle_guard.get("next_action")
+        if isinstance(next_action, Mapping) and next_action.get("subject_id") in TERMINAL_LIFECYCLE_STATES:
+            return True
+    return False
+
+
 def _sha256_file(path: Path) -> str | None:
     try:
         import hashlib
@@ -967,6 +1216,7 @@ def project_live_run(project_root: str | Path = ".", run_id: str | None = None) 
     router_state = _read_json(run_root / "router_state.json")
     active_route_id = str(_dict_get(frontier, ["active_route_id"]) or "route-001")
     active_route = _read_json(run_root / "routes" / active_route_id / "flow.json")
+    run_ledger = _read_json(run_root / "ledger.json")
     packet_ledger = _read_json(run_root / "packet_ledger.json")
     status_summary = _read_json(run_root / "display" / "current_status_summary.json")
     current_state = _read_json(root / ".flowpilot" / "current.json")
@@ -984,6 +1234,7 @@ def project_live_run(project_root: str | Path = ".", run_id: str | None = None) 
             "execution_frontier": frontier,
             "router_state": router_state,
             "active_route": active_route,
+            "run_ledger": run_ledger,
             "packet_ledger": packet_ledger,
             "current_status_summary": status_summary,
             "current": current_state,
@@ -1012,10 +1263,7 @@ def project_live_run(project_root: str | Path = ".", run_id: str | None = None) 
         packet_ledger,
         trusted_packet_ids=trusted_packet_ids,
     )
-    terminal_run = (
-        _dict_get(current_state, ["run_id"]) == resolved_run_id
-        and _dict_get(current_state, ["status"]) in {"stopped_by_user", "cancelled", "terminal", "completed"}
-    ) or _dict_get(router_state, ["status"]) in {"stopped_by_user", "cancelled", "terminal", "completed"}
+    terminal_run = _terminal_lifecycle_run(current_state, router_state, run_ledger, resolved_run_id)
     authorities_agree = _authorities_agree(frontier, packet_ledger, status_summary)
     control_registry_registered = isinstance(control_transaction_registry, Mapping)
     control_registry_rows = (
@@ -1044,6 +1292,12 @@ def project_live_run(project_root: str | Path = ".", run_id: str | None = None) 
     legal_policy_registered = _route_action_policy_registered(route_action_policy_registry)
     legal_action_projected = _legal_next_action_projected(router_state, frontier, route_action_policy_registry)
     legal_action_conformant = _legal_next_action_conformant(router_state, frontier, route_action_policy_registry)
+    route_authority_registered = _route_authority_model_registered(root)
+    route_authority_projected = _route_authority_projected(router_state, frontier, root)
+    route_authority_conformant = _route_authority_conformant(router_state, frontier, root)
+    route_authority_repair_feedback_present = _route_authority_repair_feedback_present(router_state)
+    repeated_lifecycle_absorbed = _repeated_lifecycle_action_absorbed(run_ledger)
+    lifecycle_guard_stuck = _lifecycle_guard_control_plane_stuck(run_ledger)
 
     blocking_reasons = list(reasons)
     if parse_errors:
@@ -1072,6 +1326,18 @@ def project_live_run(project_root: str | Path = ".", run_id: str | None = None) 
         blocking_reasons.append("legal_next_action_projection_missing")
     elif not legal_action_conformant:
         blocking_reasons.append("legal_next_action_conformance_failed")
+    if not route_authority_registered:
+        blocking_reasons.append("route_authority_model_missing")
+    elif not route_authority_projected:
+        blocking_reasons.append("route_authority_projection_missing")
+    elif not route_authority_conformant:
+        blocking_reasons.append("route_authority_conformance_failed")
+    if not route_authority_repair_feedback_present:
+        blocking_reasons.append("route_authority_repair_feedback_missing")
+    if not repeated_lifecycle_absorbed:
+        blocking_reasons.append("repeated_lifecycle_action_not_absorbed")
+    if lifecycle_guard_stuck:
+        blocking_reasons.append("lifecycle_guard_control_plane_stuck")
 
     if parse_errors:
         decision = "model_coverage_insufficient"
@@ -1086,6 +1352,11 @@ def project_live_run(project_root: str | Path = ".", run_id: str | None = None) 
         or not legal_policy_registered
         or not legal_action_projected
         or not legal_action_conformant
+        or not route_authority_registered
+        or not route_authority_projected
+        or not route_authority_conformant
+        or not route_authority_repair_feedback_present
+        or not repeated_lifecycle_absorbed
     ):
         decision = "terminal_not_continuable"
     elif (
@@ -1100,9 +1371,13 @@ def project_live_run(project_root: str | Path = ".", run_id: str | None = None) 
         or not legal_policy_registered
         or not legal_action_projected
         or not legal_action_conformant
+        or not route_authority_registered
+        or not route_authority_projected
+        or not route_authority_conformant
+        or not route_authority_repair_feedback_present
     ):
         decision = "blocked_by_cross_model_contradiction"
-    elif active_blocker:
+    elif active_blocker or not repeated_lifecycle_absorbed or lifecycle_guard_stuck:
         decision = "blocked_by_live_evidence"
     else:
         decision = "mesh_green_can_continue"
@@ -1144,6 +1419,16 @@ def project_live_run(project_root: str | Path = ".", run_id: str | None = None) 
         legal_next_action_policy_registered=legal_policy_registered,
         legal_next_action_projected=legal_action_projected,
         legal_next_action_conformant=legal_action_conformant,
+        route_authority_singularity_registered=route_authority_registered,
+        route_authority_projected=route_authority_projected,
+        route_authority_conformant=route_authority_conformant,
+        route_authority_owner_unique=route_authority_conformant,
+        route_authority_wrong_path_rejected=True,
+        route_authority_repair_feedback_present=route_authority_repair_feedback_present,
+        route_authority_fallback_rejected=True,
+        route_authority_no_delta_repeat_absorbed=True,
+        repeated_lifecycle_action_absorbed=repeated_lifecycle_absorbed,
+        lifecycle_guard_control_plane_stuck=lifecycle_guard_stuck,
     )
 
     projected_failures = mesh_failures(state)

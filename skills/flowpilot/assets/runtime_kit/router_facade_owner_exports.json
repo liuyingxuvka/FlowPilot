@@ -2241,6 +2241,14 @@
             "target": "_route_action_for_event"
           },
           {
+            "public": "_reject_route_authority_submission",
+            "target": "_reject_route_authority_submission"
+          },
+          {
+            "public": "_reject_unsupported_route_authority_payload",
+            "target": "_reject_unsupported_route_authority_payload"
+          },
+          {
             "public": "_route_action_policy_by_id",
             "target": "_route_action_policy_by_id"
           },
@@ -2255,6 +2263,30 @@
           {
             "public": "_route_action_policy_rows",
             "target": "_route_action_policy_rows"
+          },
+          {
+            "public": "_route_authority_rejection_payload",
+            "target": "_route_authority_rejection_payload"
+          },
+          {
+            "public": "_route_authority_required_repair_command",
+            "target": "_route_authority_required_repair_command"
+          },
+          {
+            "public": "_route_authority_snapshot",
+            "target": "_route_authority_snapshot"
+          },
+          {
+            "public": "_unsupported_route_action_alias",
+            "target": "_unsupported_route_action_alias"
+          },
+          {
+            "public": "_unsupported_route_authority_payload_fields",
+            "target": "_unsupported_route_authority_payload_fields"
+          },
+          {
+            "public": "_write_route_authority_rejection_blocker",
+            "target": "_write_route_authority_rejection_blocker"
           },
           {
             "public": "_route_active_path",

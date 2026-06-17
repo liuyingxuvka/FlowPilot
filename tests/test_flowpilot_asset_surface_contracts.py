@@ -24,6 +24,9 @@ STRUCTURE_SPLIT_CHILD_SURFACES = (
     "flowpilot_router_expected_waits_reconciliation_pm_package",
     "flowpilot_router_role_output_bridge_events_replay",
     "flowpilot_router_runtime_state_persistence_save",
+    "flowpilot_router_route_frontier_policy_completion_authority",
+    "flowpilot_router_route_frontier_policy_completion_context",
+    "flowpilot_router_route_frontier_policy_completion_ledger",
     "role_output_runtime_envelope_receipts",
 )
 

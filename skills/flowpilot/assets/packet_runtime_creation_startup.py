@@ -139,6 +139,18 @@ _CURRENT_STARTUP_OPTION_KEYS = {"background_collaboration_authorized"}
 _CURRENT_STARTUP_METADATA = {"provenance": "explicit_user_reply"}
 
 
+def _append_user_intake_recovery_contract(body_text: str) -> str:
+    if "pm_startup_repair_request" in body_text:
+        return body_text
+    recovery_contract = (
+        "\n\n## Startup Recovery Contract\n"
+        "- pm_startup_repair_request: if startup metadata or release evidence is mechanically invalid, "
+        "use the current packet output contract or pm_control_blocker_repair_decision; do not revive "
+        "legacy startup reviewer gates, chat-history recovery, or ordinary Controller repair prose.\n"
+    )
+    return body_text.rstrip() + recovery_contract
+
+
 def _current_startup_options(startup_options: dict[str, Any] | None) -> dict[str, Any]:
     options = dict(startup_options or {})
     supported_keys = _CURRENT_STARTUP_OPTION_KEYS | set(_CURRENT_STARTUP_METADATA)
@@ -278,6 +290,7 @@ def create_user_intake_packet(
                 "controller_must_not_use_chat_history_for_startup_intake": True,
             }
         )
+    body_text = _append_user_intake_recovery_contract(body_text)
     return create_packet(
         project_root,
         run_id=run_id,

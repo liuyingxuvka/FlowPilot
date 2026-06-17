@@ -8,7 +8,7 @@ from collections import deque
 from pathlib import Path
 from typing import Any
 
-from flowguard import Explorer
+from flowguard.explorer import Explorer
 from flowguard.export import exception_branch_to_dict
 
 import flowpilot_persistent_router_daemon_model as model

@@ -18,10 +18,9 @@ runtime_context: Treat the runtime delivery envelope as the live source for the 
 
 ## Decision-Support Findings
 
-For every outcome, consider `independent_challenge.non_blocking_findings`.
-Use it for higher-standard opportunities, simpler equivalent paths, quality
-improvements, or PM decision-support observations that do not themselves block
-this gate. This applies even when the review blocks.
+For every outcome, consider PM decision-support observations. Put
+higher-standard opportunities, simpler equivalent paths, and quality
+improvements that do not themselves block this gate into `pm_suggestion_items`.
 When useful, express these findings as candidate
 `flowpilot.pm_suggestion_item.v1` entries for PM's suggestion ledger. Use
 `current_gate_blocker` only when the current gate's minimum standard cannot be
@@ -69,56 +68,27 @@ Write the full body to the run-scoped material sufficiency report file requested
 by Router state and submit the runtime-generated envelope directly to Router.
 Controller may later see only Router-exposed metadata with the report path and hash.
 
-The body must use these exact field names. Include every required field even
-when the material is insufficient.
+The body must use the current review result fields. Include every required
+field even when the material is insufficient. Put material-specific details
+such as checked source paths, runtime-open receipt refs, PM readiness, and
+missing materials into `findings`, `blockers`, or `pm_suggestion_items`.
 
 ```json
 {
-  "schema_version": "flowpilot.material_sufficiency_report.v1",
-  "run_id": "<current run id>",
-  "report_type": "material_sufficiency",
+  "pm_visible_summary": ["<short PM-visible material sufficiency summary>"],
   "reviewed_by_role": "human_like_reviewer",
-  "sufficient": false,
-  "direct_material_sources_checked": true,
-  "packet_matches_checked_sources": true,
-  "pm_ready": false,
-  "checked_source_paths": [],
-  "runtime_open_receipt_refs": [],
-  "independent_challenge": {
-    "scope_restatement": "<reviewed material/research package and out-of-scope boundary>",
-    "explicit_and_implicit_commitments": {
-      "explicit": [],
-      "implicit": []
-    },
-    "failure_hypotheses": [],
-    "challenge_actions": [
-      {
-        "action": "<source inspection, contradiction check, freshness check, or waiver>",
-        "evidence_path": "<path-or-null>",
-        "result": "<observed result>"
-      }
-    ],
-    "blocking_findings": [],
-    "non_blocking_findings": [],
-    "pass_or_block": "block",
-    "reroute_request": "<follow-up research, PM route mutation, or null>",
-    "challenge_waivers": []
-  },
+  "passed": false,
   "findings": [],
   "blockers": [],
-  "recommended_resolution": "<required when sufficient is false or pm_ready is false; null when sufficient and pm_ready are true>",
-  "residual_risks": [],
   "pm_suggestion_items": [],
   "contract_self_check": {
     "all_required_fields_present": true,
     "exact_field_names_used": true,
-    "empty_required_arrays_explicit": true
+    "empty_required_arrays_explicit": true,
+    "runtime_mechanical_validation_passed": true
   }
 }
 ```
 
-If sufficient, set `sufficient: true`, `pm_ready: true`, and `blockers: []`.
-If insufficient, set `sufficient: false`, keep `pm_ready: false`, explain the
-gap in `blockers`, and still include `direct_material_sources_checked`,
-`packet_matches_checked_sources`, `checked_source_paths`, and
-`runtime_open_receipt_refs`.
+If sufficient, set `passed: true` and `blockers: []`. If insufficient, set
+`passed: false` and explain the gap in `blockers`.

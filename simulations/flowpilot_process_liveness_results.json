@@ -1,18 +1,33 @@
 {
   "current_run_projection": {
-    "current_run_can_continue": false,
+    "daemon_lifecycle": "unknown",
+    "evidence_paths": [
+      ".flowpilot\\current.json",
+      ".flowpilot\\runs\\run-20260614-184920\\ledger.json"
+    ],
     "findings": [
       {
-        "id": "missing_current_pointer",
-        "severity": "blocking",
-        "summary": ".flowpilot/current.json is missing; no active run can be continued or claimed"
+        "completed_node_count": 0,
+        "id": "route_nodes_never_activated",
+        "review_pass_count": 0,
+        "route_node_count": 0,
+        "severity": "info",
+        "summary": "no route nodes were activated, so per-node execution and reviewer coverage cannot be claimed"
+      },
+      {
+        "id": "normal_completion_not_claimed",
+        "severity": "info",
+        "summary": "normal route-wide completion was not claimed for the current run"
       }
     ],
-    "metadata_only": true,
+    "frontier_status": "unknown",
+    "frontier_terminal": false,
     "ok": true,
-    "permission": "no_current_run",
-    "safe_to_claim_live_run_confidence": false,
-    "status": "missing_current_pointer"
+    "run_root": ".flowpilot\\runs\\run-20260614-184920",
+    "severity_counts": {
+      "info": 2
+    },
+    "status": "unknown"
   },
   "flowguard_explorer": {
     "dead_branch_count": 0,

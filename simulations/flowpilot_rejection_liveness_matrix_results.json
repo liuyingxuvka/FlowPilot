@@ -1,0 +1,1496 @@
+{
+  "claim_boundary": {
+    "live_ai_semantic_quality_proven": false,
+    "release_confidence_claimed": false,
+    "routine_control_flow_confidence": true
+  },
+  "flowguard": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "reachability_failures": [],
+    "summary": "sequences=2 initial_states=1 traces=45",
+    "violation_count": 0
+  },
+  "graph": {
+    "accepted_count": 4,
+    "invariant_failures": [],
+    "labels_seen": [
+      "accept_valid_blocker_absorption",
+      "accept_valid_rejected_corrected",
+      "accept_valid_stuck_absorbed",
+      "accept_valid_user_wait",
+      "reject_mesh_green_live_repeated_action",
+      "reject_missing_legal_repair_shape_continues",
+      "reject_missing_owner_feedback_continues",
+      "reject_missing_subject_feedback_continues",
+      "reject_required_cell_missing_owner",
+      "reject_required_cell_stale_test",
+      "reject_same_action_retry_claims_progress",
+      "reject_same_payload_retry_claims_progress",
+      "reject_stuck_detected_not_absorbed",
+      "reject_synthetic_live_quality_overclaim",
+      "reject_vague_feedback_continues",
+      "select_mesh_green_live_repeated_action",
+      "select_missing_legal_repair_shape_continues",
+      "select_missing_owner_feedback_continues",
+      "select_missing_subject_feedback_continues",
+      "select_required_cell_missing_owner",
+      "select_required_cell_stale_test",
+      "select_same_action_retry_claims_progress",
+      "select_same_payload_retry_claims_progress",
+      "select_stuck_detected_not_absorbed",
+      "select_synthetic_live_quality_overclaim",
+      "select_vague_feedback_continues",
+      "select_valid_blocker_absorption",
+      "select_valid_rejected_corrected",
+      "select_valid_stuck_absorbed",
+      "select_valid_user_wait"
+    ],
+    "missing_labels": [],
+    "ok": true,
+    "rejected_count": 11,
+    "state_count": 31,
+    "terminal_count": 15
+  },
+  "hazard_detection": {
+    "expected": [
+      "mesh_green_live_repeated_action",
+      "missing_legal_repair_shape_continues",
+      "missing_owner_feedback_continues",
+      "missing_subject_feedback_continues",
+      "required_cell_missing_owner",
+      "required_cell_stale_test",
+      "same_action_retry_claims_progress",
+      "same_payload_retry_claims_progress",
+      "stuck_detected_not_absorbed",
+      "synthetic_live_quality_overclaim",
+      "vague_feedback_continues"
+    ],
+    "hazards": {
+      "mesh_green_live_repeated_action": [
+        "parent_mesh_green_over_repeated_action",
+        "repeated_action_safe_to_continue_without_progress",
+        "repeated_action_stuck_not_absorbed"
+      ],
+      "missing_legal_repair_shape_continues": [
+        "rejection_feedback_missing_legal_command_or_event",
+        "rejection_feedback_missing_minimum_valid_shape"
+      ],
+      "missing_owner_feedback_continues": [
+        "rejection_feedback_missing_owner"
+      ],
+      "missing_subject_feedback_continues": [
+        "rejection_feedback_missing_subject"
+      ],
+      "required_cell_missing_owner": [
+        "required_rejection_liveness_cell_missing_owner"
+      ],
+      "required_cell_stale_test": [
+        "required_rejection_liveness_cell_stale_or_missing_test"
+      ],
+      "same_action_retry_claims_progress": [
+        "post_rejection_continuation_has_no_delta_or_disposition",
+        "same_payload_or_action_retry_claimed_progress"
+      ],
+      "same_payload_retry_claims_progress": [
+        "post_rejection_continuation_has_no_delta_or_disposition",
+        "same_payload_or_action_retry_claimed_progress"
+      ],
+      "stuck_detected_not_absorbed": [
+        "repeated_action_safe_to_continue_without_progress",
+        "repeated_action_stuck_not_absorbed"
+      ],
+      "synthetic_live_quality_overclaim": [
+        "synthetic_evidence_overclaims_live_ai_quality"
+      ],
+      "vague_feedback_continues": [
+        "rejection_feedback_missing_field_details",
+        "rejection_feedback_not_precise"
+      ]
+    },
+    "missing_expected_failures": {},
+    "ok": true
+  },
+  "model_id": "flowpilot_rejection_liveness_matrix",
+  "ok": true,
+  "required_cell_matrix": {
+    "by_defect_class": {
+      "contradictory_pass_blocker": 11,
+      "corrected_retry": 11,
+      "missing_body": 11,
+      "missing_field": 11,
+      "missing_hash": 11,
+      "missing_path": 11,
+      "prose_only_critical_content": 11,
+      "same_action_retry": 11,
+      "same_payload_retry": 11,
+      "stale_evidence": 11,
+      "unsupported_enum": 11,
+      "wrong_id": 11,
+      "wrong_owner": 11
+    },
+    "by_family": {
+      "acceptance_item": 13,
+      "flowguard_report": 13,
+      "packet_body": 13,
+      "packet_envelope": 13,
+      "pm_repair_decision": 13,
+      "result_body": 13,
+      "result_envelope": 13,
+      "reviewer_report": 13,
+      "route_mutation": 13,
+      "startup_intake": 13,
+      "terminal_replay": 13
+    },
+    "cell_count": 143,
+    "defect_count": 13,
+    "family_count": 11,
+    "missing_owner_or_boundary": [],
+    "ok": true,
+    "required_cells": [
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "startup_intake.missing_field",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "missing_field",
+        "family": "startup_intake",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "startup_intake.missing_body",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "missing_body",
+        "family": "startup_intake",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "startup_intake.missing_path",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "missing_path",
+        "family": "startup_intake",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "startup_intake.missing_hash",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "missing_hash",
+        "family": "startup_intake",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "startup_intake.wrong_owner",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "wrong_owner",
+        "family": "startup_intake",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "startup_intake.wrong_id",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "wrong_id",
+        "family": "startup_intake",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "startup_intake.unsupported_enum",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "unsupported_enum",
+        "family": "startup_intake",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "startup_intake.stale_evidence",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "stale_evidence",
+        "family": "startup_intake",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "startup_intake.prose_only_critical_content",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "prose_only_critical_content",
+        "family": "startup_intake",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "startup_intake.contradictory_pass_blocker",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "contradictory_pass_blocker",
+        "family": "startup_intake",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "startup_intake.same_payload_retry",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "same_payload_retry",
+        "family": "startup_intake",
+        "required_evidence_owner": "rejection_liveness_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "startup_intake.same_action_retry",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "same_action_retry",
+        "family": "startup_intake",
+        "required_evidence_owner": "rejection_liveness_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "repair_path",
+        "cell_id": "startup_intake.corrected_retry",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "corrected_retry",
+        "family": "startup_intake",
+        "required_evidence_owner": "rejection_liveness_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "packet_envelope.missing_field",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "missing_field",
+        "family": "packet_envelope",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "packet_envelope.missing_body",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "missing_body",
+        "family": "packet_envelope",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "packet_envelope.missing_path",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "missing_path",
+        "family": "packet_envelope",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "packet_envelope.missing_hash",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "missing_hash",
+        "family": "packet_envelope",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "packet_envelope.wrong_owner",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "wrong_owner",
+        "family": "packet_envelope",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "packet_envelope.wrong_id",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "wrong_id",
+        "family": "packet_envelope",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "packet_envelope.unsupported_enum",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "unsupported_enum",
+        "family": "packet_envelope",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "packet_envelope.stale_evidence",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "stale_evidence",
+        "family": "packet_envelope",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "packet_envelope.prose_only_critical_content",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "prose_only_critical_content",
+        "family": "packet_envelope",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "packet_envelope.contradictory_pass_blocker",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "contradictory_pass_blocker",
+        "family": "packet_envelope",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "packet_envelope.same_payload_retry",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "same_payload_retry",
+        "family": "packet_envelope",
+        "required_evidence_owner": "rejection_liveness_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "packet_envelope.same_action_retry",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "same_action_retry",
+        "family": "packet_envelope",
+        "required_evidence_owner": "rejection_liveness_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "repair_path",
+        "cell_id": "packet_envelope.corrected_retry",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "corrected_retry",
+        "family": "packet_envelope",
+        "required_evidence_owner": "rejection_liveness_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "packet_body.missing_field",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "missing_field",
+        "family": "packet_body",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "packet_body.missing_body",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "missing_body",
+        "family": "packet_body",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "packet_body.missing_path",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "missing_path",
+        "family": "packet_body",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "packet_body.missing_hash",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "missing_hash",
+        "family": "packet_body",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "packet_body.wrong_owner",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "wrong_owner",
+        "family": "packet_body",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "packet_body.wrong_id",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "wrong_id",
+        "family": "packet_body",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "packet_body.unsupported_enum",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "unsupported_enum",
+        "family": "packet_body",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "packet_body.stale_evidence",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "stale_evidence",
+        "family": "packet_body",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "packet_body.prose_only_critical_content",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "prose_only_critical_content",
+        "family": "packet_body",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "packet_body.contradictory_pass_blocker",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "contradictory_pass_blocker",
+        "family": "packet_body",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "packet_body.same_payload_retry",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "same_payload_retry",
+        "family": "packet_body",
+        "required_evidence_owner": "rejection_liveness_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "packet_body.same_action_retry",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "same_action_retry",
+        "family": "packet_body",
+        "required_evidence_owner": "rejection_liveness_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "repair_path",
+        "cell_id": "packet_body.corrected_retry",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "corrected_retry",
+        "family": "packet_body",
+        "required_evidence_owner": "rejection_liveness_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "result_envelope.missing_field",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "missing_field",
+        "family": "result_envelope",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "result_envelope.missing_body",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "missing_body",
+        "family": "result_envelope",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "result_envelope.missing_path",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "missing_path",
+        "family": "result_envelope",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "result_envelope.missing_hash",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "missing_hash",
+        "family": "result_envelope",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "result_envelope.wrong_owner",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "wrong_owner",
+        "family": "result_envelope",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "result_envelope.wrong_id",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "wrong_id",
+        "family": "result_envelope",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "result_envelope.unsupported_enum",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "unsupported_enum",
+        "family": "result_envelope",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "result_envelope.stale_evidence",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "stale_evidence",
+        "family": "result_envelope",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "result_envelope.prose_only_critical_content",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "prose_only_critical_content",
+        "family": "result_envelope",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "result_envelope.contradictory_pass_blocker",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "contradictory_pass_blocker",
+        "family": "result_envelope",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "result_envelope.same_payload_retry",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "same_payload_retry",
+        "family": "result_envelope",
+        "required_evidence_owner": "rejection_liveness_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "result_envelope.same_action_retry",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "same_action_retry",
+        "family": "result_envelope",
+        "required_evidence_owner": "rejection_liveness_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "repair_path",
+        "cell_id": "result_envelope.corrected_retry",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "corrected_retry",
+        "family": "result_envelope",
+        "required_evidence_owner": "rejection_liveness_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "result_body.missing_field",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "missing_field",
+        "family": "result_body",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "result_body.missing_body",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "missing_body",
+        "family": "result_body",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "result_body.missing_path",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "missing_path",
+        "family": "result_body",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "result_body.missing_hash",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "missing_hash",
+        "family": "result_body",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "result_body.wrong_owner",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "wrong_owner",
+        "family": "result_body",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "result_body.wrong_id",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "wrong_id",
+        "family": "result_body",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "result_body.unsupported_enum",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "unsupported_enum",
+        "family": "result_body",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "result_body.stale_evidence",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "stale_evidence",
+        "family": "result_body",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "result_body.prose_only_critical_content",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "prose_only_critical_content",
+        "family": "result_body",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "result_body.contradictory_pass_blocker",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "contradictory_pass_blocker",
+        "family": "result_body",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "result_body.same_payload_retry",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "same_payload_retry",
+        "family": "result_body",
+        "required_evidence_owner": "rejection_liveness_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "result_body.same_action_retry",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "same_action_retry",
+        "family": "result_body",
+        "required_evidence_owner": "rejection_liveness_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "repair_path",
+        "cell_id": "result_body.corrected_retry",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "corrected_retry",
+        "family": "result_body",
+        "required_evidence_owner": "rejection_liveness_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "flowguard_report.missing_field",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "missing_field",
+        "family": "flowguard_report",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "flowguard_report.missing_body",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "missing_body",
+        "family": "flowguard_report",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "flowguard_report.missing_path",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "missing_path",
+        "family": "flowguard_report",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "flowguard_report.missing_hash",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "missing_hash",
+        "family": "flowguard_report",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "flowguard_report.wrong_owner",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "wrong_owner",
+        "family": "flowguard_report",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "flowguard_report.wrong_id",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "wrong_id",
+        "family": "flowguard_report",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "flowguard_report.unsupported_enum",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "unsupported_enum",
+        "family": "flowguard_report",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "flowguard_report.stale_evidence",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "stale_evidence",
+        "family": "flowguard_report",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "flowguard_report.prose_only_critical_content",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "prose_only_critical_content",
+        "family": "flowguard_report",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "flowguard_report.contradictory_pass_blocker",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "contradictory_pass_blocker",
+        "family": "flowguard_report",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "flowguard_report.same_payload_retry",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "same_payload_retry",
+        "family": "flowguard_report",
+        "required_evidence_owner": "rejection_liveness_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "flowguard_report.same_action_retry",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "same_action_retry",
+        "family": "flowguard_report",
+        "required_evidence_owner": "rejection_liveness_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "repair_path",
+        "cell_id": "flowguard_report.corrected_retry",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "corrected_retry",
+        "family": "flowguard_report",
+        "required_evidence_owner": "rejection_liveness_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "reviewer_report.missing_field",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "missing_field",
+        "family": "reviewer_report",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "reviewer_report.missing_body",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "missing_body",
+        "family": "reviewer_report",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "reviewer_report.missing_path",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "missing_path",
+        "family": "reviewer_report",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "reviewer_report.missing_hash",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "missing_hash",
+        "family": "reviewer_report",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "reviewer_report.wrong_owner",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "wrong_owner",
+        "family": "reviewer_report",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "reviewer_report.wrong_id",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "wrong_id",
+        "family": "reviewer_report",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "reviewer_report.unsupported_enum",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "unsupported_enum",
+        "family": "reviewer_report",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "reviewer_report.stale_evidence",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "stale_evidence",
+        "family": "reviewer_report",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "reviewer_report.prose_only_critical_content",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "prose_only_critical_content",
+        "family": "reviewer_report",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "reviewer_report.contradictory_pass_blocker",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "contradictory_pass_blocker",
+        "family": "reviewer_report",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "reviewer_report.same_payload_retry",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "same_payload_retry",
+        "family": "reviewer_report",
+        "required_evidence_owner": "rejection_liveness_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "reviewer_report.same_action_retry",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "same_action_retry",
+        "family": "reviewer_report",
+        "required_evidence_owner": "rejection_liveness_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "repair_path",
+        "cell_id": "reviewer_report.corrected_retry",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "corrected_retry",
+        "family": "reviewer_report",
+        "required_evidence_owner": "rejection_liveness_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "pm_repair_decision.missing_field",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "missing_field",
+        "family": "pm_repair_decision",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "pm_repair_decision.missing_body",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "missing_body",
+        "family": "pm_repair_decision",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "pm_repair_decision.missing_path",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "missing_path",
+        "family": "pm_repair_decision",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "pm_repair_decision.missing_hash",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "missing_hash",
+        "family": "pm_repair_decision",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "pm_repair_decision.wrong_owner",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "wrong_owner",
+        "family": "pm_repair_decision",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "pm_repair_decision.wrong_id",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "wrong_id",
+        "family": "pm_repair_decision",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "pm_repair_decision.unsupported_enum",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "unsupported_enum",
+        "family": "pm_repair_decision",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "pm_repair_decision.stale_evidence",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "stale_evidence",
+        "family": "pm_repair_decision",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "pm_repair_decision.prose_only_critical_content",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "prose_only_critical_content",
+        "family": "pm_repair_decision",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "pm_repair_decision.contradictory_pass_blocker",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "contradictory_pass_blocker",
+        "family": "pm_repair_decision",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "pm_repair_decision.same_payload_retry",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "same_payload_retry",
+        "family": "pm_repair_decision",
+        "required_evidence_owner": "rejection_liveness_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "pm_repair_decision.same_action_retry",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "same_action_retry",
+        "family": "pm_repair_decision",
+        "required_evidence_owner": "rejection_liveness_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "repair_path",
+        "cell_id": "pm_repair_decision.corrected_retry",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "corrected_retry",
+        "family": "pm_repair_decision",
+        "required_evidence_owner": "rejection_liveness_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "route_mutation.missing_field",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "missing_field",
+        "family": "route_mutation",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "route_mutation.missing_body",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "missing_body",
+        "family": "route_mutation",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "route_mutation.missing_path",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "missing_path",
+        "family": "route_mutation",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "route_mutation.missing_hash",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "missing_hash",
+        "family": "route_mutation",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "route_mutation.wrong_owner",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "wrong_owner",
+        "family": "route_mutation",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "route_mutation.wrong_id",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "wrong_id",
+        "family": "route_mutation",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "route_mutation.unsupported_enum",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "unsupported_enum",
+        "family": "route_mutation",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "route_mutation.stale_evidence",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "stale_evidence",
+        "family": "route_mutation",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "route_mutation.prose_only_critical_content",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "prose_only_critical_content",
+        "family": "route_mutation",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "route_mutation.contradictory_pass_blocker",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "contradictory_pass_blocker",
+        "family": "route_mutation",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "route_mutation.same_payload_retry",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "same_payload_retry",
+        "family": "route_mutation",
+        "required_evidence_owner": "rejection_liveness_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "route_mutation.same_action_retry",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "same_action_retry",
+        "family": "route_mutation",
+        "required_evidence_owner": "rejection_liveness_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "repair_path",
+        "cell_id": "route_mutation.corrected_retry",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "corrected_retry",
+        "family": "route_mutation",
+        "required_evidence_owner": "rejection_liveness_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "terminal_replay.missing_field",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "missing_field",
+        "family": "terminal_replay",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "terminal_replay.missing_body",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "missing_body",
+        "family": "terminal_replay",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "terminal_replay.missing_path",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "missing_path",
+        "family": "terminal_replay",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "terminal_replay.missing_hash",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "missing_hash",
+        "family": "terminal_replay",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "terminal_replay.wrong_owner",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "wrong_owner",
+        "family": "terminal_replay",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "terminal_replay.wrong_id",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "wrong_id",
+        "family": "terminal_replay",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "terminal_replay.unsupported_enum",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "unsupported_enum",
+        "family": "terminal_replay",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "terminal_replay.stale_evidence",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "stale_evidence",
+        "family": "terminal_replay",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "terminal_replay.prose_only_critical_content",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "prose_only_critical_content",
+        "family": "terminal_replay",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "terminal_replay.contradictory_pass_blocker",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "contradictory_pass_blocker",
+        "family": "terminal_replay",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "terminal_replay.same_payload_retry",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "same_payload_retry",
+        "family": "terminal_replay",
+        "required_evidence_owner": "rejection_liveness_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "terminal_replay.same_action_retry",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "same_action_retry",
+        "family": "terminal_replay",
+        "required_evidence_owner": "rejection_liveness_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "repair_path",
+        "cell_id": "terminal_replay.corrected_retry",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "corrected_retry",
+        "family": "terminal_replay",
+        "required_evidence_owner": "rejection_liveness_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "acceptance_item.missing_field",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "missing_field",
+        "family": "acceptance_item",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "acceptance_item.missing_body",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "missing_body",
+        "family": "acceptance_item",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "acceptance_item.missing_path",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "missing_path",
+        "family": "acceptance_item",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "acceptance_item.missing_hash",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "missing_hash",
+        "family": "acceptance_item",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "acceptance_item.wrong_owner",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "wrong_owner",
+        "family": "acceptance_item",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "acceptance_item.wrong_id",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "wrong_id",
+        "family": "acceptance_item",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "acceptance_item.unsupported_enum",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "unsupported_enum",
+        "family": "acceptance_item",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "acceptance_item.stale_evidence",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "stale_evidence",
+        "family": "acceptance_item",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "acceptance_item.prose_only_critical_content",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "prose_only_critical_content",
+        "family": "acceptance_item",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "acceptance_item.contradictory_pass_blocker",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "contradictory_pass_blocker",
+        "family": "acceptance_item",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "acceptance_item.same_payload_retry",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "same_payload_retry",
+        "family": "acceptance_item",
+        "required_evidence_owner": "rejection_liveness_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "acceptance_item.same_action_retry",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "same_action_retry",
+        "family": "acceptance_item",
+        "required_evidence_owner": "rejection_liveness_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "repair_path",
+        "cell_id": "acceptance_item.corrected_retry",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "corrected_retry",
+        "family": "acceptance_item",
+        "required_evidence_owner": "rejection_liveness_fake_ai_matrix"
+      }
+    ],
+    "sample_cells": [
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "startup_intake.missing_field",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "missing_field",
+        "family": "startup_intake",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "startup_intake.missing_body",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "missing_body",
+        "family": "startup_intake",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "startup_intake.missing_path",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "missing_path",
+        "family": "startup_intake",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "startup_intake.missing_hash",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "missing_hash",
+        "family": "startup_intake",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "startup_intake.wrong_owner",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "wrong_owner",
+        "family": "startup_intake",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "startup_intake.wrong_id",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "wrong_id",
+        "family": "startup_intake",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "startup_intake.unsupported_enum",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "unsupported_enum",
+        "family": "startup_intake",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "startup_intake.stale_evidence",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "stale_evidence",
+        "family": "startup_intake",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "startup_intake.prose_only_critical_content",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "prose_only_critical_content",
+        "family": "startup_intake",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "startup_intake.contradictory_pass_blocker",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "contradictory_pass_blocker",
+        "family": "startup_intake",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "startup_intake.same_payload_retry",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "same_payload_retry",
+        "family": "startup_intake",
+        "required_evidence_owner": "rejection_liveness_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "startup_intake.same_action_retry",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "same_action_retry",
+        "family": "startup_intake",
+        "required_evidence_owner": "rejection_liveness_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "repair_path",
+        "cell_id": "startup_intake.corrected_retry",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "corrected_retry",
+        "family": "startup_intake",
+        "required_evidence_owner": "rejection_liveness_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "packet_envelope.missing_field",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "missing_field",
+        "family": "packet_envelope",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "packet_envelope.missing_body",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "missing_body",
+        "family": "packet_envelope",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "packet_envelope.missing_path",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "missing_path",
+        "family": "packet_envelope",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "packet_envelope.missing_hash",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "missing_hash",
+        "family": "packet_envelope",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "packet_envelope.wrong_owner",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "wrong_owner",
+        "family": "packet_envelope",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "packet_envelope.wrong_id",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "wrong_id",
+        "family": "packet_envelope",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      },
+      {
+        "branch_kind": "negative_path",
+        "cell_id": "packet_envelope.unsupported_enum",
+        "confidence_boundary": "contract_bound_control_flow",
+        "defect_class": "unsupported_enum",
+        "family": "packet_envelope",
+        "required_evidence_owner": "rejection_liveness_contract_matrix"
+      }
+    ]
+  },
+  "result_type": "flowpilot_rejection_liveness_matrix",
+  "test_mesh": {
+    "child_suites": {
+      "rejection_liveness_contract_matrix": {
+        "coverage_boundary": "contract_bound_control_flow",
+        "evidence_current": true,
+        "layer": "leaf_matrix_cell",
+        "owned_cell_count": 110,
+        "result_status": "passed"
+      },
+      "rejection_liveness_fake_ai_matrix": {
+        "coverage_boundary": "synthetic_non_live_control_flow",
+        "evidence_current": true,
+        "layer": "artifact_payload",
+        "owned_cell_count": 33,
+        "result_status": "passed"
+      },
+      "rejection_liveness_live_projection": {
+        "coverage_boundary": "metadata_only_live_projection",
+        "evidence_current": true,
+        "layer": "live_current_projection",
+        "owned_cell_count": 2,
+        "result_status": "passed"
+      }
+    },
+    "missing_or_stale_child_suites": [],
+    "ok": true,
+    "parent_gate": "flowpilot_rejection_liveness_testmesh",
+    "release_scope": {
+      "release_confidence_claimed": false,
+      "release_evidence_required": false
+    },
+    "required_cell_count": 143,
+    "routine_scope": "routine"
+  }
+}

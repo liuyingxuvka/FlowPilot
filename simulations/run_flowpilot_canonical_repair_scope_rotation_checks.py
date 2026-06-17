@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from flowguard import Explorer
+from flowguard.explorer import Explorer
 
 try:  # pragma: no cover
     from . import flowpilot_canonical_repair_scope_rotation_model as model
@@ -86,7 +86,18 @@ def _model_test_alignment_report() -> dict[str, Any]:
         "removed_decision_negative_test": "test_removed_pm_repair_decisions_are_rejected" in core_test_text,
         "fresh_packet_gate": "fresh repair packet does not exist" in runtime_text,
         "current_scope_replacement_test": "test_pm_disposition_repair_current_scope_creates_replacement_node" in high_standard_test_text,
-        "parent_scope_replacement_test": "test_pm_repair_parent_scope_replaces_parent_and_descendants" in high_standard_test_text,
+        "parent_scope_replacement_test": "test_pm_repair_parent_scope_replaces_parent_and_descendants_with_active_repair_children" in high_standard_test_text,
+        "parent_repair_contract_runtime": "repair_parent_scope_contract" in runtime_text,
+        "parent_repair_child_specs_runtime": "repair_child_specs" in runtime_text,
+        "parent_repair_inherited_history_runtime": "inherited_child_node_ids" in runtime_text
+        and "inherited_accepted_result_ids" in runtime_text,
+        "parent_repair_missing_contract_test": "test_pm_repair_parent_scope_requires_structured_repair_child_specs"
+        in high_standard_test_text,
+        "parent_repair_inherited_only_replay_test": "test_parent_repair_replay_rejects_inherited_history_without_current_child_result"
+        in high_standard_test_text,
+        "flowguard_subject_artifact_consumption_test": "test_flowguard_parent_repair_requires_subject_artifact_consumption"
+        in core_test_text,
+        "same_lineage_breakglass_runtime": "same_repair_lineage_problem_identity" in runtime_text,
         "route_redesign_test": "test_pm_redesign_route_repair_is_gated_before_application" in high_standard_test_text,
         "june3_regression_test": "test_june3_same_node_empty_fresh_packet_regression_is_rejected" in core_test_text,
         "pm_disposition_current_name": "repair_current_scope" in high_standard_test_text,

@@ -152,6 +152,58 @@ def _currentness_field_lifecycle_report(projections: tuple[FieldProjection, ...]
             disposition="current-contract",
             projection=projection_by_field["accepted_result_packets"],
         ),
+        FieldLifecycleRow(
+            field_id="route_authority_snapshot.legal_action_ids",
+            field_name="route_authority_snapshot.legal_action_ids",
+            locations=("skills/flowpilot/assets/flowpilot_router_route_frontier_policy_completion.py",),
+            group_id="route_authority_currentness",
+            role="derived_view",
+            lifecycle="derived_projection",
+            behavior_impacts=("route_action_selection", "wrong_path_rejection"),
+            reader_ids=("_require_legal_route_action", "_reject_route_authority_submission"),
+            writer_ids=("_route_authority_snapshot", "_legal_next_action_context"),
+            disposition="current-contract",
+            projection=projection_by_field["route_authority_snapshot.legal_action_ids"],
+        ),
+        FieldLifecycleRow(
+            field_id="route_authority_snapshot.current_owner",
+            field_name="route_authority_snapshot.current_owner",
+            locations=("skills/flowpilot/assets/flowpilot_router_route_frontier_policy_completion.py",),
+            group_id="route_authority_currentness",
+            role="derived_view",
+            lifecycle="derived_projection",
+            behavior_impacts=("single_authority", "role_overreach_rejection"),
+            reader_ids=("_route_authority_rejection_payload", "_write_route_authority_rejection_blocker"),
+            writer_ids=("_route_authority_snapshot", "_legal_next_action_context"),
+            disposition="current-contract",
+            projection=projection_by_field["route_authority_snapshot.current_owner"],
+        ),
+        FieldLifecycleRow(
+            field_id="route_authority_snapshot.required_repair_command",
+            field_name="route_authority_snapshot.required_repair_command",
+            locations=("skills/flowpilot/assets/flowpilot_router_route_frontier_policy_completion.py",),
+            group_id="route_authority_currentness",
+            role="derived_view",
+            lifecycle="derived_projection",
+            behavior_impacts=("repair_feedback", "corrected_retry"),
+            reader_ids=("_route_authority_rejection_payload", "_reject_route_authority_submission"),
+            writer_ids=("_route_authority_snapshot", "_legal_next_action_context"),
+            disposition="current-contract",
+            projection=projection_by_field["route_authority_snapshot.required_repair_command"],
+        ),
+        FieldLifecycleRow(
+            field_id="active_control_blocker.route_authority_rejection",
+            field_name="active_control_blocker.route_authority_rejection",
+            locations=("skills/flowpilot/assets/flowpilot_router_route_frontier_policy_completion.py",),
+            group_id="route_authority_currentness",
+            role="state_contract",
+            lifecycle="current_blocker_until_disposition",
+            behavior_impacts=("wrong_path_feedback", "fallback_rejection"),
+            reader_ids=("_control_blocker_summary", "_sync_control_plane_indexes"),
+            writer_ids=("_write_route_authority_rejection_blocker",),
+            disposition="current-contract",
+            projection=projection_by_field["active_control_blocker.route_authority_rejection"],
+        ),
     )
     plan = FieldLifecyclePlan(
         mesh_id="flowpilot_currentness_field_lifecycle",
@@ -177,6 +229,18 @@ def _currentness_field_lifecycle_report(projections: tuple[FieldProjection, ...]
                 field_ids=("active_packets", "accepted_result_packets", "closure_accepted_packets"),
                 owner_route="model_test_alignment",
                 rationale="Router active-packet views and final-closure accepted-evidence views are separate projections.",
+            ),
+            FieldLifecycleGroup(
+                group_id="route_authority_currentness",
+                boundary_kind="derived_route_authority_view",
+                field_ids=(
+                    "route_authority_snapshot.legal_action_ids",
+                    "route_authority_snapshot.current_owner",
+                    "route_authority_snapshot.required_repair_command",
+                    "active_control_blocker.route_authority_rejection",
+                ),
+                owner_route="model_test_alignment",
+                rationale="Route-authority fields derive from the current route action policy and active frontier, then become the single repair-feedback surface when a wrong path is rejected.",
             ),
         ),
         fields=fields,
@@ -407,7 +471,7 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 required_test_kinds=(NEGATIVE,),
             ),
             _obligation(
-                "packet_result_family.flowguard_evidence_consistency_before_reviewer",
+                "packet_result_family.flowguard_current_report_before_reviewer",
                 obligation_type="mechanical_consistency_contract",
                 description=(
                     "FlowGuard top-level passed status, contract self-check, "
@@ -418,29 +482,675 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 allow_shared_evidence=True,
                 allow_shared_implementation=True,
             ),
+            _obligation(
+                "packet_result_family.flowguard_artifact_hard_decision_before_reviewer",
+                obligation_type="artifact_payload_contract",
+                description=(
+                    "Packet-owned run-local flowguard_evidence.json hard decisions "
+                    "must be folded into FlowGuard result acceptance, work-order "
+                    "decision, and Reviewer evidence exposure."
+                ),
+                required_test_kinds=(HAPPY, NEGATIVE),
+                allow_shared_evidence=True,
+                allow_shared_implementation=True,
+            ),
+            _obligation(
+                "packet_result_family.flowguard_repair_blocker_identity_continuity",
+                obligation_type="field_identity_contract",
+                description=(
+                    "repair_blocker_id must stay continuous from repaired subject packet "
+                    "to FlowGuard packet, FlowGuard work order, and Reviewer manifest."
+                ),
+                required_test_kinds=(NEGATIVE, EDGE),
+                allow_shared_evidence=True,
+                allow_shared_implementation=True,
+            ),
+            _obligation(
+                "packet_result_family.flowguard_semantic_recheck_subject_bound",
+                obligation_type="external_result_contract_profile",
+                description=(
+                    "Blocker-bound FlowGuard rechecks must prove authorized subject-result "
+                    "consumption and subject-bound semantic coverage from the current packet's "
+                    "structured result contract profile binding, and reject shape-only or "
+                    "current-contract-only passes."
+                ),
+                required_test_kinds=(HAPPY, NEGATIVE),
+                allow_shared_evidence=True,
+                allow_shared_implementation=True,
+            ),
+            _obligation(
+                "packet_result_family.flowguard_semantic_recheck_ai_facing_projection",
+                obligation_type="ai_facing_contract_projection",
+                description=(
+                    "AI-facing FlowGuard semantic recheck packets must project the profile-bound "
+                    "required fields, finite allowed values, field type requirements, forbidden aliases, "
+                    "and minimal valid shape before the FlowGuard operator submits a result."
+                ),
+                required_test_kinds=(HAPPY, NEGATIVE),
+                allow_shared_evidence=True,
+                allow_shared_implementation=True,
+            ),
+            _obligation(
+                "packet_result_family.flowguard_semantic_recheck_corrected_retry_convergence",
+                obligation_type="fake_ai_repair_convergence",
+                description=(
+                    "Near-synonym or wrong finite-value semantic_recheck payloads must be rejected "
+                    "with current-contract feedback, then a corrected second-round payload must return "
+                    "to the ordinary accepted path without GlassBreak."
+                ),
+                required_test_kinds=(NEGATIVE, REPLAY),
+                allow_shared_evidence=True,
+                allow_shared_implementation=True,
+            ),
+            _obligation(
+                "packet_result_family.contract_driven_fake_ai_cartesian_retry",
+                obligation_type="contract_driven_fake_ai_cartesian_replay",
+                description=(
+                    "A deterministic fake-AI responder must read packet-local contracts, refuse to "
+                    "guess missing finite options, generate wrong-value rows for every visible "
+                    "allowed_value_options field, and repair each row from runtime's reissue feedback "
+                    "before the GlassBreak threshold."
+                ),
+                required_test_kinds=(NEGATIVE, REPLAY),
+                allow_shared_evidence=True,
+                allow_shared_implementation=True,
+            ),
+            _obligation(
+                "packet_result_family.sealed_body_related_context_reads",
+                obligation_type="authorized_body_read_contract",
+                description=(
+                    "Blocker, repair, review, and FlowGuard handoffs must authorize the assigned "
+                    "downstream role to open the blocker result body plus related upstream result "
+                    "bodies before submit."
+                ),
+                required_test_kinds=(HAPPY, NEGATIVE),
+                allow_shared_evidence=True,
+                allow_shared_implementation=True,
+            ),
+            _obligation(
+                "packet_result_family.pm_repair_evidence_obligation_lifecycle",
+                obligation_type="repair_obligation_contract",
+                description=(
+                    "PM repair packets must carry blocker-derived repair_evidence_obligations; "
+                    "PM results must disposition every obligation; repair packets and FlowGuard "
+                    "semantic rechecks must consume the resulting obligation context."
+                ),
+                required_test_kinds=(HAPPY, NEGATIVE),
+                allow_shared_evidence=True,
+                allow_shared_implementation=True,
+            ),
+            _obligation(
+                "packet_result_family.flowguard_reissue_preserves_current_evidence_policy",
+                obligation_type="field_lifecycle_contract",
+                description=(
+                    "Mechanical reissue of a FlowGuard packet must preserve blocker identity, "
+                    "semantic recheck fields, required subject artifacts, and evidence_output_policy "
+                    "while retargeting the evidence root to the fresh packet id."
+                ),
+                required_test_kinds=(NEGATIVE, EDGE),
+                allow_shared_evidence=True,
+                allow_shared_implementation=True,
+            ),
+            _obligation(
+                "packet_result_family.flowguard_reissue_preserves_required_authorized_result_reads",
+                obligation_type="field_lifecycle_contract",
+                description=(
+                    "All current FlowGuard reissue paths must preserve the source packet's "
+                    "required authorized result-body reads so the FlowGuard operator must open "
+                    "the same material before submitting the replacement result. Leaf obligations "
+                    "own the separate ordinary-reissue and semantic-recheck edge evidence."
+                ),
+                required_test_kinds=(NEGATIVE,),
+                allow_shared_evidence=True,
+                allow_shared_implementation=True,
+            ),
+            _obligation(
+                "packet_result_family.flowguard_standard_reissue_preserves_required_authorized_result_reads",
+                obligation_type="field_lifecycle_contract",
+                description=(
+                    "Ordinary mechanical FlowGuard reissue must copy required authorized "
+                    "result-body reads into the fresh envelope, body, and current handoff contract."
+                ),
+                required_test_kinds=(EDGE,),
+                allow_shared_evidence=True,
+                allow_shared_implementation=True,
+            ),
+            _obligation(
+                "packet_result_family.flowguard_semantic_recheck_reissue_preserves_required_authorized_result_reads",
+                obligation_type="field_lifecycle_contract",
+                description=(
+                    "Semantic-recheck FlowGuard reissue must preserve required authorized "
+                    "result-body reads while also retaining blocker-bound semantic recheck context."
+                ),
+                required_test_kinds=(EDGE,),
+                allow_shared_evidence=True,
+                allow_shared_implementation=True,
+            ),
+            _obligation(
+                "packet_result_family.review_handoff_blocks_empty_required_flowguard_manifest",
+                obligation_type="handoff_contract",
+                description=(
+                    "When a subject packet requires FlowGuard, Reviewer packets cannot be issued "
+                    "with an empty matching FlowGuard evidence manifest; runtime records a repairable "
+                    "control-plane blocker before review."
+                ),
+                required_test_kinds=(NEGATIVE,),
+                allow_shared_evidence=True,
+                allow_shared_implementation=True,
+            ),
+            _obligation(
+                "packet_result_family.repair_loop_glass_break_root_cause_identity",
+                obligation_type="liveness_contract",
+                description=(
+                    "Repeated no-delta repair blockers for the same FlowGuard evidence-chain root "
+                    "must count toward BreakGlass even when the surface gate changes."
+                ),
+                required_test_kinds=(NEGATIVE, REPLAY),
+                allow_shared_evidence=True,
+                allow_shared_implementation=True,
+            ),
+            _obligation(
+                "packet_result_family.historical_failure_families_have_normal_repair_routes",
+                obligation_type="historical_failure_contract",
+                description=(
+                    "Historical missing-body, missing-mail, wrong-address, stale-context, "
+                    "vanished-evidence, install split-brain, invalid repair-target, and repeated-blocker "
+                    "families must name a normal repair route before they can support confidence."
+                ),
+                required_test_kinds=(REPLAY,),
+                allow_shared_evidence=True,
+                allow_shared_implementation=True,
+            ),
+            _obligation(
+                "packet_result_family.glass_break_is_alarm_not_success_path",
+                obligation_type="liveness_contract",
+                description=(
+                    "BreakGlass must remain an alarm for unrepaired repeated blockers; accepted "
+                    "FlowPilot rehearsals cannot treat reaching BreakGlass as a successful path."
+                ),
+                required_test_kinds=(NEGATIVE, REPLAY),
+                allow_shared_evidence=True,
+                allow_shared_implementation=True,
+            ),
+            _obligation(
+                "packet_result_family.contract_exhaustion_matrix_owners_are_child_suites",
+                obligation_type="testmesh_handoff_contract",
+                description=(
+                    "Every required contract-exhaustion evidence owner emitted by the matrix "
+                    "must be registered as a current TestMesh child suite so generated rows "
+                    "cannot pass without downstream consumption."
+                ),
+                required_test_kinds=(REPLAY,),
+                allow_shared_evidence=True,
+                allow_shared_implementation=True,
+            ),
+            _obligation(
+                "packet_result_family.cartesian_control_plane_cells_have_oracles",
+                obligation_type="cartesian_exhaustion_contract",
+                description=(
+                    "Every declared control-plane material, mutation, handoff context, and "
+                    "downstream consumer combination must be either explicitly skipped with "
+                    "a reason or mapped to a current-contract repair oracle, evidence owner, "
+                    "and normal-vs-GlassBreak recovery expectation."
+                ),
+                required_test_kinds=(NEGATIVE, REPLAY),
+                allow_shared_evidence=True,
+                allow_shared_implementation=True,
+            ),
+            _obligation(
+                "packet_result_family.stage_evidence_matrix_all_families",
+                obligation_type="stage_evidence_contract",
+                description=(
+                    "Every current packet/result family has exactly one stage-evidence matrix row, "
+                    "and every generated packet handoff exposes that row in both envelope and body "
+                    "so roles know which evidence is due now and which evidence is future-stage only."
+                ),
+                required_test_kinds=(HAPPY, NEGATIVE, REPLAY),
+                allow_shared_evidence=True,
+                allow_shared_implementation=True,
+            ),
+            _obligation(
+                "packet_result_family.portable_runtime_self_check_receipt",
+                obligation_type="install_portability_contract",
+                description=(
+                    "FlowPilot start_run records an installed-skill runtime self-check receipt and "
+                    "must not require arbitrary target projects to contain FlowPilot development-repo "
+                    "simulation scripts."
+                ),
+                required_test_kinds=(HAPPY, NEGATIVE),
+                allow_shared_evidence=True,
+                allow_shared_implementation=True,
+            ),
         ),
         code_contracts=(
             _contract(
-                "packet_result_family.runtime.flowguard_evidence_consistency_gate",
+                "packet_result_family.runtime.stage_evidence_matrix",
+                path="skills/flowpilot/assets/flowpilot_core_runtime/packet_stage_evidence_matrix.py",
+                symbol="PACKET_STAGE_EVIDENCE_MATRIX",
+                implements=("packet_result_family.stage_evidence_matrix_all_families",),
+                external_inputs=("contract_family_id",),
+                external_outputs=("stage_evidence_row",),
+                state_reads=("packet_result_contract_family_id",),
+            ),
+            _contract(
+                "packet_result_family.runtime.current_handoff_stage_matrix",
                 path="skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
-                symbol="_flowguard_evidence_consistency_violation",
-                implements=("packet_result_family.flowguard_evidence_consistency_before_reviewer",),
-                external_inputs=("packet", "result"),
+                symbol="_build_current_handoff_contract",
+                implements=("packet_result_family.stage_evidence_matrix_all_families",),
+                external_inputs=("ledger", "packet_envelope", "authorized_result_reads"),
+                external_outputs=("current_handoff_contract.stage_evidence_matrix",),
+                state_reads=("packet_result_contract_family_id", "packet_stage_evidence_matrix"),
+                state_writes=("packet.envelope.current_handoff_contract", "packet.body.current_handoff_contract"),
+            ),
+            _contract(
+                "packet_result_family.runtime.flowguard_stage_matrix",
+                path="skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+                symbol="_ensure_flowguard_packet_for_task_result",
+                implements=("packet_result_family.stage_evidence_matrix_all_families",),
+                external_inputs=("ledger", "subject_packet", "subject_result"),
+                external_outputs=("flowguard_packet.subject_stage_evidence_matrix",),
+                state_reads=("subject_packet", "packet_stage_evidence_matrix"),
+                state_writes=("flowguard_packet",),
+            ),
+            _contract(
+                "packet_result_family.runtime.reviewer_stage_matrix",
+                path="skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+                symbol="_ensure_review_packet_for_task_result",
+                implements=("packet_result_family.stage_evidence_matrix_all_families",),
+                external_inputs=("ledger", "subject_packet_id"),
+                external_outputs=("review_packet.subject_stage_evidence_matrix",),
+                state_reads=("subject_packet", "packet_stage_evidence_matrix", "flowguard_manifest"),
+                state_writes=("review_packet",),
+            ),
+            _contract(
+                "packet_result_family.runtime.portable_self_check",
+                path="skills/flowpilot/assets/flowpilot_runtime_self_check.py",
+                symbol="runtime_self_check",
+                implements=("packet_result_family.portable_runtime_self_check_receipt",),
+                external_inputs=("assets_root",),
+                external_outputs=("runtime_self_check_receipt",),
+                state_reads=("installed_skill_assets", "flowguard_package"),
+            ),
+            _contract(
+                "packet_result_family.runtime.record_portable_self_check",
+                path="skills/flowpilot/assets/flowpilot_new_shared.py",
+                symbol="_record_runtime_self_check_receipt",
+                implements=("packet_result_family.portable_runtime_self_check_receipt",),
+                external_inputs=("run_shell",),
+                external_outputs=("run_root.runtime.flowpilot_runtime_self_check_receipt.json",),
+                state_writes=("ledger.flowpilot_runtime_self_check",),
+            ),
+            _contract(
+                "packet_result_family.runtime.flowguard_current_report_gate",
+                path="skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+                symbol="_flowguard_current_report_violation",
+                implements=(
+                    "packet_result_family.flowguard_current_report_before_reviewer",
+                    "packet_result_family.flowguard_artifact_hard_decision_before_reviewer",
+                    "packet_result_family.flowguard_semantic_recheck_subject_bound",
+                ),
+                external_inputs=("ledger", "packet", "result"),
                 external_outputs=("contract_check",),
-                state_reads=("flowguard_result_body",),
+                state_reads=("flowguard_result_body", "flowguard_evidence_artifact"),
+            ),
+            _contract(
+                "packet_result_family.runtime.flowguard_artifact_hard_decision",
+                path="skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+                symbol="_flowguard_packet_artifact_hard_decision",
+                implements=("packet_result_family.flowguard_artifact_hard_decision_before_reviewer",),
+                external_inputs=("ledger", "flowguard_packet"),
+                external_outputs=("hard_evidence_decision", "hard_evidence_source_path"),
+                state_reads=("run_root", "packet_body.evidence_output_policy"),
+            ),
+            _contract(
+                "packet_result_family.runtime.flowguard_semantic_recheck_gate",
+                path="skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+                symbol="_flowguard_semantic_recheck_contract_violation",
+                implements=(
+                    "packet_result_family.flowguard_semantic_recheck_subject_bound",
+                    "packet_result_family.pm_repair_evidence_obligation_lifecycle",
+                    "packet_result_family.flowguard_semantic_recheck_corrected_retry_convergence",
+                ),
+                external_inputs=("flowguard_packet", "flowguard_result_payload"),
+                external_outputs=("contract_check",),
+                state_reads=(
+                    "packet.envelope.result_contract_profile_bindings",
+                    "packet_body.semantic_recheck_contract.context_only",
+                    "flowguard_result.semantic_recheck",
+                ),
+            ),
+            _contract(
+                "packet_result_family.runtime.effective_result_contract_profiles",
+                path="skills/flowpilot/assets/flowpilot_core_runtime/packet_result_contracts.py",
+                symbol="effective_result_contract_from_envelope",
+                implements=("packet_result_family.flowguard_semantic_recheck_ai_facing_projection",),
+                external_inputs=("packet_envelope.result_contract_profile_ids", "packet_envelope.result_contract_profile_bindings"),
+                external_outputs=("effective_required_fields", "effective_allowed_value_options", "effective_minimal_valid_shape"),
+                state_reads=("packet_stage_evidence_matrix.RESULT_CONTRACT_PROFILES",),
+            ),
+            _contract(
+                "packet_result_family.runtime.current_handoff_result_profile_contract",
+                path="skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+                symbol="_build_current_handoff_contract",
+                implements=("packet_result_family.flowguard_semantic_recheck_ai_facing_projection",),
+                external_inputs=("ledger", "packet_envelope", "authorized_result_reads"),
+                external_outputs=("current_handoff_contract.required_report_contract",),
+                state_reads=("packet_envelope.result_contract_profile_bindings", "effective_result_contract"),
+                state_writes=("packet.envelope.current_handoff_contract", "packet.body.current_handoff_contract"),
+            ),
+            _contract(
+                "packet_result_family.runtime.current_contract_reissue_feedback",
+                path="skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+                symbol="_block_result_and_reissue_current_packet_family",
+                implements=(
+                    "packet_result_family.flowguard_semantic_recheck_ai_facing_projection",
+                    "packet_result_family.flowguard_semantic_recheck_corrected_retry_convergence",
+                ),
+                external_inputs=("blocked_packet", "blocked_result", "contract_check"),
+                external_outputs=("current_contract_reissue_packet.body"),
+                state_reads=("effective_result_contract", "contract_check.missing_required_fields", "contract_check.forbidden_fields_seen"),
+                state_writes=("fresh_packet.envelope.result_contract_profile_bindings", "fresh_packet.body.minimal_valid_shape"),
+            ),
+            _contract(
+                "packet_result_family.simulation.contract_driven_fake_ai_responder",
+                path="simulations/flowpilot_contract_driven_fake_ai.py",
+                symbol="ContractDrivenFakeAIResponder",
+                implements=(
+                    "packet_result_family.flowguard_semantic_recheck_ai_facing_projection",
+                    "packet_result_family.flowguard_semantic_recheck_corrected_retry_convergence",
+                    "packet_result_family.contract_driven_fake_ai_cartesian_retry",
+                ),
+                external_inputs=(
+                    "packet.body.current_handoff_contract.required_report_contract",
+                    "reissue_packet.body.allowed_value_options",
+                    "reissue_packet.body.minimal_valid_shape",
+                ),
+                external_outputs=("legal_payload", "invalid_allowed_value_payload", "repaired_payload"),
+                state_reads=("packet_local_contract_projection",),
+            ),
+            _contract(
+                "packet_result_family.runtime.blocker_related_authorized_reads",
+                path="skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+                symbol="_blocker_authorized_result_reads",
+                implements=("packet_result_family.sealed_body_related_context_reads",),
+                external_inputs=("ledger", "active_blocker"),
+                external_outputs=("authorized_result_reads",),
+                state_reads=("active_blocker.result_id", "active_blocker.target_result_id", "upstream_packet.authorized_result_reads"),
+                state_writes=("packet.envelope.authorized_result_reads", "packet.body.current_handoff_contract"),
+            ),
+            _contract(
+                "packet_result_family.runtime.pm_repair_obligation_disposition_gate",
+                path="skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+                symbol="_pm_repair_obligation_disposition_violation",
+                implements=("packet_result_family.pm_repair_evidence_obligation_lifecycle",),
+                external_inputs=("pm_repair_packet", "pm_repair_result_payload"),
+                external_outputs=("contract_check",),
+                state_reads=("pm_repair_packet.body.repair_evidence_obligations", "pm_repair_result.repair_obligation_disposition"),
+            ),
+            _contract(
+                "packet_result_family.runtime.repair_obligation_context_projection",
+                path="skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+                symbol="_attach_repair_obligation_context_to_packet",
+                implements=("packet_result_family.pm_repair_evidence_obligation_lifecycle",),
+                external_inputs=("ledger", "repair_packet", "active_blocker", "pm_repair_decision_id"),
+                external_outputs=("repair_packet_body"),
+                state_reads=("pm_repair_decision.repair_obligation_disposition",),
+                state_writes=("repair_packet.body.repair_obligation_context",),
+            ),
+            _contract(
+                "packet_result_family.runtime.flowguard_reissue_inherited_body_payload",
+                path="skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+                symbol="_flowguard_reissue_inherited_body_payload",
+                implements=("packet_result_family.flowguard_reissue_preserves_current_evidence_policy",),
+                external_inputs=("ledger", "blocked_flowguard_packet", "fresh_packet_id"),
+                external_outputs=("reissue_body_fields",),
+                state_reads=("blocked_flowguard_packet.body", "ledger.run_root"),
+                state_writes=("fresh_flowguard_packet.body.evidence_output_policy",),
+            ),
+            _contract(
+                "packet_result_family.runtime.flowguard_reissue_inherited_authorized_reads",
+                path="skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+                symbol="_flowguard_reissue_inherited_authorized_result_reads",
+                implements=(
+                    "packet_result_family.flowguard_reissue_preserves_required_authorized_result_reads",
+                    "packet_result_family.flowguard_standard_reissue_preserves_required_authorized_result_reads",
+                    "packet_result_family.flowguard_semantic_recheck_reissue_preserves_required_authorized_result_reads",
+                ),
+                external_inputs=("ledger", "blocked_flowguard_packet"),
+                external_outputs=("authorized_result_reads",),
+                state_reads=(
+                    "blocked_flowguard_packet.envelope.authorized_result_reads",
+                    "blocked_flowguard_packet.envelope.current_handoff_contract",
+                ),
+                state_writes=(
+                    "fresh_flowguard_packet.envelope.authorized_result_reads",
+                    "fresh_flowguard_packet.body.authorized_result_reads",
+                    "fresh_flowguard_packet.current_handoff_contract",
+                ),
+            ),
+            _contract(
+                "packet_result_family.runtime.flowguard_reissue_issue_task_packet_reads",
+                path="skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+                symbol="_block_result_and_reissue_current_packet_family",
+                implements=(
+                    "packet_result_family.flowguard_reissue_preserves_required_authorized_result_reads",
+                    "packet_result_family.flowguard_standard_reissue_preserves_required_authorized_result_reads",
+                    "packet_result_family.flowguard_semantic_recheck_reissue_preserves_required_authorized_result_reads",
+                ),
+                external_inputs=("ledger", "blocked_flowguard_packet", "mechanically_blocked_result"),
+                external_outputs=("fresh_flowguard_packet_id",),
+                state_reads=("reissue_authorized_result_reads",),
+                state_writes=("issue_task_packet.authorized_result_reads",),
+            ),
+            _contract(
+                "packet_result_family.runtime.flowguard_packet_issue_inherits_blocker",
+                path="skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+                symbol="_ensure_flowguard_packet_for_task_result",
+                implements=(
+                    "packet_result_family.flowguard_repair_blocker_identity_continuity",
+                    "packet_result_family.flowguard_semantic_recheck_subject_bound",
+                ),
+                external_inputs=("ledger", "subject_packet", "subject_result"),
+                external_outputs=("flowguard_packet_id",),
+                state_reads=("subject_packet.repair_blocker_id", "active_blockers"),
+                state_writes=(
+                    "flowguard_packet.repair_blocker_id",
+                    "flowguard_packet.envelope.result_contract_profile_ids",
+                    "flowguard_packet.envelope.result_contract_profile_bindings",
+                    "flowguard_packet.body.semantic_recheck_contract.context_only",
+                ),
+            ),
+            _contract(
+                "packet_result_family.runtime.repair_blocker_identity_formal_gate",
+                path="skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+                symbol="_formal_repair_identity_blockers",
+                implements=("packet_result_family.flowguard_repair_blocker_identity_continuity",),
+                external_inputs=("packet",),
+                external_outputs=("mechanical_blockers",),
+                state_reads=(
+                    "packet.repair_blocker_id",
+                    "packet.envelope.repair_blocker_id",
+                    "packet.body.current_handoff_contract",
+                ),
+            ),
+            _contract(
+                "packet_result_family.runtime.flowguard_work_order_hard_decision",
+                path="skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+                symbol="_record_flowguard_from_packet_result",
+                implements=(
+                    "packet_result_family.flowguard_artifact_hard_decision_before_reviewer",
+                    "packet_result_family.flowguard_repair_blocker_identity_continuity",
+                ),
+                external_inputs=("ledger", "flowguard_packet", "flowguard_result"),
+                external_outputs=("flowguard_work_order_id",),
+                state_reads=("flowguard_evidence_artifact", "flowguard_packet.repair_blocker_id"),
+                state_writes=("flowguard_work_order.decision", "flowguard_work_order.hard_evidence_decision", "flowguard_work_order.blocker_id"),
             ),
             _contract(
                 "packet_result_family.runtime.flowguard_review_handoff",
                 path="skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
                 symbol="_ensure_review_packet_for_task_result",
-                implements=("packet_result_family.flowguard_evidence_consistency_before_reviewer",),
+                implements=(
+                    "packet_result_family.flowguard_current_report_before_reviewer",
+                    "packet_result_family.flowguard_artifact_hard_decision_before_reviewer",
+                    "packet_result_family.flowguard_repair_blocker_identity_continuity",
+                ),
                 external_inputs=("ledger", "subject_packet_id"),
                 external_outputs=("review_packet_id",),
                 state_reads=("flowguard_work_orders", "flowguard_result"),
                 state_writes=("review_packet",),
             ),
+            _contract(
+                "packet_result_family.runtime.missing_flowguard_review_handoff_blocker",
+                path="skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+                symbol="_record_missing_matching_flowguard_review_handoff_blocker",
+                implements=("packet_result_family.review_handoff_blocks_empty_required_flowguard_manifest",),
+                external_inputs=("ledger", "subject_packet_id", "target_result_id"),
+                external_outputs=("blocker_id",),
+                state_reads=("subject_packet", "flowguard_work_orders"),
+                state_writes=("active_blockers", "pm_repair_decision_packet"),
+            ),
+            _contract(
+                "packet_result_family.runtime.repair_loop_root_cause_count",
+                path="skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+                symbol="_repair_loop_same_family_rows",
+                implements=("packet_result_family.repair_loop_glass_break_root_cause_identity",),
+                external_inputs=("ledger", "active_blocker"),
+                external_outputs=("same_root_cause_rows",),
+                state_reads=("active_blockers.root_cause_loop_key",),
+            ),
+            _contract(
+                "packet_result_family.model.contract_exhaustion_history_matrix",
+                path="simulations/flowpilot_contract_exhaustion_mesh_model.py",
+                symbol="HISTORICAL_FAILURE_FAMILIES",
+                implements=(
+                    "packet_result_family.historical_failure_families_have_normal_repair_routes",
+                    "packet_result_family.glass_break_is_alarm_not_success_path",
+                ),
+                external_inputs=("historical_failure_rows", "contract_exhaustion_cells"),
+                external_outputs=("historical_failure_repair_routes", "glass_break_alarm_boundary"),
+                state_reads=("known_friction_rows", "historical_replay_rows", "hard_gate_rows"),
+            ),
+            _contract(
+                "packet_result_family.runner.contract_exhaustion_test_mesh_owner_consumption",
+                path="simulations/run_flowpilot_contract_exhaustion_mesh_checks.py",
+                symbol="_test_mesh_report",
+                implements=("packet_result_family.contract_exhaustion_matrix_owners_are_child_suites",),
+                external_inputs=("required_contract_exhaustion_cells",),
+                external_outputs=("required_child_suite_owners", "child_suites", "unregistered_required_child_suites"),
+                state_reads=("required_evidence_owner",),
+            ),
+            _contract(
+                "packet_result_family.model.cartesian_control_plane_exhaustion_matrix",
+                path="simulations/flowpilot_cartesian_control_plane_exhaustion_model.py",
+                symbol="REQUIRED_CARTESIAN_CELLS",
+                implements=("packet_result_family.cartesian_control_plane_cells_have_oracles",),
+                external_inputs=("control_plane_boundaries", "mutation_alphabet", "handoff_contexts", "downstream_consumers"),
+                external_outputs=(
+                    "applicable_cartesian_cells",
+                    "skipped_cartesian_cells",
+                    "repair_oracles",
+                    "contract_combination_case_ids",
+                    "coverage_shard_ids",
+                    "coverage_receipt_ids",
+                ),
+                state_reads=("contract_exhaustion_bridge_cells", "historical_failure_bridge_cells"),
+            ),
+            _contract(
+                "packet_result_family.runner.cartesian_control_plane_owner_consumption",
+                path="simulations/run_flowpilot_cartesian_control_plane_exhaustion_checks.py",
+                symbol="_test_mesh_report",
+                implements=("packet_result_family.cartesian_control_plane_cells_have_oracles",),
+                external_inputs=("required_cartesian_cells", "native_contract_exhaustion_report"),
+                external_outputs=(
+                    "required_child_suite_owners",
+                    "child_suites",
+                    "required_coverage_shard_ids",
+                    "coverage_receipt_ids",
+                    "unregistered_required_child_suites",
+                ),
+                state_reads=(
+                    "required_evidence_owner",
+                    "expected_reaction",
+                    "normal_repair_context",
+                    "coverage_shard_id",
+                    "coverage_receipt_id",
+                ),
+            ),
         ),
         test_evidence=(
+            _evidence(
+                "packet_result_family.happy.stage_matrix_family_coverage",
+                test_name="test_stage_evidence_matrix_covers_every_packet_result_family",
+                path="tests/test_flowpilot_high_standard_control_flow.py",
+                command=(
+                    "python -m unittest "
+                    "tests.test_flowpilot_high_standard_control_flow."
+                    "FlowPilotHighStandardControlFlowTests."
+                    "test_stage_evidence_matrix_covers_every_packet_result_family"
+                ),
+                test_kind=HAPPY,
+                covers=("packet_result_family.stage_evidence_matrix_all_families",),
+                code_contracts=("packet_result_family.runtime.stage_evidence_matrix",),
+            ),
+            _evidence(
+                "packet_result_family.replay.stage_matrix_all_package_handoffs",
+                test_name="test_generated_packet_handoffs_include_stage_matrix_for_each_package_class",
+                path="tests/test_flowpilot_high_standard_control_flow.py",
+                command=(
+                    "python -m unittest "
+                    "tests.test_flowpilot_high_standard_control_flow."
+                    "FlowPilotHighStandardControlFlowTests."
+                    "test_generated_packet_handoffs_include_stage_matrix_for_each_package_class"
+                ),
+                test_kind=REPLAY,
+                covers=("packet_result_family.stage_evidence_matrix_all_families",),
+                code_contracts=(
+                    "packet_result_family.runtime.current_handoff_stage_matrix",
+                    "packet_result_family.runtime.flowguard_stage_matrix",
+                    "packet_result_family.runtime.reviewer_stage_matrix",
+                ),
+            ),
+            _evidence(
+                "packet_result_family.negative.preplanning_stage_not_final_evidence",
+                test_name="test_high_standard_flowguard_packet_uses_preplanning_stage_matrix",
+                path="tests/test_flowpilot_high_standard_control_flow.py",
+                command=(
+                    "python -m unittest "
+                    "tests.test_flowpilot_high_standard_control_flow."
+                    "FlowPilotHighStandardControlFlowTests."
+                    "test_high_standard_flowguard_packet_uses_preplanning_stage_matrix"
+                ),
+                test_kind=NEGATIVE,
+                covers=("packet_result_family.stage_evidence_matrix_all_families",),
+                code_contracts=("packet_result_family.runtime.flowguard_stage_matrix",),
+            ),
+            _evidence(
+                "packet_result_family.happy.portable_runtime_self_check_receipt",
+                test_name="test_start_run_records_portable_runtime_self_check_receipt",
+                path="tests/test_flowpilot_new_entrypoint.py",
+                command=(
+                    "python -m unittest "
+                    "tests.test_flowpilot_new_entrypoint.FlowPilotNewEntrypointTests."
+                    "test_start_run_records_portable_runtime_self_check_receipt"
+                ),
+                test_kind=HAPPY,
+                covers=("packet_result_family.portable_runtime_self_check_receipt",),
+                code_contracts=("packet_result_family.runtime.record_portable_self_check",),
+            ),
+            _evidence(
+                "packet_result_family.negative.portable_runtime_no_target_dev_script",
+                test_name="test_runtime_self_check_does_not_require_target_project_simulations",
+                path="tests/test_flowpilot_new_entrypoint.py",
+                command=(
+                    "python -m unittest "
+                    "tests.test_flowpilot_new_entrypoint.FlowPilotNewEntrypointTests."
+                    "test_runtime_self_check_does_not_require_target_project_simulations"
+                ),
+                test_kind=NEGATIVE,
+                covers=("packet_result_family.portable_runtime_self_check_receipt",),
+                code_contracts=("packet_result_family.runtime.portable_self_check",),
+            ),
             _evidence(
                 "packet_result_family.happy.material_scan_full",
                 test_name="test_material_scan_existing_results_reconcile_before_stale_wait",
@@ -543,9 +1253,9 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 path="tests/test_flowpilot_core_runtime.py",
                 command="python -m pytest tests/test_flowpilot_core_runtime.py -k test_review_packet_rejects_generic_decision_summary_result -q",
                 test_kind=HAPPY,
-                covers=("packet_result_family.flowguard_evidence_consistency_before_reviewer",),
+                covers=("packet_result_family.flowguard_current_report_before_reviewer",),
                 code_contracts=(
-                    "packet_result_family.runtime.flowguard_evidence_consistency_gate",
+                    "packet_result_family.runtime.flowguard_current_report_gate",
                     "packet_result_family.runtime.flowguard_review_handoff",
                 ),
             ),
@@ -555,30 +1265,348 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 path="tests/test_flowpilot_core_runtime.py",
                 command="python -m pytest tests/test_flowpilot_core_runtime.py -k test_flowguard_packet_rejects_failed_contract_self_check_without_reviewer -q",
                 test_kind=NEGATIVE,
-                covers=("packet_result_family.flowguard_evidence_consistency_before_reviewer",),
-                code_contracts=("packet_result_family.runtime.flowguard_evidence_consistency_gate",),
+                covers=("packet_result_family.flowguard_current_report_before_reviewer",),
+                code_contracts=("packet_result_family.runtime.flowguard_current_report_gate",),
             ),
             _evidence(
                 "packet_result_family.negative.flowguard_blocked_child_evidence",
-                test_name="test_flowguard_packet_rejects_blocked_child_evidence_without_reviewer",
+                test_name="test_flowguard_packet_rejects_deleted_evidence_consistency_field_without_reviewer",
                 path="tests/test_flowpilot_core_runtime.py",
-                command="python -m pytest tests/test_flowpilot_core_runtime.py -k test_flowguard_packet_rejects_blocked_child_evidence_without_reviewer -q",
+                command="python -m pytest tests/test_flowpilot_core_runtime.py -k test_flowguard_packet_rejects_deleted_evidence_consistency_field_without_reviewer -q",
                 test_kind=NEGATIVE,
-                covers=("packet_result_family.flowguard_evidence_consistency_before_reviewer",),
+                covers=("packet_result_family.flowguard_current_report_before_reviewer",),
                 code_contracts=(
-                    "packet_result_family.runtime.flowguard_evidence_consistency_gate",
+                    "packet_result_family.runtime.flowguard_current_report_gate",
                     "packet_result_family.runtime.flowguard_review_handoff",
                 ),
             ),
             _evidence(
-                "packet_result_family.replay.flowguard_consistent_block",
-                test_name="test_flowguard_packet_block_with_consistent_evidence_does_not_issue_reviewer",
+                "packet_result_family.negative.flowguard_artifact_missing_code_contract",
+                test_name="test_flowguard_packet_rejects_artifact_missing_code_contract_without_reviewer",
                 path="tests/test_flowpilot_core_runtime.py",
-                command="python -m pytest tests/test_flowpilot_core_runtime.py -k test_flowguard_packet_block_with_consistent_evidence_does_not_issue_reviewer -q",
-                test_kind=REPLAY,
-                covers=("packet_result_family.flowguard_evidence_consistency_before_reviewer",),
+                command="python -m pytest tests/test_flowpilot_core_runtime.py -k test_flowguard_packet_rejects_artifact_missing_code_contract_without_reviewer -q",
+                test_kind=NEGATIVE,
+                covers=(
+                    "packet_result_family.flowguard_artifact_hard_decision_before_reviewer",
+                    "packet_result_family.flowguard_current_report_before_reviewer",
+                ),
                 code_contracts=(
-                    "packet_result_family.runtime.flowguard_evidence_consistency_gate",
+                    "packet_result_family.runtime.flowguard_current_report_gate",
+                    "packet_result_family.runtime.flowguard_artifact_hard_decision",
+                    "packet_result_family.runtime.flowguard_work_order_hard_decision",
+                    "packet_result_family.runtime.flowguard_review_handoff",
+                ),
+            ),
+            _evidence(
+                "packet_result_family.negative.flowguard_missing_evidence_output_policy",
+                test_name="test_flowguard_packet_rejects_missing_evidence_output_policy",
+                path="tests/test_flowpilot_core_runtime.py",
+                command="python -m pytest tests/test_flowpilot_core_runtime.py -k test_flowguard_packet_rejects_missing_evidence_output_policy -q",
+                test_kind=NEGATIVE,
+                covers=(
+                    "packet_result_family.flowguard_current_report_before_reviewer",
+                    "packet_result_family.flowguard_reissue_preserves_current_evidence_policy",
+                ),
+                code_contracts=(
+                    "packet_result_family.runtime.flowguard_current_report_gate",
+                    "packet_result_family.runtime.flowguard_reissue_inherited_body_payload",
+                ),
+            ),
+            _evidence(
+                "packet_result_family.edge.flowguard_reissue_preserves_policy",
+                test_name="test_flowguard_fallback_evidence_is_mechanically_reissued",
+                path="tests/test_flowpilot_core_runtime.py",
+                command="python -m pytest tests/test_flowpilot_core_runtime.py -k test_flowguard_fallback_evidence_is_mechanically_reissued -q",
+                test_kind=EDGE,
+                covers=("packet_result_family.flowguard_reissue_preserves_current_evidence_policy",),
+                code_contracts=(
+                    "packet_result_family.runtime.flowguard_current_report_gate",
+                    "packet_result_family.runtime.flowguard_reissue_inherited_body_payload",
+                ),
+            ),
+            _evidence(
+                "packet_result_family.edge.flowguard_reissue_preserves_authorized_reads",
+                test_name="test_flowguard_reissue_inherits_required_authorized_result_reads",
+                path="tests/test_flowpilot_core_runtime.py",
+                command="python -m pytest tests/test_flowpilot_core_runtime.py -k test_flowguard_reissue_inherits_required_authorized_result_reads -q",
+                test_kind=EDGE,
+                covers=("packet_result_family.flowguard_standard_reissue_preserves_required_authorized_result_reads",),
+                code_contracts=(
+                    "packet_result_family.runtime.flowguard_reissue_inherited_authorized_reads",
+                    "packet_result_family.runtime.flowguard_reissue_issue_task_packet_reads",
+                ),
+            ),
+            _evidence(
+                "packet_result_family.edge.flowguard_semantic_recheck_reissue_preserves_authorized_reads",
+                test_name="test_flowguard_semantic_recheck_reissue_inherits_required_authorized_reads",
+                path="tests/test_flowpilot_core_runtime.py",
+                command="python -m pytest tests/test_flowpilot_core_runtime.py -k test_flowguard_semantic_recheck_reissue_inherits_required_authorized_reads -q",
+                test_kind=EDGE,
+                covers=(
+                    "packet_result_family.flowguard_semantic_recheck_subject_bound",
+                    "packet_result_family.flowguard_semantic_recheck_reissue_preserves_required_authorized_result_reads",
+                ),
+                code_contracts=(
+                    "packet_result_family.runtime.flowguard_semantic_recheck_gate",
+                    "packet_result_family.runtime.flowguard_reissue_inherited_authorized_reads",
+                    "packet_result_family.runtime.flowguard_reissue_issue_task_packet_reads",
+                ),
+            ),
+            _evidence(
+                "packet_result_family.negative.flowguard_reissue_requires_inherited_body_open",
+                test_name="test_reissued_flowguard_result_blocks_without_inherited_body_open",
+                path="tests/test_flowpilot_core_runtime.py",
+                command="python -m pytest tests/test_flowpilot_core_runtime.py -k test_reissued_flowguard_result_blocks_without_inherited_body_open -q",
+                test_kind=NEGATIVE,
+                covers=(
+                    "packet_result_family.flowguard_reissue_preserves_required_authorized_result_reads",
+                    "packet_result_family.sealed_body_related_context_reads",
+                ),
+                code_contracts=(
+                    "packet_result_family.runtime.flowguard_reissue_inherited_authorized_reads",
+                    "packet_result_family.runtime.flowguard_reissue_issue_task_packet_reads",
+                ),
+            ),
+            _evidence(
+                "packet_result_family.negative.empty_required_flowguard_manifest",
+                test_name="test_review_packet_is_not_issued_with_empty_required_flowguard_manifest",
+                path="tests/test_flowpilot_core_runtime.py",
+                command="python -m pytest tests/test_flowpilot_core_runtime.py -k test_review_packet_is_not_issued_with_empty_required_flowguard_manifest -q",
+                test_kind=NEGATIVE,
+                covers=(
+                    "packet_result_family.review_handoff_blocks_empty_required_flowguard_manifest",
+                    "packet_result_family.flowguard_current_report_before_reviewer",
+                ),
+                code_contracts=(
+                    "packet_result_family.runtime.flowguard_review_handoff",
+                    "packet_result_family.runtime.missing_flowguard_review_handoff_blocker",
+                ),
+            ),
+            _evidence(
+                "packet_result_family.negative.same_root_break_glass",
+                test_name="test_break_glass_counts_same_flowguard_root_cause_across_surface_gates",
+                path="tests/test_flowpilot_core_runtime.py",
+                command="python -m pytest tests/test_flowpilot_core_runtime.py -k test_break_glass_counts_same_flowguard_root_cause_across_surface_gates -q",
+                test_kind=NEGATIVE,
+                covers=("packet_result_family.repair_loop_glass_break_root_cause_identity",),
+                code_contracts=("packet_result_family.runtime.repair_loop_root_cause_count",),
+            ),
+            _evidence(
+                "packet_result_family.edge.flowguard_auto_recheck_inherits_blocker",
+                test_name="test_repair_task_flowguard_packet_inherits_blocker_identity",
+                path="tests/test_flowpilot_core_runtime.py",
+                command="python -m pytest tests/test_flowpilot_core_runtime.py -k test_repair_task_flowguard_packet_inherits_blocker_identity -q",
+                test_kind=EDGE,
+                covers=("packet_result_family.flowguard_repair_blocker_identity_continuity",),
+                code_contracts=("packet_result_family.runtime.flowguard_packet_issue_inherits_blocker",),
+            ),
+            _evidence(
+                "packet_result_family.edge.flowguard_explicit_recheck_inherits_blocker",
+                test_name="test_explicit_flowguard_action_inherits_repair_blocker_identity",
+                path="tests/test_flowpilot_core_runtime.py",
+                command="python -m pytest tests/test_flowpilot_core_runtime.py -k test_explicit_flowguard_action_inherits_repair_blocker_identity -q",
+                test_kind=HAPPY,
+                covers=("packet_result_family.flowguard_repair_blocker_identity_continuity",),
+                code_contracts=("packet_result_family.runtime.flowguard_packet_issue_inherits_blocker",),
+            ),
+            _evidence(
+                "packet_result_family.negative.repair_identity_mismatch_blocks",
+                test_name="test_formal_repair_identity_mismatch_is_runtime_mechanical_blocker",
+                path="tests/test_flowpilot_core_runtime.py",
+                command="python -m pytest tests/test_flowpilot_core_runtime.py -k test_formal_repair_identity_mismatch_is_runtime_mechanical_blocker -q",
+                test_kind=NEGATIVE,
+                covers=("packet_result_family.flowguard_repair_blocker_identity_continuity",),
+                code_contracts=("packet_result_family.runtime.repair_blocker_identity_formal_gate",),
+            ),
+            _evidence(
+                "packet_result_family.negative.flowguard_shape_only_semantic_recheck",
+                test_name="test_semantic_recheck_rejects_shape_only_flowguard_pass",
+                path="tests/test_flowpilot_core_runtime.py",
+                command="python -m pytest tests/test_flowpilot_core_runtime.py -k test_semantic_recheck_rejects_shape_only_flowguard_pass -q",
+                test_kind=NEGATIVE,
+                covers=("packet_result_family.flowguard_semantic_recheck_subject_bound",),
+                code_contracts=(
+                    "packet_result_family.runtime.flowguard_current_report_gate",
+                    "packet_result_family.runtime.flowguard_semantic_recheck_gate",
+                ),
+            ),
+            _evidence(
+                "packet_result_family.happy.flowguard_subject_bound_semantic_recheck",
+                test_name="test_semantic_recheck_subject_bound_flowguard_pass_reaches_reviewer",
+                path="tests/test_flowpilot_core_runtime.py",
+                command="python -m pytest tests/test_flowpilot_core_runtime.py -k test_semantic_recheck_subject_bound_flowguard_pass_reaches_reviewer -q",
+                test_kind=HAPPY,
+                covers=(
+                    "packet_result_family.flowguard_semantic_recheck_subject_bound",
+                    "packet_result_family.flowguard_artifact_hard_decision_before_reviewer",
+                    "packet_result_family.flowguard_repair_blocker_identity_continuity",
+                ),
+                code_contracts=(
+                    "packet_result_family.runtime.flowguard_current_report_gate",
+                    "packet_result_family.runtime.flowguard_artifact_hard_decision",
+                    "packet_result_family.runtime.flowguard_work_order_hard_decision",
+                    "packet_result_family.runtime.flowguard_review_handoff",
+                ),
+            ),
+            _evidence(
+                "packet_result_family.happy.flowguard_ai_contract_projection",
+                test_name="test_semantic_recheck_contract_projects_ai_facing_fields_and_options",
+                path="tests/test_flowpilot_ai_contract_projection.py",
+                command=(
+                    "python -m unittest tests.test_flowpilot_ai_contract_projection."
+                    "FlowPilotAIContractProjectionTests."
+                    "test_semantic_recheck_contract_projects_ai_facing_fields_and_options"
+                ),
+                test_kind=HAPPY,
+                covers=("packet_result_family.flowguard_semantic_recheck_ai_facing_projection",),
+                code_contracts=(
+                    "packet_result_family.runtime.effective_result_contract_profiles",
+                    "packet_result_family.runtime.current_handoff_result_profile_contract",
+                ),
+            ),
+            _evidence(
+                "packet_result_family.negative.flowguard_ai_contract_forbidden_alias_feedback",
+                test_name="test_semantic_recheck_near_synonyms_reissue_with_correct_minimal_shape",
+                path="tests/test_flowpilot_ai_contract_projection.py",
+                command=(
+                    "python -m unittest tests.test_flowpilot_ai_contract_projection."
+                    "FlowPilotAIContractProjectionTests."
+                    "test_semantic_recheck_near_synonyms_reissue_with_correct_minimal_shape"
+                ),
+                test_kind=NEGATIVE,
+                covers=(
+                    "packet_result_family.flowguard_semantic_recheck_ai_facing_projection",
+                    "packet_result_family.flowguard_semantic_recheck_corrected_retry_convergence",
+                ),
+                code_contracts=(
+                    "packet_result_family.runtime.flowguard_semantic_recheck_gate",
+                    "packet_result_family.runtime.current_contract_reissue_feedback",
+                ),
+            ),
+            _evidence(
+                "packet_result_family.replay.flowguard_ai_contract_corrected_retry",
+                test_name="test_semantic_recheck_wrong_value_then_corrected_retry_returns_to_legal_path",
+                path="tests/test_flowpilot_ai_contract_projection.py",
+                command=(
+                    "python -m unittest tests.test_flowpilot_ai_contract_projection."
+                    "FlowPilotAIContractProjectionTests."
+                    "test_semantic_recheck_wrong_value_then_corrected_retry_returns_to_legal_path"
+                ),
+                test_kind=REPLAY,
+                covers=("packet_result_family.flowguard_semantic_recheck_corrected_retry_convergence",),
+                code_contracts=(
+                    "packet_result_family.runtime.flowguard_semantic_recheck_gate",
+                    "packet_result_family.runtime.current_contract_reissue_feedback",
+                ),
+            ),
+            _evidence(
+                "packet_result_family.negative.contract_driven_fake_ai_missing_options",
+                test_name="test_contract_driven_fake_ai_refuses_to_guess_when_finite_options_are_missing",
+                path="tests/test_flowpilot_ai_contract_projection.py",
+                command=(
+                    "python -m unittest tests.test_flowpilot_ai_contract_projection."
+                    "FlowPilotAIContractProjectionTests."
+                    "test_contract_driven_fake_ai_refuses_to_guess_when_finite_options_are_missing"
+                ),
+                test_kind=NEGATIVE,
+                covers=(
+                    "packet_result_family.flowguard_semantic_recheck_ai_facing_projection",
+                    "packet_result_family.contract_driven_fake_ai_cartesian_retry",
+                ),
+                code_contracts=("packet_result_family.simulation.contract_driven_fake_ai_responder",),
+            ),
+            _evidence(
+                "packet_result_family.replay.contract_driven_fake_ai_cartesian_retry",
+                test_name="test_contract_driven_fake_ai_wrong_value_rows_repair_each_finite_option",
+                path="tests/test_flowpilot_ai_contract_projection.py",
+                command=(
+                    "python -m unittest tests.test_flowpilot_ai_contract_projection."
+                    "FlowPilotAIContractProjectionTests."
+                    "test_contract_driven_fake_ai_wrong_value_rows_repair_each_finite_option"
+                ),
+                test_kind=REPLAY,
+                covers=(
+                    "packet_result_family.flowguard_semantic_recheck_ai_facing_projection",
+                    "packet_result_family.flowguard_semantic_recheck_corrected_retry_convergence",
+                    "packet_result_family.contract_driven_fake_ai_cartesian_retry",
+                ),
+                code_contracts=(
+                    "packet_result_family.simulation.contract_driven_fake_ai_responder",
+                    "packet_result_family.runtime.current_contract_reissue_feedback",
+                ),
+            ),
+            _evidence(
+                "packet_result_family.happy.related_blocker_bodies_delivered_to_pm",
+                test_name="test_reviewer_required_repair_reaches_pm_repair_packet",
+                path="tests/test_flowpilot_core_runtime.py",
+                command="python -m pytest tests/test_flowpilot_core_runtime.py -k test_reviewer_required_repair_reaches_pm_repair_packet -q",
+                test_kind=HAPPY,
+                covers=("packet_result_family.sealed_body_related_context_reads",),
+                code_contracts=("packet_result_family.runtime.blocker_related_authorized_reads",),
+            ),
+            _evidence(
+                "packet_result_family.negative.related_blocker_bodies_must_be_opened",
+                test_name="test_pm_repair_decision_blocks_without_opening_all_related_bodies",
+                path="tests/test_flowpilot_core_runtime.py",
+                command="python -m pytest tests/test_flowpilot_core_runtime.py -k test_pm_repair_decision_blocks_without_opening_all_related_bodies -q",
+                test_kind=NEGATIVE,
+                covers=("packet_result_family.sealed_body_related_context_reads",),
+                code_contracts=("packet_result_family.runtime.blocker_related_authorized_reads",),
+            ),
+            _evidence(
+                "packet_result_family.happy.pm_repair_obligations_projected",
+                test_name="test_pm_repair_packet_projects_blocker_body_into_repair_obligations",
+                path="tests/test_flowpilot_core_runtime.py",
+                command="python -m pytest tests/test_flowpilot_core_runtime.py -k test_pm_repair_packet_projects_blocker_body_into_repair_obligations -q",
+                test_kind=HAPPY,
+                covers=(
+                    "packet_result_family.sealed_body_related_context_reads",
+                    "packet_result_family.pm_repair_evidence_obligation_lifecycle",
+                ),
+                code_contracts=(
+                    "packet_result_family.runtime.blocker_related_authorized_reads",
+                    "packet_result_family.runtime.pm_repair_obligation_disposition_gate",
+                ),
+            ),
+            _evidence(
+                "packet_result_family.negative.pm_repair_reason_only_obligation_loss",
+                test_name="test_pm_repair_decision_reason_only_is_rejected_when_obligations_exist",
+                path="tests/test_flowpilot_core_runtime.py",
+                command="python -m pytest tests/test_flowpilot_core_runtime.py -k test_pm_repair_decision_reason_only_is_rejected_when_obligations_exist -q",
+                test_kind=NEGATIVE,
+                covers=("packet_result_family.pm_repair_evidence_obligation_lifecycle",),
+                code_contracts=("packet_result_family.runtime.pm_repair_obligation_disposition_gate",),
+            ),
+            _evidence(
+                "packet_result_family.negative.pm_repair_stale_or_registry_only_obligation",
+                test_name="test_pm_repair_obligation_rejects_stale_or_registry_only_disposition",
+                path="tests/test_flowpilot_core_runtime.py",
+                command="python -m pytest tests/test_flowpilot_core_runtime.py -k test_pm_repair_obligation_rejects_stale_or_registry_only_disposition -q",
+                test_kind=NEGATIVE,
+                covers=("packet_result_family.pm_repair_evidence_obligation_lifecycle",),
+                code_contracts=("packet_result_family.runtime.pm_repair_obligation_disposition_gate",),
+            ),
+            _evidence(
+                "packet_result_family.negative.flowguard_missing_repair_obligation_consumption",
+                test_name="test_repair_packet_and_flowguard_recheck_must_consume_repair_obligations",
+                path="tests/test_flowpilot_core_runtime.py",
+                command="python -m pytest tests/test_flowpilot_core_runtime.py -k test_repair_packet_and_flowguard_recheck_must_consume_repair_obligations -q",
+                test_kind=NEGATIVE,
+                covers=("packet_result_family.pm_repair_evidence_obligation_lifecycle",),
+                code_contracts=(
+                    "packet_result_family.runtime.repair_obligation_context_projection",
+                    "packet_result_family.runtime.flowguard_semantic_recheck_gate",
+                ),
+            ),
+            _evidence(
+                "packet_result_family.replay.flowguard_consistent_block",
+                test_name="test_flowguard_packet_block_with_compact_blocker_does_not_issue_reviewer",
+                path="tests/test_flowpilot_core_runtime.py",
+                command="python -m pytest tests/test_flowpilot_core_runtime.py -k test_flowguard_packet_block_with_compact_blocker_does_not_issue_reviewer -q",
+                test_kind=REPLAY,
+                covers=("packet_result_family.flowguard_current_report_before_reviewer",),
+                code_contracts=(
+                    "packet_result_family.runtime.flowguard_current_report_gate",
                     "packet_result_family.runtime.flowguard_review_handoff",
                 ),
             ),
@@ -588,10 +1616,125 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 path="tests/test_flowpilot_new_entrypoint.py",
                 command="python -m pytest tests/test_flowpilot_new_entrypoint.py -k test_fake_end_to_end_flowguard_consistency_chaos_reissues_and_finishes -q",
                 test_kind=REPLAY,
-                covers=("packet_result_family.flowguard_evidence_consistency_before_reviewer",),
+                covers=("packet_result_family.flowguard_current_report_before_reviewer",),
                 code_contracts=(
-                    "packet_result_family.runtime.flowguard_evidence_consistency_gate",
+                    "packet_result_family.runtime.flowguard_current_report_gate",
                     "packet_result_family.runtime.flowguard_review_handoff",
+                ),
+            ),
+            _evidence(
+                "packet_result_family.replay.fake_e2e_flowguard_artifact_chaos",
+                test_name="test_fake_end_to_end_flowguard_artifact_chaos_reissues_and_finishes",
+                path="tests/test_flowpilot_new_entrypoint.py",
+                command="python -m pytest tests/test_flowpilot_new_entrypoint.py -k test_fake_end_to_end_flowguard_artifact_chaos_reissues_and_finishes -q",
+                test_kind=REPLAY,
+                covers=(
+                    "packet_result_family.flowguard_artifact_hard_decision_before_reviewer",
+                    "packet_result_family.flowguard_current_report_before_reviewer",
+                ),
+                code_contracts=(
+                    "packet_result_family.runtime.flowguard_current_report_gate",
+                    "packet_result_family.runtime.flowguard_artifact_hard_decision",
+                    "packet_result_family.runtime.flowguard_review_handoff",
+                ),
+            ),
+            _evidence(
+                "packet_result_family.replay.historical_skillguard_flowguard_artifact_block",
+                test_name="test_historical_skillguard_flowguard_artifact_block_is_not_authoritative",
+                path="tests/test_flowpilot_historical_live_run_replay.py",
+                command="python -m pytest tests/test_flowpilot_historical_live_run_replay.py -k test_historical_skillguard_flowguard_artifact_block_is_not_authoritative -q",
+                test_kind=REPLAY,
+                covers=(
+                    "packet_result_family.flowguard_artifact_hard_decision_before_reviewer",
+                    "packet_result_family.flowguard_current_report_before_reviewer",
+                ),
+                code_contracts=(
+                    "packet_result_family.runtime.flowguard_current_report_gate",
+                    "packet_result_family.runtime.flowguard_artifact_hard_decision",
+                    "packet_result_family.runtime.flowguard_review_handoff",
+                ),
+            ),
+            _evidence(
+                "packet_result_family.replay.contract_exhaustion_mesh",
+                test_name="test_contract_exhaustion_mesh_accepts_valid_and_rejects_hazards",
+                path="tests/test_flowpilot_contract_exhaustion_mesh.py",
+                command="python -m pytest tests/test_flowpilot_contract_exhaustion_mesh.py -q",
+                test_kind=REPLAY,
+                covers=(
+                    "packet_result_family.flowguard_reissue_preserves_current_evidence_policy",
+                    "packet_result_family.flowguard_reissue_preserves_required_authorized_result_reads",
+                    "packet_result_family.review_handoff_blocks_empty_required_flowguard_manifest",
+                    "packet_result_family.repair_loop_glass_break_root_cause_identity",
+                    "packet_result_family.glass_break_is_alarm_not_success_path",
+                ),
+                code_contracts=(
+                    "packet_result_family.runtime.flowguard_reissue_inherited_body_payload",
+                    "packet_result_family.runtime.flowguard_reissue_inherited_authorized_reads",
+                    "packet_result_family.runtime.flowguard_reissue_issue_task_packet_reads",
+                    "packet_result_family.runtime.missing_flowguard_review_handoff_blocker",
+                    "packet_result_family.runtime.repair_loop_root_cause_count",
+                    "packet_result_family.model.contract_exhaustion_history_matrix",
+                ),
+            ),
+            _evidence(
+                "packet_result_family.replay.contract_exhaustion_historical_failure_families",
+                test_name="test_historical_failure_families_require_normal_repair_before_glass_break",
+                path="tests/test_flowpilot_contract_exhaustion_mesh.py",
+                command="python -m pytest tests/test_flowpilot_contract_exhaustion_mesh.py -q",
+                test_kind=REPLAY,
+                covers=(
+                    "packet_result_family.historical_failure_families_have_normal_repair_routes",
+                    "packet_result_family.glass_break_is_alarm_not_success_path",
+                ),
+                code_contracts=(
+                    "packet_result_family.model.contract_exhaustion_history_matrix",
+                ),
+            ),
+            _evidence(
+                "packet_result_family.replay.contract_exhaustion_test_mesh_owner_consumption",
+                test_name="test_contract_exhaustion_test_mesh_registers_every_required_owner",
+                path="tests/test_flowpilot_contract_exhaustion_mesh.py",
+                command="python -m pytest tests/test_flowpilot_contract_exhaustion_mesh.py -q",
+                test_kind=REPLAY,
+                covers=("packet_result_family.contract_exhaustion_matrix_owners_are_child_suites",),
+                code_contracts=(
+                    "packet_result_family.runner.contract_exhaustion_test_mesh_owner_consumption",
+                ),
+            ),
+            _evidence(
+                "packet_result_family.negative.glass_break_alarm_not_success_path",
+                test_name="test_contract_exhaustion_mesh_accepts_valid_and_rejects_hazards",
+                path="tests/test_flowpilot_contract_exhaustion_mesh.py",
+                command="python -m pytest tests/test_flowpilot_contract_exhaustion_mesh.py -q",
+                test_kind=NEGATIVE,
+                covers=("packet_result_family.glass_break_is_alarm_not_success_path",),
+                code_contracts=(
+                    "packet_result_family.model.contract_exhaustion_history_matrix",
+                    "packet_result_family.runtime.repair_loop_root_cause_count",
+                ),
+            ),
+            _evidence(
+                "packet_result_family.replay.cartesian_control_plane_exhaustion",
+                test_name="test_cartesian_runner_accepts_valid_and_rejects_hazards",
+                path="tests/test_flowpilot_cartesian_control_plane_exhaustion.py",
+                command="python -m pytest tests/test_flowpilot_cartesian_control_plane_exhaustion.py -q",
+                test_kind=REPLAY,
+                covers=("packet_result_family.cartesian_control_plane_cells_have_oracles",),
+                code_contracts=(
+                    "packet_result_family.model.cartesian_control_plane_exhaustion_matrix",
+                    "packet_result_family.runner.cartesian_control_plane_owner_consumption",
+                ),
+            ),
+            _evidence(
+                "packet_result_family.negative.cartesian_normal_repair_not_glassbreak",
+                test_name="test_normal_repair_cells_never_expect_glassbreak",
+                path="tests/test_flowpilot_cartesian_control_plane_exhaustion.py",
+                command="python -m pytest tests/test_flowpilot_cartesian_control_plane_exhaustion.py -q",
+                test_kind=NEGATIVE,
+                covers=("packet_result_family.cartesian_control_plane_cells_have_oracles",),
+                code_contracts=(
+                    "packet_result_family.model.cartesian_control_plane_exhaustion_matrix",
+                    "packet_result_family.runner.cartesian_control_plane_owner_consumption",
                 ),
             ),
         ),
@@ -770,6 +1913,51 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
             error_paths=("stale_accepted_lease_not_detected", "stale_route_evidence_reused"),
             rationale="Accepted-result packet health checks must inspect active-route accepted-result authority without treating it as router-current work.",
         ),
+        _field_projection(
+            "field_lifecycle_currentness.route_authority_legal_actions_current",
+            field_id="route_authority_snapshot.legal_action_ids",
+            obligation_id="field_lifecycle_currentness.route_authority_legal_actions_current",
+            code_contract_id="field_lifecycle_currentness.runtime.route_authority_snapshot",
+            required_test_kinds=(HAPPY, NEGATIVE),
+            state_reads=("execution_frontier", "route_action_policy_registry", "route_nodes", "run_state.flags"),
+            side_effects=("legal_next_action_context",),
+            error_paths=("wrong_path", "unsupported_event_alias"),
+            rationale="Legal route-action ids must derive from the current frontier and policy registry, not from stale prompts or aliases.",
+        ),
+        _field_projection(
+            "field_lifecycle_currentness.route_authority_single_owner_current",
+            field_id="route_authority_snapshot.current_owner",
+            obligation_id="field_lifecycle_currentness.route_authority_single_owner_current",
+            code_contract_id="field_lifecycle_currentness.runtime.route_authority_snapshot",
+            required_test_kinds=(HAPPY, NEGATIVE),
+            state_reads=("route_action_policy_registry.owner_role", "route_action_policy_registry.actor_roles"),
+            side_effects=("single_authority_projection",),
+            error_paths=("owner_missing", "owner_conflict", "role_overreach"),
+            rationale="The current legal route action set must expose exactly one owner or block as owner_missing/owner_conflict.",
+        ),
+        _field_projection(
+            "field_lifecycle_currentness.route_authority_required_repair_command_current",
+            field_id="route_authority_snapshot.required_repair_command",
+            obligation_id="field_lifecycle_currentness.route_authority_required_repair_command_current",
+            code_contract_id="field_lifecycle_currentness.runtime.route_authority_snapshot",
+            required_test_kinds=(NEGATIVE, REPLAY),
+            state_reads=("route_action_policy_registry.required_repair_command",),
+            side_effects=("route_authority_rejection_feedback",),
+            error_paths=("wrong_path", "fallback_payload", "no_delta_retry"),
+            rationale="Rejected packages must receive the current legal repair command so the next package can change shape instead of looping.",
+        ),
+        _field_projection(
+            "field_lifecycle_currentness.route_authority_rejection_blocker_current",
+            field_id="active_control_blocker.route_authority_rejection",
+            obligation_id="field_lifecycle_currentness.route_authority_rejection_blocker_current",
+            code_contract_id="field_lifecycle_currentness.runtime.write_route_authority_rejection_blocker",
+            required_test_kinds=(NEGATIVE, REPLAY),
+            state_reads=("execution_frontier", "route_action_policy_registry", "run_state.flags"),
+            state_writes=("active_control_blocker", "control_blocker_artifact", "control_plane_indexes"),
+            side_effects=("control_blocker_written", "run_state_saved"),
+            error_paths=("wrong_path", "unsupported_payload_shape", "unsupported_event_alias"),
+            rationale="Wrong-path and fallback-like submissions become a current control blocker with structured route-authority feedback, not prose or alias translation.",
+        ),
     )
     currentness_field_lifecycle = ModelTestAlignmentPlan(
         model_id="field_lifecycle_currentness",
@@ -828,6 +2016,34 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 obligation_type="field_lifecycle",
                 description="Final return preflight derives active blocker targets from the current-effective blocker predicate, so accepted repair history cannot become current authority.",
                 required_test_kinds=(NEGATIVE,),
+                allow_shared_implementation=True,
+            ),
+            _obligation(
+                "field_lifecycle_currentness.route_authority_legal_actions_current",
+                obligation_type="field_lifecycle",
+                description="Route-authority legal action ids derive from the current frontier and route action policy registry.",
+                required_test_kinds=(HAPPY, NEGATIVE),
+                allow_shared_implementation=True,
+            ),
+            _obligation(
+                "field_lifecycle_currentness.route_authority_single_owner_current",
+                obligation_type="field_lifecycle",
+                description="Route-authority owner is a single current owner derived from legal action policy rows or blocks as owner_missing/owner_conflict.",
+                required_test_kinds=(HAPPY, NEGATIVE),
+                allow_shared_implementation=True,
+            ),
+            _obligation(
+                "field_lifecycle_currentness.route_authority_required_repair_command_current",
+                obligation_type="field_lifecycle",
+                description="Rejected route-authority packages expose a current required repair command that guides the next package shape.",
+                required_test_kinds=(NEGATIVE, REPLAY),
+                allow_shared_implementation=True,
+            ),
+            _obligation(
+                "field_lifecycle_currentness.route_authority_rejection_blocker_current",
+                obligation_type="field_lifecycle",
+                description="Wrong-path, old-alias, and fallback-like route submissions write a current structured route-authority rejection blocker.",
+                required_test_kinds=(NEGATIVE, REPLAY),
                 allow_shared_implementation=True,
             ),
         ),
@@ -911,6 +2127,33 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 state_reads=("active_blockers", "packets", "route_nodes", "active_route_version"),
                 state_writes=(),
                 side_effects=("final_return_preflight",),
+            ),
+            _contract(
+                "field_lifecycle_currentness.runtime.route_authority_snapshot",
+                path="skills/flowpilot/assets/flowpilot_router_route_frontier_policy_completion.py",
+                symbol="_route_authority_snapshot",
+                implements=(
+                    "field_lifecycle_currentness.route_authority_legal_actions_current",
+                    "field_lifecycle_currentness.route_authority_single_owner_current",
+                    "field_lifecycle_currentness.route_authority_required_repair_command_current",
+                ),
+                external_inputs=("policy_by_id", "frontier", "active_node_kind", "legal_ids", "blocking_reasons"),
+                external_outputs=("route_authority_snapshot",),
+                state_reads=("route_action_policy_registry", "execution_frontier"),
+                side_effects=("derived_projection",),
+                error_paths=("owner_missing", "owner_conflict"),
+            ),
+            _contract(
+                "field_lifecycle_currentness.runtime.write_route_authority_rejection_blocker",
+                path="skills/flowpilot/assets/flowpilot_router_route_frontier_policy_completion.py",
+                symbol="_write_route_authority_rejection_blocker",
+                implements=("field_lifecycle_currentness.route_authority_rejection_blocker_current",),
+                external_inputs=("rejected_action_id", "context", "rejected_event", "rejection_kind"),
+                external_outputs=("control_blocker",),
+                state_reads=("execution_frontier", "route_action_policy_registry"),
+                state_writes=("active_control_blocker", "control_blocker_artifact"),
+                side_effects=("control_blocker_written", "control_plane_indexes_synced", "run_state_saved"),
+                error_paths=("wrong_path", "unsupported_payload_shape", "unsupported_event_alias"),
             ),
         ),
         test_evidence=(
@@ -1043,6 +2286,50 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 covers=("field_lifecycle_currentness.final_preflight_active_blockers_use_current_effective",),
                 code_contracts=("field_lifecycle_currentness.runtime.current_target_preflight_blockers",),
             ),
+            _evidence(
+                "field_lifecycle_currentness.happy.route_authority_snapshot",
+                test_name="run_flowpilot_route_authority_singularity_checks",
+                path="simulations/run_flowpilot_route_authority_singularity_checks.py",
+                command="python simulations/run_flowpilot_route_authority_singularity_checks.py --json-out simulations/flowpilot_route_authority_singularity_results.json",
+                test_kind=HAPPY,
+                covers=(
+                    "field_lifecycle_currentness.route_authority_legal_actions_current",
+                    "field_lifecycle_currentness.route_authority_single_owner_current",
+                ),
+                code_contracts=("field_lifecycle_currentness.runtime.route_authority_snapshot",),
+            ),
+            _evidence(
+                "field_lifecycle_currentness.negative.route_authority_rejections",
+                test_name="RouteMutationParentBackwardRuntimeTests route-authority rejection tests",
+                path="tests/router_runtime/route_mutation_parent_backward.py",
+                command="python -m unittest tests.router_runtime.route_mutation_parent_backward.RouteMutationParentBackwardRuntimeTests",
+                test_kind=NEGATIVE,
+                covers=(
+                    "field_lifecycle_currentness.route_authority_legal_actions_current",
+                    "field_lifecycle_currentness.route_authority_single_owner_current",
+                    "field_lifecycle_currentness.route_authority_required_repair_command_current",
+                    "field_lifecycle_currentness.route_authority_rejection_blocker_current",
+                ),
+                code_contracts=(
+                    "field_lifecycle_currentness.runtime.route_authority_snapshot",
+                    "field_lifecycle_currentness.runtime.write_route_authority_rejection_blocker",
+                ),
+            ),
+            _evidence(
+                "field_lifecycle_currentness.replay.route_authority_corrected_retry",
+                test_name="test_route_authority_wrong_path_rejection_guides_corrected_retry_fake_package",
+                path="tests/test_flowpilot_synthetic_agent_trace_replay.py",
+                command="python -m unittest tests.test_flowpilot_synthetic_agent_trace_replay.FlowPilotSyntheticExceptionTraceReplayTests.test_route_authority_wrong_path_rejection_guides_corrected_retry_fake_package",
+                test_kind=REPLAY,
+                covers=(
+                    "field_lifecycle_currentness.route_authority_required_repair_command_current",
+                    "field_lifecycle_currentness.route_authority_rejection_blocker_current",
+                ),
+                code_contracts=(
+                    "field_lifecycle_currentness.runtime.route_authority_snapshot",
+                    "field_lifecycle_currentness.runtime.write_route_authority_rejection_blocker",
+                ),
+            ),
         ),
         field_lifecycle_reports=(_currentness_field_lifecycle_report(currentness_field_projections),),
         field_lifecycle_projections=currentness_field_projections,
@@ -1135,6 +2422,14 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 allow_shared_implementation=True,
             ),
             _obligation(
+                "terminal.supplemental_repair_contract",
+                obligation_type="invariant",
+                description="Terminal Reviewer gaps that continue repair require a PM supplemental repair contract, owner repair-node projection, existing gates, final ledger/matrix rows, terminal replay segments, and a hard three-round cap.",
+                required_test_kinds=(HAPPY, NEGATIVE),
+                allow_shared_evidence=True,
+                allow_shared_implementation=True,
+            ),
+            _obligation(
                 "resume.current_run_reentry",
                 obligation_type="transition",
                 description="Resume re-entry loads current-run state, frontier, packet ledger, daemon/owner state, role memory, and recovery evidence before PM work.",
@@ -1187,6 +2482,63 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 external_inputs=("packet", "result"),
                 external_outputs=("contract_check",),
                 state_reads=("packet.body.segment_targets", "result.body.segment_reviews"),
+            ),
+            _contract(
+                "terminal.runtime.terminal_replay_current_scope_repair_packet",
+                path="skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+                symbol="_issue_current_scope_repair_packet",
+                implements=("terminal.final_quality_current_evidence_gates", "terminal.supplemental_repair_contract"),
+                external_inputs=("ledger", "blocker", "decision_id"),
+                external_outputs=("packet_id",),
+                state_reads=("active_blockers", "final_route_wide_gate_ledger", "final_requirement_evidence_matrix"),
+                state_writes=("packets", "repair_transactions"),
+            ),
+            _contract(
+                "terminal.runtime.parse_supplemental_repair_contract",
+                path="skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+                symbol="_parse_terminal_supplemental_repair_contract_payload",
+                implements=("terminal.supplemental_repair_contract",),
+                external_inputs=("ledger", "packet", "payload", "decision", "route_plan"),
+                external_outputs=("supplemental_repair_contract"),
+                state_reads=("active_blockers", "contract_hash", "acceptance_item_registry", "route_nodes"),
+            ),
+            _contract(
+                "terminal.runtime.record_supplemental_repair_contract",
+                path="skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+                symbol="_record_terminal_supplemental_repair_contract",
+                implements=("terminal.supplemental_repair_contract",),
+                external_inputs=("ledger", "contract", "decision_id", "packet", "result"),
+                external_outputs=("terminal_supplemental_repair"),
+                state_reads=("supplemental_repair_contracts",),
+                state_writes=("terminal_supplemental_repair", "supplemental_repair_contracts", "terminal_backward_replay_id"),
+            ),
+            _contract(
+                "terminal.runtime.supplemental_repair_closure_rows",
+                path="skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+                symbol="_supplemental_repair_closure_rows",
+                implements=("terminal.supplemental_repair_contract",),
+                external_inputs=("ledger",),
+                external_outputs=("rows", "unresolved"),
+                state_reads=("supplemental_repair_contracts", "route_nodes", "validation_evidence", "reviews", "flowguard_work_orders"),
+            ),
+            _contract(
+                "terminal.runtime.supplemental_repair_exhaustion",
+                path="skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+                symbol="_record_terminal_supplemental_repair_exhausted",
+                implements=("terminal.supplemental_repair_contract",),
+                external_inputs=("ledger", "blocker", "result"),
+                external_outputs=("terminal_lifecycle"),
+                state_reads=("terminal_supplemental_repair", "active_blockers"),
+                state_writes=("terminal_supplemental_repair", "terminal_lifecycle"),
+            ),
+            _contract(
+                "terminal.runtime.router_final_ready_current_packet_priority",
+                path="skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+                symbol="router_next_action",
+                implements=("terminal.final_quality_current_evidence_gates",),
+                external_inputs=("ledger",),
+                external_outputs=("RuntimeAction",),
+                state_reads=("packets", "execution_frontier", "closure", "terminal_backward_replays"),
             ),
             _contract(
                 "terminal.runtime.closure_blockers",
@@ -1282,6 +2634,102 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 test_kind=NEGATIVE,
                 covers=("terminal.final_quality_current_evidence_gates",),
                 code_contracts=("terminal.runtime.terminal_backward_replay_result_contract",),
+            ),
+            _evidence(
+                "terminal.negative.terminal_replay_semantic_blocker",
+                test_name="test_terminal_replay_valid_block_records_semantic_blocker_not_mechanical_reissue",
+                path="tests/test_flowpilot_core_runtime.py",
+                command="python -m unittest tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_terminal_replay_valid_block_records_semantic_blocker_not_mechanical_reissue",
+                test_kind=NEGATIVE,
+                covers=("terminal.final_quality_current_evidence_gates",),
+                code_contracts=(
+                    "terminal.runtime.terminal_backward_replay_result_contract",
+                    "terminal.runtime.closure_blockers",
+                ),
+            ),
+            _evidence(
+                "terminal.negative.terminal_replay_repair_loop",
+                test_name="test_terminal_replay_repair_current_scope_preserves_targets_and_closes",
+                path="tests/test_flowpilot_core_runtime.py",
+                command="python -m unittest tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_terminal_replay_repair_current_scope_preserves_targets_and_closes",
+                test_kind=NEGATIVE,
+                covers=("terminal.final_quality_current_evidence_gates", "terminal.supplemental_repair_contract"),
+                code_contracts=(
+                    "terminal.runtime.terminal_backward_replay_result_contract",
+                    "terminal.runtime.terminal_replay_current_scope_repair_packet",
+                    "terminal.runtime.parse_supplemental_repair_contract",
+                    "terminal.runtime.record_supplemental_repair_contract",
+                    "terminal.runtime.supplemental_repair_closure_rows",
+                    "terminal.runtime.router_final_ready_current_packet_priority",
+                    "terminal.runtime.closure_blockers",
+                ),
+            ),
+            _evidence(
+                "terminal.negative.supplemental_contract_required",
+                test_name="test_terminal_pm_repair_for_terminal_gap_requires_supplemental_contract",
+                path="tests/test_flowpilot_core_runtime.py",
+                command="python -m unittest tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_terminal_pm_repair_for_terminal_gap_requires_supplemental_contract",
+                test_kind=NEGATIVE,
+                covers=("terminal.supplemental_repair_contract",),
+                code_contracts=("terminal.runtime.parse_supplemental_repair_contract",),
+            ),
+            _evidence(
+                "terminal.negative.supplemental_projection_blocks_ledgers",
+                test_name="test_supplemental_repair_item_projection_blocks_final_ledgers",
+                path="tests/test_flowpilot_core_runtime.py",
+                command="python -m unittest tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_supplemental_repair_item_projection_blocks_final_ledgers",
+                test_kind=NEGATIVE,
+                covers=("terminal.supplemental_repair_contract",),
+                code_contracts=(
+                    "terminal.runtime.supplemental_repair_closure_rows",
+                    "terminal.runtime.final_requirement_evidence_matrix",
+                    "terminal.runtime.closure_blockers",
+                ),
+            ),
+            _evidence(
+                "terminal.negative.supplemental_rounds_exhausted",
+                test_name="test_terminal_supplemental_repair_exhausts_after_third_round_without_pm_packet",
+                path="tests/test_flowpilot_core_runtime.py",
+                command="python -m unittest tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_terminal_supplemental_repair_exhausts_after_third_round_without_pm_packet",
+                test_kind=NEGATIVE,
+                covers=("terminal.supplemental_repair_contract",),
+                code_contracts=("terminal.runtime.supplemental_repair_exhaustion",),
+            ),
+            _evidence(
+                "terminal.happy.supplemental_repair_model",
+                test_name="run_flowpilot_terminal_supplemental_repair_checks",
+                path="simulations/run_flowpilot_terminal_supplemental_repair_checks.py",
+                command="python simulations/run_flowpilot_terminal_supplemental_repair_checks.py",
+                test_kind=HAPPY,
+                covers=("terminal.supplemental_repair_contract",),
+                code_contracts=(
+                    "terminal.runtime.parse_supplemental_repair_contract",
+                    "terminal.runtime.record_supplemental_repair_contract",
+                    "terminal.runtime.supplemental_repair_closure_rows",
+                    "terminal.runtime.supplemental_repair_exhaustion",
+                ),
+            ),
+            _evidence(
+                "terminal.negative.fake_e2e_terminal_replay_blocker",
+                test_name="test_fake_end_to_end_terminal_replay_blocker_records_semantic_blocker",
+                path="tests/test_flowpilot_new_entrypoint.py",
+                command="python -m unittest tests.test_flowpilot_new_entrypoint.FlowPilotNewEntrypointTests.test_fake_end_to_end_terminal_replay_blocker_records_semantic_blocker",
+                test_kind=NEGATIVE,
+                covers=("terminal.final_quality_current_evidence_gates",),
+            ),
+            _evidence(
+                "terminal.negative.fake_e2e_terminal_replay_repair_loop",
+                test_name="test_fake_end_to_end_terminal_replay_blocker_repairs_to_completion",
+                path="tests/test_flowpilot_new_entrypoint.py",
+                command="python -m unittest tests.test_flowpilot_new_entrypoint.FlowPilotNewEntrypointTests.test_fake_end_to_end_terminal_replay_blocker_repairs_to_completion",
+                test_kind=NEGATIVE,
+                covers=("terminal.final_quality_current_evidence_gates",),
+                code_contracts=(
+                    "terminal.runtime.terminal_backward_replay_result_contract",
+                    "terminal.runtime.terminal_replay_current_scope_repair_packet",
+                    "terminal.runtime.router_final_ready_current_packet_priority",
+                    "terminal.runtime.closure_blockers",
+                ),
             ),
             _evidence(
                 "resume.happy.loads_state",
@@ -2083,6 +3531,288 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
         ),
     )
 
+    rejection_liveness = ModelTestAlignmentPlan(
+        model_id="flowpilot_rejection_liveness_matrix",
+        obligations=(
+            _obligation(
+                "rejection_liveness.required_cell_ownership",
+                obligation_type="contract",
+                description="Every current-contract malformed-output family/defect cell has one test owner and no live-completion authority.",
+                required_test_kinds=(HAPPY, NEGATIVE),
+            ),
+            _obligation(
+                "rejection_liveness.no_delta_retry_feedback",
+                obligation_type="hazard",
+                description="No-delta fake-AI retries are treated as control-flow hazards unless the retry changes the missing field, body, owner, or legal repair shape.",
+                required_test_kinds=(NEGATIVE, REPLAY),
+            ),
+            _obligation(
+                "rejection_liveness.stuck_absorption",
+                obligation_type="invariant",
+                description="Once the lifecycle guard marks the same nonterminal action/event as stuck, later previews must keep it blocked until real progress changes the event count or action.",
+                required_test_kinds=(NEGATIVE, EDGE),
+            ),
+            _obligation(
+                "rejection_liveness.live_projection_blocks_repeated_action",
+                obligation_type="hazard",
+                description="Live current-run projection blocks repeated lifecycle actions that were not absorbed into control_plane_stuck.",
+                required_test_kinds=(NEGATIVE, EDGE),
+            ),
+            _obligation(
+                "rejection_liveness.synthetic_boundary",
+                obligation_type="contract",
+                description="Synthetic fake-AI rehearsals may prove control-flow behavior but cannot claim live semantic completion.",
+                required_test_kinds=(EDGE,),
+            ),
+        ),
+        test_evidence=(
+            _evidence(
+                "rejection_liveness.happy.model_matrix",
+                test_name="run_flowpilot_rejection_liveness_matrix_checks",
+                path="simulations/run_flowpilot_rejection_liveness_matrix_checks.py",
+                command="python simulations/run_flowpilot_rejection_liveness_matrix_checks.py --json-out simulations/flowpilot_rejection_liveness_matrix_results.json",
+                test_kind=HAPPY,
+                covers=("rejection_liveness.required_cell_ownership",),
+            ),
+            _evidence(
+                "rejection_liveness.negative.no_delta_model_matrix",
+                test_name="run_flowpilot_rejection_liveness_matrix_checks",
+                path="simulations/run_flowpilot_rejection_liveness_matrix_checks.py",
+                command="python simulations/run_flowpilot_rejection_liveness_matrix_checks.py --json-out simulations/flowpilot_rejection_liveness_matrix_results.json",
+                test_kind=NEGATIVE,
+                covers=("rejection_liveness.no_delta_retry_feedback",),
+            ),
+            _evidence(
+                "rejection_liveness.negative.required_cell_owners",
+                test_name="test_rejection_liveness_required_cells_have_owners",
+                path="tests/test_flowpilot_synthetic_agent_coverage_matrix.py",
+                command="python -m unittest tests.test_flowpilot_synthetic_agent_coverage_matrix",
+                test_kind=NEGATIVE,
+                covers=("rejection_liveness.required_cell_ownership",),
+            ),
+            _evidence(
+                "rejection_liveness.replay.no_delta_retry_matrix",
+                test_name="test_rejection_liveness_fake_ai_matrix_covers_no_delta_and_corrected_retry",
+                path="tests/test_flowpilot_synthetic_agent_trace_replay.py",
+                command="python -m unittest tests.test_flowpilot_synthetic_agent_trace_replay.FlowPilotSyntheticAgentTraceReplayTests.test_rejection_liveness_fake_ai_matrix_covers_no_delta_and_corrected_retry",
+                test_kind=REPLAY,
+                covers=("rejection_liveness.no_delta_retry_feedback", "rejection_liveness.synthetic_boundary"),
+            ),
+            _evidence(
+                "rejection_liveness.negative.stuck_absorption",
+                test_name="test_prior_stuck_decision_absorbs_same_action_until_progress_event",
+                path="tests/test_flowpilot_lifecycle_guard.py",
+                command="python -m unittest tests.test_flowpilot_lifecycle_guard.FlowPilotLifecycleGuardTests.test_prior_stuck_decision_absorbs_same_action_until_progress_event",
+                test_kind=NEGATIVE,
+                covers=("rejection_liveness.stuck_absorption",),
+            ),
+            _evidence(
+                "rejection_liveness.edge.stuck_absorption",
+                test_name="test_patrol_does_not_classify_repeated_role_dispatch_as_stuck",
+                path="tests/test_flowpilot_lifecycle_guard.py",
+                command="python -m unittest tests.test_flowpilot_lifecycle_guard.FlowPilotLifecycleGuardTests.test_patrol_does_not_classify_repeated_role_dispatch_as_stuck",
+                test_kind=EDGE,
+                covers=("rejection_liveness.stuck_absorption",),
+            ),
+            _evidence(
+                "rejection_liveness.negative.live_projection",
+                test_name="test_process_liveness_projection_blocks_unabsorbed_repeated_lifecycle_action",
+                path="tests/test_flowpilot_full_model_test_gap_closure.py",
+                command="python -m unittest tests.test_flowpilot_full_model_test_gap_closure.FlowPilotFullModelTestGapClosureTests.test_process_liveness_projection_blocks_unabsorbed_repeated_lifecycle_action",
+                test_kind=NEGATIVE,
+                covers=("rejection_liveness.live_projection_blocks_repeated_action",),
+            ),
+            _evidence(
+                "rejection_liveness.edge.synthetic_boundary",
+                test_name="test_synthetic_rows_are_non_live_and_backed_by_trace_tests",
+                path="tests/test_flowpilot_synthetic_agent_coverage_matrix.py",
+                command="python -m unittest tests.test_flowpilot_synthetic_agent_coverage_matrix",
+                test_kind=EDGE,
+                covers=("rejection_liveness.synthetic_boundary",),
+            ),
+            _evidence(
+                "rejection_liveness.edge.live_projection",
+                test_name="test_process_liveness_projection_blocks_unabsorbed_repeated_lifecycle_action",
+                path="tests/test_flowpilot_full_model_test_gap_closure.py",
+                command="python -m unittest tests.test_flowpilot_full_model_test_gap_closure.FlowPilotFullModelTestGapClosureTests.test_process_liveness_projection_blocks_unabsorbed_repeated_lifecycle_action",
+                test_kind=EDGE,
+                covers=("rejection_liveness.live_projection_blocks_repeated_action",),
+            ),
+        ),
+    )
+
+    route_authority = ModelTestAlignmentPlan(
+        model_id="flowpilot_route_authority_singularity",
+        obligations=(
+            _obligation(
+                "route_authority.single_owner_and_legal_action_visibility",
+                obligation_type="invariant",
+                description="Every current route-action decision exposes the single current owner, legal action ids, forbidden action ids, and required repair command from the route action policy registry.",
+                required_test_kinds=(HAPPY, NEGATIVE),
+                allow_shared_implementation=True,
+            ),
+            _obligation(
+                "route_authority.reject_wrong_path_alias_and_fallback",
+                obligation_type="hazard",
+                description="Wrong-path route actions, old event aliases, fallback/prose payload shapes, and role-overreach are rejected with structured route-authority feedback instead of being translated.",
+                required_test_kinds=(NEGATIVE, REPLAY),
+                allow_shared_implementation=True,
+            ),
+            _obligation(
+                "route_authority.corrected_retry_changes_packet_shape",
+                obligation_type="hazard",
+                description="After a route-authority rejection, a corrected retry must use the named legal repair command and change the package shape; repeated no-delta submissions remain blocked.",
+                required_test_kinds=(NEGATIVE, REPLAY),
+                allow_shared_implementation=True,
+            ),
+            _obligation(
+                "route_authority.parent_mesh_blocks_missing_or_conflicted_evidence",
+                obligation_type="contract",
+                description="ModelMesh treats missing route-authority model evidence, missing projection, owner conflicts, wrong-path acceptance, fallback acceptance, and no-delta repeat acceptance as blocking parent hazards.",
+                required_test_kinds=(HAPPY, NEGATIVE),
+                allow_shared_implementation=True,
+            ),
+            _obligation(
+                "route_authority.fake_ai_variant_matrix",
+                obligation_type="hazard",
+                description="Fake-AI route-authority variants cover wrong role, old aliases, fallback/prose payloads, missing feedback fields, and repeated no-delta submissions as separate modeled hazards.",
+                required_test_kinds=(REPLAY,),
+                allow_shared_implementation=True,
+            ),
+        ),
+        code_contracts=(
+            _contract(
+                "route_authority.runtime.snapshot",
+                path="skills/flowpilot/assets/flowpilot_router_route_frontier_policy_completion.py",
+                symbol="_route_authority_snapshot",
+                implements=("route_authority.single_owner_and_legal_action_visibility",),
+                external_inputs=("policy_by_id", "frontier", "active_node_kind", "legal_ids", "blocking_reasons"),
+                external_outputs=("route_authority_snapshot",),
+                state_reads=("execution_frontier", "route_action_policy_registry"),
+                side_effects=("legal_next_action_context",),
+                error_paths=("owner_missing", "owner_conflict"),
+            ),
+            _contract(
+                "route_authority.runtime.require_legal_action",
+                path="skills/flowpilot/assets/flowpilot_router_route_frontier_policy_completion.py",
+                symbol="_require_legal_route_action",
+                implements=(
+                    "route_authority.single_owner_and_legal_action_visibility",
+                    "route_authority.reject_wrong_path_alias_and_fallback",
+                ),
+                external_inputs=("action_id", "context"),
+                state_reads=("execution_frontier", "route_action_policy_registry", "run_state.flags"),
+                side_effects=("wrong_path_rejection",),
+                error_paths=("wrong_path",),
+            ),
+            _contract(
+                "route_authority.runtime.reject_submission",
+                path="skills/flowpilot/assets/flowpilot_router_route_frontier_policy_completion.py",
+                symbol="_reject_route_authority_submission",
+                implements=(
+                    "route_authority.reject_wrong_path_alias_and_fallback",
+                    "route_authority.corrected_retry_changes_packet_shape",
+                ),
+                external_inputs=("rejected_action_id", "context", "rejected_event", "rejection_kind"),
+                external_outputs=("RouterError", "control_blocker"),
+                state_reads=("execution_frontier", "route_action_policy_registry"),
+                state_writes=("active_control_blocker", "control_blocker_artifact"),
+                side_effects=("route_authority_rejection_blocker",),
+                error_paths=("wrong_path", "unsupported_event_alias", "unsupported_payload_shape"),
+            ),
+            _contract(
+                "route_authority.runtime.reject_unsupported_payload",
+                path="skills/flowpilot/assets/flowpilot_router_route_frontier_policy_completion.py",
+                symbol="_reject_unsupported_route_authority_payload",
+                implements=("route_authority.reject_wrong_path_alias_and_fallback",),
+                external_inputs=("event", "action_id", "payload"),
+                state_reads=("payload", "route_action_policy_registry"),
+                state_writes=("active_control_blocker",),
+                side_effects=("unsupported_payload_rejection",),
+                error_paths=("unsupported_payload_shape",),
+            ),
+        ),
+        test_evidence=(
+            _evidence(
+                "route_authority.happy.model_matrix",
+                test_name="run_flowpilot_route_authority_singularity_checks",
+                path="simulations/run_flowpilot_route_authority_singularity_checks.py",
+                command="python simulations/run_flowpilot_route_authority_singularity_checks.py --json-out simulations/flowpilot_route_authority_singularity_results.json",
+                test_kind=HAPPY,
+                covers=(
+                    "route_authority.single_owner_and_legal_action_visibility",
+                    "route_authority.parent_mesh_blocks_missing_or_conflicted_evidence",
+                ),
+                code_contracts=("route_authority.runtime.snapshot",),
+            ),
+            _evidence(
+                "route_authority.negative.model_matrix",
+                test_name="run_flowpilot_route_authority_singularity_checks",
+                path="simulations/run_flowpilot_route_authority_singularity_checks.py",
+                command="python simulations/run_flowpilot_route_authority_singularity_checks.py --json-out simulations/flowpilot_route_authority_singularity_results.json",
+                test_kind=NEGATIVE,
+                covers=("route_authority.corrected_retry_changes_packet_shape",),
+                code_contracts=(
+                    "route_authority.runtime.snapshot",
+                    "route_authority.runtime.reject_submission",
+                    "route_authority.runtime.reject_unsupported_payload",
+                ),
+            ),
+            _evidence(
+                "route_authority.replay.fake_ai_matrix_variants",
+                test_name="test_route_authority_fake_ai_matrix_covers_alias_fallback_no_delta_and_feedback",
+                path="tests/test_flowpilot_synthetic_agent_trace_replay.py",
+                command="python -m unittest tests.test_flowpilot_synthetic_agent_trace_replay.FlowPilotSyntheticAgentTraceReplayTests.test_route_authority_fake_ai_matrix_covers_alias_fallback_no_delta_and_feedback",
+                test_kind=REPLAY,
+                covers=("route_authority.fake_ai_variant_matrix",),
+                code_contracts=(
+                    "route_authority.runtime.snapshot",
+                    "route_authority.runtime.reject_submission",
+                    "route_authority.runtime.reject_unsupported_payload",
+                ),
+            ),
+            _evidence(
+                "route_authority.negative.runtime_rejections",
+                test_name="RouteMutationParentBackwardRuntimeTests route-authority rejection tests",
+                path="tests/router_runtime/route_mutation_parent_backward.py",
+                command="python -m unittest tests.router_runtime.route_mutation_parent_backward.RouteMutationParentBackwardRuntimeTests",
+                test_kind=NEGATIVE,
+                covers=(
+                    "route_authority.single_owner_and_legal_action_visibility",
+                    "route_authority.reject_wrong_path_alias_and_fallback",
+                ),
+                code_contracts=(
+                    "route_authority.runtime.require_legal_action",
+                    "route_authority.runtime.reject_submission",
+                    "route_authority.runtime.reject_unsupported_payload",
+                ),
+            ),
+            _evidence(
+                "route_authority.replay.corrected_retry",
+                test_name="test_route_authority_wrong_path_rejection_guides_corrected_retry_fake_package",
+                path="tests/test_flowpilot_synthetic_agent_trace_replay.py",
+                command="python -m unittest tests.test_flowpilot_synthetic_agent_trace_replay.FlowPilotSyntheticExceptionTraceReplayTests.test_route_authority_wrong_path_rejection_guides_corrected_retry_fake_package",
+                test_kind=REPLAY,
+                covers=(
+                    "route_authority.reject_wrong_path_alias_and_fallback",
+                    "route_authority.corrected_retry_changes_packet_shape",
+                ),
+                code_contracts=(
+                    "route_authority.runtime.require_legal_action",
+                    "route_authority.runtime.reject_submission",
+                ),
+            ),
+            _evidence(
+                "route_authority.negative.model_mesh_parent",
+                test_name="run_flowpilot_model_mesh_checks",
+                path="simulations/run_flowpilot_model_mesh_checks.py",
+                command="python simulations/run_flowpilot_model_mesh_checks.py --json-out simulations/flowpilot_model_mesh_results.json",
+                test_kind=NEGATIVE,
+                covers=("route_authority.parent_mesh_blocks_missing_or_conflicted_evidence",),
+            ),
+        ),
+    )
+
     startup = _with_runtime_path(startup, "startup")
     packet_card_ack = _with_runtime_path(packet_card_ack, "packet/card/ack")
     packet_result_family = _with_runtime_path(packet_result_family, "packet result family")
@@ -2094,6 +3824,8 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
     router_loop_daemon = _with_runtime_path(router_loop_daemon, "router loop/daemon")
     repair_transactions = _with_runtime_path(repair_transactions, "repair transactions")
     tiering = _with_runtime_path(tiering, "test tiering/slow-test contracts")
+    rejection_liveness = _with_runtime_path(rejection_liveness, "rejection/liveness matrix")
+    route_authority = _with_runtime_path(route_authority, "route authority singularity")
     meta_capability = _with_runtime_path(meta_capability, "meta/capability parents")
 
     return [
@@ -2203,6 +3935,35 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 "python simulations/run_flowpilot_slow_test_contract_checks.py",
             ),
             coverage_boundary="Test-tiering alignment covers test-plan mechanics and slow-test parent/child contracts, including progress-only background hazards.",
+        ),
+        _plan_entry(
+            "rejection/liveness matrix",
+            rejection_liveness,
+            model_checks=(
+                "python simulations/run_flowpilot_rejection_liveness_matrix_checks.py --json-out simulations/flowpilot_rejection_liveness_matrix_results.json",
+                "python simulations/flowpilot_synthetic_agent_coverage_matrix.py --json-out simulations/flowpilot_synthetic_agent_coverage_matrix_results.json",
+            ),
+            coverage_boundary=(
+                "Rejection/liveness alignment covers malformed current-contract packets, "
+                "fake-AI no-delta retries, stuck absorption, and live repeated-action "
+                "projection. Synthetic rows prove control flow only and never claim live "
+                "semantic completion."
+            ),
+        ),
+        _plan_entry(
+            "route authority singularity",
+            route_authority,
+            model_checks=(
+                "python simulations/run_flowpilot_route_authority_singularity_checks.py --json-out simulations/flowpilot_route_authority_singularity_results.json",
+                "python simulations/run_flowpilot_model_mesh_checks.py --json-out simulations/flowpilot_model_mesh_results.json",
+            ),
+            coverage_boundary=(
+                "Route-authority alignment covers current legal-action ownership, "
+                "wrong-path/alias/fallback rejection, required repair-command "
+                "feedback, corrected retry behavior, and ModelMesh parent hazards. "
+                "Synthetic replay proves control flow only and cannot claim live "
+                "semantic completion."
+            ),
         ),
         _plan_entry(
             "meta/capability parents",

@@ -36,6 +36,7 @@ def write_json_atomic(path: Path, payload: dict[str, Any], *, sort_keys: bool = 
     target_verified = False
     try:
         body = json.dumps(payload, indent=2, sort_keys=sort_keys) + "\n"
+        expected_size = len(body.encode("utf-8"))
         with tmp_path.open("w", encoding="utf-8", newline="\n") as handle:
             handle.write(body)
             handle.flush()
@@ -57,6 +58,25 @@ def write_json_atomic(path: Path, payload: dict[str, Any], *, sort_keys: bool = 
                 time.sleep(io_locks.RUNTIME_JSON_WRITE_LOCK_POLL_SECONDS)
         if verify:
             try:
+                stat = path.stat()
+            except OSError as exc:
+                write_lock = io_locks._json_write_lock_liveness(path)
+                if isinstance(exc, PermissionError) or write_lock.get("active") or write_lock.get("fresh"):
+                    write_lock["verification_readback_error"] = True
+                    write_lock["verification_error_type"] = type(exc).__name__
+                    write_lock["verification_error_message"] = str(exc)
+                    raise RouterLedgerWriteInProgress(
+                        path,
+                        write_lock,
+                        f"could not verify JSON target after runtime readback error: {exc}",
+                    ) from exc
+                raise
+            if stat.st_size != expected_size:
+                raise RouterError(
+                    f"JSON target write verification size mismatch: {path} "
+                    f"(expected {expected_size}, observed {stat.st_size})"
+                )
+            try:
                 read_json(path)
             except OSError as exc:
                 write_lock = io_locks._json_write_lock_liveness(path)
@@ -72,7 +92,10 @@ def write_json_atomic(path: Path, payload: dict[str, Any], *, sort_keys: bool = 
                 raise
             target_verified = True
         else:
-            target_verified = io_locks._runtime_json_target_valid(path)
+            try:
+                target_verified = path.exists() and path.stat().st_size == expected_size
+            except OSError:
+                target_verified = False
     finally:
         try:
             if tmp_path.exists():

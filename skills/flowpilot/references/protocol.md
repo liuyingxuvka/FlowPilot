@@ -591,9 +591,7 @@ manual refresh or ad hoc status reconstruction.
 
 Do not infer "important" parent nodes from semantics. The trigger is purely
 route structure: every effective route node with children is a parent/composite
-node and must run a local backward replay before that parent closes. Labels
-such as high risk, integration, feature, or downstream dependency may make the
-review more detailed, but they do not decide whether review is required.
+node and must run a local backward replay before that parent closes.
 
 When the checked route is created or mutated, the project manager enumerates
 all effective parent/composite nodes from `flow.json` into the frontier. As

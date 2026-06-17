@@ -8,7 +8,7 @@ import json
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
-from flowguard import Explorer
+from flowguard.explorer import Explorer
 
 import flowpilot_test_tiering_model as model
 
@@ -35,8 +35,11 @@ REQUIRED_LABELS = {
     "reject_router_slice_import_broken_counted_green",
     "reject_router_child_tier_keeps_slow_aggregate",
     "reject_router_child_tier_duplicates_k_shards",
+    "reject_router_child_tier_stale_k_pattern",
     "reject_background_progress_only_claimed_pass",
     "reject_background_missing_artifact_set",
+    "reject_background_running_without_timeout_guard",
+    "reject_json_write_readback_can_hang_control_gate",
     "reject_release_obligation_hidden",
     "reject_release_claim_without_release_suite",
     "reject_release_public_check_races_model_proofs",
@@ -61,10 +64,20 @@ EXPECTED_HAZARD_FAILURES = {
     "router_child_tier_duplicates_k_shards": {
         "router_child_shards_duplicate_test_selection",
     },
+    "router_child_tier_stale_k_pattern": {
+        "router_child_shard_pattern_stale_or_empty",
+    },
     "background_progress_only_claimed_pass": {
         "background_progress_is_not_completion_evidence",
     },
     "background_missing_artifact_set": {"background_artifact_set_missing"},
+    "background_running_without_timeout_guard": {
+        "background_progress_is_not_completion_evidence",
+        "background_timeout_not_enforced",
+    },
+    "json_write_readback_can_hang_control_gate": {
+        "json_write_readback_not_bounded",
+    },
     "release_obligation_hidden": {"release_obligation_hidden"},
     "release_claim_without_release_suite": {"release_scope_missing_release_suite"},
     "release_public_check_races_model_proofs": {"release_public_check_races_model_proofs"},
@@ -82,11 +95,12 @@ def _state_id(state: model.State) -> str:
         f"{state.public_release_in_fast_tier},{state.coverage_sweep_blocks_fast_tier}|"
         f"router={state.router_slice_import_ok},{state.router_slice_counted_green}|"
         f"router_granular={state.router_child_commands_granular},"
-        f"{state.router_k_shards_disjoint},"
+        f"{state.router_k_shards_disjoint},{state.router_k_patterns_current},"
         f"{state.slow_router_aggregate_command_present}|"
         f"background={state.background_requested},{state.background_artifacts_declared},"
         f"{state.background_exit_artifact_present},{state.background_exit_inspected},"
-        f"{state.background_progress_claimed_as_pass}|"
+        f"{state.background_progress_claimed_as_pass},{state.background_timeout_enforced},"
+        f"{state.json_write_readback_bounded}|"
         f"release={state.release_required},{state.release_obligation_visible},"
         f"{state.release_suite_run_or_backgrounded},"
         f"{state.release_public_check_after_model_proofs}|"

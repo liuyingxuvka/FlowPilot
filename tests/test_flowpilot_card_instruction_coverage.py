@@ -91,6 +91,14 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
     def test_current_prompt_surfaces_reject_obsolete_runtime_paths(self) -> None:
         self.assertFalse(model.forbidden_current_prompt_surface_errors(ROOT))
 
+    def test_current_prompt_surface_scan_includes_generated_contract_sources(self) -> None:
+        scanned = {path.relative_to(ROOT).as_posix() for path in model._iter_current_prompt_surface_paths(ROOT)}
+        self.assertIn("skills/flowpilot/assets/flowpilot_router_payload_contracts_pm.py", scanned)
+        self.assertIn("skills/flowpilot/assets/flowpilot_router_protocol_work_contracts.py", scanned)
+        self.assertIn("skills/flowpilot/assets/flowpilot_router_expected_waits_actions.py", scanned)
+        self.assertIn("skills/flowpilot/assets/flowpilot_router_startup_mechanical_boundary_controller.py", scanned)
+        self.assertIn("skills/flowpilot/assets/role_output_runtime_contracts.py", scanned)
+
     def test_current_reference_surfaces_reject_obsolete_startup_and_role_paths(self) -> None:
         self.assertFalse(model.forbidden_current_reference_surface_errors(ROOT))
 
@@ -132,6 +140,78 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
         self.assertIn("parallel-count", text)
         self.assertIn("model-capability limits", text)
         self.assertIn("when such surfaces are available", text)
+
+    def test_authorized_result_body_guidance_requires_all_related_bodies(self) -> None:
+        def normalized(path: Path) -> str:
+            return " ".join(path.read_text(encoding="utf-8").lower().split())
+
+        prompt_paths = [
+            RUNTIME_KIT / "prompts" / "packets" / "packet_identity_boundary.md",
+            RUNTIME_KIT / "prompts" / "packets" / "output_contract_section.md",
+        ]
+        for path in prompt_paths:
+            with self.subTest(path=path.name):
+                text = normalized(path)
+                self.assertIn("authorized_result_reads", text)
+                self.assertIn("every", text)
+                self.assertIn("delivered", text)
+                self.assertIn("summaries", text)
+                self.assertIn("not substitutes", text)
+
+        role_cards = _card_paths_by_id(
+            "pm.core",
+            "pm.review_repair",
+            "reviewer.core",
+            "flowguard_operator.core",
+            "worker.core",
+        )
+        for path in role_cards:
+            with self.subTest(path=path.name):
+                text = normalized(path)
+                self.assertIn("authorized_result_reads", text)
+                self.assertIn("read every", text)
+                self.assertIn("delivered", text)
+                self.assertIn("blocker", text)
+                self.assertIn("target", text)
+                self.assertIn("upstream", text)
+                self.assertNotIn("one selected result body is enough", text)
+
+        pm_text = normalized(_card_path_by_id("pm.core"))
+        repair_text = normalized(_card_path_by_id("pm.review_repair"))
+        flowguard_text = normalized(_card_path_by_id("flowguard_operator.core"))
+        for text in (pm_text, repair_text):
+            self.assertIn("repair_evidence_obligations", text)
+            self.assertIn("repair_obligation_disposition", text)
+            self.assertIn("every obligation id", text)
+            self.assertIn("reason", text)
+            self.assertIn("do not close", text)
+        self.assertIn("semantic_recheck", flowguard_text)
+        self.assertIn("repair obligation id named by the checklist", flowguard_text)
+
+    def test_allowed_value_options_are_explained_on_ai_facing_contract_surfaces(self) -> None:
+        def normalized(path: Path) -> str:
+            return " ".join(path.read_text(encoding="utf-8").lower().split())
+
+        prompt_paths = [
+            RUNTIME_KIT / "prompts" / "packets" / "output_contract_section.md",
+            ROOT / "templates" / "flowpilot" / "packets" / "packet_body.template.md",
+        ]
+        for path in prompt_paths:
+            with self.subTest(path=path.name):
+                text = normalized(path)
+                self.assertIn("allowed_value_options", text)
+                self.assertIn("finite menu", text)
+                self.assertIn("choose exactly one listed value", text)
+                self.assertIn("do not invent synonyms", text)
+                self.assertIn("extra enum values", text)
+
+        for card_id in ("pm.core", "flowguard_operator.core", "reviewer.core"):
+            with self.subTest(card_id=card_id):
+                text = normalized(_card_path_by_id(card_id))
+                self.assertIn("allowed_value_options", text)
+                self.assertIn("finite", text)
+                self.assertIn("listed value", text)
+                self.assertIn("do not invent", text)
 
     def test_pm_worker_packet_cards_carry_lightweight_dispatch_guidance(self) -> None:
         worker_packet_cards = _card_paths_by_id(
@@ -414,7 +494,7 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
         self.assertIn("concrete pm-actionable split recommendation", reviewer_card)
         self.assertIn("worker replanning is not an acceptable substitute for route depth", reviewer_card)
         self.assertIn("must not override the canonical route node shape", node_plan_card)
-        self.assertIn("fallback safety gate", node_plan_card)
+        self.assertIn("route-depth safety gate", node_plan_card)
         self.assertIn("mutate routes", controller_text)
         self.assertIn("read sealed flowguard report bodies", controller_text)
 
@@ -551,32 +631,32 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
 
         pm_core = normalized(_card_path_by_id("pm.core"))
         for term in (
-            "flowguard test obligation ownership",
-            "test_obligation_matrix.pre_worker",
-            "test_obligation_matrix.post_worker",
+            "flowguard and test gap ownership",
+            "pm does not pre-fill large model/test matrices",
             "existing model preflight",
             "developmentprocessflow",
             "model-test alignment",
             "testmesh",
-            "worker_test_packet_required",
-            "missing_test_kinds",
+            "current_required_fields",
+            "allowed_value_options",
         ):
             self.assertIn(term, pm_core)
-        self.assertIn("do not let `missing_test_kinds` remain only", pm_core)
-        self.assertIn("do not become the default authors or maintainers", pm_core)
+        self.assertIn("let flowguard record it in evidence", pm_core)
+        self.assertIn("do not turn it into a required pm node-plan field", pm_core)
 
         pm_node_plan = normalized(_card_path_by_id("pm.node_acceptance_plan"))
         for term in (
-            "test_obligation_matrix.pre_worker",
-            "test_obligation_matrix.post_worker",
-            "required_test_kind",
-            "freshness_rule",
-            "test obligation coverage",
-            "model_test_alignment_required",
-            "testmesh_required",
-            "undispositioned rows block pm node-completion approval",
+            "`purpose`",
+            "`acceptance_criteria`",
+            "`relevant_references`",
+            "`known_risks`",
+            "`acceptance_item_projection`",
+            "do not add pm-only pre-worker test matrices",
+            "flowguard operator, reviewer, worker, and testmesh each expand their own checks",
         ):
             self.assertIn(term, pm_node_plan)
+        self.assertNotIn("test_obligation_matrix", pm_node_plan)
+        self.assertNotIn("work_packet_projection", pm_node_plan)
 
         flowguard_operator_loop = normalized(_card_path_by_id("pm.flowguard_operator_request_report_loop"))
         for term in (
@@ -590,12 +670,13 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
 
         pm_role_work = normalized(_card_path_by_id("pm.role_work_request"))
         for term in (
+            "current evidence obligation ids",
             "test obligation coverage",
-            "test_obligation_matrix",
             "maintain ordinary packet-scoped tests",
             "flowguard operators identify obligations and gaps",
         ):
             self.assertIn(term, pm_role_work)
+        self.assertNotIn("test_obligation_matrix", pm_role_work)
 
         worker_cards = _card_paths_by_id("worker.core")
         for path in worker_cards:
@@ -616,7 +697,7 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
         for path in reviewer_cards:
             with self.subTest(path=path.name):
                 text = normalized(path)
-                self.assertIn("test_obligation_matrix", text)
+                self.assertIn("current evidence", text)
                 self.assertIn("missing", text)
                 self.assertIn("stale", text)
                 self.assertIn("skipped", text)
@@ -701,15 +782,18 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
         worker_review = normalized(_card_path_by_id("reviewer.worker_result_review"))
         node_plan_review = normalized(_card_path_by_id("reviewer.node_acceptance_plan_review"))
 
-        self.assertIn("same current route node has repeated the same blocker problem more than five consecutive times", pm_repair)
+        self.assertIn("same repair lineage has repeated the same blocker problem more than five consecutive times", pm_repair)
         self.assertIn("do not issue another ordinary pm repair decision packet", pm_repair)
+        self.assertIn("terminal supplemental repair contracts use the runtime's separate three-round cap", pm_repair)
+        self.assertIn("after the third round, pm must choose a legal terminal disposition", pm_repair)
+        self.assertIn("route a new pm decision from the current blocker context", pm_repair)
         self.assertIn("repair_loop_break_glass_review", controller)
-        self.assertIn("same current route node has repeated the same blocker problem more than five consecutive times", controller)
+        self.assertIn("same repair lineage has repeated the same blocker problem more than five consecutive times", controller)
         self.assertIn("similar blocker classes spread across different route nodes are ordinary repair evidence", controller)
-        self.assertIn("same current route node has repeated the same blocker problem more than five consecutive times", break_glass)
+        self.assertIn("same repair lineage has repeated the same blocker problem more than five consecutive times", break_glass)
         self.assertIn("false alarm", break_glass)
         self.assertIn("mechanical progress from semantic repair progress", flowguard_process)
-        self.assertIn("more than five consecutive same-node attempts", flowguard_process)
+        self.assertIn("more than five consecutive same-lineage attempts", flowguard_process)
         self.assertIn("reuse the prior `blocker_class`", worker_review)
         self.assertIn("reuse the prior `blocker_class`", node_plan_review)
 

@@ -12,10 +12,10 @@
     "expected": [
       "closure_before_system_validation",
       "closure_flowguard_operator_required_on_ordinary_path",
-      "high_risk_pm_applied_before_gate",
-      "low_risk_repair_forced_through_gate",
       "old_closure_packet_accepted",
       "old_validator_packet_accepted",
+      "pm_continue_repair_applied_before_gate",
+      "pm_continue_repair_applied_directly",
       "pm_decision_reviewer_missing",
       "pm_gate_before_staged_effect_convergence",
       "pm_redesign_without_flowguard",
@@ -36,17 +36,17 @@
       "closure_flowguard_operator_required_on_ordinary_path": [
         "ordinary path still required Closure FlowGuard operator AI"
       ],
-      "high_risk_pm_applied_before_gate": [
-        "high-risk PM decision applied before gate"
-      ],
-      "low_risk_repair_forced_through_gate": [
-        "low-risk PM repair was forced through high-risk gate"
-      ],
       "old_closure_packet_accepted": [
         "old closure packet was accepted"
       ],
       "old_validator_packet_accepted": [
         "old validator packet was accepted"
+      ],
+      "pm_continue_repair_applied_before_gate": [
+        "PM continue-repair decision applied before gate"
+      ],
+      "pm_continue_repair_applied_directly": [
+        "PM continue-repair decision applied directly without unified gate"
       ],
       "pm_decision_reviewer_missing": [
         "PM decision gate lacked reviewer pass"
@@ -72,7 +72,7 @@
         "semantic review demanded future committed state before gate closure"
       ],
       "staged_effect_missing_before_gate": [
-        "high-risk PM decision staged without staged_effect",
+        "PM continue-repair decision staged without staged_effect",
         "PM decision gate opened without staged_effect"
       ],
       "system_validation_failure_auto_closed": [
@@ -101,13 +101,13 @@
     "missing": [],
     "obligations": {
       "current_target_bad_packet_tests": true,
-      "high_risk_pm_disposition_staged": true,
-      "high_risk_pm_repair_staged": true,
-      "low_risk_pm_repair_direct": true,
       "node_acceptance_staged_effect_kind": true,
       "old_validation_closure_packets_rejected": true,
       "old_validator_closure_roles_removed": true,
+      "pm_current_scope_repair_gated": true,
       "pm_decision_gate_ledger": true,
+      "pm_redesign_route_disposition_gated": true,
+      "pm_redesign_route_repair_gated": true,
       "review_future_state_boundary_card_test": true,
       "reviewer_pass_no_closure_flowguard_operator_packet": true,
       "route_redesign_staged_effect_kind": true,
@@ -136,10 +136,8 @@
       "advance_after_system_closure",
       "record_failed_system_validation",
       "route_failed_system_validation_to_pm",
-      "record_low_risk_pm_decision",
-      "apply_low_risk_pm_decision_directly",
-      "record_high_risk_pm_decision",
-      "stage_high_risk_pm_decision",
+      "record_pm_continue_repair_decision",
+      "stage_pm_continue_repair_decision",
       "converge_same_family_staged_effect",
       "pass_pm_decision_flowguard_gate",
       "pass_pm_decision_reviewer_gate",
@@ -151,9 +149,8 @@
     "ok": true,
     "state": {
       "failed_system_validation_routed_to_pm": true,
-      "high_risk_pm_decision_staged": true,
-      "low_risk_pm_decision_applied": true,
       "old_packet_roles_rejected": true,
+      "pm_continue_repair_decision_staged": true,
       "pm_gate_flowguard_passed": true,
       "pm_gate_reviewer_passed": true,
       "pm_gate_system_closure_recorded": true,

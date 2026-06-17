@@ -25,7 +25,7 @@ fresh executable packet first, and only then may the blocker move to
 - Make parent repair abandon the nearest parent scope and its descendants as
   current authority, create a replacement parent repair node, and issue a fresh
   executable packet for that replacement.
-- Make route redesign use the existing high-risk PM gate, then create a new
+- Make route redesign use the unified PM continue-repair gate, then create a new
   route version from a PM route-plan packet/result before activating the new
   route frontier.
 - Require Runtime to verify `fresh_packet_id` exists and points to a current

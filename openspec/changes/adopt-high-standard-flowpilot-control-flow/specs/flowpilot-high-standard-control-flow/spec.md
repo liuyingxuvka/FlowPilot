@@ -92,8 +92,9 @@ same-node repair unless PM explicitly selects structural route mutation.
 
 ### Requirement: Parent backward replay gates parent/module closure
 FlowPilot SHALL require current parent backward replay before accepting a
-parent or module node that has effective children, unless PM records an
-explicit current-run low-risk waiver.
+parent or module node that has effective children. Any authority waiver must
+use the formal authority-waiver path and must not create a separate
+low-risk/high-risk parent replay branch.
 
 #### Scenario: Parent cannot close from child acceptance alone
 - **WHEN** all children of a parent node are accepted

@@ -29,6 +29,7 @@ REQUIRED_SURFACES = {
     "semantic_contract",
     "ui_display_projection",
     "windows_filesystem",
+    "contract_surface_reduction_baseline",
 }
 REQUIRED_REPLAY_IDS = {
     "historical.snapshot.stale_pending_terminal_display",
@@ -42,6 +43,7 @@ REQUIRED_REPLAY_IDS = {
     "semantic.contract.missing_standard_matrix_or_waiver",
     "ui.display.stale_projection_not_authority",
     "windows.fs.path_lock_and_partial_json",
+    "contract.surface.run_20260613_mainline_and_first_packet_failure",
 }
 
 REQUIRED_ROW_FIELDS = (
@@ -82,6 +84,22 @@ HISTORICAL_PACKAGE_CLASSES = (
     "missing_skill_standard_result_matrix",
     "stale_ui_projection",
     "windows_lock_partial_json",
+    "contract_surface_reduction_mainline_regression",
+)
+
+CONTRACT_SURFACE_REDUCTION_PACKET_FAMILIES = (
+    "task.high_standard_contract",
+    "task.discovery",
+    "task.skill_standard",
+    "task.planning",
+    "task.node_acceptance_plan",
+    "task.node",
+    "flowguard_check.post_result",
+    "review.any_current_subject",
+    "pm_repair_decision.pm_repair_decision",
+    "pm_disposition.node_pm_disposition",
+    "task.parent_backward_replay",
+    "review.terminal_backward_replay",
 )
 
 
@@ -217,6 +235,72 @@ HISTORICAL_LIVE_RUN_REPLAY_ROWS: tuple[dict[str, Any], ...] = (
         "production_replay_adapter_present": False,
         "destructive_live_state_mutation": False,
         "confidence_boundary": "proves mechanical relay evidence agreement for selected packet paths",
+    },
+    {
+        "replay_id": "contract.surface.run_20260613_mainline_and_first_packet_failure",
+        "priority": "P0",
+        "surface": "contract_surface_reduction_baseline",
+        "source_records": [
+            "WorldGurd_20260613/.flowpilot/runs/run-20260613-140526",
+            "docs/flowpilot_contract_surface_reduction_baseline.md",
+            "later_first_packet_failure_report",
+            "openspec/changes/reduce-flowpilot-contract-surface",
+        ],
+        "phase_sequence": list(CONTRACT_SURFACE_REDUCTION_PACKET_FAMILIES),
+        "entrypoints": [
+            "packet_stage_evidence_matrix",
+            "packet_result_contracts",
+            "runtime.current_handoff_contract",
+            "historical_live_run_replay_matrix",
+            "historical_live_run_replay_tests",
+        ],
+        "fake_ai_artifacts": [
+            "run_20260613_success_mainline_process_baseline",
+            "later_first_packet_terminal_evidence_blocker",
+            "all_mainline_packet_family_replay_fixture",
+        ],
+        "failure_package": (
+            "later high-standard first packet is blocked for terminal, worker, or model-detail "
+            "evidence that belongs to later packet families"
+        ),
+        "expected_standard_state": (
+            "run-20260613-140526 is accepted only as a process-route baseline; "
+            "the later first-packet terminal-evidence blocker is invalid under the reduced "
+            "high-standard contract; all 12 mainline packet families are covered"
+        ),
+        "protected_state_invariant": (
+            "moved or deleted future-stage fields cannot block early high-standard packets, "
+            "and historical field shape cannot be promoted into the current contract"
+        ),
+        "required_evidence": [
+            "run-20260613-140526_process_route_baseline",
+            "historical_success_not_field_shape_authority",
+            "first_packet_terminal_evidence_blocker_invalid",
+            *CONTRACT_SURFACE_REDUCTION_PACKET_FAMILIES,
+        ],
+        "forbidden_shortcuts": [
+            "restore_historical_field_shape",
+            "treat_first_packet_as_terminal_replay",
+            "require_flowguard_model_detail_in_pm_packet",
+            "skip_mainline_packet_family_coverage",
+        ],
+        "finite_package_classes": ["contract_surface_reduction_mainline_regression"],
+        "evidence_test": (
+            "FlowPilotHistoricalLiveRunReplayTests."
+            "test_contract_surface_reduction_baseline_keeps_success_mainline_and_rejects_first_packet_terminal_evidence"
+        ),
+        "evidence_status": "passed",
+        "evidence_current": True,
+        "evidence_role": "primary_historical_replay",
+        "live_ai_semantic_quality_proven": False,
+        "historical_snapshot_required": True,
+        "production_replay_adapter_required": False,
+        "production_replay_adapter_present": False,
+        "destructive_live_state_mutation": False,
+        "confidence_boundary": (
+            "proves the contracted mainline package lifecycle and named first-packet regression; "
+            "does not restore historical field shape or prove live AI semantic quality"
+        ),
     },
     {
         "replay_id": "parallel.stress.high_parallel_peer_proof_isolation",
@@ -673,6 +757,58 @@ def validate_rows(rows: Sequence[dict[str, Any]]) -> list[dict[str, Any]]:
                     "message": "semantic rows must forbid treating contract self-check as skill standard evidence",
                 }
             )
+        if row.get("surface") == "contract_surface_reduction_baseline":
+            sources = {str(item) for item in row.get("source_records", [])}
+            artifacts = {str(item) for item in row.get("fake_ai_artifacts", [])}
+            evidence = {str(item) for item in row.get("required_evidence", [])}
+            phases = {str(item) for item in row.get("phase_sequence", [])}
+            all_text = "\n".join(sorted(sources | artifacts | evidence))
+            if "run-20260613-140526" not in all_text:
+                findings.append(
+                    {
+                        "code": "missing_run_20260613_baseline",
+                        "replay_id": replay_id,
+                        "message": "contract-surface rows must bind the 2026-06-13 successful process baseline",
+                    }
+                )
+            missing_phase_families = [
+                family for family in CONTRACT_SURFACE_REDUCTION_PACKET_FAMILIES if family not in phases
+            ]
+            missing_evidence_families = [
+                family for family in CONTRACT_SURFACE_REDUCTION_PACKET_FAMILIES if family not in evidence
+            ]
+            if missing_phase_families or missing_evidence_families:
+                findings.append(
+                    {
+                        "code": "missing_contract_surface_packet_family",
+                        "replay_id": replay_id,
+                        "missing_phase_families": missing_phase_families,
+                        "missing_evidence_families": missing_evidence_families,
+                        "message": "contract-surface replay must cover every mainline packet family",
+                    }
+                )
+            if "first_packet_terminal_evidence_blocker_invalid" not in evidence:
+                findings.append(
+                    {
+                        "code": "missing_first_packet_failure_regression",
+                        "replay_id": replay_id,
+                        "message": "contract-surface replay must classify the first-packet terminal-evidence blocker",
+                    }
+                )
+            for shortcut in {
+                "restore_historical_field_shape",
+                "treat_first_packet_as_terminal_replay",
+                "skip_mainline_packet_family_coverage",
+            }:
+                if shortcut not in forbidden:
+                    findings.append(
+                        {
+                            "code": "contract_surface_shortcut_not_forbidden",
+                            "replay_id": replay_id,
+                            "shortcut": shortcut,
+                            "message": "contract-surface replay must forbid old-field and first-packet shortcuts",
+                        }
+                    )
     return findings
 
 
@@ -777,6 +913,29 @@ def known_bad_cases() -> list[dict[str, Any]]:
                 "invalid_evidence_status",
                 "missing_background_classifier_entrypoint",
                 "missing_required_replay",
+            ],
+        },
+        {
+            "name": "contract_surface_missing_packet_family_and_regression",
+            "rows": [
+                {
+                    **base,
+                    "replay_id": "contract.surface.run_20260613_mainline_and_first_packet_failure",
+                    "surface": "contract_surface_reduction_baseline",
+                    "source_records": ["docs/flowpilot_contract_surface_reduction_baseline.md"],
+                    "phase_sequence": ["task.high_standard_contract"],
+                    "fake_ai_artifacts": ["later_first_packet_terminal_evidence_blocker"],
+                    "required_evidence": ["task.high_standard_contract"],
+                    "forbidden_shortcuts": ["restore_historical_field_shape"],
+                    "finite_package_classes": ["contract_surface_reduction_mainline_regression"],
+                    "historical_snapshot_required": True,
+                }
+            ],
+            "expected_codes": [
+                "missing_run_20260613_baseline",
+                "missing_contract_surface_packet_family",
+                "missing_first_packet_failure_regression",
+                "contract_surface_shortcut_not_forbidden",
             ],
         },
     ]

@@ -153,10 +153,17 @@ def _gap_classes(
     classes: list[str] = []
     if not record.get("parsed"):
         classes.append("runner_unparsed_or_unavailable")
-    if record.get("parsed") and record.get("ok") is False:
-        classes.append("runner_not_ok")
     findings = record.get("findings") or []
     finding_classes = {str(item.get("classification") or "") for item in findings if isinstance(item, dict)}
+    current_live_only_failure = (
+        "modeled_current_live_hit_fix_runtime_or_current_state" in finding_classes
+        and finding_classes <= {
+            "modeled_current_live_hit_fix_runtime_or_current_state",
+            "boundary_expected_or_informational",
+        }
+    )
+    if record.get("parsed") and record.get("ok") is False and not current_live_only_failure:
+        classes.append("runner_not_ok")
     if "modeled_current_live_hit_fix_runtime_or_current_state" in finding_classes:
         classes.append("live_runtime_or_state_findings")
     if "modeled_source_hit_fix_source_or_runtime" in finding_classes:

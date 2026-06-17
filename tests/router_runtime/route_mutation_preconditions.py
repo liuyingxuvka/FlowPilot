@@ -114,15 +114,17 @@ class RouteMutationPreconditionRuntimeTests(FlowPilotRouterRuntimeTestBase):
 
 
     def test_route_mutation_and_final_ledger_have_required_preconditions(self) -> None:
+            precondition_root = self.make_project()
+            self.boot_to_controller(precondition_root)
+
+            with self.assertRaises(router.RouterError):
+                router.record_external_event(precondition_root, "pm_mutates_route_after_review_block")
+            with self.assertRaises(router.RouterError):
+                router.record_external_event(precondition_root, "pm_records_final_route_wide_ledger_clean")
+
             root = self.make_project()
             self.boot_to_controller(root)
             self.complete_pre_route_gates(root)
-
-            with self.assertRaises(router.RouterError):
-                router.record_external_event(root, "pm_mutates_route_after_review_block")
-            with self.assertRaises(router.RouterError):
-                router.record_external_event(root, "pm_records_final_route_wide_ledger_clean")
-
             self.activate_route(root)
             self.deliver_current_node_cards(root)
             packet = packet_runtime.create_packet(

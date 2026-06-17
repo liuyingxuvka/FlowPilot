@@ -8,7 +8,7 @@ from collections import deque
 from pathlib import Path
 from typing import Any
 
-from flowguard import Explorer
+from flowguard.explorer import Explorer
 
 import flowpilot_planning_quality_model as model
 
@@ -79,6 +79,11 @@ HAZARD_EXPECTED_FAILURES = {
     model.NODE_PLAN_MISSING_REALIZATION_OBLIGATIONS: "node acceptance plan does not consume target-realization obligations",
     model.WORK_PACKET_MISSING_REALIZATION_OBLIGATIONS: "work packet does not carry target-realization obligations",
     model.FINAL_LEDGER_REALIZATION_OBLIGATIONS_UNRESOLVED: "final ledger or closure leaves target-realization obligations unresolved",
+    model.ACCEPTANCE_ITEM_REGISTRY_MISSING: "PM high-standard contract lacks acceptance item registry with user and PM high-standard items",
+    model.ACCEPTANCE_ITEM_NO_ROUTE_OWNER: "active acceptance item lacks a route node owner",
+    model.NODE_PLAN_MISSING_ACCEPTANCE_ITEM_PROJECTION: "node acceptance plan lacks acceptance item projection",
+    model.WORK_PACKET_MISSING_ACCEPTANCE_ITEM_MATRIX: "work packet or result lacks acceptance item result matrix",
+    model.FINAL_LEDGER_ACCEPTANCE_ITEM_UNRESOLVED: "final ledger or closure leaves acceptance items unresolved",
 }
 
 

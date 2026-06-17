@@ -7,8 +7,9 @@ same time, some PM decisions that can mutate route state or waive blockers
 apply directly after PM submission.
 
 This change keeps the reliable fixed-flow benefit while removing the redundant
-AI validator hop from ordinary successful work and strengthening high-risk PM
-decisions before they can change control state.
+AI validator hop from ordinary successful work and requiring PM
+continue-repair decisions to pass the same current gate before they can change
+control state or release repair work.
 
 ## What Changes
 
@@ -18,11 +19,10 @@ decisions before they can change control state.
   validation evidence or closure blockers.
 - Preserve legacy validation packet handling for old or repair runs that
   already contain validator packets.
-- Classify PM repair and PM disposition decisions by risk.
-- Let low-risk PM repair decisions reissue or collect work directly because
-  they still require downstream recheck.
-- Require high-risk PM decisions such as route mutation and waiver to pass a
-  FlowGuard packet and reviewer packet before applying the decision.
+- Stage PM continue-repair decisions before applying their side effects or
+  opening resulting repair work.
+- Require FlowGuard, PM absorption, reviewer, system validation, and system
+  closure before the staged PM continue-repair decision applies.
 - Keep PM accept after a fully closed node direct, unless the PM decision tries
   to change scope, waive evidence, or mutate the route.
 
@@ -30,7 +30,8 @@ decisions before they can change control state.
 
 ### New Capabilities
 - `new-flowpilot-validation-automation-and-pm-risk-gates`: System-owned
-  validation evidence and high-risk PM decision gating in the fresh runtime.
+  validation evidence and unified PM continue-repair decision gating in the
+  fresh runtime.
 
 ### Modified Capabilities
 None. This change adds the fresh-runtime automation/risk-gate contract while

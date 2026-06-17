@@ -3,6 +3,7 @@ from __future__ import annotations
 import sys
 import unittest
 from pathlib import Path
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "skills" / "flowpilot" / "assets"))
@@ -10,6 +11,7 @@ sys.path.insert(0, str(ROOT / "skills" / "flowpilot" / "assets"))
 import flowpilot_router as router  # noqa: E402
 import flowpilot_router_role_output_bridge_events as role_output_bridge_events  # noqa: E402
 import flowpilot_router_work_packets_pm_role_writes_decisions as pm_decisions  # noqa: E402
+import flowpilot_router_work_packets_material as material_packets  # noqa: E402
 import flowpilot_closure_kernel as closure_kernel  # noqa: E402
 import packet_runtime  # noqa: E402
 import role_output_runtime  # noqa: E402
@@ -506,6 +508,216 @@ class FlowPilotControlPlaneContractRuntimeTests(FlowPilotRouterRuntimeTestBase):
             )
 
         self.assertIn("role-output runtime envelope", str(raised.exception))
+
+    def test_pm_package_disposition_rejects_reason_alias_for_decision_reason(self) -> None:
+        root = self.make_project()
+        run_root, run_state, _payload, output_path = self._prepare_material_scan_pm_disposition(
+            root,
+            "run-disposition-reason-alias",
+        )
+        payload = {
+            "_role_output_envelope": {
+                "role_output_runtime_validated": True,
+                "output_type": "pm_package_result_disposition",
+                "output_contract_id": "flowpilot.output_contract.pm_package_result_disposition.v1",
+            },
+            "decided_by_role": "project_manager",
+            "decision": "absorbed",
+            "reason": "Old reason alias must not satisfy the current decision_reason field.",
+            "residual_risks": [],
+        }
+
+        with self.assertRaisesRegex(router.RouterError, "decision_reason; reason is not a current alias"):  # type: ignore[attr-defined]
+            pm_decisions._write_pm_package_result_disposition(
+                router,
+                root,
+                run_root,
+                run_state,
+                payload,
+                batch_kind="material_scan",
+                package_label="material_scan",
+                gate_kind="material_sufficiency",
+                output_path=output_path,
+                router_event="pm_records_material_scan_result_disposition",
+            )
+
+    def test_pm_formal_gate_package_rejects_reason_alias_for_decision_reason(self) -> None:
+        root = self.make_project()
+        run_root = self.write_minimal_run(root, "run-formal-package-reason-alias")
+        output_path = run_root / "material" / "pm_material_scan_result_disposition.json"
+
+        with self.assertRaisesRegex(router.RouterError, "decision_reason; reason is not a current alias"):  # type: ignore[attr-defined]
+            pm_decisions._write_pm_formal_gate_package(
+                router,
+                root,
+                output_path,
+                run_state={"run_id": run_root.name, "run_root": router.project_relative(root, run_root)},
+                batch={"batch_id": "batch-1"},
+                records=[],
+                batch_kind="material_scan",
+                package_label="material_scan",
+                gate_kind="material_sufficiency",
+                decision="absorbed",
+                payload={"reason": "Old reason alias must not pass."},
+            )
+
+    def test_material_sufficiency_rejects_runtime_open_receipts_alias(self) -> None:
+        root = self.make_project()
+        run_root = self.write_minimal_run(root, "run-material-open-receipts-alias")
+        run_state = read_json(router.run_state_path(run_root))
+        run_state.setdefault("flags", {})["material_scan_results_absorbed_by_pm"] = True
+        router.write_json(
+            router._material_scan_index_path(run_root),  # type: ignore[attr-defined]
+            {
+                "schema_version": "flowpilot.material_scan_packets.v1",
+                "run_id": run_root.name,
+                "packets": [],
+            },
+        )
+        payload = {
+            "pm_visible_summary": ["Reviewed material is insufficient for PM execution."],
+            "reviewed_by_role": "human_like_reviewer",
+            "passed": False,
+            "direct_material_sources_checked": True,
+            "packet_matches_checked_sources": True,
+            "pm_ready": False,
+            "checked_source_paths": [],
+            "runtime_open_receipts": ["old-open-receipt"],
+            "findings": [],
+            "blockers": [{"blocker_id": "missing-material"}],
+            "pm_suggestion_items": [],
+            "contract_self_check": {"status": "pass"},
+            "_role_output_envelope": {
+                "role_output_runtime_validated": True,
+                "output_type": "material_sufficiency_report",
+                "output_contract_id": "flowpilot.output_contract.material_sufficiency_report.v1",
+            },
+        }
+
+        material_packets._bind_router(router)  # type: ignore[attr-defined]
+        with mock.patch.object(router, "_load_packet_index", return_value={"packets": [{"packet_id": "packet-alias"}]}):
+            with mock.patch.object(router, "_validate_packet_group_for_reviewer", return_value=None):
+                with mock.patch.object(material_packets, "_load_file_backed_role_payload", return_value=payload):
+                    with self.assertRaisesRegex(router.RouterError, "runtime_open_receipt_refs; runtime_open_receipts is not a current alias"):  # type: ignore[attr-defined]
+                        material_packets._write_material_sufficiency_report(  # type: ignore[attr-defined]
+                            router,
+                            root,
+                            run_root,
+                            run_state,
+                            {"report_path": "unused.json", "report_hash": "unused"},
+                            sufficient=False,
+                        )
+
+    def test_material_sufficiency_rejects_checked_by_role_alias(self) -> None:
+        root = self.make_project()
+        run_root = self.write_minimal_run(root, "run-material-checked-by-role-alias")
+        run_state = read_json(router.run_state_path(run_root))
+        payload = {
+            "pm_visible_summary": ["Reviewed material is insufficient for PM execution."],
+            "checked_by_role": "human_like_reviewer",
+            "passed": False,
+            "direct_material_sources_checked": True,
+            "packet_matches_checked_sources": True,
+            "pm_ready": False,
+            "checked_source_paths": ["materials/source.md"],
+            "runtime_open_receipt_refs": [],
+            "findings": [],
+            "blockers": [],
+            "pm_suggestion_items": [],
+            "contract_self_check": {"status": "pass"},
+            "_role_output_envelope": {
+                "role_output_runtime_validated": True,
+                "output_type": "material_sufficiency_report",
+                "output_contract_id": "flowpilot.output_contract.material_sufficiency_report.v1",
+            },
+        }
+
+        material_packets._bind_router(router)  # type: ignore[attr-defined]
+        with mock.patch.object(material_packets, "_load_file_backed_role_payload", return_value=payload):
+            with self.assertRaisesRegex(router.RouterError, "reviewed_by_role; checked_by_role is not a current alias"):  # type: ignore[attr-defined]
+                material_packets._write_material_sufficiency_report(  # type: ignore[attr-defined]
+                    router,
+                    root,
+                    run_root,
+                    run_state,
+                    {"report_path": "unused.json", "report_hash": "unused"},
+                    sufficient=False,
+                )
+
+    def test_pm_role_work_request_rejects_old_alias_fields(self) -> None:
+        root = self.make_project()
+        run_root = self.write_minimal_run(root, "run-pm-role-work-alias")
+        run_state = read_json(router.run_state_path(run_root))
+        run_state["pending_action"] = router.make_action(
+            action_type="await_role_decision",
+            actor="controller",
+            label="controller_waits_for_pm_followup",
+            summary="Wait for PM follow-up.",
+            to_role="project_manager",
+            extra={"allowed_external_events": [router.PM_ROLE_WORK_REQUEST_EVENT]},
+        )
+
+        current_payload = {
+            "request_id": "request-alias",
+            "requested_by_role": "project_manager",
+            "to_role": "flowguard_operator",
+            "request_mode": "blocking",
+            "request_kind": "model_miss",
+            "output_contract_id": "flowpilot.output_contract.flowguard_model_miss_report.v1",
+            "body_text": "Check model miss.",
+        }
+        alias_cases = {
+            "from_role": ("requested_by_role", "from_role", "project_manager"),
+            "recipient_role": ("to_role", "recipient_role", "flowguard_operator"),
+            "mode": ("request_mode", "mode", "blocking"),
+            "kind": ("request_kind", "kind", "model_miss"),
+        }
+        for name, (current_field, old_field, old_value) in alias_cases.items():
+            with self.subTest(name=name):
+                payload = dict(current_payload)
+                payload.pop(current_field)
+                payload[old_field] = old_value
+                with self.assertRaisesRegex(router.RouterError, f"{current_field}; {old_field} is not a current alias"):  # type: ignore[attr-defined]
+                    router._write_pm_role_work_request(root, run_root, run_state, payload)  # type: ignore[attr-defined]
+
+    def test_research_packet_rejects_recipient_role_alias(self) -> None:
+        root = self.make_project()
+        run_root = self.write_minimal_run(root, "run-research-recipient-role-alias")
+        run_state = read_json(router.run_state_path(run_root))
+        research_dir = run_root / "research"
+        research_dir.mkdir(parents=True, exist_ok=True)
+        router.write_json(
+            research_dir / "research_package.json",
+            {
+                "schema_version": "flowpilot.research_package.v1",
+                "run_id": run_root.name,
+                "written_by_role": "project_manager",
+                "decision_question": "Which source should be checked?",
+                "allowed_source_types": ["local"],
+                "host_capability_decision": "local_sources_only",
+                "worker_owner": "worker",
+                "batch_id": "research-batch-alias",
+                "packets": [
+                    {
+                        "packet_id": "research-packet-alias",
+                        "recipient_role": "worker",
+                        "body_text": "Old recipient_role alias must not pass.",
+                    }
+                ],
+                "reviewer_direct_check_required": True,
+                "stop_conditions": [],
+                "written_at": "2026-06-16T00:00:00Z",
+            },
+        )
+
+        with self.assertRaisesRegex(router.RouterError, "to_role; recipient_role is not a current alias"):  # type: ignore[attr-defined]
+            material_packets._write_research_capability_decision(  # type: ignore[attr-defined]
+                router,
+                root,
+                run_root,
+                run_state,
+                {"allowed_sources": ["local"], "batch_id": "research-batch-alias"},
+            )
 
     def test_control_blocker_done_receipt_applies_delivery_postcondition(self) -> None:
         root = self.make_project()

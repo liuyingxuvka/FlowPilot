@@ -3,47 +3,19 @@
   "alignment_path": "simulations/flowpilot_model_test_alignment_results.json",
   "claim_boundary": "This inventory proves that FlowGuard model/check entrypoints were enumerated and classified against current evidence. Scoped replay or skipped checks remain blocking unless the replay evidence manifest attaches them to exact current runtime or source evidence.",
   "classification_counts": {
-    "boundary_expected_or_informational": 139,
-    "modeled_current_live_hit_fix_runtime_or_current_state": 1,
-    "runner_unparsed_or_unavailable": 1
+    "boundary_expected_or_informational": 146
   },
   "coverage_tier_counts": {
     "abstract_strong_live_mapping_weaker": 8,
-    "coverage_strong": 36,
+    "coverage_strong": 42,
     "specialized_assertion_or_local_hazard": 7,
-    "supporting_model_owned": 89
+    "supporting_model_owned": 93
   },
-  "deferred_structure_split_count": 1,
-  "finding_count": 140,
-  "full_coverage_ok": false,
-  "gap_class_counts": {
-    "live_runtime_or_state_findings": 1,
-    "runner_not_ok": 1,
-    "runner_unparsed_or_unavailable": 1
-  },
-  "prioritized_groups": [
-    {
-      "gap_class": "runner_unparsed_or_unavailable",
-      "runner_count": 1,
-      "runners": [
-        "flowpilot_process_liveness"
-      ]
-    },
-    {
-      "gap_class": "runner_not_ok",
-      "runner_count": 1,
-      "runners": [
-        "flowpilot_final_confidence_gate"
-      ]
-    },
-    {
-      "gap_class": "live_runtime_or_state_findings",
-      "runner_count": 1,
-      "runners": [
-        "flowpilot_model_mesh"
-      ]
-    }
-  ],
+  "deferred_structure_split_count": 0,
+  "finding_count": 146,
+  "full_coverage_ok": true,
+  "gap_class_counts": {},
+  "prioritized_groups": [],
   "read_only": true,
   "records": [
     {
@@ -269,6 +241,59 @@
     {
       "coverage_tier": "supporting_model_owned",
       "covered_skipped_checks": [],
+      "finding_count": 1,
+      "finding_counts": {
+        "boundary_expected_or_informational": 1
+      },
+      "gap_classes": [
+        "currently_consumable_inventory_evidence"
+      ],
+      "metadata": {
+        "exit_code": null,
+        "mode": "read_existing_result",
+        "parse_error": null,
+        "reason": "runner writes result files by default",
+        "result_path": "simulations/flowpilot_acceptance_testmesh_results.json"
+      },
+      "ok": true,
+      "ordinary_test_reference_strength": "ordinary_test_text_reference",
+      "parsed": true,
+      "read_only_mode": "read_existing_result",
+      "replay_evidence": {},
+      "runner": "flowpilot_acceptance_testmesh",
+      "script": "simulations/run_flowpilot_acceptance_testmesh_checks.py",
+      "sections": {
+        "abstract": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "hazards": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "live": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "progress": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "source": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        }
+      },
+      "skipped_checks": {}
+    },
+    {
+      "coverage_tier": "supporting_model_owned",
+      "covered_skipped_checks": [],
       "finding_count": 0,
       "finding_counts": {},
       "gap_classes": [
@@ -420,6 +445,57 @@
           ],
           "ok": true,
           "present": true
+        },
+        "source": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        }
+      },
+      "skipped_checks": {}
+    },
+    {
+      "coverage_tier": "coverage_strong",
+      "covered_skipped_checks": [],
+      "finding_count": 0,
+      "finding_counts": {},
+      "gap_classes": [
+        "currently_consumable_inventory_evidence"
+      ],
+      "metadata": {
+        "exit_code": null,
+        "mode": "read_existing_result",
+        "parse_error": null,
+        "reason": "runner writes result files by default",
+        "result_path": "simulations/flowpilot_cartesian_control_plane_exhaustion_results.json"
+      },
+      "ok": true,
+      "ordinary_test_reference_strength": "ordinary_test_text_reference",
+      "parsed": true,
+      "read_only_mode": "read_existing_result",
+      "replay_evidence": {},
+      "runner": "flowpilot_cartesian_control_plane_exhaustion",
+      "script": "simulations/run_flowpilot_cartesian_control_plane_exhaustion_checks.py",
+      "sections": {
+        "abstract": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "hazards": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "live": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "progress": {
+          "keys": [],
+          "ok": null,
+          "present": false
         },
         "source": {
           "keys": [],
@@ -841,8 +917,58 @@
     },
     {
       "coverage_tier": "coverage_strong",
+      "covered_skipped_checks": [],
+      "finding_count": 0,
+      "finding_counts": {},
+      "gap_classes": [
+        "currently_consumable_inventory_evidence"
+      ],
+      "metadata": {
+        "exit_code": null,
+        "mode": "read_existing_result",
+        "parse_error": null,
+        "reason": "runner writes result files by default",
+        "result_path": "simulations/flowpilot_contract_exhaustion_mesh_results.json"
+      },
+      "ok": true,
+      "ordinary_test_reference_strength": "ordinary_test_text_reference",
+      "parsed": true,
+      "read_only_mode": "read_existing_result",
+      "replay_evidence": {},
+      "runner": "flowpilot_contract_exhaustion_mesh",
+      "script": "simulations/run_flowpilot_contract_exhaustion_mesh_checks.py",
+      "sections": {
+        "abstract": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "hazards": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "live": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "progress": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "source": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        }
+      },
+      "skipped_checks": {}
+    },
+    {
+      "coverage_tier": "coverage_strong",
       "covered_skipped_checks": [
-        "live_run_audit",
         "production_mutation"
       ],
       "finding_count": 0,
@@ -866,12 +992,6 @@
       "read_only_mode": "executed_read_only",
       "replay_evidence": {
         "covered_skipped_checks": {
-          "live_run_audit": {
-            "evidence_ids": [
-              "current_pointer.scoped_missing_current"
-            ],
-            "status": "covered_elsewhere"
-          },
           "production_mutation": {
             "evidence_ids": [
               "control_plane.contracts"
@@ -880,12 +1000,6 @@
           }
         },
         "evidence": [
-          {
-            "command": "python -m unittest tests.test_flowpilot_full_model_test_gap_closure.FlowPilotFullModelTestGapClosureTests.test_friction_live_audits_missing_current_run_are_scoped_not_history_fallback",
-            "evidence_id": "current_pointer.scoped_missing_current",
-            "path": "tests/test_flowpilot_full_model_test_gap_closure.py",
-            "scope": "missing current pointer is a scoped no-live-evidence projection, not a history fallback or live confidence proof"
-          },
           {
             "command": "python -m unittest tests.test_flowpilot_control_plane_contracts",
             "evidence_id": "control_plane.contracts",
@@ -936,7 +1050,6 @@
       },
       "skipped_checks": {
         "default_results_file": "skipped_with_reason: no --json-out path was provided",
-        "live_run_audit": "skipped_with_reason: .flowpilot/current.json is missing; no current live-run audit can be claimed",
         "production_mutation": "skipped_with_reason: this model check is read-only and does not repair FlowPilot runtime artifacts"
       }
     },
@@ -1595,7 +1708,6 @@
     {
       "coverage_tier": "coverage_strong",
       "covered_skipped_checks": [
-        "live_run_audit",
         "production_mutation"
       ],
       "finding_count": 0,
@@ -1619,12 +1731,6 @@
       "read_only_mode": "executed_read_only",
       "replay_evidence": {
         "covered_skipped_checks": {
-          "live_run_audit": {
-            "evidence_ids": [
-              "current_pointer.scoped_missing_current"
-            ],
-            "status": "covered_elsewhere"
-          },
           "production_mutation": {
             "evidence_ids": [
               "control_plane.contracts",
@@ -1634,12 +1740,6 @@
           }
         },
         "evidence": [
-          {
-            "command": "python -m unittest tests.test_flowpilot_full_model_test_gap_closure.FlowPilotFullModelTestGapClosureTests.test_friction_live_audits_missing_current_run_are_scoped_not_history_fallback",
-            "evidence_id": "current_pointer.scoped_missing_current",
-            "path": "tests/test_flowpilot_full_model_test_gap_closure.py",
-            "scope": "missing current pointer is a scoped no-live-evidence projection, not newest-run fallback or live confidence proof"
-          },
           {
             "command": "python -m unittest tests.test_flowpilot_control_plane_contracts",
             "evidence_id": "control_plane.contracts",
@@ -1695,9 +1795,59 @@
       },
       "skipped_checks": {
         "default_results_file": "skipped_with_reason: no --json-out path was provided",
-        "live_run_audit": "skipped_with_reason: no current FlowPilot run root is selected; live-run evidence is unavailable",
         "production_mutation": "skipped_with_reason: user requested model upgrade, scan, and minimal repair strategy before production code edits"
       }
+    },
+    {
+      "coverage_tier": "coverage_strong",
+      "covered_skipped_checks": [],
+      "finding_count": 0,
+      "finding_counts": {},
+      "gap_classes": [
+        "currently_consumable_inventory_evidence"
+      ],
+      "metadata": {
+        "exit_code": null,
+        "mode": "read_existing_result",
+        "parse_error": null,
+        "reason": "runner writes result files by default",
+        "result_path": "simulations/flowpilot_current_contract_cartesian_matrix_results.json"
+      },
+      "ok": true,
+      "ordinary_test_reference_strength": "ordinary_test_text_reference",
+      "parsed": true,
+      "read_only_mode": "read_existing_result",
+      "replay_evidence": {},
+      "runner": "flowpilot_current_contract_cartesian_matrix",
+      "script": "simulations/run_flowpilot_current_contract_cartesian_matrix_checks.py",
+      "sections": {
+        "abstract": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "hazards": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "live": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "progress": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "source": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        }
+      },
+      "skipped_checks": {}
     },
     {
       "coverage_tier": "supporting_model_owned",
@@ -2013,7 +2163,7 @@
         }
       },
       "skipped_checks": {
-        "live_run_projection": "skipped_with_reason: no .flowpilot/current.json found"
+        "live_run_projection": "skipped_with_reason: current run does not have runtime scheduler/action ledgers"
       }
     },
     {
@@ -2777,6 +2927,57 @@
       "skipped_checks": {}
     },
     {
+      "coverage_tier": "coverage_strong",
+      "covered_skipped_checks": [],
+      "finding_count": 0,
+      "finding_counts": {},
+      "gap_classes": [
+        "currently_consumable_inventory_evidence"
+      ],
+      "metadata": {
+        "exit_code": null,
+        "mode": "read_existing_result",
+        "parse_error": null,
+        "reason": "runner writes result files by default",
+        "result_path": "simulations/flowpilot_executable_matrix_coverage_results.json"
+      },
+      "ok": true,
+      "ordinary_test_reference_strength": "ordinary_test_text_reference",
+      "parsed": true,
+      "read_only_mode": "read_existing_result",
+      "replay_evidence": {},
+      "runner": "flowpilot_executable_matrix_coverage",
+      "script": "simulations/run_flowpilot_executable_matrix_coverage_checks.py",
+      "sections": {
+        "abstract": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "hazards": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "live": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "progress": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "source": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        }
+      },
+      "skipped_checks": {}
+    },
+    {
       "coverage_tier": "supporting_model_owned",
       "covered_skipped_checks": [],
       "finding_count": 0,
@@ -2828,24 +3029,136 @@
       "skipped_checks": {}
     },
     {
+      "coverage_tier": "supporting_model_owned",
+      "covered_skipped_checks": [],
+      "finding_count": 0,
+      "finding_counts": {},
+      "gap_classes": [
+        "currently_consumable_inventory_evidence"
+      ],
+      "metadata": {
+        "exit_code": null,
+        "mode": "read_existing_result",
+        "parse_error": null,
+        "reason": "runner writes result files by default",
+        "result_path": "simulations/flowpilot_field_contract_results.json"
+      },
+      "ok": true,
+      "ordinary_test_reference_strength": "source_audited_alignment",
+      "parsed": true,
+      "read_only_mode": "read_existing_result",
+      "replay_evidence": {},
+      "runner": "flowpilot_field_contract",
+      "script": "simulations/run_flowpilot_field_contract_checks.py",
+      "sections": {
+        "abstract": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "hazards": {
+          "keys": [
+            "hazard_checks"
+          ],
+          "ok": true,
+          "present": true
+        },
+        "live": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "progress": {
+          "keys": [
+            "progress"
+          ],
+          "ok": true,
+          "present": true
+        },
+        "source": {
+          "keys": [
+            "source_alignment"
+          ],
+          "ok": true,
+          "present": true
+        }
+      },
+      "skipped_checks": {}
+    },
+    {
+      "coverage_tier": "supporting_model_owned",
+      "covered_skipped_checks": [],
+      "finding_count": 0,
+      "finding_counts": {},
+      "gap_classes": [
+        "currently_consumable_inventory_evidence"
+      ],
+      "metadata": {
+        "exit_code": null,
+        "mode": "read_existing_result",
+        "parse_error": null,
+        "reason": "runner writes result files by default",
+        "result_path": "simulations/flowpilot_field_mesh_results.json"
+      },
+      "ok": true,
+      "ordinary_test_reference_strength": "source_audited_alignment",
+      "parsed": true,
+      "read_only_mode": "read_existing_result",
+      "replay_evidence": {},
+      "runner": "flowpilot_field_mesh",
+      "script": "simulations/run_flowpilot_field_mesh_checks.py",
+      "sections": {
+        "abstract": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "hazards": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "live": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "progress": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "source": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        }
+      },
+      "skipped_checks": {}
+    },
+    {
       "coverage_tier": "coverage_strong",
       "covered_skipped_checks": [],
       "finding_count": 0,
       "finding_counts": {},
       "gap_classes": [
-        "runner_not_ok"
+        "currently_consumable_inventory_evidence"
       ],
       "metadata": {
         "command": [
           "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
-          "simulations\\run_flowpilot_final_confidence_gate_checks.py"
+          "simulations\\run_flowpilot_final_confidence_gate_checks.py",
+          "--run-checks",
+          "--repository-confidence-only",
+          "--json-out",
+          "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\simulations\\flowpilot_final_confidence_gate_results.json"
         ],
-        "exit_code": 1,
+        "exit_code": 0,
         "mode": "executed_read_only",
         "parse_error": null,
         "stderr_tail": ""
       },
-      "ok": false,
+      "ok": true,
       "ordinary_test_reference_strength": "ordinary_test_text_reference",
       "parsed": true,
       "read_only_mode": "executed_read_only",
@@ -3488,9 +3801,9 @@
     {
       "coverage_tier": "supporting_model_owned",
       "covered_skipped_checks": [],
-      "finding_count": 11,
+      "finding_count": 16,
       "finding_counts": {
-        "boundary_expected_or_informational": 11
+        "boundary_expected_or_informational": 16
       },
       "gap_classes": [
         "currently_consumable_inventory_evidence"
@@ -3544,12 +3857,10 @@
     {
       "coverage_tier": "coverage_strong",
       "covered_skipped_checks": [],
-      "finding_count": 1,
-      "finding_counts": {
-        "modeled_current_live_hit_fix_runtime_or_current_state": 1
-      },
+      "finding_count": 0,
+      "finding_counts": {},
       "gap_classes": [
-        "live_runtime_or_state_findings"
+        "currently_consumable_inventory_evidence"
       ],
       "metadata": {
         "command": [
@@ -3559,10 +3870,10 @@
         "exit_code": 0,
         "mode": "executed_read_only",
         "parse_error": null,
-        "stderr_tail": "[flowguard] start phase=explore work_total=2 progress_steps=10\n[flowguard] progress 50% work=1/2 traces=26 violations=0\n[flowguard] progress 100% work=2/2 traces=78 violations=0\n"
+        "stderr_tail": "[flowguard] start phase=explore work_total=2 progress_steps=10\n[flowguard] progress 50% work=1/2 traces=35 violations=0\n[flowguard] progress 100% work=2/2 traces=105 violations=0\n"
       },
       "ok": true,
-      "ordinary_test_reference_strength": "ordinary_test_text_reference",
+      "ordinary_test_reference_strength": "source_audited_alignment",
       "parsed": true,
       "read_only_mode": "executed_read_only",
       "replay_evidence": {},
@@ -3607,9 +3918,9 @@
     {
       "coverage_tier": "coverage_strong",
       "covered_skipped_checks": [],
-      "finding_count": 35,
+      "finding_count": 34,
       "finding_counts": {
-        "boundary_expected_or_informational": 35
+        "boundary_expected_or_informational": 34
       },
       "gap_classes": [
         "currently_consumable_inventory_evidence"
@@ -4550,7 +4861,7 @@
         "result_path": "simulations/flowpilot_prework_flowguard_gate_results.json"
       },
       "ok": true,
-      "ordinary_test_reference_strength": "ordinary_test_text_reference",
+      "ordinary_test_reference_strength": "source_audited_alignment",
       "parsed": true,
       "read_only_mode": "read_existing_result",
       "replay_evidence": {},
@@ -4595,10 +4906,12 @@
     {
       "coverage_tier": "supporting_model_owned",
       "covered_skipped_checks": [],
-      "finding_count": 0,
-      "finding_counts": {},
+      "finding_count": 2,
+      "finding_counts": {
+        "boundary_expected_or_informational": 2
+      },
       "gap_classes": [
-        "runner_unparsed_or_unavailable"
+        "currently_consumable_inventory_evidence"
       ],
       "metadata": {
         "command": [
@@ -4607,28 +4920,33 @@
           "--json",
           "--no-write-results"
         ],
-        "exit_code": null,
+        "exit_code": 0,
         "mode": "executed_read_only",
-        "parse_error": "runner timed out after 60 seconds",
-        "stderr_tail": "[flowguard] start phase=explore work_total=90 progress_steps=10\n[flowguard] progress 10% work=9/90 traces=45 violations=0\n[flowguard] progress 20% work=18/90 traces=237 violations=0\n[flowguard] progress 30% work=27/90 traces=813 violations=0\n[flowguard] progress 40% work=36/90 traces=2102 violations=0\n[flowguard] progress 50% work=45/90 traces=4716 violations=0\n[flowguard] progress 60% work=54/90 traces=9604 violations=0\n[flowguard] progress 70% work=63/90 traces=17782 violations=0\n[flowguard] progress 80% work=72/90 traces=29518 violations=0\n[flowguard] progress 90% work=81/90 traces=44818 violations=0\n"
+        "parse_error": null,
+        "stderr_tail": "[flowguard] start phase=explore work_total=90 progress_steps=10\n[flowguard] progress 10% work=9/90 traces=45 violations=0\n[flowguard] progress 20% work=18/90 traces=237 violations=0\n[flowguard] progress 30% work=27/90 traces=813 violations=0\n[flowguard] progress 40% work=36/90 traces=2102 violations=0\n[flowguard] progress 50% work=45/90 traces=4716 violations=0\n[flowguard] progress 60% work=54/90 traces=9604 violations=0\n[flowguard] progress 70% work=63/90 traces=17782 violations=0\n[flowguard] progress 80% work=72/90 traces=29518 violations=0\n[flowguard] progress 90% work=81/90 traces=44818 violations=0\n[flowguard] progress 100% work=90/90 traces=63682 violations=0\n"
       },
-      "ok": false,
+      "ok": true,
       "ordinary_test_reference_strength": "ordinary_test_text_reference",
-      "parsed": false,
+      "parsed": true,
       "read_only_mode": "executed_read_only",
       "replay_evidence": {},
       "runner": "flowpilot_process_liveness",
       "script": "simulations/run_flowpilot_process_liveness_checks.py",
       "sections": {
         "abstract": {
-          "keys": [],
-          "ok": null,
-          "present": false
+          "keys": [
+            "safe_graph",
+            "flowguard_explorer"
+          ],
+          "ok": true,
+          "present": true
         },
         "hazards": {
-          "keys": [],
-          "ok": null,
-          "present": false
+          "keys": [
+            "hazard_checks"
+          ],
+          "ok": true,
+          "present": true
         },
         "live": {
           "keys": [],
@@ -4636,9 +4954,12 @@
           "present": false
         },
         "progress": {
-          "keys": [],
-          "ok": null,
-          "present": false
+          "keys": [
+            "progress",
+            "loop"
+          ],
+          "ok": true,
+          "present": true
         },
         "source": {
           "keys": [],
@@ -5113,6 +5434,59 @@
           "keys": [],
           "ok": null,
           "present": false
+        },
+        "hazards": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "live": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "progress": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "source": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        }
+      },
+      "skipped_checks": {}
+    },
+    {
+      "coverage_tier": "coverage_strong",
+      "covered_skipped_checks": [],
+      "finding_count": 0,
+      "finding_counts": {},
+      "gap_classes": [
+        "currently_consumable_inventory_evidence"
+      ],
+      "metadata": {
+        "exit_code": null,
+        "mode": "read_existing_result",
+        "parse_error": null,
+        "reason": "runner writes result files by default",
+        "result_path": "simulations/flowpilot_rejection_liveness_matrix_results.json"
+      },
+      "ok": true,
+      "ordinary_test_reference_strength": "source_audited_alignment",
+      "parsed": true,
+      "read_only_mode": "read_existing_result",
+      "replay_evidence": {},
+      "runner": "flowpilot_rejection_liveness_matrix",
+      "script": "simulations/run_flowpilot_rejection_liveness_matrix_checks.py",
+      "sections": {
+        "abstract": {
+          "keys": [
+            "graph"
+          ],
+          "ok": true,
+          "present": true
         },
         "hazards": {
           "keys": [],
@@ -5762,6 +6136,61 @@
           "keys": [],
           "ok": null,
           "present": false
+        },
+        "source": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        }
+      },
+      "skipped_checks": {}
+    },
+    {
+      "coverage_tier": "coverage_strong",
+      "covered_skipped_checks": [],
+      "finding_count": 0,
+      "finding_counts": {},
+      "gap_classes": [
+        "currently_consumable_inventory_evidence"
+      ],
+      "metadata": {
+        "exit_code": null,
+        "mode": "read_existing_result",
+        "parse_error": null,
+        "reason": "runner writes result files by default",
+        "result_path": "simulations/flowpilot_route_authority_singularity_results.json"
+      },
+      "ok": true,
+      "ordinary_test_reference_strength": "source_audited_alignment",
+      "parsed": true,
+      "read_only_mode": "read_existing_result",
+      "replay_evidence": {},
+      "runner": "flowpilot_route_authority_singularity",
+      "script": "simulations/run_flowpilot_route_authority_singularity_checks.py",
+      "sections": {
+        "abstract": {
+          "keys": [
+            "safe_graph"
+          ],
+          "ok": true,
+          "present": true
+        },
+        "hazards": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "live": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "progress": {
+          "keys": [
+            "progress"
+          ],
+          "ok": true,
+          "present": true
         },
         "source": {
           "keys": [],
@@ -6828,19 +7257,16 @@
         "currently_consumable_inventory_evidence"
       ],
       "metadata": {
-        "command": [
-          "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
-          "simulations\\run_flowpilot_startup_control_checks.py"
-        ],
-        "exit_code": 0,
-        "mode": "executed_read_only",
+        "exit_code": null,
+        "mode": "read_existing_result",
         "parse_error": null,
-        "stderr_tail": "[flowguard] start phase=explore work_total=24 progress_steps=10\n[flowguard] progress 10% work=3/24 traces=14 violations=0\n[flowguard] progress 20% work=5/24 traces=55 violations=0\n[flowguard] progress 30% work=8/24 traces=204 violations=0\n[flowguard] progress 40% work=10/24 traces=385 violations=0\n[flowguard] progress 50% work=12/24 traces=650 violations=0\n[flowguard] progress 60% work=15/24 traces=1326 violations=0\n[flowguard] progress 70% work=17/24 traces=2290 violations=0\n[flowguard] progress 80% work=20/24 traces=5830 violations=0\n[flowguard] progress 90% work=22/24 traces=11312 violations=0\n[flowguard] progress 100% work=24/24 traces=21920 violations=0\n"
+        "reason": "runner writes result files by default",
+        "result_path": "simulations/flowpilot_startup_control_results.json"
       },
       "ok": true,
       "ordinary_test_reference_strength": "source_audited_alignment",
       "parsed": true,
-      "read_only_mode": "executed_read_only",
+      "read_only_mode": "read_existing_result",
       "replay_evidence": {
         "covered_skipped_checks": {
           "conformance_replay": {
@@ -6904,7 +7330,7 @@
         }
       },
       "skipped_checks": {
-        "conformance_replay": "skipped_with_reason: this abstract startup-control model has no production replay adapter in the allowed write set"
+        "conformance_replay": "skipped_with_reason: abstract startup-control model; production coverage comes from router startup runtime tests"
       }
     },
     {
@@ -7431,6 +7857,57 @@
           ],
           "ok": true,
           "present": true
+        },
+        "source": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        }
+      },
+      "skipped_checks": {}
+    },
+    {
+      "coverage_tier": "supporting_model_owned",
+      "covered_skipped_checks": [],
+      "finding_count": 0,
+      "finding_counts": {},
+      "gap_classes": [
+        "currently_consumable_inventory_evidence"
+      ],
+      "metadata": {
+        "exit_code": null,
+        "mode": "read_existing_result",
+        "parse_error": null,
+        "reason": "runner writes result files by default",
+        "result_path": "simulations/flowpilot_terminal_supplemental_repair_results.json"
+      },
+      "ok": true,
+      "ordinary_test_reference_strength": "ordinary_test_text_reference",
+      "parsed": true,
+      "read_only_mode": "read_existing_result",
+      "replay_evidence": {},
+      "runner": "flowpilot_terminal_supplemental_repair",
+      "script": "simulations/run_flowpilot_terminal_supplemental_repair_checks.py",
+      "sections": {
+        "abstract": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "hazards": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "live": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "progress": {
+          "keys": [],
+          "ok": null,
+          "present": false
         },
         "source": {
           "keys": [],
@@ -8580,10 +9057,10 @@
   "release_convergence_ok": true,
   "replay_evidence_path": "simulations/flowpilot_full_model_replay_evidence.json",
   "result_type": "flowpilot_full_model_coverage_inventory",
-  "runner_count": 140,
+  "runner_count": 150,
   "schema_version": "flowpilot.full_model_coverage_inventory.v1",
   "source_audit_ok": true,
-  "sweep_ok": false,
+  "sweep_ok": true,
   "sweep_path": "simulations/flowpilot_full_model_coverage_sweep_results.json",
   "unresolved_non_deferred_gap_count": 0
 }

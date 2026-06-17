@@ -74,7 +74,7 @@ PM Suggestion Items instead of silent target repair.
 
 For `request_kind` values that include test maintenance, test rerun,
 validation-gap closure, or FlowGuard model-test coverage, include the relevant
-`test_obligation_matrix` row ids in the sealed request body. Worker requests
+current evidence obligation ids in the sealed request body. Worker requests
 must require a `Test Obligation Coverage` section with one row per assigned
 obligation, including obligation id, required test kind, changed or inspected
 paths, command or manual replay evidence, freshness status, skipped or failed

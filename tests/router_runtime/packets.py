@@ -15,6 +15,7 @@ class PacketsRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertEqual(action["card_id"], "pm.material_scan")
         self.ack_system_card_action(root, action)
         router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
+        self.ensure_current_role_agent_for_role(root, "worker")
 
         action = self.next_after_display_sync(root)
 
@@ -108,6 +109,7 @@ class PacketsRuntimeTests(FlowPilotRouterRuntimeTestBase):
         state_before = read_json(router.run_state_path(run_root))
         ledger_checks_before = int(state_before.get("ledger_checks", 0))
         ledger_requests_before = int(state_before.get("ledger_check_requests", 0))
+        self.ensure_current_role_agent_for_role(root, "worker")
         action = router.next_action(root)
         self.assertEqual(action["action_type"], "relay_material_scan_packets")
         self.assertTrue(action["combined_ledger_check_and_relay"])
@@ -863,6 +865,7 @@ class PacketsRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 ]
             },
         )
+        self.ensure_current_role_agent_for_role(root, "worker")
         self.apply_next_packet_action(root, "relay_material_scan_packets")
         lease_a = self.active_holder_lease_for_packet(root, "material-scan-reconcile-a")
         self.assertEqual(lease_a["holder_role"], "worker")
@@ -941,17 +944,26 @@ class PacketsRuntimeTests(FlowPilotRouterRuntimeTestBase):
 
     def test_current_node_result_requires_write_grant(self) -> None:
         root = self.make_project()
-        run_root, _packet_path, result_path = self.prepare_current_node_result_for_review(
-            root,
-            packet_id="node-packet-write-grant-required",
-            record_result_return=False,
+        run_root = self.write_minimal_run(root, "run-current-node-write-grant-required", status="controller_ready")
+        self.write_current_focus(root, run_root)
+        router.write_json(
+            run_root / "execution_frontier.json",
+            {
+                "schema_version": "flowpilot.execution_frontier.v1",
+                "run_id": run_root.name,
+                "status": "current_node_loop",
+                "active_route_id": "route-001",
+                "active_node_id": "node-001",
+                "route_version": 1,
+                "completed_nodes": [],
+            },
         )
         state_path = router.run_state_path(run_root)
         state = read_json(state_path)
+        state["flags"]["current_node_packet_relayed"] = True
         state["flags"]["current_node_write_grant_issued"] = False
         grant_path = run_root / "routes" / "route-001" / "nodes" / "node-001" / "current_node_write_grant.json"
-        self.assertTrue(grant_path.exists())
-        grant_path.unlink()
+        self.assertFalse(grant_path.exists())
         router.write_json(state_path, state)
 
         with self.assertRaisesRegex(router.RouterError, "current-node write grant"):
@@ -960,7 +972,7 @@ class PacketsRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 "worker_current_node_result_returned",
                 {
                     "packet_id": "node-packet-write-grant-required",
-                    "result_envelope_path": result_path,
+                    "result_envelope_path": "packets/results/missing-result-envelope.json",
                 },
             )
     def test_current_node_packet_rejects_unresolved_node_entry_self_interrogation(self) -> None:

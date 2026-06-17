@@ -1228,73 +1228,8 @@ def _route_scaffold_lifecycle_valid(state: State) -> bool:
     )
 
 
-def _route_scaffold_lifecycle_valid(state: State) -> bool:
-    return (
-        state.task_kind in {"backend", "ui"}
-        and state.flowpilot_enabled
-        and state.showcase_floor_committed
-        and state.self_interrogation_done
-        and state.self_interrogation_evidence
-        and state.visible_self_interrogation_done
-        and state.self_interrogation_pm_ratified
-        and state.quality_candidate_pool_seeded
-        and state.validation_strategy_seeded
-        and _product_function_architecture_ready(state)
-        and state.contract_frozen
-        and _runtime_roles_ready(state)
-        and state.pm_initial_capability_decision_recorded
-        and state.capabilities_manifest_written
-        and state.child_skill_route_design_discovery_started
-        and state.child_skill_initial_gate_manifest_extracted
-        and state.child_skill_gate_approvers_assigned
-        and state.child_skill_manifest_independent_validation_done
-        and state.child_skill_manifest_reviewer_reviewed
-        and state.child_skill_manifest_pm_approved_for_route
-        and state.child_skill_focused_interrogation_done
-        and state.child_skill_contracts_loaded
-        and state.child_skill_exact_source_verified
-        and state.child_skill_substitutes_rejected
-        and state.child_skill_original_standards_extracted
-        and state.child_skill_standards_promoted_to_node_contract
-        and state.child_skill_gate_evidence_obligations_bound
-        and state.flowpilot_invocation_policy_mapped
-        and state.child_skill_requirements_mapped
-        and state.child_skill_evidence_plan_written
-        and state.child_skill_subroute_projected
-        and state.child_skill_conformance_model_checked
-        and state.child_skill_conformance_model_flowguard_operator_route_scope_approved
-        and state.strict_gate_obligation_review_model_checked
-        and state.dependency_plan_recorded
-        and state.future_installs_deferred
-        and state.flowguard_dependency_checked
-        and _continuation_lifecycle_valid(state)
-        and state.flowguard_process_design_done
-        and state.flowguard_operator_model_adversarial_probe_done
-        and state.meta_route_checked
-        and state.meta_route_flowguard_operator_route_scope_approved
-        and state.capability_route_checked
-        and state.capability_route_flowguard_operator_route_scope_approved
-        and state.capability_product_function_model_checked
-        and state.capability_product_function_model_flowguard_operator_product_scope_approved
-        and state.capability_evidence_synced
-        and state.execution_frontier_written
-        and state.codex_plan_synced
-        and state.frontier_version == state.capability_route_version
-        and state.plan_version == state.frontier_version
-        and state.capability_user_flow_diagram_refreshed
-        and state.capability_user_flow_diagram_emitted
-        and _runtime_role_binding_startup_resolved(state)
-        and _startup_intake_release_ready(state)
-        and state.work_beyond_startup_allowed
-    )
-
-
 def _gates_ready(state: State) -> bool:
     return _route_scaffold_ready(state) and state.manual_resume_binding_health_checked
-
-
-def _gates_lifecycle_valid(state: State) -> bool:
-    return _route_scaffold_lifecycle_valid(state) and state.manual_resume_binding_health_checked
 
 
 def _gates_lifecycle_valid(state: State) -> bool:

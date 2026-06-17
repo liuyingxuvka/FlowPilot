@@ -8,7 +8,7 @@ from collections import deque
 from pathlib import Path
 from typing import Sequence
 
-from flowguard import Explorer
+from flowguard.explorer import Explorer
 
 import flowpilot_project_topology_orientation_model as model
 

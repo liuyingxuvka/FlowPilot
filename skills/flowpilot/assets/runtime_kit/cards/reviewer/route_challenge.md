@@ -19,10 +19,9 @@ runtime_context: Treat the runtime delivery envelope as the live source for the 
 
 ## Decision-Support Findings
 
-For every outcome, consider `independent_challenge.non_blocking_findings`.
-Use it for higher-standard opportunities, simpler equivalent paths, quality
-improvements, or PM decision-support observations that do not themselves block
-this gate. This applies even when the review blocks.
+For every outcome, consider PM decision-support observations. Put
+higher-standard opportunities, simpler equivalent paths, and quality
+improvements that do not themselves block this gate into `pm_suggestion_items`.
 When useful, express these findings as candidate
 `flowpilot.pm_suggestion_item.v1` entries for PM's suggestion ledger. Use
 `current_gate_blocker` only when the current gate's minimum standard cannot be
@@ -121,6 +120,11 @@ Check:
   route bloat unless PM shows distinct evidence, role authority, failure
   isolation, recovery boundary, or user-visible milestone value that an
   existing node could not provide;
+- every active `acceptance_item_id` from the accepted registry is assigned to
+  one or more route nodes, and every user-sourced item and PM high-standard
+  item has an explicit reviewer or FlowGuard gate. Block route pass if an item
+  is missing, orphaned, assigned only to a vague parent with no executable
+  proof path, or silently downgraded into prose;
 - necessary convergence loops are present for the chosen profile, especially
   concept-to-implementation visual comparison, interaction validation, realtime
   state mapping, desktop integration, or release validation when those are
@@ -145,10 +149,10 @@ Check:
   blockers are not intentionally changed;
 - FlowPilot can tell Controller the next role at each major boundary.
 
-The report body must include `independent_challenge` from the human-like
-reviewer core card. Route pass is invalid if that object only repeats the PM
-checklist, lacks failure hypotheses, lacks task-specific challenge actions, or
-downgrades hard requirements into residual risk.
+Use the current review result contract from the human-like reviewer core card.
+Route pass is invalid if the review only repeats the PM checklist, lacks
+failure hypotheses, lacks task-specific challenge actions, or downgrades hard
+requirements into nonblocking notes.
 
 For route standard or complexity disagreements, report the evidence and
 alternative for PM decision instead of becoming a second route owner. Block

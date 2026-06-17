@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import sys
 import tempfile
 from pathlib import Path
 from typing import Any
@@ -11,12 +12,37 @@ from tests.router_runtime.common import *  # noqa: F403
 from tests.router_runtime.common import FlowPilotRouterRuntimeTestBase, read_json
 from tests.synthetic_agent_trace_replay import SyntheticTracePackage, start_worker_trace
 
+REPO_ROOT = Path(__file__).resolve().parents[1]
+SIMULATIONS_ROOT = REPO_ROOT / "simulations"
+ASSETS_ROOT = REPO_ROOT / "skills" / "flowpilot" / "assets"
+for import_root in (SIMULATIONS_ROOT, ASSETS_ROOT):
+    if str(import_root) not in sys.path:
+        sys.path.insert(0, str(import_root))
+
+from flowpilot_core_runtime import runtime as core_runtime  # noqa: E402
+import flowpilot_core_runtime_scenarios as core_runtime_scenarios  # noqa: E402
+
 
 HISTORICAL_METADATA_FIXTURE = (
     Path(__file__).resolve().parent
     / "fixtures"
     / "flowpilot"
     / "run-20260527-212331-control-plane-metadata.json"
+)
+
+CONTRACT_SURFACE_REDUCTION_PACKET_FAMILIES = (
+    "task.high_standard_contract",
+    "task.discovery",
+    "task.skill_standard",
+    "task.planning",
+    "task.node_acceptance_plan",
+    "task.node",
+    "flowguard_check.post_result",
+    "review.any_current_subject",
+    "pm_repair_decision.pm_repair_decision",
+    "pm_disposition.node_pm_disposition",
+    "task.parent_backward_replay",
+    "review.terminal_backward_replay",
 )
 
 
@@ -80,6 +106,32 @@ def _package_completion_claim_is_mechanically_supported(replay) -> dict[str, Any
     return {"ok": not missing, "missing": missing}
 
 
+def _write_historical_flowguard_evidence_artifact(
+    ledger: dict[str, Any],
+    packet_id: str,
+    *,
+    decision: str,
+) -> Path:
+    path = Path(str(ledger["run_root"])) / "evidence" / "flowguard" / packet_id / "flowguard_evidence.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps(
+            {
+                "schema_version": "flowpilot.flowguard_evidence.v1",
+                "model_test_alignment_report": {
+                    "decision": decision,
+                    "failed_predicates": [] if decision == "pass" else ["semantic_contract_missing"],
+                },
+            },
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    return path
+
+
 def _semantic_standard_package_ok(package: dict[str, Any]) -> dict[str, Any]:
     missing = []
     inherited = package.get("inherited_skill_standard_ids") or []
@@ -96,6 +148,43 @@ def _semantic_standard_package_ok(package: dict[str, Any]) -> dict[str, Any]:
         if standard_id not in covered and standard_id not in waivers:
             missing.append(f"missing_standard_result:{standard_id}")
     return {"ok": not missing, "missing": missing}
+
+
+def _contract_surface_reduction_baseline_ok(package: dict[str, Any]) -> dict[str, Any]:
+    reasons: list[str] = []
+    covered = {str(item) for item in package.get("covered_packet_families") or []}
+    missing_families = [
+        family for family in CONTRACT_SURFACE_REDUCTION_PACKET_FAMILIES if family not in covered
+    ]
+    first_packet_failure = package.get("first_packet_failure") or {}
+    forbidden = {str(item) for item in package.get("forbidden_shortcuts") or []}
+
+    if package.get("success_run_id") != "run-20260613-140526":
+        reasons.append("success_run_id_not_20260613_baseline")
+    if package.get("baseline_use") != "process_route_only":
+        reasons.append("historical_run_used_as_field_shape_baseline")
+    if package.get("historical_field_shape_authority") is not False:
+        reasons.append("historical_field_shape_promoted_to_current_contract")
+    if missing_families:
+        reasons.append("missing_mainline_packet_family_coverage")
+    if first_packet_failure.get("blocker_class") != "early_terminal_evidence_requirement":
+        reasons.append("first_packet_failure_not_terminal_evidence_regression")
+    if first_packet_failure.get("terminal_replay_fields_required_at_first_packet") is not False:
+        reasons.append("first_packet_still_requires_terminal_replay_fields")
+    if (
+        first_packet_failure.get("expected_current_disposition")
+        != "invalid_under_reduced_high_standard_contract"
+    ):
+        reasons.append("first_packet_failure_disposition_not_reduced_contract_invalid")
+    for shortcut in {
+        "restore_historical_field_shape",
+        "treat_first_packet_as_terminal_replay",
+        "skip_mainline_packet_family_coverage",
+    }:
+        if shortcut not in forbidden:
+            reasons.append(f"missing_forbidden_shortcut:{shortcut}")
+
+    return {"ok": not reasons, "reasons": reasons, "missing_packet_families": missing_families}
 
 
 def _install_split_brain_report(repo_skill: Path, installed_skill: Path) -> dict[str, Any]:
@@ -189,6 +278,110 @@ class FlowPilotHistoricalLiveRunReplayTests(FlowPilotRouterRuntimeTestBase):
         self.assertIn("break_glass_incident_still_open", gate["reasons"])
         self.assertIn("break_glass_recovery_transaction_missing", gate["reasons"])
         self.assertIn("break_glass_patch_validation_not_run", gate["reasons"])
+
+    def test_contract_surface_reduction_baseline_keeps_success_mainline_and_rejects_first_packet_terminal_evidence(
+        self,
+    ) -> None:
+        baseline_package = {
+            "success_run_id": "run-20260613-140526",
+            "baseline_use": "process_route_only",
+            "historical_field_shape_authority": False,
+            "covered_packet_families": list(CONTRACT_SURFACE_REDUCTION_PACKET_FAMILIES),
+            "first_packet_failure": {
+                "blocker_class": "early_terminal_evidence_requirement",
+                "terminal_replay_fields_required_at_first_packet": False,
+                "expected_current_disposition": "invalid_under_reduced_high_standard_contract",
+            },
+            "forbidden_shortcuts": [
+                "restore_historical_field_shape",
+                "treat_first_packet_as_terminal_replay",
+                "skip_mainline_packet_family_coverage",
+            ],
+        }
+
+        accepted = _contract_surface_reduction_baseline_ok(baseline_package)
+        self.assertTrue(accepted["ok"], accepted)
+        self.assertEqual(accepted["missing_packet_families"], [])
+
+        old_field_shape_package = {**baseline_package, "historical_field_shape_authority": True}
+        old_field_shape = _contract_surface_reduction_baseline_ok(old_field_shape_package)
+        self.assertFalse(old_field_shape["ok"])
+        self.assertIn("historical_field_shape_promoted_to_current_contract", old_field_shape["reasons"])
+
+        missing_family_package = {
+            **baseline_package,
+            "covered_packet_families": list(CONTRACT_SURFACE_REDUCTION_PACKET_FAMILIES[:-1]),
+        }
+        missing_family = _contract_surface_reduction_baseline_ok(missing_family_package)
+        self.assertFalse(missing_family["ok"])
+        self.assertIn("missing_mainline_packet_family_coverage", missing_family["reasons"])
+        self.assertEqual(missing_family["missing_packet_families"], ["review.terminal_backward_replay"])
+
+        wrong_first_packet_package = {
+            **baseline_package,
+            "first_packet_failure": {
+                "blocker_class": "early_terminal_evidence_requirement",
+                "terminal_replay_fields_required_at_first_packet": True,
+                "expected_current_disposition": "valid_terminal_gate_block",
+            },
+        }
+        wrong_first_packet = _contract_surface_reduction_baseline_ok(wrong_first_packet_package)
+        self.assertFalse(wrong_first_packet["ok"])
+        self.assertIn("first_packet_still_requires_terminal_replay_fields", wrong_first_packet["reasons"])
+        self.assertIn(
+            "first_packet_failure_disposition_not_reduced_contract_invalid",
+            wrong_first_packet["reasons"],
+        )
+
+    def test_historical_skillguard_flowguard_artifact_block_is_not_authoritative(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_root:
+            ledger, packet_id, worker = core_runtime_scenarios._base_ledger()
+            ledger["run_root"] = temp_root
+            core_runtime.ack_lease(ledger, worker, packet_id)
+            core_runtime.submit_result(
+                ledger,
+                worker,
+                packet_id,
+                core_runtime_scenarios._role_result_body("Historical SkillGuard worker result replay."),
+            )
+            flowguard_packet = core_runtime_scenarios._open_packet_by_kind(ledger, "flowguard_check")
+            _write_historical_flowguard_evidence_artifact(
+                ledger,
+                flowguard_packet,
+                decision="missing_code_contract",
+            )
+            flowguard_lease = core_runtime.lease_agent(
+                ledger,
+                "flowguard_operator",
+                agent_id="historical-skillguard-flowguard",
+                packet_id=flowguard_packet,
+            )
+            core_runtime.assign_packet(ledger, flowguard_packet, flowguard_lease)
+            core_runtime.ack_lease(ledger, flowguard_lease, flowguard_packet)
+            core_runtime.open_authorized_input_materials_for_role(ledger, flowguard_packet, flowguard_lease)
+
+            result_id = core_runtime.submit_result(
+                ledger,
+                flowguard_lease,
+                flowguard_packet,
+                core_runtime_scenarios._flowguard_result_body(
+                    "Historical FlowGuard body claims pass while artifact blocks."
+                ),
+            )
+            result = ledger["results"][result_id]
+
+            self.assertEqual(result["status"], "mechanical_contract_blocked")
+            self.assertIn(
+                "flowguard_evidence.json.model_test_alignment_report.decision",
+                result["missing_required_fields"],
+            )
+            self.assertFalse(
+                [
+                    packet
+                    for packet in ledger["packets"].values()
+                    if packet["envelope"].get("packet_kind") == "review"
+                ]
+            )
 
     def test_historical_snapshot_and_background_packages_reject_stale_or_incomplete_evidence(self) -> None:
         root = self.make_project()

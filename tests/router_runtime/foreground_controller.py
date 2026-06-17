@@ -90,7 +90,7 @@ class ForegroundControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
         run_root = self.boot_to_controller(root)
         self.release_startup_daemon_for_explicit_daemon_test(root)
 
-        self.force_current_role_result_wait(root)
+        self.force_current_role_result_wait(root, waiting_for_role="human_like_reviewer")
 
         ledger = read_json(run_root / "runtime" / "controller_action_ledger.json")
         ordinary_types = [item.get("action_type") for item in ledger["actions"]]
@@ -393,7 +393,7 @@ class ForegroundControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
         root = self.make_project()
         run_root = self.boot_to_controller(root)
         self.release_startup_daemon_for_explicit_daemon_test(root)
-        self.force_current_role_result_wait(root)
+        self.force_current_role_result_wait(root, waiting_for_role="human_like_reviewer")
         state = read_json(router.run_state_path(run_root))
         state["pending_action"]["created_at"] = self.old_utc(minutes=11)
         lock = router._refresh_router_daemon_lock(root, run_root)  # type: ignore[attr-defined]
@@ -448,7 +448,7 @@ class ForegroundControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
         root = self.make_project()
         run_root = self.boot_to_controller(root)
         self.release_startup_daemon_for_explicit_daemon_test(root)
-        self.force_current_role_result_wait(root)
+        self.force_current_role_result_wait(root, waiting_for_role="human_like_reviewer")
         state = read_json(router.run_state_path(run_root))
         stale_checked_at = self.old_utc(minutes=11)
         delivered_at = router.utc_now()
@@ -547,7 +547,7 @@ class ForegroundControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
         root = self.make_project()
         run_root = self.boot_to_controller(root)
         self.release_startup_daemon_for_explicit_daemon_test(root)
-        self.force_current_role_result_wait(root)
+        self.force_current_role_result_wait(root, waiting_for_role="human_like_reviewer")
         result: dict[str, object] = {}
 
         def run_standby() -> None:
@@ -582,7 +582,7 @@ class ForegroundControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
         root = self.make_project()
         run_root = self.boot_to_controller(root)
         self.release_startup_daemon_for_explicit_daemon_test(root)
-        self.force_current_role_result_wait(root)
+        self.force_current_role_result_wait(root, waiting_for_role="human_like_reviewer")
         state = read_json(router.run_state_path(run_root))
         state["pending_action"]["created_at"] = self.old_utc(minutes=11)
         state["pending_action"]["last_liveness_probe"] = {
@@ -620,7 +620,7 @@ class ForegroundControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
         root = self.make_project()
         run_root = self.boot_to_controller(root)
         self.release_startup_daemon_for_explicit_daemon_test(root)
-        self.force_current_role_result_wait(root)
+        self.force_current_role_result_wait(root, waiting_for_role="human_like_reviewer")
         state = read_json(router.run_state_path(run_root))
         state["pending_action"]["created_at"] = self.old_utc(minutes=11)
         state["pending_action"]["last_liveness_probe"] = {

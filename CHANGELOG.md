@@ -2,6 +2,30 @@
 
 All notable changes to FlowPilot will be documented in this file.
 
+## 0.10.12 - 2026-06-15
+
+### Fixed
+
+- Hardened parent-scope repair so replacement parent/module nodes must carry
+  new active repair child nodes while preserving old children and accepted
+  child results as inherited read-only history.
+- Required PM parent repair output to include a structured parent repair scope
+  contract with repair child specs, and blocked prose-only child routing before
+  node acceptance or parent backward replay can loop.
+- Hardened FlowGuard result acceptance so subject-bound evidence artifacts,
+  blocker findings, missing code contracts, missing obligations, stale
+  evidence, or progress-only evidence override a top-level `passed: true`.
+- Counted repeated same-problem repair attempts across superseded repair
+  lineage nodes so no-in-place repair no longer hides break-glass thresholds.
+
+### Validation
+
+- Refreshed the canonical repair-scope FlowGuard model, model-test alignment,
+  fake AI rehearsals, historical replay, synthetic trace replay, topology,
+  install sync, and Meta control-plane checks for the repair.
+- Added OpenSpec coverage for the FlowGuard semantic recheck evidence chain and
+  parent repair inheritance contract.
+
 ## 0.10.11 - 2026-06-13
 
 ### Fixed

@@ -46,10 +46,10 @@ as leaseable responsibilities or packet kinds.
 - **AND** the runtime MUST reject `validator` and `closure_officer`
   responsibilities.
 
-### Requirement: Staged high-risk PM decisions apply after system closure
-The runtime SHALL apply staged high-risk PM repair and PM disposition decisions
-only after FlowGuard, reviewer, system validation, and system closure pass for
-the PM decision subject.
+### Requirement: Staged PM continue-repair decisions apply after system closure
+The runtime SHALL apply staged PM continue-repair and route-mutating
+disposition decisions only after FlowGuard, reviewer, system validation, and
+system closure pass for the PM decision subject.
 
 #### Scenario: PM route mutation applies after system closure
 - **WHEN** PM submits a staged route mutation decision

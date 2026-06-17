@@ -7,7 +7,7 @@ import json
 from collections import deque
 from pathlib import Path
 
-from flowguard import Explorer
+from flowguard.explorer import Explorer
 
 import flowpilot_role_packet_access_model as model
 

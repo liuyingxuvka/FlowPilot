@@ -512,12 +512,11 @@ class FlowPilotRoleOutputRuntimeTests(unittest.TestCase):
             agent_id="agent-reviewer-quality",
             body={
                 "pm_visible_summary": ["Reviewer checked the declared generic quality-pack rows."],
+                "reviewed_by_role": "human_like_reviewer",
                 "passed": True,
                 "review_summary": "Reviewer checked the declared generic quality-pack rows.",
-                "direct_evidence_paths_checked": [],
                 "findings": [],
                 "blockers": [],
-                "residual_risks": [],
                 "quality_pack_checks": [
                     {
                         "pack_id": "ui_visual_interaction_quality_pack",
@@ -534,17 +533,6 @@ class FlowPilotRoleOutputRuntimeTests(unittest.TestCase):
                         "waivers": [],
                     },
                 ],
-                "independent_challenge": {
-                    "scope_restatement": "Generic quality-pack response structure only.",
-                    "explicit_and_implicit_commitments": [],
-                    "failure_hypotheses": [],
-                    "challenge_actions": [],
-                    "blocking_findings": [],
-                    "non_blocking_findings": [],
-                    "pass_or_block": "pass",
-                    "reroute_request": [],
-                    "challenge_waivers": [],
-                },
             },
         )
         body = self.read_json(root / envelope["body_ref"]["path"])
@@ -559,23 +547,11 @@ class FlowPilotRoleOutputRuntimeTests(unittest.TestCase):
                 agent_id="agent-reviewer-quality-2",
                 body={
                     "pm_visible_summary": ["Missing declared quality pack rows should fail."],
+                    "reviewed_by_role": "human_like_reviewer",
                     "passed": True,
                     "review_summary": "Missing declared quality pack rows should fail.",
-                    "direct_evidence_paths_checked": [],
                     "findings": [],
                     "blockers": [],
-                    "residual_risks": [],
-                    "independent_challenge": {
-                        "scope_restatement": "Missing pack rows.",
-                        "explicit_and_implicit_commitments": [],
-                        "failure_hypotheses": [],
-                        "challenge_actions": [],
-                        "blocking_findings": [],
-                        "non_blocking_findings": [],
-                        "pass_or_block": "pass",
-                        "reroute_request": [],
-                        "challenge_waivers": [],
-                    },
                 },
             )
 

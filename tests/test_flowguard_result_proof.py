@@ -102,6 +102,39 @@ class FlowGuardResultProofTests(unittest.TestCase):
         for command in commands[:4]:
             self.assertNotIn("--fast", command)
 
+    def test_smoke_group_runs_only_selected_chunk(self) -> None:
+        commands: list[list[str]] = []
+        old_run = smoke_flowpilot.run
+        try:
+            def fake_run(command: list[str], *, fast: bool = False) -> bool:
+                commands.append(command)
+                return True
+
+            smoke_flowpilot.run = fake_run
+            self.assertEqual(smoke_flowpilot.main(["--fast", "--group", "parents"]), 0)
+        finally:
+            smoke_flowpilot.run = old_run
+
+        self.assertEqual(
+            commands,
+            [
+                [
+                    sys.executable,
+                    "simulations/run_flowpilot_model_mesh_checks.py",
+                    "--json-out",
+                    "simulations/flowpilot_model_mesh_results.json",
+                ],
+                [sys.executable, "simulations/run_meta_checks.py", "--fast"],
+                [sys.executable, "simulations/run_capability_checks.py", "--fast"],
+                [
+                    sys.executable,
+                    "simulations/run_flowpilot_model_hierarchy_checks.py",
+                    "--json-out",
+                    "simulations/flowpilot_model_hierarchy_results.json",
+                ],
+            ],
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

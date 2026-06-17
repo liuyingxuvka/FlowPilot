@@ -8,7 +8,7 @@ from collections import deque
 from datetime import datetime, timezone
 from pathlib import Path
 
-from flowguard import Explorer
+from flowguard.explorer import Explorer
 
 import flowpilot_packet_lifecycle_model as model
 

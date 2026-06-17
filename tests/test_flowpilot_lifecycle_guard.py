@@ -22,7 +22,11 @@ lifecycle_runner = importlib.import_module("simulations.run_flowpilot_lifecycle_
 
 
 def role_result_body(summary: str, **fields: object) -> str:
-    payload: dict[str, object] = {"decision": "pass", "pm_visible_summary": [summary]}
+    payload: dict[str, object] = {
+        "decision": "pass",
+        "pm_visible_summary": [summary],
+        "current_evidence_refs": ["current-runtime-evidence"],
+    }
     payload.update(fields)
     return json.dumps(payload)
 
@@ -517,6 +521,30 @@ class FlowPilotLifecycleGuardTests(unittest.TestCase):
             self.assertEqual(refreshed["decision"], "process_next_action")
             self.assertEqual(third["lifecycle_guard"]["next_action_class"], "role_dispatch")
             self.assertGreaterEqual(third["lifecycle_guard"]["repeated_count"], 3)
+
+    def test_prior_stuck_decision_absorbs_same_action_until_progress_event(self) -> None:
+        ledger = runtime.new_ledger("Build the thing", "Finish cleanly")
+        first = runtime.preview_lifecycle_guard(ledger, trigger="patrol")
+        ledger["lifecycle_guard_history"] = [
+            {
+                "created_at": "2026-06-15T00:00:00Z",
+                "trigger": "patrol",
+                "decision": "control_plane_stuck",
+                "controller_stop_allowed": False,
+                "action_key": first["action_key"],
+                "observed_event_count": first["observed_event_count"],
+                "repeated_count": 3,
+                "subject_id": first["next_action"].get("subject_id", ""),
+            }
+        ]
+
+        absorbed = runtime.preview_lifecycle_guard(ledger, trigger="final_preflight")
+
+        self.assertEqual(absorbed["action_key"], first["action_key"])
+        self.assertEqual(absorbed["observed_event_count"], first["observed_event_count"])
+        self.assertEqual(absorbed["decision"], "control_plane_stuck")
+        self.assertTrue(absorbed["stuck_absorbed_from_history"])
+        self.assertIn("same nonterminal action", absorbed["reason"])
 
     def test_inactive_lease_result_is_quarantined_by_guard(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

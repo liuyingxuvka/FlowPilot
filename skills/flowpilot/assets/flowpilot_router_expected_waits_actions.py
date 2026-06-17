@@ -148,13 +148,13 @@ def _expected_role_decision_wait_action(
         payload_contract = dict(payload_contract)
         structural = list(payload_contract.get("structural_requirements") or [])
         structural.append(
-            "Maintain role-output progress through flowpilot_runtime.py progress-output; progress is metadata-only and is not pass/fail evidence."
+            "Maintain role-output progress through flowpilot_new.py progress --lease-id <lease-id> --packet-id <packet-id> --status <metadata-only-status>; progress is metadata-only and is not pass/fail evidence."
         )
         payload_contract["structural_requirements"] = structural
         payload_contract["progress_status"] = {
             "default_progress_required": True,
             "controller_status_packet_path": role_output_status_packet_path,
-            "runtime_command": "flowpilot_runtime.py progress-output",
+            "runtime_command": "flowpilot_new.py progress --lease-id <lease-id> --packet-id <packet-id> --status <metadata-only-status>",
             "controller_visibility": "metadata_only",
             "progress_is_decision_evidence": False,
         }
@@ -206,7 +206,7 @@ def _expected_role_decision_wait_action(
         extra["role_output_progress_status"] = {
             "controller_status_packet_path": role_output_status_packet_path,
             "default_progress_required": True,
-            "runtime_command": "flowpilot_runtime.py progress-output",
+            "runtime_command": "flowpilot_new.py progress --lease-id <lease-id> --packet-id <packet-id> --status <metadata-only-status>",
             "controller_visibility": "metadata_only",
             "progress_is_decision_evidence": False,
         }

@@ -32,10 +32,9 @@ model, search for same-class omissions across sibling children, add repair or
 supplemental nodes as needed, and rerun the stale local gates before parent
 completion.
 
-Build local parent backward replay targets when composition risk is high or
-when the PM cannot justify a low-risk waiver from current evidence. For a
-low-risk waiver, write the waiver reason and cited source paths before the
-parent node can close.
+Build local parent backward replay targets for every effective current-route
+node that has children. Derive the target list from the active route,
+frontier, node acceptance plan, and child evidence pointers.
 
 Write
 `.flowpilot/runs/<run-id>/routes/<route-id>/parent_backward_targets.json`

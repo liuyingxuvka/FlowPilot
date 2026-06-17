@@ -6,7 +6,7 @@ from pathlib import Path
 if __package__ in (None, ""):
     sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from flowguard import Explorer  # noqa: E402
+from flowguard.explorer import Explorer  # noqa: E402
 
 import packet_control_plane_model as model  # noqa: E402
 

@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import os
 import shutil
 from datetime import datetime, timezone
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
@@ -72,7 +74,42 @@ def bootstrap_state_path(project_root: Path, state: dict[str, Any] | None = None
     raise RouterError("startup bootstrap path requires a current run-scoped FlowPilot pointer")
 
 
+@lru_cache(maxsize=4096)
+def _absolute_path_text(raw_path: str) -> str:
+    return os.path.abspath(raw_path)
+
+
+@lru_cache(maxsize=8192)
+def _path_has_symlink_segment(root_text: str, path_text: str) -> bool:
+    root = Path(root_text)
+    current = Path(path_text)
+    while True:
+        if current == root:
+            return False
+        try:
+            current.relative_to(root)
+        except ValueError:
+            return True
+        try:
+            if current.is_symlink():
+                return True
+        except OSError:
+            return True
+        parent = current.parent
+        if parent == current:
+            return True
+        current = parent
+
+
 def project_relative(project_root: Path, path: Path) -> str:
+    root_abs = Path(_absolute_path_text(str(project_root)))
+    path_abs = Path(_absolute_path_text(str(path)))
+    try:
+        rel_path = path_abs.relative_to(root_abs)
+        if not _path_has_symlink_segment(str(root_abs), str(path_abs)):
+            return rel_path.as_posix()
+    except ValueError:
+        pass
     try:
         return path.resolve().relative_to(project_root.resolve()).as_posix()
     except ValueError as exc:
@@ -80,7 +117,7 @@ def project_relative(project_root: Path, path: Path) -> str:
 
 
 def _project_root_from_run_root(run_root: Path) -> Path:
-    resolved = run_root.resolve()
+    resolved = Path(_absolute_path_text(str(run_root)))
     if resolved.parent.name == "runs" and resolved.parent.parent.name == ".flowpilot":
         return resolved.parent.parent.parent
     return resolved.parent

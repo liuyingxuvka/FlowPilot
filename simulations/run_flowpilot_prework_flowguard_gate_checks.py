@@ -8,7 +8,7 @@ from collections import deque
 from pathlib import Path
 from typing import Sequence
 
-from flowguard import Explorer
+from flowguard.explorer import Explorer
 
 import flowpilot_prework_flowguard_gate_model as model
 

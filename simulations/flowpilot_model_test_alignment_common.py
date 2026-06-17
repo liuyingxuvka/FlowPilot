@@ -173,6 +173,9 @@ FACADE_PARITY_EXTERNAL_CONTRACT_SURFACE_IDS = {
     "asset:flowpilot_router_route_artifacts_architecture",
     "asset:flowpilot_router_route_artifacts_architecture_gate_blocks",
     "asset:flowpilot_router_route_artifacts_architecture_product",
+    "asset:flowpilot_router_route_artifacts_architecture_product_core",
+    "asset:flowpilot_router_route_artifacts_architecture_product_decisions",
+    "asset:flowpilot_router_route_artifacts_architecture_product_intent",
     "asset:flowpilot_router_route_artifacts_architecture_route_checks",
     "asset:flowpilot_router_route_artifacts_nodes",
     "asset:flowpilot_router_route_artifacts_nodes_acceptance",
@@ -191,6 +194,9 @@ FACADE_PARITY_EXTERNAL_CONTRACT_SURFACE_IDS = {
     "asset:flowpilot_router_route_frontier_nodes",
     "asset:flowpilot_router_route_frontier_policy",
     "asset:flowpilot_router_route_frontier_policy_completion",
+    "asset:flowpilot_router_route_frontier_policy_completion_authority",
+    "asset:flowpilot_router_route_frontier_policy_completion_context",
+    "asset:flowpilot_router_route_frontier_policy_completion_ledger",
     "asset:flowpilot_router_route_frontier_policy_registry",
     "asset:flowpilot_router_route_frontier_policy_topology",
     "asset:flowpilot_router_route_frontier_status",
@@ -239,6 +245,7 @@ FACADE_PARITY_EXTERNAL_CONTRACT_SURFACE_IDS = {
     "asset:flowpilot_router_work_packets_current_node_relay_leases",
     "asset:flowpilot_router_work_packets_current_node_relay_runtime_ops",
     "asset:flowpilot_router_work_packets_current_node_validation",
+    "asset:flowpilot_router_work_packets_material_next",
     "asset:flowpilot_router_work_packets_pm_role_lifecycle_contracts",
     "asset:flowpilot_router_work_packets_pm_role_lifecycle_index",
     "asset:flowpilot_router_work_packets_pm_role_lifecycle_flowguard_operator",
@@ -249,6 +256,8 @@ FACADE_PARITY_EXTERNAL_CONTRACT_SURFACE_IDS = {
     "asset:flowpilot_router_work_packets_pm_role_writes_decisions_role_result",
     "asset:flowpilot_router_work_packets_pm_role_writes_request",
     "asset:flowpilot_router_work_packets_pm_role_writes_results",
+    "asset:flowpilot_router_work_packets_research_next",
+    "asset:flowpilot_router_work_packets_role_agents",
     "asset:flowpilot_user_flow_diagram",
     "asset:flowpilot_user_flow_diagram_cli",
     "asset:flowpilot_user_flow_diagram_generate",
@@ -696,6 +705,18 @@ STRUCTURE_SPLIT_REPAIR_PLAN = {
         "safe_split_class": "stateful_runtime_flow",
         "recommended_next_action": "monitor_route_artifact_architecture_child_contracts",
     },
+    "flowpilot_router_route_artifacts_architecture_product": {
+        "split_status": "completed_split",
+        "split_reason": "product_architecture_intent_and_pm_decision_helpers_extracted",
+        "completed_split_paths": (
+            "skills/flowpilot/assets/flowpilot_router_route_artifacts_architecture_product_core.py",
+            "skills/flowpilot/assets/flowpilot_router_route_artifacts_architecture_product_intent.py",
+            "skills/flowpilot/assets/flowpilot_router_route_artifacts_architecture_product_decisions.py",
+        ),
+        "peer_safety_status": "claimed_by_split_flowpilot_hff_structure_surfaces",
+        "safe_split_class": "stateful_runtime_flow",
+        "recommended_next_action": "monitor_route_artifact_product_child_contracts",
+    },
     "flowpilot_router_route_artifacts_nodes": {
         "split_status": "completed_split",
         "split_reason": "node_acceptance_parent_replay_and_delegate_validation_helpers_extracted",
@@ -743,6 +764,18 @@ STRUCTURE_SPLIT_REPAIR_PLAN = {
         "peer_safety_status": "claimed_by_finish_flowpilot_structure_debt",
         "safe_split_class": "runtime_route_frontier_policy_helper",
         "recommended_next_action": "monitor_route_frontier_policy_child_contracts",
+    },
+    "flowpilot_router_route_frontier_policy_completion": {
+        "split_status": "completed_split",
+        "split_reason": "route_frontier_completion_authority_context_and_ledger_helpers_extracted",
+        "completed_split_paths": (
+            "skills/flowpilot/assets/flowpilot_router_route_frontier_policy_completion_authority.py",
+            "skills/flowpilot/assets/flowpilot_router_route_frontier_policy_completion_context.py",
+            "skills/flowpilot/assets/flowpilot_router_route_frontier_policy_completion_ledger.py",
+        ),
+        "peer_safety_status": "claimed_by_split_route_frontier_policy_completion",
+        "safe_split_class": "runtime_route_frontier_policy_completion_helper",
+        "recommended_next_action": "monitor_route_frontier_policy_completion_child_contracts",
     },
     "flowpilot_router_route_frontier_status": {
         "split_status": "completed_split",
@@ -804,6 +837,19 @@ STRUCTURE_SPLIT_REPAIR_PLAN = {
         "peer_safety_status": "claimed_by_finish_flowpilot_structure_debt",
         "safe_split_class": "system_card_selection_helper",
         "recommended_next_action": "monitor_system_card_selection_child_contracts",
+    },
+    "flowpilot_router_work_packets_next_actions": {
+        "split_status": "completed_split",
+        "split_reason": "role_agent_material_research_and_result_reconciliation_helpers_extracted",
+        "completed_split_paths": (
+            "skills/flowpilot/assets/flowpilot_router_work_packets_role_agents.py",
+            "skills/flowpilot/assets/flowpilot_router_work_packets_material_next.py",
+            "skills/flowpilot/assets/flowpilot_router_work_packets_research_next.py",
+            "skills/flowpilot/assets/flowpilot_router_work_packets_result_reconciliation.py",
+        ),
+        "peer_safety_status": "claimed_by_split_flowpilot_hff_structure_surfaces",
+        "safe_split_class": "runtime_work_packet_next_action_helper",
+        "recommended_next_action": "monitor_work_packet_next_action_child_contracts",
     },
     "flowpilot_router_work_packets_pm_role_lifecycle": {
         "split_status": "completed_split",
@@ -1149,6 +1195,7 @@ def _contract(
     state_reads: Sequence[str] = (),
     state_writes: Sequence[str] = (),
     side_effects: Sequence[str] = (),
+    error_paths: Sequence[str] = (),
 ) -> CodeContract:
     return CodeContract(
         code_contract_id=code_contract_id,
@@ -1160,6 +1207,7 @@ def _contract(
         state_reads=tuple(state_reads),
         state_writes=tuple(state_writes),
         side_effects=tuple(side_effects),
+        error_paths=tuple(error_paths),
     )
 
 

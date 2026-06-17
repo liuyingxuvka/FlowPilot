@@ -1,0 +1,67 @@
+{
+  "accepted_scenarios": [
+    "valid_terminal_supplemental_completion"
+  ],
+  "edge_count": 28,
+  "hazard_failures": {
+    "final_ledger_omits_hygiene": [
+      "final ledgers must include final artifact hygiene closure rows"
+    ],
+    "final_ledger_omits_supplemental": [
+      "final ledgers must include supplemental repair closure rows"
+    ],
+    "fourth_round_pm_packet_opened": [
+      "runtime must stop instead of opening a fourth supplemental repair round"
+    ],
+    "hygiene_category_missing": [
+      "final artifact hygiene repair items require hygiene_category"
+    ],
+    "hygiene_gap_not_contractualized": [
+      "required final artifact hygiene gap requires PM supplemental repair contract"
+    ],
+    "missing_repair_item_owner": [
+      "supplemental repair items require owner repair nodes"
+    ],
+    "missing_route_node_projection": [
+      "repair route nodes must project supplemental contract and item ids"
+    ],
+    "missing_supplemental_contract": [
+      "terminal gap repair requires PM supplemental contract"
+    ],
+    "optional_hygiene_note_blocks": [
+      "optional hygiene notes must not block closure unless PM imports them"
+    ],
+    "original_contract_mutated": [
+      "terminal supplemental repair must not mutate frozen original contract"
+    ],
+    "repair_bypasses_existing_gates": [
+      "supplemental repair nodes must reuse existing FlowPilot gates"
+    ],
+    "terminal_replay_omits_hygiene_segment": [
+      "terminal backward replay must include final artifact hygiene segment"
+    ],
+    "terminal_replay_omits_supplemental": [
+      "terminal backward replay must include supplemental repair segments"
+    ]
+  },
+  "invariant_failures": [],
+  "missing_expected_hazards": [],
+  "missing_labels": [],
+  "ok": true,
+  "rejected_scenarios": [
+    "final_ledger_omits_hygiene",
+    "final_ledger_omits_supplemental",
+    "fourth_round_pm_packet_opened",
+    "hygiene_category_missing",
+    "hygiene_gap_not_contractualized",
+    "missing_repair_item_owner",
+    "missing_route_node_projection",
+    "missing_supplemental_contract",
+    "optional_hygiene_note_blocks",
+    "original_contract_mutated",
+    "repair_bypasses_existing_gates",
+    "terminal_replay_omits_hygiene_segment",
+    "terminal_replay_omits_supplemental"
+  ],
+  "state_count": 29
+}

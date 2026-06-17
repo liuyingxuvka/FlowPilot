@@ -11,7 +11,8 @@ from collections import deque
 from dataclasses import dataclass, replace
 from typing import Any, Iterable, Mapping, NamedTuple, Sequence
 
-from flowguard import Explorer, FunctionResult, Invariant, InvariantResult, Workflow
+from flowguard.explorer import Explorer
+from flowguard import FunctionResult, Invariant, InvariantResult, Workflow
 
 
 FAMILIES = (

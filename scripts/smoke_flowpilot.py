@@ -13,6 +13,14 @@ ROOT = Path(__file__).resolve().parents[1]
 FAST_REUSABLE_JSON_PROOF_RUNNERS = {
     "simulations/run_flowpilot_persistent_router_daemon_checks.py",
 }
+SMOKE_GROUP_ORDER = (
+    "core",
+    "friction",
+    "daemon",
+    "parents",
+    "structure",
+    "topology",
+)
 
 
 def _json_out_path(command: list[str]) -> Path | None:
@@ -63,11 +71,7 @@ def run(command: list[str], *, fast: bool = False) -> bool:
     return completed.returncode == 0
 
 
-def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--fast", action="store_true", help="reuse valid slow-model proofs when possible")
-    args = parser.parse_args(argv)
-
+def build_check_groups(*, fast: bool = False) -> dict[str, list[list[str]]]:
     meta_check = [sys.executable, "simulations/run_meta_checks.py"]
     capability_check = [sys.executable, "simulations/run_capability_checks.py"]
     control_plane_friction_check = [
@@ -165,39 +169,82 @@ def main(argv: list[str] | None = None) -> int:
         "--json-out",
         "simulations/flowpilot_control_transaction_registry_results.json",
     ]
-    if args.fast:
+    if fast:
         meta_check.append("--fast")
         capability_check.append("--fast")
 
-    checks = [
-        [sys.executable, "simulations/run_card_instruction_coverage_checks.py"],
-        [sys.executable, "simulations/run_release_tooling_checks.py"],
-        [sys.executable, "simulations/run_startup_pm_review_checks.py"],
-        [sys.executable, "simulations/run_command_refinement_checks.py"],
-        [sys.executable, "simulations/run_flowpilot_reviewer_active_challenge_checks.py"],
-        prompt_isolation_check,
-        control_plane_friction_check,
-        cross_plane_friction_check,
-        persistent_router_daemon_check,
-        daemon_startup_lock_check,
-        daemon_controller_actions_check,
-        daemon_wait_liveness_check,
-        daemon_terminal_projection_check,
-        control_transaction_registry_check,
-        model_mesh_check,
-        # Hierarchy consumes the current thin-parent proof files written by the
-        # meta/capability checks, so refresh those proofs first.
-        meta_check,
-        capability_check,
-        model_hierarchy_check,
-        structure_maintenance_check,
-        router_facade_split_check,
-        similarity_convergence_check,
-        model_test_alignment_check,
-        project_topology_orientation_check,
-        project_topology_build,
-        project_topology_check,
-    ]
+    return {
+        "core": [
+            [sys.executable, "simulations/run_card_instruction_coverage_checks.py"],
+            [sys.executable, "simulations/run_release_tooling_checks.py"],
+            [sys.executable, "simulations/run_startup_pm_review_checks.py"],
+            [sys.executable, "simulations/run_command_refinement_checks.py"],
+            [sys.executable, "simulations/run_flowpilot_reviewer_active_challenge_checks.py"],
+            prompt_isolation_check,
+        ],
+        "friction": [
+            control_plane_friction_check,
+            cross_plane_friction_check,
+        ],
+        "daemon": [
+            persistent_router_daemon_check,
+            daemon_startup_lock_check,
+            daemon_controller_actions_check,
+            daemon_wait_liveness_check,
+            daemon_terminal_projection_check,
+            control_transaction_registry_check,
+        ],
+        "parents": [
+            model_mesh_check,
+            # Hierarchy consumes the current thin-parent proof files written by
+            # the meta/capability checks, so refresh those proofs first.
+            meta_check,
+            capability_check,
+            model_hierarchy_check,
+        ],
+        "structure": [
+            structure_maintenance_check,
+            router_facade_split_check,
+            similarity_convergence_check,
+            model_test_alignment_check,
+        ],
+        "topology": [
+            project_topology_orientation_check,
+            project_topology_build,
+            project_topology_check,
+        ],
+    }
+
+
+def selected_checks(groups: dict[str, list[list[str]]], selected_groups: list[str]) -> list[list[str]]:
+    if not selected_groups:
+        selected_groups = list(SMOKE_GROUP_ORDER)
+    checks: list[list[str]] = []
+    for group in selected_groups:
+        checks.extend(groups[group])
+    return checks
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--fast", action="store_true", help="reuse valid slow-model proofs when possible")
+    parser.add_argument(
+        "--group",
+        action="append",
+        choices=SMOKE_GROUP_ORDER,
+        default=[],
+        help="run one smoke group; repeat to run several groups",
+    )
+    parser.add_argument("--list-groups", action="store_true", help="print smoke groups and exit")
+    args = parser.parse_args(argv)
+
+    if args.list_groups:
+        for group in SMOKE_GROUP_ORDER:
+            print(group)
+        return 0
+
+    groups = build_check_groups(fast=args.fast)
+    checks = selected_checks(groups, args.group)
     ok = True
     for command in checks:
         if not run(command, fast=args.fast):

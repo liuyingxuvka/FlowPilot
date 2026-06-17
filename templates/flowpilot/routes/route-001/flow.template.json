@@ -51,6 +51,22 @@
     "every_node_requires_requirement_or_risk_rationale": true,
     "external_spec_material_advisory_until_pm_imported": true
   },
+  "acceptance_item_traceability_policy": {
+    "schema_version": "flowpilot.route_acceptance_item_traceability.v1",
+    "source_acceptance_item_registry": ".flowpilot/runs/<run-id>/acceptance_item_registry.json",
+    "every_active_acceptance_item_requires_route_node_owner": true,
+    "route_node_acceptance_item_ids_are_authoritative_for_node_plans": true,
+    "route_redesign_must_reassign_all_active_acceptance_items": true,
+    "unknown_acceptance_item_ids_block_route_activation": true
+  },
+  "terminal_supplemental_repair_traceability_policy": {
+    "schema_version": "flowpilot.route_terminal_supplemental_repair_traceability.v1",
+    "supplemental_contracts_append_to_original_contract": true,
+    "original_contract_mutation_forbidden": true,
+    "repair_nodes_must_project_supplemental_contract_ids": true,
+    "repair_nodes_must_project_supplemental_repair_item_ids": true,
+    "max_terminal_supplemental_repair_rounds": 3
+  },
   "display_plan": {
     "display_depth": 1,
     "source": "PM shallow projection from the full route tree",
@@ -114,6 +130,9 @@
       "status": "pending",
       "summary": "Run startup interrogation, complete material intake handoff, complete PM-owned product-function architecture, freeze the contract, generate a candidate route tree, and freeze the checked root model as the first route version.",
       "covers_requirement_ids": [],
+      "acceptance_item_ids": [],
+      "supplemental_repair_contract_ids": [],
+      "supplemental_repair_item_ids": [],
       "covers_scenario_ids": [],
       "source_product_capability_ids": [],
       "why_this_node_exists": "Owns startup, product architecture, root contract, capability, and route-freeze obligations before implementation starts.",

@@ -18,10 +18,9 @@ runtime_context: Treat the runtime delivery envelope as the live source for the 
 
 ## Decision-Support Findings
 
-For every outcome, consider `independent_challenge.non_blocking_findings`.
-Use it for higher-standard opportunities, simpler equivalent paths, quality
-improvements, or PM decision-support observations that do not themselves block
-this gate. This applies even when the review blocks.
+For every outcome, consider PM decision-support observations. Put
+higher-standard opportunities, simpler equivalent paths, and quality
+improvements that do not themselves block this gate into `pm_suggestion_items`.
 When useful, express these findings as candidate
 `flowpilot.pm_suggestion_item.v1` entries for PM's suggestion ledger. Use
 `current_gate_blocker` only when the current gate's minimum standard cannot be
@@ -37,7 +36,7 @@ Review only the gate named in the delivered card or packet.
 Pass requires:
 
 - the required role performed the work;
-- direct source, file, command, screenshot, or state evidence is cited;
+- direct source, file, command, screenshot, or current evidence is cited;
 - skipped checks have reasons and are not counted as passes;
 - worker or Controller reports are treated as pointers only;
 - router-owned checks replace reviewer work only when a
@@ -45,13 +44,10 @@ Pass requires:
   packet-runtime hash checked, or host-receipt bound to the current run, and
   only for `mechanical_only` scope;
 - residual blockers, risks, and stale evidence are explicitly listed.
-- FlowGuard-backed gates expose `model_obligations`,
-  `ordinary_test_evidence`, `missing_test_kinds`, `conformance_boundary`, and
-  `residual_blindspots`; ordinary tests must be bound to the named model
-  obligations before they can support a pass, and every missing/stale/skipped
-  test kind must have a PM `test_obligation_matrix` disposition. Treat
-  undispositioned, failed, not-run, or progress-only test rows as gaps, not
-  closure evidence.
+- FlowGuard-backed gates expose current FlowGuard evidence artifacts and PM
+  dispositions; ordinary tests must be bound to the named current obligation
+  before they can support a pass. Treat undispositioned, failed, not-run, or
+  progress-only test rows as gaps, not closure evidence.
 - FlowGuard-backed gates cite the active FlowGuard Work Order and FlowGuard
   Report with `flowguard_work_order_id`, `flowguard_report_id`,
   `flowguard_route_used`, `flowguard_report_freshness`, and

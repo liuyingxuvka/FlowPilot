@@ -235,6 +235,24 @@ FAST_COMMANDS = (
         description="FlowGuard Model-Test Alignment checks for model obligations and ordinary test evidence.",
     ),
     TierCommand(
+        name="flowguard_contract_exhaustion_mesh",
+        command=_py(
+            "simulations/run_flowpilot_contract_exhaustion_mesh_checks.py",
+            "--json-out",
+            "simulations/flowpilot_contract_exhaustion_mesh_results.json",
+        ),
+        description="FlowGuard contract-exhaustion matrix for current packet/result/control-plane fields, handoffs, and no-delta loops.",
+    ),
+    TierCommand(
+        name="flowguard_cartesian_control_plane_exhaustion",
+        command=_py(
+            "simulations/run_flowpilot_cartesian_control_plane_exhaustion_checks.py",
+            "--json-out",
+            "simulations/flowpilot_cartesian_control_plane_exhaustion_results.json",
+        ),
+        description="FlowGuard Cartesian control-plane matrix for declared material, mutation, handoff, consumer, and recovery combinations.",
+    ),
+    TierCommand(
         name="flowguard_project_topology_orientation",
         command=_py(
             "simulations/run_flowpilot_project_topology_orientation_checks.py",
@@ -328,11 +346,13 @@ FAST_COMMANDS = (
         name="flowguard_project_topology_build",
         command=_py("scripts/flowguard_project_topology.py", "build"),
         description="Regenerate FlowGuard project topology orientation artifacts from current model, test, code, and evidence sources.",
+        background_stage=1,
     ),
     TierCommand(
         name="flowguard_project_topology_check",
         command=_py("scripts/flowguard_project_topology.py", "check"),
         description="Check FlowGuard project topology artifacts for freshness, required layers, and orientation-only boundary text.",
+        background_stage=2,
     ),
     _pytest(
         "project_topology_tests",

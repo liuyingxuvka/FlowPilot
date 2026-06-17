@@ -340,6 +340,89 @@ class FlowPilotFullCoverageFindingRepairTests(unittest.TestCase):
             model_mesh._packet_authority_unchecked(packet_ledger, trusted_packet_ids=trusted_ids)
         )
 
+    def test_model_mesh_blocks_current_lifecycle_guard_stuck(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project_root = Path(tmp)
+            run_root = project_root / ".flowpilot" / "runs" / "run-stuck"
+            run_root.mkdir(parents=True)
+            _write_json(
+                project_root / ".flowpilot" / "current.json",
+                {
+                    "run_id": "run-stuck",
+                    "run_root": ".flowpilot/runs/run-stuck",
+                    "status": "created",
+                },
+            )
+            _write_json(
+                run_root / "ledger.json",
+                {
+                    "lifecycle_guard": {
+                        "decision": "control_plane_stuck",
+                        "reason": "previous stuck decision for the same nonterminal action remains unresolved",
+                        "action_key": "open_startup_intake:none",
+                        "repeated_count": 15,
+                        "next_action": {
+                            "action_type": "open_startup_intake",
+                        },
+                    },
+                    "foreground_duty": {
+                        "action": "control_plane_blocker",
+                        "lifecycle_guard_decision": "control_plane_stuck",
+                        "final_return_preflight": {
+                            "blockers": ["guard_decision:control_plane_stuck"],
+                        },
+                    },
+                },
+            )
+
+            projection = model_mesh.project_live_run(project_root)
+
+        self.assertNotEqual(projection["decision"], "mesh_green_can_continue")
+        self.assertFalse(projection["current_run_can_continue"])
+        reasons = {finding["reason"] for finding in projection["findings"]}
+        self.assertIn("lifecycle_guard_control_plane_stuck", reasons)
+        projected_state = projection["projected_state"]
+        self.assertTrue(projected_state["lifecycle_guard_control_plane_stuck"])
+
+    def test_model_mesh_treats_current_lifecycle_state_as_terminal(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project_root = Path(tmp)
+            run_root = project_root / ".flowpilot" / "runs" / "run-stopped"
+            run_root.mkdir(parents=True)
+            _write_json(
+                project_root / ".flowpilot" / "current.json",
+                {
+                    "run_id": "run-stopped",
+                    "run_root": ".flowpilot/runs/run-stopped",
+                    "lifecycle_state": "stopped_by_user",
+                    "terminal_lifecycle_status": "stopped_by_user",
+                    "ledger_lifecycle_state": "stopped_by_user",
+                },
+            )
+            _write_json(
+                run_root / "ledger.json",
+                {
+                    "terminal_lifecycle": {
+                        "terminal": True,
+                        "state": "stopped_by_user",
+                        "status": "stopped_by_user",
+                    },
+                    "lifecycle_guard": {
+                        "decision": "terminal_return",
+                        "next_action": {
+                            "action_type": "terminal_lifecycle",
+                            "subject_id": "stopped_by_user",
+                        },
+                    },
+                },
+            )
+
+            projection = model_mesh.project_live_run(project_root)
+
+        self.assertTrue(projection["terminal_disposition"]["terminal_run"])
+        self.assertFalse(projection["current_run_can_continue"])
+        self.assertNotEqual(projection["decision"], "mesh_green_can_continue")
+
     def test_source_known_bad_findings_are_classified_as_boundary_checks(self) -> None:
         self.assertEqual(
             coverage_sweep._classify_finding(

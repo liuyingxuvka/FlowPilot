@@ -80,7 +80,7 @@
           "sealed_body_exposed_in_wait": false,
           "status": "complete",
           "target_identity_valid": true,
-          "target_role": "worker_a",
+          "target_role": "worker",
           "unresolved_ack_for_target": false,
           "wait_exposed": false,
           "wait_obligation_identity_present": true,
@@ -119,12 +119,12 @@
           "sealed_body_exposed_in_wait": false,
           "status": "complete",
           "target_identity_valid": true,
-          "target_role": "process_flowguard_operator",
+          "target_role": "flowguard_operator",
           "unresolved_ack_for_target": false,
           "wait_exposed": true,
           "wait_obligation_identity_present": false,
           "wait_source_named": true,
-          "wait_target_role": "process_flowguard_operator"
+          "wait_target_role": "flowguard_operator"
         }
       },
       "different_idle_parallel_blocked": {
@@ -158,7 +158,7 @@
           "sealed_body_exposed_in_wait": false,
           "status": "complete",
           "target_identity_valid": true,
-          "target_role": "worker_a,worker_b",
+          "target_role": "worker,worker",
           "unresolved_ack_for_target": false,
           "wait_exposed": false,
           "wait_obligation_identity_present": true,
@@ -197,7 +197,7 @@
           "sealed_body_exposed_in_wait": false,
           "status": "complete",
           "target_identity_valid": true,
-          "target_role": "worker_a",
+          "target_role": "worker",
           "unresolved_ack_for_target": false,
           "wait_exposed": false,
           "wait_obligation_identity_present": true,
@@ -236,7 +236,7 @@
           "sealed_body_exposed_in_wait": false,
           "status": "complete",
           "target_identity_valid": true,
-          "target_role": "worker_a",
+          "target_role": "worker",
           "unresolved_ack_for_target": false,
           "wait_exposed": false,
           "wait_obligation_identity_present": true,
@@ -431,7 +431,7 @@
           "sealed_body_exposed_in_wait": false,
           "status": "complete",
           "target_identity_valid": true,
-          "target_role": "process_flowguard_operator",
+          "target_role": "flowguard_operator",
           "unresolved_ack_for_target": false,
           "wait_exposed": false,
           "wait_obligation_identity_present": true,
@@ -509,12 +509,12 @@
           "sealed_body_exposed_in_wait": false,
           "status": "complete",
           "target_identity_valid": true,
-          "target_role": "worker_b",
+          "target_role": "worker",
           "unresolved_ack_for_target": false,
           "wait_exposed": true,
           "wait_obligation_identity_present": true,
           "wait_source_named": true,
-          "wait_target_role": "worker_b"
+          "wait_target_role": "worker"
         }
       },
       "same_output_context_card_blocked": {
@@ -743,12 +743,12 @@
           "sealed_body_exposed_in_wait": true,
           "status": "complete",
           "target_identity_valid": true,
-          "target_role": "worker_a",
+          "target_role": "worker",
           "unresolved_ack_for_target": false,
           "wait_exposed": true,
           "wait_obligation_identity_present": true,
           "wait_source_named": true,
-          "wait_target_role": "worker_a"
+          "wait_target_role": "worker"
         }
       }
     },
@@ -782,12 +782,12 @@
       "sealed_body_exposed_in_wait": false,
       "status": "complete",
       "target_identity_valid": true,
-      "target_role": "worker_a",
+      "target_role": "worker",
       "unresolved_ack_for_target": false,
       "wait_exposed": true,
       "wait_obligation_identity_present": true,
       "wait_source_named": true,
-      "wait_target_role": "worker_a"
+      "wait_target_role": "worker"
     }
   },
   "ok": true,

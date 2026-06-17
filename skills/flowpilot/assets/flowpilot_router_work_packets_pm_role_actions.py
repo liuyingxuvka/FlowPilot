@@ -23,6 +23,7 @@ import packet_runtime
 import role_output_runtime
 from flowpilot_prompt_store import PromptStoreError, card_manifest_entry, load_card_manifest_from_run
 from flowpilot_router_errors import RouterError, RouterLedgerCorruptionError, RouterLedgerWriteInProgress
+from flowpilot_router_work_packets_next_actions import _open_current_role_agent_for_packet_plan
 
 _DEFAULT_SENTINEL = object()
 _BOUND_ROUTER: ModuleType | None = None
@@ -54,6 +55,9 @@ def _next_pm_role_work_request_action(router: ModuleType, project_root: Path, ru
         if any((record.get('status') == 'open' for record in batch_records)):
             open_records = [record for record in batch_records if record.get('status') == 'open']
             active_holder_plan, active_holder_allowed_writes = router._packet_active_holder_lease_plan(project_root, run_root, run_state, open_records, packet_family='pm_role_work', mode='lease_on_pm_role_work_request_relay')
+            role_binding_action = _open_current_role_agent_for_packet_plan(router, project_root, run_root, run_state, active_holder_plan, packet_family='pm_role_work', next_action_type='relay_pm_role_work_request_packet')
+            if role_binding_action:
+                return role_binding_action
             runtime_relay_operations = router._packet_runtime_relay_operations(project_root, run_state, open_records, packet_family='pm_role_work', postcondition='pm_role_work_request_packet_relayed', active_holder_plan=active_holder_plan)
             allowed_reads = [project_relative(project_root, run_root / 'packet_ledger.json'), project_relative(project_root, index_path), *[str(record.get('packet_envelope_path')) for record in batch_records]]
             if not run_state.get('ledger_check_requested'):
@@ -86,6 +90,9 @@ def _next_pm_role_work_request_action(router: ModuleType, project_root: Path, ru
     packet_ids = [active.get('packet_id')]
     if active.get('status') == 'open':
         active_holder_plan, active_holder_allowed_writes = router._packet_active_holder_lease_plan(project_root, run_root, run_state, [active], packet_family='pm_role_work', mode='lease_on_pm_role_work_request_relay')
+        role_binding_action = _open_current_role_agent_for_packet_plan(router, project_root, run_root, run_state, active_holder_plan, packet_family='pm_role_work', next_action_type='relay_pm_role_work_request_packet')
+        if role_binding_action:
+            return role_binding_action
         runtime_relay_operations = router._packet_runtime_relay_operations(project_root, run_state, [active], packet_family='pm_role_work', postcondition='pm_role_work_request_packet_relayed', active_holder_plan=active_holder_plan)
         allowed_reads = [project_relative(project_root, run_root / 'packet_ledger.json'), project_relative(project_root, index_path), str(active.get('packet_envelope_path'))]
         if not run_state.get('ledger_check_requested'):

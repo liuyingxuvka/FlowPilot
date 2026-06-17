@@ -18,10 +18,9 @@ runtime_context: Treat the runtime delivery envelope as the live source for the 
 
 ## Decision-Support Findings
 
-For every outcome, consider `independent_challenge.non_blocking_findings`.
-Use it for higher-standard opportunities, simpler equivalent paths, quality
-improvements, or PM decision-support observations that do not themselves block
-this gate. This applies even when the review blocks.
+For every outcome, consider PM decision-support observations. Put
+higher-standard opportunities, simpler equivalent paths, and quality
+improvements that do not themselves block this gate into `pm_suggestion_items`.
 When useful, express these findings as candidate
 `flowpilot.pm_suggestion_item.v1` entries for PM's suggestion ledger. Use
 `current_gate_blocker` only when the current gate's minimum standard cannot be
@@ -32,9 +31,9 @@ If this review blocks, requests more evidence, or requires reroute, include
 PM-actionable recommendation for resolving the blocked review. PM remains the
 owner of final repair strategy.
 
-When blocking the same current route node for the same plan-stage defect as
-the prior review, reuse the prior `blocker_class` instead of inventing a new
-name. This preserves same-node repeat evidence for the runtime threshold; it
+When blocking the same repair lineage for the same plan-stage defect as the
+prior review, reuse the prior `blocker_class` instead of inventing a new name.
+This preserves same-lineage repeat evidence for the runtime threshold; it
 does not let Reviewer decide break-glass, and similar defects on different
 route nodes remain ordinary repair evidence.
 
@@ -70,6 +69,12 @@ Check:
 - the plan matches the active route id, route version, and active node id;
 - root requirements and product-function architecture are represented when
   relevant;
+- every `acceptance_item_id` assigned to this route node appears in
+  `acceptance_item_projection`, with required evidence, quality floor,
+  low-quality failure patterns, review gate, and final replay requirement
+  preserved. Block if PM omits an item, waters a high-quality item down to a
+  generic note, marks completion without evidence, or leaves the item for a
+  worker to rediscover;
 - when the node affects a final user, operator, maintainer, reader, or
   delivered product, the plan states how the node contributes to user intent,
   final-user usefulness, and experience or product quality, plus what evidence
@@ -90,6 +95,10 @@ Check:
 - if the active node has children, the plan blocks direct worker packet
   dispatch and routes execution into child subtree entry or parent backward
   replay;
+- if the active node is a parent repair replacement, non-empty `child_node_ids`
+  must name the current repair children. `inherited_child_node_ids` and
+  `inherited_accepted_result_ids` are history/context only; they cannot satisfy
+  active child routing or parent backward replay by themselves;
 - the node acceptance plan is execution context only. It must not override the
   canonical route node shape from `node_kind`, `parent_node_id`, or
   `child_node_ids`; if the shape is wrong, block for route deepening or route
@@ -99,8 +108,9 @@ Check:
   worker outcome, can be executed without PM replanning, has defined proof,
   dependency boundaries, failure isolation, and has been checked for both
   under-decomposition and over-decomposition;
-- if the apparent leaf is still broad at node entry, treat this as a fallback
-  safety gate and route-quality failure before Worker dispatch. Block for PM
+- if the apparent leaf is still broad at node entry, treat this as a
+  route-depth safety gate and route-quality failure before Worker dispatch.
+  Block for PM
   route deepening or route mutation; do not pass a plan that relies on the
   Worker to split the node, invent child tasks, choose ordering, or define
   acceptance boundaries;
@@ -124,10 +134,9 @@ Check:
   this node has a `role_skill_use_bindings` row with `used_by_role`,
   `use_context`, source `SKILL.md`, reference paths, affected output or gate,
   Role Skill Use Evidence requirements, and reviewer/check authority;
-- every worker/FlowGuard operator packet that can be issued from the plan has a matching
-  `work_packet_projection` and requires a result matrix row for each inherited
-  standard id plus `Child Skill Use Evidence` for each active child-skill
-  binding and Role Skill Use Evidence for each applicable role-skill binding;
+- every worker/FlowGuard operator packet that can be issued from the plan has
+  enough current node context and explicit evidence obligations for inherited
+  standard ids, child-skill use, and role-skill use;
 - material or report handoff inside this node has a current-runtime producer,
   required report contract, downstream consumer, authorized read path, and
   missing-information response. Block if the plan leaves those responsibilities
@@ -180,9 +189,9 @@ Examples of silent weakening:
 - "use fresh assets" when the skill forbids specific substitutions or requires
   provenance.
 
-The report body must include `independent_challenge` from the human-like
-reviewer core card. Pass is invalid if it only checks the PM checklist and does
-not challenge implicit commitments, missing failure paths, or unverifiable
+Use the current review result contract from the human-like reviewer core card.
+Pass is invalid if the review only checks the PM checklist and does not
+challenge implicit commitments, missing failure paths, or unverifiable
 acceptance surfaces exposed by this node.
 
 Do not act as a second PM when you disagree with PM's standard or complexity

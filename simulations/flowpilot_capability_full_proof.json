@@ -1,0 +1,9 @@
+{
+  "check": "capability",
+  "created_at": "2026-06-14T17:08:32.427980+00:00",
+  "input_fingerprint": "cf965040b77c10a183897e17c4b8abebd336ea912cf93b6c322eb092362062be",
+  "ok": true,
+  "result_fingerprint": "43741299b12d614072236125dc8b41a09a9c3a626dc18750e8639d55334e08f5",
+  "result_type": "layered_full_parent",
+  "schema": 1
+}

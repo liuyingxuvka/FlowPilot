@@ -141,12 +141,18 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
                     root,
                     "material/reviewer_material_sufficiency",
                     {
+                        "pm_visible_summary": ["Reviewed material is sufficient for PM planning."],
                         "reviewed_by_role": "human_like_reviewer",
+                        "passed": True,
                         "direct_material_sources_checked": True,
                         "packet_matches_checked_sources": True,
                         "pm_ready": True,
                         "checked_source_paths": [],
                         "runtime_open_receipt_refs": [],
+                        "findings": [],
+                        "blockers": [],
+                        "pm_suggestion_items": [],
+                        "contract_self_check": {"status": "pass"},
                     },
                 ),
             )
@@ -192,13 +198,18 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 root,
                 "material/reviewer_material_insufficient",
                 {
+                    "pm_visible_summary": ["Reviewed material is insufficient for PM execution."],
                     "reviewed_by_role": "human_like_reviewer",
+                    "passed": False,
                     "direct_material_sources_checked": True,
                     "packet_matches_checked_sources": True,
                     "pm_ready": False,
                     "checked_source_paths": self.material_review_source_paths(root),
                     "runtime_open_receipt_refs": [],
+                    "findings": [],
                     "blockers": ["missing authoritative source"],
+                    "pm_suggestion_items": [],
+                    "contract_self_check": {"status": "pass"},
                 },
             ),
         )
@@ -289,12 +300,18 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 root,
                 "material/reviewer_material_insufficient",
                 {
+                    "pm_visible_summary": ["Reviewed material is insufficient for PM execution."],
                     "reviewed_by_role": "human_like_reviewer",
+                    "passed": False,
                     "direct_material_sources_checked": True,
                     "packet_matches_checked_sources": True,
                     "pm_ready": False,
                     "checked_source_paths": self.material_review_source_paths(root),
                     "runtime_open_receipt_refs": [],
+                    "findings": [],
+                    "blockers": [],
+                    "pm_suggestion_items": [],
+                    "contract_self_check": {"status": "pass"},
                 },
             ),
         )
@@ -771,6 +788,7 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertFalse(state["flags"]["material_scan_dispatch_recheck_protocol_blocked"])
         transaction = read_json(run_root / "control_blocks" / "repair_transactions" / f"{transaction['transaction_id']}.json")
         self.assertEqual(transaction["status"], "complete")
+        self.ensure_current_role_agent_for_role(root, "worker")
         action = self.next_after_display_sync(root)
         self.assertEqual(action["action_type"], "relay_material_scan_packets")
 
@@ -901,6 +919,7 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
         state["flags"]["material_scan_results_relayed_to_pm"] = True
         state["flags"]["material_scan_result_disposition_recorded"] = True
         router.save_run_state(run_root, state)
+        self.ensure_current_role_agent_for_role(root, "worker")
 
         action = self.next_after_display_sync(root)
 
@@ -933,6 +952,7 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
             ],
         )
         router.save_run_state(run_root, state)
+        self.ensure_current_role_agent_for_role(root, "worker")
         self.apply_next_packet_action(root, "relay_material_scan_packets")
         state = read_json(router.run_state_path(run_root))
         state["flags"]["worker_packets_delivered"] = True
@@ -1033,6 +1053,7 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
 
         self.deliver_expected_card(root, "pm.material_scan")
         router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
+        self.ensure_current_role_agent_for_role(root, "worker")
         relay_action = self.next_after_display_sync(root)
         self.assertEqual(relay_action["action_type"], "relay_material_scan_packets")
         self.apply_next_packet_action(root, "relay_material_scan_packets")
@@ -1074,6 +1095,7 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
 
         self.deliver_expected_card(root, "pm.material_scan")
         router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
+        self.ensure_current_role_agent_for_role(root, "worker")
         relay_action = self.next_after_display_sync(root)
         self.assertEqual(relay_action["action_type"], "relay_material_scan_packets")
         self.assertTrue(relay_action["runtime_relay_operations"])
@@ -1113,6 +1135,7 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
 
         self.deliver_expected_card(root, "pm.material_scan")
         router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
+        self.ensure_current_role_agent_for_role(root, "worker")
         relay_action = self.next_after_display_sync(root)
         state = read_json(router.run_state_path(run_root))
         entry = router._write_controller_action_entry(root, run_root, state, relay_action)  # type: ignore[attr-defined]
@@ -1198,12 +1221,18 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 root,
                 "material/reviewer_material_insufficient",
                 {
+                    "pm_visible_summary": ["Reviewed material is insufficient for PM execution."],
                     "reviewed_by_role": "human_like_reviewer",
+                    "passed": False,
                     "direct_material_sources_checked": True,
                     "packet_matches_checked_sources": True,
                     "pm_ready": False,
                     "checked_source_paths": self.material_review_source_paths(root),
                     "runtime_open_receipt_refs": [],
+                    "findings": [],
+                    "blockers": [],
+                    "pm_suggestion_items": [],
+                    "contract_self_check": {"status": "pass"},
                 },
             ),
         )

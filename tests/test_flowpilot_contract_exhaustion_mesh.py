@@ -1,0 +1,568 @@
+from __future__ import annotations
+
+import importlib.util
+import sys
+import unittest
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def load_module(name: str, path: Path):
+    spec = importlib.util.spec_from_file_location(name, path)
+    assert spec is not None
+    assert spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    old_path = list(sys.path)
+    old_module = sys.modules.get(name)
+    sys.modules[name] = module
+    sys.path.insert(0, str(path.parent))
+    try:
+        spec.loader.exec_module(module)
+    finally:
+        sys.path[:] = old_path
+        if old_module is None:
+            sys.modules.pop(name, None)
+        else:
+            sys.modules[name] = old_module
+    return module
+
+
+model = load_module(
+    "flowpilot_contract_exhaustion_mesh_model",
+    ROOT / "simulations" / "flowpilot_contract_exhaustion_mesh_model.py",
+)
+contract_fake_ai = load_module(
+    "flowpilot_contract_driven_fake_ai",
+    ROOT / "simulations" / "flowpilot_contract_driven_fake_ai.py",
+)
+runner = load_module(
+    "run_flowpilot_contract_exhaustion_mesh_checks",
+    ROOT / "simulations" / "run_flowpilot_contract_exhaustion_mesh_checks.py",
+)
+
+
+def compact_fake_ai_failure(report: dict[str, object]) -> dict[str, object]:
+    fake_ai = report.get("fake_ai_responder")
+    if not isinstance(fake_ai, dict):
+        return {"report_ok": report.get("ok"), "fake_ai_responder": fake_ai}
+    summary = fake_ai.get("summary")
+    if isinstance(summary, dict):
+        return {"report_ok": report.get("ok"), "fake_ai_responder": summary}
+    return {
+        "report_ok": report.get("ok"),
+        "projection_findings": fake_ai.get("projection_findings", [])[:5],
+        "missing_required_cell_count": len(fake_ai.get("missing_required_cells", [])),
+        "missing_required_cells_sample": fake_ai.get("missing_required_cells", [])[:10],
+        "missing_option_value_cell_count": len(fake_ai.get("missing_option_value_cells", [])),
+        "missing_option_value_cells_sample": fake_ai.get("missing_option_value_cells", [])[:10],
+    }
+
+
+class FlowPilotContractExhaustionMeshTests(unittest.TestCase):
+    def test_contract_exhaustion_mesh_accepts_valid_and_rejects_hazards(self) -> None:
+        report = runner.run_checks()
+
+        self.assertTrue(report["ok"], compact_fake_ai_failure(report))
+        self.assertEqual(report["model_id"], model.MODEL_ID)
+        self.assertGreater(report["required_cells"]["cell_count"], 80)
+        self.assertGreaterEqual(report["required_cells"]["family_count"], len(model.CONTRACT_FAMILIES))
+        self.assertLessEqual(set(model.CONTRACT_FAMILIES), set(report["required_cells"]["by_family"]))
+        self.assertEqual(report["hazards"]["missing_expected_failures"], {})
+        self.assertIn(
+            "reviewer_packet_issued_with_empty_required_flowguard_manifest",
+            report["hazards"]["hazards"]["empty_manifest_review_issued"],
+        )
+        self.assertIn(
+            "flowguard_reissue_lost_evidence_output_policy",
+            report["hazards"]["hazards"]["flowguard_reissue_loses_policy"],
+        )
+        self.assertIn(
+            "flowguard_reissue_lost_authorized_result_reads",
+            report["hazards"]["hazards"]["flowguard_reissue_loses_authorized_reads"],
+        )
+        self.assertIn(
+            "flowguard_reissue_lost_required_body_open_gate",
+            report["hazards"]["hazards"]["flowguard_reissue_loses_required_body_open_gate"],
+        )
+        self.assertIn(
+            "same_root_no_delta_retry_did_not_trigger_break_glass",
+            report["hazards"]["hazards"]["same_root_no_delta_without_break_glass"],
+        )
+        self.assertIn(
+            "ordinary_rehearsal_entered_glass_break",
+            report["hazards"]["hazards"]["ordinary_rehearsal_enters_glass_break"],
+        )
+        self.assertNotIn("valid_break_glass_same_root", model.VALID_SCENARIOS)
+        self.assertIn("valid_same_root_repaired_before_glass_break", model.VALID_SCENARIOS)
+        self.assertIn("same_blocker_five_times_triggers_glass_break_alarm", model.VALID_SCENARIOS)
+        self.assertNotIn("same_blocker_five_times_triggers_glass_break_alarm", report["hazards"]["hazards"])
+        self.assertEqual(
+            model.contract_exhaustion_failures(
+                model.SCENARIOS["same_blocker_five_times_triggers_glass_break_alarm"]
+            ),
+            [],
+        )
+
+    def test_contract_exhaustion_required_cells_name_runtime_and_synthetic_owners(self) -> None:
+        cells = list(model.REQUIRED_CONTRACT_EXHAUSTION_CELLS)
+        owners = {cell["required_evidence_owner"] for cell in cells}
+        mutation_kinds = {cell["mutation_kind"] for cell in cells}
+
+        self.assertIn("contract_exhaustion_runtime_matrix", owners)
+        self.assertIn("contract_exhaustion_fake_ai_matrix", owners)
+        self.assertIn("contract_exhaustion_historical_failure_matrix", owners)
+        self.assertLessEqual(model.SYNTHETIC_MUTATION_KINDS, mutation_kinds)
+        self.assertTrue(
+            [
+                cell
+                for cell in cells
+                if cell["family"] == "flowguard_reissue_packet"
+                and cell["mutation_kind"] == "reissue_loses_inherited_policy"
+            ]
+        )
+        self.assertTrue(
+            [
+                cell
+                for cell in cells
+                if cell["family"] == "flowguard_reissue_packet"
+                and cell["mutation_kind"] == "reissue_loses_inherited_authorized_reads"
+            ]
+        )
+        self.assertTrue(
+            [
+                cell
+                for cell in cells
+                if cell["family"] == "flowguard_reissue_packet"
+                and cell["mutation_kind"] == "reissue_loses_required_read_manifest"
+            ]
+        )
+        self.assertTrue(
+            [
+                cell
+                for cell in cells
+                if cell["family"] == "review_packet"
+                and cell["mutation_kind"] == "empty_required_manifest"
+            ]
+        )
+
+    def test_ai_contract_projection_and_retry_cells_are_required(self) -> None:
+        cells = list(model.REQUIRED_CONTRACT_EXHAUSTION_CELLS)
+        cell_index = {
+            (
+                cell.get("family", ""),
+                cell.get("contract_path", ""),
+                cell.get("mutation_kind", ""),
+                cell.get("required_evidence_owner", ""),
+            )
+            for cell in cells
+        }
+
+        expected_cells = {
+            (
+                "flowguard_check_packet",
+                "envelope.result_contract_profile_ids[flowguard.semantic_recheck_required]",
+                "missing_result_contract_profile",
+                "contract_exhaustion_runtime_matrix",
+            ),
+            (
+                "flowguard_check_packet",
+                "current_handoff_contract.required_report_contract.allowed_value_options.semantic_recheck.subject_bound_semantic_coverage",
+                "missing_allowed_value_options",
+                "contract_exhaustion_runtime_matrix",
+            ),
+            (
+                "flowguard_check_packet",
+                "current_handoff_contract.required_report_contract.field_type_requirements.semantic_recheck.subject_bound_semantic_coverage",
+                "missing_field_type_requirements",
+                "contract_exhaustion_runtime_matrix",
+            ),
+            (
+                "flowguard_check_packet",
+                "current_handoff_contract.required_report_contract.forbidden_aliases.semantic_recheck.authorized_result_body_consumed",
+                "forbidden_alias_used",
+                "contract_exhaustion_runtime_matrix",
+            ),
+            (
+                "flowguard_check_result",
+                "result.semantic_recheck.subject_bound_semantic_coverage",
+                "wrong_allowed_value",
+                "contract_exhaustion_fake_ai_matrix",
+            ),
+            (
+                "flowguard_check_result",
+                "result.semantic_recheck.authorized_result_body_consumed",
+                "forbidden_alias_used",
+                "contract_exhaustion_fake_ai_matrix",
+            ),
+            (
+                "flowguard_check_result",
+                "result.semantic_recheck.subject_bound_semantic_coverage",
+                "corrected_second_retry",
+                "contract_exhaustion_fake_ai_matrix",
+            ),
+        }
+        self.assertLessEqual(expected_cells, cell_index)
+
+    def test_historical_failure_families_require_normal_repair_before_glass_break(self) -> None:
+        cells = [
+            cell
+            for cell in model.REQUIRED_CONTRACT_EXHAUSTION_CELLS
+            if cell["required_evidence_owner"] == "contract_exhaustion_historical_failure_matrix"
+        ]
+        source_classes = {cell["source_class"] for cell in cells}
+
+        self.assertGreaterEqual(len(model.HISTORICAL_FAILURE_FAMILIES), 9)
+        self.assertGreaterEqual(len(cells), 20)
+        for source_class in (
+            "worker_output_contract_failure",
+            "mail_chain_or_packet_body_loss",
+            "wrong_address_or_current_wait",
+            "route_mutation_stale_evidence",
+            "historical_or_background_evidence_loss",
+            "install_source_split_brain",
+            "pm_repair_target_or_producer_loss",
+            "pm_repair_information_flow_loss",
+            "same_family_control_blocker_repetition",
+        ):
+            with self.subTest(source_class=source_class):
+                self.assertIn(source_class, source_classes)
+        for cell in cells:
+            with self.subTest(cell_id=cell["cell_id"]):
+                self.assertFalse(cell["glass_break_allowed_in_acceptance"])
+                self.assertTrue(cell["normal_repair_route"])
+
+    def test_contract_exhaustion_test_mesh_registers_every_required_owner(self) -> None:
+        report = runner.run_checks()
+        required_owners = {
+            cell["required_evidence_owner"]
+            for cell in report["required_cells"]["required_cells"]
+        }
+        child_suites = report["test_mesh"]["child_suites"]
+
+        self.assertTrue(report["test_mesh"]["ok"], report["test_mesh"])
+        self.assertEqual(set(report["test_mesh"]["required_child_suite_owners"]), required_owners)
+        self.assertEqual(set(child_suites), required_owners)
+        self.assertEqual(report["test_mesh"]["unregistered_required_child_suites"], [])
+        self.assertEqual(report["test_mesh"]["missing_or_stale_child_suites"], [])
+        self.assertGreater(
+            child_suites["contract_exhaustion_historical_failure_matrix"]["owned_cell_count"],
+            0,
+        )
+
+    def test_contract_exhaustion_runner_checks_fake_ai_responder_cartesian_parity(self) -> None:
+        report = runner.run_checks()
+        fake_ai = report["fake_ai_responder"]
+        summary = fake_ai["summary"]
+
+        self.assertIn("missing_by_contract", summary)
+        self.assertIn("missing_by_mutation_kind", summary)
+        self.assertEqual(summary["projection_finding_count"], len(fake_ai["projection_findings"]))
+        self.assertEqual(summary["missing_required_cell_count"], len(fake_ai["missing_required_cells"]))
+        self.assertEqual(summary["missing_option_value_cell_count"], len(fake_ai["missing_option_value_cells"]))
+        self.assertTrue(fake_ai["ok"], compact_fake_ai_failure(report))
+        self.assertEqual(fake_ai["projection_findings"], [])
+        self.assertEqual(fake_ai["missing_required_cells"], [])
+        self.assertEqual(fake_ai["missing_option_value_cells"], [])
+        self.assertGreater(fake_ai["contract_count"], len(model.packet_result_contracts.PACKET_RESULT_CONTRACTS))
+        self.assertGreater(fake_ai["required_responder_cell_count"], 50)
+        self.assertGreaterEqual(fake_ai["generated_cell_count"], fake_ai["required_responder_cell_count"])
+        self.assertEqual(
+            fake_ai["generated_option_value_cell_count"],
+            fake_ai["required_option_value_cell_count"],
+        )
+        self.assertGreater(fake_ai["required_option_value_cell_count"], 150)
+
+    def test_fake_ai_responder_parity_does_not_absorb_runtime_owned_cells(self) -> None:
+        report = runner.run_checks()
+        fake_ai_missing = {
+            (
+                cell["contract_family_id"],
+                cell["contract_path"],
+                cell["mutation_kind"],
+            )
+            for cell in report["fake_ai_responder"]["missing_required_cells"]
+        }
+        runtime_owned_supported = {
+            (
+                str(cell.get("contract_family_id") or ""),
+                str(cell.get("contract_path") or ""),
+                str(cell.get("mutation_kind") or ""),
+            )
+            for cell in model.REQUIRED_CONTRACT_EXHAUSTION_CELLS
+            if cell.get("required_evidence_owner") == "contract_exhaustion_runtime_matrix"
+            and cell.get("mutation_kind") in runner.RESPONDER_SUPPORTED_MUTATIONS
+        }
+
+        self.assertEqual(fake_ai_missing & runtime_owned_supported, set())
+
+    def test_contract_driven_fake_ai_enumerates_every_packet_result_contract(self) -> None:
+        for row in model.packet_result_contracts.PACKET_RESULT_CONTRACTS:
+            family_id = str(row["family_id"])
+            with self.subTest(family_id=family_id):
+                contract = model.packet_result_contracts.effective_result_contract_for_family(family_id)
+                responder = contract_fake_ai.ContractDrivenFakeAIResponder(contract)
+                cells = {
+                    (cell["contract_path"], cell["mutation_kind"])
+                    for cell in responder.coverage_cells()
+                }
+
+                self.assertEqual(responder.projection_findings(), [])
+                for field in responder.required_fields:
+                    self.assertIn((str(field), "missing_required_field"), cells)
+                    self.assertIn((str(field), "wrong_type"), cells)
+                for field in responder.required_child_fields:
+                    self.assertIn((str(field), "missing_required_child_field"), cells)
+                    self.assertIn((str(field), "wrong_type"), cells)
+                for field in responder.non_empty_array_fields:
+                    self.assertIn((str(field), "empty_required_array"), cells)
+                for field in responder.forbidden_fields:
+                    self.assertIn((str(field), "forbidden_field_present"), cells)
+                for field_path in responder.allowed_value_options:
+                    self.assertIn(
+                        (
+                            "current_handoff_contract.required_report_contract."
+                            f"allowed_value_options.{field_path}",
+                            "missing_allowed_value_options",
+                        ),
+                        cells,
+                    )
+                    self.assertIn((f"result.{field_path}", "wrong_allowed_value"), cells)
+                    for value in responder.allowed_value_options[field_path]:
+                        with self.subTest(family_id=family_id, field=field_path, value=value):
+                            payload = responder.allowed_value_payload(field_path, value)
+                            self.assertIn(value, responder.option_values_seen(payload, field_path))
+
+    def test_contract_driven_fake_ai_enumerates_result_contract_profiles(self) -> None:
+        for profile_id in model.packet_result_contracts.packet_stage_evidence_matrix.RESULT_CONTRACT_PROFILE_IDS:
+            with self.subTest(profile_id=profile_id):
+                profile = model.packet_result_contracts.packet_stage_evidence_matrix.result_contract_profile(profile_id)
+                family_id = str(profile["family_id"])
+                sample_binding = model.PROFILE_EXHAUSTION_SAMPLE_BINDINGS.get(profile_id, {})
+                contract = model.packet_result_contracts.effective_result_contract_for_family(
+                    family_id,
+                    result_contract_profile_ids=(profile_id,),
+                    result_contract_profile_bindings={profile_id: sample_binding},
+                )
+                responder = contract_fake_ai.ContractDrivenFakeAIResponder(contract)
+                cells = {
+                    (cell["contract_path"], cell["mutation_kind"])
+                    for cell in responder.coverage_cells()
+                }
+
+                self.assertEqual(responder.projection_findings(), [])
+                for field in profile.get("required_fields", ()):
+                    self.assertIn((str(field), "missing_required_field"), cells)
+                    self.assertIn((str(field), "wrong_type"), cells)
+                for field in profile.get("required_child_fields", ()):
+                    self.assertIn((str(field), "missing_required_child_field"), cells)
+                    self.assertIn((str(field), "wrong_type"), cells)
+                for field in profile.get("non_empty_array_fields", ()):
+                    self.assertIn((str(field), "empty_required_array"), cells)
+                for field in contract.get("field_type_requirements", ()):
+                    field_path = str(field)
+                    self.assertIn(
+                        (
+                            "current_handoff_contract.required_report_contract."
+                            f"field_type_requirements.{field_path}",
+                            "missing_field_type_requirements",
+                        ),
+                        cells,
+                    )
+                    self.assertIn((f"result.{field_path}", "wrong_type"), cells)
+                for alias in contract.get("forbidden_aliases", ()):
+                    alias_path = str(alias)
+                    self.assertIn(
+                        (
+                            "current_handoff_contract.required_report_contract."
+                            f"forbidden_aliases.{alias_path}",
+                            "forbidden_alias_used",
+                        ),
+                        cells,
+                    )
+                    self.assertIn((f"result.{alias_path}", "forbidden_alias_used"), cells)
+                for field_path, values in responder.allowed_value_options.items():
+                    for value in values:
+                        with self.subTest(profile_id=profile_id, field=field_path, value=value):
+                            payload = responder.allowed_value_payload(field_path, value)
+                            self.assertIn(value, responder.option_values_seen(payload, field_path))
+
+    def test_contract_driven_fake_ai_materializes_supported_payload_mutations(self) -> None:
+        for contract_id, contract in runner._responder_contracts().items():
+            responder = contract_fake_ai.ContractDrivenFakeAIResponder(contract)
+            if responder.projection_findings():
+                continue
+            with self.subTest(contract_id=contract_id, mutation="missing_required_field"):
+                for field_path in responder.required_fields:
+                    self.assertIsInstance(responder.missing_required_field_payload(field_path), dict)
+            with self.subTest(contract_id=contract_id, mutation="missing_required_child_field"):
+                for field_path in responder.required_child_fields:
+                    self.assertIsInstance(responder.missing_required_child_field_payload(field_path), dict)
+            with self.subTest(contract_id=contract_id, mutation="wrong_type"):
+                for field_path in (*responder.required_fields, *responder.required_child_fields):
+                    self.assertIsInstance(responder.wrong_type_payload(field_path), dict)
+            with self.subTest(contract_id=contract_id, mutation="empty_required_array"):
+                for field_path in responder.non_empty_array_fields:
+                    self.assertIsInstance(responder.empty_required_array_payload(field_path), dict)
+            with self.subTest(contract_id=contract_id, mutation="forbidden_field_present"):
+                for field_path in responder.forbidden_fields:
+                    self.assertIsInstance(responder.forbidden_field_payload(field_path), dict)
+            with self.subTest(contract_id=contract_id, mutation="wrong_allowed_value"):
+                for field_path, values in responder.allowed_value_options.items():
+                    payload = responder.invalid_allowed_value_payload(field_path)
+                    seen_values = responder.option_values_seen(payload, field_path)
+                    self.assertTrue(any(value not in values for value in seen_values))
+            with self.subTest(contract_id=contract_id, mutation="forbidden_alias_used"):
+                for alias_path in responder.forbidden_aliases:
+                    self.assertIsInstance(responder.alias_payload(alias_path), dict)
+
+    def test_packet_result_contract_fields_are_expanded_into_cells(self) -> None:
+        cells = list(model.REQUIRED_CONTRACT_EXHAUSTION_CELLS)
+        cell_index = {
+            (
+                cell.get("contract_family_id", ""),
+                cell.get("contract_path", ""),
+                cell.get("mutation_kind", ""),
+            )
+            for cell in cells
+        }
+
+        for row in model.packet_result_contracts.PACKET_RESULT_CONTRACTS:
+            family_id = str(row["family_id"])
+            for field in row.get("required_fields", ()):
+                with self.subTest(family_id=family_id, field=field, mutation="missing_required_field"):
+                    self.assertIn((family_id, str(field), "missing_required_field"), cell_index)
+                with self.subTest(family_id=family_id, field=field, mutation="wrong_type"):
+                    self.assertIn((family_id, str(field), "wrong_type"), cell_index)
+            for field in row.get("required_child_fields", ()):
+                with self.subTest(family_id=family_id, field=field, mutation="missing_required_child_field"):
+                    self.assertIn((family_id, str(field), "missing_required_child_field"), cell_index)
+            for field in row.get("forbidden_fields", ()):
+                with self.subTest(family_id=family_id, field=field, mutation="forbidden_field_present"):
+                    self.assertIn((family_id, str(field), "forbidden_field_present"), cell_index)
+
+    def test_packet_result_contract_allowed_options_are_expanded_into_cells(self) -> None:
+        cells = list(model.REQUIRED_CONTRACT_EXHAUSTION_CELLS)
+        cell_index = {
+            (
+                cell.get("contract_family_id", ""),
+                cell.get("contract_path", ""),
+                cell.get("mutation_kind", ""),
+                cell.get("required_evidence_owner", ""),
+            )
+            for cell in cells
+        }
+
+        for row in model.packet_result_contracts.PACKET_RESULT_CONTRACTS:
+            family_id = str(row["family_id"])
+            for field in model.packet_result_contracts.allowed_value_options_for_family(family_id):
+                field_path = str(field)
+                with self.subTest(family_id=family_id, field=field_path, mutation="missing_allowed_value_options"):
+                    self.assertIn(
+                        (
+                            family_id,
+                            "current_handoff_contract.required_report_contract."
+                            f"allowed_value_options.{field_path}",
+                            "missing_allowed_value_options",
+                            "contract_exhaustion_runtime_matrix",
+                        ),
+                        cell_index,
+                    )
+                with self.subTest(family_id=family_id, field=field_path, mutation="wrong_allowed_value"):
+                    self.assertIn(
+                        (
+                            family_id,
+                            f"result.{field_path}",
+                            "wrong_allowed_value",
+                            "contract_exhaustion_fake_ai_matrix",
+                        ),
+                        cell_index,
+                    )
+
+    def test_result_contract_profile_allowed_options_are_expanded_into_cells(self) -> None:
+        cells = list(model.REQUIRED_CONTRACT_EXHAUSTION_CELLS)
+        cell_index = {
+            (
+                cell.get("contract_family_id", ""),
+                cell.get("contract_path", ""),
+                cell.get("mutation_kind", ""),
+                cell.get("required_evidence_owner", ""),
+            )
+            for cell in cells
+        }
+
+        for profile_id in model.packet_result_contracts.packet_stage_evidence_matrix.RESULT_CONTRACT_PROFILE_IDS:
+            profile = model.packet_result_contracts.packet_stage_evidence_matrix.result_contract_profile(profile_id)
+            family_id = str(profile["family_id"])
+            sample_binding = model.PROFILE_EXHAUSTION_SAMPLE_BINDINGS.get(profile_id, {})
+            effective_contract = model.packet_result_contracts.effective_result_contract_for_family(
+                family_id,
+                result_contract_profile_ids=(profile_id,),
+                result_contract_profile_bindings={profile_id: sample_binding},
+            )
+            base_allowed_fields = set(model.packet_result_contracts.allowed_value_options_for_family(family_id))
+            profile_allowed_fields = sorted(
+                str(field)
+                for field in (effective_contract.get("allowed_value_options") or {})
+                if str(field) not in base_allowed_fields
+            )
+
+            self.assertGreater(
+                len(profile_allowed_fields),
+                0,
+                f"{profile_id} sample binding did not expose any profile-owned finite option fields",
+            )
+            for field_path in profile_allowed_fields:
+                with self.subTest(profile_id=profile_id, field=field_path, mutation="missing_allowed_value_options"):
+                    self.assertIn(
+                        (
+                            profile_id,
+                            "current_handoff_contract.required_report_contract."
+                            f"allowed_value_options.{field_path}",
+                            "missing_allowed_value_options",
+                            "contract_exhaustion_runtime_matrix",
+                        ),
+                        cell_index,
+                    )
+                with self.subTest(profile_id=profile_id, field=field_path, mutation="wrong_allowed_value"):
+                    self.assertIn(
+                        (
+                            profile_id,
+                            f"result.{field_path}",
+                            "wrong_allowed_value",
+                            "contract_exhaustion_fake_ai_matrix",
+                        ),
+                        cell_index,
+                    )
+
+    def test_contract_exhaustion_runtime_regressions_exist(self) -> None:
+        test_text = (ROOT / "tests" / "test_flowpilot_core_runtime.py").read_text(encoding="utf-8")
+
+        for test_name in (
+            "test_review_packet_is_not_issued_with_empty_required_flowguard_manifest",
+            "test_flowguard_packet_rejects_missing_evidence_output_policy",
+            "test_break_glass_counts_same_flowguard_root_cause_across_surface_gates",
+            "test_flowguard_fallback_evidence_is_mechanically_reissued",
+            "test_flowguard_reissue_inherits_required_authorized_result_reads",
+            "test_flowguard_semantic_recheck_reissue_inherits_required_authorized_reads",
+            "test_reissued_flowguard_result_blocks_without_inherited_body_open",
+            "test_pm_repair_decision_reason_only_is_rejected_when_obligations_exist",
+            "test_pm_repair_obligation_rejects_stale_or_registry_only_disposition",
+            "test_repair_packet_and_flowguard_recheck_must_consume_repair_obligations",
+            "test_semantic_recheck_contract_projects_ai_facing_fields_and_options",
+            "test_semantic_recheck_near_synonyms_reissue_with_correct_minimal_shape",
+            "test_semantic_recheck_wrong_value_then_corrected_retry_returns_to_legal_path",
+        ):
+            with self.subTest(test_name=test_name):
+                if test_name.startswith("test_semantic_recheck_"):
+                    projection_text = (ROOT / "tests" / "test_flowpilot_ai_contract_projection.py").read_text(
+                        encoding="utf-8"
+                    )
+                    self.assertIn(test_name, projection_text)
+                else:
+                    self.assertIn(test_name, test_text)
+
+
+if __name__ == "__main__":
+    unittest.main()

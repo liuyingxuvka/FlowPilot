@@ -42,23 +42,38 @@ def main(argv: Sequence[str] | None = None) -> int:
         default=None,
         help="FlowPilot source root for control-plane source-contract checks.",
     )
+    parser.add_argument(
+        "--repository-confidence-only",
+        action="store_true",
+        help=(
+            "Scope out formal FlowPilot terminal-return authority. This mode can "
+            "support repository diagnostics but not a Controller exit claim."
+        ),
+    )
     args = parser.parse_args(argv)
+    terminal_return_required = not args.repository_confidence_only
 
     if args.run_checks:
         subcheck_runs = run_required_subchecks(
             args.results_dir,
             live_root=args.live_root,
             source_root=args.source_root,
+            terminal_return_required=terminal_return_required,
         )
         result_paths = result_paths_for_dir(args.results_dir)
     else:
         subcheck_runs = []
         result_paths = DEFAULT_RESULT_PATHS
 
-    report = evaluate_final_confidence(result_paths, subcheck_runs=subcheck_runs)
+    report = evaluate_final_confidence(
+        result_paths,
+        subcheck_runs=subcheck_runs,
+        terminal_return_required=terminal_return_required,
+    )
     report["result_type"] = "flowpilot_final_confidence_gate"
     report["subcheck_runs"] = subcheck_runs
     report["result_paths"] = {name: str(path) for name, path in result_paths.items()}
+    report["terminal_return_required"] = terminal_return_required
 
     output = json.dumps(report, indent=2, sort_keys=True) + "\n"
     if args.json_out:

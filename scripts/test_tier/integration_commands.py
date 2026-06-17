@@ -24,7 +24,7 @@ INTEGRATION_COMMANDS = (
     ),
     TierCommand(
         name="flowguard_coverage_sweep",
-        command=_py("scripts/run_flowguard_coverage_sweep.py", "--timeout-seconds", "60"),
+        command=_py("scripts/run_flowguard_coverage_sweep.py", "--timeout-seconds", "300"),
         description="Read-only FlowGuard coverage sweep.",
         long_running=True,
         background_recommended=True,

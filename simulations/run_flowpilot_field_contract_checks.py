@@ -7,7 +7,7 @@ import json
 from collections import deque
 from pathlib import Path
 
-from flowguard import Explorer
+from flowguard.explorer import Explorer
 
 import flowpilot_field_contract_model as model
 
@@ -206,13 +206,55 @@ def _source_alignment_report() -> dict[str, object]:
         / "flowpilot_core_runtime"
         / "packet_result_contracts.py"
     )
+    stage_matrix_path = (
+        REPO_ROOT
+        / "skills"
+        / "flowpilot"
+        / "assets"
+        / "flowpilot_core_runtime"
+        / "packet_stage_evidence_matrix.py"
+    )
+    runtime_self_check_path = (
+        REPO_ROOT
+        / "skills"
+        / "flowpilot"
+        / "assets"
+        / "flowpilot_runtime_self_check.py"
+    )
     core_test_path = REPO_ROOT / "tests" / "test_flowpilot_core_runtime.py"
     high_standard_test_path = REPO_ROOT / "tests" / "test_flowpilot_high_standard_control_flow.py"
     fake_project_test_path = REPO_ROOT / "tests" / "test_flowpilot_fake_project_rehearsal.py"
     new_entrypoint_test_path = REPO_ROOT / "tests" / "test_flowpilot_new_entrypoint.py"
     lifecycle_guard_test_path = REPO_ROOT / "tests" / "test_flowpilot_lifecycle_guard.py"
+    control_plane_test_path = REPO_ROOT / "tests" / "test_flowpilot_control_plane_contracts.py"
+    ai_contract_projection_test_path = REPO_ROOT / "tests" / "test_flowpilot_ai_contract_projection.py"
+    contract_surface_reduction_test_path = REPO_ROOT / "tests" / "test_flowpilot_contract_surface_reduction.py"
     fake_e2e_path = REPO_ROOT / "skills" / "flowpilot" / "assets" / "flowpilot_core_runtime" / "fake_e2e.py"
     fake_cli_path = REPO_ROOT / "simulations" / "flowpilot_fake_project_rehearsal_cli.py"
+    new_role_commands_path = REPO_ROOT / "skills" / "flowpilot" / "assets" / "flowpilot_new_role_commands.py"
+    model_text = Path(model.__file__).read_text(encoding="utf-8")
+    pm_package_disposition_path = (
+        REPO_ROOT
+        / "skills"
+        / "flowpilot"
+        / "assets"
+        / "flowpilot_router_work_packets_pm_role_writes_decisions_package_disposition.py"
+    )
+    pm_formal_gate_path = (
+        REPO_ROOT
+        / "skills"
+        / "flowpilot"
+        / "assets"
+        / "flowpilot_router_work_packets_pm_role_writes_decisions_formal_gate.py"
+    )
+    material_path = REPO_ROOT / "skills" / "flowpilot" / "assets" / "flowpilot_router_work_packets_material.py"
+    pm_request_path = (
+        REPO_ROOT
+        / "skills"
+        / "flowpilot"
+        / "assets"
+        / "flowpilot_router_work_packets_pm_role_writes_request.py"
+    )
     contract_index_path = (
         REPO_ROOT
         / "skills"
@@ -225,6 +267,8 @@ def _source_alignment_report() -> dict[str, object]:
 
     runtime_text = runtime_path.read_text(encoding="utf-8")
     contract_module_text = contract_module_path.read_text(encoding="utf-8")
+    stage_matrix_text = stage_matrix_path.read_text(encoding="utf-8")
+    runtime_self_check_text = runtime_self_check_path.read_text(encoding="utf-8")
     contract_index_text = contract_index_path.read_text(encoding="utf-8")
     test_text = (
         core_test_path.read_text(encoding="utf-8")
@@ -236,8 +280,31 @@ def _source_alignment_report() -> dict[str, object]:
         + new_entrypoint_test_path.read_text(encoding="utf-8")
         + "\n"
         + lifecycle_guard_test_path.read_text(encoding="utf-8")
+        + "\n"
+        + control_plane_test_path.read_text(encoding="utf-8")
+        + "\n"
+        + ai_contract_projection_test_path.read_text(encoding="utf-8")
+        + "\n"
+        + contract_surface_reduction_test_path.read_text(encoding="utf-8")
     )
     fake_text = fake_e2e_path.read_text(encoding="utf-8") + "\n" + fake_cli_path.read_text(encoding="utf-8")
+    new_role_commands_text = new_role_commands_path.read_text(encoding="utf-8")
+    field_alias_source_text = "\n".join(
+        path.read_text(encoding="utf-8")
+        for path in (
+            pm_package_disposition_path,
+            pm_formal_gate_path,
+            material_path,
+            pm_request_path,
+        )
+    )
+    material_text = material_path.read_text(encoding="utf-8")
+    material_sufficiency_source = material_text
+    if "def _write_material_sufficiency_report" in material_text:
+        material_sufficiency_source = material_text.split(
+            "def _write_material_sufficiency_report",
+            1,
+        )[1].split("def _write_research_package", 1)[0]
 
     validators = sorted(
         {
@@ -250,12 +317,23 @@ def _source_alignment_report() -> dict[str, object]:
     forbidden_alias_hits = {
         "pm_repair_decision.authority_alias": 'payload.get("authority")' in runtime_text,
         "pm_disposition.summary_reason_alias": 'payload.get("reason") or payload.get("summary")' in runtime_text,
+        "pm_package_disposition.reason_alias": "payload.get('decision_reason') or payload.get('reason')" in field_alias_source_text,
+        "material_sufficiency.runtime_open_receipts_alias": "payload.get('runtime_open_receipt_refs') or payload.get('runtime_open_receipts')" in field_alias_source_text,
+        "material_sufficiency.checked_by_role_alias": (
+            "payload.get('reviewed_by_role') or payload.get('checked_by_role')" in material_sufficiency_source
+            or "payload.get('checked_by_role') or payload.get('reviewed_by_role')" in material_sufficiency_source
+        ),
+        "pm_role_work_request.mode_alias": "payload.get('request_mode') or payload.get('mode')" in field_alias_source_text,
+        "pm_role_work_request.from_role_alias": "payload.get('requested_by_role') or payload.get('from_role')" in field_alias_source_text,
+        "pm_role_work_request.recipient_role_alias": "payload.get('to_role') or payload.get('recipient_role')" in field_alias_source_text,
+        "pm_role_work_request.kind_alias": "payload.get('request_kind') or payload.get('kind')" in field_alias_source_text,
+        "research_packet_spec.recipient_role_alias": "spec.get('to_role') or spec.get('recipient_role')" in material_text,
     }
     private_runtime_contract_tables = [
         token
         for token in (
-            "_PACKET_RESULT_REQUIRED_FIELDS",
-            "_PACKET_RESULT_FORBIDDEN_FIELDS",
+        "_PACKET_RESULT_REQUIRED_FIELDS",
+        "_PACKET_RESULT_FORBIDDEN_FIELDS",
         )
         if token in runtime_text
     ]
@@ -277,6 +355,10 @@ def _source_alignment_report() -> dict[str, object]:
             "test_review_packet_authorizes_matching_flowguard_result_read",
             "test_pm_repair_handoff_contract_includes_branch_shapes",
             "test_pm_repair_redesign_route_reissue_names_branch_field_path",
+            "test_pm_repair_packet_projects_blocker_body_into_repair_obligations",
+            "test_pm_repair_decision_reason_only_is_rejected_when_obligations_exist",
+            "test_pm_repair_obligation_rejects_stale_or_registry_only_disposition",
+            "test_repair_packet_and_flowguard_recheck_must_consume_repair_obligations",
             "test_repair_packet_handoff_contract_carries_formal_blocker_identity",
             "test_formal_repair_identity_mismatch_is_runtime_mechanical_blocker",
             "test_staged_effect_same_family_rejects_different_formal_blocker_identity",
@@ -290,16 +372,73 @@ def _source_alignment_report() -> dict[str, object]:
             "test_closure_accepted_evidence_projection_excludes_superseded_node_packets",
             "test_final_preflight_blocks_stale_active_accepted_packet_lease",
             "test_pending_route_mutation_clears_after_replacement_node_acceptance",
+            "test_open_packet_submission_checklist_projects_current_handoff_contract",
+            "test_stage_evidence_matrix_covers_every_packet_result_family",
+            "test_generated_packet_handoffs_include_stage_matrix_for_each_package_class",
+            "test_high_standard_flowguard_packet_uses_preplanning_stage_matrix",
+            "test_node_acceptance_plan_review_packet_keeps_worker_evidence_future_stage",
+            "test_runtime_self_check_does_not_require_target_project_simulations",
+            "test_start_run_records_portable_runtime_self_check_receipt",
+            "test_pm_package_disposition_rejects_reason_alias_for_decision_reason",
+            "test_pm_formal_gate_package_rejects_reason_alias_for_decision_reason",
+            "test_material_sufficiency_rejects_runtime_open_receipts_alias",
+            "test_material_sufficiency_rejects_checked_by_role_alias",
+            "test_pm_role_work_request_rejects_old_alias_fields",
+            "test_research_packet_rejects_recipient_role_alias",
         )
         if name not in test_text
     ]
     current_handoff_source_ok = (
         "_build_current_handoff_contract" in runtime_text
         and '"current_handoff_contract"' in runtime_text
-        and "branch_valid_shapes_for_family" in runtime_text
+        and "effective_result_contract_from_envelope" in runtime_text
+        and "stage_evidence_matrix" in runtime_text
+        and "_packet_stage_evidence_row" in runtime_text
+        and "non_empty_array_fields" in runtime_text
         and "branch_minimal_valid_shape" in runtime_text
         and "matching_flowguard_result_for_review" in runtime_text
+        and "authorized_result_read_ids" in runtime_text
+        and "required_authorized_read_count" in runtime_text
+        and "all_required_authorized_result_bodies_must_be_opened_before_submit" in runtime_text
+        and "result_contract_profile_ids" in runtime_text
+        and "result_contract_profile_bindings" in runtime_text
+        and "_submission_checklist_from_packet_body" in new_role_commands_text
+        and '"required_child_fields"' in new_role_commands_text
+        and '"branch_valid_shapes"' in new_role_commands_text
+        and '"non_empty_array_fields"' in new_role_commands_text
+        and '"field_type_requirements"' in new_role_commands_text
+        and '"input_material_manifest"' in new_role_commands_text
+        and "stage_evidence_matrix" in test_text
         and "current_handoff_contract" in test_text
+        and "test_body_semantic_recheck_context_without_profile_does_not_create_hidden_fields" in test_text
+        and "research packet spec requires to_role; recipient_role is not a current alias" in material_text
+        and "research_packet_spec.recipient_role" in model_text
+    )
+    stage_evidence_matrix_source_ok = (
+        "PACKET_STAGE_EVIDENCE_MATRIX" in stage_matrix_text
+        and "STAGE_EVIDENCE_MATRIX_SCHEMA_VERSION" in stage_matrix_text
+        and "stage_evidence_row_for_family" in stage_matrix_text
+        and "role_visible_stage_evidence_row_json" in stage_matrix_text
+        and "stage_evidence_row_json_for_family" in contract_module_text
+        and "role_visible_stage_evidence_row_json_for_family" in contract_module_text
+        and "subject_stage_evidence_matrix" in runtime_text
+        and "current_required_fields" in runtime_text
+        and "role_visible_stage_evidence_row_json" in runtime_text
+        and "allowed_blocker_classes" in runtime_text
+        and "test_stage_evidence_matrix_covers_every_packet_result_family" in test_text
+        and "test_generated_packet_handoffs_include_stage_matrix_for_each_package_class" in test_text
+        and "test_role_visible_stage_matrix_omits_lifecycle_history" in test_text
+    )
+    runtime_self_check_source_ok = (
+        "REQUIRED_RUNTIME_ASSETS" in runtime_self_check_text
+        and "dev_repo_simulations_required" in runtime_self_check_text
+        and "write_runtime_self_check_receipt" in runtime_self_check_text
+        and "_record_runtime_self_check_receipt" in runtime_text + "\n" + (
+            REPO_ROOT / "skills" / "flowpilot" / "assets" / "flowpilot_new_shared.py"
+        ).read_text(encoding="utf-8")
+        and "flowpilot_runtime_self_check_receipt.json" in runtime_self_check_text
+        and "test_runtime_self_check_does_not_require_target_project_simulations" in test_text
+        and "test_start_run_records_portable_runtime_self_check_receipt" in test_text
     )
     missing_repair_identity_markers = [
         label
@@ -355,17 +494,18 @@ def _source_alignment_report() -> dict[str, object]:
             ("FLOWGUARD_REPORT_REQUIRED_FIELDS", contract_module_text),
             ("FLOWGUARD_REPORT_REQUIRED_CHILD_FIELDS", contract_module_text),
             ("explicit_array_fields_for_family", contract_module_text),
-            ('"decision", "outcome", "status"', contract_module_text),
+            ('"outcome"', contract_module_text),
+            ('"validation_status"', contract_module_text),
             ("_payload_path_missing", runtime_text),
             ("_missing_or_wrong_explicit_array_fields", runtime_text),
             ('packet_kind in {"flowguard_check", "review"}', runtime_text),
-            ("_flowguard_evidence_consistency_violation", runtime_text),
+            ("_flowguard_current_report_violation", runtime_text),
             ('"pm_visible_summary"', contract_index_text),
-            ('"independent_challenge"', contract_index_text),
-            ('"missing_test_kinds"', contract_index_text),
-            ('"evidence_consistency"', contract_index_text),
+            ('"modeled_boundary"', contract_index_text),
+            ('"blockers"', contract_index_text),
+            ('"contract_self_check"', contract_index_text),
             ("flowguard_result_body", test_text),
-            ("test_flowguard_packet_rejects_blocked_child_evidence_without_reviewer", test_text),
+            ("test_flowguard_packet_rejects_deleted_evidence_consistency_field_without_reviewer", test_text),
             ("test_flowguard_packet_rejects_failed_contract_self_check_without_reviewer", test_text),
             ("review_result_body", test_text),
         )
@@ -379,9 +519,8 @@ def _source_alignment_report() -> dict[str, object]:
             '"node_context_package"',
             '"pm_visible_summary"',
             '"modeled_boundary"',
-            '"independent_challenge"',
-            '"missing_test_kinds"',
-            '"evidence_consistency"',
+            '"route_segment_replay"',
+            '"final_blockers"',
         )
         if term not in fake_text
     ]
@@ -392,6 +531,8 @@ def _source_alignment_report() -> dict[str, object]:
             and not private_runtime_contract_tables
             and shared_contract_source_ok
             and current_handoff_source_ok
+            and stage_evidence_matrix_source_ok
+            and runtime_self_check_source_ok
             and formal_repair_identity_source_ok
             and role_report_contract_alignment_ok
             and not missing_negative_tests
@@ -405,6 +546,9 @@ def _source_alignment_report() -> dict[str, object]:
             _repo_path(fake_project_test_path),
             _repo_path(new_entrypoint_test_path),
             _repo_path(lifecycle_guard_test_path),
+            _repo_path(control_plane_test_path),
+            _repo_path(ai_contract_projection_test_path),
+            _repo_path(contract_surface_reduction_test_path),
         ],
         "fake_paths": [_repo_path(fake_e2e_path), _repo_path(fake_cli_path)],
         "packet_result_contract_count": model.REQUIRED_PACKET_RESULT_CONTRACT_COUNT,
@@ -413,6 +557,8 @@ def _source_alignment_report() -> dict[str, object]:
         "private_runtime_contract_tables": private_runtime_contract_tables,
         "shared_contract_source_ok": shared_contract_source_ok,
         "current_handoff_source_ok": current_handoff_source_ok,
+        "stage_evidence_matrix_source_ok": stage_evidence_matrix_source_ok,
+        "runtime_self_check_source_ok": runtime_self_check_source_ok,
         "formal_repair_identity_source_ok": formal_repair_identity_source_ok,
         "role_report_contract_alignment_ok": role_report_contract_alignment_ok,
         "missing_repair_identity_markers": missing_repair_identity_markers,

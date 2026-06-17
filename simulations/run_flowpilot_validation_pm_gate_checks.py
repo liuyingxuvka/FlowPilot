@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from flowguard import Explorer
+from flowguard.explorer import Explorer
 
 try:  # pragma: no cover
     from . import flowpilot_validation_pm_gate_model as model
@@ -83,9 +83,9 @@ def _model_test_alignment_report() -> dict[str, Any]:
         "old_validator_closure_roles_removed": "test_validator_and_closure_flowguard_operator_are_not_runtime_roles" in test_text,
         "old_validation_closure_packets_rejected": "test_validation_and_closure_packet_kinds_are_rejected" in test_text,
         "pm_decision_gate_ledger": "pm_decision_gates" in runtime_text,
-        "high_risk_pm_repair_staged": "test_pm_redesign_route_repair_is_gated_before_application" in test_text,
-        "low_risk_pm_repair_direct": "test_pm_repair_current_scope_for_packet_scope_remains_direct" in test_text,
-        "high_risk_pm_disposition_staged": "test_pm_redesign_route_disposition_is_gated_before_application" in test_text,
+        "pm_redesign_route_repair_gated": "test_pm_redesign_route_repair_is_gated_before_application" in test_text,
+        "pm_current_scope_repair_gated": "test_pm_repair_current_scope_for_packet_scope_is_gated_before_application" in test_text,
+        "pm_redesign_route_disposition_gated": "test_pm_redesign_route_disposition_is_gated_before_application" in test_text,
         "runtime_staged_effect_helper": "_attach_staged_effect" in runtime_text,
         "route_redesign_staged_effect_kind": "commit_route_redesign" in runtime_text,
         "node_acceptance_staged_effect_kind": "commit_node_acceptance_plan" in runtime_text,

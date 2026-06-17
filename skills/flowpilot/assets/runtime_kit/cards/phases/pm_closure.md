@@ -23,6 +23,16 @@ runtime_context: Treat the runtime delivery envelope as the live source for the 
 
 
 Close only after final ledger and backward replay pass.
+Closure also requires the final ledger to show zero unresolved active
+acceptance items and the terminal backward replay to pass every
+`acceptance_item` segment the runtime issued. PM may not approve closure while
+any user-sourced or PM high-standard item lacks direct evidence, reviewer or
+FlowGuard gate closure, valid waiver authority, or final replay coverage.
+If terminal supplemental repair was entered, PM may approve normal closure only
+when `terminal_supplemental_repair.status` is `clean` and every
+`supplemental_repair_closure` row is covered. `repair_rounds_exhausted` is a
+terminal stop state, not a completion approval. Do not reopen a fourth repair
+round from closure; record the exhausted summary and stop.
 Closure also requires all active FlowGuard Work Orders to be closed by current
 FlowGuard Reports that PM accepted, or explicitly dispositioned by PM with a
 scoped waiver, deferral, quarantine, or user stop. Missing, stale, skipped,
@@ -69,11 +79,16 @@ runnable, operational, or implementation-ready completion.
 PM must also self-check structural convergence. Closure is blocked while the
 final ledger has unresolved structure debt, unowned fallback-like paths,
 compatibility branches, duplicate adapters, stale generated artifacts,
-newest-run fallback, repo-root fallback, or maintenance layers without owner,
-scope, validation evidence, and sunset or next-disposition criteria. Old
-artifacts, old route fields, and historical evidence may appear only as
-negative rejection evidence or historical context; they cannot close current
-completion.
+non-current evidence, or maintenance layers without owner, scope, validation
+evidence, and sunset or next-disposition criteria. Historical context and
+negative rejection evidence must stay separate from current completion
+evidence.
+PM must also self-check final artifact hygiene. Closure is blocked while any
+`current_goal_required_repair` or `clean_delivery_required_repair` hygiene
+finding remains unresolved in the final ledger or latest terminal Reviewer
+replay. Nonblocking hygiene opportunities must have PM disposition before
+closure, but they do not require a repair node unless PM imports them into the
+current supplemental repair contract.
 PM must also accept the runtime's final-quality evidence classification.
 Invalid final matrix rows, blocked review ids, stale/progress-only FlowGuard
 ids, failed validation ids, and terminal replay target mismatches are closure

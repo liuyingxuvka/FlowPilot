@@ -20,13 +20,14 @@
     "root_acceptance",
     "parent_or_module_nodes",
     "leaf_nodes",
+    "final_artifact_hygiene",
     "pm_segment_decisions",
     "repair_restart_policy"
   ],
   "segments": [
     {
       "segment_id": "<segment-id>",
-      "segment_type": "<delivered_product|root_acceptance|parent_or_module_node|leaf_node>",
+      "segment_type": "<delivered_product|root_acceptance|parent_or_module_node|leaf_node|final_artifact_hygiene>",
       "node_id": "<node-id-or-null>",
       "parent_node_id": "<parent-node-id-or-null>",
       "ledger_entry_ids": [],
@@ -36,6 +37,7 @@
       "root_acceptance_obligations": [],
       "standard_scenarios": [],
       "risk_scenarios": [],
+      "final_artifact_hygiene_checks_required": [],
       "current_product_checks_required": [],
       "reviewer_report_path": "<path-or-null>",
       "pm_decision": "<not_reviewed|continue|repair|route_mutation|pm_stop>",
@@ -49,7 +51,9 @@
     "root_acceptance_reviewed": false,
     "parent_nodes_reviewed": false,
     "leaf_nodes_reviewed": false,
-    "every_effective_node_has_pm_segment_decision": false
+    "every_effective_node_has_pm_segment_decision": false,
+    "final_artifact_hygiene_segment_present": false,
+    "final_artifact_hygiene_reviewed": false
   },
   "repair_restart_policy": {
     "default_restart": "restart_from_delivered_product",

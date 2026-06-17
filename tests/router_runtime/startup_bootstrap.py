@@ -1019,6 +1019,7 @@ class StartupBootstrapRuntimeTests(FlowPilotRouterRuntimeTestBase):
         body = (run_root / "packets" / "user_intake" / "packet_body.md").read_text(encoding="utf-8")
         self.assertIn(USER_REQUEST["text"], body)
         self.assertIn("startup_intake_record_path", body)
+        self.assertIn("pm_startup_repair_request", body)
     def test_new_invocation_creates_fresh_run_scoped_bootstrap_over_stale_state(self) -> None:
         root = self.make_project()
         old_run_root = root / ".flowpilot" / "runs" / "run-old-stopped"

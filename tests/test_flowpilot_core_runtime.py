@@ -61,7 +61,11 @@ control_surface = runtime.control_surface
 
 
 def role_result_body(summary: str, **fields: object) -> str:
-    payload: dict[str, object] = {"decision": "pass", "pm_visible_summary": [summary]}
+    payload: dict[str, object] = {
+        "decision": "pass",
+        "pm_visible_summary": [summary],
+        "current_evidence_refs": ["current-runtime-evidence"],
+    }
     payload.update(fields)
     return json.dumps(payload)
 
@@ -72,24 +76,8 @@ def flowguard_result_body(summary: str, **fields: object) -> str:
         "reviewed_by_role": "flowguard_operator",
         "passed": True,
         "modeled_boundary": "Current packet and current result only.",
-        "commands_run": ["python simulations/run_flowpilot_model_test_alignment_checks.py"],
-        "counterexamples_or_absence": ["No counterexample in the current modeled boundary."],
-        "hard_invariants": ["Current packet-result contracts use only current fields."],
-        "skipped_checks": [],
-        "model_obligations": ["Current FlowGuard packet report fields are present."],
-        "ordinary_test_evidence": ["Targeted runtime regression."],
-        "missing_test_kinds": [],
-        "conformance_boundary": "Runtime checks mechanics only.",
-        "confidence_boundary": "Scoped to this current packet.",
-        "residual_blindspots": [],
-        "background_artifact_completion": [],
+        "blockers": [],
         "pm_suggestion_items": [],
-        "evidence_consistency": {
-            "self_check_passed": True,
-            "child_reports_all_passed": True,
-            "blocking_child_reports": [],
-            "hard_evidence_decision": "pass",
-        },
         "contract_self_check": {
             "all_required_fields_present": True,
             "exact_field_names_used": True,
@@ -102,31 +90,127 @@ def flowguard_result_body(summary: str, **fields: object) -> str:
     return json.dumps(payload)
 
 
+def semantic_recheck_fields(
+    blocker_id: str,
+    *,
+    consumed_authorized_result_read_ids: list[str] | None = None,
+    coverage_boundary: str = "subject_bound_semantic",
+) -> dict[str, object]:
+    return {
+        "semantic_recheck": {
+            "blocker_id": blocker_id,
+            "subject_result_consumed": True,
+            "subject_bound_semantic_coverage": True,
+            "coverage_boundary": coverage_boundary,
+            "consumed_authorized_result_read_ids": consumed_authorized_result_read_ids or [],
+            "consumed_repair_obligation_ids": [],
+        }
+    }
+
+
+def semantic_recheck_fields_from_packet(
+    ledger: dict[str, object],
+    flowguard_packet_id: str,
+    blocker_id: str,
+    *,
+    coverage_boundary: str = "subject_bound_semantic",
+) -> dict[str, object]:
+    flowguard_packet_row = ledger["packets"][flowguard_packet_id]
+    authorized_read_ids = [
+        str(row.get("result_id") or "")
+        for row in flowguard_packet_row["envelope"].get("authorized_result_reads", [])
+        if row.get("required_before_submit") is True and str(row.get("result_id") or "")
+    ]
+    payload = semantic_recheck_fields(
+        blocker_id,
+        consumed_authorized_result_read_ids=authorized_read_ids,
+        coverage_boundary=coverage_boundary,
+    )
+    profile_bindings = flowguard_packet_row["envelope"].get("result_contract_profile_bindings", {})
+    semantic_binding = (
+        profile_bindings.get("flowguard.semantic_recheck_required", {})
+        if isinstance(profile_bindings, dict)
+        else {}
+    )
+    obligation_ids = list(
+        semantic_binding.get("repair_obligation_ids")
+        if isinstance(semantic_binding, dict)
+        else []
+        or []
+    )
+    payload["semantic_recheck"]["consumed_repair_obligation_ids"] = obligation_ids
+    return payload
+
+
+def pm_repair_decision_body(
+    ledger: dict[str, object],
+    pm_packet_id: str,
+    *,
+    decision: str = "repair_current_scope",
+    reason: str = "Current PM repair decision.",
+    **fields: object,
+) -> str:
+    packet_body = json.loads(ledger["packets"][pm_packet_id]["body"])
+    obligations = packet_body.get("repair_evidence_obligations") or []
+    envelope = ledger["packets"][pm_packet_id].get("envelope", {})
+    subject_blocker_id = ""
+    if isinstance(envelope, dict):
+        subject_blocker_id = str(envelope.get("subject_id") or "")
+    payload: dict[str, object] = {
+        "decision": decision,
+        "reason": reason,
+        "target_blocker_id": subject_blocker_id or "blocker-current",
+        "next_action": decision,
+    }
+    if obligations:
+        payload["repair_obligation_disposition"] = runtime._repair_obligation_disposition_minimal_shape(
+            obligations,
+            decision,
+        )
+    payload.update(fields)
+    return json.dumps(payload)
+
+
+def write_flowguard_evidence_artifact(
+    ledger: dict[str, object],
+    packet_id: str,
+    *,
+    decision: str = "pass",
+) -> Path:
+    if not ledger.get("run_root"):
+        ledger["run_root"] = tempfile.mkdtemp(prefix="flowpilot-core-test-")
+    packet = ledger["packets"][packet_id]
+    path = runtime._flowguard_packet_evidence_artifact_path(ledger, packet)
+    assert path is not None
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps(
+            {
+                "schema_version": "flowpilot.flowguard_evidence.v1",
+                "model_test_alignment_report": {
+                    "decision": decision,
+                    "failed_predicates": [] if decision == "pass" else ["semantic_contract_missing"],
+                },
+            },
+            indent=2,
+            sort_keys=True,
+        ),
+        encoding="utf-8",
+    )
+    return path
+
+
 def review_result_body(summary: str, **fields: object) -> str:
     passed = bool(fields.pop("passed", True))
     blocking_findings = fields.pop("blocking_findings", [])
     if not isinstance(blocking_findings, list):
         blocking_findings = []
-    pass_or_block = "pass" if passed else "block"
     payload: dict[str, object] = {
         "pm_visible_summary": [summary],
         "reviewed_by_role": "human_like_reviewer",
         "passed": passed,
-        "direct_evidence_paths_checked": ["current result body"],
-        "independent_challenge": {
-            "scope_restatement": "Review the current packet result against current acceptance criteria.",
-            "explicit_and_implicit_commitments": ["current contract fields", "quality sufficient for next gate"],
-            "failure_hypotheses": ["The result may satisfy fields without satisfying the task."],
-            "challenge_actions": ["Checked current evidence and challenged the strongest likely failure."],
-            "blocking_findings": blocking_findings,
-            "non_blocking_findings": [],
-            "pass_or_block": pass_or_block,
-            "reroute_request": [],
-            "challenge_waivers": [],
-        },
-        "findings": [],
+        "findings": blocking_findings if not passed else [],
         "blockers": blocking_findings,
-        "residual_risks": [],
         "pm_suggestion_items": [],
         "contract_self_check": {
             "all_required_fields_present": True,
@@ -194,37 +278,217 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         targets = list(packet_body["segment_targets"])
         if omit_last:
             targets = targets[:-1]
-        reviews = [
+        route_segment_replay = [
             {
                 "segment_id": target["segment_id"],
                 "segment_kind": target["segment_kind"],
-                "reviewed_by_role": "human_like_reviewer",
-                "passed": True,
-                "pm_segment_decision": "continue",
-                "direct_evidence_paths_checked": ["current-evidence.json"],
+                "status": "closed",
+                "basis": "Current evidence closes this segment.",
             }
             for target in targets
         ]
         if unexpected:
-            reviews.append(
+            route_segment_replay.append(
                 {
                     "segment_id": "unexpected-segment",
                     "segment_kind": "route_node",
-                    "reviewed_by_role": "human_like_reviewer",
-                    "passed": True,
-                    "pm_segment_decision": "continue",
-                    "direct_evidence_paths_checked": ["current-evidence.json"],
+                    "status": "closed",
+                    "basis": "Unexpected segment should be rejected.",
                 }
             )
-        payload = json.loads(
-            review_result_body(
-                "Terminal replay checked every runtime-issued segment.",
-                segment_reviews=reviews,
-                repair_restart_policy="Restart terminal replay after any repair.",
-            )
-        )
-        payload["passed"] = True
+        acceptance_item_closure = [
+            {
+                "id": str(target["segment_id"]).removeprefix("acceptance-item:"),
+                "status": "closed",
+                "basis": "Current terminal replay evidence closes this acceptance item.",
+            }
+            for target in targets
+            if str(target.get("segment_id", "")).startswith("acceptance-item:")
+        ] or [
+            {
+                "id": "acc-001",
+                "status": "closed",
+                "basis": "Current terminal replay evidence closes the active acceptance item.",
+            }
+        ]
+        payload: dict[str, object] = {
+            "pm_visible_summary": ["Reviewer completed terminal backward replay."],
+            "reviewed_by_role": "human_like_reviewer",
+            "passed": True,
+            "findings": [],
+            "blockers": [],
+            "pm_suggestion_items": [],
+            "final_artifact_refs": [
+                {"id": "delivered-product", "status": "closed", "basis": "Final artifact inspected directly."}
+            ],
+            "acceptance_item_closure": acceptance_item_closure,
+            "route_segment_replay": route_segment_replay,
+            "waiver_records": [],
+            "final_blockers": [],
+            "contract_self_check": {
+                "all_required_fields_present": True,
+                "exact_field_names_used": True,
+                "empty_required_arrays_explicit": True,
+                "runtime_mechanical_validation_passed": True,
+                "semantic_sufficiency_reviewed_by_runtime": False,
+            },
+        }
         return json.dumps(payload)
+
+    def _terminal_replay_block_body_for_packet(self, packet: dict[str, object], *, omit_blockers: bool = False) -> str:
+        payload = json.loads(self._terminal_replay_body_for_packet(packet))
+        first_segment = payload["route_segment_replay"][0]
+        first_segment["status"] = "blocked"
+        first_segment["basis"] = "Delivered product signposting does not match the current accepted route."
+        payload["final_blockers"] = [
+            {
+                "blocker_id": "terminal-blocker-001",
+                "blocker_class": "terminal_closure",
+                "recommended_resolution": "Repair delivered-product signposting and restart terminal replay.",
+            }
+        ]
+        payload["blockers"] = list(payload["final_blockers"])
+        payload["findings"] = ["Delivered product signposting does not match the current accepted route."]
+        payload["passed"] = False
+        if omit_blockers:
+            payload["final_blockers"] = []
+            payload["blockers"] = []
+            payload["findings"] = []
+            payload["passed"] = True
+        return json.dumps(payload)
+
+    def _prepare_terminal_supplemental_projection(
+        self,
+        ledger: dict[str, object],
+        node_id: str,
+        *,
+        contract_id: str = "terminal-supplemental-repair-r1",
+        item_id: str = "terminal-gap-r1-item-1",
+    ) -> None:
+        ledger["acceptance_item_registry"] = {
+            "schema_version": "flowpilot.acceptance_item_registry.v1",
+            "items": [
+                {
+                    "acceptance_item_id": "acc-001",
+                    "source_type": "user_explicit",
+                    "summary": "Complete the current user goal.",
+                    "quality_floor": "high_quality_required",
+                    "future_evidence_rule": "Fresh implementation, validation, PM disposition, and terminal replay evidence.",
+                    "status": "active",
+                }
+            ],
+        }
+        node = ledger["route_nodes"][node_id]
+        node["acceptance_item_ids"] = ["acc-001"]
+        node["supplemental_repair_contract_ids"] = [contract_id]
+        node["supplemental_repair_item_ids"] = [item_id]
+        disposition_id = node.get("pm_disposition_id")
+        if disposition_id:
+            disposition = ledger.setdefault("pm_dispositions", {}).setdefault(disposition_id, {})
+            disposition["acceptance_item_disposition"] = [
+                {
+                    "acceptance_item_id": "acc-001",
+                    "disposition": "accepted",
+                    "basis": "Current node evidence closes this item.",
+                }
+            ]
+
+    def _terminal_supplemental_contract(
+        self,
+        ledger: dict[str, object],
+        blocker_id: str,
+        node_id: str,
+        *,
+        round_number: int = 1,
+        contract_id: str | None = None,
+        item_id: str | None = None,
+        gap_kind: str = "latent_high_standard_requirement",
+        hygiene_category: str | None = None,
+    ) -> dict[str, object]:
+        contract_id = contract_id or f"terminal-supplemental-repair-r{round_number}"
+        item_id = item_id or f"terminal-gap-r{round_number}-item-1"
+        blocker = ledger["active_blockers"][blocker_id]
+        repair_item = {
+            "repair_item_id": item_id,
+            "gap_kind": gap_kind,
+            "original_goal_link": "The final product must satisfy the original user goal at high standard.",
+            "reviewer_gap": "The delivered product still misses terminal signposting.",
+            "required_repair": "Repair terminal signposting and rerun terminal replay.",
+            "owner_repair_node_id": node_id,
+            "acceptance_item_ids": ["acc-001"],
+            "required_evidence": ["fresh implementation evidence", "fresh validation evidence"],
+            "status": "open",
+        }
+        if hygiene_category is not None:
+            repair_item["hygiene_category"] = hygiene_category
+        return {
+            "schema_version": "flowpilot.terminal_supplemental_repair_contract.v1",
+            "contract_id": contract_id,
+            "round_number": round_number,
+            "original_contract_hash": ledger["contract_hash"],
+            "terminal_blocker_id": blocker_id,
+            "terminal_gap_report_result_id": blocker["result_id"],
+            "pm_reason": "Terminal Reviewer found an original-goal gap that must be repaired.",
+            "repair_items": [repair_item],
+        }
+
+    def _lease_ack_and_open_packet(
+        self,
+        ledger: dict[str, object],
+        packet_id: str,
+        responsibility: str,
+    ) -> str:
+        lease_id = runtime.lease_agent(ledger, responsibility, packet_id=packet_id)
+        runtime.assign_packet(ledger, packet_id, lease_id)
+        runtime.ack_lease(ledger, lease_id, packet_id)
+        open_required_result_reads(ledger, packet_id, lease_id)
+        return lease_id
+
+    def _complete_pm_continue_repair_gate(self, ledger: dict[str, object], blocker_id: str) -> None:
+        flowguard_packet = runtime_runner._open_packet_by_kind(ledger, "flowguard_check")
+        flowguard_lease = self._lease_ack_and_open_packet(ledger, flowguard_packet, "flowguard_operator")
+        write_flowguard_evidence_artifact(ledger, flowguard_packet)
+        runtime.submit_result(
+            ledger,
+            flowguard_lease,
+            flowguard_packet,
+            flowguard_result_body(
+                "FlowGuard accepted the staged PM continue-repair decision.",
+                **semantic_recheck_fields_from_packet(ledger, flowguard_packet, blocker_id),
+            ),
+        )
+
+        gate = next(
+            row
+            for row in ledger["pm_decision_gates"].values()
+            if row.get("status") == "awaiting_pm_flowguard_acceptance"
+        )
+        order = ledger["flowguard_work_orders"][gate["flowguard_order_id"]]
+        pm_packet = runtime_runner._open_packet_by_kind(ledger, "pm_flowguard_acceptance")
+        pm_lease = self._lease_ack_and_open_packet(ledger, pm_packet, "pm")
+        payload = packet_result_contracts.minimal_valid_shape_for_family("pm_flowguard_acceptance.pm_flowguard_acceptance")
+        payload.update(
+            {
+                "reason": "PM absorbed FlowGuard before continuing repair.",
+                "flowguard_absorption": "PM accepted the current FlowGuard recheck for the staged repair decision.",
+                "accepted_flowguard_result_id": order["proof_result_id"],
+            }
+        )
+        runtime.submit_result(ledger, pm_lease, pm_packet, json.dumps(payload))
+
+        review_packet = runtime_runner._open_packet_by_kind(ledger, "review")
+        review_lease = self._lease_ack_and_open_packet(ledger, review_packet, "reviewer")
+        runtime.submit_result(
+            ledger,
+            review_lease,
+            review_packet,
+            review_result_body("Reviewer accepted the PM-absorbed continue-repair decision."),
+        )
+        for _ in range(5):
+            action = runtime.router_next_action(ledger)
+            if action.action_type != "repair_accepted_packet":
+                break
+            runtime.repair_accepted_packet_assignment(ledger, action.subject_id)
 
     def _stopped_review_blocker_after_flowguard_failure(
         self,
@@ -243,6 +507,7 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         runtime.assign_packet(ledger, flowguard_packet, flowguard_lease)
         runtime.ack_lease(ledger, flowguard_lease, flowguard_packet)
         open_required_result_reads(ledger, flowguard_packet, flowguard_lease)
+        write_flowguard_evidence_artifact(ledger, flowguard_packet)
         runtime.submit_result(
             ledger,
             flowguard_lease,
@@ -291,7 +556,12 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
             ledger,
             pm_lease,
             pm_packet,
-            json.dumps({"decision": "stop_for_user", "reason": "Controller repair is required."}),
+            pm_repair_decision_body(
+                ledger,
+                pm_packet,
+                decision="stop_for_user",
+                reason="Controller repair is required.",
+            ),
         )
         return ledger, packet_id, blocker_id, flowguard_packet, review_packet, pm_packet
 
@@ -428,7 +698,7 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         self.assertEqual(envelope_contract["contract_family_id"], "task.node")
         self.assertEqual(
             envelope_contract["required_report_contract"]["required_result_body_fields"],
-            ["decision", "pm_visible_summary"],
+            ["decision", "pm_visible_summary", "current_evidence_refs"],
         )
         self.assertEqual(envelope_contract["downstream_consumer"]["next_consumer_authority"], "runtime_router")
         self.assertTrue(envelope_contract["status_projection_requirements"]["repair_chain_visible_when_current"])
@@ -449,6 +719,75 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         self.assertEqual(handoff["current_handoff_contract"], envelope_contract)
         self.assertIn("current_handoff_contract", handoff["text"])
 
+    def test_role_handoff_tells_recipient_to_read_all_authorized_bodies(self) -> None:
+        ledger = runtime.new_ledger("Goal", "Contract")
+        authorize_background_collaboration(ledger)
+        runtime.create_route(ledger, "Route", ["First source", "Second source", "Repair"])
+        source_result_ids: list[str] = []
+        for index in range(2):
+            source_packet = runtime.issue_task_packet(
+                ledger,
+                "worker",
+                f"Produce source evidence {index}",
+                json.dumps({"instruction": f"source {index}"}),
+                route_scope="node",
+            )
+            source_lease = runtime.lease_agent(ledger, "worker", packet_id=source_packet)
+            runtime.assign_packet(ledger, source_packet, source_lease)
+            runtime.ack_lease(ledger, source_lease, source_packet)
+            source_result_ids.append(
+                runtime.submit_result(
+                    ledger,
+                    source_lease,
+                    source_packet,
+                    role_result_body(f"Source result {index}."),
+                )
+            )
+
+        repair_packet = runtime.issue_task_packet(
+            ledger,
+            "worker",
+            "Repair using all related evidence",
+            json.dumps({"instruction": "repair"}),
+            authorized_result_reads=[
+                runtime._authorized_read_for_result(
+                    ledger,
+                    source_result_ids[0],
+                    allowed_roles=["worker"],
+                    purpose="blocked_target_result_body_for_repair",
+                    required_before_submit=True,
+                ),
+                runtime._authorized_read_for_result(
+                    ledger,
+                    source_result_ids[1],
+                    allowed_roles=["worker"],
+                    purpose="upstream_context_for_blocker",
+                    required_before_submit=True,
+                ),
+            ],
+        )
+        repair_lease = runtime.lease_agent(ledger, "worker", packet_id=repair_packet)
+        runtime.assign_packet(ledger, repair_packet, repair_lease)
+        with tempfile.TemporaryDirectory() as tmp:
+            handoff = role_handoff.render_current_packet_handoff(
+                ledger,
+                root=Path(tmp),
+                script_path=ROOT / "skills" / "flowpilot" / "assets" / "flowpilot_new.py",
+                run_id="run-test",
+                packet_id=repair_packet,
+                lease_id=repair_lease,
+            )
+
+        text = handoff["text"]
+        self.assertEqual(
+            [row["result_id"] for row in handoff["authorized_result_reads"]],
+            source_result_ids,
+        )
+        self.assertIn("Read every delivered authorized body before submit-result", text)
+        self.assertIn("blocker, target, and upstream context bodies", text)
+        self.assertIn("one selected result body", text)
+        self.assertIn("multiple authorized bodies", text)
+
     def test_review_packet_authorizes_matching_flowguard_result_read(self) -> None:
         ledger, packet_id, worker = runtime_runner._base_ledger()
         runtime.ack_lease(ledger, worker, packet_id)
@@ -468,6 +807,7 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         runtime.assign_packet(ledger, flowguard_packet, flowguard_lease)
         runtime.ack_lease(ledger, flowguard_lease, flowguard_packet)
         open_required_result_reads(ledger, flowguard_packet, flowguard_lease)
+        write_flowguard_evidence_artifact(ledger, flowguard_packet)
         flowguard_result_id = runtime.submit_result(
             ledger,
             flowguard_lease,
@@ -874,6 +1214,432 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         self.assertIn("unexpected segment id", unexpected_check.blocked_reason)
         self.assertTrue(passing_check.ok)
 
+    def test_terminal_replay_requires_final_artifact_hygiene_segment_in_route_replay(self) -> None:
+        ledger, _node_id, validation_id = self._ledger_with_final_quality_node()
+        packet_id = runtime.ensure_terminal_backward_replay_packet(ledger, validation_id)
+        packet = ledger["packets"][packet_id]
+        packet_body = json.loads(packet["body"])
+
+        self.assertIn(
+            "final-artifact-hygiene",
+            [target["segment_id"] for target in packet_body["segment_targets"]],
+        )
+
+        payload = json.loads(self._terminal_replay_body_for_packet(packet))
+        payload["route_segment_replay"] = [
+            row
+            for row in payload["route_segment_replay"]
+            if row["segment_id"] != "final-artifact-hygiene"
+        ]
+        check = runtime._terminal_backward_replay_result_violation(packet, {"body": json.dumps(payload)})
+
+        self.assertFalse(check.ok)
+        self.assertIn("missing segment id", check.blocked_reason)
+
+    def test_terminal_replay_final_blockers_are_semantic_not_shape_failure(self) -> None:
+        ledger, _node_id, validation_id = self._ledger_with_final_quality_node()
+        packet_id = runtime.ensure_terminal_backward_replay_packet(ledger, validation_id)
+        packet = ledger["packets"][packet_id]
+        payload = json.loads(self._terminal_replay_block_body_for_packet(packet))
+        payload["final_blockers"].append(
+            {
+                "blocker_id": "terminal-blocker-hygiene",
+                "blocker_class": "terminal_closure",
+                "recommended_resolution": "Repair final artifact hygiene before terminal replay can close.",
+            }
+        )
+
+        check = runtime._terminal_backward_replay_result_violation(packet, {"body": json.dumps(payload)})
+
+        self.assertTrue(check.ok)
+
+    def test_terminal_replay_pass_records_without_legacy_hygiene_review(self) -> None:
+        ledger, _node_id, validation_id = self._ledger_with_final_quality_node()
+        packet_id = runtime.ensure_terminal_backward_replay_packet(ledger, validation_id)
+        lease_id = self._lease_ack_and_open_packet(ledger, packet_id, "reviewer")
+        payload = json.loads(self._terminal_replay_body_for_packet(ledger["packets"][packet_id]))
+
+        runtime.submit_result(ledger, lease_id, packet_id, json.dumps(payload))
+        final_ledger = runtime.build_final_route_wide_gate_ledger(ledger)
+        matrix = runtime.build_final_requirement_evidence_matrix(ledger)
+
+        self.assertEqual(ledger["terminal_backward_replay_id"], "terminal_replay-0001")
+        self.assertNotIn("terminal_replay-0001", ledger.get("final_artifact_hygiene_reviews", {}))
+        self.assertNotIn("final_artifact_hygiene", "\n".join(final_ledger["unresolved"]))
+        self.assertNotIn("final_artifact_hygiene", "\n".join(matrix["unresolved"]))
+
+    def test_terminal_replay_valid_block_records_semantic_blocker_not_mechanical_reissue(self) -> None:
+        ledger, _node_id, validation_id = self._ledger_with_final_quality_node()
+        packet_id = runtime.ensure_terminal_backward_replay_packet(ledger, validation_id)
+        lease_id = runtime.lease_agent(ledger, "reviewer", agent_id="reviewer-terminal-block", packet_id=packet_id)
+        runtime.assign_packet(ledger, packet_id, lease_id)
+        runtime.ack_lease(ledger, lease_id, packet_id)
+
+        result_id = runtime.submit_result(
+            ledger,
+            lease_id,
+            packet_id,
+            self._terminal_replay_block_body_for_packet(ledger["packets"][packet_id]),
+        )
+
+        result = ledger["results"][result_id]
+        self.assertEqual(result["status"], "review_blocked")
+        self.assertFalse(result["accepted"])
+        self.assertEqual(ledger["packets"][packet_id]["status"], "review_blocked")
+        self.assertFalse(ledger.get("terminal_backward_replays"))
+        self.assertFalse(ledger.get("closure_confirmed_by_backward_replay", False))
+        self.assertTrue(ledger["active_blockers"])
+        blocker = next(iter(ledger["active_blockers"].values()))
+        self.assertEqual(blocker["route_scope"], "terminal_backward_replay")
+        self.assertIn("signposting", blocker["recommended_resolution"])
+        self.assertFalse(
+            [event for event in ledger["events"] if event["event_type"] == "current_contract_reissue_packet_issued"]
+        )
+
+    def test_terminal_replay_repair_current_scope_preserves_targets_and_closes(self) -> None:
+        ledger, node_id, validation_id = self._ledger_with_final_quality_node()
+        self._prepare_terminal_supplemental_projection(ledger, node_id)
+        packet_id = runtime.ensure_terminal_backward_replay_packet(ledger, validation_id)
+        lease_id = self._lease_ack_and_open_packet(ledger, packet_id, "reviewer")
+        block_result_id = runtime.submit_result(
+            ledger,
+            lease_id,
+            packet_id,
+            self._terminal_replay_block_body_for_packet(ledger["packets"][packet_id]),
+        )
+        blocker_id = next(iter(ledger["active_blockers"]))
+        self.assertEqual(ledger["results"][block_result_id]["status"], "review_blocked")
+
+        pm_packet_id = ledger["active_blockers"][blocker_id]["pm_repair_packet_id"]
+        pm_lease_id = self._lease_ack_and_open_packet(ledger, pm_packet_id, "pm")
+        runtime.submit_result(
+            ledger,
+            pm_lease_id,
+            pm_packet_id,
+            pm_repair_decision_body(
+                ledger,
+                pm_packet_id,
+                decision="repair_current_scope",
+                reason="Repair terminal replay blocker and rerun terminal replay.",
+                pm_visible_summary=["PM chose current-scope terminal replay repair."],
+                supplemental_repair_contract=self._terminal_supplemental_contract(
+                    ledger,
+                    blocker_id,
+                    node_id,
+                ),
+            ),
+        )
+        self.assertEqual(ledger["terminal_supplemental_repair"]["current_round"], 1)
+        self.assertIn("terminal-supplemental-repair-r1", ledger["supplemental_repair_contracts"])
+        self._complete_pm_continue_repair_gate(ledger, blocker_id)
+
+        repair_packet_id = ledger["active_blockers"][blocker_id]["repair_packet_id"]
+        repair_packet = ledger["packets"][repair_packet_id]
+        repair_body = json.loads(repair_packet["body"])
+        self.assertEqual(repair_packet["envelope"]["packet_kind"], "review")
+        self.assertEqual(repair_packet["envelope"]["route_scope"], "terminal_backward_replay")
+        self.assertEqual(repair_body["schema_version"], "black_box_flowpilot.terminal_backward_replay_repair_packet.v1")
+        self.assertTrue(repair_body["segment_targets"])
+        self.assertIn(
+            "supplemental-repair-item:terminal-supplemental-repair-r1:terminal-gap-r1-item-1",
+            {target["segment_id"] for target in repair_body["segment_targets"]},
+        )
+
+        action = runtime.router_next_action(ledger)
+        self.assertEqual(action.action_type, "dispatch_current_role")
+        self.assertEqual(action.subject_id, repair_packet_id)
+
+        repair_lease_id = self._lease_ack_and_open_packet(ledger, repair_packet_id, "reviewer")
+        pass_result_id = runtime.submit_result(
+            ledger,
+            repair_lease_id,
+            repair_packet_id,
+            self._terminal_replay_body_for_packet(repair_packet),
+        )
+
+        self.assertEqual(ledger["results"][pass_result_id]["status"], "accepted")
+        self.assertEqual(ledger["active_blockers"][blocker_id]["status"], "cleared")
+        self.assertTrue(ledger["terminal_backward_replays"])
+        self.assertTrue(ledger["closure_confirmed_by_backward_replay"])
+        self.assertEqual(ledger["terminal_supplemental_repair"]["status"], "clean")
+        self.assertEqual(ledger["closure"]["decision"], "complete")
+        self.assertEqual(runtime.router_next_action(ledger).action_type, "terminal_complete")
+        current_blocking_outcomes = [
+            outcome
+            for outcome in ledger["packet_outcomes"].values()
+            if runtime._packet_outcome_is_current_blocker(ledger, outcome)
+        ]
+        self.assertEqual(current_blocking_outcomes, [])
+
+    def test_terminal_pm_repair_for_terminal_gap_requires_supplemental_contract(self) -> None:
+        ledger, _node_id, validation_id = self._ledger_with_final_quality_node()
+        packet_id = runtime.ensure_terminal_backward_replay_packet(ledger, validation_id)
+        lease_id = self._lease_ack_and_open_packet(ledger, packet_id, "reviewer")
+        runtime.submit_result(
+            ledger,
+            lease_id,
+            packet_id,
+            self._terminal_replay_block_body_for_packet(ledger["packets"][packet_id]),
+        )
+        blocker_id = next(iter(ledger["active_blockers"]))
+        pm_packet_id = ledger["active_blockers"][blocker_id]["pm_repair_packet_id"]
+        pm_lease_id = self._lease_ack_and_open_packet(ledger, pm_packet_id, "pm")
+
+        result_id = runtime.submit_result(
+            ledger,
+            pm_lease_id,
+            pm_packet_id,
+            pm_repair_decision_body(
+                ledger,
+                pm_packet_id,
+                decision="repair_current_scope",
+                reason="Repair terminal replay blocker without the required supplemental contract.",
+            ),
+        )
+
+        result = ledger["results"][result_id]
+        self.assertEqual(result["status"], "mechanical_contract_blocked")
+        self.assertIn("supplemental_repair_contract", result["missing_required_fields"])
+        self.assertFalse(ledger["supplemental_repair_contracts"])
+        self.assertFalse(ledger["pm_repair_decisions"])
+
+    def test_terminal_hygiene_supplemental_contract_requires_category(self) -> None:
+        ledger, node_id, validation_id = self._ledger_with_final_quality_node()
+        self._prepare_terminal_supplemental_projection(ledger, node_id)
+        packet_id = runtime.ensure_terminal_backward_replay_packet(ledger, validation_id)
+        lease_id = self._lease_ack_and_open_packet(ledger, packet_id, "reviewer")
+        runtime.submit_result(
+            ledger,
+            lease_id,
+            packet_id,
+            self._terminal_replay_block_body_for_packet(ledger["packets"][packet_id]),
+        )
+        blocker_id = next(iter(ledger["active_blockers"]))
+        pm_packet_id = ledger["active_blockers"][blocker_id]["pm_repair_packet_id"]
+        pm_lease_id = self._lease_ack_and_open_packet(ledger, pm_packet_id, "pm")
+
+        result_id = runtime.submit_result(
+            ledger,
+            pm_lease_id,
+            pm_packet_id,
+            pm_repair_decision_body(
+                ledger,
+                pm_packet_id,
+                decision="repair_current_scope",
+                reason="Repair final artifact hygiene through supplemental repair.",
+                pm_visible_summary=["PM chose current-scope hygiene repair."],
+                supplemental_repair_contract=self._terminal_supplemental_contract(
+                    ledger,
+                    blocker_id,
+                    node_id,
+                    gap_kind="final_artifact_hygiene_gap",
+                ),
+            ),
+        )
+
+        result = ledger["results"][result_id]
+        self.assertEqual(result["status"], "mechanical_contract_blocked")
+        self.assertIn("hygiene_category", result["quarantine_reason"])
+        self.assertFalse(ledger["supplemental_repair_contracts"])
+
+    def test_terminal_hygiene_supplemental_contract_projects_to_final_ledgers(self) -> None:
+        ledger, node_id, validation_id = self._ledger_with_final_quality_node()
+        self._prepare_terminal_supplemental_projection(ledger, node_id)
+        ledger["active_blockers"]["blocker-terminal"] = {
+            "blocker_id": "blocker-terminal",
+            "result_id": "terminal-gap-result",
+            "route_scope": "terminal_backward_replay",
+        }
+        contract = self._terminal_supplemental_contract(
+            ledger,
+            "blocker-terminal",
+            node_id,
+            gap_kind="final_artifact_hygiene_gap",
+            hygiene_category="code_maintainability",
+        )
+        contract["terminal_blocker_id"] = "blocker-terminal"
+        contract["terminal_gap_report_result_id"] = "terminal-gap-result"
+        contract["source_packet_id"] = "pm-packet"
+        ledger["supplemental_repair_contracts"][contract["contract_id"]] = contract
+
+        final_ledger = runtime.build_final_route_wide_gate_ledger(ledger)
+        matrix = runtime.build_final_requirement_evidence_matrix(ledger)
+
+        self.assertEqual(
+            final_ledger["final_artifact_hygiene_closure"][0]["finding_id"],
+            "terminal-supplemental-repair-r1:terminal-gap-r1-item-1",
+        )
+        self.assertEqual(final_ledger["final_artifact_hygiene_closure"][0]["artifact_family"], "code_maintainability")
+        self.assertFalse(final_ledger["final_artifact_hygiene_closure"][0]["unresolved"])
+        self.assertNotIn(
+            "final_artifact_hygiene_unresolved:terminal-supplemental-repair-r1:terminal-gap-r1-item-1",
+            final_ledger["unresolved"],
+        )
+        self.assertNotIn(
+            "final_artifact_hygiene:terminal-supplemental-repair-r1:terminal-gap-r1-item-1:missing",
+            matrix["unresolved"],
+        )
+
+    def test_unresolved_required_hygiene_finding_blocks_final_closure(self) -> None:
+        ledger, _node_id, validation_id = self._ledger_with_final_quality_node()
+        ledger["final_artifact_hygiene_findings"].append(
+            {
+                "finding_id": "hygiene-required-closure",
+                "artifact_family": "test_coverage",
+                "surface_path": "tests/test_flowpilot_core_runtime.py",
+                "classification": "current_goal_required_repair",
+                "required_repair": "Add a missing regression for required hygiene closure.",
+                "disposition": "",
+                "evidence_ids": [],
+            }
+        )
+
+        final_ledger = runtime.build_final_route_wide_gate_ledger(ledger)
+        blockers = runtime._closure_blockers(
+            ledger,
+            validation_evidence_id=validation_id,
+            required_flowguard_target="development_process",
+        )
+
+        self.assertIn("final_artifact_hygiene_unresolved:hygiene-required-closure", final_ledger["unresolved"])
+        self.assertIn("final_artifact_hygiene_unresolved:hygiene-required-closure", blockers)
+
+    def test_terminal_pm_repair_packet_supplies_current_supplemental_contract_shape(self) -> None:
+        ledger, _node_id, validation_id = self._ledger_with_final_quality_node()
+        packet_id = runtime.ensure_terminal_backward_replay_packet(ledger, validation_id)
+        lease_id = self._lease_ack_and_open_packet(ledger, packet_id, "reviewer")
+        runtime.submit_result(
+            ledger,
+            lease_id,
+            packet_id,
+            self._terminal_replay_block_body_for_packet(ledger["packets"][packet_id]),
+        )
+        blocker_id = next(iter(ledger["active_blockers"]))
+        blocker = ledger["active_blockers"][blocker_id]
+        pm_packet_id = blocker["pm_repair_packet_id"]
+        pm_body = json.loads(ledger["packets"][pm_packet_id]["body"])
+        minimal_shape = pm_body["minimal_valid_shape"]
+        supplemental_contract = minimal_shape["supplemental_repair_contract"]
+        route_nodes = minimal_shape["route_plan"]["nodes"]
+
+        self.assertEqual(supplemental_contract["original_contract_hash"], ledger["contract_hash"])
+        self.assertEqual(supplemental_contract["terminal_blocker_id"], blocker_id)
+        self.assertEqual(supplemental_contract["terminal_gap_report_result_id"], blocker["result_id"])
+        self.assertIn("terminal-supplemental-repair-r1", route_nodes[1]["supplemental_repair_contract_ids"])
+        self.assertIn("terminal-gap-r1-item-1", route_nodes[1]["supplemental_repair_item_ids"])
+
+    def test_supplemental_repair_item_projection_blocks_final_ledgers(self) -> None:
+        ledger, node_id, _validation_id = self._ledger_with_final_quality_node()
+        self._prepare_terminal_supplemental_projection(ledger, node_id)
+        ledger["active_blockers"]["blocker-terminal"] = {
+            "blocker_id": "blocker-terminal",
+            "result_id": "terminal-gap-result",
+        }
+        contract = self._terminal_supplemental_contract(
+            ledger,
+            "blocker-terminal",
+            node_id,
+        )
+        contract["terminal_blocker_id"] = "blocker-terminal"
+        contract["terminal_gap_report_result_id"] = "terminal-gap-result"
+        contract["source_packet_id"] = "pm-packet"
+        contract["source_result_id"] = "pm-result"
+        ledger["supplemental_repair_contracts"][contract["contract_id"]] = contract
+        ledger["route_nodes"][node_id]["supplemental_repair_item_ids"] = []
+
+        route_ledger = runtime.build_final_route_wide_gate_ledger(ledger)
+        matrix = runtime.build_final_requirement_evidence_matrix(ledger)
+
+        self.assertIn(
+            "supplemental_repair_item_projection_missing:terminal-supplemental-repair-r1:terminal-gap-r1-item-1",
+            route_ledger["unresolved"],
+        )
+        self.assertIn(
+            "terminal_supplemental_repair_item:terminal-supplemental-repair-r1:terminal-gap-r1-item-1:projection_missing",
+            matrix["unresolved"],
+        )
+
+    def test_terminal_supplemental_repair_exhausts_after_third_round_without_pm_packet(self) -> None:
+        ledger, _node_id, validation_id = self._ledger_with_final_quality_node()
+        ledger["terminal_supplemental_repair"]["status"] = "active"
+        ledger["terminal_supplemental_repair"]["current_round"] = 3
+        ledger["terminal_supplemental_repair"]["active_contract_id"] = "terminal-supplemental-repair-r3"
+        packet_id = runtime.ensure_terminal_backward_replay_packet(ledger, validation_id)
+        lease_id = self._lease_ack_and_open_packet(ledger, packet_id, "reviewer")
+
+        runtime.submit_result(
+            ledger,
+            lease_id,
+            packet_id,
+            self._terminal_replay_block_body_for_packet(ledger["packets"][packet_id]),
+        )
+
+        self.assertEqual(ledger["terminal_lifecycle"]["status"], "repair_rounds_exhausted")
+        self.assertTrue(
+            any(event["event_type"] == "run_repair_rounds_exhausted" for event in ledger["events"])
+        )
+        self.assertFalse(
+            any(
+                event["event_type"] == "run_cancelled_by_user"
+                and event["payload"].get("status") == "repair_rounds_exhausted"
+                for event in ledger["events"]
+            )
+        )
+        blocker = next(iter(ledger["active_blockers"].values()))
+        self.assertEqual(blocker["route_scope"], "terminal_backward_replay")
+        self.assertEqual(blocker["pm_repair_packet_id"], "")
+        self.assertFalse(
+            [
+                packet
+                for packet in ledger["packets"].values()
+                if packet["envelope"].get("packet_kind") == "pm_repair_decision"
+                and packet["status"] in {"open", "assigned", "acknowledged"}
+            ]
+        )
+
+    def test_terminal_replay_block_branch_requires_repair_evidence(self) -> None:
+        ledger, _node_id, validation_id = self._ledger_with_final_quality_node()
+        packet_id = runtime.ensure_terminal_backward_replay_packet(ledger, validation_id)
+        packet = ledger["packets"][packet_id]
+
+        check = runtime._terminal_backward_replay_result_violation(
+            packet,
+            {"body": self._terminal_replay_block_body_for_packet(packet, omit_blockers=True)},
+        )
+
+        self.assertFalse(check.ok)
+        self.assertIn("final_blockers", check.blocked_reason)
+
+    def test_terminal_replay_mechanical_reissue_preserves_segment_targets(self) -> None:
+        ledger, _node_id, validation_id = self._ledger_with_final_quality_node()
+        packet_id = runtime.ensure_terminal_backward_replay_packet(ledger, validation_id)
+        expected_targets = json.loads(ledger["packets"][packet_id]["body"])["segment_targets"]
+        lease_id = runtime.lease_agent(ledger, "reviewer", agent_id="reviewer-terminal-reissue", packet_id=packet_id)
+        runtime.assign_packet(ledger, packet_id, lease_id)
+        runtime.ack_lease(ledger, lease_id, packet_id)
+
+        result_id = runtime.submit_result(
+            ledger,
+            lease_id,
+            packet_id,
+            self._terminal_replay_body_for_packet(ledger["packets"][packet_id], omit_last=True),
+        )
+
+        result = ledger["results"][result_id]
+        self.assertEqual(result["status"], "mechanical_contract_blocked")
+        reissue_events = [
+            event for event in ledger["events"] if event["event_type"] == "current_contract_reissue_packet_issued"
+        ]
+        self.assertEqual(len(reissue_events), 1)
+        reissue_packet_id = reissue_events[0]["payload"]["fresh_packet_id"]
+        reissue_body = json.loads(ledger["packets"][reissue_packet_id]["body"])
+        self.assertEqual(reissue_body["schema_version"], "black_box_flowpilot.terminal_backward_replay_reissue_packet.v1")
+        self.assertEqual(reissue_body["segment_targets"], expected_targets)
+        self.assertEqual(reissue_body["route_scope"], "terminal_backward_replay")
+        action = runtime.router_next_action(ledger)
+        self.assertEqual(action.action_type, "dispatch_current_role")
+        self.assertEqual(action.subject_id, reissue_packet_id)
+
     def test_quarantined_packet_projection_replay_uses_currentness_predicate(self) -> None:
         ledger, packet_id, worker = runtime_runner._base_ledger()
         runtime.ack_lease(ledger, worker, packet_id)
@@ -1120,11 +1886,8 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
                 "purpose": "Provide current starting context.",
                 "acceptance_criteria": ["criterion"],
                 "relevant_references": ["reference"],
-                "evidence_targets": ["evidence"],
-                "inspection_targets": ["inspection"],
                 "known_risks": ["risk"],
-                "flowguard_targets": ["development_process"],
-                "reviewer_starting_points": ["review start"],
+                "acceptance_item_projection": [],
             }
         )
 
@@ -1153,6 +1916,175 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         self.assertEqual(flowguard_packets, [])
         self.assertEqual(len(review_packets), 1)
         self.assertEqual(json.loads(review_packets[0]["body"])["staged_effect"]["effect_kind"], "commit_node_acceptance_plan")
+
+    def test_pm_disposition_packet_minimal_shape_uses_current_node_acceptance_items(self) -> None:
+        ledger = runtime.new_ledger("Goal", "Acceptance")
+        authorize_background_collaboration(ledger)
+        runtime.create_route(ledger, "Route", ["Node one"])
+        route_version = ledger["active_route_version"]
+        ledger["route_nodes"]["node-with-items"] = {
+            "node_id": "node-with-items",
+            "route_version": route_version,
+            "title": "Node With Items",
+            "status": "running",
+            "responsibility": "worker",
+            "modeled_target": "development_process",
+            "repair_generation": 0,
+            "acceptance_criteria": ["criterion"],
+            "child_node_ids": [],
+            "acceptance_item_ids": ["acc-node-001", "acc-node-002"],
+        }
+        ledger["route_nodes"]["node-without-items"] = {
+            "node_id": "node-without-items",
+            "route_version": route_version,
+            "title": "Node Without Items",
+            "status": "running",
+            "responsibility": "worker",
+            "modeled_target": "development_process",
+            "repair_generation": 0,
+            "acceptance_criteria": ["criterion"],
+            "child_node_ids": [],
+            "acceptance_item_ids": [],
+        }
+        subject_with_items = runtime.issue_task_packet(
+            ledger,
+            "worker",
+            "Work with items",
+            "BODY",
+            route_node_id="node-with-items",
+            route_scope="node",
+        )
+        subject_without_items = runtime.issue_task_packet(
+            ledger,
+            "worker",
+            "Work without items",
+            "BODY",
+            route_node_id="node-without-items",
+            route_scope="node",
+        )
+
+        packet_with_items = runtime._ensure_pm_disposition_packet_for_node(
+            ledger,
+            "node-with-items",
+            subject_with_items,
+        )
+        packet_without_items = runtime._ensure_pm_disposition_packet_for_node(
+            ledger,
+            "node-without-items",
+            subject_without_items,
+        )
+
+        body_with_items = json.loads(ledger["packets"][packet_with_items]["body"])
+        body_without_items = json.loads(ledger["packets"][packet_without_items]["body"])
+        self.assertEqual(body_with_items["node_acceptance_item_ids"], ["acc-node-001", "acc-node-002"])
+        self.assertEqual(
+            [
+                row["acceptance_item_id"]
+                for row in body_with_items["minimal_valid_shape"]["acceptance_item_disposition"]
+            ],
+            ["acc-node-001", "acc-node-002"],
+        )
+        self.assertEqual(body_without_items["node_acceptance_item_ids"], [])
+        self.assertEqual(body_without_items["minimal_valid_shape"]["acceptance_item_disposition"], [])
+
+    def test_pm_disposition_mechanical_reissue_preserves_current_node_acceptance_items(self) -> None:
+        ledger = runtime.new_ledger("Goal", "Acceptance")
+        authorize_background_collaboration(ledger)
+        runtime.create_route(ledger, "Route", ["Node one"])
+        route_version = ledger["active_route_version"]
+        ledger["route_nodes"]["node-1"] = {
+            "node_id": "node-1",
+            "route_version": route_version,
+            "title": "Node One",
+            "status": "running",
+            "responsibility": "worker",
+            "modeled_target": "development_process",
+            "repair_generation": 0,
+            "acceptance_criteria": ["criterion"],
+            "child_node_ids": [],
+            "acceptance_item_ids": ["acc-node-001"],
+            "high_standard_requirement_ids": ["hsr-node-001"],
+            "validation_evidence_ids": ["validation-node-001"],
+        }
+        subject_packet_id = runtime.issue_task_packet(
+            ledger,
+            "worker",
+            "Work with items",
+            "BODY",
+            route_node_id="node-1",
+            route_scope="node",
+        )
+        packet_id = runtime._ensure_pm_disposition_packet_for_node(ledger, "node-1", subject_packet_id)
+        lease_id = runtime.lease_agent(ledger, "pm", agent_id="pm-bad-disposition", packet_id=packet_id)
+        runtime.assign_packet(ledger, packet_id, lease_id)
+        runtime.ack_lease(ledger, lease_id, packet_id)
+
+        result_id = runtime.submit_result(
+            ledger,
+            lease_id,
+            packet_id,
+            json.dumps({"decision": "accept", "summary": "old field must be rejected"}),
+        )
+
+        self.assertEqual(ledger["results"][result_id]["status"], "mechanical_contract_blocked")
+        reissues = [
+            packet for packet in ledger["packets"].values()
+            if packet["packet_id"] != packet_id
+            and packet["envelope"]["packet_kind"] == "pm_disposition"
+            and packet["status"] == "open"
+        ]
+        self.assertEqual(len(reissues), 1)
+        reissue_body = json.loads(reissues[0]["body"])
+        self.assertEqual(reissue_body["schema_version"], "black_box_flowpilot.pm_disposition_reissue_packet.v1")
+        self.assertEqual(reissue_body["node_acceptance_item_ids"], ["acc-node-001"])
+        self.assertEqual(
+            [
+                row["acceptance_item_id"]
+                for row in reissue_body["minimal_valid_shape"]["acceptance_item_disposition"]
+            ],
+            ["acc-node-001"],
+        )
+
+    def test_node_acceptance_plan_mechanical_reissue_preserves_acceptance_items(self) -> None:
+        ledger = runtime.new_ledger("Goal", "Acceptance")
+        authorize_background_collaboration(ledger)
+        runtime.create_route(ledger, "Route", ["Node one"])
+        route_version = ledger["active_route_version"]
+        ledger["route_nodes"]["node-1"] = {
+            "node_id": "node-1",
+            "route_version": route_version,
+            "title": "Node One",
+            "status": "pending",
+            "responsibility": "worker",
+            "modeled_target": "development_process",
+            "repair_generation": 0,
+            "acceptance_criteria": ["criterion"],
+            "child_node_ids": [],
+            "acceptance_item_ids": ["acc-node-001"],
+        }
+        packet_id = runtime.ensure_node_acceptance_plan_packet(ledger, "node-1")
+        lease_id = runtime.lease_agent(ledger, "pm", agent_id="pm-node-bad-plan", packet_id=packet_id)
+        runtime.assign_packet(ledger, packet_id, lease_id)
+        runtime.ack_lease(ledger, lease_id, packet_id)
+
+        result_id = runtime.submit_result(
+            ledger,
+            lease_id,
+            packet_id,
+            json.dumps({"decision": "pass"}),
+        )
+
+        self.assertEqual(ledger["results"][result_id]["status"], "mechanical_contract_blocked")
+        reissues = [
+            packet for packet in ledger["packets"].values()
+            if packet["packet_id"] != packet_id
+            and packet["envelope"]["route_scope"] == "node_acceptance_plan"
+            and packet["status"] == "open"
+        ]
+        self.assertEqual(len(reissues), 1)
+        reissue_body = json.loads(reissues[0]["body"])
+        self.assertEqual(reissue_body["schema_version"], "black_box_flowpilot.node_acceptance_plan_reissue_packet.v1")
+        self.assertEqual(reissue_body["acceptance_item_ids"], ["acc-node-001"])
 
     def test_node_acceptance_redesign_route_rejects_flat_peer_leaf_split(self) -> None:
         ledger = runtime.new_ledger("Goal", "Acceptance")
@@ -1331,11 +2263,8 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
                 "purpose": "Provide current starting context.",
                 "acceptance_criteria": ["criterion"],
                 "relevant_references": ["reference"],
-                "evidence_targets": ["evidence"],
-                "inspection_targets": ["inspection"],
                 "known_risks": ["risk"],
-                "flowguard_targets": ["development_process"],
-                "reviewer_starting_points": ["review start"],
+                "acceptance_item_projection": [],
             }
         )
 
@@ -1460,8 +2389,14 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
             ledger,
             pm_lease,
             pm_packet,
-            json.dumps({"decision": "repair_current_scope", "reason": "Repair current packet."}),
+            pm_repair_decision_body(
+                ledger,
+                pm_packet,
+                decision="repair_current_scope",
+                reason="Repair current packet.",
+            ),
         )
+        self._complete_pm_continue_repair_gate(ledger, blocker_id)
         repair_packets = [
             packet
             for packet in ledger["packets"].values()
@@ -1548,11 +2483,12 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
             ledger,
             pm_lease,
             pm_packet,
-            json.dumps(
-                {
-                    "decision": "redesign_route",
-                    "reason": "Current route cannot complete cleanly.",
-                    "route_plan": {
+            pm_repair_decision_body(
+                ledger,
+                pm_packet,
+                decision="redesign_route",
+                reason="Current route cannot complete cleanly.",
+                route_plan={
                         "schema_version": runtime.ROUTE_PLAN_SCHEMA_VERSION,
                         "decision": "pass",
                         "nodes": [
@@ -1565,7 +2501,6 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
                             }
                         ],
                     },
-                }
             ),
         )
 
@@ -1635,7 +2570,7 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         self.assertEqual(fresh["envelope"]["route_scope"], "pm_repair_decision")
         self.assertEqual(fresh["envelope"]["subject_id"], pm_repair_packet)
 
-    def test_flowguard_fallback_evidence_is_mechanically_reissued(self) -> None:
+    def _flowguard_reissue_after_forbidden_fallback(self) -> tuple[dict[str, object], str, str, str]:
         ledger, packet_id, worker = runtime_runner._base_ledger()
         runtime.ack_lease(ledger, worker, packet_id)
         runtime.submit_result(ledger, worker, packet_id, role_result_body("Worker submitted current runtime evidence."))
@@ -1675,6 +2610,140 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
             and packet["status"] == "open"
         ]
         self.assertEqual(len(reissues), 1)
+        return ledger, packet_id, flowguard_packet["packet_id"], reissues[0]["packet_id"]
+
+    def test_flowguard_fallback_evidence_is_mechanically_reissued(self) -> None:
+        ledger, _packet_id, flowguard_packet_id, reissue_packet_id = self._flowguard_reissue_after_forbidden_fallback()
+        reissue_packet = ledger["packets"][reissue_packet_id]
+        reissue_body = json.loads(reissue_packet["body"])
+        original_body = json.loads(ledger["packets"][flowguard_packet_id]["body"])
+        self.assertIn("evidence_output_policy", reissue_body)
+        self.assertTrue(reissue_body["evidence_output_policy"]["required_for_formal_run"])
+        self.assertNotEqual(
+            reissue_body["evidence_output_policy"]["run_local_evidence_root"],
+            original_body["evidence_output_policy"]["run_local_evidence_root"],
+        )
+        self.assertIn(reissue_packet["packet_id"], reissue_body["evidence_output_policy"]["run_local_evidence_root"])
+
+    def test_flowguard_reissue_inherits_required_authorized_result_reads(self) -> None:
+        ledger, _packet_id, flowguard_packet_id, reissue_packet_id = self._flowguard_reissue_after_forbidden_fallback()
+        source_packet = ledger["packets"][flowguard_packet_id]
+        reissue_packet = ledger["packets"][reissue_packet_id]
+        source_reads = source_packet["envelope"]["authorized_result_reads"]
+        reissue_reads = reissue_packet["envelope"]["authorized_result_reads"]
+        source_required = [
+            row["result_id"]
+            for row in source_reads
+            if row["required_before_submit"] is True
+        ]
+        reissue_required = [
+            row["result_id"]
+            for row in reissue_reads
+            if row["required_before_submit"] is True
+        ]
+        reissue_body = json.loads(reissue_packet["body"])
+        manifest = reissue_packet["envelope"]["current_handoff_contract"]["input_material_manifest"]
+
+        self.assertEqual(reissue_reads, source_reads)
+        self.assertEqual(reissue_body["authorized_result_reads"], source_reads)
+        self.assertEqual(manifest["required_authorized_reads_before_submit"], source_required)
+        self.assertEqual(
+            reissue_body["current_handoff_contract"]["input_material_manifest"]["required_authorized_reads_before_submit"],
+            source_required,
+        )
+        self.assertEqual(reissue_required, source_required)
+        self.assertGreater(manifest["required_authorized_read_count"], 0)
+
+    def test_reissued_flowguard_result_blocks_without_inherited_body_open(self) -> None:
+        ledger, _packet_id, _flowguard_packet_id, reissue_packet_id = self._flowguard_reissue_after_forbidden_fallback()
+        required_result_id = ledger["packets"][reissue_packet_id]["envelope"]["authorized_result_reads"][0]["result_id"]
+        flowguard_lease = runtime.lease_agent(
+            ledger,
+            "flowguard_operator",
+            packet_id=reissue_packet_id,
+        )
+        runtime.assign_packet(ledger, reissue_packet_id, flowguard_lease)
+        runtime.ack_lease(ledger, flowguard_lease, reissue_packet_id)
+
+        result_id = runtime.submit_result(
+            ledger,
+            flowguard_lease,
+            reissue_packet_id,
+            flowguard_result_body("FlowGuard tried to answer the reissued packet without opening inherited material."),
+        )
+        result = ledger["results"][result_id]
+
+        self.assertEqual(result["status"], "blocked")
+        self.assertFalse(result["accepted"])
+        self.assertIn(f"required_result_body_not_opened:{required_result_id}", result["mechanical_blockers"])
+
+    def test_review_packet_is_not_issued_with_empty_required_flowguard_manifest(self) -> None:
+        ledger, packet_id, worker = runtime_runner._base_ledger()
+        runtime.ack_lease(ledger, worker, packet_id)
+        result_id = runtime.submit_result(
+            ledger,
+            worker,
+            packet_id,
+            role_result_body("Worker submitted current runtime evidence before FlowGuard completed."),
+        )
+
+        review_packet = runtime._ensure_review_packet_for_task_result(ledger, packet_id, force_new=True)
+
+        self.assertEqual(review_packet, "")
+        self.assertFalse(
+            [
+                packet
+                for packet in ledger["packets"].values()
+                if packet["envelope"]["packet_kind"] == "review"
+            ]
+        )
+        blockers = list(ledger["active_blockers"].values())
+        self.assertEqual(len(blockers), 1)
+        blocker = blockers[0]
+        self.assertEqual(blocker["blocker_class"], "missing_matching_flowguard_report")
+        self.assertEqual(blocker["gate_kind"], "flowguard_review_handoff")
+        self.assertEqual(blocker["required_recheck_role"], "flowguard_operator")
+        self.assertEqual(blocker["target_result_id"], result_id)
+        self.assertIn("flowguard_evidence_manifest.entries[].flowguard_result_id", blocker["missing_required_fields"])
+        self.assertIn("flowguard_missing_matching_report", blocker["root_cause_loop_key"])
+        self.assertTrue(
+            [
+                packet
+                for packet in ledger["packets"].values()
+                if packet["envelope"]["packet_kind"] == "pm_repair_decision"
+            ]
+        )
+
+    def test_break_glass_counts_same_flowguard_root_cause_across_surface_gates(self) -> None:
+        ledger = runtime.new_ledger("Goal", "Contract")
+        runtime.create_route(ledger, "Route", ["Do work"])
+        root_cause_key = runtime._flowguard_missing_evidence_root_cause_key(
+            subject_packet_id="packet-subject",
+            target_result_id="result-subject",
+            repair_blocker_id="",
+        )
+        for index in range(7):
+            blocker_id = f"blocker-root-{index}"
+            ledger["active_blockers"][blocker_id] = {
+                "blocker_id": blocker_id,
+                "status": "active",
+                "gate_kind": "flowguard_review_handoff" if index % 2 == 0 else "system_validation",
+                "blocker_class": "missing_matching_flowguard_report" if index % 2 == 0 else "system_validation_failure",
+                "required_recheck_role": "flowguard_operator" if index % 2 == 0 else "system",
+                "repair_target_packet_id": "packet-subject",
+                "target_result_id": "result-subject",
+                "root_cause_loop_key": root_cause_key,
+            }
+
+        review = runtime._repair_loop_break_glass_review(
+            ledger,
+            ledger["active_blockers"]["blocker-root-6"],
+        )
+
+        self.assertTrue(review["threshold_exceeded"])
+        self.assertEqual(review["attempt_count"], 7)
+        self.assertEqual(review["family_key"], root_cause_key)
+        self.assertEqual(review["root_cause_loop_key"], root_cause_key)
 
     def test_result_submitted_repair_target_is_superseded_after_reissue(self) -> None:
         ledger, packet_id, worker = runtime_runner._base_ledger()
@@ -2478,7 +3547,7 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         self.assertIn("passed", result["missing_required_fields"])
         self.assertIn("decision", result["forbidden_fields_seen"])
 
-    def test_flowguard_packet_rejects_empty_required_report_arrays(self) -> None:
+    def test_flowguard_packet_rejects_deleted_commands_run_field(self) -> None:
         ledger, packet_id, worker = runtime_runner._base_ledger()
         runtime.ack_lease(ledger, worker, packet_id)
         runtime.submit_result(ledger, worker, packet_id, role_result_body("Worker submitted current runtime evidence."))
@@ -2497,13 +3566,43 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
             ledger,
             flowguard_lease,
             flowguard_packet,
-            flowguard_result_body("FlowGuard report with empty commands.", commands_run=[]),
+            flowguard_result_body("FlowGuard report uses deleted commands_run field.", commands_run=[]),
         )
         result = ledger["results"][result_id]
 
         self.assertEqual(result["status"], "mechanical_contract_blocked")
         self.assertEqual(result["contract_family_id"], "flowguard_check.post_result")
-        self.assertIn("commands_run", result["missing_required_fields"])
+        self.assertIn("commands_run", result["forbidden_fields_seen"])
+
+    def test_flowguard_packet_rejects_missing_evidence_output_policy(self) -> None:
+        ledger, packet_id, worker = runtime_runner._base_ledger()
+        runtime.ack_lease(ledger, worker, packet_id)
+        runtime.submit_result(ledger, worker, packet_id, role_result_body("Worker submitted current runtime evidence."))
+        flowguard_packet = runtime_runner._open_packet_by_kind(ledger, "flowguard_check")
+        packet_body = json.loads(ledger["packets"][flowguard_packet]["body"])
+        packet_body.pop("evidence_output_policy")
+        ledger["packets"][flowguard_packet]["body"] = json.dumps(packet_body)
+        flowguard_lease = runtime.lease_agent(
+            ledger,
+            "flowguard_operator",
+            agent_id="fg-missing-policy",
+            packet_id=flowguard_packet,
+        )
+        runtime.assign_packet(ledger, flowguard_packet, flowguard_lease)
+        runtime.ack_lease(ledger, flowguard_lease, flowguard_packet)
+        open_required_result_reads(ledger, flowguard_packet, flowguard_lease)
+
+        result_id = runtime.submit_result(
+            ledger,
+            flowguard_lease,
+            flowguard_packet,
+            flowguard_result_body("FlowGuard body cannot replace packet-owned evidence policy."),
+        )
+        result = ledger["results"][result_id]
+
+        self.assertEqual(result["status"], "mechanical_contract_blocked")
+        self.assertEqual(result["contract_family_id"], "flowguard_check.post_result")
+        self.assertIn("evidence_output_policy", result["missing_required_fields"])
 
     def test_flowguard_packet_rejects_failed_contract_self_check_without_reviewer(self) -> None:
         ledger, packet_id, worker = runtime_runner._base_ledger()
@@ -2521,7 +3620,6 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         open_required_result_reads(ledger, flowguard_packet, flowguard_lease)
         body = json.loads(flowguard_result_body("FlowGuard report contradicts its self-check."))
         body["contract_self_check"]["all_required_fields_present"] = False
-        body["evidence_consistency"]["self_check_passed"] = False
 
         result_id = runtime.submit_result(ledger, flowguard_lease, flowguard_packet, json.dumps(body))
         result = ledger["results"][result_id]
@@ -2544,7 +3642,7 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
             ]
         )
 
-    def test_flowguard_packet_rejects_blocked_child_evidence_without_reviewer(self) -> None:
+    def test_flowguard_packet_rejects_deleted_evidence_consistency_field_without_reviewer(self) -> None:
         ledger, packet_id, worker = runtime_runner._base_ledger()
         runtime.ack_lease(ledger, worker, packet_id)
         runtime.submit_result(ledger, worker, packet_id, role_result_body("Worker submitted current runtime evidence."))
@@ -2576,8 +3674,7 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
 
         self.assertEqual(result["status"], "mechanical_contract_blocked")
         self.assertEqual(result["contract_family_id"], "flowguard_check.post_result")
-        self.assertIn("evidence_consistency.child_reports_all_passed", result["missing_required_fields"])
-        self.assertIn("evidence_consistency.hard_evidence_decision", result["missing_required_fields"])
+        self.assertIn("evidence_consistency", result["forbidden_fields_seen"])
         self.assertFalse(
             [
                 packet
@@ -2593,7 +3690,235 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
             ]
         )
 
-    def test_flowguard_packet_block_with_consistent_evidence_does_not_issue_reviewer(self) -> None:
+    def test_flowguard_parent_repair_requires_subject_artifact_consumption(self) -> None:
+        ledger, packet_id, worker = runtime_runner._base_ledger()
+        runtime.ack_lease(ledger, worker, packet_id)
+        runtime.submit_result(ledger, worker, packet_id, role_result_body("Worker submitted current runtime evidence."))
+        flowguard_packet = runtime_runner._open_packet_by_kind(ledger, "flowguard_check")
+        packet = ledger["packets"][flowguard_packet]
+        envelope = packet["envelope"]
+        envelope["result_contract_profile_ids"] = ["flowguard.subject_artifacts_consumed_required"]
+        envelope["result_contract_profile_bindings"] = {
+            "flowguard.subject_artifacts_consumed_required": {
+                "artifact_ids": ["parent_repair_scope_contract:parent-repair-contract-001"],
+            }
+        }
+        handoff_contract = runtime._build_current_handoff_contract(
+            ledger,
+            envelope,
+            runtime._packet_authorized_result_reads(packet),
+        )
+        envelope["current_handoff_contract"] = handoff_contract
+        packet["body"] = runtime._packet_body_with_current_handoff_contract(
+            str(packet.get("body", "")),
+            handoff_contract,
+            replace_existing=True,
+        )
+        envelope["body_hash"] = runtime.hash_text(packet["body"])
+        flowguard_lease = runtime.lease_agent(
+            ledger,
+            "flowguard_operator",
+            agent_id="fg-format-only-parent-repair",
+            packet_id=flowguard_packet,
+        )
+        runtime.assign_packet(ledger, flowguard_packet, flowguard_lease)
+        runtime.ack_lease(ledger, flowguard_lease, flowguard_packet)
+        open_required_result_reads(ledger, flowguard_packet, flowguard_lease)
+
+        result_id = runtime.submit_result(
+            ledger,
+            flowguard_lease,
+            flowguard_packet,
+            flowguard_result_body("FlowGuard report only checked shape."),
+        )
+        result = ledger["results"][result_id]
+
+        self.assertEqual(result["status"], "mechanical_contract_blocked")
+        self.assertEqual(result["contract_family_id"], "flowguard_check.post_result")
+        self.assertIn("subject_artifacts_consumed", result["missing_required_fields"])
+
+    def test_flowguard_packet_rejects_artifact_missing_code_contract_without_reviewer(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_root:
+            ledger, packet_id, worker = runtime_runner._base_ledger()
+            ledger["run_root"] = temp_root
+            runtime.ack_lease(ledger, worker, packet_id)
+            runtime.submit_result(ledger, worker, packet_id, role_result_body("Worker submitted current runtime evidence."))
+            flowguard_packet = runtime_runner._open_packet_by_kind(ledger, "flowguard_check")
+            write_flowguard_evidence_artifact(ledger, flowguard_packet, decision="missing_code_contract")
+            flowguard_lease = runtime.lease_agent(
+                ledger,
+                "flowguard_operator",
+                agent_id="fg-artifact-blocked",
+                packet_id=flowguard_packet,
+            )
+            runtime.assign_packet(ledger, flowguard_packet, flowguard_lease)
+            runtime.ack_lease(ledger, flowguard_lease, flowguard_packet)
+            open_required_result_reads(ledger, flowguard_packet, flowguard_lease)
+
+            result_id = runtime.submit_result(
+                ledger,
+                flowguard_lease,
+                flowguard_packet,
+                flowguard_result_body("FlowGuard body claims pass while artifact blocks."),
+            )
+            result = ledger["results"][result_id]
+
+            self.assertEqual(result["status"], "mechanical_contract_blocked")
+            self.assertEqual(result["contract_family_id"], "flowguard_check.post_result")
+            self.assertIn(
+                "flowguard_evidence.json.model_test_alignment_report.decision",
+                result["missing_required_fields"],
+            )
+            self.assertFalse(
+                [
+                    order
+                    for order in ledger.get("flowguard_work_orders", {}).values()
+                    if order.get("decision") == "pass"
+                ]
+            )
+            self.assertFalse(
+                [
+                    packet
+                    for packet in ledger["packets"].values()
+                    if packet["envelope"]["packet_kind"] == "review"
+                ]
+            )
+
+    def test_repair_task_flowguard_packet_inherits_blocker_identity(self) -> None:
+        ledger, packet_id, worker = runtime_runner._base_ledger()
+        blocker_id = "blocker-auto-flowguard"
+        ledger["active_blockers"][blocker_id] = {
+            "blocker_id": blocker_id,
+            "status": "active",
+            "reason": "Reviewer requires subject-bound FlowGuard evidence.",
+            "blocker_class": "local_artifact",
+            "gate_kind": "review",
+            "required_recheck_role": "reviewer",
+        }
+        runtime._bind_packet_repair_blocker_identity(ledger, packet_id, blocker_id)
+
+        runtime.ack_lease(ledger, worker, packet_id)
+        runtime.submit_result(ledger, worker, packet_id, role_result_body("Worker submitted repaired evidence."))
+
+        flowguard_packet = runtime_runner._open_packet_by_kind(ledger, "flowguard_check")
+        flowguard = ledger["packets"][flowguard_packet]
+        flowguard_body = json.loads(flowguard["body"])
+        self.assertEqual(flowguard["repair_blocker_id"], blocker_id)
+        self.assertEqual(flowguard["envelope"]["repair_blocker_id"], blocker_id)
+        self.assertEqual(flowguard_body["recheck_for_blocker_id"], blocker_id)
+        self.assertEqual(flowguard_body["semantic_recheck_contract"]["blocker_id"], blocker_id)
+        self.assertTrue(flowguard_body["semantic_recheck_contract"]["subject_bound_required"])
+
+    def test_explicit_flowguard_action_inherits_repair_blocker_identity(self) -> None:
+        ledger, packet_id, worker = runtime_runner._base_ledger()
+        blocker_id = "blocker-explicit-flowguard"
+        runtime._bind_packet_repair_blocker_identity(ledger, packet_id, blocker_id)
+        runtime.ack_lease(ledger, worker, packet_id)
+        runtime.submit_result(ledger, worker, packet_id, role_result_body("Worker submitted repaired evidence."))
+
+        action_result = runtime._apply_router_internal_action(
+            ledger,
+            runtime.RuntimeAction(
+                "issue_flowguard_packet",
+                "explicit recheck",
+                packet_id,
+                "flowguard_operator",
+            ),
+        )
+
+        explicit_packet_id = action_result["packet_id"]
+        explicit_packet = ledger["packets"][explicit_packet_id]
+        explicit_body = json.loads(explicit_packet["body"])
+        self.assertEqual(explicit_packet["repair_blocker_id"], blocker_id)
+        self.assertEqual(explicit_packet["envelope"]["repair_blocker_id"], blocker_id)
+        self.assertEqual(explicit_body["recheck_for_blocker_id"], blocker_id)
+        self.assertEqual(explicit_body["semantic_recheck_contract"]["blocker_id"], blocker_id)
+
+    def test_semantic_recheck_rejects_shape_only_flowguard_pass(self) -> None:
+        ledger, packet_id, worker = runtime_runner._base_ledger()
+        blocker_id = "blocker-shape-only"
+        runtime._bind_packet_repair_blocker_identity(ledger, packet_id, blocker_id)
+        runtime.ack_lease(ledger, worker, packet_id)
+        runtime.submit_result(ledger, worker, packet_id, role_result_body("Worker submitted repaired evidence."))
+        flowguard_packet = runtime_runner._open_packet_by_kind(ledger, "flowguard_check")
+        flowguard_lease = runtime.lease_agent(
+            ledger,
+            "flowguard_operator",
+            agent_id="fg-shape-only",
+            packet_id=flowguard_packet,
+        )
+        runtime.assign_packet(ledger, flowguard_packet, flowguard_lease)
+        runtime.ack_lease(ledger, flowguard_lease, flowguard_packet)
+        open_required_result_reads(ledger, flowguard_packet, flowguard_lease)
+        body = json.loads(flowguard_result_body("FlowGuard checked only packet shape."))
+        body["semantic_recheck"] = {
+            "blocker_id": blocker_id,
+            "subject_result_consumed": True,
+            "subject_bound_semantic_coverage": True,
+            "coverage_boundary": "current_contract_only",
+            "consumed_authorized_result_read_ids": [
+                str(row.get("result_id") or "")
+                for row in ledger["packets"][flowguard_packet]["envelope"].get("authorized_result_reads", [])
+                if row.get("required_before_submit") is True and str(row.get("result_id") or "")
+            ],
+            "consumed_repair_obligation_ids": [],
+        }
+
+        result_id = runtime.submit_result(ledger, flowguard_lease, flowguard_packet, json.dumps(body))
+        result = ledger["results"][result_id]
+
+        self.assertEqual(result["status"], "mechanical_contract_blocked")
+        self.assertIn("semantic_recheck.coverage_boundary", result["missing_required_fields"])
+        self.assertFalse(
+            [
+                order
+                for order in ledger.get("flowguard_work_orders", {}).values()
+                if order.get("decision") == "pass"
+            ]
+        )
+
+    def test_semantic_recheck_subject_bound_flowguard_pass_reaches_reviewer(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_root:
+            ledger, packet_id, worker = runtime_runner._base_ledger()
+            ledger["run_root"] = temp_root
+            blocker_id = "blocker-subject-bound"
+            runtime._bind_packet_repair_blocker_identity(ledger, packet_id, blocker_id)
+            runtime.ack_lease(ledger, worker, packet_id)
+            runtime.submit_result(ledger, worker, packet_id, role_result_body("Worker submitted repaired evidence."))
+            flowguard_packet = runtime_runner._open_packet_by_kind(ledger, "flowguard_check")
+            write_flowguard_evidence_artifact(ledger, flowguard_packet, decision="pass")
+            flowguard_lease = runtime.lease_agent(
+                ledger,
+                "flowguard_operator",
+                agent_id="fg-subject-bound",
+                packet_id=flowguard_packet,
+            )
+            runtime.assign_packet(ledger, flowguard_packet, flowguard_lease)
+            runtime.ack_lease(ledger, flowguard_lease, flowguard_packet)
+            open_required_result_reads(ledger, flowguard_packet, flowguard_lease)
+            result_id = runtime.submit_result(
+                ledger,
+                flowguard_lease,
+                flowguard_packet,
+                flowguard_result_body(
+                    "FlowGuard consumed subject result and passed.",
+                    **semantic_recheck_fields_from_packet(ledger, flowguard_packet, blocker_id),
+                ),
+            )
+
+            review_packets = [
+                packet
+                for packet in ledger["packets"].values()
+                if packet["envelope"]["packet_kind"] == "review"
+            ]
+            self.assertEqual(ledger["results"][result_id]["status"], "accepted")
+            self.assertEqual(len(review_packets), 1)
+            flowguard_orders = list(ledger.get("flowguard_work_orders", {}).values())
+            self.assertTrue(flowguard_orders)
+            self.assertEqual(flowguard_orders[-1]["decision"], "pass")
+            self.assertEqual(flowguard_orders[-1]["hard_evidence_decision"], "pass")
+
+    def test_flowguard_packet_block_with_compact_blocker_does_not_issue_reviewer(self) -> None:
         ledger, packet_id, worker = runtime_runner._base_ledger()
         runtime.ack_lease(ledger, worker, packet_id)
         runtime.submit_result(ledger, worker, packet_id, role_result_body("Worker submitted current runtime evidence."))
@@ -2607,15 +3932,17 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         runtime.assign_packet(ledger, flowguard_packet, flowguard_lease)
         runtime.ack_lease(ledger, flowguard_lease, flowguard_packet)
         open_required_result_reads(ledger, flowguard_packet, flowguard_lease)
+        write_flowguard_evidence_artifact(ledger, flowguard_packet, decision="blocked")
         body = json.loads(flowguard_result_body("FlowGuard blocks on current hard evidence."))
         body["passed"] = False
-        body["blocking"] = True
-        body["evidence_consistency"] = {
-            "self_check_passed": True,
-            "child_reports_all_passed": False,
-            "blocking_child_reports": [{"report_path": "current-child-report.json", "decision": "blocked"}],
-            "hard_evidence_decision": "blocked",
-        }
+        body["blockers"] = [
+            {
+                "blocker_id": "flowguard-block-current",
+                "blocker_class": "flowguard_failure",
+                "next_action": "pm_flowguard_acceptance",
+                "recommended_resolution": "PM must absorb the current FlowGuard blocker.",
+            }
+        ]
 
         result_id = runtime.submit_result(ledger, flowguard_lease, flowguard_packet, json.dumps(body))
         result = ledger["results"][result_id]
@@ -2644,6 +3971,7 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         runtime.assign_packet(ledger, flowguard_packet, flowguard_lease)
         runtime.ack_lease(ledger, flowguard_lease, flowguard_packet)
         open_required_result_reads(ledger, flowguard_packet, flowguard_lease)
+        write_flowguard_evidence_artifact(ledger, flowguard_packet)
         runtime.submit_result(
             ledger,
             flowguard_lease,
@@ -2667,10 +3995,10 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         self.assertEqual(result["status"], "mechanical_contract_blocked")
         self.assertEqual(result["contract_family_id"], "review.any_current_subject")
         self.assertIn("passed", result["missing_required_fields"])
-        self.assertIn("independent_challenge", result["missing_required_fields"])
+        self.assertIn("contract_self_check", result["missing_required_fields"])
         self.assertIn("decision", result["forbidden_fields_seen"])
 
-    def test_review_packet_rejects_empty_independent_challenge_actions(self) -> None:
+    def test_review_packet_rejects_deleted_independent_challenge_field(self) -> None:
         ledger, packet_id, worker = runtime_runner._base_ledger()
         runtime.ack_lease(ledger, worker, packet_id)
         runtime.submit_result(ledger, worker, packet_id, role_result_body("Worker submitted current runtime evidence."))
@@ -2684,6 +4012,7 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         runtime.assign_packet(ledger, flowguard_packet, flowguard_lease)
         runtime.ack_lease(ledger, flowguard_lease, flowguard_packet)
         open_required_result_reads(ledger, flowguard_packet, flowguard_lease)
+        write_flowguard_evidence_artifact(ledger, flowguard_packet)
         runtime.submit_result(
             ledger,
             flowguard_lease,
@@ -2695,15 +4024,18 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         runtime.assign_packet(ledger, review_packet, review_lease)
         runtime.ack_lease(ledger, review_lease, review_packet)
         open_required_result_reads(ledger, review_packet, review_lease)
-        body = json.loads(review_result_body("Reviewer left challenge actions empty."))
-        body["independent_challenge"]["challenge_actions"] = []
+        body = json.loads(review_result_body("Reviewer used deleted challenge object."))
+        body["independent_challenge"] = {
+            "challenge_actions": [],
+            "blocking_findings": [],
+        }
 
         result_id = runtime.submit_result(ledger, review_lease, review_packet, json.dumps(body))
         result = ledger["results"][result_id]
 
         self.assertEqual(result["status"], "mechanical_contract_blocked")
         self.assertEqual(result["contract_family_id"], "review.any_current_subject")
-        self.assertIn("independent_challenge.challenge_actions", result["missing_required_fields"])
+        self.assertIn("independent_challenge", result["forbidden_fields_seen"])
 
     def test_pm_repair_packet_includes_recent_role_report_summary(self) -> None:
         ledger, packet_id, worker = runtime_runner._base_ledger()
@@ -2763,20 +4095,276 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
             ledger,
             pm_lease,
             pm_packet,
-            json.dumps({"decision": "repair_current_scope", "reason": "repair the stale lifecycle path"}),
+            pm_repair_decision_body(
+                ledger,
+                pm_packet,
+                decision="repair_current_scope",
+                reason="repair the stale lifecycle path",
+            ),
         )
 
         self.assertEqual(ledger["results"][accepted_decision_id]["status"], "accepted")
+        self._complete_pm_continue_repair_gate(ledger, blocker_id)
         fresh_packets = [
             row
             for row in ledger["packets"].values()
             if row.get("repair_blocker_id") == blocker_id
             and row["packet_id"] != pm_packet
             and row["status"] == "open"
+            and row.get("envelope", {}).get("packet_kind") == "task"
         ]
         self.assertEqual(len(fresh_packets), 1)
         fresh_body = json.loads(fresh_packets[0]["body"])
         self.assertEqual(fresh_body["authorized_result_reads"][0]["result_id"], blocking_result_id)
+
+    def test_pm_repair_packet_projects_blocker_body_into_repair_obligations(self) -> None:
+        ledger, packet_id, worker = runtime_runner._base_ledger()
+        runtime.ack_lease(ledger, worker, packet_id)
+        blocking_result_id = runtime.submit_result(
+            ledger,
+            worker,
+            packet_id,
+            role_result_body(
+                "Worker cannot proceed because direct evidence and FlowGuard replay are missing.",
+                decision="block",
+                blocking=True,
+                recommended_resolution="Add direct evidence, rerun FlowGuard, and then validate the current result.",
+            ),
+        )
+
+        blocker_id = next(iter(ledger["active_blockers"]))
+        pm_packet = ledger["active_blockers"][blocker_id]["pm_repair_packet_id"]
+        pm_body = json.loads(ledger["packets"][pm_packet]["body"])
+        obligation_kinds = {row["evidence_kind"] for row in pm_body["repair_evidence_obligations"]}
+        self.assertIn("direct_deliverable_evidence", obligation_kinds)
+        self.assertIn("formal_flowguard_evidence", obligation_kinds)
+        self.assertIn("fresh_current_evidence", obligation_kinds)
+        self.assertEqual(pm_body["authorized_result_reads"][0]["result_id"], blocking_result_id)
+
+        pm_lease = runtime.lease_agent(ledger, "pm", agent_id="pm-obligations", packet_id=pm_packet)
+        runtime.assign_packet(ledger, pm_packet, pm_lease)
+        runtime.ack_lease(ledger, pm_lease, pm_packet)
+        delivered = runtime.open_authorized_input_materials_for_role(ledger, pm_packet, pm_lease)
+        self.assertIn("direct evidence and FlowGuard replay are missing", delivered[0]["sealed_result_body"])
+
+    def test_pm_repair_decision_reason_only_is_rejected_when_obligations_exist(self) -> None:
+        ledger, packet_id, worker = runtime_runner._base_ledger()
+        runtime.ack_lease(ledger, worker, packet_id)
+        runtime.submit_result(
+            ledger,
+            worker,
+            packet_id,
+            role_result_body(
+                "Worker blocked on missing direct evidence.",
+                decision="block",
+                blocking=True,
+                recommended_resolution="Add direct evidence.",
+            ),
+        )
+        blocker_id = next(iter(ledger["active_blockers"]))
+        pm_packet = ledger["active_blockers"][blocker_id]["pm_repair_packet_id"]
+        pm_lease = runtime.lease_agent(ledger, "pm", agent_id="pm-reason-only", packet_id=pm_packet)
+        runtime.assign_packet(ledger, pm_packet, pm_lease)
+        runtime.ack_lease(ledger, pm_lease, pm_packet)
+        open_required_result_reads(ledger, pm_packet, pm_lease)
+
+        result_id = runtime.submit_result(
+            ledger,
+            pm_lease,
+            pm_packet,
+            json.dumps(
+                {
+                    "decision": "repair_current_scope",
+                    "reason": "I will repair it.",
+                    "target_blocker_id": blocker_id,
+                    "next_action": "repair_current_scope",
+                }
+            ),
+        )
+
+        result = ledger["results"][result_id]
+        self.assertEqual(result["status"], "mechanical_contract_blocked")
+        self.assertIn("repair_obligation_disposition", result["missing_required_fields"])
+        self.assertFalse(ledger["pm_repair_decisions"])
+
+    def test_pm_repair_obligation_rejects_stale_or_registry_only_disposition(self) -> None:
+        for mutation in ("stale_evidence_ref", "acceptance_registry_only"):
+            with self.subTest(mutation=mutation):
+                ledger, packet_id, worker = runtime_runner._base_ledger()
+                runtime.ack_lease(ledger, worker, packet_id)
+                blocking_result_id = runtime.submit_result(
+                    ledger,
+                    worker,
+                    packet_id,
+                    role_result_body(
+                        "Worker blocked on missing direct evidence.",
+                        decision="block",
+                        blocking=True,
+                        recommended_resolution="Add direct evidence.",
+                    ),
+                )
+                blocker_id = next(iter(ledger["active_blockers"]))
+                pm_packet = ledger["active_blockers"][blocker_id]["pm_repair_packet_id"]
+                body = json.loads(pm_repair_decision_body(ledger, pm_packet, decision="repair_current_scope"))
+                if mutation == "stale_evidence_ref":
+                    body["repair_obligation_disposition"][0]["evidence_refs"] = [blocking_result_id]
+                else:
+                    body["repair_obligation_disposition"][0]["disposition"] = "acceptance_registry_only"
+                pm_lease = runtime.lease_agent(ledger, "pm", agent_id=f"pm-{mutation}", packet_id=pm_packet)
+                runtime.assign_packet(ledger, pm_packet, pm_lease)
+                runtime.ack_lease(ledger, pm_lease, pm_packet)
+                open_required_result_reads(ledger, pm_packet, pm_lease)
+
+                result_id = runtime.submit_result(ledger, pm_lease, pm_packet, json.dumps(body))
+
+                result = ledger["results"][result_id]
+                self.assertEqual(result["status"], "mechanical_contract_blocked")
+                self.assertIn("repair_obligation_disposition", result["missing_required_fields"])
+                self.assertFalse(ledger["pm_repair_decisions"])
+
+    def test_repair_packet_and_flowguard_recheck_must_consume_repair_obligations(self) -> None:
+        ledger, packet_id, worker = runtime_runner._base_ledger()
+        runtime.ack_lease(ledger, worker, packet_id)
+        runtime.submit_result(
+            ledger,
+            worker,
+            packet_id,
+            role_result_body(
+                "Worker blocked on missing direct evidence.",
+                decision="block",
+                blocking=True,
+                recommended_resolution="Add direct evidence.",
+            ),
+        )
+        blocker_id = next(iter(ledger["active_blockers"]))
+        pm_packet = ledger["active_blockers"][blocker_id]["pm_repair_packet_id"]
+        pm_lease = runtime.lease_agent(ledger, "pm", agent_id="pm-repair-context", packet_id=pm_packet)
+        runtime.assign_packet(ledger, pm_packet, pm_lease)
+        runtime.ack_lease(ledger, pm_lease, pm_packet)
+        open_required_result_reads(ledger, pm_packet, pm_lease)
+        runtime.submit_result(
+            ledger,
+            pm_lease,
+            pm_packet,
+            pm_repair_decision_body(ledger, pm_packet, decision="repair_current_scope"),
+        )
+        self._complete_pm_continue_repair_gate(ledger, blocker_id)
+        repair_packet = ledger["active_blockers"][blocker_id]["repair_packet_id"]
+        repair_body = json.loads(ledger["packets"][repair_packet]["body"])
+        self.assertTrue(repair_body["repair_obligation_context"]["repair_evidence_obligations"])
+        self.assertEqual(repair_body["repair_evidence_obligations"][0]["source_blocker_id"], blocker_id)
+
+        repair_lease = runtime.lease_agent(ledger, "worker", packet_id=repair_packet)
+        runtime.assign_packet(ledger, repair_packet, repair_lease)
+        runtime.ack_lease(ledger, repair_lease, repair_packet)
+        open_required_result_reads(ledger, repair_packet, repair_lease)
+        runtime.submit_result(ledger, repair_lease, repair_packet, role_result_body("Worker submitted repaired evidence."))
+        flowguard_packet = runtime_runner._open_packet_by_kind(ledger, "flowguard_check")
+        flowguard_body = json.loads(ledger["packets"][flowguard_packet]["body"])
+        self.assertEqual(
+            flowguard_body["semantic_recheck_contract"]["must_consume_repair_obligation_ids"],
+            [row["obligation_id"] for row in flowguard_body["repair_evidence_obligations"]],
+        )
+
+        flowguard_lease = runtime.lease_agent(
+            ledger,
+            "flowguard_operator",
+            packet_id=flowguard_packet,
+        )
+        runtime.assign_packet(ledger, flowguard_packet, flowguard_lease)
+        runtime.ack_lease(ledger, flowguard_lease, flowguard_packet)
+        open_required_result_reads(ledger, flowguard_packet, flowguard_lease)
+        result_id = runtime.submit_result(
+            ledger,
+            flowguard_lease,
+            flowguard_packet,
+            flowguard_result_body(
+                "FlowGuard forgot to consume the repair obligation.",
+                **semantic_recheck_fields(
+                    blocker_id,
+                    consumed_authorized_result_read_ids=[
+                        str(row.get("result_id") or "")
+                        for row in ledger["packets"][flowguard_packet]["envelope"].get("authorized_result_reads", [])
+                        if row.get("required_before_submit") is True and str(row.get("result_id") or "")
+                    ],
+                ),
+            ),
+        )
+
+        result = ledger["results"][result_id]
+        self.assertEqual(result["status"], "mechanical_contract_blocked")
+        self.assertIn("semantic_recheck.consumed_repair_obligation_ids", result["missing_required_fields"])
+
+    def test_flowguard_semantic_recheck_reissue_inherits_required_authorized_reads(self) -> None:
+        ledger, packet_id, worker = runtime_runner._base_ledger()
+        runtime.ack_lease(ledger, worker, packet_id)
+        runtime.submit_result(
+            ledger,
+            worker,
+            packet_id,
+            role_result_body(
+                "Worker blocked on missing direct evidence.",
+                decision="block",
+                blocking=True,
+                recommended_resolution="Add direct evidence.",
+            ),
+        )
+        blocker_id = next(iter(ledger["active_blockers"]))
+        pm_packet = ledger["active_blockers"][blocker_id]["pm_repair_packet_id"]
+        pm_lease = runtime.lease_agent(ledger, "pm", agent_id="pm-semantic-reissue", packet_id=pm_packet)
+        runtime.assign_packet(ledger, pm_packet, pm_lease)
+        runtime.ack_lease(ledger, pm_lease, pm_packet)
+        open_required_result_reads(ledger, pm_packet, pm_lease)
+        runtime.submit_result(
+            ledger,
+            pm_lease,
+            pm_packet,
+            pm_repair_decision_body(ledger, pm_packet, decision="repair_current_scope"),
+        )
+        self._complete_pm_continue_repair_gate(ledger, blocker_id)
+        repair_packet = ledger["active_blockers"][blocker_id]["repair_packet_id"]
+        repair_lease = runtime.lease_agent(ledger, "worker", packet_id=repair_packet)
+        runtime.assign_packet(ledger, repair_packet, repair_lease)
+        runtime.ack_lease(ledger, repair_lease, repair_packet)
+        open_required_result_reads(ledger, repair_packet, repair_lease)
+        runtime.submit_result(ledger, repair_lease, repair_packet, role_result_body("Worker submitted repaired evidence."))
+
+        flowguard_packet_id = runtime_runner._open_packet_by_kind(ledger, "flowguard_check")
+        source_reads = ledger["packets"][flowguard_packet_id]["envelope"]["authorized_result_reads"]
+        flowguard_lease = runtime.lease_agent(
+            ledger,
+            "flowguard_operator",
+            packet_id=flowguard_packet_id,
+        )
+        runtime.assign_packet(ledger, flowguard_packet_id, flowguard_lease)
+        runtime.ack_lease(ledger, flowguard_lease, flowguard_packet_id)
+        open_required_result_reads(ledger, flowguard_packet_id, flowguard_lease)
+
+        result_id = runtime.submit_result(
+            ledger,
+            flowguard_lease,
+            flowguard_packet_id,
+            flowguard_result_body("FlowGuard forgot the blocker-bound semantic recheck."),
+        )
+        result = ledger["results"][result_id]
+        self.assertEqual(result["status"], "mechanical_contract_blocked")
+        self.assertIn("semantic_recheck", result["missing_required_fields"])
+        reissue_event = next(
+            event
+            for event in reversed(ledger["events"])
+            if event["event_type"] == "current_contract_reissue_packet_issued"
+            and event["payload"]["blocked_packet_id"] == flowguard_packet_id
+        )
+        reissue_packet_id = reissue_event["payload"]["fresh_packet_id"]
+        reissue_packet = ledger["packets"][reissue_packet_id]
+        reissue_manifest = reissue_packet["envelope"]["current_handoff_contract"]["input_material_manifest"]
+
+        self.assertEqual(reissue_packet["envelope"]["authorized_result_reads"], source_reads)
+        self.assertEqual(json.loads(reissue_packet["body"])["authorized_result_reads"], source_reads)
+        self.assertEqual(
+            reissue_manifest["required_authorized_reads_before_submit"],
+            [row["result_id"] for row in source_reads if row["required_before_submit"] is True],
+        )
 
     def test_reviewer_required_repair_reaches_pm_repair_packet(self) -> None:
         ledger, packet_id, worker = runtime_runner._base_ledger()
@@ -2788,7 +4376,13 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         runtime.assign_packet(ledger, flowguard_packet, flowguard_lease)
         runtime.ack_lease(ledger, flowguard_lease, flowguard_packet)
         open_required_result_reads(ledger, flowguard_packet, flowguard_lease)
-        runtime.submit_result(ledger, flowguard_lease, flowguard_packet, flowguard_result_body("FlowGuard evidence passed."))
+        write_flowguard_evidence_artifact(ledger, flowguard_packet)
+        flowguard_result_id = runtime.submit_result(
+            ledger,
+            flowguard_lease,
+            flowguard_packet,
+            flowguard_result_body("FlowGuard evidence passed."),
+        )
 
         review_packet = runtime_runner._open_packet_by_kind(ledger, "review")
         review_lease = runtime.lease_agent(ledger, "reviewer", agent_id="reviewer", packet_id=review_packet)
@@ -2825,6 +4419,71 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         authorized_reads = body["authorized_result_reads"]
         self.assertEqual(authorized_reads[0]["result_id"], review_result_id)
         self.assertTrue(authorized_reads[0]["required_before_submit"])
+        authorized_read_ids = {row["result_id"] for row in authorized_reads}
+        self.assertIn(review_result_id, authorized_read_ids)
+        self.assertIn(flowguard_result_id, authorized_read_ids)
+
+        pm_lease = runtime.lease_agent(ledger, "pm", agent_id="pm-review-context", packet_id=pm_packet)
+        runtime.assign_packet(ledger, pm_packet, pm_lease)
+        runtime.ack_lease(ledger, pm_lease, pm_packet)
+        delivered = runtime.open_authorized_input_materials_for_role(ledger, pm_packet, pm_lease)
+        delivered_ids = {row["result_id"] for row in delivered}
+        self.assertIn(review_result_id, delivered_ids)
+        self.assertIn(flowguard_result_id, delivered_ids)
+
+    def test_pm_repair_decision_blocks_without_opening_all_related_bodies(self) -> None:
+        ledger, packet_id, worker = runtime_runner._base_ledger()
+        runtime.ack_lease(ledger, worker, packet_id)
+        runtime.submit_result(ledger, worker, packet_id, role_result_body("Worker submitted implementation evidence."))
+
+        flowguard_packet = runtime_runner._open_packet_by_kind(ledger, "flowguard_check")
+        flowguard_lease = runtime.lease_agent(ledger, "flowguard_operator", agent_id="fg", packet_id=flowguard_packet)
+        runtime.assign_packet(ledger, flowguard_packet, flowguard_lease)
+        runtime.ack_lease(ledger, flowguard_lease, flowguard_packet)
+        open_required_result_reads(ledger, flowguard_packet, flowguard_lease)
+        write_flowguard_evidence_artifact(ledger, flowguard_packet)
+        flowguard_result_id = runtime.submit_result(
+            ledger,
+            flowguard_lease,
+            flowguard_packet,
+            flowguard_result_body("FlowGuard evidence passed."),
+        )
+
+        review_packet = runtime_runner._open_packet_by_kind(ledger, "review")
+        review_lease = runtime.lease_agent(ledger, "reviewer", agent_id="reviewer", packet_id=review_packet)
+        runtime.assign_packet(ledger, review_packet, review_lease)
+        runtime.ack_lease(ledger, review_lease, review_packet)
+        open_required_result_reads(ledger, review_packet, review_lease)
+        review_result_id = runtime.submit_result(
+            ledger,
+            review_lease,
+            review_packet,
+            review_result_body(
+                "Reviewer found a current evidence gap.",
+                passed=False,
+                recommended_resolution="repair current evidence",
+                blocking_findings=[{"finding": "current evidence gap", "required_repair": "repair current evidence"}],
+            ),
+        )
+
+        blocker_id = next(iter(ledger["active_blockers"]))
+        pm_packet = ledger["active_blockers"][blocker_id]["pm_repair_packet_id"]
+        pm_lease = runtime.lease_agent(ledger, "pm", agent_id="pm-no-open", packet_id=pm_packet)
+        runtime.assign_packet(ledger, pm_packet, pm_lease)
+        runtime.ack_lease(ledger, pm_lease, pm_packet)
+
+        result_id = runtime.submit_result(
+            ledger,
+            pm_lease,
+            pm_packet,
+            pm_repair_decision_body(ledger, pm_packet, decision="repair_current_scope"),
+        )
+
+        result = ledger["results"][result_id]
+        self.assertEqual(result["status"], "blocked")
+        self.assertIn(f"required_result_body_not_opened:{review_result_id}", result["mechanical_blockers"])
+        self.assertIn(f"required_result_body_not_opened:{flowguard_result_id}", result["mechanical_blockers"])
+        self.assertFalse(ledger["pm_repair_decisions"])
 
     def test_generated_role_handoff_and_packet_open_are_role_symmetric(self) -> None:
         for role in sorted(runtime.RESPONSIBILITIES):
@@ -3028,16 +4687,17 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
             ledger,
             pm_lease,
             pm_packet,
-            json.dumps(
-                {
-                    "decision": "repair_current_scope",
-                    "reason": "This prose mentions stop_for_user and block, but they are not the decision.",
-                }
+            pm_repair_decision_body(
+                ledger,
+                pm_packet,
+                decision="repair_current_scope",
+                reason="This prose mentions stop_for_user and block, but they are not the decision.",
             ),
         )
 
         decision = next(iter(ledger["pm_repair_decisions"].values()))
         self.assertEqual(decision["decision"], "repair_current_scope")
+        self._complete_pm_continue_repair_gate(ledger, blocker_id)
         self.assertEqual(ledger["active_blockers"][blocker_id]["status"], "repair_packet_open")
 
     def test_removed_pm_repair_decisions_are_rejected(self) -> None:
@@ -3068,26 +4728,43 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
                     ledger,
                     pm_lease,
                     pm_packet,
-                    json.dumps({"decision": removed, "reason": "old menu value"}),
+                    json.dumps(
+                        {
+                            "decision": removed,
+                            "reason": "old menu value",
+                            "target_blocker_id": blocker_id,
+                            "next_action": removed,
+                        }
+                    ),
                 )
 
                 self.assertEqual(ledger["results"][bad_result]["status"], "mechanical_contract_blocked")
                 self.assertFalse(ledger["pm_repair_decisions"])
-                self.assertIn("removed decision", ledger["results"][bad_result]["quarantine_reason"])
+                self.assertIn("allowed_value_options", ledger["results"][bad_result]["quarantine_reason"])
                 self.assertEqual(
                     ledger["results"][bad_result]["contract_family_id"],
                     "pm_repair_decision.pm_repair_decision",
                 )
 
     def test_waive_with_authority_requires_authority_ref_and_opens_no_repair_packet(self) -> None:
-        for body, expected_status in (
-            ({"decision": "waive_with_authority", "reason": "authorized exception"}, "mechanical_contract_blocked"),
+        for body_factory, expected_status in (
             (
-                {
-                    "decision": "waive_with_authority",
-                    "reason": "authorized exception",
-                    "authority_ref": "AUTH-20260604-001",
-                },
+                lambda ledger, pm_packet: pm_repair_decision_body(
+                    ledger,
+                    pm_packet,
+                    decision="waive_with_authority",
+                    reason="authorized exception",
+                ),
+                "mechanical_contract_blocked",
+            ),
+            (
+                lambda ledger, pm_packet: pm_repair_decision_body(
+                    ledger,
+                    pm_packet,
+                    decision="waive_with_authority",
+                    reason="authorized exception",
+                    authority_ref="AUTH-20260604-001",
+                ),
                 "waived",
             ),
         ):
@@ -3108,7 +4785,7 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
                 runtime.ack_lease(ledger, pm_lease, pm_packet)
                 open_required_result_reads(ledger, pm_packet, pm_lease)
 
-                result_id = runtime.submit_result(ledger, pm_lease, pm_packet, json.dumps(body))
+                result_id = runtime.submit_result(ledger, pm_lease, pm_packet, body_factory(ledger, pm_packet))
 
                 if expected_status == "mechanical_contract_blocked":
                     self.assertEqual(ledger["results"][result_id]["status"], expected_status)
@@ -3144,6 +4821,8 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
                 {
                     "decision": "waive_with_authority",
                     "reason": "authorized exception",
+                    "target_blocker_id": blocker_id,
+                    "next_action": "waive_with_authority",
                     "authority": "AUTH-LEGACY-ALIAS",
                 }
             ),
@@ -3175,7 +4854,7 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         self.assertEqual(redesign_shape["route_plan"]["schema_version"], runtime.ROUTE_PLAN_SCHEMA_VERSION)
         self.assertEqual(redesign_shape["route_plan"]["nodes"][0]["node_id"], "repair-current-scope")
         self.assertIn("title", redesign_shape["route_plan"]["nodes"][0])
-        self.assertIn("route_plan.nodes[].title when decision=redesign_route", report_contract["required_child_fields"])
+        self.assertNotIn("route_plan.nodes[].title when decision=redesign_route", report_contract["required_child_fields"])
 
     def test_pm_repair_redesign_route_reissue_names_branch_field_path(self) -> None:
         ledger, packet_id, worker = runtime_runner._base_ledger()
@@ -3201,6 +4880,8 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
                 {
                     "decision": "redesign_route",
                     "reason": "Route needs redesign, but this body omits the node title.",
+                    "target_blocker_id": blocker_id,
+                    "next_action": "redesign_route",
                     "route_plan": {
                         "schema_version": runtime.ROUTE_PLAN_SCHEMA_VERSION,
                         "nodes": [{"node_id": "node-redesign"}],
@@ -3278,7 +4959,10 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         self.assertEqual(ledger["results"][bad_result]["status"], "mechanical_contract_blocked")
         self.assertEqual(ledger["packets"][pm_packet]["status"], "superseded_after_repair")
         self.assertFalse(ledger["pm_repair_decisions"])
-        self.assertEqual(ledger["results"][bad_result]["missing_required_fields"], ["decision", "reason"])
+        self.assertEqual(
+            ledger["results"][bad_result]["missing_required_fields"],
+            ["decision", "reason", "target_blocker_id", "next_action"],
+        )
         self.assertEqual(runtime.router_next_action(ledger).action_type, "dispatch_current_role")
 
         fresh_pm_packet = runtime._ensure_pm_repair_decision_packet_for_blocker(ledger, blocker_id)
@@ -3293,7 +4977,12 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
             ledger,
             good_pm_lease,
             fresh_pm_packet,
-            json.dumps({"decision": "stop_for_user", "reason": "PM needs the user to decide."}),
+            pm_repair_decision_body(
+                ledger,
+                fresh_pm_packet,
+                decision="stop_for_user",
+                reason="PM needs the user to decide.",
+            ),
         )
 
         self.assertEqual(ledger["active_blockers"][blocker_id]["status"], "stopped")
@@ -3387,11 +5076,19 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         runtime.assign_packet(ledger, fresh_flowguard_packet, flowguard_lease)
         runtime.ack_lease(ledger, flowguard_lease, fresh_flowguard_packet)
         open_required_result_reads(ledger, fresh_flowguard_packet, flowguard_lease)
+        write_flowguard_evidence_artifact(ledger, fresh_flowguard_packet)
         fresh_flowguard_result_id = runtime.submit_result(
             ledger,
             flowguard_lease,
             fresh_flowguard_packet,
-            flowguard_result_body("Fresh FlowGuard evidence passes after reattachment."),
+            flowguard_result_body(
+                "Fresh FlowGuard evidence passes after reattachment.",
+                **semantic_recheck_fields_from_packet(
+                    ledger,
+                    fresh_flowguard_packet,
+                    blocker_id,
+                ),
+            ),
         )
 
         self.assertEqual(ledger["active_blockers"][blocker_id]["status"], "awaiting_recheck")
@@ -3498,6 +5195,8 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
             json.dumps(
                 {
                     "decision": "repair_current_scope",
+                    "target_blocker_id": blocker_id,
+                    "next_action": "repair_current_scope",
                     "summary": "legacy reason fallback must not be accepted",
                     "recommended_resolution": "same node repair",
                 }

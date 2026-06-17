@@ -573,7 +573,11 @@ def _obsolete_pattern(*parts: str) -> re.Pattern[str]:
 FORBIDDEN_CURRENT_PROMPT_SURFACE_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("obsolete role-output entrypoint", _obsolete_pattern(r"flowpilot_", r"runtime\.py")),
     ("obsolete router-submit command", _obsolete_pattern(r"submit-output", r"-to-router")),
+    ("obsolete progress command", _obsolete_pattern(r"progress", r"-", r"output\b")),
+    ("obsolete controller-boundary submit command", _obsolete_pattern(r"submit", r"-", r"controller", r"-", r"boundary", r"-", r"confirmation")),
     ("obsolete skeleton command", _obsolete_pattern(r"\bprepare", r"-", r"output\b")),
+    ("obsolete open-packet output-type arguments", _obsolete_pattern(r"open", r"-", r"packet\s+--output", r"-", r"type")),
+    ("lower-level role-output helper exposed as live handoff", _obsolete_pattern(r"role_output", r"_runtime\.py")),
     ("obsolete packet-holder label", _obsolete_pattern(r"active", r"-holder")),
     ("obsolete router facade command", _obsolete_pattern(r"flowpilot_", r"router\.py")),
     ("obsolete daemon wording", _obsolete_pattern(r"router\s+daemon")),
@@ -619,6 +623,16 @@ def _iter_current_prompt_surface_paths(project_root: Path) -> Iterable[Path]:
         for path in sorted(root.rglob("*")):
             if path.is_file() and path.suffix in allowed_suffixes:
                 yield path
+    generated_role_facing_sources = (
+        project_root / "skills" / "flowpilot" / "assets" / "flowpilot_router_payload_contracts_pm.py",
+        project_root / "skills" / "flowpilot" / "assets" / "flowpilot_router_protocol_work_contracts.py",
+        project_root / "skills" / "flowpilot" / "assets" / "flowpilot_router_expected_waits_actions.py",
+        project_root / "skills" / "flowpilot" / "assets" / "flowpilot_router_startup_mechanical_boundary_controller.py",
+        project_root / "skills" / "flowpilot" / "assets" / "role_output_runtime_contracts.py",
+    )
+    for path in generated_role_facing_sources:
+        if path.exists():
+            yield path
 
 
 def forbidden_current_prompt_surface_errors(project_root: Path) -> tuple[str, ...]:

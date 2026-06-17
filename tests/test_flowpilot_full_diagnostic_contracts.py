@@ -156,6 +156,9 @@ import flowpilot_router_role_output_bridge as role_output_bridge  # noqa: E402
 import flowpilot_router_route_artifacts_architecture as route_artifacts_architecture  # noqa: E402
 import flowpilot_router_route_artifacts_architecture_gate_blocks as route_artifacts_architecture_gate_blocks  # noqa: E402
 import flowpilot_router_route_artifacts_architecture_product as route_artifacts_architecture_product  # noqa: E402
+import flowpilot_router_route_artifacts_architecture_product_core as route_artifacts_architecture_product_core  # noqa: E402
+import flowpilot_router_route_artifacts_architecture_product_decisions as route_artifacts_architecture_product_decisions  # noqa: E402
+import flowpilot_router_route_artifacts_architecture_product_intent as route_artifacts_architecture_product_intent  # noqa: E402
 import flowpilot_router_route_artifacts_architecture_route_checks as route_artifacts_architecture_route_checks  # noqa: E402
 import flowpilot_router_route_artifacts_evidence as route_artifacts_evidence  # noqa: E402
 import flowpilot_router_route_artifacts_nodes as route_artifacts_nodes  # noqa: E402
@@ -176,6 +179,16 @@ import flowpilot_router_route_frontier_memory_paths as route_frontier_memory_pat
 import flowpilot_router_route_frontier_nodes as route_frontier_nodes  # noqa: E402
 import flowpilot_router_route_frontier_policy as route_frontier_policy  # noqa: E402
 import flowpilot_router_route_frontier_policy_completion as route_frontier_policy_completion  # noqa: E402
+import flowpilot_router_route_frontier_policy_completion_authority as route_frontier_policy_completion_authority  # noqa: E402
+import flowpilot_router_route_frontier_policy_completion_authority_rejection as route_frontier_policy_completion_authority_rejection  # noqa: E402
+from flowpilot_router_route_frontier_policy_completion_authority_rejection import (  # noqa: E402
+    route_authority_event_requirements,
+    route_authority_inferred_event,
+    route_authority_missing_required_flags,
+    unsupported_route_authority_payload_fields,
+)
+import flowpilot_router_route_frontier_policy_completion_context as route_frontier_policy_completion_context  # noqa: E402
+import flowpilot_router_route_frontier_policy_completion_ledger as route_frontier_policy_completion_ledger  # noqa: E402
 import flowpilot_router_route_frontier_policy_registry as route_frontier_policy_registry  # noqa: E402
 import flowpilot_router_route_frontier_policy_topology as route_frontier_policy_topology  # noqa: E402
 import flowpilot_router_route_frontier_status as route_frontier_status  # noqa: E402
@@ -232,6 +245,7 @@ import flowpilot_router_work_packets_current_node_paths as work_packets_current_
 import flowpilot_router_work_packets_current_node_relay as work_packets_current_node_relay  # noqa: E402
 import flowpilot_router_work_packets_current_node_validation as work_packets_current_node_validation  # noqa: E402
 import flowpilot_router_work_packets_next_actions as work_packets_next_actions  # noqa: E402
+import flowpilot_router_work_packets_material_next as work_packets_material_next  # noqa: E402
 import flowpilot_router_work_packets_pm_role_actions as work_packets_pm_role_actions  # noqa: E402
 import flowpilot_router_work_packets_pm_role_lifecycle as work_packets_pm_role_lifecycle  # noqa: E402
 import flowpilot_router_work_packets_pm_role_lifecycle_contracts as work_packets_pm_role_lifecycle_contracts  # noqa: E402
@@ -241,11 +255,13 @@ import flowpilot_router_work_packets_pm_role_writes as work_packets_pm_role_writ
 import flowpilot_router_work_packets_pm_role_writes_decisions as work_packets_pm_role_writes_decisions  # noqa: E402
 import flowpilot_router_work_packets_pm_role_writes_request as work_packets_pm_role_writes_request  # noqa: E402
 import flowpilot_router_work_packets_pm_role_writes_results as work_packets_pm_role_writes_results  # noqa: E402
-import flowpilot_user_flow_markdown as user_flow_markdown  # noqa: E402
-import flowpilot_user_flow_mermaid as user_flow_mermaid  # noqa: E402
-import flowpilot_user_flow_source as user_flow_source  # noqa: E402
-import flowpilot_user_flow_stage as user_flow_stage  # noqa: E402
-import flowpilot_user_flow_tree as user_flow_tree  # noqa: E402
+import flowpilot_router_work_packets_research_next as work_packets_research_next  # noqa: E402
+import flowpilot_router_work_packets_role_agents as work_packets_role_agents  # noqa: E402
+from flowpilot_user_flow_markdown import build_chat_markdown  # noqa: E402
+from flowpilot_user_flow_mermaid import build_mermaid  # noqa: E402
+from flowpilot_user_flow_source import _route_source_summary  # noqa: E402
+from flowpilot_user_flow_stage import classify_current_stage  # noqa: E402
+from flowpilot_user_flow_tree import _active_node  # noqa: E402
 import packet_control_plane_model_invariants as packet_invariants  # noqa: E402
 import packet_control_plane_model_invariants_dispatch as packet_invariants_dispatch  # noqa: E402
 import packet_control_plane_model_invariants_handoff as packet_invariants_handoff  # noqa: E402
@@ -307,6 +323,10 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
             route_completion_support,
             route_frontier_context,
             route_frontier_policy,
+            route_frontier_policy_completion,
+            route_frontier_policy_completion_authority,
+            route_frontier_policy_completion_context,
+            route_frontier_policy_completion_ledger,
             route_frontier_status,
             repair_blockers,
             repair_model_gate,
@@ -361,6 +381,30 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
         self.assertIs(
             role_output_envelopes.validate_envelope_runtime_receipt,
             role_output_envelope_receipts.validate_envelope_runtime_receipt,
+        )
+        self.assertIs(
+            route_artifacts_architecture_product._write_product_function_architecture,
+            route_artifacts_architecture_product_core._write_product_function_architecture,
+        )
+        self.assertIs(
+            route_artifacts_architecture_product._write_pm_implementation_intent,
+            route_artifacts_architecture_product_intent._write_pm_implementation_intent,
+        )
+        self.assertIs(
+            route_artifacts_architecture_product._write_pm_model_decision,
+            route_artifacts_architecture_product_decisions._write_pm_model_decision,
+        )
+        self.assertIs(
+            work_packets_next_actions._open_current_role_agent_for_packet_plan,
+            work_packets_role_agents._open_current_role_agent_for_packet_plan,
+        )
+        self.assertIs(
+            work_packets_next_actions._next_material_packet_action,
+            work_packets_material_next._next_material_packet_action,
+        )
+        self.assertIs(
+            work_packets_next_actions._next_research_packet_action,
+            work_packets_research_next._next_research_packet_action,
         )
 
     def test_controller_control_scheduler_external_contracts(self) -> None:
@@ -1701,6 +1745,24 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
             | set(route_frontier_policy_topology.__all__)
             | set(route_frontier_policy_completion.__all__),
         )
+        self.assertIs(
+            route_frontier_policy_completion._route_authority_snapshot,
+            route_frontier_policy_completion_authority._route_authority_snapshot,
+        )
+        self.assertIs(
+            route_frontier_policy_completion._legal_next_action_context,
+            route_frontier_policy_completion_context._legal_next_action_context,
+        )
+        self.assertIs(
+            route_frontier_policy_completion._mark_frontier_node_completed,
+            route_frontier_policy_completion_ledger._mark_frontier_node_completed,
+        )
+        self.assertEqual(
+            set(route_frontier_policy_completion.__all__),
+            set(route_frontier_policy_completion_authority.__all__)
+            | set(route_frontier_policy_completion_context.__all__)
+            | set(route_frontier_policy_completion_ledger.__all__),
+        )
         self.assertIs(route_frontier_status._active_ui_task_catalog, route_frontier_status_catalog._active_ui_task_catalog)
         self.assertIs(route_frontier_status._build_progress_summary, route_frontier_status_summary._build_progress_summary)
         self.assertIs(route_frontier_status._write_display_plan_from_route, route_frontier_status_views._write_display_plan_from_route)
@@ -1721,16 +1783,16 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
             ],
         }
         frontier = {"active_node": "implement", "current_mainline": ["implement"], "status": "running"}
-        source_summary = user_flow_source._route_source_summary(route)
-        stage = user_flow_stage.classify_current_stage(frontier, route)
-        active_node = user_flow_tree._active_node(frontier, {}, route)
-        mermaid, metadata = user_flow_mermaid.build_mermaid(
+        source_summary = _route_source_summary(route)
+        stage = classify_current_stage(frontier, route)
+        active_node = _active_node(frontier, {}, route)
+        mermaid, metadata = build_mermaid(
             frontier=frontier,
             route=route,
             current_stage=stage,
             trigger="major_node_entry",
         )
-        markdown = user_flow_markdown.build_chat_markdown(
+        markdown = build_chat_markdown(
             mermaid,
             generated_at="2026-05-18T00:00:00Z",
             current_stage=stage,
@@ -1752,6 +1814,49 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
         self.assertIn("flowchart", mermaid)
         self.assertEqual(metadata["layout"], "route_nodes")
         self.assertIn("Current path: Implement", markdown)
+
+    def test_route_authority_rejection_helper_projects_external_contract_feedback(self) -> None:
+        router_stub = ModuleType("router_stub")
+        router_stub.ROUTE_ACTION_POLICY_EVENT_TO_ACTION = {
+            "pm_mutates_route_after_review_block": "mutate_route_after_review_block",
+        }
+        router_stub.ROUTE_EXTERNAL_EVENT_DATA = {
+            "pm_mutates_route_after_review_block": {
+                "requires_flag": "model_miss_triage_closed",
+                "summary": "Model-miss triage must close before this route mutation event.",
+            }
+        }
+
+        inferred_event = route_authority_inferred_event(
+            router_stub,
+            "mutate_route_after_review_block",
+            None,
+        )
+        self.assertEqual(inferred_event, "pm_mutates_route_after_review_block")
+
+        missing_requirements = route_authority_event_requirements(
+            router_stub,
+            {"flags": {}},
+            inferred_event,
+        )
+        self.assertEqual(missing_requirements["missing_required_flags"], ["model_miss_triage_closed"])
+        self.assertEqual(
+            route_authority_missing_required_flags({"event_requirements": missing_requirements}),
+            ["model_miss_triage_closed"],
+        )
+
+        satisfied_requirements = route_authority_event_requirements(
+            router_stub,
+            {"flags": {"model_miss_triage_closed": True}},
+            inferred_event,
+        )
+        self.assertEqual(satisfied_requirements["missing_required_flags"], [])
+        self.assertEqual(
+            unsupported_route_authority_payload_fields(
+                {"selected_path_text": "close it", "fallback_route_action": "complete_parent_node"}
+            ),
+            ["fallback_route_action", "selected_path_text"],
+        )
 
     def test_packet_control_plane_and_reviewer_external_contracts(self) -> None:
         runtime_args = flowpilot_runtime_cli.parse_args(

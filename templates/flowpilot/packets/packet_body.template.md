@@ -90,6 +90,31 @@ events.
 
 - <bounded acceptance condition for this packet only>
 
+## Acceptance Item Projection
+
+Copy every packet-scoped row from the current route node's
+`acceptance_item_ids` and node acceptance plan's `acceptance_item_projection`.
+Do not drop PM high-standard items or convert them into generic prose.
+
+- acceptance_item_id: <acc-id>
+- quality_floor: <high_quality_required>
+- future_evidence_rule: <later-current-evidence-or-waiver-rule>
+- status: <active|superseded|waived>
+
+## Supplemental Repair Projection
+
+If this packet belongs to a terminal supplemental repair node, copy every
+runtime-supplied `supplemental_repair_contract_id` and
+`supplemental_repair_item_id` for this packet. These rows append to the frozen
+contract; they do not replace normal acceptance item, FlowGuard, Reviewer, or
+PM disposition gates.
+
+- supplemental_contract_id: <contract-id-or-none>
+- repair_item_id: <repair-item-id-or-none>
+- original_goal_link: <why-this-repair-is-required-for-current-goal-or-none>
+- required_repair: <repair-work-this-packet-must-produce-or-inspect-or-none>
+- required_evidence: <direct-current-evidence-needed-or-none>
+
 ## Node Context Package
 
 If this packet belongs to a route node, copy the runtime-supplied
@@ -140,6 +165,25 @@ removes, rejects, preserves, or intentionally retains any fallback-like path,
 compatibility branch, duplicate adapter, stale generated artifact, or
 maintenance layer, report it there. Do not silently keep a compatibility path
 as a convenience fallback.
+
+## Final Artifact Hygiene Delta Requirement
+
+Copy this section from `node_acceptance_plan.final_artifact_hygiene_projection`
+or the runtime-supplied supplemental repair item when this packet owns final
+cleanup or maintainability work. This appends to the frozen contract; it does
+not replace normal acceptance, FlowGuard, Reviewer, or PM disposition gates.
+
+- finding_id: <hygiene-finding-id-or-none>
+- artifact_family: <code|document|ui|model|test|process|generated_artifact|other|none>
+- surface_path: <path-or-null>
+- classification: <current_goal_required_repair|clean_delivery_required_repair|pm_decision_support|future_contract_candidate|none>
+- required_cleanup_or_completion: <work-this-packet-must-produce-or-inspect-or-none>
+- required_evidence: <direct-current-evidence-needed-or-none>
+
+The result body must include `Final Artifact Hygiene Delta` when this section
+is not `none`. Report cleaned, completed, tested, modeled, split, retained,
+deferred, or rejected surfaces there. Required hygiene findings must close with
+fresh evidence or return as blockers; do not hide them as residual notes.
 
 ## Artifact-Backed Handoff Requirements
 
@@ -215,12 +259,13 @@ verification rows, and delivered `source_paths` are starting points, not the
 outer boundary of the review. The reviewer must independently decide whether
 more in-run evidence, host-visible proof, UI inspection, screenshots, source
 checks, command probes, contradiction checks, or freshness checks are needed to
-validate or falsify the claim under review. The reviewer must still return an
-`independent_challenge` object with scope restatement, explicit and implicit
-commitments, failure hypotheses, task-specific challenge actions, blocker
-triage, nonblocking findings, pass-or-block decision, reroute request, PM
-decision-support recommendations for higher standards where useful, and any
-waivers. If the packet is not addressed to `human_like_reviewer`, write `not
+validate or falsify the claim under review. The formal review result still uses
+only the current compact fields: `pm_visible_summary`, `reviewed_by_role`,
+`passed`, `findings`, `blockers`, `pm_suggestion_items`, and
+`contract_self_check`. Express failed challenge work through current-stage
+`findings`, fixed-class `blockers`, and PM suggestion items. Treat
+`pm_suggestion_items` as PM decision-support recommendations, not extra blocker
+fields. If the packet is not addressed to `human_like_reviewer`, write `not
 applicable`.
 When reviewer findings contain PM-actionable suggestions, represent them as
 candidate `flowpilot.pm_suggestion_item.v1` items for the PM ledger. Use
@@ -279,6 +324,12 @@ This packet must include the same `output_contract` object as
 `packet_envelope.json`. The recipient must write a `Contract Self-Check`
 section in the sealed result, report, or decision body before returning an
 envelope.
+
+If `output_contract.allowed_value_options` or
+`current_handoff_contract.required_report_contract.allowed_value_options`
+lists a field, that field is a finite menu. Choose exactly one listed value
+for that field. Do not invent synonyms, prose variants, extra enum values, or
+blank placeholders.
 
 ```json
 <packet-envelope-output_contract>

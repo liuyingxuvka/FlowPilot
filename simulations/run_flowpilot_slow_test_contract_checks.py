@@ -8,7 +8,7 @@ import json
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
-from flowguard import Explorer
+from flowguard.explorer import Explorer
 
 import flowpilot_slow_test_contract_model as model
 

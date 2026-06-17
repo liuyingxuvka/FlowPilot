@@ -6,22 +6,12 @@
     {
       "runner": "flowpilot_control_plane_friction",
       "covered_skipped_checks": {
-        "live_run_audit": {
-          "status": "covered_elsewhere",
-          "evidence_ids": ["current_pointer.scoped_missing_current"]
-        },
         "production_mutation": {
           "status": "covered_elsewhere",
           "evidence_ids": ["control_plane.contracts"]
         }
       },
       "evidence": [
-        {
-          "evidence_id": "current_pointer.scoped_missing_current",
-          "path": "tests/test_flowpilot_full_model_test_gap_closure.py",
-          "command": "python -m unittest tests.test_flowpilot_full_model_test_gap_closure.FlowPilotFullModelTestGapClosureTests.test_friction_live_audits_missing_current_run_are_scoped_not_history_fallback",
-          "scope": "missing current pointer is a scoped no-live-evidence projection, not a history fallback or live confidence proof"
-        },
         {
           "evidence_id": "control_plane.contracts",
           "path": "tests/test_flowpilot_control_plane_contracts.py",
@@ -50,22 +40,12 @@
     {
       "runner": "flowpilot_cross_plane_friction",
       "covered_skipped_checks": {
-        "live_run_audit": {
-          "status": "covered_elsewhere",
-          "evidence_ids": ["current_pointer.scoped_missing_current"]
-        },
         "production_mutation": {
           "status": "covered_elsewhere",
           "evidence_ids": ["control_plane.contracts", "role_output.runtime"]
         }
       },
       "evidence": [
-        {
-          "evidence_id": "current_pointer.scoped_missing_current",
-          "path": "tests/test_flowpilot_full_model_test_gap_closure.py",
-          "command": "python -m unittest tests.test_flowpilot_full_model_test_gap_closure.FlowPilotFullModelTestGapClosureTests.test_friction_live_audits_missing_current_run_are_scoped_not_history_fallback",
-          "scope": "missing current pointer is a scoped no-live-evidence projection, not newest-run fallback or live confidence proof"
-        },
         {
           "evidence_id": "control_plane.contracts",
           "path": "tests/test_flowpilot_control_plane_contracts.py",

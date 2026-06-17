@@ -63,6 +63,13 @@ Every current-node worker packet must include the registry `output_contract`
 envelope and packet body's `Output Contract` section. The contract must match
 the active node id, recipient role, acceptance plan, required verification, and
 reviewer block conditions.
+Every current-node worker packet must also include the node's
+`acceptance_item_projection`. PM must require the worker, FlowGuard operator,
+or Reviewer result to return an `Acceptance Item Result Matrix` row for every
+packet-scoped item, preserving the high-quality floor and low-quality failure
+patterns. PM disposition must close each node-owned item as accepted,
+blocked, waived by authority, or superseded; missing item disposition blocks
+node completion.
 When the node acceptance plan assigns FlowGuard-derived obligations, copy the
 originating `flowguard_work_order_id`, `flowguard_report_id`,
 `flowguard_report_freshness`, and packet-scoped `FlowGuard Obligation

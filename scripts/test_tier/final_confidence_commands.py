@@ -17,7 +17,8 @@ FINAL_CONFIDENCE_COMMANDS = (
         description=(
             "Fail-closed final confidence gate that consumes current live audit, "
             "full model-test coverage, event idempotency, known-friction defect "
-            "families, and Risk Evidence Ledger decisions."
+            "families, Risk Evidence Ledger decisions, and formal terminal-return "
+            "preflight authority."
         ),
     ),
 )

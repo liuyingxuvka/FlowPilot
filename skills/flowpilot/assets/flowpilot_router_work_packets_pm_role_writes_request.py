@@ -131,14 +131,18 @@ def _write_pm_role_work_request(router: ModuleType, project_root: Path, run_root
     if isinstance(raw_batch, list):
         if not raw_batch:
             raise RouterError('PM role-work request batch requires at least one request')
+        if "request_mode" not in payload and "mode" in payload:
+            raise RouterError('PM role-work request batch requires request_mode; mode is not a current alias')
         batch_id = str(payload.get('batch_id') or 'pm-role-work-batch-001')
         request_ids: list[str] = []
         to_roles: list[str] = []
         for index, spec in enumerate(raw_batch, start=1):
             if not isinstance(spec, dict):
                 raise RouterError('PM role-work request batch entries must be objects')
+            if "to_role" not in spec and "recipient_role" in spec:
+                raise RouterError('PM role-work request batch entries require to_role; recipient_role is not a current alias')
             request_id = str(spec.get('request_id') or f'{batch_id}-request-{index:03d}')
-            to_role = str(spec.get('to_role') or spec.get('recipient_role') or '')
+            to_role = str(spec.get('to_role') or '')
             if to_role in to_roles:
                 raise RouterError('PM role-work request batch cannot assign two open packets to the same role')
             to_roles.append(to_role)
@@ -154,23 +158,32 @@ def _write_pm_role_work_request(router: ModuleType, project_root: Path, run_root
         index_doc['active_request_ids'] = request_ids
         index_doc['active_request_id'] = request_ids[0] if request_ids else None
         router._write_pm_role_work_request_index(run_root, index_doc)
-        run_state['pm_role_work_requests'] = {'index_path': project_relative(project_root, router._pm_role_work_request_index_path(run_root)), 'active_batch_id': batch_id, 'active_request_ids': request_ids, 'active_request_mode': payload.get('request_mode') or payload.get('mode') or 'blocking'}
+        run_state['pm_role_work_requests'] = {'index_path': project_relative(project_root, router._pm_role_work_request_index_path(run_root)), 'active_batch_id': batch_id, 'active_request_ids': request_ids, 'active_request_mode': payload.get('request_mode') or 'blocking'}
         return
     if not _pm_role_work_channel_open(run_state):
         raise RouterError('PM role-work request requires an open PM decision context')
-    requested_by_role = str(payload.get('requested_by_role') or payload.get('from_role') or '').strip()
+    alias_pairs = {
+        "requested_by_role": "from_role",
+        "to_role": "recipient_role",
+        "request_mode": "mode",
+        "request_kind": "kind",
+    }
+    for current_field, old_field in alias_pairs.items():
+        if current_field not in payload and old_field in payload:
+            raise RouterError(f'PM role-work request requires {current_field}; {old_field} is not a current alias')
+    requested_by_role = str(payload.get('requested_by_role') or '').strip()
     if requested_by_role != 'project_manager':
         raise RouterError('PM role-work request requires requested_by_role=project_manager')
     request_id = str(payload.get('request_id') or '').strip()
     if not request_id:
         raise RouterError('PM role-work request requires request_id')
-    to_role = str(payload.get('to_role') or payload.get('recipient_role') or '').strip()
+    to_role = str(payload.get('to_role') or '').strip()
     if to_role not in PM_ROLE_WORK_REQUEST_RECIPIENT_ROLES:
         raise RouterError('PM role-work request must target a FlowPilot role other than PM or Controller')
-    request_mode = str(payload.get('request_mode') or payload.get('mode') or '').strip()
+    request_mode = str(payload.get('request_mode') or '').strip()
     if request_mode not in PM_ROLE_WORK_REQUEST_MODES:
         raise RouterError('PM role-work request requires request_mode=blocking, advisory, or prep-only')
-    request_kind = str(payload.get('request_kind') or payload.get('kind') or '').strip()
+    request_kind = str(payload.get('request_kind') or '').strip()
     if request_kind not in PM_ROLE_WORK_REQUEST_KINDS:
         raise RouterError('PM role-work request has unsupported request_kind')
     output_contract = payload.get('output_contract') if isinstance(payload.get('output_contract'), dict) else {}

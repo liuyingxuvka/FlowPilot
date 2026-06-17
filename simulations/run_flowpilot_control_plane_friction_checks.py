@@ -7,7 +7,7 @@ import json
 from collections import deque
 from pathlib import Path
 
-from flowguard import Explorer
+from flowguard.explorer import Explorer
 
 import flowpilot_control_plane_friction_model as model
 from flowpilot_control_plane_friction_checks_runner_impl import _state_id

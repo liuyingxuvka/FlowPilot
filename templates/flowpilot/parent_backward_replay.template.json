@@ -11,8 +11,8 @@
   "purpose": "A local human backward replay required before any effective route node with children can close. It starts from the parent-level delivered result and checks whether child outcomes compose into the parent goal.",
   "trigger_rule": {
     "structural_trigger": "any_effective_route_node_with_children",
-    "semantic_importance_classification_required": false,
-    "high_risk_integration_feature_or_dependency_labels_are_context_only": true,
+    "source_of_truth": "active_route_structure",
+    "requires_current_route_version": true,
     "leaf_nodes_exempt_from_parent_backward_replay": true,
     "cannot_be_waived_because_children_passed_locally": true
   },

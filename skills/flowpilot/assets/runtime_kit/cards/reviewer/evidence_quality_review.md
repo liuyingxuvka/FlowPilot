@@ -18,10 +18,9 @@ runtime_context: Treat the runtime delivery envelope as the live source for the 
 
 ## Decision-Support Findings
 
-For every outcome, consider `independent_challenge.non_blocking_findings`.
-Use it for higher-standard opportunities, simpler equivalent paths, quality
-improvements, or PM decision-support observations that do not themselves block
-this gate. This applies even when the review blocks.
+For every outcome, consider PM decision-support observations. Put
+higher-standard opportunities, simpler equivalent paths, and quality
+improvements that do not themselves block this gate into `pm_suggestion_items`.
 When useful, express these findings as candidate
 `flowpilot.pm_suggestion_item.v1` entries for PM's suggestion ledger. Use
 `current_gate_blocker` only when the current gate's minimum standard cannot be
@@ -37,6 +36,11 @@ Review the PM evidence quality package before final ledger work starts.
 Check:
 
 - evidence ledger entries are concrete, current, and non-stale;
+- the package includes a final artifact hygiene inventory when the run has a
+  delivered artifact, reader/operator/user-facing output, code change, model
+  change, document, UI, generated resource, or process-ledger deliverable. The
+  inventory must say which artifact families were checked, which surfaces are
+  not applicable, and which cleanup/maintainability findings are unresolved;
 - generated resources have terminal disposition;
 - UI or visual evidence is present when the route requires it;
 - user-facing quality, product usefulness, readability, operability, or
@@ -48,24 +52,27 @@ Check:
   hard-part claim unless it directly disproves the named thin-success shortcut;
 - structure debt dispositions are complete. Patch stacks, fallback-like paths,
   compatibility branches, duplicate adapters, stale generated artifacts,
-  old-route evidence, newest-run fallbacks, repo-root fallbacks, and retained
-  maintenance layers must be removed, rejected, preserved only as negative
-  rejection evidence, retained as owned current-runtime recovery, retained as
-  owned maintenance, or blocked. Block if a retained surface lacks owner, scope,
-  validation evidence, and sunset or next-disposition criteria;
-- old screenshots, old icons, old concept images, or old assets are not reused
-  as current evidence;
+  non-current evidence, and retained maintenance layers must be removed,
+  rejected, preserved only as negative rejection evidence, retained as owned
+  current-runtime recovery, retained as owned maintenance, or blocked. Block if
+  a retained surface lacks owner, scope, validation evidence, and sunset or
+  next-disposition criteria;
+- non-current screenshots, icons, concept images, or assets are not reused as
+  current evidence;
 - completion report-only evidence is not closing a gate that needs direct
   inspection or executable proof.
-- FlowGuard-backed gates include `model_obligations`,
-  `ordinary_test_evidence`, `missing_test_kinds`, `conformance_boundary`, and
-  `residual_blindspots`, plus PM `test_obligation_matrix` dispositions. Treat
-  missing, stale, skipped, failed, running, not-run, progress-only, or
-  undispositioned ordinary tests as gaps, not coverage.
-- any cited long/background test includes `background_artifact_completion` with
-  log root, stdout, stderr, combined, exit, and meta paths, exit code, latest
-  update time, completion status, and valid proof reuse. Progress output alone
-  must not close evidence quality.
+- required final artifact hygiene findings are not hidden as residual notes.
+  Classify them as `current_goal_required_repair`,
+  `clean_delivery_required_repair`, `pm_decision_support`, or
+  `future_contract_candidate`; block evidence-quality pass when the first two
+  classes lack PM disposition or a repair path.
+- FlowGuard-backed gates cite current FlowGuard evidence artifacts and PM
+  dispositions. Treat missing, stale, skipped, failed, running, not-run,
+  progress-only, or undispositioned ordinary tests as gaps, not coverage.
+- any cited long/background test has completed log evidence with log root,
+  stdout, stderr, combined, exit, and meta paths, exit code, latest update
+  time, completion status, and valid proof reuse. Progress output alone must
+  not close evidence quality.
 
 Router ledgers and router-owned proofs may settle counts, hashes, freshness
 markers, and stale/resource disposition only when the proof is non-self-attested

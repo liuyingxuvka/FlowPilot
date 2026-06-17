@@ -30,6 +30,10 @@ Write:
 - `evidence/evidence_ledger.json`;
 - `generated_resource_ledger.json`;
 - `quality/quality_package.json`.
+- `quality/final_artifact_hygiene_inventory.json` when the run has any
+  delivered artifact, code/document/UI/model/test/process output, generated
+  resource, or terminal ledger surface that a final user, reader, operator, or
+  maintainer will inherit.
 
 Every current evidence item must be concrete, non-stale, and tied to the
 current route/frontier. Generated resources, screenshots, route diagrams,
@@ -40,7 +44,7 @@ UI or quality gate.
 For every FlowGuard-backed gate in scope, include a model-test alignment row:
 `model_obligations`, `ordinary_test_evidence`, `missing_test_kinds`,
 `conformance_boundary`, `residual_blindspots`, and PM's
-`test_obligation_matrix` disposition. Ordinary test evidence must be current,
+current PM evidence disposition. Ordinary test evidence must be current,
 passing, and bound to explicit FlowGuard obligations before it can close model
 coverage. Missing, stale, skipped, failed, not-run, progress-only, or
 undispositioned test rows are evidence gaps, not residual notes. If a report
@@ -59,8 +63,8 @@ gate.
 
 Also include structure debt dispositions as evidence hygiene. Patch stacks,
 fallback-like paths, compatibility branches, duplicate adapters, stale
-generated artifacts, old-route evidence, newest-run fallbacks, repo-root
-fallbacks, and intentionally retained maintenance layers must be marked
+generated artifacts, non-current evidence, and intentionally retained
+maintenance layers must be marked
 removed, rejected, preserved as negative rejection evidence, retained as owned
 current-runtime recovery, retained as an owned maintenance layer, or blocked.
 Retained current-runtime or maintenance surfaces must cite owner, scope,
@@ -69,3 +73,12 @@ ledger work while any structure debt disposition is missing or unresolved.
 
 If the route includes UI or visual work, include screenshot paths and visual
 review notes. If it does not, mark UI/visual evidence as not applicable.
+
+Also inventory final artifact hygiene. For each applicable artifact family,
+record the checked surface, whether cleanup is required, whether it is current
+goal required, clean-delivery required, PM decision support, or a future
+contract candidate, and what evidence would close it. Examples include code
+module split or readability, tests that must be added, model/test alignment,
+document revision cleanup, citation/table consistency, UI polish, stale
+generated artifact disposal, and process-ledger cleanup. Do not invent cleanup
+work for inapplicable families; explicitly mark them not applicable.

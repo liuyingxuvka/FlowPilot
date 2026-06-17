@@ -56,129 +56,48 @@ If PM already knows the route must change, do not try to pass the node first.
 Runtime owns mechanical validation of required fields, node identity, packet
 kind, route scope, hashes, and current-run identity.
 
-Use only the active route, active frontier, root acceptance contract, product
-function architecture, approved child-skill gate manifest, and latest
-route-memory prior path context. The plan must state:
+Use only the active route, active frontier, root acceptance contract, accepted
+skill standards, and latest route-memory prior path context. If prior path
+context mentions completed, superseded, or stale work, use it only as
+orientation for the current node plan; do not let completed, superseded, or
+stale evidence close this node. If `decision: "pass"`, the result body must include exactly one
+`node_context_package` with these current fields:
 
-- active route id, route version, and node id;
-- requirement traceability for this node: preserve the active route node's
-  requirement or skill ids when present, and otherwise bind the node through
-  existing acceptance criteria, outputs, checks, and references. Do not invent
-  broad new route-node fields at node entry; if traceability is not reviewable
-  with the current route shape, block for PM route deepening or route mutation;
-- prior path context files read and how completed, superseded, stale, blocked,
-  or experimental history affects this node;
-- concrete node requirements and proof obligations;
-- `test_obligation_matrix.pre_worker`: every FlowGuard-backed product,
-  process, child-skill, acceptance-slice, and validation obligation that needs
-  ordinary test or replay evidence before this node can close. Each row must
-  name `obligation_id`, `source`, `required_test_kind`, `owner_role`,
-  `expected_evidence`, `freshness_rule`, and current PM disposition. For any
-  FlowGuard operator modeling used to derive these rows, include `role_skill_use_bindings`
-  for the exact FlowGuard child skill or satellite route PM selected, such as
-  Existing Model Preflight, DevelopmentProcessFlow, Model-Test Alignment, or
-  TestMesh;
-  each FlowGuard-derived row must retain originating `flowguard_work_order_id`,
-  `flowguard_report_id`, `flowguard_report_freshness`, and PM disposition so
-  stale, skipped, progress-only, or unaccepted reports cannot close the node;
-- the product behavior model segment this node covers, or the reason this node
-  is process-only;
-- final-user intent and product usefulness self-check for this node when
-  applicable: how the node changes the user's real outcome, what would make it
-  unusable or semantically downgraded, and which evidence will prove that the
-  user-facing claim is true;
-- low-quality-success self-check for this node: inherited hard parts from the
-  product architecture or root contract, the node-local hard part, the
-  thin-success shortcut most likely to make the node look complete while still
-  being low quality, warning signs PM and Reviewer should distrust, and proof
-  of depth that must appear in the worker/FlowGuard operator result;
-- `structure_hygiene_expectation`: the node-local expectation for patch stacks,
-  fallback-like paths, compatibility branches, duplicate adapters, generated
-  leftovers, and maintenance layers. State whether the node must remove,
-  reject, preserve as negative rejection evidence, retain as owned
-  current-runtime recovery, retain as an owned maintenance layer, or block on
-  each surface. Any retained surface must have owner, scope, validation
-  evidence, and sunset or next-disposition criteria;
-- inherited `skill_standard_projection`: every child-skill standard relevant
-  to this node, grouped by `MUST`, `DEFAULT`, `FORBID`, `VERIFY`, `LOOP`,
-  `ARTIFACT`, and `WAIVER`, with standard ids, source skill, source path,
-  required artifact path, required reviewer/FlowGuard operator gate, and whether it is
-  completed here, completed later, not applicable, or waived by PM authority;
-- `active_child_skill_bindings`: for each selected child skill that supplies
-  execution behavior for this node, name the exact child skill, source
-  `SKILL.md` path, required reference paths, current-node slice, packet ids,
-  selected standard ids, and result evidence required. The PM packet is the
-  minimum floor; if the child skill has a stricter applicable requirement, the
-  stricter child-skill requirement wins unless PM records an explicit waiver;
-- `role_skill_use_bindings`: for each selected child skill that supports this
-  node or gate through PM planning, specification, route design, reviewer
-  review, FlowGuard operator modeling, validation, or worker execution, name the exact
-  role, use context, source `SKILL.md`, referenced paths, selected standard
-  ids, affected output or gate, and Role Skill Use Evidence required. Include
-  PM's own planning skill use when it materially shapes acceptance criteria,
-  route structure, node proof, or validation expectations;
-- `work_packet_projection`: the exact inherited standard ids that must be
-  copied into each worker/FlowGuard operator packet, plus the active child-skill bindings
-  that must be copied into each worker packet with direct-use instructions,
-  allowed source paths, result-matrix rows, and `Child Skill Use Evidence`
-  rows the recipient must return. When a packet or role-output request carries
-  `role_skill_use_bindings`, also copy the Role Skill Use Evidence rows the
-  recipient must return. When the node declares test obligations, copy the
-  relevant `test_obligation_matrix.pre_worker` rows into the worker or FlowGuard operator
-  packet and require `Test Obligation Coverage` rows in the result for every
-  packet-scoped test obligation. Also copy the relevant
-  `structure_hygiene_expectation` rows into every worker or repair packet and
-  require `Structure Hygiene Delta` in the result. Do not issue a work packet if this projection
-  is missing for a selected child skill or required test obligation;
-- minimum sufficient complexity review for this node;
-- experiments, checks, fixtures, and evidence paths;
-- direct evidence closure rules: report prose, file existence, or a clean
-  ledger row is not enough to close a covered requirement unless the root
-  contract explicitly allowed that evidence type. Name direct evidence,
-  scenario replay, reviewer/FlowGuard operator check, waiver authority, or unresolved
-  reason for every covered requirement;
-- whether the node has children and therefore requires parent backward replay;
-- whether the active node is a parent/module, leaf, or repair node. If it has
-  children, this plan must mark the node as not worker-dispatchable and route
-  execution into the child subtree or parent backward replay instead of issuing
-  a worker packet for the parent;
-- this plan is context for executing the canonical route node; it must not
-  override `node_kind`, `parent_node_id`, or `child_node_ids`. If those fields
-  show the node is not worker-dispatchable, deepen or mutate the route rather
-  than writing a worker-ready plan;
-- for a leaf or repair node, include a `leaf_readiness_gate` with `status`,
-  `single_outcome`, `worker_executable_without_replanning`, `proof_defined`,
-  `dependency_boundary_defined`, `failure_isolation_defined`, and
-  `over_decomposition_checked`. Use `status: "pass"` only when the node can be
-  completed by a worker from the packet without PM replanning;
-- at node entry, re-ask whether this apparent leaf is still too broad, too
-  narrow, or wrongly ordered. This is the PM self-check before work packet
-  release. If it is too broad, do not ask the Worker to split it and do not
-  return `decision: "pass"`; return `decision: "redesign_route"` with the
-  deeper child route under a replacement parent/module scope for the active
-  node. If it is over-split, merge or waive the extra structure with a PM
-  complexity reason before dispatch;
-- when a leaf is promoted to parent/module, mark old leaf approvals stale,
-  attach the new ordered children, and require the local FlowGuard operator product-model
-  model, PM model decision, Reviewer product challenge, FlowGuard operator process-model
-  serial child route, PM process decision, PM absorption of the structural
-  FlowGuard result, and Reviewer route challenge before dispatching those children;
-- forbidden low-standard or placeholder outcomes;
-- forbidden thin-success outcomes where an artifact, command, report,
-  screenshot, or ledger entry exists but the hard part was only handled
-  casually;
-- recheck criteria proving the node still meets the frozen contract after
-  worker output, repair, or route mutation.
+- `purpose`: why this node exists now;
+- `acceptance_criteria`: the node's current acceptance criteria;
+- `relevant_references`: current materials or artifacts the next role should
+  open first;
+- `known_risks`: risks PM already knows and wants downstream roles to inspect;
+- `acceptance_item_projection`: one row for every acceptance item assigned to
+  this route node, with `acceptance_item_id`, `status_for_this_node`, and
+  `future_evidence_rule`.
 
-After worker, FlowGuard operator, or reviewer output returns, PM must update
-`test_obligation_matrix.post_worker` before approving node completion. The
-post-worker matrix must absorb changed paths, new or stale evidence, skipped
-checks, failed checks, background tests without complete exit/meta artifacts,
-and FlowGuard operator `missing_test_kinds`. Every row must be dispositioned as
-`covered`, `worker_test_packet_required`, `testmesh_required`,
-`model_test_alignment_required`, `waived_with_authority`,
-`deferred_to_named_node`, or `blocked`. Undispositioned rows block PM
-node-completion approval.
+Do not add PM-only pre-worker test matrices, work-packet projection fields,
+FlowGuard target fields, Reviewer starting-point fields, or structure hygiene
+fields to `node_context_package`. FlowGuard operator, Reviewer, Worker, and
+TestMesh each expand their own checks from this current context and their own
+packet contracts. If a role discovers a model/test/quality gap, it reports the
+gap through its own blockers or PM suggestion items; PM then chooses the next
+current repair path.
+
+At node entry, re-ask whether this apparent leaf is still too broad, too
+narrow, or wrongly ordered. This is the PM self-check before work packet
+release. If it is too broad, do not ask the Worker to split it and do not
+return `decision: "pass"`; return `decision: "redesign_route"` with the deeper
+child route under a replacement parent/module scope for the active node. If it
+is over-split, merge or waive the extra structure with a PM complexity reason
+before dispatch.
+
+For a parent repair replacement, `child_node_ids` are the active repair
+children that must run now. `inherited_child_node_ids` and
+`inherited_accepted_result_ids` are historical context only; they cannot close
+the replacement parent and cannot substitute for a non-empty active
+`child_node_ids` list.
+
+This plan is context for executing the canonical route node; it must not
+override `node_kind`, `parent_node_id`, or `child_node_ids`. If those fields
+show the node is not worker-dispatchable, deepen or mutate the route rather
+than writing a worker-ready plan.
 
 ## Supporting Skill Fidelity
 
@@ -192,6 +111,10 @@ skill, concrete counts or ranges, required ordering, default iteration or retry
 budgets, required artifacts, required evidence, forbidden substitutions,
 reviewer gates, final verdict rules, waiver or blocker rules, and explicit
 non-goals.
+Record these requirements in `skill_standard_projection` and
+`active_child_skill_bindings`. When the child manifest declares
+`role_skill_use_bindings`, carry those bindings forward and require downstream
+roles to return `Role Skill Use Evidence` rows for the affected output or gate.
 
 Do not weaken a specific skill requirement into a generic phrase. If wording is
 compressed, preserve the same acceptance force. If a skill requirement is
@@ -210,28 +133,26 @@ Examples of weakening to avoid:
 For a repair node, include the mainline node or parent segment it returns to
 and the product-model, process-model, reviewer, or evidence checks that become
 stale and must rerun before mainline work resumes.
+For a parent repair replacement, name the current repair child ids, the inherited
+history ids, and the parent backward replay evidence that will be required after
+the active repair children complete.
 Also list impacted requirement ids, superseded requirement ids, stale evidence
 refs, and required rerun models/checks. Old evidence cannot close a changed or
 superseded requirement.
 
-The returned plan must include a complete `prior_path_context_review` object
-with `reviewed`, `source_paths`, `completed_nodes_considered`,
-`superseded_nodes_considered`, `stale_evidence_considered`,
-`prior_blocks_or_experiments_considered`, and `impact_on_decision`.
-
-The returned plan must include a complete `high_standard_recheck` object with
-`ideal_outcome`, `unacceptable_outcomes`, `higher_standard_opportunities`,
-`semantic_downgrade_risks`, `decision`, and
-`why_current_plan_meets_highest_reasonable_standard`. Use `decision:
-proceed` only when the plan already reaches the highest reasonable standard
-for this node without unnecessary complexity.
-It must also include a concrete low-quality-success mapping for this node:
-hard parts, thin-success shortcut, proof of depth, reviewer probe, and whether
-the concern is a hard current requirement or PM decision-support.
-It must also include `structure_hygiene_expectation`, even when the expected
-answer is that no fallback-like path, compatibility branch, stale generated
-artifact, duplicate adapter, or maintenance layer is expected. A missing
-structure hygiene expectation blocks packet dispatch.
+PM may keep prior-path, high-standard, low-quality-success, and structure
+hygiene notes in the plan artifact when they help Reviewer or downstream roles,
+but they are not extra runtime-required node-context fields. Do not block node
+dispatch solely because these notes are absent from `node_context_package`.
+Use `structure_hygiene_expectation` in the plan artifact to preserve expected
+dispositions for fallbacks, compatibility branches, duplicate adapters, stale
+generated artifacts, and maintenance layers that matter to this node.
+Before dispatch, PM must perform a final-user intent and product usefulness self-check.
+The low-quality-success self-check must name the hard part, the thin-success
+shortcut to avoid, and the proof of depth expected from the worker or reviewer
+evidence. Also identify each node-owned acceptance item in
+`acceptance_item_projection` so packet work cannot close a broad node by generic
+prose.
 Classify every higher-standard opportunity as hard current requirement,
 current-node improvement, future-route candidate, nonblocking note, or rejected
 with reason. Do not turn a nonessential improvement into a hard blocker unless

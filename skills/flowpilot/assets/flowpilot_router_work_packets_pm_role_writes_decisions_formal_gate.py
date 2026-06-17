@@ -77,6 +77,11 @@ def _write_pm_formal_gate_package(
     payload: dict[str, Any],
 ) -> dict[str, Any]:
     _bind_router(router)
+    if "decision_reason" not in payload and "reason" in payload:
+        raise RouterError(f"{package_label} formal gate package requires decision_reason; reason is not a current alias")
+    decision_reason = str(payload.get('decision_reason') or '').strip()
+    if not decision_reason:
+        raise RouterError(f"{package_label} formal gate package requires non-empty decision_reason")
     run_root = project_root / str(run_state['run_root'])
     map_doc = material_artifact_map.refresh_material_artifact_map(project_root, run_root, run_state)
     map_ref = material_artifact_map.material_artifact_map_source_ref(project_root, run_root)
@@ -167,7 +172,7 @@ def _write_pm_formal_gate_package(
             'excludes_worker_result_bodies': True,
             'sealed_body_boundary_preserved': True,
         },
-        'decision_reason': payload.get('decision_reason') or payload.get('reason') or '',
+        'decision_reason': decision_reason,
         'residual_risks': payload.get('residual_risks') if isinstance(payload.get('residual_risks'), list) else [],
         'created_at': utc_now(),
     }

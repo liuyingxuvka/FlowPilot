@@ -45,12 +45,15 @@ class State:
     router_slice_counted_green: bool = False
     router_child_commands_granular: bool = True
     router_k_shards_disjoint: bool = True
+    router_k_patterns_current: bool = True
     slow_router_aggregate_command_present: bool = False
     background_requested: bool = False
     background_artifacts_declared: bool = False
     background_exit_artifact_present: bool = False
     background_exit_inspected: bool = False
     background_progress_claimed_as_pass: bool = False
+    background_timeout_enforced: bool = True
+    json_write_readback_bounded: bool = True
     release_obligation_visible: bool = True
     release_required: bool = False
     release_suite_run_or_backgrounded: bool = False
@@ -172,6 +175,10 @@ SCENARIOS: dict[str, State] = {
         _valid_router("router_child_tier_duplicates_k_shards"),
         router_k_shards_disjoint=False,
     ),
+    "router_child_tier_stale_k_pattern": replace(
+        _valid_router("router_child_tier_stale_k_pattern"),
+        router_k_patterns_current=False,
+    ),
     "background_progress_only_claimed_pass": replace(
         _valid_background("background_progress_only_claimed_pass"),
         background_exit_artifact_present=False,
@@ -181,6 +188,17 @@ SCENARIOS: dict[str, State] = {
     "background_missing_artifact_set": replace(
         _valid_background("background_missing_artifact_set"),
         background_artifacts_declared=False,
+    ),
+    "background_running_without_timeout_guard": replace(
+        _valid_background("background_running_without_timeout_guard"),
+        background_exit_artifact_present=False,
+        background_exit_inspected=False,
+        background_progress_claimed_as_pass=True,
+        background_timeout_enforced=False,
+    ),
+    "json_write_readback_can_hang_control_gate": replace(
+        _valid_background("json_write_readback_can_hang_control_gate"),
+        json_write_readback_bounded=False,
     ),
     "release_obligation_hidden": replace(
         _valid_fast("release_obligation_hidden"),
@@ -244,12 +262,18 @@ def test_tier_failures(state: State) -> list[str]:
         failures.append("router_child_commands_not_granular")
     if state.tier_scope == "router" and not state.router_k_shards_disjoint:
         failures.append("router_child_shards_duplicate_test_selection")
+    if state.tier_scope == "router" and not state.router_k_patterns_current:
+        failures.append("router_child_shard_pattern_stale_or_empty")
     if state.background_requested and not state.background_artifacts_declared:
         failures.append("background_artifact_set_missing")
     if state.background_progress_claimed_as_pass and (
         not state.background_exit_artifact_present or not state.background_exit_inspected
     ):
         failures.append("background_progress_is_not_completion_evidence")
+    if state.background_requested and not state.background_timeout_enforced:
+        failures.append("background_timeout_not_enforced")
+    if state.background_requested and not state.json_write_readback_bounded:
+        failures.append("json_write_readback_not_bounded")
     if state.tier_scope == "release" and not state.release_suite_run_or_backgrounded:
         failures.append("release_scope_missing_release_suite")
     if (
@@ -350,6 +374,10 @@ def background_completion_requires_exit_evidence(
         and (not state.background_exit_artifact_present or not state.background_exit_inspected)
     ):
         return InvariantResult.fail("accepted background tier without inspected exit evidence")
+    if state.status == "accepted" and state.background_requested and not state.background_timeout_enforced:
+        return InvariantResult.fail("accepted background tier without timeout guard")
+    if state.status == "accepted" and state.background_requested and not state.json_write_readback_bounded:
+        return InvariantResult.fail("accepted background tier with unbounded JSON write readback")
     return InvariantResult.pass_()
 
 

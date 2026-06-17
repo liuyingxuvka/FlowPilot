@@ -22,6 +22,7 @@ class PacketResultFamilyRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 ]
             },
         )
+        self.ensure_current_role_agent_for_role(root, "worker")
         self.apply_next_packet_action(root, "relay_material_scan_packets")
         return run_root, run_root / "material" / "material_scan_packets.json"
 
@@ -44,12 +45,18 @@ class PacketResultFamilyRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 root,
                 "material/reviewer_material_insufficient_for_family",
                 {
+                    "pm_visible_summary": ["Reviewed material is insufficient for PM execution."],
                     "reviewed_by_role": "human_like_reviewer",
+                    "passed": False,
                     "direct_material_sources_checked": True,
                     "packet_matches_checked_sources": True,
                     "pm_ready": False,
                     "checked_source_paths": self.material_review_source_paths(root),
                     "runtime_open_receipt_refs": [],
+                    "findings": [],
+                    "blockers": [],
+                    "pm_suggestion_items": [],
+                    "contract_self_check": {"status": "pass"},
                 },
             ),
         )
@@ -77,6 +84,8 @@ class PacketResultFamilyRuntimeTests(FlowPilotRouterRuntimeTestBase):
         router.record_external_event(root, "research_capability_decision_recorded", {})
         self.apply_next_non_card_action(root)
         self.ack_system_card_action(root, router.next_action(root))
+        self.ensure_current_role_agent_for_role(root, "worker")
+        self.ensure_current_role_agent_for_role(root, "flowguard_operator")
         self.apply_next_packet_action(root, "relay_research_packet")
         return run_root, run_root / "research" / "research_packet.json"
 

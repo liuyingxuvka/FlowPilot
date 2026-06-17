@@ -108,9 +108,9 @@ Allowed actions:
   never grants sealed-body access, gate approval, route mutation, target-product
   work, acceptance changes, publication, deployment, or secret handling;
 - if foreground duty includes `repair_loop_break_glass_review` showing that the
-  same current route node has repeated the same blocker problem more than five
+  same repair lineage has repeated the same blocker problem more than five
   consecutive times, treat the `control_plane_blocker` as a break-glass
-  diagnosis duty. Do not wait for another same-node PM repair packet and do not
+  diagnosis duty. Do not wait for another same-lineage PM repair packet and do not
   open sealed bodies; read the break-glass playbook and report only
   Controller-visible threshold metadata. Similar blocker classes spread across
   different route nodes are ordinary repair evidence, not this threshold;

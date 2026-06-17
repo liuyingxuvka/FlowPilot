@@ -35,7 +35,7 @@ class FlowPilotHistoricalLiveRunReplayMatrixTests(unittest.TestCase):
         self.assertEqual({row["replay_id"] for row in report["rows"]}, matrix.REQUIRED_REPLAY_IDS)
         self.assertEqual(set(report["rows_by_surface"]), matrix.REQUIRED_SURFACES)
         self.assertEqual(report["row_count"], report["required_replay_count"])
-        self.assertEqual(report["rows_by_priority"]["P0"], 4)
+        self.assertEqual(report["rows_by_priority"]["P0"], 5)
         self.assertIn("historical live-run replay", report["coverage_boundary"])
         self.assertIn("live AI semantic", report["coverage_boundary"])
 
@@ -73,6 +73,7 @@ class FlowPilotHistoricalLiveRunReplayMatrixTests(unittest.TestCase):
                 "host_role_lifecycle",
                 "production_replay_adapter",
                 "relay_receipt_mechanics",
+                "contract_surface_reduction_baseline",
             },
         )
         self.assertTrue(p0_rows["historical_snapshot"]["historical_snapshot_required"])
@@ -81,6 +82,38 @@ class FlowPilotHistoricalLiveRunReplayMatrixTests(unittest.TestCase):
         self.assertIn("adapter gap", p0_rows["production_replay_adapter"]["confidence_boundary"])
         self.assertIn("rehydrate_role_bindings", p0_rows["host_role_lifecycle"]["entrypoints"])
         self.assertIn("packet_runtime", p0_rows["relay_receipt_mechanics"]["entrypoints"])
+        self.assertIn(
+            "run-20260613-140526_process_route_baseline",
+            p0_rows["contract_surface_reduction_baseline"]["required_evidence"],
+        )
+
+    def test_contract_surface_reduction_row_covers_success_baseline_failure_and_all_families(self) -> None:
+        row = next(
+            row
+            for row in matrix.build_rows()
+            if row["surface"] == "contract_surface_reduction_baseline"
+        )
+
+        self.assertEqual(
+            row["replay_id"],
+            "contract.surface.run_20260613_mainline_and_first_packet_failure",
+        )
+        self.assertIn(
+            "WorldGurd_20260613/.flowpilot/runs/run-20260613-140526",
+            row["source_records"],
+        )
+        self.assertEqual(
+            set(row["phase_sequence"]),
+            set(matrix.CONTRACT_SURFACE_REDUCTION_PACKET_FAMILIES),
+        )
+        self.assertTrue(
+            set(matrix.CONTRACT_SURFACE_REDUCTION_PACKET_FAMILIES).issubset(row["required_evidence"])
+        )
+        self.assertIn("first_packet_terminal_evidence_blocker_invalid", row["required_evidence"])
+        self.assertIn("restore_historical_field_shape", row["forbidden_shortcuts"])
+        self.assertIn("treat_first_packet_as_terminal_replay", row["forbidden_shortcuts"])
+        self.assertIn("skip_mainline_packet_family_coverage", row["forbidden_shortcuts"])
+        self.assertIn("historical field shape cannot be promoted", row["protected_state_invariant"])
 
     def test_historical_live_run_known_bad_cases_are_rejected(self) -> None:
         for case in matrix.known_bad_cases():

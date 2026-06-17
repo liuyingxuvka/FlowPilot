@@ -33,6 +33,13 @@ named migration. Runtime recovery is still allowed when it is current-run,
 owner-scoped, packet/node-scoped, and blocks or reissues instead of translating
 old input into valid current evidence.
 
+Current-contract bug repairs must also follow
+`docs/flowpilot_current_contract_repair_discipline.md`. Future agents should
+use that guide before adding fields or prompt requirements: first check the
+stage matrix, role boundary, fixed blocker action, repair packet contract, and
+repeated-repair lineage rule; then shrink, move, or delete the mismatched
+requirement instead of stacking another compatibility surface.
+
 The current structure-maintenance baseline uses a FlowGuard StructureMesh /
 TestMesh gate before broad router or model-script refactors. The gate lives in
 `simulations/flowpilot_structure_maintenance_model.py` and is checked by

@@ -85,7 +85,7 @@ for review.
 19. Generate a candidate route tree and freeze it only after root FlowGuard
     checks pass.
 20. Enumerate every effective route node with children as a parent backward
-   replay target. This is structural, not a high-risk/integration heuristic.
+   replay target from the current route structure.
 21. Review each parent subtree with FlowGuard before entering child work.
 22. Refine the child-skill gate manifest for the current node before executing
    an invoked child skill, and require assigned-role approval before the

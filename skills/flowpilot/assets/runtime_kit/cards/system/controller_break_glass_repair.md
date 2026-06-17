@@ -64,10 +64,10 @@ failures:
   because execution is bound to a specific FlowPilot packet id, current active
   packet, or one-time phase, and normal PM repair cannot form a legal next
   action.
-- Runtime foreground duty reports that the same current route node has repeated
-  the same blocker problem more than five consecutive times. This is a
+- Runtime foreground duty reports that the same repair lineage has repeated the
+  same blocker problem more than five consecutive times. This is a
   break-glass diagnosis point, not permission to open another ordinary PM
-  repair decision packet for the same node/problem loop. Similar blocker
+  repair decision packet for the same lineage/problem loop. Similar blocker
   classes across different route nodes do not trigger this threshold alone.
 - A prompt/card requires a return event that Router's current
   `allowed_external_events` does not allow.
@@ -112,9 +112,9 @@ Record which normal lane failed: PM repair, control-blocker first handler,
 packet routing, event authority, role-output runtime, lifecycle guard, or
 foreground duty.
 
-When the trigger is a same-node consecutive repair loop threshold, first verify
+When the trigger is a same-lineage consecutive repair loop threshold, first verify
 whether the threshold evidence is a false alarm using Controller-visible
-metadata only: route node identity, blocker class, gate kind, required recheck
+metadata only: repair lineage root, route node identity, blocker class, gate kind, required recheck
 role, attempt count, packet statuses, and foreground duty. If the threshold is
 a false alarm, record the diagnostic disposition and return to normal runtime
 routing. If it is real, restore a legal next action through ordinary

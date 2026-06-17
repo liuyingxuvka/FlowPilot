@@ -1149,7 +1149,7 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
             router.record_controller_action_receipt(root, action_id=entry["action_id"], status="done", payload=payload)
             completed.append(str(action_type))
         return completed
-    def force_current_role_result_wait(self, root: Path) -> dict:
+    def force_current_role_result_wait(self, root: Path, *, waiting_for_role: str = "worker") -> dict:
         run_root = self.run_root_for(root)
         runtime_dir = run_root / "runtime"
         for name in ("controller_actions", "controller_receipts"):
@@ -1166,9 +1166,9 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
             actor="controller",
             label="controller_waits_for_current_role_result",
             summary="Controller waits for a current runtime role result through Router-directed runtime output.",
-            to_role="worker",
+            to_role=waiting_for_role,
             extra={
-                "waiting_for_role": "worker",
+                "waiting_for_role": waiting_for_role,
                 "allowed_external_events": ["role_work_result_returned"],
                 "expected_return_path": "pm_role_work/current_role_result.json",
             },
@@ -1361,38 +1361,49 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
     def role_recovery_agent_payload(self, root: Path, action: dict, *, role: str = "worker") -> dict:
         request = next(item for item in action["role_recovery_request"] if item["role_key"] == role)
         transaction = action["role_recovery_transaction"]
+        recovered = {
+            "role_key": role,
+            "old_agent_id": request["old_agent_id"],
+            "agent_id": f"recovered-{transaction['transaction_id']}-{role}",
+            "model_policy": "strongest_available",
+            "reasoning_effort_policy": "highest_available",
+            "recovery_result": "targeted_replacement_opened",
+            "restore_attempted": True,
+            "restore_result": "failed",
+            "targeted_replacement_attempted": True,
+            "targeted_replacement_result": "success",
+            "host_liveness_status": "active",
+            "liveness_decision": "opened_replacement_from_current_run_memory",
+            "slot_reconciliation_attempted": False,
+            "full_role_binding_recovery_attempted": False,
+            "rehydrated_for_run_id": transaction["run_id"],
+            "memory_context_injected": True,
+            "packet_ownership_reconciled": True,
+            "role_binding_epoch_advanced": True,
+            "superseded_agent_output_quarantined": True,
+        }
+        if request.get("role_memory_status") == "available":
+            recovered.update(
+                {
+                    "memory_packet_path": request["memory_packet_path"],
+                    "memory_packet_hash": request["memory_packet_hash"],
+                    "memory_seeded_from_current_run": True,
+                }
+            )
+        else:
+            recovered.update(
+                {
+                    "memory_missing_acknowledged": True,
+                    "replacement_seeded_from_common_run_context": True,
+                }
+            )
         return {
             "runtime_role_assistance_capability_status": "available",
             "recovery_transaction_id": transaction["transaction_id"],
             "trigger_source": transaction["trigger_source"],
             "recovery_scope": transaction["recovery_scope"],
             "target_role_keys": transaction["target_role_keys"],
-            "recovered_role_bindings": [
-                {
-                    "role_key": role,
-                    "old_agent_id": request["old_agent_id"],
-                    "agent_id": f"recovered-{transaction['transaction_id']}-{role}",
-                    "model_policy": "strongest_available",
-                    "reasoning_effort_policy": "highest_available",
-                    "recovery_result": "targeted_replacement_opened",
-                    "restore_attempted": True,
-                    "restore_result": "failed",
-                    "targeted_replacement_attempted": True,
-                    "targeted_replacement_result": "success",
-                    "host_liveness_status": "active",
-                    "liveness_decision": "opened_replacement_from_current_run_memory",
-                    "slot_reconciliation_attempted": False,
-                    "full_role_binding_recovery_attempted": False,
-                    "rehydrated_for_run_id": transaction["run_id"],
-                    "memory_context_injected": True,
-                    "packet_ownership_reconciled": True,
-                    "role_binding_epoch_advanced": True,
-                    "superseded_agent_output_quarantined": True,
-                    "memory_packet_path": request["memory_packet_path"],
-                    "memory_packet_hash": request["memory_packet_hash"],
-                    "memory_seeded_from_current_run": True,
-                }
-            ],
+            "recovered_role_bindings": [recovered],
         }
     def write_worker_recovery_wait_action(
         self,
@@ -1487,12 +1498,18 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
                 root,
                 "material/reviewer_material_sufficiency",
                 {
+                    "pm_visible_summary": ["Reviewed material is sufficient for PM planning."],
                     "reviewed_by_role": "human_like_reviewer",
+                    "passed": True,
                     "direct_material_sources_checked": True,
                     "packet_matches_checked_sources": True,
                     "pm_ready": True,
                     "checked_source_paths": self.material_review_source_paths(root),
                     "runtime_open_receipt_refs": [],
+                    "findings": [],
+                    "blockers": [],
+                    "pm_suggestion_items": [],
+                    "contract_self_check": {"status": "pass"},
                 },
             ),
         )

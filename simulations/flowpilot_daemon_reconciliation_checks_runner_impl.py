@@ -8,7 +8,7 @@ from collections import deque
 from pathlib import Path
 from typing import Any
 
-from flowguard import Explorer
+from flowguard.explorer import Explorer
 
 import flowpilot_daemon_reconciliation_model as model
 from flowpilot_daemon_reconciliation_checks_projection import _live_run_projection

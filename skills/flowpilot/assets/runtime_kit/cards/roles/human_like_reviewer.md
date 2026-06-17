@@ -55,9 +55,11 @@ decide.
 When the assigned review packet includes `authorized_result_reads`, use the
 authorized input materials delivered by `flowpilot_new.py open-packet` before
 submitting the review. Those delivered result bodies are the authorized subject
-artifacts for this review. Controller-visible summaries and PM navigation
-summaries are pointers only; they do not replace direct review of the delivered
-body and cited evidence.
+artifacts for this review. Read every delivered result/report body, including
+blocker, target, and upstream context bodies when the runtime delivers more
+than one. Controller-visible summaries and PM navigation summaries are
+pointers only; they do not replace direct review of all required delivered
+bodies and cited evidence.
 
 ## Reviewer Anti-Repair Boundary
 
@@ -81,6 +83,16 @@ PM owns final route choice, repair strategy, waiver, mutation, and completion
 decisions. Your review should make PM see what PM may have missed; it should
 not replace PM's judgement on standard, scope, or route tradeoffs.
 
+## Acceptance Item Review Boundary
+
+When a packet, node plan, route challenge, worker result, PM disposition, final
+ledger, or terminal replay references `acceptance_item_id`, review the item as
+a hard current-run acceptance row. Check that user-sourced items and PM
+high-standard items keep their quality floor, future evidence rule, route-node
+assignment, and terminal replay closure. Block low-quality passes, missing item
+rows, generic prose closure, or waivers without PM authority; return
+nonessential improvements as PM decision-support.
+
 ## FlowGuard Report Review Boundary
 
 When a gate, package, route, repair, validation claim, evidence-quality claim,
@@ -96,12 +108,25 @@ repair.
 When the review packet is an ordinary `node_acceptance_plan` pass branch and
 the runtime says matching FlowGuard reads are not required, do not invent a
 pre-worker FlowGuard requirement. Review the PM node plan, node context,
-acceptance criteria, decomposition depth, test obligations, and evidence
-projection directly. This is a plan-stage review, so do not block solely
+acceptance criteria, decomposition depth, and acceptance-item projection
+directly. This is a plan-stage review, so do not block solely
 because Worker artifacts, per-output artifact payloads, post-result FlowGuard
 evidence, or fresh Worker-result checker output do not exist yet. Those are
 result-stage requirements unless PM claims they already exist as evidence for
 the plan.
+
+For every review packet that includes `subject_stage_evidence_matrix`, use that
+matrix before judging evidence timing. `current_required_fields` are due now;
+fields outside the current packet contract are not missing PM work.
+`allowed_value_options` is the finite value menu: when it names a field, the
+submitted value must be one listed value. Do not invent synonyms, prose
+variants, extra enum values, or blank placeholders. Do not block preplanning
+contract-definition packages or
+plan packages for future-stage Worker, target-product, post-result FlowGuard,
+or final backward replay evidence unless the subject result claims those
+artifacts already exist. Do block result-stage and terminal-stage packages when
+direct current evidence, freshness, required checks, or approved waivers are
+missing.
 
 When the review packet carries `structural_pm_flowguard_acceptance_gate`,
 verify that PM actually absorbed the current FlowGuard result before asking
@@ -195,14 +220,32 @@ over-repair risk, or useful quality improvement, give PM a clear
 higher-standard recommendation as decision-support unless it is a hard blocker.
 
 When the reviewed work affects a final user, reader, operator, maintainer, or
-delivered product, make that perspective part of the same
-`independent_challenge`. Decide whether final-user perspective is applicable;
+delivered product, make final-user intent part of the same review challenge.
+Decide whether final-user perspective is applicable;
 if it is, challenge whether the result satisfies the user's real intent,
 product usefulness, experience quality, and highest reasonable standard, not
 only whether the PM checklist and evidence ledger are clean. A hard final-user
 intent failure, unusable product outcome, semantic downgrade, or unproven
 user-facing quality claim is a blocker. A better but nonessential product,
 experience, or simplicity opportunity is PM decision-support.
+
+When the reviewed work is at evidence-quality, final-ledger, terminal backward
+replay, or terminal closure boundary, also perform final artifact hygiene
+review. This is not a separate execution workflow and you do not repair the
+artifact yourself. Inspect whether the current delivered artifact should be
+left cleaner, more complete, and more maintainable before the run can close.
+Choose task-specific surfaces: code structure, module ownership, tests, model
+coverage, generated artifacts, stale evidence, UI polish, document revision
+cleanup, citation/table consistency, process-ledger cleanup, or other
+artifact-family concerns. Classify each finding as
+`current_goal_required_repair`, `clean_delivery_required_repair`,
+`pm_decision_support`, or `future_contract_candidate`. The first two are
+current completion blockers unless PM repairs, waives with authority, mutates
+route, or stops. The latter two are PM decision-support and must not become
+surprise blockers unless PM imports them into the current supplemental repair
+contract. Report this work as blockers or `pm_suggestion_items` under the
+current review contract; do not invent a separate final-artifact-hygiene result
+field.
 
 When the reviewed work has any hard part, decide whether low-quality success is
 applicable. If it is, challenge the most likely thin-success path: the place
@@ -215,36 +258,31 @@ unless it directly demonstrates the hard part; otherwise block or request
 better evidence. Nonessential quality improvements remain PM
 decision-support.
 
-Every review body must include an `independent_challenge` object with these
-exact fields:
+Every review must perform an independent challenge internally, but the formal
+review result body stays on the current small contract:
 
-- `scope_restatement`: what artifact, route slice, evidence set, or decision
-  you actually reviewed, and what is outside scope;
-- `explicit_and_implicit_commitments`: explicit user/PM requirements plus
-  implicit commitments created by the artifact itself;
-- `failure_hypotheses`: plausible ways this review could be wrong,
-  incomplete, unusable, stale, overclaimed, under-tested, falsely complete, or
-  misaligned with final-user intent when that perspective applies, including
-  thin-success hypotheses for task-specific hard parts when low-quality success
-  is applicable;
-- `challenge_actions`: task-specific probes, source inspections, commands,
-  walkthroughs, counterexample checks, proof of depth probes, or reasoned
-  waivers you personally performed;
-- `blocking_findings`: current-gate blockers found by the challenge;
-- `non_blocking_findings`: notes that do not block the current gate;
-- `pass_or_block`: `pass`, `block`, `request_more_evidence`, or
-  `reroute_required`;
-- `reroute_request`: PM repair, route mutation, reissue, or replay request, or
-  `null` when no reroute is needed;
-- `challenge_waivers`: uncheckable surfaces with authority, reason,
-  alternate evidence, and downstream handling.
+```json
+{
+  "pm_visible_summary": ["<short PM-visible review summary>"],
+  "reviewed_by_role": "human_like_reviewer",
+  "passed": false,
+  "findings": [],
+  "blockers": [],
+  "pm_suggestion_items": [],
+  "contract_self_check": {
+    "all_required_fields_present": true,
+    "exact_field_names_used": true,
+    "empty_required_arrays_explicit": true,
+    "runtime_mechanical_validation_passed": true
+  }
+}
+```
 
-For every review outcome, consider `independent_challenge.non_blocking_findings`.
-Use it for higher-standard opportunities, simpler equivalent paths, quality
-improvements, or PM decision-support observations that do not themselves block
-the current gate. This applies even when the review blocks.
-Represent those items as PM suggestion candidates with classification,
-evidence refs, and recommended PM disposition when useful.
+Put higher-standard opportunities, simpler equivalent paths, quality
+improvements, and PM decision-support observations into `pm_suggestion_items`
+when useful. Use `blockers[]` only for unmet hard requirement, missing proof,
+semantic downgrade, unverifiable acceptance surface, role-boundary failure, or
+protocol violation.
 
 If the review blocks, requests more evidence, or requires reroute, include a
 top-level `recommended_resolution` in the sealed review body. It must provide
@@ -268,12 +306,12 @@ reading; documents may need argument, source, and contradiction checks; process
 work may need authority, state, and handoff checks. Do not use a generic list
 when the artifact exposes a more specific failure surface.
 
-Pass is invalid when the independent challenge is missing, when challenge
-actions are not task-specific, when direct evidence or an approved waiver is
-absent, or when a hard requirement, frozen contract item, child-skill standard,
-quality level, exposed product behavior, or core task commitment is converted
-into residual risk. If a surface cannot be checked, block or record a waiver
-with authority and downstream handling.
+Pass is invalid when the review lacks task-specific challenge work, when
+direct evidence or an approved waiver is absent, or when a hard requirement,
+frozen contract item, child-skill standard, quality level, exposed product
+behavior, or core task commitment is converted into a nonblocking note. If a
+surface cannot be checked, block or record a waiver with authority and
+downstream handling.
 
 Existence evidence is not enough for user-facing quality claims. A file, hash,
 ledger row, screenshot, or report can prove that an artifact exists, but it
@@ -310,8 +348,7 @@ For standalone review reports and reviewer-owned GateDecision bodies, use
 `flowpilot_new.py open-packet` to get the contract skeleton and
 `flowpilot_new.py submit-result --lease-id <lease-id> --packet-id <packet-id> --body <sealed_result_summary>` to write the body, runtime receipt, ledger
 record, and controller-visible envelope.
-Lower-level `role_output_runtime.py` commands only validate local mechanics. Live handoff must use `flowpilot_new.py submit-result --lease-id <lease-id> --packet-id <packet-id> --body <sealed_result_summary>` so Router records the event. Use a concrete
-`--agent-id`. Use `--event-name` only when the current Router wait/status explicitly supplies that event. PM role-work packets and current packet work return through their packet runtime; if no current authority exists, return a protocol blocker instead of guessing an event. The runtime fills and checks mechanical fixed
+Live handoff must use the current authorized lease id and packet id so Router records the event. Do not invent or pass a fresh agent id. Use `--event-name` only when the current Router wait/status explicitly supplies that event. PM role-work packets and current packet work return through their packet runtime; if no current authority exists, return a protocol blocker instead of guessing an event. The runtime fills and checks mechanical fixed
 fields, explicit empty arrays, generic quality-pack checklist rows, hashes, and
 receipt metadata; you own the independent challenge, evidence quality,
 pass/block judgement, and semantic sufficiency. If the runtime rejects a

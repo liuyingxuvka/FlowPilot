@@ -93,7 +93,7 @@ def _pm_resume_decision_payload_contract(project_root: Path, run_root: Path) -> 
             ],
         },
         structural_requirements=[
-            "Submit the body directly to Router with `flowpilot_runtime.py submit-output-to-router`; the role_output_envelope must carry body_ref and runtime_receipt_ref metadata.",
+            "Submit the body through `flowpilot_new.py submit-result --lease-id <lease-id> --packet-id <packet-id> --body <sealed_result_summary>`; the role_output_envelope must carry body_ref and runtime_receipt_ref metadata.",
             "Cite exactly the current-run pm_prior_path_context.json and route_history_index.json in prior_path_context_review.source_paths.",
             "Use empty arrays explicitly when no completed, superseded, stale, blocked, or experimental history applies.",
         ],
@@ -132,7 +132,7 @@ def _pm_parent_segment_decision_payload_contract(project_root: Path, run_root: P
             ],
         },
         structural_requirements=[
-            "Submit the body directly to Router with `flowpilot_runtime.py submit-output-to-router`; the role_output_envelope must carry body_ref and runtime_receipt_ref metadata.",
+            "Submit the body through `flowpilot_new.py submit-result --lease-id <lease-id> --packet-id <packet-id> --body <sealed_result_summary>`; the role_output_envelope must carry body_ref and runtime_receipt_ref metadata.",
             "Cite exactly the current-run pm_prior_path_context.json and route_history_index.json in prior_path_context_review.source_paths.",
             "Use empty arrays explicitly when no completed, superseded, stale, blocked, or experimental history applies.",
             "Only decision=continue may close the active parent node; all other decisions require route mutation and same-parent replay rerun.",
@@ -181,7 +181,7 @@ def _pm_terminal_closure_payload_contract(project_root: Path, run_root: Path) ->
             "lifecycle_reconciliation.self_interrogation_index_clean": [True],
         },
         structural_requirements=[
-            "Submit the body directly to Router with `flowpilot_runtime.py submit-output-to-router`; the role_output_envelope must carry body_ref and runtime_receipt_ref metadata.",
+            "Submit the body through `flowpilot_new.py submit-result --lease-id <lease-id> --packet-id <packet-id> --body <sealed_result_summary>`; the role_output_envelope must carry body_ref and runtime_receipt_ref metadata.",
             "Cite exactly the current-run pm_prior_path_context.json and route_history_index.json in prior_path_context_review.source_paths.",
             "Use empty arrays explicitly when no completed, superseded, stale, blocked, or experimental history applies.",
             "Approve closure only after clean final ledger, passed terminal backward replay, current completion projection, clean PM suggestion ledger, clean self-interrogation index, clean lifecycle ledgers, and continuation binding are present.",
@@ -232,7 +232,7 @@ def _pm_model_miss_triage_payload_contract(project_root: Path, run_root: Path) -
             ],
         },
         structural_requirements=[
-            "Submit the body directly to Router with `flowpilot_runtime.py submit-output-to-router`; the role_output_envelope must carry body_ref and runtime_receipt_ref metadata.",
+            "Submit the body through `flowpilot_new.py submit-result --lease-id <lease-id> --packet-id <packet-id> --body <sealed_result_summary>`; the role_output_envelope must carry body_ref and runtime_receipt_ref metadata.",
             "Do not start pm.review_repair until this decision either authorizes a model-backed repair or records why FlowGuard cannot model the bug class.",
             "For model-backed repair, FlowGuard operator reports must include old_model_miss_reason, bug_class_definition, same_class_findings, coverage_added, candidate_repairs, minimal_sufficient_repair_recommendation, rejected_larger_repairs, rejected_smaller_repairs, post_repair_model_checks_required, and residual_blindspots.",
             "PM selects the repair path; FlowGuard operator reports provide model evidence and repair recommendations but do not approve route mutation by themselves.",

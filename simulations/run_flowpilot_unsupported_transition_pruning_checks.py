@@ -8,7 +8,7 @@ import re
 from collections import Counter, deque
 from pathlib import Path
 
-from flowguard import Explorer
+from flowguard.explorer import Explorer
 
 import flowpilot_unsupported_transition_pruning_model as model
 

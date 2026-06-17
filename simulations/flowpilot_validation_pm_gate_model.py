@@ -1,4 +1,4 @@
-"""FlowGuard model for FlowPilot validation automation and PM risk gates."""
+"""FlowGuard model for FlowPilot validation automation and unified PM repair gates."""
 
 from __future__ import annotations
 
@@ -23,10 +23,8 @@ class State:
     system_closure_applied: bool = False
     failed_system_validation_recorded: bool = False
     failed_system_validation_routed_to_pm: bool = False
-    low_risk_pm_decision_recorded: bool = False
-    low_risk_pm_decision_applied: bool = False
-    high_risk_pm_decision_recorded: bool = False
-    high_risk_pm_decision_staged: bool = False
+    pm_continue_repair_decision_recorded: bool = False
+    pm_continue_repair_decision_staged: bool = False
     staged_effect_recorded: bool = False
     same_family_staged_effect_repeated: bool = False
     same_family_staged_effect_converged: bool = False
@@ -45,11 +43,11 @@ class State:
     closure_before_system_validation: bool = False
     system_validation_failure_not_routed_to_pm: bool = False
     system_validation_failure_auto_closed: bool = False
-    high_risk_pm_applied_before_gate: bool = False
+    pm_continue_repair_applied_before_gate: bool = False
     pm_waiver_applied_before_gate: bool = False
     pm_redesign_without_flowguard: bool = False
     pm_decision_reviewer_missing: bool = False
-    low_risk_repair_forced_through_gate: bool = False
+    pm_continue_repair_applied_directly: bool = False
     staged_effect_missing_before_gate: bool = False
     semantic_review_demands_future_committed_state: bool = False
 
@@ -78,10 +76,8 @@ REQUIRED_SAFE_LABELS = (
     "advance_after_system_closure",
     "record_failed_system_validation",
     "route_failed_system_validation_to_pm",
-    "record_low_risk_pm_decision",
-    "apply_low_risk_pm_decision_directly",
-    "record_high_risk_pm_decision",
-    "stage_high_risk_pm_decision",
+    "record_pm_continue_repair_decision",
+    "stage_pm_continue_repair_decision",
     "converge_same_family_staged_effect",
     "pass_pm_decision_flowguard_gate",
     "pass_pm_decision_reviewer_gate",
@@ -117,8 +113,8 @@ class ValidationAutomationPmGateStep:
         "active_blockers",
     )
     input_description = "Input x State: one packet result, system validation action, or PM decision gate action"
-    output_description = "Set(Output x State): ordinary system closure, failed-validation PM repair, low-risk PM repair, high-risk PM gated application"
-    idempotency = "System closure is recorded once per passed validation; high-risk PM decisions apply only after system closure"
+    output_description = "Set(Output x State): ordinary system closure, failed-validation PM repair, and one unified gated path for PM continue-repair decisions"
+    idempotency = "System closure is recorded once per passed validation; PM continue-repair decisions apply only after gated system closure"
 
     def apply(self, input_obj: Tick, state: State) -> Iterable[FunctionResult]:
         del input_obj
@@ -168,22 +164,18 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
                 replace(state, failed_system_validation_routed_to_pm=True),
             ),
         )
-    if not state.low_risk_pm_decision_recorded:
-        return (Transition("record_low_risk_pm_decision", replace(state, low_risk_pm_decision_recorded=True)),)
-    if not state.low_risk_pm_decision_applied:
+    if not state.pm_continue_repair_decision_recorded:
         return (
             Transition(
-                "apply_low_risk_pm_decision_directly",
-                replace(state, low_risk_pm_decision_applied=True),
+                "record_pm_continue_repair_decision",
+                replace(state, pm_continue_repair_decision_recorded=True),
             ),
         )
-    if not state.high_risk_pm_decision_recorded:
-        return (Transition("record_high_risk_pm_decision", replace(state, high_risk_pm_decision_recorded=True)),)
-    if not state.high_risk_pm_decision_staged:
+    if not state.pm_continue_repair_decision_staged:
         return (
             Transition(
-                "stage_high_risk_pm_decision",
-                replace(state, high_risk_pm_decision_staged=True, staged_effect_recorded=True),
+                "stage_pm_continue_repair_decision",
+                replace(state, pm_continue_repair_decision_staged=True, staged_effect_recorded=True),
             ),
         )
     if not state.same_family_staged_effect_converged:
@@ -247,24 +239,22 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("system closure applied before system closure record")
     if state.failed_system_validation_routed_to_pm and not state.failed_system_validation_recorded:
         failures.append("failed system validation routed before failed evidence")
-    if state.low_risk_pm_decision_applied and not state.low_risk_pm_decision_recorded:
-        failures.append("low-risk PM decision applied before record")
-    if state.high_risk_pm_decision_staged and not state.high_risk_pm_decision_recorded:
-        failures.append("high-risk PM decision staged before record")
-    if state.high_risk_pm_decision_staged and not state.staged_effect_recorded:
-        failures.append("high-risk PM decision staged without staged_effect")
+    if state.pm_continue_repair_decision_staged and not state.pm_continue_repair_decision_recorded:
+        failures.append("PM continue-repair decision staged before record")
+    if state.pm_continue_repair_decision_staged and not state.staged_effect_recorded:
+        failures.append("PM continue-repair decision staged without staged_effect")
     if state.same_family_staged_effect_repeated and not state.same_family_staged_effect_converged:
         failures.append("same-family staged effect did not converge before PM gate")
     if state.same_family_staged_effect_parallel_candidate_created:
         failures.append("same-family staged effect created parallel candidate state")
     if (
         state.pm_gate_flowguard_passed
-        and state.high_risk_pm_decision_staged
+        and state.pm_continue_repair_decision_staged
         and not state.same_family_staged_effect_converged
     ):
         failures.append("PM gate opened before same-family staged effect convergence")
-    if state.pm_gate_flowguard_passed and not state.high_risk_pm_decision_staged:
-        failures.append("PM gate FlowGuard passed before high-risk decision staging")
+    if state.pm_gate_flowguard_passed and not state.pm_continue_repair_decision_staged:
+        failures.append("PM gate FlowGuard passed before PM continue-repair decision staging")
     if state.pm_gate_reviewer_passed and not state.pm_gate_flowguard_passed:
         failures.append("PM gate reviewer passed before FlowGuard")
     if state.pm_gate_system_validation_recorded and not state.pm_gate_reviewer_passed:
@@ -289,16 +279,16 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("system validation failure was not routed to PM repair")
     if state.system_validation_failure_auto_closed:
         failures.append("failed system validation auto-closed the subject")
-    if state.high_risk_pm_applied_before_gate:
-        failures.append("high-risk PM decision applied before gate")
+    if state.pm_continue_repair_applied_before_gate:
+        failures.append("PM continue-repair decision applied before gate")
     if state.pm_waiver_applied_before_gate:
         failures.append("PM waiver applied before gate")
     if state.pm_redesign_without_flowguard:
         failures.append("PM route redesign applied without FlowGuard")
     if state.pm_decision_reviewer_missing:
         failures.append("PM decision gate lacked reviewer pass")
-    if state.low_risk_repair_forced_through_gate:
-        failures.append("low-risk PM repair was forced through high-risk gate")
+    if state.pm_continue_repair_applied_directly:
+        failures.append("PM continue-repair decision applied directly without unified gate")
     if state.staged_effect_missing_before_gate:
         failures.append("PM decision gate opened without staged_effect")
     if state.semantic_review_demands_future_committed_state:
@@ -320,8 +310,7 @@ def is_success(state: State) -> bool:
         and state.system_validation_recorded
         and state.system_closure_applied
         and state.failed_system_validation_routed_to_pm
-        and state.low_risk_pm_decision_applied
-        and state.high_risk_pm_decision_staged
+        and state.pm_continue_repair_decision_staged
         and state.staged_effect_recorded
         and state.same_family_staged_effect_converged
         and state.pm_gate_system_closure_recorded
@@ -355,11 +344,11 @@ def hazard_states() -> dict[str, State]:
         "closure_before_system_validation": replace(base, closure_before_system_validation=True),
         "system_validation_failure_not_routed_to_pm": replace(base, system_validation_failure_not_routed_to_pm=True),
         "system_validation_failure_auto_closed": replace(base, system_validation_failure_auto_closed=True),
-        "high_risk_pm_applied_before_gate": replace(base, high_risk_pm_applied_before_gate=True),
+        "pm_continue_repair_applied_before_gate": replace(base, pm_continue_repair_applied_before_gate=True),
         "pm_waiver_applied_before_gate": replace(base, pm_waiver_applied_before_gate=True),
         "pm_redesign_without_flowguard": replace(base, pm_redesign_without_flowguard=True),
         "pm_decision_reviewer_missing": replace(base, pm_decision_reviewer_missing=True),
-        "low_risk_repair_forced_through_gate": replace(base, low_risk_repair_forced_through_gate=True),
+        "pm_continue_repair_applied_directly": replace(base, pm_continue_repair_applied_directly=True),
         "staged_effect_missing_before_gate": replace(base, staged_effect_recorded=False, staged_effect_missing_before_gate=True),
         "same_family_staged_effect_not_converged": replace(
             base,
@@ -373,7 +362,7 @@ def hazard_states() -> dict[str, State]:
         "pm_gate_before_staged_effect_convergence": replace(
             base,
             pm_gate_flowguard_passed=True,
-            high_risk_pm_decision_staged=True,
+            pm_continue_repair_decision_staged=True,
             same_family_staged_effect_converged=False,
         ),
         "semantic_review_demands_future_committed_state": replace(base, semantic_review_demands_future_committed_state=True),
@@ -387,8 +376,7 @@ def state_summary(state: State) -> dict[str, object]:
         "system_closure_recorded": state.system_closure_recorded,
         "system_closure_applied": state.system_closure_applied,
         "failed_system_validation_routed_to_pm": state.failed_system_validation_routed_to_pm,
-        "low_risk_pm_decision_applied": state.low_risk_pm_decision_applied,
-        "high_risk_pm_decision_staged": state.high_risk_pm_decision_staged,
+        "pm_continue_repair_decision_staged": state.pm_continue_repair_decision_staged,
         "staged_effect_recorded": state.staged_effect_recorded,
         "same_family_staged_effect_converged": state.same_family_staged_effect_converged,
         "pm_gate_flowguard_passed": state.pm_gate_flowguard_passed,
@@ -407,7 +395,7 @@ EXTERNAL_INPUTS = (Tick(),)
 INVARIANTS = (
     Invariant(
         "validation_automation_and_pm_decision_gate_order",
-        "System validation replaces ordinary validator AI, system closure replaces ordinary Closure FlowGuard operator AI, and high-risk PM decisions apply only after gated system closure.",
+        "System validation replaces ordinary validator AI, system closure replaces ordinary Closure FlowGuard operator AI, and PM continue-repair decisions apply only after one unified gated system closure.",
         validation_pm_gate_invariant,
     ),
 )

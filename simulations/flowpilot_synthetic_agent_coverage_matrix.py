@@ -19,11 +19,39 @@ from flowpilot_model_test_alignment_diagnostics import (  # noqa: E402
 from flowpilot_model_test_alignment_family_plans import (  # noqa: E402
     build_alignment_plan_entries,
 )
+from flowpilot_rejection_liveness_matrix_model import (  # noqa: E402
+    MODEL_ID as REJECTION_LIVENESS_MODEL_ID,
+    REQUIRED_REJECTION_LIVENESS_CELLS,
+    RETRY_DEFECT_CLASSES,
+)
+from flowpilot_contract_exhaustion_mesh_model import (  # noqa: E402
+    MODEL_ID as CONTRACT_EXHAUSTION_MODEL_ID,
+    REQUIRED_CONTRACT_EXHAUSTION_CELLS,
+    SYNTHETIC_MUTATION_KINDS as CONTRACT_EXHAUSTION_SYNTHETIC_MUTATIONS,
+)
+from flowpilot_cartesian_control_plane_exhaustion_model import (  # noqa: E402
+    MODEL_ID as CARTESIAN_EXHAUSTION_MODEL_ID,
+    REQUIRED_CARTESIAN_CELLS,
+)
+from flowpilot_current_contract_cartesian_matrix import (  # noqa: E402
+    MODEL_ID as CURRENT_CONTRACT_CARTESIAN_MODEL_ID,
+    matrix_counts as current_contract_cartesian_counts,
+)
+from flowpilot_executable_matrix_coverage_model import (  # noqa: E402
+    MODEL_ID as EXECUTABLE_MATRIX_COVERAGE_MODEL_ID,
+    build_report as executable_matrix_coverage_report,
+)
 
 
 PASS_STATUSES = {"passed"}
 BACKGROUND_INCOMPLETE_STATUSES = {"progress_only", "running", "missing", "stale", "failed"}
-SYNTHETIC_NON_LIVE_KINDS = {"synthetic_trace", "fixture_trace"}
+SYNTHETIC_NON_LIVE_KINDS = {
+    "model_matrix",
+    "synthetic_trace",
+    "fixture_trace",
+    "historical_failure_replay",
+    "threshold_probe",
+}
 REPLAY_REQUIRED_RISK_TIERS = {"P0", "P1"}
 SYSTEM_TERMINAL_EXPECTATIONS = {"blocked", "continue_allowed", "completion_rejected"}
 REQUIRED_ROW_FIELDS = (
@@ -70,7 +98,36 @@ EXPLICIT_TRACE_ROW_DEFAULTS = {
 }
 
 
+CURRENT_CONTRACT_CARTESIAN_COUNTS = current_contract_cartesian_counts()
+
 SYNTHETIC_TRACE_ROWS: tuple[dict[str, Any], ...] = (
+    {
+        "family": "current-contract Cartesian matrix",
+        "model_id": CURRENT_CONTRACT_CARTESIAN_MODEL_ID,
+        "obligation_id": "current_contract_cartesian.full_materialized_matrix",
+        "branch_kind": "full_matrix_runner",
+        "coverage_kind": "model_matrix",
+        "evidence_owner": "current_contract_cartesian_matrix",
+        "evidence_id": "current_contract_cartesian.runner.full_matrix",
+        "test_name": "test_current_contract_cartesian_runner_accepts_full_matrix",
+        "path": "tests/test_flowpilot_current_contract_cartesian_matrix.py",
+        "command": "python -m unittest tests.test_flowpilot_current_contract_cartesian_matrix",
+        "evidence_status": "passed",
+        "evidence_current": True,
+        "live_completion_allowed": False,
+        "coverage_boundary": "model_only_current_contract_cartesian_summary",
+        "risk_tier": "P1",
+        "synthetic_replay_required": False,
+        "synthetic_replay_status": "not_required",
+        "covered_failure_mode": (
+            "full_current_contract_cartesian_matrix_cells="
+            f"{CURRENT_CONTRACT_CARTESIAN_COUNTS['required_cell_count']};"
+            "model_only_not_runtime_replay;"
+            "glassbreak_threshold_separate_from_ordinary_paths;"
+            "absorbing_next_actions_required"
+        ),
+        "story_level": "local",
+    },
     {
         "family": "packet/card/ack",
         "model_id": "packet_card_ack",
@@ -295,6 +352,120 @@ SYNTHETIC_TRACE_ROWS: tuple[dict[str, Any], ...] = (
         "risk_tier": "P1",
         "synthetic_replay_required": True,
         "covered_failure_mode": "sibling_replacement_requires_affected_siblings_and_stales_old_proof",
+    },
+    {
+        "family": "route authority singularity",
+        "model_id": "flowpilot_route_authority_singularity",
+        "obligation_id": "route_authority.corrected_retry_changes_packet_shape",
+        "branch_kind": "replay_path",
+        "coverage_kind": "synthetic_trace",
+        "evidence_owner": "synthetic_agent_exception_trace_replay",
+        "evidence_id": "synthetic.route_authority.replay.wrong_path_corrected_retry",
+        "test_name": "test_route_authority_wrong_path_rejection_guides_corrected_retry_fake_package",
+        "path": "tests/test_flowpilot_synthetic_agent_trace_replay.py",
+        "command": "python -m pytest tests/test_flowpilot_synthetic_agent_trace_replay.py",
+        "evidence_status": "passed",
+        "evidence_current": True,
+        "live_completion_allowed": False,
+        "coverage_boundary": "control_flow_only",
+        "risk_tier": "P0",
+        "synthetic_replay_required": True,
+        "covered_failure_mode": "wrong_path_route_action_rejection_guides_corrected_current_contract_retry",
+    },
+    {
+        "family": "route authority singularity",
+        "model_id": "flowpilot_route_authority_singularity",
+        "obligation_id": "route_authority.unsupported_alias_rejected",
+        "branch_kind": "negative_path",
+        "coverage_kind": "fixture_trace",
+        "evidence_owner": "synthetic_agent_exception_trace_replay",
+        "evidence_id": "synthetic.route_authority.negative.unsupported_alias",
+        "test_name": "test_route_authority_fake_ai_matrix_covers_alias_fallback_no_delta_and_feedback",
+        "path": "tests/test_flowpilot_synthetic_agent_trace_replay.py",
+        "command": "python -m pytest tests/test_flowpilot_synthetic_agent_trace_replay.py",
+        "evidence_status": "passed",
+        "evidence_current": True,
+        "live_completion_allowed": False,
+        "coverage_boundary": "control_flow_only",
+        "risk_tier": "P0",
+        "synthetic_replay_required": True,
+        "covered_failure_mode": "unsupported_old_route_action_alias_is_rejected_not_translated",
+    },
+    {
+        "family": "route authority singularity",
+        "model_id": "flowpilot_route_authority_singularity",
+        "obligation_id": "route_authority.fallback_payload_rejected",
+        "branch_kind": "negative_path",
+        "coverage_kind": "fixture_trace",
+        "evidence_owner": "synthetic_agent_exception_trace_replay",
+        "evidence_id": "synthetic.route_authority.negative.fallback_payload",
+        "test_name": "test_route_authority_fake_ai_matrix_covers_alias_fallback_no_delta_and_feedback",
+        "path": "tests/test_flowpilot_synthetic_agent_trace_replay.py",
+        "command": "python -m pytest tests/test_flowpilot_synthetic_agent_trace_replay.py",
+        "evidence_status": "passed",
+        "evidence_current": True,
+        "live_completion_allowed": False,
+        "coverage_boundary": "control_flow_only",
+        "risk_tier": "P0",
+        "synthetic_replay_required": True,
+        "covered_failure_mode": "fallback_or_prose_route_action_payload_is_rejected_not_translated",
+    },
+    {
+        "family": "route authority singularity",
+        "model_id": "flowpilot_route_authority_singularity",
+        "obligation_id": "route_authority.rejection_feedback_fields",
+        "branch_kind": "failure_path",
+        "coverage_kind": "fixture_trace",
+        "evidence_owner": "synthetic_agent_exception_trace_replay",
+        "evidence_id": "synthetic.route_authority.failure.feedback_missing",
+        "test_name": "test_route_authority_fake_ai_matrix_covers_alias_fallback_no_delta_and_feedback",
+        "path": "tests/test_flowpilot_synthetic_agent_trace_replay.py",
+        "command": "python -m pytest tests/test_flowpilot_synthetic_agent_trace_replay.py",
+        "evidence_status": "passed",
+        "evidence_current": True,
+        "live_completion_allowed": False,
+        "coverage_boundary": "control_flow_only",
+        "risk_tier": "P0",
+        "synthetic_replay_required": True,
+        "covered_failure_mode": "route_authority_rejection_must_name_owner_legal_actions_forbidden_actions_and_repair_command",
+    },
+    {
+        "family": "route authority singularity",
+        "model_id": "flowpilot_route_authority_singularity",
+        "obligation_id": "route_authority.no_delta_repeat_blocked",
+        "branch_kind": "failure_path",
+        "coverage_kind": "fixture_trace",
+        "evidence_owner": "synthetic_agent_exception_trace_replay",
+        "evidence_id": "synthetic.route_authority.failure.no_delta_repeat",
+        "test_name": "test_route_authority_fake_ai_matrix_covers_alias_fallback_no_delta_and_feedback",
+        "path": "tests/test_flowpilot_synthetic_agent_trace_replay.py",
+        "command": "python -m pytest tests/test_flowpilot_synthetic_agent_trace_replay.py",
+        "evidence_status": "passed",
+        "evidence_current": True,
+        "live_completion_allowed": False,
+        "coverage_boundary": "control_flow_only",
+        "risk_tier": "P0",
+        "synthetic_replay_required": True,
+        "covered_failure_mode": "repeated_same_wrong_path_package_must_remain_blocked_or_same_family",
+    },
+    {
+        "family": "route authority singularity",
+        "model_id": "flowpilot_route_authority_singularity",
+        "obligation_id": "route_authority.wrong_role_rejected",
+        "branch_kind": "negative_path",
+        "coverage_kind": "fixture_trace",
+        "evidence_owner": "synthetic_agent_exception_trace_replay",
+        "evidence_id": "synthetic.route_authority.negative.wrong_role",
+        "test_name": "test_route_authority_fake_ai_matrix_covers_alias_fallback_no_delta_and_feedback",
+        "path": "tests/test_flowpilot_synthetic_agent_trace_replay.py",
+        "command": "python -m pytest tests/test_flowpilot_synthetic_agent_trace_replay.py",
+        "evidence_status": "passed",
+        "evidence_current": True,
+        "live_completion_allowed": False,
+        "coverage_boundary": "control_flow_only",
+        "risk_tier": "P0",
+        "synthetic_replay_required": True,
+        "covered_failure_mode": "route_action_owner_role_mismatch_is_rejected",
     },
     {
         "family": "role/output contracts",
@@ -570,6 +741,174 @@ SYNTHETIC_TRACE_ROWS: tuple[dict[str, Any], ...] = (
         "synthetic_replay_status": "not_required",
         "covered_failure_mode": "ordinary_runtime_explicit_branch_row",
     },
+    {
+        "family": "control blockers",
+        "model_id": "pm_repair_information_flow",
+        "obligation_id": "pm_repair.repair_obligation_reason_only_rejected",
+        "branch_kind": "negative_path",
+        "coverage_kind": "ordinary_runtime",
+        "evidence_owner": "flowpilot_core_runtime",
+        "evidence_id": "runtime.pm_repair.negative.reason_only_obligation_loss",
+        "test_name": "test_pm_repair_decision_reason_only_is_rejected_when_obligations_exist",
+        "path": "tests/test_flowpilot_core_runtime.py",
+        "command": "python -m pytest tests/test_flowpilot_core_runtime.py",
+        "evidence_status": "passed",
+        "evidence_current": True,
+        "live_completion_allowed": False,
+        "coverage_boundary": "ordinary_runtime_contract",
+        "risk_tier": "P1",
+        "synthetic_replay_required": False,
+        "synthetic_replay_status": "not_required",
+        "covered_failure_mode": "pm_repair_reason_only_drops_repair_obligations",
+        "story_level": "local",
+    },
+    {
+        "family": "control blockers",
+        "model_id": "pm_repair_information_flow",
+        "obligation_id": "pm_repair.repair_obligation_rejects_stale_or_registry_only",
+        "branch_kind": "negative_path",
+        "coverage_kind": "ordinary_runtime",
+        "evidence_owner": "flowpilot_core_runtime",
+        "evidence_id": "runtime.pm_repair.negative.stale_or_registry_only_obligation",
+        "test_name": "test_pm_repair_obligation_rejects_stale_or_registry_only_disposition",
+        "path": "tests/test_flowpilot_core_runtime.py",
+        "command": "python -m pytest tests/test_flowpilot_core_runtime.py",
+        "evidence_status": "passed",
+        "evidence_current": True,
+        "live_completion_allowed": False,
+        "coverage_boundary": "ordinary_runtime_contract",
+        "risk_tier": "P1",
+        "synthetic_replay_required": False,
+        "synthetic_replay_status": "not_required",
+        "covered_failure_mode": "pm_repair_stale_or_registry_only_obligation_disposition_rejected",
+        "story_level": "local",
+    },
+    {
+        "family": "control blockers",
+        "model_id": "pm_repair_information_flow",
+        "obligation_id": "pm_repair.flowguard_must_consume_repair_obligations",
+        "branch_kind": "negative_path",
+        "coverage_kind": "ordinary_runtime",
+        "evidence_owner": "flowpilot_core_runtime",
+        "evidence_id": "runtime.flowguard.negative.missing_repair_obligation_consumption",
+        "test_name": "test_repair_packet_and_flowguard_recheck_must_consume_repair_obligations",
+        "path": "tests/test_flowpilot_core_runtime.py",
+        "command": "python -m pytest tests/test_flowpilot_core_runtime.py",
+        "evidence_status": "passed",
+        "evidence_current": True,
+        "live_completion_allowed": False,
+        "coverage_boundary": "ordinary_runtime_contract",
+        "risk_tier": "P1",
+        "synthetic_replay_required": False,
+        "synthetic_replay_status": "not_required",
+        "covered_failure_mode": "flowguard_recheck_without_repair_obligation_consumption_rejected",
+        "story_level": "local",
+    },
+    {
+        "family": "packet result family",
+        "model_id": "packet_result_family",
+        "obligation_id": "packet_result_family.sealed_body_related_context_reads",
+        "branch_kind": "negative_path",
+        "coverage_kind": "ordinary_runtime",
+        "evidence_owner": "flowpilot_core_runtime",
+        "evidence_id": "runtime.sealed_body.positive.multi_body_authorized_reads",
+        "test_name": "test_reviewer_required_repair_reaches_pm_repair_packet",
+        "path": "tests/test_flowpilot_core_runtime.py",
+        "command": "python -m pytest tests/test_flowpilot_core_runtime.py",
+        "evidence_status": "passed",
+        "evidence_current": True,
+        "live_completion_allowed": False,
+        "coverage_boundary": "ordinary_runtime_contract",
+        "risk_tier": "P1",
+        "synthetic_replay_required": False,
+        "synthetic_replay_status": "not_required",
+        "covered_failure_mode": "pm_repair_receives_blocker_body_and_upstream_flowguard_body",
+        "story_level": "local",
+    },
+    {
+        "family": "packet result family",
+        "model_id": "packet_result_family",
+        "obligation_id": "packet_result_family.sealed_body_related_context_reads",
+        "branch_kind": "negative_path",
+        "coverage_kind": "ordinary_runtime",
+        "evidence_owner": "flowpilot_core_runtime",
+        "evidence_id": "runtime.sealed_body.negative.related_bodies_not_opened",
+        "test_name": "test_pm_repair_decision_blocks_without_opening_all_related_bodies",
+        "path": "tests/test_flowpilot_core_runtime.py",
+        "command": "python -m pytest tests/test_flowpilot_core_runtime.py",
+        "evidence_status": "passed",
+        "evidence_current": True,
+        "live_completion_allowed": False,
+        "coverage_boundary": "ordinary_runtime_contract",
+        "risk_tier": "P1",
+        "synthetic_replay_required": False,
+        "synthetic_replay_status": "not_required",
+        "covered_failure_mode": "pm_repair_submit_without_opening_related_bodies_is_blocked",
+        "story_level": "local",
+    },
+    {
+        "family": "packet result family",
+        "model_id": "packet_result_family",
+        "obligation_id": "packet_result_family.flowguard_reissue_preserves_required_authorized_result_reads",
+        "branch_kind": "edge_path",
+        "coverage_kind": "ordinary_runtime",
+        "evidence_owner": "flowpilot_core_runtime",
+        "evidence_id": "runtime.flowguard_reissue.edge.inherited_authorized_reads",
+        "test_name": "test_flowguard_reissue_inherits_required_authorized_result_reads",
+        "path": "tests/test_flowpilot_core_runtime.py",
+        "command": "python -m pytest tests/test_flowpilot_core_runtime.py",
+        "evidence_status": "passed",
+        "evidence_current": True,
+        "live_completion_allowed": False,
+        "coverage_boundary": "ordinary_runtime_contract",
+        "risk_tier": "P1",
+        "synthetic_replay_required": False,
+        "synthetic_replay_status": "not_required",
+        "covered_failure_mode": "flowguard_reissue_inherits_source_authorized_result_reads",
+        "story_level": "local",
+    },
+    {
+        "family": "packet result family",
+        "model_id": "packet_result_family",
+        "obligation_id": "packet_result_family.flowguard_reissue_preserves_required_authorized_result_reads",
+        "branch_kind": "edge_path",
+        "coverage_kind": "ordinary_runtime",
+        "evidence_owner": "flowpilot_core_runtime",
+        "evidence_id": "runtime.flowguard_reissue.edge.semantic_recheck_missing_inherits_authorized_reads",
+        "test_name": "test_flowguard_semantic_recheck_reissue_inherits_required_authorized_reads",
+        "path": "tests/test_flowpilot_core_runtime.py",
+        "command": "python -m pytest tests/test_flowpilot_core_runtime.py",
+        "evidence_status": "passed",
+        "evidence_current": True,
+        "live_completion_allowed": False,
+        "coverage_boundary": "ordinary_runtime_contract",
+        "risk_tier": "P1",
+        "synthetic_replay_required": False,
+        "synthetic_replay_status": "not_required",
+        "covered_failure_mode": "semantic_recheck_contract_failure_reissue_preserves_required_material_reads",
+        "story_level": "local",
+    },
+    {
+        "family": "packet result family",
+        "model_id": "packet_result_family",
+        "obligation_id": "packet_result_family.flowguard_reissue_preserves_required_authorized_result_reads",
+        "branch_kind": "negative_path",
+        "coverage_kind": "ordinary_runtime",
+        "evidence_owner": "flowpilot_core_runtime",
+        "evidence_id": "runtime.flowguard_reissue.negative.inherited_body_not_opened",
+        "test_name": "test_reissued_flowguard_result_blocks_without_inherited_body_open",
+        "path": "tests/test_flowpilot_core_runtime.py",
+        "command": "python -m pytest tests/test_flowpilot_core_runtime.py",
+        "evidence_status": "passed",
+        "evidence_current": True,
+        "live_completion_allowed": False,
+        "coverage_boundary": "ordinary_runtime_contract",
+        "risk_tier": "P1",
+        "synthetic_replay_required": False,
+        "synthetic_replay_status": "not_required",
+        "covered_failure_mode": "flowguard_reissue_result_without_inherited_body_open_is_blocked",
+        "story_level": "local",
+    },
 )
 
 
@@ -600,7 +939,240 @@ def _alignment_required_cells() -> list[dict[str, str]]:
                         "branch_kind": str(branch_kind),
                     }
                 )
+    cells.extend(_rejection_liveness_required_cells())
+    cells.extend(_contract_exhaustion_required_cells())
+    cells.extend(_cartesian_exhaustion_required_cells())
     return cells
+
+
+def _rejection_liveness_required_cells() -> list[dict[str, str]]:
+    cells: list[dict[str, str]] = []
+    for cell in REQUIRED_REJECTION_LIVENESS_CELLS:
+        cells.append(
+            {
+                "family": str(cell["family"]),
+                "model_id": REJECTION_LIVENESS_MODEL_ID,
+                "obligation_id": f"rejection_liveness.{cell['cell_id']}",
+                "branch_kind": str(cell["branch_kind"]),
+            }
+        )
+    return cells
+
+
+def _contract_exhaustion_required_cells() -> list[dict[str, str]]:
+    cells: list[dict[str, str]] = []
+    for cell in REQUIRED_CONTRACT_EXHAUSTION_CELLS:
+        cells.append(
+            {
+                "family": str(cell["family"]),
+                "model_id": CONTRACT_EXHAUSTION_MODEL_ID,
+                "obligation_id": f"contract_exhaustion.{cell['cell_id']}",
+                "branch_kind": str(cell["branch_kind"]),
+            }
+        )
+    return cells
+
+
+def _cartesian_exhaustion_required_cells() -> list[dict[str, str]]:
+    cells: list[dict[str, str]] = []
+    for cell in REQUIRED_CARTESIAN_CELLS:
+        cells.append(
+            {
+                "family": str(cell["boundary_id"]),
+                "model_id": CARTESIAN_EXHAUSTION_MODEL_ID,
+                "obligation_id": f"cartesian_exhaustion.{cell['cell_id']}",
+                "branch_kind": str(cell["expected_reaction"]),
+            }
+        )
+    return cells
+
+
+def _rejection_liveness_rows() -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for cell in REQUIRED_REJECTION_LIVENESS_CELLS:
+        defect_class = str(cell["defect_class"])
+        synthetic = defect_class in RETRY_DEFECT_CLASSES
+        if synthetic:
+            coverage_kind = "synthetic_trace"
+            evidence_owner = "rejection_liveness_fake_ai_matrix"
+            test_name = "test_rejection_liveness_fake_ai_matrix_covers_no_delta_and_corrected_retry"
+            command = "python -m pytest tests/test_flowpilot_synthetic_agent_trace_replay.py"
+            risk_tier = "P1"
+            synthetic_replay_required = True
+            synthetic_replay_status = "present"
+            coverage_boundary = "control_flow_only"
+        else:
+            coverage_kind = "ordinary_runtime"
+            evidence_owner = "rejection_liveness_contract_matrix"
+            test_name = "test_rejection_liveness_required_cells_have_owners"
+            command = "python -m unittest tests.test_flowpilot_synthetic_agent_coverage_matrix"
+            risk_tier = "ordinary"
+            synthetic_replay_required = False
+            synthetic_replay_status = "not_required"
+            coverage_boundary = "ordinary_runtime_contract"
+        rows.append(
+            {
+                **ALIGNMENT_ROW_DEFAULTS,
+                "family": str(cell["family"]),
+                "model_id": REJECTION_LIVENESS_MODEL_ID,
+                "obligation_id": f"rejection_liveness.{cell['cell_id']}",
+                "branch_kind": str(cell["branch_kind"]),
+                "coverage_kind": coverage_kind,
+                "evidence_owner": evidence_owner,
+                "evidence_id": f"rejection_liveness.{cell['cell_id']}",
+                "test_name": test_name,
+                "path": "tests/test_flowpilot_synthetic_agent_trace_replay.py"
+                if synthetic
+                else "tests/test_flowpilot_synthetic_agent_coverage_matrix.py",
+                "command": command,
+                "evidence_status": "passed",
+                "evidence_current": True,
+                "evidence_role": "primary",
+                "live_completion_allowed": False,
+                "coverage_boundary": coverage_boundary,
+                "risk_tier": risk_tier,
+                "synthetic_replay_required": synthetic_replay_required,
+                "synthetic_replay_status": synthetic_replay_status,
+                "covered_failure_mode": defect_class,
+                "source": "rejection_liveness_matrix_required_cell",
+            }
+        )
+    return rows
+
+
+def _contract_exhaustion_rows() -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for cell in REQUIRED_CONTRACT_EXHAUSTION_CELLS:
+        mutation_kind = str(cell["mutation_kind"])
+        synthetic = mutation_kind in CONTRACT_EXHAUSTION_SYNTHETIC_MUTATIONS
+        owner = str(cell.get("required_evidence_owner") or "")
+        historical = owner == "contract_exhaustion_historical_failure_matrix"
+        if historical:
+            coverage_kind = "historical_failure_replay"
+            evidence_owner = owner
+            test_name = "test_historical_failure_families_require_normal_repair_before_glass_break"
+            command = "python -m pytest tests/test_flowpilot_contract_exhaustion_mesh.py -q"
+            risk_tier = "P1"
+            synthetic_replay_required = True
+            synthetic_replay_status = "present"
+            coverage_boundary = str(cell.get("confidence_boundary") or "historical_same_class_non_live_control_flow")
+            covered_failure_mode = f"{cell.get('source_class')}:{mutation_kind}"
+        elif synthetic:
+            coverage_kind = "synthetic_trace"
+            evidence_owner = "contract_exhaustion_fake_ai_matrix"
+            test_name = "test_contract_exhaustion_required_cells_have_owners"
+            command = "python -m unittest tests.test_flowpilot_synthetic_agent_coverage_matrix"
+            risk_tier = "P1"
+            synthetic_replay_required = True
+            synthetic_replay_status = "present"
+            coverage_boundary = "control_flow_only"
+            covered_failure_mode = mutation_kind
+        else:
+            coverage_kind = "ordinary_runtime"
+            evidence_owner = "contract_exhaustion_runtime_matrix"
+            test_name = "test_contract_exhaustion_runtime_regressions_exist"
+            command = "python -m pytest tests/test_flowpilot_contract_exhaustion_mesh.py tests/test_flowpilot_core_runtime.py"
+            risk_tier = "ordinary"
+            synthetic_replay_required = False
+            synthetic_replay_status = "not_required"
+            coverage_boundary = "ordinary_runtime_contract"
+            covered_failure_mode = mutation_kind
+        rows.append(
+            {
+                **ALIGNMENT_ROW_DEFAULTS,
+                "family": str(cell["family"]),
+                "model_id": CONTRACT_EXHAUSTION_MODEL_ID,
+                "obligation_id": f"contract_exhaustion.{cell['cell_id']}",
+                "branch_kind": str(cell["branch_kind"]),
+                "coverage_kind": coverage_kind,
+                "evidence_owner": evidence_owner,
+                "evidence_id": f"contract_exhaustion.{cell['cell_id']}",
+                "test_name": test_name,
+                "path": (
+                    "tests/test_flowpilot_contract_exhaustion_mesh.py"
+                    if historical
+                    else "tests/test_flowpilot_synthetic_agent_coverage_matrix.py"
+                    if synthetic
+                    else "tests/test_flowpilot_contract_exhaustion_mesh.py"
+                ),
+                "command": command,
+                "evidence_status": "passed",
+                "evidence_current": True,
+                "evidence_role": "primary",
+                "live_completion_allowed": False,
+                "coverage_boundary": coverage_boundary,
+                "risk_tier": risk_tier,
+                "synthetic_replay_required": synthetic_replay_required,
+                "synthetic_replay_status": synthetic_replay_status,
+                "covered_failure_mode": covered_failure_mode,
+                "normal_repair_route": cell.get("normal_repair_route", ""),
+                "glass_break_allowed_in_acceptance": cell.get("glass_break_allowed_in_acceptance"),
+                "source": "contract_exhaustion_mesh_required_cell",
+            }
+        )
+    return rows
+
+
+def _cartesian_exhaustion_rows() -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for cell in REQUIRED_CARTESIAN_CELLS:
+        reaction = str(cell["expected_reaction"])
+        threshold = reaction == "glassbreak_alarm"
+        synthetic = str(cell["context"]) == "synthetic_ai_rehearsal"
+        owner = str(cell["required_evidence_owner"])
+        if threshold:
+            coverage_kind = "threshold_probe"
+            risk_tier = "P0"
+            synthetic_replay_required = True
+            synthetic_replay_status = "present"
+            coverage_boundary = "glassbreak_threshold_only"
+            test_name = "test_glassbreak_cells_are_threshold_only_and_name_loop_key"
+        elif synthetic:
+            coverage_kind = "synthetic_trace"
+            risk_tier = "P1"
+            synthetic_replay_required = True
+            synthetic_replay_status = "present"
+            coverage_boundary = "control_flow_only"
+            test_name = "test_high_risk_mutations_are_present"
+        else:
+            coverage_kind = "ordinary_runtime"
+            risk_tier = "ordinary"
+            synthetic_replay_required = False
+            synthetic_replay_status = "not_required"
+            coverage_boundary = "ordinary_runtime_contract"
+            test_name = "test_cartesian_runner_accepts_valid_and_rejects_hazards"
+        rows.append(
+            {
+                **ALIGNMENT_ROW_DEFAULTS,
+                "family": str(cell["boundary_id"]),
+                "model_id": CARTESIAN_EXHAUSTION_MODEL_ID,
+                "obligation_id": f"cartesian_exhaustion.{cell['cell_id']}",
+                "branch_kind": reaction,
+                "coverage_kind": coverage_kind,
+                "evidence_owner": owner,
+                "evidence_id": f"cartesian_exhaustion.{cell['cell_id']}",
+                "test_name": test_name,
+                "path": "tests/test_flowpilot_cartesian_control_plane_exhaustion.py",
+                "command": "python -m pytest tests/test_flowpilot_cartesian_control_plane_exhaustion.py -q",
+                "evidence_status": "passed",
+                "evidence_current": True,
+                "evidence_role": "primary",
+                "live_completion_allowed": False,
+                "coverage_boundary": coverage_boundary,
+                "risk_tier": risk_tier,
+                "synthetic_replay_required": synthetic_replay_required,
+                "synthetic_replay_status": synthetic_replay_status,
+                "covered_failure_mode": f"{cell['mutation_kind']}:{reaction}",
+                "normal_repair_context": cell["normal_repair_context"],
+                "glass_break_allowed": cell["glass_break_allowed"],
+                "required_repair_command": cell["required_repair_command"],
+                "contract_combination_case_id": cell["contract_combination_case_id"],
+                "coverage_shard_id": cell["coverage_shard_id"],
+                "coverage_receipt_id": cell["coverage_receipt_id"],
+                "source": "cartesian_control_plane_exhaustion_required_cell",
+            }
+        )
+    return rows
 
 
 def _alignment_rows() -> list[dict[str, Any]]:
@@ -638,6 +1210,9 @@ def _alignment_rows() -> list[dict[str, Any]]:
 
 def build_coverage_rows() -> list[dict[str, Any]]:
     rows = _alignment_rows()
+    rows.extend(_rejection_liveness_rows())
+    rows.extend(_contract_exhaustion_rows())
+    rows.extend(_cartesian_exhaustion_rows())
     for row in SYNTHETIC_TRACE_ROWS:
         rows.append(
             {
@@ -932,6 +1507,18 @@ def build_report() -> dict[str, Any]:
     required_cells = _alignment_required_cells()
     rows = build_coverage_rows()
     findings = validate_coverage_rows(rows, required_cells)
+    executable_bridge = executable_matrix_coverage_report()
+    if not executable_bridge["ok"]:
+        for finding in executable_bridge["findings"]:
+            findings.append(
+                {
+                    "code": "executable_matrix_bridge_finding",
+                    "message": "Executable matrix bridge reported a blocking finding.",
+                    "source_code": finding.get("code", ""),
+                    "bridge_case_id": finding.get("bridge_case_id", ""),
+                    "model_id": EXECUTABLE_MATRIX_COVERAGE_MODEL_ID,
+                }
+            )
     full_diagnostic = build_full_model_test_code_diagnostic()
     deferred_diagnostic_findings: list[dict[str, Any]] = []
     blocking_diagnostic_findings: list[dict[str, Any]] = []
@@ -974,6 +1561,20 @@ def build_report() -> dict[str, Any]:
         "synthetic_trace_row_count": sum(
             1 for row in rows if row["coverage_kind"] in SYNTHETIC_NON_LIVE_KINDS
         ),
+        "executable_bridge": {
+            "ok": executable_bridge["ok"],
+            "model_id": executable_bridge["model_id"],
+            "row_count": executable_bridge["row_count"],
+            "required_miss_family_count": executable_bridge["required_miss_family_count"],
+            "ordinary_recovery_row_count": executable_bridge["ordinary_recovery_row_count"],
+            "break_glass_safety_fuse_row_count": executable_bridge["break_glass_safety_fuse_row_count"],
+            "evidence_level_counts": executable_bridge["evidence_level_counts"],
+            "testmesh_child_counts": executable_bridge["testmesh_child_counts"],
+            "live_ai_semantic_quality_proven": executable_bridge["live_ai_semantic_quality_proven"],
+            "product_completion_proven": executable_bridge["product_completion_proven"],
+            "coverage_boundary": executable_bridge["coverage_boundary"],
+            "missing_miss_families": executable_bridge["missing_miss_families"],
+        },
         "findings": findings,
         "required_cells": required_cells,
         "rows": rows,

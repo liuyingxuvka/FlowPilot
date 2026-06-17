@@ -111,6 +111,36 @@
       "validator": "new_run_state"
     },
     {
+      "field": "flowpilot_runtime_self_check_receipt.ok",
+      "layer": "leaf",
+      "logical_field": "portable_runtime_self_check_ok",
+      "owner": "flowpilot_runtime_self_check",
+      "required_value": true,
+      "status": "mechanical_runtime_owned",
+      "unlocks": "target_project_flowpilot_run_without_dev_repo_scripts",
+      "validator": "flowpilot_runtime_self_check.runtime_self_check"
+    },
+    {
+      "field": "flowpilot_runtime_self_check_receipt.dev_repo_simulations_required",
+      "layer": "leaf",
+      "logical_field": "target_project_dev_repo_simulations_required",
+      "owner": "flowpilot_runtime_self_check",
+      "required_value": false,
+      "status": "mechanical_runtime_owned",
+      "unlocks": "portable_installed_skill_runtime",
+      "validator": "flowpilot_runtime_self_check.runtime_self_check"
+    },
+    {
+      "field": "flowpilot_runtime_self_check_receipt.required_runtime_assets[]",
+      "layer": "leaf",
+      "logical_field": "portable_runtime_required_assets",
+      "owner": "flowpilot_runtime_self_check",
+      "required_value": "installed_skill_required_asset_paths",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "runtime_start_blocks_missing_installed_assets",
+      "validator": "flowpilot_runtime_self_check.runtime_self_check"
+    },
+    {
       "field": "route_frontier.active_node_id",
       "layer": "top_level",
       "logical_field": "active_node_id",
@@ -194,6 +224,72 @@
       "status": "mechanical_runtime_owned",
       "unlocks": "route_node_scoped_packet_currentness",
       "validator": "_route_node_is_noncurrent"
+    },
+    {
+      "field": "route_node.supplemental_repair_contract_ids",
+      "layer": "leaf",
+      "lifecycle": "append_only_current_contract_projection",
+      "logical_field": "supplemental_repair_contract_projection",
+      "owner": "project_manager",
+      "required_value": "contract_ids_from_pm_supplemental_repair_contract",
+      "status": "current",
+      "unlocks": "supplemental_repair_item_final_ledger_closure",
+      "validator": "_normalize_strict_route_plan_nodes"
+    },
+    {
+      "field": "route_node.supplemental_repair_item_ids",
+      "layer": "leaf",
+      "lifecycle": "append_only_current_contract_projection",
+      "logical_field": "supplemental_repair_item_projection",
+      "owner": "project_manager",
+      "required_value": "repair_item_ids_from_pm_supplemental_repair_contract",
+      "status": "current",
+      "unlocks": "supplemental_repair_item_final_ledger_closure",
+      "validator": "_normalize_strict_route_plan_nodes"
+    },
+    {
+      "field": "terminal_supplemental_repair.current_round",
+      "layer": "middle",
+      "lifecycle": "monotonic_until_exhausted",
+      "logical_field": "terminal_supplemental_repair_round",
+      "owner": "flowpilot_core_runtime",
+      "required_value": "next_round_number_not_exceeding_three",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "terminal_supplemental_repair_round_cap",
+      "validator": "_parse_terminal_supplemental_repair_contract_payload"
+    },
+    {
+      "field": "terminal_supplemental_repair.max_rounds",
+      "layer": "middle",
+      "lifecycle": "constant_runtime_owned",
+      "logical_field": "terminal_supplemental_repair_max_rounds",
+      "owner": "flowpilot_core_runtime",
+      "required_value": 3,
+      "status": "mechanical_runtime_owned",
+      "unlocks": "repair_rounds_exhausted_terminal_stop",
+      "validator": "_terminal_supplemental_state"
+    },
+    {
+      "field": "terminal_supplemental_repair.status",
+      "layer": "middle",
+      "lifecycle": "inactive_active_clean_or_exhausted",
+      "logical_field": "terminal_supplemental_repair_status",
+      "owner": "flowpilot_core_runtime",
+      "required_value": "inactive|active|clean|repair_rounds_exhausted",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "terminal_closure_or_terminal_stop",
+      "validator": "_record_terminal_supplemental_repair_contract"
+    },
+    {
+      "field": "supplemental_repair_contracts[].repair_items[].owner_repair_node_id",
+      "layer": "leaf",
+      "lifecycle": "current_contract_append_only",
+      "logical_field": "supplemental_repair_item_owner_node",
+      "owner": "project_manager",
+      "required_value": "current_or_route_plan_repair_node_id",
+      "status": "current",
+      "unlocks": "supplemental_repair_node_execution_and_closure",
+      "validator": "_parse_terminal_supplemental_repair_contract_payload"
     },
     {
       "field": "execution_frontier.pending_route_mutation",
@@ -560,6 +656,36 @@
       "validator": "_build_current_handoff_contract"
     },
     {
+      "field": "current_handoff_contract.stage_evidence_matrix.family_id",
+      "layer": "middle",
+      "logical_field": "stage_evidence_family_id",
+      "owner": "flowpilot_router",
+      "required_value": "same_family_as_current_packet_result_contract",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "role_visible_stage_evidence_contract",
+      "validator": "_build_current_handoff_contract"
+    },
+    {
+      "field": "current_handoff_contract.stage_evidence_matrix.lifecycle_stage",
+      "layer": "middle",
+      "logical_field": "stage_evidence_lifecycle_stage",
+      "owner": "flowpilot_router",
+      "required_value": "current_stage_for_this_packet_family",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "role_knows_current_evidence_timing",
+      "validator": "_build_current_handoff_contract"
+    },
+    {
+      "field": "current_handoff_contract.stage_evidence_matrix.current_required_fields",
+      "layer": "leaf",
+      "logical_field": "stage_evidence_current_required_fields",
+      "owner": "flowpilot_router",
+      "required_value": "non_empty_current_stage_pass_criteria",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "role_does_not_guess_future_stage_evidence",
+      "validator": "_build_current_handoff_contract"
+    },
+    {
       "field": "current_handoff_contract.input_material_manifest.authorized_result_reads[]",
       "layer": "middle",
       "logical_field": "authorized_result_reads",
@@ -568,6 +694,176 @@
       "status": "mechanical_runtime_owned",
       "unlocks": "role_reads_current_inputs_before_submit",
       "validator": "_normalize_authorized_result_reads"
+    },
+    {
+      "field": "current_handoff_contract.input_material_manifest.authorized_result_read_ids",
+      "layer": "middle",
+      "logical_field": "authorized_result_read_ids",
+      "owner": "flowpilot_router",
+      "required_value": "all_result_body_ids_the_assigned_role_must_open_before_submit",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "role_reads_all_related_blocker_context_bodies",
+      "validator": "_build_current_handoff_contract"
+    },
+    {
+      "field": "current_handoff_contract.input_material_manifest.required_authorized_read_count",
+      "layer": "leaf",
+      "logical_field": "required_authorized_read_count",
+      "owner": "flowpilot_router",
+      "required_value": "count_of_required_authorized_result_bodies_before_submit",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "model_detects_missing_related_body_authorization",
+      "validator": "_build_current_handoff_contract"
+    },
+    {
+      "field": "flowguard_reissue_packet.envelope.authorized_result_reads[]",
+      "layer": "leaf",
+      "logical_field": "flowguard_reissue_authorized_result_reads",
+      "owner": "flowpilot_router",
+      "required_value": "source_flowguard_packet_authorized_result_reads",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "reissued_flowguard_packet_requires_same_material_bodies",
+      "validator": "_flowguard_reissue_inherited_authorized_result_reads"
+    },
+    {
+      "field": "flowguard_reissue_packet.current_handoff_contract.input_material_manifest.required_authorized_reads_before_submit",
+      "layer": "leaf",
+      "logical_field": "flowguard_reissue_required_authorized_reads_before_submit",
+      "owner": "flowpilot_router",
+      "required_value": "source_flowguard_packet_required_authorized_read_ids",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "reissued_flowguard_packet_blocks_unopened_inherited_bodies",
+      "validator": "_build_current_handoff_contract"
+    },
+    {
+      "field": "current_handoff_contract.input_material_manifest.all_required_authorized_result_bodies_must_be_opened_before_submit",
+      "layer": "leaf",
+      "logical_field": "all_required_authorized_result_bodies_must_be_opened_before_submit",
+      "owner": "flowpilot_router",
+      "required_value": true,
+      "status": "mechanical_runtime_owned",
+      "unlocks": "result_submission_waits_for_all_related_body_receipts",
+      "validator": "_required_authorized_result_read_blockers"
+    },
+    {
+      "field": "current_handoff_contract.input_material_manifest.packet_body_opened_by_assigned_role_via_open_packet",
+      "layer": "leaf",
+      "logical_field": "packet_body_opened_by_assigned_role_via_open_packet",
+      "owner": "flowpilot_router",
+      "required_value": true,
+      "status": "mechanical_runtime_owned",
+      "unlocks": "assigned_role_reads_current_packet_body_and_authorized_materials_together",
+      "validator": "flowpilot_new_role_commands.open_packet"
+    },
+    {
+      "field": "pm_repair_packet.repair_evidence_obligations[]",
+      "layer": "middle",
+      "logical_field": "repair_evidence_obligations",
+      "owner": "flowpilot_router",
+      "required_value": "one_row_per_current_blocker_missing_material_or_recheck_need",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "pm_must_disposition_specific_repair_obligations",
+      "validator": "_repair_evidence_obligations_for_blocker"
+    },
+    {
+      "field": "pm_repair_packet.repair_evidence_obligations[].obligation_id",
+      "layer": "leaf",
+      "logical_field": "repair_evidence_obligation_id",
+      "owner": "flowpilot_router",
+      "required_value": "stable_current_blocker_scoped_obligation_id",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "repair_obligation_disposition_exact_match",
+      "validator": "_repair_evidence_obligations_for_blocker"
+    },
+    {
+      "field": "pm_repair_packet.repair_evidence_obligations[].source_blocker_id",
+      "layer": "leaf",
+      "logical_field": "repair_evidence_obligation_source_blocker_id",
+      "owner": "flowpilot_router",
+      "required_value": "current_blocker_id",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "repair_context_binds_back_to_blocker",
+      "validator": "_repair_evidence_obligations_for_blocker"
+    },
+    {
+      "field": "pm_repair_packet.repair_evidence_obligations[].evidence_kind",
+      "layer": "leaf",
+      "logical_field": "repair_evidence_obligation_evidence_kind",
+      "owner": "flowpilot_router",
+      "required_value": "current_blocker_evidence_kind",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "repair_worker_and_flowguard_know_what_evidence_to_produce_or_recheck",
+      "validator": "_repair_evidence_obligations_for_blocker"
+    },
+    {
+      "field": "pm_repair_result.repair_obligation_disposition[]",
+      "layer": "middle",
+      "logical_field": "repair_obligation_disposition",
+      "owner": "pm",
+      "required_value": "one_disposition_per_repair_evidence_obligation",
+      "status": "pm_decision_owned",
+      "unlocks": "repair_packet_receives_obligation_context",
+      "validator": "_pm_repair_obligation_disposition_violation"
+    },
+    {
+      "field": "pm_repair_result.repair_obligation_disposition[].obligation_id",
+      "layer": "leaf",
+      "logical_field": "repair_obligation_disposition_obligation_id",
+      "owner": "pm",
+      "required_value": "exact_obligation_id_from_pm_repair_packet",
+      "status": "pm_decision_owned",
+      "unlocks": "runtime_rejects_unknown_duplicate_or_missing_disposition_rows",
+      "validator": "_pm_repair_obligation_disposition_violation"
+    },
+    {
+      "field": "pm_repair_result.repair_obligation_disposition[].disposition",
+      "layer": "leaf",
+      "logical_field": "repair_obligation_disposition_status",
+      "owner": "pm",
+      "required_value": "decision_consistent_resolution_not_summary_or_registry_only",
+      "status": "pm_decision_owned",
+      "unlocks": "runtime_rejects_reason_only_or_stale_evidence_repairs",
+      "validator": "_pm_repair_obligation_disposition_violation"
+    },
+    {
+      "field": "repair_packet.repair_obligation_context",
+      "layer": "middle",
+      "logical_field": "repair_obligation_context",
+      "owner": "flowpilot_router",
+      "required_value": "pm_decision_obligations_and_dispositions_copied_to_current_repair_packet",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "repair_role_reads_what_the_repair_must_fix",
+      "validator": "_attach_repair_obligation_context_to_packet"
+    },
+    {
+      "field": "flowguard.semantic_recheck.consumed_repair_obligation_ids",
+      "layer": "leaf",
+      "logical_field": "consumed_repair_obligation_ids",
+      "owner": "flowguard_operator",
+      "required_value": "all_repair_evidence_obligation_ids_from_result_contract_profile_binding",
+      "status": "flowguard_process_owned",
+      "unlocks": "flowguard_cannot_pass_without_consuming_repair_obligations",
+      "validator": "_flowguard_semantic_recheck_contract_violation"
+    },
+    {
+      "field": "flowguard_packet.envelope.result_contract_profile_ids[]",
+      "layer": "middle",
+      "logical_field": "flowguard_result_contract_profile_ids",
+      "owner": "flowpilot_router",
+      "required_value": "flowguard.semantic_recheck_required_when_semantic_recheck_is_current_contract",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "semantic_recheck_fields_are_external_structured_contract_not_hidden_body_fields",
+      "validator": "issue_task_packet"
+    },
+    {
+      "field": "flowguard_packet.envelope.result_contract_profile_bindings.flowguard.semantic_recheck_required",
+      "layer": "middle",
+      "logical_field": "flowguard_semantic_recheck_profile_binding",
+      "owner": "flowpilot_router",
+      "required_value": "blocker_id_authorized_result_read_ids_repair_obligation_ids_and_coverage_boundary",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "ai_visible_required_fields_allowed_values_field_types_and_minimal_shape",
+      "validator": "packet_result_contracts.effective_result_contract_from_envelope"
     },
     {
       "field": "current_handoff_contract.required_report_contract.required_result_body_fields",
@@ -600,6 +896,16 @@
       "validator": "branch_valid_shapes_for_family"
     },
     {
+      "field": "current_handoff_contract.required_report_contract.non_empty_array_fields",
+      "layer": "middle",
+      "logical_field": "non_empty_array_fields",
+      "owner": "flowpilot_router",
+      "required_value": "same_non_empty_array_fields_as_packet_result_contract_row",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "role_keeps_required_evidence_arrays_non_empty",
+      "validator": "_build_current_handoff_contract"
+    },
+    {
       "field": "current_handoff_contract.required_report_contract.forbidden_result_body_fields",
       "layer": "middle",
       "logical_field": "forbidden_fields_seen",
@@ -610,6 +916,66 @@
       "validator": "_current_result_submission_contract_violation"
     },
     {
+      "field": "current_handoff_contract.required_report_contract.stage_evidence_matrix",
+      "layer": "middle",
+      "logical_field": "required_report_stage_evidence_matrix",
+      "owner": "flowpilot_router",
+      "required_value": "same_stage_evidence_matrix_as_current_handoff_contract",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "assigned_role_submits_against_current_stage_not_future_stage",
+      "validator": "_build_current_handoff_contract"
+    },
+    {
+      "field": "submission_checklist.required_result_body_fields",
+      "layer": "middle",
+      "logical_field": "submission_checklist_required_result_body_fields",
+      "owner": "flowpilot_new_role_commands",
+      "required_value": "projection_of_current_handoff_contract.required_report_contract.required_result_body_fields",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "assigned_role_sees_current_required_result_fields",
+      "validator": "_submission_checklist_from_packet_body"
+    },
+    {
+      "field": "submission_checklist.required_child_fields",
+      "layer": "middle",
+      "logical_field": "submission_checklist_required_child_fields",
+      "owner": "flowpilot_new_role_commands",
+      "required_value": "projection_of_current_handoff_contract.required_report_contract.required_child_fields",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "assigned_role_sees_current_nested_result_fields",
+      "validator": "_submission_checklist_from_packet_body"
+    },
+    {
+      "field": "submission_checklist.branch_valid_shapes",
+      "layer": "middle",
+      "logical_field": "submission_checklist_branch_valid_shapes",
+      "owner": "flowpilot_new_role_commands",
+      "required_value": "projection_of_current_handoff_contract.required_report_contract.branch_valid_shapes",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "assigned_role_sees_current_branch_shape_examples",
+      "validator": "_submission_checklist_from_packet_body"
+    },
+    {
+      "field": "submission_checklist.non_empty_array_fields",
+      "layer": "middle",
+      "logical_field": "submission_checklist_non_empty_array_fields",
+      "owner": "flowpilot_new_role_commands",
+      "required_value": "projection_of_current_handoff_contract.required_report_contract.non_empty_array_fields",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "assigned_role_sees_current_non_empty_array_obligations",
+      "validator": "_submission_checklist_from_packet_body"
+    },
+    {
+      "field": "submission_checklist.input_material_manifest.required_authorized_reads_before_submit",
+      "layer": "middle",
+      "logical_field": "submission_checklist_required_authorized_reads_before_submit",
+      "owner": "flowpilot_new_role_commands",
+      "required_value": "projection_of_current_handoff_contract.input_material_manifest.required_authorized_reads_before_submit",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "assigned_role_sees_current_required_result_body_reads",
+      "validator": "_submission_checklist_from_packet_body"
+    },
+    {
       "field": "current_handoff_contract.missing_information_response",
       "layer": "middle",
       "logical_field": "missing_information_response",
@@ -618,6 +984,16 @@
       "status": "mechanical_runtime_owned",
       "unlocks": "role_blocks_or_reissues_without_guessing",
       "validator": "_packet_handoff_missing_information_response"
+    },
+    {
+      "field": "research_packet_spec.to_role",
+      "layer": "middle",
+      "logical_field": "research_packet_recipient_role",
+      "owner": "flowpilot_router_work_packets_material",
+      "required_value": "worker_or_flowguard_operator",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "research_packet_created_for_current_role",
+      "validator": "_write_research_capability_decision"
     },
     {
       "field": "current_handoff_contract.downstream_consumer.unlocks",
@@ -830,14 +1206,64 @@
       "validator": "_parse_high_standard_requirements"
     },
     {
-      "field": "preplanning.high_standard_contract.requirements[].closure_blocking",
+      "field": "preplanning.high_standard_contract.requirements[].closure_rule",
       "layer": "leaf",
-      "logical_field": "high_standard_requirement_closure_blocking",
+      "logical_field": "high_standard_requirement_closure_rule",
       "owner": "flowpilot_core_runtime",
-      "required_value": "boolean",
+      "required_value": "non_empty_current_closure_rule",
       "status": "mechanical_runtime_owned",
       "unlocks": "high_standard_requirement_binding",
       "validator": "_parse_high_standard_requirements"
+    },
+    {
+      "field": "preplanning.high_standard_contract.acceptance_item_registry.items[]",
+      "layer": "middle",
+      "logical_field": "acceptance_item_registry",
+      "owner": "flowpilot_core_runtime",
+      "required_value": "non_empty_top_level_items_list_with_user_and_pm_high_standard_sources",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "route_node_acceptance_item_assignment",
+      "validator": "_high_standard_contract_result_violation"
+    },
+    {
+      "field": "preplanning.high_standard_contract.acceptance_item_registry.items[].acceptance_item_id",
+      "layer": "leaf",
+      "logical_field": "acceptance_item_id",
+      "owner": "flowpilot_core_runtime",
+      "required_value": "unique_non_empty_string",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "node_and_final_replay_acceptance_item_binding",
+      "validator": "_parse_acceptance_item_registry"
+    },
+    {
+      "field": "preplanning.high_standard_contract.acceptance_item_registry.items[].source_type",
+      "layer": "leaf",
+      "logical_field": "acceptance_item_source_type",
+      "owner": "pm",
+      "required_value": "at_least_one_user_explicit_or_user_implicit_and_one_pm_high_standard",
+      "status": "pm_decision_owned",
+      "unlocks": "user_and_pm_standard_coverage_audit",
+      "validator": "_parse_acceptance_item_registry"
+    },
+    {
+      "field": "preplanning.high_standard_contract.acceptance_item_registry.items[].quality_floor",
+      "layer": "leaf",
+      "logical_field": "acceptance_item_quality_floor",
+      "owner": "pm",
+      "required_value": "non_empty_high_quality_floor",
+      "status": "pm_decision_owned",
+      "unlocks": "reviewer_blocks_low_quality_success",
+      "validator": "_parse_acceptance_item_registry"
+    },
+    {
+      "field": "preplanning.high_standard_contract.acceptance_item_registry.items[].future_evidence_rule",
+      "layer": "leaf",
+      "logical_field": "acceptance_item_future_evidence_rule",
+      "owner": "reviewer",
+      "required_value": "non_empty_future_evidence_rule_without_terminal_proof_requirement",
+      "status": "reviewer_quality_owned",
+      "unlocks": "node_plan_and_final_replay_evidence_check",
+      "validator": "_parse_acceptance_item_registry"
     },
     {
       "field": "preplanning.discovery.material_sources",
@@ -860,21 +1286,11 @@
       "validator": "_parse_discovery_result"
     },
     {
-      "field": "preplanning.discovery.local_skill_inventory",
+      "field": "preplanning.discovery.candidate_skill_inventory",
       "layer": "leaf",
-      "logical_field": "preplanning_local_skill_inventory",
+      "logical_field": "preplanning_candidate_skill_inventory",
       "owner": "flowpilot_core_runtime",
       "required_value": "list",
-      "status": "mechanical_runtime_owned",
-      "unlocks": "preplanning_discovery_acceptance",
-      "validator": "_parse_discovery_result"
-    },
-    {
-      "field": "preplanning.discovery.candidate_only_skill_policy",
-      "layer": "leaf",
-      "logical_field": "preplanning_candidate_only_skill_policy",
-      "owner": "flowpilot_core_runtime",
-      "required_value": true,
       "status": "mechanical_runtime_owned",
       "unlocks": "preplanning_discovery_acceptance",
       "validator": "_parse_discovery_result"
@@ -940,21 +1356,11 @@
       "validator": "_parse_skill_obligations"
     },
     {
-      "field": "preplanning.skill_standard.obligations[].evidence_required",
+      "field": "preplanning.skill_standard.obligations[].evidence_rule",
       "layer": "leaf",
-      "logical_field": "skill_standard_obligation_evidence_required",
+      "logical_field": "skill_standard_obligation_evidence_rule",
       "owner": "flowpilot_core_runtime",
       "required_value": "non_empty_string",
-      "status": "mechanical_runtime_owned",
-      "unlocks": "skill_standard_obligation_binding",
-      "validator": "_parse_skill_obligations"
-    },
-    {
-      "field": "preplanning.skill_standard.obligations[].closure_blocking",
-      "layer": "leaf",
-      "logical_field": "skill_standard_obligation_closure_blocking",
-      "owner": "flowpilot_core_runtime",
-      "required_value": "boolean",
       "status": "mechanical_runtime_owned",
       "unlocks": "skill_standard_obligation_binding",
       "validator": "_parse_skill_obligations"
@@ -1010,11 +1416,11 @@
       "validator": "_json_payload_contract_check"
     },
     {
-      "field": "packet_result.review.independent_challenge",
+      "field": "packet_result.review.blockers[]",
       "layer": "leaf",
-      "logical_field": "review_packet_result_independent_challenge",
+      "logical_field": "review_packet_result_blockers",
       "owner": "human_like_reviewer",
-      "required_value": "current_nested_challenge_object",
+      "required_value": "explicit_array_of_current_stage_fixed_blocker_classes",
       "status": "reviewer_quality_owned",
       "unlocks": "reviewer_quality_review_after_runtime_mechanics",
       "validator": "_json_payload_contract_check"
@@ -1038,6 +1444,26 @@
       "status": "flowguard_process_owned",
       "unlocks": "pm_process_disposition",
       "validator": "_record_flowguard_from_packet_result"
+    },
+    {
+      "field": "flowguard_packet.subject_stage_evidence_matrix",
+      "layer": "middle",
+      "logical_field": "flowguard_subject_stage_evidence_matrix",
+      "owner": "flowpilot_core_runtime",
+      "required_value": "current_subject_packet_stage_evidence_row",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "flowguard_checks_current_stage_without_premature_future_evidence",
+      "validator": "_ensure_flowguard_packet_for_task_result"
+    },
+    {
+      "field": "review_packet.subject_stage_evidence_matrix",
+      "layer": "middle",
+      "logical_field": "review_subject_stage_evidence_matrix",
+      "owner": "flowpilot_core_runtime",
+      "required_value": "current_subject_packet_stage_evidence_row",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "reviewer_checks_current_stage_without_premature_future_evidence",
+      "validator": "_ensure_review_packet_for_task_result"
     },
     {
       "field": "flowguard_process_review.evidence_path",
@@ -1067,54 +1493,54 @@
       "required_value": "boolean_passed_current_report_outcome_consistent_with_hard_evidence",
       "status": "mechanical_runtime_owned",
       "unlocks": "flowguard_pass_or_block_outcome",
-      "validator": "_flowguard_evidence_consistency_violation"
+      "validator": "_flowguard_current_report_violation"
     },
     {
-      "field": "packet_result.flowguard_check.evidence_consistency.self_check_passed",
+      "field": "packet_result.flowguard_check.modeled_boundary",
       "layer": "leaf",
-      "logical_field": "flowguard_evidence_consistency_self_check_passed",
-      "owner": "flowpilot_core_runtime",
-      "required_value": "true_when_flowguard_result_can_be_accepted",
-      "status": "mechanical_runtime_owned",
-      "unlocks": "flowguard_pass_or_block_outcome",
-      "validator": "_flowguard_evidence_consistency_violation"
+      "logical_field": "flowguard_report_modeled_boundary",
+      "owner": "flowguard_operator",
+      "required_value": "current_subject_boundary_summary",
+      "status": "flowguard_process_owned",
+      "unlocks": "pm_process_disposition_with_modeled_scope",
+      "validator": "_json_payload_contract_check"
     },
     {
-      "field": "packet_result.flowguard_check.evidence_consistency.child_reports_all_passed",
+      "field": "packet_result.flowguard_check.blockers[]",
       "layer": "leaf",
-      "logical_field": "flowguard_evidence_consistency_child_reports_all_passed",
-      "owner": "flowpilot_core_runtime",
-      "required_value": "boolean_hard_child_report_status",
-      "status": "mechanical_runtime_owned",
-      "unlocks": "review_packet_release_only_when_true_for_pass",
-      "validator": "_flowguard_evidence_consistency_violation"
-    },
-    {
-      "field": "packet_result.flowguard_check.evidence_consistency.blocking_child_reports[]",
-      "layer": "leaf",
-      "logical_field": "flowguard_evidence_consistency_blocking_child_reports",
-      "owner": "flowpilot_core_runtime",
-      "required_value": "explicit_array_of_blocking_child_reports",
-      "status": "mechanical_runtime_owned",
+      "logical_field": "flowguard_report_blockers",
+      "owner": "flowguard_operator",
+      "required_value": "explicit_array_of_current_stage_fixed_blocker_classes",
+      "status": "flowguard_process_owned",
       "unlocks": "flowguard_block_or_reissue_before_reviewer",
-      "validator": "_flowguard_evidence_consistency_violation"
+      "validator": "_json_payload_contract_check"
     },
     {
-      "field": "packet_result.flowguard_check.evidence_consistency.hard_evidence_decision",
+      "field": "packet_result.flowguard_check.contract_self_check",
       "layer": "leaf",
-      "logical_field": "flowguard_evidence_consistency_hard_evidence_decision",
+      "logical_field": "flowguard_report_contract_self_check",
       "owner": "flowpilot_core_runtime",
-      "required_value": "pass_only_when_child_hard_evidence_allows_pass",
+      "required_value": "current_contract_self_check_object",
       "status": "mechanical_runtime_owned",
+      "unlocks": "flowguard_report_can_enter_process_gate",
+      "validator": "_json_payload_contract_check"
+    },
+    {
+      "field": "flowguard_evidence.json.model_test_alignment_report.decision",
+      "layer": "leaf",
+      "logical_field": "flowguard_evidence_file_hard_decision",
+      "owner": "flowguard_operator",
+      "required_value": "pass_or_block_current_model_evidence",
+      "status": "flowguard_process_owned",
       "unlocks": "flowguard_pass_or_block_outcome",
-      "validator": "_flowguard_evidence_consistency_violation"
+      "validator": "_flowguard_packet_artifact_hard_decision"
     },
     {
       "field": "flowguard_work_order.decision",
       "layer": "middle",
       "logical_field": "flowguard_work_order_decision",
       "owner": "flowpilot_core_runtime",
-      "required_value": "derived_after_evidence_consistency_gate",
+      "required_value": "derived_after_current_flowguard_report_and_evidence_file",
       "status": "mechanical_runtime_owned",
       "unlocks": "matching_flowguard_report_for_review",
       "validator": "_record_flowguard_from_packet_result"
@@ -1177,6 +1603,100 @@
       "terminal_disposition": "active_blocker.status"
     },
     {
+      "chain_id": "sealed_body_authorized_material_lifecycle_chain",
+      "field_sequence": [
+        "current_handoff_contract.input_material_manifest.authorized_result_reads[]",
+        "current_handoff_contract.input_material_manifest.authorized_result_read_ids",
+        "current_handoff_contract.input_material_manifest.required_authorized_read_count",
+        "current_handoff_contract.input_material_manifest.all_required_authorized_result_bodies_must_be_opened_before_submit",
+        "current_handoff_contract.input_material_manifest.packet_body_opened_by_assigned_role_via_open_packet",
+        "runtime.open_authorized_input_materials_for_role",
+        "runtime._required_authorized_result_read_blockers"
+      ],
+      "human_quality_gate": "assigned_role_current_packet_result",
+      "mechanical_gate": "_required_authorized_result_read_blockers",
+      "no_prose_authority": true,
+      "no_reviewer_mechanical_field_check": true,
+      "source": "active_blocker.result_id",
+      "terminal_disposition": "packet_result.status"
+    },
+    {
+      "chain_id": "stage_evidence_matrix_packet_lifecycle_chain",
+      "field_sequence": [
+        "packet_stage_evidence_matrix.PACKET_STAGE_EVIDENCE_MATRIX_BY_FAMILY",
+        "current_handoff_contract.stage_evidence_matrix.family_id",
+        "current_handoff_contract.stage_evidence_matrix.lifecycle_stage",
+        "current_handoff_contract.stage_evidence_matrix.current_required_fields",
+        "current_handoff_contract.required_report_contract.stage_evidence_matrix",
+        "flowguard_packet.subject_stage_evidence_matrix",
+        "review_packet.subject_stage_evidence_matrix"
+      ],
+      "human_quality_gate": "_ensure_flowguard_packet_for_task_result + _ensure_review_packet_for_task_result",
+      "mechanical_gate": "_packet_stage_evidence_row + _build_current_handoff_contract",
+      "no_prose_authority": true,
+      "no_reviewer_mechanical_field_check": true,
+      "source": "packet_result_contracts.PACKET_RESULT_CONTRACTS[].family_id",
+      "terminal_disposition": "current_stage_evidence_timing"
+    },
+    {
+      "chain_id": "portable_runtime_self_check_receipt_chain",
+      "field_sequence": [
+        "flowpilot_runtime_self_check.REQUIRED_RUNTIME_ASSETS",
+        "flowpilot_runtime_self_check_receipt.ok",
+        "flowpilot_runtime_self_check_receipt.dev_repo_simulations_required",
+        "flowpilot_runtime_self_check_receipt.required_runtime_assets[]",
+        "run_root.runtime.flowpilot_runtime_self_check_receipt.json",
+        "ledger.flowpilot_runtime_self_check"
+      ],
+      "human_quality_gate": "start_run",
+      "mechanical_gate": "flowpilot_runtime_self_check.runtime_self_check",
+      "no_prose_authority": true,
+      "no_reviewer_mechanical_field_check": true,
+      "source": "installed_flowpilot_skill_assets",
+      "terminal_disposition": "run_start_allowed_or_blocked"
+    },
+    {
+      "chain_id": "flowguard_reissue_authorized_material_inheritance_chain",
+      "field_sequence": [
+        "source_flowguard_packet.envelope.authorized_result_reads[]",
+        "source_flowguard_packet.current_handoff_contract.input_material_manifest.required_authorized_reads_before_submit",
+        "runtime._flowguard_reissue_inherited_authorized_result_reads",
+        "flowguard_reissue_packet.envelope.authorized_result_reads[]",
+        "flowguard_reissue_packet.body.authorized_result_reads[]",
+        "flowguard_reissue_packet.current_handoff_contract.input_material_manifest.required_authorized_reads_before_submit",
+        "runtime.open_authorized_input_materials_for_role",
+        "runtime._required_authorized_result_read_blockers"
+      ],
+      "human_quality_gate": "_flowguard_semantic_recheck_contract_violation",
+      "mechanical_gate": "_flowguard_reissue_inherited_authorized_result_reads + _required_authorized_result_read_blockers",
+      "no_prose_authority": true,
+      "no_reviewer_mechanical_field_check": true,
+      "source": "source_flowguard_packet.envelope.authorized_result_reads[]",
+      "terminal_disposition": "flowguard_reissue_result.status"
+    },
+    {
+      "chain_id": "pm_repair_evidence_obligation_lifecycle_chain",
+      "field_sequence": [
+        "pm_repair_packet.repair_evidence_obligations[]",
+        "pm_repair_packet.repair_evidence_obligations[].obligation_id",
+        "pm_repair_packet.repair_evidence_obligations[].source_blocker_id",
+        "pm_repair_packet.repair_evidence_obligations[].evidence_kind",
+        "pm_repair_result.repair_obligation_disposition[]",
+        "pm_repair_result.repair_obligation_disposition[].obligation_id",
+        "pm_repair_result.repair_obligation_disposition[].disposition",
+        "repair_packet.repair_obligation_context",
+        "flowguard_packet.envelope.result_contract_profile_ids[]",
+        "flowguard_packet.envelope.result_contract_profile_bindings.flowguard.semantic_recheck_required",
+        "flowguard.semantic_recheck.consumed_repair_obligation_ids"
+      ],
+      "human_quality_gate": "_flowguard_semantic_recheck_contract_violation",
+      "mechanical_gate": "_pm_repair_obligation_disposition_violation",
+      "no_prose_authority": true,
+      "no_reviewer_mechanical_field_check": true,
+      "source": "active_blocker.missing_required_fields",
+      "terminal_disposition": "active_blocker.status"
+    },
+    {
       "chain_id": "role_report_packet_result_contract_chain",
       "field_sequence": [
         "contract_index.reviewer_review_report.required_body_fields",
@@ -1198,21 +1718,21 @@
       "terminal_disposition": "packet_result.status"
     },
     {
-      "chain_id": "flowguard_evidence_consistency_to_reviewer_handoff_chain",
+      "chain_id": "flowguard_current_evidence_file_to_reviewer_handoff_chain",
       "field_sequence": [
-        "packet_result.flowguard_check.evidence_consistency.self_check_passed",
-        "packet_result.flowguard_check.evidence_consistency.child_reports_all_passed",
-        "packet_result.flowguard_check.evidence_consistency.blocking_child_reports[]",
-        "packet_result.flowguard_check.evidence_consistency.hard_evidence_decision",
+        "flowguard_evidence.json.model_test_alignment_report.decision",
+        "packet_result.flowguard_check.modeled_boundary",
+        "packet_result.flowguard_check.blockers[]",
+        "packet_result.flowguard_check.contract_self_check",
         "packet_result.flowguard_check.passed",
         "flowguard_work_order.decision",
         "flowguard_evidence_manifest.entries[].flowguard_result_id"
       ],
       "human_quality_gate": "_record_review_from_packet_result",
-      "mechanical_gate": "_flowguard_evidence_consistency_violation",
+      "mechanical_gate": "_flowguard_current_report_violation",
       "no_prose_authority": true,
       "no_reviewer_mechanical_field_check": true,
-      "source": "child_flowguard_or_model_test_report.hard_status",
+      "source": "flowguard_evidence.json.model_test_alignment_report.decision",
       "terminal_disposition": "packet_result.status"
     },
     {
@@ -1352,6 +1872,11 @@
     {
       "disposition": "reject_as_reason_alias",
       "field": "pm_disposition.summary",
+      "status": "forbidden_legacy"
+    },
+    {
+      "disposition": "reject_as_to_role_alias",
+      "field": "research_packet_spec.recipient_role",
       "status": "forbidden_legacy"
     }
   ],
@@ -1913,14 +2438,23 @@
   "packet_result_contracts": [
     {
       "fake_ai_success_fields": [
-        "requirements"
+        "requirements",
+        "acceptance_item_registry"
       ],
       "family_id": "task.high_standard_contract",
       "forbidden_fields": [
         "decision",
         "pm_visible_summary",
         "overall_contract",
-        "contract_rows"
+        "contract_rows",
+        "requirements[].evidence_rule",
+        "requirements[].closure_blocking",
+        "requirements[].report_only_closure_allowed",
+        "acceptance_item_registry.items[].owner_node_ids",
+        "acceptance_item_registry.items[].review_gate_ids",
+        "acceptance_item_registry.items[].final_replay_required",
+        "acceptance_item_registry.items[].low_quality_failure_patterns",
+        "acceptance_item_registry.items[].required_evidence"
       ],
       "owner": "flowpilot_core_runtime",
       "packet_kind": "task",
@@ -1929,12 +2463,18 @@
         "requirements[].classification",
         "requirements[].summary",
         "requirements[].source_user_intent",
-        "requirements[].evidence_rule",
-        "requirements[].closure_blocking",
-        "requirements[].report_only_closure_allowed"
+        "requirements[].closure_rule",
+        "acceptance_item_registry.items[]",
+        "acceptance_item_registry.items[].acceptance_item_id",
+        "acceptance_item_registry.items[].source_type",
+        "acceptance_item_registry.items[].summary",
+        "acceptance_item_registry.items[].quality_floor",
+        "acceptance_item_registry.items[].future_evidence_rule",
+        "acceptance_item_registry.items[].status"
       ],
       "required_fields": [
-        "requirements"
+        "requirements",
+        "acceptance_item_registry"
       ],
       "route_scope": "high_standard_contract",
       "unlocks": "high_standard_contract_flowguard_review",
@@ -1946,11 +2486,13 @@
         "pm_visible_summary",
         "material_sources",
         "material_sufficiency",
+        "candidate_skill_inventory"
+      ],
+      "family_id": "task.discovery",
+      "forbidden_fields": [
         "local_skill_inventory",
         "candidate_only_skill_policy"
       ],
-      "family_id": "task.discovery",
-      "forbidden_fields": [],
       "owner": "flowpilot_core_runtime",
       "packet_kind": "task",
       "required_child_fields": [],
@@ -1958,8 +2500,7 @@
         "decision",
         "material_sources",
         "material_sufficiency",
-        "local_skill_inventory",
-        "candidate_only_skill_policy"
+        "candidate_skill_inventory"
       ],
       "route_scope": "discovery",
       "unlocks": "discovery_record_flowguard_review",
@@ -1974,7 +2515,9 @@
       "family_id": "task.skill_standard",
       "forbidden_fields": [
         "selected_skills",
-        "default_required_obligation"
+        "default_required_obligation",
+        "obligations[].evidence_required",
+        "obligations[].closure_blocking"
       ],
       "owner": "flowpilot_core_runtime",
       "packet_kind": "task",
@@ -1984,8 +2527,7 @@
         "obligations[].classification",
         "obligations[].role_use",
         "obligations[].use_context",
-        "obligations[].evidence_required",
-        "obligations[].closure_blocking"
+        "obligations[].evidence_rule"
       ],
       "required_fields": [
         "decision",
@@ -2037,7 +2579,19 @@
         "optional_flowguard",
         "needs_flowguard",
         "maybe_flowguard",
-        "flowguard_optional"
+        "flowguard_optional",
+        "node_context_package.evidence_targets",
+        "node_context_package.inspection_targets",
+        "node_context_package.flowguard_targets",
+        "node_context_package.reviewer_starting_points",
+        "node_context_package.high_standard_requirement_ids",
+        "node_context_package.low_quality_success_risks",
+        "node_context_package.semantic_downgrade_risks",
+        "node_context_package.work_packet_projection",
+        "node_context_package.final_user_intent_checks",
+        "node_context_package.structure_hygiene_expectation",
+        "node_context_package.direct_evidence_closure_rules",
+        "node_context_package.test_obligation_matrix"
       ],
       "owner": "flowpilot_core_runtime",
       "packet_kind": "task",
@@ -2046,19 +2600,8 @@
         "node_context_package.purpose when decision=pass",
         "node_context_package.acceptance_criteria when decision=pass",
         "node_context_package.relevant_references when decision=pass",
-        "node_context_package.evidence_targets when decision=pass",
-        "node_context_package.inspection_targets when decision=pass",
         "node_context_package.known_risks when decision=pass",
-        "node_context_package.flowguard_targets when decision=pass",
-        "node_context_package.reviewer_starting_points when decision=pass",
-        "node_context_package.high_standard_requirement_ids when decision=pass",
-        "node_context_package.low_quality_success_risks when decision=pass",
-        "node_context_package.semantic_downgrade_risks when decision=pass",
-        "node_context_package.work_packet_projection when decision=pass",
-        "node_context_package.final_user_intent_checks when decision=pass",
-        "node_context_package.structure_hygiene_expectation when decision=pass",
-        "node_context_package.direct_evidence_closure_rules when decision=pass",
-        "node_context_package.test_obligation_matrix.pre_worker[] when decision=pass",
+        "node_context_package.acceptance_item_projection when decision=pass",
         "route_plan when decision=redesign_route",
         "route_plan.schema_version when decision=redesign_route",
         "route_plan.nodes[] when decision=redesign_route",
@@ -2075,9 +2618,14 @@
       "validator": "_node_context_package_from_pm_result"
     },
     {
+      "explicit_array_fields": [
+        "pm_visible_summary",
+        "current_evidence_refs"
+      ],
       "fake_ai_success_fields": [
         "decision",
-        "pm_visible_summary"
+        "pm_visible_summary",
+        "current_evidence_refs"
       ],
       "family_id": "task.node",
       "forbidden_fields": [
@@ -2090,26 +2638,40 @@
         "validation_status",
         "flowguard_report"
       ],
+      "non_empty_array_fields": [
+        "pm_visible_summary",
+        "current_evidence_refs"
+      ],
       "owner": "flowpilot_core_runtime",
       "packet_kind": "task",
       "required_child_fields": [],
       "required_fields": [
         "decision",
-        "pm_visible_summary"
+        "pm_visible_summary",
+        "current_evidence_refs"
       ],
       "route_scope": "node",
       "unlocks": "node_result_flowguard_review",
       "validator": "_strict_packet_outcome_contract_violation"
     },
     {
-      "fake_ai_success_fields": [
-        "route_node_id",
-        "decision",
+      "explicit_array_fields": [
         "pm_visible_summary",
-        "composition_checked"
+        "child_node_ids",
+        "child_evidence_refs",
+        "blockers"
+      ],
+      "fake_ai_success_fields": [
+        "pm_visible_summary",
+        "parent_node_id",
+        "child_node_ids",
+        "child_evidence_refs",
+        "composition_decision",
+        "blockers"
       ],
       "family_id": "task.parent_backward_replay",
       "forbidden_fields": [
+        "decision",
         "outcome",
         "status",
         "passed",
@@ -2118,78 +2680,48 @@
         "pass_or_block",
         "validation_status"
       ],
+      "non_empty_array_fields": [
+        "pm_visible_summary",
+        "child_node_ids",
+        "child_evidence_refs"
+      ],
       "owner": "flowpilot_core_runtime",
       "packet_kind": "task",
       "required_child_fields": [],
       "required_fields": [
-        "decision",
-        "pm_visible_summary"
+        "pm_visible_summary",
+        "parent_node_id",
+        "child_node_ids",
+        "child_evidence_refs",
+        "composition_decision",
+        "blockers"
       ],
       "route_scope": "parent_backward_replay",
       "unlocks": "parent_backward_replay_flowguard_review",
-      "validator": "_strict_packet_outcome_contract_violation"
+      "validator": "_parent_backward_replay_result_violation"
     },
     {
       "explicit_array_fields": [
         "pm_visible_summary",
-        "commands_run",
-        "counterexamples_or_absence",
-        "hard_invariants",
-        "skipped_checks",
-        "model_obligations",
-        "ordinary_test_evidence",
-        "missing_test_kinds",
-        "residual_blindspots",
-        "background_artifact_completion",
-        "pm_suggestion_items",
-        "evidence_consistency.blocking_child_reports"
+        "blockers",
+        "pm_suggestion_items"
       ],
       "fake_ai_success_fields": [
         "pm_visible_summary",
         "reviewed_by_role",
         "passed",
         "modeled_boundary",
-        "commands_run",
-        "counterexamples_or_absence",
-        "hard_invariants",
-        "skipped_checks",
-        "model_obligations",
-        "ordinary_test_evidence",
-        "missing_test_kinds",
-        "conformance_boundary",
-        "confidence_boundary",
-        "residual_blindspots",
-        "background_artifact_completion",
+        "blockers",
         "pm_suggestion_items",
-        "evidence_consistency",
-        "contract_self_check"
+        "contract_self_check",
+        "semantic_recheck",
+        "subject_artifacts_consumed"
       ],
       "family_id": "flowguard_check.post_result",
       "forbidden_fields": [
         "decision",
         "api_fallback_manual_block_eval",
-        "fallback_manual_block_eval"
-      ],
-      "non_empty_array_fields": [
-        "pm_visible_summary",
-        "commands_run",
-        "hard_invariants",
-        "model_obligations",
-        "ordinary_test_evidence"
-      ],
-      "owner": "flowpilot_core_runtime",
-      "packet_kind": "flowguard_check",
-      "required_child_fields": [
-        "evidence_consistency.self_check_passed",
-        "evidence_consistency.child_reports_all_passed",
-        "evidence_consistency.blocking_child_reports",
-        "evidence_consistency.hard_evidence_decision"
-      ],
-      "required_fields": [
-        "pm_visible_summary",
-        "reviewed_by_role",
-        "passed",
-        "modeled_boundary",
+        "fallback_manual_block_eval",
         "commands_run",
         "counterexamples_or_absence",
         "hard_invariants",
@@ -2201,8 +2733,21 @@
         "confidence_boundary",
         "residual_blindspots",
         "background_artifact_completion",
+        "evidence_consistency"
+      ],
+      "non_empty_array_fields": [
+        "pm_visible_summary"
+      ],
+      "owner": "flowpilot_core_runtime",
+      "packet_kind": "flowguard_check",
+      "required_child_fields": [],
+      "required_fields": [
+        "pm_visible_summary",
+        "reviewed_by_role",
+        "passed",
+        "modeled_boundary",
+        "blockers",
         "pm_suggestion_items",
-        "evidence_consistency",
         "contract_self_check"
       ],
       "route_scope": "<subject_route_scope>",
@@ -2212,28 +2757,16 @@
     {
       "explicit_array_fields": [
         "pm_visible_summary",
-        "direct_evidence_paths_checked",
         "findings",
         "blockers",
-        "residual_risks",
-        "pm_suggestion_items",
-        "independent_challenge.explicit_and_implicit_commitments",
-        "independent_challenge.failure_hypotheses",
-        "independent_challenge.challenge_actions",
-        "independent_challenge.blocking_findings",
-        "independent_challenge.non_blocking_findings",
-        "independent_challenge.reroute_request",
-        "independent_challenge.challenge_waivers"
+        "pm_suggestion_items"
       ],
       "fake_ai_success_fields": [
         "pm_visible_summary",
         "reviewed_by_role",
         "passed",
-        "direct_evidence_paths_checked",
-        "independent_challenge",
         "findings",
         "blockers",
-        "residual_risks",
         "pm_suggestion_items",
         "contract_self_check"
       ],
@@ -2244,37 +2777,23 @@
         "status",
         "verdict",
         "result",
-        "validation_status"
+        "validation_status",
+        "direct_evidence_paths_checked",
+        "independent_challenge",
+        "residual_risks"
       ],
       "non_empty_array_fields": [
-        "pm_visible_summary",
-        "direct_evidence_paths_checked",
-        "independent_challenge.explicit_and_implicit_commitments",
-        "independent_challenge.failure_hypotheses",
-        "independent_challenge.challenge_actions"
+        "pm_visible_summary"
       ],
       "owner": "flowpilot_core_runtime",
       "packet_kind": "review",
-      "required_child_fields": [
-        "independent_challenge.scope_restatement",
-        "independent_challenge.explicit_and_implicit_commitments",
-        "independent_challenge.failure_hypotheses",
-        "independent_challenge.challenge_actions",
-        "independent_challenge.blocking_findings",
-        "independent_challenge.non_blocking_findings",
-        "independent_challenge.pass_or_block",
-        "independent_challenge.reroute_request",
-        "independent_challenge.challenge_waivers"
-      ],
+      "required_child_fields": [],
       "required_fields": [
         "pm_visible_summary",
         "reviewed_by_role",
         "passed",
-        "direct_evidence_paths_checked",
-        "independent_challenge",
         "findings",
         "blockers",
-        "residual_risks",
         "pm_suggestion_items",
         "contract_self_check"
       ],
@@ -2285,34 +2804,28 @@
     {
       "explicit_array_fields": [
         "pm_visible_summary",
-        "direct_evidence_paths_checked",
         "findings",
         "blockers",
-        "residual_risks",
         "pm_suggestion_items",
-        "independent_challenge.explicit_and_implicit_commitments",
-        "independent_challenge.failure_hypotheses",
-        "independent_challenge.challenge_actions",
-        "independent_challenge.blocking_findings",
-        "independent_challenge.non_blocking_findings",
-        "independent_challenge.reroute_request",
-        "independent_challenge.challenge_waivers",
-        "segment_reviews",
-        "segment_reviews[].direct_evidence_paths_checked"
+        "final_artifact_refs",
+        "acceptance_item_closure",
+        "route_segment_replay",
+        "waiver_records",
+        "final_blockers"
       ],
       "fake_ai_success_fields": [
         "pm_visible_summary",
         "reviewed_by_role",
         "passed",
-        "direct_evidence_paths_checked",
-        "independent_challenge",
         "findings",
         "blockers",
-        "residual_risks",
         "pm_suggestion_items",
-        "contract_self_check",
-        "segment_reviews",
-        "repair_restart_policy"
+        "final_artifact_refs",
+        "acceptance_item_closure",
+        "route_segment_replay",
+        "waiver_records",
+        "final_blockers",
+        "contract_self_check"
       ],
       "family_id": "review.terminal_backward_replay",
       "forbidden_fields": [
@@ -2321,48 +2834,34 @@
         "status",
         "verdict",
         "result",
-        "validation_status"
+        "validation_status",
+        "segment_reviews",
+        "repair_restart_policy",
+        "final_artifact_hygiene_review",
+        "independent_challenge",
+        "recommended_resolution"
       ],
       "non_empty_array_fields": [
         "pm_visible_summary",
-        "direct_evidence_paths_checked",
-        "independent_challenge.explicit_and_implicit_commitments",
-        "independent_challenge.failure_hypotheses",
-        "independent_challenge.challenge_actions",
-        "segment_reviews"
+        "final_artifact_refs",
+        "acceptance_item_closure"
       ],
       "owner": "flowpilot_core_runtime",
       "packet_kind": "review",
-      "required_child_fields": [
-        "independent_challenge.scope_restatement",
-        "independent_challenge.explicit_and_implicit_commitments",
-        "independent_challenge.failure_hypotheses",
-        "independent_challenge.challenge_actions",
-        "independent_challenge.blocking_findings",
-        "independent_challenge.non_blocking_findings",
-        "independent_challenge.pass_or_block",
-        "independent_challenge.reroute_request",
-        "independent_challenge.challenge_waivers",
-        "segment_reviews[].segment_id",
-        "segment_reviews[].segment_kind",
-        "segment_reviews[].reviewed_by_role",
-        "segment_reviews[].passed",
-        "segment_reviews[].pm_segment_decision",
-        "segment_reviews[].direct_evidence_paths_checked"
-      ],
+      "required_child_fields": [],
       "required_fields": [
         "pm_visible_summary",
         "reviewed_by_role",
         "passed",
-        "direct_evidence_paths_checked",
-        "independent_challenge",
         "findings",
         "blockers",
-        "residual_risks",
         "pm_suggestion_items",
-        "contract_self_check",
-        "segment_reviews",
-        "repair_restart_policy"
+        "final_artifact_refs",
+        "acceptance_item_closure",
+        "route_segment_replay",
+        "waiver_records",
+        "final_blockers",
+        "contract_self_check"
       ],
       "route_scope": "terminal_backward_replay",
       "unlocks": "terminal_backward_replay_closure_confirmation",
@@ -2373,30 +2872,72 @@
         "decision",
         "reason",
         "authority_ref",
-        "route_plan"
+        "target_blocker_id",
+        "next_action",
+        "route_plan",
+        "repair_lineage",
+        "repair_parent_scope_contract",
+        "supplemental_repair_contract",
+        "repair_obligation_disposition"
       ],
       "family_id": "pm_repair_decision.pm_repair_decision",
       "forbidden_fields": [
         "authority",
         "summary",
         "repair_decision",
-        "pm_repair_decision"
+        "pm_repair_decision",
+        "supplemental_contract",
+        "repair_contract",
+        "terminal_repair_contract"
       ],
       "owner": "flowpilot_core_runtime",
       "packet_kind": "pm_repair_decision",
       "required_child_fields": [
         "authority_ref when decision=waive_with_authority",
+        "repair_parent_scope_contract when decision=repair_parent_scope",
+        "repair_parent_scope_contract.source_parent_node_id when decision=repair_parent_scope",
+        "repair_parent_scope_contract.inherit_existing_children when decision=repair_parent_scope",
+        "repair_parent_scope_contract.repair_child_specs[] when decision=repair_parent_scope",
+        "repair_parent_scope_contract.repair_child_specs[].node_id when decision=repair_parent_scope",
+        "repair_parent_scope_contract.repair_child_specs[].purpose when decision=repair_parent_scope",
+        "repair_parent_scope_contract.repair_child_specs[].required_evidence when decision=repair_parent_scope",
         "route_plan when decision=redesign_route",
         "route_plan.schema_version when decision=redesign_route",
         "route_plan.nodes[] when decision=redesign_route",
         "route_plan.nodes[].node_id when decision=redesign_route",
         "route_plan.nodes[].title when decision=redesign_route",
         "route_plan.nodes[].node_kind when decision=redesign_route",
-        "route_plan.nodes[].parent_node_id/child_node_ids when decision=redesign_route"
+        "route_plan.nodes[].parent_node_id/child_node_ids when decision=redesign_route",
+        "repair_lineage.original_blocker_id when this is a repeated repair",
+        "repair_lineage.prior_repair_packet_id when this is a repeated repair",
+        "repair_lineage.prior_repair_result_id when this is a repeated repair",
+        "repair_lineage.prior_repair_evidence_refs when this is a repeated repair",
+        "repair_lineage.failed_recheck_report_id when this is a repeated repair",
+        "repair_lineage.prior_failure_reason when this is a repeated repair",
+        "repair_lineage.current_blocking_report_id when this is a repeated repair",
+        "repair_lineage.new_repair_delta when this is a repeated repair",
+        "repair_lineage.return_gate when this is a repeated repair",
+        "supplemental_repair_contract when terminal repair continues",
+        "supplemental_repair_contract.schema_version when terminal repair continues",
+        "supplemental_repair_contract.contract_id when terminal repair continues",
+        "supplemental_repair_contract.round_number when terminal repair continues",
+        "supplemental_repair_contract.original_contract_hash when terminal repair continues",
+        "supplemental_repair_contract.terminal_blocker_id when terminal repair continues",
+        "supplemental_repair_contract.terminal_gap_report_result_id when terminal repair continues",
+        "supplemental_repair_contract.repair_items[] when terminal repair continues",
+        "supplemental_repair_contract.repair_items[].owner_repair_node_id when terminal repair continues",
+        "supplemental_repair_contract.repair_items[].acceptance_item_ids when terminal repair continues",
+        "repair_obligation_disposition[] when repair_evidence_obligations exist",
+        "repair_obligation_disposition[].obligation_id when repair_evidence_obligations exist",
+        "repair_obligation_disposition[].disposition when repair_evidence_obligations exist",
+        "repair_obligation_disposition[].return_gate when repair_evidence_obligations exist",
+        "repair_obligation_disposition[].evidence_kind when repair_evidence_obligations exist"
       ],
       "required_fields": [
         "decision",
-        "reason"
+        "reason",
+        "target_blocker_id",
+        "next_action"
       ],
       "route_scope": "pm_repair_decision",
       "unlocks": "current_repair_packet_or_terminal_block",
@@ -2404,25 +2945,28 @@
     },
     {
       "explicit_array_fields": [
-        "covered_requirement_ids",
-        "validation_evidence_ids",
-        "waived_requirement_ids"
+        "acceptance_item_disposition"
       ],
       "fake_ai_success_fields": [
         "decision",
         "reason",
+        "acceptance_item_disposition"
+      ],
+      "family_id": "pm_disposition.node_pm_disposition",
+      "forbidden_fields": [
+        "summary",
+        "pm_disposition_summary",
         "covered_requirement_ids",
+        "accepted_acceptance_item_ids",
+        "blocked_acceptance_item_ids",
+        "waived_acceptance_item_ids",
+        "superseded_acceptance_item_ids",
         "reviewer_absorption",
         "flowguard_absorption",
         "residual_risk_disposition",
         "semantic_downgrade_disposition",
         "validation_evidence_ids",
         "waived_requirement_ids"
-      ],
-      "family_id": "pm_disposition.node_pm_disposition",
-      "forbidden_fields": [
-        "summary",
-        "pm_disposition_summary"
       ],
       "owner": "flowpilot_core_runtime",
       "packet_kind": "pm_disposition",
@@ -2430,13 +2974,7 @@
       "required_fields": [
         "decision",
         "reason",
-        "covered_requirement_ids",
-        "reviewer_absorption",
-        "flowguard_absorption",
-        "residual_risk_disposition",
-        "semantic_downgrade_disposition",
-        "validation_evidence_ids",
-        "waived_requirement_ids"
+        "acceptance_item_disposition"
       ],
       "route_scope": "node_pm_disposition",
       "unlocks": "node_frontier_disposition_or_staged_route_gate",
@@ -2522,8 +3060,16 @@
       "simulations/flowpilot_fake_project_rehearsal_cli.py"
     ],
     "forbidden_alias_hits": {
+      "material_sufficiency.checked_by_role_alias": false,
+      "material_sufficiency.runtime_open_receipts_alias": false,
       "pm_disposition.summary_reason_alias": false,
-      "pm_repair_decision.authority_alias": false
+      "pm_package_disposition.reason_alias": false,
+      "pm_repair_decision.authority_alias": false,
+      "pm_role_work_request.from_role_alias": false,
+      "pm_role_work_request.kind_alias": false,
+      "pm_role_work_request.mode_alias": false,
+      "pm_role_work_request.recipient_role_alias": false,
+      "research_packet_spec.recipient_role_alias": false
     },
     "formal_repair_identity_source_ok": true,
     "missing_fake_contract_terms": [],
@@ -2535,13 +3081,18 @@
     "private_runtime_contract_tables": [],
     "role_report_contract_alignment_ok": true,
     "runtime_path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+    "runtime_self_check_source_ok": true,
     "shared_contract_source_ok": true,
+    "stage_evidence_matrix_source_ok": true,
     "test_paths": [
       "tests/test_flowpilot_core_runtime.py",
       "tests/test_flowpilot_high_standard_control_flow.py",
       "tests/test_flowpilot_fake_project_rehearsal.py",
       "tests/test_flowpilot_new_entrypoint.py",
-      "tests/test_flowpilot_lifecycle_guard.py"
+      "tests/test_flowpilot_lifecycle_guard.py",
+      "tests/test_flowpilot_control_plane_contracts.py",
+      "tests/test_flowpilot_ai_contract_projection.py",
+      "tests/test_flowpilot_contract_surface_reduction.py"
     ]
   },
   "state_count": 42,

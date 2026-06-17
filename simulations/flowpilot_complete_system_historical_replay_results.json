@@ -7,7 +7,7 @@
     "wrong_flowguard_target_not_gate_evidence",
     "stale_result_artifact_not_gate_evidence",
     "duplicate_result_not_authority",
-    "cockpit_disconnect_uses_chat_route_sign",
+    "cockpit_disconnect_blocks_display_surface",
     "progress_only_background_not_release"
   ],
   "result_type": "flowpilot_complete_system_historical_replay_checks",
@@ -49,9 +49,9 @@
       "status": "passed"
     },
     {
-      "evidence": "cockpit_disconnect_records_chat_fallback",
-      "replay_id": "cockpit_disconnect_uses_chat_route_sign",
-      "source_class": "display_surface_fallback",
+      "evidence": "cockpit_disconnect_records_display_surface_blocker",
+      "replay_id": "cockpit_disconnect_blocks_display_surface",
+      "source_class": "display_surface_blocker",
       "status": "passed"
     },
     {

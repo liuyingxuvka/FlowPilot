@@ -10,11 +10,14 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "skills" / "flowpilot" / "assets"))
 sys.path.insert(0, str(ROOT / "scripts"))
+sys.path.insert(0, str(ROOT / "simulations"))
 
 import flowpilot_defects  # noqa: E402
 import packet_runtime  # noqa: E402
 import role_output_runtime  # noqa: E402
 import flowpilot_router as router  # noqa: E402
+import flowpilot_rejection_liveness_matrix_model as rejection_liveness_model  # noqa: E402
+import flowpilot_route_authority_singularity_model as route_authority_model  # noqa: E402
 from scripts.test_tier import background as test_tier_background  # noqa: E402
 from tests.router_runtime.common import FlowPilotRouterRuntimeTestBase  # noqa: E402
 from tests.flowpilot_route_mutation_contracts import (  # noqa: E402
@@ -30,6 +33,38 @@ from tests.synthetic_agent_trace_replay import (  # noqa: E402
 
 
 class FlowPilotSyntheticAgentTraceReplayTests(unittest.TestCase):
+    def test_route_authority_fake_ai_matrix_covers_alias_fallback_no_delta_and_feedback(self) -> None:
+        expected_failures = {
+            route_authority_model.WRONG_ROLE_ROUTE_ACTION: "submitted role does not match current route authority owner",
+            route_authority_model.OLD_ALIAS_TRANSLATED: "unsupported old route-action alias was translated",
+            route_authority_model.FALLBACK_PROSE_TRANSLATED: "fallback or prose route-action payload was translated",
+            route_authority_model.REJECTION_FEEDBACK_MISSING: "route authority rejection feedback missing repair fields",
+            route_authority_model.REPEATED_NO_DELTA_ACCEPTED: "repeated no-delta wrong-path submission was accepted",
+        }
+        hazard_states = route_authority_model.hazard_states()
+
+        for scenario, expected_failure in expected_failures.items():
+            with self.subTest(scenario=scenario):
+                failures = route_authority_model.route_authority_failures(hazard_states[scenario])
+                self.assertIn(expected_failure, failures)
+
+    def test_rejection_liveness_fake_ai_matrix_covers_no_delta_and_corrected_retry(self) -> None:
+        retry_cells = [
+            cell
+            for cell in rejection_liveness_model.REQUIRED_REJECTION_LIVENESS_CELLS
+            if cell["defect_class"] in rejection_liveness_model.RETRY_DEFECT_CLASSES
+        ]
+        families = {cell["family"] for cell in retry_cells}
+        defects_by_family = {
+            family: {cell["defect_class"] for cell in retry_cells if cell["family"] == family}
+            for family in families
+        }
+
+        self.assertEqual(families, set(rejection_liveness_model.CONTRACT_FAMILIES))
+        for family, defects in defects_by_family.items():
+            with self.subTest(family=family):
+                self.assertEqual(defects, set(rejection_liveness_model.RETRY_DEFECT_CLASSES))
+
     def test_happy_path_worker_trace_reaches_pm_disposition(self) -> None:
         package = SyntheticTracePackage(
             name="packet_happy_worker_result",
@@ -514,6 +549,94 @@ class FlowPilotSyntheticExceptionTraceReplayTests(FlowPilotRouterRuntimeTestBase
                 ),
             )
 
+    def _prepare_route_authority_parent_segment_wait(self, root: Path) -> Path:
+        run_root = self.boot_to_controller(root)
+        self.complete_pre_route_gates(root)
+        router.record_external_event(
+            root,
+            "pm_activates_reviewed_route",
+            {
+                "route_id": "route-001",
+                "active_node_id": "parent-001",
+                "route_version": 1,
+                "route": {
+                    "schema_version": "flowpilot.route.v1",
+                    "route_id": "route-001",
+                    "route_version": 1,
+                    "active_node_id": "parent-001",
+                    "nodes": [
+                        {
+                            "node_id": "parent-001",
+                            "status": "active",
+                            "title": "Parent node",
+                            "child_node_ids": ["child-001"],
+                        },
+                        {"node_id": "child-001", "status": "completed", "title": "Child node"},
+                    ],
+                },
+            },
+        )
+        self.seed_child_completion_ledger(root, "child-001")
+        self.deliver_current_node_cards(root)
+        self.deliver_expected_card(root, "pm.parent_backward_targets")
+        router.record_external_event(root, "pm_builds_parent_backward_targets")
+        self.deliver_expected_card(root, "reviewer.parent_backward_replay")
+        router.record_external_event(
+            root,
+            "reviewer_passes_parent_backward_replay",
+            self.role_report_envelope(
+                root,
+                "synthetic/route_authority/parent_backward_replay",
+                {"reviewed_by_role": "human_like_reviewer", "passed": True},
+            ),
+        )
+        self.deliver_expected_card(root, "pm.parent_segment_decision")
+        wait_action = router.next_action(root)
+        self.assertEqual(wait_action["action_type"], "await_role_decision")
+        self.assertIn("pm_records_parent_segment_decision", wait_action["allowed_external_events"])
+        self.assertEqual(wait_action["legal_next_actions"]["current_owner"], "project_manager")
+        self.assertEqual(
+            wait_action["legal_next_actions"]["required_repair_command"],
+            "submit_pm_parent_segment_decision",
+        )
+        return run_root
+
+    def test_route_authority_wrong_path_rejection_guides_corrected_retry_fake_package(self) -> None:
+        root = self.make_project()
+        run_root = self._prepare_route_authority_parent_segment_wait(root)
+
+        with self.assertRaisesRegex(router.RouterError, "rejected by route authority") as raised:
+            router.record_external_event(root, "pm_completes_parent_node_from_backward_replay")
+
+        blocker = raised.exception.control_blocker
+        rejection = blocker["route_authority_rejection"]
+        self.assertEqual(rejection["rejection_kind"], "wrong_path")
+        self.assertEqual(rejection["rejected_action_id"], "complete_parent_node")
+        self.assertEqual(rejection["legal_action_ids"], ["record_parent_segment_decision"])
+        self.assertEqual(rejection["required_repair_command"], "submit_pm_parent_segment_decision")
+        self.assertFalse(rejection["fallback_or_alias_translation_allowed"])
+
+        router.record_external_event(
+            root,
+            "pm_records_parent_segment_decision",
+            self.role_decision_envelope(
+                root,
+                "synthetic/route_authority/corrected_parent_segment_decision",
+                {
+                    "decision_owner": "project_manager",
+                    "decision": "continue",
+                    **self.prior_path_context_review(
+                        root,
+                        "Corrected retry used submit_pm_parent_segment_decision after route-authority feedback.",
+                    ),
+                },
+            ),
+        )
+
+        state = read_json(router.run_state_path(run_root))
+        self.assertTrue(state["flags"]["parent_segment_decision_recorded"])
+        self.assertEqual(state["flags"].get("last_route_authority_rejected_action"), None)
+
     def test_route_mutation_stale_sibling_proof_fake_package(self) -> None:
         contract_harness = RouteMutationContractHarness(methodName="runTest")
         root = contract_harness.make_project()
@@ -652,6 +775,7 @@ class FlowPilotSyntheticExceptionTraceReplayTests(FlowPilotRouterRuntimeTestBase
         state["flags"]["material_scan_results_relayed_to_pm"] = True
         state["flags"]["material_scan_result_disposition_recorded"] = True
         router.save_run_state(run_root, state)
+        self.ensure_current_role_agent_for_role(root, "worker")
 
         action = self.next_after_display_sync(root)
 

@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
-from typing import Any
+from typing import Any, Mapping
 
 from flowpilot_new_shared import (
     ENTRYPOINT_PATH,
@@ -34,6 +35,107 @@ def _packet_by_kind(ledger: dict[str, Any], packet_kind: str) -> str:
 def _quote_cli(value: str | Path) -> str:
     text = str(value)
     return "'" + text.replace("'", "''") + "'"
+
+
+def _json_object_from_body(body: str) -> dict[str, Any]:
+    try:
+        parsed = json.loads(body)
+    except json.JSONDecodeError:
+        return {}
+    return dict(parsed) if isinstance(parsed, Mapping) else {}
+
+
+def _mapping_or_empty(value: Any) -> dict[str, Any]:
+    return dict(value) if isinstance(value, Mapping) else {}
+
+
+def _string_list(value: Any) -> list[str]:
+    if isinstance(value, str):
+        return [value] if value else []
+    if isinstance(value, (list, tuple, set)):
+        return [str(item) for item in value if str(item)]
+    return []
+
+
+def _mapping_or_none(value: Any) -> dict[str, Any] | None:
+    return dict(value) if isinstance(value, Mapping) else None
+
+
+def _submission_checklist_from_packet_body(
+    body: str,
+    authorized_input_materials: list[dict[str, Any]],
+    current_handoff_contract: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    packet_body = _json_object_from_body(body)
+    handoff_contract = _mapping_or_empty(current_handoff_contract)
+    if not handoff_contract:
+        handoff_contract = _mapping_or_empty(packet_body.get("current_handoff_contract"))
+    report_contract = _mapping_or_empty(handoff_contract.get("required_report_contract"))
+    input_material_manifest = _mapping_or_empty(handoff_contract.get("input_material_manifest"))
+    required_materials = [
+        material
+        for material in authorized_input_materials
+        if isinstance(material, Mapping) and material.get("required_before_submit") is True
+    ]
+    required_result_body_fields = _string_list(
+        packet_body.get("required_result_body_fields") or report_contract.get("required_result_body_fields")
+    )
+    conditional_required_fields = _mapping_or_empty(packet_body.get("conditional_required_fields"))
+    result_skeleton = _mapping_or_none(packet_body.get("minimal_valid_shape")) or _mapping_or_empty(
+        report_contract.get("minimal_valid_shape")
+    )
+    branch_valid_shapes = _mapping_or_empty(packet_body.get("branch_valid_shapes") or report_contract.get("branch_valid_shapes"))
+    required_read_ids = _string_list(input_material_manifest.get("required_authorized_reads_before_submit")) or [
+        str(material.get("result_id") or "") for material in required_materials if str(material.get("result_id") or "")
+    ]
+    authorized_result_read_ids = _string_list(input_material_manifest.get("authorized_result_read_ids"))
+    required_read_count = input_material_manifest.get("required_authorized_read_count")
+    if not isinstance(required_read_count, int):
+        required_read_count = len(required_read_ids)
+    all_required_reads_must_be_opened = input_material_manifest.get(
+        "all_required_authorized_result_bodies_must_be_opened_before_submit"
+    )
+    if not isinstance(all_required_reads_must_be_opened, bool):
+        all_required_reads_must_be_opened = bool(required_read_ids)
+    return {
+        "schema_version": "black_box_flowpilot.submission_checklist.v1",
+        "source": "current_handoff_contract_and_sealed_packet_body",
+        "contract_family_id": str(handoff_contract.get("contract_family_id") or ""),
+        "current_packet_body_inspected": bool(packet_body),
+        "current_handoff_contract_inspected": bool(handoff_contract),
+        "required_result_body_fields": required_result_body_fields,
+        "required_child_fields": _string_list(report_contract.get("required_child_fields")),
+        "explicit_array_fields": _string_list(report_contract.get("explicit_array_fields")),
+        "non_empty_array_fields": _string_list(report_contract.get("non_empty_array_fields")),
+        "conditional_required_fields": conditional_required_fields,
+        "allowed_value_options": _mapping_or_empty(report_contract.get("allowed_value_options")),
+        "field_type_requirements": _mapping_or_empty(report_contract.get("field_type_requirements")),
+        "result_skeleton": result_skeleton,
+        "has_result_skeleton": bool(result_skeleton),
+        "branch_valid_shapes": branch_valid_shapes,
+        "missing_information_response": _mapping_or_empty(handoff_contract.get("missing_information_response")),
+        "downstream_consumer": _mapping_or_empty(handoff_contract.get("downstream_consumer")),
+        "input_material_manifest": input_material_manifest,
+        "authorized_input_materials_count": len(authorized_input_materials),
+        "required_authorized_input_materials_count": len(required_materials),
+        "authorized_result_read_ids": authorized_result_read_ids,
+        "required_authorized_result_read_ids": required_read_ids,
+        "required_authorized_read_count": required_read_count,
+        "all_required_authorized_result_bodies_must_be_opened_before_submit": all_required_reads_must_be_opened,
+        "pre_submit_checks": [
+            "Read every required authorized input material delivered by open-packet.",
+            "Open every required authorized result body before submit when the checklist requires it.",
+            "Fill every required_result_body_fields entry for this packet.",
+            "Fill every required_child_fields path for this packet.",
+            "Keep explicit_array_fields present as arrays, even when empty.",
+            "Keep non_empty_array_fields present as non-empty arrays.",
+            "Apply the conditional_required_fields branch for the chosen decision.",
+            "Use only allowed_value_options for finite fields and match field_type_requirements exactly.",
+            "Apply branch_valid_shapes for the chosen branch when present.",
+            "Use result_skeleton as the current mechanical example when present.",
+            "Do not submit a fixed short shape when result_skeleton contains additional required fields.",
+        ],
+    }
 
 
 def _dispatch_retry_command(
@@ -169,6 +271,11 @@ def open_packet(root: Path, *, lease_id: str, packet_id: str) -> dict[str, Any]:
     packet = ledger["packets"][packet_id]
     lease = ledger["leases"][lease_id]
     envelope = packet["envelope"]
+    submission_checklist = _submission_checklist_from_packet_body(
+        body,
+        authorized_input_materials,
+        envelope.get("current_handoff_contract", {}),
+    )
     run_shell.save_run_ledger(shell, ledger, guard_trigger="open_packet")
     return {
         "ok": True,
@@ -199,8 +306,11 @@ def open_packet(root: Path, *, lease_id: str, packet_id: str) -> dict[str, Any]:
         "sealed_body_visibility": "assigned_role_only",
         "authorized_input_materials": authorized_input_materials,
         "authorized_input_materials_delivered": True,
+        "submission_checklist": submission_checklist,
+        "submission_checklist_visibility": "assigned_role_only",
         "controller_may_read_packet_body": False,
         "controller_may_read_authorized_input_materials": False,
+        "controller_may_read_submission_checklist": False,
         "sealed_body_text_included": True,
         "open_receipt": {
             "event_type": "sealed_packet_body_opened",

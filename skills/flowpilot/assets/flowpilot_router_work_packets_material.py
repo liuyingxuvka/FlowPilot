@@ -139,6 +139,8 @@ def _write_material_dispatch_recheck_protocol_blocker(router: ModuleType, projec
 def _write_material_sufficiency_report(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any], *, sufficient: bool) -> None:
     _bind_router(router)
     payload = _load_file_backed_role_payload(project_root, payload)
+    if 'reviewed_by_role' not in payload and 'checked_by_role' in payload:
+        raise RouterError('material sufficiency report requires reviewed_by_role; checked_by_role is not a current alias')
     if payload.get('reviewed_by_role') != 'human_like_reviewer':
         raise RouterError('material sufficiency report must be reviewed_by_role=human_like_reviewer')
     if not run_state['flags'].get('material_scan_results_absorbed_by_pm'):
@@ -150,13 +152,21 @@ def _write_material_sufficiency_report(router: ModuleType, project_root: Path, r
         raise RouterError('material sufficiency report requires direct_material_sources_checked=true')
     if payload.get('packet_matches_checked_sources') is not True:
         raise RouterError('material sufficiency report requires packet_matches_checked_sources=true')
+    if payload.get('passed') is not sufficient:
+        expected = 'true' if sufficient else 'false'
+        raise RouterError(f'material sufficiency report requires passed={expected} for this reviewer event')
+    pm_visible_summary = payload.get('pm_visible_summary') or []
+    if not isinstance(pm_visible_summary, list) or not pm_visible_summary or not all(isinstance(item, str) and item.strip() for item in pm_visible_summary):
+        raise RouterError('material sufficiency report requires pm_visible_summary as a non-empty list of non-empty strings')
     checked_source_paths = payload.get('checked_source_paths') or []
-    runtime_open_receipt_refs = payload.get('runtime_open_receipt_refs') or payload.get('runtime_open_receipts') or []
+    if "runtime_open_receipt_refs" not in payload and "runtime_open_receipts" in payload:
+        raise RouterError('material sufficiency report requires runtime_open_receipt_refs; runtime_open_receipts is not a current alias')
+    runtime_open_receipt_refs = payload.get('runtime_open_receipt_refs') or []
     if not checked_source_paths and not runtime_open_receipt_refs:
         raise RouterError('material sufficiency report requires checked_source_paths or runtime_open_receipt_refs for direct source check')
     if sufficient and payload.get('pm_ready') is not True:
         raise RouterError('sufficient material report requires pm_ready=true')
-    write_json(run_root / 'material' / 'material_sufficiency_report.json', {'schema_version': 'flowpilot.material_sufficiency_report.v1', 'run_id': run_state['run_id'], 'reviewed_by_role': 'human_like_reviewer', 'sufficient': sufficient, 'direct_material_sources_checked': True, 'packet_matches_checked_sources': True, 'pm_ready': bool(payload.get('pm_ready')), 'checked_source_paths': checked_source_paths, 'runtime_open_receipt_refs': runtime_open_receipt_refs, 'blockers': payload.get('blockers') or [], 'reported_at': utc_now(), **_role_output_envelope_record(payload)})
+    write_json(run_root / 'material' / 'material_sufficiency_report.json', {'schema_version': 'flowpilot.material_sufficiency_report.v1', 'run_id': run_state['run_id'], 'pm_visible_summary': pm_visible_summary, 'reviewed_by_role': 'human_like_reviewer', 'passed': sufficient, 'sufficient': sufficient, 'direct_material_sources_checked': True, 'packet_matches_checked_sources': True, 'pm_ready': bool(payload.get('pm_ready')), 'checked_source_paths': checked_source_paths, 'runtime_open_receipt_refs': runtime_open_receipt_refs, 'findings': payload.get('findings') or [], 'blockers': payload.get('blockers') or [], 'pm_suggestion_items': payload.get('pm_suggestion_items') or [], 'reported_at': utc_now(), **_role_output_envelope_record(payload)})
     material_artifact_map.refresh_material_artifact_map(project_root, run_root, run_state)
 
 def _write_research_package(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
@@ -197,7 +207,9 @@ def _write_research_capability_decision(router: ModuleType, project_root: Path, 
     for index, spec in enumerate(packet_specs, start=1):
         if not isinstance(spec, dict):
             raise RouterError('each research packet spec must be an object')
-        to_role = str(spec.get('to_role') or spec.get('recipient_role') or worker_owner)
+        if 'to_role' not in spec and 'recipient_role' in spec:
+            raise RouterError('research packet spec requires to_role; recipient_role is not a current alias')
+        to_role = str(spec.get('to_role') or worker_owner)
         if to_role not in {'worker', 'flowguard_operator', 'flowguard_operator'}:
             raise RouterError('research packets may target workers or FlowGuard operators only')
         packet_type = 'flowguard_operator_request' if to_role in {'flowguard_operator', 'flowguard_operator'} else 'research'

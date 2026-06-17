@@ -65,4 +65,11 @@ unnecessary implementation shape. Do not turn a complex route, tool choice,
 child skill, or artifact family into a hard requirement unless the user asked
 for it or the proof obligation cannot be met without it.
 
+Freeze the acceptance item registry together with the root contract. PM must
+translate all accepted user requirements and PM high-standard criteria into
+atomic `acceptance_item_id` rows with a high-quality floor, low-quality failure
+patterns, required evidence, source requirement ids, and final replay
+expectation. A root contract that only restates requirements without this
+acceptance table is not review-ready.
+
 Do not draft a route until the Reviewer check passes for the frozen contract.

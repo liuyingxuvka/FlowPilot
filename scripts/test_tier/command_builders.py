@@ -42,6 +42,17 @@ def _unittest_k(name: str, *modules: str, patterns: tuple[str, ...], description
         pattern_args.extend(("-k", pattern))
     return TierCommand(
         name=name,
-        command=_py("-m", "unittest", "-v", *pattern_args, *modules),
+        command=_py("scripts/test_tier/unittest_shard.py", "-v", *pattern_args, *modules),
+        description=description,
+    )
+
+
+def _unittest_isolated_k(name: str, *modules: str, patterns: tuple[str, ...], description: str) -> TierCommand:
+    pattern_args: list[str] = []
+    for pattern in patterns:
+        pattern_args.extend(("-k", pattern))
+    return TierCommand(
+        name=name,
+        command=_py("scripts/test_tier/unittest_isolated_shard.py", "-v", *pattern_args, *modules),
         description=description,
     )

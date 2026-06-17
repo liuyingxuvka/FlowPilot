@@ -97,13 +97,12 @@ Route requirements:
 - Minimum Sufficient Complexity: choose the smallest route structure that can
   satisfy the frozen contract with the required proof strength;
 - include a `structure_convergence_review`: name the route-level cleanup
-  targets, fallback-like or compatibility paths that must be rejected or
-  removed, any allowed current-runtime recovery with owner/current run/current
-  packet or node/blocking state/repair command/validation evidence, and any
-  intentionally retained maintenance layer with owner, scope, validation
-  evidence, and sunset or next-disposition criteria. Old artifacts, old field
-  names, newest-run fallbacks, repo-root fallbacks, or historical evidence must
-  not become current completion evidence;
+  targets, fallback-like or compatibility paths in the target work that must be
+  rejected or removed, any allowed current-runtime recovery with owner/current
+  run/current packet or node/blocking state/repair command/validation evidence,
+  and any intentionally retained maintenance layer with owner, scope,
+  validation evidence, and sunset or next-disposition criteria. Only
+  current-contract artifacts and current evidence may support completion;
 - use the FlowGuard operator's product behavior model as route input:
   map the route to its essential user actions, product states,
   failure/recovery paths, forbidden downgrades, and completion evidence;
@@ -113,6 +112,16 @@ Route requirements:
   with a current planning boundary. Shallow-success traps and non-downgrade
   rules must become route evidence obligations, node acceptance checks, packet
   instructions, reviewer checks, or final closure checks;
+- use the accepted `acceptance_item_registry` as route input: every active
+  `acceptance_item_id` must appear in at least one route node's
+  `acceptance_item_ids`. Do not leave user-sourced items or PM high-standard
+  items only in prose, and do not reference unknown item ids. Route redesigns
+  must reassign all still-active items before activation;
+- for terminal supplemental repair route plans, every repair node that owns a
+  supplemental item must include `supplemental_repair_contract_ids` and
+  `supplemental_repair_item_ids`. These fields are projections from the PM
+  `supplemental_repair_contract`; they do not replace `acceptance_item_ids`,
+  FlowGuard, Reviewer, PM disposition, or terminal replay gates;
 - use only a PM-accepted product behavior model. If PM has not accepted the
   FlowGuard operator product model, return to product-model decision before drafting;
 - use only a PM-accepted target-realization model. If PM has not accepted the

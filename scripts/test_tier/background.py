@@ -21,6 +21,10 @@ except ImportError:  # pragma: no cover - script execution path
 ROOT = Path(__file__).resolve().parents[2]
 ARTIFACT_SUFFIXES = ("out", "err", "combined", "exit", "meta")
 BACKGROUND_CHILD_ENTRYPOINT = ROOT / "scripts" / "run_test_tier.py"
+DEFAULT_BACKGROUND_CHILD_TIMEOUT_SECONDS = int(
+    os.environ.get("FLOWPILOT_BACKGROUND_CHILD_TIMEOUT_SECONDS", "2700")
+)
+BACKGROUND_CHILD_TIMEOUT_EXIT_CODE = 124
 
 def _safe_base(name: str) -> str:
     safe = re.sub(r"[^A-Za-z0-9_.-]+", "_", name).strip("._")
@@ -128,7 +132,40 @@ def _hidden_process_kwargs() -> dict[str, Any]:
     }
 
 
-def _launch_background(command: TierCommand, *, log_root: Path) -> dict[str, Any]:
+def _coerce_timeout_seconds(value: int | str | None) -> int:
+    if value is None:
+        return DEFAULT_BACKGROUND_CHILD_TIMEOUT_SECONDS
+    try:
+        parsed = int(value)
+    except (TypeError, ValueError):
+        return DEFAULT_BACKGROUND_CHILD_TIMEOUT_SECONDS
+    return max(0, parsed)
+
+
+def _terminate_process_tree(pid: int) -> None:
+    if pid <= 0:
+        return
+    if os.name == "nt":
+        subprocess.run(
+            ["taskkill", "/PID", str(pid), "/T", "/F"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=False,
+            **_hidden_process_kwargs(),
+        )
+        return
+    try:
+        os.kill(pid, 9)
+    except OSError:
+        pass
+
+
+def _launch_background(
+    command: TierCommand,
+    *,
+    log_root: Path,
+    timeout_seconds: int | None = None,
+) -> dict[str, Any]:
     log_root.mkdir(parents=True, exist_ok=True)
     paths = artifact_paths(log_root, command.name)
     clear_artifacts(paths)
@@ -141,6 +178,7 @@ def _launch_background(command: TierCommand, *, log_root: Path) -> dict[str, Any
         "end_time": None,
         "exit_code": None,
         "proof_reused": None,
+        "timeout_seconds": _coerce_timeout_seconds(timeout_seconds),
         "artifacts": {key: str(value) for key, value in paths.items()},
     }
     _write_json(paths["meta"], meta)
@@ -154,6 +192,8 @@ def _launch_background(command: TierCommand, *, log_root: Path) -> dict[str, Any
         json.dumps(list(command.command)),
         "--background-dir",
         str(log_root),
+        "--background-child-timeout-seconds",
+        str(meta["timeout_seconds"]),
     ]
     proc = subprocess.Popen(
         child_args,
@@ -176,8 +216,16 @@ def _launch_background(command: TierCommand, *, log_root: Path) -> dict[str, Any
     }
 
 
-def launch_background(commands: Iterable[TierCommand], *, log_root: Path) -> list[dict[str, Any]]:
-    return [_launch_background(command, log_root=log_root) for command in commands]
+def launch_background(
+    commands: Iterable[TierCommand],
+    *,
+    log_root: Path,
+    timeout_seconds: int | None = None,
+) -> list[dict[str, Any]]:
+    return [
+        _launch_background(command, log_root=log_root, timeout_seconds=timeout_seconds)
+        for command in commands
+    ]
 
 
 def _read_exit_code(path: Path) -> int | None:

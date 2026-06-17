@@ -132,11 +132,15 @@ def render_current_packet_handoff(
             "",
             "Then open only this assigned packet through the runtime command:",
             f"`{open_command}`",
-            "The open-packet output includes `current_handoff_contract` and any authorized input materials this packet may use.",
+            "The open-packet output includes `current_handoff_contract`, `submission_checklist`, and any authorized input materials this packet may use.",
+            "Before submit-result, use `submission_checklist.result_skeleton` or the packet body's `minimal_valid_shape` as the current mechanical checklist.",
+            "If the checklist lists required fields, required child fields, explicit or non-empty arrays, branch-valid shapes, forbidden fields, or required authorized reads, follow those rows for this packet instead of using a remembered or shortened result shape.",
             "",
             *(
                 [
                     "Authorized result/report bodies are delivered by open-packet for this role surface only.",
+                    "Read every delivered authorized body before submit-result; blocker, target, and upstream context bodies each carry required context when present.",
+                    "Do not work from only the packet body, a summary, or one selected result body when multiple authorized bodies were delivered.",
                     "Controller must not run role-only open commands or read sealed bodies.",
                     "",
                 ]

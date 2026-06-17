@@ -38,15 +38,19 @@ except ImportError:  # pragma: no cover - script execution path
 try:
     from .test_tier.background import (
         ARTIFACT_SUFFIXES,
+        BACKGROUND_CHILD_TIMEOUT_EXIT_CODE,
+        DEFAULT_BACKGROUND_CHILD_TIMEOUT_SECONDS,
         MappingLike,
         _artifact_has_progress,
         _artifact_paths_for_json,
+        _coerce_timeout_seconds,
         _hidden_process_kwargs,
         _launch_background,
         _read_background_meta,
         _read_exit_code,
         _release_local_only_proof,
         _safe_base,
+        _terminate_process_tree,
         _utc_now,
         _windows_hidden_process_flags,
         _windows_hidden_startupinfo,
@@ -64,15 +68,19 @@ except ImportError:  # pragma: no cover - script execution path
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     from test_tier.background import (
         ARTIFACT_SUFFIXES,
+        BACKGROUND_CHILD_TIMEOUT_EXIT_CODE,
+        DEFAULT_BACKGROUND_CHILD_TIMEOUT_SECONDS,
         MappingLike,
         _artifact_has_progress,
         _artifact_paths_for_json,
+        _coerce_timeout_seconds,
         _hidden_process_kwargs,
         _launch_background,
         _read_background_meta,
         _read_exit_code,
         _release_local_only_proof,
         _safe_base,
+        _terminate_process_tree,
         _utc_now,
         _windows_hidden_process_flags,
         _windows_hidden_startupinfo,
@@ -103,7 +111,13 @@ def next_background_launch_index(
     return None
 
 
-def _launch_background_supervisor(tier: str, *, log_root: Path, max_parallel: int) -> dict[str, Any]:
+def _launch_background_supervisor(
+    tier: str,
+    *,
+    log_root: Path,
+    max_parallel: int,
+    timeout_seconds: int = DEFAULT_BACKGROUND_CHILD_TIMEOUT_SECONDS,
+) -> dict[str, Any]:
     log_root.mkdir(parents=True, exist_ok=True)
     name = background_supervisor_name(tier)
     paths = artifact_paths(log_root, name)
@@ -118,6 +132,8 @@ def _launch_background_supervisor(tier: str, *, log_root: Path, max_parallel: in
         str(log_root),
         "--background-max-parallel",
         str(max_parallel),
+        "--background-child-timeout-seconds",
+        str(timeout_seconds),
     ]
     meta = {
         "name": name,
@@ -130,6 +146,7 @@ def _launch_background_supervisor(tier: str, *, log_root: Path, max_parallel: in
         "exit_code": None,
         "proof_reused": None,
         "max_parallel": max_parallel,
+        "timeout_seconds": timeout_seconds,
         "artifacts": {key: str(value) for key, value in paths.items()},
     }
     _write_json(paths["meta"], meta)
@@ -160,6 +177,7 @@ def run_background_supervisor(
     *,
     log_root: Path,
     max_parallel: int,
+    timeout_seconds: int = DEFAULT_BACKGROUND_CHILD_TIMEOUT_SECONDS,
 ) -> int:
     name = background_supervisor_name(tier)
     paths = artifact_paths(log_root, name)
@@ -174,6 +192,7 @@ def run_background_supervisor(
         "exit_code": None,
         "proof_reused": False,
         "max_parallel": max_parallel,
+        "timeout_seconds": timeout_seconds,
         "command_count": len(commands),
         "running": [],
         "completed": [],
@@ -195,7 +214,11 @@ def run_background_supervisor(
                     if launch_index is None:
                         break
                     command = pending.pop(launch_index)
-                    launched = _launch_background(command, log_root=log_root)
+                    launched = _launch_background(
+                        command,
+                        log_root=log_root,
+                        timeout_seconds=timeout_seconds,
+                    )
                     running.append(command)
                     line = f"launched {command.name} pid={launched['child_pid']}\n"
                     out_file.write(line)
@@ -285,7 +308,13 @@ def _stream_pipe(
     pipe.close()
 
 
-def run_background_child(name: str, command: Sequence[str], *, log_root: Path) -> int:
+def run_background_child(
+    name: str,
+    command: Sequence[str],
+    *,
+    log_root: Path,
+    timeout_seconds: int = DEFAULT_BACKGROUND_CHILD_TIMEOUT_SECONDS,
+) -> int:
     paths = artifact_paths(log_root, name)
     log_root.mkdir(parents=True, exist_ok=True)
     meta = {
@@ -297,6 +326,8 @@ def run_background_child(name: str, command: Sequence[str], *, log_root: Path) -
         "end_time": None,
         "exit_code": None,
         "proof_reused": False,
+        "timeout_seconds": timeout_seconds,
+        "timed_out": False,
         "artifacts": {key: str(value) for key, value in paths.items()},
     }
     _write_json(paths["meta"], meta)
@@ -331,9 +362,25 @@ def run_background_child(name: str, command: Sequence[str], *, log_root: Path) -
             )
             out_thread.start()
             err_thread.start()
-            returncode = process.wait()
-            out_thread.join()
-            err_thread.join()
+            try:
+                returncode = process.wait(timeout=timeout_seconds or None)
+            except subprocess.TimeoutExpired:
+                meta["timed_out"] = True
+                combined_file.write(
+                    f"[runner] timed out after {timeout_seconds} seconds; terminating process tree\n"
+                )
+                combined_file.flush()
+                err_file.write(f"background child timed out after {timeout_seconds} seconds\n")
+                err_file.flush()
+                _terminate_process_tree(process.pid)
+                try:
+                    process.wait(timeout=5)
+                except subprocess.TimeoutExpired:
+                    process.kill()
+                    process.wait(timeout=5)
+                returncode = BACKGROUND_CHILD_TIMEOUT_EXIT_CODE
+            out_thread.join(timeout=5)
+            err_thread.join(timeout=5)
     except Exception as exc:  # pragma: no cover - defensive background reporting
         paths["err"].write_text(f"background child failed before command exit: {exc}\n", encoding="utf-8")
         paths["combined"].write_text(
@@ -347,6 +394,8 @@ def run_background_child(name: str, command: Sequence[str], *, log_root: Path) -
     meta["end_time"] = _utc_now()
     meta["exit_code"] = returncode
     meta["proof_reused"] = flags["proof_reused"]
+    if meta["timed_out"]:
+        meta["failure_reason"] = "background_child_timeout"
     _write_json(paths["meta"], meta)
     return returncode
 
@@ -390,6 +439,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         default=DEFAULT_BACKGROUND_MAX_PARALLEL,
         help="Maximum command runners started concurrently by the background supervisor.",
     )
+    parser.add_argument(
+        "--background-child-timeout-seconds",
+        type=int,
+        default=DEFAULT_BACKGROUND_CHILD_TIMEOUT_SECONDS,
+        help="Maximum wall-clock seconds for each background child command; 0 disables this guard.",
+    )
     parser.add_argument("--list-tiers", action="store_true")
     parser.add_argument("--background-child", action="store_true", help=argparse.SUPPRESS)
     parser.add_argument("--background-supervisor", action="store_true", help=argparse.SUPPRESS)
@@ -401,7 +456,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         command = json.loads(args.command_json)
         if not isinstance(command, list) or not args.name:
             raise SystemExit("background child requires --name and command list")
-        return run_background_child(args.name, [str(part) for part in command], log_root=args.background_dir)
+        return run_background_child(
+            args.name,
+            [str(part) for part in command],
+            log_root=args.background_dir,
+            timeout_seconds=_coerce_timeout_seconds(args.background_child_timeout_seconds),
+        )
 
     if args.background_supervisor:
         commands = commands_for_tier(args.tier)
@@ -411,6 +471,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             commands,
             log_root=args.background_dir,
             max_parallel=max_parallel,
+            timeout_seconds=_coerce_timeout_seconds(args.background_child_timeout_seconds),
         )
 
     if args.list_tiers:
@@ -434,16 +495,29 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     if args.background:
         max_parallel = max(1, args.background_max_parallel)
+        timeout_seconds = _coerce_timeout_seconds(args.background_child_timeout_seconds)
         if should_use_background_supervisor(len(commands), max_parallel):
-            launched = [_launch_background_supervisor(args.tier, log_root=args.background_dir, max_parallel=max_parallel)]
+            launched = [
+                _launch_background_supervisor(
+                    args.tier,
+                    log_root=args.background_dir,
+                    max_parallel=max_parallel,
+                    timeout_seconds=timeout_seconds,
+                )
+            ]
             supervisor = launched[0]
         else:
-            launched = launch_background(commands, log_root=args.background_dir)
+            launched = launch_background(
+                commands,
+                log_root=args.background_dir,
+                timeout_seconds=timeout_seconds,
+            )
             supervisor = None
         payload = {
             "ok": True,
             "tier": args.tier,
             "background_max_parallel": max_parallel,
+            "background_child_timeout_seconds": timeout_seconds,
             "launched": launched,
             "plan": plan,
             "supervisor": supervisor,

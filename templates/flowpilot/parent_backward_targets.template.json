@@ -9,13 +9,8 @@
   "built_at": "<iso-8601-timestamp-or-null>",
   "trigger_rule": {
     "structural_trigger": "any_effective_route_node_with_children",
-    "semantic_importance_classification_required": false,
-    "importance_labels_are_context_only": [
-      "high_risk",
-      "integration",
-      "feature",
-      "downstream_dependency"
-    ],
+    "source_of_truth": "active_route_structure",
+    "requires_current_route_version": true,
     "leaf_nodes_exempt_from_parent_backward_replay": true
   },
   "targets": [

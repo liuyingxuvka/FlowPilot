@@ -223,7 +223,11 @@ def _build_current_status_summary(router: ModuleType, run_root: Path, run_state:
 
 def _write_current_status_summary(router: ModuleType, run_root: Path, run_state: dict[str, Any], *, route_payload: dict[str, Any] | None=None) -> None:
     _bind_router(router)
-    write_json(router._current_status_summary_path(run_root), router._build_current_status_summary(run_root, run_state, route_payload=route_payload))
+    router.write_json_atomic(
+        router._current_status_summary_path(run_root),
+        router._build_current_status_summary(run_root, run_state, route_payload=route_payload),
+        verify=False,
+    )
 
 
 __all__ = (

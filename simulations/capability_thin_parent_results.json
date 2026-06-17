@@ -1,5 +1,5 @@
 {
-  "created_at": "2026-06-13T12:17:07.968740+00:00",
+  "created_at": "2026-06-17T11:55:48.604463+00:00",
   "graph": {
     "edge_count": 14,
     "invariant_failure_count": 0,
@@ -11,7 +11,7 @@
     "current": true,
     "required_for_release": true,
     "status": {
-      "created_at": "2026-06-13T12:16:50.432073+00:00",
+      "created_at": "2026-06-17T11:55:42.465463+00:00",
       "edge_count": 16,
       "kind": "layered_full_parent",
       "proof_file": "simulations/capability_layered_full_results.proof.json",
@@ -122,17 +122,17 @@
       {
         "evidence": [
           {
-            "edge_count": 116,
+            "edge_count": 126,
             "failures": [],
             "missing": false,
             "model_id": "flowpilot_planning_quality",
             "ok": true,
             "proof_status": "not_present",
             "result_file": "simulations/flowpilot_planning_quality_results.json",
-            "result_fingerprint": "1d5cdc92f80339077eb1da4da2406ce7f6538ac34bdf970003d1224a412e50f2",
+            "result_fingerprint": "f6517bfe1e2a36f7109f2576efd1575f794f63a61ea3b55df46740613e2b9880",
             "skipped_required_checks": [],
             "skipped_required_checks_visible": true,
-            "state_count": 117
+            "state_count": 127
           },
           {
             "edge_count": 40,
@@ -451,17 +451,17 @@
       {
         "evidence": [
           {
-            "edge_count": 52,
+            "edge_count": 70,
             "failures": [],
             "missing": false,
             "model_id": "flowpilot_model_mesh",
             "ok": true,
             "proof_status": "not_present",
             "result_file": "simulations/flowpilot_model_mesh_results.json",
-            "result_fingerprint": "89fa97cb10b957639f67ef813e6816840e676881b6e8c91ebaaf238174ee1e96",
+            "result_fingerprint": "f309a2fb7ad390ebd63e7d9e7c8b249552b179bc1a9c5f4304f953cce98ad404",
             "skipped_required_checks": [],
             "skipped_required_checks_visible": true,
-            "state_count": 53
+            "state_count": 71
           },
           {
             "edge_count": 50,

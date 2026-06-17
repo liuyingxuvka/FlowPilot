@@ -58,5 +58,11 @@ Router hard gate fields:
   `target_realization_verdict: "blocked"` and a concrete
   `recommended_resolution`.
 
+When the model identifies a realization obligation, shallow-success trap,
+non-downgrade rule, or evidence gate that must affect current completion,
+name the candidate `acceptance_item_id` or recommend that PM add one to the
+accepted registry. Do not leave a current-run quality floor only as model
+commentary.
+
 Write the canonical report at
 `.flowpilot/runs/<run-id>/flowguard/target_realization_model.json`.

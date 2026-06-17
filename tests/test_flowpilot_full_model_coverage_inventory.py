@@ -19,14 +19,14 @@ class FlowPilotFullModelCoverageInventoryTests(unittest.TestCase):
         self.assertEqual(report["runner_count"], runner_count)
         self.assertGreaterEqual(report["runner_count"], 90)
         self.assertEqual(
-            report["gap_class_counts"].get("runner_not_ok"),
-            1,
-            "only the final confidence gate may be blocked in an offline maintenance clone",
+            report["gap_class_counts"].get("runner_not_ok", 0),
+            0,
+            "read-only runner failures should be fixed or classified as live-state evidence",
         )
         self.assertEqual(
-            report["gap_class_counts"].get("live_runtime_or_state_findings"),
-            1,
-            "only the no-current-run live boundary may be present in an offline maintenance clone",
+            report["gap_class_counts"].get("live_runtime_or_state_findings", 0),
+            0,
+            "current-run blockers must be repaired or explicitly disposed before coverage can claim green",
         )
         self.assertNotIn("source_or_code_findings", report["gap_class_counts"])
         self.assertNotIn("missing_or_scoped_replay_adapter", report["gap_class_counts"])
@@ -45,10 +45,31 @@ class FlowPilotFullModelCoverageInventoryTests(unittest.TestCase):
         self.assertIn("replay evidence manifest", report["claim_boundary"])
 
         records = {record["runner"]: record for record in report["records"]}
-        self.assertIn("runner_not_ok", records["flowpilot_final_confidence_gate"]["gap_classes"])
-        self.assertEqual(
+        self.assertEqual(records["flowpilot_contract_exhaustion_mesh"]["coverage_tier"], "coverage_strong")
+        self.assertEqual(records["flowpilot_cartesian_control_plane_exhaustion"]["coverage_tier"], "coverage_strong")
+        self.assertEqual(records["flowpilot_executable_matrix_coverage"]["coverage_tier"], "coverage_strong")
+        self.assertNotIn("runner_not_ok", records["flowpilot_executable_matrix_coverage"]["gap_classes"])
+        self.assertNotIn(
+            "runner_unparsed_or_unavailable",
+            records["flowpilot_executable_matrix_coverage"]["gap_classes"],
+        )
+        self.assertIn(
+            "currently_consumable_inventory_evidence",
+            records["flowpilot_contract_exhaustion_mesh"]["gap_classes"],
+        )
+        self.assertIn(
+            "currently_consumable_inventory_evidence",
+            records["flowpilot_cartesian_control_plane_exhaustion"]["gap_classes"],
+        )
+        self.assertNotIn("runner_not_ok", records["flowpilot_final_confidence_gate"]["gap_classes"])
+        self.assertNotIn("live_runtime_or_state_findings", records["flowpilot_process_liveness"]["gap_classes"])
+        self.assertNotIn(
+            "modeled_current_live_hit_fix_runtime_or_current_state",
             records["flowpilot_model_mesh"]["finding_counts"],
-            {"modeled_current_live_hit_fix_runtime_or_current_state": 1},
+        )
+        self.assertNotIn(
+            "modeled_current_live_hit_fix_runtime_or_current_state",
+            records["flowpilot_process_liveness"]["finding_counts"],
         )
 
     def test_inventory_marks_source_audited_and_scoped_replay_boundaries(self) -> None:

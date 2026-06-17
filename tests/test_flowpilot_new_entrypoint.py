@@ -17,6 +17,8 @@ if str(ASSETS) not in sys.path:
     sys.path.insert(0, str(ASSETS))
 
 flowpilot_new = importlib.import_module("flowpilot_new")
+flowpilot_new_shared = importlib.import_module("flowpilot_new_shared")
+flowpilot_runtime_self_check = importlib.import_module("flowpilot_runtime_self_check")
 flowpilot_new_role_commands = importlib.import_module("flowpilot_new_role_commands")
 runtime = importlib.import_module("flowpilot_core_runtime.runtime")
 fake_e2e = importlib.import_module("flowpilot_core_runtime.fake_e2e")
@@ -27,35 +29,26 @@ install_check_common = importlib.import_module("scripts.install_checks.common")
 
 
 def role_result_body(summary: str, **fields: object) -> str:
-    payload: dict[str, object] = {"decision": "pass", "pm_visible_summary": [summary]}
+    payload: dict[str, object] = {
+        "decision": "pass",
+        "pm_visible_summary": [summary],
+        "current_evidence_refs": ["current-runtime-evidence"],
+    }
     payload.update(fields)
     return json.dumps(payload)
 
 
 def flowguard_result_body(summary: str, **fields: object) -> str:
+    blocker_class = fields.pop("blocker_class", None)
+    recommended_resolution = fields.pop("recommended_resolution", None)
+    passed = bool(fields.get("passed", True))
     payload: dict[str, object] = {
         "pm_visible_summary": [summary],
         "reviewed_by_role": "flowguard_operator",
-        "passed": True,
+        "passed": passed,
         "modeled_boundary": "Current packet and current result only.",
-        "commands_run": ["python simulations/run_flowpilot_model_test_alignment_checks.py"],
-        "counterexamples_or_absence": ["No counterexample in the current modeled boundary."],
-        "hard_invariants": ["Current packet-result contracts use only current fields."],
-        "skipped_checks": [],
-        "model_obligations": ["Current FlowGuard packet report fields are present."],
-        "ordinary_test_evidence": ["Targeted new-entrypoint regression."],
-        "missing_test_kinds": [],
-        "conformance_boundary": "Runtime checks mechanics only.",
-        "confidence_boundary": "Scoped to this current packet.",
-        "residual_blindspots": [],
-        "background_artifact_completion": [],
+        "blockers": [],
         "pm_suggestion_items": [],
-        "evidence_consistency": {
-            "self_check_passed": True,
-            "child_reports_all_passed": True,
-            "blocking_child_reports": [],
-            "hard_evidence_decision": "pass",
-        },
         "contract_self_check": {
             "all_required_fields_present": True,
             "exact_field_names_used": True,
@@ -64,6 +57,15 @@ def flowguard_result_body(summary: str, **fields: object) -> str:
             "semantic_sufficiency_reviewed_by_runtime": False,
         },
     }
+    if passed is False and blocker_class:
+        payload["blockers"] = [
+            {
+                "blocker_id": "flowguard-blocker-001",
+                "blocker_class": blocker_class,
+                "recommended_resolution": recommended_resolution or summary,
+                "summary": summary,
+            }
+        ]
     payload.update(fields)
     return json.dumps(payload)
 
@@ -74,21 +76,8 @@ def review_result_body(summary: str, **fields: object) -> str:
         "pm_visible_summary": [summary],
         "reviewed_by_role": "human_like_reviewer",
         "passed": passed,
-        "direct_evidence_paths_checked": ["current result body"],
-        "independent_challenge": {
-            "scope_restatement": "Review the current packet result against current acceptance criteria.",
-            "explicit_and_implicit_commitments": ["current contract fields", "quality sufficient for next gate"],
-            "failure_hypotheses": ["The result may satisfy fields without satisfying the task."],
-            "challenge_actions": ["Checked current evidence and challenged the strongest likely failure."],
-            "blocking_findings": [],
-            "non_blocking_findings": [],
-            "pass_or_block": "pass" if passed else "block",
-            "reroute_request": [],
-            "challenge_waivers": [],
-        },
         "findings": [],
         "blockers": [],
-        "residual_risks": [],
         "pm_suggestion_items": [],
         "contract_self_check": {
             "all_required_fields_present": True,
@@ -111,13 +100,77 @@ def high_standard_contract_body() -> str:
                     "classification": "hard_current",
                     "summary": "Complete the requested outcome.",
                     "source_user_intent": "sealed_startup_intake",
-                    "evidence_rule": "Direct current evidence or explicit waiver required.",
-                    "closure_blocking": True,
-                    "report_only_closure_allowed": False,
+                    "closure_rule": "Must be satisfied by current evidence, an explicit waiver, or a current blocker.",
                 }
-            ]
+            ],
+            "acceptance_item_registry": {
+                "schema_version": runtime.ACCEPTANCE_ITEM_REGISTRY_SCHEMA_VERSION,
+                "items": [
+                    {
+                        "acceptance_item_id": "acc-001",
+                        "source_type": "user_explicit",
+                        "source_requirement_ids": ["hsr-001"],
+                        "summary": "Complete the requested outcome.",
+                        "quality_floor": "high_quality_required",
+                        "future_evidence_rule": "Later node and terminal packets must cite current evidence or an explicit waiver.",
+                        "status": "active",
+                    },
+                    {
+                        "acceptance_item_id": "acc-002",
+                        "source_type": "pm_high_standard",
+                        "source_requirement_ids": ["hsr-001"],
+                        "summary": "Hold the result to the highest reasonable current-run quality bar.",
+                        "quality_floor": "high_quality_required",
+                        "future_evidence_rule": "Later node and terminal packets must cite depth evidence plus review closure.",
+                        "status": "active",
+                    },
+                ],
+            },
         }
     )
+
+
+_PM_REPAIR_OBLIGATION_DISPOSITION_BY_DECISION = {
+    "repair_current_scope": "fresh_repair_packet_required",
+    "repair_parent_scope": "parent_scope_repair_required",
+    "redesign_route": "route_redesign_required",
+    "waive_with_authority": "waived_with_authority",
+    "stop_for_user": "stop_for_user",
+}
+
+_PM_REPAIR_OBLIGATION_RETURN_GATE_BY_DECISION = {
+    "repair_current_scope": "flowguard_then_reviewer",
+    "repair_parent_scope": "flowguard_then_reviewer",
+    "redesign_route": "route_redesign_gate",
+    "waive_with_authority": "authority_waiver_gate",
+    "stop_for_user": "terminal_user_stop",
+}
+
+
+def pm_repair_body_from_packet(
+    packet: dict[str, object],
+    *,
+    decision: str,
+    reason: str,
+) -> str:
+    packet_body = json.loads(str(packet.get("body") or "{}"))
+    payload = dict(packet_body.get("minimal_valid_shape") or {})
+    payload["decision"] = decision
+    payload["next_action"] = decision
+    payload["reason"] = reason
+    obligations = packet_body.get("repair_evidence_obligations")
+    if isinstance(obligations, list) and obligations:
+        payload["repair_obligation_disposition"] = [
+            {
+                "obligation_id": str(row.get("obligation_id") or ""),
+                "disposition": _PM_REPAIR_OBLIGATION_DISPOSITION_BY_DECISION[decision],
+                "return_gate": _PM_REPAIR_OBLIGATION_RETURN_GATE_BY_DECISION[decision],
+                "evidence_kind": "fresh_current_evidence",
+            }
+            for row in obligations
+            if isinstance(row, dict)
+        ]
+    return json.dumps(payload)
 
 
 class FlowPilotNewEntrypointTests(unittest.TestCase):
@@ -134,6 +187,7 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
         )
 
         self.assertIn("requirements", body)
+        self.assertIn("acceptance_item_registry", body)
         self.assertNotIn("decision", body)
         self.assertNotIn("pm_visible_summary", body)
 
@@ -154,8 +208,26 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
             {"packet_id": "packet-node", "envelope": {"packet_kind": "task", "route_scope": "node"}},
             {"packet_id": "packet-flowguard", "envelope": {"packet_kind": "flowguard_check", "route_scope": "node"}},
             {"packet_id": "packet-review", "envelope": {"packet_kind": "review", "route_scope": "node"}},
+            {
+                "packet_id": "packet-terminal",
+                "envelope": {"packet_kind": "review", "route_scope": "terminal_backward_replay"},
+            },
+            {
+                "packet_id": "packet-repair",
+                "envelope": {"packet_kind": "pm_repair_decision", "route_scope": "pm_repair_decision"},
+            },
             {"packet_id": "packet-pm", "envelope": {"packet_kind": "pm_disposition", "route_scope": "node_pm_disposition"}},
+            {
+                "packet_id": "packet-pm-flowguard",
+                "envelope": {
+                    "packet_kind": "pm_flowguard_acceptance",
+                    "route_scope": "pm_flowguard_acceptance",
+                },
+            },
         ]
+        covered_families = {runtime._packet_result_family_id(packet) for packet in packets}
+        contract_families = {str(row["family_id"]) for row in packet_result_contracts.PACKET_RESULT_CONTRACTS}
+        self.assertEqual(contract_families, covered_families)
 
         for packet in packets:
             with self.subTest(packet=packet["packet_id"]):
@@ -180,6 +252,8 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
             "skills/flowpilot/assets/flowpilot_new_run_commands.py",
             "skills/flowpilot/assets/flowpilot_new_shared.py",
             "skills/flowpilot/assets/flowpilot_core_runtime/packet_result_contracts.py",
+            "skills/flowpilot/assets/flowpilot_core_runtime/packet_stage_evidence_matrix.py",
+            "skills/flowpilot/assets/flowpilot_runtime_self_check.py",
         ):
             self.assertIn(path, required)
 
@@ -206,6 +280,199 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
             self.assertIn("flowpilot_new.py", rendered)
             self.assertNotIn("flowpilot_new_role_commands.py", rendered)
             self.assertNotIn("flowpilot_new_cli.py", rendered)
+
+    def test_start_run_records_portable_runtime_self_check_receipt(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            started = flowpilot_new.start_run(
+                root,
+                run_id="run-runtime-self-check",
+                headless_startup_text="Check portable FlowPilot runtime self-check.",
+                require_formal_ui=False,
+            )
+
+            receipt = started["flowpilot_runtime_self_check"]
+            receipt_path = Path(receipt["receipt_path"])
+            shell = run_shell.load_run_shell(root, run_id="run-runtime-self-check")
+            ledger = run_shell.load_run_ledger(shell)
+
+            self.assertTrue(receipt["ok"], receipt)
+            self.assertTrue(receipt_path.is_file())
+            self.assertFalse(receipt["dev_repo_simulations_required"])
+            self.assertEqual(receipt, ledger["flowpilot_runtime_self_check"])
+            self.assertTrue((shell.run_root / "runtime" / "flowpilot_runtime_self_check_receipt.json").is_file())
+
+    def test_record_runtime_self_check_receipt_writes_run_scoped_receipt(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            shell = run_shell.create_run_shell(
+                root,
+                "Check portable FlowPilot runtime self-check.",
+                "Runtime self-check receipt must be run-scoped.",
+                run_id="run-runtime-self-check-direct",
+            )
+
+            receipt = flowpilot_new_shared._record_runtime_self_check_receipt(shell)
+            ledger = run_shell.load_run_ledger(shell)
+            receipt_path = Path(receipt["receipt_path"])
+
+            self.assertTrue(receipt["ok"], receipt)
+            self.assertTrue(receipt_path.is_file())
+            self.assertEqual(receipt, ledger["flowpilot_runtime_self_check"])
+            self.assertEqual(receipt_path, shell.run_root / "runtime" / "flowpilot_runtime_self_check_receipt.json")
+
+    def test_runtime_self_check_does_not_require_target_project_simulations(self) -> None:
+        receipt = flowpilot_runtime_self_check.runtime_self_check(assets_root=ASSETS)
+
+        self.assertTrue(receipt["ok"], receipt)
+        self.assertFalse(receipt["dev_repo_simulations_required"])
+        self.assertNotIn(
+            "simulations/run_flowpilot_model_test_alignment_checks.py",
+            "\n".join(receipt["required_runtime_assets"]),
+        )
+
+    def test_open_packet_returns_submission_checklist_from_packet_body(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            flowpilot_new.start_run(
+                root,
+                run_id="run-open-packet-checklist",
+                headless_startup_text="Check open-packet submission checklist.",
+                require_formal_ui=False,
+            )
+            shell = run_shell.load_run_shell(root, run_id="run-open-packet-checklist")
+            ledger = run_shell.load_run_ledger(shell)
+            packet_id = runtime.issue_task_packet(
+                ledger,
+                "pm",
+                "Check role-facing submission checklist.",
+                json.dumps(
+                    {
+                        "schema_version": "flowpilot.test_packet.v1",
+                        "required_result_body_fields": ["decision", "reason", "repair_obligation_disposition"],
+                        "conditional_required_fields": {
+                            "repair_current_scope": ["repair_obligation_disposition"]
+                        },
+                        "forbidden_fields": ["summary"],
+                        "minimal_valid_shape": {
+                            "decision": "repair_current_scope",
+                            "reason": "Concrete PM repair reason.",
+                            "repair_obligation_disposition": [
+                                {
+                                    "obligation_id": "obligation-001",
+                                    "disposition": "fresh_repair_packet_required",
+                                    "return_gate": "flowguard_then_reviewer",
+                                    "evidence_kind": "fresh_current_evidence",
+                                }
+                            ],
+                        },
+                    }
+                ),
+                packet_kind="pm_repair_decision",
+                route_scope="pm_repair_decision",
+            )
+            run_shell.save_run_ledger(shell, ledger)
+
+            lease_id = self._lease_packet(
+                root,
+                packet_id=packet_id,
+                responsibility="pm",
+                agent_id="pm-checklist-agent",
+            )
+            flowpilot_new.ack(root, lease_id=lease_id, packet_id=packet_id)
+            opened = flowpilot_new.open_packet(root, lease_id=lease_id, packet_id=packet_id)
+
+            checklist = opened["submission_checklist"]
+            self.assertEqual(checklist["schema_version"], "black_box_flowpilot.submission_checklist.v1")
+            self.assertEqual(
+                checklist["required_result_body_fields"],
+                ["decision", "reason", "repair_obligation_disposition"],
+            )
+            self.assertEqual(checklist["result_skeleton"]["decision"], "repair_current_scope")
+            self.assertIn("repair_obligation_disposition", checklist["result_skeleton"])
+            self.assertNotIn("forbidden_fields", checklist)
+            self.assertFalse(opened["controller_may_read_submission_checklist"])
+
+    def test_open_packet_submission_checklist_projects_current_handoff_contract(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            started = flowpilot_new.start_run(
+                root,
+                run_id="run-open-packet-handoff-checklist",
+                headless_startup_text="Check complete handoff checklist projection.",
+                require_formal_ui=False,
+            )
+            source_packet_id = str(started["next_action"]["subject_id"])
+            _, source_result_id = self._complete_open_packet(
+                root,
+                packet_id=source_packet_id,
+                responsibility="pm",
+                agent_id="pm-source-result-agent",
+                body=role_result_body("Source result for authorized-read checklist."),
+            )
+            shell = run_shell.load_run_shell(root, run_id="run-open-packet-handoff-checklist")
+            ledger = run_shell.load_run_ledger(shell)
+            packet_id = runtime.issue_task_packet(
+                ledger,
+                "flowguard_operator",
+                "Check handoff-derived submission checklist.",
+                json.dumps({"schema_version": "flowpilot.test_packet.v1"}),
+                packet_kind="flowguard_check",
+                route_scope="post_result",
+                authorized_result_reads=[
+                    {
+                        "result_id": source_result_id,
+                        "allowed_roles": ["flowguard_operator"],
+                        "required_before_submit": True,
+                        "purpose": "semantic_recheck_input",
+                    }
+                ],
+            )
+            run_shell.save_run_ledger(shell, ledger)
+
+            lease_id = self._lease_packet(
+                root,
+                packet_id=packet_id,
+                responsibility="flowguard_operator",
+                agent_id="flowguard-checklist-agent",
+            )
+            flowpilot_new.ack(root, lease_id=lease_id, packet_id=packet_id)
+            opened = flowpilot_new.open_packet(root, lease_id=lease_id, packet_id=packet_id)
+
+            checklist = opened["submission_checklist"]
+            report_contract = opened["packet"]["current_handoff_contract"]["required_report_contract"]
+            output_contract = opened["packet"]["output_contract"]
+            self.assertTrue(checklist["current_handoff_contract_inspected"])
+            self.assertEqual(checklist["contract_family_id"], "flowguard_check.post_result")
+            self.assertEqual(
+                checklist["required_result_body_fields"],
+                list(packet_result_contracts.required_fields_for_family("flowguard_check.post_result")),
+            )
+            self.assertEqual(checklist["required_child_fields"], list(report_contract["required_child_fields"]))
+            self.assertEqual(checklist["explicit_array_fields"], list(report_contract["explicit_array_fields"]))
+            self.assertEqual(checklist["non_empty_array_fields"], list(report_contract["non_empty_array_fields"]))
+            self.assertNotIn("forbidden_fields", checklist)
+            self.assertNotIn("forbidden_result_body_fields", report_contract)
+            self.assertEqual(checklist["result_skeleton"], report_contract["minimal_valid_shape"])
+            self.assertEqual(checklist["branch_valid_shapes"], report_contract["branch_valid_shapes"])
+            self.assertEqual(
+                report_contract["allowed_value_options"],
+                packet_result_contracts.allowed_value_options_json_for_family("flowguard_check.post_result"),
+            )
+            self.assertEqual(output_contract["allowed_value_options"], report_contract["allowed_value_options"])
+            self.assertEqual(
+                report_contract["allowed_value_options"]["reviewed_by_role"],
+                ["flowguard_operator"],
+            )
+            self.assertEqual(
+                report_contract["allowed_value_options"]["passed"],
+                [True, False],
+            )
+            self.assertEqual(checklist["required_authorized_result_read_ids"], [source_result_id])
+            self.assertEqual(checklist["required_authorized_read_count"], 1)
+            self.assertTrue(checklist["all_required_authorized_result_bodies_must_be_opened_before_submit"])
+            self.assertIn(source_result_id, checklist["input_material_manifest"]["required_authorized_reads_before_submit"])
+            self.assertFalse(opened["controller_may_read_submission_checklist"])
 
     def test_resolve_stopped_blocker_cli_exposes_reattach_required_recheck(self) -> None:
         completed = subprocess.run(
@@ -241,6 +508,12 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
         )
         flowpilot_new.ack(root, lease_id=lease_id, packet_id=packet_id)
         flowpilot_new.open_packet(root, lease_id=lease_id, packet_id=packet_id)
+        if responsibility == "flowguard_operator":
+            self._write_flowguard_evidence_artifact_for_packet(
+                root,
+                packet_id,
+                decision=self._flowguard_artifact_decision_for_body(body),
+            )
         result_id = flowpilot_new.submit_result(
             root,
             lease_id=lease_id,
@@ -248,6 +521,46 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
             body=body,
         )["result_id"]
         return lease_id, result_id
+
+    def _flowguard_artifact_decision_for_body(self, body: str) -> str:
+        try:
+            payload = json.loads(body)
+        except json.JSONDecodeError:
+            return "blocked"
+        if isinstance(payload, dict) and payload.get("passed") is False:
+            return "blocked"
+        return "pass"
+
+    def _write_flowguard_evidence_artifact_for_packet(
+        self,
+        root: Path,
+        packet_id: str,
+        *,
+        decision: str,
+    ) -> Path:
+        shell = run_shell.load_run_shell(root)
+        ledger = run_shell.load_run_ledger(shell)
+        packet = ledger["packets"][packet_id]
+        path = runtime._flowguard_packet_evidence_artifact_path(ledger, packet)
+        self.assertIsNotNone(path)
+        assert path is not None
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(
+            json.dumps(
+                {
+                    "schema_version": "flowpilot.flowguard_evidence.v1",
+                    "model_test_alignment_report": {
+                        "decision": decision,
+                        "failed_predicates": [] if decision == "pass" else ["semantic_contract_missing"],
+                    },
+                },
+                indent=2,
+                sort_keys=True,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        return path
 
     def _lease_packet(
         self,
@@ -479,13 +792,7 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
                 set(disposition["missing_required_fields"]),
                 {
                     "reason",
-                    "covered_requirement_ids",
-                    "reviewer_absorption",
-                    "flowguard_absorption",
-                    "residual_risk_disposition",
-                    "semantic_downgrade_disposition",
-                    "validation_evidence_ids",
-                    "waived_requirement_ids",
+                    "acceptance_item_disposition",
                 },
             )
             self.assertEqual(disposition["forbidden_fields_seen"], ["summary"])
@@ -494,7 +801,8 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
             self.assertIn("decision", flowguard_block["forbidden_fields_seen"])
             review_block = next(block for block in blocks if block["contract_family_id"] == "review.any_current_subject")
             self.assertIn("passed", review_block["missing_required_fields"])
-            self.assertIn("independent_challenge", review_block["missing_required_fields"])
+            self.assertIn("reviewed_by_role", review_block["missing_required_fields"])
+            self.assertIn("contract_self_check", review_block["missing_required_fields"])
             self.assertIn("decision", review_block["forbidden_fields_seen"])
             shell = run_shell.load_run_shell(root, run_id="run-e2e-contract-chaos")
             ledger = run_shell.load_run_ledger(shell)
@@ -528,6 +836,106 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
                 and "evidence_consistency" in block["quarantine_reason"]
             ]
             self.assertTrue(blocks, result["mechanical_contract_blocks"])
+
+    def test_fake_end_to_end_flowguard_artifact_chaos_reissues_and_finishes(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            result = flowpilot_new.run_fake_e2e(
+                root,
+                run_id="run-e2e-flowguard-artifact-chaos",
+                startup_text="Build and validate a toy command with FlowGuard artifact chaos.",
+                inject_artifact_consistency_faults=True,
+            )
+
+            self.assertTrue(result["ok"], result)
+            self.assertEqual(result["closure"]["decision"], "complete")
+            self.assertIn(
+                "flowguard_check.post_result",
+                set(result["injected_artifact_consistency_fault_families"]),
+            )
+            blocks = [
+                block
+                for block in result["mechanical_contract_blocks"]
+                if block["contract_family_id"] == "flowguard_check.post_result"
+                and "flowguard_evidence.json.model_test_alignment_report.decision"
+                in block["missing_required_fields"]
+            ]
+            self.assertTrue(blocks, result["mechanical_contract_blocks"])
+
+    def test_fake_end_to_end_terminal_replay_blocker_records_semantic_blocker(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            result = flowpilot_new.run_fake_e2e(
+                root,
+                run_id="run-e2e-terminal-replay-blocker",
+                startup_text="Build and validate a toy command with terminal replay blocker.",
+                inject_terminal_replay_blocker=True,
+            )
+
+            self.assertFalse(result["ok"], result)
+            self.assertEqual(result["closure"]["decision"], "blocked")
+            self.assertEqual(result["injected_terminal_replay_blockers"][0]["status"], "review_blocked")
+            self.assertFalse(
+                [
+                    block
+                    for block in result["mechanical_contract_blocks"]
+                    if block["contract_family_id"] == "review.terminal_backward_replay"
+                ],
+                result["mechanical_contract_blocks"],
+            )
+            self.assertFalse(
+                [
+                    block
+                    for block in result["mechanical_contract_blocks"]
+                    if block["contract_family_id"] == "pm_repair_decision.pm_repair_decision"
+                ],
+                result["mechanical_contract_blocks"],
+            )
+            terminal_blockers = [
+                blocker
+                for blocker in result["active_blockers"].values()
+                if blocker.get("route_scope") == "terminal_backward_replay"
+            ]
+            self.assertTrue(terminal_blockers, result["active_blockers"])
+            self.assertIn("delivered-product signposting", terminal_blockers[0]["recommended_resolution"])
+            self.assertEqual(result["next_action"]["action_type"], "dispatch_current_role")
+            self.assertEqual(result["next_action"]["responsibility"], "pm")
+
+    def test_fake_end_to_end_terminal_replay_blocker_repairs_to_completion(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            result = flowpilot_new.run_fake_e2e(
+                root,
+                run_id="run-e2e-terminal-replay-repair",
+                startup_text="Build and validate a toy command with terminal replay repair.",
+                inject_terminal_replay_blocker=True,
+                repair_terminal_replay_blocker=True,
+            )
+
+            self.assertTrue(result["ok"], result)
+            self.assertEqual(result["closure"]["decision"], "complete")
+            self.assertEqual(result["injected_terminal_replay_blockers"][0]["status"], "review_blocked")
+            self.assertFalse(
+                [
+                    block
+                    for block in result["mechanical_contract_blocks"]
+                    if block["contract_family_id"] == "review.terminal_backward_replay"
+                ],
+                result["mechanical_contract_blocks"],
+            )
+            terminal_blockers = [
+                blocker
+                for blocker in result["active_blockers"].values()
+                if blocker.get("route_scope") == "terminal_backward_replay"
+            ]
+            self.assertTrue(terminal_blockers, result["active_blockers"])
+            self.assertEqual(terminal_blockers[0]["status"], "cleared")
+            supplemental_rows = result["final_route_wide_gate_ledger"]["supplemental_repair_closure"]
+            self.assertTrue(supplemental_rows)
+            self.assertEqual(supplemental_rows[0]["contract_id"], "terminal-supplemental-repair-r1")
+            self.assertEqual(supplemental_rows[0]["status"], "covered")
+            self.assertEqual(result["final_route_wide_gate_ledger"]["unresolved"], [])
+            self.assertEqual(result["next_action"]["action_type"], "terminal_complete")
 
     def test_ack_only_and_pm_only_result_do_not_reach_terminal_closure(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -578,7 +986,17 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
             self.assertIn("simulations/meta_thin_parent_results.json", policy["tracked_baseline_paths_forbidden_unless_explicit_baseline_update"])
             self.assertNotIn("recommended_runner_commands", flowguard_body)
             self.assertIn("Simulate the current route", flowguard_body["instruction"])
-            self.assertIn("validation", " ".join(flowguard_body["modeled_subject_policy"]["required_simulation_targets"]))
+            matrix = flowguard_body["subject_stage_evidence_matrix"]
+            self.assertEqual(matrix["family_id"], "task.high_standard_contract")
+            self.assertEqual(matrix["lifecycle_stage"], "preplanning_contract_definition")
+            self.assertIn("requirements", matrix["current_required_fields"])
+            self.assertIn("acceptance_item_registry", matrix["current_required_fields"])
+            self.assertNotIn("moved_fields", matrix)
+            self.assertNotIn("deleted_fields", matrix)
+            targets = " ".join(flowguard_body["modeled_subject_policy"]["required_simulation_targets"])
+            self.assertIn("requirements list defines current", targets)
+            self.assertIn("acceptance_item_registry.items records active acceptance items", targets)
+            self.assertNotIn("validation/check evidence freshness", targets)
 
     def test_resolve_stopped_blocker_requires_explicit_user_request_before_reissue(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -618,6 +1036,7 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
             )
             flowpilot_new.ack(root, lease_id=flowguard_lease, packet_id=flowguard_packet)
             self._open_authorized_result_reads(root, packet_id=flowguard_packet, lease_id=flowguard_lease)
+            self._write_flowguard_evidence_artifact_for_packet(root, flowguard_packet, decision="blocked")
             flowpilot_new.submit_result(
                 root,
                 lease_id=flowguard_lease,
@@ -625,7 +1044,7 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
                 body=flowguard_result_body(
                     "FlowGuard identified a blocker that needs a user decision.",
                     passed=False,
-                    blocker_class="needs_user",
+                    blocker_class="flowguard_failure",
                     recommended_resolution="needs user decision",
                 ),
             )
@@ -640,15 +1059,15 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
             )
             flowpilot_new.ack(root, lease_id=repair_lease, packet_id=repair_packet)
             self._open_authorized_result_reads(root, packet_id=repair_packet, lease_id=repair_lease)
+            ledger = run_shell.load_run_ledger(shell)
             flowpilot_new.submit_result(
                 root,
                 lease_id=repair_lease,
                 packet_id=repair_packet,
-                body=json.dumps(
-                    {
-                        "decision": "stop_for_user",
-                        "reason": "Need explicit user decision.",
-                    }
+                body=pm_repair_body_from_packet(
+                    ledger["packets"][repair_packet],
+                    decision="stop_for_user",
+                    reason="Need explicit user decision.",
                 ),
             )
 
@@ -733,6 +1152,7 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
             flowguard_lease = str(flowguard_dispatch["lease_id"])
             flowpilot_new.ack(root, lease_id=flowguard_lease, packet_id=flowguard_packet)
             self._open_authorized_result_reads(root, packet_id=flowguard_packet, lease_id=flowguard_lease)
+            self._write_flowguard_evidence_artifact_for_packet(root, flowguard_packet, decision="pass")
             flowpilot_new.submit_result(
                 root,
                 lease_id=flowguard_lease,

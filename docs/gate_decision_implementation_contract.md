@@ -75,7 +75,7 @@ Reviewer and PM responsibility is semantic sufficiency:
 - documentation-only gates are not forced through product-scope FlowGuard;
 - local defects remain local;
 - route-invalidating findings mutate the route and invalidate stale evidence;
-- low-composition-risk parent replay can be waived with a reason;
+- parent/module nodes with effective children require current parent backward replay before closure;
 - delivery evidence is resolved before completion;
 - diagnostic temporary resources do not block completion.
 

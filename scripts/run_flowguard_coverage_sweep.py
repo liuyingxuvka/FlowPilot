@@ -42,12 +42,18 @@ STRONG_COVERAGE = {
     "flowpilot_packet_lifecycle",
     "flowpilot_repair_transaction",
     "flowpilot_control_transaction_registry",
+    "flowpilot_contract_exhaustion_mesh",
+    "flowpilot_cartesian_control_plane_exhaustion",
+    "flowpilot_current_contract_cartesian_matrix",
+    "flowpilot_executable_matrix_coverage",
     "flowpilot_legal_next_action",
     "flowpilot_event_capability_registry",
     "flowpilot_route_replanning_policy",
     "flowpilot_cross_plane_friction",
     "flowpilot_persistent_router_daemon",
     "flowpilot_model_mesh",
+    "flowpilot_rejection_liveness_matrix",
+    "flowpilot_route_authority_singularity",
     "flowpilot_model_hierarchy",
     "flowpilot_packet_result_family_parity",
     "flowpilot_runtime_gateway_adoption",
@@ -107,6 +113,9 @@ SUPPORTING_COVERAGE = {
     "flowpilot_event_envelope_transfer",
     "flowpilot_event_idempotency",
     "flowpilot_fake_project_rehearsal",
+    "flowpilot_acceptance_testmesh",
+    "flowpilot_field_contract",
+    "flowpilot_field_mesh",
     "flowpilot_handoff_artifact_protocol",
     "flowpilot_material_artifact_map",
     "flowpilot_model_driven_recursive_route",
@@ -150,6 +159,7 @@ SUPPORTING_COVERAGE = {
     "flowpilot_startup_optimization",
     "flowpilot_structural_refactor",
     "flowpilot_terminal_state_monotonicity",
+    "flowpilot_terminal_supplemental_repair",
     "flowpilot_terminal_summary",
     "flowpilot_test_obligation_ownership",
     "flowpilot_test_tiering",
@@ -200,6 +210,11 @@ def _declared_result_path(path: Path, text: str) -> Path | None:
         return path.parent / "meta_thin_parent_results.json"
     if key == "capability":
         return path.parent / "capability_thin_parent_results.json"
+    if key == "flowpilot_final_confidence_gate":
+        return path.parent / "flowpilot_final_confidence_gate_results.json"
+    match = re.search(r'RESULTS_PATH\s*=\s*ROOT\s*/\s*"simulations"\s*/\s*"([^"]+)"', text)
+    if match:
+        return path.parent / match.group(1)
     match = re.search(r'RESULTS_PATH\s*=\s*ROOT\s*/\s*"([^"]+)"', text)
     if match:
         return path.parent / match.group(1)
@@ -363,6 +378,12 @@ def _classify_finding(finding: dict[str, Any]) -> str:
     severity = str(finding.get("severity") or "").lower()
     if "known_bad_sanity_checks" in section_path:
         return "boundary_expected_or_informational"
+    if "current_run_projection" in section_path and (
+        severity in {"blocking", "error", "fatal"}
+        or finding.get("current_run_can_continue") is False
+        or finding.get("decision") == "blocked_by_live_evidence"
+    ):
+        return "modeled_current_live_hit_fix_runtime_or_current_state"
     if section == "live":
         return "modeled_current_live_hit_fix_runtime_or_current_state"
     if section == "source":
@@ -374,6 +395,15 @@ def _classify_finding(finding: dict[str, Any]) -> str:
 
 def _run_runner(path: Path, text: str, timeout_seconds: int) -> tuple[dict[str, Any] | None, dict[str, Any]]:
     command = [sys.executable, str(path.relative_to(ROOT))]
+    if _runner_key(path) == "flowpilot_final_confidence_gate":
+        command.extend(
+            [
+                "--run-checks",
+                "--repository-confidence-only",
+                "--json-out",
+                str(SIMULATIONS / "flowpilot_final_confidence_gate_results.json"),
+            ]
+        )
     if _supports_argument(path, text, "--json"):
         command.append("--json")
     if _supports_argument(path, text, "--no-write-results"):

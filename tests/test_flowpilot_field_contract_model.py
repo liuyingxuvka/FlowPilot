@@ -48,6 +48,12 @@ class FlowPilotFieldContractModelTests(unittest.TestCase):
         self.assertIn("current_packet.packet_id", fields)
         self.assertIn("packet_result.packet_id", fields)
         self.assertIn("packet_result.result_id", fields)
+        self.assertIn("route_node.supplemental_repair_contract_ids", fields)
+        self.assertIn("route_node.supplemental_repair_item_ids", fields)
+        self.assertIn("terminal_supplemental_repair.current_round", fields)
+        self.assertIn("terminal_supplemental_repair.max_rounds", fields)
+        self.assertIn("terminal_supplemental_repair.status", fields)
+        self.assertIn("supplemental_repair_contracts[].repair_items[].owner_repair_node_id", fields)
         self.assertIn("output_contract.missing_required_fields", fields)
         self.assertIn("output_contract.forbidden_fields_seen", fields)
         self.assertIn("output_contract.contract_family_id", fields)
@@ -55,6 +61,30 @@ class FlowPilotFieldContractModelTests(unittest.TestCase):
         self.assertIn("output_contract.minimal_valid_shape", fields)
         self.assertIn("current_handoff_contract.contract_family_id", fields)
         self.assertIn("current_handoff_contract.input_material_manifest.authorized_result_reads[]", fields)
+        self.assertIn("current_handoff_contract.input_material_manifest.authorized_result_read_ids", fields)
+        self.assertIn("current_handoff_contract.input_material_manifest.required_authorized_read_count", fields)
+        self.assertIn("flowguard_reissue_packet.envelope.authorized_result_reads[]", fields)
+        self.assertIn(
+            "flowguard_reissue_packet.current_handoff_contract.input_material_manifest.required_authorized_reads_before_submit",
+            fields,
+        )
+        self.assertIn(
+            "current_handoff_contract.input_material_manifest.all_required_authorized_result_bodies_must_be_opened_before_submit",
+            fields,
+        )
+        self.assertIn(
+            "current_handoff_contract.input_material_manifest.packet_body_opened_by_assigned_role_via_open_packet",
+            fields,
+        )
+        self.assertIn("pm_repair_packet.repair_evidence_obligations[]", fields)
+        self.assertIn("pm_repair_packet.repair_evidence_obligations[].obligation_id", fields)
+        self.assertIn("pm_repair_packet.repair_evidence_obligations[].source_blocker_id", fields)
+        self.assertIn("pm_repair_packet.repair_evidence_obligations[].evidence_kind", fields)
+        self.assertIn("pm_repair_result.repair_obligation_disposition[]", fields)
+        self.assertIn("pm_repair_result.repair_obligation_disposition[].obligation_id", fields)
+        self.assertIn("pm_repair_result.repair_obligation_disposition[].disposition", fields)
+        self.assertIn("repair_packet.repair_obligation_context", fields)
+        self.assertIn("flowguard.semantic_recheck.consumed_repair_obligation_ids", fields)
         self.assertIn("current_handoff_contract.required_report_contract.required_result_body_fields", fields)
         self.assertIn("current_handoff_contract.required_report_contract.forbidden_result_body_fields", fields)
         self.assertIn("current_handoff_contract.missing_information_response", fields)
@@ -79,35 +109,44 @@ class FlowPilotFieldContractModelTests(unittest.TestCase):
         self.assertIn("preplanning.high_standard_contract.requirements[].requirement_id", fields)
         self.assertIn("preplanning.high_standard_contract.requirements[].classification", fields)
         self.assertIn("preplanning.high_standard_contract.requirements[].summary", fields)
-        self.assertIn("preplanning.high_standard_contract.requirements[].closure_blocking", fields)
+        self.assertIn("preplanning.high_standard_contract.requirements[].closure_rule", fields)
+        self.assertIn("preplanning.high_standard_contract.acceptance_item_registry.items[]", fields)
+        self.assertIn("preplanning.high_standard_contract.acceptance_item_registry.items[].acceptance_item_id", fields)
+        self.assertIn("preplanning.high_standard_contract.acceptance_item_registry.items[].source_type", fields)
+        self.assertIn("preplanning.high_standard_contract.acceptance_item_registry.items[].quality_floor", fields)
+        self.assertIn("preplanning.high_standard_contract.acceptance_item_registry.items[].future_evidence_rule", fields)
         self.assertIn("preplanning.discovery.material_sources", fields)
         self.assertIn("preplanning.discovery.material_sufficiency", fields)
-        self.assertIn("preplanning.discovery.local_skill_inventory", fields)
-        self.assertIn("preplanning.discovery.candidate_only_skill_policy", fields)
+        self.assertIn("preplanning.discovery.candidate_skill_inventory", fields)
         self.assertIn("preplanning.skill_standard.obligations[]", fields)
         self.assertIn("preplanning.skill_standard.obligations[].obligation_id", fields)
         self.assertIn("preplanning.skill_standard.obligations[].skill", fields)
         self.assertIn("preplanning.skill_standard.obligations[].classification", fields)
         self.assertIn("preplanning.skill_standard.obligations[].role_use", fields)
         self.assertIn("preplanning.skill_standard.obligations[].use_context", fields)
-        self.assertIn("preplanning.skill_standard.obligations[].evidence_required", fields)
-        self.assertIn("preplanning.skill_standard.obligations[].closure_blocking", fields)
+        self.assertIn("preplanning.skill_standard.obligations[].evidence_rule", fields)
         self.assertIn("control_blocker.target_role_repair_instruction", fields)
         self.assertIn("reviewer_quality_review.decision", fields)
         self.assertIn("flowguard_process_review.target_result_id", fields)
-        self.assertIn("packet_result.flowguard_check.evidence_consistency.self_check_passed", fields)
-        self.assertIn("packet_result.flowguard_check.evidence_consistency.child_reports_all_passed", fields)
-        self.assertIn("packet_result.flowguard_check.evidence_consistency.blocking_child_reports[]", fields)
-        self.assertIn("packet_result.flowguard_check.evidence_consistency.hard_evidence_decision", fields)
+        self.assertIn("packet_result.flowguard_check.modeled_boundary", fields)
+        self.assertIn("packet_result.flowguard_check.blockers[]", fields)
+        self.assertIn("packet_result.flowguard_check.contract_self_check", fields)
+        self.assertIn("flowguard_evidence.json.model_test_alignment_report.decision", fields)
         self.assertIn("flowguard_work_order.decision", fields)
         self.assertIn("flowguard_evidence_manifest.entries[].flowguard_result_id", fields)
         self.assertIn("active_packets", fields)
         self.assertIn("accepted_result_packets", fields)
         self.assertIn("closure_accepted_packets", fields)
-        self.assertIn("flowguard_evidence_consistency_hard_evidence_decision", logical_fields)
+        self.assertIn("flowguard_evidence_file_hard_decision", logical_fields)
         self.assertIn("current_packet_id", logical_fields)
         self.assertIn("repair_blocker_id", logical_fields)
+        self.assertIn("supplemental_repair_item_projection", logical_fields)
+        self.assertIn("terminal_supplemental_repair_round", logical_fields)
         self.assertIn("handoff_blocker_id", logical_fields)
+        self.assertIn("authorized_result_read_ids", logical_fields)
+        self.assertIn("repair_evidence_obligations", logical_fields)
+        self.assertIn("repair_obligation_disposition", logical_fields)
+        self.assertIn("consumed_repair_obligation_ids", logical_fields)
         self.assertIn("staged_effect_blocker_id", logical_fields)
         self.assertIn("flowguard_result_blocker_id", logical_fields)
         self.assertIn("missing_fields", logical_fields)
@@ -127,9 +166,21 @@ class FlowPilotFieldContractModelTests(unittest.TestCase):
         self.assertIn("current_role_agent_binding.liveness_decision", fields)
         self.assertIn("current_handoff_contract.required_report_contract.required_child_fields", fields)
         self.assertIn("current_handoff_contract.required_report_contract.branch_valid_shapes", fields)
+        self.assertIn("current_handoff_contract.required_report_contract.non_empty_array_fields", fields)
+        self.assertIn("submission_checklist.required_result_body_fields", fields)
+        self.assertIn("submission_checklist.required_child_fields", fields)
+        self.assertIn("submission_checklist.branch_valid_shapes", fields)
+        self.assertIn("submission_checklist.non_empty_array_fields", fields)
+        self.assertIn(
+            "submission_checklist.input_material_manifest.required_authorized_reads_before_submit",
+            fields,
+        )
         self.assertIn("output_contract.mechanical_contract_failure.failed_branch", fields)
         self.assertIn("output_contract.mechanical_contract_failure.failed_field_path", fields)
         self.assertIn("output_contract.branch_minimal_valid_shape", fields)
+        self.assertIn("submission_checklist_required_child_fields", logical_fields)
+        self.assertIn("submission_checklist_branch_valid_shapes", logical_fields)
+        self.assertIn("submission_checklist_required_authorized_reads_before_submit", logical_fields)
         self.assertNotIn(
             "startup_fact_report.external_fact_review.reviewer_checked_requirement_ids",
             fields,
@@ -149,6 +200,14 @@ class FlowPilotFieldContractModelTests(unittest.TestCase):
         self.assertNotIn("preplanning.skill_standard.selected_skills", fields)
         self.assertNotIn("preplanning.high_standard_contract.decision", fields)
         self.assertNotIn("preplanning.high_standard_contract.contract_rows", fields)
+        self.assertNotIn("preplanning.high_standard_contract.requirements[].closure_blocking", fields)
+        self.assertNotIn("preplanning.high_standard_contract.acceptance_item_registry.items[].final_replay_required", fields)
+        self.assertNotIn("preplanning.discovery.local_skill_inventory", fields)
+        self.assertNotIn("preplanning.discovery.candidate_only_skill_policy", fields)
+        self.assertNotIn("preplanning.skill_standard.obligations[].evidence_required", fields)
+        self.assertNotIn("preplanning.skill_standard.obligations[].closure_blocking", fields)
+        self.assertNotIn("packet_result.flowguard_check.evidence_consistency.hard_evidence_decision", fields)
+        self.assertNotIn("packet_result.review.independent_challenge", fields)
 
     def test_field_lifecycle_chain_models_repair_identity_end_to_end(self) -> None:
         chains = {entry["chain_id"]: entry for entry in model.FIELD_LIFECYCLE_CHAINS}
@@ -172,6 +231,42 @@ class FlowPilotFieldContractModelTests(unittest.TestCase):
                 "review_packet.repair_blocker_id",
             ),
         )
+
+        sealed_body_chain = chains["sealed_body_authorized_material_lifecycle_chain"]
+        self.assertEqual(sealed_body_chain["source"], "active_blocker.result_id")
+        self.assertEqual(sealed_body_chain["mechanical_gate"], "_required_authorized_result_read_blockers")
+        self.assertIn(
+            "current_handoff_contract.input_material_manifest.authorized_result_read_ids",
+            sealed_body_chain["field_sequence"],
+        )
+        self.assertIn(
+            "runtime.open_authorized_input_materials_for_role",
+            sealed_body_chain["field_sequence"],
+        )
+        reissue_material_chain = chains["flowguard_reissue_authorized_material_inheritance_chain"]
+        self.assertEqual(
+            reissue_material_chain["source"],
+            "source_flowguard_packet.envelope.authorized_result_reads[]",
+        )
+        self.assertIn(
+            "runtime._flowguard_reissue_inherited_authorized_result_reads",
+            reissue_material_chain["field_sequence"],
+        )
+        self.assertIn(
+            "flowguard_reissue_packet.current_handoff_contract.input_material_manifest.required_authorized_reads_before_submit",
+            reissue_material_chain["field_sequence"],
+        )
+        self.assertIn(
+            "runtime._required_authorized_result_read_blockers",
+            reissue_material_chain["field_sequence"],
+        )
+
+        repair_obligation_chain = chains["pm_repair_evidence_obligation_lifecycle_chain"]
+        self.assertEqual(repair_obligation_chain["source"], "active_blocker.missing_required_fields")
+        self.assertEqual(repair_obligation_chain["mechanical_gate"], "_pm_repair_obligation_disposition_violation")
+        self.assertEqual(repair_obligation_chain["human_quality_gate"], "_flowguard_semantic_recheck_contract_violation")
+        self.assertIn("repair_packet.repair_obligation_context", repair_obligation_chain["field_sequence"])
+        self.assertIn("flowguard.semantic_recheck.consumed_repair_obligation_ids", repair_obligation_chain["field_sequence"])
 
     def test_field_lifecycle_chains_separate_routing_and_closure_packet_projections(self) -> None:
         chains = {entry["chain_id"]: entry for entry in model.FIELD_LIFECYCLE_CHAINS}
@@ -236,7 +331,10 @@ class FlowPilotFieldContractModelTests(unittest.TestCase):
             self.assertIn(family_id, contracts)
         self.assertNotIn("flowguard_check.node_prework_flowguard", contracts)
 
-        self.assertEqual(contracts["task.high_standard_contract"]["required_fields"], ("requirements",))
+        self.assertEqual(
+            contracts["task.high_standard_contract"]["required_fields"],
+            ("requirements", "acceptance_item_registry"),
+        )
         self.assertIn("decision", contracts["task.high_standard_contract"]["forbidden_fields"])
         self.assertIn("contract_rows", contracts["task.high_standard_contract"]["forbidden_fields"])
         self.assertIn("obligations", contracts["task.skill_standard"]["required_fields"])
@@ -246,11 +344,9 @@ class FlowPilotFieldContractModelTests(unittest.TestCase):
         self.assertIn("node_context_package", node_branch_shapes["decision=pass"])
         self.assertIn("route_plan", node_branch_shapes["decision=redesign_route"])
         self.assertIn("pm_visible_summary", contracts["flowguard_check.post_result"]["required_fields"])
-        self.assertIn("evidence_consistency", contracts["flowguard_check.post_result"]["required_fields"])
-        self.assertIn(
-            "evidence_consistency.child_reports_all_passed",
-            contracts["flowguard_check.post_result"]["required_child_fields"],
-        )
+        self.assertIn("modeled_boundary", contracts["flowguard_check.post_result"]["required_fields"])
+        self.assertIn("contract_self_check", contracts["flowguard_check.post_result"]["required_fields"])
+        self.assertIn("evidence_consistency", contracts["flowguard_check.post_result"]["forbidden_fields"])
         self.assertIn("authority", contracts["pm_repair_decision.pm_repair_decision"]["forbidden_fields"])
         self.assertIn(
             "route_plan.nodes[].title when decision=redesign_route",
@@ -268,17 +364,19 @@ class FlowPilotFieldContractModelTests(unittest.TestCase):
             contracts["pm_flowguard_acceptance.pm_flowguard_acceptance"]["required_child_fields"],
         )
 
-    def test_field_lifecycle_chains_cover_flowguard_evidence_consistency(self) -> None:
+    def test_field_lifecycle_chains_cover_flowguard_evidence_file_handoff(self) -> None:
         chains = {entry["chain_id"]: entry for entry in model.FIELD_LIFECYCLE_CHAINS}
-        chain = chains["flowguard_evidence_consistency_to_reviewer_handoff_chain"]
+        chain = chains["flowguard_current_evidence_file_to_reviewer_handoff_chain"]
 
-        self.assertEqual(chain["mechanical_gate"], "_flowguard_evidence_consistency_violation")
+        self.assertEqual(chain["mechanical_gate"], "_flowguard_current_report_violation")
         self.assertTrue(chain["no_prose_authority"])
         self.assertTrue(chain["no_reviewer_mechanical_field_check"])
         self.assertIn(
-            "packet_result.flowguard_check.evidence_consistency.hard_evidence_decision",
+            "flowguard_evidence.json.model_test_alignment_report.decision",
             chain["field_sequence"],
         )
+        self.assertIn("packet_result.flowguard_check.modeled_boundary", chain["field_sequence"])
+        self.assertIn("packet_result.flowguard_check.blockers[]", chain["field_sequence"])
         self.assertIn("flowguard_evidence_manifest.entries[].flowguard_result_id", chain["field_sequence"])
 
     def test_field_contract_model_blocks_old_field_translation_and_fixed_role_gates(self) -> None:

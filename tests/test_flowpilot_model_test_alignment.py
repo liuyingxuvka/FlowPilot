@@ -75,25 +75,112 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
                 "router loop/daemon",
                 "repair transactions",
                 "test tiering/slow-test contracts",
+                "rejection/liveness matrix",
+                "route authority singularity",
                 "meta/capability parents",
             ],
         )
         self.assertEqual(report["findings"], [])
 
-    def test_packet_result_family_covers_flowguard_evidence_consistency_gate(self) -> None:
+    def test_route_authority_singularity_family_maps_model_runtime_and_replay(self) -> None:
+        entries = alignment_runner.build_alignment_plan_entries()
+        entry = next(entry for entry in entries if entry["family"] == "route authority singularity")
+        plan = entry["plan"]
+        obligations = {item.obligation_id for item in plan.obligations}
+        contracts = {item.code_contract_id: item for item in plan.code_contracts}
+        evidence = {item.evidence_id: item for item in plan.test_evidence}
+
+        for obligation in (
+            "route_authority.single_owner_and_legal_action_visibility",
+            "route_authority.reject_wrong_path_alias_and_fallback",
+            "route_authority.corrected_retry_changes_packet_shape",
+            "route_authority.parent_mesh_blocks_missing_or_conflicted_evidence",
+            "route_authority.fake_ai_variant_matrix",
+        ):
+            with self.subTest(obligation=obligation):
+                self.assertIn(obligation, obligations)
+
+        for contract in (
+            "route_authority.runtime.snapshot",
+            "route_authority.runtime.require_legal_action",
+            "route_authority.runtime.reject_submission",
+            "route_authority.runtime.reject_unsupported_payload",
+        ):
+            with self.subTest(contract=contract):
+                self.assertIn(contract, contracts)
+
+        self.assertEqual(
+            evidence["route_authority.replay.fake_ai_matrix_variants"].test_name,
+            "test_route_authority_fake_ai_matrix_covers_alias_fallback_no_delta_and_feedback",
+        )
+        self.assertEqual(
+            evidence["route_authority.replay.corrected_retry"].test_name,
+            "test_route_authority_wrong_path_rejection_guides_corrected_retry_fake_package",
+        )
+        self.assertEqual(
+            evidence["route_authority.negative.runtime_rejections"].path,
+            "tests/router_runtime/route_mutation_parent_backward.py",
+        )
+
+    def test_packet_result_family_covers_flowguard_current_report_gate(self) -> None:
         entries = alignment_runner.build_alignment_plan_entries()
         packet_entry = next(entry for entry in entries if entry["family"] == "packet result family")
         obligations = {item.obligation_id for item in packet_entry["plan"].obligations}
         contracts = {item.code_contract_id: item for item in packet_entry["plan"].code_contracts}
         evidence = {item.evidence_id: item for item in packet_entry["plan"].test_evidence}
 
-        obligation = "packet_result_family.flowguard_evidence_consistency_before_reviewer"
+        obligation = "packet_result_family.flowguard_current_report_before_reviewer"
         self.assertIn(obligation, obligations)
-        self.assertIn("packet_result_family.runtime.flowguard_evidence_consistency_gate", contracts)
+        self.assertIn("packet_result_family.flowguard_artifact_hard_decision_before_reviewer", obligations)
+        self.assertIn("packet_result_family.flowguard_repair_blocker_identity_continuity", obligations)
+        self.assertIn("packet_result_family.flowguard_semantic_recheck_subject_bound", obligations)
+        self.assertIn("packet_result_family.flowguard_semantic_recheck_ai_facing_projection", obligations)
+        self.assertIn("packet_result_family.flowguard_semantic_recheck_corrected_retry_convergence", obligations)
+        self.assertIn("packet_result_family.contract_driven_fake_ai_cartesian_retry", obligations)
+        self.assertIn("packet_result_family.sealed_body_related_context_reads", obligations)
+        self.assertIn("packet_result_family.pm_repair_evidence_obligation_lifecycle", obligations)
+        self.assertIn("packet_result_family.flowguard_reissue_preserves_current_evidence_policy", obligations)
+        self.assertIn("packet_result_family.flowguard_reissue_preserves_required_authorized_result_reads", obligations)
+        self.assertIn(
+            "packet_result_family.flowguard_standard_reissue_preserves_required_authorized_result_reads",
+            obligations,
+        )
+        self.assertIn(
+            "packet_result_family.flowguard_semantic_recheck_reissue_preserves_required_authorized_result_reads",
+            obligations,
+        )
+        self.assertIn("packet_result_family.review_handoff_blocks_empty_required_flowguard_manifest", obligations)
+        self.assertIn("packet_result_family.repair_loop_glass_break_root_cause_identity", obligations)
+        self.assertIn("packet_result_family.historical_failure_families_have_normal_repair_routes", obligations)
+        self.assertIn("packet_result_family.glass_break_is_alarm_not_success_path", obligations)
+        self.assertIn("packet_result_family.contract_exhaustion_matrix_owners_are_child_suites", obligations)
+        self.assertIn("packet_result_family.cartesian_control_plane_cells_have_oracles", obligations)
+        self.assertIn("packet_result_family.runtime.flowguard_current_report_gate", contracts)
+        self.assertIn("packet_result_family.runtime.flowguard_artifact_hard_decision", contracts)
+        self.assertIn("packet_result_family.runtime.flowguard_semantic_recheck_gate", contracts)
+        self.assertIn("packet_result_family.runtime.effective_result_contract_profiles", contracts)
+        self.assertIn("packet_result_family.runtime.current_handoff_result_profile_contract", contracts)
+        self.assertIn("packet_result_family.runtime.current_contract_reissue_feedback", contracts)
+        self.assertIn("packet_result_family.simulation.contract_driven_fake_ai_responder", contracts)
+        self.assertIn("packet_result_family.runtime.flowguard_reissue_inherited_body_payload", contracts)
+        self.assertIn("packet_result_family.runtime.flowguard_reissue_inherited_authorized_reads", contracts)
+        self.assertIn("packet_result_family.runtime.flowguard_reissue_issue_task_packet_reads", contracts)
+        self.assertIn("packet_result_family.runtime.flowguard_packet_issue_inherits_blocker", contracts)
+        self.assertIn("packet_result_family.runtime.blocker_related_authorized_reads", contracts)
+        self.assertIn("packet_result_family.runtime.pm_repair_obligation_disposition_gate", contracts)
+        self.assertIn("packet_result_family.runtime.repair_obligation_context_projection", contracts)
+        self.assertIn("packet_result_family.runtime.repair_blocker_identity_formal_gate", contracts)
+        self.assertIn("packet_result_family.runtime.flowguard_work_order_hard_decision", contracts)
         self.assertIn("packet_result_family.runtime.flowguard_review_handoff", contracts)
+        self.assertIn("packet_result_family.runtime.missing_flowguard_review_handoff_blocker", contracts)
+        self.assertIn("packet_result_family.runtime.repair_loop_root_cause_count", contracts)
+        self.assertIn("packet_result_family.model.contract_exhaustion_history_matrix", contracts)
+        self.assertIn("packet_result_family.runner.contract_exhaustion_test_mesh_owner_consumption", contracts)
+        self.assertIn("packet_result_family.model.cartesian_control_plane_exhaustion_matrix", contracts)
+        self.assertIn("packet_result_family.runner.cartesian_control_plane_owner_consumption", contracts)
         self.assertEqual(
             evidence["packet_result_family.negative.flowguard_blocked_child_evidence"].test_name,
-            "test_flowguard_packet_rejects_blocked_child_evidence_without_reviewer",
+            "test_flowguard_packet_rejects_deleted_evidence_consistency_field_without_reviewer",
         )
         self.assertEqual(
             evidence["packet_result_family.negative.flowguard_failed_self_check"].test_name,
@@ -102,6 +189,145 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
         self.assertEqual(
             evidence["packet_result_family.replay.fake_e2e_flowguard_consistency_chaos"].test_name,
             "test_fake_end_to_end_flowguard_consistency_chaos_reissues_and_finishes",
+        )
+        self.assertEqual(
+            evidence["packet_result_family.replay.fake_e2e_flowguard_artifact_chaos"].test_name,
+            "test_fake_end_to_end_flowguard_artifact_chaos_reissues_and_finishes",
+        )
+        self.assertEqual(
+            evidence["packet_result_family.replay.historical_skillguard_flowguard_artifact_block"].test_name,
+            "test_historical_skillguard_flowguard_artifact_block_is_not_authoritative",
+        )
+        self.assertEqual(
+            evidence["packet_result_family.negative.flowguard_artifact_missing_code_contract"].test_name,
+            "test_flowguard_packet_rejects_artifact_missing_code_contract_without_reviewer",
+        )
+        self.assertEqual(
+            evidence["packet_result_family.negative.flowguard_missing_evidence_output_policy"].test_name,
+            "test_flowguard_packet_rejects_missing_evidence_output_policy",
+        )
+        self.assertEqual(
+            evidence["packet_result_family.edge.flowguard_reissue_preserves_policy"].test_name,
+            "test_flowguard_fallback_evidence_is_mechanically_reissued",
+        )
+        self.assertEqual(
+            evidence["packet_result_family.edge.flowguard_reissue_preserves_authorized_reads"].test_name,
+            "test_flowguard_reissue_inherits_required_authorized_result_reads",
+        )
+        self.assertEqual(
+            evidence["packet_result_family.edge.flowguard_reissue_preserves_authorized_reads"].covered_obligations,
+            ("packet_result_family.flowguard_standard_reissue_preserves_required_authorized_result_reads",),
+        )
+        self.assertEqual(
+            evidence["packet_result_family.edge.flowguard_semantic_recheck_reissue_preserves_authorized_reads"].test_name,
+            "test_flowguard_semantic_recheck_reissue_inherits_required_authorized_reads",
+        )
+        self.assertEqual(
+            evidence["packet_result_family.edge.flowguard_semantic_recheck_reissue_preserves_authorized_reads"].covered_obligations,
+            (
+                "packet_result_family.flowguard_semantic_recheck_subject_bound",
+                "packet_result_family.flowguard_semantic_recheck_reissue_preserves_required_authorized_result_reads",
+            ),
+        )
+        self.assertEqual(
+            evidence["packet_result_family.negative.flowguard_reissue_requires_inherited_body_open"].test_name,
+            "test_reissued_flowguard_result_blocks_without_inherited_body_open",
+        )
+        self.assertEqual(
+            evidence["packet_result_family.negative.empty_required_flowguard_manifest"].test_name,
+            "test_review_packet_is_not_issued_with_empty_required_flowguard_manifest",
+        )
+        self.assertEqual(
+            evidence["packet_result_family.negative.same_root_break_glass"].test_name,
+            "test_break_glass_counts_same_flowguard_root_cause_across_surface_gates",
+        )
+        self.assertEqual(
+            evidence["packet_result_family.edge.flowguard_auto_recheck_inherits_blocker"].test_name,
+            "test_repair_task_flowguard_packet_inherits_blocker_identity",
+        )
+        self.assertEqual(
+            evidence["packet_result_family.edge.flowguard_explicit_recheck_inherits_blocker"].test_name,
+            "test_explicit_flowguard_action_inherits_repair_blocker_identity",
+        )
+        self.assertEqual(
+            evidence["packet_result_family.negative.repair_identity_mismatch_blocks"].test_name,
+            "test_formal_repair_identity_mismatch_is_runtime_mechanical_blocker",
+        )
+        self.assertEqual(
+            evidence["packet_result_family.negative.flowguard_shape_only_semantic_recheck"].test_name,
+            "test_semantic_recheck_rejects_shape_only_flowguard_pass",
+        )
+        self.assertEqual(
+            evidence["packet_result_family.happy.flowguard_subject_bound_semantic_recheck"].test_name,
+            "test_semantic_recheck_subject_bound_flowguard_pass_reaches_reviewer",
+        )
+        self.assertEqual(
+            evidence["packet_result_family.happy.flowguard_ai_contract_projection"].test_name,
+            "test_semantic_recheck_contract_projects_ai_facing_fields_and_options",
+        )
+        self.assertEqual(
+            evidence["packet_result_family.negative.flowguard_ai_contract_forbidden_alias_feedback"].test_name,
+            "test_semantic_recheck_near_synonyms_reissue_with_correct_minimal_shape",
+        )
+        self.assertEqual(
+            evidence["packet_result_family.replay.flowguard_ai_contract_corrected_retry"].test_name,
+            "test_semantic_recheck_wrong_value_then_corrected_retry_returns_to_legal_path",
+        )
+        self.assertEqual(
+            evidence["packet_result_family.negative.contract_driven_fake_ai_missing_options"].test_name,
+            "test_contract_driven_fake_ai_refuses_to_guess_when_finite_options_are_missing",
+        )
+        self.assertEqual(
+            evidence["packet_result_family.replay.contract_driven_fake_ai_cartesian_retry"].test_name,
+            "test_contract_driven_fake_ai_wrong_value_rows_repair_each_finite_option",
+        )
+        self.assertEqual(
+            evidence["packet_result_family.happy.related_blocker_bodies_delivered_to_pm"].test_name,
+            "test_reviewer_required_repair_reaches_pm_repair_packet",
+        )
+        self.assertEqual(
+            evidence["packet_result_family.negative.related_blocker_bodies_must_be_opened"].test_name,
+            "test_pm_repair_decision_blocks_without_opening_all_related_bodies",
+        )
+        self.assertEqual(
+            evidence["packet_result_family.happy.pm_repair_obligations_projected"].test_name,
+            "test_pm_repair_packet_projects_blocker_body_into_repair_obligations",
+        )
+        self.assertEqual(
+            evidence["packet_result_family.negative.pm_repair_reason_only_obligation_loss"].test_name,
+            "test_pm_repair_decision_reason_only_is_rejected_when_obligations_exist",
+        )
+        self.assertEqual(
+            evidence["packet_result_family.negative.pm_repair_stale_or_registry_only_obligation"].test_name,
+            "test_pm_repair_obligation_rejects_stale_or_registry_only_disposition",
+        )
+        self.assertEqual(
+            evidence["packet_result_family.negative.flowguard_missing_repair_obligation_consumption"].test_name,
+            "test_repair_packet_and_flowguard_recheck_must_consume_repair_obligations",
+        )
+        self.assertEqual(
+            evidence["packet_result_family.replay.contract_exhaustion_mesh"].test_name,
+            "test_contract_exhaustion_mesh_accepts_valid_and_rejects_hazards",
+        )
+        self.assertEqual(
+            evidence["packet_result_family.replay.contract_exhaustion_historical_failure_families"].test_name,
+            "test_historical_failure_families_require_normal_repair_before_glass_break",
+        )
+        self.assertEqual(
+            evidence["packet_result_family.replay.contract_exhaustion_test_mesh_owner_consumption"].test_name,
+            "test_contract_exhaustion_test_mesh_registers_every_required_owner",
+        )
+        self.assertEqual(
+            evidence["packet_result_family.negative.glass_break_alarm_not_success_path"].test_kind,
+            "negative_path",
+        )
+        self.assertEqual(
+            evidence["packet_result_family.replay.cartesian_control_plane_exhaustion"].test_name,
+            "test_cartesian_runner_accepts_valid_and_rejects_hazards",
+        )
+        self.assertEqual(
+            evidence["packet_result_family.negative.cartesian_normal_repair_not_glassbreak"].test_name,
+            "test_normal_repair_cells_never_expect_glassbreak",
         )
 
     def test_full_diagnostic_inventory_reports_current_gap_classes(self) -> None:

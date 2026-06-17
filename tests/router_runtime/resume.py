@@ -361,9 +361,12 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
         router.apply_action(root, "rehydrate_role_bindings", self.resume_role_agent_payload(root, action))
 
         state = read_json(router.run_state_path(run_root))
-        self.assertTrue(state["flags"]["role_recovery_obligation_replay_completed"])
+        self.assertTrue(state["flags"]["resume_roles_restored"])
+        self.assertTrue(state["flags"]["resume_role_bindings_rehydrated"])
+        self.assertTrue(state["flags"]["role_binding_recovery_report_written"])
+        self.assertFalse(state["flags"]["role_recovery_obligation_replay_completed"])
         self.assertFalse(state["flags"]["role_recovery_pm_escalation_required"])
-        self.assertTrue(state["flags"]["pm_resume_recovery_decision_returned"])
+        self.assertFalse(state["flags"]["pm_resume_recovery_decision_returned"])
         action = self.next_after_display_sync(root)
         self.assertEqual(action["action_type"], "handle_control_blocker")
         self.assertEqual(action["blocker_id"], blocker["blocker_id"])
@@ -688,7 +691,7 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
             root,
             "controller_reports_role_no_output",
             {
-                "role_key": "human_like_reviewer",
+                "role_key": "worker",
                 "liveness_probe_result": "completed_without_expected_event",
                 "current_controller_action_id": wait_action["controller_action_id"],
                 "router_scheduler_row_id": wait_action["router_scheduler_row_id"],
@@ -724,7 +727,7 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
             root,
             "controller_reports_role_liveness_fault",
             {
-                "role_key": "human_like_reviewer",
+                "role_key": "worker",
                 "host_liveness_status": "completed",
                 "current_controller_action_id": wait_action["controller_action_id"],
             },
@@ -749,7 +752,7 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
             root,
             "controller_reports_role_no_output",
             {
-                "role_key": "human_like_reviewer",
+                "role_key": "worker",
                 "liveness_probe_result": "completed_without_expected_event",
                 "current_controller_action_id": wait_action["controller_action_id"],
             },
@@ -758,7 +761,7 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
             root,
             "controller_reports_role_no_output",
             {
-                "role_key": "human_like_reviewer",
+                "role_key": "worker",
                 "liveness_probe_result": "completed_without_expected_event",
                 "current_controller_action_id": first["replacement_controller_action_id"],
             },
@@ -767,7 +770,7 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
             root,
             "controller_reports_role_no_output",
             {
-                "role_key": "human_like_reviewer",
+                "role_key": "worker",
                 "liveness_probe_result": "completed_without_expected_event",
                 "current_controller_action_id": second["replacement_controller_action_id"],
             },
@@ -782,7 +785,7 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertFalse(state["flags"]["role_recovery_requested"])
         self.assertTrue(state["flags"]["role_no_output_pm_escalation_required"])
         self.assertEqual(state["active_control_blocker"]["originating_event"], "controller_reports_role_no_output")
-    def test_resume_rehydration_settles_existing_output_without_pm(self) -> None:
+    def test_manual_resume_rehydration_keeps_existing_waits_outside_role_recovery(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
         self.complete_startup_runtime_entry(root)
@@ -805,18 +808,19 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertEqual(action["action_type"], "rehydrate_role_bindings")
         router.apply_action(root, "rehydrate_role_bindings", self.resume_role_agent_payload(root, action))
 
-        report = read_json(run_root / "continuation" / "role_recovery_report.json")
-        replay = read_json(root / report["role_recovery_obligation_replay_path"])
-        self.assertEqual(replay["settled_existing_count"], 1)
-        self.assertEqual(replay["replacement_count"], 0)
-        self.assertEqual(replay["outcomes"][0]["outcome"], "settled_existing_output")
-        original_after = read_json(run_root / "runtime" / "controller_actions" / f"{original['action_id']}.json")
-        self.assertEqual(original_after["status"], "done")
-        self.assertFalse(report["pm_decision_required_before_normal_work"])
+        report = read_json(run_root / "continuation" / "role_binding_recovery_report.json")
+        self.assertEqual(report["schema_version"], "flowpilot.role_binding_recovery_report.v1")
+        self.assertEqual(report["role_binding_mode"], "current_run_manual_resume_rehydration")
+        self.assertFalse((run_root / "continuation" / "role_recovery_report.json").exists())
         state = read_json(router.run_state_path(run_root))
-        self.assertTrue(state["flags"]["pm_resume_recovery_decision_returned"])
+        self.assertTrue(state["flags"]["resume_roles_restored"])
+        self.assertTrue(state["flags"]["role_binding_recovery_report_written"])
+        self.assertFalse(state["flags"]["role_recovery_obligation_replay_completed"])
+        self.assertFalse(state["flags"]["pm_resume_recovery_decision_returned"])
         self.assertFalse((run_root / "continuation" / "pm_resume_decision.json").exists())
-    def test_resume_rehydration_reissues_missing_obligations_before_pm(self) -> None:
+        original_after = read_json(run_root / "runtime" / "controller_actions" / f"{original['action_id']}.json")
+        self.assertNotEqual(original_after.get("completion_source"), "role_recovery_obligation_replay")
+    def test_manual_resume_rehydration_does_not_reissue_missing_obligations_without_role_recovery(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
         self.complete_startup_runtime_entry(root)
@@ -829,20 +833,17 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertEqual(action["action_type"], "rehydrate_role_bindings")
         router.apply_action(root, "rehydrate_role_bindings", self.resume_role_agent_payload(root, action))
 
-        report = read_json(run_root / "continuation" / "role_recovery_report.json")
-        replay = read_json(root / report["role_recovery_obligation_replay_path"])
-        self.assertEqual(replay["replacement_count"], 1)
-        self.assertEqual(replay["settled_existing_count"], 0)
-        self.assertFalse(report["pm_decision_required_before_normal_work"])
+        report = read_json(run_root / "continuation" / "role_binding_recovery_report.json")
+        self.assertEqual(report["schema_version"], "flowpilot.role_binding_recovery_report.v1")
+        self.assertEqual(report["role_binding_mode"], "current_run_manual_resume_rehydration")
+        self.assertFalse((run_root / "continuation" / "role_recovery_report.json").exists())
         original_after = read_json(run_root / "runtime" / "controller_actions" / f"{original['action_id']}.json")
-        self.assertEqual(original_after["status"], "superseded")
-        replacement_id = replay["replacement_order"][0]["replacement_controller_action_id"]
-        replacement = read_json(run_root / "runtime" / "controller_actions" / f"{replacement_id}.json")
-        self.assertEqual(replacement["status"], "waiting")
-        self.assertEqual(replacement["replaces_controller_action_id"], original["action_id"])
+        self.assertEqual(original_after["status"], "waiting")
         state = read_json(router.run_state_path(run_root))
-        self.assertTrue(state["flags"]["pm_resume_recovery_decision_returned"])
-        self.assertEqual(state["pending_action"]["controller_action_id"], replacement_id)
+        self.assertTrue(state["flags"]["resume_roles_restored"])
+        self.assertTrue(state["flags"]["role_binding_recovery_report_written"])
+        self.assertFalse(state["flags"]["role_recovery_obligation_replay_completed"])
+        self.assertFalse(state["flags"]["pm_resume_recovery_decision_returned"])
         self.assertFalse((run_root / "continuation" / "pm_resume_decision.json").exists())
     def test_role_recovery_settles_existing_output_without_replay_or_pm(self) -> None:
         root = self.make_project()

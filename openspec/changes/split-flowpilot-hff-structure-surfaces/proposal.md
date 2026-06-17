@@ -8,12 +8,17 @@ oversized entrypoints.
 
 ## What Changes
 
-- Split the four current deferred StructureMesh surfaces while preserving only
+- Split the original four deferred StructureMesh surfaces while preserving only
   their current public command/module entrypoints:
   - `simulations/run_flowpilot_core_runtime_checks.py`
   - `simulations/run_flowpilot_information_flow_alignment_checks.py`
   - `skills/flowpilot/assets/flowpilot_new.py`
   - `scripts/flowguard_project_topology.py`
+- Close the two final current runtime-contract StructureMesh diagnostics now
+  reported by model-test alignment while preserving their current import
+  surfaces:
+  - `skills/flowpilot/assets/flowpilot_router_route_artifacts_architecture_product.py`
+  - `skills/flowpilot/assets/flowpilot_router_work_packets_next_actions.py`
 - Move cohesive helper ownership into child modules with one owner per
   partition, no old-shape aliases, no missing-field defaults, and no
   compatibility/fallback acceptance paths.

@@ -32,36 +32,26 @@ outcomes for existing validation packets and repair paths.
 - **AND** the runtime MUST create an active blocker that requires validator
   recheck or a PM-authorized compatible repair path.
 
-### Requirement: High-risk PM repair decisions are gated before application
-The runtime SHALL stage PM repair decisions that can mutate route state or
-waive a blocker until FlowGuard, reviewer, system validation, and closure gates
-pass for the PM decision.
+### Requirement: PM continue-repair decisions are gated before application
+The runtime SHALL stage PM repair decisions that continue repair work until
+FlowGuard, reviewer, system validation, and closure gates pass for the PM
+decision.
 
-#### Scenario: PM route mutation repair waits for gates
-- **WHEN** PM submits a repair decision with `mutate_route`
+#### Scenario: PM current-scope repair waits for gates
+- **WHEN** PM submits a repair decision with `repair_current_scope`
+- **THEN** the runtime MUST record the PM decision as staged
+- **AND** the runtime MUST issue a FlowGuard packet for the PM decision
+- **AND** the runtime MUST NOT open the resulting repair work before the PM decision gate is
+  closed.
+
+#### Scenario: PM route redesign waits for gates
+- **WHEN** PM submits a repair decision with `redesign_route`
 - **THEN** the runtime MUST record the PM decision as staged
 - **AND** the runtime MUST issue a FlowGuard packet for the PM decision
 - **AND** the runtime MUST NOT mutate the route before the PM decision gate is
   closed.
 
-#### Scenario: PM waiver waits for gates
-- **WHEN** PM submits a repair decision with `waive_with_authority`
-- **THEN** the runtime MUST record the PM decision as staged
-- **AND** the blocker MUST NOT be waived before the PM decision gate is closed.
-
-### Requirement: Low-risk PM repair decisions stay direct
-The runtime SHALL apply low-risk PM repair decisions directly when they only
-reissue work, collect evidence, rerun a legacy validation packet, quarantine
-evidence, or stop for user input.
-
-#### Scenario: PM sender reissue remains direct
-- **WHEN** PM submits a repair decision with `sender_reissue`
-- **THEN** the runtime MUST issue the fresh repair packet without requiring a
-  PM decision FlowGuard gate
-- **AND** the original blocker MUST remain active until the required recheck
-  role passes.
-
-### Requirement: High-risk PM disposition decisions are gated before application
+### Requirement: Route-mutating PM disposition decisions are gated before application
 The runtime SHALL stage PM disposition decisions that mutate route structure
 until FlowGuard, reviewer, system validation, and closure gates pass for the
 PM disposition.

@@ -1,11 +1,11 @@
 ## Context
 
 The current FlowGuard model-test alignment inventory is green for ordinary
-binding evidence but still reports four deferred StructureMesh split findings.
-Those findings sit in validation gates, a runtime contract entrypoint, and the
-project topology CLI. The repository also has active peer-agent work, so this
-change must keep its own OpenSpec and implementation scope separate from
-unrelated dirty files.
+binding evidence. The original HFF batch closed its four deferred StructureMesh
+split findings, and the current diagnostics now identify two final
+runtime-contract StructureMesh findings in router child modules. The repository
+also has active peer-agent work, so this change must keep its own OpenSpec and
+implementation scope separate from unrelated dirty files.
 
 The strict FlowPilot maintenance contract remains current-path-only: preserving
 an entrypoint means preserving the current supported command or import path. It
@@ -16,8 +16,9 @@ defaults, newest-run fallback, repo-root fallback, or prose/shape guessing.
 
 **Goals:**
 
-- Close the four current deferred StructureMesh findings from the executable
-  model-test alignment diagnostics.
+- Close the current deferred StructureMesh findings from the executable
+  model-test alignment diagnostics, including the two final runtime-contract
+  router child modules.
 - Keep each parent entrypoint thin enough that ownership is visible and each
   moved responsibility has one child owner.
 - Preserve current CLI/module behavior, JSON output contracts, and install

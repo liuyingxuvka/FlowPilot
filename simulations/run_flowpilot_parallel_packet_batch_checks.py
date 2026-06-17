@@ -6,7 +6,7 @@ import argparse
 import json
 from collections import deque
 
-from flowguard import Explorer
+from flowguard.explorer import Explorer
 
 import flowpilot_parallel_packet_batch_model as model
 

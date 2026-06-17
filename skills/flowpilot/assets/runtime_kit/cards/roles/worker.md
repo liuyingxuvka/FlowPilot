@@ -67,8 +67,12 @@ role's sealed body or expand writes beyond the packet boundary.
 When a repair or worker packet includes `authorized_result_reads`, use the
 authorized input materials delivered by `flowpilot_new.py open-packet` before
 submitting the worker result. Use the delivered report body to understand the
-concrete prior failure being repaired. Do not rely on PM summary text alone,
-and do not read any result body that the packet did not authorize.
+concrete prior failure being repaired. Read every delivered body before
+choosing the repair. If multiple bodies are delivered, read all of them: the
+current blocker body, target result body, and upstream context bodies each carry
+different required context. Do not rely on PM summary text alone, do not use
+only one delivered body as a substitute for the rest, and do not read any
+result body that the packet did not authorize.
 
 Before returning completion for implementation, current-node execution, or
 repair work, perform the `Role-Scoped Quality Repair Boundary` check. Inspect

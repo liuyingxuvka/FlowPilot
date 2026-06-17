@@ -61,6 +61,11 @@ class FlowPilotPlanningQualityTests(unittest.TestCase):
         self.assertTrue(hazards[model.NODE_PLAN_MISSING_REALIZATION_OBLIGATIONS]["detected"])
         self.assertTrue(hazards[model.WORK_PACKET_MISSING_REALIZATION_OBLIGATIONS]["detected"])
         self.assertTrue(hazards[model.FINAL_LEDGER_REALIZATION_OBLIGATIONS_UNRESOLVED]["detected"])
+        self.assertTrue(hazards[model.ACCEPTANCE_ITEM_REGISTRY_MISSING]["detected"])
+        self.assertTrue(hazards[model.ACCEPTANCE_ITEM_NO_ROUTE_OWNER]["detected"])
+        self.assertTrue(hazards[model.NODE_PLAN_MISSING_ACCEPTANCE_ITEM_PROJECTION]["detected"])
+        self.assertTrue(hazards[model.WORK_PACKET_MISSING_ACCEPTANCE_ITEM_MATRIX]["detected"])
+        self.assertTrue(hazards[model.FINAL_LEDGER_ACCEPTANCE_ITEM_UNRESOLVED]["detected"])
 
     def test_runtime_cards_and_templates_expose_planning_quality_contracts(self) -> None:
         route_card = (
@@ -247,6 +252,8 @@ class FlowPilotPlanningQualityTests(unittest.TestCase):
         self.assertIn("unjustified route bloat", route_card)
         self.assertIn("PM shallow-completion trap list", route_card)
         self.assertIn("practical next-step evidence", route_card)
+        self.assertIn("acceptance_item_registry", route_card)
+        self.assertIn("acceptance_item_ids", route_card)
         self.assertIn("deliverable_support", child_selection_card)
         self.assertIn("process_support", child_selection_card)
         self.assertIn("FlowGuard satellite skills", child_selection_card)
@@ -258,7 +265,9 @@ class FlowPilotPlanningQualityTests(unittest.TestCase):
         self.assertIn("active_child_skill_bindings", node_plan_card)
         self.assertIn("role_skill_use_bindings", node_plan_card)
         self.assertIn("Role Skill Use Evidence", node_plan_card)
-        self.assertIn("work_packet_projection", node_plan_card)
+        self.assertNotIn("work_packet_projection", node_plan_card)
+        self.assertIn("acceptance_item_projection", node_plan_card)
+        self.assertIn("node-owned acceptance item", node_plan_card)
         self.assertIn("final-user intent and product usefulness self-check", node_plan_card)
         self.assertIn("nonessential improvement", node_plan_card)
         self.assertIn("low-quality-success self-check", node_plan_card)
@@ -266,18 +275,24 @@ class FlowPilotPlanningQualityTests(unittest.TestCase):
         self.assertIn("structure_hygiene_expectation", node_plan_card)
         self.assertIn("Structure Hygiene Delta", packet_template)
         self.assertIn("Structure Hygiene Delta", result_template)
+        self.assertIn("Acceptance Item Projection", packet_template)
+        self.assertIn("Acceptance Item Result Matrix", result_template)
+        self.assertIn("acceptance_item_projection", node_plan_review_card)
         self.assertIn("structure_hygiene_expectation", node_plan_review_card)
         self.assertIn("unowned fallback", worker_result_review_card)
         self.assertIn("Negative rejection evidence", worker_result_review_card)
         self.assertIn("final-user intent and product usefulness assumptions", product_architecture_card)
         self.assertIn("low-quality-success review", product_architecture_card)
+        self.assertIn("acceptance_item_registry_seed", product_architecture_card)
         self.assertIn("thin-success shortcuts", product_architecture_card)
         self.assertIn("final-user intent and delivered-product usefulness claims", final_ledger_card)
+        self.assertIn("acceptance item closure", final_ledger_card)
         self.assertIn("low-quality-success risks", final_ledger_card)
         self.assertIn("structure debt dispositions", final_ledger_card)
         self.assertIn("structure debt dispositions", evidence_quality_card)
         self.assertIn("final_user_outcome_replay", closure_card)
         self.assertIn("hard low-quality-success risks", closure_card)
+        self.assertIn("zero unresolved active", closure_card)
         self.assertIn("shallow-completion traps", closure_card)
         self.assertIn("practical next step", closure_card)
         self.assertIn("structural convergence", closure_card)
@@ -292,6 +307,7 @@ class FlowPilotPlanningQualityTests(unittest.TestCase):
         self.assertIn("Proof of Depth", result_template)
 
         self.assertIn("low_quality_success_review", product_template)
+        self.assertIn("acceptance_item_registry_seed", product_template["requirement_trace"])
         self.assertIn("proof_of_depth_required", product_template["low_quality_success_review"]["hard_parts"][0])
         self.assertIn("selection_dimensions", pm_selection_template)
         self.assertIn("FlowGuard satellite skills", pm_selection_template["selection_rule"])
@@ -312,21 +328,35 @@ class FlowPilotPlanningQualityTests(unittest.TestCase):
         self.assertIn("reviewer_or_flowguard_gate_ids", standard)
         self.assertIn("expected_artifact_paths", standard)
         self.assertIn("skill_standard_projection", node_template)
+        self.assertIn("node_context_package", node_template)
+        self.assertIn("acceptance_item_projection", node_template["node_context_package"])
+        self.assertEqual(
+            set(node_template["node_context_package"]),
+            {
+                "purpose",
+                "acceptance_criteria",
+                "relevant_references",
+                "known_risks",
+                "acceptance_item_projection",
+            },
+        )
+        self.assertIn("acceptance_item_registry", node_template["source_paths"])
         self.assertIn("structure_hygiene_expectation", node_template)
         self.assertIn("active_child_skill_bindings", node_template)
         self.assertIn("role_skill_use_bindings", node_template)
         self.assertFalse(node_template["role_skill_use_bindings"][0]["self_attestation_allowed"])
-        self.assertIn("work_packet_projection", node_template)
-        self.assertIn("structure_hygiene_delta_required", node_template["work_packet_projection"][0])
-        self.assertIn("role_skill_use_binding_ids", node_template["work_packet_projection"][0])
-        self.assertIn("role_skill_use_evidence_required", node_template["work_packet_projection"][0])
+        self.assertNotIn("work_packet_projection", node_template)
         self.assertIn("local_low_quality_success_risk", node_template["pm_current_node_high_standard_recheck"])
         self.assertIn(
             "proof_of_depth_required",
             node_template["pm_current_node_high_standard_recheck"]["local_low_quality_success_risk"],
         )
         self.assertIn("structure_convergence_review", route_template)
+        self.assertIn("acceptance_item_traceability_policy", route_template)
+        self.assertIn("acceptance_item_ids", route_template["nodes"][0])
         self.assertFalse(route_template["structure_convergence_review"]["old_artifacts_may_close_current_completion"])
+        self.assertIn("acceptance_item_closure", final_ledger_template)
+        self.assertIn("active_acceptance_item_count", final_ledger_template["counts"])
         self.assertIn("structure_debt_dispositions", final_ledger_template)
         self.assertIn("unresolved_structure_debt_count", final_ledger_template["counts"])
         self.assertIn("structure_debt_triage", closure_template)

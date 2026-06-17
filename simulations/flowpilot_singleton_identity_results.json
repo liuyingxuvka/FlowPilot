@@ -172,7 +172,7 @@
   "authority_matrix_count": 8,
   "authority_matrix_ok": true,
   "claim_scope": "FlowPilot singleton-vs-plural authority for routine maintenance and local install confidence",
-  "confidence": "full",
+  "confidence": "scoped",
   "flowguard_explorer": {
     "dead_branch_count": 0,
     "exception_branch_count": 0,
@@ -182,7 +182,7 @@
     "summary": "sequences=3 initial_states=1 traces=72",
     "violation_count": 0
   },
-  "full_closure_ok": true,
+  "full_closure_ok": false,
   "hazard_detection": {
     "hazards": {
       "ack_only_output_marked_complete": {
@@ -265,75 +265,64 @@
     "ok": true
   },
   "live_audit": {
-    "evidence_insufficient_count": 0,
+    "evidence_insufficient_count": 5,
     "mutation_performed": false,
     "ok": true,
     "result_type": "flowpilot_live_singleton_audit",
     "risk_count": 0,
     "status_counts": {
-      "safe": 6
+      "evidence_insufficient": 5,
+      "safe": 1
     },
     "surface_count": 6,
     "surfaces": [
       {
         "detail": "current pointer is present and treated as UI focus/default target",
         "evidence": {
-          "run_id": "run-20260527-173225",
-          "run_root": ".flowpilot/runs/run-20260527-173225"
+          "run_id": "run-20260614-184920",
+          "run_root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\.flowpilot\\runs\\run-20260614-184920"
         },
         "status": "safe",
         "surface": "current_run_pointer"
       },
       {
-        "detail": "parallel Flow blocks are legal when each operation has a target surface",
+        "detail": "missing",
         "evidence": {
-          "active_task_count": 41,
-          "untargeted": []
+          "path": ".flowpilot/runs/run-20260614-184920/route_state_snapshot.json"
         },
-        "status": "safe",
+        "status": "evidence_insufficient",
         "surface": "parallel_flow_blocks"
       },
       {
-        "detail": "one active run-scoped daemon writer lock is present",
+        "detail": "missing",
         "evidence": {
-          "lock_run_id": "run-20260527-173225",
-          "lock_status": "active",
-          "single_writer_lock": true,
-          "status_error": ""
+          "path": ".flowpilot/runs/run-20260614-184920/runtime/router_daemon.lock"
         },
-        "status": "safe",
+        "status": "evidence_insufficient",
         "surface": "router_daemon_writer"
       },
       {
-        "detail": "active packet records have no conflicting holder/status pairs for the same packet id",
+        "detail": "missing",
         "evidence": {
-          "active_packet_id": "material-scan-worker-b-runtime-data-validation",
-          "active_record_count": 3,
-          "duplicate_packet_ids": []
+          "path": ".flowpilot/runs/run-20260614-184920/packet_ledger.json"
         },
-        "status": "safe",
+        "status": "evidence_insufficient",
         "surface": "packet_active_holder"
       },
       {
-        "detail": "frontier does not expose an undisposed replacement route conflict",
+        "detail": "missing",
         "evidence": {
-          "active_packet_status": "router-next-action-ready-for-controller",
-          "frontier_status": "material_scan",
-          "pending_route_mutation": false,
-          "phase": "material_scan"
+          "path": ".flowpilot/runs/run-20260614-184920/execution_frontier.json"
         },
-        "status": "safe",
+        "status": "evidence_insufficient",
         "surface": "route_frontier_current_authority"
       },
       {
-        "detail": "material progress flags are reported with current phase context",
+        "detail": "missing",
         "evidence": {
-          "material_scan_packets_relayed": true,
-          "material_scan_result_disposition_recorded": false,
-          "material_scan_results_relayed_to_pm": false,
-          "phase": "material_scan"
+          "path": ".flowpilot/runs/run-20260614-184920/router_state.json"
         },
-        "status": "safe",
+        "status": "evidence_insufficient",
         "surface": "material_progress_generation"
       }
     ]
@@ -346,7 +335,11 @@
     "samples": [],
     "stuck_state_count": 0
   },
-  "recommended_actions": [],
+  "recommended_actions": [
+    "inspect_live_singleton_audit_gaps",
+    "refresh_or_attach_missing_singleton_evidence",
+    "downgrade_broad_confidence_to_scoped_until_current"
+  ],
   "result_type": "flowpilot_singleton_identity",
   "safe_graph": {
     "edge_count": 24,

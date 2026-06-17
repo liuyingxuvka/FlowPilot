@@ -46,6 +46,45 @@ def source_test_evidence() -> tuple[TestEvidence, ...]:
             code_contracts=("flowpilot_new.start_run",),
         ),
         _evidence(
+            "source.new_entrypoint.runtime_self_check_receipt",
+            test_name="test_start_run_records_portable_runtime_self_check_receipt",
+            path="tests/test_flowpilot_new_entrypoint.py",
+            command=(
+                "python -m unittest "
+                "tests.test_flowpilot_new_entrypoint.FlowPilotNewEntrypointTests."
+                "test_start_run_records_portable_runtime_self_check_receipt"
+            ),
+            test_kind=HAPPY,
+            covers=("new_entrypoint.portable_runtime_self_check_receipt",),
+            code_contracts=("flowpilot_new.start_run",),
+        ),
+        _evidence(
+            "source.new_entrypoint.record_runtime_self_check_receipt",
+            test_name="test_record_runtime_self_check_receipt_writes_run_scoped_receipt",
+            path="tests/test_flowpilot_new_entrypoint.py",
+            command=(
+                "python -m unittest "
+                "tests.test_flowpilot_new_entrypoint.FlowPilotNewEntrypointTests."
+                "test_record_runtime_self_check_receipt_writes_run_scoped_receipt"
+            ),
+            test_kind=HAPPY,
+            covers=("new_entrypoint.portable_runtime_self_check_receipt",),
+            code_contracts=("flowpilot_new.record_runtime_self_check_receipt",),
+        ),
+        _evidence(
+            "source.new_entrypoint.runtime_self_check_no_dev_script",
+            test_name="test_runtime_self_check_does_not_require_target_project_simulations",
+            path="tests/test_flowpilot_new_entrypoint.py",
+            command=(
+                "python -m unittest "
+                "tests.test_flowpilot_new_entrypoint.FlowPilotNewEntrypointTests."
+                "test_runtime_self_check_does_not_require_target_project_simulations"
+            ),
+            test_kind=NEGATIVE,
+            covers=("new_entrypoint.portable_runtime_self_check_receipt",),
+            code_contracts=("flowpilot_runtime_self_check.runtime_self_check",),
+        ),
+        _evidence(
             "source.new_entrypoint.headless_reject",
             test_name="test_formal_mode_rejects_headless_startup_result_as_formal_evidence",
             path="tests/test_flowpilot_new_entrypoint.py",
@@ -298,6 +337,19 @@ def source_test_evidence() -> tuple[TestEvidence, ...]:
             test_kind=NEGATIVE,
             covers=("route_mutation.sibling_replacement_stales_old_evidence",),
             code_contracts=("router.record_external_event", "packet.create_packet"),
+        ),
+        _evidence(
+            "source.route_authority.rejection_feedback_helper",
+            test_name="test_route_authority_rejection_helper_projects_external_contract_feedback",
+            path="tests/test_flowpilot_full_diagnostic_contracts.py",
+            command="python -m unittest tests.test_flowpilot_full_diagnostic_contracts.FlowPilotFullDiagnosticContractTests.test_route_authority_rejection_helper_projects_external_contract_feedback",
+            test_kind=EDGE,
+            covers=("route_authority.rejection_feedback_projection",),
+            code_contracts=(
+                "route_authority_rejection.infer_event",
+                "route_authority_rejection.event_requirements",
+                "route_authority_rejection.unsupported_payload_fields",
+            ),
         ),
         _evidence(
             "source.route.display",

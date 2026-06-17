@@ -1,0 +1,9 @@
+{
+  "check": "meta",
+  "created_at": "2026-06-14T17:08:32.294924+00:00",
+  "input_fingerprint": "007dbc964f415a9105ef0f90cdc1c7eda295cb23c86692f32cbadde6632a983e",
+  "ok": true,
+  "result_fingerprint": "d83b2bc5a32efe8aca0087a8041264314535f21b06b9b6e9998dfa4162cea6d3",
+  "result_type": "layered_full_parent",
+  "schema": 1
+}

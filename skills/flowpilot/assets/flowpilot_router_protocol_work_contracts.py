@@ -127,7 +127,7 @@ def pm_package_result_disposition_payload_contract(name: str) -> dict[str, Any]:
         "expected_return_envelope": "role_output_envelope",
         "expected_output_type": PM_PACKAGE_RESULT_DISPOSITION_OUTPUT_TYPE,
         "expected_output_contract_id": PM_PACKAGE_RESULT_DISPOSITION_CONTRACT_ID,
-        "runtime_command": "flowpilot_runtime.py submit-output-to-router",
+        "runtime_command": "flowpilot_new.py submit-result --lease-id <lease-id> --packet-id <packet-id> --body <sealed_result_summary>",
         "required_fields": list(PM_PACKAGE_RESULT_DISPOSITION_REQUIRED_FIELDS),
         "recommended_fields": ["packet_outcomes"],
         "packet_outcomes_contract": {

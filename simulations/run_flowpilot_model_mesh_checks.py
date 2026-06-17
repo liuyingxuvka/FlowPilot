@@ -8,7 +8,7 @@ import json
 from pathlib import Path
 from typing import Any, Dict, List, Mapping, Sequence
 
-from flowguard import Explorer
+from flowguard.explorer import Explorer
 
 import flowpilot_model_mesh_model as model
 
@@ -66,6 +66,24 @@ REQUIRED_LABELS = {
     "reject_legal_next_action_projection_missing",
     "select_legal_next_action_conformance_failed",
     "reject_legal_next_action_conformance_failed",
+    "select_route_authority_model_missing",
+    "reject_route_authority_model_missing",
+    "select_route_authority_projection_missing",
+    "reject_route_authority_projection_missing",
+    "select_route_authority_owner_conflict",
+    "reject_route_authority_owner_conflict",
+    "select_route_authority_wrong_path_accepted",
+    "reject_route_authority_wrong_path_accepted",
+    "select_route_authority_repair_feedback_missing",
+    "reject_route_authority_repair_feedback_missing",
+    "select_route_authority_fallback_accepted",
+    "reject_route_authority_fallback_accepted",
+    "select_route_authority_no_delta_repeat_accepted",
+    "reject_route_authority_no_delta_repeat_accepted",
+    "select_repeated_lifecycle_action_not_absorbed",
+    "reject_repeated_lifecycle_action_not_absorbed",
+    "select_lifecycle_guard_stuck_claimed_safe",
+    "reject_lifecycle_guard_stuck_claimed_safe",
 }
 
 HAZARD_EXPECTED_FAILURES = {
@@ -104,6 +122,19 @@ HAZARD_EXPECTED_FAILURES = {
     },
     "legal_next_action_projection_missing": {"legal_next_action_projection_missing"},
     "legal_next_action_conformance_failed": {"legal_next_action_conformance_failed"},
+    "route_authority_model_missing": {
+        "route_authority_singularity_model_not_registered",
+        "route_authority_projection_missing",
+        "route_authority_conformance_failed",
+    },
+    "route_authority_projection_missing": {"route_authority_projection_missing"},
+    "route_authority_owner_conflict": {"route_authority_owner_conflict"},
+    "route_authority_wrong_path_accepted": {"route_authority_wrong_path_not_rejected"},
+    "route_authority_repair_feedback_missing": {"route_authority_repair_feedback_missing"},
+    "route_authority_fallback_accepted": {"route_authority_fallback_not_rejected"},
+    "route_authority_no_delta_repeat_accepted": {"route_authority_no_delta_repeat_not_absorbed"},
+    "repeated_lifecycle_action_not_absorbed": {"repeated_lifecycle_action_must_block_mesh_green"},
+    "lifecycle_guard_stuck_claimed_safe": {"lifecycle_guard_stuck_must_block_mesh_green"},
 }
 
 
@@ -131,7 +162,12 @@ def _state_id(state: model.State) -> str:
         f"{state.control_transaction_commit_scope_complete}|parent_child="
         f"{state.parent_child_lifecycle_conformant},{state.parent_child_lifecycle_replayed}|legal="
         f"{state.legal_next_action_policy_registered},{state.legal_next_action_projected},"
-        f"{state.legal_next_action_conformant}"
+        f"{state.legal_next_action_conformant}|route_auth="
+        f"{state.route_authority_singularity_registered},{state.route_authority_projected},"
+        f"{state.route_authority_conformant},{state.route_authority_owner_unique},"
+        f"{state.route_authority_wrong_path_rejected},{state.route_authority_repair_feedback_present},"
+        f"{state.route_authority_fallback_rejected},{state.route_authority_no_delta_repeat_absorbed}|"
+        f"repeat={state.repeated_lifecycle_action_absorbed}|stuck={state.lifecycle_guard_control_plane_stuck}"
     )
 
 

@@ -61,6 +61,14 @@ Include:
   proof obligations, and any external advisory material PM imports. External
   OpenSpec/OpenSpark/SparkKey-style files are only source material until PM
   imports them here; they never become route authority by themselves;
+- `acceptance_item_registry_seed`: compile atomic current-run acceptance
+  items from explicit user requirements, implicit user commitments, PM-added
+  high standards, low-quality-success risks, child-skill standards, and
+  FlowGuard obligations. Include at least one user-sourced item and at least
+  one PM high-standard item. Each row must state `quality_floor`,
+  `low_quality_failure_patterns`, `required_evidence`, expected owner nodes
+  when known, reviewer or FlowGuard gates, and whether final backward replay
+  must check it;
 - final-user intent and product usefulness assumptions, including what would
   make the result feel incomplete, unusable, misleading, or below the user's
   real goal;
@@ -83,6 +91,12 @@ carry `source_requirement_ids` when it exists because of a user requirement,
 PM-added hard risk, or imported advisory source. If an item has no supporting
 requirement id, either put it in negative scope/deferred scope or record why it
 is only PM decision-support.
+
+The acceptance item seed is not a separate workflow. It is the checklist form
+of the same product architecture and root contract. Later PM route planning
+must assign every active item to route nodes, node acceptance plans must
+project the node-owned items, PM dispositions must close or block them, and
+the final ledger/backward replay must check every active item again.
 
 Use Minimum Sufficient Complexity here. Every accepted capability, feature,
 surface, and visible element must be tied to a user task, a hard acceptance

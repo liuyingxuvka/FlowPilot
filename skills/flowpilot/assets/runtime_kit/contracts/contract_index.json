@@ -360,7 +360,6 @@
         "decided_by_role",
         "decision",
         "decision_reason",
-        "residual_risks",
         "contract_self_check"
       ],
       "recommended_body_fields": [
@@ -393,9 +392,7 @@
         "rework_requested",
         "route_or_node_mutation_required"
       ],
-      "explicit_array_fields": [
-        "residual_risks"
-      ],
+      "explicit_array_fields": [],
       "contract_self_check_required": true,
       "controller_may_read_sealed_bodies": false,
       "controller_visibility": "role_output_envelope_only",
@@ -439,8 +436,8 @@
         "source_packet_declares_role_skill_use_bindings": [
           "Role Skill Use Evidence"
         ],
-        "source_packet_declares_test_obligation_matrix_rows": [
-          "Test Obligation Coverage"
+        "source_packet_declares_current_evidence_obligations": [
+          "Current Evidence Coverage"
         ]
       },
       "required_result_envelope_fields": [
@@ -484,8 +481,8 @@
         "source_request_declares_role_skill_use_bindings": [
           "Role Skill Use Evidence"
         ],
-        "source_request_declares_test_obligation_matrix_rows": [
-          "Test Obligation Coverage"
+        "source_request_declares_current_evidence_obligations": [
+          "Current Evidence Coverage"
         ]
       },
       "required_result_envelope_values": {
@@ -591,20 +588,8 @@
         "pm_visible_summary",
         "reviewed_by_role",
         "passed",
-        "direct_evidence_paths_checked",
-        "independent_challenge",
-        "independent_challenge.scope_restatement",
-        "independent_challenge.explicit_and_implicit_commitments",
-        "independent_challenge.failure_hypotheses",
-        "independent_challenge.challenge_actions",
-        "independent_challenge.blocking_findings",
-        "independent_challenge.non_blocking_findings",
-        "independent_challenge.pass_or_block",
-        "independent_challenge.reroute_request",
-        "independent_challenge.challenge_waivers",
         "findings",
         "blockers",
-        "residual_risks",
         "pm_suggestion_items",
         "contract_self_check"
       ],
@@ -624,7 +609,6 @@
         "overall_passed"
       ],
       "contract_self_check_required": true,
-      "reviewer_independent_challenge_required": true,
       "reviewer_must_block_missing_or_failed_check": true,
       "runtime_channel": "role_output_runtime",
       "output_type": "reviewer_review_report",
@@ -636,18 +620,9 @@
       "router_event_mode": "router_supplied",
       "explicit_array_fields": [
         "pm_visible_summary",
-        "direct_evidence_paths_checked",
         "findings",
         "blockers",
-        "residual_risks",
-        "pm_suggestion_items",
-        "independent_challenge.explicit_and_implicit_commitments",
-        "independent_challenge.failure_hypotheses",
-        "independent_challenge.challenge_actions",
-        "independent_challenge.blocking_findings",
-        "independent_challenge.non_blocking_findings",
-        "independent_challenge.reroute_request",
-        "independent_challenge.challenge_waivers"
+        "pm_suggestion_items"
       ]
     },
     {
@@ -663,28 +638,12 @@
         "reviewed_by_role",
         "passed",
         "modeled_boundary",
-        "commands_run",
-        "counterexamples_or_absence",
-        "hard_invariants",
-        "skipped_checks",
-        "model_obligations",
-        "ordinary_test_evidence",
-        "missing_test_kinds",
-        "conformance_boundary",
-        "confidence_boundary",
-        "residual_blindspots",
-        "background_artifact_completion",
+        "blockers",
         "pm_suggestion_items",
-        "evidence_consistency",
         "contract_self_check"
       ],
-      "background_artifact_completion_required_when_long_tests_cited": true,
-      "required_child_fields": [
-        "evidence_consistency.self_check_passed",
-        "evidence_consistency.child_reports_all_passed",
-        "evidence_consistency.blocking_child_reports",
-        "evidence_consistency.hard_evidence_decision"
-      ],
+      "flowguard_model_details_surface": "run-local flowguard_evidence.json",
+      "required_child_fields": [],
       "conditional_required_body_fields": {
         "source_packet_or_request_declares_role_skill_use_bindings": [
           "role_skill_use_evidence"
@@ -701,17 +660,8 @@
       "router_event_mode": "router_supplied",
       "explicit_array_fields": [
         "pm_visible_summary",
-        "commands_run",
-        "counterexamples_or_absence",
-        "hard_invariants",
-        "skipped_checks",
-        "model_obligations",
-        "ordinary_test_evidence",
-        "missing_test_kinds",
-        "residual_blindspots",
-        "background_artifact_completion",
-        "pm_suggestion_items",
-        "evidence_consistency.blocking_child_reports"
+        "blockers",
+        "pm_suggestion_items"
       ]
     },
     {
@@ -834,25 +784,16 @@
         "human_like_reviewer"
       ],
       "required_body_fields": [
+        "pm_visible_summary",
         "reviewed_by_role",
+        "passed",
         "direct_material_sources_checked",
         "packet_matches_checked_sources",
         "pm_ready",
         "checked_source_paths",
         "runtime_open_receipt_refs",
-        "independent_challenge",
-        "independent_challenge.scope_restatement",
-        "independent_challenge.explicit_and_implicit_commitments",
-        "independent_challenge.failure_hypotheses",
-        "independent_challenge.challenge_actions",
-        "independent_challenge.blocking_findings",
-        "independent_challenge.non_blocking_findings",
-        "independent_challenge.pass_or_block",
-        "independent_challenge.reroute_request",
-        "independent_challenge.challenge_waivers",
         "findings",
         "blockers",
-        "residual_risks",
         "pm_suggestion_items",
         "contract_self_check"
       ],
@@ -861,7 +802,6 @@
         "direct_material_sources_checked": true,
         "packet_matches_checked_sources": true
       },
-      "reviewer_independent_challenge_required": true,
       "expected_return_envelope": "role_output_envelope",
       "runtime_channel": "role_output_runtime",
       "output_type": "material_sufficiency_report",
@@ -872,19 +812,12 @@
       "hash_key": "report_hash",
       "router_event_mode": "router_supplied",
       "explicit_array_fields": [
+        "pm_visible_summary",
         "checked_source_paths",
         "runtime_open_receipt_refs",
         "findings",
         "blockers",
-        "residual_risks",
-        "pm_suggestion_items",
-        "independent_challenge.explicit_and_implicit_commitments",
-        "independent_challenge.failure_hypotheses",
-        "independent_challenge.challenge_actions",
-        "independent_challenge.blocking_findings",
-        "independent_challenge.non_blocking_findings",
-        "independent_challenge.reroute_request",
-        "independent_challenge.challenge_waivers"
+        "pm_suggestion_items"
       ]
     },
     {
@@ -898,20 +831,8 @@
         "pm_visible_summary",
         "reviewed_by_role",
         "passed",
-        "direct_evidence_paths_checked",
-        "independent_challenge",
-        "independent_challenge.scope_restatement",
-        "independent_challenge.explicit_and_implicit_commitments",
-        "independent_challenge.failure_hypotheses",
-        "independent_challenge.challenge_actions",
-        "independent_challenge.blocking_findings",
-        "independent_challenge.non_blocking_findings",
-        "independent_challenge.pass_or_block",
-        "independent_challenge.reroute_request",
-        "independent_challenge.challenge_waivers",
         "findings",
         "blockers",
-        "residual_risks",
         "pm_suggestion_items",
         "contract_self_check"
       ],
@@ -926,7 +847,6 @@
         "per_packet_findings",
         "overall_passed"
       ],
-      "reviewer_independent_challenge_required": true,
       "expected_return_envelope": "role_output_envelope",
       "runtime_channel": "role_output_runtime",
       "output_type": "current_node_result_review_pass",
@@ -938,18 +858,10 @@
       "router_event_mode": "fixed",
       "router_event": "current_node_reviewer_passes_result",
       "explicit_array_fields": [
-        "direct_evidence_paths_checked",
+        "pm_visible_summary",
         "findings",
         "blockers",
-        "residual_risks",
-        "pm_suggestion_items",
-        "independent_challenge.explicit_and_implicit_commitments",
-        "independent_challenge.failure_hypotheses",
-        "independent_challenge.challenge_actions",
-        "independent_challenge.blocking_findings",
-        "independent_challenge.non_blocking_findings",
-        "independent_challenge.reroute_request",
-        "independent_challenge.challenge_waivers"
+        "pm_suggestion_items"
       ]
     },
     {
@@ -1351,37 +1263,22 @@
         "human_like_reviewer"
       ],
       "required_body_fields": [
+        "pm_visible_summary",
         "reviewed_by_role",
         "passed",
-        "segment_reviews",
-        "direct_evidence_paths_checked",
-        "independent_challenge",
-        "independent_challenge.scope_restatement",
-        "independent_challenge.explicit_and_implicit_commitments",
-        "independent_challenge.failure_hypotheses",
-        "independent_challenge.challenge_actions",
-        "independent_challenge.blocking_findings",
-        "independent_challenge.non_blocking_findings",
-        "independent_challenge.pass_or_block",
-        "independent_challenge.reroute_request",
-        "independent_challenge.challenge_waivers",
         "findings",
         "blockers",
-        "residual_risks",
         "pm_suggestion_items",
-        "repair_restart_policy",
+        "final_artifact_refs",
+        "acceptance_item_closure",
+        "route_segment_replay",
+        "waiver_records",
+        "final_blockers",
         "contract_self_check"
       ],
       "required_body_values": {
-        "reviewed_by_role": "human_like_reviewer",
-        "passed": true
+        "reviewed_by_role": "human_like_reviewer"
       },
-      "segment_review_required_values": {
-        "reviewed_by_role": "human_like_reviewer",
-        "passed": true,
-        "pm_segment_decision": "continue"
-      },
-      "reviewer_independent_challenge_required": true,
       "expected_return_envelope": "role_output_envelope",
       "runtime_channel": "role_output_runtime",
       "output_type": "terminal_backward_replay_report",
@@ -1394,19 +1291,14 @@
       "router_event": "reviewer_final_backward_replay_passed",
       "explicit_array_fields": [
         "pm_visible_summary",
-        "segment_reviews",
-        "direct_evidence_paths_checked",
         "findings",
         "blockers",
-        "residual_risks",
         "pm_suggestion_items",
-        "independent_challenge.explicit_and_implicit_commitments",
-        "independent_challenge.failure_hypotheses",
-        "independent_challenge.challenge_actions",
-        "independent_challenge.blocking_findings",
-        "independent_challenge.non_blocking_findings",
-        "independent_challenge.reroute_request",
-        "independent_challenge.challenge_waivers"
+        "final_artifact_refs",
+        "acceptance_item_closure",
+        "route_segment_replay",
+        "waiver_records",
+        "final_blockers"
       ]
     }
   ]

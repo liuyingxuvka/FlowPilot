@@ -1,0 +1,593 @@
+"""Contract-driven fake AI responder for FlowPilot runtime rehearsals.
+
+This helper is intentionally mechanical: it reads the AI-facing packet contract
+that runtime projects, then builds legal, invalid, alias, and repair payloads
+from that contract. Tests use it to avoid hand-writing fake AI packages that
+silently encode the author's assumptions.
+"""
+
+from __future__ import annotations
+
+from copy import deepcopy
+from dataclasses import dataclass
+import json
+from typing import Any, Mapping
+
+
+@dataclass(frozen=True)
+class ProjectionFinding:
+    code: str
+    field_path: str
+    message: str
+
+
+def _packet_body(packet: Mapping[str, Any]) -> dict[str, Any]:
+    raw_body = packet.get("body")
+    if isinstance(raw_body, Mapping):
+        return dict(raw_body)
+    if isinstance(raw_body, str) and raw_body.strip():
+        try:
+            parsed = json.loads(raw_body)
+        except json.JSONDecodeError:
+            return {}
+        if isinstance(parsed, dict):
+            return parsed
+    return {}
+
+
+def _required_report_contract_from_packet(packet: Mapping[str, Any]) -> dict[str, Any]:
+    body = _packet_body(packet)
+    handoff = body.get("current_handoff_contract")
+    if isinstance(handoff, Mapping):
+        contract = handoff.get("required_report_contract")
+        if isinstance(contract, Mapping):
+            return deepcopy(dict(contract))
+    return {
+        "required_result_body_fields": list(body.get("required_result_body_fields") or ()),
+        "required_child_fields": list(body.get("required_child_fields") or ()),
+        "allowed_value_options": deepcopy(dict(body.get("allowed_value_options") or {})),
+        "field_type_requirements": deepcopy(dict(body.get("field_type_requirements") or {})),
+        "forbidden_aliases": deepcopy(dict(body.get("forbidden_aliases") or {})),
+        "minimal_valid_shape": deepcopy(dict(body.get("minimal_valid_shape") or {})),
+        "branch_valid_shapes": deepcopy(dict(body.get("branch_valid_shapes") or {})),
+        "result_contract_profile_ids": list(body.get("result_contract_profile_ids") or ()),
+        "result_contract_profile_bindings": deepcopy(dict(body.get("result_contract_profile_bindings") or {})),
+    }
+
+
+def _strip_condition(field_path: str) -> str:
+    return field_path.split(" when ", 1)[0]
+
+
+def _path_tokens(field_path: str) -> list[str]:
+    return [token for token in _strip_condition(field_path).split(".") if token]
+
+
+def _shape_has_path(shape: Mapping[str, Any], field_path: str) -> bool:
+    current: Any = shape
+    for token in _path_tokens(field_path):
+        is_array = token.endswith("[]")
+        key = token[:-2] if is_array else token
+        if "/" in key:
+            key_options = [part for part in key.split("/") if part]
+            if not isinstance(current, Mapping) or not all(part in current for part in key_options):
+                return False
+            return True
+        if not isinstance(current, Mapping) or key not in current:
+            return False
+        current = current[key]
+        if is_array:
+            if not isinstance(current, list):
+                return False
+            if not current:
+                return True
+            current = current[0]
+    return True
+
+
+def _contract_shape_has_path(contract: Mapping[str, Any], field_path: str) -> bool:
+    minimal = contract.get("minimal_valid_shape")
+    if isinstance(minimal, Mapping) and _shape_has_path(minimal, field_path):
+        return True
+    branch_shapes = contract.get("branch_valid_shapes")
+    if isinstance(branch_shapes, Mapping):
+        for shape in branch_shapes.values():
+            if isinstance(shape, Mapping) and _shape_has_path(shape, field_path):
+                return True
+    return False
+
+
+def _contract_base_shapes(contract: Mapping[str, Any]) -> list[tuple[str, Mapping[str, Any]]]:
+    shapes: list[tuple[str, Mapping[str, Any]]] = []
+    minimal = contract.get("minimal_valid_shape")
+    if isinstance(minimal, Mapping) and minimal:
+        shapes.append(("minimal_valid_shape", minimal))
+    branch_shapes = contract.get("branch_valid_shapes")
+    if isinstance(branch_shapes, Mapping):
+        for branch_id, shape in branch_shapes.items():
+            if isinstance(shape, Mapping) and shape:
+                shapes.append((f"branch_valid_shapes.{branch_id}", shape))
+    return shapes
+
+
+def _contract_shape_for_path(contract: Mapping[str, Any], field_path: str) -> tuple[str, Mapping[str, Any]] | None:
+    for shape_id, shape in _contract_base_shapes(contract):
+        if _shape_has_path(shape, field_path):
+            return shape_id, shape
+    return None
+
+
+def _set_path_value(payload: dict[str, Any], field_path: str, value: Any) -> dict[str, Any]:
+    current: Any = payload
+    tokens = _path_tokens(field_path)
+    for index, token in enumerate(tokens):
+        is_last = index == len(tokens) - 1
+        is_array = token.endswith("[]")
+        key = token[:-2] if is_array else token
+        if is_last:
+            if is_array:
+                current[key] = value if isinstance(value, list) else [value]
+            else:
+                current[key] = value
+            return payload
+        if is_array:
+            current.setdefault(key, [{}])
+            if not isinstance(current[key], list) or not current[key]:
+                current[key] = [{}]
+            if not isinstance(current[key][0], dict):
+                current[key][0] = {}
+            current = current[key][0]
+            continue
+        current.setdefault(key, {})
+        if not isinstance(current[key], dict):
+            current[key] = {}
+        current = current[key]
+    return payload
+
+
+def _delete_path(payload: dict[str, Any], field_path: str) -> dict[str, Any]:
+    current_values: list[Any] = [payload]
+    tokens = _path_tokens(field_path)
+    for index, token in enumerate(tokens):
+        is_last = index == len(tokens) - 1
+        is_array = token.endswith("[]")
+        key = token[:-2] if is_array else token
+        next_values: list[Any] = []
+        for current in current_values:
+            if not isinstance(current, dict) or key not in current:
+                continue
+            if is_last:
+                del current[key]
+                continue
+            value = current[key]
+            if is_array:
+                if isinstance(value, list):
+                    next_values.extend(item for item in value if isinstance(item, dict))
+                elif isinstance(value, dict):
+                    next_values.append(value)
+            elif isinstance(value, dict):
+                next_values.append(value)
+        current_values = next_values
+        if not current_values and not is_last:
+            return payload
+    return payload
+
+
+def _get_path_values(payload: Mapping[str, Any], field_path: str) -> tuple[bool, list[Any]]:
+    current_values: list[Any] = [payload]
+    for token in _path_tokens(field_path):
+        next_values: list[Any] = []
+        is_array = token.endswith("[]")
+        key = token[:-2] if is_array else token
+        for current in current_values:
+            if not isinstance(current, Mapping) or key not in current:
+                continue
+            value = current[key]
+            if is_array:
+                if isinstance(value, list):
+                    next_values.extend(value)
+                else:
+                    next_values.append(value)
+            else:
+                next_values.append(value)
+        if not next_values:
+            return False, []
+        current_values = next_values
+    return True, current_values
+
+
+def _invalid_value_for(allowed_values: list[Any]) -> Any:
+    if all(isinstance(value, bool) for value in allowed_values):
+        return False if False not in allowed_values else "__invalid_boolean_option__"
+    if all(isinstance(value, str) for value in allowed_values):
+        return "__invalid_option__"
+    if all(isinstance(value, int) for value in allowed_values):
+        candidate = -999999
+        return candidate if candidate not in allowed_values else "__invalid_integer_option__"
+    return {"invalid_option": True}
+
+
+def _wrong_type_for(value: Any) -> Any:
+    if isinstance(value, bool):
+        return {"wrong_type": value}
+    if isinstance(value, str):
+        return ["wrong_type"]
+    if isinstance(value, list):
+        return "wrong_type"
+    if isinstance(value, Mapping):
+        return "wrong_type"
+    if isinstance(value, int):
+        return "wrong_type"
+    return {"wrong_type": True}
+
+
+def _value_key(value: Any) -> str:
+    return json.dumps(value, ensure_ascii=True, sort_keys=True)
+
+
+def _sequence_field(contract: Mapping[str, Any], *names: str) -> list[str]:
+    for name in names:
+        values = contract.get(name)
+        if isinstance(values, (list, tuple)):
+            return [str(value) for value in values]
+    return []
+
+
+def _flatten_shape_paths(value: Any, prefix: str = "") -> list[str]:
+    paths: list[str] = []
+    if prefix:
+        paths.append(prefix)
+    if isinstance(value, Mapping):
+        keys = set(value)
+        if prefix and {"parent_node_id", "child_node_ids"} <= keys:
+            paths.append(f"{prefix}.parent_node_id/child_node_ids")
+        for key, child in value.items():
+            child_prefix = f"{prefix}.{key}" if prefix else str(key)
+            paths.extend(_flatten_shape_paths(child, child_prefix))
+    elif isinstance(value, list):
+        array_prefix = f"{prefix}[]" if prefix else "[]"
+        paths.append(array_prefix)
+        if value:
+            paths.extend(_flatten_shape_paths(value[0], array_prefix))
+    return list(dict.fromkeys(paths))
+
+
+def _branch_shape_fields(contract: Mapping[str, Any]) -> list[str]:
+    branch_shapes = contract.get("branch_valid_shapes")
+    if not isinstance(branch_shapes, Mapping):
+        return []
+    fields: list[str] = []
+    for branch_id, shape in branch_shapes.items():
+        if not isinstance(shape, Mapping):
+            continue
+        for path in _flatten_shape_paths(shape):
+            if path == "decision":
+                continue
+            fields.append(f"{path} when {branch_id}")
+    return list(dict.fromkeys(fields))
+
+
+class ContractDrivenFakeAIResponder:
+    """Mechanical fake AI that derives responses from packet-local contracts."""
+
+    def __init__(self, contract: Mapping[str, Any]):
+        self.contract = deepcopy(dict(contract))
+
+    @classmethod
+    def from_packet(cls, packet: Mapping[str, Any]) -> "ContractDrivenFakeAIResponder":
+        return cls(_required_report_contract_from_packet(packet))
+
+    @classmethod
+    def from_reissue_body(cls, reissue_body: Mapping[str, Any]) -> "ContractDrivenFakeAIResponder":
+        return cls(reissue_body)
+
+    @property
+    def allowed_value_options(self) -> dict[str, list[Any]]:
+        options = self.contract.get("allowed_value_options")
+        if not isinstance(options, Mapping):
+            return {}
+        return {
+            str(field): list(values) if isinstance(values, list) else []
+            for field, values in options.items()
+        }
+
+    @property
+    def field_type_requirements(self) -> dict[str, Any]:
+        requirements = self.contract.get("field_type_requirements")
+        if not isinstance(requirements, Mapping):
+            return {}
+        return {str(field): requirement for field, requirement in requirements.items()}
+
+    @property
+    def required_fields(self) -> list[str]:
+        return _sequence_field(
+            self.contract,
+            "required_result_body_fields",
+            "required_fields",
+        )
+
+    @property
+    def required_child_fields(self) -> list[str]:
+        return list(
+            dict.fromkeys(
+                (
+                    *_sequence_field(self.contract, "required_child_fields"),
+                    *_branch_shape_fields(self.contract),
+                )
+            )
+        )
+
+    @property
+    def non_empty_array_fields(self) -> list[str]:
+        return _sequence_field(self.contract, "non_empty_array_fields")
+
+    @property
+    def forbidden_fields(self) -> list[str]:
+        return _sequence_field(
+            self.contract,
+            "forbidden_result_body_fields",
+            "forbidden_fields",
+        )
+
+    @property
+    def forbidden_aliases(self) -> dict[str, str]:
+        aliases = self.contract.get("forbidden_aliases")
+        if not isinstance(aliases, Mapping):
+            return {}
+        return {str(alias): str(target) for alias, target in aliases.items()}
+
+    def projection_findings(self) -> list[ProjectionFinding]:
+        findings: list[ProjectionFinding] = []
+        minimal_shape = self.contract.get("minimal_valid_shape")
+        if not isinstance(minimal_shape, Mapping) or not minimal_shape:
+            findings.append(
+                ProjectionFinding(
+                    "projection_missing_minimal_valid_shape",
+                    "minimal_valid_shape",
+                    "AI-facing contract must expose a minimal legal payload shape.",
+                )
+            )
+        for field_path in self.required_fields:
+            if not _contract_shape_has_path(self.contract, field_path):
+                findings.append(
+                    ProjectionFinding(
+                        "projection_missing_required_shape_path",
+                        field_path,
+                        "Required fields must be reachable from minimal_valid_shape or branch_valid_shapes.",
+                    )
+                )
+        for field_path in self.required_child_fields:
+            if not _contract_shape_has_path(self.contract, field_path):
+                findings.append(
+                    ProjectionFinding(
+                        "projection_missing_required_child_shape_path",
+                        field_path,
+                        "Required child fields must be reachable from minimal_valid_shape or branch_valid_shapes.",
+                    )
+                )
+        for field_path, values in self.allowed_value_options.items():
+            if not values:
+                findings.append(
+                    ProjectionFinding(
+                        "projection_missing_options",
+                        field_path,
+                        "Finite option fields must expose at least one selectable value.",
+                    )
+                )
+            if not _contract_shape_has_path(self.contract, field_path):
+                findings.append(
+                    ProjectionFinding(
+                        "projection_missing_shape_path",
+                        field_path,
+                        "Finite option fields must be reachable from minimal_valid_shape or branch_valid_shapes.",
+                    )
+                )
+        return findings
+
+    def legal_payload(self) -> dict[str, Any]:
+        minimal_shape = self.contract.get("minimal_valid_shape")
+        if not isinstance(minimal_shape, Mapping) or not minimal_shape:
+            raise ValueError("AI-facing contract is missing minimal_valid_shape")
+        return deepcopy(dict(minimal_shape))
+
+    def legal_payload_for_path(self, field_path: str) -> dict[str, Any]:
+        base = _contract_shape_for_path(self.contract, field_path)
+        if base is None:
+            raise ValueError(f"AI-facing contract has no legal shape for {field_path}")
+        _shape_id, shape = base
+        return deepcopy(dict(shape))
+
+    def missing_required_field_payload(self, field_path: str) -> dict[str, Any]:
+        if field_path not in self.required_fields:
+            raise KeyError(f"no required field entry for {field_path}")
+        payload = self.legal_payload_for_path(field_path)
+        return _delete_path(payload, field_path)
+
+    def missing_required_child_field_payload(self, field_path: str) -> dict[str, Any]:
+        if field_path not in self.required_child_fields:
+            raise KeyError(f"no required child field entry for {field_path}")
+        payload = self.legal_payload_for_path(field_path)
+        return _delete_path(payload, field_path)
+
+    def wrong_type_payload(self, field_path: str) -> dict[str, Any]:
+        payload = self.legal_payload_for_path(field_path)
+        exists, values = _get_path_values(payload, field_path)
+        _set_path_value(payload, field_path, _wrong_type_for(values[0] if exists and values else None))
+        return payload
+
+    def empty_required_array_payload(self, field_path: str) -> dict[str, Any]:
+        if field_path not in self.non_empty_array_fields:
+            raise KeyError(f"no non-empty array entry for {field_path}")
+        payload = self.legal_payload_for_path(field_path)
+        _set_path_value(payload, field_path, [])
+        return payload
+
+    def forbidden_field_payload(self, field_path: str) -> dict[str, Any]:
+        if field_path not in self.forbidden_fields:
+            raise KeyError(f"no forbidden field entry for {field_path}")
+        payload = self.legal_payload()
+        _set_path_value(payload, field_path, True)
+        return payload
+
+    def invalid_allowed_value_payload(self, field_path: str) -> dict[str, Any]:
+        options = self.allowed_value_options
+        if field_path not in options:
+            raise KeyError(f"no allowed_value_options entry for {field_path}")
+        payload = self.legal_payload_for_path(field_path)
+        _set_path_value(payload, field_path, _invalid_value_for(options[field_path]))
+        return payload
+
+    def allowed_value_payload(self, field_path: str, value: Any) -> dict[str, Any]:
+        options = self.allowed_value_options
+        if field_path not in options:
+            raise KeyError(f"no allowed_value_options entry for {field_path}")
+        if value not in options[field_path]:
+            raise ValueError(f"{value!r} is not an allowed value for {field_path}")
+        payload = self.legal_payload_for_path(field_path)
+        _set_path_value(payload, field_path, value)
+        return payload
+
+    def alias_payload(self, alias_path: str) -> dict[str, Any]:
+        aliases = self.forbidden_aliases
+        if alias_path not in aliases:
+            raise KeyError(f"no forbidden_aliases entry for {alias_path}")
+        payload = self.legal_payload_for_path(aliases[alias_path])
+        target_path = aliases[alias_path]
+        exists, values = _get_path_values(payload, target_path)
+        _set_path_value(payload, alias_path, values[0] if exists and values else True)
+        return payload
+
+    def repaired_payload_from_reissue(self, reissue_body: Mapping[str, Any]) -> dict[str, Any]:
+        responder = ContractDrivenFakeAIResponder.from_reissue_body(reissue_body)
+        findings = responder.projection_findings()
+        if findings:
+            messages = ", ".join(f"{finding.code}:{finding.field_path}" for finding in findings)
+            raise ValueError(f"reissue contract is not repairable by fake AI: {messages}")
+        return responder.legal_payload()
+
+    def option_values_seen(self, payload: Mapping[str, Any], field_path: str) -> list[Any]:
+        exists, values = _get_path_values(payload, field_path)
+        return values if exists else []
+
+    def option_value_cells(self) -> list[dict[str, str]]:
+        cells: list[dict[str, str]] = []
+        for field_path, values in sorted(self.allowed_value_options.items()):
+            if not _contract_shape_has_path(self.contract, field_path):
+                continue
+            for value in values:
+                payload = self.allowed_value_payload(field_path, value)
+                if value not in self.option_values_seen(payload, field_path):
+                    continue
+                cells.append(
+                    {
+                        "field_path": field_path,
+                        "contract_path": f"result.{field_path}",
+                        "mutation_kind": "legal_allowed_value",
+                        "value_json": _value_key(value),
+                    }
+                )
+        return cells
+
+    def coverage_cells(self) -> list[dict[str, str]]:
+        cells: list[dict[str, str]] = []
+        for field_path in self.required_fields:
+            cells.append(
+                {
+                    "field_path": field_path,
+                    "contract_path": field_path,
+                    "mutation_kind": "missing_required_field",
+                }
+            )
+            cells.append(
+                {
+                    "field_path": field_path,
+                    "contract_path": field_path,
+                    "mutation_kind": "wrong_type",
+                }
+            )
+        for field_path in self.required_child_fields:
+            cells.append(
+                {
+                    "field_path": field_path,
+                    "contract_path": field_path,
+                    "mutation_kind": "missing_required_child_field",
+                }
+            )
+            cells.append(
+                {
+                    "field_path": field_path,
+                    "contract_path": field_path,
+                    "mutation_kind": "wrong_type",
+                }
+            )
+        for field_path in self.non_empty_array_fields:
+            cells.append(
+                {
+                    "field_path": field_path,
+                    "contract_path": field_path,
+                    "mutation_kind": "empty_required_array",
+                }
+            )
+        for field_path in self.forbidden_fields:
+            cells.append(
+                {
+                    "field_path": field_path,
+                    "contract_path": field_path,
+                    "mutation_kind": "forbidden_field_present",
+                }
+            )
+        for field_path in sorted(self.allowed_value_options):
+            cells.append(
+                {
+                    "field_path": field_path,
+                    "contract_path": (
+                        "current_handoff_contract.required_report_contract."
+                        f"allowed_value_options.{field_path}"
+                    ),
+                    "mutation_kind": "missing_allowed_value_options",
+                }
+            )
+            cells.append(
+                {
+                    "field_path": field_path,
+                    "contract_path": f"result.{field_path}",
+                    "mutation_kind": "wrong_allowed_value",
+                }
+            )
+        for field_path in sorted(self.field_type_requirements):
+            cells.append(
+                {
+                    "field_path": field_path,
+                    "contract_path": (
+                        "current_handoff_contract.required_report_contract."
+                        f"field_type_requirements.{field_path}"
+                    ),
+                    "mutation_kind": "missing_field_type_requirements",
+                }
+            )
+            cells.append(
+                {
+                    "field_path": field_path,
+                    "contract_path": f"result.{field_path}",
+                    "mutation_kind": "wrong_type",
+                }
+            )
+        for alias_path in sorted(self.forbidden_aliases):
+            cells.append(
+                {
+                    "field_path": alias_path,
+                    "contract_path": (
+                        "current_handoff_contract.required_report_contract."
+                        f"forbidden_aliases.{alias_path}"
+                    ),
+                    "mutation_kind": "forbidden_alias_used",
+                }
+            )
+            cells.append(
+                {
+                    "field_path": alias_path,
+                    "contract_path": f"result.{alias_path}",
+                    "mutation_kind": "forbidden_alias_used",
+                }
+            )
+        return cells

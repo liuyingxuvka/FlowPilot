@@ -106,6 +106,11 @@ ROUTE_MISSING_REALIZATION_OBLIGATIONS = "route_missing_realization_obligations"
 NODE_PLAN_MISSING_REALIZATION_OBLIGATIONS = "node_plan_missing_realization_obligations"
 WORK_PACKET_MISSING_REALIZATION_OBLIGATIONS = "work_packet_missing_realization_obligations"
 FINAL_LEDGER_REALIZATION_OBLIGATIONS_UNRESOLVED = "final_ledger_realization_obligations_unresolved"
+ACCEPTANCE_ITEM_REGISTRY_MISSING = "acceptance_item_registry_missing"
+ACCEPTANCE_ITEM_NO_ROUTE_OWNER = "acceptance_item_no_route_owner"
+NODE_PLAN_MISSING_ACCEPTANCE_ITEM_PROJECTION = "node_plan_missing_acceptance_item_projection"
+WORK_PACKET_MISSING_ACCEPTANCE_ITEM_MATRIX = "work_packet_missing_acceptance_item_matrix"
+FINAL_LEDGER_ACCEPTANCE_ITEM_UNRESOLVED = "final_ledger_acceptance_item_unresolved"
 
 VALID_SCENARIOS = (VALID_UI_ROUTE,)
 NEGATIVE_SCENARIOS = (
@@ -166,6 +171,11 @@ NEGATIVE_SCENARIOS = (
     NODE_PLAN_MISSING_REALIZATION_OBLIGATIONS,
     WORK_PACKET_MISSING_REALIZATION_OBLIGATIONS,
     FINAL_LEDGER_REALIZATION_OBLIGATIONS_UNRESOLVED,
+    ACCEPTANCE_ITEM_REGISTRY_MISSING,
+    ACCEPTANCE_ITEM_NO_ROUTE_OWNER,
+    NODE_PLAN_MISSING_ACCEPTANCE_ITEM_PROJECTION,
+    WORK_PACKET_MISSING_ACCEPTANCE_ITEM_MATRIX,
+    FINAL_LEDGER_ACCEPTANCE_ITEM_UNRESOLVED,
 )
 SCENARIOS = VALID_SCENARIOS + NEGATIVE_SCENARIOS
 
@@ -218,6 +228,13 @@ class State:
     node_plan_consumes_realization_obligations: bool = False
     work_packet_carries_realization_obligations: bool = False
     final_realization_obligations_disposition_done: bool = False
+    acceptance_item_registry_written: bool = False
+    acceptance_registry_has_user_and_pm_items: bool = False
+    acceptance_items_bound_to_route_nodes: bool = False
+    node_plan_projects_acceptance_items: bool = False
+    work_packet_carries_acceptance_item_matrix: bool = False
+    pm_disposition_closes_acceptance_items: bool = False
+    final_acceptance_items_disposition_done: bool = False
     pm_route_maps_to_product_model: bool = False
     flowguard_operator_route_scope_validated_route_viability: bool = False
     repair_return_to_mainline_defined: bool = False
@@ -363,6 +380,13 @@ def _valid_ui_state() -> State:
         node_plan_consumes_realization_obligations=True,
         work_packet_carries_realization_obligations=True,
         final_realization_obligations_disposition_done=True,
+        acceptance_item_registry_written=True,
+        acceptance_registry_has_user_and_pm_items=True,
+        acceptance_items_bound_to_route_nodes=True,
+        node_plan_projects_acceptance_items=True,
+        work_packet_carries_acceptance_item_matrix=True,
+        pm_disposition_closes_acceptance_items=True,
+        final_acceptance_items_disposition_done=True,
         pm_route_maps_to_product_model=True,
         flowguard_operator_route_scope_validated_route_viability=True,
         repair_return_to_mainline_defined=True,
@@ -529,6 +553,28 @@ def _scenario_state(scenario: str) -> State:
             state,
             closure_or_final_ledger_decision=True,
             final_realization_obligations_disposition_done=False,
+        )
+    if scenario == ACCEPTANCE_ITEM_REGISTRY_MISSING:
+        return replace(
+            state,
+            acceptance_item_registry_written=False,
+            acceptance_registry_has_user_and_pm_items=False,
+        )
+    if scenario == ACCEPTANCE_ITEM_NO_ROUTE_OWNER:
+        return replace(state, acceptance_items_bound_to_route_nodes=False)
+    if scenario == NODE_PLAN_MISSING_ACCEPTANCE_ITEM_PROJECTION:
+        return replace(state, node_plan_projects_acceptance_items=False)
+    if scenario == WORK_PACKET_MISSING_ACCEPTANCE_ITEM_MATRIX:
+        return replace(
+            state,
+            work_packet_carries_acceptance_item_matrix=False,
+            pm_disposition_closes_acceptance_items=False,
+        )
+    if scenario == FINAL_LEDGER_ACCEPTANCE_ITEM_UNRESOLVED:
+        return replace(
+            state,
+            closure_or_final_ledger_decision=True,
+            final_acceptance_items_disposition_done=False,
         )
     if scenario == PM_ROUTE_NOT_MAPPED_TO_PRODUCT_MODEL:
         return replace(state, pm_route_maps_to_product_model=False)
@@ -711,6 +757,21 @@ def planning_failures(state: State) -> list[str]:
         failures.append("work packet does not carry target-realization obligations")
     if complex_task and not state.final_realization_obligations_disposition_done:
         failures.append("final ledger or closure leaves target-realization obligations unresolved")
+    if complex_task and not (
+        state.acceptance_item_registry_written
+        and state.acceptance_registry_has_user_and_pm_items
+    ):
+        failures.append("PM high-standard contract lacks acceptance item registry with user and PM high-standard items")
+    if complex_task and not state.acceptance_items_bound_to_route_nodes:
+        failures.append("active acceptance item lacks a route node owner")
+    if complex_task and not state.node_plan_projects_acceptance_items:
+        failures.append("node acceptance plan lacks acceptance item projection")
+    if complex_task and not state.work_packet_carries_acceptance_item_matrix:
+        failures.append("work packet or result lacks acceptance item result matrix")
+    if complex_task and not state.pm_disposition_closes_acceptance_items:
+        failures.append("PM disposition does not close node-owned acceptance items")
+    if complex_task and state.closure_or_final_ledger_decision and not state.final_acceptance_items_disposition_done:
+        failures.append("final ledger or closure leaves acceptance items unresolved")
     if complex_task and not state.pm_route_maps_to_product_model:
         failures.append("PM route is not mapped to the product behavior model")
     if complex_task and not state.flowguard_operator_route_scope_validated_route_viability:

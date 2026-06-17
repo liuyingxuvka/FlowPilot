@@ -60,6 +60,18 @@ ROUTE_ACTION_POLICY_PARENT_CLOSURE_ACTIONS = {
 
 ROUTE_ACTION_POLICY_ROUTE_MOVEMENT_ACTIONS = set(ROUTE_ACTION_POLICY_EVENT_TO_ACTION.values())
 
+ROUTE_ACTION_POLICY_UNSUPPORTED_EVENT_ALIASES = {
+    "pm_complete_parent_node": "complete_parent_node",
+    "pm_completes_parent_node": "complete_parent_node",
+    "pm_records_parent_completion": "complete_parent_node",
+    "pm_records_parent_closure": "complete_parent_node",
+    "pm_closes_parent_node": "complete_parent_node",
+    "pm_records_route_mutation": "mutate_route",
+    "pm_approves_route_mutation": "mutate_route",
+    "pm_records_terminal_closure": "terminal_closure",
+    "pm_closes_terminal_route": "terminal_closure",
+}
+
 
 def _bind_router(router: ModuleType) -> None:
     global _BOUND_ROUTER
@@ -141,6 +153,13 @@ def _route_action_policy_issues(router: ModuleType, run_root: Path | None=None) 
         for field in ('actor_roles', 'router_events', 'requires', 'forbids', 'commit_targets'):
             if not isinstance(row.get(field), list):
                 issues.append(f'{context}: {field} must be a list')
+        owner_role = str(row.get('owner_role') or '').strip()
+        if not owner_role:
+            issues.append(f'{context}: owner_role is required')
+        elif isinstance(row.get('actor_roles'), list) and owner_role not in {str(role) for role in row.get('actor_roles') or []}:
+            issues.append(f'{context}: owner_role must be listed in actor_roles')
+        if not str(row.get('required_repair_command') or '').strip():
+            issues.append(f'{context}: required_repair_command is required')
         transaction_type = str(row.get('transaction_type') or '').strip()
         if transaction_type not in transaction_types:
             issues.append(f'{context}: transaction_type is not registered: {transaction_type}')
@@ -176,12 +195,18 @@ def _route_action_for_card(router: ModuleType, card_id: str) -> str | None:
     return ROUTE_ACTION_POLICY_CARD_TO_ACTION.get(str(card_id))
 
 
+def _unsupported_route_action_alias(router: ModuleType, event: str) -> str | None:
+    _bind_router(router)
+    return ROUTE_ACTION_POLICY_UNSUPPORTED_EVENT_ALIASES.get(str(event))
+
+
 __all__ = (
     'ROUTE_ACTION_POLICY_REQUIRED_BOOL_FLAGS',
     'ROUTE_ACTION_POLICY_EVENT_TO_ACTION',
     'ROUTE_ACTION_POLICY_CARD_TO_ACTION',
     'ROUTE_ACTION_POLICY_PARENT_CLOSURE_ACTIONS',
     'ROUTE_ACTION_POLICY_ROUTE_MOVEMENT_ACTIONS',
+    'ROUTE_ACTION_POLICY_UNSUPPORTED_EVENT_ALIASES',
     '_latest_event_payload',
     '_route_action_policy_registry_path',
     '_load_route_action_policy_registry',
@@ -191,6 +216,7 @@ __all__ = (
     '_route_action_policy_by_id',
     '_route_action_for_event',
     '_route_action_for_card',
+    '_unsupported_route_action_alias',
 )
 
 _LOCAL_NAMES = set(globals())

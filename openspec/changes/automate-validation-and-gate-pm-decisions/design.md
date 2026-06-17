@@ -7,9 +7,8 @@ role. The ordinary success path is:
 
 That symmetry made missing-role and side-command bugs easier to catch, but the
 validator packet is now doing mostly mechanical evidence confirmation that
-Router already knows how to enforce. In contrast, PM repair and disposition
-packets can apply route mutation or waiver decisions immediately after PM
-submission.
+Router already knows how to enforce. In contrast, PM continue-repair decisions
+can change control state or release repair work after PM submission.
 
 ## Goals / Non-Goals
 
@@ -21,14 +20,13 @@ submission.
   FlowGuard and reviewer gates pass.
 - Keep legacy validation packets readable and enforceable for old runs and
   repair paths.
-- Gate high-risk PM decisions before they mutate route state or waive blockers.
+- Gate PM continue-repair decisions before they change control state or open
+  resulting repair work.
 
 **Non-Goals:**
 
 - Do not remove FlowGuard or reviewer gates from ordinary work.
 - Do not remove final closure.
-- Do not make low-risk repair slower when it only reissues work or asks for
-  more evidence.
 - Do not rewrite legacy router/card surfaces in this change.
 
 ## Decisions
@@ -52,26 +50,22 @@ state, accepted packet state, reviewer state, and matching FlowGuard state.
 System validation is not terminal completion; it is the evidence row that makes
 closure eligible to run.
 
-### Decision: PM high-risk decisions are staged before side effects
+### Decision: PM continue-repair decisions are staged before side effects
 
-PM repair and PM disposition packets are split into low-risk and high-risk
-decisions.
+PM repair decisions that continue repair work are staged:
 
-Low-risk decisions can apply directly:
+- `repair_current_scope`
+- `repair_parent_scope`
+- `redesign_route`
 
-- `same_node_repair`
-- `sender_reissue`
-- `collect_more_evidence`
-- `rerun_validation`
-- `quarantine_evidence`
+Terminal PM dispositions remain terminal:
+
+- `waive_with_authority`
 - `stop_for_user`
-- PM disposition `accept`, `repair`, `block`, or `stop`
 
-High-risk decisions are staged:
-
-- PM repair `mutate_route`
-- PM repair `waive_with_authority`
-- PM disposition `mutate_route`
+Route-mutating PM disposition decisions are also staged before they change the
+route. PM disposition `accept` after a fully closed node is not a continue
+repair decision.
 
 The staged decision creates a PM decision gate record and issues a FlowGuard
 packet. FlowGuard pass issues a reviewer packet. Reviewer pass records system
@@ -89,9 +83,10 @@ only after the gate closure packet is accepted.
   -> Mitigation: reviewer remains the human-quality/adversarial gate, and
   system validation records evidence freshness and blocker state before
   closure.
-- [Risk] Staging PM decisions adds packets on rare high-risk branches.
-  -> Mitigation: only route mutation and waiver-class decisions pay the extra
-  cost; ordinary reissue/repair stays direct.
+- [Risk] Staging PM continue-repair decisions adds packets to repair branches.
+  -> Mitigation: the repair path is uniform and the evidence prevents direct
+  repair side effects from bypassing FlowGuard, PM absorption, Reviewer, and
+  system closure.
 - [Risk] Existing validation-packet tests and rehearsals may assume the old
   happy path.
   -> Mitigation: update focused tests and runner evidence while leaving legacy
@@ -104,13 +99,13 @@ only after the gate closure packet is accepted.
 ## Migration Plan
 
 1. Add OpenSpec requirements and tasks.
-2. Add a focused FlowGuard model for automated validation and PM risk gates.
+2. Add a focused FlowGuard model for automated validation and PM decision gates.
 3. Add runtime ledger fields and helpers for system validation evidence and PM
    decision gates.
 4. Change reviewer-pass progression to create system validation evidence and
    issue closure directly.
-5. Stage high-risk PM repair/disposition decisions until FlowGuard, reviewer,
-   system validation, and closure pass.
+5. Stage PM continue-repair and route-mutating disposition decisions until
+   FlowGuard, reviewer, system validation, and closure pass.
 6. Update focused tests and runtime check runners.
 7. Run OpenSpec, FlowGuard, targeted pytest, install sync/audit/check, and
    background meta/capability checks before local git commit.

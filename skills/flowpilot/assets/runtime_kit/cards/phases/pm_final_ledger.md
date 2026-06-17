@@ -52,6 +52,20 @@ Resolve:
   requirement ids, change status, owner nodes, covering ledger entries, direct
   evidence paths, standard scenarios, stale evidence refs, waiver authority,
   supersession, and unresolved reason;
+- acceptance item closure for every active `acceptance_item_id` in the
+  accepted registry. Each row must name source type, source requirement ids,
+  quality floor, required evidence, owner nodes, closed-by nodes, reviewer or
+  FlowGuard gates, evidence paths, waiver authority, final replay requirement,
+  and unresolved reason. A user-sourced or PM high-standard item that is
+  orphaned, missing evidence, waived without authority, or closed only by
+  generic prose keeps the final ledger open;
+- terminal supplemental repair closure for every
+  `supplemental_repair_contract` created after terminal backward replay.
+  Each row must cite the original frozen contract hash, terminal Reviewer gap
+  result, repair round, repair item id, owner repair node, acceptance item
+  links, required evidence, current evidence ids, and status. A repair item
+  with no owner node, no node projection, stale/missing evidence, or an
+  unaccepted repair node keeps the final ledger and requirement matrix open;
 - FlowGuard modeling coverage closure: startup capability snapshot, Product
   Modeling Plan, all accepted product model families, ordinary child-skill
   model-family projection, Process Modeling Plan, all accepted process model
@@ -89,7 +103,7 @@ Resolve:
 - model-test alignment for every active FlowGuard-backed gate:
   `model_obligations`, `ordinary_test_evidence`, `missing_test_kinds`,
   `conformance_boundary`, `residual_blindspots`, PM
-  `test_obligation_matrix` disposition, and any `background_artifact_completion`
+  current evidence disposition, and any long/background check completion
   required for cited long/background tests. Completion cannot count ordinary
   tests as model coverage when required test kinds are missing, stale, skipped,
   failed, still running, undispositioned by PM, or supported only by progress
@@ -98,13 +112,23 @@ Resolve:
   artifacts that were considered, superseded, deferred, or discarded;
 - structure debt dispositions for patch stacks, fallback-like paths,
   compatibility branches, duplicate adapters, stale generated artifacts,
-  old-route evidence, newest-run fallbacks, repo-root fallbacks, and retained
-  maintenance layers. Each item must be removed, rejected, preserved as
+  non-current evidence, and retained maintenance layers. Each item must be
+  removed, rejected, preserved as
   negative rejection evidence, retained as owned current-runtime recovery,
   retained as owned maintenance, superseded, or blocked. Any retained surface
   must name owner, scope, validation evidence, and sunset or
   next-disposition criteria. Unowned, unresolved, or compatibility-by-default
   paths keep the ledger open;
+- final artifact hygiene closure for every current final hygiene finding from
+  PM evidence quality review or terminal Reviewer replay. Rows must identify
+  artifact family, direct surface, classification, owner repair node or PM
+  disposition, evidence refs, and unresolved status. Findings classified as
+  `current_goal_required_repair` or `clean_delivery_required_repair` keep the
+  final ledger open until repaired through current FlowPilot gates, waived with
+  authority, route-mutated, or stopped. `pm_decision_support` and
+  `future_contract_candidate` items require PM disposition but do not count as
+  current closure blockers unless PM imports them into the supplemental repair
+  contract;
 - generated-resource lineage;
 - stale, invalid, missing, waived, blocked, or superseded evidence;
 - old evidence that attempts to close a changed or superseded requirement;

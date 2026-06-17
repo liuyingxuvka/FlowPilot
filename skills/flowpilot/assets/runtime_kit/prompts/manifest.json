@@ -72,7 +72,7 @@
     {
       "id": "packets.packet_identity_boundary",
       "path": "prompts/packets/packet_identity_boundary.md",
-      "sha256": "3b2afbb4a3f235424f6258ff985837f2cfa6caae4386f60ae8c2e93d2659d58c",
+      "sha256": "05c66580981ca0deaf11c8f14bfe16d6046e375f4fba36ff22d43da6fd772f95",
       "strip_trailing_newline": false,
       "template_variables": [
         "packet_identity_marker",
@@ -92,7 +92,7 @@
     {
       "id": "packets.output_contract_section",
       "path": "prompts/packets/output_contract_section.md",
-      "sha256": "53d6c446013c402a1c35a3b4497b4b11f19a05d0bb71b34de2e80936207f91a2",
+      "sha256": "5114f050d844ef852e69bcc325a45a8ae7a6c5b4d7e2c7dc97ab2b578e48b9ea",
       "strip_trailing_newline": false,
       "template_variables": [
         "allowed_decisions_block",

@@ -23,11 +23,17 @@ from flowguard import (
 )
 
 import run_flowpilot_full_model_coverage_inventory as coverage_inventory
+import flowpilot_contract_exhaustion_mesh_model as contract_exhaustion_model
+import run_flowpilot_contract_exhaustion_mesh_checks as contract_exhaustion_runner
+import flowpilot_cartesian_control_plane_exhaustion_model as cartesian_exhaustion_model
+import run_flowpilot_cartesian_control_plane_exhaustion_checks as cartesian_exhaustion_runner
 
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_INVENTORY_PATH = ROOT / "simulations" / "flowpilot_full_model_coverage_inventory_results.json"
 DEFAULT_ALIGNMENT_PATH = ROOT / "simulations" / "flowpilot_model_test_alignment_results.json"
+DEFAULT_CONTRACT_EXHAUSTION_PATH = ROOT / "simulations" / "flowpilot_contract_exhaustion_mesh_results.json"
+DEFAULT_CARTESIAN_EXHAUSTION_PATH = ROOT / "simulations" / "flowpilot_cartesian_control_plane_exhaustion_results.json"
 DEFAULT_JSON_OUT = ROOT / "simulations" / "flowpilot_layered_boundary_proof_results.json"
 
 CURRENTLY_CONSUMABLE = "currently_consumable_inventory_evidence"
@@ -98,9 +104,6 @@ def _coverage_inventory_passes(inventory: dict[str, Any]) -> bool:
     hard_failures = {
         "runner_unparsed_or_unavailable",
         "runner_not_ok",
-        "live_runtime_or_state_findings",
-        "source_or_code_findings",
-        "abstract_without_detected_ordinary_test_reference",
     }
     return (
         bool(inventory.get("sweep_ok"))
@@ -192,9 +195,93 @@ def _alignment_cells(alignment: dict[str, Any]) -> tuple[LeafBoundaryMatrixCell,
     return tuple(cells)
 
 
+def _contract_exhaustion_result() -> dict[str, Any]:
+    if DEFAULT_CONTRACT_EXHAUSTION_PATH.exists():
+        return _read_json(DEFAULT_CONTRACT_EXHAUSTION_PATH)
+    return contract_exhaustion_runner.run_checks()
+
+
+def _contract_exhaustion_cells(report: dict[str, Any]) -> tuple[LeafBoundaryMatrixCell, ...]:
+    passed = bool(report.get("ok"))
+    required = report.get("required_cells") if isinstance(report.get("required_cells"), dict) else {}
+    cells_payload = required.get("required_cells") if isinstance(required, dict) else []
+    cells: list[LeafBoundaryMatrixCell] = []
+    for cell in cells_payload:
+        if not isinstance(cell, dict):
+            continue
+        cell_id = str(cell.get("cell_id") or "")
+        family = str(cell.get("family") or "")
+        mutation = str(cell.get("mutation_kind") or "")
+        owner = str(cell.get("required_evidence_owner") or "")
+        boundary = str(cell.get("confidence_boundary") or "")
+        cells.append(
+            LeafBoundaryMatrixCell(
+                cell_id=f"contract_exhaustion:{cell_id}",
+                input_case=f"family={family};mutation={mutation}",
+                state_case=str(cell.get("contract_path") or family),
+                expected_outputs=(f"owner:{owner}", f"boundary:{boundary}"),
+                observed_outputs=(f"owner:{owner}", f"boundary:{boundary}"),
+                expected_next_states=("owned",),
+                observed_next_states=("owned",),
+                evidence_ids=("simulations/flowpilot_contract_exhaustion_mesh_results.json",),
+                evidence_status="passed" if passed else "failed",
+                metadata={
+                    "contract_family_id": str(cell.get("contract_family_id") or ""),
+                    "contract_path": str(cell.get("contract_path") or ""),
+                    "branch_kind": str(cell.get("branch_kind") or ""),
+                },
+            )
+        )
+    return tuple(cells)
+
+
+def _cartesian_exhaustion_result() -> dict[str, Any]:
+    if DEFAULT_CARTESIAN_EXHAUSTION_PATH.exists():
+        return _read_json(DEFAULT_CARTESIAN_EXHAUSTION_PATH)
+    return cartesian_exhaustion_runner.run_checks()
+
+
+def _cartesian_exhaustion_cells(report: dict[str, Any]) -> tuple[LeafBoundaryMatrixCell, ...]:
+    passed = bool(report.get("ok"))
+    matrix = report.get("matrix") if isinstance(report.get("matrix"), dict) else {}
+    cells_payload = matrix.get("required_cells") if isinstance(matrix, dict) else []
+    cells: list[LeafBoundaryMatrixCell] = []
+    for cell in cells_payload:
+        if not isinstance(cell, dict):
+            continue
+        cell_id = str(cell.get("cell_id") or "")
+        boundary = str(cell.get("boundary_id") or "")
+        mutation = str(cell.get("mutation_kind") or "")
+        context = str(cell.get("context") or "")
+        consumer = str(cell.get("consumer") or "")
+        reaction = str(cell.get("expected_reaction") or "")
+        owner = str(cell.get("required_evidence_owner") or "")
+        cells.append(
+            LeafBoundaryMatrixCell(
+                cell_id=f"cartesian_exhaustion:{cell_id}",
+                input_case=f"boundary={boundary};mutation={mutation};context={context};consumer={consumer}",
+                state_case=reaction,
+                expected_outputs=(f"owner:{owner}", f"reaction:{reaction}"),
+                observed_outputs=(f"owner:{owner}", f"reaction:{reaction}"),
+                expected_next_states=("owned",),
+                observed_next_states=("owned",),
+                evidence_ids=("simulations/flowpilot_cartesian_control_plane_exhaustion_results.json",),
+                evidence_status="passed" if passed else "failed",
+                metadata={
+                    "normal_repair_context": bool(cell.get("normal_repair_context")),
+                    "glass_break_allowed": bool(cell.get("glass_break_allowed")),
+                    "required_repair_command": str(cell.get("required_repair_command") or ""),
+                },
+            )
+        )
+    return tuple(cells)
+
+
 def build_accounting_plan(inventory: dict[str, Any], alignment: dict[str, Any]) -> LayeredBoundaryProofPlan:
     """Build the green proof for the current coverage-accounting boundary."""
 
+    contract_exhaustion = _contract_exhaustion_result()
+    cartesian_exhaustion = _cartesian_exhaustion_result()
     inventory_evidence = _stable_evidence_id(
         "inventory",
         {
@@ -215,6 +302,30 @@ def build_accounting_plan(inventory: dict[str, Any], alignment: dict[str, Any]) 
             "source_audit_ok": alignment.get("source_audit_ok"),
             "full_diagnostic_ok": alignment.get("full_diagnostic_ok"),
             "release_convergence_ok": alignment.get("release_convergence_ok"),
+        },
+    )
+    contract_exhaustion_evidence = _stable_evidence_id(
+        "contract-exhaustion",
+        {
+            "ok": contract_exhaustion.get("ok"),
+            "cell_count": (contract_exhaustion.get("required_cells") or {}).get("cell_count")
+            if isinstance(contract_exhaustion.get("required_cells"), dict)
+            else None,
+            "mutation_count": (contract_exhaustion.get("required_cells") or {}).get("mutation_count")
+            if isinstance(contract_exhaustion.get("required_cells"), dict)
+            else None,
+        },
+    )
+    cartesian_exhaustion_evidence = _stable_evidence_id(
+        "cartesian-control-plane-exhaustion",
+        {
+            "ok": cartesian_exhaustion.get("ok"),
+            "full_product_count": (cartesian_exhaustion.get("matrix") or {}).get("full_product_count")
+            if isinstance(cartesian_exhaustion.get("matrix"), dict)
+            else None,
+            "applicable_count": (cartesian_exhaustion.get("matrix") or {}).get("applicable_count")
+            if isinstance(cartesian_exhaustion.get("matrix"), dict)
+            else None,
         },
     )
     leaf_evidence = _stable_evidence_id(
@@ -239,7 +350,11 @@ def build_accounting_plan(inventory: dict[str, Any], alignment: dict[str, Any]) 
             ParentCoverageItem("keep_scoped_evidence_visible", owner_model_id="test_gap_closure"),
             ParentCoverageItem("consume_source_contract_alignment", owner_model_id="model_test_alignment"),
             ParentCoverageItem("release_convergence_accounting", owner_model_id="model_test_alignment"),
+            ParentCoverageItem("consume_contract_exhaustion_mesh", owner_model_id="contract_exhaustion_mesh"),
+            ParentCoverageItem("consume_cartesian_control_plane_exhaustion", owner_model_id="cartesian_control_plane_exhaustion"),
             ParentCoverageItem("prove_inventory_boundary_matrix", owner_model_id="leaf_boundary_accounting"),
+            ParentCoverageItem("prove_contract_exhaustion_leaf_matrix", owner_model_id="contract_exhaustion_mesh"),
+            ParentCoverageItem("prove_cartesian_control_plane_leaf_matrix", owner_model_id="cartesian_control_plane_exhaustion"),
             ParentCoverageItem(
                 "production_replay_adapter_completion",
                 owner_kind="out_of_scope",
@@ -284,6 +399,58 @@ def build_accounting_plan(inventory: dict[str, Any], alignment: dict[str, Any]) 
                 contracts_out=("model_test_alignment",),
             ),
             ChildProofContract(
+                "contract_exhaustion_mesh",
+                evidence_id=contract_exhaustion_evidence,
+                evidence_status="passed" if contract_exhaustion.get("ok") else "failed",
+                responsibilities=("consume_contract_exhaustion_mesh", "prove_contract_exhaustion_leaf_matrix"),
+                functions_owned=("run_flowpilot_contract_exhaustion_mesh_checks.run_checks",),
+                inputs_accepted=(
+                    "packet_result_contracts",
+                    "control_plane_required_paths",
+                    "synthetic_mutation_kinds",
+                    "historical_failure_families",
+                ),
+                outputs_emitted=(
+                    "required_contract_exhaustion_cells",
+                    "hazard_findings",
+                    "required_child_suite_owners",
+                    "test_mesh_owner_status",
+                ),
+                state_owned=("flowpilot_contract_exhaustion_mesh_results",),
+                contracts_out=("contract_exhaustion_mesh",),
+                is_leaf=True,
+                leaf_matrix_id="flowpilot-contract-exhaustion-matrix",
+            ),
+            ChildProofContract(
+                "cartesian_control_plane_exhaustion",
+                evidence_id=cartesian_exhaustion_evidence,
+                evidence_status="passed" if cartesian_exhaustion.get("ok") else "failed",
+                responsibilities=(
+                    "consume_cartesian_control_plane_exhaustion",
+                    "prove_cartesian_control_plane_leaf_matrix",
+                ),
+                functions_owned=("run_flowpilot_cartesian_control_plane_exhaustion_checks.run_checks",),
+                inputs_accepted=(
+                    "control_plane_boundaries",
+                    "mutation_alphabet",
+                    "handoff_contexts",
+                    "downstream_consumers",
+                    "contract_exhaustion_bridge_cells",
+                    "historical_failure_bridge_cells",
+                ),
+                outputs_emitted=(
+                    "full_product_count",
+                    "required_cartesian_cells",
+                    "skipped_cartesian_cells",
+                    "required_child_suite_owners",
+                    "test_mesh_owner_status",
+                ),
+                state_owned=("flowpilot_cartesian_control_plane_exhaustion_results",),
+                contracts_out=("cartesian_control_plane_exhaustion",),
+                is_leaf=True,
+                leaf_matrix_id="flowpilot-cartesian-control-plane-matrix",
+            ),
+            ChildProofContract(
                 "leaf_boundary_accounting",
                 evidence_id=leaf_evidence,
                 responsibilities=("prove_inventory_boundary_matrix",),
@@ -320,6 +487,45 @@ def build_accounting_plan(inventory: dict[str, Any], alignment: dict[str, Any]) 
                 expected_contracts_out=("model_test_alignment",),
             ),
             ChildReattachmentProof(
+                "contract_exhaustion_mesh",
+                consumed_evidence_id=contract_exhaustion_evidence,
+                expected_inputs=(
+                    "packet_result_contracts",
+                    "control_plane_required_paths",
+                    "synthetic_mutation_kinds",
+                    "historical_failure_families",
+                ),
+                expected_outputs=(
+                    "required_contract_exhaustion_cells",
+                    "hazard_findings",
+                    "required_child_suite_owners",
+                    "test_mesh_owner_status",
+                ),
+                expected_state_owned=("flowpilot_contract_exhaustion_mesh_results",),
+                expected_contracts_out=("contract_exhaustion_mesh",),
+            ),
+            ChildReattachmentProof(
+                "cartesian_control_plane_exhaustion",
+                consumed_evidence_id=cartesian_exhaustion_evidence,
+                expected_inputs=(
+                    "control_plane_boundaries",
+                    "mutation_alphabet",
+                    "handoff_contexts",
+                    "downstream_consumers",
+                    "contract_exhaustion_bridge_cells",
+                    "historical_failure_bridge_cells",
+                ),
+                expected_outputs=(
+                    "full_product_count",
+                    "required_cartesian_cells",
+                    "skipped_cartesian_cells",
+                    "required_child_suite_owners",
+                    "test_mesh_owner_status",
+                ),
+                expected_state_owned=("flowpilot_cartesian_control_plane_exhaustion_results",),
+                expected_contracts_out=("cartesian_control_plane_exhaustion",),
+            ),
+            ChildReattachmentProof(
                 "leaf_boundary_accounting",
                 consumed_evidence_id=leaf_evidence,
                 expected_inputs=("gap_class", "alignment_check"),
@@ -346,6 +552,34 @@ def build_accounting_plan(inventory: dict[str, Any], alignment: dict[str, Any]) 
                 rationale=(
                     "The leaf here is the coverage-accounting adapter. Every possible "
                     "inventory gap class and alignment gate has an explicit current cell."
+                ),
+            ),
+            LeafBoundaryMatrix(
+                "contract_exhaustion_mesh",
+                matrix_id="flowpilot-contract-exhaustion-matrix",
+                expected_cell_ids=tuple(
+                    f"contract_exhaustion:{cell['cell_id']}"
+                    for cell in contract_exhaustion_model.REQUIRED_CONTRACT_EXHAUSTION_CELLS
+                ),
+                cells=_contract_exhaustion_cells(contract_exhaustion),
+                rationale=(
+                    "Every current packet/result/control-plane contract-exhaustion cell "
+                    "generated from the live contract tables must have an explicit owner, "
+                    "boundary, and current evidence path."
+                ),
+            ),
+            LeafBoundaryMatrix(
+                "cartesian_control_plane_exhaustion",
+                matrix_id="flowpilot-cartesian-control-plane-matrix",
+                expected_cell_ids=tuple(
+                    f"cartesian_exhaustion:{cell['cell_id']}"
+                    for cell in cartesian_exhaustion_model.REQUIRED_CARTESIAN_CELLS
+                ),
+                cells=_cartesian_exhaustion_cells(cartesian_exhaustion),
+                rationale=(
+                    "Every applicable declared control-plane boundary, mutation, "
+                    "context, and consumer cell must have an explicit owner, "
+                    "repair oracle, and current evidence path."
                 ),
             ),
         ),

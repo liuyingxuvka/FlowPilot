@@ -18,10 +18,9 @@ runtime_context: Treat the runtime delivery envelope as the live source for the 
 
 ## Decision-Support Findings
 
-For every outcome, consider `independent_challenge.non_blocking_findings`.
-Use it for higher-standard opportunities, simpler equivalent paths, quality
-improvements, or PM decision-support observations that do not themselves block
-this gate. This applies even when the review blocks.
+For every outcome, consider PM decision-support observations. Put
+higher-standard opportunities, simpler equivalent paths, and quality
+improvements that do not themselves block this gate into `pm_suggestion_items`.
 When useful, express these findings as candidate
 `flowpilot.pm_suggestion_item.v1` entries for PM's suggestion ledger. Use
 `current_gate_blocker` only when the current gate's minimum standard cannot be
@@ -41,7 +40,7 @@ evidence to the parent goal, and record blocking findings.
 
 When the parent contributes to a final user, operator, maintainer, reader, or
 delivered product, include that perspective in the same
-`independent_challenge`: ask whether the composed child results are actually
+Review challenge: ask whether the composed child results are actually
 usable, coherent, and aligned with the user's intent at the parent level.
 Record higher-standard but nonblocking product or experience improvements as
 PM decision-support.

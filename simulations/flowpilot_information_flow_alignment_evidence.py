@@ -17,6 +17,8 @@ from flowpilot_information_flow_alignment_obligations import (
     OBL_RESUME_CURRENT,
     OBL_ROLE_ASSIGNMENT,
     OBL_ROUTE_MUTATION,
+    OBL_RUNTIME_SELF_CHECK,
+    OBL_STAGE_EVIDENCE_MATRIX,
     OBL_WORKER_DELTA,
 )
 
@@ -209,11 +211,11 @@ def _test_evidence() -> tuple[Any, ...]:
         ),
         _evidence(
             "info_flow.test.flowguard_consistency_child_block_negative",
-            test_name="test_flowguard_packet_rejects_blocked_child_evidence_without_reviewer",
+            test_name="test_flowguard_packet_rejects_deleted_evidence_consistency_field_without_reviewer",
             path="tests/test_flowpilot_core_runtime.py",
             command=(
                 "python -m pytest tests/test_flowpilot_core_runtime.py "
-                "-k test_flowguard_packet_rejects_blocked_child_evidence_without_reviewer -q"
+                "-k test_flowguard_packet_rejects_deleted_evidence_consistency_field_without_reviewer -q"
             ),
             test_kind=NEGATIVE,
             covers=(OBL_FLOWGUARD_EVIDENCE_CONSISTENCY,),
@@ -224,11 +226,11 @@ def _test_evidence() -> tuple[Any, ...]:
         ),
         _evidence(
             "info_flow.test.flowguard_consistency_legal_block_replay",
-            test_name="test_flowguard_packet_block_with_consistent_evidence_does_not_issue_reviewer",
+            test_name="test_flowguard_packet_block_with_compact_blocker_does_not_issue_reviewer",
             path="tests/test_flowpilot_core_runtime.py",
             command=(
                 "python -m pytest tests/test_flowpilot_core_runtime.py "
-                "-k test_flowguard_packet_block_with_consistent_evidence_does_not_issue_reviewer -q"
+                "-k test_flowguard_packet_block_with_compact_blocker_does_not_issue_reviewer -q"
             ),
             test_kind=REPLAY,
             covers=(OBL_FLOWGUARD_EVIDENCE_CONSISTENCY,),
@@ -236,6 +238,78 @@ def _test_evidence() -> tuple[Any, ...]:
                 "info_flow.runtime.flowguard_evidence_consistency_gate",
                 "info_flow.runtime.review_packet_requires_matching_flowguard_report",
             ),
+        ),
+        _evidence(
+            "info_flow.test.stage_matrix_family_coverage",
+            test_name="test_stage_evidence_matrix_covers_every_packet_result_family",
+            path="tests/test_flowpilot_high_standard_control_flow.py",
+            command=(
+                "python -m unittest "
+                "tests.test_flowpilot_high_standard_control_flow."
+                "FlowPilotHighStandardControlFlowTests."
+                "test_stage_evidence_matrix_covers_every_packet_result_family"
+            ),
+            test_kind=HAPPY,
+            covers=(OBL_STAGE_EVIDENCE_MATRIX,),
+            code_contracts=("info_flow.runtime.packet_stage_evidence_matrix",),
+        ),
+        _evidence(
+            "info_flow.test.stage_matrix_all_package_handoffs",
+            test_name="test_generated_packet_handoffs_include_stage_matrix_for_each_package_class",
+            path="tests/test_flowpilot_high_standard_control_flow.py",
+            command=(
+                "python -m unittest "
+                "tests.test_flowpilot_high_standard_control_flow."
+                "FlowPilotHighStandardControlFlowTests."
+                "test_generated_packet_handoffs_include_stage_matrix_for_each_package_class"
+            ),
+            test_kind=REPLAY,
+            covers=(OBL_STAGE_EVIDENCE_MATRIX,),
+            code_contracts=(
+                "info_flow.runtime.build_current_handoff_contract",
+                "info_flow.runtime.flowguard_subject_stage_matrix",
+                "info_flow.runtime.review_subject_stage_matrix",
+            ),
+        ),
+        _evidence(
+            "info_flow.test.stage_matrix_preplanning_negative",
+            test_name="test_high_standard_flowguard_packet_uses_preplanning_stage_matrix",
+            path="tests/test_flowpilot_high_standard_control_flow.py",
+            command=(
+                "python -m unittest "
+                "tests.test_flowpilot_high_standard_control_flow."
+                "FlowPilotHighStandardControlFlowTests."
+                "test_high_standard_flowguard_packet_uses_preplanning_stage_matrix"
+            ),
+            test_kind=NEGATIVE,
+            covers=(OBL_STAGE_EVIDENCE_MATRIX,),
+            code_contracts=("info_flow.runtime.flowguard_subject_stage_matrix",),
+        ),
+        _evidence(
+            "info_flow.test.runtime_self_check_receipt_positive",
+            test_name="test_start_run_records_portable_runtime_self_check_receipt",
+            path="tests/test_flowpilot_new_entrypoint.py",
+            command=(
+                "python -m unittest "
+                "tests.test_flowpilot_new_entrypoint.FlowPilotNewEntrypointTests."
+                "test_start_run_records_portable_runtime_self_check_receipt"
+            ),
+            test_kind=HAPPY,
+            covers=(OBL_RUNTIME_SELF_CHECK,),
+            code_contracts=("info_flow.runtime.record_runtime_self_check_receipt",),
+        ),
+        _evidence(
+            "info_flow.test.runtime_self_check_no_dev_script_negative",
+            test_name="test_runtime_self_check_does_not_require_target_project_simulations",
+            path="tests/test_flowpilot_new_entrypoint.py",
+            command=(
+                "python -m unittest "
+                "tests.test_flowpilot_new_entrypoint.FlowPilotNewEntrypointTests."
+                "test_runtime_self_check_does_not_require_target_project_simulations"
+            ),
+            test_kind=NEGATIVE,
+            covers=(OBL_RUNTIME_SELF_CHECK,),
+            code_contracts=("info_flow.runtime.runtime_self_check_receipt",),
         ),
         _evidence(
             "info_flow.test.handoff_contract_visible_edge",

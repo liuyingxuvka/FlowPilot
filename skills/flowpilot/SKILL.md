@@ -97,6 +97,6 @@ The active prompt content lives in the copied runtime kit and prompt manifest:
 - `assets/runtime_kit/manifest.json`
 - `assets/runtime_kit/cards/`
 - `assets/packet_runtime.py`
-- `assets/role_output_runtime.py`
+- internal role-output contract helper modules
 
 Old long-form protocol material is source-history material only.

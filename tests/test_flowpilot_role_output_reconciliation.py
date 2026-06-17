@@ -78,7 +78,9 @@ class RoleOutputReconciliationTests(FlowPilotRouterRuntimeTestBase):
             event_name="reviewer_reports_material_insufficient",
             output_path=run_root / "test_role_outputs" / "material" / "reviewer_material_insufficient.json",
             body={
+                "pm_visible_summary": ["Material is insufficient for PM execution without more source context."],
                 "reviewed_by_role": "human_like_reviewer",
+                "passed": False,
                 "direct_material_sources_checked": True,
                 "packet_matches_checked_sources": True,
                 "pm_ready": False,
@@ -86,19 +88,8 @@ class RoleOutputReconciliationTests(FlowPilotRouterRuntimeTestBase):
                 "runtime_open_receipt_refs": [],
                 "findings": [{"finding_id": "missing-context", "summary": "Material is insufficient for execution."}],
                 "blockers": [{"blocker_id": "missing-context", "summary": "More source material is required."}],
-                "residual_risks": [],
                 "pm_suggestion_items": [],
-                "independent_challenge": {
-                    "scope_restatement": "Review whether the material package is sufficient for execution.",
-                    "explicit_and_implicit_commitments": [],
-                    "failure_hypotheses": [],
-                    "challenge_actions": [],
-                    "blocking_findings": [],
-                    "non_blocking_findings": [],
-                    "pass_or_block": "block",
-                    "reroute_request": [],
-                    "challenge_waivers": [],
-                },
+                "contract_self_check": {"status": "pass"},
             },
         )
 

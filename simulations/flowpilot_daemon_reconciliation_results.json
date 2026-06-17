@@ -5467,7 +5467,8 @@
   "live_run_projection": {
     "classification_ok": false,
     "ok": true,
-    "skip_reason": "no .flowpilot/current.json found",
+    "run_root": ".flowpilot\\runs\\run-20260614-184920",
+    "skip_reason": "current run does not have runtime scheduler/action ledgers",
     "skipped": true
   },
   "ok": true,
@@ -5487,6 +5488,6 @@
     "terminal_state_count": 360
   },
   "skipped_checks": {
-    "live_run_projection": "skipped_with_reason: no .flowpilot/current.json found"
+    "live_run_projection": "skipped_with_reason: current run does not have runtime scheduler/action ledgers"
   }
 }

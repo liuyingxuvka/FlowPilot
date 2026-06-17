@@ -5,12 +5,26 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=3 initial_states=1 traces=348",
+    "summary": "sequences=3 initial_states=1 traces=378",
     "violation_count": 0
   },
   "hazard_checks": {
     "failures": [],
     "hazards": {
+      "acceptance_item_no_route_owner": {
+        "detected": true,
+        "expected_failure": "active acceptance item lacks a route node owner",
+        "failures": [
+          "active acceptance item lacks a route node owner"
+        ]
+      },
+      "acceptance_item_registry_missing": {
+        "detected": true,
+        "expected_failure": "PM high-standard contract lacks acceptance item registry with user and PM high-standard items",
+        "failures": [
+          "PM high-standard contract lacks acceptance item registry with user and PM high-standard items"
+        ]
+      },
       "artifactless_major_node": {
         "detected": true,
         "expected_failure": "major route node lacks a concrete acceptance artifact",
@@ -23,6 +37,14 @@
         "expected_failure": "research or material-scan packet grants target artifact repair instead of report self-correction",
         "failures": [
           "research or material-scan packet grants target artifact repair instead of report self-correction"
+        ]
+      },
+      "final_ledger_acceptance_item_unresolved": {
+        "detected": true,
+        "expected_failure": "final ledger or closure leaves acceptance items unresolved",
+        "failures": [
+          "final ledger or closure leaves acceptance items unresolved",
+          "PM closure lacks final-user outcome replay"
         ]
       },
       "final_ledger_realization_obligations_unresolved": {
@@ -81,6 +103,13 @@
         "expected_failure": "PM created unjustified route bloat from low-quality-success review",
         "failures": [
           "PM created unjustified route bloat from low-quality-success review"
+        ]
+      },
+      "node_plan_missing_acceptance_item_projection": {
+        "detected": true,
+        "expected_failure": "node acceptance plan lacks acceptance item projection",
+        "failures": [
+          "node acceptance plan lacks acceptance item projection"
         ]
       },
       "node_plan_missing_low_quality_mapping": {
@@ -379,6 +408,14 @@
           "complex task route lacks a selected planning profile"
         ]
       },
+      "work_packet_missing_acceptance_item_matrix": {
+        "detected": true,
+        "expected_failure": "work packet or result lacks acceptance item result matrix",
+        "failures": [
+          "work packet or result lacks acceptance item result matrix",
+          "PM disposition does not close node-owned acceptance items"
+        ]
+      },
       "work_packet_missing_low_quality_warning": {
         "detected": true,
         "expected_failure": "work packet lacks node low-quality-success warning",
@@ -443,11 +480,11 @@
     "accepted_scenarios": [
       "valid_ui_route"
     ],
-    "edge_count": 116,
+    "edge_count": 126,
     "invariant_failures": [],
     "missing_labels": [],
     "ok": true,
-    "rejected_state_count": 57,
-    "state_count": 117
+    "rejected_state_count": 62,
+    "state_count": 127
   }
 }

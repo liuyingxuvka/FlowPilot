@@ -82,9 +82,9 @@ remove that parent and its descendants from current routing authority.
 
 ### Requirement: Route redesign is gated by a strict route plan
 
-`redesign_route` MUST be treated as a high-risk PM decision. Runtime MUST stage
-the effect, require FlowGuard/reviewer approval, and activate only a strict
-current route plan.
+`redesign_route` MUST use the unified staged PM continue-repair gate. Runtime
+MUST stage the effect, require FlowGuard/reviewer approval, and activate only a
+strict current route plan.
 
 #### Scenario: PM redesigns route
 

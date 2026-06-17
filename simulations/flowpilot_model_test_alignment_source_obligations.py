@@ -90,6 +90,13 @@ def source_obligations() -> tuple[ModelObligation, ...]:
             required_test_kinds=(HAPPY, NEGATIVE),
         ),
         _source_obligation(
+            "new_entrypoint.portable_runtime_self_check_receipt",
+            obligation_type="install_portability_contract",
+            description="Source-audited installed FlowPilot start boundary records a run-local runtime self-check receipt and proves target projects are not required to contain FlowPilot development-repository simulation scripts.",
+            required_test_kinds=(HAPPY, NEGATIVE),
+            allow_shared_evidence=True,
+        ),
+        _source_obligation(
             "new_entrypoint.flowguard_run_local_evidence",
             obligation_type="contract",
             description="Source-audited FlowGuard operator packet and runner-output boundary requiring formal evidence to use run-local output paths instead of tracked simulation baselines.",
@@ -146,6 +153,13 @@ def source_obligations() -> tuple[ModelObligation, ...]:
             obligation_type="hazard",
             description="Source-audited sibling replacement boundary through Router events, packet issuance, and route-sign output.",
             required_test_kinds=(EDGE, NEGATIVE),
+        ),
+        _source_obligation(
+            "route_authority.rejection_feedback_projection",
+            obligation_type="contract",
+            description="Source-audited route-authority rejection helper boundary that projects wrong-path events, missing prerequisite flags, and unsupported payload fields into current-contract feedback.",
+            required_test_kinds=(EDGE,),
+            allow_shared_evidence=True,
         ),
         _source_obligation(
             "terminal.final_ledger_and_backward_replay",

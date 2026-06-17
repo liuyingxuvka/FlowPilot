@@ -17,6 +17,8 @@ from flowpilot_information_flow_alignment_obligations import (
     OBL_RESUME_CURRENT,
     OBL_ROLE_ASSIGNMENT,
     OBL_ROUTE_MUTATION,
+    OBL_RUNTIME_SELF_CHECK,
+    OBL_STAGE_EVIDENCE_MATRIX,
     OBL_WORKER_DELTA,
 )
 
@@ -35,6 +37,9 @@ def _code_contracts() -> tuple[Any, ...]:
         "skills/flowpilot/assets/flowpilot_controller_break_glass_recovery.py"
     )
     closure = "skills/flowpilot/assets/flowpilot_closure_kernel.py"
+    packet_stage_matrix = "skills/flowpilot/assets/flowpilot_core_runtime/packet_stage_evidence_matrix.py"
+    runtime_self_check = "skills/flowpilot/assets/flowpilot_runtime_self_check.py"
+    flowpilot_new_shared = "skills/flowpilot/assets/flowpilot_new_shared.py"
     return (
         _contract(
             "info_flow.runtime.ensure_pm_repair_packet",
@@ -136,10 +141,57 @@ def _code_contracts() -> tuple[Any, ...]:
             "info_flow.runtime.build_current_handoff_contract",
             path=runtime,
             symbol="_build_current_handoff_contract",
-            implements=(OBL_FORMAL_REPAIR_IDENTITY,),
+            implements=(OBL_FORMAL_REPAIR_IDENTITY, OBL_STAGE_EVIDENCE_MATRIX),
             external_inputs=("ledger", "packet_envelope", "authorized_result_reads"),
             external_outputs=("current_handoff_contract"),
             state_reads=("packet_envelope", "active_blocker", "repair_blocker_id"),
+        ),
+        _contract(
+            "info_flow.runtime.packet_stage_evidence_matrix",
+            path=packet_stage_matrix,
+            symbol="stage_evidence_row_for_family",
+            implements=(OBL_STAGE_EVIDENCE_MATRIX,),
+            external_inputs=("contract_family_id",),
+            external_outputs=("stage_evidence_row",),
+            state_reads=("packet_result_contract_family",),
+        ),
+        _contract(
+            "info_flow.runtime.flowguard_subject_stage_matrix",
+            path=runtime,
+            symbol="_ensure_flowguard_packet_for_task_result",
+            implements=(OBL_STAGE_EVIDENCE_MATRIX,),
+            external_inputs=("ledger", "subject_packet", "subject_result"),
+            external_outputs=("flowguard_packet.subject_stage_evidence_matrix",),
+            state_reads=("subject_packet.envelope", "packet_stage_evidence_matrix"),
+            state_writes=("flowguard_packet",),
+        ),
+        _contract(
+            "info_flow.runtime.review_subject_stage_matrix",
+            path=runtime,
+            symbol="_ensure_review_packet_for_task_result",
+            implements=(OBL_STAGE_EVIDENCE_MATRIX,),
+            external_inputs=("ledger", "subject_packet_id"),
+            external_outputs=("review_packet.subject_stage_evidence_matrix",),
+            state_reads=("subject_packet", "packet_stage_evidence_matrix", "flowguard_manifest"),
+            state_writes=("review_packet",),
+        ),
+        _contract(
+            "info_flow.runtime.runtime_self_check_receipt",
+            path=runtime_self_check,
+            symbol="runtime_self_check",
+            implements=(OBL_RUNTIME_SELF_CHECK,),
+            external_inputs=("assets_root",),
+            external_outputs=("runtime_self_check_receipt",),
+            state_reads=("installed_skill_assets", "flowguard_package"),
+        ),
+        _contract(
+            "info_flow.runtime.record_runtime_self_check_receipt",
+            path=flowpilot_new_shared,
+            symbol="_record_runtime_self_check_receipt",
+            implements=(OBL_RUNTIME_SELF_CHECK,),
+            external_inputs=("run_shell",),
+            external_outputs=("run_root.runtime.flowpilot_runtime_self_check_receipt.json",),
+            state_writes=("ledger.flowpilot_runtime_self_check", "run_runtime_receipt"),
         ),
         _contract(
             "info_flow.runtime.formal_repair_identity_gate",
@@ -153,7 +205,7 @@ def _code_contracts() -> tuple[Any, ...]:
         _contract(
             "info_flow.runtime.flowguard_evidence_consistency_gate",
             path=runtime,
-            symbol="_flowguard_evidence_consistency_violation",
+            symbol="_flowguard_current_report_violation",
             implements=(OBL_FLOWGUARD_EVIDENCE_CONSISTENCY,),
             external_inputs=("packet", "result"),
             external_outputs=("contract_check",),

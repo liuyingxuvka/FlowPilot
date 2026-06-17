@@ -35,6 +35,15 @@ Each FlowGuard operator request packet must include the registry `output_contrac
 and packet body's `Output Contract` section.
 The packet body must also include the generated `Report Contract For This Task`
 block so the FlowGuard operator sees the exact report fields before modeling.
+When the packet body includes `subject_stage_evidence_matrix`, the FlowGuard
+operator must use it as the current contract authority for this packet:
+`current_required_fields` are due now, and `allowed_blocker_classes` /
+`blocker_next_actions` define the allowed blocker class and handling route.
+For PM-owned substantive blockers, the handling route is the PM repair-decision
+packet; the blocker does not preselect PM's repair branch. This does not waive
+terminal or result-stage evidence; it
+prevents applying terminal standards to preplanning contract-definition or plan
+packages.
 The packet body must also ask the FlowGuard operator to include a soft `PM Note` in the
 sealed report body with exactly these labels: `In-scope quality choice` and
 `PM consideration`. This note is PM decision-support, not a reviewer hard gate:
@@ -69,9 +78,8 @@ For each modeling need, write a request that states:
   and post-repair model checks the PM needs before reviewer recheck;
 - model boundary, hard invariants, observed/source behavior, expected target
   behavior, and decisions the PM needs;
-- model-test alignment expectations: `model_obligations`,
-  `ordinary_test_evidence`, `missing_test_kinds`, `conformance_boundary`,
-  `residual_blindspots`, and `background_artifact_completion`;
+- model-test alignment expectations as evidence artifact content or PM
+  suggestion items, not as extra required top-level result fields;
 - `role_skill_use_bindings` for every FlowGuard child skill or satellite route
   PM expects the FlowGuard operator to use when deriving test obligations or validation
   gaps. Use the smallest applicable route: Existing Model Preflight for model
@@ -87,70 +95,43 @@ For each modeling need, write a request that states:
   FlowGuard operator may inspect;
 - how the report can change the route.
 
-The FlowGuard operator report body must include these fields exactly:
+The FlowGuard operator packet result body must include these fields exactly:
 
 ```json
 {
-  "schema_version": "flowpilot.flowguard_operator_model_report.v1",
-  "run_id": "<current run id>",
-  "flowguard_work_order_id": "<work-order id>",
-  "flowguard_report_id": "<report id>",
-  "flowguard_route_used": "<FlowGuard route or satellite skill>",
-  "flowguard_report_freshness": "<current, stale, blocked, skipped, or progress_only>",
+  "pm_visible_summary": ["<short PM-visible result summary>"],
+  "reviewed_by_role": "flowguard_operator",
+  "passed": false,
   "modeled_boundary": "<scope modeled>",
-  "commands_run": [],
-  "counterexamples_or_absence": "<counterexample summary or explicit absence>",
-  "hard_invariants": [],
-  "skipped_checks": [],
-  "model_obligations": [],
-  "ordinary_test_evidence": [],
-  "missing_test_kinds": [],
-  "conformance_boundary": "<abstract model only, ordinary tests, conformance replay, or bounded combination>",
-  "confidence_boundary": "<what this model does and does not prove>",
-  "residual_blindspots": [],
-  "background_artifact_completion": [],
+  "blockers": [],
   "pm_suggestion_items": [],
-  "evidence_consistency": {
-    "self_check_passed": true,
-    "child_reports_all_passed": true,
-    "blocking_child_reports": [],
-    "hard_evidence_decision": "pass"
-  },
   "contract_self_check": {
     "all_required_fields_present": true,
     "exact_field_names_used": true,
     "empty_required_arrays_explicit": true,
-    "runtime_mechanical_validation_passed": true,
-    "semantic_sufficiency_reviewed_by_runtime": false
+    "runtime_mechanical_validation_passed": true
   }
 }
 ```
 
-Use `model_obligations` for FlowGuard scenarios, invariants, hazards,
-transitions, and contracts that matter to the PM decision. Use
-`ordinary_test_evidence` for non-FlowGuard test, replay, or manual command
-evidence bound to those obligations. Use `missing_test_kinds` for required
-happy, failure, edge, negative, or replay evidence that is absent or stale. If
-the report cites any long or background test, `background_artifact_completion`
-must list the log root, stdout, stderr, combined, exit, and meta paths, exit
-code, latest update time, completion status, and whether a valid proof was
-reused. Progress lines alone are not completion evidence.
-
 If any child FlowGuard/model-test/development-process report says blocked,
 missing code contract, revalidation required, stale, failed, or not ok, the
-report's top-level `passed` must be false and `evidence_consistency` must name
-the blocking child report. Do not send `passed: true` when hard evidence inside
-the report says blocked.
+report's top-level `passed` must be false and the concrete issue must appear
+in `blockers[]` or PM-actionable `pm_suggestion_items[]`. Do not send
+`passed: true` when hard evidence inside the packet-owned evidence artifact
+says blocked.
 
 The FlowGuard operator report supports PM decisions; it cannot approve completion, waive
 reviewer gates, or claim no risk beyond its model boundary.
 
-After PM receives a FlowGuard operator report, PM must copy every relevant
-`model_obligations`, `ordinary_test_evidence`, and `missing_test_kinds` row into
-the current `test_obligation_matrix`. Missing, stale, skipped, failed,
-not-run, or progress-only evidence must be dispositioned by PM before the
-dependent node, evidence-quality package, final ledger, or closure gate can
-pass. FlowGuard operator prose does not close a test gap.
+After PM receives a FlowGuard operator report, PM absorbs the report through
+the existing PM decision path. FlowGuard may surface model/test gaps as
+`pm_suggestion_items`; PM decides whether to continue, repair current scope,
+repair parent scope, redesign route, waive with authority, or stop. Do not
+create a PM-owned mirror matrix just to mirror FlowGuard evidence.
+FlowGuard operator prose does not close a test gap; the report must either
+point to current evidence in the packet-owned evidence file or return a blocker
+or PM suggestion item.
 
 PM must convert the report into a concrete route decision: continue, repair,
 add evidence, split a node, mutate the route, or block. For structural route

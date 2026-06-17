@@ -8,7 +8,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from flowguard import Explorer
+from flowguard.explorer import Explorer
 
 try:  # pragma: no cover - exercised by package import tests
     from . import flowpilot_singleton_identity_model as model

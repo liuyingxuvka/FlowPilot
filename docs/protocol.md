@@ -488,9 +488,7 @@ or completion evidence by catching the route up later.
 FlowPilot does not guess which route nodes are important enough for local
 backward review. The trigger is structural: every effective route node with
 children is a parent/composite node and must run an independent parent backward
-replay before that parent can close. Semantic labels such as high risk,
-integration, feature, or downstream dependency may add context to the review,
-but they are not required to trigger it and cannot be used to skip it.
+replay before that parent can close.
 
 When the checked route is written or mutated, the project manager enumerates
 all effective parent/composite nodes from `flow.json` into the execution
@@ -1293,8 +1291,8 @@ enter parent or node -> refresh and visibly display FlowPilot Route Sign
 -> FlowGuard/route check -> execute chunk -> verify -> checkpoint
 ```
 
-The package records whether the current scope is too thin, whether a low-risk
-high-value improvement exists, whether child-skill key milestones are visible
+The package records whether the current scope is too thin, whether a bounded
+current-node improvement exists, whether child-skill key milestones are visible
 as a mini-route, whether validation is strong enough, and whether checkpoint
 closure would be rushed. Classify improvement candidates as small/current
 node, medium/later node, large/route mutation, or not doing with reason.

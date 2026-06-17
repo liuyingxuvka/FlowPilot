@@ -15,7 +15,7 @@
 </p>
 
 <p align="center">
-  Source version: <strong>v0.10.11</strong> · MIT License · Codex skill source package
+  Source version: <strong>v0.10.12</strong> · MIT License · Codex skill source package
 </p>
 <!-- README HERO END -->
 
@@ -37,7 +37,7 @@ The startup intake UI captures the user's work request and whether FlowPilot may
 
 | Field | Value |
 | --- | --- |
-| Source version | `v0.10.11` |
+| Source version | `v0.10.12` |
 | Public project name | `FlowPilot` |
 | Skill slug | `flowpilot` |
 | Release shape | source package only, no binary app bundle |
@@ -46,7 +46,7 @@ The startup intake UI captures the user's work request and whether FlowPilot may
 | Current UI surface | Windows WPF startup intake dialog for project request and background collaboration; chat route signs after startup |
 | Visual identity | `assets/brand/flowpilot-icon-default.png` |
 
-`v0.10.11` hardens final quality gates on top of the `v0.10.10` review-stage repair. Final ledgers now require current accepted review, passing FlowGuard, passing validation, active-route evidence, and exact terminal replay segment parity before FlowPilot can support a completion claim.
+`v0.10.12` hardens parent-scope repair and FlowGuard semantic rechecks on top of the `v0.10.11` final-gate repair. Replacement parent repair nodes now need active repair children, inherited child history stays read-only, FlowGuard passes must match subject-bound evidence artifacts, and repeated same-problem repair chains count toward break-glass.
 
 ## What FlowPilot Is
 
@@ -260,7 +260,7 @@ MIT License. See [LICENSE](LICENSE).
 
 # FlowPilot 中文说明
 
-**Source version:** `v0.10.11`
+**Source version:** `v0.10.12`
 **许可证：** MIT  
 **发布形态：** Codex skill source package，不是二进制 app bundle。
 
@@ -280,7 +280,7 @@ Startup intake UI 把用户请求以及是否允许 FlowPilot 使用当前 host 
 
 | 字段 | 值 |
 | --- | --- |
-| Source version | `v0.10.11` |
+| Source version | `v0.10.12` |
 | Public project name | `FlowPilot` |
 | Skill slug | `flowpilot` |
 | 发布形态 | source package only，没有 binary app bundle |
@@ -289,7 +289,7 @@ Startup intake UI 把用户请求以及是否允许 FlowPilot 使用当前 host 
 | 当前 UI surface | Windows WPF startup intake dialog，用于 project request 和 background collaboration；startup 后使用 chat route signs |
 | 视觉标识 | `assets/brand/flowpilot-icon-default.png` |
 
-`v0.10.11` 在 `v0.10.10` review-stage repair 基础上加固了最终质量门禁。最终 ledger 现在必须确认审查证据当前且已接受、FlowGuard 证据当前且通过、验证证据当前且通过、证据属于 active route，并且 terminal replay segment 精确匹配，FlowPilot 才能支撑完成声明。
+`v0.10.12` 在 `v0.10.11` final-gate repair 基础上加固了父级修复和 FlowGuard 语义复检。父级 repair replacement 现在必须有新的 active repair children，旧 child 历史只能作为只读上下文，FlowGuard pass 必须和 subject-bound evidence artifacts 一致，同一问题沿 repair lineage 反复出现会计入 break-glass。
 
 ## 它是什么
 

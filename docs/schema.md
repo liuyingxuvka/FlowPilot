@@ -480,9 +480,7 @@ closure or terminal ledger approval.
 
 `routes/*/nodes/*/parent_backward_replay.json` is required for every effective
 route node with children. The trigger is structural: if the current `flow.json`
-node has child nodes, the parent replay is required. No semantic classification
-such as high risk, integration, feature, or downstream dependency is needed to
-turn this gate on, and those labels cannot turn it off.
+node has child nodes, the parent replay is required.
 
 It records:
 

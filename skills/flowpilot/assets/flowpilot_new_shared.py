@@ -33,6 +33,7 @@ HOST_KIND_HELP = (
 
 if str(ASSETS_ROOT) not in sys.path:
     sys.path.insert(0, str(ASSETS_ROOT))
+import flowpilot_runtime_self_check
 from flowpilot_core_runtime import cockpit, fake_e2e, host, packets, role_handoff, router, run_shell, runtime
 
 ENTRYPOINT_PATH = ASSETS_ROOT / "flowpilot_new.py"
@@ -192,6 +193,29 @@ def _bootstrap_new_runtime(shell: run_shell.RunShell) -> dict[str, Any]:
     return ledger
 
 
+def _record_runtime_self_check_receipt(shell: run_shell.RunShell) -> dict[str, Any]:
+    receipt = flowpilot_runtime_self_check.write_runtime_self_check_receipt(
+        shell.run_root,
+        assets_root=ASSETS_ROOT,
+    )
+    ledger = run_shell.load_run_ledger(shell)
+    ledger["flowpilot_runtime_self_check"] = receipt
+    runtime._event(
+        ledger,
+        "flowpilot_runtime_self_check_recorded",
+        ok=receipt.get("ok") is True,
+        receipt_path=str(receipt.get("receipt_path") or ""),
+    )
+    run_shell.save_run_ledger(shell, ledger)
+    if receipt.get("ok") is not True:
+        raise runtime.BlackBoxRuntimeError(
+            "FlowPilot installed runtime self-check failed: "
+            + ", ".join(str(item) for item in receipt.get("missing_runtime_assets") or [])
+            + (f"; {receipt.get('flowguard_error')}" if receipt.get("flowguard_error") else "")
+        )
+    return receipt
+
+
 def start_run(
     root: Path,
     *,
@@ -201,6 +225,7 @@ def start_run(
 ) -> dict[str, Any]:
     root = Path(root).resolve()
     shell = run_shell.create_run_shell(root, DEFAULT_GOAL, DEFAULT_ACCEPTANCE_CONTRACT, run_id=run_id)
+    runtime_self_check = _record_runtime_self_check_receipt(shell)
     result_path = _run_startup_ui(root, shell.run_id, headless_startup_text=headless_startup_text)
     if require_formal_ui:
         _assert_formal_interactive_result(result_path)
@@ -217,6 +242,7 @@ def start_run(
                 "controller_may_read_body": startup_record["controller_may_read_body"],
                 "body_text_included": startup_record["body_text_included"],
             },
+            "flowpilot_runtime_self_check": runtime_self_check,
             "error": startup_record.get("block_reason", "background_collaboration_required"),
             **_runtime_state(ledger),
             "status": _status_projection(ledger),
@@ -232,6 +258,7 @@ def start_run(
             "controller_may_read_body": startup_record["controller_may_read_body"],
             "body_text_included": startup_record["body_text_included"],
         },
+        "flowpilot_runtime_self_check": runtime_self_check,
         **_runtime_state(ledger),
         "status": _status_projection(ledger),
     }

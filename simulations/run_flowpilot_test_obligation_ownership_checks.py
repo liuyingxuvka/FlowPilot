@@ -8,7 +8,7 @@ from collections import deque
 from dataclasses import asdict
 from pathlib import Path
 
-from flowguard import Explorer
+from flowguard.explorer import Explorer
 
 import flowpilot_test_obligation_ownership_model as model
 

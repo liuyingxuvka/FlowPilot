@@ -51,7 +51,11 @@ def _open_packets(ledger: dict, kind: str | None = None, scope: str | None = Non
 
 
 def _pass_body(summary: str, **extra: object) -> str:
-    payload: dict[str, object] = {"decision": "pass", "pm_visible_summary": [summary]}
+    payload: dict[str, object] = {
+        "decision": "pass",
+        "pm_visible_summary": [summary],
+        "current_evidence_refs": ["current-recursive-route-evidence"],
+    }
     payload.update(extra)
     return json.dumps(payload)
 
@@ -82,6 +86,19 @@ def _pm_disposition_body(decision: str, reason: str) -> str:
     payload = packet_result_contracts.minimal_valid_shape_for_family("pm_disposition.node_pm_disposition")
     payload["decision"] = decision
     payload["reason"] = reason
+    if decision == "redesign_route":
+        payload["route_plan"] = {
+            "schema_version": runtime.ROUTE_PLAN_SCHEMA_VERSION,
+            "nodes": [
+                {
+                    "node_id": "node-001-repair-v2",
+                    "title": "Repair node-001 after PM redesign",
+                    "responsibility": "worker",
+                    "modeled_target": "development_process",
+                    "acceptance_criteria": ["Replacement work is accepted with current evidence."],
+                }
+            ],
+        }
     return json.dumps(payload)
 
 
@@ -104,6 +121,21 @@ def _complete_open_packet(ledger: dict, packet_id: str, body: str | None = None)
     responsibility = packet["envelope"]["responsibility"]
     if body is None:
         body = _pass_body(f"{responsibility} completed {packet_id}.")
+    if packet["envelope"].get("packet_kind") == "pm_disposition":
+        try:
+            payload = json.loads(body)
+        except json.JSONDecodeError:
+            payload = {}
+        packet_body = json.loads(packet.get("body") or "{}")
+        if isinstance(payload, dict) and isinstance(packet_body.get("minimal_valid_shape"), dict):
+            if payload.get("acceptance_item_disposition") == packet_result_contracts.minimal_valid_shape_for_family(
+                "pm_disposition.node_pm_disposition"
+            ).get("acceptance_item_disposition"):
+                payload["acceptance_item_disposition"] = packet_body["minimal_valid_shape"].get(
+                    "acceptance_item_disposition",
+                    payload.get("acceptance_item_disposition"),
+                )
+                body = json.dumps(payload)
     lease_id = host.lease_responsibility(
         ledger,
         responsibility,
@@ -115,7 +147,37 @@ def _complete_open_packet(ledger: dict, packet_id: str, body: str | None = None)
     runtime.assign_packet(ledger, packet_id, lease_id)
     runtime.ack_lease(ledger, lease_id, packet_id)
     runtime.open_authorized_input_materials_for_role(ledger, packet_id, lease_id)
+    if packet["envelope"].get("packet_kind") == "flowguard_check":
+        _write_flowguard_evidence_artifact(ledger, packet, body or "")
     return host.submit_host_result(ledger, lease_id, packet_id, body)
+
+
+def _write_flowguard_evidence_artifact(ledger: dict, packet: dict, body: str) -> None:
+    path = runtime._flowguard_packet_evidence_artifact_path(ledger, packet)
+    if path is None:
+        return
+    decision = "pass"
+    try:
+        payload = json.loads(body or "{}")
+    except json.JSONDecodeError:
+        payload = {}
+    if isinstance(payload, dict) and payload.get("passed") is False:
+        decision = "blocked"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps(
+            {
+                "schema_version": "flowpilot.flowguard_evidence.v1",
+                "model_test_alignment_report": {
+                    "decision": decision,
+                    "failed_predicates": [] if decision == "pass" else ["recursive_route_test_block"],
+                },
+            },
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
 
 
 def _route_plan_body(nodes: list[dict] | None = None) -> str:
@@ -159,6 +221,7 @@ def _complete_foundation_planning_chain(ledger: dict, pm_packet: str) -> None:
 
 
 def _complete_active_node(ledger: dict, disposition: str = "accept") -> str:
+    runtime.run_until_wait(ledger)
     node_id = ledger["execution_frontier"]["active_node_id"]
     task_packet = _open_packets(ledger, "task", scope="node")[0]
     _complete_open_packet(ledger, task_packet, _pass_body(f"Worker completed {node_id}.", node_id=node_id))
@@ -464,15 +527,14 @@ class FlowPilotRecursiveRouteExecutionRuntimeTests(unittest.TestCase):
             )
             ledger["packets"][blocked_packet]["status"] = "review_blocked"
 
-            self.assertEqual(runtime.router_next_action(ledger).action_type, "close_project")
+            self.assertEqual(runtime.router_next_action(ledger).action_type, "repair_packet")
 
             boundary = runtime.run_until_wait(ledger, max_steps=3)
 
-            self.assertEqual(boundary["folded_applied_actions"][0]["action_type"], "close_project")
             self.assertEqual(boundary["boundary_class"], "recovery")
             self.assertEqual(boundary["next_action"]["action_type"], "repair_packet")
             self.assertEqual(boundary["next_action"]["subject_id"], blocked_packet)
-            self.assertEqual(ledger["closure"]["decision"], "blocked")
+            self.assertIsNone(ledger["closure"])
 
     def test_existing_route_deliverable_allows_final_ledger(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

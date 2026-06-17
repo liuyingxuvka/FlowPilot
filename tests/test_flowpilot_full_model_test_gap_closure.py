@@ -14,6 +14,7 @@ import run_flowpilot_full_model_coverage_inventory as inventory  # noqa: E402
 import flowpilot_control_plane_friction_model_audit as control_friction_audit  # noqa: E402
 import flowpilot_cross_plane_friction_model_audit as cross_friction_audit  # noqa: E402
 import flowpilot_daemon_reconciliation_checks_projection as daemon_projection  # noqa: E402
+import flowpilot_daemon_reconciliation_checks_projection_common as daemon_projection_common  # noqa: E402
 import flowpilot_process_liveness_checks_projection as process_projection  # noqa: E402
 from scripts import run_flowguard_coverage_sweep as sweep  # noqa: E402
 
@@ -310,6 +311,121 @@ class FlowPilotFullModelTestGapClosureTests(unittest.TestCase):
         self.assertFalse(projection["safe_to_claim_live_run_confidence"])
         self.assertTrue(projection["metadata_only"])
 
+    def test_process_liveness_projection_blocks_unabsorbed_repeated_lifecycle_action(self) -> None:
+        old_root = process_projection.PROJECT_ROOT
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            run_root = root / ".flowpilot" / "runs" / "run-loop"
+            run_root.mkdir(parents=True)
+            (root / ".flowpilot" / "current.json").write_text(
+                json.dumps(
+                    {
+                        "run_id": "run-loop",
+                        "run_root": ".flowpilot/runs/run-loop",
+                        "status": "created",
+                    }
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            (run_root / "ledger.json").write_text(
+                json.dumps(
+                    {
+                        "lifecycle_guard_config": {
+                            "max_repeated_action_without_event": 3,
+                        },
+                        "lifecycle_guard": {
+                            "decision": "process_next_action",
+                            "action_key": "open_startup_intake:none",
+                            "observed_event_count": 6,
+                            "repeated_count": 4,
+                            "next_action_class": "user_required",
+                            "next_action": {
+                                "action_type": "open_startup_intake",
+                            },
+                        },
+                        "lifecycle_guard_history": [
+                            {
+                                "decision": "control_plane_stuck",
+                                "action_key": "open_startup_intake:none",
+                                "observed_event_count": 6,
+                                "repeated_count": 3,
+                            }
+                        ],
+                    }
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            process_projection.PROJECT_ROOT = root
+            try:
+                projection = process_projection._current_run_projection()
+            finally:
+                process_projection.PROJECT_ROOT = old_root
+
+        finding_ids = {finding["id"] for finding in projection["findings"]}
+        self.assertFalse(projection["ok"])
+        self.assertIn("repeated_lifecycle_action_not_absorbed", finding_ids)
+        evidence_paths = {str(path).replace("\\", "/") for path in projection["evidence_paths"]}
+        self.assertIn(".flowpilot/runs/run-loop/ledger.json", evidence_paths)
+
+    def test_process_liveness_projection_blocks_current_lifecycle_guard_stuck(self) -> None:
+        old_root = process_projection.PROJECT_ROOT
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            run_root = root / ".flowpilot" / "runs" / "run-stuck"
+            run_root.mkdir(parents=True)
+            (root / ".flowpilot" / "current.json").write_text(
+                json.dumps(
+                    {
+                        "run_id": "run-stuck",
+                        "run_root": ".flowpilot/runs/run-stuck",
+                        "status": "created",
+                    }
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            (run_root / "ledger.json").write_text(
+                json.dumps(
+                    {
+                        "lifecycle_guard_config": {
+                            "max_repeated_action_without_event": 3,
+                        },
+                        "lifecycle_guard": {
+                            "decision": "control_plane_stuck",
+                            "reason": "previous stuck decision for the same nonterminal action remains unresolved",
+                            "action_key": "open_startup_intake:none",
+                            "observed_event_count": 6,
+                            "repeated_count": 15,
+                            "next_action_class": "user_required",
+                            "next_action": {
+                                "action_type": "open_startup_intake",
+                            },
+                        },
+                        "foreground_duty": {
+                            "action": "control_plane_blocker",
+                            "lifecycle_guard_decision": "control_plane_stuck",
+                            "final_return_preflight": {
+                                "blockers": ["guard_decision:control_plane_stuck"],
+                            },
+                        },
+                    }
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            process_projection.PROJECT_ROOT = root
+            try:
+                projection = process_projection._current_run_projection()
+            finally:
+                process_projection.PROJECT_ROOT = old_root
+
+        finding_ids = {finding["id"] for finding in projection["findings"]}
+        self.assertFalse(projection["ok"])
+        self.assertIn("lifecycle_guard_control_plane_stuck", finding_ids)
+        self.assertEqual(projection["severity_counts"]["blocking"], 1)
+
     def test_friction_live_audits_missing_current_run_are_scoped_not_history_fallback(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -352,12 +468,15 @@ class FlowPilotFullModelTestGapClosureTests(unittest.TestCase):
 
     def test_daemon_reconciliation_no_current_run_is_scoped_projection_not_runner_failure(self) -> None:
         old_root = daemon_projection.PROJECT_ROOT
+        old_common_root = daemon_projection_common.PROJECT_ROOT
         with tempfile.TemporaryDirectory() as tmp:
             daemon_projection.PROJECT_ROOT = Path(tmp)
+            daemon_projection_common.PROJECT_ROOT = Path(tmp)
             try:
                 projection = daemon_projection._live_run_projection()
             finally:
                 daemon_projection.PROJECT_ROOT = old_root
+                daemon_projection_common.PROJECT_ROOT = old_common_root
 
         self.assertTrue(projection["ok"])
         self.assertTrue(projection["skipped"])

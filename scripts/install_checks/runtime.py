@@ -372,7 +372,7 @@ def run_checks(result: dict[str, object]) -> None:
                 if human_review_template_path.exists()
                 else {}
             )
-            challenge_required_fields = {
+            deleted_challenge_fields = {
                 "independent_challenge",
                 "independent_challenge.scope_restatement",
                 "independent_challenge.explicit_and_implicit_commitments",
@@ -384,6 +384,15 @@ def run_checks(result: dict[str, object]) -> None:
                 "independent_challenge.reroute_request",
                 "independent_challenge.challenge_waivers",
             }
+            compact_reviewer_fields = {
+                "pm_visible_summary",
+                "reviewed_by_role",
+                "passed",
+                "findings",
+                "blockers",
+                "pm_suggestion_items",
+                "contract_self_check",
+            }
             reviewer_contract_failures = []
             for contract in contract_index.get("contracts", []):
                 if not (
@@ -393,21 +402,29 @@ def run_checks(result: dict[str, object]) -> None:
                 ):
                     continue
                 fields = set(contract.get("required_body_fields", []))
-                missing = sorted(challenge_required_fields - fields)
-                if missing or contract.get("reviewer_independent_challenge_required") is not True:
+                missing_compact_fields = sorted(compact_reviewer_fields - fields)
+                deleted_fields_present = sorted(
+                    field
+                    for field in fields
+                    if field in deleted_challenge_fields or str(field).startswith("independent_challenge.")
+                )
+                legacy_required_flag = contract.get("reviewer_independent_challenge_required")
+                if missing_compact_fields or deleted_fields_present or legacy_required_flag is not None:
                     reviewer_contract_failures.append(
                         {
                             "contract_id": contract.get("contract_id"),
-                            "missing_fields": missing,
-                            "required_flag": contract.get("reviewer_independent_challenge_required"),
+                            "missing_compact_fields": missing_compact_fields,
+                            "deleted_fields_present": deleted_fields_present,
+                            "legacy_required_flag": legacy_required_flag,
                         }
                     )
             active_challenge_ok = (
                 not reviewer_contract_failures
                 and "Reviewer Independent Challenge Gate" in reviewer_core_text
                 and "PM review package is the minimum checklist" in reviewer_core_text
-                and isinstance(human_review_template_json.get("independent_challenge"), dict)
-                and "challenge_actions" in human_review_template_json.get("independent_challenge", {})
+                and "independent challenge internally" in reviewer_core_text
+                and "independent_challenge" not in human_review_template_json
+                and "independent_challenge" not in packet_template_text
                 and "Reviewer Independent Challenge Context" in packet_template_text
             )
             result["checks"].append(

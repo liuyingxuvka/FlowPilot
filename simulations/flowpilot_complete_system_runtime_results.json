@@ -1,5 +1,5 @@
 {
-  "mode": "routine",
+  "mode": "release",
   "ok": true,
   "result_type": "flowpilot_complete_system_runtime_checks",
   "scenarios": [
@@ -53,7 +53,7 @@
           }
         ],
         "blockers": [],
-        "created_at": "2026-06-07T13:14:49.965820+00:00",
+        "created_at": "2026-06-15T22:07:03.377602+00:00",
         "decision": "complete",
         "required_flowguard_target": "development_process",
         "validation_evidence_id": "validation-result-0004"
@@ -123,7 +123,7 @@
           }
         ],
         "blockers": [],
-        "created_at": "2026-06-07T13:14:49.971362+00:00",
+        "created_at": "2026-06-15T22:07:03.386602+00:00",
         "decision": "complete",
         "required_flowguard_target": "development_process",
         "validation_evidence_id": "validation-result-0003"
@@ -135,7 +135,7 @@
             "packets"
           ],
           "cockpit_event_type": "pause",
-          "created_at": "2026-06-07T13:14:49.971362+00:00"
+          "created_at": "2026-06-15T22:07:03.386602+00:00"
         }
       },
       "name": "cockpit_direct_write_rejected",
@@ -198,14 +198,14 @@
           }
         ],
         "blockers": [],
-        "created_at": "2026-06-07T13:14:49.974888+00:00",
+        "created_at": "2026-06-15T22:07:03.397121+00:00",
         "decision": "complete",
         "required_flowguard_target": "development_process",
         "validation_evidence_id": "validation-result-0003"
       },
       "details": {
         "import": {
-          "created_at": "2026-06-07T13:14:49.974888+00:00",
+          "created_at": "2026-06-15T22:07:03.397121+00:00",
           "current_authority": false,
           "disposition": "imported_read_only",
           "import_id": "import-0001",
@@ -275,7 +275,7 @@
         "blockers": [
           "cutover_gate_blocked"
         ],
-        "created_at": "2026-06-07T13:14:49.978406+00:00",
+        "created_at": "2026-06-15T22:07:03.405123+00:00",
         "decision": "blocked",
         "required_flowguard_target": "development_process",
         "validation_evidence_id": "validation-result-0003"
@@ -332,7 +332,7 @@
           "blockers": [
             "cutover_gate_blocked"
           ],
-          "created_at": "2026-06-07T13:14:49.978406+00:00",
+          "created_at": "2026-06-15T22:07:03.405123+00:00",
           "decision": "blocked",
           "required_flowguard_target": "development_process",
           "validation_evidence_id": "validation-result-0003"
@@ -341,7 +341,7 @@
           "blockers": [
             "live_host_not_current"
           ],
-          "created_at": "2026-06-07T13:14:49.978406+00:00",
+          "created_at": "2026-06-15T22:07:03.405123+00:00",
           "decision": "blocked",
           "old_runtime_authority": false
         }
@@ -366,7 +366,7 @@
             "missing_matching_flowguard_report"
           ],
           "checks_evidence": true,
-          "created_at": "2026-06-07T13:14:49.981427+00:00",
+          "created_at": "2026-06-15T22:07:03.408122+00:00",
           "decision": "block",
           "direct_evidence_ids": [],
           "failure_hypotheses": [],
@@ -382,9 +382,9 @@
       },
       "name": "wrong_flowguard_target_blocks_complete_system",
       "next_action": {
-        "action_type": "resolve_role_assignment",
+        "action_type": "dispatch_current_role",
         "modeled_target": "",
-        "reason": "packet role assignment must resolve before lease commit",
+        "reason": "packet role must be dispatched through the current runtime",
         "responsibility": "flowguard_operator",
         "subject_id": "packet-0002"
       },
@@ -399,7 +399,7 @@
           "affected_packets": [
             "packet-0001"
           ],
-          "created_at": "2026-06-07T13:14:49.981427+00:00",
+          "created_at": "2026-06-15T22:07:03.409123+00:00",
           "mutation_id": "mutation-0001",
           "new_route_version": 2,
           "old_route_version": 1,
@@ -428,6 +428,7 @@
               },
               "input_material_manifest": {
                 "authorized_result_reads": [],
+                "blocker_id": "",
                 "node_context_package_id": "",
                 "packet_body_hash_authority": "envelope.body_hash",
                 "required_authorized_reads_before_submit": [],
@@ -445,6 +446,8 @@
               "packet_kind": "task",
               "recipient_responsibility": "worker",
               "required_report_contract": {
+                "branch_valid_shapes": {},
+                "explicit_array_fields": [],
                 "forbidden_result_body_fields": [
                   "outcome",
                   "status",
@@ -452,7 +455,8 @@
                   "verdict",
                   "result",
                   "pass_or_block",
-                  "validation_status"
+                  "validation_status",
+                  "flowguard_report"
                 ],
                 "minimal_valid_shape": {
                   "decision": "pass",
@@ -520,6 +524,7 @@
             },
             "packet_id": "packet-0001",
             "packet_kind": "task",
+            "repair_blocker_id": "",
             "required_flowguard_target": "development_process",
             "required_output_type": "artifact",
             "required_reviewer": "independent",
@@ -533,6 +538,7 @@
           },
           "old_route_disposition": "quarantined",
           "packet_id": "packet-0001",
+          "repair_blocker_id": "",
           "result_ids": [],
           "status": "quarantined_after_route_mutation"
         }
@@ -707,9 +713,9 @@
       },
       "name": "duplicate_output_blocks_second_result",
       "next_action": {
-        "action_type": "resolve_role_assignment",
+        "action_type": "dispatch_current_role",
         "modeled_target": "",
-        "reason": "packet role assignment must resolve before lease commit",
+        "reason": "packet role must be dispatched through the current runtime",
         "responsibility": "flowguard_operator",
         "subject_id": "packet-0002"
       },
@@ -725,7 +731,7 @@
             "missing_matching_flowguard_report"
           ],
           "checks_evidence": true,
-          "created_at": "2026-06-07T13:14:49.986961+00:00",
+          "created_at": "2026-06-15T22:07:03.416124+00:00",
           "decision": "block",
           "direct_evidence_ids": [],
           "failure_hypotheses": [],
@@ -741,9 +747,9 @@
       },
       "name": "missing_target_and_report_only_flowguard_block_review",
       "next_action": {
-        "action_type": "resolve_role_assignment",
+        "action_type": "dispatch_current_role",
         "modeled_target": "",
-        "reason": "packet role assignment must resolve before lease commit",
+        "reason": "packet role must be dispatched through the current runtime",
         "responsibility": "flowguard_operator",
         "subject_id": "packet-0002"
       },
@@ -755,9 +761,9 @@
       },
       "details": {
         "order": {
-          "completed_at": "2026-06-07T13:14:49.989981+00:00",
+          "completed_at": "2026-06-15T22:07:03.419123+00:00",
           "confidence_boundary": "scoped",
-          "created_at": "2026-06-07T13:14:49.989981+00:00",
+          "created_at": "2026-06-15T22:07:03.419123+00:00",
           "decision": "pass",
           "evidence_id": "flowguard-report",
           "flowguard_operator_lease_id": "",
@@ -779,7 +785,7 @@
             "missing_matching_flowguard_report"
           ],
           "checks_evidence": true,
-          "created_at": "2026-06-07T13:14:49.989981+00:00",
+          "created_at": "2026-06-15T22:07:03.420123+00:00",
           "decision": "block",
           "direct_evidence_ids": [],
           "failure_hypotheses": [],
@@ -795,9 +801,9 @@
       },
       "name": "stale_proof_artifact_blocks_review",
       "next_action": {
-        "action_type": "resolve_role_assignment",
+        "action_type": "dispatch_current_role",
         "modeled_target": "",
-        "reason": "packet role assignment must resolve before lease commit",
+        "reason": "packet role must be dispatched through the current runtime",
         "responsibility": "flowguard_operator",
         "subject_id": "packet-0002"
       },
@@ -813,7 +819,7 @@
           "unresolved_residual_risks",
           "unresolved_resources"
         ],
-        "created_at": "2026-06-07T13:14:49.993532+00:00",
+        "created_at": "2026-06-15T22:07:03.430123+00:00",
         "decision": "blocked",
         "required_flowguard_target": "development_process",
         "validation_evidence_id": "validation-result-0003"
@@ -828,7 +834,7 @@
             "unresolved_residual_risks",
             "unresolved_resources"
           ],
-          "created_at": "2026-06-07T13:14:49.993532+00:00",
+          "created_at": "2026-06-15T22:07:03.430123+00:00",
           "decision": "blocked",
           "required_flowguard_target": "development_process",
           "validation_evidence_id": "validation-result-0003"
@@ -852,7 +858,7 @@
         "blocker": {
           "active": "blocked",
           "block_reason": "cockpit_unavailable",
-          "created_at": "2026-06-07T13:14:49.994534+00:00",
+          "created_at": "2026-06-15T22:07:03.431122+00:00",
           "preferred": "cockpit",
           "repair_required": true
         }
@@ -870,7 +876,7 @@
   ],
   "test_mesh": {
     "release_gate": {
-      "ok": false
+      "ok": true
     },
     "routine_gate": {
       "ok": true
@@ -890,12 +896,12 @@
       },
       {
         "evidence": [
-          "live-host evidence required"
+          "live-host evidence supplied"
         ],
-        "freshness": "not_run",
+        "freshness": "current",
         "id": "complete_runtime_release_boundary",
         "scope": "release",
-        "status": "not_run"
+        "status": "passed"
       }
     ]
   }

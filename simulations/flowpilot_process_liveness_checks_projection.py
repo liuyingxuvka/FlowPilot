@@ -27,6 +27,95 @@ def _severity_counts(findings: list[dict[str, object]]) -> dict[str, int]:
         counts[severity] = counts.get(severity, 0) + 1
     return counts
 
+
+def _int_value(value: Any, default: int = 0) -> int:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _lifecycle_guard_repeat_findings(ledger: Any) -> list[dict[str, object]]:
+    if not isinstance(ledger, dict):
+        return []
+    guard = ledger.get("lifecycle_guard")
+    if not isinstance(guard, dict):
+        history = ledger.get("lifecycle_guard_history")
+        if isinstance(history, list) and history and isinstance(history[-1], dict):
+            guard = history[-1]
+        else:
+            return []
+    config = ledger.get("lifecycle_guard_config") if isinstance(ledger.get("lifecycle_guard_config"), dict) else {}
+    threshold = _int_value(config.get("max_repeated_action_without_event"), 3)
+    action_key = str(guard.get("action_key") or "")
+    observed_event_count = guard.get("observed_event_count")
+    repeated_count = _int_value(guard.get("repeated_count"), 1)
+    decision = str(guard.get("decision") or "")
+    next_action = guard.get("next_action") if isinstance(guard.get("next_action"), dict) else {}
+    action_type = str(next_action.get("action_type") or guard.get("action_type") or "")
+    action_class = str(guard.get("next_action_class") or next_action.get("next_action_class") or "")
+    history = ledger.get("lifecycle_guard_history") if isinstance(ledger.get("lifecycle_guard_history"), list) else []
+    prior_stuck_same_action = any(
+        isinstance(row, dict)
+        and row.get("action_key") == action_key
+        and row.get("observed_event_count") == observed_event_count
+        and row.get("decision") == "control_plane_stuck"
+        for row in history
+    )
+    threshold_exceeded = (
+        repeated_count >= threshold
+        and action_class not in {"role_dispatch", "router_internal"}
+        and decision not in {
+            "control_plane_stuck",
+            "terminal_return",
+            "wait_for_ack",
+            "wait_for_result",
+            "wait_for_resume",
+            "resume_reconcile",
+        }
+    )
+    if not action_key or decision == "control_plane_stuck" or not (prior_stuck_same_action or threshold_exceeded):
+        return []
+    return [
+        {
+            "id": "repeated_lifecycle_action_not_absorbed",
+            "severity": "blocking",
+            "summary": "lifecycle guard history shows a repeated nonterminal action that has not been absorbed into control_plane_stuck",
+            "action_key": action_key,
+            "action_type": action_type,
+            "next_action_class": action_class,
+            "decision": decision,
+            "repeated_count": repeated_count,
+            "threshold": threshold,
+            "prior_stuck_same_action": prior_stuck_same_action,
+            "observed_event_count": observed_event_count,
+        }
+    ]
+
+
+def _lifecycle_guard_blocking_findings(ledger: Any) -> list[dict[str, object]]:
+    if not isinstance(ledger, dict):
+        return []
+    guard = ledger.get("lifecycle_guard")
+    if not isinstance(guard, dict):
+        return []
+    if str(guard.get("decision") or "") != "control_plane_stuck":
+        return []
+    next_action = guard.get("next_action") if isinstance(guard.get("next_action"), dict) else {}
+    return [
+        {
+            "id": "lifecycle_guard_control_plane_stuck",
+            "severity": "blocking",
+            "summary": "current lifecycle guard is control_plane_stuck and must be repaired before live confidence",
+            "action_key": str(guard.get("action_key") or ""),
+            "action_type": str(next_action.get("action_type") or guard.get("action_type") or ""),
+            "decision": "control_plane_stuck",
+            "reason": str(guard.get("reason") or ""),
+            "repeated_count": _int_value(guard.get("repeated_count"), 1),
+        }
+    ]
+
+
 def _current_run_projection() -> dict[str, object]:
     findings: list[dict[str, object]] = []
     evidence_paths: list[str] = []
@@ -87,6 +176,7 @@ def _current_run_projection() -> dict[str, object]:
     frontier_path = run_root / "execution_frontier.json"
     router_path = run_root / "router_state.json"
     daemon_path = run_root / "runtime" / "router_daemon_status.json"
+    ledger_path = run_root / "ledger.json"
     packet_path = run_root / "packet_ledger.json"
     final_summary_path = run_root / "final_summary.json"
     route_history_path = run_root / "route_memory" / "route_history_index.json"
@@ -94,6 +184,7 @@ def _current_run_projection() -> dict[str, object]:
         frontier_path,
         router_path,
         daemon_path,
+        ledger_path,
         packet_path,
         final_summary_path,
         route_history_path,
@@ -104,6 +195,7 @@ def _current_run_projection() -> dict[str, object]:
     frontier = _maybe_json(frontier_path)
     router_state = _maybe_json(router_path)
     daemon_status = _maybe_json(daemon_path)
+    ledger = _maybe_json(ledger_path)
     packet_ledger = _maybe_json(packet_path)
     final_summary = _maybe_json(final_summary_path)
     route_history = _maybe_json(route_history_path)
@@ -253,6 +345,9 @@ def _current_run_projection() -> dict[str, object]:
                 "blockers": retry_budget_inconsistent_blockers,
             }
         )
+
+    findings.extend(_lifecycle_guard_blocking_findings(ledger))
+    findings.extend(_lifecycle_guard_repeat_findings(ledger))
 
     controller_counts = (
         daemon_status.get("controller_action_ledger", {}).get("counts", {})

@@ -23,11 +23,20 @@
       "legal_next_action_conformance_failed",
       "legal_next_action_policy_missing",
       "legal_next_action_projection_missing",
+      "lifecycle_guard_stuck_claimed_safe",
       "missing_conformance_claims_runtime",
       "packet_role_origin_unchecked",
       "parent_child_lifecycle_conformance_missed",
       "parent_child_lifecycle_replay_skipped",
       "parent_repair_leaf_event",
+      "repeated_lifecycle_action_not_absorbed",
+      "route_authority_fallback_accepted",
+      "route_authority_model_missing",
+      "route_authority_no_delta_repeat_accepted",
+      "route_authority_owner_conflict",
+      "route_authority_projection_missing",
+      "route_authority_repair_feedback_missing",
+      "route_authority_wrong_path_accepted",
       "sealed_body_opened_by_mesh",
       "skipped_live_audit_used_to_continue",
       "stale_run_result_used",
@@ -37,7 +46,7 @@
   "coverage": {
     "graph": {
       "accepted_state_count": 4,
-      "edge_count": 52,
+      "edge_count": 70,
       "labels_seen": [
         "accept_valid_blocked_current_state",
         "accept_valid_conformance_can_continue",
@@ -56,11 +65,20 @@
         "reject_legal_next_action_conformance_failed",
         "reject_legal_next_action_policy_missing",
         "reject_legal_next_action_projection_missing",
+        "reject_lifecycle_guard_stuck_claimed_safe",
         "reject_missing_conformance_claims_runtime",
         "reject_packet_role_origin_unchecked",
         "reject_parent_child_lifecycle_conformance_missed",
         "reject_parent_child_lifecycle_replay_skipped",
         "reject_parent_repair_leaf_event",
+        "reject_repeated_lifecycle_action_not_absorbed",
+        "reject_route_authority_fallback_accepted",
+        "reject_route_authority_model_missing",
+        "reject_route_authority_no_delta_repeat_accepted",
+        "reject_route_authority_owner_conflict",
+        "reject_route_authority_projection_missing",
+        "reject_route_authority_repair_feedback_missing",
+        "reject_route_authority_wrong_path_accepted",
         "reject_sealed_body_opened_by_mesh",
         "reject_skipped_live_audit_used_to_continue",
         "reject_stale_run_result_used",
@@ -78,11 +96,20 @@
         "select_legal_next_action_conformance_failed",
         "select_legal_next_action_policy_missing",
         "select_legal_next_action_projection_missing",
+        "select_lifecycle_guard_stuck_claimed_safe",
         "select_missing_conformance_claims_runtime",
         "select_packet_role_origin_unchecked",
         "select_parent_child_lifecycle_conformance_missed",
         "select_parent_child_lifecycle_replay_skipped",
         "select_parent_repair_leaf_event",
+        "select_repeated_lifecycle_action_not_absorbed",
+        "select_route_authority_fallback_accepted",
+        "select_route_authority_model_missing",
+        "select_route_authority_no_delta_repeat_accepted",
+        "select_route_authority_owner_conflict",
+        "select_route_authority_projection_missing",
+        "select_route_authority_repair_feedback_missing",
+        "select_route_authority_wrong_path_accepted",
         "select_sealed_body_opened_by_mesh",
         "select_skipped_live_audit_used_to_continue",
         "select_stale_run_result_used",
@@ -94,9 +121,9 @@
       ],
       "missing_labels": [],
       "ok": true,
-      "rejected_state_count": 22,
-      "state_count": 53,
-      "terminal_state_count": 26,
+      "rejected_state_count": 31,
+      "state_count": 71,
+      "terminal_state_count": 35,
       "violations": []
     },
     "negative_reject_labels_seen": [
@@ -113,18 +140,27 @@
       "reject_legal_next_action_conformance_failed",
       "reject_legal_next_action_policy_missing",
       "reject_legal_next_action_projection_missing",
+      "reject_lifecycle_guard_stuck_claimed_safe",
       "reject_missing_conformance_claims_runtime",
       "reject_packet_role_origin_unchecked",
       "reject_parent_child_lifecycle_conformance_missed",
       "reject_parent_child_lifecycle_replay_skipped",
       "reject_parent_repair_leaf_event",
+      "reject_repeated_lifecycle_action_not_absorbed",
+      "reject_route_authority_fallback_accepted",
+      "reject_route_authority_model_missing",
+      "reject_route_authority_no_delta_repeat_accepted",
+      "reject_route_authority_owner_conflict",
+      "reject_route_authority_projection_missing",
+      "reject_route_authority_repair_feedback_missing",
+      "reject_route_authority_wrong_path_accepted",
       "reject_sealed_body_opened_by_mesh",
       "reject_skipped_live_audit_used_to_continue",
       "reject_stale_run_result_used",
       "reject_unregistered_model_authoritative"
     ],
     "ok": true,
-    "required_negative_count": 22
+    "required_negative_count": 31
   },
   "flowguard_explorer": {
     "dead_branch_count": 0,
@@ -132,12 +168,12 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=2 initial_states=1 traces=78",
+    "summary": "sequences=2 initial_states=1 traces=105",
     "violation_count": 0
   },
   "graph": {
     "accepted_state_count": 4,
-    "edge_count": 52,
+    "edge_count": 70,
     "labels_seen": [
       "accept_valid_blocked_current_state",
       "accept_valid_conformance_can_continue",
@@ -156,11 +192,20 @@
       "reject_legal_next_action_conformance_failed",
       "reject_legal_next_action_policy_missing",
       "reject_legal_next_action_projection_missing",
+      "reject_lifecycle_guard_stuck_claimed_safe",
       "reject_missing_conformance_claims_runtime",
       "reject_packet_role_origin_unchecked",
       "reject_parent_child_lifecycle_conformance_missed",
       "reject_parent_child_lifecycle_replay_skipped",
       "reject_parent_repair_leaf_event",
+      "reject_repeated_lifecycle_action_not_absorbed",
+      "reject_route_authority_fallback_accepted",
+      "reject_route_authority_model_missing",
+      "reject_route_authority_no_delta_repeat_accepted",
+      "reject_route_authority_owner_conflict",
+      "reject_route_authority_projection_missing",
+      "reject_route_authority_repair_feedback_missing",
+      "reject_route_authority_wrong_path_accepted",
       "reject_sealed_body_opened_by_mesh",
       "reject_skipped_live_audit_used_to_continue",
       "reject_stale_run_result_used",
@@ -178,11 +223,20 @@
       "select_legal_next_action_conformance_failed",
       "select_legal_next_action_policy_missing",
       "select_legal_next_action_projection_missing",
+      "select_lifecycle_guard_stuck_claimed_safe",
       "select_missing_conformance_claims_runtime",
       "select_packet_role_origin_unchecked",
       "select_parent_child_lifecycle_conformance_missed",
       "select_parent_child_lifecycle_replay_skipped",
       "select_parent_repair_leaf_event",
+      "select_repeated_lifecycle_action_not_absorbed",
+      "select_route_authority_fallback_accepted",
+      "select_route_authority_model_missing",
+      "select_route_authority_no_delta_repeat_accepted",
+      "select_route_authority_owner_conflict",
+      "select_route_authority_projection_missing",
+      "select_route_authority_repair_feedback_missing",
+      "select_route_authority_wrong_path_accepted",
       "select_sealed_body_opened_by_mesh",
       "select_skipped_live_audit_used_to_continue",
       "select_stale_run_result_used",
@@ -194,9 +248,9 @@
     ],
     "missing_labels": [],
     "ok": true,
-    "rejected_state_count": 22,
-    "state_count": 53,
-    "terminal_state_count": 26,
+    "rejected_state_count": 31,
+    "state_count": 71,
+    "terminal_state_count": 35,
     "violations": []
   },
   "hazard_review": {
@@ -352,6 +406,17 @@
       },
       {
         "expected_failures": [
+          "lifecycle_guard_stuck_must_block_mesh_green"
+        ],
+        "missing_expected_failures": [],
+        "observed_failures": [
+          "lifecycle_guard_stuck_must_block_mesh_green"
+        ],
+        "ok": true,
+        "scenario": "lifecycle_guard_stuck_claimed_safe"
+      },
+      {
+        "expected_failures": [
           "evidence_tier_below_required_runtime_confidence",
           "missing_conformance_adapter_cannot_claim_runtime_conformance"
         ],
@@ -409,6 +474,98 @@
       },
       {
         "expected_failures": [
+          "repeated_lifecycle_action_must_block_mesh_green"
+        ],
+        "missing_expected_failures": [],
+        "observed_failures": [
+          "repeated_lifecycle_action_must_block_mesh_green"
+        ],
+        "ok": true,
+        "scenario": "repeated_lifecycle_action_not_absorbed"
+      },
+      {
+        "expected_failures": [
+          "route_authority_fallback_not_rejected"
+        ],
+        "missing_expected_failures": [],
+        "observed_failures": [
+          "route_authority_fallback_not_rejected"
+        ],
+        "ok": true,
+        "scenario": "route_authority_fallback_accepted"
+      },
+      {
+        "expected_failures": [
+          "route_authority_conformance_failed",
+          "route_authority_projection_missing",
+          "route_authority_singularity_model_not_registered"
+        ],
+        "missing_expected_failures": [],
+        "observed_failures": [
+          "route_authority_conformance_failed",
+          "route_authority_projection_missing",
+          "route_authority_singularity_model_not_registered"
+        ],
+        "ok": true,
+        "scenario": "route_authority_model_missing"
+      },
+      {
+        "expected_failures": [
+          "route_authority_no_delta_repeat_not_absorbed"
+        ],
+        "missing_expected_failures": [],
+        "observed_failures": [
+          "route_authority_no_delta_repeat_not_absorbed"
+        ],
+        "ok": true,
+        "scenario": "route_authority_no_delta_repeat_accepted"
+      },
+      {
+        "expected_failures": [
+          "route_authority_owner_conflict"
+        ],
+        "missing_expected_failures": [],
+        "observed_failures": [
+          "route_authority_owner_conflict"
+        ],
+        "ok": true,
+        "scenario": "route_authority_owner_conflict"
+      },
+      {
+        "expected_failures": [
+          "route_authority_projection_missing"
+        ],
+        "missing_expected_failures": [],
+        "observed_failures": [
+          "route_authority_projection_missing"
+        ],
+        "ok": true,
+        "scenario": "route_authority_projection_missing"
+      },
+      {
+        "expected_failures": [
+          "route_authority_repair_feedback_missing"
+        ],
+        "missing_expected_failures": [],
+        "observed_failures": [
+          "route_authority_repair_feedback_missing"
+        ],
+        "ok": true,
+        "scenario": "route_authority_repair_feedback_missing"
+      },
+      {
+        "expected_failures": [
+          "route_authority_wrong_path_not_rejected"
+        ],
+        "missing_expected_failures": [],
+        "observed_failures": [
+          "route_authority_wrong_path_not_rejected"
+        ],
+        "ok": true,
+        "scenario": "route_authority_wrong_path_accepted"
+      },
+      {
+        "expected_failures": [
           "mesh_must_not_open_sealed_bodies"
         ],
         "missing_expected_failures": [],
@@ -457,26 +614,14 @@
     "ok": true
   },
   "live_run_projection": {
-    "blocking_reasons": [
-      "no_current_run_id"
-    ],
+    "blocking_reasons": [],
     "classification_ok": true,
     "current_run_can_continue": false,
-    "decision": "model_coverage_insufficient",
-    "findings": [
-      {
-        "current_run_can_continue": false,
-        "decision": "model_coverage_insufficient",
-        "id": "flowpilot_model_mesh.no_current_run_id",
-        "message": "Current FlowPilot run is not permitted to continue: no_current_run_id",
-        "reason": "no_current_run_id",
-        "run_id": null,
-        "severity": "blocking"
-      }
-    ],
+    "decision": "terminal_not_continuable",
+    "findings": [],
     "metadata_only": true,
     "ok": true,
-    "permission": "blocked_or_insufficient",
+    "permission": "terminal",
     "projected_failures": [],
     "projected_state": {
       "active_blocker_present": false,
@@ -490,37 +635,52 @@
       "coverage_parse_errors_ignored": false,
       "current_authorities_agree": true,
       "current_state_classified": true,
-      "decision": "model_coverage_insufficient",
-      "evidence_tier": "none",
+      "decision": "terminal_not_continuable",
+      "evidence_tier": "live_current_green",
       "install_requires_safe_to_continue": false,
       "installed_skill_matches_repo": true,
       "known_hazard_live_projection_available": true,
       "legal_next_action_conformant": true,
       "legal_next_action_policy_registered": true,
       "legal_next_action_projected": true,
+      "lifecycle_guard_control_plane_stuck": false,
       "live_audit_skipped": false,
       "live_required": true,
       "local_sync_required": false,
       "missing_conformance_adapter": false,
-      "model_registered": false,
-      "model_result_fresh": false,
-      "model_result_ok": false,
-      "model_result_run_matches_current": false,
+      "model_registered": true,
+      "model_result_fresh": true,
+      "model_result_ok": true,
+      "model_result_run_matches_current": true,
       "packet_evidence_accepted": false,
       "parent_child_lifecycle_conformant": true,
       "parent_child_lifecycle_replayed": true,
       "parent_repair_reuses_leaf_event": false,
       "repair_event_node_compatible": true,
+      "repeated_lifecycle_action_absorbed": true,
       "required_tier": "live_current_green",
       "role_origin_checked": true,
+      "route_authority_conformant": true,
+      "route_authority_fallback_rejected": true,
+      "route_authority_no_delta_repeat_absorbed": true,
+      "route_authority_owner_unique": true,
+      "route_authority_projected": true,
+      "route_authority_repair_feedback_present": true,
+      "route_authority_singularity_registered": true,
+      "route_authority_wrong_path_rejected": true,
       "safe_to_continue_claimed": false,
       "scenario": "live_run_projection",
       "sealed_body_opened_by_mesh": false,
       "status": "selected",
       "status_summary_reports_blocked": false
     },
-    "run_id": null,
-    "sealed_body_opened_by_mesh": false
+    "run_id": "run-20260614-184920",
+    "run_root": ".flowpilot\\runs\\run-20260614-184920",
+    "sealed_body_opened_by_mesh": false,
+    "terminal_disposition": {
+      "packet_authority_unchecked_disposed_by_terminal_state": false,
+      "terminal_run": true
+    }
   },
   "model": "flowpilot_model_mesh",
   "ok": true,

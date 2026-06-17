@@ -64,6 +64,11 @@ model:
 - no product-model state, failure/recovery path, or completion evidence is left
   only partially covered by the route;
 - route nodes preserve the frozen root contract and child-skill gate manifest;
+- every active acceptance item from the accepted registry is reachable through
+  at least one effective route node, and every route-node
+  `acceptance_item_ids` entry names a real active item. Treat missing owners,
+  orphan PM high-standard items, orphan user items, or route redesigns that
+  drop active items as process blockers;
 - every ordinary child-skill standard that affects route design, worker
   execution, FlowGuard operator modeling, review, or validation is represented in the
   process model family or explicitly deferred/waived by PM;
@@ -114,6 +119,14 @@ model:
   any omission first checks whether the process model missed a class of work,
   upgrades the model when needed, searches same-class omissions, adds
   supplemental nodes, and reruns stale gates;
+- terminal supplemental repair contracts do not create a second workflow.
+  Check that each supplemental repair item cites the frozen original goal,
+  projects to an owner repair node through
+  `supplemental_repair_contract_ids` and `supplemental_repair_item_ids`, reuses
+  the normal FlowPilot node gates, invalidates stale terminal ledgers/replay,
+  and returns to terminal closure. Block any process that can open a fourth
+  terminal supplemental repair round or dispatch Worker repair without PM
+  contract, FlowGuard, Reviewer, and PM disposition gates;
 - root or parent/module node-entry gaps before executable child work are handled
   as route replanning or ordinary node expansion, not as repair-node creation;
 - if the draft adds or changes capability, the FlowGuard operator product-capability fit
@@ -124,10 +137,10 @@ model:
   which product/process checks must rerun;
 - repair branches distinguish mechanical progress from semantic repair
   progress. Creating another packet, lease, or repair generation is not enough
-  if the same current route node keeps returning with the same blocker class,
-  gate kind, and required recheck role. Preserve that blocker class for a
-  repeated same-node defect so runtime can count the loop. If the process route
-  would allow more than five consecutive same-node attempts before Controller
+  if the same repair lineage keeps returning with the same blocker class, gate
+  kind, and required recheck role. Preserve that blocker class for a repeated
+  same-lineage defect so runtime can count the loop. If the process route would
+  allow more than five consecutive same-lineage attempts before Controller
   break-glass diagnosis, block the route/process model and recommend PM repair
   of the control path. Similar blocker classes across different route nodes do
   not trigger this threshold by themselves.

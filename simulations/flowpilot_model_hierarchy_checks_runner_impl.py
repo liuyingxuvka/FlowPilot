@@ -9,7 +9,7 @@ from collections import deque
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
-from flowguard import Explorer
+from flowguard.explorer import Explorer
 
 import flowpilot_model_hierarchy_model as model
 from flowpilot_model_hierarchy_checks_runner_inventory import (

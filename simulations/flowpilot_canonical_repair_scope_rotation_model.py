@@ -57,6 +57,12 @@ class State:
     replacement_scope_created: bool = False
     parent_found: bool = False
     descendants_superseded: bool = False
+    parent_repair_contract_present: bool = False
+    repair_child_specs_count: int = 0
+    active_repair_child_nodes_created: int = 0
+    inherited_child_history_recorded: bool = False
+    inherited_children_current: bool = False
+    parent_repair_inherited_only_replay: bool = False
     route_plan_packet_present: bool = False
     flowguard_scan_passed: bool = False
     reviewer_scan_passed: bool = False
@@ -65,6 +71,8 @@ class State:
     blocker_terminal: bool = False
     same_node_repair_in_place: bool = False
     old_decision_accepted: bool = False
+    same_lineage_attempt_count: int = 0
+    repair_loop_break_glass_required: bool = False
 
 
 @dataclass(frozen=True)
@@ -156,6 +164,8 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
                     source_id="node-001",
                     blocker_id="blocker-001",
                     parent_found=True,
+                    parent_repair_contract_present=True,
+                    repair_child_specs_count=1,
                 ),
             ),
             Transition(
@@ -194,6 +204,8 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
                     old_scope_superseded=True,
                     replacement_scope_created=True,
                     descendants_superseded=True,
+                    active_repair_child_nodes_created=1,
+                    inherited_child_history_recorded=True,
                 ),
             ),
         )
@@ -253,10 +265,24 @@ def invariant_failures(state: State) -> list[str]:
         if not (state.old_scope_superseded and state.replacement_scope_created):
             failures.append("scope repair opened without superseded old scope and replacement scope")
     if state.pm_decision == "repair_parent_scope":
+        if state.replacement_scope_created and not state.parent_repair_contract_present:
+            failures.append("parent repair replacement accepted without repair_parent_scope_contract")
+        if state.replacement_scope_created and state.repair_child_specs_count <= 0:
+            failures.append("parent repair replacement accepted without repair_child_specs")
+        if state.replacement_scope_created and state.active_repair_child_nodes_created <= 0:
+            failures.append("parent repair replacement parent has no active repair child nodes")
+        if state.replacement_scope_created and not state.inherited_child_history_recorded:
+            failures.append("parent repair replacement failed to record inherited child history")
+        if state.inherited_children_current:
+            failures.append("parent repair kept inherited children as current closure path")
+        if state.parent_repair_inherited_only_replay:
+            failures.append("parent repair replay closed from inherited history without current repair child result")
         if state.replacement_scope_created and not state.parent_found:
             failures.append("parent repair guessed a parent scope")
         if state.blocker_repair_packet_open and not state.descendants_superseded:
             failures.append("parent repair kept descendants current")
+    if state.same_lineage_attempt_count > 5 and not state.repair_loop_break_glass_required:
+        failures.append("same repair lineage exceeded five attempts without break-glass")
     if state.pm_decision == "redesign_route":
         if state.route_version_switched and not (state.route_plan_packet_present and state.flowguard_scan_passed and state.reviewer_scan_passed):
             failures.append("route redesign activated without strict route plan and scans")
@@ -290,7 +316,8 @@ INVARIANTS = (
             "PM repair decisions use exactly the current five-choice menu, "
             "removed decisions are rejected, nonterminal repair opens only "
             "after a fresh current executable packet exists, parent repair "
-            "abandons descendants, route redesign is scanned before activation, "
+            "uses a structured child-spec contract, abandons descendants into "
+            "history, creates active repair children, route redesign is scanned before activation, "
             "and terminal decisions create no packet."
         ),
         predicate=invariant,
@@ -324,7 +351,16 @@ def is_success(state: State) -> bool:
             and state.blocker_repair_packet_open
         ):
             return False
-        if state.pm_decision == "repair_parent_scope" and not (state.parent_found and state.descendants_superseded):
+        if state.pm_decision == "repair_parent_scope" and not (
+            state.parent_found
+            and state.descendants_superseded
+            and state.parent_repair_contract_present
+            and state.repair_child_specs_count > 0
+            and state.active_repair_child_nodes_created > 0
+            and state.inherited_child_history_recorded
+            and not state.inherited_children_current
+            and not state.parent_repair_inherited_only_replay
+        ):
             return False
         if state.pm_decision == "redesign_route" and not (
             state.route_plan_packet_present
@@ -376,6 +412,10 @@ def hazard_states() -> dict[str, State]:
         pm_decision="repair_parent_scope",
         parent_found=True,
         descendants_superseded=True,
+        parent_repair_contract_present=True,
+        repair_child_specs_count=1,
+        active_repair_child_nodes_created=1,
+        inherited_child_history_recorded=True,
     )
     return {
         "removed_decision_reached_runtime": replace(base, pm_decision="same_node_repair"),
@@ -384,7 +424,18 @@ def hazard_states() -> dict[str, State]:
         "repair_packet_open_without_current_open_packet": replace(base, fresh_packet_current_open=False),
         "repair_packet_open_without_transaction": replace(base, transaction_recorded=False),
         "parent_repair_guessed_parent": replace(parent_base, parent_found=False),
+        "parent_repair_missing_contract": replace(parent_base, parent_repair_contract_present=False),
+        "parent_repair_missing_child_specs": replace(parent_base, repair_child_specs_count=0),
+        "parent_repair_empty_replacement_parent": replace(parent_base, active_repair_child_nodes_created=0),
+        "parent_repair_missing_inherited_history": replace(parent_base, inherited_child_history_recorded=False),
+        "parent_repair_inherited_children_current": replace(parent_base, inherited_children_current=True),
+        "parent_repair_inherited_only_replay": replace(parent_base, parent_repair_inherited_only_replay=True),
         "parent_repair_kept_descendants_current": replace(parent_base, descendants_superseded=False),
+        "same_repair_lineage_loop_without_break_glass": replace(
+            base,
+            same_lineage_attempt_count=6,
+            repair_loop_break_glass_required=False,
+        ),
         "route_redesign_without_plan": replace(route_base, route_plan_packet_present=False),
         "route_redesign_without_flowguard_scan": replace(route_base, flowguard_scan_passed=False),
         "waiver_without_authority": replace(

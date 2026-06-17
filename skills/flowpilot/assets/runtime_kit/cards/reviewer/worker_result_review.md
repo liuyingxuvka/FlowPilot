@@ -19,10 +19,9 @@ runtime_context: Treat the runtime delivery envelope as the live source for the 
 
 ## Decision-Support Findings
 
-For every outcome, consider `independent_challenge.non_blocking_findings`.
-Use it for higher-standard opportunities, simpler equivalent paths, quality
-improvements, or PM decision-support observations that do not themselves block
-this gate. This applies even when the review blocks.
+For every outcome, consider PM decision-support observations. Put
+higher-standard opportunities, simpler equivalent paths, and quality
+improvements that do not themselves block this gate into `pm_suggestion_items`.
 When useful, express these findings as candidate
 `flowpilot.pm_suggestion_item.v1` entries for PM's suggestion ledger. Use
 `current_gate_blocker` only when the current gate's minimum standard cannot be
@@ -33,9 +32,9 @@ If this review blocks, requests more evidence, or requires reroute, include
 PM-actionable recommendation for resolving the blocked review. PM remains the
 owner of final repair strategy.
 
-When blocking the same current route node for the same defect as the prior
-review, reuse the prior `blocker_class` instead of inventing a new name. This
-preserves same-node repeat evidence for the runtime threshold; it does not let
+When blocking the same repair lineage for the same defect as the prior review,
+reuse the prior `blocker_class` instead of inventing a new name. This preserves
+same-lineage repeat evidence for the runtime threshold; it does not let
 Reviewer decide break-glass, and similar defects on different route nodes
 remain ordinary repair evidence.
 
@@ -85,6 +84,11 @@ Check:
 - PM opened each result body through the current assignment path to
   `project_manager`, and PM recorded an absorbed disposition before
   this reviewer gate;
+- every packet-scoped `acceptance_item_id` has a matching
+  `Acceptance Item Result Matrix` row, and the cited evidence is strong enough
+  for that item's high-quality floor. Block if the result uses overall pass
+  prose, existence-only evidence, or generic test output instead of closing
+  the item-specific required evidence;
 - the PM formal gate package's `result_envelopes` entries identify the existing
   result envelope and, when known, the source packet envelope and
   `source_output_contract_id` needed to recover the source packet acceptance
@@ -95,9 +99,9 @@ Check:
 - no Controller-origin project evidence closes the gate;
 - no wrong-role relabeling, private mail, stale body, or contaminated body was used;
 - when the result affects a final user, operator, maintainer, reader, or
-  delivered product, `independent_challenge` explicitly tests final-user usefulness,
-  user intent, experience quality, and semantic fit instead of treating packet
-  satisfaction as enough;
+  delivered product, the review challenge explicitly tests final-user usefulness,
+  user intent, experience quality, and semantic fit instead of
+  treating packet satisfaction as enough;
 - result body includes `Contract Self-Check` against the source packet
   `output_contract`, and missing or failed self-check blocks pass;
 - when the source packet declares inherited skill-standard ids, the result body
@@ -105,13 +109,11 @@ Check:
   status `done`, `not_applicable`, `waived`, or `blocked`, evidence path or
   waiver reason, and the worker's explanation. Missing rows, manifest-only
   evidence, or unapproved waivers block pass;
-- when the source packet, PM package, or node acceptance plan declares
-  `test_obligation_matrix` rows, the PM-built package includes both
-  pre-worker and post-worker matrix refs, and the result body includes
-  `Test Obligation Coverage` rows for every packet-scoped test obligation.
-  Missing, stale, skipped, failed, not-run, progress-only, unsupported, or
-  undispositioned test rows block pass. FlowGuard operator `missing_test_kinds` must be
-  converted into PM dispositions; residual prose is not closure evidence;
+- when the source packet, PM package, or node acceptance plan declares current
+  evidence obligations, the PM-built package includes current evidence refs
+  and the result body covers every packet-scoped obligation. Missing, stale,
+  skipped, failed, not-run, progress-only, unsupported, or undispositioned
+  evidence rows block pass; residual prose is not closure evidence;
 - when the source packet declares FlowGuard-derived obligations, the result
   body includes `FlowGuard Obligation Coverage` rows for every packet-scoped
   obligation. Missing originating work-order/report ids, missing freshness,
@@ -149,10 +151,9 @@ Check:
   compatibility branch, duplicate adapter, stale generated artifact, or
   maintenance layer, or if any retained surface lacks owner, scope, validation
   evidence, and sunset or next-disposition criteria.
-- block any worker result that uses old artifacts, old route fields,
-  newest-run fallback, repo-root fallback, or historical evidence as current
-  completion evidence. Negative rejection evidence is allowed only when it is
-  clearly separated from completion evidence.
+- block any worker result that uses non-current artifacts or evidence as
+  current completion evidence. Negative rejection evidence is allowed only when
+  it is clearly separated from completion evidence.
 - when the PM package, node plan, route, or source packet identifies
   shallow-completion traps, challenge them from the final user's point of view.
   Block if any current trap remains plausible because the evidence is only a
@@ -182,51 +183,26 @@ Write the full body to the run-scoped reviewer report file requested by Router
 state and submit the runtime-generated envelope directly to Router. Controller
 may later see only Router-exposed metadata with the report path and hash.
 
-The body must use these exact field names. Include every required field even
-when the PM-built node-completion package is blocked.
+The body must use the current review result fields. Include every required
+field even when the PM-built node-completion package is blocked.
 
 ```json
 {
-  "schema_version": "flowpilot.reviewer_review_report.v1",
-  "run_id": "<current run id>",
-  "report_type": "pm_node_completion_package_review",
+  "pm_visible_summary": ["<short PM-visible review summary>"],
   "reviewed_by_role": "human_like_reviewer",
   "passed": false,
-  "direct_evidence_paths_checked": [],
-  "independent_challenge": {
-    "scope_restatement": "<reviewed artifact, route slice, evidence, and out-of-scope boundary>",
-    "explicit_and_implicit_commitments": {
-      "explicit": [],
-      "implicit": []
-    },
-    "failure_hypotheses": [],
-    "challenge_actions": [
-      {
-        "action": "<task-specific probe, source inspection, command, walkthrough, counterexample, or waiver>",
-        "evidence_path": "<path-or-null>",
-        "result": "<observed result>"
-      }
-    ],
-    "blocking_findings": [],
-    "non_blocking_findings": [],
-    "pass_or_block": "block",
-    "reroute_request": "<pm repair, route mutation, reissue, replay, or null>",
-    "challenge_waivers": []
-  },
   "findings": [],
   "blockers": [],
-  "recommended_resolution": "<required when passed is false; null when passed is true>",
-  "residual_risks": [],
   "pm_suggestion_items": [],
   "contract_self_check": {
     "all_required_fields_present": true,
     "exact_field_names_used": true,
-    "empty_required_arrays_explicit": true
+    "empty_required_arrays_explicit": true,
+    "runtime_mechanical_validation_passed": true
   }
 }
 ```
 
 If the PM-built node-completion package passes, set `passed: true` and keep
 `blockers: []`. If it needs repair, more material, or has invalid role origin,
-set `passed: false`, record the reason in `blockers`, and still include all
-fields above.
+set `passed: false` and record the reason in `blockers`.

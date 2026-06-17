@@ -97,6 +97,20 @@ class FlowPilotRouterBoundaryTests(unittest.TestCase):
             written = json.loads(path.read_text(encoding="utf-8"))
             self.assertEqual(written, payload)
 
+    def test_project_relative_fast_path_keeps_outside_root_guard(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            nested = root / ".flowpilot" / "runs" / "run-fast-path" / "state.json"
+            nested.parent.mkdir(parents=True)
+            nested.write_text("{}", encoding="utf-8")
+
+            self.assertEqual(
+                router_io_paths.project_relative(root, nested),
+                ".flowpilot/runs/run-fast-path/state.json",
+            )
+            with self.assertRaisesRegex(router.RouterError, "outside project root"):
+                router_io_paths.project_relative(root, root.parent / "outside.json")
+
     def test_card_settlement_identity_helpers_match_nested_records(self) -> None:
         record = {
             "action": {

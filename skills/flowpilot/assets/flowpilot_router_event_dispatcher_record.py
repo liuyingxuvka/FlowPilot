@@ -32,6 +32,20 @@ def _record_external_event_unchecked(router: ModuleType, project_root: Path, eve
     if event not in EXTERNAL_EVENTS:
         if _is_card_return_event_name(event):
             return _record_card_return_event_from_external_entrypoint(project_root, event)
+        bootstrap = router.load_bootstrap_state(project_root, create_if_missing=False)
+        run_state, run_root = router.load_run_state(project_root, bootstrap)
+        alias_action = router._unsupported_route_action_alias(event)
+        if alias_action and run_state is not None and run_root is not None:
+            router._refresh_route_memory(project_root, run_root, run_state, trigger=f'before_unsupported_route_action_alias:{event}')
+            router._reject_route_authority_submission(
+                project_root,
+                run_root,
+                run_state,
+                rejected_action_id=alias_action,
+                context=f'external event {event}',
+                rejected_event=event,
+                rejection_kind='unsupported_event_alias',
+            )
         raise RouterError(f'unknown external event: {event}')
     bootstrap = router.load_bootstrap_state(project_root, create_if_missing=False)
     run_state, run_root = router.load_run_state(project_root, bootstrap)
@@ -135,16 +149,17 @@ def _record_external_event_unchecked(router: ModuleType, project_root: Path, eve
         return authority_split
     if _scoped_event_is_recorded(run_state, scoped_identity):
         return _already_recorded_external_event_result(project_root, run_root, run_state, event=event, payload=payload, scoped_identity=scoped_identity)
+    payload = payload or {}
+    route_action = router._route_action_for_event(event)
+    if route_action:
+        router._reject_unsupported_route_authority_payload(project_root, run_root, run_state, event=event, action_id=route_action, payload=payload)
+        router._require_legal_route_action(project_root, run_root, run_state, route_action, f'external event {event}')
     if required_flag and (not run_state['flags'].get(required_flag)):
         raise RouterError(f'event {event} requires {required_flag}')
     _check_scoped_event_retry_budget(run_state, scoped_identity)
     if run_state['flags'].get(flag) and (not _external_event_flag_replay_requires_new_processing(run_root, run_state, event=event, flag=flag, payload=payload, scoped_identity=scoped_identity)):
         _check_scoped_event_conflict(run_state, scoped_identity)
         return _already_recorded_external_event_result(project_root, run_root, run_state, event=event, payload=payload, scoped_identity=scoped_identity)
-    payload = payload or {}
-    route_action = router._route_action_for_event(event)
-    if route_action:
-        router._require_legal_route_action(project_root, run_root, run_state, route_action, f'external event {event}')
     if flowpilot_router_events.apply_migrated_event_side_effect(router, project_root, run_root, run_state, event, payload):
         pass
     elif event == 'pm_resume_recovery_decision_returned':

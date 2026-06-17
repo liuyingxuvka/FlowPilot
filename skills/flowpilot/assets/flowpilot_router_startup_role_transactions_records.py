@@ -93,7 +93,14 @@ def _normalize_role_recovery_agent_records(router: ModuleType, project_root: Pat
     existing_by_role = {str(slot.get('role_key')): slot for slot in slots if isinstance(slot, dict) and slot.get('role_key') in RUNTIME_ROLE_KEYS}
     full_role_binding = payload_scope == 'full_role_binding' or any((isinstance(raw, dict) and raw.get('recovery_result') == ROLE_BINDING_FULL_SET_RECOVERY_RESULT for raw in iterable))
     expected_roles = list(RUNTIME_ROLE_KEYS) if full_role_binding else target_roles
-    contexts = {item['role_key']: item for item in router._resume_role_contexts(project_root, run_root, run_state)}
+    context_roles = list(RUNTIME_ROLE_KEYS) if full_role_binding else target_roles
+    contexts = {
+        role: router._resume_role_context(project_root, run_root, run_state, role)
+        for role in context_roles
+    }
+    for role in expected_roles:
+        if role not in contexts:
+            contexts[role] = router._resume_role_context(project_root, run_root, run_state, role)
     records_by_role: dict[str, dict[str, Any]] = {}
     environment_blocked = False
     for raw in iterable:

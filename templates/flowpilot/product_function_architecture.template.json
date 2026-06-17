@@ -33,6 +33,21 @@
         "status": "<active|superseded|rejected|deferred>",
         "superseded_by": []
       }
+    ],
+    "acceptance_item_registry_seed": [
+      {
+        "acceptance_item_id": "<acc-user-001>",
+        "source_type": "<user_explicit|user_implicit|pm_high_standard|skill_standard|flowguard_obligation>",
+        "source_requirement_ids": [],
+        "summary": "<atomic current-run acceptance item>",
+        "quality_floor": "high_quality_required",
+        "low_quality_failure_patterns": [],
+        "required_evidence": "<direct evidence, review, test, model, or waiver needed>",
+        "owner_node_ids": [],
+        "review_gate_ids": [],
+        "final_replay_required": true,
+        "status": "<active|superseded|waived>"
+      }
     ]
   },
   "high_standard_posture": {

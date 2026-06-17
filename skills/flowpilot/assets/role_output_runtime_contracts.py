@@ -51,13 +51,6 @@ def _default_for_required_field(
         return run_root.name
     if field_path == "contract_self_check":
         return _contract_self_check(bool(spec.explicit_array_fields))
-    if field_path == "evidence_consistency":
-        return {
-            "self_check_passed": False,
-            "child_reports_all_passed": False,
-            "blocking_child_reports": [],
-            "hard_evidence_decision": _required_placeholder("evidence_consistency.hard_evidence_decision"),
-        }
     if field_path == "prior_path_context_review":
         return _prior_path_context(project_root, run_root)
     if field_path == "repair_transaction":
@@ -77,18 +70,6 @@ def _default_for_required_field(
             "controller_may_create_project_evidence": False,
             "controller_may_approve_gates": False,
             "controller_may_implement": False,
-        }
-    if field_path == "independent_challenge":
-        return {
-            "scope_restatement": _required_placeholder("independent_challenge.scope_restatement"),
-            "explicit_and_implicit_commitments": [],
-            "failure_hypotheses": [],
-            "challenge_actions": [],
-            "blocking_findings": [],
-            "non_blocking_findings": [],
-            "pass_or_block": _required_placeholder("independent_challenge.pass_or_block"),
-            "reroute_request": [],
-            "challenge_waivers": [],
         }
     role_defaults = {
         "decision_owner": role,
@@ -169,7 +150,7 @@ def build_output_skeleton(
         "semantic_sufficiency_owner": "assigned_role_or_downstream_gate",
         "progress_status": {
             "default_progress_required": True,
-            "runtime_command": "flowpilot_runtime.py progress-output",
+            "runtime_command": "flowpilot_new.py progress --lease-id <lease-id> --packet-id <packet-id> --status <metadata-only-status>",
             "controller_visibility": "metadata_only",
             "controller_aside": controller_process_aside_contract(),
             "message_boundary": (

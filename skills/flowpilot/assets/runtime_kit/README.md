@@ -13,9 +13,10 @@ Rules:
   `delivered_by: controller`.
 - Role-to-role work uses packet/mail ledgers and sealed bodies.
 - Formal file-backed PM decisions, reviewer reports, FlowGuard operator reports, and
-  GateDecision bodies use `role_output_runtime.py` for skeleton generation,
-  mechanical validation, receipts, ledgers, hashes, and controller-visible
-  envelopes.
+  GateDecision bodies use the current `flowpilot_new.py open-packet`
+  `submission_checklist` for skeleton shape and `flowpilot_new.py
+  submit-result` for mechanical validation, receipts, ledgers, hashes, and
+  controller-visible envelopes.
 - `flowpilot_new.py` is the public role entrypoint. It delegates system-card
   check-in, packet/result opens, packet completion, and formal report/decision
   submission through the current runtime ledger.

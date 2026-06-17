@@ -15,7 +15,11 @@ runtime_context: Treat the runtime delivery envelope as the live source for the 
 - Reviewer checks alignment and quality. Reviewer does not author PM intent or
   FlowGuard models.
 - Block only current-gate failures. Put useful but nonblocking improvements in
-  `independent_challenge.non_blocking_findings`.
+  `pm_suggestion_items`.
+- Nonblocking PM suggestion items may be reported only as
+  `flowpilot.pm_suggestion_item.v1` advisory items. Treat the minimum standard
+  as advisory only for these items; do not use them as current gate blockers
+  unless they are hard current-gate failures.
 - Do not contact workers or FlowGuard operators directly; return findings through this reviewer event so PM can route needed work.
 - Classify findings as hard blockers, future requirements, and nonblocking notes; only hard blockers may stop the current gate.
 

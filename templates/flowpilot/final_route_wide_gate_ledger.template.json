@@ -17,9 +17,12 @@
     "process_modeling_plan": ".flowpilot/runs/<run-id>/flowguard/process_modeling_plan.json",
     "product_function_architecture": ".flowpilot/runs/<run-id>/product_function_architecture.json",
     "root_acceptance_contract": ".flowpilot/runs/<run-id>/root_acceptance_contract.json",
+    "acceptance_item_registry": ".flowpilot/runs/<run-id>/acceptance_item_registry.json",
+    "supplemental_repair_contracts": ".flowpilot/runs/<run-id>/supplemental_repair_contracts.json",
     "standard_scenario_pack": ".flowpilot/runs/<run-id>/standard_scenario_pack.json",
     "capabilities": ".flowpilot/runs/<run-id>/capabilities.json",
     "generated_resource_ledger": ".flowpilot/runs/<run-id>/generated_resource_ledger.json",
+    "final_artifact_hygiene_inventory": ".flowpilot/runs/<run-id>/quality/final_artifact_hygiene_inventory.json",
     "self_interrogation_index": ".flowpilot/runs/<run-id>/self_interrogation_index.json",
     "defect_ledger": ".flowpilot/runs/<run-id>/defects/defect_ledger.json",
     "role_binding_memory": ".flowpilot/runs/<run-id>/role_binding_memory",
@@ -71,7 +74,13 @@
     "standard_scenarios_replayed": false,
     "residual_risk_triage_done": false,
     "requirement_trace_checked": false,
+    "acceptance_item_trace_checked": false,
     "every_effective_requirement_closure_row_present": false,
+    "every_active_acceptance_item_closure_row_present": false,
+    "every_active_supplemental_repair_item_closure_row_present": false,
+    "acceptance_item_direct_evidence_checked": false,
+    "supplemental_repair_direct_evidence_checked": false,
+    "acceptance_item_waiver_authority_checked": false,
     "requirement_direct_evidence_checked": false,
     "requirement_waiver_authority_checked": false,
     "requirement_stale_status_checked": false,
@@ -80,6 +89,7 @@
     "role_memory_reconciled": false,
     "continuation_quarantine_reconciled": false,
     "terminal_closure_reconciliation_clean": false,
+    "final_artifact_hygiene_closure_checked": false,
     "unresolved_residual_risk_count_zero": false,
     "waivers_have_required_role": false,
     "blocked_items_have_pm_repair_or_stop_decision": false
@@ -98,6 +108,16 @@
     "generated_resource_count": 0,
     "effective_requirement_count": 0,
     "resolved_requirement_count": 0,
+    "active_acceptance_item_count": 0,
+    "resolved_acceptance_item_count": 0,
+    "active_supplemental_repair_contract_count": 0,
+    "resolved_supplemental_repair_contract_count": 0,
+    "active_supplemental_repair_item_count": 0,
+    "resolved_supplemental_repair_item_count": 0,
+    "unresolved_supplemental_repair_item_count": 0,
+    "waived_acceptance_item_count": 0,
+    "superseded_acceptance_item_count": 0,
+    "unresolved_acceptance_item_count": 0,
     "superseded_requirement_count": 0,
     "waived_requirement_count": 0,
     "unresolved_requirement_count": 0,
@@ -110,6 +130,9 @@
     "resolved_structure_debt_count": 0,
     "unresolved_structure_debt_count": 0,
     "unresolved_model_family_count": 0,
+    "final_artifact_hygiene_finding_count": 0,
+    "resolved_final_artifact_hygiene_count": 0,
+    "unresolved_final_artifact_hygiene_count": 0,
     "self_interrogation_record_count": 0,
     "self_interrogation_issue_count": 0,
     "self_interrogation_unresolved_hard_finding_count": 0,
@@ -120,6 +143,32 @@
     "imported_artifact_authority_count": 0,
     "unresolved_count": null
   },
+  "terminal_supplemental_repair": {
+    "schema_version": "black_box_flowpilot.terminal_supplemental_repair.v1",
+    "status": "<inactive|active|clean|repair_rounds_exhausted>",
+    "current_round": 0,
+    "max_rounds": 3,
+    "active_contract_id": "<contract-id-or-empty>",
+    "exhausted_reason": "<reason-or-empty>",
+    "round_cap_is_runtime_owned": true
+  },
+  "supplemental_repair_closure": [
+    {
+      "contract_id": "<terminal-supplemental-repair-contract-id>",
+      "round_number": 1,
+      "repair_item_id": "<repair-item-id>",
+      "gap_kind": "<latent_high_standard_requirement|missing_implementation|missing_validation|weak_evidence|route_structure_gap|terminal_replay_gap>",
+      "original_goal_link": "<why-this-is-required-for-the-current-user-goal>",
+      "reviewer_gap": "<terminal-reviewer-gap>",
+      "required_repair": "<repair-work>",
+      "owner_repair_node_id": "<route-node-id>",
+      "acceptance_item_ids": [],
+      "required_evidence": [],
+      "evidence_ids": [],
+      "status": "<covered|missing|orphan|projection_missing>",
+      "unresolved_reason": "<reason-or-empty>"
+    }
+  ],
   "residual_risk_triage": {
     "path": ".flowpilot/runs/<run-id>/residual_risk_triage.json",
     "required": true,
@@ -205,6 +254,21 @@
       "reason": "<why-this-disposition-is-valid>"
     }
   ],
+  "final_artifact_hygiene_closure": [
+    {
+      "finding_id": "<hygiene-finding-id>",
+      "artifact_family": "<code|document|ui|model|test|process|generated_artifact|other>",
+      "surface_path": "<path-or-null>",
+      "classification": "<current_goal_required_repair|clean_delivery_required_repair|pm_decision_support|future_contract_candidate>",
+      "owner_node_id": "<route-node-id-or-null>",
+      "supplemental_contract_id": "<contract-id-or-null>",
+      "supplemental_repair_item_id": "<repair-item-id-or-null>",
+      "evidence_refs": [],
+      "disposition": "<clean|repaired|not_applicable|waived_by_authority|deferred_future_contract|pm_suggestion_dispositioned|blocked>",
+      "unresolved": false,
+      "reason": "<why-this-disposition-is-valid-or-blocked>"
+    }
+  ],
   "requirement_trace_closure": [
     {
       "requirement_id": "<root-or-product-requirement-id>",
@@ -220,6 +284,23 @@
       "stale_evidence_refs": [],
       "superseded_by_requirement_ids": [],
       "waiver_authority": "<project_manager|human_like_reviewer|flowguard_operator|null>",
+      "unresolved_reason": "<reason-or-null>"
+    }
+  ],
+  "acceptance_item_closure": [
+    {
+      "acceptance_item_id": "<acc-id>",
+      "source_type": "<user_explicit|user_implicit|pm_high_standard|skill_standard|flowguard_obligation>",
+      "source_requirement_ids": [],
+      "quality_floor": "high_quality_required",
+      "required_evidence": "<direct current evidence required>",
+      "owner_node_ids": [],
+      "closed_by_node_ids": [],
+      "review_gate_ids": [],
+      "evidence_paths": [],
+      "waiver_authority": "<project_manager|human_like_reviewer|flowguard_operator|null>",
+      "status": "<covered|missing|orphan|superseded|waived|blocked>",
+      "final_replay_required": true,
       "unresolved_reason": "<reason-or-null>"
     }
   ],
@@ -348,12 +429,24 @@
         "reviewer_evidence_path": "<path-or-null>",
         "pm_segment_decision": "<continue|repair|route_mutation|pm_stop|not_reviewed>",
         "pm_decision_evidence_path": "<path-or-null>"
+      },
+      {
+        "segment_id": "final-artifact-hygiene",
+        "segment_type": "final_artifact_hygiene",
+        "requirement_trace_closure_refs": [],
+        "source_entries": [],
+        "node_acceptance_plan_paths": [],
+        "reviewer_manual_checks": [],
+        "reviewer_evidence_path": "<path-or-null>",
+        "pm_segment_decision": "<continue|repair|route_mutation|pm_stop|not_reviewed>",
+        "pm_decision_evidence_path": "<path-or-null>"
       }
     ],
     "required_segment_checks": {
       "root_acceptance_reviewed": false,
       "parent_nodes_reviewed": false,
     "leaf_nodes_reviewed": false,
+    "final_artifact_hygiene_reviewed": false,
     "deep_leaf_nodes_reviewed": false,
     "every_deep_leaf_mapped_to_parent_segment": false,
     "every_effective_node_replayed_by_reviewer": false,

@@ -8,7 +8,7 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
-from flowguard import Explorer
+from flowguard.explorer import Explorer
 
 try:  # pragma: no cover
     from . import flowpilot_fake_project_rehearsal_model as model
@@ -139,6 +139,7 @@ def _run_checks_in_root(work_root: Path, *, scenario_names: set[str] | None = No
         "normal_full_path": ("fake_project_blackbox_cli_normal", "skills/flowpilot/assets/flowpilot_new.py"),
         "planning_chain_does_not_terminal": ("fake_project_blackbox_cli_planning_chain_guard", "skills/flowpilot/assets/flowpilot_new.py"),
         "route_mutation_recovery": ("fake_project_blackbox_cli_route_mutation_recovery", "skills/flowpilot/assets/flowpilot_new.py"),
+        "terminal_supplemental_repair": ("fake_project_blackbox_cli_terminal_supplemental_repair", "skills/flowpilot/assets/flowpilot_new.py"),
         "slow_reviewer_progress_preserved": ("fake_project_blackbox_cli_slow_reviewer_progress", "skills/flowpilot/assets/flowpilot_new.py"),
         "missing_current_result_fields_reissue": ("fake_project_blackbox_cli_missing_current_result_fields_reissue", "skills/flowpilot/assets/flowpilot_new.py"),
         "accepted_packet_reassignment_rejected": ("fake_project_blackbox_cli_accepted_packet_reassignment", "skills/flowpilot/assets/flowpilot_new.py"),

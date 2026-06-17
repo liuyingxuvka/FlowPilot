@@ -53,6 +53,18 @@ def _issue_current_node_active_holder_leases(router: ModuleType, project_root: P
     frontier = router._active_frontier(run_root)
     route_version = int(frontier.get('route_version') or 0)
     frontier_version = router._active_holder_frontier_version(frontier)
+    missing: list[dict[str, Any]] = []
+    for record in records:
+        envelope_path = router._packet_envelope_path_from_record(project_root, run_state, record)
+        envelope = packet_runtime.load_envelope(project_root, envelope_path)
+        holder_role = str(envelope.get('to_role') or record.get('to_role') or '')
+        packet_id = str(envelope.get('packet_id') or record.get('packet_id') or '')
+        if not _active_agent_id_for_role(run_root, holder_role):
+            missing.append({'packet_id': packet_id, 'holder_role': holder_role, 'reason': 'no_live_agent_id_available'})
+    if missing:
+        summary = {'schema_version': 'flowpilot.current_node_active_holder_fast_lane.v1', 'mode': 'lease_on_current_node_delivery', 'issued': [], 'skipped': missing, 'requires_live_agent_id': True, 'recorded_at': utc_now()}
+        run_state['current_node_active_holder_fast_lane'] = summary
+        raise RouterError(f"current-node active-holder lease requires live role binding before packet relay: {missing}")
     issued: list[dict[str, Any]] = []
     skipped: list[dict[str, Any]] = []
     for record in records:
@@ -103,6 +115,18 @@ def _issue_packet_active_holder_leases(router: ModuleType, project_root: Path, r
         frontier = read_json_if_exists(run_root / 'execution_frontier.json') or {}
     route_version = int(frontier.get('route_version') or 0)
     frontier_version = router._active_holder_frontier_version(frontier)
+    missing: list[dict[str, Any]] = []
+    for record in records:
+        envelope_path = router._packet_envelope_path_from_record(project_root, run_state, record)
+        envelope = packet_runtime.load_envelope(project_root, envelope_path)
+        holder_role = str(envelope.get('to_role') or record.get('to_role') or '')
+        packet_id = str(envelope.get('packet_id') or record.get('packet_id') or '')
+        if not _active_agent_id_for_role(run_root, holder_role):
+            missing.append({'packet_id': packet_id, 'packet_family': packet_family, 'holder_role': holder_role, 'reason': 'no_live_agent_id_available'})
+    if missing:
+        summary = {'schema_version': 'flowpilot.packet_active_holder_fast_lane.v1', 'mode': mode, 'packet_family': packet_family, 'issued': [], 'skipped': missing, 'requires_live_agent_id': True, 'recorded_at': utc_now()}
+        run_state.setdefault('packet_active_holder_fast_lanes', {})[packet_family] = summary
+        raise RouterError(f"{packet_family} active-holder lease requires live role binding before packet relay: {missing}")
     issued: list[dict[str, Any]] = []
     skipped: list[dict[str, Any]] = []
     for record in records:

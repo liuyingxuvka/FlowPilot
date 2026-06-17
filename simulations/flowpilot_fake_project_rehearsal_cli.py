@@ -24,6 +24,8 @@ ROUTE_PLAN_SCHEMA_VERSION = "flowpilot.route_plan.v1"
 CLI_TIMEOUT_SECONDS = 45
 FULL_PACKET_CHAIN_BUDGET = 180
 PLANNING_PACKET_CHAIN_BUDGET = 120
+ONE_SHOT_PUBLIC_CLI_COMMANDS = {"open-packet"}
+MAX_WORKER_COMMANDS = 20
 PLANNING_CHAIN = (
     ("task", "pm"),
     ("flowguard_check", "flowguard_operator"),
@@ -130,6 +132,7 @@ for line in sys.stdin:
 class PublicCliWorker:
     def __init__(self, root: Path) -> None:
         self.root = root.resolve()
+        self.command_count = 0
         self.process = subprocess.Popen(
             [sys.executable, "-B", "-c", _CLI_WORKER_SCRIPT],
             cwd=REPO_ROOT,
@@ -156,6 +159,7 @@ class PublicCliWorker:
     def run(self, args: tuple[str, ...], *, json_mode: bool) -> subprocess.CompletedProcess[str]:
         if self.process.poll() is not None:
             raise subprocess.TimeoutExpired([sys.executable, "-B", str(ENTRYPOINT), *args], 0)
+        self.command_count += 1
         assert self.process.stdin is not None
         with self._lock:
             self.process.stdin.write(
@@ -212,6 +216,9 @@ def _cli_worker_for_root(root: Path) -> PublicCliWorker:
     key = str(root.resolve())
     with _CLI_WORKERS_LOCK:
         worker = _CLI_WORKERS.get(key)
+        if worker is not None and worker.command_count >= MAX_WORKER_COMMANDS:
+            worker.close()
+            worker = None
         if worker is None or worker.process.poll() is not None:
             worker = PublicCliWorker(root)
             _CLI_WORKERS[key] = worker
@@ -238,6 +245,23 @@ atexit.register(close_all_cli_workers)
 
 
 def _run_public_cli(root: Path, args: tuple[str, ...], *, json_mode: bool) -> subprocess.CompletedProcess[str]:
+    if args and args[0] in ONE_SHOT_PUBLIC_CLI_COMMANDS:
+        return subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                str(ENTRYPOINT),
+                "--root",
+                str(root.resolve()),
+                *(("--json",) if json_mode else ()),
+                *args,
+            ],
+            cwd=REPO_ROOT,
+            text=True,
+            capture_output=True,
+            timeout=CLI_TIMEOUT_SECONDS,
+            check=False,
+        )
     return _cli_worker_for_root(root).run(args, json_mode=json_mode)
 
 
@@ -373,6 +397,9 @@ def open_current_packet_inputs(
         raise RehearsalFailure(f"open-packet did not deliver authorized input materials for {packet_id}")
     opened_projection = opened_packet.get("packet")
     ensure(isinstance(opened_projection, dict), f"open-packet did not return packet projection for {packet_id}")
+    sealed_body = opened_packet.get("sealed_packet_body")
+    if isinstance(sealed_body, str):
+        opened_projection["body"] = sealed_body
     handoff_contract = opened_projection.get("current_handoff_contract")
     if isinstance(handoff_contract, dict):
         if not opened_projection.get("route_scope"):
@@ -437,6 +464,7 @@ def _route_plan_payload(*, node_count: int = MIN_ACCEPTED_ROUTE_NODES) -> dict[s
                 "The fake calculator behavior is implemented in the bounded scenario.",
                 "Worker evidence names current files and command results.",
             ],
+            "acceptance_item_ids": ["acc-001"],
         },
         {
             "node_id": "node-002",
@@ -447,6 +475,7 @@ def _route_plan_payload(*, node_count: int = MIN_ACCEPTED_ROUTE_NODES) -> dict[s
                 "FlowGuard and ordinary validation evidence are current.",
                 "Evidence can be challenged by an independent reviewer.",
             ],
+            "acceptance_item_ids": ["acc-002"],
         },
         {
             "node_id": "node-003",
@@ -457,12 +486,16 @@ def _route_plan_payload(*, node_count: int = MIN_ACCEPTED_ROUTE_NODES) -> dict[s
                 "The final route-wide ledger accounts for all effective nodes.",
                 "The public status remains body-free at terminal completion.",
             ],
+            "acceptance_item_ids": [],
         },
     ]
     ensure(1 <= node_count <= len(node_templates), f"unsupported fake route node count: {node_count}")
+    selected_nodes = [dict(node) for node in node_templates[:node_count]]
+    if node_count == 1:
+        selected_nodes[0]["acceptance_item_ids"] = ["acc-001", "acc-002"]
     return {
         "schema_version": ROUTE_PLAN_SCHEMA_VERSION,
-        "nodes": node_templates[:node_count],
+        "nodes": selected_nodes,
     }
 
 
@@ -477,8 +510,30 @@ def _route_plan_body(*, node_count: int = MIN_ACCEPTED_ROUTE_NODES) -> str:
     )
 
 
+def _acceptance_item_ids_for_packet(packet: dict[str, Any]) -> list[str]:
+    for key in ("acceptance_item_ids", "node_acceptance_item_ids"):
+        values = packet.get(key)
+        if isinstance(values, list):
+            return [str(item) for item in values if str(item)]
+    try:
+        packet_body = json.loads(packet.get("body") or "{}")
+    except json.JSONDecodeError:
+        packet_body = {}
+    if isinstance(packet_body, dict):
+        for key in ("acceptance_item_ids", "node_acceptance_item_ids"):
+            values = packet_body.get(key)
+            if isinstance(values, list):
+                return [str(item) for item in values if str(item)]
+    return {
+        "node-001": ["acc-001"],
+        "node-002": ["acc-002"],
+        "node-003": [],
+    }.get(str(packet.get("route_node_id") or ""), [])
+
+
 def _node_acceptance_plan_body(packet: dict[str, Any]) -> str:
     node_id = str(packet.get("route_node_id") or "")
+    acceptance_item_ids = _acceptance_item_ids_for_packet(packet)
     return json.dumps(
         {
             "decision": "pass",
@@ -488,7 +543,6 @@ def _node_acceptance_plan_body(packet: dict[str, Any]) -> str:
             "repair_policy": "same_node_repair_default",
             "low_quality_success_risks": ["existence-only evidence", "missing skill evidence"],
             "node_context_package": {
-                "node_id": node_id,
                 "purpose": "Complete the current route node with bounded worker execution, FlowGuard checks, review, and validation.",
                 "acceptance_criteria": [
                     "worker result satisfies the node packet",
@@ -496,31 +550,15 @@ def _node_acceptance_plan_body(packet: dict[str, Any]) -> str:
                     "reviewer independently challenges the node outcome",
                 ],
                 "relevant_references": ["route node contract", "high standard contract", "runtime ledger"],
-                "evidence_targets": ["worker result body", "FlowGuard report", "reviewer report", "validation output"],
-                "inspection_targets": ["changed files", "command output", "model artifacts", "runtime ledger"],
                 "known_risks": ["existence-only evidence", "stale generation", "review without active inspection"],
-                "flowguard_targets": ["development-process route", "model-test alignment where applicable"],
-                "reviewer_starting_points": ["worker result", "node context package", "FlowGuard reports", "validation evidence"],
-                "high_standard_requirement_ids": ["hsr-001"],
-                "low_quality_success_risks": ["existence-only evidence", "generic pass without hard-part proof"],
-                "semantic_downgrade_risks": ["accepted node does not prove user-visible completion"],
-                "work_packet_projection": ["copy hard requirements, risk probes, and test obligations into Worker, FlowGuard, Reviewer, and PM disposition packets"],
-                "final_user_intent_checks": ["node evidence advances the sealed startup request"],
-                "structure_hygiene_expectation": ["no compatibility branch, fallback parser, or stale artifact may be introduced"],
-                "direct_evidence_closure_rules": ["report-only closure is not sufficient for covered hard requirements"],
-                "test_obligation_matrix": {
-                    "pre_worker": [
-                        {
-                            "obligation_id": f"test-{node_id or 'active'}-001",
-                            "source": "node_acceptance_plan",
-                            "required_test_kind": "targeted_current_validation",
-                            "owner_role": "worker",
-                            "expected_evidence": "current validation evidence",
-                            "freshness_rule": "after worker result for the current node",
-                            "pm_disposition": "pending",
-                        }
-                    ]
-                },
+                "acceptance_item_projection": [
+                    {
+                        "acceptance_item_id": item_id,
+                        "status_for_this_node": "complete_here",
+                        "future_evidence_rule": "Direct current evidence or explicit waiver at the owning later gate.",
+                    }
+                    for item_id in acceptance_item_ids
+                ],
             },
         }
     )
@@ -535,11 +573,32 @@ def _high_standard_contract_body() -> str:
                     "classification": "hard_current",
                     "summary": "Complete the fake project to a high standard.",
                     "source_user_intent": "sealed_startup_intake",
-                    "evidence_rule": "Direct current evidence or explicit waiver required.",
-                    "closure_blocking": True,
-                    "report_only_closure_allowed": False,
+                    "closure_rule": "Must close through current evidence, an explicit waiver, or a current blocker.",
                 }
             ],
+            "acceptance_item_registry": {
+                "schema_version": "flowpilot.acceptance_item_registry.v1",
+                "items": [
+                    {
+                        "acceptance_item_id": "acc-001",
+                        "source_type": "user_explicit",
+                        "source_requirement_ids": ["hsr-001"],
+                        "summary": "Complete the fake project to a high standard.",
+                        "quality_floor": "high_quality_required",
+                        "future_evidence_rule": "Later node and terminal packets must cite current evidence or explicit waiver.",
+                        "status": "active",
+                    },
+                    {
+                        "acceptance_item_id": "acc-002",
+                        "source_type": "pm_high_standard",
+                        "source_requirement_ids": ["hsr-001"],
+                        "summary": "Fake project evidence must be current, reviewable, and independently challenged.",
+                        "quality_floor": "high_quality_required",
+                        "future_evidence_rule": "Later worker, FlowGuard, Reviewer, and validation packets must carry current evidence.",
+                        "status": "active",
+                    },
+                ],
+            },
         },
         sort_keys=True,
     )
@@ -549,11 +608,10 @@ def _discovery_body() -> str:
     return json.dumps(
         {
             "decision": "pass",
-            "pm_visible_summary": ["PM confirmed current startup material and local skill inventory."],
+            "pm_visible_summary": ["PM confirmed current startup material and candidate skill inventory."],
             "material_sources": ["startup"],
             "material_sufficiency": "sufficient_for_route_planning",
-            "local_skill_inventory": ["flowguard-development-process-flow"],
-            "candidate_only_skill_policy": True,
+            "candidate_skill_inventory": ["flowguard-development-process-flow"],
         },
         sort_keys=True,
     )
@@ -571,8 +629,7 @@ def _skill_standard_body() -> str:
                     "classification": "required",
                     "role_use": "flowguard_operator",
                     "use_context": "node_validation",
-                    "evidence_required": "current-run FlowGuard work order",
-                    "closure_blocking": True,
+                    "evidence_rule": "FlowGuard operator records current-run model evidence in its own evidence file.",
                 }
             ],
         },
@@ -587,13 +644,13 @@ def _generic_current_result_body(packet: dict[str, Any]) -> str:
     summary_subject = f"{packet_kind} result for {packet_id}"
     if route_scope:
         summary_subject += f" in {route_scope}"
-    return json.dumps(
-        {
-            "decision": "pass",
-            "pm_visible_summary": [f"Fake AI submitted current-contract {summary_subject}."],
-        },
-        sort_keys=True,
-    )
+    payload: dict[str, Any] = {
+        "decision": "pass",
+        "pm_visible_summary": [f"Fake AI submitted current-contract {summary_subject}."],
+    }
+    if packet_kind == "task" and route_scope == "node":
+        payload["current_evidence_refs"] = [f"fake-current-evidence:{packet_id}"]
+    return json.dumps(payload, sort_keys=True)
 
 
 def _packet_result_contract_body(packet: dict[str, Any]) -> str:
@@ -601,8 +658,45 @@ def _packet_result_contract_body(packet: dict[str, Any]) -> str:
         sys.path.insert(0, str(ASSETS))
     from flowpilot_core_runtime import packet_result_contracts
 
-    family_id = packet_result_contracts.packet_result_family_id(packet)
-    payload = packet_result_contracts.minimal_valid_shape_for_family(family_id)
+    envelope = packet.get("envelope") if isinstance(packet.get("envelope"), dict) else packet
+    family_id = packet_result_contracts.packet_result_family_id(envelope)
+    packet_body = _packet_body_payload(packet)
+    handoff = packet_body.get("current_handoff_contract") if isinstance(packet_body, dict) else None
+    report_contract = (
+        handoff.get("required_report_contract")
+        if isinstance(handoff, dict) and isinstance(handoff.get("required_report_contract"), dict)
+        else {}
+    )
+    if isinstance(report_contract.get("minimal_valid_shape"), dict):
+        payload = dict(report_contract["minimal_valid_shape"])
+    else:
+        payload = packet_result_contracts.effective_result_contract_from_envelope(envelope)["minimal_valid_shape"]
+    if family_id == "flowguard_check.post_result":
+        payload = dict(payload)
+    if family_id == "review.terminal_backward_replay":
+        segment_targets = packet_body.get("segment_targets") if isinstance(packet_body, dict) else []
+        if isinstance(segment_targets, list) and segment_targets:
+            payload["route_segment_replay"] = [
+                {
+                    "segment_id": str(target.get("segment_id") or f"segment-{index}"),
+                    "segment_kind": str(target.get("segment_kind") or "route_segment"),
+                    "status": "closed",
+                    "basis": str(target.get("summary") or target.get("segment_id") or "current segment"),
+                }
+                for index, target in enumerate(segment_targets, start=1)
+                if isinstance(target, dict)
+            ]
+            payload["final_blockers"] = []
+    if family_id == "task.parent_backward_replay":
+        parent_node_id = str(packet_body.get("route_node_id") or packet.get("route_node_id") or "").strip()
+        if parent_node_id:
+            payload["parent_node_id"] = parent_node_id
+        child_node_ids = packet_body.get("child_node_ids")
+        if isinstance(child_node_ids, list) and child_node_ids:
+            payload["child_node_ids"] = [str(item) for item in child_node_ids if str(item)]
+        child_result_ids = packet_body.get("current_repair_child_result_ids")
+        if isinstance(child_result_ids, list) and child_result_ids:
+            payload["child_evidence_refs"] = [str(item) for item in child_result_ids if str(item)]
     packet_id = str(packet.get("packet_id") or "")
     packet_kind = str(packet.get("packet_kind") or "task")
     route_scope = str(packet.get("route_scope") or "")
@@ -614,11 +708,171 @@ def _packet_result_contract_body(packet: dict[str, Any]) -> str:
     return json.dumps(payload, sort_keys=True)
 
 
+def _packet_body_payload(packet: dict[str, Any]) -> dict[str, Any]:
+    try:
+        payload = json.loads(str(packet.get("body") or "{}"))
+    except json.JSONDecodeError:
+        return {}
+    return payload if isinstance(payload, dict) else {}
+
+
+def _json_clone(value: Any) -> Any:
+    return json.loads(json.dumps(value))
+
+
+def _merge_json_objects(base: dict[str, Any], overlay: dict[str, Any]) -> dict[str, Any]:
+    merged = _json_clone(base)
+    for key, value in overlay.items():
+        if isinstance(value, dict) and isinstance(merged.get(key), dict):
+            merged[key] = _merge_json_objects(merged[key], value)
+        else:
+            merged[key] = _json_clone(value)
+    return merged
+
+
+def _project_supplemental_repair_ids(payload: dict[str, Any]) -> None:
+    supplemental_contract = payload.get("supplemental_repair_contract")
+    route_plan = payload.get("route_plan")
+    if not isinstance(supplemental_contract, dict) or not isinstance(route_plan, dict):
+        return
+    contract_id = str(supplemental_contract.get("contract_id") or "")
+    repair_items = supplemental_contract.get("repair_items")
+    first_item = repair_items[0] if isinstance(repair_items, list) and repair_items else {}
+    repair_item_id = str(first_item.get("repair_item_id") or "") if isinstance(first_item, dict) else ""
+    owner_node_id = str(first_item.get("owner_repair_node_id") or "") if isinstance(first_item, dict) else ""
+    nodes = route_plan.get("nodes")
+    if not isinstance(nodes, list):
+        return
+    for node in nodes:
+        if not isinstance(node, dict):
+            continue
+        node["supplemental_repair_contract_ids"] = [contract_id] if contract_id else []
+        if str(node.get("node_id") or "") == owner_node_id:
+            node["supplemental_repair_item_ids"] = [repair_item_id] if repair_item_id else []
+        else:
+            node.setdefault("supplemental_repair_item_ids", [])
+
+
+def _terminal_backward_replay_block_body(packet: dict[str, Any]) -> str:
+    payload = json.loads(_packet_result_contract_body(packet))
+    route_segment_replay = payload.get("route_segment_replay")
+    blocker_id = "terminal-delivered-product-signposting"
+    if isinstance(route_segment_replay, list) and route_segment_replay:
+        first_segment = route_segment_replay[0]
+        if isinstance(first_segment, dict):
+            first_segment["status"] = "blocked"
+            first_segment["basis"] = "Delivered product signposting does not match the current accepted route."
+            first_segment["blocker_ids"] = [blocker_id]
+    blocker = {
+        "blocker_id": blocker_id,
+        "blocker_class": "terminal_closure",
+        "recommended_resolution": "Repair delivered-product signposting and restart terminal replay.",
+    }
+    payload["passed"] = False
+    payload["blockers"] = [blocker]
+    payload["final_blockers"] = [
+        {
+            **blocker,
+        }
+    ]
+    return json.dumps(payload, sort_keys=True)
+
+
+def _pm_repair_decision_body_for_packet(packet: dict[str, Any], *, decision: str | None = None) -> str:
+    packet_body = _packet_body_payload(packet)
+    minimal_shape = packet_body.get("minimal_valid_shape")
+    branch_shape = packet_body.get("branch_minimal_valid_shape")
+    payload: dict[str, Any] = {}
+    handoff_contract = packet_body.get("current_handoff_contract")
+    report_contract = handoff_contract.get("required_report_contract") if isinstance(handoff_contract, dict) else {}
+    branch_valid_shapes = report_contract.get("branch_valid_shapes") if isinstance(report_contract, dict) else {}
+    repair_decision_contract = packet_body.get("repair_decision_contract")
+    terminal_supplemental_required = (
+        isinstance(repair_decision_contract, dict)
+        and repair_decision_contract.get("terminal_supplemental_repair_required") is True
+    )
+    if decision == "redesign_route" and terminal_supplemental_required and isinstance(branch_valid_shapes, dict):
+        supplemental_branch = branch_valid_shapes.get("decision=redesign_route_terminal_supplemental")
+        if isinstance(supplemental_branch, dict):
+            payload = _merge_json_objects(payload, supplemental_branch)
+    if isinstance(minimal_shape, dict):
+        payload = _merge_json_objects(payload, minimal_shape)
+    if isinstance(branch_shape, dict):
+        payload = _merge_json_objects(payload, branch_shape)
+    if not payload:
+        payload = {
+            "decision": decision or "repair_current_scope",
+            "reason": "fake PM repair decision derived from the current opened packet.",
+        }
+    if decision:
+        payload["decision"] = decision
+        payload["next_action"] = decision
+    payload["reason"] = "fake PM chose a current terminal supplemental repair path."
+    conditional = packet_body.get("conditional_required_fields")
+    required_for_decision: list[str] = []
+    if isinstance(conditional, dict):
+        row = conditional.get(str(payload.get("decision") or ""))
+        if isinstance(row, list):
+            required_for_decision = [str(item) for item in row]
+    if "supplemental_repair_contract" in required_for_decision:
+        if "supplemental_repair_contract" not in payload and isinstance(minimal_shape, dict):
+            template = minimal_shape.get("supplemental_repair_contract")
+            if isinstance(template, dict):
+                payload["supplemental_repair_contract"] = _json_clone(template)
+        if "supplemental_repair_contract" not in payload:
+            raise RehearsalFailure(
+                "current PM repair packet requires supplemental_repair_contract but did not provide a template"
+            )
+    if "route_plan" in required_for_decision and "route_plan" not in payload and isinstance(minimal_shape, dict):
+        route_plan = minimal_shape.get("route_plan")
+        if isinstance(route_plan, dict):
+            payload["route_plan"] = _json_clone(route_plan)
+    if "route_plan" in required_for_decision and "route_plan" not in payload and isinstance(branch_valid_shapes, dict):
+        route_branch = branch_valid_shapes.get("decision=redesign_route")
+        if isinstance(route_branch, dict) and isinstance(route_branch.get("route_plan"), dict):
+            payload["route_plan"] = _json_clone(route_branch["route_plan"])
+    if "route_plan" in required_for_decision and "route_plan" not in payload:
+        payload["route_plan"] = _route_plan_payload()
+    _project_supplemental_repair_ids(payload)
+    return json.dumps(payload, sort_keys=True)
+
+
+def write_flowguard_evidence_artifact_for_packet(packet: dict[str, Any], *, decision: str = "pass") -> Path | None:
+    if str(packet.get("packet_kind") or "") != "flowguard_check":
+        return None
+    packet_body = _packet_body_payload(packet)
+    evidence_policy = packet_body.get("evidence_output_policy")
+    if not isinstance(evidence_policy, dict) or evidence_policy.get("required_for_formal_run") is not True:
+        return None
+    root = str(evidence_policy.get("run_local_evidence_root") or "").strip()
+    if not root:
+        return None
+    path = Path(root) / "flowguard_evidence.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps(
+            {
+                "schema_version": "flowpilot.flowguard_evidence.v1",
+                "model_test_alignment_report": {
+                    "decision": decision,
+                    "failed_predicates": [] if decision == "pass" else ["fake_project_rehearsal_block"],
+                },
+            },
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    return path
+
+
 def current_contract_body_for_packet(
     packet: dict[str, Any],
     *,
     pm_disposition_decision: str = "accept",
     route_node_count: int = MIN_ACCEPTED_ROUTE_NODES,
+    pm_repair_decision: str | None = None,
 ) -> str:
     packet_kind = str(packet.get("packet_kind") or "")
     route_scope = str(packet.get("route_scope") or "")
@@ -633,6 +887,8 @@ def current_contract_body_for_packet(
         return _route_plan_body(node_count=route_node_count)
     if packet_kind == "task" and route_scope == "node_acceptance_plan":
         return _node_acceptance_plan_body(packet)
+    if packet_kind == "task" and route_scope == "parent_backward_replay":
+        return _packet_result_contract_body(packet)
     if packet_kind in {"flowguard_check", "review"}:
         return _packet_result_contract_body(packet)
     if packet_kind == "pm_flowguard_acceptance":
@@ -650,20 +906,24 @@ def current_contract_body_for_packet(
         payload["flowguard_absorption"] = "fake PM absorbed current FlowGuard findings before Reviewer review"
         return json.dumps(payload, sort_keys=True)
     if packet_kind == "pm_disposition":
+        acceptance_item_ids = _acceptance_item_ids_for_packet(packet)
         payload = {
             "decision": pm_disposition_decision,
             "reason": f"fake PM disposition {pm_disposition_decision}",
-            "covered_requirement_ids": ["hsr-001"] if pm_disposition_decision == "accept" else [],
-            "reviewer_absorption": "PM absorbed current Reviewer challenge fields.",
-            "flowguard_absorption": "PM absorbed current FlowGuard boundary and missing-test fields.",
-            "residual_risk_disposition": "No unresolved residual risk remains for this fake node.",
-            "semantic_downgrade_disposition": "No semantic downgrade remains for this fake node.",
-            "validation_evidence_ids": ["fake-current-validation"],
-            "waived_requirement_ids": [],
+            "acceptance_item_disposition": [
+                {
+                    "acceptance_item_id": item_id,
+                    "disposition": "accepted" if pm_disposition_decision == "accept" else "blocked",
+                    "basis": f"fake PM {pm_disposition_decision} disposition for {item_id}",
+                }
+                for item_id in acceptance_item_ids
+            ],
         }
         if pm_disposition_decision == "redesign_route":
             payload["route_plan"] = _route_plan_payload(node_count=route_node_count)
         return json.dumps(payload, sort_keys=True)
+    if packet_kind == "pm_repair_decision":
+        return _pm_repair_decision_body_for_packet(packet, decision=pm_repair_decision)
     return _generic_current_result_body(packet)
 
 
@@ -675,14 +935,30 @@ def complete_full_packet_chain(
     first_pm_disposition_decision: str = "accept",
     route_node_count: int = MIN_ACCEPTED_ROUTE_NODES,
     min_accepted_route_nodes: int = MIN_ACCEPTED_ROUTE_NODES,
+    block_terminal_replay_once: bool = False,
+    pm_repair_decision: str | None = None,
 ) -> dict[str, Any]:
     completed_packets: list[dict[str, str]] = []
+    completed_accepted_packet_repairs: list[dict[str, str]] = []
     pm_disposition_count = 0
+    terminal_replay_blocked = False
+    supplemental_contract_ids: list[str] = []
     for step_index in range(FULL_PACKET_CHAIN_BUDGET):
         action = current_payload.get("next_action")
         ensure(isinstance(action, dict), f"missing next action at step {step_index}")
         if action.get("action_type") == "terminal_complete":
             break
+        if action.get("action_type") == "repair_accepted_packet":
+            packet_id = str(action.get("subject_id", ""))
+            ensure(packet_id, f"missing repair packet id at step {step_index}")
+            current_payload = run_cli(root, command_log, "repair-accepted-packet", "--packet-id", packet_id)
+            completed_accepted_packet_repairs.append(
+                {
+                    "packet_id": packet_id,
+                    "reason": str(action.get("reason") or ""),
+                }
+            )
+            continue
         ensure(
             action.get("action_type") == "dispatch_current_role",
             f"expected role assignment action at step {step_index}: {action}",
@@ -715,11 +991,27 @@ def complete_full_packet_chain(
         if packet_kind == "pm_disposition":
             pm_disposition_count += 1
             decision = first_pm_disposition_decision if pm_disposition_count == 1 else "accept"
-        body = current_contract_body_for_packet(
-            packet,
-            pm_disposition_decision=decision,
-            route_node_count=route_node_count,
-        )
+        if (
+            block_terminal_replay_once
+            and packet_kind == "review"
+            and str(packet.get("route_scope") or "") == "terminal_backward_replay"
+            and not terminal_replay_blocked
+        ):
+            body = _terminal_backward_replay_block_body(packet)
+            terminal_replay_blocked = True
+        else:
+            body = current_contract_body_for_packet(
+                packet,
+                pm_disposition_decision=decision,
+                route_node_count=route_node_count,
+                pm_repair_decision=pm_repair_decision,
+            )
+            if packet_kind == "pm_repair_decision":
+                payload = json.loads(body)
+                supplemental_contract = payload.get("supplemental_repair_contract")
+                if isinstance(supplemental_contract, dict):
+                    supplemental_contract_ids.append(str(supplemental_contract.get("contract_id") or ""))
+        write_flowguard_evidence_artifact_for_packet(packet)
 
         current_payload = run_cli(
             root,
@@ -757,7 +1049,13 @@ def complete_full_packet_chain(
     accepted_nodes = [node for node in route_nodes if node.get("status") == "accepted"]
     ensure(len(accepted_nodes) >= min_accepted_route_nodes, f"recursive route did not accept enough nodes: {route_nodes}")
     ensure(packet_kinds.count("pm_disposition") >= min_accepted_route_nodes, f"PM dispositions missing from chain: {packet_kinds}")
-    ensure(all(packet.get("status") == "accepted" for packet in projection.get("packets", [])), "not all packets are accepted")
+    terminal_packet_statuses = {"accepted", "quarantined_after_route_mutation", "superseded_after_repair"}
+    unfinished_packets = [
+        packet
+        for packet in projection.get("packets", [])
+        if packet.get("status") not in terminal_packet_statuses
+    ]
+    ensure(not unfinished_packets, f"terminal status has unfinished packets: {unfinished_packets}")
     ensure(not [lease for lease in projection.get("leases", []) if lease.get("status") == "active"], "terminal status has active leases")
     ensure(all(lease.get("ack_received") for lease in projection.get("leases", [])), "a terminal lease is missing ACK")
     ensure(all(lease.get("packet_id") for lease in projection.get("leases", [])), "a terminal lease is missing packet id")
@@ -777,6 +1075,9 @@ def complete_full_packet_chain(
         "completed_packets": completed_packets,
         "lease_count": len(projection.get("leases", [])),
         "sealed_bodies_visible": projection.get("sealed_bodies_visible"),
+        "terminal_replay_blocked": terminal_replay_blocked,
+        "supplemental_contract_ids": [item for item in supplemental_contract_ids if item],
+        "accepted_packet_repairs": completed_accepted_packet_repairs,
     }
 
 
@@ -806,6 +1107,7 @@ def complete_planning_chain_only(
         ensure(packet_kind in {"task", "flowguard_check", "review"}, f"wrong planning packet kind: {packet}")
         ensure(responsibility == packet.get("responsibility"), f"wrong planning responsibility: {action}")
         body = current_contract_body_for_packet(packet)
+        write_flowguard_evidence_artifact_for_packet(packet)
         current_payload = run_cli(
             root,
             command_log,
