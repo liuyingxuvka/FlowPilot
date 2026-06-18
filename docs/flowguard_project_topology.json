@@ -14337,7 +14337,7 @@
       "path": "simulations/flowpilot_model_test_alignment_results.json"
     }
   },
-  "generated_at_epoch": 1781754812.4785666,
+  "generated_at_epoch": 1781760970.729298,
   "generator_version": "1",
   "layer_counts": {
     "alignment_families": 14,
@@ -20621,15 +20621,15 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1781674144010402800,
+      "mtime_ns": 1781760842047670800,
       "path": "simulations/flowpilot_cartesian_control_plane_exhaustion_model.py",
-      "size": 40412
+      "size": 42761
     },
     {
       "exists": true,
-      "mtime_ns": 1781696625476969800,
+      "mtime_ns": 1781760883519293000,
       "path": "simulations/flowpilot_cartesian_control_plane_exhaustion_results.json",
-      "size": 26279959
+      "size": 26285479
     },
     {
       "exists": true,
@@ -20717,15 +20717,15 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1781752673962699000,
+      "mtime_ns": 1781759734329282500,
       "path": "simulations/flowpilot_contract_exhaustion_mesh_model.py",
-      "size": 54579
+      "size": 54733
     },
     {
       "exists": true,
-      "mtime_ns": 1781753813783619300,
+      "mtime_ns": 1781760520482517000,
       "path": "simulations/flowpilot_contract_exhaustion_mesh_results.json",
-      "size": 521590
+      "size": 2171581
     },
     {
       "exists": true,
@@ -20891,7 +20891,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1781753916316891000,
+      "mtime_ns": 1781760696757586200,
       "path": "simulations/flowpilot_current_contract_cartesian_matrix_results.json",
       "size": 50071
     },
@@ -21329,7 +21329,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1781754806196105000,
+      "mtime_ns": 1781760902048241200,
       "path": "simulations/flowpilot_model_test_alignment_results.json",
       "size": 4348279
     },
@@ -21737,7 +21737,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1781754761938262300,
+      "mtime_ns": 1781760611924538800,
       "path": "simulations/flowpilot_reviewer_active_challenge_results.json",
       "size": 9490
     },
@@ -21749,7 +21749,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1781753937763190200,
+      "mtime_ns": 1781760611918507300,
       "path": "simulations/flowpilot_reviewer_only_gate_results.json",
       "size": 53543
     },
@@ -22373,9 +22373,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1781589108833621100,
+      "mtime_ns": 1781760853390079400,
       "path": "simulations/run_flowpilot_cartesian_control_plane_exhaustion_checks.py",
-      "size": 22928
+      "size": 23393
     },
     {
       "exists": true,
@@ -22427,9 +22427,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1781752573533073600,
+      "mtime_ns": 1781759717949889900,
       "path": "simulations/run_flowpilot_contract_exhaustion_mesh_checks.py",
-      "size": 16365
+      "size": 16810
     },
     {
       "exists": true,
@@ -26279,9 +26279,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1781752539059937800,
+      "mtime_ns": 1781760407365915800,
       "path": "tests/test_flowpilot_ai_contract_projection.py",
-      "size": 23146
+      "size": 26916
     },
     {
       "exists": true,
@@ -26297,9 +26297,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1781613196144272200,
+      "mtime_ns": 1781760863537906100,
       "path": "tests/test_flowpilot_cartesian_control_plane_exhaustion.py",
-      "size": 16839
+      "size": 17687
     },
     {
       "exists": true,
@@ -26309,9 +26309,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1781752908853448300,
+      "mtime_ns": 1781760415299807500,
       "path": "tests/test_flowpilot_contract_exhaustion_mesh.py",
-      "size": 29907
+      "size": 31636
     },
     {
       "exists": true,
@@ -26357,9 +26357,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1781752516716030200,
+      "mtime_ns": 1781760126405176800,
       "path": "tests/test_flowpilot_high_standard_control_flow.py",
-      "size": 133121
+      "size": 138240
     },
     {
       "exists": true,
@@ -26435,9 +26435,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1781643087820888100,
+      "mtime_ns": 1781760424842409000,
       "path": "tests/test_flowpilot_synthetic_agent_coverage_matrix.py",
-      "size": 20945
+      "size": 25123
     },
     {
       "exists": true,

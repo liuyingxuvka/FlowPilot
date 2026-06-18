@@ -19,11 +19,12 @@ import time
 from typing import Any, Iterable, Mapping
 
 try:  # pragma: no cover - direct module test harness path.
-    from . import control_surface, packet_result_contracts, packet_stage_evidence_matrix
+    from . import control_surface, packet_result_contracts, packet_stage_evidence_matrix, review_window_contracts
 except ImportError:  # pragma: no cover
     import control_surface  # type: ignore
     import packet_result_contracts  # type: ignore
     import packet_stage_evidence_matrix  # type: ignore
+    import review_window_contracts  # type: ignore
 
 
 SCHEMA_VERSION = "black_box_flowpilot_runtime.v1"
@@ -8465,11 +8466,14 @@ def _review_window_for_handoff(
         if isinstance(subject_packet, Mapping) and isinstance(subject_packet.get("envelope"), Mapping)
         else {}
     )
+    review_family_id = packet_result_contracts.packet_result_family_id(envelope)
     subject_family_id = (
         packet_result_contracts.packet_result_family_id(subject_envelope)
         if isinstance(subject_envelope, Mapping) and subject_envelope
         else ""
     )
+    if not subject_family_id and review_family_id == "review.terminal_backward_replay":
+        subject_family_id = review_family_id
     subject_stage_evidence = (
         packet_result_contracts.role_visible_stage_evidence_row_json_for_family(subject_family_id)
         if subject_family_id
@@ -8481,17 +8485,38 @@ def _review_window_for_handoff(
         if isinstance(row, Mapping) and row.get("required_before_submit") is True and str(row.get("result_id") or "")
     ]
     stage = str(subject_stage_evidence.get("lifecycle_stage") or "")
+    completeness = review_window_contracts.review_window_contract_for_context(
+        review_result_family_id=review_family_id,
+        subject_family_id=subject_family_id,
+        subject_lifecycle_stage=stage,
+    )
     forbidden_future_stage_demands = [
         "Do not require Worker/result-stage artifacts for a plan-stage subject unless the subject claims they already exist.",
         "Do not require terminal replay evidence before the terminal replay packet.",
         "Do not treat PM navigation summaries as reviewed evidence bodies.",
     ]
     return {
-        "schema_version": "black_box_flowpilot.review_window.v1",
+        "schema_version": review_window_contracts.REVIEW_WINDOW_SCHEMA_VERSION,
+        "review_flow_id": str(completeness.get("review_flow_id") or ""),
+        "review_window_coverage_status": str(completeness.get("coverage_status") or "unknown"),
+        "review_result_family_id": review_family_id,
         "subject_packet_id": subject_id,
         "target_result_id": str(envelope.get("target_result_id") or ""),
         "subject_result_family_id": subject_family_id,
         "subject_lifecycle_stage": stage,
+        "required_window_paths": list(completeness.get("required_window_paths") or ()),
+        "required_material_classes": list(completeness.get("required_material_classes") or ()),
+        "required_authorized_read_purposes_before_submit": list(
+            completeness.get("required_read_purposes") or ()
+        ),
+        "authorized_result_read_purposes": [
+            str(row.get("purpose") or "")
+            for row in authorized_result_reads
+            if isinstance(row, Mapping) and str(row.get("purpose") or "")
+        ],
+        "forbidden_future_stage_classes": list(
+            completeness.get("forbidden_future_stage_classes") or ()
+        ),
         "required_current_fields": list(subject_stage_evidence.get("current_required_fields") or []),
         "allowed_blocker_classes": list(subject_stage_evidence.get("allowed_blocker_classes") or []),
         "blocker_next_actions": _copy_jsonable(subject_stage_evidence.get("blocker_next_actions") or {}),

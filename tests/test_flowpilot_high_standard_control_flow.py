@@ -18,6 +18,7 @@ runtime = importlib.import_module("flowpilot_core_runtime.runtime")
 host = importlib.import_module("flowpilot_core_runtime.host")
 packet_result_contracts = importlib.import_module("flowpilot_core_runtime.packet_result_contracts")
 packet_stage_evidence_matrix = importlib.import_module("flowpilot_core_runtime.packet_stage_evidence_matrix")
+review_window_contracts = importlib.import_module("flowpilot_core_runtime.review_window_contracts")
 
 
 def _contract_child_fields(family_id: str) -> list[str]:
@@ -652,6 +653,104 @@ def _complete_active_node_packet_loop(ledger: dict) -> str:
 
 
 class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
+    def assertReviewWindowComplete(self, ledger: dict, review_packet_id: str) -> None:
+        packet = ledger["packets"][review_packet_id]
+        envelope = packet["envelope"]
+        body = json.loads(packet["body"])
+        review_window = envelope["review_window"]
+        self.assertEqual(review_window, body["current_handoff_contract"]["review_window"])
+        self.assertEqual(review_window["schema_version"], review_window_contracts.REVIEW_WINDOW_SCHEMA_VERSION)
+        self.assertEqual(review_window["review_window_coverage_status"], "declared")
+
+        row = review_window_contracts.review_flow_row(review_window["review_flow_id"])
+        self.assertEqual(review_window["review_result_family_id"], row["review_result_family_id"])
+        self.assertEqual(review_window["subject_result_family_id"], row["subject_family_id"])
+        self.assertEqual(review_window["subject_lifecycle_stage"], row["subject_lifecycle_stage"])
+        self.assertLessEqual(
+            set(review_window_contracts.required_window_paths_for_row(row)),
+            set(review_window["required_window_paths"]),
+        )
+        for path in review_window["required_window_paths"]:
+            self.assertIn(path, review_window)
+        self.assertEqual(review_window["required_material_classes"], list(row["required_material_classes"]))
+        self.assertEqual(
+            review_window["required_authorized_read_purposes_before_submit"],
+            list(row["required_read_purposes"]),
+        )
+        self.assertLessEqual(
+            set(row["required_read_purposes"]),
+            set(review_window["authorized_result_read_purposes"]),
+        )
+        self.assertIn("Reviewer hard blockers return to PM repair work", review_window["pm_repair_return_rule"])
+
+    def test_runtime_issued_review_packets_have_complete_declared_windows(self) -> None:
+        ledger = _ledger()
+        _complete_preplanning(ledger)
+        _complete_planning(ledger)
+        node_plan_packet = _open_packets(ledger, scope="node_acceptance_plan")[0]
+        _complete_open_packet(ledger, node_plan_packet, _node_context_body(ledger))
+        _complete_open_packet(ledger, _open_packets(ledger, kind="review")[0], _review_pass_body())
+
+        node_packet = _open_packets(ledger, scope="node")[0]
+        node_id = ledger["execution_frontier"]["active_node_id"]
+        _complete_open_packet(ledger, node_packet, _pass_body("Worker completed node.", node_id=node_id))
+        _complete_open_packet(ledger, _open_packets(ledger, kind="flowguard_check")[0], _flowguard_pass_body())
+        _complete_open_packet(ledger, _open_packets(ledger, kind="review")[0], _review_pass_body())
+
+        review_flow_ids = {
+            ledger["packets"][packet_id]["envelope"]["review_window"]["review_flow_id"]
+            for packet_id, packet in ledger["packets"].items()
+            if packet["envelope"].get("packet_kind") == "review"
+        }
+        self.assertLessEqual(
+            {
+                "preplanning_high_standard_contract_review",
+                "preplanning_discovery_review",
+                "preplanning_skill_standard_review",
+                "route_planning_review",
+                "node_acceptance_plan_review",
+                "worker_node_result_review",
+            },
+            review_flow_ids,
+        )
+        for packet_id, packet in ledger["packets"].items():
+            if packet["envelope"].get("packet_kind") == "review":
+                with self.subTest(packet_id=packet_id):
+                    self.assertReviewWindowComplete(ledger, packet_id)
+
+    def test_terminal_review_window_uses_terminal_flow_when_subject_is_not_packet(self) -> None:
+        ledger = _ledger()
+        _complete_preplanning(ledger)
+        _complete_task_chain(
+            ledger,
+            _open_packets(ledger, scope="planning")[0],
+            _route_plan_body(
+                [
+                    {
+                        "node_id": "node-001",
+                        "title": "Implement behavior",
+                        "acceptance_criteria": ["Behavior implementation accepted."],
+                        "high_standard_requirement_ids": ["hsr-001"],
+                        "skill_standard_obligation_ids": ["skill-std-001"],
+                    }
+                ]
+            ),
+        )
+        runtime.ensure_node_acceptance_plan_packet(ledger, "node-001")
+        _complete_node_acceptance_plan(ledger)
+        _complete_active_node_packet_loop(ledger)
+        _complete_open_packet(
+            ledger,
+            _open_packets(ledger, kind="pm_disposition")[0],
+            _pm_disposition_body("PM accepted node after role evidence absorption."),
+        )
+        boundary = runtime.run_until_wait(ledger)
+        packet_id = boundary["next_action"]["subject_id"]
+
+        self.assertReviewWindowComplete(ledger, packet_id)
+        review_window = ledger["packets"][packet_id]["envelope"]["review_window"]
+        self.assertEqual(review_window["review_flow_id"], "terminal_backward_replay_review")
+
     def test_stage_evidence_matrix_covers_every_packet_result_family(self) -> None:
         matrix_families = set(packet_stage_evidence_matrix.PACKET_STAGE_EVIDENCE_MATRIX_BY_FAMILY)
         contract_families = {

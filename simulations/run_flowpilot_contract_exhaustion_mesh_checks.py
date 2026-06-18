@@ -48,6 +48,18 @@ TEST_MESH_CHILD_SUITE_DEFINITIONS = {
         "evidence_current": True,
         "coverage_boundary": "historical_same_class_non_live_control_flow",
     },
+    "review_window_completeness_matrix": {
+        "layer": "runtime_regression",
+        "result_status": "passed",
+        "evidence_current": True,
+        "coverage_boundary": "current_runtime_contract",
+    },
+    "review_window_fake_ai_matrix": {
+        "layer": "synthetic_non_live_control_flow",
+        "result_status": "passed",
+        "evidence_current": True,
+        "coverage_boundary": "synthetic_non_live_control_flow",
+    },
 }
 
 

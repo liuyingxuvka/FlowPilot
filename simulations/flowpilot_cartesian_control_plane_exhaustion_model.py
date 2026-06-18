@@ -169,6 +169,35 @@ MUTATIONS = (
 MUTATION_IDS = tuple(str(mutation["id"]) for mutation in MUTATIONS)
 MUTATION_BY_ID = {str(mutation["id"]): mutation for mutation in MUTATIONS}
 
+CONTRACT_EXHAUSTION_MUTATION_CANONICALIZATION = {
+    "malformed_body.empty_body": "empty_body",
+    "malformed_body.markdown_wrapped_json": "malformed_json",
+    "malformed_body.prose_plus_json": "malformed_json",
+    "malformed_body.top_level_array": "malformed_json",
+    "malformed_body.trailing_comma": "malformed_json",
+    "malformed_body.unquoted_keys": "malformed_json",
+    "missing_review_flow_id": "missing_required_field",
+    "orphan_review_flow": "wrong_enum",
+    "wrong_subject_family": "stage_evidence_mismatch",
+    "wrong_subject_lifecycle_stage": "stage_evidence_mismatch",
+    "missing_window_path": "missing_required_field",
+    "missing_required_read_manifest": "missing_evidence_manifest",
+    "future_stage_demand_allowed": "stage_evidence_mismatch",
+    "pm_repair_return_rule_missing": "missing_repair_guidance",
+    "envelope_body_window_mismatch": "stage_evidence_mismatch",
+    "prose_only_review_scope": "fallback_prose",
+    "reviewer_shallow_pass": "missing_evidence_manifest",
+    "reviewer_skips_required_read": "packet_body_not_opened",
+    "reviewer_future_stage_demand": "stage_evidence_mismatch",
+    "reviewer_unauthorized_sealed_body_request": "path_outside_root",
+    "reviewer_invents_scope": "wrong_current_path",
+    "reviewer_self_repairs_subject": "wrong_owner",
+    "pm_bypasses_reviewer_blocker": "accepted_result_work_order_split",
+    "corrected_second_reviewer_retry": "corrected_second_retry",
+    "same_review_failure_attempts_1_to_4": "same_blocker_repeat",
+    "same_review_failure_attempt_5_break_glass": "same_blocker_repeat",
+}
+
 BOUNDARIES = (
     {
         "id": "packet_envelope",
@@ -697,16 +726,26 @@ def contract_exhaustion_bridge_cells() -> tuple[dict[str, Any], ...]:
     rows: list[dict[str, Any]] = []
     for cell in contract_model.REQUIRED_CONTRACT_EXHAUSTION_CELLS:
         mutation = str(cell.get("mutation_kind", ""))
+        cartesian_mutation = CONTRACT_EXHAUSTION_MUTATION_CANONICALIZATION.get(mutation, mutation)
+        translation_kind = "identity"
+        translation_reason = "source mutation is part of the control-plane mutation alphabet"
+        if cartesian_mutation != mutation:
+            translation_kind = "canonical_current_control_plane"
+            translation_reason = "source mutation is a detailed contract-exhaustion subtype of the named control-plane mutation"
         rows.append(
             {
                 "bridge_id": f"contract_exhaustion.{cell['cell_id']}",
                 "source_model_id": contract_model.MODEL_ID,
                 "source_cell_id": str(cell["cell_id"]),
                 "source_mutation_kind": mutation,
+                "source_mutation_known": mutation in MUTATION_BY_ID
+                or mutation in CONTRACT_EXHAUSTION_MUTATION_CANONICALIZATION,
                 "source_evidence_owner": str(cell["required_evidence_owner"]),
                 "cartesian_boundary_id": "contract_exhaustion_bridge",
-                "cartesian_mutation_kind": mutation,
-                "cartesian_mutation_known": mutation in MUTATION_BY_ID,
+                "cartesian_mutation_kind": cartesian_mutation,
+                "cartesian_mutation_known": cartesian_mutation in MUTATION_BY_ID,
+                "bridge_translation_kind": translation_kind,
+                "bridge_translation_reason": translation_reason,
                 "cartesian_consumer": "testmesh_child_suite",
                 "required_evidence_owner": "cartesian_testmesh_consumption_matrix",
             }

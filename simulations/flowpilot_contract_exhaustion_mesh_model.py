@@ -25,7 +25,7 @@ ASSETS_PATH = ROOT / "skills" / "flowpilot" / "assets"
 if str(ASSETS_PATH) not in sys.path:
     sys.path.insert(0, str(ASSETS_PATH))
 
-from flowpilot_core_runtime import packet_result_contracts  # noqa: E402
+from flowpilot_core_runtime import packet_result_contracts, review_window_contracts  # noqa: E402
 
 
 MODEL_ID = "flowpilot_contract_exhaustion_mesh"
@@ -100,6 +100,7 @@ MUTATION_KINDS = (
 SYNTHETIC_MUTATION_KINDS = {
     "forbidden_alias_used",
     *MALFORMED_BODY_MUTATION_KINDS,
+    *review_window_contracts.REVIEW_WINDOW_FAKE_AI_PROFILE_IDS,
     "same_payload_retry",
     "same_root_no_delta_retry",
     "synthetic_live_overclaim",
@@ -879,6 +880,7 @@ REQUIRED_CONTRACT_EXHAUSTION_CELLS = (
     *_result_contract_profile_field_cells(),
     *_control_plane_required_path_cells(),
     *_historical_failure_family_cells(),
+    *review_window_contracts.review_window_completeness_cells(),
 )
 
 

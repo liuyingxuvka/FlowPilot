@@ -298,12 +298,23 @@ class FlowPilotCartesianControlPlaneExhaustionTests(unittest.TestCase):
         self.assertEqual(report["bridges"]["historical_bridge_missing_consumption"], [])
         self.assertEqual(report["bridges"]["missing_mutation_families"], [])
         self.assertEqual(report["bridges"]["fallback_bridge_translations"], [])
+        self.assertGreater(report["bridges"]["canonical_bridge_translation_count"], 0)
 
-    def test_bridge_rows_preserve_source_mutation_identity(self) -> None:
+    def test_bridge_rows_preserve_source_identity_or_explicit_canonicalization(self) -> None:
         for row in (*model.CONTRACT_EXHAUSTION_BRIDGE_CELLS, *model.HISTORICAL_FAILURE_BRIDGE_CELLS):
             with self.subTest(bridge_id=row["bridge_id"]):
-                self.assertEqual(row["cartesian_mutation_kind"], row["source_mutation_kind"])
                 self.assertTrue(row["cartesian_mutation_known"])
+                self.assertTrue(row.get("source_mutation_known", row["source_mutation_kind"] in model.MUTATION_BY_ID))
+                if row["cartesian_mutation_kind"] == row["source_mutation_kind"]:
+                    self.assertIn(row.get("bridge_translation_kind", "identity"), {"", "identity"})
+                else:
+                    self.assertEqual(row["bridge_translation_kind"], "canonical_current_control_plane")
+                    self.assertIn(row["source_mutation_kind"], model.CONTRACT_EXHAUSTION_MUTATION_CANONICALIZATION)
+                    self.assertEqual(
+                        row["cartesian_mutation_kind"],
+                        model.CONTRACT_EXHAUSTION_MUTATION_CANONICALIZATION[row["source_mutation_kind"]],
+                    )
+                    self.assertTrue(row["bridge_translation_reason"])
 
     def test_research_packet_recipient_role_alias_is_cartesian_bridge_case(self) -> None:
         bridge = {

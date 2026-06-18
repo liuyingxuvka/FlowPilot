@@ -424,6 +424,76 @@ class FlowPilotAIContractProjectionTests(unittest.TestCase):
             self.assertIn(profile_id, mutation_kinds)
         self.assertIn("finite_option_mistake", mutation_kinds)
 
+    def test_contract_driven_fake_ai_review_window_profiles_are_declared(self) -> None:
+        cells = contract_fake_ai.review_window_behavior_cells()
+        profile_ids = {cell["mutation_kind"] for cell in cells}
+        flow_ids = {cell["review_flow_id"] for cell in cells}
+        material_state_classes = {cell["material_state_class"] for cell in cells}
+        retry_count_classes = {cell["retry_count_class"] for cell in cells}
+
+        self.assertLessEqual(set(contract_fake_ai.REVIEW_WINDOW_FAKE_AI_PROFILE_IDS), profile_ids)
+        self.assertGreaterEqual(len(flow_ids), 9)
+        self.assertEqual(
+            material_state_classes,
+            set(contract_fake_ai.review_window_contracts.REVIEW_WINDOW_MATERIAL_STATE_CLASSES),
+        )
+        self.assertEqual(
+            retry_count_classes,
+            set(contract_fake_ai.review_window_contracts.RETRY_COUNT_CLASSES),
+        )
+        cell_keys = {
+            (
+                cell["review_flow_id"],
+                cell["mutation_kind"],
+                cell["material_state_class"],
+                cell["retry_count_class"],
+            )
+            for cell in cells
+        }
+        for flow_id in flow_ids:
+            for profile_id in contract_fake_ai.REVIEW_WINDOW_FAKE_AI_PROFILE_IDS:
+                for material_state in contract_fake_ai.review_window_contracts.REVIEW_WINDOW_MATERIAL_STATE_CLASSES:
+                    for retry_class in contract_fake_ai.review_window_contracts.RETRY_COUNT_CLASSES:
+                        self.assertIn(
+                            (flow_id, profile_id, material_state, retry_class),
+                            cell_keys,
+                        )
+
+        ledger, packet_id = self.issue_semantic_recheck_packet()
+        responder = self.contract_driven_responder(ledger["packets"][packet_id])
+        sample_window = {
+            "review_flow_id": "node_acceptance_plan_review",
+            "subject_lifecycle_stage": "node_plan_definition",
+            "required_authorized_result_read_ids_before_submit": ["result-node-plan"],
+        }
+        for profile_id in contract_fake_ai.REVIEW_WINDOW_FAKE_AI_PROFILE_IDS:
+            for material_state in contract_fake_ai.review_window_contracts.REVIEW_WINDOW_MATERIAL_STATE_CLASSES:
+                for retry_class in contract_fake_ai.review_window_contracts.RETRY_COUNT_CLASSES:
+                    payload = responder.review_window_behavior_payload(
+                        profile_id,
+                        sample_window,
+                        material_state_class=material_state,
+                        retry_count_class=retry_class,
+                    )
+                    trace = payload["review_window_trace"]
+                    self.assertEqual(trace["material_state_class"], material_state)
+                    self.assertEqual(trace["retry_count_class"], retry_class)
+                    if retry_class == "same_failure_attempt_5":
+                        self.assertEqual(trace["same_failure_retry_class"], "break_glass_threshold")
+
+        skipped = responder.review_window_behavior_payload("reviewer_skips_required_read", sample_window)
+        future = responder.review_window_behavior_payload("reviewer_future_stage_demand", sample_window)
+        threshold = responder.review_window_behavior_payload(
+            "reviewer_shallow_pass",
+            sample_window,
+            retry_count_class="same_failure_attempt_5",
+        )
+
+        self.assertEqual(skipped["review_window_trace"]["consumed_authorized_result_read_ids"], [])
+        self.assertEqual(future["passed"], False)
+        self.assertIn("future-stage", future["blockers"][0]["summary"])
+        self.assertEqual(threshold["review_window_trace"]["same_failure_retry_class"], "break_glass_threshold")
+
     def test_body_semantic_recheck_context_without_profile_does_not_create_hidden_fields(self) -> None:
         ledger, packet_id = self.issue_semantic_recheck_packet(include_profile=False)
         packet = ledger["packets"][packet_id]

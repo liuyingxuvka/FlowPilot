@@ -113,6 +113,8 @@ class FlowPilotContractExhaustionMeshTests(unittest.TestCase):
         self.assertIn("contract_exhaustion_runtime_matrix", owners)
         self.assertIn("contract_exhaustion_fake_ai_matrix", owners)
         self.assertIn("contract_exhaustion_historical_failure_matrix", owners)
+        self.assertIn("review_window_completeness_matrix", owners)
+        self.assertIn("review_window_fake_ai_matrix", owners)
         self.assertLessEqual(model.SYNTHETIC_MUTATION_KINDS, mutation_kinds)
         self.assertTrue(
             [
@@ -164,6 +166,39 @@ class FlowPilotContractExhaustionMeshTests(unittest.TestCase):
                 == "current_handoff_contract.required_report_contract.ownership_coverage_rule"
             ]
         )
+
+    def test_review_window_completeness_cells_cover_every_declared_flow(self) -> None:
+        cells = list(model.REQUIRED_CONTRACT_EXHAUSTION_CELLS)
+        flow_ids = set(model.review_window_contracts.review_flow_ids())
+        path_cells = {
+            str(cell.get("review_flow_id"))
+            for cell in cells
+            if cell.get("required_evidence_owner") == "review_window_completeness_matrix"
+            and cell.get("mutation_kind") == "missing_window_path"
+        }
+        fake_ai_cells = {
+            str(cell.get("review_flow_id"))
+            for cell in cells
+            if cell.get("required_evidence_owner") == "review_window_fake_ai_matrix"
+        }
+        profile_cells = {
+            (
+                str(cell.get("review_flow_id")),
+                str(cell.get("mutation_kind")),
+                str(cell.get("material_state_class")),
+                str(cell.get("retry_count_class")),
+            )
+            for cell in cells
+            if cell.get("required_evidence_owner") == "review_window_fake_ai_matrix"
+        }
+
+        self.assertLessEqual(flow_ids, path_cells)
+        self.assertLessEqual(flow_ids, fake_ai_cells)
+        for flow_id in flow_ids:
+            for profile_id in model.review_window_contracts.REVIEW_WINDOW_FAKE_AI_PROFILE_IDS:
+                for material_state in model.review_window_contracts.REVIEW_WINDOW_MATERIAL_STATE_CLASSES:
+                    for retry_class in model.review_window_contracts.RETRY_COUNT_CLASSES:
+                        self.assertIn((flow_id, profile_id, material_state, retry_class), profile_cells)
 
     def test_ai_contract_projection_and_retry_cells_are_required(self) -> None:
         cells = list(model.REQUIRED_CONTRACT_EXHAUSTION_CELLS)

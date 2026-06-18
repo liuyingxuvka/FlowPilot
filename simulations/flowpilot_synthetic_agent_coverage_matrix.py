@@ -1059,18 +1059,31 @@ def _contract_exhaustion_rows() -> list[dict[str, Any]]:
             covered_failure_mode = f"{cell.get('source_class')}:{mutation_kind}"
         elif synthetic:
             coverage_kind = "synthetic_trace"
-            evidence_owner = "contract_exhaustion_fake_ai_matrix"
-            test_name = "test_contract_exhaustion_required_cells_have_owners"
+            evidence_owner = owner if owner == "review_window_fake_ai_matrix" else "contract_exhaustion_fake_ai_matrix"
+            test_name = (
+                "test_review_window_fake_ai_profiles_are_cartesian_covered"
+                if owner == "review_window_fake_ai_matrix"
+                else "test_contract_exhaustion_required_cells_have_owners"
+            )
             command = "python -m unittest tests.test_flowpilot_synthetic_agent_coverage_matrix"
             risk_tier = "P1"
             synthetic_replay_required = True
             synthetic_replay_status = "present"
             coverage_boundary = "control_flow_only"
-            covered_failure_mode = mutation_kind
+            if owner == "review_window_fake_ai_matrix":
+                covered_failure_mode = (
+                    f"{cell.get('material_state_class')}:{mutation_kind}:{cell.get('retry_count_class')}"
+                )
+            else:
+                covered_failure_mode = mutation_kind
         else:
             coverage_kind = "ordinary_runtime"
-            evidence_owner = "contract_exhaustion_runtime_matrix"
-            test_name = "test_contract_exhaustion_runtime_regressions_exist"
+            evidence_owner = owner if owner == "review_window_completeness_matrix" else "contract_exhaustion_runtime_matrix"
+            test_name = (
+                "test_review_window_completeness_cells_have_runtime_owners"
+                if owner == "review_window_completeness_matrix"
+                else "test_contract_exhaustion_runtime_regressions_exist"
+            )
             command = "python -m pytest tests/test_flowpilot_contract_exhaustion_mesh.py tests/test_flowpilot_core_runtime.py"
             risk_tier = "ordinary"
             synthetic_replay_required = False
@@ -1107,6 +1120,8 @@ def _contract_exhaustion_rows() -> list[dict[str, Any]]:
                 "covered_failure_mode": covered_failure_mode,
                 "normal_repair_route": cell.get("normal_repair_route", ""),
                 "glass_break_allowed_in_acceptance": cell.get("glass_break_allowed_in_acceptance"),
+                "material_state_class": cell.get("material_state_class", ""),
+                "retry_count_class": cell.get("retry_count_class", ""),
                 "source": "contract_exhaustion_mesh_required_cell",
             }
         )

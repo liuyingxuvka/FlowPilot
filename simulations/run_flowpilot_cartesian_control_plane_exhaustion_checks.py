@@ -457,7 +457,7 @@ def _bridge_missing_mutation_families(
             str(row["source_mutation_kind"])
             for rows in row_groups
             for row in rows
-            if str(row["source_mutation_kind"]) not in model.MUTATION_BY_ID
+            if not bool(row.get("source_mutation_known", str(row["source_mutation_kind"]) in model.MUTATION_BY_ID))
             or str(row["cartesian_mutation_kind"]) not in model.MUTATION_BY_ID
         }
     )
@@ -471,6 +471,7 @@ def _bridge_fallback_translations(
         for rows in row_groups
         for row in rows
         if str(row["source_mutation_kind"]) != str(row["cartesian_mutation_kind"])
+        and str(row.get("bridge_translation_kind") or "") != "canonical_current_control_plane"
     )
 
 
@@ -493,6 +494,11 @@ def _bridge_report() -> dict[str, Any]:
     ]
     missing_mutation_families = _bridge_missing_mutation_families(contract_rows, historical_rows)
     fallback_translations = _bridge_fallback_translations(contract_rows, historical_rows)
+    canonical_translations = [
+        row["bridge_id"]
+        for row in contract_rows
+        if row.get("bridge_translation_kind") == "canonical_current_control_plane"
+    ]
     return {
         "ok": (
             not contract_missing
@@ -506,6 +512,8 @@ def _bridge_report() -> dict[str, Any]:
         "historical_bridge_missing_consumption": historical_missing,
         "missing_mutation_families": missing_mutation_families,
         "fallback_bridge_translations": fallback_translations,
+        "canonical_bridge_translation_count": len(canonical_translations),
+        "sample_canonical_bridge_translations": canonical_translations[:20],
         "sample_contract_bridge_cells": contract_rows[:20],
         "sample_historical_bridge_cells": historical_rows[:20],
     }

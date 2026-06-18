@@ -2,6 +2,29 @@
 
 All notable changes to FlowPilot will be documented in this file.
 
+## 0.10.14 - 2026-06-18
+
+### Fixed
+
+- Added a runtime-checkable review-window completeness matrix with stable
+  `review_flow_id` rows for every current Reviewer flow.
+- Required review packets to expose the declared review flow, required window
+  paths, required material classes, authorized read purposes, future-stage
+  boundaries, and PM repair return rule in both envelope and handoff body.
+- Extended the contract-driven fake AI responder with review-window behavior
+  profiles across review flow, material state, behavior profile, and retry
+  count class.
+- Bridged detailed review-window and fake-AI mutation families back into the
+  existing control-plane Cartesian mutation alphabet with explicit canonical
+  mapping instead of adding another runtime path.
+
+### Validation
+
+- Refreshed high-standard control-flow, fake-AI projection,
+  contract-exhaustion mesh, synthetic coverage matrix, control-plane Cartesian
+  matrix, reviewer challenge, reviewer-only gate, model-test alignment,
+  topology, install self-check, and local install sync evidence.
+
 ## 0.10.13 - 2026-06-18
 
 ### Fixed

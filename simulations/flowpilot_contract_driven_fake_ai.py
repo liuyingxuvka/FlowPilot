@@ -11,7 +11,16 @@ from __future__ import annotations
 from copy import deepcopy
 from dataclasses import dataclass
 import json
+from pathlib import Path
+import sys
 from typing import Any, Mapping
+
+ROOT = Path(__file__).resolve().parents[1]
+CORE_ASSETS = ROOT / "skills" / "flowpilot" / "assets"
+if str(CORE_ASSETS) not in sys.path:
+    sys.path.insert(0, str(CORE_ASSETS))
+
+from flowpilot_core_runtime import review_window_contracts  # noqa: E402
 
 
 MALFORMED_BODY_PROFILE_IDS = (
@@ -35,6 +44,8 @@ PROJECTION_GAP_PROFILE_IDS = (
     "forbidden_alias",
     "missing_active_id_coverage",
 )
+
+REVIEW_WINDOW_FAKE_AI_PROFILE_IDS = review_window_contracts.REVIEW_WINDOW_FAKE_AI_PROFILE_IDS
 
 
 @dataclass(frozen=True)
@@ -290,6 +301,14 @@ def _branch_shape_fields(contract: Mapping[str, Any]) -> list[str]:
     return list(dict.fromkeys(fields))
 
 
+def review_window_behavior_cells() -> list[dict[str, str]]:
+    return [
+        dict(cell)
+        for cell in review_window_contracts.review_window_completeness_cells()
+        if cell.get("required_evidence_owner") == "review_window_fake_ai_matrix"
+    ]
+
+
 class ContractDrivenFakeAIResponder:
     """Mechanical fake AI that derives responses from packet-local contracts."""
 
@@ -491,6 +510,126 @@ class ContractDrivenFakeAIResponder:
     def option_values_seen(self, payload: Mapping[str, Any], field_path: str) -> list[Any]:
         exists, values = _get_path_values(payload, field_path)
         return values if exists else []
+
+    def review_window_behavior_payload(
+        self,
+        profile_id: str,
+        review_window: Mapping[str, Any],
+        material_state_class: str = "all_required_material_available",
+        retry_count_class: str = "first_failure",
+    ) -> dict[str, Any]:
+        if profile_id not in REVIEW_WINDOW_FAKE_AI_PROFILE_IDS:
+            raise KeyError(f"unknown review-window fake AI profile: {profile_id}")
+        if material_state_class not in review_window_contracts.REVIEW_WINDOW_MATERIAL_STATE_CLASSES:
+            raise KeyError(f"unknown review-window material state: {material_state_class}")
+        if retry_count_class not in review_window_contracts.RETRY_COUNT_CLASSES:
+            raise KeyError(f"unknown review-window retry count class: {retry_count_class}")
+        flow_id = str(review_window.get("review_flow_id") or "")
+        required_reads = [
+            str(item)
+            for item in review_window.get("required_authorized_result_read_ids_before_submit", [])
+            if str(item)
+        ]
+        base = {
+            "pm_visible_summary": [f"Fake reviewer profile {profile_id} for {flow_id}."],
+            "reviewed_by_role": "human_like_reviewer",
+            "passed": True,
+            "findings": [],
+            "blockers": [],
+            "pm_suggestion_items": [],
+            "contract_self_check": {
+                "all_required_fields_present": True,
+                "exact_field_names_used": True,
+                "empty_required_arrays_explicit": True,
+                "runtime_mechanical_validation_passed": True,
+            },
+            "review_window_trace": {
+                "review_flow_id": flow_id,
+                "subject_lifecycle_stage": str(review_window.get("subject_lifecycle_stage") or ""),
+                "consumed_authorized_result_read_ids": required_reads,
+                "material_state_class": material_state_class,
+                "retry_count_class": retry_count_class,
+                "boundary": "review_window_control_rehearsal",
+            },
+        }
+        if material_state_class == "missing_required_material":
+            base["review_window_trace"]["required_material_missing"] = True
+            base["passed"] = False
+            base["recommended_resolution"] = "Return a missing-material blocker with the missing structured path."
+        elif material_state_class == "required_read_not_consumed":
+            base["review_window_trace"]["consumed_authorized_result_read_ids"] = []
+            base["review_window_trace"]["required_reads_skipped"] = required_reads
+        elif material_state_class == "unauthorized_body_requested":
+            base["review_window_trace"]["unauthorized_sealed_body_requested"] = True
+            base["passed"] = False
+            base["recommended_resolution"] = "Use only authorized_result_reads or return a missing-material blocker."
+        elif material_state_class == "future_stage_material_requested":
+            base["review_window_trace"]["future_stage_material_requested"] = True
+            base["passed"] = False
+            base["recommended_resolution"] = "Remove the future-stage demand and review only current-stage material."
+        if profile_id == "reviewer_shallow_pass":
+            base["review_window_trace"]["challenge_work_omitted"] = True
+            base["findings"] = []
+        if profile_id == "reviewer_skips_required_read":
+            base["review_window_trace"]["consumed_authorized_result_read_ids"] = []
+            base["review_window_trace"]["required_reads_skipped"] = required_reads
+        if profile_id == "reviewer_future_stage_demand":
+            base["passed"] = False
+            base["blockers"] = [
+                {
+                    "blocker_id": "fake-review-window-future-stage",
+                    "blocker_class": "local_artifact",
+                    "summary": "Requires future-stage evidence before the current stage permits it.",
+                }
+            ]
+            base["recommended_resolution"] = "Remove the future-stage demand and review only current-stage material."
+        if profile_id == "reviewer_unauthorized_sealed_body_request":
+            base["review_window_trace"]["unauthorized_sealed_body_requested"] = True
+            base["passed"] = False
+            base["blockers"] = [
+                {
+                    "blocker_id": "fake-review-window-unauthorized-body",
+                    "blocker_class": "local_artifact",
+                    "summary": "Requested sealed body access outside authorized_result_reads.",
+                }
+            ]
+            base["recommended_resolution"] = "Use only authorized_result_reads or return a missing-material blocker."
+        if profile_id == "reviewer_invents_scope":
+            base["review_window_trace"]["invented_review_scope"] = "extra_terminal_full_project_review"
+        if profile_id == "reviewer_self_repairs_subject":
+            base["review_window_trace"]["reviewer_repaired_subject"] = True
+            base["pm_suggestion_items"] = ["Reviewer attempted to patch the subject instead of blocking."]
+        if profile_id == "pm_bypasses_reviewer_blocker":
+            base["review_window_trace"]["pm_text_bypass_attempted"] = True
+            base["passed"] = False
+            base["recommended_resolution"] = "PM must create repair work and return repaired evidence to Reviewer."
+        if profile_id == "corrected_second_reviewer_retry":
+            base["review_window_trace"]["corrected_retry"] = True
+        if profile_id == "same_review_failure_attempts_1_to_4":
+            base["review_window_trace"]["same_failure_retry_class"] = "normal_before_threshold"
+            base["passed"] = False
+            base["recommended_resolution"] = "Continue normal reissue or PM repair before break-glass threshold."
+        if profile_id == "same_review_failure_attempt_5_break_glass":
+            base["review_window_trace"]["same_failure_retry_class"] = "break_glass_threshold"
+            base["passed"] = False
+            base["recommended_resolution"] = "Escalate through the existing break-glass recovery threshold."
+        if retry_count_class == "corrected_second_attempt":
+            base["review_window_trace"]["corrected_retry"] = True
+            base["passed"] = True
+            base["blockers"] = []
+            base["recommended_resolution"] = "Reviewer corrected the prior issue and can be rechecked normally."
+            return base
+        if retry_count_class == "same_failure_attempts_1_to_4":
+            base["review_window_trace"]["same_failure_retry_class"] = "normal_before_threshold"
+            if profile_id == "same_review_failure_attempt_5_break_glass":
+                base["recommended_resolution"] = "Continue normal reissue or PM repair before break-glass threshold."
+            return base
+        if retry_count_class == "same_failure_attempt_5":
+            base["review_window_trace"]["same_failure_retry_class"] = "break_glass_threshold"
+            base["passed"] = False
+            base["recommended_resolution"] = "Escalate through the existing break-glass recovery threshold."
+            return base
+        return base
 
     def malformed_body(self, profile_id: str, payload: Mapping[str, Any] | None = None) -> str:
         if profile_id not in MALFORMED_BODY_PROFILE_IDS:

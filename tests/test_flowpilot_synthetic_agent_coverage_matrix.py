@@ -195,6 +195,89 @@ class FlowPilotSyntheticAgentCoverageMatrixTests(unittest.TestCase):
                     self.assertFalse(row["synthetic_replay_required"])
                     self.assertEqual(row["coverage_boundary"], "ordinary_runtime_contract")
 
+    def test_review_window_completeness_and_fake_ai_cells_are_cartesian_rows(self) -> None:
+        report = coverage_matrix.build_report()
+        review_cells = [
+            cell
+            for cell in coverage_matrix.REQUIRED_CONTRACT_EXHAUSTION_CELLS
+            if cell.get("required_evidence_owner") in {
+                "review_window_completeness_matrix",
+                "review_window_fake_ai_matrix",
+            }
+        ]
+        rows_by_obligation = {
+            row["obligation_id"]: row
+            for row in report["rows"]
+            if row["model_id"] == coverage_matrix.CONTRACT_EXHAUSTION_MODEL_ID
+        }
+
+        self.assertTrue(review_cells)
+        self.assertEqual(
+            {cell["required_evidence_owner"] for cell in review_cells},
+            {"review_window_completeness_matrix", "review_window_fake_ai_matrix"},
+        )
+        flow_ids = {str(cell["review_flow_id"]) for cell in review_cells}
+        fake_profile_ids = set(coverage_matrix.CONTRACT_EXHAUSTION_SYNTHETIC_MUTATIONS).intersection(
+            {str(cell["mutation_kind"]) for cell in review_cells}
+        )
+
+        for cell in review_cells:
+            obligation_id = f"contract_exhaustion.{cell['cell_id']}"
+            with self.subTest(cell_id=cell["cell_id"]):
+                self.assertIn(obligation_id, rows_by_obligation)
+                row = rows_by_obligation[obligation_id]
+                self.assertFalse(row["live_completion_allowed"])
+                self.assertTrue(row["evidence_current"])
+                self.assertEqual(row["evidence_status"], "passed")
+                if cell["required_evidence_owner"] == "review_window_completeness_matrix":
+                    self.assertEqual(row["coverage_kind"], "ordinary_runtime")
+                    self.assertFalse(row["synthetic_replay_required"])
+                    self.assertEqual(row["coverage_boundary"], "ordinary_runtime_contract")
+                    self.assertEqual(row["evidence_owner"], "review_window_completeness_matrix")
+                    self.assertEqual(row["test_name"], "test_review_window_completeness_cells_have_runtime_owners")
+                else:
+                    self.assertEqual(row["coverage_kind"], "synthetic_trace")
+                    self.assertTrue(row["synthetic_replay_required"])
+                    self.assertEqual(row["coverage_boundary"], "control_flow_only")
+                    self.assertEqual(row["evidence_owner"], "review_window_fake_ai_matrix")
+                    self.assertEqual(row["test_name"], "test_review_window_fake_ai_profiles_are_cartesian_covered")
+
+        completeness_flow_ids = {
+            str(cell["review_flow_id"])
+            for cell in review_cells
+            if cell["required_evidence_owner"] == "review_window_completeness_matrix"
+            and cell["mutation_kind"] == "missing_window_path"
+        }
+        fake_pairs = {
+            (
+                str(cell["review_flow_id"]),
+                str(cell["mutation_kind"]),
+                str(cell.get("material_state_class") or ""),
+                str(cell.get("retry_count_class") or ""),
+            )
+            for cell in review_cells
+            if cell["required_evidence_owner"] == "review_window_fake_ai_matrix"
+        }
+        material_state_classes = {
+            str(cell.get("material_state_class") or "")
+            for cell in review_cells
+            if cell["required_evidence_owner"] == "review_window_fake_ai_matrix"
+        }
+        retry_count_classes = {
+            str(cell.get("retry_count_class") or "")
+            for cell in review_cells
+            if cell["required_evidence_owner"] == "review_window_fake_ai_matrix"
+        }
+
+        self.assertLessEqual(flow_ids, completeness_flow_ids)
+        self.assertGreaterEqual(len(material_state_classes), 5)
+        self.assertGreaterEqual(len(retry_count_classes), 4)
+        for flow_id in flow_ids:
+            for profile_id in fake_profile_ids:
+                for material_state in material_state_classes:
+                    for retry_class in retry_count_classes:
+                        self.assertIn((flow_id, profile_id, material_state, retry_class), fake_pairs)
+
     def test_cartesian_exhaustion_required_cells_have_owners(self) -> None:
         report = coverage_matrix.build_report()
         matrix_cell_ids = {
