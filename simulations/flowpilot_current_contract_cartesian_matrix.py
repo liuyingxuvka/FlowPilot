@@ -86,6 +86,12 @@ AI_RETURN_PROFILES = (
     "runtime_no_ai",
     "well_formed_pass",
     "well_formed_block",
+    "malformed_json_unquoted_keys",
+    "malformed_json_markdown_wrapped",
+    "malformed_json_prose_plus_json",
+    "malformed_json_top_level_array",
+    "malformed_json_empty_body",
+    "malformed_json_trailing_comma",
     "ack_only",
     "summary_only",
     "old_protocol",
@@ -197,6 +203,8 @@ PROFILE_BY_STAGE_GROUP: dict[str, dict[str, tuple[str, ...]]] = {
         "ai_profiles": (
             "runtime_no_ai",
             "well_formed_pass",
+            "malformed_json_unquoted_keys",
+            "malformed_json_markdown_wrapped",
             "summary_only",
             "old_protocol",
             "wrong_role",
@@ -221,6 +229,8 @@ PROFILE_BY_STAGE_GROUP: dict[str, dict[str, tuple[str, ...]]] = {
         ),
         "ai_profiles": (
             "well_formed_pass",
+            "malformed_json_unquoted_keys",
+            "malformed_json_prose_plus_json",
             "summary_only",
             "old_protocol",
             "wrong_role",
@@ -249,6 +259,12 @@ PROFILE_BY_STAGE_GROUP: dict[str, dict[str, tuple[str, ...]]] = {
         "ai_profiles": (
             "well_formed_pass",
             "well_formed_block",
+            "malformed_json_unquoted_keys",
+            "malformed_json_markdown_wrapped",
+            "malformed_json_prose_plus_json",
+            "malformed_json_top_level_array",
+            "malformed_json_empty_body",
+            "malformed_json_trailing_comma",
             "ack_only",
             "summary_only",
             "old_protocol",
@@ -298,7 +314,19 @@ PROFILE_BY_STAGE_GROUP: dict[str, dict[str, tuple[str, ...]]] = {
             "wrong_owner",
             "future_claim_without_evidence",
         ),
-        "ai_profiles": ("well_formed_pass", "well_formed_block", "summary_only", "wrong_role", "overclaims_completion"),
+        "ai_profiles": (
+            "well_formed_pass",
+            "well_formed_block",
+            "malformed_json_unquoted_keys",
+            "malformed_json_markdown_wrapped",
+            "malformed_json_prose_plus_json",
+            "malformed_json_top_level_array",
+            "malformed_json_empty_body",
+            "malformed_json_trailing_comma",
+            "summary_only",
+            "wrong_role",
+            "overclaims_completion",
+        ),
         "timing": ("on_time", "one_step_early", "one_step_late", "background_progress_late"),
         "blockers": ("no_blocker", "new_current_blocker", "wrong_owner_blocker", "solved_still_blocks", "unsolved_skipped"),
         "routes": ("single_node", "parent_child", "terminal_replay"),
@@ -316,7 +344,19 @@ PROFILE_BY_STAGE_GROUP: dict[str, dict[str, tuple[str, ...]]] = {
             "current_progress_only",
             "future_claim_without_evidence",
         ),
-        "ai_profiles": ("well_formed_pass", "summary_only", "old_protocol", "wrong_role", "overclaims_completion"),
+        "ai_profiles": (
+            "well_formed_pass",
+            "malformed_json_unquoted_keys",
+            "malformed_json_markdown_wrapped",
+            "malformed_json_prose_plus_json",
+            "malformed_json_top_level_array",
+            "malformed_json_empty_body",
+            "malformed_json_trailing_comma",
+            "summary_only",
+            "old_protocol",
+            "wrong_role",
+            "overclaims_completion",
+        ),
         "timing": ("on_time", "one_step_early", "one_step_late", "background_progress_late"),
         "blockers": ("no_blocker", "new_current_blocker", "same_blocker_before_threshold", "same_blocker_at_threshold"),
         "routes": ("single_node", "parent_child", "route_mutation_replacement", "terminal_replay"),
@@ -335,6 +375,8 @@ PROFILE_BY_STAGE_GROUP: dict[str, dict[str, tuple[str, ...]]] = {
         ),
         "ai_profiles": (
             "well_formed_pass",
+            "malformed_json_unquoted_keys",
+            "malformed_json_markdown_wrapped",
             "summary_only",
             "wrong_role",
             "overclaims_completion",
@@ -364,7 +406,15 @@ PROFILE_BY_STAGE_GROUP: dict[str, dict[str, tuple[str, ...]]] = {
             "wrong_owner",
             "future_claim_without_evidence",
         ),
-        "ai_profiles": ("well_formed_pass", "summary_only", "wrong_role", "hallucinated_artifact", "overclaims_completion"),
+        "ai_profiles": (
+            "well_formed_pass",
+            "malformed_json_unquoted_keys",
+            "malformed_json_prose_plus_json",
+            "summary_only",
+            "wrong_role",
+            "hallucinated_artifact",
+            "overclaims_completion",
+        ),
         "timing": ("on_time", "one_step_early", "route_mutation_after_packet", "old_result_after_reissue"),
         "blockers": ("no_blocker", "new_current_blocker", "stale_blocker", "unsolved_skipped"),
         "routes": ("route_mutation_replacement", "sibling_branch_replacement", "superseded_node", "parent_child"),
@@ -381,7 +431,13 @@ PROFILE_BY_STAGE_GROUP: dict[str, dict[str, tuple[str, ...]]] = {
             "wrong_owner",
             "duplicate_conflict",
         ),
-        "ai_profiles": ("well_formed_pass", "summary_only", "wrong_role", "overclaims_completion"),
+        "ai_profiles": (
+            "well_formed_pass",
+            "malformed_json_unquoted_keys",
+            "summary_only",
+            "wrong_role",
+            "overclaims_completion",
+        ),
         "timing": ("on_time", "one_step_late", "old_result_after_reissue", "background_progress_late"),
         "blockers": ("no_blocker", "new_current_blocker", "stale_blocker", "solved_still_blocks", "unsolved_skipped"),
         "routes": ("single_node", "parent_child", "route_mutation_replacement"),
@@ -391,7 +447,14 @@ PROFILE_BY_STAGE_GROUP: dict[str, dict[str, tuple[str, ...]]] = {
     "replay": {
         "actions": ("review_current_subject", "block_current_subject", "repair_parent_scope"),
         "object_states": ("missing_due", "current_valid", "stale_route", "wrong_owner", "future_claim_without_evidence"),
-        "ai_profiles": ("well_formed_pass", "well_formed_block", "summary_only", "overclaims_completion"),
+        "ai_profiles": (
+            "well_formed_pass",
+            "well_formed_block",
+            "malformed_json_unquoted_keys",
+            "malformed_json_markdown_wrapped",
+            "summary_only",
+            "overclaims_completion",
+        ),
         "timing": ("on_time", "one_step_early", "one_step_late", "route_mutation_after_packet"),
         "blockers": ("no_blocker", "new_current_blocker", "stale_blocker", "unsolved_skipped"),
         "routes": ("parent_child", "sibling_branch_replacement", "terminal_replay"),
@@ -409,7 +472,16 @@ PROFILE_BY_STAGE_GROUP: dict[str, dict[str, tuple[str, ...]]] = {
             "wrong_owner",
             "future_claim_without_evidence",
         ),
-        "ai_profiles": ("well_formed_pass", "summary_only", "wrong_role", "overclaims_completion", "contradictory_result"),
+        "ai_profiles": (
+            "well_formed_pass",
+            "malformed_json_unquoted_keys",
+            "malformed_json_markdown_wrapped",
+            "malformed_json_empty_body",
+            "summary_only",
+            "wrong_role",
+            "overclaims_completion",
+            "contradictory_result",
+        ),
         "timing": ("on_time", "one_step_early", "one_step_late", "background_progress_late"),
         "blockers": ("no_blocker", "new_current_blocker", "stale_blocker", "solved_still_blocks", "unsolved_skipped"),
         "routes": ("multi_node", "parent_child", "terminal_replay", "manual_resume"),
@@ -469,6 +541,13 @@ EXISTING_TEST_LINKS = (
         "required_markers": ("undeclared_success_fields_for_family", "forbidden_success_fields_for_family"),
     },
     {
+        "link_id": "fake_ai_malformed_body_profiles",
+        "path": "tests/test_flowpilot_ai_contract_projection.py",
+        "test_name": "test_contract_driven_fake_ai_malformed_body_profiles_reissue_with_strict_json_feedback",
+        "covers": ("malformed_json_profiles", "strict_json_object_reissue"),
+        "required_markers": ("MALFORMED_BODY_PROFILE_IDS", "strict JSON object"),
+    },
+    {
         "link_id": "route_mutation_stale_old_evidence",
         "path": "tests/test_flowpilot_complete_system_runtime.py",
         "test_name": "test_complete_packet_flow_rejects_cockpit_direct_state_write_and_old_authority",
@@ -514,6 +593,8 @@ def expected_reaction(
     claim_type: str,
 ) -> str:
     group = STAGE_GROUP_BY_FAMILY[family_id]
+    if ai_profile.startswith("malformed_json_"):
+        return "mechanical_reject"
     if object_state == "unsupported_legacy_shape" or ai_profile == "old_protocol":
         return "mechanical_reject"
     if source == "stale_workspace":
@@ -597,6 +678,8 @@ def _existing_test_link_for_cell(
 ) -> str:
     if object_state == "unsupported_legacy_shape" or ai_profile == "old_protocol":
         return "cartesian_control_plane_existing_matrix"
+    if ai_profile.startswith("malformed_json_"):
+        return "fake_ai_malformed_body_profiles"
     if ai_profile in {"ack_only", "summary_only", "overclaims_completion"} or reaction == "reject_overclaim":
         return "synthetic_non_live_boundary"
     if object_state in {"stale_run", "stale_route", "stale_packet"} or timing == "old_result_after_reissue":

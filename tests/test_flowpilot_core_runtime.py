@@ -2745,6 +2745,43 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         self.assertEqual(review["family_key"], root_cause_key)
         self.assertEqual(review["root_cause_loop_key"], root_cause_key)
 
+    def test_break_glass_threshold_stays_normal_for_four_and_triggers_on_fifth(self) -> None:
+        root_cause_key = runtime._flowguard_missing_evidence_root_cause_key(
+            subject_packet_id="packet-subject",
+            target_result_id="result-subject",
+            repair_blocker_id="",
+        )
+
+        for attempt_count, threshold_exceeded in ((4, False), (5, True)):
+            with self.subTest(attempt_count=attempt_count):
+                ledger = runtime.new_ledger("Goal", "Contract")
+                runtime.create_route(ledger, "Route", ["Do work"])
+                for index in range(attempt_count):
+                    blocker_id = f"blocker-root-{index}"
+                    ledger["active_blockers"][blocker_id] = {
+                        "blocker_id": blocker_id,
+                        "status": "active",
+                        "gate_kind": "flowguard_review_handoff",
+                        "blocker_class": "missing_matching_flowguard_report",
+                        "required_recheck_role": "flowguard_operator",
+                        "repair_target_packet_id": "packet-subject",
+                        "target_result_id": "result-subject",
+                        "root_cause_loop_key": root_cause_key,
+                    }
+
+                review = runtime._repair_loop_break_glass_review(
+                    ledger,
+                    ledger["active_blockers"][f"blocker-root-{attempt_count - 1}"],
+                )
+
+                self.assertEqual(review["attempt_count"], attempt_count)
+                self.assertEqual(review["threshold"], 5)
+                self.assertEqual(review["threshold_exceeded"], threshold_exceeded)
+                self.assertEqual(
+                    review["required_action"],
+                    "controller_break_glass_diagnosis" if threshold_exceeded else "ordinary_pm_repair_allowed",
+                )
+
     def test_result_submitted_repair_target_is_superseded_after_reissue(self) -> None:
         ledger, packet_id, worker = runtime_runner._base_ledger()
         runtime.ack_lease(ledger, worker, packet_id)

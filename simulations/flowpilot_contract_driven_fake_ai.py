@@ -14,6 +14,29 @@ import json
 from typing import Any, Mapping
 
 
+MALFORMED_BODY_PROFILE_IDS = (
+    "unquoted_keys",
+    "markdown_wrapped_json",
+    "prose_plus_json",
+    "top_level_array",
+    "empty_body",
+    "trailing_comma",
+)
+
+RETRY_PROFILE_IDS = (
+    "corrected_second_retry",
+    "same_payload_retry",
+    "partial_repair_then_corrected",
+)
+
+PROJECTION_GAP_PROFILE_IDS = (
+    "hidden_projection_gap",
+    "finite_option_mistake",
+    "forbidden_alias",
+    "missing_active_id_coverage",
+)
+
+
 @dataclass(frozen=True)
 class ProjectionFinding:
     code: str
@@ -469,6 +492,124 @@ class ContractDrivenFakeAIResponder:
         exists, values = _get_path_values(payload, field_path)
         return values if exists else []
 
+    def malformed_body(self, profile_id: str, payload: Mapping[str, Any] | None = None) -> str:
+        if profile_id not in MALFORMED_BODY_PROFILE_IDS:
+            raise KeyError(f"unknown malformed body profile: {profile_id}")
+        base_payload = deepcopy(dict(payload)) if isinstance(payload, Mapping) else self.legal_payload()
+        legal_json = json.dumps(base_payload, ensure_ascii=True, sort_keys=True)
+        if profile_id == "unquoted_keys":
+            return "{decision: \"pass\", pm_visible_summary: [\"not strict json\"]}"
+        if profile_id == "markdown_wrapped_json":
+            return f"```json\n{legal_json}\n```"
+        if profile_id == "prose_plus_json":
+            return f"Here is the result:\n{legal_json}"
+        if profile_id == "top_level_array":
+            return f"[{legal_json}]"
+        if profile_id == "empty_body":
+            return ""
+        if profile_id == "trailing_comma":
+            return legal_json[:-1] + ",}" if legal_json.endswith("}") else f"{legal_json},"
+        raise KeyError(f"unknown malformed body profile: {profile_id}")
+
+    def malformed_body_cells(self) -> list[dict[str, str]]:
+        return [
+            {
+                "cell_id": f"fake_ai.raw_body.{profile_id}",
+                "field_path": "body",
+                "contract_path": "result.body",
+                "mutation_kind": f"malformed_body.{profile_id}",
+                "format_profile": profile_id,
+                "expected_reaction": "mechanical_reject_reissue",
+                "required_evidence_owner": "contract_exhaustion_fake_ai_matrix",
+            }
+            for profile_id in MALFORMED_BODY_PROFILE_IDS
+        ]
+
+    def retry_cells(self) -> list[dict[str, str]]:
+        cells: list[dict[str, str]] = []
+        repairable_paths = list(
+            dict.fromkeys(
+                [
+                    *self.required_fields,
+                    *self.required_child_fields,
+                    *[f"result.{field}" for field in sorted(self.allowed_value_options)],
+                    *[f"result.{alias}" for alias in sorted(self.forbidden_aliases)],
+                ]
+            )
+        ) or ["result.body"]
+        for profile_id in RETRY_PROFILE_IDS:
+            for field_path in repairable_paths:
+                cells.append(
+                    {
+                        "cell_id": f"fake_ai.retry.{profile_id}.{field_path}",
+                        "field_path": field_path,
+                        "contract_path": field_path,
+                        "mutation_kind": profile_id,
+                        "expected_reaction": (
+                            "accepted_after_reissue"
+                            if profile_id == "corrected_second_retry"
+                            else "same_family_repair_or_reissue_without_glassbreak_before_threshold"
+                        ),
+                        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix",
+                    }
+                )
+        return cells
+
+    def projection_gap_cells(self) -> list[dict[str, str]]:
+        cells: list[dict[str, str]] = []
+        if self.required_child_fields:
+            cells.append(
+                {
+                    "cell_id": "fake_ai.projection.hidden_required_child_gap",
+                    "field_path": self.required_child_fields[0],
+                    "contract_path": self.required_child_fields[0],
+                    "mutation_kind": "hidden_projection_gap",
+                    "expected_reaction": "projection_preflight_failure",
+                    "required_evidence_owner": "contract_exhaustion_fake_ai_matrix",
+                }
+            )
+        if self.allowed_value_options:
+            field_path = sorted(self.allowed_value_options)[0]
+            cells.append(
+                {
+                    "cell_id": f"fake_ai.projection.finite_option_mistake.{field_path}",
+                    "field_path": field_path,
+                    "contract_path": f"result.{field_path}",
+                    "mutation_kind": "finite_option_mistake",
+                    "expected_reaction": "mechanical_reject_reissue_with_options",
+                    "required_evidence_owner": "contract_exhaustion_fake_ai_matrix",
+                }
+            )
+        if self.forbidden_aliases:
+            alias_path = sorted(self.forbidden_aliases)[0]
+            cells.append(
+                {
+                    "cell_id": f"fake_ai.projection.forbidden_alias.{alias_path}",
+                    "field_path": alias_path,
+                    "contract_path": f"result.{alias_path}",
+                    "mutation_kind": "forbidden_alias",
+                    "expected_reaction": "mechanical_reject_reissue_with_exact_field",
+                    "required_evidence_owner": "contract_exhaustion_fake_ai_matrix",
+                }
+            )
+        for contract_key, field_path in (
+            ("required_acceptance_item_ids", "nodes[].acceptance_item_ids[]"),
+            ("required_node_acceptance_item_ids", "node_context_package.acceptance_item_projection[].acceptance_item_id"),
+        ):
+            values = self.contract.get(contract_key)
+            if isinstance(values, list) and values:
+                cells.append(
+                    {
+                        "cell_id": f"fake_ai.projection.missing_active_id_coverage.{contract_key}",
+                        "field_path": field_path,
+                        "contract_path": contract_key,
+                        "mutation_kind": "missing_active_id_coverage",
+                        "expected_reaction": "mechanical_reject_reissue_with_missing_ids",
+                        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix",
+                    }
+                )
+        return cells
+
     def option_value_cells(self) -> list[dict[str, str]]:
         cells: list[dict[str, str]] = []
         for field_path, values in sorted(self.allowed_value_options.items()):
@@ -489,7 +630,11 @@ class ContractDrivenFakeAIResponder:
         return cells
 
     def coverage_cells(self) -> list[dict[str, str]]:
-        cells: list[dict[str, str]] = []
+        cells: list[dict[str, str]] = [
+            *self.malformed_body_cells(),
+            *self.retry_cells(),
+            *self.projection_gap_cells(),
+        ]
         for field_path in self.required_fields:
             cells.append(
                 {

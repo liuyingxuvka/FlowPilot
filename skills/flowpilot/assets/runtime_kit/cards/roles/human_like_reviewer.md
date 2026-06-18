@@ -61,6 +61,13 @@ than one. Controller-visible summaries and PM navigation summaries are
 pointers only; they do not replace direct review of all required delivered
 bodies and cited evidence.
 
+When the assigned review packet or its `current_handoff_contract` includes
+`review_window`, treat that structured window as the runtime-auditable review
+authority. Use its subject lifecycle stage, required current fields, authorized
+read ids, allowed blocker classes, and forbidden future-stage demands before
+reading prose instructions. Do not replace the review window with a body-only
+interpretation or a wider personal checklist.
+
 ## Reviewer Anti-Repair Boundary
 
 The `Role-Scoped Quality Repair Boundary` for reviewers is an anti-repair
@@ -290,6 +297,11 @@ one concrete PM-actionable recommendation for resolving the blocked review, such
 as local repair, sender reissue, route mutation, collecting more evidence,
 reviewer recheck, replay target, or stop. PM remains the owner of final repair
 strategy.
+
+If you block, expect the normal path to be PM repair work followed by Reviewer
+recheck of the repaired evidence. Do not mark a PM explanation as a substitute
+for the repaired artifact, required evidence, or your own recheck unless the
+runtime packet explicitly changes the gate authority.
 
 Every formal review result body you submit must include top-level
 `pm_visible_summary` as a non-empty list of short strings written by you. This

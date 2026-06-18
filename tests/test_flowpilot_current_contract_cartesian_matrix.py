@@ -118,6 +118,36 @@ class FlowPilotCurrentContractCartesianMatrixTests(unittest.TestCase):
         self.assertGreater(matrix["by_reaction"]["reject_overclaim"], 0)
         self.assertGreater(matrix["by_reaction"]["progress_only_not_evidence"], 0)
 
+    def test_malformed_json_ai_profiles_are_mechanical_reject_cells(self) -> None:
+        malformed_profiles = {
+            value
+            for value in model.AI_RETURN_PROFILES
+            if str(value).startswith("malformed_json_")
+        }
+        self.assertEqual(
+            malformed_profiles,
+            {
+                "malformed_json_unquoted_keys",
+                "malformed_json_markdown_wrapped",
+                "malformed_json_prose_plus_json",
+                "malformed_json_top_level_array",
+                "malformed_json_empty_body",
+                "malformed_json_trailing_comma",
+            },
+        )
+        cells = [
+            cell
+            for cell in model.REQUIRED_FULL_CARTESIAN_CELLS
+            if cell["ai_return_profile"] in malformed_profiles
+        ]
+        self.assertTrue(cells)
+        self.assertFalse([
+            cell["cell_id"]
+            for cell in cells[:500]
+            if cell["expected_reaction"] != "mechanical_reject"
+            or cell["existing_test_link_id"] != "fake_ai_malformed_body_profiles"
+        ])
+
     def test_reused_existing_tests_are_current_contract_audited(self) -> None:
         audit = self.report["existing_test_reuse_audit"]
 

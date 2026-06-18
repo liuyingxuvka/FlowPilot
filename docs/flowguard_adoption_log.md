@@ -28473,3 +28473,56 @@ Task id: `generate-new-flowpilot-formal-entrypoint-20260529`
   - A hand-authored fake-AI package passes while the mechanical responder cannot derive the same payload from AI-facing contracts.
   - A source evidence row names code contracts that its registered test does not directly call.
   - A StructureMesh split creates helper modules without Model-Test Alignment rows for the helper contracts.
+
+## 2026-06-18 - Fake-AI Review Window Coverage Hardening
+
+- Task: `harden-flowpilot-fake-ai-review-window-coverage-20260618`
+- Route: Predictive KB preflight, OpenSpec change `harden-flowpilot-fake-ai-review-window-coverage`, ExistingModel preflight, ContractExhaustionMesh, TestMesh, Model-Test Alignment, and DevelopmentProcessFlow.
+- Trigger: the user asked to upgrade existing FlowPilot tests and runtime surfaces so two newly observed bug families are covered by fake-AI Cartesian rehearsal: hidden runtime-enforced contract rules and malformed/repair-loop AI outputs, while keeping Reviewer hard blockers on one clear Reviewer -> PM repair -> Reviewer recheck path.
+- Result:
+  - Contract-driven fake AI now emits raw malformed body profiles, retry profiles, and projection-gap profiles from structured coverage cells.
+  - Planning packets now surface active acceptance item owner coverage before first response, including current item ids and `nodes[].acceptance_item_ids` repair shape.
+  - Node-acceptance packets now surface `acceptance_item_projection` row requirements, allowed current ids, row type requirements, and minimal repair guidance before first response.
+  - Reviewer packets now carry a runtime-checkable `review_window` in structured envelope/current-handoff metadata rather than relying on prose hidden in the body.
+  - Reviewer hard blockers stay on the single PM repair path; PM does not bypass Reviewer quality judgment with text, and repaired evidence returns to Reviewer.
+  - BreakGlass threshold wording and runtime behavior are aligned to five or more same-lineage failures, while one-to-four repeats remain normal repair-path evidence.
+- Validation:
+  - `python -m pytest tests/test_flowpilot_ai_contract_projection.py tests/test_flowpilot_high_standard_control_flow.py tests/test_flowpilot_contract_exhaustion_mesh.py tests/test_flowpilot_current_contract_cartesian_matrix.py tests/test_flowpilot_executable_matrix_coverage.py tests/test_flowpilot_core_runtime.py tests/test_flowpilot_card_instruction_coverage.py -q` -> 257 tests passed, 1194 subtests passed.
+  - `python simulations/run_flowpilot_contract_exhaustion_mesh_checks.py --write-results` -> OK.
+  - `python simulations/run_flowpilot_current_contract_cartesian_matrix_checks.py --write-results` -> OK.
+  - `python simulations/run_flowpilot_executable_matrix_coverage_checks.py --write-results` -> OK after a transient Windows result-file write failure was rerun successfully.
+  - `python simulations/run_flowpilot_planning_quality_checks.py --json-out simulations/flowpilot_planning_quality_results.json` -> OK.
+  - `python simulations/run_flowpilot_reviewer_active_challenge_checks.py --json-out simulations/flowpilot_reviewer_active_challenge_results.json` -> OK.
+  - `python simulations/run_flowpilot_blocker_repair_information_flow_checks.py --json-out simulations/flowpilot_blocker_repair_information_flow_results.json` -> OK.
+  - `python simulations/run_flowpilot_model_test_alignment_checks.py --json-out simulations/flowpilot_model_test_alignment_results.json` -> OK; alignment/full diagnostics remain green.
+  - `python simulations/run_flowpilot_reviewer_only_gate_checks.py --json-out simulations/flowpilot_reviewer_only_gate_results.json` -> OK.
+  - `python simulations/run_meta_checks.py` and `python simulations/run_capability_checks.py` ran under `tmp/flowguard_background/`; both exit artifacts were 0 and meta artifacts report completed.
+- Claim boundary:
+  - This covers fake-AI/runtime/control-plane testing for malformed body rejection, projection surfacing, repairable runtime feedback, Reviewer window metadata, PM repair/reviewer recheck path, and same-lineage BreakGlass threshold behavior.
+  - This does not claim live AI semantic quality, public release readiness, remote push, GitHub release, package tag, deployment, or OpenSpec archive.
+- Counterexamples preserved:
+  - A validator rejects a field that was never surfaced in `current_handoff_contract.required_report_contract`.
+  - A role submits malformed JSON-looking text and runtime feedback fails to name the strict JSON object requirement and repair path.
+  - Reviewer receives only the current report body without enough structured subject-window metadata to judge the real scope.
+  - PM accepts or bypasses a Reviewer hard blocker instead of creating repair work and returning repaired evidence to Reviewer.
+  - Same-lineage failures do not trigger BreakGlass on the fifth occurrence, or trigger too early during one-to-four normal repair attempts.
+- Next actions:
+  - Rebuild and check topology after this log and OpenSpec task update.
+  - Sync installed FlowPilot from the repository, run install audit/checks, and then perform local git synchronization if the worktree remains scoped.
+
+## 2026-06-18 - Fake-AI Review Window Install Sync Closeout
+
+- Task: `harden-flowpilot-fake-ai-review-window-coverage-install-sync-20260618`
+- Route: DevelopmentProcessFlow closeout after OpenSpec, FlowGuard model checks, topology refresh, and install sync.
+- Trigger: finish the local repository/install/git synchronization boundary for the fake-AI review-window coverage hardening.
+- Validation:
+  - `openspec validate harden-flowpilot-fake-ai-review-window-coverage --strict` -> valid.
+  - `python scripts/flowguard_project_topology.py build` -> OK; 150 models, 452 test commands, 1064 code surfaces.
+  - `python scripts/flowguard_project_topology.py check` -> OK; no findings.
+  - `python scripts/install_flowpilot.py --sync-repo-owned --json` -> OK; installed FlowPilot was stale, then overwritten from repo and source/installed digests matched.
+  - `python scripts/audit_local_install_sync.py --json` -> OK.
+  - `python scripts/install_flowpilot.py --check --json` -> OK.
+  - `python scripts/check_install.py --json` -> OK.
+- Claim boundary:
+  - Repository validation, topology, and local installed FlowPilot sync are current for this scoped hardening.
+  - No remote push, GitHub release, package tag, deploy, public publication, or OpenSpec archive is claimed.

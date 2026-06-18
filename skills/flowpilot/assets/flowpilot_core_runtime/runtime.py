@@ -16,7 +16,7 @@ import os
 from pathlib import Path
 import re
 import time
-from typing import Any, Mapping
+from typing import Any, Iterable, Mapping
 
 try:  # pragma: no cover - direct module test harness path.
     from . import control_surface, packet_result_contracts, packet_stage_evidence_matrix
@@ -7488,7 +7488,7 @@ def _repair_loop_same_family_rows(ledger: Mapping[str, Any], blocker: Mapping[st
 def _repair_loop_break_glass_review(ledger: Mapping[str, Any], blocker: Mapping[str, Any]) -> dict[str, Any]:
     family, rows = _repair_loop_same_family_rows(ledger, blocker)
     attempt_count = len(rows)
-    threshold_exceeded = attempt_count > _REPAIR_LOOP_BREAK_GLASS_THRESHOLD
+    threshold_exceeded = attempt_count >= _REPAIR_LOOP_BREAK_GLASS_THRESHOLD
     root_cause_key = str(blocker.get("root_cause_loop_key") or "")
     return {
         "schema_version": "black_box_flowpilot.repair_loop_break_glass_review.v1",
@@ -7503,7 +7503,7 @@ def _repair_loop_break_glass_review(ledger: Mapping[str, Any], blocker: Mapping[
         "required_action": "controller_break_glass_diagnosis" if threshold_exceeded else "ordinary_pm_repair_allowed",
         "consecutive_scope": "same_repair_lineage_problem_identity",
         "reason": (
-            "same repair lineage repeated the same blocker problem more than five consecutive times"
+            "same repair lineage repeated the same blocker problem five or more consecutive times"
             if threshold_exceeded
             else "same repair lineage problem remains within ordinary PM repair threshold"
         ),
@@ -7564,7 +7564,7 @@ def _blocker_repeat_context(ledger: Mapping[str, Any], blocker: Mapping[str, Any
         "previous_blocker_ids": [row["blocker_id"] for row in same_family if row["blocker_id"] != blocker.get("blocker_id")],
         "same_family_blockers": same_family,
         "threshold": _REPAIR_LOOP_BREAK_GLASS_THRESHOLD,
-        "threshold_exceeded": repeat_count > _REPAIR_LOOP_BREAK_GLASS_THRESHOLD,
+        "threshold_exceeded": repeat_count >= _REPAIR_LOOP_BREAK_GLASS_THRESHOLD,
         "advisory_only": True,
     }
 
@@ -8335,6 +8335,182 @@ def _packet_handoff_missing_information_response(
     }
 
 
+def _dedupe_contract_fields(*groups: Iterable[Any]) -> list[str]:
+    fields: list[str] = []
+    for group in groups:
+        for item in group:
+            value = str(item)
+            if value and value not in fields:
+                fields.append(value)
+    return fields
+
+
+def _planning_owner_coverage_minimal_shape(active_item_ids: list[str]) -> dict[str, Any]:
+    return {
+        "schema_version": ROUTE_PLAN_SCHEMA_VERSION,
+        "decision": "pass",
+        "nodes": [
+            {
+                "node_id": "node-cover-active-acceptance-items",
+                "title": "Execute current acceptance items",
+                "node_kind": "leaf",
+                "parent_node_id": "",
+                "child_node_ids": [],
+                "responsibility": "worker",
+                "acceptance_criteria": ["Current node owns and closes every active acceptance item assigned here."],
+                "acceptance_item_ids": list(active_item_ids),
+                "supplemental_repair_contract_ids": [],
+                "supplemental_repair_item_ids": [],
+            }
+        ],
+    }
+
+
+def _node_acceptance_projection_rows(item_ids: list[str]) -> list[dict[str, str]]:
+    return [
+        {
+            "acceptance_item_id": item_id,
+            "status_for_this_node": "planned_for_current_node",
+            "future_evidence_rule": "Current node evidence, FlowGuard, Reviewer, PM disposition, and terminal replay must close or explicitly defer this item.",
+        }
+        for item_id in item_ids
+    ]
+
+
+def _dynamic_effective_result_contract_for_envelope(
+    ledger: Mapping[str, Any],
+    envelope: Mapping[str, Any],
+    effective_contract: Mapping[str, Any],
+) -> dict[str, Any]:
+    contract = _copy_jsonable(dict(effective_contract))
+    family_id = str(contract.get("family_id") or packet_result_contracts.packet_result_family_id(envelope))
+    allowed_options = dict(contract.get("allowed_value_options") or {})
+    field_types = dict(contract.get("field_type_requirements") or {})
+    required_child_fields = list(contract.get("required_child_fields") or [])
+
+    if family_id == "task.planning" and high_standard_flow_required(ledger):
+        active_item_ids = _active_acceptance_item_ids(ledger)
+        if active_item_ids:
+            contract["required_acceptance_item_ids"] = active_item_ids
+            contract["ownership_coverage_rule"] = {
+                "field_path": "nodes[].acceptance_item_ids",
+                "required_ids": active_item_ids,
+                "rule": "Every current active acceptance item id must appear in at least one route node acceptance_item_ids owner list.",
+                "unknown_ids_forbidden": True,
+                "minimal_repair_shape": {"nodes[].acceptance_item_ids": active_item_ids},
+            }
+            allowed_options["nodes[].acceptance_item_ids[]"] = active_item_ids
+            field_types["nodes[].acceptance_item_ids"] = "array:string"
+            contract["minimal_valid_shape"] = _planning_owner_coverage_minimal_shape(active_item_ids)
+
+    if family_id == "task.node_acceptance_plan":
+        node_id = str(envelope.get("route_node_id") or "")
+        node = ledger.get("route_nodes", {}).get(node_id, {}) if node_id else {}
+        node_item_ids = _node_acceptance_item_ids(node) if isinstance(node, Mapping) else []
+        if node_item_ids:
+            required_child_fields = _dedupe_contract_fields(
+                required_child_fields,
+                (
+                    "node_context_package.acceptance_item_projection[].acceptance_item_id",
+                    "node_context_package.acceptance_item_projection[].status_for_this_node",
+                    "node_context_package.acceptance_item_projection[].future_evidence_rule",
+                ),
+            )
+            contract["required_node_acceptance_item_ids"] = node_item_ids
+            contract["node_acceptance_projection_rule"] = {
+                "field_path": "node_context_package.acceptance_item_projection",
+                "required_ids": node_item_ids,
+                "row_required_fields": [
+                    "acceptance_item_id",
+                    "status_for_this_node",
+                    "future_evidence_rule",
+                ],
+                "rule": "When decision=pass, every node-owned acceptance item id must have one projection row.",
+                "unknown_ids_forbidden": True,
+                "minimal_repair_rows": _node_acceptance_projection_rows(node_item_ids),
+            }
+            allowed_options["node_context_package.acceptance_item_projection[].acceptance_item_id"] = node_item_ids
+            field_types["node_context_package.acceptance_item_projection"] = "array:object"
+            minimal_shape = _copy_jsonable(contract.get("minimal_valid_shape") or {})
+            package = minimal_shape.get("node_context_package")
+            if isinstance(package, dict):
+                package["acceptance_item_projection"] = _node_acceptance_projection_rows(node_item_ids)
+            branch_shapes = _copy_jsonable(contract.get("branch_valid_shapes") or {})
+            pass_shape = branch_shapes.get("decision=pass")
+            if isinstance(pass_shape, dict):
+                pass_package = pass_shape.get("node_context_package")
+                if isinstance(pass_package, dict):
+                    pass_package["acceptance_item_projection"] = _node_acceptance_projection_rows(node_item_ids)
+            contract["minimal_valid_shape"] = minimal_shape
+            contract["branch_valid_shapes"] = branch_shapes
+
+    contract["required_child_fields"] = _dedupe_contract_fields(required_child_fields)
+    contract["allowed_value_options"] = _copy_jsonable(allowed_options)
+    contract["field_type_requirements"] = _copy_jsonable(field_types)
+    return contract
+
+
+def _review_window_for_handoff(
+    ledger: Mapping[str, Any],
+    envelope: Mapping[str, Any],
+    authorized_result_reads: list[Mapping[str, Any]],
+    stage_evidence_matrix: Mapping[str, Any],
+) -> dict[str, Any]:
+    if str(envelope.get("packet_kind") or "task") != "review":
+        return {}
+    subject_id = str(envelope.get("subject_id") or "")
+    subject_packet = ledger.get("packets", {}).get(subject_id) if subject_id else None
+    subject_envelope = (
+        subject_packet.get("envelope", {})
+        if isinstance(subject_packet, Mapping) and isinstance(subject_packet.get("envelope"), Mapping)
+        else {}
+    )
+    subject_family_id = (
+        packet_result_contracts.packet_result_family_id(subject_envelope)
+        if isinstance(subject_envelope, Mapping) and subject_envelope
+        else ""
+    )
+    subject_stage_evidence = (
+        packet_result_contracts.role_visible_stage_evidence_row_json_for_family(subject_family_id)
+        if subject_family_id
+        else stage_evidence_matrix
+    )
+    required_read_ids = [
+        str(row.get("result_id") or "")
+        for row in authorized_result_reads
+        if isinstance(row, Mapping) and row.get("required_before_submit") is True and str(row.get("result_id") or "")
+    ]
+    stage = str(subject_stage_evidence.get("lifecycle_stage") or "")
+    forbidden_future_stage_demands = [
+        "Do not require Worker/result-stage artifacts for a plan-stage subject unless the subject claims they already exist.",
+        "Do not require terminal replay evidence before the terminal replay packet.",
+        "Do not treat PM navigation summaries as reviewed evidence bodies.",
+    ]
+    return {
+        "schema_version": "black_box_flowpilot.review_window.v1",
+        "subject_packet_id": subject_id,
+        "target_result_id": str(envelope.get("target_result_id") or ""),
+        "subject_result_family_id": subject_family_id,
+        "subject_lifecycle_stage": stage,
+        "required_current_fields": list(subject_stage_evidence.get("current_required_fields") or []),
+        "allowed_blocker_classes": list(subject_stage_evidence.get("allowed_blocker_classes") or []),
+        "blocker_next_actions": _copy_jsonable(subject_stage_evidence.get("blocker_next_actions") or {}),
+        "authorized_result_read_ids": [
+            str(row.get("result_id") or "")
+            for row in authorized_result_reads
+            if isinstance(row, Mapping) and str(row.get("result_id") or "")
+        ],
+        "required_authorized_result_read_ids_before_submit": required_read_ids,
+        "sealed_body_access": "authorized_result_reads_only",
+        "review_depth_rule": (
+            "Reviewer must independently challenge the current subject using the subject stage, "
+            "authorized reads, node context, FlowGuard manifest, and current-stage evidence; the package checklist is a floor, not the boundary."
+        ),
+        "forbidden_future_stage_demands": forbidden_future_stage_demands,
+        "pm_repair_return_rule": "Reviewer hard blockers return to PM repair work and then to Reviewer recheck; PM text alone does not bypass Reviewer.",
+    }
+
+
 def _build_current_handoff_contract(
     ledger: Mapping[str, Any],
     envelope: Mapping[str, Any],
@@ -8342,10 +8518,14 @@ def _build_current_handoff_contract(
 ) -> dict[str, Any]:
     family_id = packet_result_contracts.packet_result_family_id(envelope)
     family_row = packet_result_contracts.contract_for_family(family_id) or {}
-    effective_contract = packet_result_contracts.effective_result_contract_from_envelope(envelope)
+    effective_contract = _dynamic_effective_result_contract_for_envelope(
+        ledger,
+        envelope,
+        packet_result_contracts.effective_result_contract_from_envelope(envelope),
+    )
     stage_evidence_matrix = packet_result_contracts.role_visible_stage_evidence_row_json_for_family(family_id)
     required_fields = tuple(str(field) for field in effective_contract.get("required_fields") or ())
-    return {
+    handoff = {
         "schema_version": "black_box_flowpilot.current_handoff_contract.v1",
         "contract_id": "black_box_flowpilot.current_handoff_contract.v1",
         "packet_id": str(envelope.get("packet_id") or ""),
@@ -8429,6 +8609,23 @@ def _build_current_handoff_contract(
         "source_generation": int(ledger.get("source_generation", 0) or 0),
         "route_version": envelope.get("route_version"),
     }
+    for key in (
+        "required_acceptance_item_ids",
+        "ownership_coverage_rule",
+        "required_node_acceptance_item_ids",
+        "node_acceptance_projection_rule",
+    ):
+        if key in effective_contract:
+            handoff["required_report_contract"][key] = _copy_jsonable(effective_contract[key])
+    review_window = _review_window_for_handoff(
+        ledger,
+        envelope,
+        authorized_result_reads,
+        stage_evidence_matrix,
+    )
+    if review_window:
+        handoff["review_window"] = review_window
+    return handoff
 
 
 def _packet_authorized_result_reads(packet: Mapping[str, Any]) -> list[Mapping[str, Any]]:
@@ -8605,6 +8802,8 @@ def issue_task_packet(
         envelope["output_contract"] = output_contract
     current_handoff_contract = _build_current_handoff_contract(ledger, envelope, normalized_result_reads)
     envelope["current_handoff_contract"] = current_handoff_contract
+    if isinstance(current_handoff_contract.get("review_window"), Mapping):
+        envelope["review_window"] = _copy_jsonable(current_handoff_contract["review_window"])
     body = _packet_body_with_current_handoff_contract(body, current_handoff_contract)
     envelope["body_hash"] = hash_text(body)
     ledger["packets"][packet_id] = {
@@ -8647,6 +8846,8 @@ def _bind_packet_repair_blocker_identity(
         _packet_authorized_result_reads(packet),
     )
     envelope["current_handoff_contract"] = handoff_contract
+    if isinstance(handoff_contract.get("review_window"), Mapping):
+        envelope["review_window"] = _copy_jsonable(handoff_contract["review_window"])
     body = _packet_body_with_current_handoff_contract(str(packet.get("body", "")), handoff_contract, replace_existing=True)
     packet["body"] = body
     envelope["body_hash"] = hash_text(body)
@@ -9099,7 +9300,42 @@ def _packet_stage_evidence_row(packet: Mapping[str, Any]) -> dict[str, Any]:
 
 def _packet_effective_result_contract(packet: Mapping[str, Any]) -> dict[str, Any]:
     envelope = packet.get("envelope", {}) if isinstance(packet.get("envelope"), Mapping) else {}
-    return packet_result_contracts.effective_result_contract_from_envelope(envelope)
+    base = packet_result_contracts.effective_result_contract_from_envelope(envelope)
+    handoff = envelope.get("current_handoff_contract") if isinstance(envelope, Mapping) else None
+    report_contract = (
+        handoff.get("required_report_contract")
+        if isinstance(handoff, Mapping) and isinstance(handoff.get("required_report_contract"), Mapping)
+        else None
+    )
+    if not isinstance(report_contract, Mapping):
+        return base
+    dynamic = _copy_jsonable(base)
+    key_map = {
+        "required_result_body_fields": "required_fields",
+        "required_child_fields": "required_child_fields",
+        "explicit_array_fields": "explicit_array_fields",
+        "non_empty_array_fields": "non_empty_array_fields",
+        "allowed_value_options": "allowed_value_options",
+        "field_type_requirements": "field_type_requirements",
+        "minimal_valid_shape": "minimal_valid_shape",
+        "branch_valid_shapes": "branch_valid_shapes",
+        "result_contract_profile_ids": "result_contract_profile_ids",
+        "result_contract_profile_bindings": "result_contract_profile_bindings",
+    }
+    for source_key, target_key in key_map.items():
+        if source_key in report_contract:
+            dynamic[target_key] = _copy_jsonable(report_contract[source_key])
+    for same_key in (
+        "required_acceptance_item_ids",
+        "ownership_coverage_rule",
+        "required_node_acceptance_item_ids",
+        "node_acceptance_projection_rule",
+    ):
+        if same_key in report_contract:
+            dynamic[same_key] = _copy_jsonable(report_contract[same_key])
+    if "validator" in report_contract:
+        dynamic["validator"] = str(report_contract.get("validator") or "")
+    return dynamic
 
 
 _SKILL_STANDARD_REQUIRED_CHILD_FIELDS = (
@@ -10348,6 +10584,8 @@ def _terminal_supplemental_repair_decision_branch_shape(
 
 def _route_plan_failure_field_path(error: str) -> str:
     lowered = error.lower()
+    if "acceptance item" in lowered:
+        return "route_plan.nodes[].acceptance_item_ids"
     if "schema_version" in lowered:
         return "route_plan.schema_version"
     if "node_kind" in lowered:
@@ -10367,6 +10605,11 @@ def _route_plan_failure_field_path(error: str) -> str:
     if "title" in lowered:
         return "route_plan.nodes[].title"
     return "route_plan"
+
+
+def _planning_result_failure_field_path(error: str) -> str:
+    path = _route_plan_failure_field_path(error)
+    return path.removeprefix("route_plan.")
 
 
 def _pm_repair_decision_result_violation(
@@ -10858,8 +11101,13 @@ def _current_result_submission_contract_violation(
             node_specs = _normalize_strict_route_plan_nodes(route_plan)
             _validate_route_plan_acceptance_item_coverage(ledger, node_specs)
         except BlackBoxRuntimeError as exc:
-            missing = ("nodes",) if "nodes" in str(exc) else ()
-            return _contract_block(packet, str(exc), missing_required_fields=missing)
+            missing = (_planning_result_failure_field_path(str(exc)),)
+            return _contract_block(
+                packet,
+                str(exc),
+                missing_required_fields=missing,
+                failed_field_path=missing[0],
+            )
     if packet_kind == "flowguard_check":
         lowered_body = body.lower()
         if "api_fallback_manual_block_eval" in lowered_body or "fallback_manual_block_eval" in lowered_body:
@@ -10921,10 +11169,17 @@ def _block_result_and_reissue_current_packet_family(
         "acceptance_criteria": list(envelope.get("acceptance_criteria") or []),
         "contract": _copy_jsonable(envelope.get("output_contract") or {}),
         "required_result_body_fields": list(contract_check.required_result_body_fields),
+        "required_child_fields": list(effective_contract.get("required_child_fields") or []),
+        "explicit_array_fields": list(effective_contract.get("explicit_array_fields") or []),
+        "non_empty_array_fields": list(effective_contract.get("non_empty_array_fields") or []),
         "minimal_valid_shape": _copy_jsonable(contract_check.minimal_valid_shape or {}),
         "branch_minimal_valid_shape": _copy_jsonable(contract_check.branch_minimal_valid_shape or {}),
         "allowed_value_options": _copy_jsonable(effective_contract.get("allowed_value_options") or {}),
         "field_type_requirements": _copy_jsonable(effective_contract.get("field_type_requirements") or {}),
+        "required_acceptance_item_ids": list(effective_contract.get("required_acceptance_item_ids") or []),
+        "ownership_coverage_rule": _copy_jsonable(effective_contract.get("ownership_coverage_rule") or {}),
+        "required_node_acceptance_item_ids": list(effective_contract.get("required_node_acceptance_item_ids") or []),
+        "node_acceptance_projection_rule": _copy_jsonable(effective_contract.get("node_acceptance_projection_rule") or {}),
         "result_contract_profile_ids": list(effective_contract.get("result_contract_profile_ids") or []),
         "result_contract_profile_bindings": _copy_jsonable(
             effective_contract.get("result_contract_profile_bindings") or {}
@@ -14690,7 +14945,7 @@ def _repair_loop_break_glass_action(ledger: Mapping[str, Any]) -> RuntimeAction 
         blocker_id = str(blocker.get("blocker_id") or "")
         return RuntimeAction(
             "control_plane_blocker",
-            "same current route node repeated the same blocker problem more than five consecutive times; Controller break-glass diagnosis is required",
+            "same current route node repeated the same blocker problem five or more consecutive times; Controller break-glass diagnosis is required",
             blocker_id,
             "controller",
         )

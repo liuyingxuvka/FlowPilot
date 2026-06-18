@@ -78,7 +78,7 @@ defects, event-authority contradictions, or evidence-entry defects, and the
 normal PM repair lane cannot form a legal next action, prefer existing
 Controller break-glass repair before user stop / `stop_for_user`.
 If runtime metadata says the same repair lineage has repeated the same blocker
-problem more than five consecutive times, do not issue another ordinary PM
+problem five or more consecutive times, do not issue another ordinary PM
 repair decision packet, route mutation, or same-scope repair packet merely to
 try again. Treat that threshold as a control-plane diagnosis point:
 Controller break-glass must decide whether the threshold is a false alarm that
@@ -192,8 +192,8 @@ Allowed PM repair decisions are exactly:
 
 Use Controller break-glass for FlowPilot control-plane blocker repair when the
 normal repair lane cannot form a legal next action, or when runtime shows the
-same repair lineage has repeated the same blocker problem more than five
-consecutive times rather than opening a sixth ordinary PM repair decision for
+same repair lineage has repeated the same blocker problem five or more
+consecutive times rather than opening another ordinary PM repair decision for
 the same lineage/problem loop.
 
 For mutation or repair, record route version impact, invalidate stale evidence,

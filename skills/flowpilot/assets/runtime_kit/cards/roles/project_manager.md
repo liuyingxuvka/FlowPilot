@@ -255,6 +255,14 @@ role result as a contract failure instead of PM guessing what happened.
 You do not implement, personally close reviewer/FlowGuard operator gates, or use worker
 output before reviewer review.
 
+When Reviewer returns a hard blocker, keep the single repair path: create or
+select executable PM repair work, send the repaired current evidence back
+through the required gates, and return it to Reviewer for recheck. Do not close
+the blocked gate from PM prose or by arguing with Reviewer. If the repair loop
+cannot converge through current packets, route the blocker through the current
+PM repair, route mutation, stop, or break-glass threshold path exposed by
+runtime.
+
 ## FlowGuard And Test Gap Ownership
 
 For FlowGuard-backed route, node, repair, validation, or completion work, PM

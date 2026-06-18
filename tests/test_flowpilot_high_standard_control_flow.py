@@ -871,6 +871,21 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         self.assertIn("route_decomposition", matrix["allowed_blocker_classes"])
         self.assertEqual("commit_node_acceptance_plan", review_body["staged_effect"]["effect_kind"])
 
+        review_envelope = ledger["packets"][review_packet_id]["envelope"]
+        review_window = review_envelope["review_window"]
+        body_window = review_body["current_handoff_contract"]["review_window"]
+        self.assertEqual(review_window, body_window)
+        self.assertEqual(review_window["schema_version"], "black_box_flowpilot.review_window.v1")
+        self.assertEqual(review_window["subject_packet_id"], packet_id)
+        self.assertEqual(review_window["subject_result_family_id"], "task.node_acceptance_plan")
+        self.assertEqual(review_window["subject_lifecycle_stage"], "node_plan_definition")
+        self.assertIn("authorized_result_reads_only", review_window["sealed_body_access"])
+        self.assertIn("Reviewer hard blockers return to PM repair work", review_window["pm_repair_return_rule"])
+        self.assertIn(
+            "Do not require Worker/result-stage artifacts for a plan-stage subject unless the subject claims they already exist.",
+            review_window["forbidden_future_stage_demands"],
+        )
+
     def test_pm_planning_packet_carries_route_decomposition_quality_gate(self) -> None:
         ledger = _ledger()
         _complete_preplanning(ledger)
@@ -885,6 +900,54 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         self.assertIn("small worker-ready leaves", criteria)
         self.assertIn("reviewer may block planning before materialization", criteria)
         self.assertNotIn("why_this_node_exists", body["instruction"])
+
+    def test_pm_planning_packet_surfaces_active_acceptance_owner_coverage_contract(self) -> None:
+        ledger = _ledger()
+        _complete_preplanning(ledger)
+
+        packet_id = _open_packets(ledger, scope="planning")[0]
+        packet = ledger["packets"][packet_id]
+        contract = json.loads(packet["body"])["current_handoff_contract"]["required_report_contract"]
+        active_ids = ["acc-001", "acc-002"]
+
+        self.assertEqual(contract["required_acceptance_item_ids"], active_ids)
+        self.assertEqual(contract["ownership_coverage_rule"]["field_path"], "nodes[].acceptance_item_ids")
+        self.assertEqual(contract["ownership_coverage_rule"]["required_ids"], active_ids)
+        self.assertEqual(
+            contract["allowed_value_options"]["nodes[].acceptance_item_ids[]"],
+            active_ids,
+        )
+        self.assertEqual(contract["field_type_requirements"]["nodes[].acceptance_item_ids"], "array:string")
+        self.assertEqual(contract["minimal_valid_shape"]["nodes"][0]["acceptance_item_ids"], active_ids)
+
+    def test_node_acceptance_plan_packet_surfaces_projection_rows_and_allowed_ids(self) -> None:
+        ledger = _ledger()
+        _complete_preplanning(ledger)
+        _complete_planning(ledger)
+
+        packet_id = _open_packets(ledger, scope="node_acceptance_plan")[0]
+        contract = json.loads(ledger["packets"][packet_id]["body"])["current_handoff_contract"]["required_report_contract"]
+        active_ids = ["acc-001", "acc-002"]
+
+        self.assertEqual(contract["required_node_acceptance_item_ids"], active_ids)
+        self.assertEqual(
+            contract["node_acceptance_projection_rule"]["field_path"],
+            "node_context_package.acceptance_item_projection",
+        )
+        self.assertEqual(contract["node_acceptance_projection_rule"]["required_ids"], active_ids)
+        self.assertIn(
+            "node_context_package.acceptance_item_projection[].acceptance_item_id",
+            contract["required_child_fields"],
+        )
+        self.assertEqual(
+            contract["allowed_value_options"]["node_context_package.acceptance_item_projection[].acceptance_item_id"],
+            active_ids,
+        )
+        projected_ids = [
+            row["acceptance_item_id"]
+            for row in contract["minimal_valid_shape"]["node_context_package"]["acceptance_item_projection"]
+        ]
+        self.assertEqual(projected_ids, active_ids)
 
     def test_reviewer_under_decomposition_block_keeps_planning_unmaterialized_and_replans(self) -> None:
         ledger = _ledger()

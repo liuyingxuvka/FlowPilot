@@ -65,7 +65,7 @@ failures:
   packet, or one-time phase, and normal PM repair cannot form a legal next
   action.
 - Runtime foreground duty reports that the same repair lineage has repeated the
-  same blocker problem more than five consecutive times. This is a
+  same blocker problem five or more consecutive times. This is a
   break-glass diagnosis point, not permission to open another ordinary PM
   repair decision packet for the same lineage/problem loop. Similar blocker
   classes across different route nodes do not trigger this threshold alone.

@@ -1,27 +1,27 @@
 {
   "fake_ai_responder": {
     "contract_count": 15,
-    "generated_cell_count": 1108,
+    "generated_cell_count": 2613,
     "generated_option_value_cell_count": 205,
     "missing_option_value_cells": [],
     "missing_required_cells": [],
     "ok": true,
     "per_contract_cell_counts": {
-      "flowguard.semantic_recheck_required": 101,
-      "flowguard.subject_artifacts_consumed_required": 63,
-      "flowguard_check.post_result": 44,
-      "pm_disposition.node_pm_disposition": 23,
-      "pm_flowguard_acceptance.pm_flowguard_acceptance": 86,
-      "pm_repair_decision.pm_repair_decision": 295,
-      "review.any_current_subject": 38,
-      "review.terminal_backward_replay": 212,
-      "task.discovery": 12,
-      "task.high_standard_contract": 48,
-      "task.node": 18,
-      "task.node_acceptance_plan": 96,
-      "task.parent_backward_replay": 27,
-      "task.planning": 19,
-      "task.skill_standard": 26
+      "flowguard.semantic_recheck_required": 206,
+      "flowguard.subject_artifacts_consumed_required": 132,
+      "flowguard_check.post_result": 93,
+      "pm_disposition.node_pm_disposition": 45,
+      "pm_flowguard_acceptance.pm_flowguard_acceptance": 214,
+      "pm_repair_decision.pm_repair_decision": 735,
+      "review.any_current_subject": 87,
+      "review.terminal_backward_replay": 517,
+      "task.discovery": 34,
+      "task.high_standard_contract": 110,
+      "task.node": 37,
+      "task.node_acceptance_plan": 224,
+      "task.parent_backward_replay": 58,
+      "task.planning": 54,
+      "task.skill_standard": 67
     },
     "per_contract_option_value_counts": {
       "flowguard.semantic_recheck_required": 17,
@@ -42,7 +42,7 @@
     },
     "projection_findings": [],
     "required_option_value_cell_count": 205,
-    "required_responder_cell_count": 75,
+    "required_responder_cell_count": 153,
     "summary": {
       "missing_by_contract": {},
       "missing_by_mutation_kind": {},
@@ -59,6 +59,12 @@
       "empty_required_array",
       "forbidden_alias_used",
       "forbidden_field_present",
+      "malformed_body.empty_body",
+      "malformed_body.markdown_wrapped_json",
+      "malformed_body.prose_plus_json",
+      "malformed_body.top_level_array",
+      "malformed_body.trailing_comma",
+      "malformed_body.unquoted_keys",
       "missing_allowed_value_options",
       "missing_field_type_requirements",
       "missing_required_child_field",
@@ -145,38 +151,44 @@
     "by_family": {
       "break_glass_loop": 14,
       "flowguard_check_packet": 65,
-      "flowguard_check_result": 100,
+      "flowguard_check_result": 112,
       "flowguard_reissue_packet": 23,
       "flowguard_work_order": 9,
-      "pm_repair_packet": 216,
+      "pm_repair_packet": 240,
       "research_packet_spec": 1,
-      "review_packet": 124,
+      "review_packet": 148,
       "runtime_install_self_check": 19,
       "system_validation": 20,
-      "task_packet_body": 39,
-      "task_result_body": 196
+      "task_packet_body": 51,
+      "task_result_body": 244
     },
     "by_mutation_kind": {
       "accepted_result_work_order_split": 4,
       "corrected_second_retry": 5,
-      "empty_required_array": 17,
+      "empty_required_array": 20,
       "empty_required_manifest": 3,
       "evidence_path_mismatch": 8,
       "forbidden_alias_used": 20,
       "forbidden_field_present": 116,
       "legacy_alias": 1,
-      "missing_allowed_value_options": 69,
+      "malformed_body.empty_body": 17,
+      "malformed_body.markdown_wrapped_json": 17,
+      "malformed_body.prose_plus_json": 17,
+      "malformed_body.top_level_array": 17,
+      "malformed_body.trailing_comma": 17,
+      "malformed_body.unquoted_keys": 17,
+      "missing_allowed_value_options": 71,
       "missing_authorized_read": 8,
       "missing_body": 13,
-      "missing_current_handoff_manifest": 7,
+      "missing_current_handoff_manifest": 8,
       "missing_field_type_requirements": 11,
       "missing_related_authorized_body": 8,
       "missing_repair_evidence_obligations": 3,
-      "missing_repair_guidance": 3,
+      "missing_repair_guidance": 5,
       "missing_repair_obligation_consumption": 2,
       "missing_repair_obligation_disposition": 3,
-      "missing_required_child_field": 92,
-      "missing_required_field": 83,
+      "missing_required_child_field": 94,
+      "missing_required_field": 89,
       "missing_result_contract_profile": 2,
       "missing_root_cause_loop_key": 3,
       "missing_runtime_self_check_receipt": 3,
@@ -187,7 +199,7 @@
       "reissue_loses_required_read_manifest": 2,
       "same_payload_retry": 11,
       "same_root_no_delta_retry": 5,
-      "stage_evidence_mismatch": 7,
+      "stage_evidence_mismatch": 8,
       "stale_id": 15,
       "stale_repair_obligation_evidence_ref": 3,
       "synthetic_live_overclaim": 3,
@@ -196,12 +208,12 @@
       "wrong_allowed_value": 72,
       "wrong_current_path": 18,
       "wrong_owner": 13,
-      "wrong_type": 171
+      "wrong_type": 172
     },
-    "cell_count": 826,
+    "cell_count": 946,
     "family_count": 12,
     "missing_owner_or_boundary": [],
-    "mutation_count": 40,
+    "mutation_count": 46,
     "ok": true,
     "required_cells": [
       {
@@ -370,6 +382,54 @@
         "confidence_boundary": "synthetic_non_live_control_flow",
         "family": "task_result_body",
         "mutation_kind": "same_payload_retry",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "task_result_body.malformed_body.unquoted_keys",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "family": "task_result_body",
+        "mutation_kind": "malformed_body.unquoted_keys",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "task_result_body.malformed_body.markdown_wrapped_json",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "family": "task_result_body",
+        "mutation_kind": "malformed_body.markdown_wrapped_json",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "task_result_body.malformed_body.prose_plus_json",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "family": "task_result_body",
+        "mutation_kind": "malformed_body.prose_plus_json",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "task_result_body.malformed_body.top_level_array",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "family": "task_result_body",
+        "mutation_kind": "malformed_body.top_level_array",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "task_result_body.malformed_body.empty_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "family": "task_result_body",
+        "mutation_kind": "malformed_body.empty_body",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "task_result_body.malformed_body.trailing_comma",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "family": "task_result_body",
+        "mutation_kind": "malformed_body.trailing_comma",
         "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
       },
       {
@@ -634,6 +694,54 @@
         "confidence_boundary": "synthetic_non_live_control_flow",
         "family": "flowguard_check_result",
         "mutation_kind": "same_payload_retry",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "flowguard_check_result.malformed_body.unquoted_keys",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "family": "flowguard_check_result",
+        "mutation_kind": "malformed_body.unquoted_keys",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "flowguard_check_result.malformed_body.markdown_wrapped_json",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "family": "flowguard_check_result",
+        "mutation_kind": "malformed_body.markdown_wrapped_json",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "flowguard_check_result.malformed_body.prose_plus_json",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "family": "flowguard_check_result",
+        "mutation_kind": "malformed_body.prose_plus_json",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "flowguard_check_result.malformed_body.top_level_array",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "family": "flowguard_check_result",
+        "mutation_kind": "malformed_body.top_level_array",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "flowguard_check_result.malformed_body.empty_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "family": "flowguard_check_result",
+        "mutation_kind": "malformed_body.empty_body",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "flowguard_check_result.malformed_body.trailing_comma",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "family": "flowguard_check_result",
+        "mutation_kind": "malformed_body.trailing_comma",
         "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
       },
       {
@@ -978,6 +1086,54 @@
         "confidence_boundary": "synthetic_non_live_control_flow",
         "family": "review_packet",
         "mutation_kind": "same_payload_retry",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "review_packet.malformed_body.unquoted_keys",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "family": "review_packet",
+        "mutation_kind": "malformed_body.unquoted_keys",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "review_packet.malformed_body.markdown_wrapped_json",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "family": "review_packet",
+        "mutation_kind": "malformed_body.markdown_wrapped_json",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "review_packet.malformed_body.prose_plus_json",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "family": "review_packet",
+        "mutation_kind": "malformed_body.prose_plus_json",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "review_packet.malformed_body.top_level_array",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "family": "review_packet",
+        "mutation_kind": "malformed_body.top_level_array",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "review_packet.malformed_body.empty_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "family": "review_packet",
+        "mutation_kind": "malformed_body.empty_body",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "review_packet.malformed_body.trailing_comma",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "family": "review_packet",
+        "mutation_kind": "malformed_body.trailing_comma",
         "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
       },
       {
@@ -1373,6 +1529,54 @@
         "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
       },
       {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "pm_repair_packet.malformed_body.unquoted_keys",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "family": "pm_repair_packet",
+        "mutation_kind": "malformed_body.unquoted_keys",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "pm_repair_packet.malformed_body.markdown_wrapped_json",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "family": "pm_repair_packet",
+        "mutation_kind": "malformed_body.markdown_wrapped_json",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "pm_repair_packet.malformed_body.prose_plus_json",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "family": "pm_repair_packet",
+        "mutation_kind": "malformed_body.prose_plus_json",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "pm_repair_packet.malformed_body.top_level_array",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "family": "pm_repair_packet",
+        "mutation_kind": "malformed_body.top_level_array",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "pm_repair_packet.malformed_body.empty_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "family": "pm_repair_packet",
+        "mutation_kind": "malformed_body.empty_body",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "pm_repair_packet.malformed_body.trailing_comma",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "family": "pm_repair_packet",
+        "mutation_kind": "malformed_body.trailing_comma",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
         "branch_kind": "ordinary_runtime",
         "cell_id": "break_glass_loop.missing_body",
         "confidence_boundary": "current_runtime_contract",
@@ -1450,6 +1654,66 @@
         "confidence_boundary": "synthetic_non_live_control_flow",
         "family": "break_glass_loop",
         "mutation_kind": "synthetic_live_overclaim",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.task.high_standard_contract.malformed_body.unquoted_keys.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "task.high_standard_contract",
+        "contract_path": "result.body",
+        "family": "task_result_body",
+        "mutation_kind": "malformed_body.unquoted_keys",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.task.high_standard_contract.malformed_body.markdown_wrapped_json.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "task.high_standard_contract",
+        "contract_path": "result.body",
+        "family": "task_result_body",
+        "mutation_kind": "malformed_body.markdown_wrapped_json",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.task.high_standard_contract.malformed_body.prose_plus_json.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "task.high_standard_contract",
+        "contract_path": "result.body",
+        "family": "task_result_body",
+        "mutation_kind": "malformed_body.prose_plus_json",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.task.high_standard_contract.malformed_body.top_level_array.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "task.high_standard_contract",
+        "contract_path": "result.body",
+        "family": "task_result_body",
+        "mutation_kind": "malformed_body.top_level_array",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.task.high_standard_contract.malformed_body.empty_body.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "task.high_standard_contract",
+        "contract_path": "result.body",
+        "family": "task_result_body",
+        "mutation_kind": "malformed_body.empty_body",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.task.high_standard_contract.malformed_body.trailing_comma.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "task.high_standard_contract",
+        "contract_path": "result.body",
+        "family": "task_result_body",
+        "mutation_kind": "malformed_body.trailing_comma",
         "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
       },
       {
@@ -1933,6 +2197,66 @@
         "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
       },
       {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.task.discovery.malformed_body.unquoted_keys.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "task.discovery",
+        "contract_path": "result.body",
+        "family": "task_result_body",
+        "mutation_kind": "malformed_body.unquoted_keys",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.task.discovery.malformed_body.markdown_wrapped_json.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "task.discovery",
+        "contract_path": "result.body",
+        "family": "task_result_body",
+        "mutation_kind": "malformed_body.markdown_wrapped_json",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.task.discovery.malformed_body.prose_plus_json.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "task.discovery",
+        "contract_path": "result.body",
+        "family": "task_result_body",
+        "mutation_kind": "malformed_body.prose_plus_json",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.task.discovery.malformed_body.top_level_array.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "task.discovery",
+        "contract_path": "result.body",
+        "family": "task_result_body",
+        "mutation_kind": "malformed_body.top_level_array",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.task.discovery.malformed_body.empty_body.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "task.discovery",
+        "contract_path": "result.body",
+        "family": "task_result_body",
+        "mutation_kind": "malformed_body.empty_body",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.task.discovery.malformed_body.trailing_comma.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "task.discovery",
+        "contract_path": "result.body",
+        "family": "task_result_body",
+        "mutation_kind": "malformed_body.trailing_comma",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
         "branch_kind": "ordinary_runtime",
         "cell_id": "packet_result_contract.task.discovery.missing_required_field.decision",
         "confidence_boundary": "current_runtime_contract",
@@ -2050,6 +2374,66 @@
         "contract_path": "result.decision",
         "family": "task_result_body",
         "mutation_kind": "wrong_allowed_value",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.task.skill_standard.malformed_body.unquoted_keys.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "task.skill_standard",
+        "contract_path": "result.body",
+        "family": "task_result_body",
+        "mutation_kind": "malformed_body.unquoted_keys",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.task.skill_standard.malformed_body.markdown_wrapped_json.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "task.skill_standard",
+        "contract_path": "result.body",
+        "family": "task_result_body",
+        "mutation_kind": "malformed_body.markdown_wrapped_json",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.task.skill_standard.malformed_body.prose_plus_json.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "task.skill_standard",
+        "contract_path": "result.body",
+        "family": "task_result_body",
+        "mutation_kind": "malformed_body.prose_plus_json",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.task.skill_standard.malformed_body.top_level_array.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "task.skill_standard",
+        "contract_path": "result.body",
+        "family": "task_result_body",
+        "mutation_kind": "malformed_body.top_level_array",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.task.skill_standard.malformed_body.empty_body.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "task.skill_standard",
+        "contract_path": "result.body",
+        "family": "task_result_body",
+        "mutation_kind": "malformed_body.empty_body",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.task.skill_standard.malformed_body.trailing_comma.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "task.skill_standard",
+        "contract_path": "result.body",
+        "family": "task_result_body",
+        "mutation_kind": "malformed_body.trailing_comma",
         "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
       },
       {
@@ -2313,6 +2697,66 @@
         "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
       },
       {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.task.planning.malformed_body.unquoted_keys.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "task.planning",
+        "contract_path": "result.body",
+        "family": "task_result_body",
+        "mutation_kind": "malformed_body.unquoted_keys",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.task.planning.malformed_body.markdown_wrapped_json.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "task.planning",
+        "contract_path": "result.body",
+        "family": "task_result_body",
+        "mutation_kind": "malformed_body.markdown_wrapped_json",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.task.planning.malformed_body.prose_plus_json.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "task.planning",
+        "contract_path": "result.body",
+        "family": "task_result_body",
+        "mutation_kind": "malformed_body.prose_plus_json",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.task.planning.malformed_body.top_level_array.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "task.planning",
+        "contract_path": "result.body",
+        "family": "task_result_body",
+        "mutation_kind": "malformed_body.top_level_array",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.task.planning.malformed_body.empty_body.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "task.planning",
+        "contract_path": "result.body",
+        "family": "task_result_body",
+        "mutation_kind": "malformed_body.empty_body",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.task.planning.malformed_body.trailing_comma.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "task.planning",
+        "contract_path": "result.body",
+        "family": "task_result_body",
+        "mutation_kind": "malformed_body.trailing_comma",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
         "branch_kind": "ordinary_runtime",
         "cell_id": "packet_result_contract.task.planning.missing_required_field.schema_version",
         "confidence_boundary": "current_runtime_contract",
@@ -2500,6 +2944,66 @@
         "contract_path": "result.nodes[].responsibility",
         "family": "task_result_body",
         "mutation_kind": "wrong_allowed_value",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.task.node_acceptance_plan.malformed_body.unquoted_keys.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "task.node_acceptance_plan",
+        "contract_path": "result.body",
+        "family": "task_result_body",
+        "mutation_kind": "malformed_body.unquoted_keys",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.task.node_acceptance_plan.malformed_body.markdown_wrapped_json.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "task.node_acceptance_plan",
+        "contract_path": "result.body",
+        "family": "task_result_body",
+        "mutation_kind": "malformed_body.markdown_wrapped_json",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.task.node_acceptance_plan.malformed_body.prose_plus_json.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "task.node_acceptance_plan",
+        "contract_path": "result.body",
+        "family": "task_result_body",
+        "mutation_kind": "malformed_body.prose_plus_json",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.task.node_acceptance_plan.malformed_body.top_level_array.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "task.node_acceptance_plan",
+        "contract_path": "result.body",
+        "family": "task_result_body",
+        "mutation_kind": "malformed_body.top_level_array",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.task.node_acceptance_plan.malformed_body.empty_body.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "task.node_acceptance_plan",
+        "contract_path": "result.body",
+        "family": "task_result_body",
+        "mutation_kind": "malformed_body.empty_body",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.task.node_acceptance_plan.malformed_body.trailing_comma.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "task.node_acceptance_plan",
+        "contract_path": "result.body",
+        "family": "task_result_body",
+        "mutation_kind": "malformed_body.trailing_comma",
         "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
       },
       {
@@ -3023,6 +3527,66 @@
         "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
       },
       {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.task.node.malformed_body.unquoted_keys.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "task.node",
+        "contract_path": "result.body",
+        "family": "task_result_body",
+        "mutation_kind": "malformed_body.unquoted_keys",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.task.node.malformed_body.markdown_wrapped_json.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "task.node",
+        "contract_path": "result.body",
+        "family": "task_result_body",
+        "mutation_kind": "malformed_body.markdown_wrapped_json",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.task.node.malformed_body.prose_plus_json.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "task.node",
+        "contract_path": "result.body",
+        "family": "task_result_body",
+        "mutation_kind": "malformed_body.prose_plus_json",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.task.node.malformed_body.top_level_array.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "task.node",
+        "contract_path": "result.body",
+        "family": "task_result_body",
+        "mutation_kind": "malformed_body.top_level_array",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.task.node.malformed_body.empty_body.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "task.node",
+        "contract_path": "result.body",
+        "family": "task_result_body",
+        "mutation_kind": "malformed_body.empty_body",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.task.node.malformed_body.trailing_comma.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "task.node",
+        "contract_path": "result.body",
+        "family": "task_result_body",
+        "mutation_kind": "malformed_body.trailing_comma",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
         "branch_kind": "ordinary_runtime",
         "cell_id": "packet_result_contract.task.node.missing_required_field.decision",
         "confidence_boundary": "current_runtime_contract",
@@ -3200,6 +3764,66 @@
         "contract_path": "result.decision",
         "family": "task_result_body",
         "mutation_kind": "wrong_allowed_value",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.task.parent_backward_replay.malformed_body.unquoted_keys.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "task.parent_backward_replay",
+        "contract_path": "result.body",
+        "family": "task_result_body",
+        "mutation_kind": "malformed_body.unquoted_keys",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.task.parent_backward_replay.malformed_body.markdown_wrapped_json.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "task.parent_backward_replay",
+        "contract_path": "result.body",
+        "family": "task_result_body",
+        "mutation_kind": "malformed_body.markdown_wrapped_json",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.task.parent_backward_replay.malformed_body.prose_plus_json.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "task.parent_backward_replay",
+        "contract_path": "result.body",
+        "family": "task_result_body",
+        "mutation_kind": "malformed_body.prose_plus_json",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.task.parent_backward_replay.malformed_body.top_level_array.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "task.parent_backward_replay",
+        "contract_path": "result.body",
+        "family": "task_result_body",
+        "mutation_kind": "malformed_body.top_level_array",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.task.parent_backward_replay.malformed_body.empty_body.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "task.parent_backward_replay",
+        "contract_path": "result.body",
+        "family": "task_result_body",
+        "mutation_kind": "malformed_body.empty_body",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.task.parent_backward_replay.malformed_body.trailing_comma.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "task.parent_backward_replay",
+        "contract_path": "result.body",
+        "family": "task_result_body",
+        "mutation_kind": "malformed_body.trailing_comma",
         "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
       },
       {
@@ -3470,6 +4094,66 @@
         "contract_path": "result.blockers[].blocker_class",
         "family": "task_result_body",
         "mutation_kind": "wrong_allowed_value",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.flowguard_check.post_result.malformed_body.unquoted_keys.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "flowguard_check.post_result",
+        "contract_path": "result.body",
+        "family": "flowguard_check_result",
+        "mutation_kind": "malformed_body.unquoted_keys",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.flowguard_check.post_result.malformed_body.markdown_wrapped_json.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "flowguard_check.post_result",
+        "contract_path": "result.body",
+        "family": "flowguard_check_result",
+        "mutation_kind": "malformed_body.markdown_wrapped_json",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.flowguard_check.post_result.malformed_body.prose_plus_json.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "flowguard_check.post_result",
+        "contract_path": "result.body",
+        "family": "flowguard_check_result",
+        "mutation_kind": "malformed_body.prose_plus_json",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.flowguard_check.post_result.malformed_body.top_level_array.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "flowguard_check.post_result",
+        "contract_path": "result.body",
+        "family": "flowguard_check_result",
+        "mutation_kind": "malformed_body.top_level_array",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.flowguard_check.post_result.malformed_body.empty_body.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "flowguard_check.post_result",
+        "contract_path": "result.body",
+        "family": "flowguard_check_result",
+        "mutation_kind": "malformed_body.empty_body",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.flowguard_check.post_result.malformed_body.trailing_comma.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "flowguard_check.post_result",
+        "contract_path": "result.body",
+        "family": "flowguard_check_result",
+        "mutation_kind": "malformed_body.trailing_comma",
         "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
       },
       {
@@ -3913,6 +4597,66 @@
         "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
       },
       {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.review.any_current_subject.malformed_body.unquoted_keys.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "review.any_current_subject",
+        "contract_path": "result.body",
+        "family": "review_packet",
+        "mutation_kind": "malformed_body.unquoted_keys",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.review.any_current_subject.malformed_body.markdown_wrapped_json.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "review.any_current_subject",
+        "contract_path": "result.body",
+        "family": "review_packet",
+        "mutation_kind": "malformed_body.markdown_wrapped_json",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.review.any_current_subject.malformed_body.prose_plus_json.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "review.any_current_subject",
+        "contract_path": "result.body",
+        "family": "review_packet",
+        "mutation_kind": "malformed_body.prose_plus_json",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.review.any_current_subject.malformed_body.top_level_array.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "review.any_current_subject",
+        "contract_path": "result.body",
+        "family": "review_packet",
+        "mutation_kind": "malformed_body.top_level_array",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.review.any_current_subject.malformed_body.empty_body.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "review.any_current_subject",
+        "contract_path": "result.body",
+        "family": "review_packet",
+        "mutation_kind": "malformed_body.empty_body",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.review.any_current_subject.malformed_body.trailing_comma.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "review.any_current_subject",
+        "contract_path": "result.body",
+        "family": "review_packet",
+        "mutation_kind": "malformed_body.trailing_comma",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
         "branch_kind": "ordinary_runtime",
         "cell_id": "packet_result_contract.review.any_current_subject.missing_required_field.pm_visible_summary",
         "confidence_boundary": "current_runtime_contract",
@@ -4290,6 +5034,66 @@
         "contract_path": "result.contract_self_check.runtime_mechanical_validation_passed",
         "family": "review_packet",
         "mutation_kind": "wrong_allowed_value",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.review.terminal_backward_replay.malformed_body.unquoted_keys.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "review.terminal_backward_replay",
+        "contract_path": "result.body",
+        "family": "review_packet",
+        "mutation_kind": "malformed_body.unquoted_keys",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.review.terminal_backward_replay.malformed_body.markdown_wrapped_json.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "review.terminal_backward_replay",
+        "contract_path": "result.body",
+        "family": "review_packet",
+        "mutation_kind": "malformed_body.markdown_wrapped_json",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.review.terminal_backward_replay.malformed_body.prose_plus_json.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "review.terminal_backward_replay",
+        "contract_path": "result.body",
+        "family": "review_packet",
+        "mutation_kind": "malformed_body.prose_plus_json",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.review.terminal_backward_replay.malformed_body.top_level_array.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "review.terminal_backward_replay",
+        "contract_path": "result.body",
+        "family": "review_packet",
+        "mutation_kind": "malformed_body.top_level_array",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.review.terminal_backward_replay.malformed_body.empty_body.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "review.terminal_backward_replay",
+        "contract_path": "result.body",
+        "family": "review_packet",
+        "mutation_kind": "malformed_body.empty_body",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.review.terminal_backward_replay.malformed_body.trailing_comma.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "review.terminal_backward_replay",
+        "contract_path": "result.body",
+        "family": "review_packet",
+        "mutation_kind": "malformed_body.trailing_comma",
         "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
       },
       {
@@ -4890,6 +5694,66 @@
         "contract_path": "result.contract_self_check.runtime_mechanical_validation_passed",
         "family": "review_packet",
         "mutation_kind": "wrong_allowed_value",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.pm_repair_decision.pm_repair_decision.malformed_body.unquoted_keys.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "pm_repair_decision.pm_repair_decision",
+        "contract_path": "result.body",
+        "family": "pm_repair_packet",
+        "mutation_kind": "malformed_body.unquoted_keys",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.pm_repair_decision.pm_repair_decision.malformed_body.markdown_wrapped_json.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "pm_repair_decision.pm_repair_decision",
+        "contract_path": "result.body",
+        "family": "pm_repair_packet",
+        "mutation_kind": "malformed_body.markdown_wrapped_json",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.pm_repair_decision.pm_repair_decision.malformed_body.prose_plus_json.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "pm_repair_decision.pm_repair_decision",
+        "contract_path": "result.body",
+        "family": "pm_repair_packet",
+        "mutation_kind": "malformed_body.prose_plus_json",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.pm_repair_decision.pm_repair_decision.malformed_body.top_level_array.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "pm_repair_decision.pm_repair_decision",
+        "contract_path": "result.body",
+        "family": "pm_repair_packet",
+        "mutation_kind": "malformed_body.top_level_array",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.pm_repair_decision.pm_repair_decision.malformed_body.empty_body.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "pm_repair_decision.pm_repair_decision",
+        "contract_path": "result.body",
+        "family": "pm_repair_packet",
+        "mutation_kind": "malformed_body.empty_body",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.pm_repair_decision.pm_repair_decision.malformed_body.trailing_comma.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "pm_repair_decision.pm_repair_decision",
+        "contract_path": "result.body",
+        "family": "pm_repair_packet",
+        "mutation_kind": "malformed_body.trailing_comma",
         "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
       },
       {
@@ -6023,6 +6887,66 @@
         "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
       },
       {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.pm_disposition.node_pm_disposition.malformed_body.unquoted_keys.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "pm_disposition.node_pm_disposition",
+        "contract_path": "result.body",
+        "family": "pm_repair_packet",
+        "mutation_kind": "malformed_body.unquoted_keys",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.pm_disposition.node_pm_disposition.malformed_body.markdown_wrapped_json.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "pm_disposition.node_pm_disposition",
+        "contract_path": "result.body",
+        "family": "pm_repair_packet",
+        "mutation_kind": "malformed_body.markdown_wrapped_json",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.pm_disposition.node_pm_disposition.malformed_body.prose_plus_json.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "pm_disposition.node_pm_disposition",
+        "contract_path": "result.body",
+        "family": "pm_repair_packet",
+        "mutation_kind": "malformed_body.prose_plus_json",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.pm_disposition.node_pm_disposition.malformed_body.top_level_array.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "pm_disposition.node_pm_disposition",
+        "contract_path": "result.body",
+        "family": "pm_repair_packet",
+        "mutation_kind": "malformed_body.top_level_array",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.pm_disposition.node_pm_disposition.malformed_body.empty_body.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "pm_disposition.node_pm_disposition",
+        "contract_path": "result.body",
+        "family": "pm_repair_packet",
+        "mutation_kind": "malformed_body.empty_body",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.pm_disposition.node_pm_disposition.malformed_body.trailing_comma.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "pm_disposition.node_pm_disposition",
+        "contract_path": "result.body",
+        "family": "pm_repair_packet",
+        "mutation_kind": "malformed_body.trailing_comma",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
         "branch_kind": "ordinary_runtime",
         "cell_id": "packet_result_contract.pm_disposition.node_pm_disposition.missing_required_field.decision",
         "confidence_boundary": "current_runtime_contract",
@@ -6250,6 +7174,66 @@
         "contract_path": "result.acceptance_item_disposition[].disposition",
         "family": "pm_repair_packet",
         "mutation_kind": "wrong_allowed_value",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.pm_flowguard_acceptance.pm_flowguard_acceptance.malformed_body.unquoted_keys.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "pm_flowguard_acceptance.pm_flowguard_acceptance",
+        "contract_path": "result.body",
+        "family": "pm_repair_packet",
+        "mutation_kind": "malformed_body.unquoted_keys",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.pm_flowguard_acceptance.pm_flowguard_acceptance.malformed_body.markdown_wrapped_json.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "pm_flowguard_acceptance.pm_flowguard_acceptance",
+        "contract_path": "result.body",
+        "family": "pm_repair_packet",
+        "mutation_kind": "malformed_body.markdown_wrapped_json",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.pm_flowguard_acceptance.pm_flowguard_acceptance.malformed_body.prose_plus_json.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "pm_flowguard_acceptance.pm_flowguard_acceptance",
+        "contract_path": "result.body",
+        "family": "pm_repair_packet",
+        "mutation_kind": "malformed_body.prose_plus_json",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.pm_flowguard_acceptance.pm_flowguard_acceptance.malformed_body.top_level_array.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "pm_flowguard_acceptance.pm_flowguard_acceptance",
+        "contract_path": "result.body",
+        "family": "pm_repair_packet",
+        "mutation_kind": "malformed_body.top_level_array",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.pm_flowguard_acceptance.pm_flowguard_acceptance.malformed_body.empty_body.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "pm_flowguard_acceptance.pm_flowguard_acceptance",
+        "contract_path": "result.body",
+        "family": "pm_repair_packet",
+        "mutation_kind": "malformed_body.empty_body",
+        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
+      },
+      {
+        "branch_kind": "synthetic_replay",
+        "cell_id": "packet_result_contract.pm_flowguard_acceptance.pm_flowguard_acceptance.malformed_body.trailing_comma.result_body",
+        "confidence_boundary": "synthetic_non_live_control_flow",
+        "contract_family_id": "pm_flowguard_acceptance.pm_flowguard_acceptance",
+        "contract_path": "result.body",
+        "family": "pm_repair_packet",
+        "mutation_kind": "malformed_body.trailing_comma",
         "required_evidence_owner": "contract_exhaustion_fake_ai_matrix"
       },
       {
@@ -7374,6 +8358,126 @@
       },
       {
         "branch_kind": "ordinary_runtime",
+        "cell_id": "control_plane.task_packet_body.missing_required_field.current_handoff_contract_required_report_contract_required_acceptance_item_ids",
+        "confidence_boundary": "current_runtime_contract",
+        "contract_family_id": "task_packet_body",
+        "contract_path": "current_handoff_contract.required_report_contract.required_acceptance_item_ids",
+        "family": "task_packet_body",
+        "mutation_kind": "missing_required_field",
+        "required_evidence_owner": "contract_exhaustion_runtime_matrix"
+      },
+      {
+        "branch_kind": "ordinary_runtime",
+        "cell_id": "control_plane.task_packet_body.empty_required_array.current_handoff_contract_required_report_contract_required_acceptance_item_ids",
+        "confidence_boundary": "current_runtime_contract",
+        "contract_family_id": "task_packet_body",
+        "contract_path": "current_handoff_contract.required_report_contract.required_acceptance_item_ids",
+        "family": "task_packet_body",
+        "mutation_kind": "empty_required_array",
+        "required_evidence_owner": "contract_exhaustion_runtime_matrix"
+      },
+      {
+        "branch_kind": "ordinary_runtime",
+        "cell_id": "control_plane.task_packet_body.missing_allowed_value_options.current_handoff_contract_required_report_contract_required_acceptance_item_ids",
+        "confidence_boundary": "current_runtime_contract",
+        "contract_family_id": "task_packet_body",
+        "contract_path": "current_handoff_contract.required_report_contract.required_acceptance_item_ids",
+        "family": "task_packet_body",
+        "mutation_kind": "missing_allowed_value_options",
+        "required_evidence_owner": "contract_exhaustion_runtime_matrix"
+      },
+      {
+        "branch_kind": "ordinary_runtime",
+        "cell_id": "control_plane.task_packet_body.missing_required_field.current_handoff_contract_required_report_contract_ownership_coverage_rule",
+        "confidence_boundary": "current_runtime_contract",
+        "contract_family_id": "task_packet_body",
+        "contract_path": "current_handoff_contract.required_report_contract.ownership_coverage_rule",
+        "family": "task_packet_body",
+        "mutation_kind": "missing_required_field",
+        "required_evidence_owner": "contract_exhaustion_runtime_matrix"
+      },
+      {
+        "branch_kind": "ordinary_runtime",
+        "cell_id": "control_plane.task_packet_body.missing_required_child_field.current_handoff_contract_required_report_contract_ownership_coverage_rule",
+        "confidence_boundary": "current_runtime_contract",
+        "contract_family_id": "task_packet_body",
+        "contract_path": "current_handoff_contract.required_report_contract.ownership_coverage_rule",
+        "family": "task_packet_body",
+        "mutation_kind": "missing_required_child_field",
+        "required_evidence_owner": "contract_exhaustion_runtime_matrix"
+      },
+      {
+        "branch_kind": "ordinary_runtime",
+        "cell_id": "control_plane.task_packet_body.missing_repair_guidance.current_handoff_contract_required_report_contract_ownership_coverage_rule",
+        "confidence_boundary": "current_runtime_contract",
+        "contract_family_id": "task_packet_body",
+        "contract_path": "current_handoff_contract.required_report_contract.ownership_coverage_rule",
+        "family": "task_packet_body",
+        "mutation_kind": "missing_repair_guidance",
+        "required_evidence_owner": "contract_exhaustion_runtime_matrix"
+      },
+      {
+        "branch_kind": "ordinary_runtime",
+        "cell_id": "control_plane.task_packet_body.missing_required_field.current_handoff_contract_required_report_contract_required_node_acceptance_item_ids",
+        "confidence_boundary": "current_runtime_contract",
+        "contract_family_id": "task_packet_body",
+        "contract_path": "current_handoff_contract.required_report_contract.required_node_acceptance_item_ids",
+        "family": "task_packet_body",
+        "mutation_kind": "missing_required_field",
+        "required_evidence_owner": "contract_exhaustion_runtime_matrix"
+      },
+      {
+        "branch_kind": "ordinary_runtime",
+        "cell_id": "control_plane.task_packet_body.empty_required_array.current_handoff_contract_required_report_contract_required_node_acceptance_item_ids",
+        "confidence_boundary": "current_runtime_contract",
+        "contract_family_id": "task_packet_body",
+        "contract_path": "current_handoff_contract.required_report_contract.required_node_acceptance_item_ids",
+        "family": "task_packet_body",
+        "mutation_kind": "empty_required_array",
+        "required_evidence_owner": "contract_exhaustion_runtime_matrix"
+      },
+      {
+        "branch_kind": "ordinary_runtime",
+        "cell_id": "control_plane.task_packet_body.missing_allowed_value_options.current_handoff_contract_required_report_contract_required_node_acceptance_item_ids",
+        "confidence_boundary": "current_runtime_contract",
+        "contract_family_id": "task_packet_body",
+        "contract_path": "current_handoff_contract.required_report_contract.required_node_acceptance_item_ids",
+        "family": "task_packet_body",
+        "mutation_kind": "missing_allowed_value_options",
+        "required_evidence_owner": "contract_exhaustion_runtime_matrix"
+      },
+      {
+        "branch_kind": "ordinary_runtime",
+        "cell_id": "control_plane.task_packet_body.missing_required_field.current_handoff_contract_required_report_contract_node_acceptance_projection_rule",
+        "confidence_boundary": "current_runtime_contract",
+        "contract_family_id": "task_packet_body",
+        "contract_path": "current_handoff_contract.required_report_contract.node_acceptance_projection_rule",
+        "family": "task_packet_body",
+        "mutation_kind": "missing_required_field",
+        "required_evidence_owner": "contract_exhaustion_runtime_matrix"
+      },
+      {
+        "branch_kind": "ordinary_runtime",
+        "cell_id": "control_plane.task_packet_body.missing_required_child_field.current_handoff_contract_required_report_contract_node_acceptance_projection_rule",
+        "confidence_boundary": "current_runtime_contract",
+        "contract_family_id": "task_packet_body",
+        "contract_path": "current_handoff_contract.required_report_contract.node_acceptance_projection_rule",
+        "family": "task_packet_body",
+        "mutation_kind": "missing_required_child_field",
+        "required_evidence_owner": "contract_exhaustion_runtime_matrix"
+      },
+      {
+        "branch_kind": "ordinary_runtime",
+        "cell_id": "control_plane.task_packet_body.missing_repair_guidance.current_handoff_contract_required_report_contract_node_acceptance_projection_rule",
+        "confidence_boundary": "current_runtime_contract",
+        "contract_family_id": "task_packet_body",
+        "contract_path": "current_handoff_contract.required_report_contract.node_acceptance_projection_rule",
+        "family": "task_packet_body",
+        "mutation_kind": "missing_repair_guidance",
+        "required_evidence_owner": "contract_exhaustion_runtime_matrix"
+      },
+      {
+        "branch_kind": "ordinary_runtime",
         "cell_id": "control_plane.flowguard_check_packet.missing_stage_evidence_matrix.body_subject_stage_evidence_matrix",
         "confidence_boundary": "current_runtime_contract",
         "contract_family_id": "flowguard_check_packet",
@@ -7430,6 +8534,66 @@
         "contract_path": "body.subject_stage_evidence_matrix",
         "family": "review_packet",
         "mutation_kind": "missing_required_field",
+        "required_evidence_owner": "contract_exhaustion_runtime_matrix"
+      },
+      {
+        "branch_kind": "ordinary_runtime",
+        "cell_id": "control_plane.review_packet.missing_current_handoff_manifest.envelope_review_window",
+        "confidence_boundary": "current_runtime_contract",
+        "contract_family_id": "review_packet",
+        "contract_path": "envelope.review_window",
+        "family": "review_packet",
+        "mutation_kind": "missing_current_handoff_manifest",
+        "required_evidence_owner": "contract_exhaustion_runtime_matrix"
+      },
+      {
+        "branch_kind": "ordinary_runtime",
+        "cell_id": "control_plane.review_packet.missing_required_field.envelope_review_window",
+        "confidence_boundary": "current_runtime_contract",
+        "contract_family_id": "review_packet",
+        "contract_path": "envelope.review_window",
+        "family": "review_packet",
+        "mutation_kind": "missing_required_field",
+        "required_evidence_owner": "contract_exhaustion_runtime_matrix"
+      },
+      {
+        "branch_kind": "ordinary_runtime",
+        "cell_id": "control_plane.review_packet.wrong_type.envelope_review_window",
+        "confidence_boundary": "current_runtime_contract",
+        "contract_family_id": "review_packet",
+        "contract_path": "envelope.review_window",
+        "family": "review_packet",
+        "mutation_kind": "wrong_type",
+        "required_evidence_owner": "contract_exhaustion_runtime_matrix"
+      },
+      {
+        "branch_kind": "ordinary_runtime",
+        "cell_id": "control_plane.review_packet.missing_required_field.current_handoff_contract_review_window_forbidden_future_stage_demands",
+        "confidence_boundary": "current_runtime_contract",
+        "contract_family_id": "review_packet",
+        "contract_path": "current_handoff_contract.review_window.forbidden_future_stage_demands",
+        "family": "review_packet",
+        "mutation_kind": "missing_required_field",
+        "required_evidence_owner": "contract_exhaustion_runtime_matrix"
+      },
+      {
+        "branch_kind": "ordinary_runtime",
+        "cell_id": "control_plane.review_packet.empty_required_array.current_handoff_contract_review_window_forbidden_future_stage_demands",
+        "confidence_boundary": "current_runtime_contract",
+        "contract_family_id": "review_packet",
+        "contract_path": "current_handoff_contract.review_window.forbidden_future_stage_demands",
+        "family": "review_packet",
+        "mutation_kind": "empty_required_array",
+        "required_evidence_owner": "contract_exhaustion_runtime_matrix"
+      },
+      {
+        "branch_kind": "ordinary_runtime",
+        "cell_id": "control_plane.review_packet.stage_evidence_mismatch.current_handoff_contract_review_window_forbidden_future_stage_demands",
+        "confidence_boundary": "current_runtime_contract",
+        "contract_family_id": "review_packet",
+        "contract_path": "current_handoff_contract.review_window.forbidden_future_stage_demands",
+        "family": "review_packet",
+        "mutation_kind": "stage_evidence_mismatch",
         "required_evidence_owner": "contract_exhaustion_runtime_matrix"
       },
       {
@@ -8442,7 +9606,7 @@
         "coverage_boundary": "synthetic_non_live_control_flow",
         "evidence_current": true,
         "layer": "synthetic_non_live_control_flow",
-        "owned_cell_count": 104,
+        "owned_cell_count": 206,
         "result_status": "passed"
       },
       "contract_exhaustion_historical_failure_matrix": {
@@ -8456,7 +9620,7 @@
         "coverage_boundary": "current_runtime_contract",
         "evidence_current": true,
         "layer": "runtime_regression",
-        "owned_cell_count": 692,
+        "owned_cell_count": 710,
         "result_status": "passed"
       }
     },

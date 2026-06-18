@@ -45,6 +45,15 @@ CONTRACT_FAMILIES = (
     "break_glass_loop",
 )
 
+MALFORMED_BODY_MUTATION_KINDS = (
+    "malformed_body.unquoted_keys",
+    "malformed_body.markdown_wrapped_json",
+    "malformed_body.prose_plus_json",
+    "malformed_body.top_level_array",
+    "malformed_body.empty_body",
+    "malformed_body.trailing_comma",
+)
+
 MUTATION_KINDS = (
     "missing_body",
     "missing_required_field",
@@ -85,10 +94,12 @@ MUTATION_KINDS = (
     "missing_runtime_self_check_receipt",
     "target_requires_dev_repo_simulation",
     "synthetic_live_overclaim",
+    *MALFORMED_BODY_MUTATION_KINDS,
 )
 
 SYNTHETIC_MUTATION_KINDS = {
     "forbidden_alias_used",
+    *MALFORMED_BODY_MUTATION_KINDS,
     "same_payload_retry",
     "same_root_no_delta_retry",
     "synthetic_live_overclaim",
@@ -221,6 +232,30 @@ CONTROL_PLANE_REQUIRED_PATHS = (
         "required_evidence_owner": "contract_exhaustion_runtime_matrix",
     },
     {
+        "family": "task_packet_body",
+        "path": "current_handoff_contract.required_report_contract.required_acceptance_item_ids",
+        "mutation_kinds": ("missing_required_field", "empty_required_array", "missing_allowed_value_options"),
+        "required_evidence_owner": "contract_exhaustion_runtime_matrix",
+    },
+    {
+        "family": "task_packet_body",
+        "path": "current_handoff_contract.required_report_contract.ownership_coverage_rule",
+        "mutation_kinds": ("missing_required_field", "missing_required_child_field", "missing_repair_guidance"),
+        "required_evidence_owner": "contract_exhaustion_runtime_matrix",
+    },
+    {
+        "family": "task_packet_body",
+        "path": "current_handoff_contract.required_report_contract.required_node_acceptance_item_ids",
+        "mutation_kinds": ("missing_required_field", "empty_required_array", "missing_allowed_value_options"),
+        "required_evidence_owner": "contract_exhaustion_runtime_matrix",
+    },
+    {
+        "family": "task_packet_body",
+        "path": "current_handoff_contract.required_report_contract.node_acceptance_projection_rule",
+        "mutation_kinds": ("missing_required_field", "missing_required_child_field", "missing_repair_guidance"),
+        "required_evidence_owner": "contract_exhaustion_runtime_matrix",
+    },
+    {
         "family": "flowguard_check_packet",
         "path": "body.subject_stage_evidence_matrix",
         "mutation_kinds": ("missing_stage_evidence_matrix", "stage_evidence_mismatch", "missing_required_field"),
@@ -230,6 +265,18 @@ CONTROL_PLANE_REQUIRED_PATHS = (
         "family": "review_packet",
         "path": "body.subject_stage_evidence_matrix",
         "mutation_kinds": ("missing_stage_evidence_matrix", "stage_evidence_mismatch", "missing_required_field"),
+        "required_evidence_owner": "contract_exhaustion_runtime_matrix",
+    },
+    {
+        "family": "review_packet",
+        "path": "envelope.review_window",
+        "mutation_kinds": ("missing_current_handoff_manifest", "missing_required_field", "wrong_type"),
+        "required_evidence_owner": "contract_exhaustion_runtime_matrix",
+    },
+    {
+        "family": "review_packet",
+        "path": "current_handoff_contract.review_window.forbidden_future_stage_demands",
+        "mutation_kinds": ("missing_required_field", "empty_required_array", "stage_evidence_mismatch"),
         "required_evidence_owner": "contract_exhaustion_runtime_matrix",
     },
     {
@@ -356,6 +403,8 @@ CONTROL_PLANE_REQUIRED_PATHS = (
 
 
 def _mutation_applicable(family: str, mutation: str) -> bool:
+    if mutation in MALFORMED_BODY_MUTATION_KINDS:
+        return family in {"task_result_body", "flowguard_check_result", "review_packet", "pm_repair_packet"}
     if mutation == "empty_required_manifest":
         return family in {"review_packet", "system_validation"}
     if mutation == "empty_required_array":
@@ -492,6 +541,19 @@ def _packet_result_contract_field_cells() -> tuple[dict[str, str], ...]:
         packet_kind = str(row["packet_kind"])
         result_family = _contract_family_bucket(packet_kind)
         packet_family = _contract_packet_family_bucket(packet_kind)
+        for mutation in MALFORMED_BODY_MUTATION_KINDS:
+            cells.append(
+                {
+                    "cell_id": f"packet_result_contract.{family_id}.{mutation}.result_body",
+                    "family": result_family,
+                    "contract_family_id": family_id,
+                    "contract_path": "result.body",
+                    "mutation_kind": mutation,
+                    "branch_kind": "synthetic_replay",
+                    "confidence_boundary": "synthetic_non_live_control_flow",
+                    "required_evidence_owner": "contract_exhaustion_fake_ai_matrix",
+                }
+            )
         for field in row.get("required_fields", ()):
             field_path = str(field)
             for mutation in ("missing_required_field", "wrong_type"):

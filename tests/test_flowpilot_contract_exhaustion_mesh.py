@@ -146,6 +146,24 @@ class FlowPilotContractExhaustionMeshTests(unittest.TestCase):
                 and cell["mutation_kind"] == "empty_required_manifest"
             ]
         )
+        self.assertTrue(
+            [
+                cell
+                for cell in cells
+                if cell["family"] == "review_packet"
+                and cell.get("contract_path") == "envelope.review_window"
+                and cell["mutation_kind"] == "missing_required_field"
+            ]
+        )
+        self.assertTrue(
+            [
+                cell
+                for cell in cells
+                if cell["family"] == "task_packet_body"
+                and cell.get("contract_path")
+                == "current_handoff_contract.required_report_contract.ownership_coverage_rule"
+            ]
+        )
 
     def test_ai_contract_projection_and_retry_cells_are_required(self) -> None:
         cells = list(model.REQUIRED_CONTRACT_EXHAUSTION_CELLS)
@@ -200,6 +218,18 @@ class FlowPilotContractExhaustionMeshTests(unittest.TestCase):
                 "flowguard_check_result",
                 "result.semantic_recheck.subject_bound_semantic_coverage",
                 "corrected_second_retry",
+                "contract_exhaustion_fake_ai_matrix",
+            ),
+            (
+                "flowguard_check_result",
+                "result.body",
+                "malformed_body.unquoted_keys",
+                "contract_exhaustion_fake_ai_matrix",
+            ),
+            (
+                "review_packet",
+                "result.body",
+                "malformed_body.markdown_wrapped_json",
                 "contract_exhaustion_fake_ai_matrix",
             ),
         }
@@ -416,6 +446,9 @@ class FlowPilotContractExhaustionMeshTests(unittest.TestCase):
             with self.subTest(contract_id=contract_id, mutation="forbidden_alias_used"):
                 for alias_path in responder.forbidden_aliases:
                     self.assertIsInstance(responder.alias_payload(alias_path), dict)
+            with self.subTest(contract_id=contract_id, mutation="malformed_body"):
+                for profile_id in contract_fake_ai.MALFORMED_BODY_PROFILE_IDS:
+                    self.assertIsInstance(responder.malformed_body(profile_id), str)
 
     def test_packet_result_contract_fields_are_expanded_into_cells(self) -> None:
         cells = list(model.REQUIRED_CONTRACT_EXHAUSTION_CELLS)

@@ -364,6 +364,66 @@ class FlowPilotAIContractProjectionTests(unittest.TestCase):
                     ]
                 )
 
+    def test_contract_driven_fake_ai_malformed_body_profiles_reissue_with_strict_json_feedback(self) -> None:
+        for profile_id in contract_fake_ai.MALFORMED_BODY_PROFILE_IDS:
+            with self.subTest(profile_id=profile_id):
+                ledger, packet_id = self.issue_semantic_recheck_packet()
+                packet = ledger["packets"][packet_id]
+                responder = self.contract_driven_responder(packet)
+                lease_id = self.assign_flowguard(
+                    ledger,
+                    packet_id,
+                    f"fg-malformed-{profile_id}",
+                )
+
+                result_id = runtime.submit_result(
+                    ledger,
+                    lease_id,
+                    packet_id,
+                    responder.malformed_body(profile_id),
+                )
+
+                result = ledger["results"][result_id]
+                reissue_packet_id = self.latest_reissue_packet_id(ledger, packet_id)
+                reissue_body = json.loads(ledger["packets"][reissue_packet_id]["body"])
+                corrected_payload = responder.repaired_payload_from_reissue(reissue_body)
+
+                self.assertEqual(result["status"], "mechanical_contract_blocked")
+                self.assertIn("strict JSON object", result["blocked_reason"])
+                self.assertEqual(result["accepted"], False)
+                self.assertIn("minimal_valid_shape", reissue_body)
+                self.assertIn("semantic_recheck", reissue_body["minimal_valid_shape"])
+
+                corrected_lease_id = self.assign_flowguard(ledger, reissue_packet_id)
+                write_flowguard_evidence_artifact(ledger, reissue_packet_id)
+                corrected_result_id = runtime.submit_result(
+                    ledger,
+                    corrected_lease_id,
+                    reissue_packet_id,
+                    json.dumps(corrected_payload, sort_keys=True),
+                )
+
+                self.assertEqual(ledger["results"][corrected_result_id]["status"], "accepted")
+                self.assertFalse(
+                    [
+                        event
+                        for event in ledger["events"]
+                        if event["event_type"] == "repair_loop_break_glass_required"
+                    ]
+                )
+
+    def test_contract_driven_fake_ai_coverage_cells_include_raw_body_and_retry_profiles(self) -> None:
+        ledger, packet_id = self.issue_semantic_recheck_packet()
+        responder = self.contract_driven_responder(ledger["packets"][packet_id])
+        cells = responder.coverage_cells()
+        mutation_kinds = {cell["mutation_kind"] for cell in cells}
+
+        for profile_id in contract_fake_ai.MALFORMED_BODY_PROFILE_IDS:
+            self.assertIn(f"malformed_body.{profile_id}", mutation_kinds)
+        for profile_id in contract_fake_ai.RETRY_PROFILE_IDS:
+            self.assertIn(profile_id, mutation_kinds)
+        self.assertIn("finite_option_mistake", mutation_kinds)
+
     def test_body_semantic_recheck_context_without_profile_does_not_create_hidden_fields(self) -> None:
         ledger, packet_id = self.issue_semantic_recheck_packet(include_profile=False)
         packet = ledger["packets"][packet_id]
