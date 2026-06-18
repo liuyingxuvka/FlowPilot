@@ -186,6 +186,17 @@ class FlowPilotSyntheticAgentCoverageMatrixTests(unittest.TestCase):
                     self.assertTrue(row["normal_repair_route"])
                     self.assertFalse(row["glass_break_allowed_in_acceptance"])
                     self.assertIn(str(cell["source_class"]), row["covered_failure_mode"])
+                elif owner == "fake_ai_runtime_replay_matrix":
+                    self.assertEqual(row["evidence_owner"], "fake_ai_runtime_replay_matrix")
+                    self.assertTrue(row["synthetic_replay_required"])
+                    self.assertIn(row["coverage_kind"], {"synthetic_trace", "threshold_probe"})
+                    self.assertIn(row["coverage_boundary"], {"control_flow_only", "glassbreak_threshold_only"})
+                    self.assertEqual(row["test_name"], "test_runtime_replay_cells_bind_fake_ai_errors_to_runtime_reactions")
+                elif owner == "real_issue_backfeed_matrix":
+                    self.assertEqual(row["coverage_kind"], "historical_failure_replay")
+                    self.assertTrue(row["synthetic_replay_required"])
+                    self.assertEqual(row["coverage_boundary"], "historical_same_class_non_live_control_flow")
+                    self.assertEqual(row["test_name"], "test_real_issue_backfeed_registry_bridges_every_issue_to_runtime_replay")
                 elif cell["mutation_kind"] in coverage_matrix.CONTRACT_EXHAUSTION_SYNTHETIC_MUTATIONS:
                     self.assertEqual(row["coverage_kind"], "synthetic_trace")
                     self.assertTrue(row["synthetic_replay_required"])
@@ -277,6 +288,12 @@ class FlowPilotSyntheticAgentCoverageMatrixTests(unittest.TestCase):
                 for material_state in material_state_classes:
                     for retry_class in retry_count_classes:
                         self.assertIn((flow_id, profile_id, material_state, retry_class), fake_pairs)
+
+    def test_review_window_completeness_cells_have_runtime_owners(self) -> None:
+        self.test_review_window_completeness_and_fake_ai_cells_are_cartesian_rows()
+
+    def test_review_window_fake_ai_profiles_are_cartesian_covered(self) -> None:
+        self.test_review_window_completeness_and_fake_ai_cells_are_cartesian_rows()
 
     def test_cartesian_exhaustion_required_cells_have_owners(self) -> None:
         report = coverage_matrix.build_report()

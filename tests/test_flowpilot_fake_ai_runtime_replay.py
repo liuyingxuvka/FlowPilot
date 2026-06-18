@@ -1,0 +1,152 @@
+from __future__ import annotations
+
+import importlib.util
+import sys
+import unittest
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def load_module(name: str, path: Path):
+    spec = importlib.util.spec_from_file_location(name, path)
+    assert spec is not None
+    assert spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    old_path = list(sys.path)
+    old_module = sys.modules.get(name)
+    sys.modules[name] = module
+    sys.path.insert(0, str(path.parent))
+    try:
+        spec.loader.exec_module(module)
+    finally:
+        sys.path[:] = old_path
+        if old_module is None:
+            sys.modules.pop(name, None)
+        else:
+            sys.modules[name] = old_module
+    return module
+
+
+runtime_replay = load_module(
+    "flowpilot_fake_ai_runtime_replay_model",
+    ROOT / "simulations" / "flowpilot_fake_ai_runtime_replay_model.py",
+)
+runner = load_module(
+    "run_flowpilot_fake_ai_runtime_replay_checks",
+    ROOT / "simulations" / "run_flowpilot_fake_ai_runtime_replay_checks.py",
+)
+
+ASSETS_PATH = ROOT / "skills" / "flowpilot" / "assets"
+if str(ASSETS_PATH) not in sys.path:
+    sys.path.insert(0, str(ASSETS_PATH))
+from flowpilot_core_runtime import review_window_contracts  # noqa: E402
+
+
+class FlowPilotFakeAIRuntimeReplayTests(unittest.TestCase):
+    def test_fake_ai_runtime_replay_runner_accepts_valid_and_rejects_hazards(self) -> None:
+        report = runner.run_checks()
+
+        self.assertTrue(report["ok"], report)
+        self.assertEqual(report["model_id"], runtime_replay.MODEL_ID)
+        self.assertTrue(report["flowguard"]["ok"], report["flowguard"])
+        self.assertTrue(report["walk"]["ok"], report["walk"])
+        self.assertTrue(report["hazards"]["ok"], report["hazards"])
+        self.assertEqual(report["matrix"]["findings"], [])
+
+    def test_runtime_replay_cells_bind_fake_ai_errors_to_runtime_reactions(self) -> None:
+        cells = list(runtime_replay.runtime_replay_cells())
+        mutations = {str(cell["mutation_kind"]) for cell in cells}
+        reactions = {str(cell["expected_runtime_reaction"]) for cell in cells}
+        attempt_classes = {str(cell["attempt_class"]) for cell in cells}
+
+        self.assertGreater(len(cells), 400)
+        for profile_id in runtime_replay.MALFORMED_BODY_PROFILE_IDS:
+            self.assertIn(f"malformed_body.{profile_id}", mutations)
+        for mutation in (
+            "missing_required_field",
+            "missing_required_child_field",
+            "wrong_type",
+            "wrong_allowed_value",
+            "forbidden_alias_used",
+            "hidden_projection_gap",
+            "finite_option_mistake",
+            "missing_active_id_coverage",
+            "corrected_second_retry",
+            "same_payload_retry",
+        ):
+            with self.subTest(mutation=mutation):
+                self.assertIn(mutation, mutations)
+        for profile_id in (
+            "reviewer_quality_score_10_exceeds_standard",
+            "reviewer_quality_score_6_soft_pm_optimization",
+            "reviewer_quantitative_gap_blocks",
+            "reviewer_overblocks_sub9_soft_score",
+            "reviewer_recheck_consumes_score_context",
+        ):
+            with self.subTest(profile_id=profile_id):
+                self.assertIn(profile_id, mutations)
+        for reaction in (
+            "mechanical_reject_reissue_with_strict_json_feedback",
+            "mechanical_reject_reissue_with_options",
+            "mechanical_reject_reissue_with_exact_field",
+            "accepted_after_reissue",
+            "same_family_repair_or_reissue_without_glassbreak_before_threshold",
+            "breakglass_after_fifth_same_failure",
+        ):
+            with self.subTest(reaction=reaction):
+                self.assertIn(reaction, reactions)
+        self.assertLessEqual(
+            {"first_failure", "corrected_second_attempt", "same_failure_attempts_1_to_4", "same_failure_attempt_5"},
+            attempt_classes,
+        )
+        for cell in cells:
+            with self.subTest(cell_id=cell["cell_id"]):
+                self.assertEqual(cell["required_evidence_owner"], runtime_replay.REQUIRED_EVIDENCE_OWNER)
+                self.assertFalse(cell["live_completion_allowed"])
+                if cell["expected_runtime_reaction"] == "breakglass_after_fifth_same_failure":
+                    self.assertEqual(cell["attempt_class"], "same_failure_attempt_5")
+                    self.assertTrue(cell["glass_break_allowed"])
+                else:
+                    self.assertFalse(cell["glass_break_allowed"])
+
+    def test_review_window_fake_ai_runtime_replay_is_cartesian(self) -> None:
+        cells = [
+            cell
+            for cell in runtime_replay.runtime_replay_cells()
+            if cell["source_matrix"] == "review_window_fake_ai_responder"
+        ]
+        keys = {
+            (
+                cell["contract_family_id"],
+                cell["mutation_kind"],
+                cell["attempt_class"],
+            )
+            for cell in cells
+        }
+        expected_count = (
+            len(review_window_contracts.review_flow_ids())
+            * len(review_window_contracts.REVIEW_WINDOW_FAKE_AI_PROFILE_IDS)
+            * len(review_window_contracts.REVIEW_WINDOW_MATERIAL_STATE_CLASSES)
+            * len(review_window_contracts.RETRY_COUNT_CLASSES)
+        )
+
+        self.assertEqual(len(cells), expected_count)
+        for flow_id in review_window_contracts.review_flow_ids():
+            for profile_id in review_window_contracts.REVIEW_WINDOW_FAKE_AI_PROFILE_IDS:
+                for retry_class in review_window_contracts.RETRY_COUNT_CLASSES:
+                    with self.subTest(flow_id=flow_id, profile_id=profile_id, retry_class=retry_class):
+                        if profile_id == "corrected_second_reviewer_retry" or retry_class == "corrected_second_attempt":
+                            attempt_class = "corrected_second_attempt"
+                        elif profile_id == "same_review_failure_attempt_5_break_glass" or retry_class == "same_failure_attempt_5":
+                            attempt_class = "same_failure_attempt_5"
+                        elif retry_class == "same_failure_attempts_1_to_4":
+                            attempt_class = "same_failure_attempts_1_to_4"
+                        else:
+                            attempt_class = "first_failure"
+                        self.assertIn((flow_id, profile_id, attempt_class), keys)
+
+
+if __name__ == "__main__":
+    unittest.main()

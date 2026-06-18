@@ -40,6 +40,10 @@ def _card_paths_for_audience(audience: str, *, kind: str | None = None) -> list[
     return paths
 
 
+def _normalized_path(path: Path) -> str:
+    return " ".join(path.read_text(encoding="utf-8").lower().split())
+
+
 class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
     def test_actual_runtime_cards_have_router_return_instruction_coverage(self) -> None:
         cards = model.collect_card_facts(ROOT)
@@ -406,6 +410,52 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
         for text in (packet_template, result_template, contract_text):
             self.assertIn("pm suggestion", text)
             self.assertIn("pm_suggestion", text)
+
+    def test_reviewer_quality_score_rubric_reaches_pm_worker_and_reviewer_cards(self) -> None:
+        reviewer_core = _normalized_path(_card_path_by_id("reviewer.core"))
+        reviewer_worker = _normalized_path(_card_path_by_id("reviewer.worker_result_review"))
+        reviewer_node = _normalized_path(_card_path_by_id("reviewer.node_acceptance_plan_review"))
+        pm_core = _normalized_path(_card_path_by_id("pm.core"))
+        pm_repair = _normalized_path(_card_path_by_id("pm.review_repair"))
+        pm_reviewer_report = _normalized_path(_card_path_by_id("pm.event.reviewer_report"))
+        pm_reviewer_blocked = _normalized_path(_card_path_by_id("pm.event.reviewer_blocked"))
+        worker_core = _normalized_path(_card_path_by_id("worker.core"))
+
+        for text in (reviewer_core, reviewer_worker, reviewer_node):
+            with self.subTest(surface="reviewer"):
+                self.assertIn("quality score: x/10; target: 9/10; minimum hard gate passed: true|false", text)
+                self.assertIn("6/10", text)
+                self.assertIn("minimum user standard", text)
+                self.assertIn("9/10", text)
+                self.assertIn("10/10", text)
+                self.assertIn("substantially exceeds", text)
+                self.assertIn("quantitative", text)
+                self.assertIn("required, delivered, gap", text)
+                self.assertIn("pm decision-support", text)
+                self.assertIn("not a blocker by itself", text)
+
+        for text in (pm_core, pm_repair, pm_reviewer_report, pm_reviewer_blocked):
+            with self.subTest(surface="pm"):
+                self.assertTrue(
+                    "reviewer score interpretation" in text
+                    or "reviewer score rubric" in text
+                )
+                self.assertIn("quality score: x/10; target: 9/10; minimum hard gate passed: true|false", text)
+                self.assertIn("6/10", text)
+                self.assertIn("minimum user standard", text)
+                self.assertIn("9/10", text)
+                self.assertIn("10/10", text)
+                self.assertIn("pm always owns the optimization choice", text)
+                self.assertIn("even when reviewer reports no blocker", text)
+                self.assertIn("quantitative", text)
+                self.assertIn("required/delivered/gap", text)
+
+        self.assertIn("quality score: x/10; target: 9/10; minimum hard gate passed: true|false", worker_core)
+        self.assertIn("authorized materials", worker_core)
+        self.assertIn("9/10", worker_core)
+        self.assertIn("quantitative gap", worker_core)
+        self.assertIn("blocked", worker_core)
+        self.assertIn("needs_pm", worker_core)
 
     def test_flowguard_work_order_protocol_reaches_core_cards(self) -> None:
         prompt_policy = (

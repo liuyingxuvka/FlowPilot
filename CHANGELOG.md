@@ -2,6 +2,45 @@
 
 All notable changes to FlowPilot will be documented in this file.
 
+## 0.10.15 - 2026-06-18
+
+### Fixed
+
+- Added a strict text-only Reviewer quality score rubric where `6/10` is the
+  minimum user standard, `9/10` is the FlowPilot target, and `10/10`
+  substantially exceeds the user's standard.
+- Taught PM prompts to interpret Reviewer scores as decision context while
+  preserving PM's standing choice to optimize, continue, repair, waive, stop,
+  or ask the user even when Reviewer reports no blocker.
+- Taught Worker repair guidance and current-scope repair packets to consume
+  authorized Reviewer score context, quantitative gaps, and the `9/10` target
+  without expanding packet scope.
+- Extended review-window fake-AI profiles with high-score pass, soft low-score
+  PM optimization, quantitative hard blocker, soft-score overblock, and
+  score-context recheck cases.
+- Added fake-AI runtime replay coverage that drives generated fake-AI failures
+  through runtime rejection, reissue/repair, corrected second retries, and the
+  fifth same-lineage break-glass threshold.
+- Added a real-issue backfeed registry so newly discovered live failures must
+  become a fake-AI profile, contract cell, Cartesian matrix row, and runtime
+  reaction test before closure.
+- Hardened review-window completeness checks so orphan, missing, mismatched,
+  or prose-only Reviewer windows cannot count as covered structured review
+  material.
+- Tightened singleton live-evidence classification so all required live files
+  are needed for full confidence and any missing or malformed file remains
+  evidence-insufficient.
+- Bridged fake-AI replay mutation families into the existing control-plane
+  Cartesian mutation alphabet so matrix coverage keeps one current path.
+
+### Validation
+
+- Refreshed prompt coverage, contract-surface reduction, core runtime
+  information-flow, AI contract projection, fake-AI runtime replay,
+  real-issue backfeed, singleton identity, contract-exhaustion mesh, synthetic
+  agent coverage, model-test alignment, topology, and Cartesian control-plane
+  exhaustion tests.
+
 ## 0.10.14 - 2026-06-18
 
 ### Fixed

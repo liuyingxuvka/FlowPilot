@@ -494,6 +494,48 @@ class FlowPilotAIContractProjectionTests(unittest.TestCase):
         self.assertIn("future-stage", future["blockers"][0]["summary"])
         self.assertEqual(threshold["review_window_trace"]["same_failure_retry_class"], "break_glass_threshold")
 
+        expected_score_profiles = {
+            "reviewer_quality_score_10_exceeds_standard",
+            "reviewer_quality_score_6_soft_pm_optimization",
+            "reviewer_quantitative_gap_blocks",
+            "reviewer_overblocks_sub9_soft_score",
+            "reviewer_recheck_consumes_score_context",
+        }
+        self.assertLessEqual(expected_score_profiles, set(contract_fake_ai.REVIEW_WINDOW_FAKE_AI_PROFILE_IDS))
+        score_10 = responder.review_window_behavior_payload(
+            "reviewer_quality_score_10_exceeds_standard",
+            sample_window,
+        )
+        soft_6 = responder.review_window_behavior_payload(
+            "reviewer_quality_score_6_soft_pm_optimization",
+            sample_window,
+        )
+        quantitative = responder.review_window_behavior_payload(
+            "reviewer_quantitative_gap_blocks",
+            sample_window,
+        )
+        overblock = responder.review_window_behavior_payload(
+            "reviewer_overblocks_sub9_soft_score",
+            sample_window,
+        )
+        recheck = responder.review_window_behavior_payload(
+            "reviewer_recheck_consumes_score_context",
+            sample_window,
+        )
+
+        self.assertIn("Quality score: 10/10", score_10["pm_visible_summary"][0])
+        self.assertEqual(score_10["review_window_trace"]["quality_score"], 10)
+        self.assertEqual(soft_6["passed"], True)
+        self.assertEqual(soft_6["blockers"], [])
+        self.assertIn("Quality score: 6/10", soft_6["pm_visible_summary"][0])
+        self.assertTrue(soft_6["review_window_trace"]["soft_score_pm_decision_support"])
+        self.assertEqual(quantitative["passed"], False)
+        self.assertIn("required 100 items, delivered 5, gap 95", quantitative["blockers"][0]["summary"])
+        self.assertEqual(quantitative["review_window_trace"]["quantitative_gap"]["gap"], 95)
+        self.assertEqual(overblock["passed"], False)
+        self.assertTrue(overblock["review_window_trace"]["overblocked_soft_score"])
+        self.assertTrue(recheck["review_window_trace"]["prior_score_context_consumed"])
+
     def test_body_semantic_recheck_context_without_profile_does_not_create_hidden_fields(self) -> None:
         ledger, packet_id = self.issue_semantic_recheck_packet(include_profile=False)
         packet = ledger["packets"][packet_id]

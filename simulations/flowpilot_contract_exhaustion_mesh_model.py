@@ -26,6 +26,8 @@ if str(ASSETS_PATH) not in sys.path:
     sys.path.insert(0, str(ASSETS_PATH))
 
 from flowpilot_core_runtime import packet_result_contracts, review_window_contracts  # noqa: E402
+from flowpilot_fake_ai_runtime_replay_model import runtime_replay_cells  # noqa: E402
+from flowpilot_real_issue_backfeed import backfeed_cells  # noqa: E402
 
 
 MODEL_ID = "flowpilot_contract_exhaustion_mesh"
@@ -881,6 +883,8 @@ REQUIRED_CONTRACT_EXHAUSTION_CELLS = (
     *_control_plane_required_path_cells(),
     *_historical_failure_family_cells(),
     *review_window_contracts.review_window_completeness_cells(),
+    *runtime_replay_cells(),
+    *backfeed_cells(),
 )
 
 

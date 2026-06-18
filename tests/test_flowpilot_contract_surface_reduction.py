@@ -283,6 +283,28 @@ class FlowPilotContractSurfaceReductionTests(unittest.TestCase):
         reviewer_options = packet_stage_evidence_matrix.allowed_value_options_for_family("review.any_current_subject")
         self.assertEqual(reviewer_options["reviewed_by_role"], ("human_like_reviewer",))
 
+    def test_reviewer_quality_score_stays_text_not_runtime_contract_fields(self) -> None:
+        forbidden_score_fields = {
+            "score",
+            "quality_score",
+            "scorecard",
+            "review_score",
+            "target_score",
+            "minimum_hard_gate_passed",
+            "quality_assessment",
+        }
+        for family_id in ("review.any_current_subject", "review.terminal_backward_replay"):
+            with self.subTest(family_id=family_id):
+                required_fields = set(packet_result_contracts.required_fields_for_family(family_id))
+                required_child_fields = set(packet_result_contracts.required_child_fields_for_family(family_id))
+                allowed_options = set(packet_result_contracts.allowed_value_options_for_family(family_id))
+                minimal_shape = packet_result_contracts.minimal_valid_shape_for_family(family_id)
+                self.assertTrue(required_fields)
+                self.assertFalse(forbidden_score_fields.intersection(required_fields))
+                self.assertFalse(forbidden_score_fields.intersection(required_child_fields))
+                self.assertFalse(forbidden_score_fields.intersection(allowed_options))
+                self.assertFalse(forbidden_score_fields.intersection(minimal_shape))
+
     def test_runtime_rejects_values_outside_allowed_value_options(self) -> None:
         invalid_payloads = {
             "task.high_standard_contract": (

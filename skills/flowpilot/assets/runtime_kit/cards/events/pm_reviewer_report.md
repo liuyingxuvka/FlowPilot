@@ -21,6 +21,21 @@ runtime_context: Treat the runtime delivery envelope as the live source for the 
 Reviewer has returned a formal material, research, node-completion, or route
 gate report.
 
+When the report includes `Quality score: X/10; target: 9/10; minimum hard gate
+passed: true|false`, PM must interpret it with the same Reviewer score rubric
+used in the review packet: `6/10` means the minimum user standard is just met,
+`9/10` is the high-quality FlowPilot target, and `10/10` substantially exceeds
+the user's standard. Scores below `9/10` are PM decision-support when the hard
+gate is met; PM always owns the optimization choice, including whether to
+continue, optimize, defer, waive, stop, ask the user, or issue repair. This
+remains true even when Reviewer reports no blocker.
+
+If the Reviewer report identifies a current quantitative gap, such as required
+item count, word count, coverage rows, required ids, evidence count, or named
+sections where delivered quantity is short, PM must treat the
+required/delivered/gap detail as hard-blocker material for the current
+decision.
+
 PM must decide from the reviewed report only:
 
 - accept reviewed material;

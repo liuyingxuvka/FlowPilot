@@ -556,6 +556,30 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 allow_shared_implementation=True,
             ),
             _obligation(
+                "packet_result_family.fake_ai_runtime_replay_matrix_closure",
+                obligation_type="runtime_replay_testmesh_contract",
+                description=(
+                    "Generated fake-AI contract cells must be promoted into a runtime replay matrix "
+                    "that names the expected reject/reissue/repair/GlassBreak reaction and links each "
+                    "class to concrete runtime tests rather than stopping at generated bad payloads."
+                ),
+                required_test_kinds=(NEGATIVE, REPLAY),
+                allow_shared_evidence=True,
+                allow_shared_implementation=True,
+            ),
+            _obligation(
+                "packet_result_family.real_issue_backfeed_registry_bridge",
+                obligation_type="real_issue_backfeed_contract",
+                description=(
+                    "Every newly discovered real control-plane issue family must be backfed as a "
+                    "public-reference row with fake-AI profile, contract cell, Cartesian row, expected "
+                    "runtime reaction, replay suite owner, and no copied sealed body."
+                ),
+                required_test_kinds=(NEGATIVE, REPLAY),
+                allow_shared_evidence=True,
+                allow_shared_implementation=True,
+            ),
+            _obligation(
                 "packet_result_family.sealed_body_related_context_reads",
                 obligation_type="authorized_body_read_contract",
                 description=(
@@ -859,6 +883,7 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                     "packet_result_family.flowguard_semantic_recheck_ai_facing_projection",
                     "packet_result_family.flowguard_semantic_recheck_corrected_retry_convergence",
                     "packet_result_family.contract_driven_fake_ai_cartesian_retry",
+                    "packet_result_family.fake_ai_runtime_replay_matrix_closure",
                 ),
                 external_inputs=(
                     "packet.body.current_handoff_contract.required_report_contract",
@@ -867,6 +892,33 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 ),
                 external_outputs=("legal_payload", "invalid_allowed_value_payload", "repaired_payload"),
                 state_reads=("packet_local_contract_projection",),
+            ),
+            _contract(
+                "packet_result_family.model.fake_ai_runtime_replay_matrix",
+                path="simulations/flowpilot_fake_ai_runtime_replay_model.py",
+                symbol="runtime_replay_cells",
+                implements=("packet_result_family.fake_ai_runtime_replay_matrix_closure",),
+                external_inputs=("contract_driven_fake_ai.coverage_cells", "review_window_fake_ai_cells"),
+                external_outputs=("runtime_replay_cells",),
+                state_reads=("packet_result_contracts", "review_window_contracts"),
+            ),
+            _contract(
+                "packet_result_family.runner.fake_ai_runtime_replay_checks",
+                path="simulations/run_flowpilot_fake_ai_runtime_replay_checks.py",
+                symbol="run_checks",
+                implements=("packet_result_family.fake_ai_runtime_replay_matrix_closure",),
+                external_inputs=("runtime_replay_cells",),
+                external_outputs=("flowguard_report", "hazard_report", "matrix_report"),
+                state_reads=("flowguard_model",),
+            ),
+            _contract(
+                "packet_result_family.model.real_issue_backfeed_registry",
+                path="simulations/flowpilot_real_issue_backfeed.py",
+                symbol="backfeed_rows",
+                implements=("packet_result_family.real_issue_backfeed_registry_bridge",),
+                external_inputs=("public_issue_reference",),
+                external_outputs=("backfeed_rows", "backfeed_cells"),
+                state_reads=("runtime_replay_suite_owner",),
             ),
             _contract(
                 "packet_result_family.runtime.blocker_related_authorized_reads",
@@ -1534,6 +1586,65 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                     "packet_result_family.simulation.contract_driven_fake_ai_responder",
                     "packet_result_family.runtime.current_contract_reissue_feedback",
                 ),
+            ),
+            _evidence(
+                "packet_result_family.replay.fake_ai_runtime_replay_matrix",
+                test_name="test_runtime_replay_cells_bind_fake_ai_errors_to_runtime_reactions",
+                path="tests/test_flowpilot_fake_ai_runtime_replay.py",
+                command=(
+                    "python -m unittest tests.test_flowpilot_fake_ai_runtime_replay."
+                    "FlowPilotFakeAIRuntimeReplayTests."
+                    "test_runtime_replay_cells_bind_fake_ai_errors_to_runtime_reactions"
+                ),
+                test_kind=REPLAY,
+                covers=("packet_result_family.fake_ai_runtime_replay_matrix_closure",),
+                code_contracts=(
+                    "packet_result_family.model.fake_ai_runtime_replay_matrix",
+                    "packet_result_family.runner.fake_ai_runtime_replay_checks",
+                    "packet_result_family.simulation.contract_driven_fake_ai_responder",
+                ),
+            ),
+            _evidence(
+                "packet_result_family.negative.fake_ai_runtime_replay_hazards",
+                test_name="test_fake_ai_runtime_replay_runner_accepts_valid_and_rejects_hazards",
+                path="tests/test_flowpilot_fake_ai_runtime_replay.py",
+                command=(
+                    "python -m unittest tests.test_flowpilot_fake_ai_runtime_replay."
+                    "FlowPilotFakeAIRuntimeReplayTests."
+                    "test_fake_ai_runtime_replay_runner_accepts_valid_and_rejects_hazards"
+                ),
+                test_kind=NEGATIVE,
+                covers=("packet_result_family.fake_ai_runtime_replay_matrix_closure",),
+                code_contracts=(
+                    "packet_result_family.model.fake_ai_runtime_replay_matrix",
+                    "packet_result_family.runner.fake_ai_runtime_replay_checks",
+                ),
+            ),
+            _evidence(
+                "packet_result_family.replay.real_issue_backfeed_registry",
+                test_name="test_real_issue_backfeed_registry_bridges_every_issue_to_runtime_replay",
+                path="tests/test_flowpilot_real_issue_backfeed.py",
+                command=(
+                    "python -m unittest tests.test_flowpilot_real_issue_backfeed."
+                    "FlowPilotRealIssueBackfeedTests."
+                    "test_real_issue_backfeed_registry_bridges_every_issue_to_runtime_replay"
+                ),
+                test_kind=REPLAY,
+                covers=("packet_result_family.real_issue_backfeed_registry_bridge",),
+                code_contracts=("packet_result_family.model.real_issue_backfeed_registry",),
+            ),
+            _evidence(
+                "packet_result_family.negative.real_issue_backfeed_rejects_incomplete_rows",
+                test_name="test_real_issue_backfeed_rejects_missing_fields_and_sealed_body_copies",
+                path="tests/test_flowpilot_real_issue_backfeed.py",
+                command=(
+                    "python -m unittest tests.test_flowpilot_real_issue_backfeed."
+                    "FlowPilotRealIssueBackfeedTests."
+                    "test_real_issue_backfeed_rejects_missing_fields_and_sealed_body_copies"
+                ),
+                test_kind=NEGATIVE,
+                covers=("packet_result_family.real_issue_backfeed_registry_bridge",),
+                code_contracts=("packet_result_family.model.real_issue_backfeed_registry",),
             ),
             _evidence(
                 "packet_result_family.happy.related_blocker_bodies_delivered_to_pm",
@@ -3854,8 +3965,10 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
             packet_result_family,
             model_checks=(
                 "python simulations/run_flowpilot_packet_result_family_parity_checks.py",
+                "python simulations/run_flowpilot_fake_ai_runtime_replay_checks.py --json-out simulations/flowpilot_fake_ai_runtime_replay_results.json",
+                "python simulations/run_flowpilot_real_issue_backfeed_checks.py --json-out simulations/flowpilot_real_issue_backfeed_results.json",
             ),
-            coverage_boundary="Packet-result family alignment covers durable-envelope reconciliation for material scan, research, current-node, and PM role-work siblings. It does not inspect sealed result bodies or replace PM semantic review.",
+            coverage_boundary="Packet-result family alignment covers durable-envelope reconciliation, AI-facing result contracts, fake-AI runtime replay, and real-issue backfeed ownership. It does not inspect sealed result bodies or replace PM semantic review.",
         ),
         _plan_entry(
             "route mutation",

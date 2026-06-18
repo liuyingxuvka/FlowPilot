@@ -28526,3 +28526,42 @@ Task id: `generate-new-flowpilot-formal-entrypoint-20260529`
 - Claim boundary:
   - Repository validation, topology, and local installed FlowPilot sync are current for this scoped hardening.
   - No remote push, GitHub release, package tag, deploy, public publication, or OpenSpec archive is claimed.
+
+## 2026-06-18 - Runtime Replay TestMesh And Backfeed Closeout
+
+- Task: `harden-flowpilot-runtime-replay-testmesh-20260618`
+- Route: Predictive KB preflight, OpenSpec changes `harden-flowpilot-runtime-replay-testmesh` and `add-reviewer-quality-score-guidance`, DevelopmentProcessFlow, ContractExhaustionMesh, TestMesh, and Model-Test Alignment.
+- Trigger: the user asked whether the new full Cartesian coverage was actually complete, and whether previous review-window/fake-AI checks were only existence checks rather than proof that every required row, error, repair loop, and fifth-attempt BreakGlass path is covered.
+- Result:
+  - Review-window completeness is now a hard matrix: orphan, missing, mismatched, and prose-only review windows fail rather than counting as covered.
+  - Fake-AI runtime replay now drives generated fake-AI failures through runtime rejection, reissue/repair, corrected second retry, attempts one through four, and fifth same-lineage BreakGlass.
+  - Real issue backfeed now requires every newly discovered live issue family to become a fake-AI profile, contract cell, Cartesian row, expected runtime reaction, replay suite, and evidence owner.
+  - Singleton live-evidence confidence now requires all five required live files for full confidence; any missing, malformed, stale, or wrong-run evidence remains evidence-insufficient.
+  - Reviewer score guidance was preserved from the peer-agent branch, validated, and folded into the same `0.10.15` local version/changelog/readme boundary.
+- Validation:
+  - `python -m unittest tests.test_flowpilot_fake_ai_runtime_replay tests.test_flowpilot_real_issue_backfeed tests.test_flowpilot_singleton_identity` -> 12 tests OK.
+  - `python -m unittest tests.test_flowpilot_contract_exhaustion_mesh tests.test_flowpilot_synthetic_agent_coverage_matrix` -> 30 tests OK.
+  - `python -m unittest tests.test_flowpilot_high_standard_control_flow` -> 62 tests OK.
+  - `python -m unittest tests.test_flowpilot_model_test_alignment` -> 20 tests OK.
+  - `python -m unittest tests.test_flowpilot_card_instruction_coverage tests.test_flowpilot_contract_surface_reduction tests.test_flowpilot_core_runtime` -> 174 tests OK.
+  - `python -m unittest tests.test_flowpilot_cartesian_control_plane_exhaustion tests.test_flowpilot_ai_contract_projection` -> 29 tests OK.
+  - `python simulations/run_flowpilot_fake_ai_runtime_replay_checks.py --json-out simulations/flowpilot_fake_ai_runtime_replay_results.json` -> OK.
+  - `python simulations/run_flowpilot_real_issue_backfeed_checks.py --json-out simulations/flowpilot_real_issue_backfeed_results.json` -> OK.
+  - `python simulations/run_flowpilot_singleton_identity_checks.py --json-out simulations/flowpilot_singleton_identity_results.json` -> OK.
+  - `python simulations/run_flowpilot_contract_exhaustion_mesh_checks.py --json-out simulations/flowpilot_contract_exhaustion_mesh_results.json` -> OK.
+  - `python simulations/run_flowpilot_cartesian_control_plane_exhaustion_checks.py --json-out simulations/flowpilot_cartesian_control_plane_exhaustion_results.json` -> OK.
+  - `python simulations/flowpilot_synthetic_agent_coverage_matrix.py --json-out simulations/flowpilot_synthetic_agent_coverage_matrix_results.json` -> OK.
+  - `python simulations/run_flowpilot_model_test_alignment_checks.py --json-out simulations/flowpilot_model_test_alignment_results.json` -> OK.
+  - `python scripts/flowguard_project_topology.py build` and `python scripts/flowguard_project_topology.py check` -> OK; 152 models, 452 test commands, 1066 code surfaces.
+  - `openspec validate harden-flowpilot-runtime-replay-testmesh --strict` -> valid and complete.
+  - `openspec validate add-reviewer-quality-score-guidance --strict` -> valid and complete.
+  - `python simulations/run_meta_checks.py` and `python simulations/run_capability_checks.py` -> background logs under `tmp/flowguard_background/`; both completed with exit 0.
+  - `python scripts/install_flowpilot.py --sync-repo-owned --json`, `python scripts/audit_local_install_sync.py --json`, and `python scripts/install_flowpilot.py --check --json` -> OK; installed FlowPilot digest matches repository source.
+- Claim boundary:
+  - The new full Cartesian coverage claim applies to the scoped new test boundary: review-window completeness, singleton live evidence, fake-AI runtime replay, and real-issue backfeed.
+  - It does not claim live AI semantic quality, remote push, GitHub release, package tag, deploy, public publication, or OpenSpec archive.
+- Counterexamples preserved:
+  - A future test only checks that a review-window field exists but does not prove every flow row has complete structured materials and authorized reads.
+  - A fake-AI bad response is generated but no runtime replay proves rejection, reissue, repair, and fifth-attempt BreakGlass behavior.
+  - A live issue is fixed ad hoc without becoming a fake-AI profile, contract cell, Cartesian row, and runtime reaction test.
+  - Singleton evidence claims full/safe when one required live evidence file is missing or malformed.

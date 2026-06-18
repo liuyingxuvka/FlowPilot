@@ -659,6 +659,13 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         body = json.loads(packet["body"])
         review_window = envelope["review_window"]
         self.assertEqual(review_window, body["current_handoff_contract"]["review_window"])
+        self.assertEqual(
+            review_window_contracts.review_window_pair_failures(
+                review_window,
+                body["current_handoff_contract"]["review_window"],
+            ),
+            (),
+        )
         self.assertEqual(review_window["schema_version"], review_window_contracts.REVIEW_WINDOW_SCHEMA_VERSION)
         self.assertEqual(review_window["review_window_coverage_status"], "declared")
 
@@ -682,6 +689,64 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
             set(review_window["authorized_result_read_purposes"]),
         )
         self.assertIn("Reviewer hard blockers return to PM repair work", review_window["pm_repair_return_rule"])
+
+    def test_review_window_validator_rejects_orphan_missing_mismatch_and_prose_only_windows(self) -> None:
+        row = review_window_contracts.review_flow_row("node_acceptance_plan_review")
+        valid = {
+            "schema_version": review_window_contracts.REVIEW_WINDOW_SCHEMA_VERSION,
+            "review_flow_id": "node_acceptance_plan_review",
+            "review_window_coverage_status": "declared",
+            "review_result_family_id": row["review_result_family_id"],
+            "subject_packet_id": "packet-node-plan",
+            "target_result_id": "result-node-plan",
+            "subject_result_family_id": row["subject_family_id"],
+            "subject_lifecycle_stage": row["subject_lifecycle_stage"],
+            "required_window_paths": list(review_window_contracts.required_window_paths_for_row(row)),
+            "required_material_classes": list(row["required_material_classes"]),
+            "required_authorized_read_purposes_before_submit": list(row["required_read_purposes"]),
+            "authorized_result_read_purposes": list(row["required_read_purposes"]),
+            "forbidden_future_stage_classes": list(row["forbidden_future_stage_classes"]),
+            "required_current_fields": [],
+            "allowed_blocker_classes": [],
+            "blocker_next_actions": {},
+            "authorized_result_read_ids": [],
+            "required_authorized_result_read_ids_before_submit": [],
+            "sealed_body_access": "authorized_result_reads_only",
+            "review_depth_rule": "Reviewer challenges current-stage material.",
+            "forbidden_future_stage_demands": [
+                "Do not require future-stage evidence for current-stage review."
+            ],
+            "pm_repair_return_rule": (
+                "Reviewer hard blockers return to PM repair work and then to Reviewer recheck."
+            ),
+        }
+
+        self.assertEqual(review_window_contracts.review_window_completeness_failures(valid), ())
+
+        orphan = dict(valid)
+        orphan["review_flow_id"] = "orphan:review.any_current_subject:task.missing:stage"
+        orphan["review_window_coverage_status"] = "orphan_review_flow"
+        failures = review_window_contracts.review_window_completeness_failures(orphan)
+        self.assertIn("orphan_review_flow", failures)
+
+        missing = dict(valid)
+        missing.pop("pm_repair_return_rule")
+        self.assertIn(
+            "required_window_path_missing:pm_repair_return_rule",
+            review_window_contracts.review_window_completeness_failures(missing),
+        )
+
+        body_window = dict(valid)
+        body_window["subject_lifecycle_stage"] = "wrong_stage"
+        self.assertIn(
+            "envelope_body_window_mismatch",
+            review_window_contracts.review_window_pair_failures(valid, body_window),
+        )
+
+        self.assertEqual(
+            review_window_contracts.review_window_completeness_failures(None),
+            ("review_window_not_structured",),
+        )
 
     def test_runtime_issued_review_packets_have_complete_declared_windows(self) -> None:
         ledger = _ledger()

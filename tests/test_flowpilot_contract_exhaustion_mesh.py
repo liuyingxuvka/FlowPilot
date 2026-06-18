@@ -115,6 +115,8 @@ class FlowPilotContractExhaustionMeshTests(unittest.TestCase):
         self.assertIn("contract_exhaustion_historical_failure_matrix", owners)
         self.assertIn("review_window_completeness_matrix", owners)
         self.assertIn("review_window_fake_ai_matrix", owners)
+        self.assertIn("fake_ai_runtime_replay_matrix", owners)
+        self.assertIn("real_issue_backfeed_matrix", owners)
         self.assertLessEqual(model.SYNTHETIC_MUTATION_KINDS, mutation_kinds)
         self.assertTrue(
             [
@@ -315,6 +317,37 @@ class FlowPilotContractExhaustionMeshTests(unittest.TestCase):
             child_suites["contract_exhaustion_historical_failure_matrix"]["owned_cell_count"],
             0,
         )
+        self.assertGreater(
+            child_suites["fake_ai_runtime_replay_matrix"]["owned_cell_count"],
+            0,
+        )
+        self.assertGreater(
+            child_suites["real_issue_backfeed_matrix"]["owned_cell_count"],
+            0,
+        )
+
+    def test_contract_exhaustion_registers_runtime_replay_and_backfeed_cells(self) -> None:
+        cells = list(model.REQUIRED_CONTRACT_EXHAUSTION_CELLS)
+        runtime_replay_cells = [
+            cell
+            for cell in cells
+            if cell["required_evidence_owner"] == "fake_ai_runtime_replay_matrix"
+        ]
+        backfeed_cells = [
+            cell
+            for cell in cells
+            if cell["required_evidence_owner"] == "real_issue_backfeed_matrix"
+        ]
+        replay_reactions = {cell.get("expected_runtime_reaction") for cell in runtime_replay_cells}
+        backfeed_ids = {cell["cell_id"] for cell in backfeed_cells}
+
+        self.assertGreater(len(runtime_replay_cells), 400)
+        self.assertGreaterEqual(len(backfeed_cells), 6)
+        self.assertIn("mechanical_reject_reissue_with_strict_json_feedback", replay_reactions)
+        self.assertIn("accepted_after_reissue", replay_reactions)
+        self.assertIn("breakglass_after_fifth_same_failure", replay_reactions)
+        self.assertIn("real_issue_backfeed.real.fake_ai.pseudo_json_repeated_reissue", backfeed_ids)
+        self.assertIn("real_issue_backfeed.real.contract_surface.acceptance_owner_hidden_rule", backfeed_ids)
 
     def test_contract_exhaustion_runner_checks_fake_ai_responder_cartesian_parity(self) -> None:
         report = runner.run_checks()

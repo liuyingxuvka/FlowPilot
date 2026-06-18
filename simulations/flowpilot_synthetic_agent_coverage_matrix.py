@@ -29,6 +29,14 @@ from flowpilot_contract_exhaustion_mesh_model import (  # noqa: E402
     REQUIRED_CONTRACT_EXHAUSTION_CELLS,
     SYNTHETIC_MUTATION_KINDS as CONTRACT_EXHAUSTION_SYNTHETIC_MUTATIONS,
 )
+from flowpilot_fake_ai_runtime_replay_model import (  # noqa: E402
+    MODEL_ID as FAKE_AI_RUNTIME_REPLAY_MODEL_ID,
+    REQUIRED_EVIDENCE_OWNER as FAKE_AI_RUNTIME_REPLAY_OWNER,
+)
+from flowpilot_real_issue_backfeed import (  # noqa: E402
+    MODEL_ID as REAL_ISSUE_BACKFEED_MODEL_ID,
+    REQUIRED_EVIDENCE_OWNER as REAL_ISSUE_BACKFEED_OWNER,
+)
 from flowpilot_cartesian_control_plane_exhaustion_model import (  # noqa: E402
     MODEL_ID as CARTESIAN_EXHAUSTION_MODEL_ID,
     REQUIRED_CARTESIAN_CELLS,
@@ -1051,12 +1059,36 @@ def _contract_exhaustion_rows() -> list[dict[str, Any]]:
             coverage_kind = "historical_failure_replay"
             evidence_owner = owner
             test_name = "test_historical_failure_families_require_normal_repair_before_glass_break"
+            path = "tests/test_flowpilot_contract_exhaustion_mesh.py"
             command = "python -m pytest tests/test_flowpilot_contract_exhaustion_mesh.py -q"
             risk_tier = "P1"
             synthetic_replay_required = True
             synthetic_replay_status = "present"
             coverage_boundary = str(cell.get("confidence_boundary") or "historical_same_class_non_live_control_flow")
             covered_failure_mode = f"{cell.get('source_class')}:{mutation_kind}"
+        elif owner == FAKE_AI_RUNTIME_REPLAY_OWNER:
+            threshold = str(cell.get("expected_runtime_reaction") or "") == "breakglass_after_fifth_same_failure"
+            coverage_kind = "threshold_probe" if threshold else "synthetic_trace"
+            evidence_owner = owner
+            test_name = "test_runtime_replay_cells_bind_fake_ai_errors_to_runtime_reactions"
+            path = "tests/test_flowpilot_fake_ai_runtime_replay.py"
+            command = "python -m unittest tests.test_flowpilot_fake_ai_runtime_replay"
+            risk_tier = "P0" if threshold else "P1"
+            synthetic_replay_required = True
+            synthetic_replay_status = "present"
+            coverage_boundary = "glassbreak_threshold_only" if threshold else "control_flow_only"
+            covered_failure_mode = f"{mutation_kind}:{cell.get('expected_runtime_reaction')}"
+        elif owner == REAL_ISSUE_BACKFEED_OWNER:
+            coverage_kind = "historical_failure_replay"
+            evidence_owner = owner
+            test_name = "test_real_issue_backfeed_registry_bridges_every_issue_to_runtime_replay"
+            path = "tests/test_flowpilot_real_issue_backfeed.py"
+            command = "python -m unittest tests.test_flowpilot_real_issue_backfeed"
+            risk_tier = "P1"
+            synthetic_replay_required = True
+            synthetic_replay_status = "present"
+            coverage_boundary = "historical_same_class_non_live_control_flow"
+            covered_failure_mode = f"{cell.get('defect_family')}:{mutation_kind}"
         elif synthetic:
             coverage_kind = "synthetic_trace"
             evidence_owner = owner if owner == "review_window_fake_ai_matrix" else "contract_exhaustion_fake_ai_matrix"
@@ -1065,6 +1097,7 @@ def _contract_exhaustion_rows() -> list[dict[str, Any]]:
                 if owner == "review_window_fake_ai_matrix"
                 else "test_contract_exhaustion_required_cells_have_owners"
             )
+            path = "tests/test_flowpilot_synthetic_agent_coverage_matrix.py"
             command = "python -m unittest tests.test_flowpilot_synthetic_agent_coverage_matrix"
             risk_tier = "P1"
             synthetic_replay_required = True
@@ -1084,6 +1117,11 @@ def _contract_exhaustion_rows() -> list[dict[str, Any]]:
                 if owner == "review_window_completeness_matrix"
                 else "test_contract_exhaustion_runtime_regressions_exist"
             )
+            path = (
+                "tests/test_flowpilot_synthetic_agent_coverage_matrix.py"
+                if owner == "review_window_completeness_matrix"
+                else "tests/test_flowpilot_contract_exhaustion_mesh.py"
+            )
             command = "python -m pytest tests/test_flowpilot_contract_exhaustion_mesh.py tests/test_flowpilot_core_runtime.py"
             risk_tier = "ordinary"
             synthetic_replay_required = False
@@ -1101,13 +1139,7 @@ def _contract_exhaustion_rows() -> list[dict[str, Any]]:
                 "evidence_owner": evidence_owner,
                 "evidence_id": f"contract_exhaustion.{cell['cell_id']}",
                 "test_name": test_name,
-                "path": (
-                    "tests/test_flowpilot_contract_exhaustion_mesh.py"
-                    if historical
-                    else "tests/test_flowpilot_synthetic_agent_coverage_matrix.py"
-                    if synthetic
-                    else "tests/test_flowpilot_contract_exhaustion_mesh.py"
-                ),
+                "path": path,
                 "command": command,
                 "evidence_status": "passed",
                 "evidence_current": True,

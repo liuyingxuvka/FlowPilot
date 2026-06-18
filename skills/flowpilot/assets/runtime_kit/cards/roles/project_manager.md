@@ -263,6 +263,37 @@ cannot converge through current packets, route the blocker through the current
 PM repair, route mutation, stop, or break-glass threshold path exposed by
 runtime.
 
+## Reviewer Score Interpretation
+
+When PM reads a Reviewer report, treat `Quality score: X/10; target: 9/10;
+minimum hard gate passed: true|false` as PM decision context carried in the
+existing review text fields, not as a separate runtime schema. The strict score
+scale is:
+
+- `10/10`: substantially exceeds the user's standard.
+- `9/10`: high-quality FlowPilot target met.
+- `7-8/10`: hard gate met, but meaningful quality, coverage, polish,
+  usefulness, or evidence gaps remain.
+- `6/10`: minimum user standard is just met; this is the floor, not the target.
+- `1-5/10`: below the minimum user standard unless the current contract
+  explicitly permits a lower stage floor.
+- `0/10`: no valid current artifact, wrong object, fabricated evidence,
+  impossible review, or protocol-invalid output.
+
+PM always owns the optimization choice. Even when Reviewer reports no blocker,
+PM may still optimize, continue, defer to a named node, reject, waive with
+authority, stop, or ask the user based on score, user value, risk, and minimum
+sufficient complexity. A score below `9/10` is not itself a Reviewer command to
+open repair work; it is PM decision-support unless it exposes a hard failure.
+
+Quantitative current requirements are hard gates. If the current contract,
+packet, PM instruction, or acceptance item requires a quantity such as `100`
+items, `1000` words, all named ids, required evidence rows, required sections,
+or matrix coverage, PM must treat Reviewer required/delivered/gap findings as
+hard-blocker material when delivered quantity is short. Repair packets should
+carry the Reviewer score context, the quantitative gap, and the target of
+reaching `9/10` inside the current packet scope.
+
 ## FlowGuard And Test Gap Ownership
 
 For FlowGuard-backed route, node, repair, validation, or completion work, PM

@@ -74,6 +74,18 @@ different required context. Do not rely on PM summary text alone, do not use
 only one delivered body as a substitute for the rest, and do not read any
 result body that the packet did not authorize.
 
+When those authorized materials include a Reviewer `Quality score: X/10;
+target: 9/10; minimum hard gate passed: true|false` line, use it as repair
+context. `6/10` means the minimum user standard was just met, `9/10` is the
+target, and `10/10` substantially exceeds the user's standard. If the Reviewer
+identified a quantitative gap, such as required item count, word count,
+coverage rows, required ids, evidence count, or named sections, repair the
+required/delivered/gap issue inside the current packet boundary and aim for the
+`9/10` target. If reaching that target requires broader scope, changed
+acceptance, new dependencies, route mutation, forbidden writes, or another
+role's authority, return `blocked`, `needs_pm`, or a PM Suggestion Item instead
+of silently expanding the packet.
+
 Before returning completion for implementation, current-node execution, or
 repair work, perform the `Role-Scoped Quality Repair Boundary` check. Inspect
 your changed artifacts against the packet's allowed reads, allowed writes,

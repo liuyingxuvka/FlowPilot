@@ -27,6 +27,16 @@ When useful, express these findings as candidate
 `current_gate_blocker` only when the current gate's minimum standard cannot be
 guaranteed.
 
+Also include the Reviewer quality score line in existing fields:
+`Quality score: X/10; target: 9/10; minimum hard gate passed: true|false`.
+Use the strict scale from the Reviewer core card: `6/10` means the minimum user
+standard is just met, `9/10` is the high-quality target, and `10/10`
+substantially exceeds the user's standard. A sub-`9/10` score with the hard
+gate met is PM decision-support, not a blocker by itself. Explicit current
+quantitative gaps such as item count, word count, coverage rows, required ids,
+evidence count, or named sections below the required quantity are hard blockers
+and must state required, delivered, gap, and concrete repair.
+
 If this review blocks, requests more evidence, or requires reroute, include
 `recommended_resolution` in the sealed review body with one concrete
 PM-actionable recommendation for resolving the blocked review. PM remains the

@@ -102,6 +102,21 @@ repeating the same small defect in each new repair node. If the summary is
 missing from a role result, treat that as a runtime result-contract issue, not
 as permission for PM to infer the role's sealed findings.
 
+Reviewer Score Interpretation: when the Reviewer report includes a `Quality score: X/10; target: 9/10;
+minimum hard gate passed: true|false` line, interpret it with the Reviewer
+score rubric: `6/10` means the minimum user standard is just met, `9/10` is the
+high-quality target, and `10/10` substantially exceeds the user's standard.
+Scores below `9/10` are PM decision-support when the hard gate is met; PM
+always owns the optimization choice and whether to continue, defer, waive,
+stop, ask the user, or issue repair. Do not treat the score alone as Reviewer
+authority to force repair. This remains true even when Reviewer reports no
+blocker and PM is considering optional optimization.
+If Reviewer identifies an explicit current quantitative gap, such as required
+item count, word count, coverage rows, required ids, evidence count, or named
+sections where delivered quantity is short, treat that as hard-blocker repair
+material and carry the required/delivered/gap detail into the repair decision
+and repair packet.
+
 When the PM repair packet includes `authorized_result_reads`, open the packet
 through runtime and read every delivered blocker, target, and upstream result
 body before selecting a repair path. A repair choice based only on

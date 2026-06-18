@@ -137,6 +137,8 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
         self.assertIn("packet_result_family.flowguard_semantic_recheck_ai_facing_projection", obligations)
         self.assertIn("packet_result_family.flowguard_semantic_recheck_corrected_retry_convergence", obligations)
         self.assertIn("packet_result_family.contract_driven_fake_ai_cartesian_retry", obligations)
+        self.assertIn("packet_result_family.fake_ai_runtime_replay_matrix_closure", obligations)
+        self.assertIn("packet_result_family.real_issue_backfeed_registry_bridge", obligations)
         self.assertIn("packet_result_family.sealed_body_related_context_reads", obligations)
         self.assertIn("packet_result_family.pm_repair_evidence_obligation_lifecycle", obligations)
         self.assertIn("packet_result_family.flowguard_reissue_preserves_current_evidence_policy", obligations)
@@ -162,6 +164,9 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
         self.assertIn("packet_result_family.runtime.current_handoff_result_profile_contract", contracts)
         self.assertIn("packet_result_family.runtime.current_contract_reissue_feedback", contracts)
         self.assertIn("packet_result_family.simulation.contract_driven_fake_ai_responder", contracts)
+        self.assertIn("packet_result_family.model.fake_ai_runtime_replay_matrix", contracts)
+        self.assertIn("packet_result_family.runner.fake_ai_runtime_replay_checks", contracts)
+        self.assertIn("packet_result_family.model.real_issue_backfeed_registry", contracts)
         self.assertIn("packet_result_family.runtime.flowguard_reissue_inherited_body_payload", contracts)
         self.assertIn("packet_result_family.runtime.flowguard_reissue_inherited_authorized_reads", contracts)
         self.assertIn("packet_result_family.runtime.flowguard_reissue_issue_task_packet_reads", contracts)
@@ -280,6 +285,22 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
         self.assertEqual(
             evidence["packet_result_family.replay.contract_driven_fake_ai_cartesian_retry"].test_name,
             "test_contract_driven_fake_ai_wrong_value_rows_repair_each_finite_option",
+        )
+        self.assertEqual(
+            evidence["packet_result_family.replay.fake_ai_runtime_replay_matrix"].test_name,
+            "test_runtime_replay_cells_bind_fake_ai_errors_to_runtime_reactions",
+        )
+        self.assertEqual(
+            evidence["packet_result_family.negative.fake_ai_runtime_replay_hazards"].test_name,
+            "test_fake_ai_runtime_replay_runner_accepts_valid_and_rejects_hazards",
+        )
+        self.assertEqual(
+            evidence["packet_result_family.replay.real_issue_backfeed_registry"].test_name,
+            "test_real_issue_backfeed_registry_bridges_every_issue_to_runtime_replay",
+        )
+        self.assertEqual(
+            evidence["packet_result_family.negative.real_issue_backfeed_rejects_incomplete_rows"].test_name,
+            "test_real_issue_backfeed_rejects_missing_fields_and_sealed_body_copies",
         )
         self.assertEqual(
             evidence["packet_result_family.happy.related_blocker_bodies_delivered_to_pm"].test_name,

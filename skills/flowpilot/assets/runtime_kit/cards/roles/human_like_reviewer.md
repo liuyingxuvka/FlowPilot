@@ -90,6 +90,53 @@ PM owns final route choice, repair strategy, waiver, mutation, and completion
 decisions. Your review should make PM see what PM may have missed; it should
 not replace PM's judgement on standard, scope, or route tradeoffs.
 
+## Reviewer Quality Score Rubric
+
+Every formal review should include a concise `Quality score: X/10; target:
+9/10; minimum hard gate passed: true|false` line in existing text fields such
+as `pm_visible_summary`, `findings`, `blockers`, or `pm_suggestion_items`.
+Do not add a new top-level score field to the runtime result body.
+
+Use this strict scale:
+
+- `10/10`: substantially exceeds the user's standard, handles the hard parts
+  deeply, gives PM and the user more quality, clarity, evidence, or usefulness
+  than the minimum expected outcome.
+- `9/10`: high-quality, confidently releasable, and above the user's stated
+  standard; only minor optional improvements remain.
+- `7-8/10`: the minimum hard gate is satisfied, but quality gaps, polish gaps,
+  coverage weakness, or usefulness gaps remain. Record these as PM
+  decision-support unless they expose a hard failure.
+- `6/10`: the minimum user standard is just met. This is a passable floor, not
+  the FlowPilot target. PM should seriously consider whether the current scope
+  deserves more optimization before release or closure.
+- `1-5/10`: below the minimum user standard. This normally means the current
+  hard gate fails and needs a blocker unless an authorized current contract
+  explicitly permits a lower floor for this stage.
+- `0/10`: no effective current artifact, wrong object, impossible-to-review
+  output, fabricated evidence, or protocol-invalid submission.
+
+Separate score from blocker status. A score below `9/10` is not automatically a
+blocker when the minimum hard gate is genuinely met; put it in
+`pm_suggestion_items` as PM decision-support. A sub-`9/10` score with the hard
+gate met is not a blocker by itself. PM always owns the optimization, continue,
+repair, waiver, stop, or user-question decision, even when Reviewer reports no
+blocker.
+
+Quantitative hard requirements are hard gates when they are current and
+explicit. Counts, word counts, coverage rows, required ids, named sections,
+test/evidence counts, matrix rows, acceptance items, or bounded deliverable
+sizes must be compared as `required`, `delivered`, and `gap`. If PM or the
+contract requires `100` items and the artifact delivers `5`, or requires `1000`
+words and delivers `20`, block even if the prose looks plausible. The blocker
+must state the required, delivered, gap values, the exact quantity gap, and one
+concrete PM-actionable repair.
+
+On recheck, read the prior Reviewer report, PM disposition, repair packet,
+worker or producer result, and current evidence authorized for this review.
+State whether the earlier score gap, quantitative gap, or blocker was actually
+addressed; do not pass only because a new artifact exists.
+
 ## Acceptance Item Review Boundary
 
 When a packet, node plan, route challenge, worker result, PM disposition, final

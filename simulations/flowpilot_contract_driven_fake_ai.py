@@ -599,6 +599,88 @@ class ContractDrivenFakeAIResponder:
         if profile_id == "reviewer_self_repairs_subject":
             base["review_window_trace"]["reviewer_repaired_subject"] = True
             base["pm_suggestion_items"] = ["Reviewer attempted to patch the subject instead of blocking."]
+        if profile_id == "reviewer_quality_score_10_exceeds_standard":
+            base["pm_visible_summary"] = [
+                (
+                    "Quality score: 10/10; target: 9/10; minimum hard gate passed: true; "
+                    "the reviewed work substantially exceeds the user's standard."
+                )
+            ]
+            base["review_window_trace"]["quality_score"] = 10
+            base["review_window_trace"]["minimum_hard_gate_passed"] = True
+        if profile_id == "reviewer_quality_score_6_soft_pm_optimization":
+            base["pm_visible_summary"] = [
+                (
+                    "Quality score: 6/10; target: 9/10; minimum hard gate passed: true; "
+                    "minimum user standard is just met."
+                )
+            ]
+            base["pm_suggestion_items"] = [
+                "PM decision-support: consider optimization toward 9/10; no hard blocker is present."
+            ]
+            base["review_window_trace"]["quality_score"] = 6
+            base["review_window_trace"]["minimum_hard_gate_passed"] = True
+            base["review_window_trace"]["soft_score_pm_decision_support"] = True
+        if profile_id == "reviewer_quantitative_gap_blocks":
+            base["pm_visible_summary"] = [
+                (
+                    "Quality score: 3/10; target: 9/10; minimum hard gate passed: false; "
+                    "required 100 items, delivered 5, gap 95."
+                )
+            ]
+            base["passed"] = False
+            base["blockers"] = [
+                {
+                    "blocker_id": "fake-review-window-quantitative-gap",
+                    "blocker_class": "local_artifact",
+                    "summary": "Quantitative hard requirement failed: required 100 items, delivered 5, gap 95.",
+                    "required": 100,
+                    "delivered": 5,
+                    "gap": 95,
+                    "required_repair": "Produce the missing 95 required items or obtain PM waiver authority.",
+                }
+            ]
+            base["recommended_resolution"] = (
+                "Repair the quantitative gap: required 100 items, delivered 5, gap 95."
+            )
+            base["review_window_trace"]["quality_score"] = 3
+            base["review_window_trace"]["minimum_hard_gate_passed"] = False
+            base["review_window_trace"]["quantitative_gap"] = {
+                "required": 100,
+                "delivered": 5,
+                "gap": 95,
+            }
+        if profile_id == "reviewer_overblocks_sub9_soft_score":
+            base["pm_visible_summary"] = [
+                (
+                    "Quality score: 8/10; target: 9/10; minimum hard gate passed: true; "
+                    "Reviewer incorrectly treats the score alone as a blocker."
+                )
+            ]
+            base["passed"] = False
+            base["blockers"] = [
+                {
+                    "blocker_id": "fake-review-window-soft-score-overblock",
+                    "blocker_class": "local_artifact",
+                    "summary": "Incorrect blocker: score below 9/10 with hard gate already passed.",
+                }
+            ]
+            base["recommended_resolution"] = (
+                "Convert the soft score gap to PM decision-support unless a hard failure is named."
+            )
+            base["review_window_trace"]["quality_score"] = 8
+            base["review_window_trace"]["minimum_hard_gate_passed"] = True
+            base["review_window_trace"]["overblocked_soft_score"] = True
+        if profile_id == "reviewer_recheck_consumes_score_context":
+            base["pm_visible_summary"] = [
+                (
+                    "Quality score: 9/10; target: 9/10; minimum hard gate passed: true; "
+                    "prior score and quantitative gap were rechecked against repaired evidence."
+                )
+            ]
+            base["review_window_trace"]["quality_score"] = 9
+            base["review_window_trace"]["prior_score_context_consumed"] = True
+            base["review_window_trace"]["prior_quantitative_gap_rechecked"] = True
         if profile_id == "pm_bypasses_reviewer_blocker":
             base["review_window_trace"]["pm_text_bypass_attempted"] = True
             base["passed"] = False

@@ -4468,6 +4468,132 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         self.assertIn(review_result_id, delivered_ids)
         self.assertIn(flowguard_result_id, delivered_ids)
 
+    def test_reviewer_quality_score_and_quantitative_gap_reach_pm_and_repair_packet(self) -> None:
+        ledger, packet_id, worker = runtime_runner._base_ledger()
+        runtime.ack_lease(ledger, worker, packet_id)
+        runtime.submit_result(ledger, worker, packet_id, role_result_body("Worker delivered 5 of 100 required items."))
+
+        flowguard_packet = runtime_runner._open_packet_by_kind(ledger, "flowguard_check")
+        flowguard_lease = runtime.lease_agent(ledger, "flowguard_operator", agent_id="fg", packet_id=flowguard_packet)
+        runtime.assign_packet(ledger, flowguard_packet, flowguard_lease)
+        runtime.ack_lease(ledger, flowguard_lease, flowguard_packet)
+        open_required_result_reads(ledger, flowguard_packet, flowguard_lease)
+        write_flowguard_evidence_artifact(ledger, flowguard_packet)
+        flowguard_result_id = runtime.submit_result(
+            ledger,
+            flowguard_lease,
+            flowguard_packet,
+            flowguard_result_body("FlowGuard evidence passed."),
+        )
+
+        review_packet = runtime_runner._open_packet_by_kind(ledger, "review")
+        review_lease = runtime.lease_agent(ledger, "reviewer", agent_id="reviewer-score", packet_id=review_packet)
+        runtime.assign_packet(ledger, review_packet, review_lease)
+        runtime.ack_lease(ledger, review_lease, review_packet)
+        open_required_result_reads(ledger, review_packet, review_lease)
+        score_summary = (
+            "Quality score: 3/10; target: 9/10; minimum hard gate passed: false; "
+            "required 100 items, delivered 5, gap 95."
+        )
+        required_repair = "Produce the missing 95 required items and recheck against the 9/10 target."
+        review_result_id = runtime.submit_result(
+            ledger,
+            review_lease,
+            review_packet,
+            review_result_body(
+                score_summary,
+                passed=False,
+                recommended_resolution="repair quantitative gap",
+                blocking_findings=[
+                    {
+                        "finding": score_summary,
+                        "required_repair": required_repair,
+                    }
+                ],
+            ),
+        )
+
+        blocker_id = next(iter(ledger["active_blockers"]))
+        blocker = ledger["active_blockers"][blocker_id]
+        self.assertEqual(blocker["recommended_resolution"], required_repair)
+        pm_packet = blocker["pm_repair_packet_id"]
+        pm_body = json.loads(ledger["packets"][pm_packet]["body"])
+        self.assertEqual(pm_body["recommended_resolution"], required_repair)
+        self.assertEqual(pm_body["recent_role_report_summary"][0]["summary"], [score_summary])
+        authorized_read_ids = {row["result_id"] for row in pm_body["authorized_result_reads"]}
+        self.assertIn(review_result_id, authorized_read_ids)
+        self.assertIn(flowguard_result_id, authorized_read_ids)
+
+        pm_lease = runtime.lease_agent(ledger, "pm", agent_id="pm-score", packet_id=pm_packet)
+        runtime.assign_packet(ledger, pm_packet, pm_lease)
+        runtime.ack_lease(ledger, pm_lease, pm_packet)
+        delivered = runtime.open_authorized_input_materials_for_role(ledger, pm_packet, pm_lease)
+        delivered_bodies = "\n".join(str(row.get("sealed_result_body") or "") for row in delivered)
+        self.assertIn("Quality score: 3/10", delivered_bodies)
+        runtime.submit_result(
+            ledger,
+            pm_lease,
+            pm_packet,
+            pm_repair_decision_body(ledger, pm_packet, decision="repair_current_scope"),
+        )
+        self._complete_pm_continue_repair_gate(ledger, blocker_id)
+
+        repair_packet = ledger["active_blockers"][blocker_id]["repair_packet_id"]
+        repair_body = json.loads(ledger["packets"][repair_packet]["body"])
+        self.assertIn("Quality score", repair_body["instruction"])
+        self.assertIn("target: 9/10", repair_body["instruction"])
+        self.assertIn("quantitative required/delivered/gap", repair_body["instruction"])
+        self.assertEqual(repair_body["authorized_result_reads"][0]["result_id"], review_result_id)
+
+        repair_lease = runtime.lease_agent(ledger, "worker", packet_id=repair_packet)
+        runtime.assign_packet(ledger, repair_packet, repair_lease)
+        runtime.ack_lease(ledger, repair_lease, repair_packet)
+        repair_delivered = runtime.open_authorized_input_materials_for_role(ledger, repair_packet, repair_lease)
+        repair_bodies = "\n".join(str(row.get("sealed_result_body") or "") for row in repair_delivered)
+        self.assertIn("Quality score: 3/10", repair_bodies)
+        self.assertIn("gap 95", repair_bodies)
+
+    def test_reviewer_soft_low_score_pass_does_not_create_blocker(self) -> None:
+        ledger, packet_id, worker = runtime_runner._base_ledger()
+        runtime.ack_lease(ledger, worker, packet_id)
+        runtime.submit_result(ledger, worker, packet_id, role_result_body("Worker met the minimum user standard."))
+
+        flowguard_packet = runtime_runner._open_packet_by_kind(ledger, "flowguard_check")
+        flowguard_lease = runtime.lease_agent(ledger, "flowguard_operator", agent_id="fg", packet_id=flowguard_packet)
+        runtime.assign_packet(ledger, flowguard_packet, flowguard_lease)
+        runtime.ack_lease(ledger, flowguard_lease, flowguard_packet)
+        open_required_result_reads(ledger, flowguard_packet, flowguard_lease)
+        write_flowguard_evidence_artifact(ledger, flowguard_packet)
+        runtime.submit_result(
+            ledger,
+            flowguard_lease,
+            flowguard_packet,
+            flowguard_result_body("FlowGuard evidence passed."),
+        )
+
+        review_packet = runtime_runner._open_packet_by_kind(ledger, "review")
+        review_lease = runtime.lease_agent(ledger, "reviewer", agent_id="reviewer-soft-score", packet_id=review_packet)
+        runtime.assign_packet(ledger, review_packet, review_lease)
+        runtime.ack_lease(ledger, review_lease, review_packet)
+        open_required_result_reads(ledger, review_packet, review_lease)
+        result_id = runtime.submit_result(
+            ledger,
+            review_lease,
+            review_packet,
+            review_result_body(
+                (
+                    "Quality score: 6/10; target: 9/10; minimum hard gate passed: true; "
+                    "minimum user standard is just met."
+                ),
+                pm_suggestion_items=[
+                    "PM decision-support: consider optimizing toward 9/10 before closure."
+                ],
+            ),
+        )
+
+        self.assertEqual(ledger["results"][result_id]["status"], "accepted")
+        self.assertFalse(ledger["active_blockers"])
+
     def test_pm_repair_decision_blocks_without_opening_all_related_bodies(self) -> None:
         ledger, packet_id, worker = runtime_runner._base_ledger()
         runtime.ack_lease(ledger, worker, packet_id)

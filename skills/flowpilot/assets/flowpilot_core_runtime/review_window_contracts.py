@@ -59,6 +59,11 @@ REVIEW_WINDOW_FAKE_AI_PROFILE_IDS = (
     "reviewer_unauthorized_sealed_body_request",
     "reviewer_invents_scope",
     "reviewer_self_repairs_subject",
+    "reviewer_quality_score_10_exceeds_standard",
+    "reviewer_quality_score_6_soft_pm_optimization",
+    "reviewer_quantitative_gap_blocks",
+    "reviewer_overblocks_sub9_soft_score",
+    "reviewer_recheck_consumes_score_context",
     "pm_bypasses_reviewer_blocker",
     "corrected_second_reviewer_retry",
     "same_review_failure_attempts_1_to_4",
@@ -256,6 +261,82 @@ def review_window_contract_for_context(
         "coverage_status": "declared",
         "required_window_paths": required_window_paths_for_row(row),
     }
+
+
+def review_window_completeness_failures(review_window: Mapping[str, Any] | None) -> tuple[str, ...]:
+    if not isinstance(review_window, Mapping):
+        return ("review_window_not_structured",)
+    failures: list[str] = []
+    if review_window.get("schema_version") != REVIEW_WINDOW_SCHEMA_VERSION:
+        failures.append("review_window_schema_version_mismatch")
+    flow_id = str(review_window.get("review_flow_id") or "")
+    coverage_status = str(review_window.get("review_window_coverage_status") or "")
+    if coverage_status != "declared":
+        failures.append(str(coverage_status or "review_window_coverage_status_missing"))
+    if not flow_id:
+        failures.append("review_flow_id_missing")
+    else:
+        try:
+            row = review_flow_row(flow_id)
+        except KeyError:
+            failures.append("orphan_review_flow")
+        else:
+            expected_pairs = (
+                ("review_result_family_id", "review_result_family_id"),
+                ("subject_result_family_id", "subject_family_id"),
+                ("subject_lifecycle_stage", "subject_lifecycle_stage"),
+            )
+            for window_key, row_key in expected_pairs:
+                if str(review_window.get(window_key) or "") != str(row.get(row_key) or ""):
+                    failures.append(f"review_window_{window_key}_mismatch")
+            required_paths = set(required_window_paths_for_row(row))
+            declared_paths = {
+                str(path)
+                for path in review_window.get("required_window_paths", [])
+                if str(path)
+            }
+            missing_declared_paths = sorted(required_paths - declared_paths)
+            failures.extend(f"required_window_path_not_declared:{path}" for path in missing_declared_paths)
+            missing_structured_paths = sorted(
+                path for path in required_paths if path not in review_window
+            )
+            failures.extend(f"required_window_path_missing:{path}" for path in missing_structured_paths)
+            expected_required_reads = {
+                str(purpose)
+                for purpose in row.get("required_read_purposes") or ()
+                if str(purpose)
+            }
+            projected_required_reads = {
+                str(purpose)
+                for purpose in review_window.get("required_authorized_read_purposes_before_submit", [])
+                if str(purpose)
+            }
+            authorized_read_purposes = {
+                str(purpose)
+                for purpose in review_window.get("authorized_result_read_purposes", [])
+                if str(purpose)
+            }
+            failures.extend(
+                f"required_authorized_read_purpose_not_projected:{purpose}"
+                for purpose in sorted(expected_required_reads - projected_required_reads)
+            )
+            failures.extend(
+                f"required_authorized_read_purpose_not_authorized:{purpose}"
+                for purpose in sorted(expected_required_reads - authorized_read_purposes)
+            )
+    return tuple(dict.fromkeys(failures))
+
+
+def review_window_pair_failures(
+    envelope_review_window: Mapping[str, Any] | None,
+    body_review_window: Mapping[str, Any] | None,
+) -> tuple[str, ...]:
+    failures = list(review_window_completeness_failures(envelope_review_window))
+    if not isinstance(body_review_window, Mapping):
+        failures.append("body_review_window_not_structured")
+    elif dict(envelope_review_window or {}) != dict(body_review_window):
+        failures.append("envelope_body_window_mismatch")
+    return tuple(dict.fromkeys(failures))
 
 
 def review_window_completeness_cells() -> tuple[dict[str, str], ...]:

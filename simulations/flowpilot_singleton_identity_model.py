@@ -19,6 +19,29 @@ ROOT = Path(__file__).resolve().parents[1]
 RESULT_PATH = "simulations/flowpilot_singleton_identity_results.json"
 MODEL_ID = "flowpilot_singleton_identity_authority"
 
+LIVE_SINGLETON_REQUIRED_EVIDENCE_FILES = (
+    {
+        "surface": "parallel_flow_blocks",
+        "relative_path": "route_state_snapshot.json",
+    },
+    {
+        "surface": "router_daemon_writer",
+        "relative_path": "runtime/router_daemon.lock",
+    },
+    {
+        "surface": "packet_active_holder",
+        "relative_path": "packet_ledger.json",
+    },
+    {
+        "surface": "route_frontier_current_authority",
+        "relative_path": "execution_frontier.json",
+    },
+    {
+        "surface": "material_progress_generation",
+        "relative_path": "router_state.json",
+    },
+)
+
 LEGAL_PARALLEL_RUNS = "legal_parallel_runs"
 DUPLICATE_DAEMON_WRITER = "duplicate_daemon_writer"
 ACTIVE_PACKET_REPLAY = "active_packet_same_identity_replay"
@@ -555,11 +578,18 @@ def hazard_states() -> dict[str, State]:
 
 def _read_json(path: Path) -> tuple[dict[str, Any] | None, str]:
     try:
-        return json.loads(path.read_text(encoding="utf-8")), ""
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(payload, dict):
+            return None, "not_object"
+        return payload, ""
     except FileNotFoundError:
         return None, "missing"
     except Exception as exc:
         return None, repr(exc)
+
+
+def live_singleton_required_evidence_files() -> tuple[dict[str, str], ...]:
+    return tuple(dict(row) for row in LIVE_SINGLETON_REQUIRED_EVIDENCE_FILES)
 
 
 def _rel(path: Path, root: Path) -> str:
@@ -654,7 +684,7 @@ def build_live_singleton_audit(repo_root: Path | str = ROOT) -> dict[str, Any]:
         status_error = ""
         if isinstance(daemon_status, dict):
             status_error = str(daemon_status.get("error") or "")
-        elif daemon_status_error:
+        elif daemon_status_error and daemon_status_error != "missing":
             status_error = daemon_status_error
         if lock_status == "active" and single_writer and lock_run == run_id and not status_error:
             status = "safe"

@@ -6173,7 +6173,10 @@ def _issue_current_scope_repair_packet(
         "instruction": (
             "Produce fresh repaired evidence for this current replacement packet. "
             "The source artifact is context only, not passing evidence. Submit the corrected deliverable "
-            "or a new structured blocker."
+            "or a new structured blocker. If authorized Reviewer materials include a Quality score "
+            "line, quantitative required/delivered/gap finding, or target: 9/10 guidance, read that "
+            "context and repair toward the 9/10 target inside this packet boundary without expanding "
+            "scope beyond the packet."
         ),
     }
     if repair_obligation_context.get("repair_evidence_obligations"):
