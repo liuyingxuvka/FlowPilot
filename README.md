@@ -15,7 +15,7 @@
 </p>
 
 <p align="center">
-  Source version: <strong>v0.10.12</strong> · MIT License · Codex skill source package
+  Source version: <strong>v0.10.13</strong> · MIT License · Codex skill source package
 </p>
 <!-- README HERO END -->
 
@@ -37,7 +37,7 @@ The startup intake UI captures the user's work request and whether FlowPilot may
 
 | Field | Value |
 | --- | --- |
-| Source version | `v0.10.12` |
+| Source version | `v0.10.13` |
 | Public project name | `FlowPilot` |
 | Skill slug | `flowpilot` |
 | Release shape | source package only, no binary app bundle |
@@ -46,7 +46,7 @@ The startup intake UI captures the user's work request and whether FlowPilot may
 | Current UI surface | Windows WPF startup intake dialog for project request and background collaboration; chat route signs after startup |
 | Visual identity | `assets/brand/flowpilot-icon-default.png` |
 
-`v0.10.12` hardens parent-scope repair and FlowGuard semantic rechecks on top of the `v0.10.11` final-gate repair. Replacement parent repair nodes now need active repair children, inherited child history stays read-only, FlowGuard passes must match subject-bound evidence artifacts, and repeated same-problem repair chains count toward break-glass.
+`v0.10.13` hardens fake-AI rehearsal and reviewer-window coverage on top of the `v0.10.12` repair-lineage release. Planning packets now surface active acceptance owner coverage before first response, node-acceptance packets expose acceptance-item projection rows, malformed AI result bodies are exercised by the contract-driven fake AI responder, reviewer packets carry a runtime-checkable review window, and the fifth same-lineage blocker routes to BreakGlass consistently across runtime and role cards.
 
 ## What FlowPilot Is
 
@@ -260,7 +260,7 @@ MIT License. See [LICENSE](LICENSE).
 
 # FlowPilot 中文说明
 
-**Source version:** `v0.10.12`
+**Source version:** `v0.10.13`
 **许可证：** MIT  
 **发布形态：** Codex skill source package，不是二进制 app bundle。
 
@@ -280,7 +280,7 @@ Startup intake UI 把用户请求以及是否允许 FlowPilot 使用当前 host 
 
 | 字段 | 值 |
 | --- | --- |
-| Source version | `v0.10.12` |
+| Source version | `v0.10.13` |
 | Public project name | `FlowPilot` |
 | Skill slug | `flowpilot` |
 | 发布形态 | source package only，没有 binary app bundle |
@@ -289,7 +289,7 @@ Startup intake UI 把用户请求以及是否允许 FlowPilot 使用当前 host 
 | 当前 UI surface | Windows WPF startup intake dialog，用于 project request 和 background collaboration；startup 后使用 chat route signs |
 | 视觉标识 | `assets/brand/flowpilot-icon-default.png` |
 
-`v0.10.12` 在 `v0.10.11` final-gate repair 基础上加固了父级修复和 FlowGuard 语义复检。父级 repair replacement 现在必须有新的 active repair children，旧 child 历史只能作为只读上下文，FlowGuard pass 必须和 subject-bound evidence artifacts 一致，同一问题沿 repair lineage 反复出现会计入 break-glass。
+`v0.10.13` 在 `v0.10.12` repair-lineage release 基础上加固了 fake-AI 演练和 reviewer-window 覆盖。Planning packet 会在首轮响应前暴露 active acceptance owner coverage，node-acceptance packet 会暴露 acceptance-item projection rows，contract-driven fake AI responder 会演练 malformed AI result body，reviewer packet 带 runtime 可审查的 review window，同一 lineage 的第五次 blocker 会在 runtime 和角色卡中一致进入 BreakGlass。
 
 ## 它是什么
 

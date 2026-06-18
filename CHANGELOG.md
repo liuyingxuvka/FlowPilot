@@ -2,6 +2,32 @@
 
 All notable changes to FlowPilot will be documented in this file.
 
+## 0.10.13 - 2026-06-18
+
+### Fixed
+
+- Hardened fake-AI rehearsal coverage for malformed result bodies, partial
+  repairs, corrected retries, finite-option mistakes, forbidden aliases, and
+  hidden projection gaps.
+- Surfaced planning acceptance owner coverage and node-acceptance projection
+  rules in AI-visible structured contracts before the first role response.
+- Added runtime-checkable reviewer windows so review packets carry the current
+  subject stage, authorized read scope, forbidden future-stage demands, and PM
+  repair return rules outside sealed prose.
+- Kept Reviewer hard blockers on the single PM repair work path and returned
+  repaired evidence to Reviewer recheck rather than allowing PM prose override.
+- Aligned the same-lineage BreakGlass threshold to the fifth repeated blocker
+  across runtime behavior, role cards, and card-instruction tests.
+
+### Validation
+
+- Refreshed fake-AI projection tests, high-standard control-flow tests,
+  contract-exhaustion mesh, current-contract Cartesian matrix, executable
+  matrix coverage, core runtime, card-instruction coverage, reviewer challenge,
+  blocker repair information flow, model-test alignment, topology, public
+  release preflight, install sync, and Meta/Capability evidence for the
+  release.
+
 ## 0.10.12 - 2026-06-15
 
 ### Fixed
