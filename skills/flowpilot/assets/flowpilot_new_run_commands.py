@@ -26,29 +26,6 @@ def progress(root: Path, *, lease_id: str, packet_id: str, status: str) -> dict[
     return {"ok": True, **_runtime_state(ledger)}
 
 
-def host_liveness(
-    root: Path,
-    *,
-    lease_id: str,
-    packet_id: str,
-    status: str,
-    source: str = "host_report",
-    detail: str = "",
-) -> dict[str, Any]:
-    shell = run_shell.load_run_shell(root)
-    ledger = run_shell.load_run_ledger(shell)
-    report = host.record_liveness(
-        ledger,
-        lease_id,
-        packet_id,
-        status,
-        source=source,
-        detail=detail,
-    )
-    run_shell.save_run_ledger(shell, ledger, guard_trigger="host_liveness")
-    return {"ok": True, "host_liveness": report, **_runtime_state(ledger)}
-
-
 def stop_run(root: Path, *, reason: str = "manual_stop") -> dict[str, Any]:
     shell = run_shell.load_run_shell(root)
     ledger = run_shell.load_run_ledger(shell)

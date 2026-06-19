@@ -452,7 +452,12 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
             self.assertEqual(checklist["explicit_array_fields"], list(report_contract["explicit_array_fields"]))
             self.assertEqual(checklist["non_empty_array_fields"], list(report_contract["non_empty_array_fields"]))
             self.assertNotIn("forbidden_fields", checklist)
+            self.assertNotIn("forbidden_result_body_fields", checklist)
             self.assertNotIn("forbidden_result_body_fields", report_contract)
+            self.assertEqual(
+                report_contract["output_contract"]["forbidden_fields"],
+                list(packet_result_contracts.forbidden_fields_for_family("flowguard_check.post_result")),
+            )
             self.assertEqual(checklist["result_skeleton"], report_contract["minimal_valid_shape"])
             self.assertEqual(checklist["branch_valid_shapes"], report_contract["branch_valid_shapes"])
             self.assertEqual(

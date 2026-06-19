@@ -68,13 +68,7 @@ ROLE_RECOVERY_RESULTS = {
     ROLE_BINDING_ENVIRONMENT_BLOCKED_RESULT,
 }
 
-ROLE_BINDING_HOST_LIVENESS_STATUSES = {"active", "completed", "missing", "cancelled", "timeout_unknown", "unknown"}
-
-ROLE_BINDING_BOUNDED_WAIT_RESULTS = {"not_waited", "completed", "timeout_unknown"}
-
-ROLE_BINDING_LIVENESS_DECISIONS = {"confirmed_existing_agent", "opened_replacement_from_current_run_memory"}
-
-ROLE_BINDING_LIVENESS_PROBE_MODE = "concurrent_batch"
+ROLE_BINDING_CURRENT_RUN_DECISIONS = {"existing_current_agent_reused", "current_run_replacement_opened"}
 
 CONTROL_BLOCKER_LANES = {
     "control_plane_reissue",
@@ -225,10 +219,7 @@ __all__ = (
     'ROLE_BINDING_PREFERRED_REASONING_EFFORT',
     'RESUME_ROLE_BINDING_RESULTS',
     'ROLE_RECOVERY_RESULTS',
-    'ROLE_BINDING_HOST_LIVENESS_STATUSES',
-    'ROLE_BINDING_BOUNDED_WAIT_RESULTS',
-    'ROLE_BINDING_LIVENESS_DECISIONS',
-    'ROLE_BINDING_LIVENESS_PROBE_MODE',
+    'ROLE_BINDING_CURRENT_RUN_DECISIONS',
     'CONTROL_BLOCKER_LANES',
     'PM_DECISION_REQUIRED_CONTROL_BLOCKER_LANES',
     'PM_BLOCKER_RECOVERY_OPTIONS',

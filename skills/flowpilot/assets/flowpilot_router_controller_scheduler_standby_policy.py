@@ -51,7 +51,6 @@ def _foreground_standby_state(
         return "wait_target_reissue_required"
     if (
         (current_wait.get("reminder") or {}).get("due")
-        or (current_wait.get("liveness_probe") or {}).get("due")
         or (current_wait.get("controller_local_self_audit") or {}).get("required")
     ):
         return "wait_target_check_due"

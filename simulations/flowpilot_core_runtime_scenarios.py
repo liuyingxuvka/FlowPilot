@@ -452,7 +452,6 @@ def replacement_worker_success() -> dict[str, Any]:
     ledger, packet_id, worker = _base_ledger()
     runtime.ack_lease(ledger, worker, packet_id)
     runtime.record_progress(ledger, worker, packet_id, "still working")
-    runtime.record_host_liveness(ledger, worker, packet_id, "lost")
     runtime.close_lease(ledger, worker, "no final result")
     late_result = runtime.submit_result(
         ledger,
@@ -799,8 +798,7 @@ def compact_status_does_not_leak_sealed_bodies() -> dict[str, Any]:
 def recovery_duty_names_command_payload() -> dict[str, Any]:
     ledger, packet_id, worker = _base_ledger()
     runtime.ack_lease(ledger, worker, packet_id)
-    ledger["leases"][worker]["liveness_status"] = "not_found"
-    ledger["leases"][worker]["liveness_checked_at"] = runtime.now_iso()
+    ledger["leases"][worker]["ack_received_at"] = "2000-01-01T00:00:00+00:00"
     guard = runtime.preview_lifecycle_guard(ledger, trigger="patrol")
     duty = runtime.preview_foreground_duty(ledger, guard=guard, trigger="patrol")
     command = duty.get("recovery", {}).get("recommended_command", {})

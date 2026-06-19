@@ -212,7 +212,7 @@ def hazard_states() -> dict[str, State]:
             wait_target_expected_evidence_visible=False,
             wait_target_reminder_text_present=False,
         ),
-        "report_reminder_without_fresh_liveness_probe": replace(
+        "report_reminder_without_ack_progress_policy": replace(
             safe_active,
             current_wait="report",
             wait_target_metadata_present=True,
@@ -220,8 +220,8 @@ def hazard_states() -> dict[str, State]:
             wait_target_expected_evidence_visible=True,
             wait_target_reminder_text_present=True,
             report_reminder_sent=True,
-            liveness_check_required=True,
-            liveness_probe_fresh=False,
+            progress_reminder_required=True,
+            ack_progress_policy_current=False,
         ),
         "wait_target_reminder_without_controller_action": replace(
             safe_active,
@@ -236,14 +236,14 @@ def hazard_states() -> dict[str, State]:
             wait_target_reminder_receipt_recorded=False,
             wait_target_reminder_updates_wait_metadata=False,
         ),
-        "cached_liveness_trusted_as_current_truth": replace(
+        "cached_progress_trusted_as_current_truth": replace(
             safe_active,
             current_wait="report",
             wait_target_metadata_present=True,
             wait_target_names_role=True,
             wait_target_expected_evidence_visible=True,
             wait_target_reminder_text_present=True,
-            stale_liveness_cached_as_truth=True,
+            stale_progress_cached_as_truth=True,
         ),
         "ack_wait_ten_minutes_without_blocker": replace(
             safe_active,
@@ -254,10 +254,10 @@ def hazard_states() -> dict[str, State]:
             wait_target_reminder_text_present=True,
             ack_wait_age_minutes=10,
             ack_wait_reminder_sent=True,
-            ack_wait_blocker_recorded=False,
+            ack_wait_replacement_recorded=False,
             mailbox_evidence_present=False,
         ),
-        "lost_role_without_pm_blocker": replace(
+        "progress_replacement_missing_after_thirty_minutes": replace(
             safe_active,
             current_wait="report",
             wait_target_metadata_present=True,
@@ -265,10 +265,10 @@ def hazard_states() -> dict[str, State]:
             wait_target_expected_evidence_visible=True,
             wait_target_reminder_text_present=True,
             report_reminder_sent=True,
-            liveness_check_required=True,
-            liveness_probe_fresh=True,
-            liveness_probe_outcome="lost",
-            role_liveness_blocker_recorded=False,
+            progress_reminder_required=True,
+            ack_progress_policy_current=True,
+            progress_evidence_outcome="expired",
+            progress_replacement_recorded=False,
         ),
         "recorded_external_event_left_wait_row_open": replace(
             safe_active,

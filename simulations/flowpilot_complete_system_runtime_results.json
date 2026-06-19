@@ -1,5 +1,5 @@
 {
-  "mode": "release",
+  "mode": "routine",
   "ok": true,
   "result_type": "flowpilot_complete_system_runtime_checks",
   "scenarios": [
@@ -53,7 +53,7 @@
           }
         ],
         "blockers": [],
-        "created_at": "2026-06-15T22:07:03.377602+00:00",
+        "created_at": "2026-06-19T08:55:48.254736+00:00",
         "decision": "complete",
         "required_flowguard_target": "development_process",
         "validation_evidence_id": "validation-result-0004"
@@ -123,7 +123,7 @@
           }
         ],
         "blockers": [],
-        "created_at": "2026-06-15T22:07:03.386602+00:00",
+        "created_at": "2026-06-19T08:55:48.298736+00:00",
         "decision": "complete",
         "required_flowguard_target": "development_process",
         "validation_evidence_id": "validation-result-0003"
@@ -135,7 +135,7 @@
             "packets"
           ],
           "cockpit_event_type": "pause",
-          "created_at": "2026-06-15T22:07:03.386602+00:00"
+          "created_at": "2026-06-19T08:55:48.298736+00:00"
         }
       },
       "name": "cockpit_direct_write_rejected",
@@ -198,14 +198,14 @@
           }
         ],
         "blockers": [],
-        "created_at": "2026-06-15T22:07:03.397121+00:00",
+        "created_at": "2026-06-19T08:55:48.335260+00:00",
         "decision": "complete",
         "required_flowguard_target": "development_process",
         "validation_evidence_id": "validation-result-0003"
       },
       "details": {
         "import": {
-          "created_at": "2026-06-15T22:07:03.397121+00:00",
+          "created_at": "2026-06-19T08:55:48.335260+00:00",
           "current_authority": false,
           "disposition": "imported_read_only",
           "import_id": "import-0001",
@@ -275,7 +275,7 @@
         "blockers": [
           "cutover_gate_blocked"
         ],
-        "created_at": "2026-06-15T22:07:03.405123+00:00",
+        "created_at": "2026-06-19T08:55:48.369263+00:00",
         "decision": "blocked",
         "required_flowguard_target": "development_process",
         "validation_evidence_id": "validation-result-0003"
@@ -332,7 +332,7 @@
           "blockers": [
             "cutover_gate_blocked"
           ],
-          "created_at": "2026-06-15T22:07:03.405123+00:00",
+          "created_at": "2026-06-19T08:55:48.369263+00:00",
           "decision": "blocked",
           "required_flowguard_target": "development_process",
           "validation_evidence_id": "validation-result-0003"
@@ -341,7 +341,7 @@
           "blockers": [
             "live_host_not_current"
           ],
-          "created_at": "2026-06-15T22:07:03.405123+00:00",
+          "created_at": "2026-06-19T08:55:48.369263+00:00",
           "decision": "blocked",
           "old_runtime_authority": false
         }
@@ -366,7 +366,7 @@
             "missing_matching_flowguard_report"
           ],
           "checks_evidence": true,
-          "created_at": "2026-06-15T22:07:03.408122+00:00",
+          "created_at": "2026-06-19T08:55:48.380265+00:00",
           "decision": "block",
           "direct_evidence_ids": [],
           "failure_hypotheses": [],
@@ -399,7 +399,7 @@
           "affected_packets": [
             "packet-0001"
           ],
-          "created_at": "2026-06-15T22:07:03.409123+00:00",
+          "created_at": "2026-06-19T08:55:48.382263+00:00",
           "mutation_id": "mutation-0001",
           "new_route_version": 2,
           "old_route_version": 1,
@@ -427,10 +427,14 @@
                 "unlocks": "node_result_flowguard_review"
               },
               "input_material_manifest": {
+                "all_required_authorized_result_bodies_must_be_opened_before_submit": true,
+                "authorized_result_read_ids": [],
                 "authorized_result_reads": [],
                 "blocker_id": "",
                 "node_context_package_id": "",
                 "packet_body_hash_authority": "envelope.body_hash",
+                "packet_body_opened_by_assigned_role_via_open_packet": true,
+                "required_authorized_read_count": 0,
                 "required_authorized_reads_before_submit": [],
                 "route_node_id": "",
                 "sealed_body_visibility": "sealed",
@@ -446,35 +450,62 @@
               "packet_kind": "task",
               "recipient_responsibility": "worker",
               "required_report_contract": {
+                "allowed_value_options": {
+                  "decision": [
+                    "pass",
+                    "block"
+                  ]
+                },
                 "branch_valid_shapes": {},
-                "explicit_array_fields": [],
-                "forbidden_result_body_fields": [
-                  "outcome",
-                  "status",
-                  "passed",
-                  "verdict",
-                  "result",
-                  "pass_or_block",
-                  "validation_status",
-                  "flowguard_report"
+                "explicit_array_fields": [
+                  "pm_visible_summary",
+                  "current_evidence_refs"
                 ],
+                "field_type_requirements": {},
                 "minimal_valid_shape": {
+                  "current_evidence_refs": [
+                    "current-output"
+                  ],
                   "decision": "pass",
                   "pm_visible_summary": [
                     "Role-authored summary for PM."
                   ]
                 },
+                "non_empty_array_fields": [
+                  "pm_visible_summary",
+                  "current_evidence_refs"
+                ],
                 "output_contract": {
                   "accepted_authority": "runtime_acceptance_gate",
                   "ack_authority": "lease_ack_only",
                   "ack_result_accepted_separate": true,
+                  "allowed_value_options": {
+                    "decision": [
+                      "pass",
+                      "block"
+                    ]
+                  },
+                  "contract_family_id": "task.node",
                   "contract_id": "black_box_flowpilot.output.task.v1",
                   "expected_result_visibility": "sealed",
+                  "field_type_requirements": {},
+                  "forbidden_fields": [
+                    "outcome",
+                    "status",
+                    "passed",
+                    "verdict",
+                    "result",
+                    "pass_or_block",
+                    "validation_status",
+                    "flowguard_report"
+                  ],
                   "packet_id": "packet-0001",
                   "pm_visible_summary_required": true,
                   "pm_visible_summary_shape": "non_empty_string_list",
                   "recipient_responsibility": "worker",
                   "result_authority": "sealed_result_envelope",
+                  "result_contract_profile_bindings": {},
+                  "result_contract_profile_ids": [],
                   "route_version": 1,
                   "runner_may_synthesize_pm_visible_summary": false,
                   "schema_version": "black_box_flowpilot.packet_output_contract.v1",
@@ -483,14 +514,529 @@
                 "required_child_fields": [],
                 "required_result_body_fields": [
                   "decision",
-                  "pm_visible_summary"
+                  "pm_visible_summary",
+                  "current_evidence_refs"
                 ],
+                "result_contract_profile_bindings": {},
+                "result_contract_profile_ids": [],
+                "stage_evidence_matrix": {
+                  "allowed_blocker_classes": [
+                    "mechanical_contract_missing_field",
+                    "invalid_blocker_shape",
+                    "evidence_gap",
+                    "missing_required_information",
+                    "flowguard_failure",
+                    "local_artifact"
+                  ],
+                  "allowed_value_options": {
+                    "decision": [
+                      "pass",
+                      "block"
+                    ]
+                  },
+                  "blocker_next_actions": {
+                    "evidence_gap": "pm_repair_decision",
+                    "flowguard_failure": "pm_repair_decision",
+                    "invalid_blocker_shape": "same_role_reissue",
+                    "local_artifact": "pm_repair_decision",
+                    "mechanical_contract_missing_field": "same_packet_reissue",
+                    "missing_required_information": "same_packet_block_or_stop_for_user"
+                  },
+                  "blocker_repair_packet_contracts": {
+                    "evidence_gap": {
+                      "leaf_repair_route_shape": "repair_current_scope via _replace_scope_and_open_repair_packet",
+                      "owner_role": "pm",
+                      "parent_repair_required_context_fields": [
+                        "repair_parent_scope_contract",
+                        "repair_parent_scope_contract.source_parent_node_id",
+                        "repair_parent_scope_contract.inherit_existing_children",
+                        "repair_parent_scope_contract.repair_child_specs[]",
+                        "inherited_child_node_ids",
+                        "inherited_accepted_result_ids",
+                        "replacement_parent_node_id",
+                        "child_node_ids"
+                      ],
+                      "parent_repair_route_shape": "repair_parent_scope with repair_parent_scope_contract and active repair_child_specs",
+                      "repair_packet_family": "pm_repair_decision.pm_repair_decision",
+                      "repeat_repair_must_carry_lineage": true,
+                      "required_context_fields": [
+                        "subject_packet_id",
+                        "subject_result_id",
+                        "blocking_report_id",
+                        "blocking_report_open_receipt_id",
+                        "missing_evidence_kinds",
+                        "source_packet_id",
+                        "source_body_hash",
+                        "source_objective",
+                        "source_output_contract",
+                        "source_acceptance_criteria",
+                        "target_result_id",
+                        "stale_evidence_ids",
+                        "blocker_class",
+                        "required_recheck_role",
+                        "recommended_resolution",
+                        "repeat_context",
+                        "repair_obligation_context",
+                        "authorized_result_reads"
+                      ],
+                      "required_payload_fields": [
+                        "decision",
+                        "reason",
+                        "target_blocker_id",
+                        "next_action"
+                      ],
+                      "return_gate": "pm_selected_repair_gate"
+                    },
+                    "flowguard_failure": {
+                      "leaf_repair_route_shape": "repair_current_scope via _replace_scope_and_open_repair_packet",
+                      "owner_role": "pm",
+                      "parent_repair_required_context_fields": [
+                        "repair_parent_scope_contract",
+                        "repair_parent_scope_contract.source_parent_node_id",
+                        "repair_parent_scope_contract.inherit_existing_children",
+                        "repair_parent_scope_contract.repair_child_specs[]",
+                        "inherited_child_node_ids",
+                        "inherited_accepted_result_ids",
+                        "replacement_parent_node_id",
+                        "child_node_ids"
+                      ],
+                      "parent_repair_route_shape": "repair_parent_scope with repair_parent_scope_contract and active repair_child_specs",
+                      "repair_packet_family": "pm_repair_decision.pm_repair_decision",
+                      "repeat_repair_must_carry_lineage": true,
+                      "required_context_fields": [
+                        "subject_packet_id",
+                        "subject_result_id",
+                        "flowguard_result_id",
+                        "flowguard_result_open_receipt_id",
+                        "flowguard_evidence_path",
+                        "blocker_id",
+                        "source_packet_id",
+                        "source_body_hash",
+                        "source_objective",
+                        "source_output_contract",
+                        "source_acceptance_criteria",
+                        "target_result_id",
+                        "stale_evidence_ids",
+                        "blocker_class",
+                        "required_recheck_role",
+                        "recommended_resolution",
+                        "repeat_context",
+                        "repair_obligation_context",
+                        "authorized_result_reads"
+                      ],
+                      "required_payload_fields": [
+                        "decision",
+                        "reason",
+                        "target_blocker_id",
+                        "next_action"
+                      ],
+                      "return_gate": "pm_selected_repair_gate"
+                    },
+                    "invalid_blocker_shape": {
+                      "owner_role": "blocking_report_role",
+                      "repair_packet_family": "same_role_reissue",
+                      "repeat_repair_must_carry_lineage": true,
+                      "required_context_fields": [
+                        "blocked_packet_id",
+                        "blocked_result_id",
+                        "invalid_blocker_id",
+                        "allowed_blocker_classes",
+                        "blocker_class_to_next_action"
+                      ],
+                      "required_payload_fields": [
+                        "corrected_blocker"
+                      ],
+                      "return_gate": "runtime_blocker_shape_validation"
+                    },
+                    "local_artifact": {
+                      "leaf_repair_route_shape": "repair_current_scope via _replace_scope_and_open_repair_packet",
+                      "owner_role": "pm",
+                      "parent_repair_required_context_fields": [
+                        "repair_parent_scope_contract",
+                        "repair_parent_scope_contract.source_parent_node_id",
+                        "repair_parent_scope_contract.inherit_existing_children",
+                        "repair_parent_scope_contract.repair_child_specs[]",
+                        "inherited_child_node_ids",
+                        "inherited_accepted_result_ids",
+                        "replacement_parent_node_id",
+                        "child_node_ids"
+                      ],
+                      "parent_repair_route_shape": "repair_parent_scope with repair_parent_scope_contract and active repair_child_specs",
+                      "repair_packet_family": "pm_repair_decision.pm_repair_decision",
+                      "repeat_repair_must_carry_lineage": true,
+                      "required_context_fields": [
+                        "subject_packet_id",
+                        "subject_result_id",
+                        "review_result_id",
+                        "review_result_open_receipt_id",
+                        "blocker_id",
+                        "source_packet_id",
+                        "source_body_hash",
+                        "source_objective",
+                        "source_output_contract",
+                        "source_acceptance_criteria",
+                        "target_result_id",
+                        "stale_evidence_ids",
+                        "blocker_class",
+                        "required_recheck_role",
+                        "recommended_resolution",
+                        "repeat_context",
+                        "repair_obligation_context",
+                        "authorized_result_reads"
+                      ],
+                      "required_payload_fields": [
+                        "decision",
+                        "reason",
+                        "target_blocker_id",
+                        "next_action"
+                      ],
+                      "return_gate": "pm_selected_repair_gate"
+                    },
+                    "mechanical_contract_missing_field": {
+                      "owner_role": "original_producer_role",
+                      "repair_packet_family": "same_packet_reissue",
+                      "repeat_repair_must_carry_lineage": true,
+                      "required_context_fields": [
+                        "blocked_packet_id",
+                        "blocked_result_id",
+                        "missing_required_fields",
+                        "minimal_valid_shape",
+                        "failed_field_path"
+                      ],
+                      "required_payload_fields": [
+                        "corrected_result_body"
+                      ],
+                      "return_gate": "runtime_mechanical_validation"
+                    },
+                    "missing_required_information": {
+                      "owner_role": "current_packet_owner_or_pm",
+                      "repair_packet_family": "same_packet_block_or_stop_for_user",
+                      "repeat_repair_must_carry_lineage": true,
+                      "required_context_fields": [
+                        "blocked_packet_id",
+                        "blocked_result_id",
+                        "missing_information",
+                        "recommended_resolution",
+                        "minimal_valid_shape"
+                      ],
+                      "required_payload_fields": [
+                        "decision",
+                        "blocker_class",
+                        "recommended_resolution",
+                        "pm_visible_summary"
+                      ],
+                      "return_gate": "runtime_current_packet_contract_or_user_stop"
+                    }
+                  },
+                  "current_required_fields": [
+                    "decision",
+                    "pm_visible_summary",
+                    "current_evidence_refs"
+                  ],
+                  "family_id": "task.node",
+                  "lifecycle_stage": "node_result_execution",
+                  "parent_replacement_required_context_fields": [
+                    "repair_parent_scope_contract",
+                    "repair_parent_scope_contract.source_parent_node_id",
+                    "repair_parent_scope_contract.inherit_existing_children",
+                    "repair_parent_scope_contract.repair_child_specs[]",
+                    "inherited_child_node_ids",
+                    "inherited_accepted_result_ids",
+                    "replacement_parent_node_id",
+                    "child_node_ids"
+                  ],
+                  "repair_node_required_context_fields": [
+                    "source_packet_id",
+                    "source_body_hash",
+                    "source_objective",
+                    "source_output_contract",
+                    "source_acceptance_criteria",
+                    "target_result_id",
+                    "stale_evidence_ids",
+                    "blocker_class",
+                    "required_recheck_role",
+                    "recommended_resolution",
+                    "repeat_context",
+                    "repair_obligation_context",
+                    "authorized_result_reads"
+                  ],
+                  "repeat_repair_required_fields": [
+                    "original_blocker_id",
+                    "prior_repair_packet_id",
+                    "prior_repair_result_id",
+                    "prior_repair_evidence_refs",
+                    "failed_recheck_report_id",
+                    "prior_failure_reason",
+                    "current_blocking_report_id",
+                    "new_repair_delta",
+                    "return_gate"
+                  ],
+                  "required_evidence_owner": "assigned_worker_current_result",
+                  "schema_version": "flowpilot.packet_contract_matrix.v2"
+                },
                 "validator": "_strict_packet_outcome_contract_violation"
               },
+              "result_contract_profile_bindings": {},
+              "result_contract_profile_ids": [],
               "route_scope": "",
               "route_version": 1,
               "schema_version": "black_box_flowpilot.current_handoff_contract.v1",
               "source_generation": 1,
+              "stage_evidence_matrix": {
+                "allowed_blocker_classes": [
+                  "mechanical_contract_missing_field",
+                  "invalid_blocker_shape",
+                  "evidence_gap",
+                  "missing_required_information",
+                  "flowguard_failure",
+                  "local_artifact"
+                ],
+                "allowed_value_options": {
+                  "decision": [
+                    "pass",
+                    "block"
+                  ]
+                },
+                "blocker_next_actions": {
+                  "evidence_gap": "pm_repair_decision",
+                  "flowguard_failure": "pm_repair_decision",
+                  "invalid_blocker_shape": "same_role_reissue",
+                  "local_artifact": "pm_repair_decision",
+                  "mechanical_contract_missing_field": "same_packet_reissue",
+                  "missing_required_information": "same_packet_block_or_stop_for_user"
+                },
+                "blocker_repair_packet_contracts": {
+                  "evidence_gap": {
+                    "leaf_repair_route_shape": "repair_current_scope via _replace_scope_and_open_repair_packet",
+                    "owner_role": "pm",
+                    "parent_repair_required_context_fields": [
+                      "repair_parent_scope_contract",
+                      "repair_parent_scope_contract.source_parent_node_id",
+                      "repair_parent_scope_contract.inherit_existing_children",
+                      "repair_parent_scope_contract.repair_child_specs[]",
+                      "inherited_child_node_ids",
+                      "inherited_accepted_result_ids",
+                      "replacement_parent_node_id",
+                      "child_node_ids"
+                    ],
+                    "parent_repair_route_shape": "repair_parent_scope with repair_parent_scope_contract and active repair_child_specs",
+                    "repair_packet_family": "pm_repair_decision.pm_repair_decision",
+                    "repeat_repair_must_carry_lineage": true,
+                    "required_context_fields": [
+                      "subject_packet_id",
+                      "subject_result_id",
+                      "blocking_report_id",
+                      "blocking_report_open_receipt_id",
+                      "missing_evidence_kinds",
+                      "source_packet_id",
+                      "source_body_hash",
+                      "source_objective",
+                      "source_output_contract",
+                      "source_acceptance_criteria",
+                      "target_result_id",
+                      "stale_evidence_ids",
+                      "blocker_class",
+                      "required_recheck_role",
+                      "recommended_resolution",
+                      "repeat_context",
+                      "repair_obligation_context",
+                      "authorized_result_reads"
+                    ],
+                    "required_payload_fields": [
+                      "decision",
+                      "reason",
+                      "target_blocker_id",
+                      "next_action"
+                    ],
+                    "return_gate": "pm_selected_repair_gate"
+                  },
+                  "flowguard_failure": {
+                    "leaf_repair_route_shape": "repair_current_scope via _replace_scope_and_open_repair_packet",
+                    "owner_role": "pm",
+                    "parent_repair_required_context_fields": [
+                      "repair_parent_scope_contract",
+                      "repair_parent_scope_contract.source_parent_node_id",
+                      "repair_parent_scope_contract.inherit_existing_children",
+                      "repair_parent_scope_contract.repair_child_specs[]",
+                      "inherited_child_node_ids",
+                      "inherited_accepted_result_ids",
+                      "replacement_parent_node_id",
+                      "child_node_ids"
+                    ],
+                    "parent_repair_route_shape": "repair_parent_scope with repair_parent_scope_contract and active repair_child_specs",
+                    "repair_packet_family": "pm_repair_decision.pm_repair_decision",
+                    "repeat_repair_must_carry_lineage": true,
+                    "required_context_fields": [
+                      "subject_packet_id",
+                      "subject_result_id",
+                      "flowguard_result_id",
+                      "flowguard_result_open_receipt_id",
+                      "flowguard_evidence_path",
+                      "blocker_id",
+                      "source_packet_id",
+                      "source_body_hash",
+                      "source_objective",
+                      "source_output_contract",
+                      "source_acceptance_criteria",
+                      "target_result_id",
+                      "stale_evidence_ids",
+                      "blocker_class",
+                      "required_recheck_role",
+                      "recommended_resolution",
+                      "repeat_context",
+                      "repair_obligation_context",
+                      "authorized_result_reads"
+                    ],
+                    "required_payload_fields": [
+                      "decision",
+                      "reason",
+                      "target_blocker_id",
+                      "next_action"
+                    ],
+                    "return_gate": "pm_selected_repair_gate"
+                  },
+                  "invalid_blocker_shape": {
+                    "owner_role": "blocking_report_role",
+                    "repair_packet_family": "same_role_reissue",
+                    "repeat_repair_must_carry_lineage": true,
+                    "required_context_fields": [
+                      "blocked_packet_id",
+                      "blocked_result_id",
+                      "invalid_blocker_id",
+                      "allowed_blocker_classes",
+                      "blocker_class_to_next_action"
+                    ],
+                    "required_payload_fields": [
+                      "corrected_blocker"
+                    ],
+                    "return_gate": "runtime_blocker_shape_validation"
+                  },
+                  "local_artifact": {
+                    "leaf_repair_route_shape": "repair_current_scope via _replace_scope_and_open_repair_packet",
+                    "owner_role": "pm",
+                    "parent_repair_required_context_fields": [
+                      "repair_parent_scope_contract",
+                      "repair_parent_scope_contract.source_parent_node_id",
+                      "repair_parent_scope_contract.inherit_existing_children",
+                      "repair_parent_scope_contract.repair_child_specs[]",
+                      "inherited_child_node_ids",
+                      "inherited_accepted_result_ids",
+                      "replacement_parent_node_id",
+                      "child_node_ids"
+                    ],
+                    "parent_repair_route_shape": "repair_parent_scope with repair_parent_scope_contract and active repair_child_specs",
+                    "repair_packet_family": "pm_repair_decision.pm_repair_decision",
+                    "repeat_repair_must_carry_lineage": true,
+                    "required_context_fields": [
+                      "subject_packet_id",
+                      "subject_result_id",
+                      "review_result_id",
+                      "review_result_open_receipt_id",
+                      "blocker_id",
+                      "source_packet_id",
+                      "source_body_hash",
+                      "source_objective",
+                      "source_output_contract",
+                      "source_acceptance_criteria",
+                      "target_result_id",
+                      "stale_evidence_ids",
+                      "blocker_class",
+                      "required_recheck_role",
+                      "recommended_resolution",
+                      "repeat_context",
+                      "repair_obligation_context",
+                      "authorized_result_reads"
+                    ],
+                    "required_payload_fields": [
+                      "decision",
+                      "reason",
+                      "target_blocker_id",
+                      "next_action"
+                    ],
+                    "return_gate": "pm_selected_repair_gate"
+                  },
+                  "mechanical_contract_missing_field": {
+                    "owner_role": "original_producer_role",
+                    "repair_packet_family": "same_packet_reissue",
+                    "repeat_repair_must_carry_lineage": true,
+                    "required_context_fields": [
+                      "blocked_packet_id",
+                      "blocked_result_id",
+                      "missing_required_fields",
+                      "minimal_valid_shape",
+                      "failed_field_path"
+                    ],
+                    "required_payload_fields": [
+                      "corrected_result_body"
+                    ],
+                    "return_gate": "runtime_mechanical_validation"
+                  },
+                  "missing_required_information": {
+                    "owner_role": "current_packet_owner_or_pm",
+                    "repair_packet_family": "same_packet_block_or_stop_for_user",
+                    "repeat_repair_must_carry_lineage": true,
+                    "required_context_fields": [
+                      "blocked_packet_id",
+                      "blocked_result_id",
+                      "missing_information",
+                      "recommended_resolution",
+                      "minimal_valid_shape"
+                    ],
+                    "required_payload_fields": [
+                      "decision",
+                      "blocker_class",
+                      "recommended_resolution",
+                      "pm_visible_summary"
+                    ],
+                    "return_gate": "runtime_current_packet_contract_or_user_stop"
+                  }
+                },
+                "current_required_fields": [
+                  "decision",
+                  "pm_visible_summary",
+                  "current_evidence_refs"
+                ],
+                "family_id": "task.node",
+                "lifecycle_stage": "node_result_execution",
+                "parent_replacement_required_context_fields": [
+                  "repair_parent_scope_contract",
+                  "repair_parent_scope_contract.source_parent_node_id",
+                  "repair_parent_scope_contract.inherit_existing_children",
+                  "repair_parent_scope_contract.repair_child_specs[]",
+                  "inherited_child_node_ids",
+                  "inherited_accepted_result_ids",
+                  "replacement_parent_node_id",
+                  "child_node_ids"
+                ],
+                "repair_node_required_context_fields": [
+                  "source_packet_id",
+                  "source_body_hash",
+                  "source_objective",
+                  "source_output_contract",
+                  "source_acceptance_criteria",
+                  "target_result_id",
+                  "stale_evidence_ids",
+                  "blocker_class",
+                  "required_recheck_role",
+                  "recommended_resolution",
+                  "repeat_context",
+                  "repair_obligation_context",
+                  "authorized_result_reads"
+                ],
+                "repeat_repair_required_fields": [
+                  "original_blocker_id",
+                  "prior_repair_packet_id",
+                  "prior_repair_result_id",
+                  "prior_repair_evidence_refs",
+                  "failed_recheck_report_id",
+                  "prior_failure_reason",
+                  "current_blocking_report_id",
+                  "new_repair_delta",
+                  "return_gate"
+                ],
+                "required_evidence_owner": "assigned_worker_current_result",
+                "schema_version": "flowpilot.packet_contract_matrix.v2"
+              },
               "status_projection_requirements": {
                 "controller_projection_is_display_only": true,
                 "repair_chain_visible_when_current": true,
@@ -510,13 +1056,33 @@
               "accepted_authority": "runtime_acceptance_gate",
               "ack_authority": "lease_ack_only",
               "ack_result_accepted_separate": true,
+              "allowed_value_options": {
+                "decision": [
+                  "pass",
+                  "block"
+                ]
+              },
+              "contract_family_id": "task.node",
               "contract_id": "black_box_flowpilot.output.task.v1",
               "expected_result_visibility": "sealed",
+              "field_type_requirements": {},
+              "forbidden_fields": [
+                "outcome",
+                "status",
+                "passed",
+                "verdict",
+                "result",
+                "pass_or_block",
+                "validation_status",
+                "flowguard_report"
+              ],
               "packet_id": "packet-0001",
               "pm_visible_summary_required": true,
               "pm_visible_summary_shape": "non_empty_string_list",
               "recipient_responsibility": "worker",
               "result_authority": "sealed_result_envelope",
+              "result_contract_profile_bindings": {},
+              "result_contract_profile_ids": [],
               "route_version": 1,
               "runner_may_synthesize_pm_visible_summary": false,
               "schema_version": "black_box_flowpilot.packet_output_contract.v1",
@@ -560,10 +1126,10 @@
       "details": {
         "result": {
           "accepted": false,
-          "body": "{\"decision\": \"pass\", \"pm_visible_summary\": [\"Role-authored summary for PM.\"]}",
+          "body": "{\"decision\": \"pass\", \"pm_visible_summary\": [\"Role-authored summary for PM.\"], \"current_evidence_refs\": [\"current-output\"]}",
           "envelope": {
             "ack_result_accepted_separate": true,
-            "body_hash": "5dcd456359f9183bc8290e39580113fcda95587e7ff11a42e8255c3f3f1d9287",
+            "body_hash": "976bff10bc498756299bb4fb2a8533266ae0a1ac0bc8faaf9bd8874ba8a4cbf7",
             "body_visibility": "sealed",
             "evidence_generation": 1,
             "evidence_ids": [],
@@ -571,13 +1137,33 @@
               "accepted_authority": "runtime_acceptance_gate",
               "ack_authority": "lease_ack_only",
               "ack_result_accepted_separate": true,
+              "allowed_value_options": {
+                "decision": [
+                  "pass",
+                  "block"
+                ]
+              },
+              "contract_family_id": "task.node",
               "contract_id": "black_box_flowpilot.output.task.v1",
               "expected_result_visibility": "sealed",
+              "field_type_requirements": {},
+              "forbidden_fields": [
+                "outcome",
+                "status",
+                "passed",
+                "verdict",
+                "result",
+                "pass_or_block",
+                "validation_status",
+                "flowguard_report"
+              ],
               "packet_id": "packet-0001",
               "pm_visible_summary_required": true,
               "pm_visible_summary_shape": "non_empty_string_list",
               "recipient_responsibility": "worker",
               "result_authority": "sealed_result_envelope",
+              "result_contract_profile_bindings": {},
+              "result_contract_profile_ids": [],
               "route_version": 1,
               "runner_may_synthesize_pm_visible_summary": false,
               "schema_version": "black_box_flowpilot.packet_output_contract.v1",
@@ -621,10 +1207,10 @@
       "details": {
         "first": {
           "accepted": false,
-          "body": "{\"decision\": \"pass\", \"pm_visible_summary\": [\"Role-authored summary for PM.\"]}",
+          "body": "{\"decision\": \"pass\", \"pm_visible_summary\": [\"Role-authored summary for PM.\"], \"current_evidence_refs\": [\"current-output\"]}",
           "envelope": {
             "ack_result_accepted_separate": true,
-            "body_hash": "5dcd456359f9183bc8290e39580113fcda95587e7ff11a42e8255c3f3f1d9287",
+            "body_hash": "976bff10bc498756299bb4fb2a8533266ae0a1ac0bc8faaf9bd8874ba8a4cbf7",
             "body_visibility": "sealed",
             "evidence_generation": 1,
             "evidence_ids": [],
@@ -632,13 +1218,33 @@
               "accepted_authority": "runtime_acceptance_gate",
               "ack_authority": "lease_ack_only",
               "ack_result_accepted_separate": true,
+              "allowed_value_options": {
+                "decision": [
+                  "pass",
+                  "block"
+                ]
+              },
+              "contract_family_id": "task.node",
               "contract_id": "black_box_flowpilot.output.task.v1",
               "expected_result_visibility": "sealed",
+              "field_type_requirements": {},
+              "forbidden_fields": [
+                "outcome",
+                "status",
+                "passed",
+                "verdict",
+                "result",
+                "pass_or_block",
+                "validation_status",
+                "flowguard_report"
+              ],
               "packet_id": "packet-0001",
               "pm_visible_summary_required": true,
               "pm_visible_summary_shape": "non_empty_string_list",
               "recipient_responsibility": "worker",
               "result_authority": "sealed_result_envelope",
+              "result_contract_profile_bindings": {},
+              "result_contract_profile_ids": [],
               "route_version": 1,
               "runner_may_synthesize_pm_visible_summary": false,
               "schema_version": "black_box_flowpilot.packet_output_contract.v1",
@@ -666,10 +1272,10 @@
         },
         "second": {
           "accepted": false,
-          "body": "{\"decision\": \"pass\", \"pm_visible_summary\": [\"Role-authored summary for PM.\"]}",
+          "body": "{\"decision\": \"pass\", \"pm_visible_summary\": [\"Role-authored summary for PM.\"], \"current_evidence_refs\": [\"current-output\"]}",
           "envelope": {
             "ack_result_accepted_separate": true,
-            "body_hash": "5dcd456359f9183bc8290e39580113fcda95587e7ff11a42e8255c3f3f1d9287",
+            "body_hash": "976bff10bc498756299bb4fb2a8533266ae0a1ac0bc8faaf9bd8874ba8a4cbf7",
             "body_visibility": "sealed",
             "evidence_generation": 1,
             "evidence_ids": [],
@@ -677,13 +1283,33 @@
               "accepted_authority": "runtime_acceptance_gate",
               "ack_authority": "lease_ack_only",
               "ack_result_accepted_separate": true,
+              "allowed_value_options": {
+                "decision": [
+                  "pass",
+                  "block"
+                ]
+              },
+              "contract_family_id": "task.node",
               "contract_id": "black_box_flowpilot.output.task.v1",
               "expected_result_visibility": "sealed",
+              "field_type_requirements": {},
+              "forbidden_fields": [
+                "outcome",
+                "status",
+                "passed",
+                "verdict",
+                "result",
+                "pass_or_block",
+                "validation_status",
+                "flowguard_report"
+              ],
               "packet_id": "packet-0001",
               "pm_visible_summary_required": true,
               "pm_visible_summary_shape": "non_empty_string_list",
               "recipient_responsibility": "worker",
               "result_authority": "sealed_result_envelope",
+              "result_contract_profile_bindings": {},
+              "result_contract_profile_ids": [],
               "route_version": 1,
               "runner_may_synthesize_pm_visible_summary": false,
               "schema_version": "black_box_flowpilot.packet_output_contract.v1",
@@ -731,7 +1357,7 @@
             "missing_matching_flowguard_report"
           ],
           "checks_evidence": true,
-          "created_at": "2026-06-15T22:07:03.416124+00:00",
+          "created_at": "2026-06-19T08:55:48.406266+00:00",
           "decision": "block",
           "direct_evidence_ids": [],
           "failure_hypotheses": [],
@@ -761,9 +1387,9 @@
       },
       "details": {
         "order": {
-          "completed_at": "2026-06-15T22:07:03.419123+00:00",
+          "completed_at": "2026-06-19T08:55:48.419273+00:00",
           "confidence_boundary": "scoped",
-          "created_at": "2026-06-15T22:07:03.419123+00:00",
+          "created_at": "2026-06-19T08:55:48.419273+00:00",
           "decision": "pass",
           "evidence_id": "flowguard-report",
           "flowguard_operator_lease_id": "",
@@ -785,7 +1411,7 @@
             "missing_matching_flowguard_report"
           ],
           "checks_evidence": true,
-          "created_at": "2026-06-15T22:07:03.420123+00:00",
+          "created_at": "2026-06-19T08:55:48.420274+00:00",
           "decision": "block",
           "direct_evidence_ids": [],
           "failure_hypotheses": [],
@@ -819,7 +1445,7 @@
           "unresolved_residual_risks",
           "unresolved_resources"
         ],
-        "created_at": "2026-06-15T22:07:03.430123+00:00",
+        "created_at": "2026-06-19T08:55:48.455440+00:00",
         "decision": "blocked",
         "required_flowguard_target": "development_process",
         "validation_evidence_id": "validation-result-0003"
@@ -834,7 +1460,7 @@
             "unresolved_residual_risks",
             "unresolved_resources"
           ],
-          "created_at": "2026-06-15T22:07:03.430123+00:00",
+          "created_at": "2026-06-19T08:55:48.455440+00:00",
           "decision": "blocked",
           "required_flowguard_target": "development_process",
           "validation_evidence_id": "validation-result-0003"
@@ -858,7 +1484,7 @@
         "blocker": {
           "active": "blocked",
           "block_reason": "cockpit_unavailable",
-          "created_at": "2026-06-15T22:07:03.431122+00:00",
+          "created_at": "2026-06-19T08:55:48.456439+00:00",
           "preferred": "cockpit",
           "repair_required": true
         }
@@ -876,7 +1502,7 @@
   ],
   "test_mesh": {
     "release_gate": {
-      "ok": true
+      "ok": false
     },
     "routine_gate": {
       "ok": true
@@ -896,12 +1522,12 @@
       },
       {
         "evidence": [
-          "live-host evidence supplied"
+          "live-host evidence required"
         ],
-        "freshness": "current",
+        "freshness": "not_run",
         "id": "complete_runtime_release_boundary",
         "scope": "release",
-        "status": "passed"
+        "status": "not_run"
       }
     ]
   }

@@ -1519,12 +1519,19 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         pm_packet_id = blocker["pm_repair_packet_id"]
         pm_body = json.loads(ledger["packets"][pm_packet_id]["body"])
         minimal_shape = pm_body["minimal_valid_shape"]
+        allowed_options = pm_body["current_handoff_contract"]["required_report_contract"]["allowed_value_options"]
         supplemental_contract = minimal_shape["supplemental_repair_contract"]
         route_nodes = minimal_shape["route_plan"]["nodes"]
+        hygiene_options = allowed_options[
+            "supplemental_repair_contract.repair_items[].hygiene_category when gap_kind=final_artifact_hygiene_gap"
+        ]
 
         self.assertEqual(supplemental_contract["original_contract_hash"], ledger["contract_hash"])
         self.assertEqual(supplemental_contract["terminal_blocker_id"], blocker_id)
         self.assertEqual(supplemental_contract["terminal_gap_report_result_id"], blocker["result_id"])
+        self.assertEqual(supplemental_contract["repair_items"][0]["hygiene_category"], "artifact_lineage")
+        self.assertIn("artifact_lineage", hygiene_options)
+        self.assertNotIn("current_goal_required", hygiene_options)
         self.assertIn("terminal-supplemental-repair-r1", route_nodes[1]["supplemental_repair_contract_ids"])
         self.assertIn("terminal-gap-r1-item-1", route_nodes[1]["supplemental_repair_item_ids"])
 
@@ -1772,8 +1779,7 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
     def test_recover_or_reissue_payload_names_concrete_command(self) -> None:
         ledger, packet_id, worker = runtime_runner._base_ledger()
         runtime.ack_lease(ledger, worker, packet_id)
-        ledger["leases"][worker]["liveness_status"] = "not_found"
-        ledger["leases"][worker]["liveness_checked_at"] = runtime.now_iso()
+        ledger["leases"][worker]["ack_received_at"] = "2000-01-01T00:00:00+00:00"
 
         guard = runtime.preview_lifecycle_guard(ledger, trigger="patrol")
         duty = runtime.preview_foreground_duty(ledger, guard=guard, trigger="patrol")
@@ -5012,8 +5018,10 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         branch_shapes = report_contract["branch_valid_shapes"]
 
         self.assertIn("decision=redesign_route", branch_shapes)
+        self.assertEqual(report_contract["minimal_valid_shape"]["target_blocker_id"], blocker_id)
         redesign_shape = branch_shapes["decision=redesign_route"]
         self.assertEqual(redesign_shape["decision"], "redesign_route")
+        self.assertEqual(redesign_shape["target_blocker_id"], blocker_id)
         self.assertEqual(redesign_shape["route_plan"]["schema_version"], runtime.ROUTE_PLAN_SCHEMA_VERSION)
         self.assertEqual(redesign_shape["route_plan"]["nodes"][0]["node_id"], "repair-current-scope")
         self.assertIn("title", redesign_shape["route_plan"]["nodes"][0])
@@ -5061,6 +5069,8 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         self.assertEqual(result["mechanical_contract_failure"]["failed_field_path"], "route_plan.nodes[].title")
         self.assertEqual(fresh_body["failed_branch"], "decision=redesign_route")
         self.assertEqual(fresh_body["failed_field_path"], "route_plan.nodes[].title")
+        self.assertEqual(fresh_body["minimal_valid_shape"]["target_blocker_id"], blocker_id)
+        self.assertEqual(fresh_body["branch_minimal_valid_shape"]["target_blocker_id"], blocker_id)
         self.assertEqual(fresh_body["branch_minimal_valid_shape"]["decision"], "redesign_route")
         self.assertIn("title", fresh_body["branch_minimal_valid_shape"]["route_plan"]["nodes"][0])
 

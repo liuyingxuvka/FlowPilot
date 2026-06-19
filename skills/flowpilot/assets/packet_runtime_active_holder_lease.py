@@ -29,8 +29,12 @@ LIVE_CREW_SLOT_STATUSES = {
     "live_agent_recycled",
 }
 
+CURRENT_RUN_BINDING_DECISIONS = {
+    "existing_current_agent_reused",
+    "current_run_replacement_opened",
+}
 
-def _active_holder_liveness_evidence(
+def _active_holder_binding_evidence(
     project_root: Path,
     *,
     packet_envelope: dict[str, Any],
@@ -50,39 +54,32 @@ def _active_holder_liveness_evidence(
             raise PacketRuntimeError("active-holder lease agent does not match current live role slot")
         status = str(slot.get("status") or "")
         if status not in LIVE_CREW_SLOT_STATUSES:
-            raise PacketRuntimeError(f"active-holder lease requires live host liveness proof for {holder_role}")
-        liveness_status = str(slot.get("host_liveness_status") or "")
-        liveness_decision = str(slot.get("liveness_decision") or "")
-        if liveness_status in {"missing", "cancelled", "unknown", "timeout_unknown", "completed"}:
-            raise PacketRuntimeError(f"active-holder lease requires active host liveness proof for {holder_role}")
-        if status == "live_agent_started":
-            host_liveness_proven = liveness_status in {"", "active"}
-        elif status == "live_agent_rehydrated":
-            host_liveness_proven = liveness_status == "active" and liveness_decision == "confirmed_existing_agent"
-        else:
-            host_liveness_proven = liveness_status == "active" and liveness_decision in {
-                "confirmed_existing_agent",
-                "opened_replacement_from_current_run_memory",
-            }
-        if not host_liveness_proven:
-            raise PacketRuntimeError(f"active-holder lease requires active host liveness proof for {holder_role}")
+            raise PacketRuntimeError(f"active-holder lease requires a current role binding for {holder_role}")
+        current_run_binding_decision = str(slot.get("current_run_binding_decision") or "")
+        role_surface_addressable = slot.get("role_surface_addressable") is True
+        current_role_binding_proven = (
+            role_surface_addressable
+            and current_run_binding_decision in CURRENT_RUN_BINDING_DECISIONS
+        )
+        if not current_role_binding_proven:
+            raise PacketRuntimeError(f"active-holder lease requires current role binding evidence for {holder_role}")
         return {
-            "schema_version": "flowpilot.active_holder_liveness_evidence.v1",
+            "schema_version": "flowpilot.active_holder_binding_evidence.v1",
             "source": "role_binding_ledger",
             "role_binding_ledger_path": project_relative(project_root, role_binding_path),
             "run_id": paths["run_id"],
             "role_key": holder_role,
             "agent_id": holder_agent_id,
             "role_slot_status": status,
-            "host_liveness_status": slot.get("host_liveness_status"),
-            "liveness_decision": slot.get("liveness_decision"),
+            "role_surface_addressable": role_surface_addressable,
+            "current_run_binding_decision": current_run_binding_decision,
             "binding_open_result": slot.get("binding_open_result"),
             "recovery_result": slot.get("last_role_recovery_result") or slot.get("recovery_result"),
             "role_binding_generation": slot.get("role_binding_generation"),
             "role_binding_epoch": slot.get("role_binding_epoch"),
-            "host_liveness_proven": host_liveness_proven,
+            "current_role_binding_proven": current_role_binding_proven,
         }
-    raise PacketRuntimeError(f"active-holder lease requires current live role slot for {holder_role}")
+    raise PacketRuntimeError(f"active-holder lease requires current role slot for {holder_role}")
 from packet_runtime_schema import (
     ACTIVE_HOLDER_LEASE_SCHEMA,
     PacketRuntimeError,
@@ -107,7 +104,7 @@ def issue_active_holder_lease(
     resolved_agent_id = _require_concrete_agent_id(holder_agent_id, role=holder_role)
     if holder_role != packet_envelope.get("to_role"):
         raise PacketRuntimeError("active-holder lease may only be issued to the packet to_role")
-    holder_liveness = _active_holder_liveness_evidence(
+    holder_binding_evidence = _active_holder_binding_evidence(
         project_root,
         packet_envelope=packet_envelope,
         holder_role=holder_role,
@@ -132,8 +129,8 @@ def issue_active_holder_lease(
         "node_id": packet_envelope.get("node_id"),
         "holder_role": holder_role,
         "holder_agent_id": resolved_agent_id,
-        "holder_liveness": holder_liveness,
-        "host_liveness_proof_required": True,
+        "holder_binding_evidence": holder_binding_evidence,
+        "current_role_binding_required": True,
         "route_version": int(route_version),
         "frontier_version": int(frontier_version),
         "allowed_actions": allowed_actions
@@ -172,8 +169,8 @@ def issue_active_holder_lease(
             "active_holder_lease_id": lease["lease_id"],
             "active_holder_role": holder_role,
             "active_holder_agent_id": resolved_agent_id,
-            "active_holder_liveness": holder_liveness,
-            "active_holder_liveness_proven": True,
+            "active_holder_binding_evidence": holder_binding_evidence,
+            "active_holder_binding_proven": True,
             "active_holder_route_version": int(route_version),
             "active_holder_frontier_version": int(frontier_version),
             "active_packet_status": "active-holder-lease-issued",

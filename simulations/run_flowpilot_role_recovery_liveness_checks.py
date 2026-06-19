@@ -1,4 +1,4 @@
-"""Run FlowGuard role-recovery liveness proof checks for FlowPilot."""
+"""Run FlowGuard role-recovery binding evidence checks for FlowPilot."""
 
 from __future__ import annotations
 
@@ -16,18 +16,18 @@ except ImportError:  # pragma: no cover
 
 
 ROOT = Path(__file__).resolve().parent
-RESULTS_PATH = ROOT / "flowpilot_role_recovery_liveness_results.json"
+RESULTS_PATH = ROOT / "flowpilot_role_recovery_binding_evidence_results.json"
 
 REQUIRED_LABELS = (
     "select_valid_current_report",
     "select_stale_report_reclaim",
-    "select_unknown_liveness",
+    "select_unknown_binding_evidence",
     "select_replacement_intent_only",
     "select_daemon_error_with_diagnostics",
     "select_daemon_error_without_diagnostics",
-    "classify_current_recovery_liveness_proven",
+    "classify_current_recovery_binding_proven",
     "classify_stale_recovery_report_risk",
-    "classify_missing_host_liveness_risk",
+    "classify_missing_current_binding_risk",
     "classify_daemon_error_diagnostics_complete",
     "classify_daemon_error_diagnostics_missing",
 )
@@ -63,7 +63,7 @@ def _hazard_report() -> dict[str, Any]:
             hazards[name] = failures
     expected = {
         "stale_report_marked_safe",
-        "unknown_liveness_marked_safe",
+        "unknown_binding_evidence_marked_safe",
         "replacement_intent_only_marked_safe",
         "daemon_error_without_diagnostics_marked_safe",
         "current_report_overblocked",
@@ -75,7 +75,7 @@ def run_checks() -> dict[str, Any]:
     flowguard = _flowguard_report()
     hazards = _hazard_report()
     report = {
-        "result_type": "flowpilot_role_recovery_liveness",
+        "result_type": "flowpilot_role_recovery_binding_evidence",
         "model_id": model.MODEL_ID,
         "flowguard": flowguard,
         "hazard_detection": hazards,

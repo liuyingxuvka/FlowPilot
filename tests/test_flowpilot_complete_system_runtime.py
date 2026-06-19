@@ -377,7 +377,7 @@ class FlowPilotCompleteSystemRuntimeTests(unittest.TestCase):
         runtime.create_route(ledger, "Route", ["Review work"])
         packet_id = packets.issue_packet(ledger, "reviewer", "Review", "SEALED_REVIEW")
         first = host.lease_responsibility(ledger, "reviewer", agent_id="reviewer-agent-1", host_kind="fake", packet_id=packet_id)
-        runtime.record_host_liveness(ledger, first, packet_id, "lost")
+        ledger["leases"][first]["created_at"] = "2000-01-01T00:00:00+00:00"
         del ledger["role_continuity"]["roles"]["reviewer"]
 
         next_packet = packets.issue_packet(ledger, "reviewer", "Review next", "SEALED_REVIEW_NEXT")
@@ -403,7 +403,7 @@ class FlowPilotCompleteSystemRuntimeTests(unittest.TestCase):
         packet_id = packets.issue_packet(ledger, "reviewer", "Review work", "SEALED_REVIEW")
         first = host.lease_responsibility(ledger, "reviewer", agent_id="reviewer-agent-1", host_kind="fake", packet_id=packet_id)
         runtime.assign_packet(ledger, packet_id, first)
-        runtime.record_host_liveness(ledger, first, packet_id, "lost")
+        ledger["leases"][first]["created_at"] = "2000-01-01T00:00:00+00:00"
 
         replacement_packet = packets.issue_packet(ledger, "reviewer", "Review replacement work", "SEALED_REVIEW_2")
         replacement = host.lease_responsibility(

@@ -73,6 +73,7 @@ class FlowPilotSyntheticAgentCoverageMatrixTests(unittest.TestCase):
         ]
 
         self.assertGreaterEqual(len(synthetic_rows), 22)
+        test_text_cache: dict[Path, str] = {}
         for row in synthetic_rows:
             with self.subTest(evidence_id=row["evidence_id"]):
                 self.assertFalse(row["live_completion_allowed"])
@@ -86,10 +87,49 @@ class FlowPilotSyntheticAgentCoverageMatrixTests(unittest.TestCase):
                 })
                 evidence_test_path = ROOT / row["path"]
                 self.assertTrue(evidence_test_path.exists())
-                self.assertIn(row["test_name"], evidence_test_path.read_text(encoding="utf-8"))
+                test_text = test_text_cache.setdefault(
+                    evidence_test_path,
+                    evidence_test_path.read_text(encoding="utf-8"),
+                )
+                self.assertIn(row["test_name"], test_text)
                 self.assertEqual(row["evidence_status"], "passed")
                 self.assertTrue(row["evidence_current"])
                 self.assertIn(row["story_level"], {"local", "system"})
+
+    def test_liveness_evidence_cartesian_summary_is_wired_to_synthetic_matrix(self) -> None:
+        report = coverage_matrix.build_report()
+        summary = report["liveness_evidence_cartesian"]
+        rows = [
+            row
+            for row in report["rows"]
+            if row["model_id"] == coverage_matrix.LIVENESS_EVIDENCE_CARTESIAN_MODEL_ID
+        ]
+
+        self.assertTrue(summary["ok"], summary)
+        self.assertEqual(summary["row_count"], 35_280)
+        self.assertEqual(len(rows), summary["row_count"])
+        self.assertGreater(summary["runtime_executable_count"], 0)
+        self.assertGreater(summary["legacy_pollution_case_count"], 0)
+        self.assertLessEqual(
+            {
+                "wait_missing_ack",
+                "remind_missing_ack",
+                "replace_missing_ack",
+                "wait_fresh_evidence",
+                "remind_stale_progress",
+                "replace_stale_progress",
+                "final_result_wins",
+                "mechanical_result_block",
+                "invalid_setup",
+            },
+            set(summary["by_reaction"]),
+        )
+        for row in rows[:100]:
+            with self.subTest(evidence_id=row["evidence_id"]):
+                self.assertEqual(row["coverage_kind"], "synthetic_trace")
+                self.assertFalse(row["live_completion_allowed"])
+                self.assertEqual(row["coverage_boundary"], "control_flow_only")
+                self.assertIn("liveness_evidence.", row["obligation_id"])
 
     def test_rejection_liveness_required_cells_have_owners(self) -> None:
         report = coverage_matrix.build_report()

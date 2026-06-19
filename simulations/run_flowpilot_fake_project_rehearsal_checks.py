@@ -144,7 +144,7 @@ def _run_checks_in_root(work_root: Path, *, scenario_names: set[str] | None = No
         "missing_current_result_fields_reissue": ("fake_project_blackbox_cli_missing_current_result_fields_reissue", "skills/flowpilot/assets/flowpilot_new.py"),
         "accepted_packet_reassignment_rejected": ("fake_project_blackbox_cli_accepted_packet_reassignment", "skills/flowpilot/assets/flowpilot_new.py"),
         "stop_terminal_fence": ("fake_project_blackbox_cli_stop_terminal_fence", "skills/flowpilot/assets/flowpilot_new.py"),
-        "host_liveness_bridge_recovery": ("fake_project_blackbox_cli_host_liveness_bridge", "skills/flowpilot/assets/flowpilot_new.py"),
+        "progress_evidence_replacement": ("fake_project_blackbox_cli_progress_evidence_replacement", "skills/flowpilot/assets/flowpilot_new.py"),
         "orphan_runner_summary_recovery": ("fake_project_blackbox_cli_orphan_runner_summary", "skills/flowpilot/assets/flowpilot_new.py"),
     }
     for scenario_name, (row_id, evidence_path) in scenario_rows.items():

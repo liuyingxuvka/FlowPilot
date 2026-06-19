@@ -49,7 +49,7 @@ FAMILY_FIELDS: dict[str, dict[str, str]] = {
     "wait_liveness": {
         "wait_target_metadata_complete": "daemon-owned role wait lacked role, evidence, or reminder metadata",
         "reminders_are_controller_actions": "wait reminder was not handled as executable Controller work",
-        "fresh_liveness_probe_used": "report wait reminder used stale role liveness",
+        "fresh_ack_progress_evidence_used": "report wait reminder used stale ACK/progress evidence",
         "mailbox_consumed_once": "mailbox evidence was not consumed exactly once",
         "external_event_closed_by_router": "matching external-event wait was not closed by Router",
         "foreground_standby_polls": "foreground standby did not keep polling daemon status and action ledger",
@@ -109,7 +109,7 @@ class State:
     same_action_not_reissued: bool = True
     wait_target_metadata_complete: bool = True
     reminders_are_controller_actions: bool = True
-    fresh_liveness_probe_used: bool = True
+    fresh_ack_progress_evidence_used: bool = True
     mailbox_consumed_once: bool = True
     external_event_closed_by_router: bool = True
     foreground_standby_polls: bool = True
@@ -447,4 +447,3 @@ __all__ = [
     "required_labels",
     "scenarios_for",
 ]
-

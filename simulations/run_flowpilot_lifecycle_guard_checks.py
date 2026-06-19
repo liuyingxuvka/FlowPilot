@@ -47,7 +47,7 @@ def _target_plan_report() -> dict[str, Any]:
     failures = model.invariant_failures(state)
     return {
         "ok": not failures and model.is_success(state),
-        "evidence_role": "lifecycle_guard_model_not_live_host_proof",
+        "evidence_role": "lifecycle_guard_model_ack_progress_evidence",
         "failures": failures,
         "state": model.state_summary(state),
         "labels": list(model.REQUIRED_SAFE_LABELS),
@@ -84,10 +84,10 @@ def _model_test_alignment_report() -> dict[str, Any]:
             and "slow_reviewer_progress_preserved" in fake_text
             and "still_working" in fake_text
         ),
-        "liveness_failure_required_before_replacement": (
-            "test_liveness_check_due_does_not_replace_without_failure_evidence" in lifecycle_text
-            and "test_current_liveness_failure_allows_replacement_duty" in lifecycle_text
-            and "no_output" in fake_text
+        "ack_progress_evidence_thresholds": (
+            "test_ack_wait_uses_five_and_ten_minute_thresholds" in lifecycle_text
+            and "test_acknowledged_wait_uses_progress_reminder_and_replacement_thresholds" in lifecycle_text
+            and "progress_evidence_replacement" in fake_text
         ),
         "accepted_packet_reassignment_rejected": (
             "test_accepted_packet_rejects_reassignment_and_ack_regression" in lifecycle_text
@@ -100,10 +100,11 @@ def _model_test_alignment_report() -> dict[str, Any]:
             and "test_user_cancel_terminal_fence_blocks_new_work" in lifecycle_text
             and "stop_terminal_fence" in fake_text
         ),
-        "host_liveness_bridge": (
-            "test_host_liveness_not_found_overrides_prior_progress" in lifecycle_text
-            and "host_liveness_bridge_recovery" in fake_text
-            and "host-liveness" in fake_text
+        "legacy_liveness_surface_rejected": (
+            "test_legacy_host_liveness_current_surface_is_removed" in lifecycle_text
+            and "test_legacy_liveness_fields_do_not_override_fresh_progress" in lifecycle_text
+            and "progress_evidence_replacement" in fake_text
+            and "host-liveness" not in fake_text
         ),
         "orphan_evidence_recovery": (
             "test_orphan_runner_summary_routes_recovery_without_accepting_packet" in lifecycle_text

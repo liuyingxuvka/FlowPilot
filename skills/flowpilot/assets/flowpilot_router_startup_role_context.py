@@ -96,7 +96,7 @@ def _resume_role_context(router: ModuleType, project_root: Path, run_root: Path,
     memory_path = router._role_memory_path(run_root, role)
     core_path = router._role_core_prompt_path(run_root, role)
     common_context = {'resume_reentry': project_relative(project_root, run_root / 'continuation' / 'resume_reentry.json'), 'execution_frontier': project_relative(project_root, run_root / 'execution_frontier.json'), 'packet_ledger': project_relative(project_root, run_root / 'packet_ledger.json'), 'prompt_delivery_ledger': project_relative(project_root, run_root / 'prompt_delivery_ledger.json'), 'role_io_protocol_ledger': project_relative(project_root, _role_io_protocol_ledger_path(run_root)), 'role_binding_ledger': project_relative(project_root, run_root / 'role_binding_ledger.json'), 'route_history_index': project_relative(project_root, router._route_history_index_path(run_root)), 'pm_prior_path_context': project_relative(project_root, router._pm_prior_path_context_path(run_root)), 'display_plan': project_relative(project_root, router._display_plan_path(run_root))}
-    context = {'role_key': role, 'required_rehydration_result': 'conditional_on_host_liveness', 'active_liveness_rehydration_result': ROLE_BINDING_CONTINUITY_RESULT, 'replacement_rehydration_result': ROLE_BINDING_REHYDRATION_RESULT, 'allowed_rehydration_results': sorted(RESUME_ROLE_BINDING_RESULTS), 'model_policy': ROLE_BINDING_MODEL_POLICY, 'reasoning_effort_policy': ROLE_BINDING_REASONING_EFFORT_POLICY, 'preferred_reasoning_effort': ROLE_BINDING_PREFERRED_REASONING_EFFORT, 'inherit_foreground_model_allowed': False, 'rehydrated_for_run_id': run_state['run_id'], 'rehydrated_after_resume_tick_id': router._latest_resume_tick_id(run_state), 'rehydrated_after_resume_state_loaded': True, 'replacement_opened_after_resume_state_loaded': False, 'replacement_opened_after_resume_state_loaded_required_if_replaced': True, 'core_prompt_path': project_relative(project_root, core_path), 'core_prompt_hash': router._path_hash(core_path), 'memory_packet_path': project_relative(project_root, memory_path), 'memory_packet_hash': router._path_hash(memory_path), 'role_memory_status': 'available' if memory_path.exists() else 'missing', 'common_context_paths': common_context, 'controller_visibility': 'state_and_envelopes_only', 'sealed_body_reads_allowed': False, 'chat_history_progress_inference_allowed': False}
+    context = {'role_key': role, 'required_rehydration_result': 'conditional_on_current_role_addressability', 'active_liveness_rehydration_result': ROLE_BINDING_CONTINUITY_RESULT, 'replacement_rehydration_result': ROLE_BINDING_REHYDRATION_RESULT, 'allowed_rehydration_results': sorted(RESUME_ROLE_BINDING_RESULTS), 'model_policy': ROLE_BINDING_MODEL_POLICY, 'reasoning_effort_policy': ROLE_BINDING_REASONING_EFFORT_POLICY, 'preferred_reasoning_effort': ROLE_BINDING_PREFERRED_REASONING_EFFORT, 'inherit_foreground_model_allowed': False, 'rehydrated_for_run_id': run_state['run_id'], 'rehydrated_after_resume_tick_id': router._latest_resume_tick_id(run_state), 'rehydrated_after_resume_state_loaded': True, 'replacement_opened_after_resume_state_loaded': False, 'replacement_opened_after_resume_state_loaded_required_if_replaced': True, 'core_prompt_path': project_relative(project_root, core_path), 'core_prompt_hash': router._path_hash(core_path), 'memory_packet_path': project_relative(project_root, memory_path), 'memory_packet_hash': router._path_hash(memory_path), 'role_memory_status': 'available' if memory_path.exists() else 'missing', 'common_context_paths': common_context, 'controller_visibility': 'state_and_envelopes_only', 'sealed_body_reads_allowed': False, 'chat_history_progress_inference_allowed': False}
     if role == 'project_manager':
         context['pm_resume_context_required'] = True
         context['pm_resume_context_paths'] = {'resume_reentry': common_context['resume_reentry'], 'execution_frontier': common_context['execution_frontier'], 'packet_ledger': common_context['packet_ledger'], 'prompt_delivery_ledger': common_context['prompt_delivery_ledger'], 'role_binding_ledger': common_context['role_binding_ledger'], 'role_binding_memory': project_relative(project_root, run_root / 'role_binding_memory'), 'route_history_index': common_context['route_history_index'], 'pm_prior_path_context': common_context['pm_prior_path_context'], 'display_plan': common_context['display_plan']}
@@ -143,10 +143,6 @@ def _current_resume_role_keys(router: ModuleType, project_root: Path, run_root: 
 def _resume_role_contexts(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any]) -> list[dict[str, Any]]:
     _bind_router(router)
     return [router._resume_role_context(project_root, run_root, run_state, role) for role in router._current_resume_role_keys(project_root, run_root, run_state)]
-
-def _resume_liveness_probe_batch_id(router: ModuleType, run_state: dict[str, Any]) -> str:
-    _bind_router(router)
-    return f"resume-liveness-{run_state['run_id']}-{router._latest_resume_tick_id(run_state)}"
 
 def _role_recovery_dir(router: ModuleType, run_root: Path) -> Path:
     _bind_router(router)
@@ -219,7 +215,7 @@ def _role_recovery_ready_context(router: ModuleType, project_root: Path, run_roo
         agent_id = slot.get('agent_id')
         if role in transaction_targets and str(slot.get('last_role_recovery_transaction_id') or '') != str(transaction.get('transaction_id') or ''):
             continue
-        if role in RUNTIME_ROLE_KEYS and isinstance(agent_id, str) and agent_id.strip() and router._role_slot_has_current_host_liveness(slot):
+        if role in RUNTIME_ROLE_KEYS and isinstance(agent_id, str) and agent_id.strip() and router._role_slot_has_current_binding(slot):
             ready_agents[role] = agent_id.strip()
     missing_roles = [role for role in transaction_targets if role not in ready_agents]
     if missing_roles:
@@ -235,7 +231,6 @@ __all__ = (
     '_resume_role_context',
     '_current_resume_role_keys',
     '_resume_role_contexts',
-    '_resume_liveness_probe_batch_id',
     '_role_recovery_dir',
     '_role_recovery_latest_transaction_path',
     '_role_recovery_state_path',

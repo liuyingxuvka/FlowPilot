@@ -121,25 +121,6 @@ def submit_host_result(
     return runtime.submit_result(ledger, lease_id, packet_id, body, **kwargs)
 
 
-def record_liveness(
-    ledger: dict[str, Any],
-    lease_id: str,
-    packet_id: str,
-    status: str,
-    *,
-    source: str = "host_report",
-    detail: str = "",
-) -> dict[str, Any]:
-    return runtime.record_host_liveness(
-        ledger,
-        lease_id,
-        packet_id,
-        status,
-        source=source,
-        detail=detail,
-    )
-
-
 def host_confidence_boundary(ledger: dict[str, Any]) -> dict[str, Any]:
     rows = list(ledger.get("host_evidence", {}).values())
     live_rows = [row for row in rows if row.get("live_confidence")]

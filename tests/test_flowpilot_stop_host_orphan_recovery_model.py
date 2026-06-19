@@ -7,7 +7,7 @@ import unittest
 runner = importlib.import_module("simulations.run_flowpilot_stop_host_orphan_recovery_checks")
 
 
-class FlowPilotStopHostOrphanRecoveryModelTests(unittest.TestCase):
+class FlowPilotStopProgressOrphanRecoveryModelTests(unittest.TestCase):
     def test_flowguard_model_is_green_and_catches_known_hazards(self) -> None:
         result = runner.run_checks()
 
@@ -16,7 +16,7 @@ class FlowPilotStopHostOrphanRecoveryModelTests(unittest.TestCase):
         for expected in (
             "new_work_after_terminal_allowed",
             "terminal_without_ledger_status",
-            "stale_progress_overrode_host_failure",
+            "stale_progress_counted_as_fresh_evidence",
             "completed_without_result_treated_terminal",
             "orphan_evidence_auto_accepted",
             "orphan_evidence_ignored",

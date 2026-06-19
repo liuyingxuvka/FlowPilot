@@ -928,7 +928,7 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
             ("blocker", {"blocker": {"required": True}}, "wait_target_blocker_required"),
             ("reissue", {"reissue": {"required": True}}, "wait_target_reissue_required"),
             ("reminder", {"reminder": {"due": True}}, "wait_target_check_due"),
-            ("liveness_probe", {"liveness_probe": {"due": True}}, "wait_target_check_due"),
+            ("legacy_liveness_probe_ignored", {"liveness_probe": {"due": True}}, "daemon_alive_no_controller_action"),
             (
                 "controller_local_self_audit",
                 {"controller_local_self_audit": {"required": True}},
@@ -1038,7 +1038,7 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
                 user_required=False,
                 daemon_liveness_check_required=False,
                 pending_action_ids=[],
-                current_wait={"liveness_probe": {"due": True}},
+                current_wait={"reminder": {"due": True}},
             ),
             "wait_target_check_due",
         )

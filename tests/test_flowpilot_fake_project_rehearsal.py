@@ -36,7 +36,7 @@ class FlowPilotFakeProjectRehearsalTests(unittest.TestCase):
                 "slow_reviewer_progress_preserved",
                 "accepted_packet_reassignment_rejected",
                 "stop_terminal_fence",
-                "host_liveness_bridge_recovery",
+                "progress_evidence_replacement",
                 "orphan_runner_summary_recovery",
                 "unsupported_side_command",
             },

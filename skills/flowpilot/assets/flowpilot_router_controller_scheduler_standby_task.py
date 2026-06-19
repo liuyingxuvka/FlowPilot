@@ -70,8 +70,9 @@ def _continuous_standby_task_payload(
         "next_due": current_wait.get("next_due") or {},
         "strict_wait_until_router_release_condition": True,
         "ack_reminder_seconds": WAIT_TARGET_ACK_REMINDER_SECONDS,
-        "ack_blocker_seconds": WAIT_TARGET_ACK_BLOCKER_SECONDS,
-        "report_reminder_and_liveness_seconds": WAIT_TARGET_REPORT_REMINDER_SECONDS,
+        "ack_replace_seconds": WAIT_TARGET_ACK_REPLACE_SECONDS,
+        "report_reminder_seconds": WAIT_TARGET_REPORT_REMINDER_SECONDS,
+        "report_replace_seconds": WAIT_TARGET_REPORT_REPLACE_SECONDS,
         "receipt_audit_before_each_wait_wakeup": True,
     }
     return {

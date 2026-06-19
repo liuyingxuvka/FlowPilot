@@ -70,7 +70,7 @@ def read_role_io_protocol_ledger(run_root: Path, run_id: str) -> dict[str, Any]:
 
 
 def role_io_receipt_lifecycle_phase(record: dict[str, Any], default_phase: str) -> str:
-    if record.get("liveness_decision") == "opened_replacement_from_current_run_memory":
+    if record.get("current_run_binding_decision") == "current_run_replacement_opened":
         return "missing_agent_replacement"
     return default_phase
 

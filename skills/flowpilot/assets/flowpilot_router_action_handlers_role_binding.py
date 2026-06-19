@@ -39,8 +39,8 @@ def _normalize_current_role_agent_binding(
         "reasoning_effort_policy",
         "binding_open_result",
         "opened_for_run_id",
-        "host_liveness_status",
-        "liveness_decision",
+        "role_surface_addressable",
+        "current_run_binding_decision",
     }
     extra_record_keys = sorted(str(key) for key in raw if key not in allowed_record_keys)
     if extra_record_keys:
@@ -58,10 +58,10 @@ def _normalize_current_role_agent_binding(
         raise router.RouterError(f"{role} requires binding_open_result={CURRENT_ROLE_AGENT_BINDING_RESULT}")
     if raw.get("opened_for_run_id") != run_state["run_id"]:
         raise router.RouterError(f"{role} must be opened_for_run_id={run_state['run_id']}")
-    if raw.get("host_liveness_status") != "active":
-        raise router.RouterError(f"{role} requires active host_liveness_status")
-    if raw.get("liveness_decision") != "confirmed_existing_agent":
-        raise router.RouterError(f"{role} requires liveness_decision=confirmed_existing_agent")
+    if raw.get("role_surface_addressable") is not True:
+        raise router.RouterError(f"{role} requires role_surface_addressable=true")
+    if raw.get("current_run_binding_decision") != "existing_current_agent_reused":
+        raise router.RouterError(f"{role} requires current_run_binding_decision=existing_current_agent_reused")
     core_prompt_path = router._role_core_prompt_path(run_root, role)
     return {
         "role_key": role,
@@ -72,9 +72,8 @@ def _normalize_current_role_agent_binding(
         "preferred_reasoning_effort": router.ROLE_BINDING_PREFERRED_REASONING_EFFORT,
         "binding_open_result": CURRENT_ROLE_AGENT_BINDING_RESULT,
         "opened_for_run_id": run_state["run_id"],
-        "host_liveness_status": "active",
-        "liveness_decision": "confirmed_existing_agent",
-        "host_liveness_verified": True,
+        "role_surface_addressable": True,
+        "current_run_binding_decision": "existing_current_agent_reused",
         "core_prompt_path": router.project_relative(project_root, core_prompt_path),
         "core_prompt_hash": router._path_hash(core_prompt_path),
         "recorded_at": router.utc_now(),
@@ -130,8 +129,8 @@ def _write_current_role_agent_binding(
         "current_role_agent_binding": {
             "opened_for_current_run": True,
             "binding_open_result": record["binding_open_result"],
-            "host_liveness_status": record["host_liveness_status"],
-            "liveness_decision": record["liveness_decision"],
+            "role_surface_addressable": record["role_surface_addressable"],
+            "current_run_binding_decision": record["current_run_binding_decision"],
             "source_action": "open_current_role_agent",
         },
         "core_prompt_path": record["core_prompt_path"],

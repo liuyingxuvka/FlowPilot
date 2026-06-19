@@ -37,7 +37,7 @@ class ControlPlaneStep:
         "packet_ledger_io",
         "control_blocker_lane",
         "lifecycle_authorities",
-        "host_liveness",
+        "current_binding_evidence",
         "active_snapshot",
         "status_summary",
         "role_memory",
@@ -136,7 +136,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 holder="controller",
                 active_holder_lease_issued=True,
                 active_holder_agent_identity_recorded=True,
-                active_holder_agent_host_live=True,
+                active_holder_current_binding_proven=True,
                 active_holder_packet_role_matches=True,
             ),
         )

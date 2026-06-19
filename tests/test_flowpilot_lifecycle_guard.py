@@ -128,7 +128,7 @@ class FlowPilotLifecycleGuardTests(unittest.TestCase):
             self.assertFalse(guard["controller_stop_allowed"])
             duty = resumed["foreground_duty"]
             self.assertEqual(duty["action"], "wait_patrol")
-            self.assertEqual(duty["wait_patrol"]["seconds"], 60)
+            self.assertEqual(duty["wait_patrol"]["seconds"], 300)
             self.assertFalse(duty["final_return_preflight"]["allowed"])
 
     def test_final_preflight_rejects_open_packet(self) -> None:
@@ -167,10 +167,6 @@ class FlowPilotLifecycleGuardTests(unittest.TestCase):
             flowpilot_new.ack(root, lease_id=lease_id, packet_id=packet_id)
 
             shell = run_shell.load_run_shell(root, run_id="run-progress-grace")
-            ledger = run_shell.load_run_ledger(shell)
-            ledger["lifecycle_guard_config"]["result_liveness_seconds"] = 0
-            run_shell.save_run_ledger(shell, ledger, guard_trigger="test_config")
-
             progress = flowpilot_new.progress(root, lease_id=lease_id, packet_id=packet_id, status="still_working")
 
             self.assertEqual(progress["next_action"]["action_type"], "wait_for_result")
@@ -181,13 +177,13 @@ class FlowPilotLifecycleGuardTests(unittest.TestCase):
             self.assertEqual(ledger["leases"][lease_id]["progress_count"], 1)
             self.assertEqual(ledger["packets"][packet_id]["status"], "acknowledged")
 
-    def test_liveness_check_due_does_not_replace_without_failure_evidence(self) -> None:
+    def test_ack_wait_uses_five_and_ten_minute_thresholds(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             started = flowpilot_new.start_run(
                 root,
-                run_id="run-liveness-check-due",
-                headless_startup_text="Exercise liveness due without replacement.",
+                run_id="run-ack-thresholds",
+                headless_startup_text="Exercise ACK wait thresholds.",
                 require_formal_ui=False,
             )
             packet_id = started["next_action"]["subject_id"]
@@ -195,59 +191,43 @@ class FlowPilotLifecycleGuardTests(unittest.TestCase):
                 root,
                 packet_id=packet_id,
                 responsibility="pm",
-                agent_id="fake-pm-liveness",
+                agent_id="fake-pm-ack-threshold",
             )
-            flowpilot_new.ack(root, lease_id=lease_id, packet_id=packet_id)
-            shell = run_shell.load_run_shell(root, run_id="run-liveness-check-due")
+            shell = run_shell.load_run_shell(root, run_id="run-ack-thresholds")
             ledger = run_shell.load_run_ledger(shell)
-            ledger["lifecycle_guard_config"]["result_liveness_seconds"] = 0
-            ledger["leases"][lease_id]["ack_received_at"] = (
-                datetime.now(timezone.utc) - timedelta(minutes=15)
-            ).isoformat()
-            run_shell.save_run_ledger(shell, ledger, guard_trigger="test_old_wait")
+            ledger["leases"][lease_id]["created_at"] = (datetime.now(timezone.utc) - timedelta(minutes=4, seconds=59)).isoformat()
+            run_shell.save_run_ledger(shell, ledger, guard_trigger="test_ack_wait")
 
             patrol = flowpilot_new.patrol(root)
+            self.assertEqual(patrol["lifecycle_guard"]["wait_recovery"]["state"], "wait_patrol")
 
-            self.assertEqual(patrol["lifecycle_guard"]["decision"], "wait_for_result")
-            self.assertEqual(patrol["lifecycle_guard"]["wait_recovery"]["state"], "liveness_check_due")
+            ledger = run_shell.load_run_ledger(shell)
+            ledger["leases"][lease_id]["created_at"] = (datetime.now(timezone.utc) - timedelta(minutes=5)).isoformat()
+            run_shell.save_run_ledger(shell, ledger, guard_trigger="test_ack_reminder")
+            patrol = flowpilot_new.patrol(root)
+            self.assertEqual(patrol["lifecycle_guard"]["decision"], "wait_for_ack")
+            self.assertEqual(patrol["lifecycle_guard"]["wait_recovery"]["state"], "ack_reminder_due")
             self.assertFalse(patrol["lifecycle_guard"]["wait_recovery"]["replacement_eligible"])
             self.assertEqual(patrol["foreground_duty"]["action"], "wait_patrol")
+            self.assertTrue(patrol["foreground_duty"]["wait_patrol"]["reminder"]["due"])
+            self.assertEqual(patrol["foreground_duty"]["wait_patrol"]["reminder"]["kind"], "ack")
 
-    def test_current_liveness_failure_allows_replacement_duty(self) -> None:
-        with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
-            started = flowpilot_new.start_run(
-                root,
-                run_id="run-liveness-failure",
-                headless_startup_text="Exercise liveness failure replacement.",
-                require_formal_ui=False,
-            )
-            packet_id = started["next_action"]["subject_id"]
-            lease_id = self._lease_packet(
-                root,
-                packet_id=packet_id,
-                responsibility="pm",
-                agent_id="fake-pm-failure",
-            )
-            flowpilot_new.ack(root, lease_id=lease_id, packet_id=packet_id)
-            shell = run_shell.load_run_shell(root, run_id="run-liveness-failure")
             ledger = run_shell.load_run_ledger(shell)
-            ledger["leases"][lease_id]["liveness_status"] = "timeout_unknown"
-            run_shell.save_run_ledger(shell, ledger, guard_trigger="test_liveness_failure")
-
+            ledger["leases"][lease_id]["created_at"] = (datetime.now(timezone.utc) - timedelta(minutes=10)).isoformat()
+            run_shell.save_run_ledger(shell, ledger, guard_trigger="test_ack_replace")
             patrol = flowpilot_new.patrol(root)
-
             self.assertEqual(patrol["lifecycle_guard"]["decision"], "reissue_or_replace_lease")
+            self.assertEqual(patrol["lifecycle_guard"]["wait_recovery"]["state"], "ack_replacement_due")
             self.assertTrue(patrol["lifecycle_guard"]["wait_recovery"]["replacement_eligible"])
             self.assertEqual(patrol["foreground_duty"]["action"], "recover_or_reissue")
 
-    def test_host_liveness_not_found_overrides_prior_progress(self) -> None:
+    def test_acknowledged_wait_uses_progress_reminder_and_replacement_thresholds(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             started = flowpilot_new.start_run(
                 root,
-                run_id="run-host-liveness-not-found",
-                headless_startup_text="Exercise real host liveness bridge.",
+                run_id="run-progress-thresholds",
+                headless_startup_text="Exercise progress evidence thresholds.",
                 require_formal_ui=False,
             )
             packet_id = started["next_action"]["subject_id"]
@@ -255,31 +235,52 @@ class FlowPilotLifecycleGuardTests(unittest.TestCase):
                 root,
                 packet_id=packet_id,
                 responsibility="pm",
-                agent_id="fake-pm-liveness-bridge",
+                agent_id="fake-pm-progress-threshold",
             )
             flowpilot_new.ack(root, lease_id=lease_id, packet_id=packet_id)
-            flowpilot_new.progress(root, lease_id=lease_id, packet_id=packet_id, status="still_working")
+            shell = run_shell.load_run_shell(root, run_id="run-progress-thresholds")
+            ledger = run_shell.load_run_ledger(shell)
+            ledger["leases"][lease_id]["ack_received_at"] = (datetime.now(timezone.utc) - timedelta(minutes=9, seconds=59)).isoformat()
+            run_shell.save_run_ledger(shell, ledger, guard_trigger="test_progress_fresh")
 
-            bridge = flowpilot_new.host_liveness(
-                root,
-                lease_id=lease_id,
-                packet_id=packet_id,
-                status="not_found",
-                source="unit_test_host_probe",
-            )
+            patrol = flowpilot_new.patrol(root)
+            self.assertEqual(patrol["lifecycle_guard"]["decision"], "wait_for_result")
+            self.assertEqual(patrol["lifecycle_guard"]["wait_recovery"]["state"], "grace_wait")
 
-            self.assertEqual(bridge["lifecycle_guard"]["decision"], "reissue_or_replace_lease")
-            self.assertEqual(bridge["lifecycle_guard"]["wait_recovery"]["last_liveness_status"], "not_found")
-            self.assertTrue(bridge["lifecycle_guard"]["wait_recovery"]["replacement_eligible"])
-            self.assertEqual(bridge["foreground_duty"]["action"], "recover_or_reissue")
+            ledger = run_shell.load_run_ledger(shell)
+            ledger["leases"][lease_id]["ack_received_at"] = (datetime.now(timezone.utc) - timedelta(minutes=10)).isoformat()
+            run_shell.save_run_ledger(shell, ledger, guard_trigger="test_progress_reminder")
+            patrol = flowpilot_new.patrol(root)
+            self.assertEqual(patrol["lifecycle_guard"]["decision"], "wait_for_result")
+            self.assertEqual(patrol["lifecycle_guard"]["wait_recovery"]["state"], "progress_reminder_due")
+            self.assertFalse(patrol["lifecycle_guard"]["wait_recovery"]["replacement_eligible"])
+            self.assertEqual(patrol["foreground_duty"]["wait_patrol"]["reminder"]["kind"], "progress")
 
-    def test_completed_without_result_is_recovery_not_terminal(self) -> None:
+            recovered = flowpilot_new.progress(root, lease_id=lease_id, packet_id=packet_id, status="still_working")
+            self.assertEqual(recovered["lifecycle_guard"]["decision"], "wait_for_result")
+            self.assertEqual(recovered["lifecycle_guard"]["wait_recovery"]["state"], "grace_wait")
+
+            ledger = run_shell.load_run_ledger(shell)
+            stale = (datetime.now(timezone.utc) - timedelta(minutes=30)).isoformat()
+            ledger["leases"][lease_id]["ack_received_at"] = stale
+            ledger["leases"][lease_id]["last_progress_at"] = stale
+            run_shell.save_run_ledger(shell, ledger, guard_trigger="test_progress_replace")
+            patrol = flowpilot_new.patrol(root)
+            self.assertEqual(patrol["lifecycle_guard"]["decision"], "reissue_or_replace_lease")
+            self.assertEqual(patrol["lifecycle_guard"]["wait_recovery"]["state"], "progress_replacement_due")
+            self.assertTrue(patrol["lifecycle_guard"]["wait_recovery"]["replacement_eligible"])
+
+    def test_legacy_host_liveness_current_surface_is_removed(self) -> None:
+        self.assertFalse(hasattr(flowpilot_new, "host_liveness"))
+        self.assertFalse(hasattr(runtime, "record_host_liveness"))
+
+    def test_legacy_liveness_fields_do_not_override_fresh_progress(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             started = flowpilot_new.start_run(
                 root,
-                run_id="run-host-completed-without-result",
-                headless_startup_text="Exercise completed-without-result bridge.",
+                run_id="run-legacy-liveness-residue",
+                headless_startup_text="Exercise legacy liveness residue.",
                 require_formal_ui=False,
             )
             packet_id = started["next_action"]["subject_id"]
@@ -287,22 +288,23 @@ class FlowPilotLifecycleGuardTests(unittest.TestCase):
                 root,
                 packet_id=packet_id,
                 responsibility="pm",
-                agent_id="fake-pm-completed-without-result",
+                agent_id="fake-pm-legacy-residue",
             )
             flowpilot_new.ack(root, lease_id=lease_id, packet_id=packet_id)
+            shell = run_shell.load_run_shell(root, run_id="run-legacy-liveness-residue")
+            ledger = run_shell.load_run_ledger(shell)
+            ledger["leases"][lease_id]["liveness_status"] = "timeout_unknown"
+            ledger["leases"][lease_id]["last_liveness_status"] = "lost"
+            run_shell.save_run_ledger(shell, ledger, guard_trigger="test_legacy_residue")
 
-            bridge = flowpilot_new.host_liveness(
-                root,
-                lease_id=lease_id,
-                packet_id=packet_id,
-                status="completed_without_result",
-                source="unit_test_host_probe",
+            recovered = flowpilot_new.progress(root, lease_id=lease_id, packet_id=packet_id, status="still_working")
+
+            self.assertEqual(recovered["lifecycle_guard"]["decision"], "wait_for_result")
+            self.assertEqual(recovered["lifecycle_guard"]["wait_recovery"]["state"], "grace_wait")
+            self.assertEqual(
+                recovered["lifecycle_guard"]["wait_recovery"]["last_liveness_evidence_kind"],
+                "progress",
             )
-
-            self.assertEqual(bridge["next_action"]["action_type"], "wait_for_result")
-            self.assertEqual(bridge["lifecycle_guard"]["decision"], "reissue_or_replace_lease")
-            self.assertEqual(bridge["foreground_duty"]["action"], "recover_or_reissue")
-            self.assertFalse(bridge["final_return_preflight"]["allowed"])
 
     def test_user_stop_terminal_fence_allows_exit_without_closure(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

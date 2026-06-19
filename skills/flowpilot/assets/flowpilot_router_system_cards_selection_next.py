@@ -68,8 +68,8 @@ def _current_role_agent_payload_contract(run_state: dict[str, Any], role: str) -
             "current_role_agent_binding.reasoning_effort_policy",
             "current_role_agent_binding.binding_open_result",
             "current_role_agent_binding.opened_for_run_id",
-            "current_role_agent_binding.host_liveness_status",
-            "current_role_agent_binding.liveness_decision",
+            "current_role_agent_binding.role_surface_addressable",
+            "current_role_agent_binding.current_run_binding_decision",
         ],
         "allowed_values": {
             "runtime_role_assistance_capability_status": ["available"],
@@ -78,8 +78,8 @@ def _current_role_agent_payload_contract(run_state: dict[str, Any], role: str) -
             "current_role_agent_binding.reasoning_effort_policy": [ROLE_BINDING_REASONING_EFFORT_POLICY],
             "current_role_agent_binding.binding_open_result": ["opened_for_current_packet"],
             "current_role_agent_binding.opened_for_run_id": [str(run_state.get("run_id") or "")],
-            "current_role_agent_binding.host_liveness_status": ["active"],
-            "current_role_agent_binding.liveness_decision": ["confirmed_existing_agent"],
+            "current_role_agent_binding.role_surface_addressable": [True],
+            "current_role_agent_binding.current_run_binding_decision": ["existing_current_agent_reused"],
         },
     }
 

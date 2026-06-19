@@ -13,7 +13,7 @@ Risk intent brief:
   external-event wait row closure, Controller receipts, stateful Controller
   postcondition evidence, Router scheduler ledger parseability, atomic durable
   ledger writes, daemon status/lock/process consistency, manual resume/patrol
-  resume recovery, role cohort liveness, missing-deliverable repair
+  resume recovery, ACK/progress wait evidence, missing-deliverable repair
   issue/failure counts, and terminal cleanup.
 - Adversarial branches include formal startup skipping or failing daemon
   launch before Controller core load, no daemon at a wait, duplicate Router
@@ -153,14 +153,14 @@ class State:
     wait_target_reminder_updates_wait_metadata: bool = False
     ack_wait_age_minutes: int = 0
     ack_wait_reminder_sent: bool = False
-    ack_wait_blocker_recorded: bool = False
+    ack_wait_replacement_recorded: bool = False
     report_wait_age_minutes: int = 0
     report_reminder_sent: bool = False
-    liveness_check_required: bool = False
-    liveness_probe_fresh: bool = False
-    liveness_probe_outcome: str = "none"  # none | working | lost
-    stale_liveness_cached_as_truth: bool = False
-    role_liveness_blocker_recorded: bool = False
+    progress_reminder_required: bool = False
+    ack_progress_policy_current: bool = False
+    progress_evidence_outcome: str = "none"  # none | fresh | expired
+    stale_progress_cached_as_truth: bool = False
+    progress_replacement_recorded: bool = False
     controller_local_self_audit_done: bool = False
     controller_local_blocker_recorded: bool = False
     controller_reminded_itself: bool = False

@@ -110,9 +110,9 @@
     "obligations": {
       "accepted_packet_race_repair": true,
       "accepted_packet_reassignment_rejected": true,
+      "ack_progress_evidence_thresholds": true,
       "final_preflight_blocks_open_packet": true,
-      "host_liveness_bridge": true,
-      "liveness_failure_required_before_replacement": true,
+      "legacy_liveness_surface_rejected": true,
       "nonterminal_foreground_duty": true,
       "orphan_evidence_recovery": true,
       "recovery_or_blocker_duty": true,
@@ -127,7 +127,7 @@
   "ok": true,
   "result_type": "flowpilot_lifecycle_guard_checks",
   "target_plan": {
-    "evidence_role": "lifecycle_guard_model_not_live_host_proof",
+    "evidence_role": "lifecycle_guard_model_ack_progress_evidence",
     "failures": [],
     "labels": [
       "load_current_run_ledger",

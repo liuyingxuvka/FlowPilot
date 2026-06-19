@@ -2451,22 +2451,8 @@ def _audit_controller_delivery_success(run_root: Path) -> dict[str, object]:
                 )
     return {"ok": not failures, "failures": failures}
 
-def _audit_active_holder_liveness(run_root: Path) -> dict[str, object]:
-    role_recovery, _role_recovery_error = _read_json(
-        run_root / "continuation" / "role_recovery" / "latest_transaction.json"
-    )
+def _audit_active_holder_binding(run_root: Path) -> dict[str, object]:
     missing_agent_ids: set[str] = set()
-    if isinstance(role_recovery, dict):
-        fault_payload = role_recovery.get("fault_payload")
-        fault_payload = fault_payload if isinstance(fault_payload, dict) else {}
-        probe = fault_payload.get("liveness_probe")
-        probe = probe if isinstance(probe, dict) else {}
-        if probe.get("result") == "missing":
-            detail = str(probe.get("detail") or "")
-            for token in detail.replace(";", " ").split():
-                if token.startswith("019"):
-                    missing_agent_ids.add(token)
-
     delivery_audit = _audit_controller_delivery_success(run_root)
     for failure in delivery_audit.get("failures", []):
         target_agent_id = failure.get("target_agent_id")
@@ -2487,8 +2473,13 @@ def _audit_active_holder_liveness(run_root: Path) -> dict[str, object]:
         envelope, _envelope_error = _read_json(lease_path.parent / "packet_envelope.json")
         if isinstance(envelope, dict):
             packet_role_matches = str(envelope.get("to_role") or "") == holder_role
-        host_live = holder_agent_id not in missing_agent_ids
-        if not holder_agent_id or not holder_role or not packet_role_matches or not host_live:
+        binding_evidence = lease.get("holder_binding_evidence")
+        binding_evidence = binding_evidence if isinstance(binding_evidence, dict) else {}
+        current_binding_proven = (
+            bool(binding_evidence.get("current_role_binding_proven") is True)
+            and holder_agent_id not in missing_agent_ids
+        )
+        if not holder_agent_id or not holder_role or not packet_role_matches or not current_binding_proven:
             lease_issues.append(
                 {
                     "path": ".flowpilot/runs/" + run_root.name + "/" + lease_path.relative_to(run_root).as_posix(),
@@ -2496,7 +2487,7 @@ def _audit_active_holder_liveness(run_root: Path) -> dict[str, object]:
                     "holder_role": holder_role or None,
                     "holder_agent_id": holder_agent_id or None,
                     "agent_identity_recorded": bool(holder_agent_id),
-                    "host_live": host_live,
+                    "current_binding_proven": current_binding_proven,
                     "packet_role_matches": packet_role_matches,
                     "read_error": error,
                 }
@@ -2505,7 +2496,7 @@ def _audit_active_holder_liveness(run_root: Path) -> dict[str, object]:
         "lease_count": lease_count,
         "lease_issues": lease_issues,
         "agent_identity_recorded": not any(not item["agent_identity_recorded"] for item in lease_issues),
-        "host_live": not any(not item["host_live"] for item in lease_issues),
+        "current_binding_proven": not any(not item["current_binding_proven"] for item in lease_issues),
         "packet_role_matches": not any(not item["packet_role_matches"] for item in lease_issues),
     }
 
@@ -2987,15 +2978,15 @@ def audit_live_run(
             evidence=controller_delivery,
         )
 
-    active_holder_liveness = _audit_active_holder_liveness(run_root)
-    if active_holder_liveness.get("lease_issues"):
+    active_holder_binding = _audit_active_holder_binding(run_root)
+    if active_holder_binding.get("lease_issues"):
         _add_finding(
             findings,
-            code="active_holder_lease_without_host_liveness",
+            code="active_holder_lease_without_current_binding",
             severity="error",
-            summary="active-holder lease existed without host-liveness proof for the target agent",
-            invariant="active_holder_leases_require_host_liveness",
-            evidence=active_holder_liveness,
+            summary="active-holder lease existed without current binding evidence for the target agent",
+            invariant="active_holder_leases_require_current_binding",
+            evidence=active_holder_binding,
         )
 
     packet_ledger_io = _audit_packet_ledger_corruption(run_root)
@@ -3548,13 +3539,13 @@ def audit_live_run(
         pm_role_work_open_request_masked_by_global_flag=bool(
             pm_role_work_identity.get("global_postcondition_masks_open_request")
         ),
-        active_holder_lease_issued=bool(active_holder_liveness.get("lease_count")),
+        active_holder_lease_issued=bool(active_holder_binding.get("lease_count")),
         active_holder_agent_identity_recorded=bool(
-            active_holder_liveness.get("agent_identity_recorded")
+            active_holder_binding.get("agent_identity_recorded")
         ),
-        active_holder_agent_host_live=bool(active_holder_liveness.get("host_live")),
+        active_holder_current_binding_proven=bool(active_holder_binding.get("current_binding_proven")),
         active_holder_packet_role_matches=bool(
-            active_holder_liveness.get("packet_role_matches")
+            active_holder_binding.get("packet_role_matches")
         ),
         packet_ledger_write_atomic=not bool(
             packet_ledger_io.get("corrupt_backup_count")

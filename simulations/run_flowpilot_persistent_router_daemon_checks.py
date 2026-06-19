@@ -16,6 +16,7 @@ import flowpilot_persistent_router_daemon_model as model
 
 ROOT = Path(__file__).resolve().parent
 RESULTS_PATH = ROOT / "flowpilot_persistent_router_daemon_results.json"
+BOUNDED_FLOWGUARD_MAX_SEQUENCE_LENGTH = 12
 
 REQUIRED_LABELS = (
     "formal_startup_starts_builtin_router_daemon",
@@ -41,7 +42,7 @@ REQUIRED_LABELS = (
     "router_reconciles_controller_receipt_updates_router_fact_and_requires_rescan",
     "router_reconciles_stateful_receipt_after_postcondition_evidence",
     "router_enters_ack_wait_owned_by_daemon",
-    "router_enters_report_wait_with_liveness_obligation",
+    "router_enters_report_wait_with_ack_progress_obligation",
     "router_enters_controller_local_wait_for_self_audit",
     "daemon_projects_packet_holder_current_work_owner",
     "daemon_projects_passive_reconciliation_current_work_owner",
@@ -50,10 +51,10 @@ REQUIRED_LABELS = (
     "foreground_controller_standby_poll_tick_keeps_turn_open",
     "foreground_controller_bounded_timeout_reenters_standby",
     "controller_sends_ack_wait_reminder_at_three_minutes",
-    "controller_records_ack_wait_blocker_at_ten_minutes",
-    "controller_sends_report_reminder_with_fresh_liveness_probe",
-    "healthy_role_continues_report_wait_after_probe",
-    "controller_reports_lost_role_wait_blocker",
+    "controller_reissues_missing_ack_at_ten_minutes",
+    "controller_sends_report_progress_reminder_at_ten_minutes",
+    "healthy_role_continues_report_wait_after_progress",
+    "controller_reissues_report_wait_after_thirty_minutes",
     "controller_local_wait_self_audits_ledger",
     "role_writes_expected_mailbox_evidence",
     "daemon_consumes_mailbox_evidence_once",
@@ -110,16 +111,16 @@ HAZARD_EXPECTED_FAILURES = {
     "foreground_controller_ended_with_pending_controller_action": "Foreground Controller ended while an executable Controller action was pending",
     "foreground_controller_ended_while_daemon_active_no_action": "Foreground Controller ended while the Router daemon was live and no Controller action was ready",
     "role_wait_missing_wait_target_metadata": "daemon-owned role wait lacks Router-authored wait target metadata",
-    "report_reminder_without_fresh_liveness_probe": "report reminder was sent without a fresh role liveness probe",
+    "report_reminder_without_ack_progress_policy": "report reminder was sent without current ACK/progress evidence policy",
     "wait_target_reminder_without_controller_action": (
         "wait target reminder was not handled as an executable Controller action with receipt metadata"
     ),
-    "cached_liveness_trusted_as_current_truth": "Controller trusted cached role liveness instead of probing during standby",
+    "cached_progress_trusted_as_current_truth": "Controller trusted cached progress evidence instead of current ACK/progress evidence",
     "recorded_external_event_left_wait_row_open": "recorded external event left matching Controller wait row open",
     "next_wait_opened_before_satisfied_wait_closed": "Router opened next wait before closing satisfied external-event wait",
     "controller_closed_external_event_wait": "Controller closed external-event wait instead of Router",
-    "ack_wait_ten_minutes_without_blocker": "ACK wait reached ten minutes without Router-visible blocker",
-    "lost_role_without_pm_blocker": "lost role wait did not route to PM blocker recovery",
+    "ack_wait_ten_minutes_without_blocker": "ACK wait reached ten minutes without Router-visible replacement",
+    "progress_replacement_missing_after_thirty_minutes": "report wait reached stale progress replacement without Router-visible replacement",
     "controller_local_wait_reminded_itself": "Controller sent a reminder to itself instead of self-auditing local action ledger",
     "packet_holder_projection_missing_current_work": "packet holder is active but current_work does not name the packet holder",
     "passive_reconciliation_projection_missing_current_work": "passive reconciliation wait is active but current_work does not name the internal owner",
@@ -195,10 +196,10 @@ def _state_id(state: model.State) -> str:
         f"reminder_receipt={state.wait_target_reminder_receipt_recorded},"
         f"reminder_updates_wait={state.wait_target_reminder_updates_wait_metadata},"
         f"ack_age={state.ack_wait_age_minutes},ack_remind={state.ack_wait_reminder_sent},"
-        f"ack_blocker={state.ack_wait_blocker_recorded},report_age={state.report_wait_age_minutes},"
-        f"report_remind={state.report_reminder_sent},live_req={state.liveness_check_required},"
-        f"live_fresh={state.liveness_probe_fresh},live_outcome={state.liveness_probe_outcome},"
-        f"stale_live={state.stale_liveness_cached_as_truth},role_blocker={state.role_liveness_blocker_recorded},"
+        f"ack_replacement={state.ack_wait_replacement_recorded},report_age={state.report_wait_age_minutes},"
+        f"report_remind={state.report_reminder_sent},progress_reminder={state.progress_reminder_required},"
+        f"ack_progress_policy={state.ack_progress_policy_current},progress_outcome={state.progress_evidence_outcome},"
+        f"stale_progress={state.stale_progress_cached_as_truth},progress_replacement={state.progress_replacement_recorded},"
         f"controller_self_audit={state.controller_local_self_audit_done},"
         f"controller_local_blocker={state.controller_local_blocker_recorded},"
         f"controller_reminded_itself={state.controller_reminded_itself}|"
@@ -325,13 +326,15 @@ def _run_flowguard_explorer() -> dict[str, object]:
         initial_states=(model.initial_state(),),
         external_inputs=model.EXTERNAL_INPUTS,
         invariants=model.INVARIANTS,
-        max_sequence_length=model.MAX_SEQUENCE_LENGTH,
+        max_sequence_length=BOUNDED_FLOWGUARD_MAX_SEQUENCE_LENGTH,
         terminal_predicate=lambda _input, state, _trace: model.is_terminal(state),
         success_predicate=lambda state, _trace: model.is_success(state),
-        required_labels=REQUIRED_LABELS,
     ).explore()
     return {
         "ok": report.ok,
+        "coverage_boundary": "bounded_flowguard_smoke",
+        "max_sequence_length": BOUNDED_FLOWGUARD_MAX_SEQUENCE_LENGTH,
+        "required_label_coverage_owner": "safe_graph",
         "summary": report.summary,
         "violation_count": len(report.violations),
         "dead_branch_count": len(report.dead_branches),
@@ -408,4 +411,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

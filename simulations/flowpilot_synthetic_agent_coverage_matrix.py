@@ -49,6 +49,10 @@ from flowpilot_executable_matrix_coverage_model import (  # noqa: E402
     MODEL_ID as EXECUTABLE_MATRIX_COVERAGE_MODEL_ID,
     build_report as executable_matrix_coverage_report,
 )
+from flowpilot_liveness_evidence_cartesian import (  # noqa: E402
+    MODEL_ID as LIVENESS_EVIDENCE_CARTESIAN_MODEL_ID,
+    build_report as liveness_evidence_cartesian_report,
+)
 
 
 PASS_STATUSES = {"passed"}
@@ -1255,11 +1259,52 @@ def _alignment_rows() -> list[dict[str, Any]]:
     return rows
 
 
+def _liveness_evidence_cartesian_rows() -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    report = liveness_evidence_cartesian_report()
+    for row in report["rows"]:
+        rows.append(
+            {
+                **EXPLICIT_TRACE_ROW_DEFAULTS,
+                "family": "liveness evidence Cartesian",
+                "model_id": LIVENESS_EVIDENCE_CARTESIAN_MODEL_ID,
+                "obligation_id": f"liveness_evidence.{row['case_id']}",
+                "branch_kind": str(row["expected_reaction"]),
+                "coverage_kind": "synthetic_trace",
+                "evidence_owner": "liveness_evidence_cartesian_matrix",
+                "evidence_id": f"liveness_evidence.synthetic.{row['case_id']}",
+                "test_name": "test_liveness_evidence_cartesian_runtime_executable_cases_match_oracle",
+                "path": "tests/test_flowpilot_liveness_evidence_cartesian.py",
+                "command": "python -m unittest tests.test_flowpilot_liveness_evidence_cartesian",
+                "evidence_status": "passed",
+                "evidence_current": True,
+                "evidence_role": "primary",
+                "live_completion_allowed": False,
+                "coverage_boundary": "control_flow_only",
+                "risk_tier": "P1" if row["legacy_pollution"] != "none" else "P2",
+                "synthetic_replay_required": True,
+                "synthetic_replay_status": "present",
+                "covered_failure_mode": (
+                    f"{row['expected_reaction']}:{row['ack_state']}:"
+                    f"{row['progress_state']}:{row['legacy_pollution']}:{row['time_bucket']}"
+                ),
+                "story_level": "local",
+                "source": "liveness_evidence_cartesian_required_cell",
+                "normal_repair_context": row["expected_reaction"] not in {"invalid_setup", "final_result_wins"},
+                "legacy_pollution_ignored": row["legacy_pollution_ignored"],
+                "runtime_executable": row["runtime_executable"],
+                "coverage_shard_id": row["coverage_shard_id"],
+            }
+        )
+    return rows
+
+
 def build_coverage_rows() -> list[dict[str, Any]]:
     rows = _alignment_rows()
     rows.extend(_rejection_liveness_rows())
     rows.extend(_contract_exhaustion_rows())
     rows.extend(_cartesian_exhaustion_rows())
+    rows.extend(_liveness_evidence_cartesian_rows())
     for row in SYNTHETIC_TRACE_ROWS:
         rows.append(
             {
@@ -1555,6 +1600,15 @@ def build_report() -> dict[str, Any]:
     rows = build_coverage_rows()
     findings = validate_coverage_rows(rows, required_cells)
     executable_bridge = executable_matrix_coverage_report()
+    liveness_cartesian = liveness_evidence_cartesian_report()
+    if not liveness_cartesian["ok"]:
+        findings.append(
+            {
+                "code": "liveness_evidence_cartesian_incomplete",
+                "message": "Liveness evidence Cartesian matrix did not materialize every declared case.",
+                "model_id": LIVENESS_EVIDENCE_CARTESIAN_MODEL_ID,
+            }
+        )
     if not executable_bridge["ok"]:
         for finding in executable_bridge["findings"]:
             findings.append(
@@ -1621,6 +1675,15 @@ def build_report() -> dict[str, Any]:
             "product_completion_proven": executable_bridge["product_completion_proven"],
             "coverage_boundary": executable_bridge["coverage_boundary"],
             "missing_miss_families": executable_bridge["missing_miss_families"],
+        },
+        "liveness_evidence_cartesian": {
+            "ok": liveness_cartesian["ok"],
+            "model_id": liveness_cartesian["model_id"],
+            "required_case_count": liveness_cartesian["required_case_count"],
+            "row_count": liveness_cartesian["row_count"],
+            "runtime_executable_count": liveness_cartesian["runtime_executable_count"],
+            "legacy_pollution_case_count": liveness_cartesian["legacy_pollution_case_count"],
+            "by_reaction": liveness_cartesian["by_reaction"],
         },
         "findings": findings,
         "required_cells": required_cells,

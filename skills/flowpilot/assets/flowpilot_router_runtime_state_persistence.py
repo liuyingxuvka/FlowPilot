@@ -18,8 +18,7 @@ _RUN_STATE_LOAD_META_ACTIVE_CONTROL_BLOCKER = "_flowpilot_loaded_active_control_
 _RUN_STATE_VOLATILE_META_KEYS = {_RUN_STATE_LOAD_META_HASH, _RUN_STATE_LOAD_META_FLAGS, _RUN_STATE_LOAD_META_PENDING, _RUN_STATE_LOAD_META_ACTIVE_CONTROL_BLOCKER}
 _RUN_STATE_APPEND_ONLY_LIST_FIELDS = ("history", "events", "quarantined_role_reports", "control_blockers", "resolved_control_blockers", "protocol_blockers",
                                       "gate_decisions", "delivered_cards", "delivered_mail", "role_output_replay_quarantine")
-_RUN_STATE_PENDING_REMINDER_FIELDS = ("last_wait_reminder_at", "last_wait_reminder_sha256", "wait_reminder_text", "wait_reminder_text_sha256",
-                                      "last_liveness_probe", "liveness_probe_result")
+_RUN_STATE_PENDING_REMINDER_FIELDS = ("last_wait_reminder_at", "last_wait_reminder_sha256", "wait_reminder_text", "wait_reminder_text_sha256")
 _MATERIAL_GENERATION_PROGRESS_FLAGS = {"material_scan_packets_relayed", "worker_packets_delivered", "worker_scan_results_returned",
                                        "material_scan_results_relayed_to_pm", "material_scan_result_disposition_recorded",
                                        "material_scan_results_absorbed_by_pm", "material_review_sufficient", "material_review_insufficient"}

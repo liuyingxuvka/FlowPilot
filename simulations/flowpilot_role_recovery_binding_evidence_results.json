@@ -1,0 +1,44 @@
+{
+  "flowguard": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "reachability_failures": [],
+    "summary": "sequences=3 initial_states=1 traces=36",
+    "violation_count": 0
+  },
+  "hazard_detection": {
+    "hazards": {
+      "current_report_overblocked": [
+        "safe role recovery or daemon diagnostic scenario was overblocked"
+      ],
+      "daemon_error_without_diagnostics_marked_safe": [
+        "daemon fatal error was marked safe without actionable diagnostics"
+      ],
+      "replacement_intent_only_marked_safe": [
+        "role recovery was marked safe without current transaction and current binding evidence"
+      ],
+      "stale_report_marked_safe": [
+        "role recovery was marked safe without current transaction and current binding evidence"
+      ],
+      "unknown_binding_evidence_marked_safe": [
+        "role recovery was marked safe without current transaction and current binding evidence"
+      ]
+    },
+    "ok": true
+  },
+  "model_id": "flowpilot_role_recovery_binding_evidence_proofs",
+  "ok": true,
+  "result_type": "flowpilot_role_recovery_binding_evidence",
+  "risk_scenarios": [
+    "daemon_error_without_diagnostics",
+    "replacement_intent_only",
+    "stale_report_reclaim",
+    "unknown_binding_evidence"
+  ],
+  "safe_scenarios": [
+    "daemon_error_with_diagnostics",
+    "valid_current_report"
+  ]
+}

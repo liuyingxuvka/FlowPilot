@@ -33,20 +33,20 @@ def invariant_failures(state: State) -> list[str]:
         and state.wait_target_reminder_text_present
     ):
         failures.append("wait target metadata does not name role, evidence, and reminder text")
-    if state.current_wait == "report" and state.report_reminder_sent and not state.liveness_probe_fresh:
-        failures.append("report reminder was sent without a fresh role liveness probe")
+    if state.current_wait == "report" and state.report_reminder_sent and not state.ack_progress_policy_current:
+        failures.append("report reminder was sent without current ACK/progress evidence policy")
     if (state.ack_wait_reminder_sent or state.report_reminder_sent) and not (
         state.wait_target_reminder_controller_action_ready
         and state.wait_target_reminder_receipt_recorded
         and state.wait_target_reminder_updates_wait_metadata
     ):
         failures.append("wait target reminder was not handled as an executable Controller action with receipt metadata")
-    if state.stale_liveness_cached_as_truth:
-        failures.append("Controller trusted cached role liveness instead of probing during standby")
-    if state.current_wait == "ack" and state.ack_wait_age_minutes >= 10 and not state.ack_wait_blocker_recorded and not state.mailbox_evidence_present:
-        failures.append("ACK wait reached ten minutes without Router-visible blocker")
-    if state.liveness_probe_outcome == "lost" and not state.role_liveness_blocker_recorded:
-        failures.append("lost role wait did not route to PM blocker recovery")
+    if state.stale_progress_cached_as_truth:
+        failures.append("Controller trusted cached progress evidence instead of current ACK/progress evidence")
+    if state.current_wait == "ack" and state.ack_wait_age_minutes >= 10 and not state.ack_wait_replacement_recorded and not state.mailbox_evidence_present:
+        failures.append("ACK wait reached ten minutes without Router-visible replacement")
+    if state.progress_evidence_outcome == "expired" and not state.progress_replacement_recorded:
+        failures.append("report wait reached stale progress replacement without Router-visible replacement")
     if state.external_event_recorded and state.external_event_matches_wait and state.event_wait_action_open:
         failures.append("recorded external event left matching Controller wait row open")
     if state.external_event_recorded and state.external_event_matches_wait and not state.event_wait_closed_by_router:
@@ -339,14 +339,14 @@ INVARIANTS = (
     _invariant("daemon_status_matches_live_process", "daemon status reported active without a live process"),
     _invariant("daemon_wait_has_wait_target_metadata", "daemon-owned role wait lacks Router-authored wait target metadata"),
     _invariant("wait_target_names_role_evidence_and_reminder", "wait target metadata does not name role, evidence, and reminder text"),
-    _invariant("report_reminder_requires_fresh_liveness_probe", "report reminder was sent without a fresh role liveness probe"),
+    _invariant("report_reminder_requires_ack_progress_policy", "report reminder was sent without current ACK/progress evidence policy"),
     _invariant(
         "wait_target_reminder_is_executable_controller_work",
         "wait target reminder was not handled as an executable Controller action with receipt metadata",
     ),
-    _invariant("controller_does_not_trust_cached_liveness", "Controller trusted cached role liveness instead of probing during standby"),
-    _invariant("ack_wait_ten_minutes_routes_blocker", "ACK wait reached ten minutes without Router-visible blocker"),
-    _invariant("lost_role_routes_to_pm_blocker", "lost role wait did not route to PM blocker recovery"),
+    _invariant("controller_does_not_trust_cached_progress", "Controller trusted cached progress evidence instead of current ACK/progress evidence"),
+    _invariant("ack_wait_ten_minutes_routes_blocker", "ACK wait reached ten minutes without Router-visible replacement"),
+    _invariant("stale_progress_routes_to_replacement", "report wait reached stale progress replacement without Router-visible replacement"),
     _invariant("recorded_external_event_closes_matching_wait", "recorded external event left matching Controller wait row open"),
     _invariant("external_event_wait_closure_is_router_owned", "recorded external event was not reconciled by Router-owned wait closure"),
     _invariant("next_wait_after_event_closure", "Router opened next wait before closing satisfied external-event wait"),

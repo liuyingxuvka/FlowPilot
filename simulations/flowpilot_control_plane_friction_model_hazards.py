@@ -28,7 +28,7 @@ def _safe_base(**changes: object) -> State:
             pm_role_work_open_request_masked_by_global_flag=False,
             active_holder_lease_issued=True,
             active_holder_agent_identity_recorded=True,
-            active_holder_agent_host_live=True,
+            active_holder_current_binding_proven=True,
             active_holder_packet_role_matches=True,
             packet_ledger_write_atomic=True,
             packet_ledger_write_locked_or_cas=True,
@@ -426,16 +426,16 @@ def hazard_states() -> dict[str, State]:
             controller_delivery_host_status="failed_agent_not_found",
             controller_delivery_target_role_wait_started=True,
         ),
-        "active_holder_lease_without_host_liveness": _safe_base(
+        "active_holder_lease_without_current_binding": _safe_base(
             active_holder_lease_issued=True,
             active_holder_agent_identity_recorded=True,
-            active_holder_agent_host_live=False,
+            active_holder_current_binding_proven=False,
             active_holder_packet_role_matches=True,
         ),
         "active_holder_lease_to_wrong_packet_role": _safe_base(
             active_holder_lease_issued=True,
             active_holder_agent_identity_recorded=True,
-            active_holder_agent_host_live=True,
+            active_holder_current_binding_proven=True,
             active_holder_packet_role_matches=False,
         ),
         "packet_ledger_write_without_atomic_lock": _safe_base(

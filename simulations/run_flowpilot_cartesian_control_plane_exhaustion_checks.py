@@ -78,7 +78,7 @@ TEST_MESH_CHILD_SUITE_DEFINITIONS = {
         "coverage_boundary": "model_mesh_closure",
     },
     "cartesian_glassbreak_threshold_matrix": {
-        "layer": "glassbreak_threshold_liveness_probe",
+        "layer": "glassbreak_threshold_repeated_blocker",
         "result_status": "passed",
         "evidence_current": True,
         "coverage_boundary": "threshold_probe_only",

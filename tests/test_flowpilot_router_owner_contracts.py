@@ -261,8 +261,8 @@ class FlowPilotRouterOwnerContractTests(unittest.TestCase):
                     "reasoning_effort_policy": router.ROLE_BINDING_REASONING_EFFORT_POLICY,
                     "binding_open_result": "opened_for_current_packet",
                     "opened_for_run_id": "run-test",
-                    "host_liveness_status": "active",
-                    "liveness_decision": "confirmed_existing_agent",
+                    "role_surface_addressable": True,
+                    "current_run_binding_decision": "existing_current_agent_reused",
                 },
             }
 

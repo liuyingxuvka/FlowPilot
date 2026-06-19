@@ -29,7 +29,8 @@ Accept only:
 
 - live role bindings opened for this run after the runtime requested their
   current packet responsibilities;
-- live continuity confirmed by a host liveness preflight for the current run;
+- live continuity confirmed by current ACK/progress evidence for the requested
+  packet responsibility;
 - same-task role memory packets reused only for the currently requested
   replacement role binding;
 - explicit user-approved stop or replacement for dispatched role work.
@@ -51,6 +52,7 @@ Prior-run `agent_id` values are audit history only. If any runtime-required
 role binding is missing, stale, cross-run, or unverifiable, block route work
 until PM records a replacement, stop, or current-runtime recovery decision.
 
-`wait_agent` timeout is not freshness proof. Treat it as `timeout_unknown`;
-Controller must not continue waiting on that old role unless a later bounded
-host liveness check confirms the role is active.
+Legacy host-liveness probes and timeout statuses are not freshness proof.
+Controller must not continue waiting on an old role unless runtime's current
+ACK/progress evidence policy says the lease is still within the allowed wait
+window for the requested packet responsibility.

@@ -47,7 +47,7 @@ def _packet_record_summary(root: Path, envelope: dict[str, Any]) -> dict[str, An
             "active_packet_status": record.get("active_packet_status"),
             "active_holder_lease_issued": bool(record.get("active_holder_lease_issued")),
             "active_holder_lease_path": record.get("active_holder_lease_path"),
-            "active_holder_liveness_proven": bool(record.get("active_holder_liveness_proven")),
+            "active_holder_binding_proven": bool(record.get("active_holder_binding_proven")),
         }
     return {"packet_id": packet_id, "record_missing": True}
 

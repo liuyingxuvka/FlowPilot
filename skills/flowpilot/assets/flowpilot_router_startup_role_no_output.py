@@ -57,20 +57,34 @@ def _bound_router() -> ModuleType:
 
 OWNER_MODULE = 'flowpilot_router_startup_role_recovery'
 
-def _role_no_output_liveness_result(router: ModuleType, payload: dict[str, Any] | None) -> str:
+def _role_no_output_current_wait_result(router: ModuleType, payload: dict[str, Any] | None) -> str:
     _bind_router(router)
     payload = payload or {}
-    liveness_probe = payload.get('liveness_probe') if isinstance(payload.get('liveness_probe'), dict) else {}
-    for key in ('liveness_probe_result', 'host_liveness_status', 'bounded_wait_result', 'result'):
+    legacy_keys = {
+        'liveness_probe',
+        'liveness_probe_result',
+        'host_liveness_status',
+        'bounded_wait_result',
+        'timeout_unknown',
+    }
+    found_legacy_keys = sorted(key for key in legacy_keys if key in payload)
+    if found_legacy_keys:
+        raise RouterError(f"role no-output recovery received unsupported legacy liveness fields: {', '.join(found_legacy_keys)}")
+    for key in ('reissue_reason', 'result', 'no_output_reason'):
         value = payload.get(key)
         if isinstance(value, str) and value.strip():
             return value.strip()
-    value = liveness_probe.get('result')
-    return value.strip() if isinstance(value, str) else ''
+    if payload.get('wait_class') == 'report_result' and payload.get('expected_return_path'):
+        return 'role_no_fresh_progress_after_thirty_minutes'
+    return ''
 
 def _payload_indicates_role_no_output(router: ModuleType, payload: dict[str, Any] | None) -> bool:
     _bind_router(router)
-    return router._role_no_output_liveness_result(payload) in WAIT_TARGET_NO_OUTPUT_LIVENESS_RESULTS
+    return router._role_no_output_current_wait_result(payload) in {
+        'no_output',
+        'role_no_output_missing_expected_event',
+        'role_no_fresh_progress_after_thirty_minutes',
+    }
 
 def _role_no_output_target_roles(router: ModuleType, payload: dict[str, Any] | None) -> list[str]:
     _bind_router(router)
@@ -222,13 +236,13 @@ def _write_role_recovery_report(router: ModuleType, project_root: Path, run_root
             old_agent_id = record.get('old_agent_id')
             if isinstance(old_agent_id, str) and old_agent_id and (old_agent_id != record.get('agent_id')) and (old_agent_id not in superseded):
                 superseded.append(old_agent_id)
-            slots_by_role[role] = {**old, 'role_key': role, 'status': 'live_agent_recovered' if not full_role_binding else 'live_agent_recycled', 'agent_id': record['agent_id'], 'model_policy': record['model_policy'], 'reasoning_effort_policy': record['reasoning_effort_policy'], 'host_liveness_status': record.get('host_liveness_status'), 'liveness_decision': record.get('liveness_decision'), 'host_liveness_verified': bool(record.get('host_liveness_verified')), 'role_binding_generation': next_generation, 'role_binding_epoch': epoch + 1, 'last_role_recovery_transaction_id': transaction['transaction_id'], 'last_role_recovery_result': record['recovery_result'], 'superseded_agent_ids': superseded, 'superseded_agent_output_quarantined': bool(record.get('superseded_agent_output_quarantined')), 'memory_seeded_from_current_run': bool(record.get('memory_seeded_from_current_run')), 'replacement_seeded_from_common_run_context': bool(record.get('replacement_seeded_from_common_run_context')), 'recovered_at': record['recorded_at']}
+            slots_by_role[role] = {**old, 'role_key': role, 'status': 'live_agent_recovered' if not full_role_binding else 'live_agent_recycled', 'agent_id': record['agent_id'], 'model_policy': record['model_policy'], 'reasoning_effort_policy': record['reasoning_effort_policy'], 'role_surface_addressable': bool(record.get('role_surface_addressable')), 'current_run_binding_decision': record.get('current_run_binding_decision'), 'role_binding_generation': next_generation, 'role_binding_epoch': epoch + 1, 'last_role_recovery_transaction_id': transaction['transaction_id'], 'last_role_recovery_result': record['recovery_result'], 'superseded_agent_ids': superseded, 'superseded_agent_output_quarantined': bool(record.get('superseded_agent_output_quarantined')), 'memory_seeded_from_current_run': bool(record.get('memory_seeded_from_current_run')), 'replacement_seeded_from_common_run_context': bool(record.get('replacement_seeded_from_common_run_context')), 'recovered_at': record['recorded_at']}
     all_slots = [slots_by_role[role] for role in RUNTIME_ROLE_KEYS]
     required_role_keys = list(RUNTIME_ROLE_KEYS) if full_role_binding else list(transaction['target_role_keys'])
     required_slots = [slots_by_role[role] for role in required_role_keys]
-    required_bindings_ready = not environment_blocked and all((router._role_slot_has_current_host_liveness(slot) for slot in required_slots))
+    required_bindings_ready = not environment_blocked and all((router._role_slot_has_current_binding(slot) for slot in required_slots))
     report_path = router._role_recovery_report_path(run_root)
-    proof_state = {'recovery_requested': True, 'replacement_created': any((record.get('recovery_result') in {ROLE_BINDING_TARGETED_REPLACEMENT_RESULT, ROLE_BINDING_FULL_SET_RECOVERY_RESULT} for record in records)), 'memory_seeded': all((record.get('memory_context_injected') for record in records)) if not environment_blocked else False, 'host_liveness_verified': all((record.get('host_liveness_verified') for record in records)) if not environment_blocked else False}
+    proof_state = {'recovery_requested': True, 'replacement_created': any((record.get('recovery_result') in {ROLE_BINDING_TARGETED_REPLACEMENT_RESULT, ROLE_BINDING_FULL_SET_RECOVERY_RESULT} for record in records)), 'memory_seeded': all((record.get('memory_context_injected') for record in records)) if not environment_blocked else False, 'role_surface_addressable': all((record.get('role_surface_addressable') for record in records)) if not environment_blocked else False}
     report = {'schema_version': ROLE_RECOVERY_REPORT_SCHEMA, 'run_id': run_state['run_id'], 'transaction_id': transaction['transaction_id'], 'trigger_source': transaction['trigger_source'], 'recovery_scope': payload.get('recovery_scope') or transaction['recovery_scope'], 'target_role_keys': transaction['target_role_keys'], 'recorded_at': utc_now(), 'priority': 'preempt_normal_work', 'normal_work_suspended_until_report': True, 'required_role_bindings_ready': required_bindings_ready, 'environment_blocked': environment_blocked, 'role_binding_generation_before': current_generation, 'role_binding_generation_after': next_generation, 'role_records': records, 'role_recovery_proof_state': proof_state, 'packet_ownership_reconciled': all((record.get('packet_ownership_reconciled') for record in records)) if not environment_blocked else False, 'memory_context_injected': all((record.get('memory_context_injected') for record in records)) if not environment_blocked else False, 'stale_generation_output_quarantined': all((record.get('superseded_agent_output_quarantined') or record.get('recovery_result') == ROLE_BINDING_RESTORE_RESULT for record in records)) if not environment_blocked else False, 'pm_decision_required_before_normal_work': False, 'mechanical_obligation_replay_before_pm': True, 'controller_visibility': 'state_and_envelopes_only', 'sealed_body_reads_allowed': False, 'chat_history_progress_inference_allowed': False, 'source_paths': {'transaction': project_relative(project_root, router._role_recovery_latest_transaction_path(run_root)), 'state_load': project_relative(project_root, router._role_recovery_state_path(run_root)), 'role_binding_ledger': project_relative(project_root, runtime_roles_path), 'packet_ledger': project_relative(project_root, run_root / 'packet_ledger.json'), 'pm_prior_path_context': project_relative(project_root, router._pm_prior_path_context_path(run_root)), 'route_history_index': project_relative(project_root, router._route_history_index_path(run_root))}}
     write_json(report_path, report)
     history = role_binding.get('role_recovery_history') if isinstance(role_binding.get('role_recovery_history'), list) else []
@@ -240,7 +254,7 @@ def _write_role_recovery_report(router: ModuleType, project_root: Path, run_root
         _append_role_io_protocol_injections(project_root, run_root, str(run_state['run_id']), ready_records, default_lifecycle_phase='role_liveness_recovery', resume_tick_id=str(transaction['transaction_id']), source_action='recover_role_bindings')
     role_binding_recovery_path = run_root / 'continuation' / 'role_binding_recovery_report.json'
     if not environment_blocked:
-        write_json(role_binding_recovery_path, {'schema_version': 'flowpilot.role_binding_recovery_report.v1', 'run_id': run_state['run_id'], 'role_recovery_report_path': project_relative(project_root, report_path), 'resume_tick_id': str(transaction['transaction_id']), 'role_binding_mode': 'current_run_role_recovery', 'recorded_at': report['recorded_at'], 'required_role_bindings_ready': required_bindings_ready, 'current_run_memory_complete': bool(report['memory_context_injected']), 'missing_memory_role_keys': [record['role_key'] for record in records if record.get('role_memory_status') != 'available'], 'pm_memory_rehydrated': any((slot.get('role_key') == 'project_manager' and isinstance(slot.get('agent_id'), str) and bool(str(slot.get('agent_id')).strip()) for slot in all_slots)), 'liveness_preflight': {'checked_at': report['recorded_at'], 'probe_mode': ROLE_BINDING_LIVENESS_PROBE_MODE, 'liveness_probe_batch_id': str(transaction['transaction_id']), 'all_liveness_probes_started_before_wait': True, 'roles_checked': list(transaction['target_role_keys']), 'replacement_role_keys': [record['role_key'] for record in records if record['recovery_result'] in {ROLE_BINDING_TARGETED_REPLACEMENT_RESULT, ROLE_BINDING_FULL_SET_RECOVERY_RESULT}], 'wait_agent_timeout_treated_as_active': False, 'host_liveness_verified': bool(proof_state['host_liveness_verified']), 'decision': 'roles_ready_after_role_recovery' if required_bindings_ready else 'role_recovery_incomplete_host_liveness'}, 'role_records': records, 'controller_visibility': 'state_and_envelopes_only', 'sealed_body_reads_allowed': False, 'chat_history_progress_inference_allowed': False})
+        write_json(role_binding_recovery_path, {'schema_version': 'flowpilot.role_binding_recovery_report.v1', 'run_id': run_state['run_id'], 'role_recovery_report_path': project_relative(project_root, report_path), 'resume_tick_id': str(transaction['transaction_id']), 'role_binding_mode': 'current_run_role_recovery', 'recorded_at': report['recorded_at'], 'required_role_bindings_ready': required_bindings_ready, 'current_run_memory_complete': bool(report['memory_context_injected']), 'missing_memory_role_keys': [record['role_key'] for record in records if record.get('role_memory_status') != 'available'], 'pm_memory_rehydrated': any((slot.get('role_key') == 'project_manager' and isinstance(slot.get('agent_id'), str) and bool(str(slot.get('agent_id')).strip()) for slot in all_slots)), 'role_binding_evidence_policy': {'checked_at': report['recorded_at'], 'current_wait_authority': 'ack_progress_evidence_only', 'roles_checked': list(transaction['target_role_keys']), 'replacement_role_keys': [record['role_key'] for record in records if record['recovery_result'] in {ROLE_BINDING_TARGETED_REPLACEMENT_RESULT, ROLE_BINDING_FULL_SET_RECOVERY_RESULT}], 'role_surface_addressable': bool(proof_state['role_surface_addressable']), 'decision': 'roles_ready_after_role_recovery' if required_bindings_ready else 'role_recovery_incomplete_addressability'}, 'role_records': records, 'controller_visibility': 'state_and_envelopes_only', 'sealed_body_reads_allowed': False, 'chat_history_progress_inference_allowed': False})
     run_state['flags']['role_recovery_roles_restored'] = not environment_blocked
     run_state['flags']['role_recovery_report_written'] = True
     run_state['flags']['role_recovery_environment_blocked'] = environment_blocked
@@ -261,7 +275,7 @@ def _write_role_recovery_report(router: ModuleType, project_root: Path, run_root
     run_state['flags']['role_recovery_requested'] = False
 
 __all__ = (
-    '_role_no_output_liveness_result',
+    '_role_no_output_current_wait_result',
     '_payload_indicates_role_no_output',
     '_role_no_output_target_roles',
     '_role_no_output_wait_candidate',

@@ -69,11 +69,14 @@ current run's Router-derived route display projection/cache. If it is missing,
 show only the waiting-for-PM placeholder provided by the router; do not restore
 a previous ordinary Codex plan from chat history.
 
-Before declaring a role binding alive, perform the runtime-requested liveness
-preflight for the currently awaited role. A bounded `wait_agent` timeout is
-`timeout_unknown`, not active. Missing, cancelled, unknown, or timeout-unknown
-role bindings must be reused, replaced, or blocked only for the currently
-requested packet responsibility before PM resume decision.
+Before declaring a role binding usable, follow the runtime's current
+ACK/progress evidence policy for the currently awaited packet responsibility.
+Before ACK, five minutes without ACK triggers the runtime-authored ACK
+reminder and ten minutes without ACK triggers reissue or replacement. After
+ACK, ten minutes without fresh ACK/progress evidence triggers the
+runtime-authored progress reminder and thirty minutes without fresh evidence
+triggers reissue or replacement. Do not create or rely on legacy host-liveness
+or timeout status fields as current wait authority.
 
 For mid-run role assignment or replacement recovery, follow the same ladder in
 order: reuse an addressable same-responsibility binding when the runtime allows
@@ -114,8 +117,9 @@ already exposed the next action, refresh the lifecycle guard before any
 foreground role wait. If the run is nonterminal and only waiting for a role
 output, run `flowpilot_new.py patrol` or the runtime-provided refresh command
 and keep the foreground turn open instead of ending the Controller response.
-Use bounded `wait_agent` only for runtime-requested liveness/recovery
-preflight; a timeout is `timeout_unknown`, not active continuity.
+Use only runtime-authored ACK/progress wait duties for current liveness
+recovery. Legacy host-liveness probes and timeout statuses are not active
+continuity.
 
 During a nonterminal active run, do not end the foreground Controller turn. If
 status metadata says a Controller action is ready, perform the executable
@@ -125,7 +129,7 @@ the active foreground duty, not a completed or finishable checklist item: sync
 the visible Codex plan from the current status projection, keep that item
 `in_progress`, check Controller-visible formal return metadata, and run the
 refresh command
-`python skills\flowpilot\assets\flowpilot_new.py --root . --json patrol --sleep-seconds 60`
+`python skills\flowpilot\assets\flowpilot_new.py --root . --json patrol --sleep-seconds 300`
 as long as FlowPilot is still running. Wait for that command's output and then
 follow the next foreground duty. Starting or restarting the command is not
 completion. If the runtime exposes new Controller work while patrol is active,

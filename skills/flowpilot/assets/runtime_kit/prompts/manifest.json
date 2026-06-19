@@ -23,7 +23,7 @@
     {
       "id": "cards.post_ack_policy",
       "path": "prompts/cards/post_ack_policy.md",
-      "sha256": "fbf2be576a9394da07f44c2b6e8fe19b45135f5bad039c02e18c07e3845e532c",
+      "sha256": "0028943abc74ff86ce6138c26849e164de7124efc27e6b45fe72e58f0778ed50",
       "strip_trailing_newline": true,
       "template_variables": []
     },
@@ -72,7 +72,7 @@
     {
       "id": "packets.packet_identity_boundary",
       "path": "prompts/packets/packet_identity_boundary.md",
-      "sha256": "05c66580981ca0deaf11c8f14bfe16d6046e375f4fba36ff22d43da6fd772f95",
+      "sha256": "53aa454b6a763bd7ea1c062448c5515842b8618e471269c40507382e868f248f",
       "strip_trailing_newline": false,
       "template_variables": [
         "packet_identity_marker",

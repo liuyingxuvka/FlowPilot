@@ -251,6 +251,12 @@ class FlowPilotAIContractProjectionTests(unittest.TestCase):
         )
         self.assertNotIn("forbidden_aliases", report_contract)
         self.assertNotIn("forbidden_result_body_fields", report_contract)
+        self.assertEqual(
+            report_contract["output_contract"]["forbidden_fields"],
+            runtime.packet_result_contracts.effective_result_contract_from_envelope(
+                packet["envelope"]
+            )["forbidden_fields"],
+        )
 
     def test_contract_driven_fake_ai_uses_projected_minimal_shape_for_legal_path(self) -> None:
         ledger, packet_id = self.issue_semantic_recheck_packet()

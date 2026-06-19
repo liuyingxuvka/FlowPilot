@@ -884,7 +884,7 @@ def terminal_supplemental_repair_contract_minimal_shape(round_number: int = 1) -
             {
                 "repair_item_id": f"terminal-gap-r{round_number}-item-1",
                 "gap_kind": "final_artifact_hygiene_gap",
-                "hygiene_category": "current_goal_required",
+                "hygiene_category": "artifact_lineage",
                 "original_goal_link": "Which original user-goal obligation this item closes.",
                 "reviewer_gap": "Concrete terminal Reviewer gap.",
                 "required_repair": "Concrete repair work PM is adding.",

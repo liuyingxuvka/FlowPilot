@@ -171,6 +171,22 @@ def _write_controller_receipt(router: ModuleType, project_root: Path, run_root: 
     action = read_json_if_exists(action_path)
     if action.get('schema_version') != CONTROLLER_ACTION_SCHEMA:
         raise RouterError(f'controller action is missing: {action_id}')
+    if status == 'done' and action.get('action_type') == WAIT_TARGET_REMINDER_ACTION_TYPE and isinstance(payload, dict):
+        legacy_liveness_keys = {
+            'liveness_probe',
+            'liveness_probe_result',
+            'liveness_probe_checked_at',
+            'liveness_probe_evidence_path',
+            'host_liveness_status',
+            'bounded_wait_result',
+            'timeout_unknown',
+        }
+        found_legacy_liveness_keys = sorted(key for key in legacy_liveness_keys if key in payload)
+        if found_legacy_liveness_keys:
+            raise RouterError(
+                "unsupported legacy liveness fields in wait reminder receipt: "
+                + ", ".join(found_legacy_liveness_keys)
+            )
     delivery_failure = _done_receipt_payload_delivery_failure(payload)
     if status == 'done' and delivery_failure:
         raise RouterError(

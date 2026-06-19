@@ -365,11 +365,10 @@ class ContractDrivenFakeAIResponder:
 
     @property
     def forbidden_fields(self) -> list[str]:
-        return _sequence_field(
-            self.contract,
-            "forbidden_result_body_fields",
-            "forbidden_fields",
-        )
+        output_contract = self.contract.get("output_contract")
+        if not isinstance(output_contract, Mapping):
+            return []
+        return _sequence_field(output_contract, "forbidden_fields")
 
     @property
     def forbidden_aliases(self) -> dict[str, str]:

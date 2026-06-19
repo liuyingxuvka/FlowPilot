@@ -416,21 +416,31 @@
       "validator": "_normalize_current_role_agent_binding"
     },
     {
-      "field": "current_role_agent_binding.host_liveness_status",
+      "field": "responsibility_lease.ack_received",
       "layer": "middle",
-      "logical_field": "host_liveness_status",
-      "owner": "host_background_collaboration",
-      "required_value": "active",
+      "logical_field": "ack_received",
+      "owner": "flowpilot_runtime",
+      "required_value": "true_before_result_wait",
       "status": "mechanical_runtime_owned",
-      "unlocks": "current_on_demand_role_binding",
-      "validator": "_normalize_current_role_agent_binding"
+      "unlocks": "current_wait_liveness_evidence",
+      "validator": "ack_lease"
     },
     {
-      "field": "current_role_agent_binding.liveness_decision",
+      "field": "responsibility_lease.ack_received_at",
       "layer": "middle",
-      "logical_field": "current_role_agent_binding.liveness_decision",
+      "logical_field": "ack_received_at",
+      "owner": "flowpilot_runtime",
+      "required_value": "current_run_timestamp",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "current_wait_liveness_evidence",
+      "validator": "ack_lease"
+    },
+    {
+      "field": "current_role_agent_binding.current_run_binding_decision",
+      "layer": "middle",
+      "logical_field": "current_role_agent_binding.current_run_binding_decision",
       "owner": "host_background_collaboration",
-      "required_value": "confirmed_existing_agent",
+      "required_value": "existing_current_agent_reused_or_current_run_replacement_opened",
       "status": "mechanical_runtime_owned",
       "unlocks": "current_on_demand_role_binding",
       "validator": "_normalize_current_role_agent_binding"
@@ -466,34 +476,44 @@
       "validator": "_write_current_role_agent_binding"
     },
     {
-      "field": "role_binding_ledger.role_slots[].host_liveness_status",
+      "field": "responsibility_lease.progress_count",
       "layer": "middle",
-      "logical_field": "host_liveness_status",
+      "logical_field": "progress_count",
+      "owner": "flowpilot_runtime",
+      "required_value": "metadata_only_liveness_counter",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "current_wait_liveness_evidence",
+      "validator": "record_progress"
+    },
+    {
+      "field": "responsibility_lease.last_progress_at",
+      "layer": "middle",
+      "logical_field": "last_progress_at",
+      "owner": "flowpilot_runtime",
+      "required_value": "current_run_timestamp",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "current_wait_liveness_evidence",
+      "validator": "record_progress"
+    },
+    {
+      "field": "role_binding_ledger.role_slots[].current_run_binding_decision",
+      "layer": "middle",
+      "logical_field": "role_binding_ledger.role_slots[].current_run_binding_decision",
       "owner": "flowpilot_router",
-      "required_value": "active",
+      "required_value": "existing_current_agent_reused_or_current_run_replacement_opened",
       "status": "mechanical_runtime_owned",
       "unlocks": "background_or_parallel_work",
       "validator": "_write_current_role_agent_binding"
     },
     {
-      "field": "role_binding_ledger.role_slots[].liveness_decision",
+      "field": "lifecycle_guard.last_liveness_evidence_kind",
       "layer": "middle",
-      "logical_field": "role_binding_ledger.role_slots[].liveness_decision",
-      "owner": "flowpilot_router",
-      "required_value": "confirmed_existing_agent",
+      "logical_field": "last_liveness_evidence_kind",
+      "owner": "flowpilot_runtime",
+      "required_value": "ack_or_progress_only",
       "status": "mechanical_runtime_owned",
-      "unlocks": "background_or_parallel_work",
-      "validator": "_write_current_role_agent_binding"
-    },
-    {
-      "field": "role_binding_memory.current_role_agent_binding.host_liveness_status",
-      "layer": "middle",
-      "logical_field": "host_liveness_status",
-      "owner": "flowpilot_router",
-      "required_value": "active",
-      "status": "mechanical_runtime_owned",
-      "unlocks": "resume_and_recovery_context",
-      "validator": "_write_current_role_agent_binding"
+      "unlocks": "current_wait_liveness_evidence",
+      "validator": "_latest_liveness_evidence"
     },
     {
       "field": "role_binding_memory.identity_policy.current_authority_source",
@@ -906,14 +926,14 @@
       "validator": "_build_current_handoff_contract"
     },
     {
-      "field": "current_handoff_contract.required_report_contract.forbidden_result_body_fields",
+      "field": "current_handoff_contract.required_report_contract.output_contract.forbidden_fields",
       "layer": "middle",
-      "logical_field": "forbidden_fields_seen",
+      "logical_field": "output_contract_forbidden_fields",
       "owner": "flowpilot_router",
-      "required_value": "same_forbidden_fields_as_packet_result_contract_row",
+      "required_value": "same_forbidden_fields_as_effective_packet_result_contract",
       "status": "mechanical_runtime_owned",
-      "unlocks": "role_avoids_unsupported_old_fields",
-      "validator": "_current_result_submission_contract_violation"
+      "unlocks": "role_avoids_unsupported_old_fields_without_duplicate_forbidden_field_alias",
+      "validator": "_build_current_handoff_contract"
     },
     {
       "field": "current_handoff_contract.required_report_contract.stage_evidence_matrix",
@@ -1877,6 +1897,71 @@
     {
       "disposition": "reject_as_to_role_alias",
       "field": "research_packet_spec.recipient_role",
+      "status": "forbidden_legacy"
+    },
+    {
+      "disposition": "replaced_by_responsibility_lease_ack_and_progress_evidence",
+      "field": "current_role_agent_binding.host_liveness_status",
+      "status": "forbidden_legacy"
+    },
+    {
+      "disposition": "replaced_by_responsibility_lease_ack_and_progress_evidence",
+      "field": "role_binding_ledger.role_slots[].host_liveness_status",
+      "status": "forbidden_legacy"
+    },
+    {
+      "disposition": "replaced_by_responsibility_lease_ack_and_progress_evidence",
+      "field": "role_binding_memory.current_role_agent_binding.host_liveness_status",
+      "status": "forbidden_legacy"
+    },
+    {
+      "disposition": "replaced_by_current_run_binding_decision",
+      "field": "current_role_agent_binding.liveness_decision",
+      "status": "forbidden_legacy"
+    },
+    {
+      "disposition": "replaced_by_current_run_binding_decision",
+      "field": "role_binding_ledger.role_slots[].liveness_decision",
+      "status": "forbidden_legacy"
+    },
+    {
+      "disposition": "deleted_current_wait_authority",
+      "field": "responsibility_lease.liveness_status",
+      "status": "forbidden_legacy"
+    },
+    {
+      "disposition": "deleted_current_wait_authority",
+      "field": "responsibility_lease.last_liveness_status",
+      "status": "forbidden_legacy"
+    },
+    {
+      "disposition": "deleted_current_wait_authority",
+      "field": "responsibility_lease.liveness_checked_at",
+      "status": "forbidden_legacy"
+    },
+    {
+      "disposition": "deleted_current_wait_authority",
+      "field": "responsibility_lease.host_liveness_history",
+      "status": "forbidden_legacy"
+    },
+    {
+      "disposition": "deleted_current_wait_authority",
+      "field": "runtime.host_liveness_reports",
+      "status": "forbidden_legacy"
+    },
+    {
+      "disposition": "replaced_by_ack_replace_seconds",
+      "field": "lifecycle_guard_config.ack_blocker_seconds",
+      "status": "forbidden_legacy"
+    },
+    {
+      "disposition": "replaced_by_progress_reminder_seconds",
+      "field": "lifecycle_guard_config.result_liveness_seconds",
+      "status": "forbidden_legacy"
+    },
+    {
+      "disposition": "replaced_by_progress_replace_seconds",
+      "field": "lifecycle_guard_config.progress_grace_seconds",
       "status": "forbidden_legacy"
     }
   ],

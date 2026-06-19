@@ -5,7 +5,7 @@ from __future__ import annotations
 
 FOREGROUND_CONTROLLER_STANDBY_DEFAULT_MAX_SECONDS = 300.0
 FOREGROUND_CONTROLLER_STANDBY_POLL_SECONDS = 1.0
-CONTROLLER_PATROL_TIMER_DEFAULT_SECONDS = 60.0
+CONTROLLER_PATROL_TIMER_DEFAULT_SECONDS = 300.0
 CONTINUOUS_CONTROLLER_STANDBY_ACTION_TYPE = "continuous_controller_standby"
 WAIT_TARGET_REMINDER_ACTION_TYPE = "send_wait_target_reminder"
 PASSIVE_WAIT_STATUS_ACTION_TYPES = frozenset(
@@ -16,17 +16,10 @@ PASSIVE_WAIT_STATUS_ACTION_TYPES = frozenset(
         "await_current_scope_reconciliation",
     }
 )
-WAIT_TARGET_ACK_REMINDER_SECONDS = 180
-WAIT_TARGET_ACK_BLOCKER_SECONDS = 600
+WAIT_TARGET_ACK_REMINDER_SECONDS = 300
+WAIT_TARGET_ACK_REPLACE_SECONDS = 600
 WAIT_TARGET_REPORT_REMINDER_SECONDS = 600
-WAIT_TARGET_UNHEALTHY_LIVENESS_RESULTS = {"missing", "cancelled", "unknown", "unresponsive", "blocked", "lost"}
-WAIT_TARGET_NO_OUTPUT_LIVENESS_RESULTS = {
-    "no_output",
-    "alive_no_output",
-    "not_working_no_output",
-    "completed",
-    "completed_without_expected_event",
-}
+WAIT_TARGET_REPORT_REPLACE_SECONDS = 1800
 ROLE_NO_OUTPUT_REISSUE_MAX_ATTEMPTS = 2
 CONTROLLER_RECEIPT_STATUSES = {"done", "blocked", "waiting", "skipped"}
 CONTROLLER_ACTION_CLOSED_STATUSES = {"done", "blocked", "skipped", "resolved", "superseded"}

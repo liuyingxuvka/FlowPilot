@@ -115,10 +115,12 @@ PM_FLOWGUARD_ACCEPTANCE_DECISION_OPTIONS: tuple[str, ...] = (
 FLOWGUARD_SEMANTIC_COVERAGE_BOUNDARY_OPTIONS: tuple[str, ...] = ("subject_bound_semantic",)
 TERMINAL_SUPPLEMENTAL_REPAIR_GAP_KIND_OPTIONS: tuple[str, ...] = (
     "latent_high_standard_requirement",
+    "missing_implementation",
+    "missing_validation",
+    "weak_evidence",
+    "route_structure_gap",
+    "terminal_replay_gap",
     "final_artifact_hygiene_gap",
-    "route_coverage_gap",
-    "validation_gap",
-    "source_evidence_gap",
 )
 
 
@@ -192,10 +194,14 @@ RESULT_CONTRACT_PROFILES: dict[str, dict[str, Any]] = {
     },
 }
 FINAL_ARTIFACT_HYGIENE_CATEGORY_OPTIONS: tuple[str, ...] = (
-    "current_goal_required",
-    "clean_delivery_required",
-    "pm_decision_support",
-    "future_contract_candidate",
+    "artifact_lineage",
+    "code_maintainability",
+    "document_cleanup",
+    "model_coverage",
+    "other",
+    "process_ledger_cleanup",
+    "test_coverage",
+    "ui_polish",
 )
 
 

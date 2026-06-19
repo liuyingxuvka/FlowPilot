@@ -75,7 +75,7 @@ Allowed actions:
 - run the current `flowpilot_new.py` command named by the lifecycle guard or
   foreground duty. Fresh runs use `flowpilot_new.py start`, `status`, `patrol`,
   `resume`, `dispatch-current-role`, `role-handoff`, `ack`,
-  `progress`, `host-liveness`, `submit-result`, `repair-accepted-packet`,
+  `progress`, `submit-result`, `repair-accepted-packet`,
   `resolve-stopped-blocker`, `stop`, `cancel`, and
   `final-preflight` as the public control surface;
 - load only Controller-visible current-run metadata: lifecycle guard,
@@ -85,7 +85,7 @@ Allowed actions:
   chat memory, or status summaries as current authority for a fresh run;
 - before every continued wait, refresh the lifecycle guard through the
   runtime-provided refresh command or `flowpilot_new.py patrol --sleep-seconds
-  60`. The refresh result may show `process_next_action`, `wait_patrol`,
+  300`. The refresh result may show `process_next_action`, `wait_patrol`,
   `recover_or_reissue`, `control_plane_blocker`, or `terminal_return`. Starting
   the refresh command, seeing no new work, or seeing a live role is not
   completion evidence;
@@ -114,16 +114,18 @@ Allowed actions:
   open sealed bodies; read the break-glass playbook and report only
   Controller-visible threshold metadata. Similar blocker classes spread across
   different route nodes are ordinary repair evidence, not this threshold;
-- when `current_wait.wait_class` is `ack`, use the Router-authored reminder
-  text after the three-minute reminder point. If the ACK remains absent after
-  the ten-minute blocker point, record a Router-visible blocker for PM-routed
-  recovery instead of continuing to wait silently;
-- when `current_wait.wait_class` is `report_result`, use the Router-authored
-  reminder text every ten minutes and perform a fresh liveness check on the
-  target role every reminder cycle. Do not trust an old "alive" status as a
-  current fact. If the role is missing, cancelled, unknown, unresponsive, or
-  reports it is blocked, record the Router-visible liveness blocker and let PM
-  choose the recovery path;
+- when runtime foreground duty includes an ACK reminder, relay the exact
+  Router-authored reminder text. The runtime decides from lease age: five
+  minutes without ACK reminds, ten minutes without ACK reissues or replaces.
+  Controller does not run a separate host-liveness check or create a timeout
+  status;
+- when runtime foreground duty includes a progress reminder, relay the exact
+  Router-authored reminder text. The runtime decides from current ACK/progress
+  evidence: ten minutes without fresh evidence reminds, thirty minutes without
+  fresh evidence reissues or replaces. The role should immediately record
+  `progress +1` if still working, or submit the final result if complete.
+  Controller does not infer death, inspect sealed bodies, or use legacy
+  liveness fields;
 - when `current_wait.wait_class` is `controller_local_action`, do not remind
   yourself. Refresh lifecycle guard/status, perform only the runtime duty
   named by the guard, and record a Controller blocker only if that duty cannot
@@ -227,13 +229,14 @@ Forbidden actions:
 - do not invent, preserve, or restore visible route-plan items from chat
   history, ordinary Codex planning, or Controller summaries.
 - do not infer packet completion from holder chat while a current packet lease
-  is open. Only a runtime-authored next-action notice, PM blocker, timeout, or
-  explicit runtime action can end Controller's wait.
+  is open. Only a runtime-authored next-action notice, PM blocker, formal
+  runtime result, or explicit runtime action can end Controller's wait.
 - do not keep the foreground turn blocked on ordinary role-binding waiting
   when Router-ready evidence, a pending router action, a resolved direct ACK,
   a returned result envelope, or `current runtime next-action notice` exists.
-  Bounded `wait_agent` checks are liveness/recovery only when Router requests
-  them; timeout is `timeout_unknown`, never active work proof.
+  Legacy host-liveness or `timeout_unknown` checks are not current wait
+  authority. Runtime wait decisions use only ACK, `progress +1`, and formal
+  result metadata.
 - do not treat a `controller_aside`, chat note, or self-attested "done" comment
   as wait completion. Only formal Router-visible return metadata and Router's
   next action/reconciliation path can release the wait.

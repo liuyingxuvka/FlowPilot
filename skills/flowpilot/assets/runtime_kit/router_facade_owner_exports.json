@@ -3111,10 +3111,6 @@
             "target": "_record_role_no_output_reissue"
           },
           {
-            "public": "_resume_liveness_probe_batch_id",
-            "target": "_resume_liveness_probe_batch_id"
-          },
-          {
             "public": "_resume_role_context",
             "target": "_resume_role_context"
           },
@@ -3139,8 +3135,8 @@
             "target": "_role_memory_path"
           },
           {
-            "public": "_role_no_output_liveness_result",
-            "target": "_role_no_output_liveness_result"
+            "public": "_role_no_output_current_wait_result",
+            "target": "_role_no_output_current_wait_result"
           },
           {
             "public": "_role_no_output_reissue_attempt",
@@ -3262,8 +3258,8 @@
             "target": "_active_agent_id_for_role"
           },
           {
-            "public": "_role_slot_has_current_host_liveness",
-            "target": "_role_slot_has_current_host_liveness"
+            "public": "_role_slot_has_current_binding",
+            "target": "_role_slot_has_current_binding"
           },
           {
             "public": "_controller_wait_allowed_external_events",

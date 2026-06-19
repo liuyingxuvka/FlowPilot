@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime, timedelta, timezone
 import json
 from pathlib import Path
 from typing import Any, Callable
@@ -316,7 +317,7 @@ def scenario_ack_only_wait(work_root: Path) -> dict[str, Any]:
     ensure(guard.get("controller_stop_allowed") is False, f"ACK-only guard allowed stop: {guard}")
     duty = projection.get("foreground_duty", {})
     ensure(duty.get("action") == "wait_patrol", f"ACK-only foreground duty was not a patrol: {duty}")
-    ensure(duty.get("wait_patrol", {}).get("seconds") == 60, f"ACK-only patrol did not carry 60-second duty: {duty}")
+    ensure(duty.get("wait_patrol", {}).get("seconds") == 300, f"ACK-only patrol did not carry 300-second duty: {duty}")
     ensure(duty.get("final_return_preflight", {}).get("allowed") is False, f"ACK-only duty allowed final return: {duty}")
     final_preflight = run_cli(root, command_log, "final-preflight", expect_ok=False)
     ensure(final_preflight.get("ok") is False, f"ACK-only final-preflight unexpectedly passed: {final_preflight}")
@@ -367,7 +368,7 @@ def scenario_lifecycle_guard_resume_and_patrol(work_root: Path) -> dict[str, Any
     ensure(patrol_guard.get("controller_stop_allowed") is False, f"patrol guard allowed stop: {patrol_guard}")
     ensure(patrol.get("foreground_duty", {}).get("action") == "wait_patrol", f"patrol did not preserve wait duty: {patrol}")
 
-    failed_liveness = run_cli(
+    progress_liveness = run_cli(
         root,
         command_log,
         "progress",
@@ -378,14 +379,14 @@ def scenario_lifecycle_guard_resume_and_patrol(work_root: Path) -> dict[str, Any
         "--status",
         "no_output",
     )
-    failed_guard = failed_liveness.get("lifecycle_guard", {})
+    progress_guard = progress_liveness.get("lifecycle_guard", {})
     ensure(
-        failed_guard.get("decision") == "reissue_or_replace_lease",
-        f"liveness failure did not classify for recovery: {failed_guard}",
+        progress_guard.get("decision") == "wait_for_result",
+        f"fresh progress did not preserve the result wait: {progress_guard}",
     )
     ensure(
-        failed_liveness.get("foreground_duty", {}).get("action") == "recover_or_reissue",
-        f"liveness failure did not expose recovery duty: {failed_liveness}",
+        progress_liveness.get("foreground_duty", {}).get("action") == "wait_patrol",
+        f"fresh progress did not preserve wait patrol duty: {progress_liveness}",
     )
     projection = status_projection(root, command_log)
     assert_public_projection_is_sealed(projection)
@@ -397,8 +398,8 @@ def scenario_lifecycle_guard_resume_and_patrol(work_root: Path) -> dict[str, Any
         "observations": {
             "resume_decision": guard.get("decision"),
             "patrol_decision": patrol_guard.get("decision"),
-            "liveness_failure_decision": failed_guard.get("decision"),
-            "controller_stop_allowed": failed_guard.get("controller_stop_allowed"),
+            "progress_decision": progress_guard.get("decision"),
+            "controller_stop_allowed": progress_guard.get("controller_stop_allowed"),
         },
         "commands": command_log,
     }
@@ -756,48 +757,43 @@ def scenario_stop_terminal_fence(work_root: Path) -> dict[str, Any]:
     }
 
 
-def scenario_host_liveness_bridge_recovery(work_root: Path) -> dict[str, Any]:
+def scenario_progress_evidence_replacement(work_root: Path) -> dict[str, Any]:
     command_log: list[dict[str, Any]] = []
-    root = reset_scenario_root(work_root, "host_liveness_bridge_recovery")
-    current_payload = start_rehearsal(root, command_log, "run-fake-host-liveness")
+    root = reset_scenario_root(work_root, "progress_evidence_replacement")
+    current_payload = start_rehearsal(root, command_log, "run-fake-progress-replacement")
     pm_packet = str(current_payload["next_action"]["subject_id"])
     lease_payload = resolve_and_lease_packet(
         root,
         command_log,
         packet_id=pm_packet,
         responsibility="pm",
-        agent_id="fake-pm-host-liveness",
+        agent_id="fake-pm-progress-replacement",
     )
     lease_id = str(lease_payload["lease_id"])
     run_cli(root, command_log, "ack", "--lease-id", lease_id, "--packet-id", pm_packet)
     run_cli(root, command_log, "progress", "--lease-id", lease_id, "--packet-id", pm_packet, "--status", "still_working")
-    liveness = run_cli(
-        root,
-        command_log,
-        "host-liveness",
-        "--lease-id",
-        lease_id,
-        "--packet-id",
-        pm_packet,
-        "--status",
-        "not_found",
-        "--source",
-        "fake_host_probe",
-    )
-    guard = liveness.get("lifecycle_guard", {})
-    ensure(guard.get("decision") == "reissue_or_replace_lease", f"host not_found did not force recovery: {guard}")
+    current = json.loads((root / ".flowpilot" / "current.json").read_text(encoding="utf-8"))
+    ledger_path = Path(str(current["ledger_path"]))
+    ledger = json.loads(ledger_path.read_text(encoding="utf-8"))
+    stale = (datetime.now(timezone.utc) - timedelta(minutes=31)).isoformat()
+    ledger["leases"][lease_id]["ack_received_at"] = stale
+    ledger["leases"][lease_id]["last_progress_at"] = stale
+    ledger_path.write_text(json.dumps(ledger, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    patrol = run_cli(root, command_log, "patrol")
+    guard = patrol.get("lifecycle_guard", {})
+    ensure(guard.get("decision") == "reissue_or_replace_lease", f"stale progress did not force recovery: {guard}")
     ensure(
-        guard.get("wait_recovery", {}).get("last_liveness_status") == "not_found",
-        f"host liveness status not visible in guard: {guard}",
+        guard.get("wait_recovery", {}).get("state") == "progress_replacement_due",
+        f"progress replacement state not visible in guard: {guard}",
     )
-    ensure(liveness.get("foreground_duty", {}).get("action") == "recover_or_reissue", f"host liveness lost duty: {liveness}")
+    ensure(patrol.get("foreground_duty", {}).get("action") == "recover_or_reissue", f"progress replacement lost duty: {patrol}")
     return {
-        "name": "host_liveness_bridge_recovery",
+        "name": "progress_evidence_replacement",
         "ok": True,
         "root": str(root),
         "observations": {
             "decision": guard.get("decision"),
-            "liveness_status": guard.get("wait_recovery", {}).get("last_liveness_status"),
+            "wait_recovery_state": guard.get("wait_recovery", {}).get("state"),
         },
         "commands": command_log,
     }
@@ -883,7 +879,7 @@ SCENARIOS: tuple[tuple[str, Callable[[Path], dict[str, Any]]], ...] = (
     ("slow_reviewer_progress_preserved", scenario_slow_reviewer_progress_preserved),
     ("accepted_packet_reassignment_rejected", scenario_accepted_packet_reassignment_rejected),
     ("stop_terminal_fence", scenario_stop_terminal_fence),
-    ("host_liveness_bridge_recovery", scenario_host_liveness_bridge_recovery),
+    ("progress_evidence_replacement", scenario_progress_evidence_replacement),
     ("orphan_runner_summary_recovery", scenario_orphan_runner_summary_recovery),
     ("unsupported_side_command", scenario_unsupported_side_command),
 )

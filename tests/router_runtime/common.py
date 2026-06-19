@@ -726,8 +726,8 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
                 "reasoning_effort_policy": "highest_available",
                 "binding_open_result": "opened_for_current_packet",
                 "opened_for_run_id": run_id,
-                "host_liveness_status": "active",
-                "liveness_decision": "confirmed_existing_agent",
+                "role_surface_addressable": True,
+                "current_run_binding_decision": "existing_current_agent_reused",
             },
         }
     def apply_current_role_agent_if_requested(self, root: Path, action: dict | None = None) -> dict:
@@ -756,8 +756,8 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
                 "reasoning_effort_policy": "highest_available",
                 "binding_open_result": "opened_for_current_packet",
                 "opened_for_run_id": state["run_id"],
-                "host_liveness_status": "active",
-                "liveness_decision": "confirmed_existing_agent",
+                "role_surface_addressable": True,
+                "current_run_binding_decision": "existing_current_agent_reused",
             },
         }
         role_action_handlers._write_current_role_agent_binding(router, root, run_root, state, role, payload)
@@ -1307,7 +1307,6 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
     def resume_role_agent_payload(self, root: Path, action: dict | None = None) -> dict:
         action = action or self.next_after_display_sync(root)
         records = []
-        batch_id = action["liveness_probe_batch_id"]
         for request in action["role_rehydration_request"]:
             role = request["role_key"]
             record = {
@@ -1316,16 +1315,9 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
                 "model_policy": "strongest_available",
                 "reasoning_effort_policy": "highest_available",
                 "rehydration_result": "live_agent_continuity_confirmed",
-                "host_liveness_status": "active",
-                "liveness_decision": "confirmed_existing_agent",
+                "role_surface_addressable": True,
+                "current_run_binding_decision": "existing_current_agent_reused",
                 "resume_agent_attempted": True,
-                "bounded_wait_result": "completed",
-                "bounded_wait_ms": 1000,
-                "liveness_probe_batch_id": batch_id,
-                "liveness_probe_mode": "concurrent_batch",
-                "liveness_probe_started_at": "2026-05-11T00:00:00Z",
-                "liveness_probe_completed_at": "2026-05-11T00:00:01Z",
-                "wait_agent_timeout_treated_as_active": False,
                 "rehydrated_for_run_id": request["rehydrated_for_run_id"],
                 "rehydrated_after_resume_tick_id": request["rehydrated_after_resume_tick_id"],
                 "rehydrated_after_resume_state_loaded": True,
@@ -1353,9 +1345,7 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
             records.append(record)
         return {
             "runtime_role_assistance_capability_status": "available",
-            "liveness_probe_batch_id": batch_id,
-            "liveness_probe_mode": "concurrent_batch",
-            "all_liveness_probes_started_before_wait": True,
+            "ack_progress_evidence_policy": "current_wait_authority_only",
             "rehydrated_role_bindings": records,
         }
     def role_recovery_agent_payload(self, root: Path, action: dict, *, role: str = "worker") -> dict:
@@ -1372,8 +1362,8 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
             "restore_result": "failed",
             "targeted_replacement_attempted": True,
             "targeted_replacement_result": "success",
-            "host_liveness_status": "active",
-            "liveness_decision": "opened_replacement_from_current_run_memory",
+            "role_surface_addressable": True,
+            "current_run_binding_decision": "current_run_replacement_opened",
             "slot_reconciliation_attempted": False,
             "full_role_binding_recovery_attempted": False,
             "rehydrated_for_run_id": transaction["run_id"],
@@ -1434,7 +1424,7 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
             "controller_reports_role_liveness_fault",
             {
                 "role_key": "worker",
-                "host_liveness_status": "missing",
+                "role_surface_addressable": False,
                 "detected_by": "controller",
             },
         )

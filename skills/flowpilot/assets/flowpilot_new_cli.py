@@ -17,7 +17,6 @@ from flowpilot_new_role_commands import (
 from flowpilot_new_run_commands import (
     cancel_run,
     final_preflight,
-    host_liveness,
     patrol,
     progress,
     repair_accepted_packet,
@@ -97,13 +96,6 @@ def main(argv: list[str] | None = None) -> int:
     progress_parser.add_argument("--packet-id", required=True)
     progress_parser.add_argument("--status", required=True)
 
-    liveness_parser = sub.add_parser("host-liveness", help="Record current host liveness for an assigned packet")
-    liveness_parser.add_argument("--lease-id", required=True)
-    liveness_parser.add_argument("--packet-id", required=True)
-    liveness_parser.add_argument("--status", required=True)
-    liveness_parser.add_argument("--source", default="host_report")
-    liveness_parser.add_argument("--detail", default="")
-
     stop_parser = sub.add_parser("stop", help="Stop the current run as an explicit terminal lifecycle event")
     stop_parser.add_argument("--reason", default="manual_stop")
     cancel_parser = sub.add_parser("cancel", help="Cancel the current run as an explicit terminal lifecycle event")
@@ -162,15 +154,6 @@ def main(argv: list[str] | None = None) -> int:
             payload = open_result(root, lease_id=args.lease_id, packet_id=args.packet_id, result_id=args.result_id)
         elif args.command == "progress":
             payload = progress(root, lease_id=args.lease_id, packet_id=args.packet_id, status=args.status)
-        elif args.command == "host-liveness":
-            payload = host_liveness(
-                root,
-                lease_id=args.lease_id,
-                packet_id=args.packet_id,
-                status=args.status,
-                source=args.source,
-                detail=args.detail,
-            )
         elif args.command == "stop":
             payload = stop_run(root, reason=args.reason)
         elif args.command == "cancel":

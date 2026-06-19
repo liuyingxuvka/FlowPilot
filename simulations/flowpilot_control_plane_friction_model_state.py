@@ -133,7 +133,7 @@ class State:
     pm_role_work_open_request_masked_by_global_flag: bool = False
     active_holder_lease_issued: bool = False
     active_holder_agent_identity_recorded: bool = False
-    active_holder_agent_host_live: bool = False
+    active_holder_current_binding_proven: bool = False
     active_holder_packet_role_matches: bool = False
     packet_ledger_write_atomic: bool = False
     packet_ledger_write_locked_or_cas: bool = False

@@ -163,12 +163,12 @@ def _active_holder_lease_evidence(
             "active_holder_lease_path": lease_path,
             "status": lease.get("status"),
         }
-    liveness = lease.get("holder_liveness") if isinstance(lease.get("holder_liveness"), dict) else {}
-    if liveness.get("host_liveness_proven") is not True:
+    binding_evidence = lease.get("holder_binding_evidence") if isinstance(lease.get("holder_binding_evidence"), dict) else {}
+    if binding_evidence.get("current_role_binding_proven") is not True:
         return {
             "required": True,
             "ok": False,
-            "reason": "active_holder_lease_liveness_missing",
+            "reason": "active_holder_lease_binding_evidence_missing",
             "active_holder_lease_path": lease_path,
         }
     return {
@@ -179,7 +179,7 @@ def _active_holder_lease_evidence(
         "lease_id": lease.get("lease_id"),
         "holder_role": lease.get("holder_role"),
         "holder_agent_id": lease.get("holder_agent_id"),
-        "holder_liveness": liveness,
+        "holder_binding_evidence": binding_evidence,
     }
 
 def _runtime_relay_missing_deliverables(

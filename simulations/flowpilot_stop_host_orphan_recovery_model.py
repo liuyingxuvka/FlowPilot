@@ -1,4 +1,4 @@
-"""FlowGuard model for stop/cancel, host liveness, and orphan evidence recovery."""
+"""FlowGuard model for stop/cancel, progress evidence, and orphan recovery."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from typing import Iterable, NamedTuple
 from flowguard import FunctionResult, Invariant, InvariantResult, Workflow
 
 
-MODEL_ID = "flowpilot_stop_host_orphan_recovery"
+MODEL_ID = "flowpilot_stop_progress_orphan_recovery"
 MAX_SEQUENCE_LENGTH = 16
 
 
@@ -22,16 +22,16 @@ class State:
     terminal_leases_closed: bool = False
     terminal_packets_marked: bool = False
     terminal_preflight_allowed: bool = False
-    host_liveness_bridge_written: bool = False
-    positive_liveness_preserves_wait: bool = False
-    failure_liveness_overrides_progress: bool = False
-    no_output_liveness_recovery: bool = False
+    ack_progress_policy_written: bool = False
+    positive_progress_preserves_wait: bool = False
+    no_fresh_evidence_triggers_replacement: bool = False
+    no_output_progress_recovery: bool = False
     orphan_runner_summary_seen: bool = False
     orphan_recovery_duty: bool = False
     orphan_not_auto_accepted: bool = False
     new_work_after_terminal_allowed: bool = False
     terminal_without_ledger_status: bool = False
-    stale_progress_overrode_host_failure: bool = False
+    stale_progress_counted_as_fresh_evidence: bool = False
     completed_without_result_treated_terminal: bool = False
     orphan_evidence_auto_accepted: bool = False
     orphan_evidence_ignored: bool = False
@@ -59,10 +59,10 @@ REQUIRED_SAFE_LABELS = (
     "close_terminal_leases",
     "mark_terminal_packets",
     "allow_terminal_preflight",
-    "write_host_liveness_bridge",
-    "preserve_positive_liveness_wait",
-    "override_progress_with_host_failure",
-    "route_no_output_to_recovery",
+    "write_ack_progress_evidence_policy",
+    "preserve_positive_progress_wait",
+    "replace_after_no_fresh_evidence",
+    "route_no_output_to_progress_recovery",
     "detect_orphan_runner_summary",
     "route_orphan_recovery_duty",
     "block_orphan_auto_accept",
@@ -73,14 +73,14 @@ def initial_state() -> State:
     return State()
 
 
-class StopHostOrphanStep:
-    name = "StopHostOrphanStep"
+class StopProgressOrphanStep:
+    name = "StopProgressOrphanStep"
     reads = (
         "current_run_ledger",
         "lifecycle_state",
         "packet_state",
         "lease_state",
-        "host_liveness_report",
+        "ack_progress_evidence",
         "runner_summary",
     )
     writes = (
@@ -89,10 +89,10 @@ class StopHostOrphanStep:
         "packet_terminal_status",
         "lifecycle_guard",
         "foreground_duty",
-        "host_liveness_report_ledger",
+        "progress_evidence_policy",
         "orphan_evidence_ledger",
     )
-    input_description = "Input x State: one controller patrol, stop/cancel, or host evidence observation"
+    input_description = "Input x State: one controller patrol, stop/cancel, or progress evidence observation"
     output_description = "Set(Output x State): legal terminal/recovery state or blocked hazard state"
 
     def apply(self, input_obj: Tick, state: State) -> Iterable[FunctionResult]:
@@ -124,14 +124,14 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
         return (Transition("mark_terminal_packets", replace(state, terminal_packets_marked=True)),)
     if not state.terminal_preflight_allowed:
         return (Transition("allow_terminal_preflight", replace(state, terminal_preflight_allowed=True)),)
-    if not state.host_liveness_bridge_written:
-        return (Transition("write_host_liveness_bridge", replace(state, host_liveness_bridge_written=True)),)
-    if not state.positive_liveness_preserves_wait:
-        return (Transition("preserve_positive_liveness_wait", replace(state, positive_liveness_preserves_wait=True)),)
-    if not state.failure_liveness_overrides_progress:
-        return (Transition("override_progress_with_host_failure", replace(state, failure_liveness_overrides_progress=True)),)
-    if not state.no_output_liveness_recovery:
-        return (Transition("route_no_output_to_recovery", replace(state, no_output_liveness_recovery=True)),)
+    if not state.ack_progress_policy_written:
+        return (Transition("write_ack_progress_evidence_policy", replace(state, ack_progress_policy_written=True)),)
+    if not state.positive_progress_preserves_wait:
+        return (Transition("preserve_positive_progress_wait", replace(state, positive_progress_preserves_wait=True)),)
+    if not state.no_fresh_evidence_triggers_replacement:
+        return (Transition("replace_after_no_fresh_evidence", replace(state, no_fresh_evidence_triggers_replacement=True)),)
+    if not state.no_output_progress_recovery:
+        return (Transition("route_no_output_to_progress_recovery", replace(state, no_output_progress_recovery=True)),)
     if not state.orphan_runner_summary_seen:
         return (Transition("detect_orphan_runner_summary", replace(state, orphan_runner_summary_seen=True)),)
     if not state.orphan_recovery_duty:
@@ -153,12 +153,12 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("terminal packets marked before active leases closed")
     if state.terminal_preflight_allowed and not (state.terminal_packets_marked and state.terminal_leases_closed):
         failures.append("terminal preflight allowed before stop/cancel cleanup")
-    if state.host_liveness_bridge_written and not state.packet_and_lease_loaded:
-        failures.append("host liveness recorded before packet and lease state")
-    if state.failure_liveness_overrides_progress and not state.host_liveness_bridge_written:
-        failures.append("host failure override claimed before host bridge")
-    if state.no_output_liveness_recovery and not state.host_liveness_bridge_written:
-        failures.append("no-output recovery claimed before host bridge")
+    if state.ack_progress_policy_written and not state.packet_and_lease_loaded:
+        failures.append("ACK/progress evidence policy recorded before packet and lease state")
+    if state.no_fresh_evidence_triggers_replacement and not state.ack_progress_policy_written:
+        failures.append("no-fresh-evidence replacement claimed before ACK/progress policy")
+    if state.no_output_progress_recovery and not state.ack_progress_policy_written:
+        failures.append("no-output recovery claimed before ACK/progress policy")
     if state.orphan_runner_summary_seen and not state.packet_and_lease_loaded:
         failures.append("orphan runner summary checked before packet state")
     if state.orphan_recovery_duty and not state.orphan_runner_summary_seen:
@@ -169,8 +169,8 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("new work was allowed after explicit terminal lifecycle")
     if state.terminal_without_ledger_status:
         failures.append("terminal return was allowed without terminal lifecycle ledger status")
-    if state.stale_progress_overrode_host_failure:
-        failures.append("older progress overrode newer host failure")
+    if state.stale_progress_counted_as_fresh_evidence:
+        failures.append("stale progress was counted as fresh liveness evidence")
     if state.completed_without_result_treated_terminal:
         failures.append("completed_without_result was treated as terminal completion")
     if state.orphan_evidence_auto_accepted:
@@ -191,7 +191,7 @@ def _invariant(state: State, trace: object) -> InvariantResult:
 INVARIANTS = (
     Invariant(
         "stop_host_orphan_recovery_invariants",
-        "Explicit stop/cancel is terminal, host liveness is current authority, orphan evidence routes recovery.",
+        "Explicit stop/cancel is terminal, ACK/progress evidence is wait authority, orphan evidence routes recovery.",
         _invariant,
     ),
 )
@@ -220,7 +220,7 @@ def hazard_states() -> dict[str, State]:
     return {
         "new_work_after_terminal_allowed": replace(base, new_work_after_terminal_allowed=True),
         "terminal_without_ledger_status": replace(base, terminal_without_ledger_status=True),
-        "stale_progress_overrode_host_failure": replace(base, stale_progress_overrode_host_failure=True),
+        "stale_progress_counted_as_fresh_evidence": replace(base, stale_progress_counted_as_fresh_evidence=True),
         "completed_without_result_treated_terminal": replace(base, completed_without_result_treated_terminal=True),
         "orphan_evidence_auto_accepted": replace(base, orphan_evidence_auto_accepted=True),
         "orphan_evidence_ignored": replace(base, orphan_evidence_ignored=True),
@@ -231,15 +231,15 @@ def state_summary(state: State) -> dict[str, bool | str]:
     return {
         "status": state.status,
         "terminal_preflight_allowed": state.terminal_preflight_allowed,
-        "host_liveness_bridge_written": state.host_liveness_bridge_written,
-        "failure_liveness_overrides_progress": state.failure_liveness_overrides_progress,
+        "ack_progress_policy_written": state.ack_progress_policy_written,
+        "no_fresh_evidence_triggers_replacement": state.no_fresh_evidence_triggers_replacement,
         "orphan_recovery_duty": state.orphan_recovery_duty,
         "orphan_not_auto_accepted": state.orphan_not_auto_accepted,
     }
 
 
 def build_workflow() -> Workflow:
-    return Workflow(blocks=(StopHostOrphanStep(),), name=MODEL_ID)
+    return Workflow(blocks=(StopProgressOrphanStep(),), name=MODEL_ID)
 
 
 EXTERNAL_INPUTS = (Tick(),)

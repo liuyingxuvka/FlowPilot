@@ -208,8 +208,8 @@ def make_action(
                 "await_card_bundle_return_event",
                 "await_role_decision",
             ],
-            "liveness_wait_allowed_only_when_router_requests_recovery": True,
-            "timeout_unknown_is_not_active": True,
+            "wait_authority": "ack_progress_evidence_only",
+            "unsupported_legacy_payloads_rejected": True,
             "sealed_body_reads_allowed": bool(action.get("sealed_body_reads_allowed", False)),
         }
         action["controller_after_relay_policy"] = policy

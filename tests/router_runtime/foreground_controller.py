@@ -389,7 +389,7 @@ class ForegroundControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertNotEqual((state.get("pending_action") or {}).get("controller_action_id"), entry["action_id"])
         labels = [item["label"] for item in state["history"] if isinstance(item, dict)]
         self.assertIn("router_reconciled_pending_controller_action_receipt", labels)
-    def test_foreground_controller_standby_materializes_report_reminder_with_liveness_probe(self) -> None:
+    def test_foreground_controller_standby_materializes_report_progress_reminder(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
         self.release_startup_daemon_for_explicit_daemon_test(root)
@@ -413,16 +413,18 @@ class ForegroundControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertEqual(standby["foreground_required_mode"], "process_controller_action")
         self.assertFalse(standby["controller_must_process_wait_target_before_exit"])
         self.assertTrue(standby["current_wait"]["reminder"]["due"])
-        self.assertTrue(standby["current_wait"]["liveness_probe"]["due"])
-        self.assertTrue(standby["current_wait"]["liveness_probe"]["required"])
-        self.assertTrue(standby["current_wait"]["liveness_probe"]["current_liveness_is_not_cached_authority"])
+        self.assertEqual(
+            standby["current_wait"]["ack_progress_evidence_policy"]["current_wait_authority"],
+            "expected_return_path_or_ack_progress_evidence",
+        )
         materialized = standby["materialized_wait_target_controller_action"]
         self.assertEqual(materialized["action_type"], router.WAIT_TARGET_REMINDER_ACTION_TYPE)
         action_record = read_json(run_root / "runtime" / "controller_actions" / f"{materialized['controller_action_id']}.json")
         reminder_action = action_record["action"]
         self.assertEqual(reminder_action["target_role"], "human_like_reviewer")
         self.assertEqual(reminder_action["wait_class"], "report_result")
-        self.assertTrue(reminder_action["fresh_liveness_probe_required"])
+        self.assertNotIn("fresh_liveness_probe_required", reminder_action)
+        self.assertIn("progress +1", reminder_action["reminder_text"])
         self.assertTrue(reminder_action["controller_must_use_router_authored_text"])
         self.assertFalse(reminder_action["sealed_body_reads_allowed"])
 
@@ -435,13 +437,12 @@ class ForegroundControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 "delivered_to_role": "human_like_reviewer",
                 "reminder_text_sha256": reminder_action["reminder_text_sha256"],
                 "sealed_body_reads": False,
-                "liveness_probe": {"checked_at": router.utc_now(), "result": "working"},
             },
         )
         self.assertTrue(receipt["ok"])
         state = read_json(router.run_state_path(run_root))
         self.assertTrue(state["pending_action"]["last_wait_reminder_at"])
-        self.assertEqual(state["pending_action"]["last_liveness_probe"]["result"], "working")
+        self.assertNotIn("last_liveness_probe", state["pending_action"])
         action_record = read_json(run_root / "runtime" / "controller_actions" / f"{materialized['controller_action_id']}.json")
         self.assertEqual(action_record["status"], "done")
     def test_reconcile_replays_reconciled_wait_reminder_receipt_after_state_drift(self) -> None:
@@ -454,12 +455,6 @@ class ForegroundControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
         delivered_at = router.utc_now()
         state["pending_action"]["created_at"] = self.old_utc(minutes=12)
         state["pending_action"]["last_wait_reminder_at"] = stale_checked_at
-        state["pending_action"]["last_liveness_probe"] = {
-            "checked_at": stale_checked_at,
-            "result": "message_submission_accepted",
-            "evidence_path": None,
-        }
-        state["pending_action"]["liveness_probe_result"] = "message_submission_accepted"
         lock = router._refresh_router_daemon_lock(root, run_root)  # type: ignore[attr-defined]
         router._write_router_daemon_status(  # type: ignore[attr-defined]
             root,
@@ -486,9 +481,6 @@ class ForegroundControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 "reminder_text_sha256": reminder_action["reminder_text_sha256"],
                 "sealed_body_reads": False,
                 "delivered_at": delivered_at,
-                "liveness_probe": {"checked_at": delivered_at, "result": "message_submission_accepted"},
-                "liveness_probe_result": "message_submission_accepted",
-                "liveness_probe_checked_at": delivered_at,
             },
         )
         self.assertTrue(receipt["ok"])
@@ -509,12 +501,6 @@ class ForegroundControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
                     "reminder_text_sha256": reminder_action["reminder_text_sha256"],
                     "sealed_body_reads": False,
                     "delivered_at": stale_checked_at,
-                    "liveness_probe": {
-                        "checked_at": stale_checked_at,
-                        "result": "message_submission_accepted",
-                    },
-                    "liveness_probe_result": "message_submission_accepted",
-                    "liveness_probe_checked_at": stale_checked_at,
                 },
             },
         )
@@ -524,12 +510,6 @@ class ForegroundControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
 
         drifted = read_json(router.run_state_path(run_root))
         drifted["pending_action"]["last_wait_reminder_at"] = stale_checked_at
-        drifted["pending_action"]["last_liveness_probe"] = {
-            "checked_at": stale_checked_at,
-            "result": "message_submission_accepted",
-            "evidence_path": None,
-        }
-        drifted["pending_action"]["liveness_probe_result"] = "message_submission_accepted"
         router.save_run_state(run_root, drifted)
 
         reconcile = router.reconcile_current_run(root)
@@ -537,7 +517,7 @@ class ForegroundControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertTrue(reconcile["repaired"]["scheduled_controller_receipts"]["changed"])
         repaired = read_json(router.run_state_path(run_root))
         self.assertEqual(repaired["pending_action"]["last_wait_reminder_at"], delivered_at)
-        self.assertEqual(repaired["pending_action"]["last_liveness_probe"]["checked_at"], delivered_at)
+        self.assertNotIn("last_liveness_probe", repaired["pending_action"])
         labels = [item["label"] for item in repaired["history"] if isinstance(item, dict)]
         self.assertIn("router_replayed_reconciled_wait_target_reminder_receipt", labels)
         standby_after_replay = router.foreground_controller_standby(root, max_seconds=0, poll_seconds=0.01, bounded_diagnostic=True)
@@ -584,12 +564,7 @@ class ForegroundControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.release_startup_daemon_for_explicit_daemon_test(root)
         self.force_current_role_result_wait(root, waiting_for_role="human_like_reviewer")
         state = read_json(router.run_state_path(run_root))
-        state["pending_action"]["created_at"] = self.old_utc(minutes=11)
-        state["pending_action"]["last_liveness_probe"] = {
-            "checked_at": router.utc_now(),
-            "result": "completed_without_expected_event",
-            "evidence_path": "runtime/liveness/reviewer-completed-no-output.json",
-        }
+        state["pending_action"]["created_at"] = self.old_utc(minutes=31)
         lock = router._refresh_router_daemon_lock(root, run_root)  # type: ignore[attr-defined]
         router._write_router_daemon_status(  # type: ignore[attr-defined]
             root,
@@ -613,21 +588,16 @@ class ForegroundControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
             "human_like_reviewer",
         )
         self.assertEqual(
-            standby["current_wait"]["liveness_probe"]["last_result"],
-            "completed_without_expected_event",
+            standby["current_wait"]["reissue"]["reason"],
+            "role_no_fresh_progress_after_thirty_minutes",
         )
-    def test_foreground_controller_standby_returns_lost_role_blocker_required(self) -> None:
+    def test_wait_reminder_receipt_rejects_legacy_liveness_probe_payload(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
         self.release_startup_daemon_for_explicit_daemon_test(root)
         self.force_current_role_result_wait(root, waiting_for_role="human_like_reviewer")
         state = read_json(router.run_state_path(run_root))
         state["pending_action"]["created_at"] = self.old_utc(minutes=11)
-        state["pending_action"]["last_liveness_probe"] = {
-            "checked_at": router.utc_now(),
-            "result": "unresponsive",
-            "evidence_path": "runtime/liveness/reviewer-unresponsive.json",
-        }
         lock = router._refresh_router_daemon_lock(root, run_root)  # type: ignore[attr-defined]
         router._write_router_daemon_status(  # type: ignore[attr-defined]
             root,
@@ -641,12 +611,22 @@ class ForegroundControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
 
         standby = router.foreground_controller_standby(root, max_seconds=5, poll_seconds=0.01)
 
-        self.assertEqual(standby["standby_state"], "wait_target_blocker_required")
-        self.assertEqual(standby["foreground_required_mode"], "record_wait_target_blocker")
-        self.assertTrue(standby["current_wait"]["blocker"]["required"])
-        self.assertEqual(standby["current_wait"]["blocker"]["event"], "controller_reports_role_liveness_fault")
-        self.assertEqual(standby["current_wait"]["blocker"]["record_event_payload"]["role_key"], "human_like_reviewer")
-        self.assertEqual(standby["current_wait"]["liveness_probe"]["last_result"], "unresponsive")
+        materialized = standby["materialized_wait_target_controller_action"]
+        action_record = read_json(run_root / "runtime" / "controller_actions" / f"{materialized['controller_action_id']}.json")
+        reminder_action = action_record["action"]
+        with self.assertRaisesRegex(router.RouterError, "unsupported legacy liveness fields"):
+            router.record_controller_action_receipt(
+                root,
+                action_id=materialized["controller_action_id"],
+                status="done",
+                payload={
+                    "target_role": "human_like_reviewer",
+                    "delivered_to_role": "human_like_reviewer",
+                    "reminder_text_sha256": reminder_action["reminder_text_sha256"],
+                    "sealed_body_reads": False,
+                    "liveness_probe": {"checked_at": router.utc_now(), "result": "working"},
+                },
+            )
     def test_foreground_controller_standby_returns_ack_reminder_and_blocker_due(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
@@ -709,7 +689,7 @@ class ForegroundControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
         reminder_action = action_record["action"]
         self.assertEqual(reminder_action["target_role"], "project_manager")
         self.assertEqual(reminder_action["wait_class"], "ack")
-        self.assertFalse(reminder_action["fresh_liveness_probe_required"])
+        self.assertNotIn("fresh_liveness_probe_required", reminder_action)
 
         router.record_controller_action_receipt(
             root,
@@ -847,9 +827,9 @@ class ForegroundControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertIn("no_new_controller_action_yet", standby_task["do_not_mark_complete_on"])
         self.assertEqual(
             standby_task["required_command"],
-            "python skills\\flowpilot\\assets\\flowpilot_router.py --root . --json controller-patrol-timer --seconds 60",
+            "python skills\\flowpilot\\assets\\flowpilot_router.py --root . --json controller-patrol-timer --seconds 300",
         )
-        self.assertEqual(standby_task["patrol_timer_seconds"], 60.0)
+        self.assertEqual(standby_task["patrol_timer_seconds"], 300.0)
         quiet_policy = standby_task["quiet_user_reporting_policy"]
         self.assertFalse(quiet_policy["continue_patrol_user_visible_message_required"])
         self.assertIn("quiet_patrol_continue", quiet_policy["silent_by_default_for"])
@@ -908,7 +888,7 @@ class ForegroundControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertFalse(result["final_answer_preflight"]["controller_stop_allowed"])
         self.assertEqual(result["final_answer_preflight"]["continuous_controller_standby_status"], "in_progress")
         self.assertFalse(result["display_projection_is_stop_authority"])
-    def test_controller_patrol_timer_continues_for_daemon_patrol_inside_thirty_second_window(self) -> None:
+    def test_controller_patrol_timer_continues_for_daemon_patrol_inside_five_minute_window(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
         runtime_dir = run_root / "runtime"
@@ -942,7 +922,7 @@ class ForegroundControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
         router_daemon = result["standby_snapshot"]["router_daemon"]
         self.assertEqual(router_daemon["daemon_patrol_status"], "ok")
         self.assertTrue(router_daemon["lock_live"])
-        self.assertEqual(router_daemon["daemon_patrol_check_after_seconds"], 30.0)
+        self.assertEqual(router_daemon["daemon_patrol_check_after_seconds"], 300.0)
         self.assertLess(router_daemon["daemon_patrol_age_seconds"], router.ROUTER_DAEMON_PATROL_CHECK_SECONDS)
         self.assertFalse(router_daemon["controller_liveness_check_required"])
     def test_controller_patrol_timer_requests_liveness_check_after_delayed_daemon_patrol(self) -> None:
@@ -959,7 +939,7 @@ class ForegroundControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
         state["daemon_mode_enabled"] = True
         router._rebuild_controller_action_ledger(root, run_root, state)  # type: ignore[attr-defined]
         lock = router._refresh_router_daemon_lock(root, run_root)  # type: ignore[attr-defined]
-        lock["last_tick_at"] = self.old_utc(minutes=1)
+        lock["last_tick_at"] = self.old_utc(minutes=6)
         router.write_json(run_root / "runtime" / "router_daemon.lock", lock)
         router._write_router_daemon_status(  # type: ignore[attr-defined]
             root,

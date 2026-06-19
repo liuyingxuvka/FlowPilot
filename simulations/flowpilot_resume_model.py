@@ -11,14 +11,14 @@ Risk intent brief:
 - Adversarial branches include ambiguous worker state, duplicate resume ticks,
   old run control state, body reads, missing manifest/ledger checks, dynamic
   launchers, launcher self-keepalive self-classification, stale role binding ids, missing
-  current-run manual resume evidence, stale lifecycle flags, host role liveness
+  current-run manual resume evidence, stale lifecycle flags, host role binding evidence
   ambiguity, unnecessary replacement of live roles, replacing all runtime roles
   when only one role failed, active control blockers racing ahead of resume
   re-entry, and route progress inferred from chat history.
 - Hard invariants: stable launcher only; Controller is relay-only; PM decisions
   happen after manual wake records re-entry to the router, current-run
   manual resume evidence, current-run state, visible plan
-  restoration, role-binding liveness checking, lifecycle reconciliation, and runtime roles
+  restoration, role-binding evidence checking, lifecycle reconciliation, and runtime roles
   rehydration;
   prompt/mail delivery is ledger gated; route progress can only come from
   reviewed packet evidence.
@@ -87,14 +87,14 @@ class State:
     frontier_loaded: bool = False
     visible_plan_restored_from_run: bool = False
     role_binding_memory_loaded: bool = False
-    liveness_probe_batch_started: bool = False
-    liveness_probe_batch_concurrent: bool = False
-    all_runtime_roles_liveness_probes_started_before_wait: bool = False
-    liveness_probe_batch_id_consistent: bool = False
-    serial_liveness_wait_used: bool = False
-    all_runtime_role_liveness_checked: bool = False
-    role_liveness_outcome: str = "unknown"  # unknown | all_active | recovery_needed | timeout_unknown
-    timeout_unknown_treated_as_active: bool = False
+    role_binding_evidence_batch_started: bool = False
+    role_binding_evidence_batch_concurrent: bool = False
+    all_runtime_roles_binding_evidence_checked_before_wait: bool = False
+    role_binding_evidence_batch_id_consistent: bool = False
+    serial_binding_evidence_wait_used: bool = False
+    all_runtime_role_binding_checked: bool = False
+    role_binding_outcome: str = "unknown"  # unknown | all_current | recovery_needed | unsupported_timeout_payload
+    unsupported_timeout_payload_treated_as_active: bool = False
     missing_role_treated_as_waiting: bool = False
     host_role_rehydrate_requested: bool = False
     live_agent_reuse_preferred: bool = False
@@ -498,45 +498,45 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             replace(state, controller_relay_boundary_confirmed=True, holder="controller"),
         )
         return
-    if not state.liveness_probe_batch_started:
+    if not state.role_binding_evidence_batch_started:
         yield Transition(
-            "runtime_role_liveness_concurrent_probe_batch_started",
+            "runtime_role_binding_evidence_batch_started",
             replace(
                 state,
-                liveness_probe_batch_started=True,
-                liveness_probe_batch_concurrent=True,
-                all_runtime_roles_liveness_probes_started_before_wait=True,
-                liveness_probe_batch_id_consistent=True,
+                role_binding_evidence_batch_started=True,
+                role_binding_evidence_batch_concurrent=True,
+                all_runtime_roles_binding_evidence_checked_before_wait=True,
+                role_binding_evidence_batch_id_consistent=True,
             ),
         )
         return
-    if not state.all_runtime_role_liveness_checked:
+    if not state.all_runtime_role_binding_checked:
         yield Transition(
-            "runtime_role_liveness_checked_all_active",
+            "runtime_role_binding_checked_all_current",
             replace(
                 state,
-                all_runtime_role_liveness_checked=True,
-                role_liveness_outcome="all_active",
+                all_runtime_role_binding_checked=True,
+                role_binding_outcome="all_current",
                 live_agent_reuse_preferred=True,
                 failed_role_count=0,
             ),
         )
         yield Transition(
-            "runtime_role_liveness_checked_recovery_needed",
+            "runtime_role_binding_checked_recovery_needed",
             replace(
                 state,
-                all_runtime_role_liveness_checked=True,
-                role_liveness_outcome="recovery_needed",
+                all_runtime_role_binding_checked=True,
+                role_binding_outcome="recovery_needed",
                 live_agent_reuse_preferred=True,
                 failed_role_count=1,
             ),
         )
         yield Transition(
-            "runtime_role_liveness_timeout_unknown_recorded",
+            "runtime_role_binding_unsupported_timeout_payload_rejected",
             replace(
                 state,
-                all_runtime_role_liveness_checked=True,
-                role_liveness_outcome="timeout_unknown",
+                all_runtime_role_binding_checked=True,
+                role_binding_outcome="unsupported_timeout_payload",
                 failed_role_count=6,
             ),
         )
@@ -554,7 +554,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         )
         return
     if not state.runtime_responsibilities_ready:
-        if state.role_liveness_outcome == "all_active":
+        if state.role_binding_outcome == "all_current":
             yield Transition(
                 "active_live_resume_roles_reused_after_memory_refresh",
                 replace(
@@ -566,7 +566,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                     replacement_role_count=0,
                 ),
             )
-        if state.role_liveness_outcome == "recovery_needed":
+        if state.role_binding_outcome == "recovery_needed":
             yield Transition(
                 "only_failed_resume_roles_replaced_from_current_run_memory",
                 replace(
@@ -579,7 +579,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                     replacement_role_count=state.failed_role_count,
                 ),
             )
-        if state.role_liveness_outcome == "timeout_unknown":
+        if state.role_binding_outcome == "unsupported_timeout_payload":
             yield Transition(
                 "all_uncertain_resume_roles_replaced_from_current_run_memory",
                 replace(
@@ -832,7 +832,7 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("active control blocker handled before resume state load")
     if state.control_blocker_handled and not (
         state.host_role_rehydrate_requested
-        and state.all_runtime_role_liveness_checked
+        and state.all_runtime_role_binding_checked
         and state.runtime_responsibilities_ready
         and state.run_memory_injected_into_roles
         and state.role_binding_recovery_report_written
@@ -906,66 +906,66 @@ def invariant_failures(state: State) -> list[str]:
     if state.chat_history_progress_inferred or state.pm_decision_from_chat_history:
         failures.append("resume inferred route progress or PM decision from chat history")
 
-    if state.all_runtime_role_liveness_checked and not state.controller_relay_boundary_confirmed:
-        failures.append("role-binding liveness checked before Controller loaded current-run resume state")
-    if state.serial_liveness_wait_used:
-        failures.append("role-binding liveness was not checked as a concurrent batch")
+    if state.all_runtime_role_binding_checked and not state.controller_relay_boundary_confirmed:
+        failures.append("role-binding evidence checked before Controller loaded current-run resume state")
+    if state.serial_binding_evidence_wait_used:
+        failures.append("role-binding evidence was not checked as a concurrent batch")
     if (
-        state.all_runtime_role_liveness_checked
+        state.all_runtime_role_binding_checked
         or state.host_role_rehydrate_requested
         or state.runtime_responsibilities_ready
         or state.pm_decision_requested
         or state.pm_decision_prompt_delivered
         or state.pm_decision_returned
     ) and not (
-        state.liveness_probe_batch_started
-        and state.liveness_probe_batch_concurrent
-        and state.all_runtime_roles_liveness_probes_started_before_wait
-        and state.liveness_probe_batch_id_consistent
+        state.role_binding_evidence_batch_started
+        and state.role_binding_evidence_batch_concurrent
+        and state.all_runtime_roles_binding_evidence_checked_before_wait
+        and state.role_binding_evidence_batch_id_consistent
     ):
-        failures.append("role-binding liveness was not checked as a concurrent batch")
-    if state.host_role_rehydrate_requested and not state.all_runtime_role_liveness_checked:
-        failures.append("host role rehydration requested before all runtime role liveness was checked")
-    if state.timeout_unknown_treated_as_active:
-        failures.append("timeout_unknown was treated as an active role")
+        failures.append("role-binding evidence was not checked as a concurrent batch")
+    if state.host_role_rehydrate_requested and not state.all_runtime_role_binding_checked:
+        failures.append("host role rehydration requested before all runtime role binding evidence was checked")
+    if state.unsupported_timeout_payload_treated_as_active:
+        failures.append("unsupported_timeout_payload was treated as an active role")
     if state.missing_role_treated_as_waiting:
         failures.append("missing or cancelled role was treated as a legal wait")
     if state.unnecessary_replacement_attempted:
-        failures.append("live role replacement was attempted without failed liveness")
+        failures.append("live role replacement was attempted without failed binding evidence")
     if (
-        state.role_liveness_outcome in {"recovery_needed", "timeout_unknown"}
+        state.role_binding_outcome in {"recovery_needed", "unsupported_timeout_payload"}
         and state.runtime_roles_restored
     ):
-        failures.append("roles were restored as active after missing/cancelled/timeout liveness")
-    if state.role_liveness_outcome == "all_active" and state.runtime_roles_replaced:
-        failures.append("all-active resume replaced live roles instead of reusing them")
+        failures.append("roles were restored as active after missing/cancelled/unsupported binding evidence")
+    if state.role_binding_outcome == "all_current" and state.runtime_roles_replaced:
+        failures.append("all-current resume replaced live roles instead of reusing them")
     if (
-        state.role_liveness_outcome == "all_active"
+        state.role_binding_outcome == "all_current"
         and state.runtime_responsibilities_ready
         and not (state.runtime_roles_restored and state.active_live_agents_reused and state.replacement_role_count == 0)
     ):
-        failures.append("all-active resume did not reuse live roles after memory refresh")
+        failures.append("all-current resume did not reuse live roles after memory refresh")
     if (
-        state.role_liveness_outcome == "recovery_needed"
+        state.role_binding_outcome == "recovery_needed"
         and state.runtime_responsibilities_ready
         and state.replacement_role_count != state.failed_role_count
     ):
         failures.append("recovery-needed resume replaced a count different from failed roles")
     if (
-        state.role_liveness_outcome == "recovery_needed"
+        state.role_binding_outcome == "recovery_needed"
         and state.runtime_responsibilities_ready
         and not state.active_live_agents_reused
     ):
         failures.append("recovery-needed resume did not reuse still-active roles")
     if (
-        state.role_liveness_outcome == "timeout_unknown"
+        state.role_binding_outcome == "unsupported_timeout_payload"
         and state.runtime_responsibilities_ready
         and state.replacement_role_count != state.failed_role_count
     ):
-        failures.append("timeout_unknown resume did not replace every uncertain role")
+        failures.append("unsupported_timeout_payload resume did not replace every uncertain role")
     if state.runtime_responsibilities_ready and not (
         state.host_role_rehydrate_requested
-        and state.all_runtime_role_liveness_checked
+        and state.all_runtime_role_binding_checked
         and state.all_roles_current_run_bound
         and (
         state.runtime_roles_restored
@@ -990,7 +990,7 @@ def invariant_failures(state: State) -> list[str]:
         or state.status == "complete"
     ) and not (
         state.host_role_rehydrate_requested
-        and state.all_runtime_role_liveness_checked
+        and state.all_runtime_role_binding_checked
         and state.run_memory_injected_into_roles
         and state.role_binding_recovery_report_written
         and _lifecycle_flags_current(state)
@@ -1041,13 +1041,13 @@ def invariant_failures(state: State) -> list[str]:
         and _lifecycle_flags_current(state)
         and _loaded_current_run_state(state)
         and state.controller_relay_boundary_confirmed
-        and state.all_runtime_role_liveness_checked
+        and state.all_runtime_role_binding_checked
         and state.runtime_responsibilities_ready
         and state.ambiguous_state == "clear"
         and state.resume_obligation_replay_scanned
         and state.resume_obligation_replay_pm_escalation_required
     ):
-        failures.append("PM decision requested before wake/router entry, state load, visible plan, role-binding liveness, lifecycle reconciliation, relay boundary, role recovery, ambiguity clearance, and replay escalation")
+        failures.append("PM decision requested before wake/router entry, state load, visible plan, role-binding evidence, lifecycle reconciliation, relay boundary, role recovery, ambiguity clearance, and replay escalation")
     if state.pm_decision_prompt_delivered and not state.pm_controller_reminder_included:
         failures.append("PM decision card omitted the Controller relay-only reminder")
     if (
@@ -1210,12 +1210,12 @@ def _ready_for_pm(**changes: object) -> State:
         visible_plan_restored_from_run=True,
         role_binding_memory_loaded=True,
         controller_relay_boundary_confirmed=True,
-        liveness_probe_batch_started=True,
-        liveness_probe_batch_concurrent=True,
-        all_runtime_roles_liveness_probes_started_before_wait=True,
-        liveness_probe_batch_id_consistent=True,
-        all_runtime_role_liveness_checked=True,
-        role_liveness_outcome="all_active",
+        role_binding_evidence_batch_started=True,
+        role_binding_evidence_batch_concurrent=True,
+        all_runtime_roles_binding_evidence_checked_before_wait=True,
+        role_binding_evidence_batch_id_consistent=True,
+        all_runtime_role_binding_checked=True,
+        role_binding_outcome="all_current",
         host_role_rehydrate_requested=True,
         runtime_responsibilities_ready=True,
         runtime_roles_restored=True,
@@ -1379,36 +1379,36 @@ def hazard_states() -> dict[str, State]:
             role_binding_memory_loaded=False,
             pm_decision_requested=True,
         ),
-        "pm_decision_before_runtime_role_liveness": _ready_for_pm(
-            all_runtime_role_liveness_checked=False,
+        "pm_decision_before_runtime_role_binding_evidence": _ready_for_pm(
+            all_runtime_role_binding_checked=False,
             pm_decision_requested=True,
         ),
-        "runtime_role_liveness_serial_wait": _ready_for_pm(
-            serial_liveness_wait_used=True,
+        "runtime_role_binding_evidence_serial_wait": _ready_for_pm(
+            serial_binding_evidence_wait_used=True,
         ),
-        "runtime_role_liveness_without_probe_batch": _ready_for_pm(
-            liveness_probe_batch_started=False,
-            liveness_probe_batch_concurrent=False,
-            all_runtime_roles_liveness_probes_started_before_wait=False,
-            liveness_probe_batch_id_consistent=False,
+        "runtime_role_binding_evidence_without_batch": _ready_for_pm(
+            role_binding_evidence_batch_started=False,
+            role_binding_evidence_batch_concurrent=False,
+            all_runtime_roles_binding_evidence_checked_before_wait=False,
+            role_binding_evidence_batch_id_consistent=False,
         ),
-        "runtime_role_liveness_waits_before_all_probe_starts": _ready_for_pm(
-            all_runtime_roles_liveness_probes_started_before_wait=False,
+        "runtime_role_binding_evidence_waits_before_all_checks_start": _ready_for_pm(
+            all_runtime_roles_binding_evidence_checked_before_wait=False,
         ),
-        "runtime_role_liveness_batch_id_mismatch": _ready_for_pm(
-            liveness_probe_batch_id_consistent=False,
+        "runtime_role_binding_evidence_batch_id_mismatch": _ready_for_pm(
+            role_binding_evidence_batch_id_consistent=False,
         ),
         "pm_decision_before_runtime_roles_recovery": _ready_for_pm(
             runtime_responsibilities_ready=False,
             runtime_roles_restored=False,
             pm_decision_requested=True,
         ),
-        "timeout_unknown_treated_as_active": _ready_for_pm(
-            role_liveness_outcome="timeout_unknown",
-            timeout_unknown_treated_as_active=True,
+        "unsupported_timeout_payload_treated_as_active": _ready_for_pm(
+            role_binding_outcome="unsupported_timeout_payload",
+            unsupported_timeout_payload_treated_as_active=True,
         ),
         "missing_role_treated_as_waiting": _ready_for_pm(
-            role_liveness_outcome="recovery_needed",
+            role_binding_outcome="recovery_needed",
             missing_role_treated_as_waiting=True,
         ),
         "pm_decision_before_run_memory_injection": _ready_for_pm(
@@ -1416,8 +1416,8 @@ def hazard_states() -> dict[str, State]:
             role_binding_recovery_report_written=False,
             pm_decision_requested=True,
         ),
-        "all_active_roles_replaced_instead_of_reused": _ready_for_pm(
-            role_liveness_outcome="all_active",
+        "all_current_roles_replaced_instead_of_reused": _ready_for_pm(
+            role_binding_outcome="all_current",
             runtime_roles_restored=False,
             runtime_roles_replaced=True,
             active_live_agents_reused=False,
@@ -1426,7 +1426,7 @@ def hazard_states() -> dict[str, State]:
             unnecessary_replacement_attempted=True,
         ),
         "one_failed_role_replaced_all_runtime_roles": _ready_for_pm(
-            role_liveness_outcome="recovery_needed",
+            role_binding_outcome="recovery_needed",
             failed_role_count=1,
             runtime_roles_restored=False,
             runtime_roles_replaced=True,
@@ -1435,7 +1435,7 @@ def hazard_states() -> dict[str, State]:
             replacement_role_count=6,
         ),
         "one_failed_role_does_not_reuse_active_roles": _ready_for_pm(
-            role_liveness_outcome="recovery_needed",
+            role_binding_outcome="recovery_needed",
             failed_role_count=1,
             runtime_roles_restored=False,
             runtime_roles_replaced=True,

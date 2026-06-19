@@ -14,7 +14,7 @@
       "new_work_after_terminal_allowed",
       "orphan_evidence_auto_accepted",
       "orphan_evidence_ignored",
-      "stale_progress_overrode_host_failure",
+      "stale_progress_counted_as_fresh_evidence",
       "terminal_without_ledger_status"
     ],
     "hazards": {
@@ -30,8 +30,8 @@
       "orphan_evidence_ignored": [
         "orphan evidence was ignored instead of routed to recovery"
       ],
-      "stale_progress_overrode_host_failure": [
-        "older progress overrode newer host failure"
+      "stale_progress_counted_as_fresh_evidence": [
+        "stale progress was counted as fresh liveness evidence"
       ],
       "terminal_without_ledger_status": [
         "terminal return was allowed without terminal lifecycle ledger status"
@@ -39,11 +39,11 @@
     },
     "ok": true
   },
-  "model_id": "flowpilot_stop_host_orphan_recovery",
+  "model_id": "flowpilot_stop_progress_orphan_recovery",
   "ok": true,
-  "result_type": "flowpilot_stop_host_orphan_recovery_checks",
+  "result_type": "flowpilot_stop_progress_orphan_recovery_checks",
   "target_plan": {
-    "evidence_role": "model_target_plan_not_live_host_proof",
+    "evidence_role": "model_target_plan_ack_progress_evidence",
     "failures": [],
     "labels": [
       "load_current_run",
@@ -52,18 +52,18 @@
       "close_terminal_leases",
       "mark_terminal_packets",
       "allow_terminal_preflight",
-      "write_host_liveness_bridge",
-      "preserve_positive_liveness_wait",
-      "override_progress_with_host_failure",
-      "route_no_output_to_recovery",
+      "write_ack_progress_evidence_policy",
+      "preserve_positive_progress_wait",
+      "replace_after_no_fresh_evidence",
+      "route_no_output_to_progress_recovery",
       "detect_orphan_runner_summary",
       "route_orphan_recovery_duty",
       "block_orphan_auto_accept"
     ],
     "ok": true,
     "state": {
-      "failure_liveness_overrides_progress": true,
-      "host_liveness_bridge_written": true,
+      "ack_progress_policy_written": true,
+      "no_fresh_evidence_triggers_replacement": true,
       "orphan_not_auto_accepted": true,
       "orphan_recovery_duty": true,
       "status": "complete",
@@ -80,7 +80,7 @@
           "simulations/flowpilot_stop_host_orphan_recovery_model.py"
         ],
         "freshness": "current",
-        "id": "stop_host_orphan_flowguard_model",
+        "id": "stop_progress_orphan_flowguard_model",
         "scope": "routine",
         "status": "passed"
       },
@@ -89,7 +89,7 @@
           "openspec/changes/harden-new-flowpilot-stop-host-orphan-recovery/tasks.md"
         ],
         "freshness": "current",
-        "id": "stop_host_orphan_target_plan",
+        "id": "stop_progress_orphan_target_plan",
         "scope": "routine",
         "status": "passed"
       },
@@ -98,7 +98,7 @@
           "simulations/flowpilot_stop_host_orphan_recovery_model.py"
         ],
         "freshness": "current",
-        "id": "stop_host_orphan_hazard_replay",
+        "id": "stop_progress_orphan_hazard_replay",
         "scope": "routine",
         "status": "passed"
       }

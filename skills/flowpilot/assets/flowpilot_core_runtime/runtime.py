@@ -134,7 +134,6 @@ EVENT_FAMILY_BY_TYPE = {
     "run_repair_rounds_exhausted": "lifecycle",
     "responsibility_lease_created": "lease",
     "role_memory_seed_recorded": "lease",
-    "host_liveness_recorded": "lease",
     "role_continuity_reused": "lease",
     "role_continuity_replaced": "lease",
     "role_continuity_initialized": "lease",
@@ -194,11 +193,11 @@ _GUARD_HISTORY_LIMIT = 50
 _GUARD_STUCK_TRIGGERS = {"patrol", "resume"}
 _FOREGROUND_DUTY_HISTORY_LIMIT = 50
 _REPAIR_LOOP_BREAK_GLASS_THRESHOLD = 5
-_DEFAULT_WAIT_PATROL_SECONDS = 60
-_WAIT_ACK_REMINDER_SECONDS = 180
-_WAIT_ACK_BLOCKER_SECONDS = 600
-_WAIT_RESULT_LIVENESS_SECONDS = 600
-_WAIT_PROGRESS_GRACE_SECONDS = 600
+_DEFAULT_WAIT_PATROL_SECONDS = 300
+_WAIT_ACK_REMINDER_SECONDS = 300
+_WAIT_ACK_REPLACE_SECONDS = 600
+_WAIT_PROGRESS_REMINDER_SECONDS = 600
+_WAIT_PROGRESS_REPLACE_SECONDS = 1800
 _WAIT_PATROL_DECISIONS = {"wait_for_ack", "wait_for_result"}
 _RECOVERY_DUTY_DECISIONS = {
     "reissue_or_replace_lease",
@@ -206,36 +205,6 @@ _RECOVERY_DUTY_DECISIONS = {
     "recover_packet",
     "repair_assignment_race",
 }
-_WAIT_LIVENESS_FAILURE_STATUSES = {
-    "missing",
-    "cancelled",
-    "not_found",
-    "unknown",
-    "unresponsive",
-    "blocked",
-    "lost",
-    "timeout_unknown",
-}
-_WAIT_NO_OUTPUT_STATUSES = {
-    "no_output",
-    "alive_no_output",
-    "not_working_no_output",
-    "completed",
-    "completed_without_result",
-    "completed_without_expected_event",
-}
-_HOST_LIVENESS_STATUSES = (
-    _WAIT_LIVENESS_FAILURE_STATUSES
-    | _WAIT_NO_OUTPUT_STATUSES
-    | {
-        "active",
-        "still_working",
-        "working",
-        "progressing",
-        "acknowledged",
-    }
-)
-_ROLE_NONREUSABLE_LIVENESS_STATUSES = _WAIT_LIVENESS_FAILURE_STATUSES | _WAIT_NO_OUTPUT_STATUSES
 TERMINAL_LIFECYCLE_STATUSES = {"stopped_by_user", "cancelled_by_user", "repair_rounds_exhausted"}
 _STALE_RESULT_BLOCKERS = {
     "closed_or_inactive_lease",
@@ -402,9 +371,9 @@ def new_ledger(
         "lifecycle_guard_config": {
             "max_repeated_action_without_event": 3,
             "ack_reminder_seconds": _WAIT_ACK_REMINDER_SECONDS,
-            "ack_blocker_seconds": _WAIT_ACK_BLOCKER_SECONDS,
-            "result_liveness_seconds": _WAIT_RESULT_LIVENESS_SECONDS,
-            "progress_grace_seconds": _WAIT_PROGRESS_GRACE_SECONDS,
+            "ack_replace_seconds": _WAIT_ACK_REPLACE_SECONDS,
+            "progress_reminder_seconds": _WAIT_PROGRESS_REMINDER_SECONDS,
+            "progress_replace_seconds": _WAIT_PROGRESS_REPLACE_SECONDS,
         },
         "foreground_duty": {
             "schema_version": "black_box_flowpilot.foreground_duty.v1",
@@ -457,7 +426,6 @@ def new_ledger(
         "system_closures": {},
         "host_driver_state": {},
         "host_evidence": {},
-        "host_liveness_reports": {},
         "role_continuity": {
             "schema_version": "black_box_flowpilot.role_continuity.v1",
             "roles": {},
@@ -1077,7 +1045,7 @@ def _terminal_supplemental_repair_contract_minimal_shape(round_number: int = 1) 
             {
                 "repair_item_id": f"terminal-gap-r{round_number}-item-1",
                 "gap_kind": "final_artifact_hygiene_gap",
-                "hygiene_category": "current_goal_required",
+                "hygiene_category": "artifact_lineage",
                 "original_goal_link": "Which original user-goal obligation this item closes.",
                 "reviewer_gap": "Concrete terminal Reviewer gap.",
                 "required_repair": "Concrete repair work PM is adding.",
@@ -7089,6 +7057,48 @@ def _role_continuity_table(ledger: dict[str, Any]) -> dict[str, Any]:
     return roles
 
 
+def _latest_liveness_evidence(lease: Mapping[str, Any]) -> dict[str, Any]:
+    candidates: list[tuple[str, str, datetime]] = []
+    if lease.get("ack_received"):
+        ack_at = str(lease.get("ack_received_at") or "")
+        parsed_ack = _parse_utc_timestamp(ack_at)
+        if parsed_ack is not None:
+            candidates.append(("ack", ack_at, parsed_ack))
+    progress_at = str(lease.get("last_progress_at") or "")
+    parsed_progress = _parse_utc_timestamp(progress_at)
+    if parsed_progress is not None:
+        candidates.append(("progress", progress_at, parsed_progress))
+    if not candidates:
+        return {"kind": "none", "at": "", "elapsed_seconds": None}
+    kind, raw_at, parsed_at = max(candidates, key=lambda item: item[2])
+    return {
+        "kind": kind,
+        "at": raw_at,
+        "elapsed_seconds": max(0, int((datetime.now(timezone.utc) - parsed_at).total_seconds())),
+    }
+
+
+def _lease_replacement_due_from_evidence_age(ledger: Mapping[str, Any], lease: Mapping[str, Any]) -> bool:
+    if str(lease.get("status") or "") != "active":
+        return False
+    packet_id = str(lease.get("packet_id") or "")
+    packet = ledger.get("packets", {}).get(packet_id)
+    if isinstance(packet, Mapping) and packet.get("accepted_result_id"):
+        return False
+    if not lease.get("ack_received"):
+        elapsed = _elapsed_seconds_since(lease.get("created_at"))
+        ack_replace_seconds = _guard_config_int(ledger, "ack_replace_seconds", _WAIT_ACK_REPLACE_SECONDS)
+        return elapsed is not None and elapsed >= ack_replace_seconds
+    evidence = _latest_liveness_evidence(lease)
+    elapsed = evidence.get("elapsed_seconds")
+    progress_replace_seconds = _guard_config_int(
+        ledger,
+        "progress_replace_seconds",
+        _WAIT_PROGRESS_REPLACE_SECONDS,
+    )
+    return isinstance(elapsed, int) and elapsed >= progress_replace_seconds
+
+
 def _role_slot_reusable(ledger: Mapping[str, Any], role: str, slot: Mapping[str, Any] | None) -> bool:
     if not isinstance(slot, Mapping):
         return False
@@ -7104,11 +7114,9 @@ def _role_slot_reusable(ledger: Mapping[str, Any], role: str, slot: Mapping[str,
             return False
         if lease.get("status") in {"expired", "superseded", "cancelled"}:
             return False
-        liveness = str(lease.get("liveness_status") or lease.get("last_liveness_status") or "")
-        if liveness in _ROLE_NONREUSABLE_LIVENESS_STATUSES:
+        if _lease_replacement_due_from_evidence_age(ledger, lease):
             return False
-    liveness = str(slot.get("last_liveness_status") or "")
-    return liveness not in _ROLE_NONREUSABLE_LIVENESS_STATUSES
+    return True
 
 
 def _role_assignment_reuse_forbidden_reason(
@@ -7140,14 +7148,13 @@ def _role_assignment_table(ledger: dict[str, Any]) -> dict[str, Any]:
     return assignments
 
 
-def _lease_reusable_for_role_slot(lease: Mapping[str, Any]) -> bool:
+def _lease_reusable_for_role_slot(ledger: Mapping[str, Any], lease: Mapping[str, Any]) -> bool:
     agent_id = str(lease.get("agent_id") or "").strip()
     if not agent_id:
         return False
     if str(lease.get("status") or "") in {"expired", "superseded", "cancelled"}:
         return False
-    liveness = str(lease.get("liveness_status") or lease.get("last_liveness_status") or lease.get("last_progress_status") or "")
-    return liveness not in _ROLE_NONREUSABLE_LIVENESS_STATUSES
+    return not _lease_replacement_due_from_evidence_age(ledger, lease)
 
 
 def _same_responsibility_lease_history(ledger: Mapping[str, Any], role: str) -> list[Mapping[str, Any]]:
@@ -7168,7 +7175,7 @@ def _hydrate_role_slot_from_current_run_history(
     if not history:
         return None, "no_same_responsibility_history"
     for lease in reversed(history):
-        if not _lease_reusable_for_role_slot(lease):
+        if not _lease_reusable_for_role_slot(ledger, lease):
             continue
         roles = _role_continuity_table(ledger)
         slot = {
@@ -7178,9 +7185,6 @@ def _hydrate_role_slot_from_current_run_history(
             "latest_lease_id": str(lease.get("lease_id") or ""),
             "latest_packet_id": str(lease.get("packet_id") or ""),
             "reuse_state": "reusable",
-            "last_liveness_status": str(
-                lease.get("liveness_status") or lease.get("last_liveness_status") or lease.get("last_progress_status") or ""
-            ),
             "last_continuity_action": "hydrated",
             "prior_agent_id": "",
             "replacement_reason": "",
@@ -7696,23 +7700,6 @@ def _attach_role_memory_seed(
     return memory_seed_id
 
 
-def _update_role_slot_liveness(ledger: dict[str, Any], lease: Mapping[str, Any], status: str) -> None:
-    role = str(lease.get("responsibility") or "")
-    lease_id = str(lease.get("lease_id") or "")
-    if not role or not lease_id:
-        return
-    roles = _role_continuity_table(ledger)
-    slot = roles.get(role)
-    if not isinstance(slot, dict) or str(slot.get("latest_lease_id") or "") != lease_id:
-        return
-    slot["last_liveness_status"] = status
-    slot["last_liveness_checked_at"] = now_iso()
-    if status in _ROLE_NONREUSABLE_LIVENESS_STATUSES:
-        slot["reuse_state"] = "not_reusable"
-        slot["not_reusable_reason"] = f"liveness:{status}"
-    slot["updated_at"] = now_iso()
-
-
 def role_memory_seed_for_lease(
     ledger: dict[str, Any],
     lease_id: str,
@@ -7755,7 +7742,6 @@ def _mark_role_slot_after_lease(
         "latest_lease_id": str(lease.get("lease_id") or ""),
         "latest_packet_id": str(lease.get("packet_id") or ""),
         "reuse_state": "reusable",
-        "last_liveness_status": str(lease.get("liveness_status") or lease.get("last_liveness_status") or ""),
         "last_continuity_action": "reused" if reused else ("replaced" if prior_agent_id else "initialized"),
         "prior_agent_id": prior_agent_id,
         "replacement_reason": replacement_reason,
@@ -7867,10 +7853,6 @@ def lease_agent(
         "ack_received_at": "",
         "progress_count": 0,
         "last_progress_at": "",
-        "last_liveness_status": "",
-        "liveness_status": "",
-        "liveness_checked_at": "",
-        "host_liveness_history": [],
         "created_at": now_iso(),
         "closed_at": None,
         "close_reason": "",
@@ -8381,6 +8363,22 @@ def _node_acceptance_projection_rows(item_ids: list[str]) -> list[dict[str, str]
     ]
 
 
+def _project_current_pm_repair_blocker_id(value: Any, blocker_id: str) -> Any:
+    if not blocker_id:
+        return _copy_jsonable(value)
+    if isinstance(value, Mapping):
+        projected: dict[str, Any] = {}
+        for key, item in value.items():
+            if str(key) == "target_blocker_id":
+                projected[str(key)] = blocker_id
+            else:
+                projected[str(key)] = _project_current_pm_repair_blocker_id(item, blocker_id)
+        return projected
+    if isinstance(value, list):
+        return [_project_current_pm_repair_blocker_id(item, blocker_id) for item in value]
+    return _copy_jsonable(value)
+
+
 def _dynamic_effective_result_contract_for_envelope(
     ledger: Mapping[str, Any],
     envelope: Mapping[str, Any],
@@ -8447,6 +8445,18 @@ def _dynamic_effective_result_contract_for_envelope(
                     pass_package["acceptance_item_projection"] = _node_acceptance_projection_rows(node_item_ids)
             contract["minimal_valid_shape"] = minimal_shape
             contract["branch_valid_shapes"] = branch_shapes
+
+    if family_id == "pm_repair_decision.pm_repair_decision":
+        blocker_id = str(envelope.get("repair_blocker_id") or envelope.get("subject_id") or "")
+        if blocker_id:
+            contract["minimal_valid_shape"] = _project_current_pm_repair_blocker_id(
+                contract.get("minimal_valid_shape") or {},
+                blocker_id,
+            )
+            contract["branch_valid_shapes"] = _project_current_pm_repair_blocker_id(
+                contract.get("branch_valid_shapes") or {},
+                blocker_id,
+            )
 
     contract["required_child_fields"] = _dedupe_contract_fields(required_child_fields)
     contract["allowed_value_options"] = _copy_jsonable(allowed_options)
@@ -8821,6 +8831,7 @@ def issue_task_packet(
     output_contract["field_type_requirements"] = _copy_jsonable(
         effective_contract.get("field_type_requirements") or {}
     )
+    output_contract["forbidden_fields"] = list(effective_contract.get("forbidden_fields") or [])
     envelope["output_contract"] = output_contract
     if _role_result_requires_pm_visible_summary(responsibility=responsibility, packet_kind=packet_kind):
         output_contract = dict(envelope["output_contract"])
@@ -9128,70 +9139,7 @@ def record_progress(ledger: dict[str, Any], lease_id: str, packet_id: str, statu
     lease["progress_count"] = int(lease.get("progress_count", 0)) + 1
     lease["last_progress_status"] = status
     lease["last_progress_at"] = now_iso()
-    lease["last_liveness_status"] = status
     _event(ledger, "lease_progress", lease_id=lease_id, packet_id=packet_id, status=status)
-
-
-def record_host_liveness(
-    ledger: dict[str, Any],
-    lease_id: str,
-    packet_id: str,
-    status: str,
-    *,
-    source: str = "host_report",
-    detail: str = "",
-) -> dict[str, Any]:
-    _assert_not_terminal_lifecycle(ledger)
-    normalized = status.strip()
-    if normalized not in _HOST_LIVENESS_STATUSES:
-        raise BlackBoxRuntimeError(f"unknown host liveness status: {status}")
-    lease = _require(ledger["leases"], lease_id, "lease")
-    packet = _require(ledger["packets"], packet_id, "packet")
-    if lease.get("packet_id") != packet_id:
-        raise BlackBoxRuntimeError("host liveness packet mismatch")
-    if packet.get("accepted_result_id"):
-        raise BlackBoxRuntimeError("accepted packet cannot record host liveness")
-    checked_at = now_iso()
-    report_id = _next_id(ledger, "host_liveness")
-    report = {
-        "schema_version": "black_box_flowpilot.host_liveness_report.v1",
-        "report_id": report_id,
-        "lease_id": lease_id,
-        "packet_id": packet_id,
-        "status": normalized,
-        "source": source,
-        "detail": detail,
-        "checked_at": checked_at,
-        "current_run_only": True,
-    }
-    ledger.setdefault("host_liveness_reports", {})[report_id] = report
-    lease["liveness_status"] = normalized
-    lease["last_liveness_status"] = normalized
-    lease["liveness_checked_at"] = checked_at
-    lease["liveness_source"] = source
-    lease["liveness_detail"] = detail
-    _update_role_slot_liveness(ledger, lease, normalized)
-    history = lease.setdefault("host_liveness_history", [])
-    if isinstance(history, list):
-        history.append(
-            {
-                "report_id": report_id,
-                "status": normalized,
-                "source": source,
-                "checked_at": checked_at,
-            }
-        )
-        del history[:-20]
-    _event(
-        ledger,
-        "host_liveness_recorded",
-        report_id=report_id,
-        lease_id=lease_id,
-        packet_id=packet_id,
-        status=normalized,
-        source=source,
-    )
-    return report
 
 
 def submit_result(
@@ -11296,6 +11244,23 @@ def _block_result_and_reissue_current_packet_family(
                     "node_validation_evidence_ids": node_validation_ids,
                     "minimal_valid_shape": pm_minimal_valid_shape,
                 }
+            )
+    if packet_kind == "pm_repair_decision":
+        current_blocker_id = str(
+            packet.get("active_blocker_id")
+            or packet.get("repair_blocker_id")
+            or envelope.get("repair_blocker_id")
+            or envelope.get("subject_id")
+            or ""
+        )
+        if current_blocker_id:
+            reissue_payload["minimal_valid_shape"] = _project_current_pm_repair_blocker_id(
+                reissue_payload.get("minimal_valid_shape") or {},
+                current_blocker_id,
+            )
+            reissue_payload["branch_minimal_valid_shape"] = _project_current_pm_repair_blocker_id(
+                reissue_payload.get("branch_minimal_valid_shape") or {},
+                current_blocker_id,
             )
     preassigned_packet_id = ""
     reissue_authorized_result_reads: list[dict[str, Any]] = []
@@ -14193,25 +14158,20 @@ def _guard_wait_recovery(
 
     progress_count = int(lease_map.get("progress_count", 0) or 0)
     last_progress_status = str(lease_map.get("last_progress_status") or "")
-    last_liveness_status = str(lease_map.get("liveness_status") or lease_map.get("last_liveness_status") or last_progress_status)
     last_progress_elapsed = _elapsed_seconds_since(lease_map.get("last_progress_at"))
-    last_liveness_elapsed = _elapsed_seconds_since(lease_map.get("liveness_checked_at"))
-    progress_grace_seconds = _guard_config_int(ledger, "progress_grace_seconds", _WAIT_PROGRESS_GRACE_SECONDS)
-    positive_liveness_recent = bool(
-        last_liveness_status
-        and last_liveness_status not in _WAIT_LIVENESS_FAILURE_STATUSES
-        and last_liveness_status not in _WAIT_NO_OUTPUT_STATUSES
-        and (
-            last_liveness_elapsed is not None
-            and last_liveness_elapsed <= progress_grace_seconds
-            or last_liveness_elapsed is None
-            and last_progress_elapsed is not None
-            and last_progress_elapsed <= progress_grace_seconds
-        )
+    liveness_evidence = _latest_liveness_evidence(lease_map)
+    evidence_elapsed = liveness_evidence.get("elapsed_seconds")
+    ack_reminder_seconds = _guard_config_int(ledger, "ack_reminder_seconds", _WAIT_ACK_REMINDER_SECONDS)
+    ack_replace_seconds = _guard_config_int(ledger, "ack_replace_seconds", _WAIT_ACK_REPLACE_SECONDS)
+    progress_reminder_seconds = _guard_config_int(
+        ledger,
+        "progress_reminder_seconds",
+        _WAIT_PROGRESS_REMINDER_SECONDS,
     )
-    progress_recent = bool(
-        (progress_count or lease_map.get("liveness_checked_at"))
-        and positive_liveness_recent
+    progress_replace_seconds = _guard_config_int(
+        ledger,
+        "progress_replace_seconds",
+        _WAIT_PROGRESS_REPLACE_SECONDS,
     )
     base = {
         "state": "waiting",
@@ -14221,10 +14181,13 @@ def _guard_wait_recovery(
         "progress_count": progress_count,
         "last_progress_status": last_progress_status,
         "last_progress_elapsed_seconds": last_progress_elapsed,
-        "last_liveness_status": last_liveness_status,
-        "last_liveness_checked_at": str(lease_map.get("liveness_checked_at") or ""),
-        "last_liveness_elapsed_seconds": last_liveness_elapsed,
-        "progress_grace_seconds": progress_grace_seconds,
+        "last_liveness_evidence_kind": str(liveness_evidence.get("kind") or "none"),
+        "last_liveness_evidence_at": str(liveness_evidence.get("at") or ""),
+        "liveness_evidence_elapsed_seconds": evidence_elapsed,
+        "ack_reminder_seconds": ack_reminder_seconds,
+        "ack_replace_seconds": ack_replace_seconds,
+        "progress_reminder_seconds": progress_reminder_seconds,
+        "progress_replace_seconds": progress_replace_seconds,
         "trigger": trigger,
         "repeated_count": repeated_count,
         "old_router_authority_used": False,
@@ -14248,53 +14211,54 @@ def _guard_wait_recovery(
                 "replacement_eligible": True,
                 "orphan_evidence": orphan_evidence,
             }
-    if last_liveness_status in _WAIT_LIVENESS_FAILURE_STATUSES or last_liveness_status in _WAIT_NO_OUTPUT_STATUSES:
-        return {
-            **base,
-            "state": "current_liveness_failure",
-            "decision_override": "reissue_or_replace_lease",
-            "reason": f"current liveness status is {last_liveness_status}",
-            "replacement_eligible": True,
-        }
     if action.action_type == "wait_for_ack":
         elapsed = _elapsed_seconds_since(lease_map.get("created_at"))
-        ack_reminder_seconds = _guard_config_int(ledger, "ack_reminder_seconds", _WAIT_ACK_REMINDER_SECONDS)
-        ack_blocker_seconds = _guard_config_int(ledger, "ack_blocker_seconds", _WAIT_ACK_BLOCKER_SECONDS)
-        if elapsed is not None and elapsed >= ack_blocker_seconds:
+        if elapsed is not None and elapsed >= ack_replace_seconds:
             return {
                 **base,
-                "state": "ack_blocker_due",
+                "state": "ack_replacement_due",
                 "decision_override": "reissue_or_replace_lease",
-                "reason": "ACK wait exceeded blocker threshold",
+                "reason": "ACK wait exceeded replacement threshold",
                 "replacement_eligible": True,
                 "elapsed_seconds": elapsed,
-                "ack_reminder_seconds": ack_reminder_seconds,
-                "ack_blocker_seconds": ack_blocker_seconds,
+                "reminder_kind": "ack",
             }
-        state = "wait_reminder_due" if elapsed is not None and elapsed >= ack_reminder_seconds else "wait_patrol"
+        state = "ack_reminder_due" if elapsed is not None and elapsed >= ack_reminder_seconds else "wait_patrol"
+        reason = (
+            "assigned lease has not acknowledged; send ACK reminder"
+            if state == "ack_reminder_due"
+            else "assigned lease has not acknowledged"
+        )
         return {
             **base,
             "state": state,
-            "reason": "assigned lease has not acknowledged",
+            "reason": reason,
             "elapsed_seconds": elapsed,
-            "ack_reminder_seconds": ack_reminder_seconds,
-            "ack_blocker_seconds": ack_blocker_seconds,
+            "reminder_kind": "ack" if state == "ack_reminder_due" else "",
         }
 
     elapsed = _elapsed_seconds_since(lease_map.get("ack_received_at") or lease_map.get("created_at"))
-    result_liveness_seconds = _guard_config_int(ledger, "result_liveness_seconds", _WAIT_RESULT_LIVENESS_SECONDS)
-    if progress_recent:
+    if isinstance(evidence_elapsed, int) and evidence_elapsed < progress_reminder_seconds:
         return {
             **base,
             "state": "grace_wait",
-            "reason": "active lease recorded current-run progress",
+            "reason": "active lease has fresh ACK/progress evidence",
             "elapsed_seconds": elapsed,
-            "result_liveness_seconds": result_liveness_seconds,
         }
-    state = "liveness_check_due" if elapsed is not None and elapsed >= result_liveness_seconds else "wait_patrol"
+    if isinstance(evidence_elapsed, int) and evidence_elapsed >= progress_replace_seconds:
+        return {
+            **base,
+            "state": "progress_replacement_due",
+            "decision_override": "reissue_or_replace_lease",
+            "reason": "result wait exceeded progress evidence replacement threshold",
+            "replacement_eligible": True,
+            "elapsed_seconds": elapsed,
+            "reminder_kind": "progress",
+        }
+    state = "progress_reminder_due" if isinstance(evidence_elapsed, int) else "wait_patrol"
     reason = (
-        "result wait reached liveness-check threshold; replacement still needs current failure evidence"
-        if state == "liveness_check_due"
+        "result wait needs strong progress reminder"
+        if state == "progress_reminder_due"
         else "ACK is liveness only and result is still required"
     )
     return {
@@ -14302,7 +14266,7 @@ def _guard_wait_recovery(
         "state": state,
         "reason": reason,
         "elapsed_seconds": elapsed,
-        "result_liveness_seconds": result_liveness_seconds,
+        "reminder_kind": "progress" if state == "progress_reminder_due" else "",
     }
 
 
@@ -14313,6 +14277,7 @@ def _guard_wait_subject(ledger: Mapping[str, Any], action: RuntimeAction) -> dic
     lease_id = str(packet.get("assigned_lease_id") or "")
     lease = ledger.get("leases", {}).get(lease_id)
     lease_map = lease if isinstance(lease, Mapping) else {}
+    liveness_evidence = _latest_liveness_evidence(lease_map)
     return {
         "packet_id": action.subject_id,
         "packet_found": True,
@@ -14328,11 +14293,9 @@ def _guard_wait_subject(ledger: Mapping[str, Any], action: RuntimeAction) -> dic
         "progress_count": int(lease_map.get("progress_count", 0) or 0),
         "last_progress_status": str(lease_map.get("last_progress_status", "")),
         "last_progress_at": str(lease_map.get("last_progress_at", "")),
-        "last_liveness_status": str(
-            lease_map.get("liveness_status") or lease_map.get("last_liveness_status") or lease_map.get("last_progress_status", "")
-        ),
-        "liveness_checked_at": str(lease_map.get("liveness_checked_at", "")),
-        "liveness_source": str(lease_map.get("liveness_source", "")),
+        "last_liveness_evidence_kind": str(liveness_evidence.get("kind") or "none"),
+        "last_liveness_evidence_at": str(liveness_evidence.get("at") or ""),
+        "liveness_evidence_elapsed_seconds": liveness_evidence.get("elapsed_seconds"),
         "stale_result_blockers": _stale_result_blockers_for_packet(ledger, action.subject_id),
     }
 
@@ -14597,6 +14560,21 @@ def _foreground_wait_patrol(
     seconds = int(config.get("wait_patrol_seconds", _DEFAULT_WAIT_PATROL_SECONDS))
     wait_subject = guard.get("wait_subject") if isinstance(guard.get("wait_subject"), Mapping) else {}
     wait_recovery = guard.get("wait_recovery") if isinstance(guard.get("wait_recovery"), Mapping) else {}
+    reminder_kind = str(wait_recovery.get("reminder_kind") or "")
+    reminder_text = ""
+    if reminder_kind == "ack":
+        reminder_text = (
+            "You have not ACKed the current packet. ACK it now through the current runtime path, "
+            "or submit the supported blocker if you cannot receive this packet."
+        )
+    elif reminder_kind == "progress":
+        reminder_text = (
+            "You have not submitted the final result. If complete, submit the final result now. "
+            "If still working, immediately record progress +1 for this lease and packet, then continue. "
+            "After that, record progress +1 whenever work starts, resumes, reaches a small milestone, "
+            "starts or finishes a long command, or receives another runtime reminder. If unable to continue, "
+            "submit the supported blocker."
+        )
     return {
         "active": True,
         "kind": "timed_patrol",
@@ -14606,6 +14584,12 @@ def _foreground_wait_patrol(
         "reason": str(guard.get("reason", "")),
         "packet_id": str(wait_subject.get("packet_id", "")),
         "wait_recovery": _copy_jsonable(wait_recovery),
+        "reminder": {
+            "due": bool(reminder_text),
+            "kind": reminder_kind,
+            "text": reminder_text,
+            "controller_must_use_runtime_authored_text": bool(reminder_text),
+        },
         "after_wait": "refresh_lifecycle_guard_and_foreground_duty",
         "refresh_command": (
             "python skills\\flowpilot\\assets\\flowpilot_new.py "
@@ -15336,8 +15320,8 @@ def render_console(ledger: Mapping[str, Any]) -> dict[str, Any]:
                 "status": lease["status"],
                 "ack_received": lease["ack_received"],
                 "packet_id": lease.get("packet_id", ""),
-                "liveness_status": lease.get("liveness_status", ""),
-                "liveness_checked_at": lease.get("liveness_checked_at", ""),
+                "progress_count": int(lease.get("progress_count", 0) or 0),
+                "last_progress_at": lease.get("last_progress_at", ""),
             }
             for lease in ledger.get("leases", {}).values()
         ],
@@ -15412,7 +15396,6 @@ def render_console(ledger: Mapping[str, Any]) -> dict[str, Any]:
             for gate in ledger.get("pm_decision_gates", {}).values()
         ],
         "host_evidence": list(ledger.get("host_evidence", {}).values()),
-        "host_liveness_reports": list(ledger.get("host_liveness_reports", {}).values()),
         "orphan_evidence": list(ledger.get("orphan_evidence", {}).values()),
         "route_nodes": [
             {

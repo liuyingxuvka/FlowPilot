@@ -51,16 +51,9 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
             "rehydrated_role_bindings[].rehydrated_after_resume_state_loaded",
             "rehydrated_role_bindings[].core_prompt_path",
             "rehydrated_role_bindings[].core_prompt_hash",
-            "rehydrated_role_bindings[].host_liveness_status",
-            "rehydrated_role_bindings[].liveness_decision",
+            "rehydrated_role_bindings[].role_surface_addressable",
+            "rehydrated_role_bindings[].current_run_binding_decision",
             "rehydrated_role_bindings[].resume_agent_attempted",
-            "rehydrated_role_bindings[].bounded_wait_result",
-            "rehydrated_role_bindings[].bounded_wait_ms",
-            "rehydrated_role_bindings[].liveness_probe_batch_id",
-            "rehydrated_role_bindings[].liveness_probe_mode",
-            "rehydrated_role_bindings[].liveness_probe_started_at",
-            "rehydrated_role_bindings[].liveness_probe_completed_at",
-            "rehydrated_role_bindings[].wait_agent_timeout_treated_as_active",
             "rehydrated_role_bindings[].memory_packet_path",
             "rehydrated_role_bindings[].memory_packet_hash",
             "rehydrated_role_bindings[].memory_missing_acknowledged",
@@ -81,15 +74,10 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
             {item["reasoning_effort_policy"] for item in action["role_rehydration_request"]},
             {"highest_available"},
         )
-        self.assertEqual(action["role_binding_open_policy"], "reuse_confirmed_live_agents_spawn_only_missing_cancelled_completed_unknown_or_timeout")
-        self.assertTrue(action["liveness_preflight_required"])
-        self.assertTrue(action["liveness_preflight_policy"]["concurrent_probe_required"])
-        self.assertTrue(action["liveness_preflight_policy"]["start_all_probes_before_waiting"])
-        self.assertEqual(action["liveness_preflight_policy"]["probe_mode"], "concurrent_batch")
-        self.assertEqual(action["liveness_preflight_policy"]["liveness_probe_batch_id"], action["liveness_probe_batch_id"])
-        self.assertFalse(action["liveness_preflight_policy"]["timeout_unknown_is_active"])
+        self.assertEqual(action["role_binding_open_policy"], "reuse_addressable_current_run_agent_or_open_replacement_from_memory")
+        self.assertEqual(action["ack_progress_evidence_policy"]["current_wait_authority"], "ack_progress_evidence_only")
+        self.assertTrue(action["ack_progress_evidence_policy"]["unsupported_legacy_payloads_rejected"])
         target_roles = action["role_keys"]
-        self.assertEqual(action["liveness_preflight_policy"]["roles_to_check"], target_roles)
         self.assertEqual(
             {item["role_key"] for item in action["role_rehydration_request"]},
             set(target_roles),
@@ -132,29 +120,28 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 "wait_agent_timeout_treated_as_active": True,
             }
         )
-        with self.assertRaisesRegex(router.RouterError, "timeout_unknown|wait_agent_timeout_treated_as_active"):
+        with self.assertRaisesRegex(router.RouterError, "unsupported legacy liveness fields"):
             router.apply_action(root, "rehydrate_role_bindings", payload)
         action = router.next_action(root)
         payload = self.resume_role_agent_payload(root, action)
         payload["rehydrated_role_bindings"][0]["liveness_probe_mode"] = "serial"
-        with self.assertRaisesRegex(router.RouterError, "concurrent liveness probe mode"):
+        with self.assertRaisesRegex(router.RouterError, "unsupported legacy liveness fields"):
             router.apply_action(root, "rehydrate_role_bindings", payload)
         action = router.next_action(root)
         payload = self.resume_role_agent_payload(root, action)
         payload["all_liveness_probes_started_before_wait"] = False
-        with self.assertRaisesRegex(router.RouterError, "all_liveness_probes_started_before_wait"):
+        with self.assertRaisesRegex(router.RouterError, "unsupported legacy liveness fields"):
             router.apply_action(root, "rehydrate_role_bindings", payload)
         action = router.next_action(root)
         payload = self.resume_role_agent_payload(root, action)
         payload["rehydrated_role_bindings"][0].update(
             {
                 "rehydration_result": "rehydrated_from_current_run_memory",
-                "host_liveness_status": "active",
-                "liveness_decision": "opened_replacement_from_current_run_memory",
+                "current_run_binding_decision": "existing_current_agent_reused",
                 "replacement_opened_after_resume_state_loaded": True,
             }
         )
-        with self.assertRaisesRegex(router.RouterError, "active host liveness must use live_agent_continuity_confirmed"):
+        with self.assertRaisesRegex(router.RouterError, "replacement rehydration requires current_run_replacement_opened"):
             router.apply_action(root, "rehydrate_role_bindings", payload)
 
         action = router.next_action(root)
@@ -164,22 +151,17 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
             {
                 "agent_id": f"replacement-agent-{replaced_role}",
                 "rehydration_result": "rehydrated_from_current_run_memory",
-                "host_liveness_status": "missing",
-                "liveness_decision": "opened_replacement_from_current_run_memory",
-                "bounded_wait_result": "not_waited",
-                "bounded_wait_ms": 0,
+                "current_run_binding_decision": "current_run_replacement_opened",
                 "replacement_opened_after_resume_state_loaded": True,
             }
         )
         router.apply_action(root, "rehydrate_role_bindings", payload)
         rehydration = read_json(run_root / "continuation" / "role_binding_recovery_report.json")
-        self.assertEqual(rehydration["liveness_preflight"]["replacement_role_keys"], [replaced_role])
-        self.assertEqual(rehydration["liveness_preflight"]["decision"], "roles_ready_after_replacement")
+        self.assertEqual(rehydration["role_binding_evidence_policy"]["replacement_role_keys"], [replaced_role])
+        self.assertEqual(rehydration["role_binding_evidence_policy"]["decision"], "roles_ready_after_replacement")
         self.assertTrue(rehydration["required_role_bindings_ready"])
-        self.assertEqual(rehydration["liveness_preflight"]["roles_checked"], target_roles)
-        self.assertFalse(rehydration["liveness_preflight"]["wait_agent_timeout_treated_as_active"])
-        self.assertEqual(rehydration["liveness_preflight"]["probe_mode"], "concurrent_batch")
-        self.assertTrue(rehydration["liveness_preflight"]["all_liveness_probes_started_before_wait"])
+        self.assertEqual(rehydration["role_binding_evidence_policy"]["roles_checked"], target_roles)
+        self.assertEqual(rehydration["role_binding_evidence_policy"]["current_wait_authority"], "ack_progress_evidence_only")
         self.assertTrue(rehydration["current_run_memory_complete"])
         self.assertTrue(rehydration["pm_memory_rehydrated"])
         role_io = read_json(run_root / "role_io_protocol_ledger.json")
@@ -391,7 +373,7 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
             "controller_reports_role_liveness_fault",
             {
                 "role_key": "worker",
-                "host_liveness_status": "missing",
+                "role_surface_addressable": False,
                 "detected_by": "controller",
             },
         )
@@ -524,7 +506,7 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
             "controller_reports_role_liveness_fault",
             {
                 "role_key": "project_manager",
-                "host_liveness_status": "missing",
+                "role_surface_addressable": False,
                 "detected_by": "controller",
             },
         )
@@ -546,7 +528,7 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertEqual(action["action_type"], "load_role_recovery_state")
         self.assertEqual(action["role_recovery_transaction"]["target_role_keys"], ["project_manager"])
 
-    def test_active_agent_lookup_rejects_unknown_recovered_liveness(self) -> None:
+    def test_active_agent_lookup_rejects_unaddressable_recovered_binding(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
         self.complete_startup_runtime_entry(root)
@@ -557,8 +539,8 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
             {
                 "status": "live_agent_recovered",
                 "agent_id": "recovered-pm-unknown",
-                "host_liveness_status": "unknown",
-                "liveness_decision": "opened_replacement_from_current_run_memory",
+                "role_surface_addressable": False,
+                "current_run_binding_decision": "current_run_replacement_opened",
             }
         )
         router.write_json(run_root / "role_binding_ledger.json", role_binding)
@@ -692,7 +674,7 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
             "controller_reports_role_no_output",
             {
                 "role_key": "worker",
-                "liveness_probe_result": "completed_without_expected_event",
+                "no_output_reason": "role_no_output_missing_expected_event",
                 "current_controller_action_id": wait_action["controller_action_id"],
                 "router_scheduler_row_id": wait_action["router_scheduler_row_id"],
             },
@@ -717,7 +699,7 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertEqual(replacement["status"], "waiting")
         self.assertEqual(replacement["replacement_reason"], "role_no_output_missing_expected_event")
         self.assertEqual(replacement["replaces_controller_action_id"], wait_action["controller_action_id"])
-    def test_completed_liveness_fault_no_output_redirects_to_reissue_not_recovery(self) -> None:
+    def test_no_output_event_reissues_same_work_not_recovery(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
         self.release_startup_daemon_for_explicit_daemon_test(root)
@@ -725,17 +707,17 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
 
         result = router.record_external_event(
             root,
-            "controller_reports_role_liveness_fault",
+            "controller_reports_role_no_output",
             {
                 "role_key": "worker",
-                "host_liveness_status": "completed",
+                "no_output_reason": "role_no_output_missing_expected_event",
                 "current_controller_action_id": wait_action["controller_action_id"],
             },
         )
 
         self.assertTrue(result["ok"])
         self.assertEqual(result["event"], "controller_reports_role_no_output")
-        self.assertEqual(result["source_event"], "controller_reports_role_liveness_fault")
+        self.assertEqual(result["source_event"], "controller_reports_role_no_output")
         self.assertTrue(result["role_no_output_reissue_created"])
         self.assertFalse(result["role_recovery_requested"])
         state = read_json(router.run_state_path(run_root))
@@ -753,7 +735,7 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
             "controller_reports_role_no_output",
             {
                 "role_key": "worker",
-                "liveness_probe_result": "completed_without_expected_event",
+                "no_output_reason": "role_no_output_missing_expected_event",
                 "current_controller_action_id": wait_action["controller_action_id"],
             },
         )
@@ -762,7 +744,7 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
             "controller_reports_role_no_output",
             {
                 "role_key": "worker",
-                "liveness_probe_result": "completed_without_expected_event",
+                "no_output_reason": "role_no_output_missing_expected_event",
                 "current_controller_action_id": first["replacement_controller_action_id"],
             },
         )
@@ -771,7 +753,7 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
             "controller_reports_role_no_output",
             {
                 "role_key": "worker",
-                "liveness_probe_result": "completed_without_expected_event",
+                "no_output_reason": "role_no_output_missing_expected_event",
                 "current_controller_action_id": second["replacement_controller_action_id"],
             },
         )

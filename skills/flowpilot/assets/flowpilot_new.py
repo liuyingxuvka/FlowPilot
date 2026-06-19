@@ -18,7 +18,6 @@ from flowpilot_new_role_commands import (
 from flowpilot_new_run_commands import (
     cancel_run,
     final_preflight,
-    host_liveness,
     patrol,
     progress,
     repair_accepted_packet,
@@ -51,7 +50,6 @@ __all__ = [
     "cancel_run",
     "dispatch_current_role",
     "final_preflight",
-    "host_liveness",
     "main",
     "open_packet",
     "open_result",

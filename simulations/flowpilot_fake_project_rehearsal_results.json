@@ -13764,7 +13764,7 @@
           ],
           "payload": {
             "foreground_duty": {
-              "action": "recover_or_reissue",
+              "action": "wait_patrol",
               "final_return_allowed": false
             },
             "next_action": {
@@ -13783,7 +13783,7 @@
           ],
           "payload": {
             "foreground_duty": {
-              "action": "recover_or_reissue",
+              "action": "wait_patrol",
               "final_return_allowed": false
             },
             "next_action": {
@@ -13800,8 +13800,8 @@
       "name": "lifecycle_guard_resume_and_patrol",
       "observations": {
         "controller_stop_allowed": false,
-        "liveness_failure_decision": "reissue_or_replace_lease",
         "patrol_decision": "wait_for_result",
+        "progress_decision": "wait_for_result",
         "resume_decision": "wait_for_result"
       },
       "ok": true,
@@ -15209,7 +15209,7 @@
           "args": [
             "internal-rehearsal-start",
             "--run-id",
-            "run-fake-host-liveness",
+            "run-fake-progress-replacement",
             "--startup-text",
             "<sealed>"
           ],
@@ -15239,7 +15239,7 @@
             "--host-kind",
             "fake",
             "--agent-id",
-            "fake-pm-host-liveness"
+            "fake-pm-progress-replacement"
           ],
           "payload": {
             "foreground_duty": {
@@ -15307,15 +15307,7 @@
         },
         {
           "args": [
-            "host-liveness",
-            "--lease-id",
-            "lease-0001",
-            "--packet-id",
-            "packet-0001",
-            "--status",
-            "not_found",
-            "--source",
-            "fake_host_probe"
+            "patrol"
           ],
           "payload": {
             "foreground_duty": {
@@ -15333,13 +15325,13 @@
           "stderr_excerpt": ""
         }
       ],
-      "name": "host_liveness_bridge_recovery",
+      "name": "progress_evidence_replacement",
       "observations": {
         "decision": "reissue_or_replace_lease",
-        "liveness_status": "not_found"
+        "wait_recovery_state": "progress_replacement_due"
       },
       "ok": true,
-      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal\\host_liveness_bridge_recovery"
+      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal\\progress_evidence_replacement"
     },
     {
       "commands": [
@@ -15474,7 +15466,7 @@
           ],
           "returncode": 0,
           "stderr_excerpt": "",
-          "stdout_excerpt": "usage: -c [-h] [--root ROOT] [--json]\n          {start,run-until-wait,status,patrol,final-preflight,resume,resolve-stopped-blocker,dispatch-current-role,ack,role-handoff,open-packet,open-result,progress,host-liveness,stop,cancel,submit-result,repair-accepted-packet}\n          ...\n\nCLI parser and dis"
+          "stdout_excerpt": "usage: -c [-h] [--root ROOT] [--json]\n          {start,run-until-wait,status,patrol,final-preflight,resume,resolve-stopped-blocker,dispatch-current-role,ack,role-handoff,open-packet,open-result,progress,stop,cancel,submit-result,repair-accepted-packet}\n          ...\n\nCLI parser and dispatcher for th"
         },
         {
           "args": [
@@ -15482,7 +15474,7 @@
             "complete-flowguard"
           ],
           "returncode": 2,
-          "stderr_excerpt": "usage: -c [-h] [--root ROOT] [--json]\n          {start,run-until-wait,status,patrol,final-preflight,resume,resolve-stopped-blocker,dispatch-current-role,ack,role-handoff,open-packet,open-result,progress,host-liveness,stop,cancel,submit-result,repair-accepted-packet}\n          ...\n-c: error: argument",
+          "stderr_excerpt": "usage: -c [-h] [--root ROOT] [--json]\n          {start,run-until-wait,status,patrol,final-preflight,resume,resolve-stopped-blocker,dispatch-current-role,ack,role-handoff,open-packet,open-result,progress,stop,cancel,submit-result,repair-accepted-packet}\n          ...\n-c: error: argument command: inva",
           "stdout_excerpt": ""
         }
       ],
@@ -15745,7 +15737,7 @@
           "skills/flowpilot/assets/flowpilot_new.py"
         ],
         "freshness": "current",
-        "id": "fake_project_blackbox_cli_host_liveness_bridge",
+        "id": "fake_project_blackbox_cli_progress_evidence_replacement",
         "scope": "routine",
         "status": "passed"
       },

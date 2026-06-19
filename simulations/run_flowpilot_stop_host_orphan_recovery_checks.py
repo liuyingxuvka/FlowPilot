@@ -1,4 +1,4 @@
-"""Run FlowGuard checks for stop/cancel, host liveness, and orphan evidence recovery."""
+"""Run FlowGuard checks for stop/cancel, progress evidence, and orphan recovery."""
 
 from __future__ import annotations
 
@@ -46,7 +46,7 @@ def _target_plan_report() -> dict[str, Any]:
     failures = model.invariant_failures(state)
     return {
         "ok": not failures and model.is_success(state),
-        "evidence_role": "model_target_plan_not_live_host_proof",
+        "evidence_role": "model_target_plan_ack_progress_evidence",
         "failures": failures,
         "state": model.state_summary(state),
         "labels": list(model.REQUIRED_SAFE_LABELS),
@@ -72,21 +72,21 @@ def run_checks() -> dict[str, Any]:
     hazards = _hazard_report()
     rows = [
         {
-            "id": "stop_host_orphan_flowguard_model",
+            "id": "stop_progress_orphan_flowguard_model",
             "status": "passed" if flowguard["ok"] else "failed",
             "freshness": "current",
             "scope": "routine",
             "evidence": ["simulations/flowpilot_stop_host_orphan_recovery_model.py"],
         },
         {
-            "id": "stop_host_orphan_target_plan",
+            "id": "stop_progress_orphan_target_plan",
             "status": "passed" if target_plan["ok"] else "failed",
             "freshness": "current",
             "scope": "routine",
             "evidence": ["openspec/changes/harden-new-flowpilot-stop-host-orphan-recovery/tasks.md"],
         },
         {
-            "id": "stop_host_orphan_hazard_replay",
+            "id": "stop_progress_orphan_hazard_replay",
             "status": "passed" if hazards["ok"] else "failed",
             "freshness": "current",
             "scope": "routine",
@@ -94,7 +94,7 @@ def run_checks() -> dict[str, Any]:
         },
     ]
     return {
-        "result_type": "flowpilot_stop_host_orphan_recovery_checks",
+        "result_type": "flowpilot_stop_progress_orphan_recovery_checks",
         "model_id": model.MODEL_ID,
         "ok": flowguard["ok"] and target_plan["ok"] and hazards["ok"],
         "flowguard": flowguard,

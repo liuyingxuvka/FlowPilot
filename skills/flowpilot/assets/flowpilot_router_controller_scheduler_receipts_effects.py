@@ -202,12 +202,23 @@ def _apply_wait_target_reminder_receipt(router: ModuleType, project_root: Path, 
         return {'applied': False, 'reason': 'wait_target_reminder_text_hash_mismatch', 'expected_reminder_text_sha256': expected_hash or None, 'actual_reminder_text_sha256': actual_hash or None}
     if receipt_payload.get('sealed_body_reads') is not False:
         return {'applied': False, 'reason': 'wait_target_reminder_sealed_body_boundary_not_confirmed'}
+    legacy_liveness_keys = {
+        'liveness_probe',
+        'liveness_probe_result',
+        'liveness_probe_checked_at',
+        'liveness_probe_evidence_path',
+        'host_liveness_status',
+        'bounded_wait_result',
+        'timeout_unknown',
+    }
+    found_legacy_liveness_keys = sorted(key for key in legacy_liveness_keys if key in receipt_payload)
+    if found_legacy_liveness_keys:
+        return {
+            'applied': False,
+            'reason': 'wait_target_reminder_legacy_liveness_payload_unsupported',
+            'unsupported_fields': found_legacy_liveness_keys,
+        }
     delivered_at = str(receipt_payload.get('delivered_at') or utc_now())
-    liveness_payload = receipt_payload.get('liveness_probe') if isinstance(receipt_payload.get('liveness_probe'), dict) else {}
-    liveness_result = str(receipt_payload.get('liveness_probe_result') or liveness_payload.get('result') or '').strip()
-    liveness_checked_at = str(receipt_payload.get('liveness_probe_checked_at') or liveness_payload.get('checked_at') or delivered_at)
-    if action.get('fresh_liveness_probe_required') and (not liveness_result):
-        return {'applied': False, 'reason': 'wait_target_reminder_missing_fresh_liveness_probe'}
     pending = run_state.get('pending_action') if isinstance(run_state.get('pending_action'), dict) else {}
     pending_updated = False
     if pending and _action_is_passive_wait_status(pending):
@@ -222,9 +233,6 @@ def _apply_wait_target_reminder_receipt(router: ModuleType, project_root: Path, 
                 reminder_history = pending.setdefault('wait_reminder_history', [])
                 if isinstance(reminder_history, list):
                     reminder_history.append({'at': delivered_at, 'target_role': target_role, 'reminder_text_sha256': expected_hash, 'controller_action_id': action.get('controller_action_id')})
-                if liveness_result:
-                    pending['last_liveness_probe'] = {'checked_at': liveness_checked_at, 'result': liveness_result, 'evidence_path': liveness_payload.get('evidence_path') or receipt_payload.get('liveness_probe_evidence_path')}
-                    pending['liveness_probe_result'] = liveness_result
                 run_state['pending_action'] = pending
                 pending_updated = True
     return_update = {'changed': False, 'reminded_return_ids': []}

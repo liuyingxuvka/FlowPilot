@@ -57,6 +57,8 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
                         "binding_open_result": "opened_for_current_task",
                         "opened_for_run_id": "run-test",
                         "opened_after_startup_answers": True,
+                        "role_surface_addressable": True,
+                        "current_run_binding_decision": "existing_current_agent_reused",
                         "role_binding_generation": 1,
                         "role_binding_epoch": 1,
                     }
@@ -166,7 +168,7 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
 
         self.assertEqual(result["holder_agent_id"], "agent-worker-1-runtime")
         self.assertEqual(result["holder_role"], "worker")
-        self.assertTrue(result["holder_liveness"]["host_liveness_proven"])
+        self.assertTrue(result["holder_binding_evidence"]["current_role_binding_proven"])
 
         envelope = self.read_json(self.packet_envelope_path(root))
         self.assertNotIn("controller_relay", envelope)
@@ -175,7 +177,7 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
         self.assertEqual(record["active_packet_holder"], "worker")
         self.assertEqual(record["active_packet_status"], "active-holder-lease-issued")
         self.assertTrue(record["active_holder_lease_issued"])
-        self.assertTrue(record["active_holder_liveness_proven"])
+        self.assertTrue(record["active_holder_binding_proven"])
         self.assertNotIn("packet_controller_relay", record)
 
     def test_pm_issue_writes_physical_envelope_body_and_ledger(self) -> None:
@@ -1034,7 +1036,7 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
         root = self.make_project()
         envelope = self.relay_packet(root, self.issue_packet(root))
 
-        with self.assertRaisesRegex(packet_runtime.PacketRuntimeError, "requires current live role slot"):
+        with self.assertRaisesRegex(packet_runtime.PacketRuntimeError, "requires current role slot"):
             packet_runtime.issue_active_holder_lease(
                 root,
                 packet_envelope=envelope,
@@ -1044,7 +1046,7 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
                 frontier_version=1,
             )
 
-    def test_active_holder_lease_rejects_replacement_without_active_host_proof(self) -> None:
+    def test_active_holder_lease_rejects_replacement_without_current_binding_evidence(self) -> None:
         root = self.make_project()
         envelope = self.relay_packet(root, self.issue_packet(root))
         _write_json(
@@ -1057,15 +1059,15 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
                         "role_key": "worker",
                         "status": "live_agent_recovered",
                         "agent_id": "replacement-worker-1",
-                        "host_liveness_status": "unknown",
-                        "liveness_decision": "opened_replacement_from_current_run_memory",
+                        "role_surface_addressable": False,
+                        "current_run_binding_decision": "current_run_replacement_opened",
                         "last_role_recovery_result": "targeted_replacement_opened",
                     }
                 ],
             },
         )
 
-        with self.assertRaisesRegex(packet_runtime.PacketRuntimeError, "requires active host liveness proof"):
+        with self.assertRaisesRegex(packet_runtime.PacketRuntimeError, "requires current role binding evidence"):
             packet_runtime.issue_active_holder_lease(
                 root,
                 packet_envelope=envelope,

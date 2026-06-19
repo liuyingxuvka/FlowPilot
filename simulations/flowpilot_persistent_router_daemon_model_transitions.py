@@ -517,7 +517,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             ),
         )
         yield Transition(
-            "router_enters_report_wait_with_liveness_obligation",
+            "router_enters_report_wait_with_ack_progress_obligation",
             _step(
                 state,
                 current_wait="report",
@@ -541,7 +541,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 wait_target_names_role=True,
                 wait_target_expected_evidence_visible=True,
                 wait_target_reminder_text_present=True,
-                liveness_check_required=True,
+                progress_reminder_required=True,
                 foreground_standby_active=True,
                 foreground_standby_polling_daemon_status=True,
                 foreground_standby_polling_action_ledger=True,
@@ -828,14 +828,14 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             return
         if state.ack_wait_age_minutes < 10:
             yield Transition(
-                "controller_records_ack_wait_blocker_at_ten_minutes",
-                _step(state, ack_wait_age_minutes=10, ack_wait_blocker_recorded=True),
+                "controller_reissues_missing_ack_at_ten_minutes",
+                _step(state, ack_wait_age_minutes=10, ack_wait_replacement_recorded=True),
             )
             return
-        if state.ack_wait_age_minutes >= 10 and not state.ack_wait_blocker_recorded:
+        if state.ack_wait_age_minutes >= 10 and not state.ack_wait_replacement_recorded:
             yield Transition(
-                "controller_records_ack_wait_blocker_at_ten_minutes",
-                _step(state, ack_wait_blocker_recorded=True),
+                "controller_reissues_missing_ack_at_ten_minutes",
+                _step(state, ack_wait_replacement_recorded=True),
             )
             return
 
@@ -848,35 +848,21 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             return
         if state.report_wait_age_minutes >= 10 and not state.report_reminder_sent:
             yield Transition(
-                "controller_sends_report_reminder_with_fresh_liveness_probe",
+                "controller_sends_report_progress_reminder_at_ten_minutes",
                 _step(
                     state,
                     report_reminder_sent=True,
                     wait_target_reminder_controller_action_ready=True,
                     wait_target_reminder_receipt_recorded=True,
                     wait_target_reminder_updates_wait_metadata=True,
-                    liveness_check_required=True,
-                    liveness_probe_fresh=True,
-                    liveness_probe_outcome="working",
+                    progress_reminder_required=True,
+                    ack_progress_policy_current=True,
+                    progress_evidence_outcome="none",
                 ),
             )
+        if state.report_reminder_sent and state.progress_evidence_outcome == "none":
             yield Transition(
-                "controller_reports_lost_role_wait_blocker",
-                _step(
-                    state,
-                    report_reminder_sent=True,
-                    wait_target_reminder_controller_action_ready=True,
-                    wait_target_reminder_receipt_recorded=True,
-                    wait_target_reminder_updates_wait_metadata=True,
-                    liveness_check_required=True,
-                    liveness_probe_fresh=True,
-                    liveness_probe_outcome="lost",
-                    role_liveness_blocker_recorded=True,
-                ),
-            )
-        if state.report_reminder_sent and state.liveness_probe_outcome == "working":
-            yield Transition(
-                "healthy_role_continues_report_wait_after_probe",
+                "healthy_role_continues_report_wait_after_progress",
                 _step(
                     state,
                     report_reminder_sent=False,
@@ -884,6 +870,28 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                     wait_target_reminder_controller_action_ready=False,
                     wait_target_reminder_receipt_recorded=False,
                     wait_target_reminder_updates_wait_metadata=False,
+                    progress_reminder_required=False,
+                    progress_evidence_outcome="fresh",
+                ),
+            )
+            if state.report_wait_age_minutes < 30:
+                yield Transition(
+                    "report_wait_time_advances_to_replacement",
+                    _step(state, report_wait_age_minutes=30),
+                )
+        if state.report_wait_age_minutes >= 30 and not state.progress_replacement_recorded:
+            yield Transition(
+                "controller_reissues_report_wait_after_thirty_minutes",
+                _step(
+                    state,
+                    report_reminder_sent=True,
+                    wait_target_reminder_controller_action_ready=True,
+                    wait_target_reminder_receipt_recorded=True,
+                    wait_target_reminder_updates_wait_metadata=True,
+                    progress_reminder_required=True,
+                    ack_progress_policy_current=True,
+                    progress_evidence_outcome="expired",
+                    progress_replacement_recorded=True,
                 ),
             )
 

@@ -30,10 +30,10 @@ REQUIRED_LABELS = (
     "visible_plan_restored_from_current_run",
     "role_binding_memory_loaded",
     "controller_relay_boundary_confirmed",
-    "runtime_role_liveness_concurrent_probe_batch_started",
-    "runtime_role_liveness_checked_all_active",
-    "runtime_role_liveness_checked_recovery_needed",
-    "runtime_role_liveness_timeout_unknown_recorded",
+    "runtime_role_binding_evidence_batch_started",
+    "runtime_role_binding_checked_all_current",
+    "runtime_role_binding_checked_recovery_needed",
+    "runtime_role_binding_unsupported_timeout_payload_rejected",
     "host_reuse_or_replace_resume_roles_requested",
     "active_live_resume_roles_reused_after_memory_refresh",
     "only_failed_resume_roles_replaced_from_current_run_memory",
@@ -102,11 +102,11 @@ def _state_id(state: model.State) -> str:
         f"{state.resume_obligation_replay_completed},"
         f"{state.resume_obligation_replay_pm_escalation_required},"
         f"{state.resume_mechanical_replay_skipped_pm}|"
-        f"liveness={state.resume_wake_recorded_to_router},batch={state.liveness_probe_batch_started},"
-        f"{state.liveness_probe_batch_concurrent},"
-        f"{state.all_runtime_roles_liveness_probes_started_before_wait},"
-        f"{state.liveness_probe_batch_id_consistent},serial={state.serial_liveness_wait_used},"
-        f"{state.all_runtime_role_liveness_checked},{state.role_liveness_outcome}|"
+        f"binding_evidence={state.resume_wake_recorded_to_router},batch={state.role_binding_evidence_batch_started},"
+        f"{state.role_binding_evidence_batch_concurrent},"
+        f"{state.all_runtime_roles_binding_evidence_checked_before_wait},"
+        f"{state.role_binding_evidence_batch_id_consistent},serial_binding={state.serial_binding_evidence_wait_used},"
+        f"{state.all_runtime_role_binding_checked},{state.role_binding_outcome}|"
         f"reuse={state.live_agent_reuse_preferred},{state.active_live_agents_reused},"
         f"failed={state.failed_role_count},replaced={state.replacement_role_count},"
         f"unneeded={state.unnecessary_replacement_attempted}|"

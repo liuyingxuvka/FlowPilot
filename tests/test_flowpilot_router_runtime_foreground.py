@@ -7,15 +7,15 @@ from tests.flowpilot_router_runtime_suite import load_named_runtime_tests
 
 TEST_NAMES = (
     "test_foreground_next_waits_on_stale_lock_when_owner_process_is_live",
-    "test_foreground_controller_standby_materializes_report_reminder_with_liveness_probe",
+    "test_foreground_controller_standby_materializes_report_progress_reminder",
     "test_foreground_controller_standby_default_waits_past_timeout_until_action",
     "test_foreground_controller_standby_returns_no_output_reissue_required",
-    "test_foreground_controller_standby_returns_lost_role_blocker_required",
+    "test_wait_reminder_receipt_rejects_legacy_liveness_probe_payload",
     "test_foreground_controller_standby_returns_ack_reminder_and_blocker_due",
     "test_foreground_controller_standby_self_audits_controller_local_wait",
     "test_foreground_controller_standby_keeps_alive_when_daemon_has_no_ready_action",
     "test_controller_patrol_timer_continue_patrol_restarts_and_waits",
-    "test_controller_patrol_timer_continues_for_daemon_patrol_inside_thirty_second_window",
+    "test_controller_patrol_timer_continues_for_daemon_patrol_inside_five_minute_window",
     "test_controller_patrol_timer_requests_liveness_check_after_delayed_daemon_patrol",
     "test_foreground_controller_standby_requests_liveness_check_on_stale_or_missing_daemon",
     "test_foreground_controller_standby_does_not_compute_router_next",

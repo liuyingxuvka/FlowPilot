@@ -185,15 +185,15 @@ def pm_role_work_identity_is_work_unit_scoped(state: State, trace) -> InvariantR
         )
     return InvariantResult.pass_()
 
-def active_holder_leases_require_host_liveness(state: State, trace) -> InvariantResult:
+def active_holder_leases_require_current_binding(state: State, trace) -> InvariantResult:
     del trace
     if state.active_holder_lease_issued and not (
         state.active_holder_agent_identity_recorded
-        and state.active_holder_agent_host_live
+        and state.active_holder_current_binding_proven
         and state.active_holder_packet_role_matches
     ):
         return InvariantResult.fail(
-            "active holder lease was issued without concrete agent identity, host liveness, and packet-role match"
+            "active holder lease was issued without concrete agent identity, current binding evidence, and packet-role match"
         )
     return InvariantResult.pass_()
 
@@ -1306,9 +1306,9 @@ INVARIANTS = (
         predicate=pm_role_work_identity_is_work_unit_scoped,
     ),
     Invariant(
-        name="active_holder_leases_require_host_liveness",
-        description="Packet active-holder leases require concrete agent identity, host liveness, and packet-role match.",
-        predicate=active_holder_leases_require_host_liveness,
+        name="active_holder_leases_require_current_binding",
+        description="Packet active-holder leases require concrete agent identity, current binding evidence, and packet-role match.",
+        predicate=active_holder_leases_require_current_binding,
     ),
     Invariant(
         name="packet_ledger_io_is_atomic_and_recoverable",
