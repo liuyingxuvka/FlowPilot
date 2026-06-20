@@ -20,7 +20,7 @@ CORE_ASSETS = ROOT / "skills" / "flowpilot" / "assets"
 if str(CORE_ASSETS) not in sys.path:
     sys.path.insert(0, str(CORE_ASSETS))
 
-from flowpilot_core_runtime import review_window_contracts  # noqa: E402
+from flowpilot_core_runtime import formal_artifact_contracts, review_window_contracts  # noqa: E402
 
 
 MALFORMED_BODY_PROFILE_IDS = (
@@ -47,14 +47,7 @@ PROJECTION_GAP_PROFILE_IDS = (
 
 REVIEW_WINDOW_FAKE_AI_PROFILE_IDS = review_window_contracts.REVIEW_WINDOW_FAKE_AI_PROFILE_IDS
 
-FORMAL_ARTIFACT_PROFILE_IDS = (
-    "missing_formal_artifact",
-    "wrong_formal_artifact_path",
-    "invalid_formal_artifact_json",
-    "missing_formal_artifact_decision",
-    "wrong_formal_artifact_decision",
-    "body_pass_artifact_blocks",
-)
+FORMAL_ARTIFACT_PROFILE_IDS = formal_artifact_contracts.FORMAL_ARTIFACT_FAULT_MODES
 
 
 @dataclass(frozen=True)
@@ -107,7 +100,11 @@ def _path_tokens(field_path: str) -> list[str]:
 
 
 def _is_formal_artifact_path(field_path: str) -> bool:
-    return field_path.startswith("flowguard_evidence.json") or field_path.startswith("artifact.flowguard_evidence.json")
+    return any(
+        field_path.startswith(str(artifact_id))
+        or field_path.startswith(f"artifact.{artifact_id}")
+        for artifact_id in formal_artifact_contracts.artifact_ids()
+    )
 
 
 def _shape_has_path(shape: Mapping[str, Any], field_path: str) -> bool:
@@ -853,7 +850,7 @@ class ContractDrivenFakeAIResponder:
             and evidence_policy.get("required_for_formal_run") is True
         ):
             return []
-        artifact_id = "flowguard_evidence.json"
+        artifact_id = str(formal_artifact_contracts.FLOWGUARD_FORMAL_ARTIFACT_CONTRACT["artifact_id"])
         if isinstance(artifact_contract, Mapping):
             artifact_id = str(artifact_contract.get("artifact_id") or artifact_id)
         decision_path = f"{artifact_id}.model_test_alignment_report.decision"
@@ -891,7 +888,6 @@ class ContractDrivenFakeAIResponder:
                     }
                 )
         return cells
-
     def coverage_cells(self) -> list[dict[str, str]]:
         cells: list[dict[str, str]] = [
             *self.malformed_body_cells(),
@@ -1000,3 +996,28 @@ class ContractDrivenFakeAIResponder:
                 }
             )
         return cells
+
+
+def runtime_known_formal_artifact_cells() -> list[dict[str, str]]:
+    cells: list[dict[str, str]] = []
+    for contract in formal_artifact_contracts.all_contracts():
+        artifact_id = str(contract["artifact_id"])
+        decision_field = str(contract["decision_field_path"])
+        decision_path = formal_artifact_contracts.artifact_field_path(contract, decision_field)
+        for profile_id in formal_artifact_contracts.fault_modes(contract):
+            field_path = decision_path if "decision" in profile_id or "blocks" in profile_id else artifact_id
+            cells.append(
+                {
+                    "cell_id": f"fake_ai.formal_artifact.{contract['contract_id']}.{profile_id}",
+                    "field_path": field_path,
+                    "contract_path": f"artifact.{field_path}",
+                    "mutation_kind": profile_id,
+                    "expected_reaction": (
+                        "breakglass_after_fifth_same_failure"
+                        if profile_id == "wrong_formal_artifact_path"
+                        else "mechanical_reject_reissue_with_artifact_instructions"
+                    ),
+                    "required_evidence_owner": "contract_exhaustion_fake_ai_matrix",
+                }
+            )
+    return cells

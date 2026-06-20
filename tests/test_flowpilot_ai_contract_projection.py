@@ -45,6 +45,7 @@ contract_fake_ai = load_module(
     "flowpilot_contract_driven_fake_ai",
     ROOT / "simulations" / "flowpilot_contract_driven_fake_ai.py",
 )
+from flowpilot_core_runtime import formal_artifact_contracts  # noqa: E402
 
 
 def flowguard_result_payload(summary: str) -> dict[str, object]:
@@ -464,6 +465,59 @@ class FlowPilotAIContractProjectionTests(unittest.TestCase):
             self.assertEqual(cell["required_evidence_owner"], "contract_exhaustion_fake_ai_matrix")
             self.assertTrue(cell["contract_path"].startswith("artifact.flowguard_evidence.json"))
 
+    def test_formal_artifact_registry_boundary_is_file_backed_and_current_contract_only(self) -> None:
+        artifact_ids = set(formal_artifact_contracts.artifact_ids())
+        flowguard_contract = formal_artifact_contracts.contract_for_artifact_id("flowguard_evidence.json")
+
+        self.assertIn("flowguard_evidence.json", artifact_ids)
+        self.assertEqual(
+            flowguard_contract["target_root_field"],
+            "evidence_output_policy.run_local_evidence_root",
+        )
+        self.assertEqual(
+            formal_artifact_contracts.artifact_field_path(
+                flowguard_contract,
+                str(flowguard_contract["decision_field_path"]),
+            ),
+            runtime._FLOWGUARD_FORMAL_ARTIFACT_DECISION_FIELD,
+        )
+        self.assertEqual(
+            tuple(
+                flowguard_contract["allowed_value_options"][
+                    flowguard_contract["decision_field_path"]
+                ]
+            ),
+            runtime._FLOWGUARD_FORMAL_ARTIFACT_ALLOWED_PASS_DECISIONS,
+        )
+        for prefix in formal_artifact_contracts.EXCLUDED_LOGICAL_ARTIFACT_PREFIXES:
+            with self.subTest(prefix=prefix):
+                self.assertFalse(any(artifact_id.startswith(prefix) for artifact_id in artifact_ids))
+        for runtime_file in formal_artifact_contracts.EXCLUDED_RUNTIME_FILE_FAMILIES:
+            with self.subTest(runtime_file=runtime_file):
+                self.assertNotIn(runtime_file, artifact_ids)
+
+    def test_runtime_known_formal_artifact_fake_ai_cells_cover_registry(self) -> None:
+        cells = contract_fake_ai.runtime_known_formal_artifact_cells()
+        cell_ids = {cell["cell_id"] for cell in cells}
+        path_index = {(cell["contract_path"], cell["mutation_kind"]) for cell in cells}
+
+        for artifact_contract in formal_artifact_contracts.all_contracts():
+            contract_id = str(artifact_contract["contract_id"])
+            decision_path = formal_artifact_contracts.artifact_contract_path(
+                artifact_contract,
+                str(artifact_contract["decision_field_path"]),
+            )
+            artifact_path = formal_artifact_contracts.artifact_contract_path(artifact_contract)
+            for mode in formal_artifact_contracts.fault_modes(artifact_contract):
+                with self.subTest(contract_id=contract_id, mode=mode):
+                    self.assertIn(f"fake_ai.formal_artifact.{contract_id}.{mode}", cell_ids)
+                    expected_path = (
+                        decision_path
+                        if "decision" in mode or "blocks" in mode
+                        else artifact_path
+                    )
+                    self.assertIn((expected_path, mode), path_index)
+
     def test_flowguard_formal_artifact_faults_reissue_with_executable_feedback(self) -> None:
         fault_cases = (
             ("missing", "pass", "flowguard_evidence.json"),
@@ -579,6 +633,43 @@ class FlowPilotAIContractProjectionTests(unittest.TestCase):
         self.assertIn("semantic_contract_missing", pm_body_text)
         self.assertIn("flowguard_evidence_path", pm_body)
         self.assertIn("flowguard_evidence_path", pm_body["required_context_fields"])
+
+    def test_subject_artifact_ids_remain_body_contract_feedback_not_file_artifacts(self) -> None:
+        ledger, packet_id = self.issue_semantic_recheck_packet()
+        packet = ledger["packets"][packet_id]
+        envelope = packet["envelope"]
+        profile_ids = list(envelope.get("result_contract_profile_ids") or [])
+        profile_ids.append("flowguard.subject_artifacts_consumed_required")
+        envelope["result_contract_profile_ids"] = profile_ids
+        bindings = dict(envelope.get("result_contract_profile_bindings") or {})
+        bindings["flowguard.subject_artifacts_consumed_required"] = {
+            "artifact_ids": ["subject_packet:packet-subject-required-001"],
+        }
+        envelope["result_contract_profile_bindings"] = bindings
+        responder = self.contract_driven_responder(packet)
+        payload = responder.legal_payload()
+        lease_id = self.assign_flowguard(ledger, packet_id, "fg-subject-artifact-missing")
+        write_flowguard_evidence_artifact(ledger, packet_id)
+
+        result_id = runtime.submit_result(
+            ledger,
+            lease_id,
+            packet_id,
+            json.dumps(payload, sort_keys=True),
+        )
+        result = ledger["results"][result_id]
+        reissue_packet_id = self.latest_reissue_packet_id(ledger, packet_id)
+        reissue_body = json.loads(ledger["packets"][reissue_packet_id]["body"])
+        reissue_text = json.dumps(reissue_body, sort_keys=True)
+
+        self.assertEqual(result["status"], "mechanical_contract_blocked")
+        self.assertIn("subject_artifacts_consumed", result["missing_required_fields"])
+        self.assertIn("subject_packet:packet-subject-required-001", result["blocked_reason"])
+        self.assertIn("subject_packet:packet-subject-required-001", reissue_text)
+        self.assertNotIn(
+            "subject_packet:packet-subject-required-001",
+            formal_artifact_contracts.artifact_ids(),
+        )
 
     def test_repeated_formal_artifact_mechanical_blocks_reach_break_glass_threshold(self) -> None:
         ledger, packet_id = self.issue_semantic_recheck_packet()

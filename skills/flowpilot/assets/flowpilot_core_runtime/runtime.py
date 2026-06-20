@@ -19,9 +19,16 @@ import time
 from typing import Any, Iterable, Mapping
 
 try:  # pragma: no cover - direct module test harness path.
-    from . import control_surface, packet_result_contracts, packet_stage_evidence_matrix, review_window_contracts
+    from . import (
+        control_surface,
+        formal_artifact_contracts,
+        packet_result_contracts,
+        packet_stage_evidence_matrix,
+        review_window_contracts,
+    )
 except ImportError:  # pragma: no cover
     import control_surface  # type: ignore
+    import formal_artifact_contracts  # type: ignore
     import packet_result_contracts  # type: ignore
     import packet_stage_evidence_matrix  # type: ignore
     import review_window_contracts  # type: ignore
@@ -9844,11 +9851,21 @@ _FLOWGUARD_HARD_EVIDENCE_BLOCK_DECISIONS = {
     "not_ok",
     "stale",
 }
-_FLOWGUARD_FORMAL_ARTIFACT_ID = "flowguard_evidence.json"
-_FLOWGUARD_FORMAL_ARTIFACT_DECISION_FIELD = (
-    "flowguard_evidence.json.model_test_alignment_report.decision"
+_FLOWGUARD_FORMAL_ARTIFACT_CONTRACT = formal_artifact_contracts.contract_for_artifact_id(
+    "flowguard_evidence.json"
 )
-_FLOWGUARD_FORMAL_ARTIFACT_ALLOWED_PASS_DECISIONS = ("pass",)
+_FLOWGUARD_FORMAL_ARTIFACT_ID = str(_FLOWGUARD_FORMAL_ARTIFACT_CONTRACT["artifact_id"])
+_FLOWGUARD_FORMAL_ARTIFACT_DECISION_FIELD = formal_artifact_contracts.artifact_field_path(
+    _FLOWGUARD_FORMAL_ARTIFACT_CONTRACT,
+    str(_FLOWGUARD_FORMAL_ARTIFACT_CONTRACT["decision_field_path"]),
+)
+_FLOWGUARD_FORMAL_ARTIFACT_ALLOWED_PASS_DECISIONS = tuple(
+    str(value)
+    for value in (
+        _FLOWGUARD_FORMAL_ARTIFACT_CONTRACT.get("allowed_value_options", {})
+        .get(str(_FLOWGUARD_FORMAL_ARTIFACT_CONTRACT["decision_field_path"]), ())
+    )
+)
 
 
 def _flowguard_current_report_violation(
@@ -9924,7 +9941,8 @@ def _flowguard_current_report_violation(
         if not isinstance(consumed_artifacts, list):
             return _contract_block(
                 packet,
-                "FlowGuard parent repair pass requires subject_artifacts_consumed for every required subject artifact",
+                "FlowGuard parent repair pass requires subject_artifacts_consumed for required subject artifact(s): "
+                + ", ".join(required_subject_artifact_ids),
                 missing_required_fields=("subject_artifacts_consumed",),
             )
         consumed_ids: set[str] = set()

@@ -28596,3 +28596,34 @@ Task id: `generate-new-flowpilot-formal-entrypoint-20260529`
   - Runtime says only that evidence is missing but does not name the exact artifact path, internal field, allowed value, or body-only insufficiency.
   - A FlowGuard blocker reaches PM without the concrete evidence path or failed-check summary needed to issue a useful repair packet.
   - Same-family mechanical formal-artifact failures repeat indefinitely without reaching the fifth-attempt BreakGlass threshold.
+
+## 2026-06-20 - Formal Artifact Registry Closeout
+
+- Task: `generalize-flowpilot-formal-artifact-registry`
+- Route: Predictive KB preflight, OpenSpec proposal/apply, DevelopmentProcessFlow, ContractExhaustionMesh, TestMesh, and focused runtime replay.
+- Trigger: after closing the concrete `flowguard_evidence.json` failure family, the user challenged whether every runtime-known formal attachment was covered rather than only the observed FlowGuard evidence file.
+- Result:
+  - Added a dependency-light formal artifact registry for AI-submitted, file-backed formal artifacts.
+  - The current registry row is `flowguard_evidence.json`; logical subject artifact ids such as `subject_packet:<id>` and runtime-owned internal files such as ledgers/envelopes are explicitly excluded from that file-backed registry.
+  - Runtime FlowGuard formal evidence constants now derive from the registry row.
+  - Fake-AI formal artifact cells and ContractExhaustionMesh formal artifact cells are generated from the registry, so future registered artifacts fail closed unless coverage is added.
+  - Runtime subject artifact id feedback now names the concrete missing id when `subject_artifacts_consumed` is absent, while keeping that path separate from file-backed formal artifact validation.
+- Validation:
+  - `python -m py_compile skills/flowpilot/assets/flowpilot_core_runtime/formal_artifact_contracts.py skills/flowpilot/assets/flowpilot_core_runtime/runtime.py skills/flowpilot/assets/flowpilot_core_runtime/fake_e2e.py simulations/flowpilot_contract_driven_fake_ai.py simulations/flowpilot_contract_exhaustion_mesh_model.py simulations/run_flowpilot_contract_exhaustion_mesh_checks.py` -> OK.
+  - `python -m unittest tests.test_flowpilot_ai_contract_projection` -> 17 tests OK.
+  - `python -m unittest tests.test_flowpilot_contract_exhaustion_mesh` -> 18 tests OK.
+  - `python -m unittest tests.test_flowpilot_synthetic_agent_coverage_matrix` -> 15 tests OK.
+  - Focused fake e2e formal artifact tests, complete-system runtime regressions, historical replay, field contract model, and contract-surface reduction all passed.
+  - `python simulations/run_flowpilot_contract_exhaustion_mesh_checks.py --summary-json` -> OK; fake-AI responder missing required cells = 0 and missing option cells = 0.
+  - `python simulations/run_meta_checks.py` -> OK.
+  - `python -m flowguard project-audit --root .` -> pass.
+  - `python scripts/flowguard_project_topology.py build` and `check` -> OK.
+  - `python scripts/install_flowpilot.py --sync-repo-owned --json`, `--check --json`, `python scripts/audit_local_install_sync.py --json`, and `python scripts/check_install.py` -> OK; installed FlowPilot digest matches repository source.
+- Claim boundary:
+  - Full registry-derived Cartesian coverage now applies to all registered AI-submitted, file-backed formal artifacts.
+  - The current registered set contains `flowguard_evidence.json`.
+  - This does not claim that ordinary runtime persistence files, all generated project files, or live AI semantic quality are covered by this formal artifact registry.
+- Counterexamples preserved:
+  - A new AI-submitted formal file is added to runtime but not registered, leaving the fake-AI matrix blind.
+  - A registered artifact is added but lacks missing-file, wrong-path, invalid-JSON, missing-field, wrong-value, body-conflict, retry, or fifth-attempt BreakGlass cells.
+  - A logical artifact id is mistakenly treated as a file path, or an internal runtime ledger is mistakenly assigned to an AI role as a formal attachment.

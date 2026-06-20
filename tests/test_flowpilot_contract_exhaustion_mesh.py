@@ -658,15 +658,38 @@ class FlowPilotContractExhaustionMeshTests(unittest.TestCase):
             for cell in cells
         }
 
-        for profile_id in contract_fake_ai.FORMAL_ARTIFACT_PROFILE_IDS:
-            with self.subTest(profile_id=profile_id):
-                self.assertIn(
-                    (
-                        model.FORMAL_ARTIFACT_EXHAUSTION_CONTRACT_ID,
-                        profile_id,
-                        "contract_exhaustion_fake_ai_matrix",
-                    ),
-                    cell_index,
+        for artifact_contract in model.formal_artifact_contracts.all_contracts():
+            contract_id = str(artifact_contract["contract_id"])
+            for profile_id in model.formal_artifact_contracts.fault_modes(artifact_contract):
+                with self.subTest(contract_id=contract_id, profile_id=profile_id):
+                    self.assertIn(
+                        (
+                            contract_id,
+                            profile_id,
+                            "contract_exhaustion_fake_ai_matrix",
+                        ),
+                        cell_index,
+                    )
+
+    def test_formal_artifact_exhaustion_contracts_cover_registry(self) -> None:
+        contract_ids = set(model.FORMAL_ARTIFACT_EXHAUSTION_CONTRACTS)
+        cell_contract_ids = {
+            str(cell.get("contract_family_id") or "")
+            for cell in model.REQUIRED_CONTRACT_EXHAUSTION_CELLS
+            if str(cell.get("contract_path") or "").startswith("artifact.")
+        }
+
+        for artifact_contract in model.formal_artifact_contracts.all_contracts():
+            contract_id = str(artifact_contract["contract_id"])
+            with self.subTest(contract_id=contract_id):
+                self.assertIn(contract_id, contract_ids)
+                self.assertIn(contract_id, cell_contract_ids)
+                exhaustion_contract = model.FORMAL_ARTIFACT_EXHAUSTION_CONTRACTS[contract_id]
+                formal_contract = exhaustion_contract["formal_artifact_contract"]
+                self.assertEqual(formal_contract["artifact_id"], artifact_contract["artifact_id"])
+                self.assertEqual(
+                    tuple(formal_contract["required_field_paths"]),
+                    model.formal_artifact_contracts.required_field_paths(artifact_contract),
                 )
 
     def test_contract_exhaustion_runtime_regressions_exist(self) -> None:

@@ -485,7 +485,7 @@ def _write_flowguard_evidence_artifact_for_packet(
     if mode == "missing":
         return path
     if mode == "wrong_path":
-        path = path.parent.parent / f"{packet['packet_id']}-wrong" / "flowguard_evidence.json"
+        path = path.parent.parent / f"{packet['packet_id']}-wrong" / runtime._FLOWGUARD_FORMAL_ARTIFACT_ID
     path.parent.mkdir(parents=True, exist_ok=True)
     if mode == "invalid_json":
         path.write_text("{not: strict json", encoding="utf-8")
