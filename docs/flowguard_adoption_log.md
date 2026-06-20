@@ -28627,3 +28627,39 @@ Task id: `generate-new-flowpilot-formal-entrypoint-20260529`
   - A new AI-submitted formal file is added to runtime but not registered, leaving the fake-AI matrix blind.
   - A registered artifact is added but lacks missing-file, wrong-path, invalid-JSON, missing-field, wrong-value, body-conflict, retry, or fifth-attempt BreakGlass cells.
   - A logical artifact id is mistakenly treated as a file path, or an internal runtime ledger is mistakenly assigned to an AI role as a formal attachment.
+
+## 2026-06-20 - Formal Artifact Cartesian Bridge Closeout
+
+- Task: `close-flowpilot-formal-artifact-cartesian-bridge`
+- Route: Predictive KB preflight, OpenSpec change, DevelopmentProcessFlow, TestMesh, ContractExhaustionMesh, and Model-Test Alignment.
+- Trigger: the lower formal artifact registry, fake-AI responder, and ContractExhaustionMesh checks were green, but the upper control-plane Cartesian bridge still treated the new formal artifact fault modes as unknown mutation families.
+- Result:
+  - Added registry-backed formal artifact fault modes to the parent control-plane Cartesian mutation alphabet as first-class `formal_artifact` mutations.
+  - Bound formal artifact mutations to current result-body, artifact-path, evidence-manifest, stage-evidence, and FlowGuard-report boundaries instead of translating them through fallback aliases.
+  - The Cartesian bridge now reports `missing_mutation_families=[]` and `fallback_bridge_translations=[]` for the formal artifact rows.
+  - Updated the role-recovery liveness test to assert the current `unknown_binding_evidence_marked_safe` hazard name.
+- Validation:
+  - `python -m unittest tests.test_flowpilot_cartesian_control_plane_exhaustion` -> 19 tests OK.
+  - `python -m unittest tests.test_flowpilot_role_recovery_liveness_model` -> 2 tests OK.
+  - `python -m unittest tests.test_flowpilot_ai_contract_projection` -> 17 tests OK.
+  - `python -m unittest tests.test_flowpilot_contract_exhaustion_mesh` -> 18 tests OK.
+  - `python simulations/run_flowpilot_contract_exhaustion_mesh_checks.py --summary-json` -> OK.
+  - `python simulations/run_flowpilot_fake_ai_runtime_replay_checks.py --json` -> OK.
+  - `python simulations/run_flowpilot_real_issue_backfeed_checks.py --json` -> OK.
+  - `python -m unittest tests.test_flowpilot_current_contract_cartesian_matrix` -> 8 tests OK.
+  - `python -m unittest tests.test_flowpilot_synthetic_agent_coverage_matrix` -> 15 tests OK.
+  - `python -m unittest tests.test_flowpilot_liveness_evidence_cartesian` -> 3 tests OK.
+  - `python -m unittest tests.test_flowpilot_fake_project_rehearsal` -> 15 tests OK.
+  - `python -m unittest tests.test_flowpilot_reviewer_active_challenge` -> 3 tests OK.
+  - `openspec validate close-flowpilot-formal-artifact-cartesian-bridge --strict` -> valid.
+  - `python simulations/run_flowpilot_model_test_alignment_checks.py` -> alignment OK.
+  - `python simulations/run_meta_checks.py` and `python simulations/run_capability_checks.py` -> background logs under `tmp/flowguard_background/`, both exit 0 with complete out/err/combined/exit/meta artifacts.
+  - `python scripts/flowguard_project_topology.py build` and `check` -> OK.
+  - `python scripts/install_flowpilot.py --check --json`, `python scripts/audit_local_install_sync.py --json`, and `python scripts/check_install.py --json` -> OK; installed FlowPilot digest matches repository source.
+- Claim boundary:
+  - This closes the scoped upper Cartesian bridge for registered formal artifact fault modes and the stale liveness hazard-name test.
+  - It does not claim live AI semantic quality, remote push, GitHub release, package tag, deploy, public publication, or OpenSpec archive.
+- Counterexamples preserved:
+  - Lower registry/fake-AI/ContractExhaustionMesh checks pass but the parent Cartesian bridge does not recognize the new mutation family.
+  - A new lower-level mutation is silently canonicalized through a generic fallback instead of being explicit in the current control-plane alphabet.
+  - A model hazard is renamed but tests keep asserting the stale label.

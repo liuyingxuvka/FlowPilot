@@ -92,11 +92,17 @@ MUTATION_GROUPS = {
     "path",
     "identity",
     "evidence",
+    "formal_artifact",
     "retry",
     "gate",
     "terminal",
     "compatibility",
 }
+
+FORMAL_ARTIFACT_MUTATIONS = tuple(
+    {"id": mutation, "group": "formal_artifact"}
+    for mutation in contract_model.formal_artifact_contracts.FORMAL_ARTIFACT_FAULT_MODES
+)
 
 MUTATIONS = (
     {"id": "missing_body", "group": "body"},
@@ -164,6 +170,7 @@ MUTATIONS = (
     {"id": "missing_runtime_self_check_receipt", "group": "evidence"},
     {"id": "target_requires_dev_repo_simulation", "group": "path"},
     {"id": "synthetic_live_overclaim", "group": "evidence"},
+    *FORMAL_ARTIFACT_MUTATIONS,
 )
 
 MUTATION_IDS = tuple(str(mutation["id"]) for mutation in MUTATIONS)
@@ -246,7 +253,7 @@ BOUNDARIES = (
         "id": "result_body",
         "subject": "current result body",
         "owner": "runtime_router",
-        "groups": ("body", "field", "evidence", "compatibility"),
+        "groups": ("body", "field", "evidence", "formal_artifact", "compatibility"),
         "contexts": ("post_result_review", "terminal_closure", "synthetic_ai_rehearsal"),
         "consumers": ("runtime_router", "reviewer", "testmesh_child_suite", "modelmesh_closure"),
     },
@@ -286,7 +293,7 @@ BOUNDARIES = (
         "id": "target_artifact_path",
         "subject": "current artifact path",
         "owner": "runtime_router",
-        "groups": ("path", "evidence", "compatibility"),
+        "groups": ("path", "evidence", "formal_artifact", "compatibility"),
         "contexts": ("post_result_review", "route_mutation", "terminal_closure"),
         "consumers": ("runtime_router", "reviewer", "flowguard_operator", "testmesh_child_suite", "modelmesh_closure"),
     },
@@ -294,7 +301,7 @@ BOUNDARIES = (
         "id": "evidence_manifest",
         "subject": "current evidence manifest",
         "owner": "runtime_router",
-        "groups": ("evidence", "field", "path", "compatibility"),
+        "groups": ("evidence", "field", "path", "formal_artifact", "compatibility"),
         "contexts": ("post_result_review", "flowguard_reissue", "route_mutation", "terminal_closure"),
         "consumers": ("runtime_router", "reviewer", "flowguard_operator", "testmesh_child_suite", "modelmesh_closure"),
     },
@@ -302,7 +309,7 @@ BOUNDARIES = (
         "id": "stage_evidence_matrix",
         "subject": "current packet stage-evidence matrix",
         "owner": "runtime_router",
-        "groups": ("field", "evidence", "gate"),
+        "groups": ("field", "evidence", "formal_artifact", "gate"),
         "contexts": ("active_packet_dispatch", "post_result_review", "flowguard_reissue", "synthetic_ai_rehearsal"),
         "consumers": ("runtime_router", "reviewer", "flowguard_operator", "testmesh_child_suite", "modelmesh_closure"),
     },
@@ -334,7 +341,7 @@ BOUNDARIES = (
         "id": "flowguard_report_reference",
         "subject": "current FlowGuard report reference",
         "owner": "flowguard_operator",
-        "groups": ("evidence", "path", "identity", "field"),
+        "groups": ("evidence", "path", "identity", "field", "formal_artifact"),
         "contexts": ("flowguard_reissue", "post_result_review", "route_mutation", "terminal_closure"),
         "consumers": ("runtime_router", "reviewer", "flowguard_operator", "testmesh_child_suite", "modelmesh_closure"),
     },

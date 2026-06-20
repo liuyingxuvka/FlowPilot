@@ -14,7 +14,7 @@ class FlowPilotRoleRecoveryLivenessModelTests(unittest.TestCase):
         self.assertEqual(
             {
                 "stale_report_marked_safe",
-                "unknown_liveness_marked_safe",
+                "unknown_binding_evidence_marked_safe",
                 "replacement_intent_only_marked_safe",
                 "daemon_error_without_diagnostics_marked_safe",
                 "current_report_overblocked",
