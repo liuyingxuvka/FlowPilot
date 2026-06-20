@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 import sys
 import unittest
 from collections import Counter
@@ -62,6 +63,42 @@ class FlowPilotCartesianControlPlaneExhaustionTests(unittest.TestCase):
             "cartesian_no_delta_retry_missing_required_delta_feedback",
             report["hazards"]["hazards"]["no_delta_retry_without_feedback"],
         )
+
+    def test_persisted_cartesian_result_matches_live_summary(self) -> None:
+        persisted = json.loads(runner.RESULTS_PATH.read_text(encoding="utf-8"))
+        live = runner.run_checks()
+
+        self.assertTrue(persisted["ok"], persisted)
+        self.assertEqual(persisted["ok"], live["ok"])
+        self.assertEqual(persisted["model_id"], live["model_id"])
+        for key in (
+            "full_product_count",
+            "applicable_count",
+            "skipped_count",
+            "boundary_count",
+            "mutation_count",
+            "context_count",
+            "consumer_count",
+            "coverage_shard_count",
+            "missing_dimensions",
+            "missing_oracle_or_feedback",
+            "normal_context_glassbreak_cells",
+            "threshold_cells_without_loop_key",
+            "retry_cells_without_delta_feedback",
+        ):
+            with self.subTest(section="matrix", key=key):
+                self.assertEqual(persisted["matrix"][key], live["matrix"][key])
+        for key in (
+            "contract_exhaustion_bridge_count",
+            "historical_failure_bridge_count",
+            "contract_bridge_missing_consumption",
+            "historical_bridge_missing_consumption",
+            "missing_mutation_families",
+            "fallback_bridge_translations",
+            "canonical_bridge_translation_count",
+        ):
+            with self.subTest(section="bridges", key=key):
+                self.assertEqual(persisted["bridges"][key], live["bridges"][key])
 
     def test_every_declared_dimension_has_applicable_cells(self) -> None:
         report = runner.run_checks()

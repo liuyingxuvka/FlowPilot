@@ -28663,3 +28663,36 @@ Task id: `generate-new-flowpilot-formal-entrypoint-20260529`
   - Lower registry/fake-AI/ContractExhaustionMesh checks pass but the parent Cartesian bridge does not recognize the new mutation family.
   - A new lower-level mutation is silently canonicalized through a generic fallback instead of being explicit in the current control-plane alphabet.
   - A model hazard is renamed but tests keep asserting the stale label.
+
+## 2026-06-20 - Coverage Evidence Freshness Closeout
+
+- Task: `harden-flowpilot-coverage-evidence-freshness`
+- Route: Predictive KB preflight, OpenSpec change, DevelopmentProcessFlow, TestMesh, ContractExhaustionMesh, and Model-Test Alignment.
+- Trigger: after the Cartesian and fake-AI matrices were upgraded, live checks showed broader coverage than the committed evidence files; the old persisted Cartesian result still reported 65 mutation families and 114660 product cells, while the live model reported 71 mutation families and 125244 product cells. The persisted full-model sweep/inventory also listed 150 runners while the repository had 152 current FlowGuard runners.
+- Result:
+  - Added a persisted-vs-live Cartesian summary regression so the committed `flowpilot_cartesian_control_plane_exhaustion_results.json` must match the live runner summary for product size, applicable/skipped cells, dimensions, bridge counts, missing mutation families, fallback translations, and GlassBreak-related cells.
+  - Added persisted sweep/inventory completeness regressions so `flowpilot_full_model_coverage_sweep_results.json` and `flowpilot_full_model_coverage_inventory_results.json` must enumerate every current `run_*_checks.py` runner.
+  - Registered `flowpilot_fake_ai_runtime_replay` as `coverage_strong` and `flowpilot_real_issue_backfeed` as `supporting_model_owned` in the existing coverage sweep tier map.
+  - Refreshed the Cartesian result, full-model sweep, full-model inventory, model hierarchy, model maturation, thin parent evidence, and project topology.
+  - The refreshed full-model inventory now has 152 runners, `gap_class_counts={}`, `full_coverage_ok=true`, and no unresolved non-deferred gaps.
+- Validation:
+  - `python -m unittest -q tests.test_flowpilot_cartesian_control_plane_exhaustion tests.test_flowpilot_full_model_coverage_inventory` -> 25 tests OK.
+  - `python -m unittest -q tests.test_flowpilot_ai_contract_projection tests.test_flowpilot_contract_exhaustion_mesh tests.test_flowpilot_current_contract_cartesian_matrix tests.test_flowpilot_synthetic_agent_coverage_matrix tests.test_flowpilot_fake_ai_runtime_replay tests.test_flowpilot_liveness_evidence_cartesian tests.test_flowpilot_reviewer_active_challenge tests.test_flowpilot_role_recovery_liveness_model` -> 69 tests OK.
+  - `python simulations/run_flowpilot_contract_exhaustion_mesh_checks.py --summary-json` -> OK.
+  - `python simulations/run_flowpilot_fake_ai_runtime_replay_checks.py --json` -> OK.
+  - `python simulations/run_flowpilot_real_issue_backfeed_checks.py --json` -> OK.
+  - `python simulations/run_flowpilot_model_test_alignment_checks.py` -> OK; source audit, full coverage, and release convergence are true.
+  - `python scripts/run_flowguard_coverage_sweep.py --timeout-seconds 60 --json-out simulations/flowpilot_full_model_coverage_sweep_results.json` -> OK; 152 runners.
+  - `python simulations/run_flowpilot_full_model_coverage_inventory.py` -> OK; 152 runners and no gap classes.
+  - `python simulations/run_meta_checks.py` and `python simulations/run_capability_checks.py` -> background logs under `tmp/flowguard_background/`, both exit 0 with complete out/err/combined/exit/meta artifacts.
+  - `python scripts/flowguard_project_topology.py build` and `python scripts/flowguard_project_topology.py check` -> OK; topology reports 152 models, 452 test commands, 1066 code surfaces, and no findings.
+  - `openspec validate harden-flowpilot-coverage-evidence-freshness --strict` -> valid.
+  - `python scripts/install_flowpilot.py --sync-repo-owned --json`, `python scripts/install_flowpilot.py --check --json`, `python scripts/audit_local_install_sync.py --json`, and `python scripts/check_install.py --json` -> OK; installed FlowPilot is fresh against repository source.
+- Claim boundary:
+  - This closes the scoped local evidence-freshness gap for the current Cartesian control-plane exhaustion result, full-model coverage sweep, full-model inventory, and project topology.
+  - It does not claim live AI semantic quality, remote push, GitHub release, package tag, deploy, public publication, or OpenSpec archive.
+- Counterexamples preserved:
+  - A live Cartesian model changes but the persisted JSON result is not regenerated.
+  - A new `run_*_checks.py` runner is added but the committed sweep or inventory still omits it.
+  - A runner is enumerated but not assigned to an explicit coverage tier.
+  - A full-model inventory contains `runner_not_ok`, live-state blockers, missing replay evidence, or unresolved non-deferred gaps while still being described as complete.

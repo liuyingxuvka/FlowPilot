@@ -282,7 +282,7 @@
         "layered_full_regression": {
           "current": true,
           "proof": {
-            "created_at": "2026-06-17T11:55:22.396014+00:00",
+            "created_at": "2026-06-20T03:57:26.027172+00:00",
             "edge_count": 20,
             "kind": "layered_full_parent",
             "proof_file": "simulations/meta_layered_full_results.proof.json",
@@ -296,7 +296,7 @@
         "model_id": "meta",
         "ok": true,
         "proof": {
-          "created_at": "2026-06-17T11:55:22.396014+00:00",
+          "created_at": "2026-06-20T03:57:26.027172+00:00",
           "edge_count": 20,
           "kind": "layered_full_parent",
           "proof_file": "simulations/meta_layered_full_results.proof.json",
@@ -317,7 +317,7 @@
         "state_count": 10,
         "thin_parent": {
           "proof": {
-            "created_at": "2026-06-18T03:36:57.697724+00:00",
+            "created_at": "2026-06-20T06:33:52.601410+00:00",
             "proof_file": "simulations/meta_thin_parent_results.proof.json",
             "reason": "valid proof",
             "result_file": "simulations/meta_thin_parent_results.json",
@@ -378,7 +378,7 @@
         "state_count": 8,
         "thin_parent": {
           "proof": {
-            "created_at": "2026-06-18T03:36:57.599199+00:00",
+            "created_at": "2026-06-20T06:34:37.343640+00:00",
             "proof_file": "simulations/capability_thin_parent_results.proof.json",
             "reason": "valid proof",
             "result_file": "simulations/capability_thin_parent_results.json",

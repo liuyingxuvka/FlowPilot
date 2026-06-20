@@ -42,7 +42,7 @@ Completion and readiness claims still need the owning FlowGuard checks, tests, r
 | Artifact | Path | OK | Decision | Confidence | Findings |
 | --- | --- | --- | --- | --- | ---: |
 | `model_test_alignment` | `simulations/flowpilot_model_test_alignment_results.json` | True | `` | `` | 0 |
-| `coverage_sweep` | `simulations/flowpilot_full_model_coverage_sweep_results.json` | True | `` | `` | 146 |
+| `coverage_sweep` | `simulations/flowpilot_full_model_coverage_sweep_results.json` | True | `` | `` | 133 |
 | `model_maturation` | `simulations/flowpilot_model_maturation_results.json` | True | `model_maturation_scoped_claim` | `scoped` | None |
 | `model_mesh` | `simulations/flowpilot_model_mesh_results.json` | True | `` | `` | None |
 | `model_hierarchy` | `simulations/flowpilot_model_hierarchy_results.json` | True | `` | `` | None |

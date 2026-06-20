@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import sys
 import unittest
 from pathlib import Path
@@ -7,15 +8,24 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "simulations"))
+sys.path.insert(0, str(ROOT / "scripts"))
 
 import run_flowpilot_full_model_coverage_inventory as inventory  # noqa: E402
+import run_flowguard_coverage_sweep as coverage_sweep  # noqa: E402
+
+
+def _current_runner_keys() -> set[str]:
+    return {
+        coverage_sweep._runner_key(path)
+        for path in sorted((ROOT / "simulations").glob("run_*_checks.py"))
+    }
 
 
 class FlowPilotFullModelCoverageInventoryTests(unittest.TestCase):
     def test_inventory_classifies_all_current_flowguard_runners(self) -> None:
         report = inventory.build_inventory()
 
-        runner_count = len(list((ROOT / "simulations").glob("run_*checks.py")))
+        runner_count = len(_current_runner_keys())
         self.assertEqual(report["runner_count"], runner_count)
         self.assertGreaterEqual(report["runner_count"], 90)
         self.assertEqual(
@@ -48,6 +58,8 @@ class FlowPilotFullModelCoverageInventoryTests(unittest.TestCase):
         self.assertEqual(records["flowpilot_contract_exhaustion_mesh"]["coverage_tier"], "coverage_strong")
         self.assertEqual(records["flowpilot_cartesian_control_plane_exhaustion"]["coverage_tier"], "coverage_strong")
         self.assertEqual(records["flowpilot_executable_matrix_coverage"]["coverage_tier"], "coverage_strong")
+        self.assertEqual(records["flowpilot_fake_ai_runtime_replay"]["coverage_tier"], "coverage_strong")
+        self.assertEqual(records["flowpilot_real_issue_backfeed"]["coverage_tier"], "supporting_model_owned")
         self.assertNotIn("runner_not_ok", records["flowpilot_executable_matrix_coverage"]["gap_classes"])
         self.assertNotIn(
             "runner_unparsed_or_unavailable",
@@ -103,6 +115,26 @@ class FlowPilotFullModelCoverageInventoryTests(unittest.TestCase):
         self.assertEqual(report["replay_evidence_path"], "simulations/flowpilot_full_model_replay_evidence.json")
         self.assertTrue(report["sweep_ok"])
         self.assertTrue(report["alignment_ok"])
+
+    def test_persisted_sweep_enumerates_all_current_flowguard_runners(self) -> None:
+        sweep = json.loads(inventory.DEFAULT_SWEEP_PATH.read_text(encoding="utf-8"))
+        current = _current_runner_keys()
+        persisted = {record["runner"] for record in sweep["runners"]}
+
+        self.assertEqual(sweep["runner_count"], len(current))
+        self.assertEqual(persisted, current)
+        self.assertIn("flowpilot_fake_ai_runtime_replay", persisted)
+        self.assertIn("flowpilot_real_issue_backfeed", persisted)
+
+    def test_persisted_inventory_enumerates_all_current_flowguard_runners(self) -> None:
+        persisted_inventory = json.loads(inventory.DEFAULT_JSON_OUT.read_text(encoding="utf-8"))
+        current = _current_runner_keys()
+        persisted = {record["runner"] for record in persisted_inventory["records"]}
+
+        self.assertEqual(persisted_inventory["runner_count"], len(current))
+        self.assertEqual(persisted, current)
+        self.assertIn("flowpilot_fake_ai_runtime_replay", persisted)
+        self.assertIn("flowpilot_real_issue_backfeed", persisted)
 
 
 if __name__ == "__main__":
