@@ -76,6 +76,7 @@ def run_fake_e2e(
     inject_contract_faults: bool = False,
     inject_consistency_faults: bool = False,
     inject_artifact_consistency_faults: bool = False,
+    flowguard_artifact_fault_mode: str = "",
     inject_terminal_replay_blocker: bool = False,
     repair_terminal_replay_blocker: bool = False,
 ) -> dict[str, Any]:
@@ -87,6 +88,7 @@ def run_fake_e2e(
         inject_contract_faults=inject_contract_faults,
         inject_consistency_faults=inject_consistency_faults,
         inject_artifact_consistency_faults=inject_artifact_consistency_faults,
+        flowguard_artifact_fault_mode=flowguard_artifact_fault_mode,
         inject_terminal_replay_blocker=inject_terminal_replay_blocker,
         repair_terminal_replay_blocker=repair_terminal_replay_blocker,
     )

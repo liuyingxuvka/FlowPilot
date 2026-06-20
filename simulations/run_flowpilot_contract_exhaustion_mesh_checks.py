@@ -230,9 +230,11 @@ def _test_mesh_report(cells: dict[str, Any]) -> dict[str, Any]:
 
 
 RESPONDER_SUPPORTED_MUTATIONS = {
+    "body_pass_artifact_blocks",
     "empty_required_array",
     "forbidden_alias_used",
     "forbidden_field_present",
+    "invalid_formal_artifact_json",
     "malformed_body.empty_body",
     "malformed_body.markdown_wrapped_json",
     "malformed_body.prose_plus_json",
@@ -241,8 +243,12 @@ RESPONDER_SUPPORTED_MUTATIONS = {
     "malformed_body.unquoted_keys",
     "missing_allowed_value_options",
     "missing_field_type_requirements",
+    "missing_formal_artifact",
+    "missing_formal_artifact_decision",
     "missing_required_child_field",
     "missing_required_field",
+    "wrong_formal_artifact_decision",
+    "wrong_formal_artifact_path",
     "wrong_allowed_value",
     "wrong_type",
 }
@@ -262,6 +268,9 @@ def _responder_contracts() -> dict[str, dict[str, Any]]:
             result_contract_profile_ids=(profile_id,),
             result_contract_profile_bindings={profile_id: sample_binding},
         )
+    contracts[model.FORMAL_ARTIFACT_EXHAUSTION_CONTRACT_ID] = dict(
+        model.FORMAL_ARTIFACT_EXHAUSTION_CONTRACT
+    )
     return contracts
 
 

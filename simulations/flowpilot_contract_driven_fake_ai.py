@@ -47,6 +47,15 @@ PROJECTION_GAP_PROFILE_IDS = (
 
 REVIEW_WINDOW_FAKE_AI_PROFILE_IDS = review_window_contracts.REVIEW_WINDOW_FAKE_AI_PROFILE_IDS
 
+FORMAL_ARTIFACT_PROFILE_IDS = (
+    "missing_formal_artifact",
+    "wrong_formal_artifact_path",
+    "invalid_formal_artifact_json",
+    "missing_formal_artifact_decision",
+    "wrong_formal_artifact_decision",
+    "body_pass_artifact_blocks",
+)
+
 
 @dataclass(frozen=True)
 class ProjectionFinding:
@@ -95,6 +104,10 @@ def _strip_condition(field_path: str) -> str:
 
 def _path_tokens(field_path: str) -> list[str]:
     return [token for token in _strip_condition(field_path).split(".") if token]
+
+
+def _is_formal_artifact_path(field_path: str) -> bool:
+    return field_path.startswith("flowguard_evidence.json") or field_path.startswith("artifact.flowguard_evidence.json")
 
 
 def _shape_has_path(shape: Mapping[str, Any], field_path: str) -> bool:
@@ -415,6 +428,8 @@ class ContractDrivenFakeAIResponder:
                         "Finite option fields must expose at least one selectable value.",
                     )
                 )
+            if _is_formal_artifact_path(field_path):
+                continue
             if not _contract_shape_has_path(self.contract, field_path):
                 findings.append(
                     ProjectionFinding(
@@ -830,6 +845,34 @@ class ContractDrivenFakeAIResponder:
                 )
         return cells
 
+    def formal_artifact_cells(self) -> list[dict[str, str]]:
+        artifact_contract = self.contract.get("formal_artifact_contract")
+        evidence_policy = self.contract.get("evidence_output_policy")
+        if not isinstance(artifact_contract, Mapping) and not (
+            isinstance(evidence_policy, Mapping)
+            and evidence_policy.get("required_for_formal_run") is True
+        ):
+            return []
+        artifact_id = "flowguard_evidence.json"
+        if isinstance(artifact_contract, Mapping):
+            artifact_id = str(artifact_contract.get("artifact_id") or artifact_id)
+        decision_path = f"{artifact_id}.model_test_alignment_report.decision"
+        return [
+            {
+                "cell_id": f"fake_ai.formal_artifact.{profile_id}",
+                "field_path": decision_path if "decision" in profile_id or "blocks" in profile_id else artifact_id,
+                "contract_path": f"artifact.{decision_path}" if "decision" in profile_id or "blocks" in profile_id else f"artifact.{artifact_id}",
+                "mutation_kind": profile_id,
+                "expected_reaction": (
+                    "breakglass_after_fifth_same_failure"
+                    if profile_id == "wrong_formal_artifact_path"
+                    else "mechanical_reject_reissue_with_artifact_instructions"
+                ),
+                "required_evidence_owner": "contract_exhaustion_fake_ai_matrix",
+            }
+            for profile_id in FORMAL_ARTIFACT_PROFILE_IDS
+        ]
+
     def option_value_cells(self) -> list[dict[str, str]]:
         cells: list[dict[str, str]] = []
         for field_path, values in sorted(self.allowed_value_options.items()):
@@ -854,6 +897,7 @@ class ContractDrivenFakeAIResponder:
             *self.malformed_body_cells(),
             *self.retry_cells(),
             *self.projection_gap_cells(),
+            *self.formal_artifact_cells(),
         ]
         for field_path in self.required_fields:
             cells.append(

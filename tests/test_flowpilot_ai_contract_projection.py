@@ -70,21 +70,31 @@ def write_flowguard_evidence_artifact(
     packet_id: str,
     *,
     decision: str = "pass",
+    mode: str = "valid",
 ) -> None:
     if not ledger.get("run_root"):
         ledger["run_root"] = tempfile.mkdtemp(prefix="flowpilot-ai-contract-test-")
     packet = ledger["packets"][packet_id]
     path = runtime._flowguard_packet_evidence_artifact_path(ledger, packet)
     assert path is not None
+    if mode == "missing":
+        return
+    if mode == "wrong_path":
+        path = path.parent.parent / f"{packet_id}-wrong" / "flowguard_evidence.json"
     path.parent.mkdir(parents=True, exist_ok=True)
+    if mode == "invalid_json":
+        path.write_text("{not: strict json", encoding="utf-8")
+        return
+    report: dict[str, object] = {
+        "failed_predicates": [] if decision == "pass" else ["semantic_contract_missing"],
+    }
+    if mode != "missing_decision":
+        report["decision"] = decision
     path.write_text(
         json.dumps(
             {
                 "schema_version": "flowpilot.flowguard_evidence.v1",
-                "model_test_alignment_report": {
-                    "decision": decision,
-                    "failed_predicates": [] if decision == "pass" else ["semantic_contract_missing"],
-                },
+                "model_test_alignment_report": report,
             },
             indent=2,
             sort_keys=True,
@@ -429,6 +439,179 @@ class FlowPilotAIContractProjectionTests(unittest.TestCase):
         for profile_id in contract_fake_ai.RETRY_PROFILE_IDS:
             self.assertIn(profile_id, mutation_kinds)
         self.assertIn("finite_option_mistake", mutation_kinds)
+
+    def test_formal_artifact_fake_ai_cells_are_declared(self) -> None:
+        contract = {
+            "minimal_valid_shape": flowguard_result_payload("FlowGuard legal body."),
+            "evidence_output_policy": {
+                "required_for_formal_run": True,
+                "run_local_evidence_root": ".flowpilot/runs/<run-id>/evidence/flowguard/<packet-id>",
+            },
+            "formal_artifact_contract": {
+                "artifact_id": "flowguard_evidence.json",
+                "required_field_paths": ["model_test_alignment_report.decision"],
+                "allowed_value_options": {
+                    "model_test_alignment_report.decision": ["pass"],
+                },
+            },
+        }
+        responder = contract_fake_ai.ContractDrivenFakeAIResponder(contract)
+        cells = responder.formal_artifact_cells()
+        mutation_kinds = {cell["mutation_kind"] for cell in cells}
+
+        self.assertEqual(mutation_kinds, set(contract_fake_ai.FORMAL_ARTIFACT_PROFILE_IDS))
+        for cell in cells:
+            self.assertEqual(cell["required_evidence_owner"], "contract_exhaustion_fake_ai_matrix")
+            self.assertTrue(cell["contract_path"].startswith("artifact.flowguard_evidence.json"))
+
+    def test_flowguard_formal_artifact_faults_reissue_with_executable_feedback(self) -> None:
+        fault_cases = (
+            ("missing", "pass", "flowguard_evidence.json"),
+            ("wrong_path", "pass", "flowguard_evidence.json"),
+            ("invalid_json", "pass", "flowguard_evidence.json"),
+            (
+                "missing_decision",
+                "pass",
+                "flowguard_evidence.json.model_test_alignment_report.decision",
+            ),
+            (
+                "valid",
+                "__invalid_option__",
+                "flowguard_evidence.json.model_test_alignment_report.decision",
+            ),
+            (
+                "valid",
+                "missing_code_contract",
+                "flowguard_evidence.json.model_test_alignment_report.decision",
+            ),
+        )
+        for mode, decision, missing_field in fault_cases:
+            with self.subTest(mode=mode, decision=decision):
+                ledger, packet_id = self.issue_semantic_recheck_packet()
+                packet = ledger["packets"][packet_id]
+                responder = self.contract_driven_responder(packet)
+                payload = responder.legal_payload()
+                lease_id = self.assign_flowguard(
+                    ledger,
+                    packet_id,
+                    f"fg-artifact-{mode}-{decision}".replace("_", "-"),
+                )
+                write_flowguard_evidence_artifact(
+                    ledger,
+                    packet_id,
+                    decision=decision,
+                    mode=mode,
+                )
+
+                result_id = runtime.submit_result(
+                    ledger,
+                    lease_id,
+                    packet_id,
+                    json.dumps(payload, sort_keys=True),
+                )
+                result = ledger["results"][result_id]
+                reissue_packet_id = self.latest_reissue_packet_id(ledger, packet_id)
+                reissue_packet = ledger["packets"][reissue_packet_id]
+                reissue_body = json.loads(reissue_packet["body"])
+                feedback_text = json.dumps(reissue_body, sort_keys=True)
+
+                self.assertEqual(result["status"], "mechanical_contract_blocked")
+                self.assertIn(missing_field, result["missing_required_fields"])
+                self.assertIn("flowguard_evidence.json", feedback_text)
+                self.assertIn("evidence_output_policy.run_local_evidence_root", feedback_text)
+                self.assertIn("model_test_alignment_report.decision", feedback_text)
+                self.assertIn("result body alone cannot satisfy", feedback_text)
+                self.assertIn(
+                    "flowguard_evidence.json.model_test_alignment_report.decision",
+                    reissue_body["allowed_value_options"],
+                )
+                self.assertEqual(
+                    reissue_body["allowed_value_options"][
+                        "flowguard_evidence.json.model_test_alignment_report.decision"
+                    ],
+                    ["pass"],
+                )
+
+                corrected_lease_id = self.assign_flowguard(ledger, reissue_packet_id)
+                corrected_payload = responder.repaired_payload_from_reissue(reissue_body)
+                write_flowguard_evidence_artifact(ledger, reissue_packet_id)
+                corrected_result_id = runtime.submit_result(
+                    ledger,
+                    corrected_lease_id,
+                    reissue_packet_id,
+                    json.dumps(corrected_payload, sort_keys=True),
+                )
+
+                self.assertEqual(ledger["results"][corrected_result_id]["status"], "accepted")
+
+    def test_flowguard_failure_pm_repair_packet_projects_formal_evidence_path_and_failed_checks(self) -> None:
+        ledger, packet_id = self.issue_semantic_recheck_packet()
+        responder = self.contract_driven_responder(ledger["packets"][packet_id])
+        payload = responder.legal_payload()
+        payload["pm_visible_summary"] = ["FlowGuard found a current model-test gap."]
+        payload["passed"] = False
+        payload["blockers"] = [
+            {
+                "blocker_id": "fg-blocker-001",
+                "blocker_class": "flowguard_failure",
+                "summary": "FlowGuard evidence check failed.",
+                "recommended_resolution": "Repair the current FlowGuard evidence failures.",
+            }
+        ]
+        lease_id = self.assign_flowguard(ledger, packet_id, "fg-blocking-evidence")
+        write_flowguard_evidence_artifact(ledger, packet_id, decision="missing_code_contract")
+
+        result_id = runtime.submit_result(
+            ledger,
+            lease_id,
+            packet_id,
+            json.dumps(payload, sort_keys=True),
+        )
+        result = ledger["results"][result_id]
+        blocker = next(iter(ledger["active_blockers"].values()))
+        pm_packet = ledger["packets"][blocker["pm_repair_packet_id"]]
+        pm_body = json.loads(pm_packet["body"])
+        pm_body_text = json.dumps(pm_body, sort_keys=True)
+
+        self.assertEqual(result["status"], "flowguard_blocked")
+        self.assertEqual(blocker["blocker_class"], "flowguard_failure")
+        self.assertTrue(pm_body["flowguard_evidence_path"].endswith("flowguard_evidence.json"))
+        self.assertIn("semantic_contract_missing", pm_body_text)
+        self.assertIn("flowguard_evidence_path", pm_body)
+        self.assertIn("flowguard_evidence_path", pm_body["required_context_fields"])
+
+    def test_repeated_formal_artifact_mechanical_blocks_reach_break_glass_threshold(self) -> None:
+        ledger, packet_id = self.issue_semantic_recheck_packet()
+        current_packet_id = packet_id
+        for index in range(1, 6):
+            packet = ledger["packets"][current_packet_id]
+            responder = self.contract_driven_responder(packet)
+            lease_id = self.assign_flowguard(ledger, current_packet_id)
+            result_id = runtime.submit_result(
+                ledger,
+                lease_id,
+                current_packet_id,
+                json.dumps(responder.legal_payload(), sort_keys=True),
+            )
+            result = ledger["results"][result_id]
+
+            self.assertEqual(result["status"], "mechanical_contract_blocked")
+            self.assertIn("flowguard_evidence.json", result["missing_required_fields"])
+            if index < 5:
+                self.assertNotEqual(runtime.router_next_action(ledger).action_type, "control_plane_blocker")
+                current_packet_id = self.latest_reissue_packet_id(ledger, current_packet_id)
+
+        action = runtime.router_next_action(ledger)
+        break_glass_events = [
+            event
+            for event in ledger["events"]
+            if event["event_type"] == "repair_loop_break_glass_required"
+        ]
+
+        self.assertEqual(action.action_type, "control_plane_blocker")
+        self.assertIn("flowguard_evidence.json", action.subject_id)
+        self.assertTrue(break_glass_events)
+        self.assertEqual(break_glass_events[-1]["payload"]["attempt_count"], 5)
 
     def test_contract_driven_fake_ai_review_window_profiles_are_declared(self) -> None:
         cells = contract_fake_ai.review_window_behavior_cells()

@@ -5134,6 +5134,66 @@ def _repair_obligation_disposition_minimal_shape(
     ]
 
 
+def _flowguard_formal_evidence_context_for_blocker(
+    ledger: Mapping[str, Any],
+    blocker: Mapping[str, Any],
+) -> dict[str, Any]:
+    if str(blocker.get("blocker_class") or "") != "flowguard_failure":
+        return {"flowguard_evidence_path": "", "failed_check_summaries": []}
+    blocker_result_id = str(blocker.get("result_id") or "")
+    blocker_packet_id = str(blocker.get("packet_id") or "")
+    evidence_path = ""
+    for order in ledger.get("flowguard_work_orders", {}).values():
+        if not isinstance(order, Mapping):
+            continue
+        if blocker_result_id and str(order.get("producer_result_id") or "") == blocker_result_id:
+            evidence_path = str(order.get("hard_evidence_source_path") or "")
+            break
+        if blocker_packet_id and str(order.get("packet_id") or "") == blocker_packet_id:
+            evidence_path = str(order.get("hard_evidence_source_path") or "")
+            break
+    summaries: list[str] = []
+    if evidence_path:
+        try:
+            payload = json.loads(Path(evidence_path).read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError, UnicodeDecodeError):
+            payload = {}
+        if isinstance(payload, Mapping):
+            report = payload.get("model_test_alignment_report")
+            if isinstance(report, Mapping):
+                for field in ("failed_predicates", "failed_checks", "blockers"):
+                    values = report.get(field)
+                    if isinstance(values, list):
+                        for item in values:
+                            if isinstance(item, Mapping):
+                                label = (
+                                    item.get("check_id")
+                                    or item.get("predicate")
+                                    or item.get("id")
+                                    or item.get("name")
+                                    or item.get("summary")
+                                )
+                                if label:
+                                    summaries.append(str(label))
+                            elif str(item):
+                                summaries.append(str(item))
+            checks = payload.get("checks")
+            if isinstance(checks, list):
+                for item in checks:
+                    if not isinstance(item, Mapping):
+                        continue
+                    status = _normalize_outcome_token(item.get("status") or item.get("decision"))
+                    if status in _FLOWGUARD_HARD_EVIDENCE_PASS_DECISIONS:
+                        continue
+                    label = item.get("check_id") or item.get("id") or item.get("name") or item.get("summary")
+                    if label:
+                        summaries.append(str(label))
+    return {
+        "flowguard_evidence_path": evidence_path,
+        "failed_check_summaries": list(dict.fromkeys(summaries)),
+    }
+
+
 def _repair_obligation_context_for_decision(
     ledger: Mapping[str, Any],
     blocker: Mapping[str, Any],
@@ -5384,6 +5444,21 @@ def _ensure_pm_repair_decision_packet_for_blocker(ledger: dict[str, Any], blocke
     supplemental_state = _terminal_supplemental_state_view(ledger)
     next_supplemental_round = int(supplemental_state.get("current_round", 0) or 0) + 1
     repair_evidence_obligations = _repair_evidence_obligations_for_blocker(blocker)
+    try:
+        blocker_contract = packet_stage_evidence_matrix.blocker_repair_packet_contract(
+            str(blocker.get("blocker_class") or "")
+        )
+    except KeyError:
+        blocker_contract = {}
+    required_context_fields = list(blocker_contract.get("required_context_fields") or [])
+    flowguard_context = _flowguard_formal_evidence_context_for_blocker(ledger, blocker)
+    recommended_resolution = str(blocker.get("recommended_resolution", ""))
+    if flowguard_context.get("failed_check_summaries"):
+        recommended_resolution = (
+            (recommended_resolution + " ") if recommended_resolution else ""
+        ) + "FlowGuard formal evidence failed checks: " + "; ".join(
+            str(item) for item in flowguard_context["failed_check_summaries"]
+        )
     required_result_fields = ["decision", "reason", "target_blocker_id", "next_action"]
     minimal_valid_shape: dict[str, Any] = {
         "decision": "repair_current_scope",
@@ -5464,7 +5539,9 @@ def _ensure_pm_repair_decision_packet_for_blocker(ledger: dict[str, Any], blocke
                 "gate_kind": blocker["gate_kind"],
                 "blocker_class": blocker.get("blocker_class", ""),
                 "blocker_status": blocker.get("status", ""),
-                "recommended_resolution": blocker.get("recommended_resolution", ""),
+                "recommended_resolution": recommended_resolution,
+                "flowguard_evidence_path": str(flowguard_context.get("flowguard_evidence_path") or ""),
+                "required_context_fields": required_context_fields,
                 "stale_evidence_ids": list(blocker.get("stale_evidence_ids") or []),
                 "required_recheck_role": blocker["required_recheck_role"],
                 "repair_evidence_obligations": repair_evidence_obligations,
@@ -9767,6 +9844,11 @@ _FLOWGUARD_HARD_EVIDENCE_BLOCK_DECISIONS = {
     "not_ok",
     "stale",
 }
+_FLOWGUARD_FORMAL_ARTIFACT_ID = "flowguard_evidence.json"
+_FLOWGUARD_FORMAL_ARTIFACT_DECISION_FIELD = (
+    "flowguard_evidence.json.model_test_alignment_report.decision"
+)
+_FLOWGUARD_FORMAL_ARTIFACT_ALLOWED_PASS_DECISIONS = ("pass",)
 
 
 def _flowguard_current_report_violation(
@@ -9877,6 +9959,23 @@ def _flowguard_current_report_violation(
             missing_required_fields=("flowguard_evidence.json",),
         )
     artifact_hard_decision = _normalize_outcome_token(artifact_decision.get("decision"))
+    if artifact_decision.get("required") and not artifact_hard_decision:
+        return _contract_block(
+            packet,
+            "FlowGuard formal evidence artifact must include model_test_alignment_report.decision",
+            missing_required_fields=(_FLOWGUARD_FORMAL_ARTIFACT_DECISION_FIELD,),
+        )
+    if (
+        artifact_decision.get("required")
+        and artifact_hard_decision
+        and artifact_hard_decision
+        not in _FLOWGUARD_HARD_EVIDENCE_PASS_DECISIONS | _FLOWGUARD_HARD_EVIDENCE_BLOCK_DECISIONS
+    ):
+        return _contract_block(
+            packet,
+            "FlowGuard formal evidence artifact decision must use a supported current value",
+            missing_required_fields=(_FLOWGUARD_FORMAL_ARTIFACT_DECISION_FIELD,),
+        )
     if top_level_passed and artifact_hard_decision in _FLOWGUARD_HARD_EVIDENCE_BLOCK_DECISIONS:
         return _contract_block(
             packet,
@@ -10061,6 +10160,40 @@ def _flowguard_packet_artifact_hard_decision(
         "decision": _flowguard_artifact_decision_from_payload(payload),
         "path": path.as_posix(),
     }
+
+
+def _flowguard_formal_artifact_reissue_needed(contract_check: PacketResultContractCheck) -> bool:
+    return any(
+        str(field).startswith(_FLOWGUARD_FORMAL_ARTIFACT_ID)
+        for field in contract_check.missing_required_fields
+    )
+
+
+def _add_flowguard_formal_artifact_reissue_guidance(
+    reissue_payload: dict[str, Any],
+    *,
+    contract_check: PacketResultContractCheck,
+) -> None:
+    if not _flowguard_formal_artifact_reissue_needed(contract_check):
+        return
+    allowed = reissue_payload.setdefault("allowed_value_options", {})
+    if isinstance(allowed, dict):
+        allowed[_FLOWGUARD_FORMAL_ARTIFACT_DECISION_FIELD] = list(
+            _FLOWGUARD_FORMAL_ARTIFACT_ALLOWED_PASS_DECISIONS
+        )
+    types = reissue_payload.setdefault("field_type_requirements", {})
+    if isinstance(types, dict):
+        types[_FLOWGUARD_FORMAL_ARTIFACT_DECISION_FIELD] = "string:pass"
+    prior_instruction = str(reissue_payload.get("instruction") or "")
+    artifact_instruction = (
+        " FlowGuard formal evidence is a required packet-owned artifact, not optional prose. "
+        "Write flowguard_evidence.json under evidence_output_policy.run_local_evidence_root for this fresh packet. "
+        "The artifact must be strict JSON and must include "
+        "flowguard_evidence.json.model_test_alignment_report.decision=pass when the result body claims passed=true. "
+        "A result body alone cannot satisfy this formal evidence contract."
+    )
+    if "result body alone cannot satisfy" not in prior_instruction:
+        reissue_payload["instruction"] = prior_instruction + artifact_instruction
 
 
 def _packet_result_contract_profile_binding(packet: Mapping[str, Any], profile_id: str) -> Mapping[str, Any]:
@@ -11273,6 +11406,10 @@ def _block_result_and_reissue_current_packet_family(
                 "fresh_packet_id": preassigned_packet_id,
                 **_flowguard_reissue_inherited_body_payload(ledger, packet, preassigned_packet_id),
             }
+        )
+        _add_flowguard_formal_artifact_reissue_guidance(
+            reissue_payload,
+            contract_check=contract_check,
         )
     fresh_packet_id = issue_task_packet(
         ledger,
@@ -14964,6 +15101,127 @@ def _repair_loop_break_glass_action(ledger: Mapping[str, Any]) -> RuntimeAction 
     return None
 
 
+def _flowguard_formal_artifact_failure_key(
+    ledger: Mapping[str, Any],
+    result: Mapping[str, Any],
+) -> tuple[str, str] | None:
+    if result.get("status") != "mechanical_contract_blocked":
+        return None
+    if str(result.get("contract_family_id") or "") != "flowguard_check.post_result":
+        return None
+    missing = [
+        str(field)
+        for field in result.get("missing_required_fields") or []
+        if str(field).startswith(_FLOWGUARD_FORMAL_ARTIFACT_ID)
+    ]
+    if not missing:
+        return None
+    packet_id = str(result.get("packet_id") or "")
+    packet = ledger.get("packets", {}).get(packet_id)
+    envelope = packet.get("envelope", {}) if isinstance(packet, Mapping) and isinstance(packet.get("envelope"), Mapping) else {}
+    subject_id = str(envelope.get("subject_id") or "")
+    target_result_id = str(envelope.get("target_result_id") or "")
+    repair_blocker_id = ""
+    if isinstance(packet, Mapping):
+        repair_blocker_id = str(envelope.get("repair_blocker_id") or packet.get("repair_blocker_id") or "")
+    route_node_id = str(envelope.get("route_node_id") or "")
+    missing_key = ",".join(sorted(set(missing)))
+    prefix = "|".join(
+        (
+            "flowguard_formal_artifact",
+            subject_id,
+            target_result_id,
+            repair_blocker_id,
+            route_node_id,
+        )
+    )
+    return prefix, f"{prefix}|{missing_key}"
+
+
+def _flowguard_formal_artifact_mechanical_break_glass_review(
+    ledger: Mapping[str, Any],
+) -> dict[str, Any]:
+    counts: dict[str, int] = {}
+    prefixes_by_key: dict[str, str] = {}
+    latest_key = ""
+    for result in ledger.get("results", {}).values():
+        if not isinstance(result, Mapping):
+            continue
+        key_pair = _flowguard_formal_artifact_failure_key(ledger, result)
+        if key_pair is not None:
+            prefix, key = key_pair
+            counts[key] = counts.get(key, 0) + 1
+            prefixes_by_key[key] = prefix
+            latest_key = key
+            continue
+        packet_id = str(result.get("packet_id") or "")
+        packet = ledger.get("packets", {}).get(packet_id)
+        if not isinstance(packet, Mapping):
+            continue
+        if _packet_result_family_id(packet) != "flowguard_check.post_result":
+            continue
+        if result.get("status") not in {"accepted", "review_blocked"}:
+            continue
+        envelope = packet.get("envelope", {}) if isinstance(packet.get("envelope"), Mapping) else {}
+        accepted_prefix = "|".join(
+            (
+                "flowguard_formal_artifact",
+                str(envelope.get("subject_id") or ""),
+                str(envelope.get("target_result_id") or ""),
+                str(envelope.get("repair_blocker_id") or packet.get("repair_blocker_id") or ""),
+                str(envelope.get("route_node_id") or ""),
+            )
+        )
+        for key, prefix in list(prefixes_by_key.items()):
+            if prefix == accepted_prefix:
+                counts[key] = 0
+    attempt_count = int(counts.get(latest_key, 0) or 0)
+    threshold_exceeded = attempt_count >= _REPAIR_LOOP_BREAK_GLASS_THRESHOLD
+    return {
+        "schema_version": "black_box_flowpilot.mechanical_repair_loop_break_glass_review.v1",
+        "family_key": latest_key,
+        "attempt_count": attempt_count,
+        "threshold": _REPAIR_LOOP_BREAK_GLASS_THRESHOLD,
+        "threshold_exceeded": threshold_exceeded,
+        "required_action": "controller_break_glass_diagnosis" if threshold_exceeded else "ordinary_reissue_allowed",
+    }
+
+
+def _flowguard_formal_artifact_break_glass_event_recorded(
+    ledger: Mapping[str, Any],
+    family_key: str,
+) -> bool:
+    for event in ledger.get("events", []):
+        if not isinstance(event, Mapping) or event.get("event_type") != "repair_loop_break_glass_required":
+            continue
+        payload = event.get("payload")
+        if isinstance(payload, Mapping) and payload.get("family_key") == family_key:
+            return True
+    return False
+
+
+def _mechanical_formal_artifact_break_glass_action(ledger: Mapping[str, Any]) -> RuntimeAction | None:
+    review = _flowguard_formal_artifact_mechanical_break_glass_review(ledger)
+    if not review.get("threshold_exceeded"):
+        return None
+    family_key = str(review.get("family_key") or "")
+    if isinstance(ledger, dict) and not _flowguard_formal_artifact_break_glass_event_recorded(ledger, family_key):
+        _event(
+            ledger,
+            "repair_loop_break_glass_required",
+            blocker_id=family_key,
+            family_key=family_key,
+            attempt_count=int(review.get("attempt_count", 0) or 0),
+            threshold=int(review.get("threshold", _REPAIR_LOOP_BREAK_GLASS_THRESHOLD) or 0),
+        )
+    return RuntimeAction(
+        "control_plane_blocker",
+        "same current FlowGuard formal evidence artifact problem repeated five or more times; Controller break-glass diagnosis is required",
+        family_key,
+        "controller",
+    )
+
+
 def router_next_action(ledger: Mapping[str, Any]) -> RuntimeAction:
     terminal_status = terminal_lifecycle_status(ledger)
     if terminal_status:
@@ -15000,6 +15258,9 @@ def router_next_action(ledger: Mapping[str, Any]) -> RuntimeAction:
     terminal_replay_action = _terminal_backward_replay_next_action(ledger)
     if terminal_replay_action is not None:
         return terminal_replay_action
+    mechanical_break_glass_action = _mechanical_formal_artifact_break_glass_action(ledger)
+    if mechanical_break_glass_action is not None:
+        return mechanical_break_glass_action
     repair_loop_action = _repair_loop_break_glass_action(ledger)
     if repair_loop_action is not None:
         return repair_loop_action

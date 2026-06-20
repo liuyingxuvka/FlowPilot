@@ -867,6 +867,40 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
             ]
             self.assertTrue(blocks, result["mechanical_contract_blocks"])
 
+    def test_fake_end_to_end_flowguard_formal_artifact_fault_modes_are_explicit(self) -> None:
+        fault_modes = (
+            ("missing", "flowguard_evidence.json"),
+            ("wrong_path", "flowguard_evidence.json"),
+            ("invalid_json", "flowguard_evidence.json"),
+            ("missing_decision", "flowguard_evidence.json.model_test_alignment_report.decision"),
+            ("wrong_decision", "flowguard_evidence.json.model_test_alignment_report.decision"),
+            ("blocked_decision", "flowguard_evidence.json.model_test_alignment_report.decision"),
+        )
+        for mode, missing_field in fault_modes:
+            with self.subTest(mode=mode):
+                with tempfile.TemporaryDirectory() as tmp:
+                    root = Path(tmp)
+                    result = flowpilot_new.run_fake_e2e(
+                        root,
+                        run_id=f"run-e2e-flowguard-artifact-{mode.replace('_', '-')}",
+                        startup_text=f"Build and validate a toy command with FlowGuard artifact fault {mode}.",
+                        flowguard_artifact_fault_mode=mode,
+                    )
+
+                    self.assertTrue(result["ok"], result)
+                    self.assertEqual(result["closure"]["decision"], "complete")
+                    self.assertEqual(
+                        result["injected_flowguard_artifact_fault_modes"][0]["mode"],
+                        mode,
+                    )
+                    blocks = [
+                        block
+                        for block in result["mechanical_contract_blocks"]
+                        if block["contract_family_id"] == "flowguard_check.post_result"
+                        and missing_field in block["missing_required_fields"]
+                    ]
+                    self.assertTrue(blocks, result["mechanical_contract_blocks"])
+
     def test_fake_end_to_end_terminal_replay_blocker_records_semantic_blocker(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

@@ -477,19 +477,29 @@ def _write_flowguard_evidence_artifact_for_packet(
     packet: dict[str, Any],
     *,
     decision: str,
+    mode: str = "valid",
 ) -> Path | None:
     path = runtime._flowguard_packet_evidence_artifact_path(ledger, packet)
     if path is None:
         return None
+    if mode == "missing":
+        return path
+    if mode == "wrong_path":
+        path = path.parent.parent / f"{packet['packet_id']}-wrong" / "flowguard_evidence.json"
     path.parent.mkdir(parents=True, exist_ok=True)
+    if mode == "invalid_json":
+        path.write_text("{not: strict json", encoding="utf-8")
+        return path
+    report: dict[str, Any] = {
+        "failed_predicates": [] if decision == "pass" else ["semantic_contract_missing"],
+    }
+    if mode != "missing_decision":
+        report["decision"] = decision
     path.write_text(
         json.dumps(
             {
                 "schema_version": "flowpilot.flowguard_evidence.v1",
-                "model_test_alignment_report": {
-                    "decision": decision,
-                    "failed_predicates": [] if decision == "pass" else ["semantic_contract_missing"],
-                },
+                "model_test_alignment_report": report,
             },
             indent=2,
             sort_keys=True,
@@ -509,6 +519,7 @@ def run_fake_e2e(
     inject_contract_faults: bool = False,
     inject_consistency_faults: bool = False,
     inject_artifact_consistency_faults: bool = False,
+    flowguard_artifact_fault_mode: str = "",
     inject_terminal_replay_blocker: bool = False,
     repair_terminal_replay_blocker: bool = False,
 ) -> dict[str, Any]:
@@ -543,6 +554,7 @@ def run_fake_e2e(
     injected_fault_families: set[str] = set()
     injected_consistency_fault_families: set[str] = set()
     injected_artifact_consistency_fault_families: set[str] = set()
+    injected_flowguard_artifact_fault_modes: list[dict[str, str]] = []
     injected_terminal_replay_blockers: list[dict[str, str]] = []
     mechanical_contract_blocks: list[dict[str, Any]] = []
     for index in range(80):
@@ -574,7 +586,7 @@ def run_fake_e2e(
             and family_id not in injected_consistency_fault_families
         )
         should_artifact_consistency_fault = (
-            inject_artifact_consistency_faults
+            (inject_artifact_consistency_faults or bool(flowguard_artifact_fault_mode))
             and family_id == "flowguard_check.post_result"
             and family_id not in injected_artifact_consistency_fault_families
         )
@@ -597,8 +609,28 @@ def run_fake_e2e(
         else:
             body = _body_for_packet(packet, ledger=ledger)
         if family_id.startswith("flowguard_check."):
-            artifact_decision = "missing_code_contract" if should_artifact_consistency_fault else "pass"
-            _write_flowguard_evidence_artifact_for_packet(ledger, packet, decision=artifact_decision)
+            mode = "valid"
+            artifact_decision = "pass"
+            if should_artifact_consistency_fault:
+                mode = flowguard_artifact_fault_mode or "blocked_decision"
+                if mode == "blocked_decision":
+                    artifact_decision = "missing_code_contract"
+                elif mode == "wrong_decision":
+                    artifact_decision = "__invalid_option__"
+                else:
+                    artifact_decision = "pass"
+                injected_flowguard_artifact_fault_modes.append(
+                    {
+                        "packet_id": packet_id,
+                        "mode": mode,
+                    }
+                )
+            _write_flowguard_evidence_artifact_for_packet(
+                ledger,
+                packet,
+                decision=artifact_decision,
+                mode=mode,
+            )
         lease_id, result_id = complete_leased_packet(
             packet_id,
             agent_id=f"fake-{kind}-{index}",
@@ -641,6 +673,7 @@ def run_fake_e2e(
         "injected_fault_families": sorted(injected_fault_families),
         "injected_consistency_fault_families": sorted(injected_consistency_fault_families),
         "injected_artifact_consistency_fault_families": sorted(injected_artifact_consistency_fault_families),
+        "injected_flowguard_artifact_fault_modes": injected_flowguard_artifact_fault_modes,
         "injected_terminal_replay_blockers": injected_terminal_replay_blockers,
         "active_blockers": runtime._copy_jsonable(ledger.get("active_blockers") or {}),
         "folded_boundaries": folded_boundaries,

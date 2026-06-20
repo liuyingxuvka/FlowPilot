@@ -517,6 +517,16 @@ class FlowPilotContractExhaustionMeshTests(unittest.TestCase):
             with self.subTest(contract_id=contract_id, mutation="malformed_body"):
                 for profile_id in contract_fake_ai.MALFORMED_BODY_PROFILE_IDS:
                     self.assertIsInstance(responder.malformed_body(profile_id), str)
+            if contract_id == model.FORMAL_ARTIFACT_EXHAUSTION_CONTRACT_ID:
+                with self.subTest(contract_id=contract_id, mutation="formal_artifact"):
+                    mutation_kinds = {
+                        cell["mutation_kind"]
+                        for cell in responder.formal_artifact_cells()
+                    }
+                    self.assertEqual(
+                        mutation_kinds,
+                        set(contract_fake_ai.FORMAL_ARTIFACT_PROFILE_IDS),
+                    )
 
     def test_packet_result_contract_fields_are_expanded_into_cells(self) -> None:
         cells = list(model.REQUIRED_CONTRACT_EXHAUSTION_CELLS)
@@ -636,6 +646,28 @@ class FlowPilotContractExhaustionMeshTests(unittest.TestCase):
                         ),
                         cell_index,
                     )
+
+    def test_formal_artifact_contract_faults_are_expanded_into_fake_ai_cells(self) -> None:
+        cells = list(model.REQUIRED_CONTRACT_EXHAUSTION_CELLS)
+        cell_index = {
+            (
+                cell.get("contract_family_id", ""),
+                cell.get("mutation_kind", ""),
+                cell.get("required_evidence_owner", ""),
+            )
+            for cell in cells
+        }
+
+        for profile_id in contract_fake_ai.FORMAL_ARTIFACT_PROFILE_IDS:
+            with self.subTest(profile_id=profile_id):
+                self.assertIn(
+                    (
+                        model.FORMAL_ARTIFACT_EXHAUSTION_CONTRACT_ID,
+                        profile_id,
+                        "contract_exhaustion_fake_ai_matrix",
+                    ),
+                    cell_index,
+                )
 
     def test_contract_exhaustion_runtime_regressions_exist(self) -> None:
         test_text = (ROOT / "tests" / "test_flowpilot_core_runtime.py").read_text(encoding="utf-8")

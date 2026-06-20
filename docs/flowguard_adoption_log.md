@@ -28565,3 +28565,34 @@ Task id: `generate-new-flowpilot-formal-entrypoint-20260529`
   - A fake-AI bad response is generated but no runtime replay proves rejection, reissue, repair, and fifth-attempt BreakGlass behavior.
   - A live issue is fixed ad hoc without becoming a fake-AI profile, contract cell, Cartesian row, and runtime reaction test.
   - Singleton evidence claims full/safe when one required live evidence file is missing or malformed.
+
+## 2026-06-20 - Formal Artifact Fake-AI Rehearsal Closeout
+
+- Task: `harden-flowpilot-formal-artifact-rehearsal`
+- Route: OpenSpec proposal/apply, DevelopmentProcessFlow, ContractExhaustionMesh, TestMesh, and focused runtime replay.
+- Trigger: a live WorldGuard run exposed that missing or malformed formal FlowGuard evidence artifacts were not covered deeply enough by the fake-AI Cartesian rehearsal, PM repair packets did not always receive enough concrete artifact context, and repeated mechanical reissues did not clearly enter the fifth-attempt BreakGlass path.
+- Result:
+  - The fake-AI responder now owns formal artifact fault modes instead of letting helper code silently write a valid artifact every time.
+  - The Cartesian matrix now includes missing artifact, wrong artifact path, invalid artifact JSON, missing internal decision, wrong decision enum, and result-body-versus-artifact conflict.
+  - Runtime reissue feedback now names the formal artifact filename, expected evidence root/path, exact internal decision field, allowed value, type requirement, and the rule that a result body alone cannot satisfy the formal evidence contract.
+  - PM repair packets now receive the existing formal evidence path and failed-check summary when FlowGuard reports a real artifact failure, without adding compatibility acceptance or fallback aliases.
+  - Repeated same-family mechanical formal-artifact failures now count toward the existing fifth-attempt BreakGlass threshold; attempts one through four stay on the normal repair/reissue path.
+- Validation:
+  - `python -m unittest tests.test_flowpilot_ai_contract_projection` -> 14 tests OK.
+  - `python -m unittest tests.test_flowpilot_contract_exhaustion_mesh` -> 17 tests OK.
+  - `python -m unittest tests.test_flowpilot_synthetic_agent_coverage_matrix` -> 15 tests OK.
+  - `python -m unittest tests.test_flowpilot_new_entrypoint.FlowPilotNewEntrypointTests.test_fake_end_to_end_flowguard_artifact_chaos_reissues_and_finishes tests.test_flowpilot_new_entrypoint.FlowPilotNewEntrypointTests.test_fake_end_to_end_flowguard_formal_artifact_fault_modes_are_explicit` -> 2 tests OK.
+  - Focused runtime regressions for PM repair recommendation, sixth repeated blocker BreakGlass, cross-node non-merge, repair-loop family normalization, historical replay, and contract-surface reduction passed.
+  - `python simulations/run_flowpilot_contract_exhaustion_mesh_checks.py --summary-json` -> OK; fake-AI responder coverage has no missing required cells or missing option cells for the new formal-artifact family.
+  - `python simulations/run_meta_checks.py --full --force` and the follow-up routine `python simulations/run_meta_checks.py` -> OK.
+  - `python -m flowguard project-audit --root .` -> pass.
+  - `openspec status --change harden-flowpilot-formal-artifact-rehearsal --json` -> complete.
+  - `python scripts/install_flowpilot.py --sync-repo-owned --json`, `python scripts/install_flowpilot.py --check --json`, and `python scripts/audit_local_install_sync.py --json` -> OK after local install sync.
+- Claim boundary:
+  - This closes the scoped fake-AI/runtime Cartesian boundary for formal FlowGuard artifact handoff failures, executable reissue feedback, PM repair context projection, and fifth-attempt BreakGlass behavior.
+  - It does not claim live AI semantic quality, remote push, GitHub release, package tag, deploy, public publication, or OpenSpec archive.
+- Counterexamples preserved:
+  - A test helper always writes the valid evidence file, so fake-AI rehearsal never exercises missing-file or wrong-file behavior.
+  - Runtime says only that evidence is missing but does not name the exact artifact path, internal field, allowed value, or body-only insufficiency.
+  - A FlowGuard blocker reaches PM without the concrete evidence path or failed-check summary needed to issue a useful repair packet.
+  - Same-family mechanical formal-artifact failures repeat indefinitely without reaching the fifth-attempt BreakGlass threshold.

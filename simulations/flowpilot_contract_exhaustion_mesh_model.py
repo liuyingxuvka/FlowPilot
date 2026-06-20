@@ -96,6 +96,12 @@ MUTATION_KINDS = (
     "missing_runtime_self_check_receipt",
     "target_requires_dev_repo_simulation",
     "synthetic_live_overclaim",
+    "missing_formal_artifact",
+    "wrong_formal_artifact_path",
+    "invalid_formal_artifact_json",
+    "missing_formal_artifact_decision",
+    "wrong_formal_artifact_decision",
+    "body_pass_artifact_blocks",
     *MALFORMED_BODY_MUTATION_KINDS,
 )
 
@@ -108,6 +114,12 @@ SYNTHETIC_MUTATION_KINDS = {
     "synthetic_live_overclaim",
     "wrong_allowed_value",
     "corrected_second_retry",
+    "missing_formal_artifact",
+    "wrong_formal_artifact_path",
+    "invalid_formal_artifact_json",
+    "missing_formal_artifact_decision",
+    "wrong_formal_artifact_decision",
+    "body_pass_artifact_blocks",
 }
 
 HISTORICAL_FAILURE_FAMILIES = (
@@ -457,6 +469,15 @@ def _mutation_applicable(family: str, mutation: str) -> bool:
         return family in {"pm_repair_packet", "break_glass_loop", "system_validation"}
     if mutation == "synthetic_live_overclaim":
         return family in {"break_glass_loop", "pm_repair_packet"}
+    if mutation in {
+        "missing_formal_artifact",
+        "wrong_formal_artifact_path",
+        "invalid_formal_artifact_json",
+        "missing_formal_artifact_decision",
+        "wrong_formal_artifact_decision",
+        "body_pass_artifact_blocks",
+    }:
+        return family == "flowguard_check_result"
     if mutation == "evidence_path_mismatch":
         return family in {
             "flowguard_check_packet",
@@ -533,6 +554,37 @@ PROFILE_EXHAUSTION_SAMPLE_BINDINGS = {
     },
     "flowguard.subject_artifacts_consumed_required": {
         "artifact_ids": ["artifact-contract-exhaustion-sample"],
+    },
+}
+
+FORMAL_ARTIFACT_EXHAUSTION_CONTRACT_ID = "flowguard.formal_evidence_artifact"
+FORMAL_ARTIFACT_EXHAUSTION_CONTRACT = {
+    "required_result_body_fields": ("pm_visible_summary", "reviewed_by_role", "passed", "blockers"),
+    "minimal_valid_shape": {
+        "pm_visible_summary": ["FlowGuard current packet passed with formal evidence."],
+        "reviewed_by_role": "flowguard_operator",
+        "passed": True,
+        "blockers": [],
+        "contract_self_check": {
+            "all_required_fields_present": True,
+            "exact_field_names_used": True,
+            "empty_required_arrays_explicit": True,
+            "runtime_mechanical_validation_passed": True,
+        },
+    },
+    "evidence_output_policy": {
+        "required_for_formal_run": True,
+        "run_local_evidence_root": ".flowpilot/runs/<run-id>/evidence/flowguard/<packet-id>",
+    },
+    "formal_artifact_contract": {
+        "artifact_id": "flowguard_evidence.json",
+        "required_field_paths": ("model_test_alignment_report.decision",),
+        "allowed_value_options": {
+            "model_test_alignment_report.decision": ("pass",),
+        },
+        "field_type_requirements": {
+            "model_test_alignment_report.decision": "string",
+        },
     },
 }
 
@@ -826,6 +878,38 @@ def _result_contract_profile_field_cells() -> tuple[dict[str, str], ...]:
     return tuple(cells)
 
 
+def _formal_artifact_contract_cells() -> tuple[dict[str, str], ...]:
+    cells: list[dict[str, str]] = []
+    for profile_id in (
+        "missing_formal_artifact",
+        "wrong_formal_artifact_path",
+        "invalid_formal_artifact_json",
+        "missing_formal_artifact_decision",
+        "wrong_formal_artifact_decision",
+        "body_pass_artifact_blocks",
+    ):
+        path = "artifact.flowguard_evidence.json"
+        if profile_id in {
+            "missing_formal_artifact_decision",
+            "wrong_formal_artifact_decision",
+            "body_pass_artifact_blocks",
+        }:
+            path = "artifact.flowguard_evidence.json.model_test_alignment_report.decision"
+        cells.append(
+            {
+                "cell_id": f"formal_artifact.{FORMAL_ARTIFACT_EXHAUSTION_CONTRACT_ID}.{profile_id}",
+                "family": "flowguard_check_result",
+                "contract_family_id": FORMAL_ARTIFACT_EXHAUSTION_CONTRACT_ID,
+                "contract_path": path,
+                "mutation_kind": profile_id,
+                "branch_kind": "synthetic_replay",
+                "confidence_boundary": "synthetic_non_live_control_flow",
+                "required_evidence_owner": "contract_exhaustion_fake_ai_matrix",
+            }
+        )
+    return tuple(cells)
+
+
 def _control_plane_required_path_cells() -> tuple[dict[str, str], ...]:
     cells: list[dict[str, str]] = []
     for row in CONTROL_PLANE_REQUIRED_PATHS:
@@ -880,6 +964,7 @@ REQUIRED_CONTRACT_EXHAUSTION_CELLS = (
     *STATIC_CONTRACT_EXHAUSTION_CELLS,
     *_packet_result_contract_field_cells(),
     *_result_contract_profile_field_cells(),
+    *_formal_artifact_contract_cells(),
     *_control_plane_required_path_cells(),
     *_historical_failure_family_cells(),
     *review_window_contracts.review_window_completeness_cells(),
