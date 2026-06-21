@@ -118,6 +118,14 @@ Check:
   worker outcome, can be executed without PM replanning, has defined proof,
   dependency boundaries, failure isolation, and has been checked for both
   under-decomposition and over-decomposition;
+- check producer-before-consumer order at node entry. If the current node plan
+  requires output, evidence, validation results, examples, fixtures, package
+  artifacts, public documentation, or release material that is only produced by
+  a later unfinished route node, block worker dispatch and recommend PM route
+  correction through the existing node-plan review surface. Do not require
+  future-stage Worker artifacts, tests, fixtures, or release evidence when the
+  current node is scoped to already available material or work owned by the
+  current node itself;
 - if the apparent leaf is still broad at node entry, treat this as a
   route-depth safety gate and route-quality failure before Worker dispatch.
   Block for PM

@@ -64,12 +64,14 @@ class State:
     route_redesign_flowguard_packet_issued: bool = False
     flowguard_current_subject_bound: bool = False
     flowguard_simulated_work_validation_failure_paths: bool = False
+    flowguard_checked_producer_consumer_order: bool = False
     flowguard_passed: bool = False
     flowguard_blocked: bool = False
     pm_route_repair_recorded: bool = False
     pm_flowguard_acceptance_packet_issued: bool = False
     pm_absorbed_flowguard: bool = False
     route_reviewer_packet_issued: bool = False
+    route_reviewer_checked_producer_consumer_order: bool = False
     route_reviewer_passed: bool = False
     route_mutation_committed: bool = False
 
@@ -77,6 +79,9 @@ class State:
     flowguard_operator_mutated_route: bool = False
     flowguard_scope_missing: bool = False
     flowguard_validation_path_missing: bool = False
+    route_has_future_node_dependency: bool = False
+    node_plan_requires_future_node_output: bool = False
+    node_plan_reviewer_checked_producer_consumer_order: bool = False
     pm_accepts_blocked_flowguard: bool = False
     route_mutation_without_pm_absorption: bool = False
     reviewer_before_pm_absorption: bool = False
@@ -149,12 +154,14 @@ def _reset_redesign_after_pm_route_repair(state: State) -> State:
         route_redesign_flowguard_packet_issued=False,
         flowguard_current_subject_bound=False,
         flowguard_simulated_work_validation_failure_paths=False,
+        flowguard_checked_producer_consumer_order=False,
         flowguard_passed=False,
         flowguard_blocked=False,
         pm_route_repair_recorded=True,
         pm_flowguard_acceptance_packet_issued=False,
         pm_absorbed_flowguard=False,
         route_reviewer_packet_issued=False,
+        route_reviewer_checked_producer_consumer_order=False,
         route_reviewer_passed=False,
         route_mutation_committed=False,
     )
@@ -189,6 +196,7 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
                     replace(
                         state,
                         node_plan_reviewer_used_plan_stage_standard=True,
+                        node_plan_reviewer_checked_producer_consumer_order=True,
                         node_plan_reviewer_passed=True,
                     ),
                 ),
@@ -238,6 +246,7 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
                         state,
                         flowguard_current_subject_bound=True,
                         flowguard_simulated_work_validation_failure_paths=True,
+                        flowguard_checked_producer_consumer_order=True,
                     ),
                 ),
             )
@@ -279,7 +288,16 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
         if not state.route_reviewer_packet_issued:
             return (Transition("runtime_issues_route_redesign_reviewer_packet", replace(state, route_reviewer_packet_issued=True)),)
         if not state.route_reviewer_passed:
-            return (Transition("reviewer_passes_pm_absorption_package", replace(state, route_reviewer_passed=True)),)
+            return (
+                Transition(
+                    "reviewer_passes_pm_absorption_package",
+                    replace(
+                        state,
+                        route_reviewer_checked_producer_consumer_order=True,
+                        route_reviewer_passed=True,
+                    ),
+                ),
+            )
         if not state.route_mutation_committed:
             return (Transition("route_redesign_committed_after_review", replace(state, route_mutation_committed=True)),)
         return (Transition("route_redesign_flow_complete", replace(state, status="complete")),)
@@ -302,6 +320,10 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("FlowGuard did not bind the current route plan as simulation subject")
     if state.flowguard_validation_path_missing:
         failures.append("FlowGuard did not simulate work, validation, failure, and repair paths")
+    if state.flowguard_passed and not state.flowguard_checked_producer_consumer_order:
+        failures.append("FlowGuard passed without checking producer-before-consumer route order")
+    if state.flowguard_passed and state.route_has_future_node_dependency:
+        failures.append("FlowGuard passed a route with a future-node dependency")
     if state.pm_accepts_blocked_flowguard:
         failures.append("PM accepted a blocked FlowGuard route result")
     if state.route_mutation_without_pm_absorption:
@@ -328,6 +350,10 @@ def invariant_failures(state: State) -> list[str]:
             failures.append("worker packet missing PM node context package")
         if state.node_plan_reviewer_passed and not state.node_plan_reviewer_used_plan_stage_standard:
             failures.append("node plan Reviewer passed without plan-stage review standard")
+        if state.node_plan_reviewer_passed and not state.node_plan_reviewer_checked_producer_consumer_order:
+            failures.append("node plan Reviewer passed without checking future-node dependencies")
+        if state.node_plan_reviewer_passed and state.node_plan_requires_future_node_output:
+            failures.append("node plan Reviewer passed a plan that requires future-node output")
         if state.worker_result_submitted and not state.worker_packet_issued:
             failures.append("worker result submitted before worker packet")
         if state.post_result_flowguard_issued and not state.worker_result_submitted:
@@ -356,6 +382,10 @@ def invariant_failures(state: State) -> list[str]:
             failures.append("FlowGuard passed without binding current route plan")
         if state.flowguard_passed and not state.flowguard_simulated_work_validation_failure_paths:
             failures.append("FlowGuard passed without simulating work, validation, failure, and repair paths")
+        if state.flowguard_passed and not state.flowguard_checked_producer_consumer_order:
+            failures.append("FlowGuard passed without checking producer-before-consumer route order")
+        if state.flowguard_passed and state.route_has_future_node_dependency:
+            failures.append("FlowGuard passed a route with a future-node dependency")
         if state.pm_flowguard_acceptance_packet_issued and not current_flowguard:
             failures.append("PM FlowGuard acceptance packet issued before current FlowGuard pass")
         if state.pm_absorbed_flowguard and not state.pm_flowguard_acceptance_packet_issued:
@@ -366,6 +396,10 @@ def invariant_failures(state: State) -> list[str]:
             failures.append("Reviewer packet issued before current PM FlowGuard absorption")
         if state.route_reviewer_passed and not state.route_reviewer_packet_issued:
             failures.append("Reviewer passed route effect before packet")
+        if state.route_reviewer_passed and not state.route_reviewer_checked_producer_consumer_order:
+            failures.append("Reviewer passed route effect without checking producer-before-consumer route order")
+        if state.route_reviewer_passed and state.route_has_future_node_dependency:
+            failures.append("Reviewer passed a route with a future-node dependency")
         if state.route_mutation_committed and not state.route_reviewer_passed:
             failures.append("route mutation committed before Reviewer pass")
         if state.route_mutation_committed and not current_pm_absorption:
@@ -426,12 +460,14 @@ def target_success_state() -> State:
         route_redesign_flowguard_packet_issued=True,
         flowguard_current_subject_bound=True,
         flowguard_simulated_work_validation_failure_paths=True,
+        flowguard_checked_producer_consumer_order=True,
         flowguard_passed=True,
         flowguard_blocked=False,
         pm_route_repair_recorded=True,
         pm_flowguard_acceptance_packet_issued=True,
         pm_absorbed_flowguard=True,
         route_reviewer_packet_issued=True,
+        route_reviewer_checked_producer_consumer_order=True,
         route_reviewer_passed=True,
         route_mutation_committed=True,
     )
@@ -445,6 +481,7 @@ def ordinary_node_success_state() -> State:
         node_context_package_accepted=True,
         node_plan_reviewer_packet_issued=True,
         node_plan_reviewer_used_plan_stage_standard=True,
+        node_plan_reviewer_checked_producer_consumer_order=True,
         node_plan_reviewer_passed=True,
         worker_packet_issued=True,
         worker_context_attached=True,
@@ -467,10 +504,26 @@ def hazard_states() -> dict[str, State]:
         "pm_optional_flowguard": replace(route_base, pm_made_flowguard_optional=True),
         "flowguard_scope_missing": replace(route_base, flowguard_scope_missing=True),
         "flowguard_validation_path_missing": replace(route_base, flowguard_validation_path_missing=True),
+        "flowguard_missing_producer_consumer_order": replace(
+            route_base,
+            flowguard_checked_producer_consumer_order=False,
+        ),
+        "flowguard_accepts_future_node_dependency": replace(
+            route_base,
+            route_has_future_node_dependency=True,
+        ),
         "flowguard_operator_route_mutation": replace(route_base, flowguard_operator_mutated_route=True),
         "pm_accepts_blocked_flowguard": replace(route_base, pm_accepts_blocked_flowguard=True),
         "stale_flowguard_after_route_rewrite": replace(route_base, flowguard_generation=0),
         "reviewer_before_pm_absorption": replace(route_base, reviewer_before_pm_absorption=True),
+        "route_reviewer_missing_producer_consumer_order": replace(
+            route_base,
+            route_reviewer_checked_producer_consumer_order=False,
+        ),
+        "route_reviewer_accepts_future_node_dependency": replace(
+            route_base,
+            route_has_future_node_dependency=True,
+        ),
         "route_mutation_without_pm_absorption": replace(route_base, route_mutation_without_pm_absorption=True),
         "route_reviewer_before_pm_absorption": replace(route_base, pm_absorbed_flowguard=False, route_reviewer_packet_issued=True),
         "route_commit_before_reviewer": replace(route_base, route_reviewer_passed=False),
@@ -480,6 +533,14 @@ def hazard_states() -> dict[str, State]:
         "node_plan_reviewer_demands_worker_artifacts": replace(
             ordinary_base,
             node_plan_reviewer_required_worker_artifacts=True,
+        ),
+        "node_plan_reviewer_missing_producer_consumer_order": replace(
+            ordinary_base,
+            node_plan_reviewer_checked_producer_consumer_order=False,
+        ),
+        "node_plan_reviewer_accepts_future_node_dependency": replace(
+            ordinary_base,
+            node_plan_requires_future_node_output=True,
         ),
         "node_plan_reviewer_treats_plan_as_result_proof": replace(
             ordinary_base,

@@ -51,10 +51,14 @@ HAZARD_EXPECTED_FAILURES = {
     "pm_optional_flowguard": "PM made structural route FlowGuard optional",
     "flowguard_scope_missing": "FlowGuard did not bind the current route plan as simulation subject",
     "flowguard_validation_path_missing": "FlowGuard did not simulate work, validation, failure, and repair paths",
+    "flowguard_missing_producer_consumer_order": "FlowGuard passed without checking producer-before-consumer route order",
+    "flowguard_accepts_future_node_dependency": "FlowGuard passed a route with a future-node dependency",
     "flowguard_operator_route_mutation": "FlowGuard operator mutated route instead of reporting to PM",
     "pm_accepts_blocked_flowguard": "PM accepted a blocked FlowGuard route result",
     "stale_flowguard_after_route_rewrite": "PM absorbed stale or missing FlowGuard result",
     "reviewer_before_pm_absorption": "Reviewer inspected route effect before PM absorbed FlowGuard result",
+    "route_reviewer_missing_producer_consumer_order": "Reviewer passed route effect without checking producer-before-consumer route order",
+    "route_reviewer_accepts_future_node_dependency": "Reviewer passed a route with a future-node dependency",
     "route_mutation_without_pm_absorption": "route mutation committed without PM FlowGuard absorption",
     "route_reviewer_before_pm_absorption": "Reviewer packet issued before current PM FlowGuard absorption",
     "route_commit_before_reviewer": "route mutation committed before Reviewer pass",
@@ -62,6 +66,8 @@ HAZARD_EXPECTED_FAILURES = {
     "worker_context_missing": "worker packet missing PM node context package",
     "worker_replans_broad_leaf": "Worker replanned a broad leaf instead of PM route deepening",
     "node_plan_reviewer_demands_worker_artifacts": "Node plan Reviewer required Worker artifacts before Worker dispatch",
+    "node_plan_reviewer_missing_producer_consumer_order": "node plan Reviewer passed without checking future-node dependencies",
+    "node_plan_reviewer_accepts_future_node_dependency": "node plan Reviewer passed a plan that requires future-node output",
     "node_plan_reviewer_treats_plan_as_result_proof": "Node plan Reviewer treated PM plan as Worker-result proof",
     "post_result_flowguard_skipped": "Reviewer packet issued before post-result FlowGuard pass",
     "reviewer_not_independent": "Reviewer pass was not independent",
@@ -85,8 +91,13 @@ def _state_id(state: model.State) -> str:
         f"{state.route_redesign_flowguard_packet_issued},"
         f"{state.flowguard_current_subject_bound},"
         f"{state.flowguard_simulated_work_validation_failure_paths},"
+        f"{state.flowguard_checked_producer_consumer_order},"
         f"{state.flowguard_passed},{state.pm_absorbed_flowguard},"
-        f"{state.route_reviewer_passed},{state.route_mutation_committed}"
+        f"{state.route_reviewer_checked_producer_consumer_order},"
+        f"{state.route_reviewer_passed},{state.route_mutation_committed}|"
+        f"deps={state.route_has_future_node_dependency},"
+        f"{state.node_plan_requires_future_node_output},"
+        f"{state.node_plan_reviewer_checked_producer_consumer_order}"
     )
 
 
@@ -211,14 +222,24 @@ def _check_hazards() -> dict[str, object]:
 
 def _model_test_alignment_report() -> dict[str, object]:
     repo_root = Path(__file__).resolve().parents[1]
-    model_text = (repo_root / "simulations" / "flowpilot_prework_flowguard_gate_model.py").read_text(encoding="utf-8")
-    runtime_text = (repo_root / "skills" / "flowpilot" / "assets" / "flowpilot_core_runtime" / "runtime.py").read_text(encoding="utf-8")
-    test_text = (repo_root / "tests" / "test_flowpilot_high_standard_control_flow.py").read_text(encoding="utf-8")
-    core_test_text = (repo_root / "tests" / "test_flowpilot_core_runtime.py").read_text(encoding="utf-8")
-    fake_text = (repo_root / "skills" / "flowpilot" / "assets" / "flowpilot_core_runtime" / "fake_e2e.py").read_text(encoding="utf-8")
-    prompt_text = (repo_root / "skills" / "flowpilot" / "assets" / "runtime_kit" / "cards" / "roles" / "flowguard_operator.md").read_text(encoding="utf-8").lower()
-    reviewer_text = (repo_root / "skills" / "flowpilot" / "assets" / "runtime_kit" / "cards" / "roles" / "human_like_reviewer.md").read_text(encoding="utf-8").lower()
-    node_review_text = (repo_root / "skills" / "flowpilot" / "assets" / "runtime_kit" / "cards" / "reviewer" / "node_acceptance_plan_review.md").read_text(encoding="utf-8").lower()
+    def raw(path: Path) -> str:
+        return path.read_text(encoding="utf-8")
+
+    def normalized(path: Path) -> str:
+        return " ".join(raw(path).lower().split())
+
+    model_text = raw(repo_root / "simulations" / "flowpilot_prework_flowguard_gate_model.py")
+    runtime_text = raw(repo_root / "skills" / "flowpilot" / "assets" / "flowpilot_core_runtime" / "runtime.py")
+    test_text = raw(repo_root / "tests" / "test_flowpilot_high_standard_control_flow.py")
+    core_test_text = raw(repo_root / "tests" / "test_flowpilot_core_runtime.py")
+    fake_text = raw(repo_root / "skills" / "flowpilot" / "assets" / "flowpilot_core_runtime" / "fake_e2e.py")
+    prompt_text = normalized(repo_root / "skills" / "flowpilot" / "assets" / "runtime_kit" / "cards" / "roles" / "flowguard_operator.md")
+    reviewer_text = normalized(repo_root / "skills" / "flowpilot" / "assets" / "runtime_kit" / "cards" / "roles" / "human_like_reviewer.md")
+    node_review_text = normalized(repo_root / "skills" / "flowpilot" / "assets" / "runtime_kit" / "cards" / "reviewer" / "node_acceptance_plan_review.md")
+    pm_route_text = normalized(repo_root / "skills" / "flowpilot" / "assets" / "runtime_kit" / "cards" / "phases" / "pm_route_skeleton.md")
+    route_process_text = normalized(repo_root / "skills" / "flowpilot" / "assets" / "runtime_kit" / "cards" / "flowguard_operator" / "route_process_check.md")
+    route_challenge_text = normalized(repo_root / "skills" / "flowpilot" / "assets" / "runtime_kit" / "cards" / "reviewer" / "route_challenge.md")
+    pm_node_text = normalized(repo_root / "skills" / "flowpilot" / "assets" / "runtime_kit" / "cards" / "phases" / "pm_node_acceptance_plan.md")
     obligations = {
         "node_plan_stage_model": "node_plan_reviewer_used_plan_stage_standard" in model_text,
         "result_stage_model": "final_reviewer_used_result_stage_standard" in model_text,
@@ -235,6 +256,17 @@ def _model_test_alignment_report() -> dict[str, object]:
         "fake_ai_node_plan_stage_language": "plan-stage review" in fake_text,
         "reviewer_core_plan_stage_boundary": "plan-stage review" in reviewer_text,
         "reviewer_node_plan_no_worker_artifacts": "do not block solely because worker artifacts" in node_review_text,
+        "pm_route_dependency_order_prompt": "producer-before-consumer route order" in pm_route_text
+        and "do not add a dependency ledger or extra route-node fields" in pm_route_text,
+        "flowguard_route_dependency_order_prompt": "producer-before-consumer order" in route_process_text
+        and "dependency-order inversion" in route_process_text
+        and "not viable as drafted" in route_process_text,
+        "reviewer_route_dependency_order_prompt": "producer-before-consumer dependency direction" in route_challenge_text
+        and "unfinished producer" in route_challenge_text,
+        "pm_node_future_route_output_prompt": "consumer of future route output" in pm_node_text
+        and "do not demand future-stage evidence" in pm_node_text,
+        "reviewer_node_future_route_output_prompt": "producer-before-consumer order at node entry" in node_review_text
+        and "later unfinished route node" in node_review_text,
         "flowguard_subject_prompt": "current subject simulation boundary" in prompt_text,
         "route_simulation_prompt": "work dispatch" in prompt_text and "validation/check path" in prompt_text,
         "unsupported_old_prework_rejection": "node_prework_flowguard is no longer a supported current FlowPilot path" in runtime_text,
@@ -250,6 +282,10 @@ def _model_test_alignment_report() -> dict[str, object]:
             "skills/flowpilot/assets/flowpilot_core_runtime/fake_e2e.py",
             "skills/flowpilot/assets/runtime_kit/cards/roles/flowguard_operator.md",
             "skills/flowpilot/assets/runtime_kit/cards/roles/human_like_reviewer.md",
+            "skills/flowpilot/assets/runtime_kit/cards/phases/pm_route_skeleton.md",
+            "skills/flowpilot/assets/runtime_kit/cards/flowguard_operator/route_process_check.md",
+            "skills/flowpilot/assets/runtime_kit/cards/reviewer/route_challenge.md",
+            "skills/flowpilot/assets/runtime_kit/cards/phases/pm_node_acceptance_plan.md",
             "skills/flowpilot/assets/runtime_kit/cards/reviewer/node_acceptance_plan_review.md",
             "tests/test_flowpilot_high_standard_control_flow.py",
             "tests/test_flowpilot_core_runtime.py",

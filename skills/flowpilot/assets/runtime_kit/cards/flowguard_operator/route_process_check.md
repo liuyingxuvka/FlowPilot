@@ -61,6 +61,14 @@ model:
 - the canonical process model is serial: every effective root, parent/module,
   child, leaf, and repair segment has a definite ordered predecessor/successor
   path, and all required nodes are reachable before completion;
+- the serial route preserves producer-before-consumer order. For every node,
+  inspect the existing route text such as `title`, `required_outputs`,
+  `acceptance_criteria`, `deliverable_checks`, and `validation_checks`. If a
+  node's artifact, check, claim, report, public document, package, or
+  validation consumes output or evidence from another route node, the producer
+  must be earlier, be the same current node's owned work, or already exist as
+  current external material. A route that can only pass by letting an early node
+  depend on a later unfinished node is not viable as drafted;
 - no product-model state, failure/recovery path, or completion evidence is left
   only partially covered by the route;
 - route nodes preserve the frozen root contract and child-skill gate manifest;
@@ -115,6 +123,12 @@ model:
   Worker must invent subtasks, choose child order, define dependency
   boundaries, or decide acceptance boundaries, return repair-required process
   evidence and recommend PM route deepening before any Worker dispatch;
+- explicitly check dependency-order inversion. If a consumer node is scheduled
+  before the unfinished producer whose output, evidence, or validation it needs,
+  return repair-required or blocked process evidence through the existing
+  `recommended_resolution` surface. Name the affected producer and consumer
+  nodes when the route text supports that judgment, but do not create a new
+  dependency field or become the PM route author;
 - parent completion and final completion include backward coverage review, and
   any omission first checks whether the process model missed a class of work,
   upgrades the model when needed, searches same-class omissions, adds

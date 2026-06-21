@@ -211,6 +211,7 @@ def _body_for_packet(packet: dict[str, Any], ledger: dict[str, Any] | None = Non
                     "purpose": "Complete the current route node with bounded worker execution, FlowGuard checks, review, and validation.",
                     "acceptance_criteria": [
                         "worker result satisfies the node packet",
+                        "plan-stage review checks current inputs without future-stage evidence",
                         "node-plan Reviewer, post-result FlowGuard, and final Reviewer evidence are current",
                         "reviewer independently challenges the node outcome",
                     ],

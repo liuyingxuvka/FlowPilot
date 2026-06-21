@@ -20258,6 +20258,42 @@ to identify unsupported historical-layer branches that should be deleted.
 ### Next Actions
 - Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
 
+## 2026-06-21 - Route Producer-Consumer Ordering Closeout
+
+- Task: `enforce-flowpilot-route-producer-consumer-ordering`
+- Route: Predictive KB preflight, OpenSpec change, Existing Model Preflight, DevelopmentProcessFlow, prompt/card update, model-test alignment, topology, and install sync.
+- Trigger: a live FlowPilot route could put a README or other consumer node before the unfinished producer node it depended on, and the FlowGuard operator route-process check did not explicitly treat that inverted dependency as a route viability blocker.
+- Result:
+  - PM route guidance now asks route authors to keep producer work before consumer work using existing route fields.
+  - FlowGuard operator route-process guidance now treats future-node dependency inversion as a route viability failure through existing repair/block and `recommended_resolution` surfaces.
+  - Reviewer route challenge now independently blocks dependency-order inversion without becoming the route author.
+  - PM and Reviewer node-entry guidance now blocks worker dispatch when the current node needs later unfinished node output, while preserving bounded current-slice work that does not require future evidence.
+  - The prework FlowGuard gate model now detects missing producer-before-consumer checks, accepted future-node dependencies, and node-entry plans that require future-node output.
+  - Source version is now `0.10.16`.
+- Validation:
+  - `python -m unittest tests.test_flowpilot_card_instruction_coverage` -> 29 tests OK.
+  - `python simulations/run_flowpilot_prework_flowguard_gate_checks.py --json-out simulations/flowpilot_prework_flowguard_gate_results.json` -> OK; new producer/consumer hazards detected as expected.
+  - `python simulations/run_card_instruction_coverage_checks.py --json-out simulations/card_instruction_coverage_results.json` -> OK.
+  - `python simulations/run_flowpilot_planning_quality_checks.py --json-out simulations/flowpilot_planning_quality_results.json` -> OK.
+  - `python -m unittest tests.test_flowpilot_high_standard_control_flow.FlowPilotHighStandardControlFlowTests.test_node_acceptance_plan_review_packet_keeps_worker_evidence_future_stage tests.test_flowpilot_high_standard_control_flow.FlowPilotHighStandardControlFlowTests.test_node_acceptance_redesign_route_flowguard_block_prevents_route_mutation tests.test_flowpilot_high_standard_control_flow.FlowPilotHighStandardControlFlowTests.test_node_acceptance_redesign_route_requires_pm_absorption_before_reviewer` -> 3 tests OK.
+  - `python simulations/run_meta_checks.py` and `python simulations/run_capability_checks.py` -> background logs under `tmp/flowguard_background/`, both exit 0 with complete out/err/combined/exit/meta artifacts.
+  - `python scripts/flowguard_project_topology.py build` and `python scripts/flowguard_project_topology.py check` -> OK.
+  - `openspec validate enforce-route-producer-before-consumer --strict` -> valid.
+  - `python scripts/install_flowpilot.py --sync-repo-owned --json`, `python scripts/audit_local_install_sync.py --json`, `python scripts/install_flowpilot.py --check --json`, and `python scripts/check_install.py --json` -> OK; installed FlowPilot digest matches repository source.
+  - `python -m flowguard project-audit --root .` -> pass; FlowGuard package `0.52.1`, schema `1.0`.
+  - `git diff --check` -> OK; CRLF warnings only.
+- Claim boundary:
+  - This closes the local current-contract route-ordering gap in PM route planning, FlowGuard operator checks, Reviewer challenge, node-entry review, and executable regression coverage.
+  - It does not add route-node dependency fields, dependency ledgers, compatibility shims, fallback translators, old-router paths, release publication, tag, deploy, remote push, or OpenSpec archive.
+- Counterexamples preserved:
+  - FlowGuard passes a route without checking producer-before-consumer order.
+  - FlowGuard or Reviewer accepts an early consumer node that needs a later unfinished producer.
+  - Node-entry Reviewer dispatches work for a node whose plan requires future-node output.
+  - Node-entry review wrongly demands future-stage Worker artifacts for a bounded current node that does not need future output.
+- Friction:
+  - OpenSpec strict validation initially failed because the new spec used a generic `Requirements` heading instead of `## ADDED Requirements`; the delta heading repair fixed it.
+  - One topology build hit a transient Windows write error on `docs/flowguard_project_topology.json`; the file was readable and not read-only, and the immediate retry plus topology check passed.
+
 ## 2026-06-21 - FlowPilot Control-Plane Miss Coverage Hardening
 
 - Task: `harden-flowpilot-control-plane-miss-coverage`

@@ -88,6 +88,15 @@ child route under a replacement parent/module scope for the active node. If it
 is over-split, merge or waive the extra structure with a PM complexity reason
 before dispatch.
 
+Also re-ask whether the current node is a consumer of future route output. If
+the node plan would require a later unfinished node's artifact, evidence,
+validation result, example, fixture, package, public document, or release output
+before the current node can be executed or reviewed, do not return
+`decision: "pass"`. Treat that as wrong route order or wrong node boundary and
+use `decision: "redesign_route"` through the existing route-plan path. If the
+node uses only already available material or work it owns in the same node, do
+not demand future-stage evidence merely because later route nodes still exist.
+
 For a parent repair replacement, `child_node_ids` are the active repair
 children that must run now. `inherited_child_node_ids` and
 `inherited_accepted_result_ids` are historical context only; they cannot close

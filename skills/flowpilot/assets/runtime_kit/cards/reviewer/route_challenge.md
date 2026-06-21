@@ -51,6 +51,12 @@ Check:
   boundaries, reviewer checks, FlowGuard checks, and final closure;
 - the process route is a single ordered execution line, including ordered
   children for every parent/module and ordered deeper children as needed;
+- the ordered route satisfies producer-before-consumer dependency direction.
+  Challenge whether any node artifact, acceptance criterion, required output,
+  deliverable check, or validation check consumes output or evidence that is
+  only produced by a later unfinished node. If so, block route approval through
+  the existing review result fields and recommend PM route repair without
+  becoming the route author;
 - the selected planning profile matches the task type and stated quality level;
 - the selected planning profile does not create a light/simple FlowPilot mode.
   Formal FlowPilot use must keep the full protocol; if PM treats a small task
@@ -143,6 +149,11 @@ Check:
   Block if the route expects a later actor to infer required materials from
   summaries, stale files, chat history, or old repair packets instead of the
   current runtime handoff;
+- public docs, final reports, release notes, demos, package docs, examples, or
+  similar summary artifacts are not special-cased, but they often consume other
+  node outputs. Block only when the route orders such a consumer before the
+  unfinished producer it needs, or when its current node boundary cannot be
+  reviewed from already available material;
 - after a route mutation, same-family obsolete repair blockers must no longer
   be treated as current work. Block if accepted, superseded, or stale repair
   packets can still appear as current final-preflight blockers while unrelated

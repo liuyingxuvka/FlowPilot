@@ -594,6 +594,30 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
         self.assertIn("complex flat all-leaf route plan", flowguard_route)
         self.assertIn("node-entry redesign did not promote active scope", flowguard_route)
 
+    def test_route_cards_check_producer_before_consumer_order(self) -> None:
+        def normalized(card_id: str) -> str:
+            return " ".join(_card_path_by_id(card_id).read_text(encoding="utf-8").lower().split())
+
+        pm_route = normalized("pm.route_skeleton")
+        flowguard_route = normalized("flowguard_operator.route_process_check")
+        reviewer_route = normalized("reviewer.route_challenge")
+        pm_node = normalized("pm.node_acceptance_plan")
+        reviewer_node = normalized("reviewer.node_acceptance_plan_review")
+
+        self.assertIn("producer-before-consumer route order", pm_route)
+        self.assertIn("do not add a dependency ledger or extra route-node fields", pm_route)
+        self.assertIn("producer-before-consumer order", flowguard_route)
+        self.assertIn("dependency-order inversion", flowguard_route)
+        self.assertIn("not viable as drafted", flowguard_route)
+        self.assertIn("producer-before-consumer dependency direction", reviewer_route)
+        self.assertIn("unfinished producer", reviewer_route)
+        self.assertIn("consumer of future route output", pm_node)
+        self.assertIn('`decision: "redesign_route"`', pm_node)
+        self.assertIn("do not demand future-stage evidence", pm_node)
+        self.assertIn("producer-before-consumer order at node entry", reviewer_node)
+        self.assertIn("later unfinished route node", reviewer_node)
+        self.assertIn("do not require future-stage worker artifacts", reviewer_node)
+
     def test_reviewer_formal_package_reuses_existing_acceptance_sources(self) -> None:
         def normalized(path: Path) -> str:
             return " ".join(path.read_text(encoding="utf-8").lower().split())

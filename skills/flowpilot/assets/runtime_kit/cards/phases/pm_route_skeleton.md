@@ -171,6 +171,14 @@ Route requirements:
 - each separate node must close a distinct risk, produce distinct evidence,
   enforce a role boundary, enable real parallelism, isolate failure recovery,
   or represent a user-visible milestone;
+- preserve producer-before-consumer route order. When one node's artifact,
+  acceptance criteria, required outputs, deliverable checks, or validation
+  checks cite, summarize, prove, package, document, or otherwise consume
+  another node's output or evidence, that producer work must appear earlier in
+  the executable route, be owned by the same current node, or already exist as
+  current external material. Do not place a consumer node before a later
+  unfinished producer and expect Worker, Reviewer, or FlowGuard operator to
+  manufacture the missing future output;
 - route decomposition quality is semantic, not field count. Use the current
   strict route fields plus existing `acceptance_criteria`, `required_outputs`,
   `deliverable_checks`, `validation_checks`, and requirement/skill ids when
@@ -234,6 +242,11 @@ Route requirements:
   (extra nodes that add no evidence, failure isolation, role boundary,
   parallelism, or user-visible milestone). This is a review obligation, not a
   requirement to add new route-node fields;
+- explicitly attack dependency-order inversion as part of route viability. If
+  an early route node would need later unfinished output before its own artifact
+  can be true, reviewable, or useful, repair the route order or node boundary
+  through the existing route shape; do not add a dependency ledger or extra
+  route-node fields for this check;
 - record how hard low-quality-success risks were kept inside existing route
   structure where possible. If a risk required new route structure, state why
   the existing route nodes could not own the proof of depth;

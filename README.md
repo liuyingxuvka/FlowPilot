@@ -15,7 +15,7 @@
 </p>
 
 <p align="center">
-  Source version: <strong>v0.10.15</strong> · MIT License · Codex skill source package
+  Source version: <strong>v0.10.16</strong> · MIT License · Codex skill source package
 </p>
 <!-- README HERO END -->
 
@@ -37,7 +37,7 @@ The startup intake UI captures the user's work request and whether FlowPilot may
 
 | Field | Value |
 | --- | --- |
-| Source version | `v0.10.15` |
+| Source version | `v0.10.16` |
 | Public project name | `FlowPilot` |
 | Skill slug | `flowpilot` |
 | Release shape | source package only, no binary app bundle |
@@ -46,7 +46,7 @@ The startup intake UI captures the user's work request and whether FlowPilot may
 | Current UI surface | Windows WPF startup intake dialog for project request and background collaboration; chat route signs after startup |
 | Visual identity | `assets/brand/flowpilot-icon-default.png` |
 
-`v0.10.15` adds strict Reviewer quality scoring on top of the `v0.10.14` review-window release. Reviewer reports now use existing text fields for a high-standard score rubric where `6/10` is only the minimum user standard, `9/10` is the target, and `10/10` substantially exceeds the user's standard. PM prompts interpret the same scale while preserving PM's optimization choice, Worker repair packets consume authorized score context, quantitative underdelivery blocks as a hard gate, and fake-AI review-window profiles exercise the score and quantity paths across the Cartesian matrix. The release also hardens fake-AI runtime replay, real-issue backfeed, review-window completeness, and singleton live-evidence matrices so those checks are proven through existing current-control paths.
+`v0.10.16` adds producer-before-consumer route ordering on top of the `v0.10.15` review-quality release. PM route planning, FlowGuard operator route checks, Reviewer route challenge, and node-entry review now use the existing route text and review/blocker surfaces to catch nodes that consume outputs, evidence, validation, package material, or public documentation from later unfinished nodes. The repair stays current-contract and prompt/model/test-owned: no dependency ledger, route-node field, compatibility shim, or second route authority is added.
 
 ## What FlowPilot Is
 
@@ -260,7 +260,7 @@ MIT License. See [LICENSE](LICENSE).
 
 # FlowPilot 中文说明
 
-**Source version:** `v0.10.15`
+**Source version:** `v0.10.16`
 **许可证：** MIT  
 **发布形态：** Codex skill source package，不是二进制 app bundle。
 
@@ -280,7 +280,7 @@ Startup intake UI 把用户请求以及是否允许 FlowPilot 使用当前 host 
 
 | 字段 | 值 |
 | --- | --- |
-| Source version | `v0.10.15` |
+| Source version | `v0.10.16` |
 | Public project name | `FlowPilot` |
 | Skill slug | `flowpilot` |
 | 发布形态 | source package only，没有 binary app bundle |
@@ -289,7 +289,7 @@ Startup intake UI 把用户请求以及是否允许 FlowPilot 使用当前 host 
 | 当前 UI surface | Windows WPF startup intake dialog，用于 project request 和 background collaboration；startup 后使用 chat route signs |
 | 视觉标识 | `assets/brand/flowpilot-icon-default.png` |
 
-`v0.10.15` 在 `v0.10.14` reviewer-window release 基础上加入严格 Reviewer 质量评分。Reviewer report 会在已有正文字段里写分数：`6/10` 只是最低用户标准刚达标，`9/10` 是目标，`10/10` 是大幅超过用户标准。PM prompt 会用同一套分数标准解释 reviewer report，同时保留 PM 自己的优化选择权；Worker repair packet 会读取授权的评分上下文；量化交付不足会作为 hard gate blocker；fake-AI review-window profiles 会在 Cartesian matrix 里演练评分和数量差距路径。本版同时加固 fake-AI runtime replay、真实问题回灌、review-window 完整性和 singleton live-evidence 矩阵，让这些检查都通过现有当前控制路径证明。
+`v0.10.16` 在 `v0.10.15` review-quality release 基础上加入 producer-before-consumer route ordering。PM route planning、FlowGuard operator route check、Reviewer route challenge 和 node-entry review 现在都会用已有 route 文本、review result 和 blocker 表面检查：前面的节点不能消费后面未完成节点才会产出的 output、evidence、validation、package material 或 public documentation。这个修复保持 current-contract：不新增 dependency ledger、不新增 route-node field、不加 compatibility shim，也不增加第二套路由权威。
 
 ## 它是什么
 
