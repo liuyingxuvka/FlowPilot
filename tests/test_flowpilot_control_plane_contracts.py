@@ -585,7 +585,9 @@ class FlowPilotControlPlaneContractRuntimeTests(FlowPilotRouterRuntimeTestBase):
             "runtime_open_receipts": ["old-open-receipt"],
             "findings": [],
             "blockers": [{"blocker_id": "missing-material"}],
-            "pm_suggestion_items": [],
+            "pm_suggestion_items": [
+                "PM decision-support: material review is insufficient; PM should route targeted research before continuing."
+            ],
             "contract_self_check": {"status": "pass"},
             "_role_output_envelope": {
                 "role_output_runtime_validated": True,
@@ -623,7 +625,9 @@ class FlowPilotControlPlaneContractRuntimeTests(FlowPilotRouterRuntimeTestBase):
             "runtime_open_receipt_refs": [],
             "findings": [],
             "blockers": [],
-            "pm_suggestion_items": [],
+            "pm_suggestion_items": [
+                "PM decision-support: material review is insufficient; PM should route targeted research before continuing."
+            ],
             "contract_self_check": {"status": "pass"},
             "_role_output_envelope": {
                 "role_output_runtime_validated": True,

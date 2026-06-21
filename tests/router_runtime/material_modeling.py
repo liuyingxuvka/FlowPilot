@@ -151,7 +151,9 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
                         "runtime_open_receipt_refs": [],
                         "findings": [],
                         "blockers": [],
-                        "pm_suggestion_items": [],
+                        "pm_suggestion_items": [
+                            "PM decision-support: material review passes; consider whether more source triangulation would improve confidence."
+                        ],
                         "contract_self_check": {"status": "pass"},
                     },
                 ),
@@ -208,7 +210,9 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
                     "runtime_open_receipt_refs": [],
                     "findings": [],
                     "blockers": ["missing authoritative source"],
-                    "pm_suggestion_items": [],
+                    "pm_suggestion_items": [
+                        "PM decision-support: collect the missing authoritative source before PM absorbs material understanding."
+                    ],
                     "contract_self_check": {"status": "pass"},
                 },
             ),
@@ -310,7 +314,9 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
                     "runtime_open_receipt_refs": [],
                     "findings": [],
                     "blockers": [],
-                    "pm_suggestion_items": [],
+                    "pm_suggestion_items": [
+                        "PM decision-support: material review is insufficient; PM should route targeted research before continuing."
+                    ],
                     "contract_self_check": {"status": "pass"},
                 },
             ),
@@ -1231,7 +1237,9 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
                     "runtime_open_receipt_refs": [],
                     "findings": [],
                     "blockers": [],
-                    "pm_suggestion_items": [],
+                    "pm_suggestion_items": [
+                        "PM decision-support: material review is insufficient; PM should route targeted research before continuing."
+                    ],
                     "contract_self_check": {"status": "pass"},
                 },
             ),

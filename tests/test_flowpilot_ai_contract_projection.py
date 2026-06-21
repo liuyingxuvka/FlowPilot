@@ -221,6 +221,19 @@ class FlowPilotAIContractProjectionTests(unittest.TestCase):
     def contract_driven_responder(self, packet: dict[str, object]):
         return contract_fake_ai.ContractDrivenFakeAIResponder.from_packet(packet)
 
+    def node_context_package_result_id(
+        self,
+        ledger: dict[str, object],
+        package: dict[str, object],
+    ) -> str:
+        result_id = f"result-node-context-{len(ledger.get('results', {})) + 1:04d}"
+        ledger.setdefault("results", {})[result_id] = {
+            "result_id": result_id,
+            "body": json.dumps({"decision": "pass", "node_context_package": package}, sort_keys=True),
+            "status": "mechanically_valid",
+        }
+        return result_id
+
     def test_semantic_recheck_contract_projects_ai_facing_fields_and_options(self) -> None:
         ledger, packet_id = self.issue_semantic_recheck_packet()
         packet = ledger["packets"][packet_id]
@@ -440,6 +453,173 @@ class FlowPilotAIContractProjectionTests(unittest.TestCase):
         for profile_id in contract_fake_ai.RETRY_PROFILE_IDS:
             self.assertIn(profile_id, mutation_kinds)
         self.assertIn("finite_option_mistake", mutation_kinds)
+
+    def test_node_acceptance_projection_owner_set_matrix_rejects_bad_rows_and_accepts_complete_rows(self) -> None:
+        ledger = runtime.new_ledger("Goal", "Contract")
+        node = {
+            "node_id": "node-001",
+            "title": "Node",
+            "route_version": 1,
+            "repair_generation": 0,
+            "acceptance_item_ids": ["acc-001", "acc-002"],
+        }
+        subject_packet = {"packet_id": "packet-node-acceptance-001"}
+        base_package: dict[str, object] = {
+            "node_id": "node-001",
+            "purpose": "Provide current starting context.",
+            "acceptance_criteria": ["criterion"],
+            "relevant_references": ["reference"],
+            "known_risks": ["risk"],
+        }
+
+        complete_package = {
+            **base_package,
+            "acceptance_item_projection": [
+                {
+                    "acceptance_item_id": "acc-001",
+                    "status_for_this_node": "covered",
+                    "future_evidence_rule": "Worker must prove acc-001.",
+                },
+                {
+                    "acceptance_item_id": "acc-002",
+                    "status_for_this_node": "covered",
+                    "future_evidence_rule": "Worker must prove acc-002.",
+                },
+            ],
+        }
+        complete_result_id = self.node_context_package_result_id(ledger, complete_package)
+        normalized = runtime._node_context_package_from_pm_result(
+            ledger,
+            node,
+            subject_packet,
+            complete_result_id,
+        )
+        self.assertEqual(
+            [row["acceptance_item_id"] for row in normalized["acceptance_item_projection"]],
+            ["acc-001", "acc-002"],
+        )
+
+        bad_packages = {
+            "missing_one_owner": {
+                **base_package,
+                "acceptance_item_projection": [
+                    {
+                        "acceptance_item_id": "acc-001",
+                        "status_for_this_node": "covered",
+                        "future_evidence_rule": "Worker must prove acc-001.",
+                    }
+                ],
+            },
+            "extra_unknown_owner": {
+                **base_package,
+                "acceptance_item_projection": [
+                    {
+                        "acceptance_item_id": "acc-001",
+                        "status_for_this_node": "covered",
+                        "future_evidence_rule": "Worker must prove acc-001.",
+                    },
+                    {
+                        "acceptance_item_id": "acc-999",
+                        "status_for_this_node": "covered",
+                        "future_evidence_rule": "Worker must prove acc-999.",
+                    },
+                ],
+            },
+            "malformed_row": {
+                **base_package,
+                "acceptance_item_projection": ["acc-001"],
+            },
+        }
+        expected_messages = {
+            "missing_one_owner": "missing node-owned acceptance item",
+            "extra_unknown_owner": "allowed node owner set",
+            "malformed_row": "must be an object",
+        }
+        for name, package in bad_packages.items():
+            with self.subTest(name=name):
+                result_id = self.node_context_package_result_id(ledger, package)
+                with self.assertRaisesRegex(runtime.BlackBoxRuntimeError, expected_messages[name]):
+                    runtime._node_context_package_from_pm_result(
+                        ledger,
+                        node,
+                        subject_packet,
+                        result_id,
+                    )
+
+        empty_owner_node = {
+            "node_id": "node-empty",
+            "title": "Node Empty",
+            "route_version": 1,
+            "repair_generation": 0,
+            "acceptance_item_ids": [],
+        }
+        empty_package = {**base_package, "node_id": "node-empty", "acceptance_item_projection": []}
+        empty_result_id = self.node_context_package_result_id(ledger, empty_package)
+        empty_normalized = runtime._node_context_package_from_pm_result(
+            ledger,
+            empty_owner_node,
+            subject_packet,
+            empty_result_id,
+        )
+        self.assertEqual(empty_normalized["acceptance_item_projection"], [])
+
+        empty_extra_package = {
+            **base_package,
+            "node_id": "node-empty",
+            "acceptance_item_projection": [
+                {
+                    "acceptance_item_id": "acc-001",
+                    "status_for_this_node": "covered",
+                    "future_evidence_rule": "Worker must prove acc-001.",
+                }
+            ],
+        }
+        empty_extra_result_id = self.node_context_package_result_id(ledger, empty_extra_package)
+        with self.assertRaisesRegex(runtime.BlackBoxRuntimeError, "allowed node owner set: \\[\\]"):
+            runtime._node_context_package_from_pm_result(
+                ledger,
+                empty_owner_node,
+                subject_packet,
+                empty_extra_result_id,
+            )
+
+        owner_contract = {
+            "minimal_valid_shape": {
+                "decision": "pass",
+                "node_context_package": {
+                    "acceptance_item_projection": complete_package["acceptance_item_projection"],
+                },
+            },
+            "required_node_acceptance_item_ids": ["acc-001", "acc-002"],
+            "required_child_fields": [
+                "node_context_package.acceptance_item_projection[].acceptance_item_id",
+            ],
+            "allowed_value_options": {
+                "node_context_package.acceptance_item_projection[].acceptance_item_id": ["acc-001", "acc-002"],
+            },
+        }
+        empty_owner_contract = {
+            "minimal_valid_shape": {
+                "decision": "pass",
+                "node_context_package": {"acceptance_item_projection": []},
+            },
+            "required_node_acceptance_item_ids": [],
+        }
+        owner_cells = contract_fake_ai.ContractDrivenFakeAIResponder(owner_contract).projection_gap_cells()
+        empty_owner_cells = contract_fake_ai.ContractDrivenFakeAIResponder(empty_owner_contract).projection_gap_cells()
+        owner_mutations = {cell["mutation_kind"] for cell in owner_cells}
+        empty_owner_mutations = {cell["mutation_kind"] for cell in empty_owner_cells}
+
+        for mutation in (
+            "complete_owner_coverage",
+            "missing_active_id_coverage",
+            "partial_owner_set_missing_id",
+            "extra_owner_id",
+            "malformed_projection_row",
+        ):
+            self.assertIn(mutation, owner_mutations)
+        self.assertIn("complete_owner_coverage", empty_owner_mutations)
+        self.assertIn("empty_owner_set_extra_id", empty_owner_mutations)
 
     def test_formal_artifact_fake_ai_cells_are_declared(self) -> None:
         contract = {

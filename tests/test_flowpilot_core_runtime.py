@@ -59,6 +59,13 @@ control_plane_audit = load_module(
 )
 control_surface = runtime.control_surface
 
+DEFAULT_REVIEW_PM_SUGGESTION = (
+    "PM decision-support: current minimum gate passes; consider whether a 9/10 quality optimization pass is useful."
+)
+DEFAULT_TERMINAL_PM_SUGGESTION = (
+    "PM decision-support: terminal replay passes; consider whether an optional quality improvement is useful."
+)
+
 
 def role_result_body(summary: str, **fields: object) -> str:
     payload: dict[str, object] = {
@@ -211,7 +218,7 @@ def review_result_body(summary: str, **fields: object) -> str:
         "passed": passed,
         "findings": blocking_findings if not passed else [],
         "blockers": blocking_findings,
-        "pm_suggestion_items": [],
+        "pm_suggestion_items": [DEFAULT_REVIEW_PM_SUGGESTION],
         "contract_self_check": {
             "all_required_fields_present": True,
             "exact_field_names_used": True,
@@ -317,7 +324,7 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
             "passed": True,
             "findings": [],
             "blockers": [],
-            "pm_suggestion_items": [],
+            "pm_suggestion_items": [DEFAULT_TERMINAL_PM_SUGGESTION],
             "final_artifact_refs": [
                 {"id": "delivered-product", "status": "closed", "basis": "Final artifact inspected directly."}
             ],
@@ -850,6 +857,139 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         self.assertEqual({row["result_id"] for row in delivered}, {subject_result_id, flowguard_result_id})
         self.assertEqual(ledger["results"][accepted_review_result]["status"], "accepted")
 
+    def test_reviewer_report_without_pm_suggestions_reissues_current_contract(self) -> None:
+        ledger, packet_id, worker = runtime_runner._base_ledger()
+        runtime.ack_lease(ledger, worker, packet_id)
+        runtime.submit_result(ledger, worker, packet_id, role_result_body("Worker produced current result."))
+        flowguard_packet = runtime_runner._open_packet_by_kind(ledger, "flowguard_check")
+        flowguard_lease = runtime.lease_agent(
+            ledger,
+            "flowguard_operator",
+            agent_id="flowguard-suggestion-required",
+            packet_id=flowguard_packet,
+        )
+        runtime.assign_packet(ledger, flowguard_packet, flowguard_lease)
+        runtime.ack_lease(ledger, flowguard_lease, flowguard_packet)
+        open_required_result_reads(ledger, flowguard_packet, flowguard_lease)
+        write_flowguard_evidence_artifact(ledger, flowguard_packet)
+        runtime.submit_result(
+            ledger,
+            flowguard_lease,
+            flowguard_packet,
+            flowguard_result_body("FlowGuard evidence passed."),
+        )
+
+        review_packet = runtime_runner._open_packet_by_kind(ledger, "review")
+        reviewer = runtime.lease_agent(
+            ledger,
+            "reviewer",
+            agent_id="reviewer-empty-suggestion",
+            packet_id=review_packet,
+        )
+        runtime.assign_packet(ledger, review_packet, reviewer)
+        runtime.ack_lease(ledger, reviewer, review_packet)
+        open_required_result_reads(ledger, review_packet, reviewer)
+
+        result_id = runtime.submit_result(
+            ledger,
+            reviewer,
+            review_packet,
+            review_result_body("Reviewer passed but forgot PM decision-support.", pm_suggestion_items=[]),
+        )
+
+        result = ledger["results"][result_id]
+        self.assertEqual(result["status"], "mechanical_contract_blocked")
+        self.assertIn("pm_suggestion_items", result["missing_required_fields"])
+        reissue_packet_id = next(
+            event["payload"]["fresh_packet_id"]
+            for event in reversed(ledger["events"])
+            if event["event_type"] == "current_contract_reissue_packet_issued"
+            and event["payload"]["blocked_packet_id"] == review_packet
+        )
+        reissue_body = json.loads(ledger["packets"][reissue_packet_id]["body"])
+        self.assertIn("pm_suggestion_items", reissue_body["non_empty_array_fields"])
+        self.assertTrue(reissue_body["minimal_valid_shape"]["pm_suggestion_items"])
+
+    def test_create_new_reviewer_rejects_reusing_forbidden_prior_agent(self) -> None:
+        ledger, packet_id, worker = runtime_runner._base_ledger()
+        runtime.ack_lease(ledger, worker, packet_id)
+        runtime.submit_result(ledger, worker, packet_id, role_result_body("Worker produced current result."))
+        flowguard_packet = runtime_runner._open_packet_by_kind(ledger, "flowguard_check")
+        flowguard_lease = runtime.lease_agent(
+            ledger,
+            "flowguard_operator",
+            agent_id="flowguard-self-review-lease",
+            packet_id=flowguard_packet,
+        )
+        runtime.assign_packet(ledger, flowguard_packet, flowguard_lease)
+        runtime.ack_lease(ledger, flowguard_lease, flowguard_packet)
+        open_required_result_reads(ledger, flowguard_packet, flowguard_lease)
+        write_flowguard_evidence_artifact(ledger, flowguard_packet)
+        runtime.submit_result(
+            ledger,
+            flowguard_lease,
+            flowguard_packet,
+            flowguard_result_body("FlowGuard evidence passed."),
+        )
+        review_packet = runtime_runner._open_packet_by_kind(ledger, "review")
+
+        prior_reviewer = runtime.lease_agent(ledger, "reviewer", agent_id="worker-1")
+        self.assertEqual(ledger["leases"][prior_reviewer]["agent_id"], "worker-1")
+        assignment = runtime.resolve_role_assignment(ledger, "reviewer", packet_id=review_packet)
+        self.assertEqual(assignment["disposition"], "create_new_role")
+        self.assertEqual(assignment["prior_agent_id"], "worker-1")
+        self.assertEqual(assignment["replacement_reason"], "reviewer_self_review_forbidden")
+
+        with self.assertRaisesRegex(runtime.BlackBoxRuntimeError, "cannot reuse forbidden prior agent id"):
+            runtime.lease_agent(
+                ledger,
+                "reviewer",
+                agent_id="worker-1",
+                packet_id=review_packet,
+                assignment_id=assignment["assignment_id"],
+            )
+
+        reviewer = runtime.lease_agent(
+            ledger,
+            "reviewer",
+            agent_id="reviewer-replacement",
+            packet_id=review_packet,
+            assignment_id=assignment["assignment_id"],
+        )
+        self.assertEqual(ledger["leases"][reviewer]["agent_id"], "reviewer-replacement")
+
+    def test_system_validation_rejects_blocked_or_self_review_records(self) -> None:
+        ledger, packet_id, worker = runtime_runner._base_ledger()
+        runtime.ack_lease(ledger, worker, packet_id)
+        subject_result_id = runtime.submit_result(
+            ledger,
+            worker,
+            packet_id,
+            role_result_body("Worker result cannot be validated by self-review."),
+        )
+        review_id = runtime.review_result(
+            ledger,
+            subject_result_id,
+            worker,
+            decision="accept",
+            checks_evidence=True,
+            direct_evidence_ids=[],
+        )
+
+        evidence_id = runtime._record_system_validation_for_packet(
+            ledger,
+            packet_id,
+            source_packet_id=packet_id,
+            source_result_id=subject_result_id,
+            review_id=review_id,
+        )
+
+        evidence = ledger["validation_evidence"][evidence_id]
+        self.assertEqual(evidence["status"], "failed")
+        self.assertIn("review_not_accepted:block", evidence["blockers"])
+        self.assertIn("review_not_independent:self_review", evidence["blockers"])
+        self.assertIn("review_missing_direct_evidence", evidence["blockers"])
+
     def test_current_progress_fraction_uses_active_route_node_order_not_history(self) -> None:
         ledger = runtime.new_ledger("Goal", "Contract")
         ledger["active_route_version"] = 2
@@ -877,10 +1017,10 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
 
         progress = runtime.current_progress_fraction(ledger)
 
-        self.assertEqual(progress["display"], "2/4")
-        self.assertEqual(progress["ended_nodes"], 2)
-        self.assertEqual(progress["expanded_nodes"], 4)
-        self.assertEqual(progress["source"], "active_route_node_order")
+        self.assertEqual(progress["display"], "3/6")
+        self.assertEqual(progress["ended_nodes"], 3)
+        self.assertEqual(progress["expanded_nodes"], 6)
+        self.assertEqual(progress["source"], "cumulative_route_node_order")
         self.assertFalse(progress["includes_repair_generations"])
         self.assertFalse(progress["packet_projection_used"])
 
@@ -915,11 +1055,12 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
 
         progress = runtime.current_progress_fraction(ledger)
 
-        self.assertEqual(progress["display"], "1/3")
-        self.assertEqual(progress["ended_nodes"], 1)
-        self.assertEqual(progress["expanded_nodes"], 3)
-        self.assertEqual(progress["repair_generations"], 1)
-        self.assertEqual(progress["source"], "active_route_node_order")
+        self.assertEqual(progress["display"], "2/4")
+        self.assertEqual(progress["ended_nodes"], 2)
+        self.assertEqual(progress["expanded_nodes"], 4)
+        self.assertEqual(progress["repair_generations"], 4)
+        self.assertEqual(progress["source"], "cumulative_route_node_order")
+        self.assertTrue(progress["includes_repair_generations"])
         self.assertFalse(progress["packet_projection_used"])
 
     def test_public_console_exposes_progress_fraction_without_completion_authority(self) -> None:

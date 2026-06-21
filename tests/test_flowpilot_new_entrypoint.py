@@ -78,7 +78,9 @@ def review_result_body(summary: str, **fields: object) -> str:
         "passed": passed,
         "findings": [],
         "blockers": [],
-        "pm_suggestion_items": [],
+        "pm_suggestion_items": [
+            "PM decision-support: current minimum gate passes; consider whether a 9/10 quality optimization pass is useful."
+        ],
         "contract_self_check": {
             "all_required_fields_present": True,
             "exact_field_names_used": True,

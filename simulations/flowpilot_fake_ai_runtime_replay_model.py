@@ -74,6 +74,14 @@ CONCRETE_RUNTIME_TESTS: dict[str, str] = {
         "tests.test_flowpilot_high_standard_control_flow.FlowPilotHighStandardControlFlowTests."
         "test_runtime_issued_review_packets_have_complete_declared_windows"
     ),
+    "legal_current_contract": (
+        "tests.test_flowpilot_ai_contract_projection.FlowPilotAIContractProjectionTests."
+        "test_contract_driven_fake_ai_uses_projected_minimal_shape_for_legal_path"
+    ),
+    "owner_set_feedback": (
+        "tests.test_flowpilot_ai_contract_projection.FlowPilotAIContractProjectionTests."
+        "test_node_acceptance_projection_owner_set_matrix_rejects_bad_rows_and_accepts_complete_rows"
+    ),
     "normal_before_threshold": (
         "tests.test_flowpilot_cartesian_control_plane_exhaustion."
         "FlowPilotCartesianControlPlaneExhaustionTests.test_normal_repair_cells_never_expect_glassbreak"
@@ -93,6 +101,11 @@ EXPECTED_REACTION_BY_MUTATION = {
     "forbidden_field_present": "mechanical_reject_reissue",
     "hidden_projection_gap": "projection_preflight_failure",
     "missing_active_id_coverage": "mechanical_reject_reissue_with_missing_ids",
+    "partial_owner_set_missing_id": "mechanical_reject_reissue_with_missing_ids",
+    "extra_owner_id": "mechanical_reject_reissue_with_owner_set",
+    "empty_owner_set_extra_id": "mechanical_reject_reissue_with_owner_set",
+    "malformed_projection_row": "mechanical_reject_reissue",
+    "complete_owner_coverage": "accepted_current_contract",
     "missing_allowed_value_options": "projection_preflight_failure",
     "missing_field_type_requirements": "projection_preflight_failure",
     "missing_required_child_field": "mechanical_reject_reissue",
@@ -137,10 +150,18 @@ def _responder_contracts() -> dict[str, dict[str, Any]]:
         **route_plan_contract,
         "required_acceptance_item_ids": ["acc-runtime-replay-001", "acc-runtime-replay-002"],
     }
+    contracts["task.planning.empty_required_acceptance_item_ids"] = {
+        **route_plan_contract,
+        "required_acceptance_item_ids": [],
+    }
     node_context_contract = packet_result_contracts.effective_result_contract_for_family("task.node_acceptance_plan")
     contracts["task.node_acceptance_plan.required_node_acceptance_item_ids"] = {
         **node_context_contract,
         "required_node_acceptance_item_ids": ["acc-runtime-replay-001", "acc-runtime-replay-002"],
+    }
+    contracts["task.node_acceptance_plan.empty_required_node_acceptance_item_ids"] = {
+        **node_context_contract,
+        "required_node_acceptance_item_ids": [],
     }
     return contracts
 
@@ -165,6 +186,14 @@ def _evidence_key_for_reaction(mutation: str, expected_reaction: str) -> str:
         return "malformed_body"
     if expected_reaction == "mechanical_reject_reissue_with_options":
         return "wrong_allowed_value"
+    if expected_reaction == "accepted_current_contract":
+        return "legal_current_contract"
+    if expected_reaction == "mechanical_reject_reissue_with_owner_set":
+        return "owner_set_feedback"
+    if expected_reaction == "mechanical_reject_reissue_with_missing_ids":
+        return "owner_set_feedback"
+    if mutation == "malformed_projection_row":
+        return "owner_set_feedback"
     if expected_reaction == "accepted_after_reissue":
         return "corrected_retry"
     if expected_reaction == "breakglass_after_fifth_same_failure":
@@ -179,6 +208,8 @@ def _evidence_key_for_reaction(mutation: str, expected_reaction: str) -> str:
 
 
 def _attempt_class(expected_reaction: str) -> str:
+    if expected_reaction == "accepted_current_contract":
+        return "accepted_first_attempt"
     if expected_reaction == "accepted_after_reissue":
         return "corrected_second_attempt"
     if expected_reaction == "breakglass_after_fifth_same_failure":

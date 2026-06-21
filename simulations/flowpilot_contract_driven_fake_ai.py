@@ -43,6 +43,11 @@ PROJECTION_GAP_PROFILE_IDS = (
     "finite_option_mistake",
     "forbidden_alias",
     "missing_active_id_coverage",
+    "partial_owner_set_missing_id",
+    "extra_owner_id",
+    "empty_owner_set_extra_id",
+    "malformed_projection_row",
+    "complete_owner_coverage",
 )
 
 REVIEW_WINDOW_FAKE_AI_PROFILE_IDS = review_window_contracts.REVIEW_WINDOW_FAKE_AI_PROFILE_IDS
@@ -547,7 +552,9 @@ class ContractDrivenFakeAIResponder:
             "passed": True,
             "findings": [],
             "blockers": [],
-            "pm_suggestion_items": [],
+            "pm_suggestion_items": [
+                "PM decision-support: fake review passes the minimum gate; consider whether a 9/10 optimization pass is useful."
+            ],
             "contract_self_check": {
                 "all_required_fields_present": True,
                 "exact_field_names_used": True,
@@ -829,6 +836,28 @@ class ContractDrivenFakeAIResponder:
             ("required_node_acceptance_item_ids", "node_context_package.acceptance_item_projection[].acceptance_item_id"),
         ):
             values = self.contract.get(contract_key)
+            if isinstance(values, list):
+                cells.append(
+                    {
+                        "cell_id": f"fake_ai.projection.complete_owner_coverage.{contract_key}",
+                        "field_path": field_path,
+                        "contract_path": contract_key,
+                        "mutation_kind": "complete_owner_coverage",
+                        "expected_reaction": "accepted_current_contract",
+                        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix",
+                    }
+                )
+            if isinstance(values, list) and not values:
+                cells.append(
+                    {
+                        "cell_id": f"fake_ai.projection.empty_owner_set_extra_id.{contract_key}",
+                        "field_path": field_path,
+                        "contract_path": contract_key,
+                        "mutation_kind": "empty_owner_set_extra_id",
+                        "expected_reaction": "mechanical_reject_reissue_with_owner_set",
+                        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix",
+                    }
+                )
             if isinstance(values, list) and values:
                 cells.append(
                     {
@@ -840,6 +869,37 @@ class ContractDrivenFakeAIResponder:
                         "required_evidence_owner": "contract_exhaustion_fake_ai_matrix",
                     }
                 )
+                cells.append(
+                    {
+                        "cell_id": f"fake_ai.projection.partial_owner_set_missing_id.{contract_key}",
+                        "field_path": field_path,
+                        "contract_path": contract_key,
+                        "mutation_kind": "partial_owner_set_missing_id",
+                        "expected_reaction": "mechanical_reject_reissue_with_missing_ids",
+                        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix",
+                    }
+                )
+                cells.append(
+                    {
+                        "cell_id": f"fake_ai.projection.extra_owner_id.{contract_key}",
+                        "field_path": field_path,
+                        "contract_path": contract_key,
+                        "mutation_kind": "extra_owner_id",
+                        "expected_reaction": "mechanical_reject_reissue_with_owner_set",
+                        "required_evidence_owner": "contract_exhaustion_fake_ai_matrix",
+                    }
+                )
+                if contract_key == "required_node_acceptance_item_ids":
+                    cells.append(
+                        {
+                            "cell_id": f"fake_ai.projection.malformed_projection_row.{contract_key}",
+                            "field_path": "node_context_package.acceptance_item_projection[]",
+                            "contract_path": contract_key,
+                            "mutation_kind": "malformed_projection_row",
+                            "expected_reaction": "mechanical_reject_reissue",
+                            "required_evidence_owner": "contract_exhaustion_fake_ai_matrix",
+                        }
+                    )
         return cells
 
     def formal_artifact_cells(self) -> list[dict[str, str]]:

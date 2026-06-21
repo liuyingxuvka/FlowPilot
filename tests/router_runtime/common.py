@@ -1498,7 +1498,9 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
                     "runtime_open_receipt_refs": [],
                     "findings": [],
                     "blockers": [],
-                    "pm_suggestion_items": [],
+                    "pm_suggestion_items": [
+                        "PM decision-support: material review passes; consider whether more source triangulation would improve confidence."
+                    ],
                     "contract_self_check": {"status": "pass"},
                 },
             ),

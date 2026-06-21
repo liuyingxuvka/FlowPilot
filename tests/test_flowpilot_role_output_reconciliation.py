@@ -88,7 +88,9 @@ class RoleOutputReconciliationTests(FlowPilotRouterRuntimeTestBase):
                 "runtime_open_receipt_refs": [],
                 "findings": [{"finding_id": "missing-context", "summary": "Material is insufficient for execution."}],
                 "blockers": [{"blocker_id": "missing-context", "summary": "More source material is required."}],
-                "pm_suggestion_items": [],
+                "pm_suggestion_items": [
+                    "PM decision-support: request the missing context before PM absorbs material understanding."
+                ],
                 "contract_self_check": {"status": "pass"},
             },
         )

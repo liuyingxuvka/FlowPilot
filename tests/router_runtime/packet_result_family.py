@@ -55,7 +55,9 @@ class PacketResultFamilyRuntimeTests(FlowPilotRouterRuntimeTestBase):
                     "runtime_open_receipt_refs": [],
                     "findings": [],
                     "blockers": [],
-                    "pm_suggestion_items": [],
+                    "pm_suggestion_items": [
+                        "PM decision-support: material review is insufficient; PM should route targeted research before continuing."
+                    ],
                     "contract_self_check": {"status": "pass"},
                 },
             ),

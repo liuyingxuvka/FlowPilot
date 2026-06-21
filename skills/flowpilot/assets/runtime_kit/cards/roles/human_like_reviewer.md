@@ -322,7 +322,9 @@ review result body stays on the current small contract:
   "passed": false,
   "findings": [],
   "blockers": [],
-  "pm_suggestion_items": [],
+  "pm_suggestion_items": [
+    "PM decision-support: include at least one higher-standard suggestion, quality-score implication, or explicit no-extra-optimization rationale for PM."
+  ],
   "contract_self_check": {
     "all_required_fields_present": true,
     "exact_field_names_used": true,

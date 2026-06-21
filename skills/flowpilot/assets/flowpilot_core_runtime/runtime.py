@@ -2134,6 +2134,8 @@ def _node_context_package_from_pm_result(
     node_id = str(node.get("node_id") or "")
     node_acceptance_item_ids = _node_acceptance_item_ids(node)
     raw_projection = raw_package.get("acceptance_item_projection")
+    if "acceptance_item_projection" in raw_package and not isinstance(raw_projection, list):
+        raise BlackBoxRuntimeError("node context package acceptance_item_projection must be an array")
     if node_acceptance_item_ids:
         if not isinstance(raw_projection, list) or not raw_projection:
             raise BlackBoxRuntimeError("node context package missing required field: acceptance_item_projection")
@@ -2149,7 +2151,9 @@ def _node_context_package_from_pm_result(
                 )
             if item_id not in node_acceptance_item_ids:
                 raise BlackBoxRuntimeError(
-                    f"node context package acceptance_item_projection[{index}] references item outside node owner set: {item_id}"
+                    "node context package "
+                    f"acceptance_item_projection[{index}] references item outside node owner set: {item_id}; "
+                    f"allowed node owner set: {json.dumps(node_acceptance_item_ids, sort_keys=True)}"
                 )
             for field in ("status_for_this_node", "future_evidence_rule"):
                 if not str(row.get(field) or "").strip():
@@ -4427,20 +4431,36 @@ def _progress_packets(ledger: Mapping[str, Any]) -> list[Mapping[str, Any]]:
     return packets
 
 
-def _active_route_node_order_for_progress(ledger: Mapping[str, Any]) -> list[str]:
+def _cumulative_route_node_order_for_progress(ledger: Mapping[str, Any]) -> list[str]:
     active_route = ledger.get("active_route_version")
     if active_route is None:
         return []
     routes = ledger.get("routes", {})
     if not isinstance(routes, Mapping):
         return []
-    route = routes.get(str(active_route))
-    if not isinstance(route, Mapping):
-        return []
-    node_order = route.get("node_order")
-    if not isinstance(node_order, (list, tuple)):
-        return []
-    return [node_id for item in node_order if (node_id := str(item or "").strip())]
+    active_route_number = _coerce_nonnegative_int(active_route)
+    ordered_routes: list[tuple[int, str, Mapping[str, Any]]] = []
+    for route_key, route in routes.items():
+        if not isinstance(route, Mapping):
+            continue
+        route_version = _coerce_nonnegative_int(route.get("route_version", route_key))
+        if active_route_number and route_version > active_route_number:
+            continue
+        ordered_routes.append((route_version, str(route_key), route))
+    ordered_routes.sort(key=lambda item: (item[0], item[1]))
+    node_ids: list[str] = []
+    seen: set[str] = set()
+    for _route_version, _route_key, route in ordered_routes:
+        node_order = route.get("node_order")
+        if not isinstance(node_order, (list, tuple)):
+            continue
+        for item in node_order:
+            node_id = str(item or "").strip()
+            if not node_id or node_id in seen:
+                continue
+            seen.add(node_id)
+            node_ids.append(node_id)
+    return node_ids
 
 
 def current_progress_fraction(ledger: Mapping[str, Any]) -> dict[str, Any]:
@@ -4449,7 +4469,7 @@ def current_progress_fraction(ledger: Mapping[str, Any]) -> dict[str, Any]:
     route_nodes = ledger.get("route_nodes", {})
     if not isinstance(route_nodes, Mapping):
         route_nodes = {}
-    active_route_node_ids = _active_route_node_order_for_progress(ledger)
+    active_route_node_ids = _cumulative_route_node_order_for_progress(ledger)
     if active_route_node_ids:
         expanded_nodes = len(active_route_node_ids)
         ended_nodes = 0
@@ -4461,7 +4481,7 @@ def current_progress_fraction(ledger: Mapping[str, Any]) -> dict[str, Any]:
             repair_generations += _coerce_nonnegative_int(node.get("repair_generation", 0))
             if str(node.get("status") or "") in _PROGRESS_ROUTE_NODE_ENDED_STATUSES:
                 ended_nodes += 1
-        source = "active_route_node_order"
+        source = "cumulative_route_node_order"
         packet_projection_used = False
     else:
         packets = _progress_packets(ledger)
@@ -4483,7 +4503,7 @@ def current_progress_fraction(ledger: Mapping[str, Any]) -> dict[str, Any]:
         "expanded_nodes": expanded_nodes,
         "source": source,
         "equal_weight_nodes": True,
-        "includes_repair_generations": False,
+        "includes_repair_generations": repair_generations > 0,
         "repair_generations": repair_generations,
         "packet_projection_used": packet_projection_used,
         "controller_relay_only": True,
@@ -7920,13 +7940,23 @@ def lease_agent(
             replacement_reason=replacement_reason,
         )
         memory_required = True
-    lease_id = _next_id(ledger, "lease")
     if not effective_agent_id:
         if disposition == "create_new_role":
             effective_agent_id = f"{responsibility}-{assignment_id}"
             requested_agent_id = effective_agent_id
         else:
             raise BlackBoxRuntimeError("reuse assignment is missing effective agent id")
+    if (
+        disposition == "create_new_role"
+        and prior_agent_id
+        and effective_agent_id == prior_agent_id
+    ):
+        reason = replacement_reason or "prior_agent_forbidden_for_current_packet"
+        raise BlackBoxRuntimeError(
+            f"create-new role dispatch cannot reuse forbidden prior agent id: {prior_agent_id}; "
+            f"replacement reason: {reason}"
+        )
+    lease_id = _next_id(ledger, "lease")
     lease = {
         "lease_id": lease_id,
         "agent_id": effective_agent_id,
@@ -8493,6 +8523,35 @@ def _dynamic_effective_result_contract_for_envelope(
         node_id = str(envelope.get("route_node_id") or "")
         node = ledger.get("route_nodes", {}).get(node_id, {}) if node_id else {}
         node_item_ids = _node_acceptance_item_ids(node) if isinstance(node, Mapping) else []
+        contract["required_node_acceptance_item_ids"] = node_item_ids
+        contract["node_acceptance_projection_rule"] = {
+            "field_path": "node_context_package.acceptance_item_projection",
+            "required_ids": node_item_ids,
+            "row_required_fields": [
+                "acceptance_item_id",
+                "status_for_this_node",
+                "future_evidence_rule",
+            ],
+            "rule": (
+                "When decision=pass, every node-owned acceptance item id must have one projection row. "
+                "If required_ids is empty, acceptance_item_projection must be an empty array and any id is forbidden."
+            ),
+            "unknown_ids_forbidden": True,
+            "minimal_repair_rows": _node_acceptance_projection_rows(node_item_ids),
+        }
+        field_types["node_context_package.acceptance_item_projection"] = "array:object"
+        minimal_shape = _copy_jsonable(contract.get("minimal_valid_shape") or {})
+        package = minimal_shape.get("node_context_package")
+        if isinstance(package, dict):
+            package["acceptance_item_projection"] = _node_acceptance_projection_rows(node_item_ids)
+        branch_shapes = _copy_jsonable(contract.get("branch_valid_shapes") or {})
+        pass_shape = branch_shapes.get("decision=pass")
+        if isinstance(pass_shape, dict):
+            pass_package = pass_shape.get("node_context_package")
+            if isinstance(pass_package, dict):
+                pass_package["acceptance_item_projection"] = _node_acceptance_projection_rows(node_item_ids)
+        contract["minimal_valid_shape"] = minimal_shape
+        contract["branch_valid_shapes"] = branch_shapes
         if node_item_ids:
             required_child_fields = _dedupe_contract_fields(
                 required_child_fields,
@@ -8502,33 +8561,7 @@ def _dynamic_effective_result_contract_for_envelope(
                     "node_context_package.acceptance_item_projection[].future_evidence_rule",
                 ),
             )
-            contract["required_node_acceptance_item_ids"] = node_item_ids
-            contract["node_acceptance_projection_rule"] = {
-                "field_path": "node_context_package.acceptance_item_projection",
-                "required_ids": node_item_ids,
-                "row_required_fields": [
-                    "acceptance_item_id",
-                    "status_for_this_node",
-                    "future_evidence_rule",
-                ],
-                "rule": "When decision=pass, every node-owned acceptance item id must have one projection row.",
-                "unknown_ids_forbidden": True,
-                "minimal_repair_rows": _node_acceptance_projection_rows(node_item_ids),
-            }
             allowed_options["node_context_package.acceptance_item_projection[].acceptance_item_id"] = node_item_ids
-            field_types["node_context_package.acceptance_item_projection"] = "array:object"
-            minimal_shape = _copy_jsonable(contract.get("minimal_valid_shape") or {})
-            package = minimal_shape.get("node_context_package")
-            if isinstance(package, dict):
-                package["acceptance_item_projection"] = _node_acceptance_projection_rows(node_item_ids)
-            branch_shapes = _copy_jsonable(contract.get("branch_valid_shapes") or {})
-            pass_shape = branch_shapes.get("decision=pass")
-            if isinstance(pass_shape, dict):
-                pass_package = pass_shape.get("node_context_package")
-                if isinstance(pass_package, dict):
-                    pass_package["acceptance_item_projection"] = _node_acceptance_projection_rows(node_item_ids)
-            contract["minimal_valid_shape"] = minimal_shape
-            contract["branch_valid_shapes"] = branch_shapes
 
     if family_id == "pm_repair_decision.pm_repair_decision":
         blocker_id = str(envelope.get("repair_blocker_id") or envelope.get("subject_id") or "")
@@ -13279,7 +13312,7 @@ def _review_blockers(
         blockers.append("self_review")
     if not checks_evidence:
         blockers.append("weak_review_no_evidence_check")
-    if result["status"] != "mechanically_valid":
+    if result["status"] not in {"mechanically_valid", "accepted"}:
         blockers.extend(result.get("mechanical_blockers", []) or ["result_not_mechanically_valid"])
     if result["envelope"]["evidence_generation"] < ledger.get("source_generation", 1):
         blockers.append("stale_evidence")
@@ -13356,6 +13389,48 @@ def _matching_flowguard_order_ids(
     return rows
 
 
+def _system_validation_review_blockers(
+    ledger: Mapping[str, Any],
+    *,
+    review_id: str,
+    subject_result_id: str,
+    subject_packet_id: str,
+) -> list[str]:
+    review = ledger.get("reviews", {}).get(review_id)
+    if not isinstance(review, Mapping):
+        return ["missing_accepted_review"]
+    blockers: list[str] = []
+    if str(review.get("result_id") or "") != subject_result_id:
+        blockers.append("review_subject_result_mismatch")
+    review_subject_packet_id = str(review.get("subject_packet_id") or "")
+    if review_subject_packet_id and review_subject_packet_id != subject_packet_id:
+        blockers.append("review_subject_packet_mismatch")
+    decision = str(review.get("decision") or "")
+    if decision != "accept":
+        blockers.append(f"review_not_accepted:{decision or 'missing'}")
+    for blocker in review.get("blockers") or []:
+        blocker_text = str(blocker or "").strip()
+        if blocker_text:
+            blockers.append(f"review_blocker:{blocker_text}")
+    if review.get("checks_evidence") is not True:
+        blockers.append("review_missing_evidence_check")
+    if review.get("independent_from_producer") is not True:
+        blockers.append("review_not_independent:self_review")
+    if not review.get("direct_evidence_ids"):
+        blockers.append("review_missing_direct_evidence")
+    result = ledger.get("results", {}).get(str(review.get("result_id") or ""))
+    if not isinstance(result, Mapping):
+        blockers.append("review_subject_result_missing")
+    elif result.get("status") != "accepted":
+        blockers.append(f"review_result_not_accepted:{result.get('status') or 'missing'}")
+    packet = ledger.get("packets", {}).get(subject_packet_id)
+    subject_envelope = packet.get("envelope", {}) if isinstance(packet, Mapping) and isinstance(packet.get("envelope"), Mapping) else {}
+    node_id = str(subject_envelope.get("route_node_id") or "")
+    if not isinstance(packet, Mapping) or not _packet_current_for_route_node(ledger, packet, node_id=node_id):
+        blockers.append("review_not_current_for_subject")
+    return list(dict.fromkeys(blockers))
+
+
 def _record_system_validation_for_packet(
     ledger: dict[str, Any],
     subject_packet_id: str,
@@ -13382,11 +13457,20 @@ def _record_system_validation_for_packet(
         flowguard_order_ids = _current_gate_flowguard_order_ids_for_subject(ledger, subject_packet_id)
     if not isinstance(subject_result, Mapping) or subject_result.get("review_id") != review_id:
         blockers.append("missing_accepted_review")
+    blockers.extend(
+        _system_validation_review_blockers(
+            ledger,
+            review_id=review_id,
+            subject_result_id=subject_result_id,
+            subject_packet_id=subject_packet_id,
+        )
+    )
     if flowguard_required and required_target and not flowguard_order_ids:
         blockers.append("missing_matching_flowguard_report")
     if gate:
         if not gate.get("review_id"):
             blockers.append("missing_pm_decision_gate_review")
+    blockers = list(dict.fromkeys(blockers))
     evidence_id = f"validation-{source_result_id}"
     gate_id = str(gate.get("gate_id") or "") if gate else ""
     record_validation_evidence(

@@ -80,7 +80,9 @@ missing materials into `findings`, `blockers`, or `pm_suggestion_items`.
   "passed": false,
   "findings": [],
   "blockers": [],
-  "pm_suggestion_items": [],
+  "pm_suggestion_items": [
+    "PM decision-support: include at least one source-quality, coverage, or follow-up research suggestion for PM."
+  ],
   "contract_self_check": {
     "all_required_fields_present": true,
     "exact_field_names_used": true,

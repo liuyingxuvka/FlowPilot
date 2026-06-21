@@ -1709,7 +1709,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     output = json.dumps(report, indent=2, sort_keys=True) + "\n"
     if args.json_out:
         args.json_out.parent.mkdir(parents=True, exist_ok=True)
-        args.json_out.write_text(output, encoding="utf-8")
+        compact_output = json.dumps(report, separators=(",", ":"), sort_keys=True) + "\n"
+        args.json_out.write_text(compact_output, encoding="utf-8")
     print(output, end="")
     return 0 if report["ok"] else 1
 

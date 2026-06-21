@@ -20258,6 +20258,37 @@ to identify unsupported historical-layer branches that should be deleted.
 ### Next Actions
 - Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
 
+## 2026-06-21 - FlowPilot Control-Plane Miss Coverage Hardening
+
+- Task: `harden-flowpilot-control-plane-miss-coverage`
+- Route: Predictive KB preflight, OpenSpec change, ExistingModelPreflight, ModelMissReview, TestMesh, DevelopmentProcessFlow, fake-AI runtime replay, Cartesian control-plane exhaustion, ContractExhaustionMesh, Model-Test Alignment.
+- Trigger: live FlowPilot runs exposed misses that prior "full coverage" claims did not catch: hidden acceptance owner coverage, incomplete node acceptance projections, shallow reviewer pass reports, reviewer self-review/reused-agent dispatch, progress denominator rollback, and final-closure repair combinations.
+- Result:
+  - Added fake-AI owner-set projection cells for empty, complete, partial, extra, and malformed acceptance item owner coverage.
+  - Added runtime current-contract guards for nonempty reviewer `pm_suggestion_items`, forbidden prior-agent reuse on `create_new_role`, current accepted independent review evidence before system validation, precise node acceptance projection feedback, and cumulative route progress display.
+  - Updated reviewer prompt cards and packet/result contract examples so PM-visible recommendations are mandatory decision support, while reviewer blocker authority remains tied to minimum completion and quantitative under-delivery.
+  - Refreshed the affected fake-AI replay, Cartesian exhaustion, ContractExhaustionMesh, model-test alignment, core runtime, synthetic agent coverage matrix, and project topology results.
+- Validation:
+  - `python -m unittest -v tests.test_flowpilot_core_runtime tests.test_flowpilot_ai_contract_projection tests.test_flowpilot_fake_ai_runtime_replay tests.test_flowpilot_high_standard_control_flow tests.test_flowpilot_control_plane_contracts tests.test_flowpilot_new_entrypoint` -> OK, 280 tests.
+  - `python -m unittest -v tests.test_flowpilot_role_output_runtime tests.test_flowpilot_reviewer_active_challenge tests.test_flowpilot_high_standard_control_flow` -> OK, 80 tests.
+  - `python -m pytest tests/test_flowpilot_synthetic_agent_coverage_matrix.py tests/test_flowpilot_contract_exhaustion_mesh.py tests/test_flowpilot_cartesian_control_plane_exhaustion.py tests/test_flowpilot_model_test_alignment.py -q` -> OK, 73 tests and 142264 subtests.
+  - `python simulations/run_flowpilot_fake_ai_runtime_replay_checks.py`, `python simulations/run_flowpilot_cartesian_control_plane_exhaustion_checks.py`, `python simulations/run_flowpilot_contract_exhaustion_mesh_checks.py`, and `python simulations/run_flowpilot_model_test_alignment_checks.py --json-out simulations/flowpilot_model_test_alignment_results.json` -> OK; inspected result artifacts report `ok=true`.
+  - `python simulations/run_flowpilot_core_runtime_checks.py` and `python simulations/run_flowpilot_core_runtime_development_checks.py` -> OK.
+  - `python simulations/flowpilot_synthetic_agent_coverage_matrix.py --json-out simulations/flowpilot_synthetic_agent_coverage_matrix_results.json` -> OK; 23539 required cells, 58895 rows, zero findings.
+  - `python simulations/run_meta_checks.py` and `python simulations/run_capability_checks.py` -> background logs under `tmp/flowguard_background/`, both exit 0 with complete stdout/stderr/combined/exit/meta artifacts.
+  - `python scripts/flowguard_project_topology.py build` and `python scripts/flowguard_project_topology.py check` -> OK; topology reports 152 models, 452 test commands, 1066 code surfaces, and no findings.
+  - `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`, `python -c "import importlib.metadata as m; print(m.version('flowguard'))"`, and `python -m flowguard project-audit --root .` -> OK; schema 1.0, package 0.52.1, project audit pass.
+  - `python scripts/install_flowpilot.py --sync-repo-owned --json`, `python scripts/install_flowpilot.py --check --json`, `python scripts/audit_local_install_sync.py --json`, and `python scripts/check_install.py` -> OK; installed FlowPilot digest matches repository source.
+- Claim boundary:
+  - This closes the scoped local control-plane miss coverage and current-contract repair work for the observed miss families and their generated Cartesian/fake-AI cells.
+  - It does not claim live AI semantic quality, remote push, GitHub release, package tag, deploy, public publication, or OpenSpec archive.
+- Counterexamples preserved:
+  - A validator knows a rule that the first packet does not surface.
+  - A fake-AI matrix contains a lower-level generated cell but the parent coverage universe silently omits or canonicalizes it.
+  - A reviewer pass omits concrete PM decision-support suggestions.
+  - A replacement role leases the same underlying agent that produced the rejected work.
+  - A final-closure evidence-gap combination has no normal repair route and falls to break-glass before the repeated-failure fuse should fire.
+
 
 ## 2026-06-16 FlowPilot Cartesian Control-Plane Exhaustion
 
@@ -28696,3 +28727,42 @@ Task id: `generate-new-flowpilot-formal-entrypoint-20260529`
   - A new `run_*_checks.py` runner is added but the committed sweep or inventory still omits it.
   - A runner is enumerated but not assigned to an explicit coverage tier.
   - A full-model inventory contains `runner_not_ok`, live-state blockers, missing replay evidence, or unresolved non-deferred gaps while still being described as complete.
+
+
+## flowguard-project-upgrade - FlowGuard project upgrade record update
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: target project uses FlowGuard and needs durable AGENTS/version records
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-06-21T03:59:10+00:00
+- Ended: 2026-06-21T03:59:10+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- none recorded
+
+### Commands
+- none recorded
+
+### Findings
+- FlowGuard repository recorded: https://github.com/liuyingxuvka/FlowGuard
+- FlowGuard package version recorded: 0.52.1
+- FlowGuard schema version recorded: 1.0
+- Artifact upgrade scan: apply: scanned=4 upgraded=1 blocked=0 changed=1
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- Project adoption record does not replace executable model checks, tests, replay, or closure evidence.
+
+### Risk Evidence Summary
+- none recorded
+
+### Next Actions
+- Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.

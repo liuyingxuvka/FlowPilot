@@ -53,7 +53,7 @@ FLOWGUARD_REPORT_EXPLICIT_ARRAY_FIELDS = (
     "pm_suggestion_items",
 )
 FLOWGUARD_REPORT_NON_EMPTY_ARRAY_FIELDS = ("pm_visible_summary",)
-REVIEW_REPORT_NON_EMPTY_ARRAY_FIELDS = ("pm_visible_summary",)
+REVIEW_REPORT_NON_EMPTY_ARRAY_FIELDS = ("pm_visible_summary", "pm_suggestion_items")
 TERMINAL_BACKWARD_REPLAY_REQUIRED_FIELDS = (
     "pm_visible_summary",
     "reviewed_by_role",
@@ -80,7 +80,12 @@ TERMINAL_BACKWARD_REPLAY_EXPLICIT_ARRAY_FIELDS = (
     "waiver_records",
     "final_blockers",
 )
-TERMINAL_BACKWARD_REPLAY_NON_EMPTY_ARRAY_FIELDS = ("pm_visible_summary", "final_artifact_refs", "acceptance_item_closure")
+TERMINAL_BACKWARD_REPLAY_NON_EMPTY_ARRAY_FIELDS = (
+    "pm_visible_summary",
+    "pm_suggestion_items",
+    "final_artifact_refs",
+    "acceptance_item_closure",
+)
 PM_DISPOSITION_REQUIRED_FIELDS = (
     "decision",
     "reason",
@@ -1193,7 +1198,9 @@ def minimal_valid_shape_for_family(family_id: str) -> dict[str, Any]:
             "passed": True,
             "findings": [],
             "blockers": [],
-            "pm_suggestion_items": [],
+            "pm_suggestion_items": [
+                "PM decision-support: current minimum gate passes; consider whether a 9/10 quality optimization pass is useful before closure."
+            ],
             "contract_self_check": {
                 "all_required_fields_present": True,
                 "exact_field_names_used": True,
@@ -1209,7 +1216,9 @@ def minimal_valid_shape_for_family(family_id: str) -> dict[str, Any]:
             "passed": True,
             "findings": [],
             "blockers": [],
-            "pm_suggestion_items": [],
+            "pm_suggestion_items": [
+                "PM decision-support: terminal replay passes; consider whether any segment deserves an optional quality improvement before final close."
+            ],
             "final_artifact_refs": [
                 {"id": "delivered-product", "status": "closed", "basis": "Final artifact was inspected directly."}
             ],
