@@ -123,10 +123,10 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
 
     def test_controller_progress_fraction_guidance_is_runtime_owned(self) -> None:
         guidance_texts = [
-            _card_path_by_id("controller.core").read_text(encoding="utf-8").lower(),
-            _card_path_by_id("controller.resume_reentry").read_text(encoding="utf-8").lower(),
-            (RUNTIME_KIT / "prompts" / "controller" / "action_ledger_table.md").read_text(encoding="utf-8").lower(),
-            (ROOT / "skills" / "flowpilot" / "SKILL.md").read_text(encoding="utf-8").lower(),
+            _normalized_path(_card_path_by_id("controller.core")),
+            _normalized_path(_card_path_by_id("controller.resume_reentry")),
+            _normalized_path(RUNTIME_KIT / "prompts" / "controller" / "action_ledger_table.md"),
+            _normalized_path(ROOT / "skills" / "flowpilot" / "SKILL.md"),
         ]
         for text in guidance_texts:
             with self.subTest():
@@ -137,6 +137,44 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
                 self.assertIn("sealed", text)
                 self.assertIn("do not invent", text)
                 self.assertIn("authority", text)
+
+    def test_controller_progress_fraction_guidance_reports_more_consistently_without_noise(self) -> None:
+        guidance_texts = [
+            _normalized_path(_card_path_by_id("controller.core")),
+            _normalized_path(_card_path_by_id("controller.resume_reentry")),
+            _normalized_path(RUNTIME_KIT / "prompts" / "controller" / "action_ledger_table.md"),
+            _normalized_path(ROOT / "skills" / "flowpilot" / "SKILL.md"),
+        ]
+        for text in guidance_texts:
+            with self.subTest():
+                self.assertIn("normally", text)
+                self.assertIn("progress_fraction.display", text)
+                self.assertIn("changed active node", text)
+                self.assertIn("changed runtime-owned expanded-node fraction", text)
+                self.assertIn("quiet patrol", text)
+                self.assertIn("ack bookkeeping", text)
+                self.assertIn("process-only asides", text)
+
+    def test_node_acceptance_plans_require_concrete_current_check_surfaces(self) -> None:
+        pm_node = _normalized_path(_card_path_by_id("pm.node_acceptance_plan"))
+        reviewer_node = _normalized_path(_card_path_by_id("reviewer.node_acceptance_plan_review"))
+
+        for text in (pm_node, reviewer_node):
+            self.assertIn("current executable check surface", text)
+            self.assertIn("status vocabulary", text)
+            self.assertIn("expected failure shape", text)
+            self.assertIn("bad fixtures", text)
+            self.assertIn("worker", text)
+            self.assertIn("reviewer", text)
+
+        self.assertIn("do not add new node-context fields", pm_node)
+        self.assertIn("replacement parent/module", pm_node)
+        self.assertIn("under-split", pm_node)
+        self.assertIn("`redesign_route`", pm_node)
+        self.assertIn("generic phrases such as \"run validation\"", reviewer_node)
+        self.assertIn("worker inventing", reviewer_node)
+        self.assertIn("node-boundary problem", reviewer_node)
+        self.assertIn("do not block solely because worker artifacts", reviewer_node)
 
     def test_role_surface_preference_is_present_on_lease_surface(self) -> None:
         text = (ROOT / "skills" / "flowpilot" / "SKILL.md").read_text(encoding="utf-8").lower()

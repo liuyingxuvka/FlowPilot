@@ -2,6 +2,30 @@
 
 All notable changes to FlowPilot will be documented in this file.
 
+## 0.10.17 - 2026-06-22
+
+### Fixed
+
+- Tightened PM node acceptance guidance so worker-ready nodes must name the
+  current executable check surface, status vocabulary, expected failure shape,
+  and bounded worker outcome before work is issued.
+- Tightened Reviewer node-plan review guidance so abstract worker-ready plans
+  are blocked for PM clarification, route deepening, or existing
+  `redesign_route` handling instead of pushing boundary discovery to Worker.
+- Made Controller user-facing status guidance normally include the
+  runtime-owned expanded-node fraction when a status update is already needed,
+  while keeping quiet patrol, receipts, ACK bookkeeping, and process-only
+  asides internal.
+
+### Validation
+
+- Added prompt coverage for PM/Reviewer node-plan concrete check surfaces and
+  Controller progress-fraction status boundaries.
+- Added planning-quality model coverage for node plans missing current checker,
+  status, failure-shape, or bounded-worker-outcome details.
+- Refreshed topology and focused FlowGuard checks for planning quality,
+  prework/order gates, and controller patrol behavior.
+
 ## 0.10.15 - 2026-06-18
 
 ### Fixed

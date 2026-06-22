@@ -88,6 +88,23 @@ child route under a replacement parent/module scope for the active node. If it
 is over-split, merge or waive the extra structure with a PM complexity reason
 before dispatch.
 
+For a worker-ready leaf or repair node, also ask whether the current executable
+check surface is concrete enough for one bounded worker outcome. When relevant,
+the plan must identify the current files, artifacts, behavior surface,
+checker, command, validation entrypoint, status vocabulary, and expected
+failure shape that make the node executable and reviewable. For negative
+cases, bad fixtures, expected-failure examples, or status-sensitive checks,
+state the expected failure shape or accepted status vocabulary clearly enough
+that Worker and Reviewer do not have to invent the acceptance boundary. Keep
+this in existing plan text, acceptance criteria, known risks, supporting notes,
+or acceptance-item projection; do not add new node-context fields.
+
+If PM cannot make that current check surface concrete, treat it as evidence
+that the apparent leaf may be too broad, mixed, wrongly bounded, or
+under-split. Decide whether the current node should become a replacement
+parent/module with ordered child nodes through the existing `redesign_route`
+path instead of asking Worker to discover the missing boundaries.
+
 Also re-ask whether the current node is a consumer of future route output. If
 the node plan would require a later unfinished node's artifact, evidence,
 validation result, example, fixture, package, public document, or release output

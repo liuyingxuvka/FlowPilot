@@ -1,5 +1,5 @@
 {
-  "created_at": "2026-06-21T12:38:30.148071+00:00",
+  "created_at": "2026-06-22T05:21:19.658488+00:00",
   "graph": {
     "edge_count": 14,
     "invariant_failure_count": 0,
@@ -11,7 +11,7 @@
     "current": true,
     "required_for_release": true,
     "status": {
-      "created_at": "2026-06-17T11:55:42.465463+00:00",
+      "created_at": "2026-06-22T05:20:25.831622+00:00",
       "edge_count": 16,
       "kind": "layered_full_parent",
       "proof_file": "simulations/capability_layered_full_results.proof.json",
@@ -122,17 +122,17 @@
       {
         "evidence": [
           {
-            "edge_count": 126,
+            "edge_count": 128,
             "failures": [],
             "missing": false,
             "model_id": "flowpilot_planning_quality",
             "ok": true,
             "proof_status": "not_present",
             "result_file": "simulations/flowpilot_planning_quality_results.json",
-            "result_fingerprint": "f6517bfe1e2a36f7109f2576efd1575f794f63a61ea3b55df46740613e2b9880",
+            "result_fingerprint": "6bdf369b7ea67e669dff12a0baa3faa25a0960244a52cf442faab977e9c9dd43",
             "skipped_required_checks": [],
             "skipped_required_checks_visible": true,
-            "state_count": 127
+            "state_count": 129
           },
           {
             "edge_count": 40,

@@ -5,7 +5,7 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=3 initial_states=1 traces=378",
+    "summary": "sequences=3 initial_states=1 traces=384",
     "violation_count": 0
   },
   "hazard_checks": {
@@ -110,6 +110,13 @@
         "expected_failure": "node acceptance plan lacks acceptance item projection",
         "failures": [
           "node acceptance plan lacks acceptance item projection"
+        ]
+      },
+      "node_plan_missing_current_check_surface": {
+        "detected": true,
+        "expected_failure": "node acceptance plan lacks current executable check surface, status vocabulary, expected failure shape, or bounded worker outcome",
+        "failures": [
+          "node acceptance plan lacks current executable check surface, status vocabulary, expected failure shape, or bounded worker outcome"
         ]
       },
       "node_plan_missing_low_quality_mapping": {
@@ -480,11 +487,11 @@
     "accepted_scenarios": [
       "valid_ui_route"
     ],
-    "edge_count": 126,
+    "edge_count": 128,
     "invariant_failures": [],
     "missing_labels": [],
     "ok": true,
-    "rejected_state_count": 62,
-    "state_count": 127
+    "rejected_state_count": 63,
+    "state_count": 129
   }
 }

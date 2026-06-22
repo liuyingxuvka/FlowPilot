@@ -74,7 +74,7 @@ Runtime-ready state preempts foreground waits. Before waiting on role chat or a 
 
 Before any final answer, done claim, or Controller shutdown, run `flowpilot_new.py final-preflight`. Only a successful final-preflight with `foreground_duty.action=terminal_return` and `controller_stop_allowed=true` may end Controller work.
 
-If public runtime output includes `progress_fraction.display`, Controller may relay that exact current expanded node fraction when a status update is useful. Do not calculate progress, convert it to a percent, read sealed bodies for progress, or treat the fraction as authority for completion, stop, gate, route advance, or final return. If absent, do not invent progress.
+If a user-facing status update is needed and public runtime output includes `progress_fraction.display`, Controller should normally relay that exact current expanded node fraction. A changed active node or changed runtime-owned expanded-node fraction can justify a short progress note, while quiet patrol, receipts, ACK bookkeeping, ledger cleanup, relay bookkeeping, and process-only asides remain silent by default. Do not calculate progress, convert it to a percent, read sealed bodies for progress, or treat the fraction as authority for completion, stop, gate, route advance, or final return. If absent, do not invent progress.
 
 ## Startup And Packet Work
 

@@ -52,6 +52,7 @@ HAZARD_EXPECTED_FAILURES = {
     model.PM_SHALLOW_COMPLETION_TRAPS_MISSING: "PM did not name the task-specific shallow-completion traps",
     model.PRACTICAL_OUTCOME_DESIGN_ONLY_ROUTE: "practical user outcome was planned as a design-only route without next-step evidence",
     model.NODE_PLAN_MISSING_LOW_QUALITY_MAPPING: "node acceptance plan lacks local low-quality-success mapping and proof of depth",
+    model.NODE_PLAN_MISSING_CURRENT_CHECK_SURFACE: "node acceptance plan lacks current executable check surface, status vocabulary, expected failure shape, or bounded worker outcome",
     model.WORK_PACKET_MISSING_LOW_QUALITY_WARNING: "work packet lacks node low-quality-success warning",
     model.WORKER_PACKET_MISSING_IN_SCOPE_REPAIR: "executable worker packet lacks in-scope quality repair obligation",
     model.WORKER_PACKET_REPAIRS_OUT_OF_SCOPE: "worker packet does not escalate out-of-scope defects to PM",

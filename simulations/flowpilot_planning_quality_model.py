@@ -79,6 +79,7 @@ LOW_QUALITY_RISK_CAUSES_ROUTE_BLOAT = "low_quality_risk_causes_route_bloat"
 PM_SHALLOW_COMPLETION_TRAPS_MISSING = "pm_shallow_completion_traps_missing"
 PRACTICAL_OUTCOME_DESIGN_ONLY_ROUTE = "practical_outcome_design_only_route"
 NODE_PLAN_MISSING_LOW_QUALITY_MAPPING = "node_plan_missing_low_quality_mapping"
+NODE_PLAN_MISSING_CURRENT_CHECK_SURFACE = "node_plan_missing_current_check_surface"
 WORK_PACKET_MISSING_LOW_QUALITY_WARNING = "work_packet_missing_low_quality_warning"
 PM_CLOSURE_LOW_QUALITY_RISK_DISPOSITION_MISSING = "pm_closure_low_quality_risk_disposition_missing"
 PM_CLOSURE_SHALLOW_COMPLETION_TRAPS_UNRESOLVED = "pm_closure_shallow_completion_traps_unresolved"
@@ -144,6 +145,7 @@ NEGATIVE_SCENARIOS = (
     PM_SHALLOW_COMPLETION_TRAPS_MISSING,
     PRACTICAL_OUTCOME_DESIGN_ONLY_ROUTE,
     NODE_PLAN_MISSING_LOW_QUALITY_MAPPING,
+    NODE_PLAN_MISSING_CURRENT_CHECK_SURFACE,
     WORK_PACKET_MISSING_LOW_QUALITY_WARNING,
     PM_CLOSURE_LOW_QUALITY_RISK_DISPOSITION_MISSING,
     PM_CLOSURE_SHALLOW_COMPLETION_TRAPS_UNRESOLVED,
@@ -258,6 +260,10 @@ class State:
     route_produces_practical_next_step_evidence: bool = False
     node_acceptance_low_quality_mapping_written: bool = False
     node_acceptance_proof_of_depth_defined: bool = False
+    node_acceptance_current_check_surface_written: bool = False
+    node_acceptance_status_vocabulary_written: bool = False
+    node_acceptance_expected_failure_shape_written: bool = False
+    node_acceptance_worker_outcome_bounded: bool = False
     work_packet_carries_low_quality_warning: bool = False
     worker_packet_carries_in_scope_quality_repair: bool = False
     worker_packet_escalates_out_of_scope_defects: bool = False
@@ -406,6 +412,10 @@ def _valid_ui_state() -> State:
         route_produces_practical_next_step_evidence=True,
         node_acceptance_low_quality_mapping_written=True,
         node_acceptance_proof_of_depth_defined=True,
+        node_acceptance_current_check_surface_written=True,
+        node_acceptance_status_vocabulary_written=True,
+        node_acceptance_expected_failure_shape_written=True,
+        node_acceptance_worker_outcome_bounded=True,
         work_packet_carries_low_quality_warning=True,
         worker_packet_carries_in_scope_quality_repair=True,
         worker_packet_escalates_out_of_scope_defects=True,
@@ -635,6 +645,14 @@ def _scenario_state(scenario: str) -> State:
             node_acceptance_low_quality_mapping_written=False,
             node_acceptance_proof_of_depth_defined=False,
         )
+    if scenario == NODE_PLAN_MISSING_CURRENT_CHECK_SURFACE:
+        return replace(
+            state,
+            node_acceptance_current_check_surface_written=False,
+            node_acceptance_status_vocabulary_written=False,
+            node_acceptance_expected_failure_shape_written=False,
+            node_acceptance_worker_outcome_bounded=False,
+        )
     if scenario == WORK_PACKET_MISSING_LOW_QUALITY_WARNING:
         return replace(state, work_packet_carries_low_quality_warning=False)
     if scenario == PM_CLOSURE_LOW_QUALITY_RISK_DISPOSITION_MISSING:
@@ -825,6 +843,13 @@ def planning_failures(state: State) -> list[str]:
         and state.node_acceptance_proof_of_depth_defined
     ):
         failures.append("node acceptance plan lacks local low-quality-success mapping and proof of depth")
+    if complex_task and not (
+        state.node_acceptance_current_check_surface_written
+        and state.node_acceptance_status_vocabulary_written
+        and state.node_acceptance_expected_failure_shape_written
+        and state.node_acceptance_worker_outcome_bounded
+    ):
+        failures.append("node acceptance plan lacks current executable check surface, status vocabulary, expected failure shape, or bounded worker outcome")
     if complex_task and not state.work_packet_carries_low_quality_warning:
         failures.append("work packet lacks node low-quality-success warning")
     if complex_task and not state.worker_packet_carries_in_scope_quality_repair:

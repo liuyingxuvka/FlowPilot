@@ -90,6 +90,19 @@ Check:
   final-user usefulness, and experience or product quality, plus what evidence
   will prove that contribution;
 - node requirements are concrete and testable;
+- the plan identifies the current executable check surface at the level needed
+  for this node: current files, artifacts, behavior surface, checker, command,
+  validation entrypoint, status vocabulary, and expected failure shape when
+  those details are relevant. Block plans that replace needed named checks with
+  generic phrases such as "run validation", omit status vocabulary for
+  status-sensitive checks, or leave negative cases, bad fixtures, or
+  expected-failure examples without an expected failure shape;
+- if the plan cannot name one bounded worker outcome without Worker inventing
+  checks, ordering, dependency boundaries, status vocabulary, acceptance
+  criteria, or failure shapes, treat that as a node-boundary problem. Block for
+  PM clarification, node-boundary repair, route deepening, or the existing
+  `redesign_route` path; do not approve the plan by assuming Worker will
+  discover the missing boundary;
 - the plan contains a concrete low-quality-success mapping for this node:
   inherited hard risk ids when applicable, task-specific hard part,
   thin-success shortcut, warning signs, existence-only evidence to reject,
