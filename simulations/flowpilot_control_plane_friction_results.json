@@ -18,8 +18,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -366,8 +366,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -708,14 +708,14 @@
       },
       "active_holder_lease_to_wrong_packet_role": {
         "detected": true,
-        "expected_failure": "active holder lease was issued without concrete agent identity, host liveness, and packet-role match",
+        "expected_failure": "active holder lease was issued without concrete agent identity, current binding evidence, and packet-role match",
         "failures": [
-          "active holder lease was issued without concrete agent identity, host liveness, and packet-role match"
+          "active holder lease was issued without concrete agent identity, current binding evidence, and packet-role match"
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": false,
           "active_repair_transaction_stale": false,
@@ -1054,16 +1054,16 @@
           "worker_packet_written": true
         }
       },
-      "active_holder_lease_without_host_liveness": {
+      "active_holder_lease_without_current_binding": {
         "detected": true,
-        "expected_failure": "active holder lease was issued without concrete agent identity, host liveness, and packet-role match",
+        "expected_failure": "active holder lease was issued without concrete agent identity, current binding evidence, and packet-role match",
         "failures": [
-          "active holder lease was issued without concrete agent identity, host liveness, and packet-role match"
+          "active holder lease was issued without concrete agent identity, current binding evidence, and packet-role match"
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": false,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": false,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -1410,8 +1410,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -1758,8 +1758,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -2106,8 +2106,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -2454,8 +2454,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -2802,8 +2802,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -3150,8 +3150,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -3498,8 +3498,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -3846,8 +3846,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -4194,8 +4194,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -4542,8 +4542,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -4890,8 +4890,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -5238,8 +5238,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -5586,8 +5586,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -5934,8 +5934,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -6282,8 +6282,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -6630,8 +6630,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -6978,8 +6978,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -7326,8 +7326,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -7674,8 +7674,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -8022,8 +8022,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -8370,8 +8370,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -8718,8 +8718,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -9066,8 +9066,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -9414,8 +9414,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -9762,8 +9762,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -10110,8 +10110,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -10458,8 +10458,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -10806,8 +10806,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -11154,8 +11154,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -11502,8 +11502,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -11850,8 +11850,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -12198,8 +12198,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -12546,8 +12546,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -12894,8 +12894,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -13242,8 +13242,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -13590,8 +13590,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -13938,8 +13938,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -14286,8 +14286,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -14634,8 +14634,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -14982,8 +14982,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -15330,8 +15330,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -15678,8 +15678,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -16026,8 +16026,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -16374,8 +16374,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -16722,8 +16722,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -17070,8 +17070,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -17419,8 +17419,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -17769,8 +17769,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -18117,8 +18117,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -18465,8 +18465,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -18813,8 +18813,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -19161,8 +19161,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -19510,8 +19510,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -19858,8 +19858,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -20207,8 +20207,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -20555,8 +20555,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -20903,8 +20903,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -21251,8 +21251,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -21599,8 +21599,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -21947,8 +21947,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -22295,8 +22295,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -22643,8 +22643,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -22991,8 +22991,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -23339,8 +23339,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -23687,8 +23687,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -24035,8 +24035,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -24383,8 +24383,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -24731,8 +24731,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -25079,8 +25079,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -25427,8 +25427,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -25775,8 +25775,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -26123,8 +26123,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -26471,8 +26471,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -26819,8 +26819,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -27167,8 +27167,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -27515,8 +27515,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -27863,8 +27863,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -28211,8 +28211,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -28559,8 +28559,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -28907,8 +28907,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -29255,8 +29255,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -29603,8 +29603,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -29951,8 +29951,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -30299,8 +30299,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -30647,8 +30647,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -30995,8 +30995,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -31343,8 +31343,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -31691,8 +31691,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -32039,8 +32039,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -32387,8 +32387,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -32735,8 +32735,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -33083,8 +33083,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -33432,8 +33432,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -33780,8 +33780,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -34128,8 +34128,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -34476,8 +34476,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -34824,8 +34824,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -35172,8 +35172,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -35520,8 +35520,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -35868,8 +35868,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -36217,8 +36217,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -36566,8 +36566,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -36914,8 +36914,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -37262,8 +37262,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -37610,8 +37610,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -37958,8 +37958,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -38306,8 +38306,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -38654,8 +38654,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -39002,8 +39002,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": true,
@@ -39350,8 +39350,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -39698,8 +39698,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -40046,8 +40046,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -40394,8 +40394,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -40742,8 +40742,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -41090,8 +41090,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -41438,8 +41438,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -41786,8 +41786,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -42134,8 +42134,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -42482,8 +42482,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -42830,8 +42830,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -43178,8 +43178,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -43526,8 +43526,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -43874,8 +43874,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -44222,8 +44222,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -44570,8 +44570,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -44918,8 +44918,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -45266,8 +45266,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -45614,8 +45614,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -45962,8 +45962,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -46310,8 +46310,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -46658,8 +46658,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -47006,8 +47006,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -47354,8 +47354,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -47702,8 +47702,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -48050,8 +48050,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -48398,8 +48398,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -48746,8 +48746,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -49094,8 +49094,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -49442,8 +49442,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -49790,8 +49790,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -50138,8 +50138,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -50486,8 +50486,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -50834,8 +50834,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -51182,8 +51182,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -51530,8 +51530,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -51878,8 +51878,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -52226,8 +52226,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -52574,8 +52574,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -52922,8 +52922,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -53270,8 +53270,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -53618,8 +53618,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -53966,8 +53966,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -54314,8 +54314,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -54662,8 +54662,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -55010,8 +55010,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -55358,8 +55358,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -55706,8 +55706,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -56054,8 +56054,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -56402,8 +56402,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -56750,8 +56750,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -57098,8 +57098,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -57446,8 +57446,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -57794,8 +57794,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -58142,8 +58142,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -58490,8 +58490,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -58838,8 +58838,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -59186,8 +59186,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -59534,8 +59534,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -59882,8 +59882,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -60230,8 +60230,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -60578,8 +60578,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -60926,8 +60926,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -61274,8 +61274,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -61622,8 +61622,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -61970,8 +61970,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,
@@ -62319,8 +62319,8 @@
         ],
         "state": {
           "active_blocker_points_noncurrent_packet": true,
-          "active_holder_agent_host_live": true,
           "active_holder_agent_identity_recorded": true,
+          "active_holder_current_binding_proven": true,
           "active_holder_lease_issued": true,
           "active_holder_packet_role_matches": true,
           "active_repair_transaction_stale": false,

@@ -25,6 +25,8 @@ All notable changes to FlowPilot will be documented in this file.
   status, failure-shape, or bounded-worker-outcome details.
 - Refreshed topology and focused FlowGuard checks for planning quality,
   prework/order gates, and controller patrol behavior.
+- Refreshed the controller action-ledger prompt manifest hash so release
+  structure checks accept the current runtime-kit prompt asset.
 
 ## 0.10.15 - 2026-06-18
 

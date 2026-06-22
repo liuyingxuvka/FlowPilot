@@ -29,7 +29,7 @@ mutation, stale-evidence reset, and final completion ledger review.
 
 ## Hero Tagline
 
-A FlowGuard-built project-control layer for long AI-agent software work.
+A project-control layer for long AI-agent software work.
 
 ## Visual Concept
 

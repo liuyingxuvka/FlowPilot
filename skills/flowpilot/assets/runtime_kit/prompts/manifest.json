@@ -3,7 +3,7 @@
     {
       "id": "controller.action_ledger_table",
       "path": "prompts/controller/action_ledger_table.md",
-      "sha256": "b34320b6144a4233b3d1ec8bba61523c8816039a29a4ec066aff688406e695f9",
+      "sha256": "831581c10b620d3daee74789ccdd274e81f2a434d37d1deac18853cca784a8dd",
       "strip_trailing_newline": true,
       "template_variables": [
         "break_glass_text",

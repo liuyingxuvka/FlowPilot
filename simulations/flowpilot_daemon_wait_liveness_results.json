@@ -52,9 +52,9 @@
       {
         "detected": true,
         "observed_failures": [
-          "report wait reminder used stale role liveness"
+          "report wait reminder used stale ACK/progress evidence"
         ],
-        "scenario": "wait_liveness_fresh_liveness_probe_used_broken"
+        "scenario": "wait_liveness_fresh_ack_progress_evidence_used_broken"
       },
       {
         "detected": true,
