@@ -54,3 +54,4 @@ product render.
 
 The hero image is inserted immediately after the H1 title and before the
 English introduction.
+
