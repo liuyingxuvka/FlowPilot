@@ -15,7 +15,7 @@
 </p>
 
 <p align="center">
-  Source version: <strong>v0.10.17</strong> · MIT License · Codex skill source package
+  Source version: <strong>v0.10.18</strong> · MIT License · Codex skill source package
 </p>
 <!-- README HERO END -->
 
@@ -88,7 +88,7 @@ In plain language:
 
 | Field | Value |
 | --- | --- |
-| Source version | `v0.10.17` |
+| Source version | `v0.10.18` |
 | Public project name | `FlowPilot` |
 | Skill slug | `flowpilot` |
 | Release shape | Source package only, no binary app bundle |
@@ -96,7 +96,7 @@ In plain language:
 | Required core dependency | Real `flowguard` Python package |
 | Current UI surface | Windows WPF startup intake dialog plus chat route signs |
 
-`v0.10.17` tightens node-planning and progress guidance on top of the `v0.10.16` producer-before-consumer route-ordering release. PM node acceptance plans now name the current executable check surface, status vocabulary, expected failure shape, and bounded worker outcome before work is issued; Reviewer blocks abstract worker-ready plans for PM clarification or route deepening; Controller normally relays the runtime-owned expanded-node fraction when a real status update is already needed.
+`v0.10.18` tightens checker independence and review-flow ordering on top of the `v0.10.17` node-planning release. Reviewer and FlowGuard operator packets now reject self-checks against results produced by the same agent; FlowGuard-approved parent backward replay closes without a second Reviewer pass over the same replay result; repeated blocker escalation now keeps the fifth same-family, same-node repair in the ordinary PM lane and enters break-glass only on the sixth attempt.
 
 ## When To Use FlowPilot
 
@@ -191,8 +191,8 @@ MIT. See [`LICENSE`](./LICENSE).
 
 # FlowPilot 中文说明
 
-**Source version:** `v0.10.17`  
-**许可证：** MIT  
+**Source version:** `v0.10.18`<br />
+**许可证：** MIT<br />
 **形态：** Codex skill source package
 
 ## 它是什么
@@ -262,7 +262,7 @@ startup intake
 
 | 字段 | 值 |
 | --- | --- |
-| Source version | `v0.10.17` |
+| Source version | `v0.10.18` |
 | Public project name | `FlowPilot` |
 | Skill slug | `flowpilot` |
 | Release shape | source package only, no binary app bundle |
@@ -270,7 +270,7 @@ startup intake
 | Required core dependency | real `flowguard` Python package |
 | Current UI surface | Windows WPF startup intake dialog plus chat route signs |
 
-`v0.10.17` 在 `v0.10.16` producer-before-consumer route-ordering release 基础上收紧 node-planning 和 progress guidance。PM node acceptance plan 现在会在发出工作前写清 current executable check surface、status vocabulary、expected failure shape 和 bounded worker outcome；Reviewer 会挡住过于抽象的 worker-ready plan，让 PM clarification 或 route deepening 先发生；Controller 在本来需要给用户报状态时，通常会带上 runtime-owned expanded-node fraction。
+`v0.10.18` 在 `v0.10.17` node-planning release 基础上收紧 checker independence 和 review-flow ordering。Reviewer 和 FlowGuard operator packet 现在会拒绝同一个 agent 审查自己产出的 target result；FlowGuard 已经通过的 parent backward replay 会直接关闭，不再对同一个 replay result 再开第二轮 Reviewer；重复 blocker 升级也改成第五次同 family、同 node repair 仍走普通 PM repair，第六次才进入 break-glass。
 
 ## 什么时候用 FlowPilot
 

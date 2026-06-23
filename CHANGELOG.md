@@ -2,6 +2,29 @@
 
 All notable changes to FlowPilot will be documented in this file.
 
+## 0.10.18 - 2026-06-23
+
+### Fixed
+
+- Reused the current packet, result, and lease surfaces to block Reviewer and
+  FlowGuard operator self-checks when the same agent produced the target result.
+- Added submission-time blocking for already-open illegal checker leases so a
+  stale or misassigned role cannot approve its own target output.
+- Closed FlowGuard-approved parent backward replay directly instead of opening
+  a second Reviewer packet over an already reviewed replay result.
+- Aligned repeated blocker escalation so the fifth same-family, same-node
+  repair stays in the ordinary PM repair lane and only the sixth attempt enters
+  Controller break-glass handling.
+
+### Validation
+
+- Added core runtime and model scenarios for checker self-check blocking,
+  independent checker reuse, parent backward replay closure ordering, and the
+  corrected repeated-blocker threshold.
+- Refreshed focused FlowGuard runtime, complete-system, ContractExhaustionMesh,
+  Model-Test Alignment, topology, install sync, and card-instruction evidence
+  for the release candidate.
+
 ## 0.10.17 - 2026-06-22
 
 ### Fixed
