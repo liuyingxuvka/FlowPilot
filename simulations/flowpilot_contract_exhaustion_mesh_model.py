@@ -1117,14 +1117,14 @@ SCENARIOS = {
     "same_root_no_delta_without_break_glass": replace(
         _valid_break_glass_same_root(),
         scenario="same_root_no_delta_without_break_glass",
-        repeated_same_blocker_attempts=5,
+        repeated_same_blocker_attempts=6,
         break_glass_triggered=False,
         normal_repair_prevents_glass_break=False,
     ),
-    "same_blocker_five_times_triggers_glass_break_alarm": replace(
+    "same_blocker_six_times_triggers_glass_break_alarm": replace(
         _valid_break_glass_same_root(),
-        scenario="same_blocker_five_times_triggers_glass_break_alarm",
-        repeated_same_blocker_attempts=5,
+        scenario="same_blocker_six_times_triggers_glass_break_alarm",
+        repeated_same_blocker_attempts=6,
         break_glass_triggered=True,
         normal_repair_prevents_glass_break=False,
     ),
@@ -1158,7 +1158,7 @@ VALID_SCENARIOS = {
     "valid_flowguard_reissue",
     "valid_missing_flowguard_blocks_review",
     "valid_same_root_repaired_before_glass_break",
-    "same_blocker_five_times_triggers_glass_break_alarm",
+    "same_blocker_six_times_triggers_glass_break_alarm",
 }
 NEGATIVE_SCENARIOS = set(SCENARIOS) - VALID_SCENARIOS
 
@@ -1192,12 +1192,12 @@ def contract_exhaustion_failures(state: State) -> list[str]:
         failures.append("flowguard_result_acceptance_split_from_work_order_failure")
     if (
         state.same_root_no_delta_retry
-        and state.repeated_same_blocker_attempts >= 5
+        and state.repeated_same_blocker_attempts > 5
         and not state.break_glass_triggered
     ):
         failures.append("same_root_no_delta_retry_did_not_trigger_break_glass")
     if state.break_glass_triggered and not (
-        state.same_root_no_delta_retry and state.repeated_same_blocker_attempts >= 5
+        state.same_root_no_delta_retry and state.repeated_same_blocker_attempts > 5
     ):
         failures.append("ordinary_rehearsal_entered_glass_break")
     if (

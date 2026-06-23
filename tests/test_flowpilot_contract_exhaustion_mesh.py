@@ -96,11 +96,11 @@ class FlowPilotContractExhaustionMeshTests(unittest.TestCase):
         )
         self.assertNotIn("valid_break_glass_same_root", model.VALID_SCENARIOS)
         self.assertIn("valid_same_root_repaired_before_glass_break", model.VALID_SCENARIOS)
-        self.assertIn("same_blocker_five_times_triggers_glass_break_alarm", model.VALID_SCENARIOS)
-        self.assertNotIn("same_blocker_five_times_triggers_glass_break_alarm", report["hazards"]["hazards"])
+        self.assertIn("same_blocker_six_times_triggers_glass_break_alarm", model.VALID_SCENARIOS)
+        self.assertNotIn("same_blocker_six_times_triggers_glass_break_alarm", report["hazards"]["hazards"])
         self.assertEqual(
             model.contract_exhaustion_failures(
-                model.SCENARIOS["same_blocker_five_times_triggers_glass_break_alarm"]
+                model.SCENARIOS["same_blocker_six_times_triggers_glass_break_alarm"]
             ),
             [],
         )

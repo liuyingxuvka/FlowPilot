@@ -656,6 +656,39 @@ def self_review_blocks() -> dict[str, Any]:
     )
 
 
+def flowguard_self_check_blocks() -> dict[str, Any]:
+    ledger, packet_id, worker = _base_ledger()
+    runtime.ack_lease(ledger, worker, packet_id)
+    runtime.submit_result(ledger, worker, packet_id, _role_result_body("Worker result exists for FlowGuard self-check guard."))
+    flowguard_packet = _open_packet_by_kind(ledger, "flowguard_check")
+    flowguard = runtime.lease_agent(
+        ledger,
+        "flowguard_operator",
+        agent_id="flowguard-original",
+        packet_id=flowguard_packet,
+    )
+    runtime.assign_packet(ledger, flowguard_packet, flowguard)
+    runtime.ack_lease(ledger, flowguard, flowguard_packet)
+    runtime.open_authorized_input_materials_for_role(ledger, flowguard_packet, flowguard)
+    _write_flowguard_evidence_artifact_for_packet(ledger, flowguard_packet)
+    ledger["leases"][flowguard]["agent_id"] = "worker-1"
+    result_id = runtime.submit_result(
+        ledger,
+        flowguard,
+        flowguard_packet,
+        _flowguard_result_body("Illegal same-agent FlowGuard self-check."),
+    )
+    blockers = ledger["results"][result_id]["mechanical_blockers"]
+    blocked = "flowguard_operator_self_check_forbidden" in blockers
+    return _scenario_result(
+        "flowguard_self_check_blocks",
+        ledger,
+        accepted=False if blocked else True,
+        expected=False,
+        details={"blockers": blockers},
+    )
+
+
 def stale_route_output_blocks() -> dict[str, Any]:
     ledger, packet_id, worker = _base_ledger()
     runtime.ack_lease(ledger, worker, packet_id)
@@ -895,6 +928,7 @@ SCENARIOS: dict[str, ScenarioFn] = {
     "route_deliverable_blocks_terminal_closure": route_deliverable_blocks_terminal_closure,
     "terminal_backward_replay_block_does_not_replan": terminal_backward_replay_block_does_not_replan,
     "self_review_blocks": self_review_blocks,
+    "flowguard_self_check_blocks": flowguard_self_check_blocks,
     "stale_route_output_blocks": stale_route_output_blocks,
     "stale_evidence_blocks": stale_evidence_blocks,
     "ack_only_timeout_stays_incomplete": ack_only_timeout_stays_incomplete,

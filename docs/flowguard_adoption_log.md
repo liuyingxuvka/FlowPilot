@@ -20258,6 +20258,55 @@ to identify unsupported historical-layer branches that should be deleted.
 ### Next Actions
 - Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
 
+## 2026-06-23 - Checker Independence And Review-Flow Ordering
+
+- Task: `tighten-checker-independence-flow`
+- Route: Predictive KB preflight, OpenSpec change, ExistingModel preflight, DevelopmentProcessFlow, ContractExhaustionMesh, Model-Test Alignment, and install sync.
+- Trigger: the user observed possible over-strict self-review avoidance, confusing Reviewer versus FlowGuard operator ordering after review, and active blocker projection ambiguity in live FlowPilot runs.
+- Result:
+  - Reviewer and FlowGuard operator checker packets now use the same target-result producer self-check guard.
+  - Role reuse remains allowed when the reviewer/checker is inspecting a different producer's result; the guard blocks only same-agent checking of its own target result.
+  - Open illegal checker leases are mechanically blocked at result submission, so old bad ledger state cannot silently pass.
+  - `parent_backward_replay` now closes after FlowGuard pass without creating a second Reviewer packet for the same already-reviewed replay result.
+  - Repair-loop break-glass behavior and card wording are aligned to "more than five" same-node same-problem attempts: the fifth ordinary repair still gets a PM repair decision, and the sixth routes to Controller break-glass.
+  - Current active-blocker projection remained current-effective; focused noncurrent repair blocker regressions still pass.
+- Validation:
+  - `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> `1.0`.
+  - `python -c "import importlib.metadata as m; print(m.version('flowguard'))"` -> `0.52.1`.
+  - `python -m flowguard project-audit --root .` -> pass.
+  - `openspec validate tighten-checker-independence-flow --strict` -> valid.
+  - `python -m py_compile ...` for the touched runtime, model, runner, and test files -> OK.
+  - `python -m unittest tests.test_flowpilot_core_runtime` -> 143 tests OK.
+  - `python -m unittest tests.test_flowpilot_complete_system_runtime` -> 25 tests OK.
+  - `python -m unittest tests.test_flowpilot_contract_exhaustion_mesh` -> 18 tests OK.
+  - `python -m unittest tests.test_flowpilot_card_instruction_coverage` -> 31 tests OK.
+  - `python simulations/run_flowpilot_core_runtime_checks.py --json-out simulations/flowpilot_core_runtime_results.json` -> OK; 16 routine scenarios.
+  - `python simulations/run_flowpilot_complete_system_runtime_checks.py --json-out simulations/flowpilot_complete_system_runtime_results.json` -> OK; 12 routine scenarios.
+  - `python simulations/run_flowpilot_blocker_repair_information_flow_checks.py --json-out simulations/flowpilot_blocker_repair_information_flow_results.json` -> OK.
+  - `python simulations/run_flowpilot_cartesian_control_plane_exhaustion_checks.py --json-out simulations/flowpilot_cartesian_control_plane_exhaustion_results.json` -> OK.
+  - `python simulations/run_flowpilot_contract_exhaustion_mesh_checks.py --json-out simulations/flowpilot_contract_exhaustion_mesh_results.json` -> OK.
+  - `python simulations/run_flowpilot_model_test_alignment_checks.py --json-out simulations/flowpilot_model_test_alignment_results.json` -> `alignment_ok=true`, `full_coverage_ok=true`.
+  - `python simulations/run_card_instruction_coverage_checks.py --json-out simulations/card_instruction_coverage_results.json` -> OK.
+  - `python simulations/run_flowpilot_complete_system_testmesh_checks.py --json-out simulations/flowpilot_complete_system_testmesh_results.json` -> routine gate OK; release gate remains intentionally false.
+  - Background `python simulations/run_meta_checks.py` completed through `tmp/flowguard_background/run_meta_checks.*`, exit code `0`, status `completed`.
+  - Background `python simulations/run_capability_checks.py` completed through `tmp/flowguard_background/run_capability_checks.*`, exit code `0`, status `completed`.
+  - `python scripts/flowguard_project_topology.py build` and `python scripts/flowguard_project_topology.py check` -> OK; topology reports 152 models, 452 test commands, 1066 code surfaces, and no findings.
+  - `python scripts/smoke_flowpilot.py --fast` -> OK.
+  - `python scripts/install_flowpilot.py --sync-repo-owned --json`, `python scripts/audit_local_install_sync.py --json`, `python scripts/install_flowpilot.py --check --json`, and `python scripts/check_install.py --json` -> OK; installed FlowPilot digest matches repository source.
+- Friction:
+  - `tests.router_runtime.route_mutation_parent_backward` and its isolated shard exceeded local timeouts in this environment. This is not claimed as passed. Focused core runtime parent-backward replay regression coverage is the current passed evidence for this change.
+  - `scripts/smoke_flowpilot.py` does not support `--json`; rerunning with `--fast` passed.
+  - The complete-system testmesh still marks release-only live-host evidence as not run, which is expected because this task did not request release, deploy, or live-host publication.
+- Claim boundary:
+  - This supports scoped local checker-independence, parent-backward replay, repair-loop threshold, current-blocker projection, prompt-card alignment, FlowGuard model regression, topology freshness, and installed-skill synchronization.
+  - It does not claim live AI semantic quality, release readiness, remote push, GitHub release, package tag, deploy, public publication, OpenSpec archive, or completion of the slow router route shard.
+- Counterexamples preserved:
+  - A FlowGuard operator checks a result produced by the same agent.
+  - A reviewer or FlowGuard checker is forced to create a new role even though the candidate is checking a different producer's result.
+  - FlowGuard pass on parent backward replay opens a second Reviewer packet for the same submitted replay result.
+  - A fifth same-family repair attempt is suppressed even though ordinary PM repair is allowed through five attempts.
+  - A noncurrent accepted repair packet with old active blocker history blocks final preflight.
+
 ## 2026-06-21 - Route Producer-Consumer Ordering Closeout
 
 - Task: `enforce-flowpilot-route-producer-consumer-ordering`

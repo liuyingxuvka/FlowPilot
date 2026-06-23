@@ -7223,6 +7223,41 @@ def _role_slot_reusable(ledger: Mapping[str, Any], role: str, slot: Mapping[str,
     return True
 
 
+_CHECKER_PACKET_KINDS_BY_RESPONSIBILITY: dict[str, set[str]] = {
+    "reviewer": {"review"},
+    "flowguard_operator": {"flowguard_check"},
+}
+
+_CHECKER_SELF_CHECK_REASON_BY_RESPONSIBILITY: dict[str, str] = {
+    "reviewer": "reviewer_self_review_forbidden",
+    "flowguard_operator": "flowguard_operator_self_check_forbidden",
+}
+
+
+def _checker_self_check_forbidden_reason(
+    ledger: Mapping[str, Any],
+    responsibility: str,
+    *,
+    packet_id: str,
+    agent_id: str,
+) -> str:
+    if not packet_id or not agent_id:
+        return ""
+    packet_kinds = _CHECKER_PACKET_KINDS_BY_RESPONSIBILITY.get(responsibility)
+    if not packet_kinds:
+        return ""
+    packet = ledger.get("packets", {}).get(packet_id)
+    if not isinstance(packet, Mapping):
+        return ""
+    envelope = packet.get("envelope", {}) if isinstance(packet.get("envelope"), Mapping) else {}
+    if str(envelope.get("packet_kind") or "task") not in packet_kinds:
+        return ""
+    target_result = ledger.get("results", {}).get(str(envelope.get("target_result_id") or ""))
+    if isinstance(target_result, Mapping) and str(target_result.get("producer_agent_id") or "") == agent_id:
+        return _CHECKER_SELF_CHECK_REASON_BY_RESPONSIBILITY[responsibility]
+    return ""
+
+
 def _role_assignment_reuse_forbidden_reason(
     ledger: Mapping[str, Any],
     responsibility: str,
@@ -7230,17 +7265,16 @@ def _role_assignment_reuse_forbidden_reason(
     packet_id: str,
     prior_agent_id: str,
 ) -> str:
-    if responsibility != "reviewer" or not packet_id or not prior_agent_id:
+    if not prior_agent_id:
         return ""
-    packet = ledger.get("packets", {}).get(packet_id)
-    if not isinstance(packet, Mapping):
-        return ""
-    envelope = packet.get("envelope", {}) if isinstance(packet.get("envelope"), Mapping) else {}
-    if envelope.get("packet_kind") != "review":
-        return ""
-    target_result = ledger.get("results", {}).get(str(envelope.get("target_result_id") or ""))
-    if isinstance(target_result, Mapping) and str(target_result.get("producer_agent_id") or "") == prior_agent_id:
-        return "reviewer_self_review_forbidden"
+    reason = _checker_self_check_forbidden_reason(
+        ledger,
+        responsibility,
+        packet_id=packet_id,
+        agent_id=prior_agent_id,
+    )
+    if reason:
+        return reason
     return ""
 
 
@@ -7600,7 +7634,7 @@ def _repair_loop_same_family_rows(ledger: Mapping[str, Any], blocker: Mapping[st
 def _repair_loop_break_glass_review(ledger: Mapping[str, Any], blocker: Mapping[str, Any]) -> dict[str, Any]:
     family, rows = _repair_loop_same_family_rows(ledger, blocker)
     attempt_count = len(rows)
-    threshold_exceeded = attempt_count >= _REPAIR_LOOP_BREAK_GLASS_THRESHOLD
+    threshold_exceeded = attempt_count > _REPAIR_LOOP_BREAK_GLASS_THRESHOLD
     root_cause_key = str(blocker.get("root_cause_loop_key") or "")
     return {
         "schema_version": "black_box_flowpilot.repair_loop_break_glass_review.v1",
@@ -7615,7 +7649,7 @@ def _repair_loop_break_glass_review(ledger: Mapping[str, Any], blocker: Mapping[
         "required_action": "controller_break_glass_diagnosis" if threshold_exceeded else "ordinary_pm_repair_allowed",
         "consecutive_scope": "same_repair_lineage_problem_identity",
         "reason": (
-            "same repair lineage repeated the same blocker problem five or more consecutive times"
+            "same repair lineage repeated the same blocker problem more than five consecutive times"
             if threshold_exceeded
             else "same repair lineage problem remains within ordinary PM repair threshold"
         ),
@@ -7676,7 +7710,7 @@ def _blocker_repeat_context(ledger: Mapping[str, Any], blocker: Mapping[str, Any
         "previous_blocker_ids": [row["blocker_id"] for row in same_family if row["blocker_id"] != blocker.get("blocker_id")],
         "same_family_blockers": same_family,
         "threshold": _REPAIR_LOOP_BREAK_GLASS_THRESHOLD,
-        "threshold_exceeded": repeat_count >= _REPAIR_LOOP_BREAK_GLASS_THRESHOLD,
+        "threshold_exceeded": repeat_count > _REPAIR_LOOP_BREAK_GLASS_THRESHOLD,
         "advisory_only": True,
     }
 
@@ -7955,6 +7989,17 @@ def lease_agent(
         raise BlackBoxRuntimeError(
             f"create-new role dispatch cannot reuse forbidden prior agent id: {prior_agent_id}; "
             f"replacement reason: {reason}"
+        )
+    checker_self_check_reason = _checker_self_check_forbidden_reason(
+        ledger,
+        responsibility,
+        packet_id=packet_id,
+        agent_id=effective_agent_id,
+    )
+    if checker_self_check_reason:
+        raise BlackBoxRuntimeError(
+            f"checker role dispatch cannot use target result producer agent id: {effective_agent_id}; "
+            f"reason: {checker_self_check_reason}"
         )
     lease_id = _next_id(ledger, "lease")
     lease = {
@@ -11742,6 +11787,8 @@ def _apply_valid_packet_result(
         gate = _pending_pm_decision_gate_for_subject(ledger, str(packet["envelope"]["subject_id"]))
         if gate and gate.get("status") == "awaiting_pm_flowguard_acceptance":
             return
+        if _close_parent_backward_replay_after_flowguard_pass(ledger, packet):
+            return
         repair_blocker_id = str(packet.get("repair_blocker_id") or "")
         _ensure_review_packet_for_task_result(
             ledger,
@@ -11809,6 +11856,52 @@ def _apply_valid_packet_result(
         record_pm_disposition(ledger, node_id, result["result_id"], decision=decision, reason=reason)
         return
     raise BlackBoxRuntimeError(f"unknown packet kind: {packet_kind}")
+
+
+def _close_parent_backward_replay_after_flowguard_pass(
+    ledger: dict[str, Any],
+    flowguard_packet: Mapping[str, Any],
+) -> bool:
+    flowguard_envelope = flowguard_packet.get("envelope", {}) if isinstance(flowguard_packet.get("envelope"), Mapping) else {}
+    subject_packet_id = str(flowguard_envelope.get("subject_id") or "")
+    subject_packet = ledger.get("packets", {}).get(subject_packet_id)
+    if not isinstance(subject_packet, dict):
+        return False
+    subject_envelope = subject_packet.get("envelope", {}) if isinstance(subject_packet.get("envelope"), Mapping) else {}
+    if str(subject_envelope.get("route_scope") or "") != "parent_backward_replay":
+        return False
+    node_id = str(subject_envelope.get("route_node_id") or "")
+    if not node_id:
+        raise BlackBoxRuntimeError("parent backward replay subject is missing route_node_id")
+    if _parent_backward_replay_accepted(ledger, node_id):
+        _ensure_pm_disposition_packet_for_node(ledger, node_id, subject_packet_id)
+        return True
+    target_result_id = str(flowguard_envelope.get("target_result_id") or "")
+    if not target_result_id:
+        raise BlackBoxRuntimeError("parent backward replay FlowGuard packet is missing target_result_id")
+    subject_result = ledger.get("results", {}).get(target_result_id)
+    if not isinstance(subject_result, dict):
+        raise BlackBoxRuntimeError("parent backward replay target result is missing")
+    if str(subject_result.get("packet_id") or "") != subject_packet_id:
+        raise BlackBoxRuntimeError("parent backward replay target result does not belong to subject packet")
+    accepted_result_id = str(subject_packet.get("accepted_result_id") or "")
+    if accepted_result_id and accepted_result_id != target_result_id:
+        raise BlackBoxRuntimeError("parent backward replay subject already accepted a different result")
+    if not accepted_result_id:
+        producer_lease_id = str(subject_result.get("producer_lease_id") or "")
+        producer_lease = ledger.get("leases", {}).get(producer_lease_id)
+        if not isinstance(producer_lease, dict):
+            raise BlackBoxRuntimeError("parent backward replay target result is missing producer lease")
+        _accept_packet_result(
+            ledger,
+            subject_packet,
+            subject_result,
+            producer_lease,
+            reason="parent_backward_replay_flowguard_passed",
+        )
+    _record_parent_backward_replay_closure(ledger, node_id, subject_packet)
+    _ensure_pm_disposition_packet_for_node(ledger, node_id, subject_packet_id)
+    return True
 
 
 def _apply_closure_side_effect_for_subject(
@@ -13126,6 +13219,14 @@ def _result_mechanical_blockers(
         blockers.append("stale_evidence")
     if packet_body_hash is not None and packet_body_hash != packet["envelope"]["body_hash"]:
         blockers.append("body_hash_mismatch")
+    checker_self_check_reason = _checker_self_check_forbidden_reason(
+        ledger,
+        str(lease.get("responsibility") or ""),
+        packet_id=str(packet.get("packet_id") or ""),
+        agent_id=str(lease.get("agent_id") or ""),
+    )
+    if checker_self_check_reason:
+        blockers.append(checker_self_check_reason)
     blockers.extend(_required_authorized_result_read_blockers(ledger, lease=lease, packet=packet))
     blockers.extend(_formal_repair_identity_blockers(packet))
     if packet.get("accepted_result_id"):
@@ -15196,7 +15297,7 @@ def _repair_loop_break_glass_action(ledger: Mapping[str, Any]) -> RuntimeAction 
         blocker_id = str(blocker.get("blocker_id") or "")
         return RuntimeAction(
             "control_plane_blocker",
-            "same current route node repeated the same blocker problem five or more consecutive times; Controller break-glass diagnosis is required",
+            "same current route node repeated the same blocker problem more than five consecutive times; Controller break-glass diagnosis is required",
             blocker_id,
             "controller",
         )
@@ -15278,7 +15379,7 @@ def _flowguard_formal_artifact_mechanical_break_glass_review(
             if prefix == accepted_prefix:
                 counts[key] = 0
     attempt_count = int(counts.get(latest_key, 0) or 0)
-    threshold_exceeded = attempt_count >= _REPAIR_LOOP_BREAK_GLASS_THRESHOLD
+    threshold_exceeded = attempt_count > _REPAIR_LOOP_BREAK_GLASS_THRESHOLD
     return {
         "schema_version": "black_box_flowpilot.mechanical_repair_loop_break_glass_review.v1",
         "family_key": latest_key,
@@ -15318,7 +15419,7 @@ def _mechanical_formal_artifact_break_glass_action(ledger: Mapping[str, Any]) ->
         )
     return RuntimeAction(
         "control_plane_blocker",
-        "same current FlowGuard formal evidence artifact problem repeated five or more times; Controller break-glass diagnosis is required",
+        "same current FlowGuard formal evidence artifact problem repeated more than five times; Controller break-glass diagnosis is required",
         family_key,
         "controller",
     )

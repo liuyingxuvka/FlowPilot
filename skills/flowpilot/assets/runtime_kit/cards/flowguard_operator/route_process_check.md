@@ -154,7 +154,7 @@ model:
   if the same repair lineage keeps returning with the same blocker class, gate
   kind, and required recheck role. Preserve that blocker class for a repeated
   same-lineage defect so runtime can count the loop. If the process route would
-  allow five or more consecutive same-lineage attempts before Controller
+  allow more than five consecutive same-lineage attempts before Controller
   break-glass diagnosis, block the route/process model and recommend PM repair
   of the control path. Similar blocker classes across different route nodes do
   not trigger this threshold by themselves.

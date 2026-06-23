@@ -958,6 +958,88 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         )
         self.assertEqual(ledger["leases"][reviewer]["agent_id"], "reviewer-replacement")
 
+    def test_flowguard_operator_rejects_checking_own_target_result(self) -> None:
+        ledger, packet_id, worker = runtime_runner._base_ledger()
+        runtime.ack_lease(ledger, worker, packet_id)
+        runtime.submit_result(ledger, worker, packet_id, role_result_body("Worker produced current result."))
+        flowguard_packet = runtime_runner._open_packet_by_kind(ledger, "flowguard_check")
+
+        prior_flowguard = runtime.lease_agent(ledger, "flowguard_operator", agent_id="worker-1")
+        self.assertEqual(ledger["leases"][prior_flowguard]["agent_id"], "worker-1")
+        assignment = runtime.resolve_role_assignment(ledger, "flowguard_operator", packet_id=flowguard_packet)
+        self.assertEqual(assignment["disposition"], "create_new_role")
+        self.assertEqual(assignment["prior_agent_id"], "worker-1")
+        self.assertEqual(assignment["replacement_reason"], "flowguard_operator_self_check_forbidden")
+
+        with self.assertRaisesRegex(runtime.BlackBoxRuntimeError, "cannot reuse forbidden prior agent id"):
+            runtime.lease_agent(
+                ledger,
+                "flowguard_operator",
+                agent_id="worker-1",
+                packet_id=flowguard_packet,
+                assignment_id=assignment["assignment_id"],
+            )
+
+        replacement = runtime.lease_agent(
+            ledger,
+            "flowguard_operator",
+            agent_id="flowguard-replacement",
+            packet_id=flowguard_packet,
+            assignment_id=assignment["assignment_id"],
+        )
+        self.assertEqual(ledger["leases"][replacement]["agent_id"], "flowguard-replacement")
+
+    def test_flowguard_operator_self_check_submission_is_mechanically_blocked(self) -> None:
+        ledger, packet_id, worker = runtime_runner._base_ledger()
+        runtime.ack_lease(ledger, worker, packet_id)
+        runtime.submit_result(ledger, worker, packet_id, role_result_body("Worker produced current result."))
+        flowguard_packet = runtime_runner._open_packet_by_kind(ledger, "flowguard_check")
+        flowguard_lease = runtime.lease_agent(
+            ledger,
+            "flowguard_operator",
+            agent_id="flowguard-original",
+            packet_id=flowguard_packet,
+        )
+        runtime.assign_packet(ledger, flowguard_packet, flowguard_lease)
+        runtime.ack_lease(ledger, flowguard_lease, flowguard_packet)
+        open_required_result_reads(ledger, flowguard_packet, flowguard_lease)
+        write_flowguard_evidence_artifact(ledger, flowguard_packet)
+
+        ledger["leases"][flowguard_lease]["agent_id"] = "worker-1"
+        result_id = runtime.submit_result(
+            ledger,
+            flowguard_lease,
+            flowguard_packet,
+            flowguard_result_body("Illegal same-agent FlowGuard self-check."),
+        )
+
+        result = ledger["results"][result_id]
+        self.assertEqual(result["status"], "blocked")
+        self.assertIn("flowguard_operator_self_check_forbidden", result["mechanical_blockers"])
+        self.assertEqual(ledger["packets"][flowguard_packet]["status"], "result_blocked")
+
+    def test_flowguard_operator_reuse_allowed_for_different_target_producer(self) -> None:
+        ledger, packet_id, worker = runtime_runner._base_ledger()
+        reusable_flowguard = runtime.lease_agent(ledger, "flowguard_operator", agent_id="flowguard-reusable")
+        runtime.ack_lease(ledger, worker, packet_id)
+        runtime.submit_result(ledger, worker, packet_id, role_result_body("Worker produced current result."))
+        flowguard_packet = runtime_runner._open_packet_by_kind(ledger, "flowguard_check")
+
+        assignment = runtime.resolve_role_assignment(ledger, "flowguard_operator", packet_id=flowguard_packet)
+
+        self.assertEqual(assignment["disposition"], "reuse_existing_role")
+        self.assertEqual(assignment["effective_agent_id"], "flowguard-reusable")
+        self.assertEqual(assignment["replacement_reason"], "")
+        lease = runtime.lease_agent(
+            ledger,
+            "flowguard_operator",
+            packet_id=flowguard_packet,
+            assignment_id=assignment["assignment_id"],
+        )
+        self.assertNotEqual(lease, reusable_flowguard)
+        self.assertEqual(ledger["leases"][lease]["agent_id"], "flowguard-reusable")
+        self.assertTrue(ledger["leases"][lease]["role_continuity"]["reused"])
+
     def test_system_validation_rejects_blocked_or_self_review_records(self) -> None:
         ledger, packet_id, worker = runtime_runner._base_ledger()
         runtime.ack_lease(ledger, worker, packet_id)
@@ -2064,6 +2146,92 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         self.assertEqual(len(review_packets), 1)
         self.assertEqual(json.loads(review_packets[0]["body"])["staged_effect"]["effect_kind"], "commit_node_acceptance_plan")
 
+    def test_parent_backward_replay_flowguard_pass_closes_without_second_reviewer(self) -> None:
+        ledger = runtime.new_ledger("Goal", "Acceptance")
+        authorize_background_collaboration(ledger)
+        ledger["high_standard_control_flow_required"] = True
+        runtime.create_route(ledger, "Route", ["Parent", "Child"])
+        route_version = ledger["active_route_version"]
+        parent_id = "parent-1"
+        child_id = "child-1"
+        ledger["routes"][str(route_version)]["node_order"] = [parent_id, child_id]
+        ledger["route_nodes"][parent_id] = {
+            "node_id": parent_id,
+            "route_version": route_version,
+            "title": "Parent",
+            "node_kind": "module",
+            "status": "awaiting_parent_backward_replay",
+            "responsibility": "reviewer",
+            "modeled_target": "development_process",
+            "repair_generation": 0,
+            "acceptance_criteria": ["children compose"],
+            "child_node_ids": [child_id],
+        }
+        ledger["route_nodes"][child_id] = {
+            "node_id": child_id,
+            "route_version": route_version,
+            "title": "Child",
+            "node_kind": "leaf",
+            "parent_node_id": parent_id,
+            "status": "accepted",
+            "accepted_result_id": "child-result-1",
+            "repair_generation": 0,
+            "acceptance_criteria": ["child accepted"],
+            "child_node_ids": [],
+        }
+        packet_id = runtime.ensure_parent_backward_replay_packet(ledger, parent_id)
+        reviewer = runtime.lease_agent(ledger, "reviewer", agent_id="reviewer-parent", packet_id=packet_id)
+        runtime.assign_packet(ledger, packet_id, reviewer)
+        runtime.ack_lease(ledger, reviewer, packet_id)
+        replay_body = packet_result_contracts.minimal_valid_shape_for_family("task.parent_backward_replay")
+        replay_body.update(
+            {
+                "parent_node_id": parent_id,
+                "child_node_ids": [child_id],
+                "child_evidence_refs": ["child-result-1"],
+                "composition_decision": "pass",
+                "blockers": [],
+            }
+        )
+        replay_result_id = runtime.submit_result(ledger, reviewer, packet_id, json.dumps(replay_body))
+        flowguard_packet = runtime_runner._open_packet_by_kind(ledger, "flowguard_check")
+
+        flowguard = runtime.lease_agent(
+            ledger,
+            "flowguard_operator",
+            agent_id="flowguard-parent",
+            packet_id=flowguard_packet,
+        )
+        runtime.assign_packet(ledger, flowguard_packet, flowguard)
+        runtime.ack_lease(ledger, flowguard, flowguard_packet)
+        open_required_result_reads(ledger, flowguard_packet, flowguard)
+        write_flowguard_evidence_artifact(ledger, flowguard_packet)
+        runtime.submit_result(
+            ledger,
+            flowguard,
+            flowguard_packet,
+            flowguard_result_body("FlowGuard accepted parent backward replay."),
+        )
+
+        self.assertEqual(ledger["packets"][packet_id]["accepted_result_id"], replay_result_id)
+        self.assertTrue(runtime._parent_backward_replay_accepted(ledger, parent_id))
+        self.assertEqual(ledger["route_nodes"][parent_id]["status"], "awaiting_pm_disposition")
+        self.assertFalse(
+            [
+                packet
+                for packet in ledger["packets"].values()
+                if packet["envelope"]["packet_kind"] == "review"
+                and packet["envelope"].get("subject_id") == packet_id
+            ]
+        )
+        pm_packets = [
+            packet
+            for packet in ledger["packets"].values()
+            if packet["envelope"]["packet_kind"] == "pm_disposition"
+            and packet["envelope"].get("subject_id") == packet_id
+        ]
+        self.assertEqual(len(pm_packets), 1)
+
     def test_pm_disposition_packet_minimal_shape_uses_current_node_acceptance_items(self) -> None:
         ledger = runtime.new_ledger("Goal", "Acceptance")
         authorize_background_collaboration(ledger)
@@ -2892,14 +3060,14 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         self.assertEqual(review["family_key"], root_cause_key)
         self.assertEqual(review["root_cause_loop_key"], root_cause_key)
 
-    def test_break_glass_threshold_stays_normal_for_four_and_triggers_on_fifth(self) -> None:
+    def test_break_glass_threshold_stays_normal_through_fifth_and_triggers_on_sixth(self) -> None:
         root_cause_key = runtime._flowguard_missing_evidence_root_cause_key(
             subject_packet_id="packet-subject",
             target_result_id="result-subject",
             repair_blocker_id="",
         )
 
-        for attempt_count, threshold_exceeded in ((4, False), (5, True)):
+        for attempt_count, threshold_exceeded in ((4, False), (5, False), (6, True)):
             with self.subTest(attempt_count=attempt_count):
                 ledger = runtime.new_ledger("Goal", "Contract")
                 runtime.create_route(ledger, "Route", ["Do work"])
