@@ -17,7 +17,7 @@ TEST_NAMES = (
     "test_load_resume_state_does_not_downgrade_existing_role_recovery_report",
     "test_incomplete_stateful_rehydrate_receipt_becomes_control_blocker",
     "test_role_no_output_report_reissues_same_work_before_role_recovery",
-    "test_completed_liveness_fault_no_output_redirects_to_reissue_not_recovery",
+    "test_no_output_event_reissues_same_work_not_recovery",
     "test_role_no_output_escalates_to_pm_after_two_reissues",
     "test_manual_resume_rehydration_keeps_existing_waits_outside_role_recovery",
     "test_manual_resume_rehydration_does_not_reissue_missing_obligations_without_role_recovery",

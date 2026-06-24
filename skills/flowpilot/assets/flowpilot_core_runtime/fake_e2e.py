@@ -19,7 +19,56 @@ CURRENT_REPORT_FAKE_SUCCESS_FIELD_MARKERS = (
 )
 
 
-def _route_plan_body() -> str:
+def _route_plan_body(*, parent_route: bool = False) -> str:
+    if parent_route:
+        return json.dumps(
+            {
+                "schema_version": runtime.ROUTE_PLAN_SCHEMA_VERSION,
+                "decision": "pass",
+                "nodes": [
+                    {
+                        "node_id": "parent-001",
+                        "title": "Compose implementation and validation",
+                        "node_kind": "module",
+                        "responsibility": "reviewer",
+                        "modeled_target": "development_process",
+                        "child_node_ids": ["node-001", "node-002"],
+                        "acceptance_criteria": [
+                            "Implementation and validation children compose into a complete parent outcome.",
+                            "Parent replay has current child evidence and an independent review.",
+                        ],
+                        "acceptance_item_ids": ["acc-001", "acc-002", "acc-003"],
+                    },
+                    {
+                        "node_id": "node-001",
+                        "title": "Implement target behavior",
+                        "node_kind": "leaf",
+                        "parent_node_id": "parent-001",
+                        "responsibility": "worker",
+                        "modeled_target": "development_process",
+                        "acceptance_criteria": [
+                            "Target behavior is implemented in the bounded project scope.",
+                            "Worker result references current changed files and evidence.",
+                        ],
+                        "acceptance_item_ids": ["acc-001"],
+                    },
+                    {
+                        "node_id": "node-002",
+                        "title": "Validate implementation evidence",
+                        "node_kind": "leaf",
+                        "parent_node_id": "parent-001",
+                        "responsibility": "worker",
+                        "modeled_target": "model_test_alignment",
+                        "acceptance_criteria": [
+                            "FlowGuard and ordinary checks are current for the node.",
+                            "Evidence is sufficient for independent review.",
+                        ],
+                        "acceptance_item_ids": ["acc-002", "acc-003"],
+                    },
+                ],
+            },
+            sort_keys=True,
+        )
     return json.dumps(
         {
             "schema_version": runtime.ROUTE_PLAN_SCHEMA_VERSION,
@@ -126,7 +175,12 @@ def _terminal_supplemental_contract_for_packet(
     return contract
 
 
-def _body_for_packet(packet: dict[str, Any], ledger: dict[str, Any] | None = None) -> str:
+def _body_for_packet(
+    packet: dict[str, Any],
+    ledger: dict[str, Any] | None = None,
+    *,
+    parent_route: bool = False,
+) -> str:
     envelope = packet["envelope"]
     kind = envelope.get("packet_kind", "task")
     scope = envelope.get("route_scope", "")
@@ -184,7 +238,7 @@ def _body_for_packet(packet: dict[str, Any], ledger: dict[str, Any] | None = Non
             }
         )
     if kind == "task" and scope == "planning":
-        return _route_plan_body()
+        return _route_plan_body(parent_route=parent_route)
     if kind == "task" and scope == "node_acceptance_plan":
         node_id = envelope.get("route_node_id", "")
         try:
@@ -523,6 +577,7 @@ def run_fake_e2e(
     flowguard_artifact_fault_mode: str = "",
     inject_terminal_replay_blocker: bool = False,
     repair_terminal_replay_blocker: bool = False,
+    use_parent_route: bool = False,
 ) -> dict[str, Any]:
     start_result = start_run(
         root,
@@ -602,13 +657,13 @@ def run_fake_e2e(
             body = _consistency_fault_body_for_packet(packet, ledger=ledger)
             injected_consistency_fault_families.add(family_id)
         elif should_artifact_consistency_fault:
-            body = _body_for_packet(packet, ledger=ledger)
+            body = _body_for_packet(packet, ledger=ledger, parent_route=use_parent_route)
             injected_artifact_consistency_fault_families.add(family_id)
         elif should_fault:
             body = _fault_body_for_packet(packet, ledger=ledger)
             injected_fault_families.add(family_id)
         else:
-            body = _body_for_packet(packet, ledger=ledger)
+            body = _body_for_packet(packet, ledger=ledger, parent_route=use_parent_route)
         if family_id.startswith("flowguard_check."):
             mode = "valid"
             artifact_decision = "pass"

@@ -76,6 +76,9 @@ failures:
   role-output schema disagree in a way that blocks normal routing.
 - The same control-plane blocker repeats after normal retry, PM repair, or role
   reissue cannot form a valid next action.
+- Runtime or final-gate metadata shows a current parent/module backward replay
+  result with missing independent review, but Router cannot issue or route the
+  normal current `review.any_current_subject` packet for that replay result.
 
 Escalate from ordinary Controller break-glass to Recovery Supervisor mode when
 the current evidence shows that the Controller role itself is no longer a safe
@@ -137,6 +140,12 @@ Controller may:
 - relay only the normal Router/Controller next action after the control channel
   becomes healthy again;
 - record a FlowPilot skill improvement observation for later permanent repair.
+
+For a missing parent/module backward replay review, the legal restoration is a
+current Reviewer packet over the accepted parent replay result. Do not invent a
+generic `final_closure` repair packet, do not use terminal backward replay as a
+replacement signature, and do not mark the parent replay closed from Controller
+metadata.
 
 Recovery Supervisor may additionally:
 

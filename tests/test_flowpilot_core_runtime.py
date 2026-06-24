@@ -2146,7 +2146,7 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         self.assertEqual(len(review_packets), 1)
         self.assertEqual(json.loads(review_packets[0]["body"])["staged_effect"]["effect_kind"], "commit_node_acceptance_plan")
 
-    def test_parent_backward_replay_flowguard_pass_closes_without_second_reviewer(self) -> None:
+    def test_parent_backward_replay_flowguard_pass_requires_independent_review_before_closure(self) -> None:
         ledger = runtime.new_ledger("Goal", "Acceptance")
         authorize_background_collaboration(ledger)
         ledger["high_standard_control_flow_required"] = True
@@ -2214,16 +2214,45 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         )
 
         self.assertEqual(ledger["packets"][packet_id]["accepted_result_id"], replay_result_id)
-        self.assertTrue(runtime._parent_backward_replay_accepted(ledger, parent_id))
-        self.assertEqual(ledger["route_nodes"][parent_id]["status"], "awaiting_pm_disposition")
-        self.assertFalse(
-            [
-                packet
-                for packet in ledger["packets"].values()
-                if packet["envelope"]["packet_kind"] == "review"
-                and packet["envelope"].get("subject_id") == packet_id
-            ]
+        self.assertTrue(runtime._parent_backward_replay_result_accepted(ledger, parent_id))
+        self.assertFalse(runtime._parent_backward_replay_accepted(ledger, parent_id))
+        self.assertEqual(ledger["route_nodes"][parent_id]["status"], "awaiting_parent_backward_replay_review")
+        review_packets = [
+            packet
+            for packet in ledger["packets"].values()
+            if packet["envelope"]["packet_kind"] == "review"
+            and packet["envelope"].get("subject_id") == packet_id
+        ]
+        self.assertEqual(len(review_packets), 1)
+        review_packet_id = review_packets[0]["packet_id"]
+        pm_packets = [
+            packet
+            for packet in ledger["packets"].values()
+            if packet["envelope"]["packet_kind"] == "pm_disposition"
+            and packet["envelope"].get("subject_id") == packet_id
+        ]
+        self.assertEqual(pm_packets, [])
+
+        reviewer_lease = runtime.lease_agent(
+            ledger,
+            "reviewer",
+            agent_id="reviewer-independent-parent",
+            packet_id=review_packet_id,
         )
+        runtime.assign_packet(ledger, review_packet_id, reviewer_lease)
+        runtime.ack_lease(ledger, reviewer_lease, review_packet_id)
+        open_required_result_reads(ledger, review_packet_id, reviewer_lease)
+        runtime.submit_result(
+            ledger,
+            reviewer_lease,
+            review_packet_id,
+            review_result_body("Independent Reviewer accepted parent backward replay."),
+        )
+
+        self.assertTrue(runtime._parent_backward_replay_accepted(ledger, parent_id))
+        replay_id = ledger["route_nodes"][parent_id]["parent_backward_replay_id"]
+        self.assertEqual(ledger["parent_backward_replays"][replay_id]["review_id"], ledger["results"][replay_result_id]["review_id"])
+        self.assertEqual(ledger["route_nodes"][parent_id]["status"], "awaiting_pm_disposition")
         pm_packets = [
             packet
             for packet in ledger["packets"].values()
@@ -2231,6 +2260,136 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
             and packet["envelope"].get("subject_id") == packet_id
         ]
         self.assertEqual(len(pm_packets), 1)
+
+    def test_parent_backward_replay_review_selector_routes_deepest_gap_first(self) -> None:
+        ledger = runtime.new_ledger("Goal", "Acceptance")
+        authorize_background_collaboration(ledger)
+        ledger["contract_frozen"] = True
+        ledger["recursive_route_execution_required"] = True
+        ledger["high_standard_control_flow_required"] = True
+        runtime.create_route(ledger, "Route", ["Root", "Parent", "Child"])
+        route_version = ledger["active_route_version"]
+        ledger["routes"][str(route_version)]["node_order"] = ["root", "parent", "child"]
+        ledger["route_nodes"] = {
+            "root": {
+                "node_id": "root",
+                "route_version": route_version,
+                "title": "Root",
+                "node_kind": "module",
+                "status": "awaiting_parent_backward_replay_review",
+                "child_node_ids": ["parent"],
+            },
+            "parent": {
+                "node_id": "parent",
+                "route_version": route_version,
+                "title": "Parent",
+                "node_kind": "module",
+                "parent_node_id": "root",
+                "status": "awaiting_parent_backward_replay_review",
+                "child_node_ids": ["child"],
+            },
+            "child": {
+                "node_id": "child",
+                "route_version": route_version,
+                "title": "Child",
+                "node_kind": "leaf",
+                "parent_node_id": "parent",
+                "status": "accepted",
+                "child_node_ids": [],
+            },
+        }
+        for node_id in ("root", "parent"):
+            packet_id = f"{node_id}-parent-replay-packet"
+            result_id = f"{node_id}-parent-replay-result"
+            ledger["packets"][packet_id] = {
+                "packet_id": packet_id,
+                "status": "accepted",
+                "accepted_result_id": result_id,
+                "result_ids": [result_id],
+                "envelope": {
+                    "packet_kind": "task",
+                    "route_scope": "parent_backward_replay",
+                    "route_node_id": node_id,
+                    "route_version": route_version,
+                    "responsibility": "reviewer",
+                    "required_flowguard_target": "development_process",
+                    "acceptance_criteria": [],
+                },
+            }
+            ledger["results"][result_id] = {
+                "result_id": result_id,
+                "packet_id": packet_id,
+                "status": "accepted",
+                "accepted": True,
+            }
+
+        action = runtime.router_next_action(ledger)
+
+        self.assertEqual(action.action_type, "issue_review_packet")
+        self.assertEqual(action.subject_id, "parent-parent-replay-packet")
+
+    def test_terminal_replay_routes_missing_parent_replay_review_to_reviewer_first(self) -> None:
+        ledger = runtime.new_ledger("Goal", "Acceptance")
+        authorize_background_collaboration(ledger)
+        ledger["contract_frozen"] = True
+        ledger["recursive_route_execution_required"] = True
+        ledger["high_standard_control_flow_required"] = True
+        runtime.create_route(ledger, "Route", ["Parent", "Child"])
+        route_version = ledger["active_route_version"]
+        ledger["routes"][str(route_version)]["node_order"] = ["parent", "child"]
+        ledger["execution_frontier"] = {
+            "active_route_version": route_version,
+            "active_node_id": "",
+            "completed_nodes": ["child"],
+            "status": "ready_for_final_closure",
+        }
+        ledger["latest_validation_evidence_id"] = "validation-current"
+        ledger["route_nodes"] = {
+            "parent": {
+                "node_id": "parent",
+                "route_version": route_version,
+                "title": "Parent",
+                "node_kind": "module",
+                "status": "awaiting_parent_backward_replay_review",
+                "child_node_ids": ["child"],
+            },
+            "child": {
+                "node_id": "child",
+                "route_version": route_version,
+                "title": "Child",
+                "node_kind": "leaf",
+                "parent_node_id": "parent",
+                "status": "accepted",
+                "child_node_ids": [],
+            },
+        }
+        ledger["packets"]["parent-replay-packet"] = {
+            "packet_id": "parent-replay-packet",
+            "status": "accepted",
+            "accepted_result_id": "parent-replay-result",
+            "result_ids": ["parent-replay-result"],
+            "envelope": {
+                "packet_kind": "task",
+                "route_scope": "parent_backward_replay",
+                "route_node_id": "parent",
+                "route_version": route_version,
+                "responsibility": "reviewer",
+                "required_flowguard_target": "development_process",
+                "acceptance_criteria": [],
+            },
+        }
+        ledger["results"]["parent-replay-result"] = {
+            "result_id": "parent-replay-result",
+            "packet_id": "parent-replay-packet",
+            "status": "accepted",
+            "accepted": True,
+        }
+
+        action = runtime.router_next_action(ledger)
+
+        self.assertEqual(action.action_type, "issue_review_packet")
+        self.assertEqual(action.subject_id, "parent-replay-packet")
+        self.assertFalse(runtime._final_gate_ledgers_clean_for_terminal_replay(ledger))
 
     def test_pm_disposition_packet_minimal_shape_uses_current_node_acceptance_items(self) -> None:
         ledger = runtime.new_ledger("Goal", "Acceptance")

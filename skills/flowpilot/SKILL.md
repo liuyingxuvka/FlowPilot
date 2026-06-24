@@ -51,7 +51,7 @@ Common current-runtime commands:
 
 ```powershell
 python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json status
-python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json patrol --sleep-seconds 60
+python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json patrol --sleep-seconds 300
 python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json final-preflight
 python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json resume --reason manual_resume
 python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json dispatch-current-role --packet-id <packet_id> --responsibility <role> --host-kind live --agent-id <role_surface_agent_id_if_requested>

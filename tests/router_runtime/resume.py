@@ -38,7 +38,7 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertFalse(action["requires_host_role_binding"])
         self.assertTrue(action["requires_host_role_rehydration"])
         self.assertTrue(action["new_binding_required_only_for_replacements"])
-        self.assertTrue(action["reuse_live_agents_when_active"])
+        self.assertNotIn("reuse_live_agents_when_active", action)
         self.assertEqual(action["payload_contract"]["name"], "resume_role_rehydration_receipt")
         self.assert_payload_contract_mentions(
             action["payload_contract"],

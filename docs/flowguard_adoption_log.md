@@ -20255,6 +20255,48 @@ to identify unsupported historical-layer branches that should be deleted.
 ### Risk Evidence Summary
 - none recorded
 
+## 2026-06-24 - Sequential Parent Replay Review Closure
+
+- Task: `enforce-sequential-parent-replay-reviews`
+- Route: Predictive KB preflight, OpenSpec change, DevelopmentProcessFlow, focused FlowGuard model, router background TestMesh, release-tier local evidence, install sync.
+- Trigger: live FlowPilot GlassBreak analysis showed parent backward replay task results could be treated as parent closure evidence without a separate independent Reviewer pass, leaving missing-review repair to look like a generic closure repair instead of a routable review packet.
+- Result:
+  - Parent backward replay now produces raw replay evidence first.
+  - Parent/module closure, parent-segment PM disposition, terminal backward replay, and final route-wide closure now require an accepted independent current Reviewer review over that replay result.
+  - Missing parent replay review repair now routes to normal current `review.any_current_subject` packets.
+  - Current-contract-only boundary was preserved: no old-run migration, compatibility alias, fallback translator, old-router path, or historical-state promotion was added.
+- Validation:
+  - `openspec validate enforce-sequential-parent-replay-reviews --strict` -> valid.
+  - `python -m py_compile ...` for changed runtime, simulation, and test files -> OK.
+  - `python -m pytest tests/test_flowpilot_core_runtime.py tests/test_flowpilot_new_entrypoint.py tests/test_flowpilot_high_standard_control_flow.py tests/test_flowpilot_card_instruction_coverage.py -q` -> 269 passed, 278 subtests passed.
+  - `python simulations/run_flowpilot_sequential_parent_replay_review_checks.py --json` -> ok true; detects raw replay closure, missing-review repair, terminal replay, parallel-review, root-gap, and old-state fallback hazards.
+  - `python simulations/run_flowpilot_legal_next_action_checks.py --json` -> ok true.
+  - `python simulations/run_flowpilot_parent_child_lifecycle_checks.py --json` -> ok true.
+  - `python simulations/run_flowpilot_model_test_alignment_checks.py --json-out simulations/flowpilot_model_test_alignment_results.json` -> alignment_ok true, full_coverage_ok true.
+  - `python simulations/run_card_instruction_coverage_checks.py --json-out simulations/card_instruction_coverage_results.json` -> ok true.
+  - `python -m unittest -v tests.test_flowpilot_test_tiers` -> OK.
+  - Router background evidence:
+    - `router-quality-gates` under `tmp/test_background_seq_parent_quality` -> all 13 child artifacts passed.
+    - `router-packets` under `tmp/test_background_seq_parent_packets` -> all 20 child artifacts passed.
+    - `router-route` under `tmp/test_background_seq_parent_route2` -> all 23 child artifacts passed, including isolated parent backward replay checks.
+    - `router-terminal` under `tmp/test_background_seq_parent_terminal2` -> all 33 child artifacts passed.
+  - Release-tier local evidence under `tmp/flowguard_background` -> `release_tooling`, `meta_full`, `capability_full`, and `public_release_check` all exit 0 with passed meta status.
+  - `python simulations/run_flowpilot_acceptance_testmesh_checks.py ... --release-evidence ...` -> ok true; routine and release gates true.
+  - `python scripts/flowguard_project_topology.py build` and `python scripts/flowguard_project_topology.py check` -> ok true; 153 model runners, 452 test commands, 1067 code surfaces, no findings.
+  - `python -m flowguard project-audit --root .` -> pass; FlowGuard package 0.52.1, schema 1.0.
+  - `python scripts/install_flowpilot.py --sync-repo-owned --json`, `python scripts/audit_local_install_sync.py --json`, `python scripts/install_flowpilot.py --check --json`, and `python scripts/check_install.py --json` -> OK; installed FlowPilot digest matches repository source.
+- Counterexamples preserved:
+  - A raw parent replay task result closes the parent without independent review.
+  - PM parent segment disposition runs before reviewed parent replay evidence exists.
+  - Terminal backward replay or final closure runs while parent/module replay review is missing.
+  - A shallower root/top gap masks the deepest current missing parent replay review gap.
+  - Old raw replay completion state is promoted into current closure evidence.
+- Skipped steps:
+  - No old-run migration, old-state repair, compatibility shim, fallback translator, legacy field alias, old-router path, remote push, GitHub release, deploy, public publication, or OpenSpec archive was performed.
+- Claim boundary:
+  - This supports local FlowPilot v0.10.19 current-contract closure behavior, model/test/prompt alignment, release-tier local evidence, topology freshness, installed-skill synchronization, and local git closeout preparation.
+  - It does not claim live AI semantic quality for unrelated future work or publish a remote GitHub release.
+
 ### Next Actions
 - Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
 

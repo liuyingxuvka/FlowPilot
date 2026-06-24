@@ -597,14 +597,18 @@ When the checked route is created or mutated, the project manager enumerates
 all effective parent/composite nodes from `flow.json` into the frontier. As
 each parent reaches closure, PM writes
 `.flowpilot/runs/<run-id>/routes/<route-id>/nodes/<parent-node-id>/parent_backward_replay.json`.
-The human-like reviewer starts from the parent-level delivered result, then
+The parent replay role starts from the parent-level delivered result, then
 checks the parent goal, child rollup, child evidence, child node acceptance
 plans, and current product behavior. Child-local passes are pointers only.
+That replay output is still only a task result. The parent replay closes only
+after a separate current independent Reviewer packet accepts that replay
+result.
 
-After each replay segment, PM records continue, repair an existing child, add
-or route to a sibling child, rebuild the child subtree, bubble impact to the
-next parent, or PM stop. Repair or route mutation makes affected child evidence
-and parent rollups stale, and the same parent replay reruns before closure.
+After each reviewed replay segment, PM records continue, repair an existing
+child, add or route to a sibling child, rebuild the child subtree, bubble
+impact to the next parent, or PM stop. Repair or route mutation makes affected
+child evidence and parent rollups stale, and the same parent replay plus
+independent replay-result review reruns before closure.
 Terminal review later consumes these local parent replays as evidence pointers
 but still independently replays the final delivered product.
 
@@ -1007,14 +1011,17 @@ development-process model, product-function model, execution, neutral
 observation, inspection, and same parent/composite recheck.
 
 Every effective route node with children must also run a parent backward replay
-before it closes. Child-local passes are inputs, not sufficient closure
-evidence. The parent review reloads the child evidence, replays it against the
-parent product-function model, inspects whether the children compose into the
-parent goal, and either passes or mutates the route. Failure strategies are:
+and then receive an independent review of that replay result before it closes.
+Child-local passes are inputs, not sufficient closure evidence. The parent
+replay reloads the child evidence, replays it against the parent
+product-function model, inspects whether the children compose into the parent
+goal, and then a separate current Reviewer review accepts or blocks that replay
+result. Failure strategies are:
 return to an affected existing child, insert an adjacent sibling child, rebuild
 the child subtree, or bubble the impact to the next parent when the parent
 contract changed. The affected evidence and parent rollups become stale until
-the changed child/subtree passes and the same parent backward review reruns.
+the changed child/subtree passes and the same parent backward replay plus
+independent replay-result review reruns.
 
 Pause, restart, and terminal closure use a unified lifecycle reconciliation
 gate. Before claiming any of those states, FlowPilot scans
@@ -1193,8 +1200,9 @@ Conditional:
 
 `complete` is allowed only when final verification exists, anti-rough-finish
 review passed, feature/acceptance/quality-candidate reviews are complete,
-every structurally required local parent backward replay has a reviewer pass
-and PM segment decision, product-function model replay and final human-like
+every structurally required local parent backward replay result has an
+independent current Reviewer pass and PM segment decision, product-function
+model replay and final human-like
 inspection passed,
 PM-owned final route-wide gate ledger has been rebuilt from the current route,
 its generated-resource lineage is resolved, its unresolved count is zero, the

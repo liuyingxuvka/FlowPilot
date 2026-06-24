@@ -1,0 +1,108 @@
+{
+  "covered_risks": [
+    "old_state_counts_raw_replay_as_complete",
+    "parallel_parent_replay_reviews",
+    "raw_replay_closes_parent",
+    "root_gap_selected_before_child_gap",
+    "segment_decision_before_review",
+    "terminal_replay_before_parent_review"
+  ],
+  "flowguard": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "reachability_failures": [],
+    "summary": "sequences=3 initial_states=1 traces=48",
+    "violation_count": 0
+  },
+  "hazards": {
+    "failures": [],
+    "hazards": {
+      "old_state_counts_raw_replay_as_complete": {
+        "detected": true,
+        "expected_failure": "fallback or old-state compatibility path was used for parent replay review",
+        "failures": [
+          "fallback or old-state compatibility path was used for parent replay review",
+          "parent replay closure recorded before independent review accepted",
+          "PM parent segment decision offered before independent parent replay review",
+          "parent completion offered before independent parent replay review",
+          "terminal backward replay offered before required parent replay review",
+          "old raw parent replay completion claim counted as current closure without review"
+        ]
+      },
+      "parallel_parent_replay_reviews": {
+        "detected": true,
+        "expected_failure": "Router did not issue exactly one current parent replay review packet",
+        "failures": [
+          "Router did not issue exactly one current parent replay review packet for missing-review gaps"
+        ]
+      },
+      "raw_replay_closes_parent": {
+        "detected": true,
+        "expected_failure": "parent replay closure recorded before independent review accepted",
+        "failures": [
+          "parent replay closure recorded before independent review accepted"
+        ]
+      },
+      "root_gap_selected_before_child_gap": {
+        "detected": true,
+        "expected_failure": "Router selected a shallower parent replay review gap before the deepest current gap",
+        "failures": [
+          "Router selected a shallower parent replay review gap before the deepest current gap"
+        ]
+      },
+      "segment_decision_before_review": {
+        "detected": true,
+        "expected_failure": "PM parent segment decision offered before independent parent replay review",
+        "failures": [
+          "PM parent segment decision offered before independent parent replay review"
+        ]
+      },
+      "terminal_replay_before_parent_review": {
+        "detected": true,
+        "expected_failure": "terminal backward replay offered before required parent replay review",
+        "failures": [
+          "terminal backward replay offered before required parent replay review"
+        ]
+      }
+    },
+    "ok": true
+  },
+  "intended": {
+    "accepted_plan": [
+      "valid_deepest_gap_selected_first",
+      "valid_sequential_parent_replay_review"
+    ],
+    "failures": {},
+    "ok": true
+  },
+  "model": "flowpilot_sequential_parent_replay_review",
+  "ok": true,
+  "progress": {
+    "cannot_reach_terminal_count": 0,
+    "ok": true,
+    "samples": [],
+    "stuck_state_count": 0,
+    "terminal_state_count": 8
+  },
+  "safe_graph": {
+    "accepted_scenarios": [
+      "valid_deepest_gap_selected_first",
+      "valid_sequential_parent_replay_review"
+    ],
+    "edge_count": 16,
+    "invariant_failures": [],
+    "missing_labels": [],
+    "ok": true,
+    "rejected_scenarios": [
+      "old_state_counts_raw_replay_as_complete",
+      "parallel_parent_replay_reviews",
+      "raw_replay_closes_parent",
+      "root_gap_selected_before_child_gap",
+      "segment_decision_before_review",
+      "terminal_replay_before_parent_review"
+    ],
+    "state_count": 17
+  }
+}

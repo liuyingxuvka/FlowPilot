@@ -216,16 +216,17 @@
     },
     "review": {
       "alignment_family_count": 0,
-      "code_surface_count": 3,
-      "known_bad_count": 67,
-      "model_count": 3,
+      "code_surface_count": 4,
+      "known_bad_count": 76,
+      "model_count": 4,
       "runner_keys": [
         "flowpilot_current_scope_pre_review_reconciliation",
         "flowpilot_reviewer_active_challenge",
-        "flowpilot_reviewer_only_gate"
+        "flowpilot_reviewer_only_gate",
+        "flowpilot_sequential_parent_replay_review"
       ],
       "surface_kinds": {
-        "model_check_runner": 3
+        "model_check_runner": 4
       },
       "test_command_count": 0
     },
@@ -1837,6 +1838,19 @@
       "repair_types": [],
       "surface_id": "model-check:run_flowpilot_semantic_gate_outcome_checks",
       "surface_owner": "model-check:run_flowpilot_semantic_gate_outcome_checks"
+    },
+    {
+      "area": "review",
+      "covered": true,
+      "evidence_status": "passed",
+      "gap_codes": [],
+      "kind": "model_check_runner",
+      "name": "run_flowpilot_sequential_parent_replay_review_checks",
+      "path": "simulations/run_flowpilot_sequential_parent_replay_review_checks.py",
+      "release_relevance": "validation_gate",
+      "repair_types": [],
+      "surface_id": "model-check:run_flowpilot_sequential_parent_replay_review_checks",
+      "surface_owner": "model-check:run_flowpilot_sequential_parent_replay_review_checks"
     },
     {
       "area": "structure",
@@ -14364,14 +14378,14 @@
       "path": "simulations/flowpilot_model_test_alignment_results.json"
     }
   },
-  "generated_at_epoch": 1782209206.4528515,
+  "generated_at_epoch": 1782278748.134502,
   "generator_version": "1",
   "layer_counts": {
     "alignment_families": 14,
-    "code_surfaces": 1066,
+    "code_surfaces": 1067,
     "evidence_summaries": 5,
-    "known_bad_signals": 2557,
-    "models": 152,
+    "known_bad_signals": 2566,
+    "models": 153,
     "test_commands": 452
   },
   "model_test_alignment": [
@@ -19167,6 +19181,36 @@
       "runner_path": "simulations/run_flowpilot_semantic_gate_outcome_checks.py"
     },
     {
+      "area": "review",
+      "coverage_tier": "unclassified_model_tier",
+      "evidence": {
+        "confidence": "",
+        "decision": "",
+        "edge_count": 16,
+        "finding_count": null,
+        "full_coverage_ok": null,
+        "known_bad": [
+          "failures",
+          "hazards",
+          "ok",
+          "old_state_counts_raw_replay_as_complete",
+          "parallel_parent_replay_reviews",
+          "raw_replay_closes_parent",
+          "root_gap_selected_before_child_gap",
+          "segment_decision_before_review",
+          "terminal_replay_before_parent_review"
+        ],
+        "ok": true,
+        "present": true,
+        "release_convergence_ok": null,
+        "state_count": 17
+      },
+      "model_path": "simulations/flowpilot_sequential_parent_replay_review_model.py",
+      "result_path": "simulations/flowpilot_sequential_parent_replay_review_results.json",
+      "runner_key": "flowpilot_sequential_parent_replay_review",
+      "runner_path": "simulations/run_flowpilot_sequential_parent_replay_review_checks.py"
+    },
+    {
       "area": "structure",
       "coverage_tier": "supporting_model_owned",
       "evidence": {
@@ -20582,15 +20626,15 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1781444168509205900,
+      "mtime_ns": 1782276868109363500,
       "path": "scripts/test_tier/router_startup_foreground_commands.py",
-      "size": 9825
+      "size": 9802
     },
     {
       "exists": true,
-      "mtime_ns": 1781447636842428600,
+      "mtime_ns": 1782276336640030000,
       "path": "scripts/test_tier/router_terminal_commands.py",
-      "size": 17837
+      "size": 17812
     },
     {
       "exists": true,
@@ -20630,7 +20674,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1782207233332262200,
+      "mtime_ns": 1782277414741473500,
       "path": "simulations/capability_thin_parent_results.json",
       "size": 20668
     },
@@ -20642,7 +20686,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1782207485434030800,
+      "mtime_ns": 1782277244320800600,
       "path": "simulations/card_instruction_coverage_results.json",
       "size": 45730
     },
@@ -20666,9 +20710,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1781694429292351100,
+      "mtime_ns": 1782278723730520000,
       "path": "simulations/flowpilot_acceptance_testmesh_results.json",
-      "size": 73923
+      "size": 66950
     },
     {
       "exists": true,
@@ -21338,7 +21382,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1781514308349512000,
+      "mtime_ns": 1782277241222411400,
       "path": "simulations/flowpilot_legal_next_action_results.json",
       "size": 37428
     },
@@ -21428,9 +21472,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1782207466149298600,
+      "mtime_ns": 1782277256489553400,
       "path": "simulations/flowpilot_model_test_alignment_results.json",
-      "size": 4383186
+      "size": 4384046
     },
     {
       "exists": true,
@@ -21566,7 +21610,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1781263486867503200,
+      "mtime_ns": 1782277241294430200,
       "path": "simulations/flowpilot_parent_child_lifecycle_results.json",
       "size": 7125
     },
@@ -22088,6 +22132,18 @@
     },
     {
       "exists": true,
+      "mtime_ns": 1782273895432277600,
+      "path": "simulations/flowpilot_sequential_parent_replay_review_model.py",
+      "size": 11947
+    },
+    {
+      "exists": true,
+      "mtime_ns": 1782277109367110000,
+      "path": "simulations/flowpilot_sequential_parent_replay_review_results.json",
+      "size": 3901
+    },
+    {
+      "exists": true,
       "mtime_ns": 1779106372643224800,
       "path": "simulations/flowpilot_shared_maintenance_log_model.py",
       "size": 15915
@@ -22376,9 +22432,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1782207233374125700,
+      "mtime_ns": 1782277415294335300,
       "path": "simulations/meta_thin_parent_results.json",
-      "size": 26212
+      "size": 26204
     },
     {
       "exists": true,
@@ -22418,7 +22474,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1782207340159381000,
+      "mtime_ns": 1782277365351114500,
       "path": "simulations/release_tooling_results.json",
       "size": 28699
     },
@@ -23144,6 +23200,12 @@
     },
     {
       "exists": true,
+      "mtime_ns": 1782273895433262400,
+      "path": "simulations/run_flowpilot_sequential_parent_replay_review_checks.py",
+      "size": 8766
+    },
+    {
+      "exists": true,
       "mtime_ns": 1781511335046544600,
       "path": "simulations/run_flowpilot_shared_maintenance_log_checks.py",
       "size": 8081
@@ -23372,9 +23434,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1782104288899097700,
+      "mtime_ns": 1782276876545411800,
       "path": "skills/flowpilot/SKILL.md",
-      "size": 8384
+      "size": 8385
     },
     {
       "exists": true,
@@ -23486,9 +23548,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1781926980195449400,
+      "mtime_ns": 1782274067201838200,
       "path": "skills/flowpilot/assets/flowpilot_new_run_commands.py",
-      "size": 7175
+      "size": 7254
     },
     {
       "exists": true,
@@ -25892,9 +25954,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1781675022287745500,
+      "mtime_ns": 1782273706914166200,
       "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_closure.md",
-      "size": 13554
+      "size": 13884
     },
     {
       "exists": true,
@@ -25982,15 +26044,15 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1781641399539634200,
+      "mtime_ns": 1782273706908409300,
       "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_parent_backward_targets.md",
-      "size": 5047
+      "size": 5401
     },
     {
       "exists": true,
-      "mtime_ns": 1780666234456095600,
+      "mtime_ns": 1782273706911049300,
       "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_parent_segment_decision.md",
-      "size": 6987
+      "size": 7369
     },
     {
       "exists": true,
@@ -26096,9 +26158,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1781675077835214500,
+      "mtime_ns": 1782273706912529700,
       "path": "skills/flowpilot/assets/runtime_kit/cards/reviewer/final_backward_replay.md",
-      "size": 6125
+      "size": 6498
     },
     {
       "exists": true,
@@ -26120,9 +26182,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1781628953625030000,
+      "mtime_ns": 1782273706910101900,
       "path": "skills/flowpilot/assets/runtime_kit/cards/reviewer/parent_backward_replay.md",
-      "size": 4983
+      "size": 5369
     },
     {
       "exists": true,
@@ -26198,9 +26260,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1782206233800606800,
+      "mtime_ns": 1782273706915684400,
       "path": "skills/flowpilot/assets/runtime_kit/cards/system/controller_break_glass_repair.md",
-      "size": 16041
+      "size": 16606
     },
     {
       "exists": true,
@@ -26354,9 +26416,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1781849424692493300,
+      "mtime_ns": 1782276336638021300,
       "path": "tests/router_runtime/resume.py",
-      "size": 59996
+      "size": 59993
     },
     {
       "exists": true,
@@ -26456,9 +26518,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1782206153898965300,
+      "mtime_ns": 1782273624137947100,
       "path": "tests/test_flowpilot_core_runtime.py",
-      "size": 271216
+      "size": 278197
     },
     {
       "exists": true,
@@ -26516,9 +26578,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1782016241086235300,
+      "mtime_ns": 1782274089879240800,
       "path": "tests/test_flowpilot_new_entrypoint.py",
-      "size": 76941
+      "size": 79516
     },
     {
       "exists": true,
@@ -28072,13 +28134,11 @@
         "-k",
         "foreground_controller_standby_keeps_alive_when_daemon_has_no_ready_action",
         "-k",
-        "foreground_controller_standby_materializes_report_reminder_with_liveness_probe",
+        "foreground_controller_standby_materializes_report_progress_reminder",
         "-k",
         "foreground_controller_standby_requests_liveness_check_on_stale_or_missing_daemon",
         "-k",
         "foreground_controller_standby_returns_ack_reminder_and_blocker_due",
-        "-k",
-        "foreground_controller_standby_returns_lost_role_blocker_required",
         "-k",
         "foreground_controller_standby_returns_no_output_reissue_required",
         "-k",
@@ -28086,13 +28146,15 @@
         "-k",
         "controller_patrol_timer_allows_terminal_return_only_when_stopped",
         "-k",
-        "controller_patrol_timer_continues_for_daemon_patrol_inside_thirty_second_window",
+        "controller_patrol_timer_continues_for_daemon_patrol_inside_five_minute_window",
         "-k",
         "controller_patrol_timer_continue_patrol_restarts_and_waits",
         "-k",
         "controller_patrol_timer_requests_liveness_check_after_delayed_daemon_patrol",
         "-k",
         "nonterminal_user_status_return_is_not_controller_stop",
+        "-k",
+        "wait_reminder_receipt_rejects_legacy_liveness_probe_payload",
         "tests.router_runtime.foreground_controller"
       ],
       "description": "Foreground standby and patrol timer slice.",
@@ -29935,11 +29997,11 @@
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
-        "test_active_agent_lookup_rejects_unknown_recovered_liveness",
+        "test_active_agent_lookup_rejects_unaddressable_recovered_binding",
         "-k",
         "test_blocked_role_recovery_receipt_reclaims_existing_report",
         "-k",
-        "test_completed_liveness_fault_no_output_redirects_to_reissue_not_recovery",
+        "test_no_output_event_reissues_same_work_not_recovery",
         "-k",
         "test_mid_run_role_liveness_fault_uses_unified_recovery_before_normal_work",
         "-k",
@@ -30433,13 +30495,11 @@
         "-k",
         "foreground_controller_standby_keeps_alive_when_daemon_has_no_ready_action",
         "-k",
-        "foreground_controller_standby_materializes_report_reminder_with_liveness_probe",
+        "foreground_controller_standby_materializes_report_progress_reminder",
         "-k",
         "foreground_controller_standby_requests_liveness_check_on_stale_or_missing_daemon",
         "-k",
         "foreground_controller_standby_returns_ack_reminder_and_blocker_due",
-        "-k",
-        "foreground_controller_standby_returns_lost_role_blocker_required",
         "-k",
         "foreground_controller_standby_returns_no_output_reissue_required",
         "-k",
@@ -30447,13 +30507,15 @@
         "-k",
         "controller_patrol_timer_allows_terminal_return_only_when_stopped",
         "-k",
-        "controller_patrol_timer_continues_for_daemon_patrol_inside_thirty_second_window",
+        "controller_patrol_timer_continues_for_daemon_patrol_inside_five_minute_window",
         "-k",
         "controller_patrol_timer_continue_patrol_restarts_and_waits",
         "-k",
         "controller_patrol_timer_requests_liveness_check_after_delayed_daemon_patrol",
         "-k",
         "nonterminal_user_status_return_is_not_controller_stop",
+        "-k",
+        "wait_reminder_receipt_rejects_legacy_liveness_probe_payload",
         "tests.router_runtime.foreground_controller"
       ],
       "description": "Foreground standby and patrol timer slice.",
@@ -31897,11 +31959,11 @@
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
-        "test_active_agent_lookup_rejects_unknown_recovered_liveness",
+        "test_active_agent_lookup_rejects_unaddressable_recovered_binding",
         "-k",
         "test_blocked_role_recovery_receipt_reclaims_existing_report",
         "-k",
-        "test_completed_liveness_fault_no_output_redirects_to_reissue_not_recovery",
+        "test_no_output_event_reissues_same_work_not_recovery",
         "-k",
         "test_mid_run_role_liveness_fault_uses_unified_recovery_before_normal_work",
         "-k",
@@ -33653,13 +33715,11 @@
         "-k",
         "foreground_controller_standby_keeps_alive_when_daemon_has_no_ready_action",
         "-k",
-        "foreground_controller_standby_materializes_report_reminder_with_liveness_probe",
+        "foreground_controller_standby_materializes_report_progress_reminder",
         "-k",
         "foreground_controller_standby_requests_liveness_check_on_stale_or_missing_daemon",
         "-k",
         "foreground_controller_standby_returns_ack_reminder_and_blocker_due",
-        "-k",
-        "foreground_controller_standby_returns_lost_role_blocker_required",
         "-k",
         "foreground_controller_standby_returns_no_output_reissue_required",
         "-k",
@@ -33667,13 +33727,15 @@
         "-k",
         "controller_patrol_timer_allows_terminal_return_only_when_stopped",
         "-k",
-        "controller_patrol_timer_continues_for_daemon_patrol_inside_thirty_second_window",
+        "controller_patrol_timer_continues_for_daemon_patrol_inside_five_minute_window",
         "-k",
         "controller_patrol_timer_continue_patrol_restarts_and_waits",
         "-k",
         "controller_patrol_timer_requests_liveness_check_after_delayed_daemon_patrol",
         "-k",
         "nonterminal_user_status_return_is_not_controller_stop",
+        "-k",
+        "wait_reminder_receipt_rejects_legacy_liveness_probe_payload",
         "tests.router_runtime.foreground_controller"
       ],
       "description": "Foreground standby and patrol timer slice.",
@@ -35117,11 +35179,11 @@
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
-        "test_active_agent_lookup_rejects_unknown_recovered_liveness",
+        "test_active_agent_lookup_rejects_unaddressable_recovered_binding",
         "-k",
         "test_blocked_role_recovery_receipt_reclaims_existing_report",
         "-k",
-        "test_completed_liveness_fault_no_output_redirects_to_reissue_not_recovery",
+        "test_no_output_event_reissues_same_work_not_recovery",
         "-k",
         "test_mid_run_role_liveness_fault_uses_unified_recovery_before_normal_work",
         "-k",

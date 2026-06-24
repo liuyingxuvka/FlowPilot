@@ -102,9 +102,9 @@ ROUTER_TERMINAL_CORE_COMMANDS = (
         "router_resume_liveness_faults",
         "tests.router_runtime.resume",
         patterns=(
-            "test_active_agent_lookup_rejects_unknown_recovered_liveness",
+            "test_active_agent_lookup_rejects_unaddressable_recovered_binding",
             "test_blocked_role_recovery_receipt_reclaims_existing_report",
-            "test_completed_liveness_fault_no_output_redirects_to_reissue_not_recovery",
+            "test_no_output_event_reissues_same_work_not_recovery",
             "test_mid_run_role_liveness_fault_uses_unified_recovery_before_normal_work",
             "test_role_no_output_escalates_to_pm_after_two_reissues",
             "test_role_no_output_report_reissues_same_work_before_role_recovery",

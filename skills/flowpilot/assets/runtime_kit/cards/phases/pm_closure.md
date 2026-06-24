@@ -28,6 +28,11 @@ acceptance items and the terminal backward replay to pass every
 `acceptance_item` segment the runtime issued. PM may not approve closure while
 any user-sourced or PM high-standard item lacks direct evidence, reviewer or
 FlowGuard gate closure, valid waiver authority, or final replay coverage.
+PM may not treat terminal backward replay as a replacement for an independent
+review of a local parent/module backward replay result. A
+`parent_backward_replay_review_missing` blocker or non-covered
+`reviewed_parent_backward_replay` row must return to the current parent replay
+review packet before terminal closure can continue.
 If terminal supplemental repair was entered, PM may approve normal closure only
 when `terminal_supplemental_repair.status` is `clean` and every
 `supplemental_repair_closure` row is covered. `repair_rounds_exhausted` is a

@@ -34,6 +34,13 @@ owner of final repair strategy.
 For an active parent node, replay child outcomes backward from the parent
 delivered result to the parent goal.
 
+This card executes the parent/module backward replay task. It is not the
+independent review signature over the replay result. Submit only the replay
+result or blocker for this packet; the runtime will issue a separate current
+`review.any_current_subject` packet to an independent Reviewer before the
+parent replay can close. Do not claim that this task result is its own
+independent review.
+
 Do not approve from worker reports alone. Start with a neutral observation,
 probe the current artifact or behavior directly when applicable, compare child
 evidence to the parent goal, and record blocking findings.

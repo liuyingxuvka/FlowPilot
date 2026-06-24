@@ -53,6 +53,12 @@ Every runtime-issued `segment_targets[]` entry must appear exactly once in
 `route_segment_replay`. Missing, duplicate, or unexpected segment ids block
 terminal replay.
 
+Terminal backward replay cannot substitute for a missing independent review of
+a local parent/module backward replay result. If the PM final ledger reports
+`parent_backward_replay_review_missing` or a non-covered
+`reviewed_parent_backward_replay` row, block terminal replay and route the gap
+back to the current parent-replay review packet instead of closing the segment.
+
 Allowed row statuses are `closed`, `blocked`, `waived`, and `superseded`.
 Completion can pass only when `final_blockers` is an explicit empty array.
 When any final blocker exists, include one object with `blocker_id`,

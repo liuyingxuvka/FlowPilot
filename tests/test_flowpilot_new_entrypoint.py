@@ -764,6 +764,53 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
             self.assertFalse(status["sealed_bodies_visible"])
             self.assertFalse([lease for lease in status["leases"] if lease["status"] == "active"])
 
+    def test_fake_end_to_end_parent_replay_has_independent_review_before_closure(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            result = flowpilot_new.run_fake_e2e(
+                root,
+                run_id="run-e2e-parent-replay",
+                startup_text="Build and validate a toy command with a parent route.",
+                use_parent_route=True,
+            )
+
+            self.assertTrue(result["ok"], result)
+            self.assertEqual(result["closure"]["decision"], "complete")
+            shell = run_shell.load_run_shell(root, run_id="run-e2e-parent-replay")
+            ledger = run_shell.load_run_ledger(shell)
+            parent_replay_packets = [
+                packet
+                for packet in ledger["packets"].values()
+                if packet["envelope"].get("packet_kind", "task") == "task"
+                and packet["envelope"].get("route_scope") == "parent_backward_replay"
+            ]
+            self.assertEqual(len(parent_replay_packets), 1)
+            parent_replay_packet = parent_replay_packets[0]
+            parent_replay_reviews = [
+                packet
+                for packet in ledger["packets"].values()
+                if packet["envelope"].get("packet_kind") == "review"
+                and packet["envelope"].get("route_scope") == "parent_backward_replay"
+                and packet["envelope"].get("subject_id") == parent_replay_packet["packet_id"]
+            ]
+            self.assertEqual(len(parent_replay_reviews), 1)
+            replay_result_id = parent_replay_packet["accepted_result_id"]
+            review_id = ledger["results"][replay_result_id]["review_id"]
+            self.assertTrue(review_id)
+            self.assertEqual(ledger["reviews"][review_id]["decision"], "accept")
+            self.assertEqual(ledger["reviews"][review_id]["subject_packet_id"], parent_replay_packet["packet_id"])
+            self.assertTrue(ledger["parent_backward_replays"])
+            replay_record = next(iter(ledger["parent_backward_replays"].values()))
+            self.assertEqual(replay_record["source_packet_id"], parent_replay_packet["packet_id"])
+            self.assertEqual(replay_record["review_id"], review_id)
+            reviewed_rows = [
+                row
+                for row in ledger["final_requirement_evidence_matrix"]["rows"]
+                if row["kind"] == "reviewed_parent_backward_replay"
+            ]
+            self.assertEqual(len(reviewed_rows), 1)
+            self.assertEqual(reviewed_rows[0]["status"], "covered")
+
     def test_fake_end_to_end_contract_chaos_reissues_missing_fields_and_finishes(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

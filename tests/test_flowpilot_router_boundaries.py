@@ -196,7 +196,7 @@ class FlowPilotRouterBoundaryTests(unittest.TestCase):
         self.assertEqual(controller_boundary._format_seconds_for_command(0.5), "0.5")
         self.assertEqual(
             controller_boundary._controller_patrol_timer_command(),
-            "python skills\\flowpilot\\assets\\flowpilot_router.py --root . --json controller-patrol-timer --seconds 60",
+            "python skills\\flowpilot\\assets\\flowpilot_router.py --root . --json controller-patrol-timer --seconds 300",
         )
         self.assertEqual(
             controller_boundary._controller_patrol_timer_command(2.5),

@@ -2326,11 +2326,19 @@ def _enter_nonworker_route_scope(ledger: dict[str, Any], node_id: str, *, reason
         else:
             ensure_next_node_task_packet(ledger)
         return True
-    if _node_requires_parent_backward_replay(node) and not _parent_backward_replay_accepted(ledger, node_id):
-        node["status"] = "awaiting_parent_backward_replay"
-        _frontier_update(ledger, node_id, "awaiting_parent_backward_replay", reason)
-        ensure_parent_backward_replay_packet(ledger, node_id)
-        return True
+    if _node_requires_parent_backward_replay(node):
+        if not _parent_backward_replay_result_accepted(ledger, node_id):
+            node["status"] = "awaiting_parent_backward_replay"
+            _frontier_update(ledger, node_id, "awaiting_parent_backward_replay", reason)
+            ensure_parent_backward_replay_packet(ledger, node_id)
+            return True
+        if not _parent_backward_replay_accepted(ledger, node_id):
+            node["status"] = "awaiting_parent_backward_replay_review"
+            _frontier_update(ledger, node_id, "awaiting_parent_backward_replay_review", reason)
+            packet = _accepted_parent_backward_replay_result_packet(ledger, node_id)
+            if isinstance(packet, Mapping):
+                _ensure_review_packet_for_task_result(ledger, str(packet.get("packet_id") or ""))
+            return True
     node["status"] = "awaiting_pm_disposition"
     _frontier_update(ledger, node_id, "awaiting_pm_disposition", reason)
     return True
@@ -2435,6 +2443,112 @@ def _parent_backward_replay_accepted(ledger: Mapping[str, Any], node_id: str) ->
         return False
     replay = ledger.get("parent_backward_replays", {}).get(replay_id, {})
     return isinstance(replay, dict) and replay.get("status") == "accepted" and replay.get("node_id") == node_id
+
+
+def _accepted_parent_backward_replay_result_packet(ledger: Mapping[str, Any], node_id: str) -> Mapping[str, Any] | None:
+    active_route = ledger.get("active_route_version")
+    for packet in reversed(list(ledger.get("packets", {}).values())):
+        if not isinstance(packet, Mapping):
+            continue
+        envelope = packet.get("envelope", {}) if isinstance(packet.get("envelope"), Mapping) else {}
+        if envelope.get("packet_kind", "task") != "task":
+            continue
+        if envelope.get("route_scope") != "parent_backward_replay":
+            continue
+        if str(envelope.get("route_node_id") or "") != node_id:
+            continue
+        if active_route is not None and envelope.get("route_version") != active_route:
+            continue
+        result_id = str(packet.get("accepted_result_id") or "")
+        result = ledger.get("results", {}).get(result_id)
+        if packet.get("status") == "accepted" and result_id and isinstance(result, Mapping) and result.get("status") == "accepted":
+            return packet
+    return None
+
+
+def _parent_backward_replay_result_accepted(ledger: Mapping[str, Any], node_id: str) -> bool:
+    node = ledger.get("route_nodes", {}).get(node_id, {})
+    if isinstance(node, dict) and node.get("parent_backward_waiver"):
+        return True
+    return _accepted_parent_backward_replay_result_packet(ledger, node_id) is not None
+
+
+def _parent_backward_replay_review_id(ledger: Mapping[str, Any], node_id: str) -> str:
+    packet = _accepted_parent_backward_replay_result_packet(ledger, node_id)
+    if not isinstance(packet, Mapping):
+        return ""
+    result_id = str(packet.get("accepted_result_id") or "")
+    result = ledger.get("results", {}).get(result_id)
+    review_id = str(result.get("review_id") or "") if isinstance(result, Mapping) else ""
+    if not review_id:
+        return ""
+    review = ledger.get("reviews", {}).get(review_id)
+    if not isinstance(review, Mapping):
+        return ""
+    if str(review.get("subject_packet_id") or "") != str(packet.get("packet_id") or ""):
+        return ""
+    if str(review.get("result_id") or "") != result_id:
+        return ""
+    return review_id
+
+
+def _parent_backward_replay_review_accepted(ledger: Mapping[str, Any], node_id: str) -> bool:
+    node = ledger.get("route_nodes", {}).get(node_id, {})
+    if isinstance(node, dict) and node.get("parent_backward_waiver"):
+        return True
+    review_id = _parent_backward_replay_review_id(ledger, node_id)
+    return bool(review_id and _review_evidence_current_and_accepted(ledger, review_id, node_id=node_id))
+
+
+def _route_node_order_index(ledger: Mapping[str, Any], node_id: str) -> int:
+    route = ledger.get("routes", {}).get(str(ledger.get("active_route_version")), {})
+    node_order = [str(item) for item in route.get("node_order") or []] if isinstance(route, Mapping) else []
+    try:
+        return node_order.index(node_id)
+    except ValueError:
+        return len(node_order) + len(ledger.get("route_nodes", {}))
+
+
+def _route_node_depth(ledger: Mapping[str, Any], node_id: str, seen: set[str] | None = None) -> int:
+    seen = set(seen or set())
+    if node_id in seen:
+        return 0
+    seen.add(node_id)
+    node = ledger.get("route_nodes", {}).get(node_id, {})
+    if not isinstance(node, Mapping):
+        return 0
+    parent_id = str(node.get("parent_node_id") or "")
+    if not parent_id:
+        return 0
+    return 1 + _route_node_depth(ledger, parent_id, seen)
+
+
+def _parent_backward_replay_review_gap_packet(ledger: Mapping[str, Any]) -> Mapping[str, Any] | None:
+    candidates: list[tuple[int, int, Mapping[str, Any]]] = []
+    for node in _active_route_node_records(ledger):
+        node_id = str(node.get("node_id") or "")
+        if not node_id or not _node_requires_parent_backward_replay(node):
+            continue
+        if _parent_backward_replay_accepted(ledger, node_id):
+            continue
+        packet = _accepted_parent_backward_replay_result_packet(ledger, node_id)
+        if not isinstance(packet, Mapping):
+            continue
+        if _parent_backward_replay_review_accepted(ledger, node_id):
+            continue
+        review_packet = _find_packet(
+            ledger,
+            packet_kind="review",
+            subject_id=str(packet.get("packet_id") or ""),
+            target_result_id=str(packet.get("accepted_result_id") or ""),
+        )
+        if review_packet:
+            continue
+        candidates.append((-_route_node_depth(ledger, node_id), _route_node_order_index(ledger, node_id), packet))
+    if not candidates:
+        return None
+    candidates.sort(key=lambda item: (item[0], item[1]))
+    return candidates[0][2]
 
 
 def _terminal_backward_replay_accepted(ledger: Mapping[str, Any]) -> bool:
@@ -2724,6 +2838,22 @@ def _terminal_backward_replay_next_action(ledger: dict[str, Any]) -> RuntimeActi
     )
 
 
+def _parent_backward_replay_review_next_action(ledger: Mapping[str, Any]) -> RuntimeAction | None:
+    if not high_standard_flow_required(ledger) or not recursive_route_required(ledger):
+        return None
+    packet = _parent_backward_replay_review_gap_packet(ledger)
+    if not isinstance(packet, Mapping):
+        return None
+    node_id = str((packet.get("envelope") or {}).get("route_node_id") or "") if isinstance(packet.get("envelope"), Mapping) else ""
+    return RuntimeAction(
+        "issue_review_packet",
+        "parent/module backward replay result needs independent Reviewer review before parent closure",
+        str(packet.get("packet_id") or ""),
+        "reviewer",
+        node_id,
+    )
+
+
 def ensure_terminal_backward_replay_packet(ledger: dict[str, Any], validation_evidence_id: str = "") -> str:
     if _terminal_backward_replay_accepted(ledger):
         return ""
@@ -2781,7 +2911,7 @@ def ensure_terminal_backward_replay_packet(ledger: dict[str, Any], validation_ev
 
 
 def ensure_parent_backward_replay_packet(ledger: dict[str, Any], node_id: str) -> str:
-    if _parent_backward_replay_accepted(ledger, node_id):
+    if _parent_backward_replay_result_accepted(ledger, node_id):
         return ""
     existing = _find_live_scope_packet(ledger, "parent_backward_replay", route_node_id=node_id)
     if existing:
@@ -2863,12 +2993,21 @@ def record_pm_disposition(
     }
     node["pm_disposition_id"] = disposition_id
     if normalized == "accept":
-        if high_standard_flow_required(ledger) and _node_requires_parent_backward_replay(node) and not _parent_backward_replay_accepted(ledger, node_id):
-            node["status"] = "awaiting_parent_backward_replay"
-            _frontier_update(ledger, node_id, "awaiting_parent_backward_replay", "parent_backward_replay_required")
-            ensure_parent_backward_replay_packet(ledger, node_id)
-            _event(ledger, "pm_disposition_recorded", node_id=node_id, disposition_id=disposition_id, decision=normalized)
-            return disposition_id
+        if high_standard_flow_required(ledger) and _node_requires_parent_backward_replay(node):
+            if not _parent_backward_replay_result_accepted(ledger, node_id):
+                node["status"] = "awaiting_parent_backward_replay"
+                _frontier_update(ledger, node_id, "awaiting_parent_backward_replay", "parent_backward_replay_required")
+                ensure_parent_backward_replay_packet(ledger, node_id)
+                _event(ledger, "pm_disposition_recorded", node_id=node_id, disposition_id=disposition_id, decision=normalized)
+                return disposition_id
+            if not _parent_backward_replay_accepted(ledger, node_id):
+                node["status"] = "awaiting_parent_backward_replay_review"
+                _frontier_update(ledger, node_id, "awaiting_parent_backward_replay_review", "parent_backward_replay_review_required")
+                packet = _accepted_parent_backward_replay_result_packet(ledger, node_id)
+                if isinstance(packet, Mapping):
+                    _ensure_review_packet_for_task_result(ledger, str(packet.get("packet_id") or ""))
+                _event(ledger, "pm_disposition_recorded", node_id=node_id, disposition_id=disposition_id, decision=normalized)
+                return disposition_id
         node["status"] = "accepted"
         _advance_frontier_after_node_acceptance(ledger, node_id)
         _event(ledger, "route_node_accepted", node_id=node_id, disposition_id=disposition_id)
@@ -3407,6 +3546,13 @@ def build_final_route_wide_gate_ledger(ledger: dict[str, Any]) -> dict[str, Any]
                 unresolved.append(f"invalid_review_evidence:{node_id}")
             if node.get("validation_evidence_ids") and not _valid_validation_evidence_ids(ledger, node):
                 unresolved.append(f"invalid_validation_evidence:{node_id}")
+        if (
+            high_standard_flow_required(ledger)
+            and _node_requires_parent_backward_replay(node)
+            and _parent_backward_replay_result_accepted(ledger, node_id)
+            and not _parent_backward_replay_accepted(ledger, node_id)
+        ):
+            unresolved.append(f"parent_backward_replay_review_missing:{node_id}")
     for packet in ledger.get("packets", {}).values():
         if not isinstance(packet, Mapping) or not _packet_requires_current_acceptance(ledger, packet):
             continue
@@ -3613,12 +3759,24 @@ def build_final_requirement_evidence_matrix(ledger: dict[str, Any]) -> dict[str,
             )
             if _node_requires_parent_backward_replay(node):
                 replay_id = str(node.get("parent_backward_replay_id") or node.get("parent_backward_waiver") or "")
+                raw_packet = _accepted_parent_backward_replay_result_packet(ledger, node_id)
+                raw_result_id = str(raw_packet.get("accepted_result_id") or "") if isinstance(raw_packet, Mapping) else ""
+                review_id = _parent_backward_replay_review_id(ledger, node_id)
+                if _parent_backward_replay_accepted(ledger, node_id):
+                    replay_status = "covered"
+                    replay_evidence_ids = [item for item in [replay_id, review_id] if item]
+                elif raw_result_id:
+                    replay_status = "review_missing"
+                    replay_evidence_ids = [raw_result_id]
+                else:
+                    replay_status = "missing"
+                    replay_evidence_ids = []
                 add_row(
                     f"{node_id}:parent-replay",
-                    "parent_backward_replay",
-                    "covered" if _parent_backward_replay_accepted(ledger, node_id) else "missing",
-                    [replay_id] if replay_id else [],
-                    f"Parent/module node {node_id} has backward replay or waiver",
+                    "reviewed_parent_backward_replay",
+                    replay_status,
+                    replay_evidence_ids,
+                    f"Parent/module node {node_id} has backward replay plus independent review or waiver",
                 )
         if dispatch_blocker and _route_node_kind(node) in {"leaf", "repair"}:
             add_row(
@@ -6868,7 +7026,10 @@ def _retire_pending_route_mutation_after_frontier_commit(
 
 
 def _frontier_update(ledger: dict[str, Any], node_id: str, status: str, blocked_reason: str) -> None:
-    frontier = ledger.setdefault("execution_frontier", {})
+    frontier = ledger.get("execution_frontier")
+    if not isinstance(frontier, dict):
+        frontier = {}
+        ledger["execution_frontier"] = frontier
     frontier["active_node_id"] = node_id
     frontier["status"] = status
     frontier["blocked_reason"] = blocked_reason
@@ -11876,6 +12037,12 @@ def _close_parent_backward_replay_after_flowguard_pass(
     if _parent_backward_replay_accepted(ledger, node_id):
         _ensure_pm_disposition_packet_for_node(ledger, node_id, subject_packet_id)
         return True
+    if _parent_backward_replay_result_accepted(ledger, node_id):
+        node = _require(ledger.setdefault("route_nodes", {}), node_id, "route node")
+        node["status"] = "awaiting_parent_backward_replay_review"
+        _frontier_update(ledger, node_id, "awaiting_parent_backward_replay_review", "parent_backward_replay_review_required")
+        _ensure_review_packet_for_task_result(ledger, subject_packet_id)
+        return True
     target_result_id = str(flowguard_envelope.get("target_result_id") or "")
     if not target_result_id:
         raise BlackBoxRuntimeError("parent backward replay FlowGuard packet is missing target_result_id")
@@ -11899,8 +12066,10 @@ def _close_parent_backward_replay_after_flowguard_pass(
             producer_lease,
             reason="parent_backward_replay_flowguard_passed",
         )
-    _record_parent_backward_replay_closure(ledger, node_id, subject_packet)
-    _ensure_pm_disposition_packet_for_node(ledger, node_id, subject_packet_id)
+    node = _require(ledger.setdefault("route_nodes", {}), node_id, "route node")
+    node["status"] = "awaiting_parent_backward_replay_review"
+    _frontier_update(ledger, node_id, "awaiting_parent_backward_replay_review", "parent_backward_replay_review_required")
+    _ensure_review_packet_for_task_result(ledger, subject_packet_id)
     return True
 
 
@@ -11940,6 +12109,12 @@ def _apply_closure_side_effect_for_subject(
         ensure_next_node_task_packet(ledger)
         return
     if high_standard_flow_required(ledger) and route_scope == "parent_backward_replay" and node_id:
+        if not _parent_backward_replay_review_accepted(ledger, node_id):
+            node = _require(ledger.setdefault("route_nodes", {}), node_id, "route node")
+            node["status"] = "awaiting_parent_backward_replay_review"
+            _frontier_update(ledger, node_id, "awaiting_parent_backward_replay_review", "parent_backward_replay_review_required")
+            _ensure_review_packet_for_task_result(ledger, subject_packet_id)
+            return
         _record_parent_backward_replay_closure(ledger, node_id, subject_packet)
         _ensure_pm_disposition_packet_for_node(ledger, node_id, str(subject_envelope.get("subject_id") or subject_packet_id))
         return
@@ -11960,9 +12135,17 @@ def _apply_closure_side_effect_for_subject(
     if recursive_route_required(ledger) and node_id:
         _record_node_closure(ledger, node_id, system_closure_id)
         node = ledger.get("route_nodes", {}).get(node_id, {})
-        if high_standard_flow_required(ledger) and isinstance(node, dict) and _node_requires_parent_backward_replay(node) and not _parent_backward_replay_accepted(ledger, node_id):
-            ensure_parent_backward_replay_packet(ledger, node_id)
-            return
+        if high_standard_flow_required(ledger) and isinstance(node, dict) and _node_requires_parent_backward_replay(node):
+            if not _parent_backward_replay_result_accepted(ledger, node_id):
+                ensure_parent_backward_replay_packet(ledger, node_id)
+                return
+            if not _parent_backward_replay_accepted(ledger, node_id):
+                node["status"] = "awaiting_parent_backward_replay_review"
+                _frontier_update(ledger, node_id, "awaiting_parent_backward_replay_review", "parent_backward_replay_review_required")
+                packet = _accepted_parent_backward_replay_result_packet(ledger, node_id)
+                if isinstance(packet, Mapping):
+                    _ensure_review_packet_for_task_result(ledger, str(packet.get("packet_id") or ""))
+                return
         _ensure_pm_disposition_packet_for_node(ledger, node_id, subject_packet_id)
         return
     evidence_id = str(validation_evidence_id or ledger.get("latest_validation_evidence_id") or f"validation-{system_closure_id}")
@@ -12381,6 +12564,9 @@ def _record_parent_backward_replay_closure(
         raise BlackBoxRuntimeError(parent_repair_violation)
     result_id = str(subject_packet.get("accepted_result_id") or "")
     child_node_ids = list(node.get("child_node_ids") or [])
+    review_id = _parent_backward_replay_review_id(ledger, node_id)
+    if high_standard_flow_required(ledger) and not review_id:
+        raise BlackBoxRuntimeError("parent backward replay closure requires accepted independent review")
     replay_id = _next_id(ledger, "parent_replay")
     ledger.setdefault("parent_backward_replays", {})[replay_id] = {
         "replay_id": replay_id,
@@ -12388,6 +12574,7 @@ def _record_parent_backward_replay_closure(
         "node_id": node_id,
         "source_packet_id": subject_packet.get("packet_id", ""),
         "source_result_id": result_id,
+        "review_id": review_id,
         "child_node_ids": child_node_ids,
         "current_repair_child_result_ids": _accepted_result_ids_for_route_nodes(
             ledger,
@@ -15458,6 +15645,9 @@ def router_next_action(ledger: Mapping[str, Any]) -> RuntimeAction:
     closure = ledger.get("closure") or {}
     if closure.get("decision") == "complete":
         return RuntimeAction("terminal_complete", "final backward chain is complete")
+    parent_review_action = _parent_backward_replay_review_next_action(ledger)
+    if parent_review_action is not None:
+        return parent_review_action
     terminal_replay_action = _terminal_backward_replay_next_action(ledger)
     if terminal_replay_action is not None:
         return terminal_replay_action
@@ -15642,6 +15832,16 @@ def router_next_action(ledger: Mapping[str, Any]) -> RuntimeAction:
                     "reviewer",
                     "development_process",
                 )
+            if high_standard_flow_required(ledger) and node.get("status") == "awaiting_parent_backward_replay_review":
+                packet = _accepted_parent_backward_replay_result_packet(ledger, node_id)
+                if isinstance(packet, Mapping):
+                    return RuntimeAction(
+                        "issue_review_packet",
+                        "parent/module backward replay result needs independent Reviewer review before parent closure",
+                        str(packet.get("packet_id") or ""),
+                        "reviewer",
+                        node_id,
+                    )
             blocker = _node_worker_dispatch_blocker(ledger, node_id, node) if isinstance(node, Mapping) else ""
             if blocker:
                 child_id = _first_unresolved_child_node_id(ledger, node) if isinstance(node, Mapping) else ""
@@ -15653,7 +15853,7 @@ def router_next_action(ledger: Mapping[str, Any]) -> RuntimeAction:
                         "pm",
                         "development_process",
                     )
-                if high_standard_flow_required(ledger) and _node_requires_parent_backward_replay(node) and not _parent_backward_replay_accepted(ledger, node_id):
+                if high_standard_flow_required(ledger) and _node_requires_parent_backward_replay(node) and not _parent_backward_replay_result_accepted(ledger, node_id):
                     return RuntimeAction(
                         "issue_parent_backward_replay_packet",
                         "parent/module node requires backward replay before PM disposition",
@@ -15661,6 +15861,16 @@ def router_next_action(ledger: Mapping[str, Any]) -> RuntimeAction:
                         "reviewer",
                         "development_process",
                     )
+                if high_standard_flow_required(ledger) and _node_requires_parent_backward_replay(node) and not _parent_backward_replay_accepted(ledger, node_id):
+                    packet = _accepted_parent_backward_replay_result_packet(ledger, node_id)
+                    if isinstance(packet, Mapping):
+                        return RuntimeAction(
+                            "issue_review_packet",
+                            "parent/module backward replay result needs independent Reviewer review before parent closure",
+                            str(packet.get("packet_id") or ""),
+                            "reviewer",
+                            node_id,
+                        )
                 if node.get("status") == "awaiting_pm_disposition":
                     return RuntimeAction("issue_pm_disposition_packet", "node awaits PM disposition", node_id, "pm")
             if node.get("status") == "awaiting_pm_disposition":

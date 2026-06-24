@@ -36,6 +36,12 @@ Build local parent backward replay targets for every effective current-route
 node that has children. Derive the target list from the active route,
 frontier, node acceptance plan, and child evidence pointers.
 
+The parent backward replay execution produces a replay result only. It is not
+the independent Reviewer review that closes the parent replay gate. After the
+runtime accepts the replay result, wait for the current `review.any_current_subject`
+packet over that replay result before any parent segment decision or parent
+closure can count the replay as closed.
+
 Write
 `.flowpilot/runs/<run-id>/routes/<route-id>/parent_backward_targets.json`
 from the active route, active frontier, node acceptance plan, and child node

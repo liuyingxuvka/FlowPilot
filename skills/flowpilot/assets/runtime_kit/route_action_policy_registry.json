@@ -69,8 +69,8 @@
       "required_repair_command": "submit_parent_backward_replay_review",
       "router_events": ["reviewer_passes_parent_backward_replay", "reviewer_blocks_parent_backward_replay"],
       "transaction_type": "reviewer_gate_result",
-      "requires": ["parent_backward_targets_built", "child_chain_closed_current"],
-      "forbids": ["parent_backward_targets_missing", "child_chain_incomplete"],
+      "requires": ["parent_backward_targets_built", "child_chain_closed_current", "parent_backward_replay_result_ready"],
+      "forbids": ["parent_backward_targets_missing", "child_chain_incomplete", "parent_backward_replay_result_missing"],
       "commit_targets": ["run_state", "blocker_index", "status_summary"]
     },
     {
@@ -80,8 +80,8 @@
       "required_repair_command": "submit_pm_parent_segment_decision",
       "router_events": ["pm_records_parent_segment_decision"],
       "transaction_type": "route_progression",
-      "requires": ["active_parent_or_module", "parent_backward_replay_passed", "child_chain_closed_current"],
-      "forbids": ["parent_backward_replay_not_passed", "child_chain_incomplete", "stale_evidence_unresolved"],
+      "requires": ["active_parent_or_module", "parent_backward_replay_reviewed_current", "child_chain_closed_current"],
+      "forbids": ["parent_backward_replay_review_missing", "parent_backward_replay_not_passed", "child_chain_incomplete", "stale_evidence_unresolved"],
       "commit_targets": ["run_state", "status_summary"]
     },
     {
@@ -91,8 +91,8 @@
       "required_repair_command": "submit_pm_parent_completion",
       "router_events": ["pm_completes_parent_node_from_backward_replay"],
       "transaction_type": "route_progression",
-      "requires": ["active_parent_or_module", "parent_segment_decision_continue", "child_chain_closed_current", "route_frontier_ledger_versions_match"],
-      "forbids": ["non_continue_parent_segment_decision", "child_chain_incomplete", "stale_legal_action_snapshot"],
+      "requires": ["active_parent_or_module", "parent_segment_decision_continue", "parent_backward_replay_reviewed_current", "child_chain_closed_current", "route_frontier_ledger_versions_match"],
+      "forbids": ["non_continue_parent_segment_decision", "parent_backward_replay_review_missing", "child_chain_incomplete", "stale_legal_action_snapshot"],
       "commit_targets": ["frontier", "run_state", "status_summary"]
     },
     {
@@ -113,8 +113,8 @@
       "required_repair_command": "submit_pm_terminal_closure",
       "router_events": [],
       "transaction_type": "route_progression",
-      "requires": ["all_route_nodes_completed", "final_gates_passed", "no_active_blocker", "no_stale_evidence"],
-      "forbids": ["open_route_work", "active_blocker_present", "stale_evidence_present"],
+      "requires": ["all_route_nodes_completed", "final_gates_passed", "all_required_parent_backward_replays_reviewed_current", "no_active_blocker", "no_stale_evidence"],
+      "forbids": ["open_route_work", "parent_backward_replay_review_missing", "active_blocker_present", "stale_evidence_present"],
       "commit_targets": ["frontier", "run_state", "status_summary"]
     }
   ]

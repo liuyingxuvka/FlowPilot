@@ -2,6 +2,35 @@
 
 All notable changes to FlowPilot will be documented in this file.
 
+## 0.10.19 - 2026-06-24
+
+### Fixed
+
+- Restored the required independent review window after accepted
+  `task.parent_backward_replay` results. Parent replay execution now produces
+  raw replay evidence only; parent/module closure and parent-segment PM
+  disposition require a separate accepted current Reviewer pass over that
+  replay result.
+- Routed missing parent replay reviews through normal current
+  `review.any_current_subject` packets instead of generic final-closure repair
+  placeholders.
+- Blocked terminal backward replay and final route-wide closure when any
+  required parent/module replay result is accepted but not independently
+  reviewed.
+- Kept the repair path current-contract only: no old-run migration, fallback
+  translator, compatibility alias, or historical-state promotion was added.
+
+### Validation
+
+- Added focused FlowGuard coverage for sequential parent replay review
+  ordering, deepest-gap-first routing, terminal replay gating, and no-fallback
+  old-state rejection.
+- Added core runtime and fake end-to-end tests proving parent replay task
+  execution cannot substitute for independent review before parent closure.
+- Updated PM, Reviewer, terminal closure, break-glass, route-action policy, and
+  evidence-matrix surfaces to name reviewed parent replay as the required
+  parent-segment precondition.
+
 ## 0.10.18 - 2026-06-23
 
 ### Fixed

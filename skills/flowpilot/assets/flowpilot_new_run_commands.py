@@ -79,6 +79,7 @@ def run_fake_e2e(
     flowguard_artifact_fault_mode: str = "",
     inject_terminal_replay_blocker: bool = False,
     repair_terminal_replay_blocker: bool = False,
+    use_parent_route: bool = False,
 ) -> dict[str, Any]:
     return fake_e2e.run_fake_e2e(
         root,
@@ -91,6 +92,7 @@ def run_fake_e2e(
         flowguard_artifact_fault_mode=flowguard_artifact_fault_mode,
         inject_terminal_replay_blocker=inject_terminal_replay_blocker,
         repair_terminal_replay_blocker=repair_terminal_replay_blocker,
+        use_parent_route=use_parent_route,
     )
 
 

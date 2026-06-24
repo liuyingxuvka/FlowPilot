@@ -32,7 +32,7 @@ class FlowPilotPromptStoreTests(unittest.TestCase):
             "controller.action_ledger_table",
             {
                 "break_glass_text": "Break glass only for router control-plane faults.",
-                "patrol_command": "python skills/flowpilot/assets/flowpilot_router.py --root . --json controller-patrol-timer --seconds 60",
+                "patrol_command": "python skills/flowpilot/assets/flowpilot_router.py --root . --json controller-patrol-timer --seconds 300",
             },
         )
 

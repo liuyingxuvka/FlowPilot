@@ -20,8 +20,9 @@ runtime_context: Treat the runtime delivery envelope as the live source for the 
 - Put reviewer, worker, and FlowGuard operator advice that needs PM disposition into the PM suggestion/blocker ledger instead of leaving it only in prose.
 
 
-After Reviewer passes local parent backward replay, record the PM segment
-decision.
+After the runtime records both the local parent backward replay result and its
+accepted independent Reviewer review, record the PM segment decision. A passed
+parent replay task result alone is not enough for `continue`.
 
 Before deciding, read the latest route-memory prior path context. The decision
 must cite whether completed children, superseded children, stale evidence,
@@ -75,10 +76,10 @@ paths from the router delivery envelope.
     "superseded_nodes_considered": [],
     "stale_evidence_considered": [],
     "prior_blocks_or_experiments_considered": [],
-    "impact_on_decision": "Parent backward replay passed and current route memory does not require mutation.",
+    "impact_on_decision": "Reviewed parent backward replay passed and current route memory does not require mutation.",
     "controller_summary_used_as_evidence": false
   },
-  "decision_rationale": "The reviewer passed parent backward replay and the current prior-path context supports continuing.",
+  "decision_rationale": "The parent backward replay result has an accepted independent review and the current prior-path context supports continuing.",
   "same_parent_replay_rerun_plan": null,
   "stale_evidence_to_mark": [],
   "superseded_nodes": [],
@@ -104,3 +105,7 @@ For any decision other than `continue`, fill `decision_rationale`,
 `stale_evidence_to_mark` or `superseded_nodes` when applicable, and
 `same_parent_replay_rerun_plan` because the router will mutate the route and
 require the same parent replay again.
+
+If the final or route-wide ledger says `parent_backward_replay_review_missing`
+or `reviewed_parent_backward_replay` is not covered, do not record
+`continue`; wait for the current review packet over the replay result.
