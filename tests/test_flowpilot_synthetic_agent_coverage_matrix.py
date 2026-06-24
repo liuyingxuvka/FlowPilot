@@ -530,6 +530,12 @@ class FlowPilotSyntheticAgentCoverageMatrixTests(unittest.TestCase):
             ),
             (
                 "packet_result_family",
+                "packet_result_family.clean_e2e_authorized_material_openings",
+                "replay_path",
+                "runtime.clean_e2e.replay.required_authorized_materials_opened",
+            ),
+            (
+                "packet_result_family",
                 "packet_result_family.flowguard_reissue_preserves_required_authorized_result_reads",
                 "edge_path",
                 "runtime.flowguard_reissue.edge.inherited_authorized_reads",

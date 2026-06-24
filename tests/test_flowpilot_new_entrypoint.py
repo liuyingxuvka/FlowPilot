@@ -205,7 +205,7 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
             },
             {
                 "packet_id": "packet-replay",
-                "envelope": {"packet_kind": "task", "route_scope": "parent_backward_replay", "route_node_id": "node-001"},
+                "envelope": {"packet_kind": "review", "route_scope": "parent_backward_replay", "route_node_id": "node-001"},
             },
             {"packet_id": "packet-node", "envelope": {"packet_kind": "task", "route_scope": "node"}},
             {"packet_id": "packet-flowguard", "envelope": {"packet_kind": "flowguard_check", "route_scope": "node"}},
@@ -756,6 +756,45 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
                     if boundary["boundary_class"] not in {"role_dispatch", "terminal"}
                 ]
             )
+            authorized_openings = result["authorized_input_openings"]
+            self.assertEqual(len(authorized_openings), len(result["completed_packets"]))
+            required_openings = [
+                row
+                for row in authorized_openings
+                if row["required_read_count"] > 0
+            ]
+            self.assertTrue(required_openings)
+            self.assertLessEqual(
+                {"flowguard_operator", "reviewer"},
+                {row["responsibility"] for row in required_openings},
+            )
+            for row in authorized_openings:
+                with self.subTest(authorized_opening=row["packet_id"]):
+                    packet = ledger["packets"][row["packet_id"]]
+                    envelope = packet["envelope"]
+                    required_reads = [
+                        read
+                        for read in envelope.get("authorized_result_reads", [])
+                        if read.get("required_before_submit") is True
+                    ]
+                    self.assertEqual(row["required_read_count"], len(required_reads))
+                    self.assertGreaterEqual(row["opened_material_count"], len(required_reads))
+                    self.assertEqual(
+                        set(row["required_result_ids"]),
+                        {read["result_id"] for read in required_reads},
+                    )
+                    for read in required_reads:
+                        receipts = [
+                            receipt
+                            for receipt in packet.get("authorized_result_read_receipts", [])
+                            if receipt["result_id"] == read["result_id"]
+                            and receipt["body_hash"] == read["body_hash"]
+                            and receipt["packet_id"] == packet["packet_id"]
+                            and receipt["responsibility"] == envelope["responsibility"]
+                        ]
+                        self.assertTrue(receipts)
+                    if envelope.get("packet_kind") == "flowguard_check":
+                        self.assertIn(envelope["target_result_id"], row["required_result_ids"])
             self.assertEqual(ledger["final_requirement_evidence_matrix"]["status"], "clean")
             self.assertTrue(all(lease["status"] == "closed" for lease in ledger["leases"].values()))
             self.assertTrue(all(lease["ack_received"] for lease in ledger["leases"].values()))

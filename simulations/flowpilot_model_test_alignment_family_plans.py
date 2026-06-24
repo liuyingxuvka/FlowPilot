@@ -592,6 +592,18 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 allow_shared_implementation=True,
             ),
             _obligation(
+                "packet_result_family.clean_e2e_authorized_material_openings",
+                obligation_type="current_run_authorized_material_proof",
+                description=(
+                    "Clean fake E2E runs must prove that every packet declaring required "
+                    "authorized result-body reads opened those bodies through the assigned-role "
+                    "packet path before result submission."
+                ),
+                required_test_kinds=(REPLAY,),
+                allow_shared_evidence=True,
+                allow_shared_implementation=True,
+            ),
+            _obligation(
                 "packet_result_family.pm_repair_evidence_obligation_lifecycle",
                 obligation_type="repair_obligation_contract",
                 description=(
@@ -929,6 +941,15 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 external_outputs=("authorized_result_reads",),
                 state_reads=("active_blocker.result_id", "active_blocker.target_result_id", "upstream_packet.authorized_result_reads"),
                 state_writes=("packet.envelope.authorized_result_reads", "packet.body.current_handoff_contract"),
+            ),
+            _contract(
+                "packet_result_family.simulation.fake_e2e_authorized_material_proof",
+                path="skills/flowpilot/assets/flowpilot_core_runtime/fake_e2e.py",
+                symbol="run_fake_e2e",
+                implements=("packet_result_family.clean_e2e_authorized_material_openings",),
+                external_inputs=("clean_current_run_packets", "authorized_result_reads"),
+                external_outputs=("authorized_input_openings",),
+                state_reads=("packet.envelope.authorized_result_reads", "packet.authorized_result_read_receipts"),
             ),
             _contract(
                 "packet_result_family.runtime.pm_repair_obligation_disposition_gate",
@@ -1536,6 +1557,25 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 ),
             ),
             _evidence(
+                "packet_result_family.negative.flowguard_semantic_recheck_purpose_string",
+                test_name="test_semantic_recheck_purpose_string_is_rejected_as_consumed_result_id",
+                path="tests/test_flowpilot_ai_contract_projection.py",
+                command=(
+                    "python -m unittest tests.test_flowpilot_ai_contract_projection."
+                    "FlowPilotAIContractProjectionTests."
+                    "test_semantic_recheck_purpose_string_is_rejected_as_consumed_result_id"
+                ),
+                test_kind=NEGATIVE,
+                covers=(
+                    "packet_result_family.flowguard_semantic_recheck_subject_bound",
+                    "packet_result_family.flowguard_semantic_recheck_ai_facing_projection",
+                ),
+                code_contracts=(
+                    "packet_result_family.runtime.flowguard_semantic_recheck_gate",
+                    "packet_result_family.runtime.current_contract_reissue_feedback",
+                ),
+            ),
+            _evidence(
                 "packet_result_family.replay.flowguard_ai_contract_corrected_retry",
                 test_name="test_semantic_recheck_wrong_value_then_corrected_retry_returns_to_legal_path",
                 path="tests/test_flowpilot_ai_contract_projection.py",
@@ -1746,6 +1786,23 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 code_contracts=(
                     "packet_result_family.runtime.flowguard_current_report_gate",
                     "packet_result_family.runtime.flowguard_artifact_hard_decision",
+                    "packet_result_family.runtime.flowguard_review_handoff",
+                ),
+            ),
+            _evidence(
+                "packet_result_family.replay.fake_e2e_authorized_material_openings",
+                test_name="test_fake_end_to_end_rehearsal_reaches_final_closure",
+                path="tests/test_flowpilot_new_entrypoint.py",
+                command="python -m pytest tests/test_flowpilot_new_entrypoint.py -k test_fake_end_to_end_rehearsal_reaches_final_closure -q",
+                test_kind=REPLAY,
+                covers=(
+                    "packet_result_family.clean_e2e_authorized_material_openings",
+                    "packet_result_family.sealed_body_related_context_reads",
+                    "packet_result_family.flowguard_current_report_before_reviewer",
+                ),
+                code_contracts=(
+                    "packet_result_family.simulation.fake_e2e_authorized_material_proof",
+                    "packet_result_family.runtime.flowguard_current_report_gate",
                     "packet_result_family.runtime.flowguard_review_handoff",
                 ),
             ),

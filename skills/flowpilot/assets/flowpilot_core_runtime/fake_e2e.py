@@ -487,6 +487,22 @@ def _consistency_fault_body_for_packet(packet: dict[str, Any], ledger: dict[str,
     return _fault_body_for_packet(packet, ledger=ledger)
 
 
+def _semantic_recheck_required_read_ids_for_packet(packet: dict[str, Any]) -> list[str]:
+    binding = runtime._packet_result_contract_profile_binding(packet, "flowguard.semantic_recheck_required")
+    if isinstance(binding.get("authorized_result_read_ids"), list):
+        binding_ids = [str(item) for item in binding["authorized_result_read_ids"] if str(item)]
+        if binding_ids:
+            return binding_ids
+    return [
+        str(row.get("result_id") or "")
+        for row in runtime._packet_authorized_result_reads(packet)
+        if row.get("required_before_submit") is True
+        and isinstance(row.get("allowed_roles"), list)
+        and "flowguard_operator" in {str(role) for role in row.get("allowed_roles", [])}
+        and str(row.get("result_id") or "")
+    ]
+
+
 def _semantic_recheck_payload_for_packet(packet: dict[str, Any]) -> dict[str, Any]:
     minimal_shape = runtime._packet_result_minimal_valid_shape(packet)
     semantic_shape = minimal_shape.get("semantic_recheck") if isinstance(minimal_shape, dict) else None
@@ -499,15 +515,78 @@ def _semantic_recheck_payload_for_packet(packet: dict[str, Any]) -> dict[str, An
     contract = packet_body.get("semantic_recheck_contract") if isinstance(packet_body, dict) else None
     if not isinstance(contract, dict) or contract.get("subject_bound_required") is not True:
         return {}
+    required_read_ids = _semantic_recheck_required_read_ids_for_packet(packet)
+    if not required_read_ids:
+        raise runtime.BlackBoxRuntimeError("semantic recheck contract has no authorized result read ids to consume")
     return {
         "semantic_recheck": {
             "blocker_id": str(contract.get("blocker_id") or ""),
             "subject_result_consumed": True,
             "subject_bound_semantic_coverage": True,
             "coverage_boundary": "subject_bound_semantic",
-            "consumed_authorized_result_read_ids": ["subject_result_for_flowguard_check"],
+            "consumed_authorized_result_read_ids": required_read_ids,
             "consumed_repair_obligation_ids": list(contract.get("must_consume_repair_obligation_ids") or []),
         }
+    }
+
+
+def _assert_required_authorized_input_materials_opened(
+    packet: dict[str, Any],
+    *,
+    lease_id: str,
+    opened_materials: list[dict[str, Any]],
+) -> dict[str, Any]:
+    envelope = packet.get("envelope", {}) if isinstance(packet.get("envelope"), dict) else {}
+    required_reads = [
+        row
+        for row in runtime._packet_authorized_result_reads(packet)
+        if row.get("required_before_submit") is True
+    ]
+    opened_by_result = {
+        (str(material.get("result_id") or ""), str(material.get("body_hash") or "")): material
+        for material in opened_materials
+        if isinstance(material, dict)
+    }
+    missing: list[str] = []
+    for row in required_reads:
+        key = (str(row.get("result_id") or ""), str(row.get("body_hash") or ""))
+        material = opened_by_result.get(key)
+        receipt = material.get("open_receipt") if isinstance(material, dict) else None
+        if not isinstance(receipt, dict) or receipt.get("lease_id") != lease_id:
+            missing.append(key[0])
+            continue
+        if receipt.get("packet_id") != packet.get("packet_id") or receipt.get("body_hash") != key[1]:
+            missing.append(key[0])
+    if missing:
+        raise runtime.BlackBoxRuntimeError(
+            "fake e2e did not open required authorized input material(s): " + ", ".join(sorted(set(missing)))
+        )
+    required_ids = [str(row.get("result_id") or "") for row in required_reads if str(row.get("result_id") or "")]
+    if str(envelope.get("packet_kind") or "") == "flowguard_check":
+        target_result_id = str(envelope.get("target_result_id") or "")
+        if target_result_id and target_result_id not in set(required_ids):
+            raise runtime.BlackBoxRuntimeError(
+                "flowguard_check target_result_id is not a required authorized input material"
+            )
+        binding = runtime._packet_result_contract_profile_binding(packet, "flowguard.semantic_recheck_required")
+        binding_ids = [
+            str(item)
+            for item in binding.get("authorized_result_read_ids", [])
+            if str(item)
+        ] if isinstance(binding.get("authorized_result_read_ids"), list) else []
+        missing_binding_ids = sorted(set(binding_ids) - set(required_ids))
+        if missing_binding_ids:
+            raise runtime.BlackBoxRuntimeError(
+                "flowguard semantic recheck binding is not backed by required authorized reads: "
+                + ", ".join(missing_binding_ids)
+            )
+    return {
+        "packet_id": str(packet.get("packet_id") or ""),
+        "packet_kind": str(envelope.get("packet_kind") or "task"),
+        "responsibility": str(envelope.get("responsibility") or ""),
+        "required_read_count": len(required_reads),
+        "opened_material_count": len(opened_materials),
+        "required_result_ids": required_ids,
     }
 
 
@@ -600,6 +679,8 @@ def run_fake_e2e(
     shell = run_shell.load_run_shell(root, run_id=start_result["run"]["run_id"])
     ledger = run_shell.load_run_ledger(shell)
 
+    authorized_input_openings: list[dict[str, Any]] = []
+
     def complete_leased_packet(packet_id: str, *, agent_id: str, body: str) -> tuple[str, str]:
         packet = ledger["packets"][packet_id]
         responsibility = packet["envelope"]["responsibility"]
@@ -613,7 +694,14 @@ def run_fake_e2e(
         )
         runtime.assign_packet(ledger, packet_id, lease_id)
         runtime.ack_lease(ledger, lease_id, packet_id)
-        runtime.open_authorized_input_materials_for_role(ledger, packet_id, lease_id)
+        opened_materials = runtime.open_authorized_input_materials_for_role(ledger, packet_id, lease_id)
+        authorized_input_openings.append(
+            _assert_required_authorized_input_materials_opened(
+                packet,
+                lease_id=lease_id,
+                opened_materials=opened_materials,
+            )
+        )
         result_id = host.submit_host_result(ledger, lease_id, packet_id, body)
         return lease_id, result_id
 
@@ -737,6 +825,7 @@ def run_fake_e2e(
         "mode": "rehearsal",
         "run": shell.to_json(),
         "completed_packets": completed_packets,
+        "authorized_input_openings": authorized_input_openings,
         "mechanical_contract_blocks": mechanical_contract_blocks,
         "injected_fault_families": sorted(injected_fault_families),
         "injected_consistency_fault_families": sorted(injected_consistency_fault_families),

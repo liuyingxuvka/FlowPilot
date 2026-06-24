@@ -289,7 +289,14 @@ class FlowPilotAIContractProjectionTests(unittest.TestCase):
 
         self.assertEqual(responder.projection_findings(), [])
         payload = responder.legal_payload()
+        binding_ids = packet["envelope"]["result_contract_profile_bindings"][
+            "flowguard.semantic_recheck_required"
+        ]["authorized_result_read_ids"]
         self.assertEqual(payload["semantic_recheck"]["blocker_id"], "blocker-semantic-001")
+        self.assertEqual(
+            payload["semantic_recheck"]["consumed_authorized_result_read_ids"],
+            binding_ids,
+        )
         self.assertEqual(
             payload["semantic_recheck"]["consumed_repair_obligation_ids"],
             ["repair-obligation-001"],
@@ -1040,6 +1047,38 @@ class FlowPilotAIContractProjectionTests(unittest.TestCase):
         self.assertEqual(
             reissue_body["minimal_valid_shape"]["semantic_recheck"]["consumed_repair_obligation_ids"],
             ["repair-obligation-001"],
+        )
+
+    def test_semantic_recheck_purpose_string_is_rejected_as_consumed_result_id(self) -> None:
+        ledger, packet_id = self.issue_semantic_recheck_packet()
+        packet = ledger["packets"][packet_id]
+        lease_id = self.assign_flowguard(ledger, packet_id, "fg-purpose-string")
+        write_flowguard_evidence_artifact(ledger, packet_id)
+        payload = flowguard_result_payload("FlowGuard used a purpose string instead of the bound result id.")
+        payload["semantic_recheck"] = {
+            "blocker_id": "blocker-semantic-001",
+            "subject_result_consumed": True,
+            "subject_bound_semantic_coverage": True,
+            "coverage_boundary": "subject_bound_semantic",
+            "consumed_authorized_result_read_ids": ["subject_result_for_flowguard_check"],
+            "consumed_repair_obligation_ids": ["repair-obligation-001"],
+        }
+
+        result_id = runtime.submit_result(ledger, lease_id, packet_id, json.dumps(payload))
+        result = ledger["results"][result_id]
+        reissue_packet_id = self.latest_reissue_packet_id(ledger, packet_id)
+        reissue_body = json.loads(ledger["packets"][reissue_packet_id]["body"])
+
+        self.assertEqual(result["status"], "mechanical_contract_blocked")
+        self.assertIn(
+            "semantic_recheck.consumed_authorized_result_read_ids[]",
+            result["missing_required_fields"],
+        )
+        self.assertEqual(
+            reissue_body["minimal_valid_shape"]["semantic_recheck"]["consumed_authorized_result_read_ids"],
+            packet["envelope"]["result_contract_profile_bindings"][
+                "flowguard.semantic_recheck_required"
+            ]["authorized_result_read_ids"],
         )
 
     def test_semantic_recheck_wrong_value_then_corrected_retry_returns_to_legal_path(self) -> None:

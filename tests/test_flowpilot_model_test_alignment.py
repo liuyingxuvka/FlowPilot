@@ -140,6 +140,7 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
         self.assertIn("packet_result_family.fake_ai_runtime_replay_matrix_closure", obligations)
         self.assertIn("packet_result_family.real_issue_backfeed_registry_bridge", obligations)
         self.assertIn("packet_result_family.sealed_body_related_context_reads", obligations)
+        self.assertIn("packet_result_family.clean_e2e_authorized_material_openings", obligations)
         self.assertIn("packet_result_family.pm_repair_evidence_obligation_lifecycle", obligations)
         self.assertIn("packet_result_family.flowguard_reissue_preserves_current_evidence_policy", obligations)
         self.assertIn("packet_result_family.flowguard_reissue_preserves_required_authorized_result_reads", obligations)
@@ -170,6 +171,7 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
         self.assertIn("packet_result_family.runtime.flowguard_reissue_inherited_body_payload", contracts)
         self.assertIn("packet_result_family.runtime.flowguard_reissue_inherited_authorized_reads", contracts)
         self.assertIn("packet_result_family.runtime.flowguard_reissue_issue_task_packet_reads", contracts)
+        self.assertIn("packet_result_family.simulation.fake_e2e_authorized_material_proof", contracts)
         self.assertIn("packet_result_family.runtime.flowguard_packet_issue_inherits_blocker", contracts)
         self.assertIn("packet_result_family.runtime.blocker_related_authorized_reads", contracts)
         self.assertIn("packet_result_family.runtime.pm_repair_obligation_disposition_gate", contracts)
@@ -275,6 +277,10 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
             "test_semantic_recheck_near_synonyms_reissue_with_correct_minimal_shape",
         )
         self.assertEqual(
+            evidence["packet_result_family.negative.flowguard_semantic_recheck_purpose_string"].test_name,
+            "test_semantic_recheck_purpose_string_is_rejected_as_consumed_result_id",
+        )
+        self.assertEqual(
             evidence["packet_result_family.replay.flowguard_ai_contract_corrected_retry"].test_name,
             "test_semantic_recheck_wrong_value_then_corrected_retry_returns_to_legal_path",
         )
@@ -289,6 +295,10 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
         self.assertEqual(
             evidence["packet_result_family.replay.fake_ai_runtime_replay_matrix"].test_name,
             "test_runtime_replay_cells_bind_fake_ai_errors_to_runtime_reactions",
+        )
+        self.assertEqual(
+            evidence["packet_result_family.replay.fake_e2e_authorized_material_openings"].test_name,
+            "test_fake_end_to_end_rehearsal_reaches_final_closure",
         )
         self.assertEqual(
             evidence["packet_result_family.negative.fake_ai_runtime_replay_hazards"].test_name,

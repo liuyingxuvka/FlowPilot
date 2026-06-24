@@ -20300,6 +20300,46 @@ to identify unsupported historical-layer branches that should be deleted.
 ### Next Actions
 - Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
 
+## 2026-06-24 - Clean Authorized Materials Proof
+
+- Task: `prove-flowpilot-clean-authorized-materials`
+- Route: Predictive KB preflight, OpenSpec change, FlowGuard existing-model preflight, DevelopmentProcessFlow, Model-Test Alignment, TestMesh, and install sync.
+- Trigger: the user wanted to distinguish a mid-upgrade installed-state break from a new FlowPilot workflow bug, and asked for proof that the clean new workflow carries authorized result body material without adding fallback, compatibility, or extra runtime protection layers.
+- Result:
+  - Strengthened `fake_e2e.py` so every declared required authorized result read is checked against packet id, result id, body hash, lease id, role, and material-open receipt.
+  - FlowGuard semantic recheck evidence now derives consumed result ids from authorized reads/profile bindings, not from the purpose string.
+  - Fake-AI tests now prove legal semantic rechecks consume actual bound result ids and reject the old bad purpose-string id.
+  - Synthetic Cartesian coverage and model-test alignment now register the clean authorized-material-opening obligation with concrete test and code owners.
+  - The installed FlowPilot skill was resynchronized from source. The accidental installed-only runtime guard and standalone check script are gone.
+- Validation:
+  - `openspec validate prove-flowpilot-clean-authorized-materials --strict` -> valid.
+  - `python -m unittest tests.test_flowpilot_ai_contract_projection` -> 19 tests OK.
+  - `python -m pytest tests/test_flowpilot_new_entrypoint.py -q` -> 31 passed, 60 subtests passed.
+  - `python -m unittest tests.test_flowpilot_synthetic_agent_coverage_matrix` -> 15 tests OK.
+  - `python -m unittest tests.test_flowpilot_model_test_alignment` -> 20 tests OK.
+  - `python simulations/run_flowpilot_model_test_alignment_checks.py --json-out simulations/flowpilot_model_test_alignment_results.json` -> OK, no findings.
+  - `python simulations/flowpilot_synthetic_agent_coverage_matrix.py --json-out simulations/flowpilot_synthetic_agent_coverage_matrix_results.json` -> OK, no findings.
+  - `python simulations/run_flowpilot_cartesian_control_plane_exhaustion_checks.py --json-out simulations/flowpilot_cartesian_control_plane_exhaustion_results.json` -> OK.
+  - `python simulations/run_flowpilot_contract_exhaustion_mesh_checks.py --json-out simulations/flowpilot_contract_exhaustion_mesh_results.json` -> OK.
+  - `python simulations/run_meta_checks.py --full` and `python simulations/run_capability_checks.py --full` -> both OK with layered full parent evidence.
+  - `python scripts/flowguard_project_topology.py build` and `python scripts/flowguard_project_topology.py check` -> OK, no findings.
+  - `python scripts/audit_local_install_sync.py --json`, `python C:\Users\liu_y\.codex\skills\flowpilot\assets\flowpilot_runtime_self_check.py --json`, `python scripts/install_flowpilot.py --check --json`, and `python scripts/check_install.py --json` -> all OK.
+  - Installed FlowPilot fake E2E entrypoint -> OK, closure complete, 31 authorized-input-opening rows. The clean happy path has required read roles for `flowguard_operator` and `reviewer`; PM/worker coverage remains in existing contract/test surfaces.
+- Friction points:
+  - A first background launch for meta/capability checks did not write usable artifacts, so final evidence uses foreground commands and exit codes.
+  - The first install-sync command returned nonzero after synchronizing because it included pre-sync stale-state evidence; independent post-sync audit/checks passed.
+  - `check_install` initially failed only because topology was stale after refreshed result files; topology rebuild and rerun passed.
+- Counterexamples preserved:
+  - A clean packet declares required authorized reads but never opens the corresponding material body.
+  - A FlowGuard semantic recheck consumes a purpose-string placeholder instead of the authorized result id.
+  - Alignment claims coverage without a concrete test/code owner.
+  - An installed-only runtime guard masks source/workflow evidence drift.
+- Skipped steps:
+  - No runtime.py hard guard, issue-time compatibility layer, fallback translator, old-run migration, historical-state promotion, old-id alias, release, deploy, remote push, public publication, or OpenSpec archive was performed.
+- Claim boundary:
+  - Evidence supports the local current-contract FlowPilot clean workflow carrying required authorized result bodies through fake E2E, fake-AI projection, Cartesian coverage, model-test alignment, topology freshness, installed-skill sync, and local git.
+  - It does not claim live AI semantic quality for unrelated future projects, remote publication, or compatibility with old in-flight upgraded runs.
+
 ## 2026-06-24 - Single Parent Backward Review Closeout
 
 - Task: `simplify-parent-backward-review-flow`
