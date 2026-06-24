@@ -55,6 +55,10 @@ PAYLOAD_CELLS = (
     "ai_contract_all_result_allowed_options_wrong_value",
     "ai_contract_profile_required_fields_and_types_projection",
     "ai_contract_profile_forbidden_alias_feedback",
+    "parent_review_single_reviewer_packet",
+    "parent_review_old_task_family_rejected",
+    "parent_review_fake_ai_contract_recovery",
+    "parent_review_final_gate_gap_hard_block",
 )
 
 FORMAL_EXIT_RELEASE_CELLS = (
@@ -385,7 +389,7 @@ def build_testmesh_plan(
             ),
             result_status="passed",
             evidence_tier="external_contract",
-            test_count=5,
+            test_count=8,
             exit_code=0,
             result_path=(
                 "tests/test_flowpilot_high_standard_control_flow.py; "
@@ -404,6 +408,9 @@ def build_testmesh_plan(
                 "ai_contract_semantic_recheck_allowed_options_projection",
                 "ai_contract_all_result_allowed_options_projection",
                 "ai_contract_profile_required_fields_and_types_projection",
+                "parent_review_single_reviewer_packet",
+                "parent_review_old_task_family_rejected",
+                "parent_review_final_gate_gap_hard_block",
             ),
         ),
         TestSuiteEvidence(
@@ -432,7 +439,7 @@ def build_testmesh_plan(
             ),
             result_status="passed",
             evidence_tier="external_contract",
-            test_count=7,
+            test_count=8,
             exit_code=0,
             result_path=(
                 "tests/test_flowpilot_fake_project_rehearsal.py; "
@@ -442,6 +449,8 @@ def build_testmesh_plan(
             owns_side_effects=("fake_ai_result_submission",),
             owned_leaf_cell_ids=(
                 "pm_disposition_missing_item_closure",
+                "parent_review_single_reviewer_packet",
+                "parent_review_fake_ai_contract_recovery",
                 "terminal_segment_missing",
                 "terminal_segment_duplicate",
                 "terminal_segment_unexpected",
@@ -480,6 +489,7 @@ def build_testmesh_plan(
             owns_state=("terminal_backward_replay", "segment_targets"),
             owns_side_effects=("terminal_replay_blocker", "terminal_replay_reissue"),
             owned_leaf_cell_ids=(
+                "parent_review_final_gate_gap_hard_block",
                 "terminal_segment_missing",
                 "terminal_segment_duplicate",
                 "terminal_segment_unexpected",

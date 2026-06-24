@@ -35,7 +35,7 @@ def _route_plan_body(*, parent_route: bool = False) -> str:
                         "child_node_ids": ["node-001", "node-002"],
                         "acceptance_criteria": [
                             "Implementation and validation children compose into a complete parent outcome.",
-                            "Parent replay has current child evidence and an independent review.",
+                            "Parent backward review has current child evidence and is accepted.",
                         ],
                         "acceptance_item_ids": ["acc-001", "acc-002", "acc-003"],
                     },
@@ -275,15 +275,27 @@ def _body_for_packet(
                 },
             }
         )
-    if kind == "task" and scope == "parent_backward_replay":
+    if kind == "review" and scope == "parent_backward_replay":
         return json.dumps(
             {
-                "pm_visible_summary": ["Parent backward replay composes current child results."],
+                "pm_visible_summary": ["Parent backward review composes current child results."],
+                "reviewed_by_role": "human_like_reviewer",
+                "passed": True,
                 "parent_node_id": envelope.get("route_node_id", "") or "parent-node",
                 "child_node_ids": ["child-node"],
                 "child_evidence_refs": ["child-result"],
-                "composition_decision": "pass",
+                "findings": [],
                 "blockers": [],
+                "pm_suggestion_items": [
+                    "PM decision-support: current parent review passes; continue only after route memory is checked."
+                ],
+                "contract_self_check": {
+                    "all_required_fields_present": True,
+                    "exact_field_names_used": True,
+                    "empty_required_arrays_explicit": True,
+                    "runtime_mechanical_validation_passed": True,
+                    "semantic_sufficiency_reviewed_by_runtime": False,
+                },
             }
         )
     family_id = runtime._packet_result_family_id(packet)

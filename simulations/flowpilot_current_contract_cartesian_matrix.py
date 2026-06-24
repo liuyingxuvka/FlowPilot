@@ -180,7 +180,7 @@ STAGE_GROUP_BY_FAMILY = {
     "task.planning": "planning",
     "task.node_acceptance_plan": "planning",
     "task.node": "result",
-    "task.parent_backward_replay": "replay",
+    "review.parent_backward_replay": "review",
     "flowguard_check.post_result": "flowguard",
     "review.any_current_subject": "review",
     "review.terminal_backward_replay": "terminal",

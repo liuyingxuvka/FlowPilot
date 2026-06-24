@@ -94,12 +94,12 @@
           "pm_flowguard_acceptance.pm_flowguard_acceptance",
           "pm_repair_decision.pm_repair_decision",
           "review.any_current_subject",
+          "review.parent_backward_replay",
           "review.terminal_backward_replay",
           "task.discovery",
           "task.high_standard_contract",
           "task.node",
           "task.node_acceptance_plan",
-          "task.parent_backward_replay",
           "task.planning",
           "task.skill_standard"
         ]
@@ -130,12 +130,12 @@
           "pm_flowguard_acceptance.pm_flowguard_acceptance",
           "pm_repair_decision.pm_repair_decision",
           "review.any_current_subject",
+          "review.parent_backward_replay",
           "review.terminal_backward_replay",
           "task.discovery",
           "task.high_standard_contract",
           "task.node",
           "task.node_acceptance_plan",
-          "task.parent_backward_replay",
           "task.planning",
           "task.skill_standard"
         ]
@@ -230,7 +230,7 @@
         "used_by_matrix": true
       },
       "fake_ai_malformed_body_profiles": {
-        "covered_cell_count": 1889760,
+        "covered_cell_count": 1967520,
         "covers": [
           "malformed_json_profiles",
           "strict_json_object_reissue"
@@ -266,7 +266,7 @@
         "used_by_matrix": false
       },
       "route_mutation_stale_old_evidence": {
-        "covered_cell_count": 769224,
+        "covered_cell_count": 773112,
         "covers": [
           "stale_route",
           "stale_packet",
@@ -285,7 +285,7 @@
         "used_by_matrix": true
       },
       "synthetic_non_live_boundary": {
-        "covered_cell_count": 1186754,
+        "covered_cell_count": 1205492,
         "covers": [
           "synthetic_ai_profiles",
           "live_ai_quality_claim_rejected"
@@ -361,7 +361,7 @@
     "by_axis": {
       "action": {
         "ack_packet": 856800,
-        "block_current_subject": 320248,
+        "block_current_subject": 362728,
         "close_route": 156800,
         "commit_route_mutation": 32256,
         "define_contract": 82944,
@@ -370,12 +370,12 @@
         "pm_dispose_result": 16200,
         "project_future_evidence": 139392,
         "redesign_route": 160200,
-        "reissue_current_packet": 1046384,
+        "reissue_current_packet": 1101824,
         "repair_current_scope": 71496,
-        "repair_parent_scope": 68256,
+        "repair_parent_scope": 55296,
         "replay_late_result": 856800,
         "resume_current_run": 156800,
-        "review_current_subject": 100656,
+        "review_current_subject": 143136,
         "submit_result": 856800,
         "terminal_backward_replay": 156800
       },
@@ -383,119 +383,119 @@
         "ack_only": 201600,
         "contradictory_result": 307648,
         "hallucinated_artifact": 252288,
-        "malformed_json_empty_body": 316624,
-        "malformed_json_markdown_wrapped": 381856,
-        "malformed_json_prose_plus_json": 288912,
-        "malformed_json_top_level_array": 238224,
-        "malformed_json_trailing_comma": 238224,
-        "malformed_json_unquoted_keys": 445504,
+        "malformed_json_empty_body": 331744,
+        "malformed_json_markdown_wrapped": 390496,
+        "malformed_json_prose_plus_json": 304032,
+        "malformed_json_top_level_array": 253344,
+        "malformed_json_trailing_comma": 253344,
+        "malformed_json_unquoted_keys": 454144,
         "old_protocol": 286464,
-        "overclaims_completion": 413248,
+        "overclaims_completion": 421888,
         "rejects_valid_task": 201600,
         "repeated_bad_fix": 229248,
         "runtime_no_ai": 31104,
-        "summary_only": 445504,
-        "well_formed_block": 223200,
-        "well_formed_pass": 445504,
-        "wrong_role": 439024
+        "summary_only": 454144,
+        "well_formed_block": 231840,
+        "well_formed_pass": 454144,
+        "wrong_role": 454144
       },
       "blocker_state": {
-        "new_current_blocker": 999496,
-        "no_blocker": 962632,
+        "new_current_blocker": 1023040,
+        "no_blocker": 986176,
         "repair_after_failed_recheck": 608064,
         "route_decomposition": 56448,
         "same_blocker_at_threshold": 667200,
         "same_blocker_before_threshold": 667200,
-        "solved_still_blocks": 233872,
-        "stale_blocker": 788440,
-        "unsolved_skipped": 213640,
-        "wrong_owner_blocker": 188784
+        "solved_still_blocks": 267136,
+        "stale_blocker": 778720,
+        "unsolved_skipped": 237184,
+        "wrong_owner_blocker": 222048
       },
       "execution_source": {
-        "background_role": 1185040,
+        "background_role": 1227520,
         "daemon_replay": 979168,
-        "foreground_runtime": 1185040,
+        "foreground_runtime": 1227520,
         "installed_skill_self_check": 62208,
-        "manual_resume": 1163440,
+        "manual_resume": 1205920,
         "stale_workspace": 810880
       },
       "final_claim_type": {
-        "future_evidence_claim": 1282892,
+        "future_evidence_claim": 1311512,
         "live_ai_quality_claim": 1005536,
-        "no_claim": 1267020,
-        "node_complete": 1217708,
+        "no_claim": 1295640,
+        "node_complete": 1259288,
         "release_evidence_claim": 89600,
-        "route_complete": 260876,
+        "route_complete": 289496,
         "routine_evidence_claim": 89600,
         "task_complete": 172544
       },
       "object_state": {
-        "current_progress_only": 500672,
+        "current_progress_only": 524432,
         "current_unopened": 374976,
-        "current_valid": 640544,
+        "current_valid": 656528,
         "duplicate_conflict": 390384,
-        "future_claim_without_evidence": 287024,
-        "missing_due": 640544,
-        "missing_not_due": 131280,
-        "stale_packet": 435648,
-        "stale_route": 527648,
+        "future_claim_without_evidence": 303008,
+        "missing_due": 656528,
+        "missing_not_due": 155040,
+        "stale_packet": 459408,
+        "stale_route": 519872,
         "stale_run": 466112,
         "unreadable_path": 342720,
         "unsupported_legacy_shape": 73728,
-        "wrong_owner": 574496
+        "wrong_owner": 590480
       },
       "route_shape": {
         "manual_resume": 239744,
         "multi_node": 785792,
         "parallel_background": 489600,
-        "parent_child": 939536,
+        "parent_child": 982016,
         "route_mutation_replacement": 714336,
-        "sibling_branch_replacement": 590112,
-        "single_node": 820464,
+        "sibling_branch_replacement": 577152,
+        "single_node": 875904,
         "superseded_node": 521856,
-        "terminal_replay": 284336
+        "terminal_replay": 326816
       },
       "timing": {
-        "background_progress_late": 907124,
+        "background_progress_late": 948704,
         "new_result_before_old": 571200,
         "old_result_after_reissue": 674952,
-        "on_time": 1060844,
-        "one_step_early": 418148,
-        "one_step_late": 457388,
+        "on_time": 1092704,
+        "one_step_early": 450008,
+        "one_step_late": 489248,
         "resume_after_wait": 626496,
-        "route_mutation_after_packet": 669624
+        "route_mutation_after_packet": 659904
       }
     },
     "by_existing_test_link": {
       "cartesian_control_plane_existing_matrix": 350400,
       "current_run_no_project_root_fallback": 198240,
-      "fake_ai_malformed_body_profiles": 1889760,
-      "route_mutation_stale_old_evidence": 769224,
-      "synthetic_non_live_boundary": 1186754
+      "fake_ai_malformed_body_profiles": 1967520,
+      "route_mutation_stale_old_evidence": 773112,
+      "synthetic_non_live_boundary": 1205492
     },
     "by_reaction": {
-      "continue_current_stage": 30268,
-      "ignore_stale_late_material": 948320,
-      "mechanical_reject": 2240160,
-      "not_due_structured_wait": 203120,
-      "progress_only_not_evidence": 231632,
-      "reissue_current_packet": 310560,
-      "reject_overclaim": 217402,
+      "continue_current_stage": 30592,
+      "ignore_stale_late_material": 953936,
+      "mechanical_reject": 2317920,
+      "not_due_structured_wait": 217376,
+      "progress_only_not_evidence": 242432,
+      "reissue_current_packet": 323520,
+      "reject_overclaim": 217780,
       "reject_stale_authority": 481600,
       "require_repair_delta": 14016,
-      "route_mutation_gate": 19068,
-      "structured_blocker": 686558,
+      "route_mutation_gate": 18744,
+      "structured_blocker": 692228,
       "terminal_evidence_gate": 3072
     },
     "by_required_evidence_owner": {
-      "current_contract_blocker_repair_matrix": 686558,
-      "current_contract_evidence_freshness_matrix": 231632,
+      "current_contract_blocker_repair_matrix": 692228,
+      "current_contract_evidence_freshness_matrix": 242432,
       "current_contract_no_delta_repair_matrix": 14016,
-      "current_contract_overclaim_matrix": 217402,
-      "current_contract_reissue_matrix": 310560,
-      "current_contract_route_mutation_matrix": 19068,
-      "current_contract_runtime_matrix": 3700348,
-      "current_contract_stage_timing_matrix": 203120,
+      "current_contract_overclaim_matrix": 217780,
+      "current_contract_reissue_matrix": 323520,
+      "current_contract_route_mutation_matrix": 18744,
+      "current_contract_runtime_matrix": 3784048,
+      "current_contract_stage_timing_matrix": 217376,
       "current_contract_terminal_matrix": 3072
     },
     "by_stage_group": {
@@ -504,17 +504,16 @@
       "planning": 225792,
       "preplanning": 248832,
       "repair": 221184,
-      "replay": 38880,
       "result": 3427200,
-      "review": 166320,
+      "review": 332640,
       "route_mutation": 129024,
       "terminal": 627200
     },
-    "coverage_shard_count": 78,
+    "coverage_shard_count": 71,
     "declared_counts": {
-      "declared_profile_full_count": 5385776,
+      "declared_profile_full_count": 5513216,
       "not_applicable_class_count": 4,
-      "required_cell_count": 5385776,
+      "required_cell_count": 5513216,
       "unrestricted_symbolic_product_count": 24600775680
     },
     "future_claim_accepted": [],
@@ -522,7 +521,7 @@
     "legacy_positive_acceptance": [],
     "missing_absorbing_next_action": [],
     "missing_oracle": [],
-    "observed_cell_count": 5385776,
+    "observed_cell_count": 5513216,
     "ok": true,
     "progress_accepted_as_evidence": [],
     "sample_cells": [
@@ -1056,14 +1055,14 @@
         "coverage_boundary": "current_contract_blocker_repair_matrix",
         "evidence_current": true,
         "layer": "current_contract_cartesian_matrix",
-        "owned_cell_count": 686558,
+        "owned_cell_count": 692228,
         "result_status": "passed"
       },
       "current_contract_evidence_freshness_matrix": {
         "coverage_boundary": "current_contract_evidence_freshness_matrix",
         "evidence_current": true,
         "layer": "current_contract_cartesian_matrix",
-        "owned_cell_count": 231632,
+        "owned_cell_count": 242432,
         "result_status": "passed"
       },
       "current_contract_no_delta_repair_matrix": {
@@ -1077,35 +1076,35 @@
         "coverage_boundary": "current_contract_overclaim_matrix",
         "evidence_current": true,
         "layer": "current_contract_cartesian_matrix",
-        "owned_cell_count": 217402,
+        "owned_cell_count": 217780,
         "result_status": "passed"
       },
       "current_contract_reissue_matrix": {
         "coverage_boundary": "current_contract_reissue_matrix",
         "evidence_current": true,
         "layer": "current_contract_cartesian_matrix",
-        "owned_cell_count": 310560,
+        "owned_cell_count": 323520,
         "result_status": "passed"
       },
       "current_contract_route_mutation_matrix": {
         "coverage_boundary": "current_contract_route_mutation_matrix",
         "evidence_current": true,
         "layer": "current_contract_cartesian_matrix",
-        "owned_cell_count": 19068,
+        "owned_cell_count": 18744,
         "result_status": "passed"
       },
       "current_contract_runtime_matrix": {
         "coverage_boundary": "current_contract_runtime_matrix",
         "evidence_current": true,
         "layer": "current_contract_cartesian_matrix",
-        "owned_cell_count": 3700348,
+        "owned_cell_count": 3784048,
         "result_status": "passed"
       },
       "current_contract_stage_timing_matrix": {
         "coverage_boundary": "current_contract_stage_timing_matrix",
         "evidence_current": true,
         "layer": "current_contract_cartesian_matrix",
-        "owned_cell_count": 203120,
+        "owned_cell_count": 217376,
         "result_status": "passed"
       },
       "current_contract_terminal_matrix": {

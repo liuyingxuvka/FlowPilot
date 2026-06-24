@@ -133,13 +133,15 @@ def _terminal_backward_replay_body(packet: dict) -> str:
 
 
 def _parent_backward_replay_body(parent_node_id: str, child_node_ids: list[str], child_evidence_refs: list[str]) -> str:
-    payload = packet_result_contracts.minimal_valid_shape_for_family("task.parent_backward_replay")
+    payload = packet_result_contracts.minimal_valid_shape_for_family("review.parent_backward_replay")
     payload.update(
         {
+            "reviewed_by_role": "human_like_reviewer",
+            "passed": True,
             "parent_node_id": parent_node_id,
             "child_node_ids": child_node_ids,
             "child_evidence_refs": child_evidence_refs,
-            "composition_decision": "pass",
+            "findings": [],
             "blockers": [],
         }
     )

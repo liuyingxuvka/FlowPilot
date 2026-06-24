@@ -275,41 +275,59 @@ PACKET_RESULT_CONTRACTS: tuple[dict[str, Any], ...] = (
         "unlocks": "node_result_flowguard_review",
     },
     {
-        "family_id": "task.parent_backward_replay",
-        "packet_kind": "task",
+        "family_id": "review.parent_backward_replay",
+        "packet_kind": "review",
         "route_scope": "parent_backward_replay",
         "owner": "flowpilot_core_runtime",
         "validator": "_parent_backward_replay_result_violation",
         "required_fields": (
             "pm_visible_summary",
+            "reviewed_by_role",
+            "passed",
             "parent_node_id",
             "child_node_ids",
             "child_evidence_refs",
-            "composition_decision",
+            "findings",
             "blockers",
+            "pm_suggestion_items",
+            "contract_self_check",
         ),
         "required_child_fields": (),
-        "explicit_array_fields": ("pm_visible_summary", "child_node_ids", "child_evidence_refs", "blockers"),
+        "explicit_array_fields": (
+            "pm_visible_summary",
+            "child_node_ids",
+            "child_evidence_refs",
+            "findings",
+            "blockers",
+            "pm_suggestion_items",
+        ),
         "non_empty_array_fields": ("pm_visible_summary", "child_node_ids", "child_evidence_refs"),
         "forbidden_fields": (
             "decision",
+            "composition_decision",
             "outcome",
             "status",
-            "passed",
             "verdict",
             "result",
             "pass_or_block",
             "validation_status",
+            "review_id",
+            "independent_review_id",
+            "parent_backward_replay_review_id",
         ),
         "fake_ai_success_fields": (
             "pm_visible_summary",
+            "reviewed_by_role",
+            "passed",
             "parent_node_id",
             "child_node_ids",
             "child_evidence_refs",
-            "composition_decision",
+            "findings",
             "blockers",
+            "pm_suggestion_items",
+            "contract_self_check",
         ),
-        "unlocks": "parent_backward_replay_flowguard_review",
+        "unlocks": "parent_backward_review_pm_absorption",
     },
     {
         "family_id": "flowguard_check.post_result",
@@ -529,19 +547,22 @@ PACKET_RESULT_CONTRACTS_BY_FAMILY = {str(row["family_id"]): row for row in PACKE
 def packet_result_family_id(envelope: Mapping[str, Any]) -> str:
     packet_kind = str(envelope.get("packet_kind", "task"))
     route_scope = str(envelope.get("route_scope") or "")
+    if packet_kind == "task" and route_scope == "parent_backward_replay":
+        return "unsupported.task_parent_backward_replay"
     if packet_kind == "task" and route_scope in {
         "high_standard_contract",
         "discovery",
         "skill_standard",
         "planning",
         "node_acceptance_plan",
-        "parent_backward_replay",
     }:
         return f"task.{route_scope}"
     if packet_kind == "task":
         return "task.node"
     if packet_kind == "flowguard_check":
         return "flowguard_check.post_result"
+    if packet_kind == "review" and route_scope == "parent_backward_replay":
+        return "review.parent_backward_replay"
     if packet_kind == "review" and route_scope == "terminal_backward_replay":
         return "review.terminal_backward_replay"
     if packet_kind == "review":
@@ -1249,13 +1270,25 @@ def minimal_valid_shape_for_family(family_id: str) -> dict[str, Any]:
             "pm_visible_summary": ["Role-authored summary for PM."],
             "current_evidence_refs": ["current-output"],
         }
-    if family_id == "task.parent_backward_replay":
+    if family_id == "review.parent_backward_replay":
         return {
-            "pm_visible_summary": ["Parent backward replay composes current child results."],
+            "pm_visible_summary": ["Parent backward review composes current child results."],
+            "reviewed_by_role": "human_like_reviewer",
+            "passed": True,
             "parent_node_id": "parent-node",
             "child_node_ids": ["child-node"],
             "child_evidence_refs": ["child-result"],
-            "composition_decision": "pass",
+            "findings": [],
             "blockers": [],
+            "pm_suggestion_items": [
+                "PM decision-support: parent backward review passes; continue only after current route memory is checked."
+            ],
+            "contract_self_check": {
+                "all_required_fields_present": True,
+                "exact_field_names_used": True,
+                "empty_required_arrays_explicit": True,
+                "runtime_mechanical_validation_passed": True,
+                "semantic_sufficiency_reviewed_by_runtime": False,
+            },
         }
     return {"decision": "pass", "pm_visible_summary": ["Role-authored summary for PM."]}

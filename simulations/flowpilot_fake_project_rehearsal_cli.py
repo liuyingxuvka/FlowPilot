@@ -687,7 +687,7 @@ def _packet_result_contract_body(packet: dict[str, Any]) -> str:
                 if isinstance(target, dict)
             ]
             payload["final_blockers"] = []
-    if family_id == "task.parent_backward_replay":
+    if family_id == "review.parent_backward_replay":
         parent_node_id = str(packet_body.get("route_node_id") or packet.get("route_node_id") or "").strip()
         if parent_node_id:
             payload["parent_node_id"] = parent_node_id

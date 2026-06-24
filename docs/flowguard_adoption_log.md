@@ -20300,6 +20300,70 @@ to identify unsupported historical-layer branches that should be deleted.
 ### Next Actions
 - Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
 
+## 2026-06-24 - Single Parent Backward Review Closeout
+
+- Task: `simplify-parent-backward-review-flow`
+- Version: `0.10.20`
+- Route: Predictive KB preflight, OpenSpec change, FlowGuard DevelopmentProcessFlow,
+  ContractExhaustionMesh, TestMesh, Model-Test Alignment, topology, release-tier
+  local evidence, and install sync.
+- Trigger: the previous `0.10.19` repair over-corrected parent backward replay
+  by requiring raw parent replay evidence plus a second independent review. The
+  user clarified that the normal path must stay single, sequential, and clean:
+  a parent/module cannot advance to the next sibling, ancestor, terminal replay,
+  or final closure until its own parent backward review is closed.
+- Result:
+  - Replaced the positive parent closure family with
+    `review.parent_backward_replay`.
+  - The Reviewer-owned parent backward review packet is now the closure
+    evidence; FlowPilot does not open a second `review.any_current_subject`
+    packet over it.
+  - `task.parent_backward_replay` is rejected as an unsupported old shape, with
+    no migration, fallback translator, compatibility alias, or historical-state
+    promotion.
+  - If a final/terminal/ancestor gate sees a missing parent review or multiple
+    parent review gaps, FlowPilot hard-blocks as a control-plane ordering
+    violation instead of dispatching late repair review work.
+  - README and CHANGELOG were updated for `v0.10.20`.
+- Validation:
+  - `openspec validate simplify-parent-backward-review-flow --strict` -> valid.
+  - `python simulations/run_flowpilot_sequential_parent_replay_review_checks.py --json-out simulations/flowpilot_sequential_parent_replay_review_results.json` -> OK.
+  - `python simulations/run_flowpilot_current_contract_cartesian_matrix_checks.py --write-results` -> OK.
+  - `python simulations/run_flowpilot_fake_ai_runtime_replay_checks.py --json-out simulations/flowpilot_fake_ai_runtime_replay_results.json` -> OK.
+  - `python simulations/run_flowpilot_contract_exhaustion_mesh_checks.py --json-out simulations/flowpilot_contract_exhaustion_mesh_results.json` -> OK.
+  - `python simulations/run_flowpilot_field_contract_checks.py --json-out simulations/flowpilot_field_contract_results.json` -> OK.
+  - `python simulations/run_flowpilot_model_test_alignment_checks.py --json-out simulations/flowpilot_model_test_alignment_results.json` -> OK.
+  - `python simulations/run_flowpilot_modeling_coverage_checks.py --json-out simulations/flowpilot_modeling_coverage_results.json` -> OK.
+  - `python simulations/run_flowpilot_model_maturation_checks.py --json-out simulations/flowpilot_model_maturation_results.json` -> OK after refreshing prompt-boundary and model-hierarchy evidence.
+  - `python simulations/run_card_instruction_coverage_checks.py --json-out simulations/card_instruction_coverage_results.json` -> OK.
+  - `python scripts/run_test_tier.py --tier router-quality-gates --background ...` -> 13/13 child artifacts passed.
+  - `python scripts/run_test_tier.py --tier router-packets --background ...` -> 20/20 child artifacts passed.
+  - `python scripts/run_test_tier.py --tier router-route --background ...` -> 23/23 child artifacts passed, including the parent backward route shard.
+  - `python scripts/run_test_tier.py --tier router-terminal --background ...` -> 33/33 child artifacts passed after rerunning in an isolated directory to avoid background artifact locks.
+  - `python scripts/run_test_tier.py --tier release --background ...` -> `release_tooling`, `meta_full`, `capability_full`, and `public_release_check` all exit 0.
+  - `python simulations/run_flowpilot_acceptance_testmesh_checks.py ... --release-evidence ...` -> OK; routine and release gates true.
+  - `python scripts/flowguard_project_topology.py build` and `python scripts/flowguard_project_topology.py check` -> OK; 153 models, 452 test commands, 1067 code surfaces, no findings.
+- Friction points:
+  - A first attempt to run `router-terminal` in the same background directory as
+    quality-gate artifacts failed with a Windows file-lock error. This was a
+    test-artifact isolation issue, not a FlowPilot logic failure. Rerunning the
+    terminal tier in its own directory passed.
+  - The previous `0.10.19` README and CHANGELOG described the two-step design;
+    they were corrected to the single review path.
+- Claim boundary:
+  - Evidence supports local FlowPilot `v0.10.20` single parent backward review
+    behavior, fake-AI Cartesian coverage, release-tier local evidence, and
+    current topology.
+  - This does not claim live AI semantic quality for unrelated future projects,
+    remote GitHub publication, deploy, or OpenSpec archive.
+- Counterexamples preserved:
+  - Raw `task.parent_backward_replay` closes a parent.
+  - PM segment disposition or terminal replay starts before the parent review
+    result is accepted.
+  - Final closure discovers multiple missing parent reviews and tries to repair
+    them as ordinary late work.
+  - Old-state evidence is translated into current closure proof.
+
 ## 2026-06-23 - Checker Independence And Review-Flow Ordering
 
 - Task: `tighten-checker-independence-flow`

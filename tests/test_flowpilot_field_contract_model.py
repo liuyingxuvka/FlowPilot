@@ -340,7 +340,7 @@ class FlowPilotFieldContractModelTests(unittest.TestCase):
             "task.planning",
             "task.node_acceptance_plan",
             "task.node",
-            "task.parent_backward_replay",
+            "review.parent_backward_replay",
             "flowguard_check.post_result",
             "review.any_current_subject",
             "review.terminal_backward_replay",

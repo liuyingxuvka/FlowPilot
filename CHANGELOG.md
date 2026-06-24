@@ -2,6 +2,34 @@
 
 All notable changes to FlowPilot will be documented in this file.
 
+## 0.10.20 - 2026-06-24
+
+### Changed
+
+- Simplified parent backward closure to one Reviewer-owned
+  `review.parent_backward_replay` packet. The accepted review result is now the
+  parent/module closure evidence; FlowPilot no longer creates a raw
+  `task.parent_backward_replay` task followed by a second independent review.
+- Made late parent-review gaps a control-plane ordering violation. If terminal
+  replay or final closure sees a missing or multiple parent-review gap, the
+  runtime hard-blocks instead of dispatching late repair review work.
+- Kept the current-contract boundary clean: old task-shaped parent replay
+  results are rejected as unsupported, with no migration, fallback translator,
+  compatibility alias, or historical-state promotion.
+
+### Validation
+
+- Added the single-parent backward review FlowGuard model and refreshed
+  current-contract Cartesian, fake-AI runtime replay, ContractExhaustionMesh,
+  field-contract, historical replay, model-hierarchy, model-maturation,
+  model-test alignment, and acceptance TestMesh result artifacts.
+- Added runtime and fake-AI tests for one parent review packet, old task-family
+  rejection, PM absorption, terminal/final hard blocks, and injected corrupt
+  multi-gap states.
+- Ran current router quality, packets, route, and terminal background tiers;
+  all required routine child artifacts completed with exit code 0 before
+  Acceptance TestMesh passed.
+
 ## 0.10.19 - 2026-06-24
 
 ### Fixed

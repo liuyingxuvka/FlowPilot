@@ -76,9 +76,10 @@ failures:
   role-output schema disagree in a way that blocks normal routing.
 - The same control-plane blocker repeats after normal retry, PM repair, or role
   reissue cannot form a valid next action.
-- Runtime or final-gate metadata shows a current parent/module backward replay
-  result with missing independent review, but Router cannot issue or route the
-  normal current `review.any_current_subject` packet for that replay result.
+- Runtime or final-gate metadata shows a parent/module backward review gap
+  after the route has already reached terminal closure readiness. Normal routing
+  should have stopped on that parent/module gate earlier, so this is a
+  control-plane ordering failure rather than an ordinary late review dispatch.
 
 Escalate from ordinary Controller break-glass to Recovery Supervisor mode when
 the current evidence shows that the Controller role itself is no longer a safe

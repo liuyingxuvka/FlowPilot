@@ -1,4 +1,4 @@
-"""Run checks for the FlowPilot sequential parent replay review model."""
+"""Run checks for the FlowPilot single parent backward review model."""
 
 from __future__ import annotations
 
@@ -22,24 +22,23 @@ REQUIRED_LABELS = tuple(
 )
 
 HAZARD_EXPECTED_FAILURES = {
-    model.RAW_REPLAY_CLOSES_PARENT: "parent replay closure recorded before independent review accepted",
-    model.SEGMENT_DECISION_BEFORE_REVIEW: "PM parent segment decision offered before independent parent replay review",
-    model.TERMINAL_REPLAY_BEFORE_PARENT_REVIEW: "terminal backward replay offered before required parent replay review",
-    model.PARALLEL_PARENT_REPLAY_REVIEWS: "Router did not issue exactly one current parent replay review packet",
-    model.ROOT_GAP_SELECTED_BEFORE_CHILD_GAP: "Router selected a shallower parent replay review gap before the deepest current gap",
-    model.OLD_STATE_COUNTS_RAW_REPLAY_AS_COMPLETE: "fallback or old-state compatibility path was used for parent replay review",
+    model.OLD_TASK_PARENT_BACKWARD_ACCEPTED: "old task.parent_backward_replay result counted as current parent review",
+    model.PM_SEGMENT_BEFORE_PARENT_REVIEW: "PM parent segment decision offered before parent backward review",
+    model.TERMINAL_REPLAY_BEFORE_PARENT_REVIEW: "terminal backward replay offered before required parent backward review",
+    model.MULTIPLE_FINAL_PARENT_GAPS_DISPATCH_REPAIR: "final gate dispatched an ordinary late parent review instead of hard blocking",
+    model.FINAL_PARENT_GAP_NOT_HARD_BLOCKED: "final gate parent review gap was not hard-blocked as control-plane corruption",
+    model.OLD_STATE_TRANSLATED_AS_CURRENT: "fallback or old-state compatibility path was used for parent backward review",
 }
 
 
 def _state_id(state: model.State) -> str:
     return (
         f"scenario={state.scenario}|status={state.status}|"
-        f"raw={state.parent_replay_result_accepted}|review={state.independent_replay_review_accepted}|"
-        f"closure={state.parent_replay_closure_recorded}|pm={state.pm_segment_decision_offered},"
+        f"review_packet={state.parent_review_packet_current}|review={state.parent_review_result_accepted}|"
+        f"old_task={state.old_task_parent_replay_result_accepted}|closure={state.parent_closure_recorded}|pm={state.pm_segment_decision_offered},"
         f"{state.pm_parent_completion_offered}|terminal={state.terminal_replay_offered}|"
-        f"gaps={state.current_missing_review_gap_count}|issued={state.review_packets_issued_this_tick}|"
-        f"depth={state.selected_gap_depth}/{state.deepest_missing_gap_depth}|"
-        f"order={state.selected_gap_route_order_index}/{state.earliest_deepest_gap_route_order_index}|"
+        f"gaps={state.current_parent_review_gap_count}|final={state.final_gate_ready}|"
+        f"late_review={state.ordinary_late_parent_review_dispatched}|control={state.control_plane_blocker_offered}|"
         f"fallback={state.fallback_or_compatibility_path_used}|reason={state.terminal_reason}"
     )
 
@@ -147,7 +146,7 @@ def _hazard_report() -> dict[str, object]:
     hazards: dict[str, object] = {}
     failures: list[str] = []
     for name, state in model.hazard_states().items():
-        review_failures = model.replay_review_failures(state)
+        review_failures = model.parent_review_failures(state)
         expected = HAZARD_EXPECTED_FAILURES[name]
         detected = any(expected in failure for failure in review_failures)
         hazards[name] = {
@@ -163,7 +162,7 @@ def _hazard_report() -> dict[str, object]:
 def _intended_report() -> dict[str, object]:
     failures: dict[str, list[str]] = {}
     for scenario, state in model.intended_states().items():
-        scenario_failures = model.replay_review_failures(state)
+        scenario_failures = model.parent_review_failures(state)
         if scenario_failures:
             failures[scenario] = scenario_failures
     return {"ok": not failures, "failures": failures, "accepted_plan": sorted(model.VALID_SCENARIOS)}
@@ -181,7 +180,7 @@ def run_checks() -> dict[str, object]:
     ok = all(report.get("ok") for report in reports.values())
     return {
         "ok": ok,
-        "model": "flowpilot_sequential_parent_replay_review",
+        "model": "flowpilot_single_parent_backward_review",
         "covered_risks": sorted(model.NEGATIVE_SCENARIOS),
         **reports,
     }

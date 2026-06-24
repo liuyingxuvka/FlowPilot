@@ -2744,26 +2744,35 @@
         "pm_visible_summary",
         "child_node_ids",
         "child_evidence_refs",
-        "blockers"
+        "findings",
+        "blockers",
+        "pm_suggestion_items"
       ],
       "fake_ai_success_fields": [
         "pm_visible_summary",
+        "reviewed_by_role",
+        "passed",
         "parent_node_id",
         "child_node_ids",
         "child_evidence_refs",
-        "composition_decision",
-        "blockers"
+        "findings",
+        "blockers",
+        "pm_suggestion_items",
+        "contract_self_check"
       ],
-      "family_id": "task.parent_backward_replay",
+      "family_id": "review.parent_backward_replay",
       "forbidden_fields": [
         "decision",
+        "composition_decision",
         "outcome",
         "status",
-        "passed",
         "verdict",
         "result",
         "pass_or_block",
-        "validation_status"
+        "validation_status",
+        "review_id",
+        "independent_review_id",
+        "parent_backward_replay_review_id"
       ],
       "non_empty_array_fields": [
         "pm_visible_summary",
@@ -2771,18 +2780,22 @@
         "child_evidence_refs"
       ],
       "owner": "flowpilot_core_runtime",
-      "packet_kind": "task",
+      "packet_kind": "review",
       "required_child_fields": [],
       "required_fields": [
         "pm_visible_summary",
+        "reviewed_by_role",
+        "passed",
         "parent_node_id",
         "child_node_ids",
         "child_evidence_refs",
-        "composition_decision",
-        "blockers"
+        "findings",
+        "blockers",
+        "pm_suggestion_items",
+        "contract_self_check"
       ],
       "route_scope": "parent_backward_replay",
-      "unlocks": "parent_backward_replay_flowguard_review",
+      "unlocks": "parent_backward_review_pm_absorption",
       "validator": "_parent_backward_replay_result_violation"
     },
     {
@@ -2868,7 +2881,8 @@
         "residual_risks"
       ],
       "non_empty_array_fields": [
-        "pm_visible_summary"
+        "pm_visible_summary",
+        "pm_suggestion_items"
       ],
       "owner": "flowpilot_core_runtime",
       "packet_kind": "review",
@@ -2928,6 +2942,7 @@
       ],
       "non_empty_array_fields": [
         "pm_visible_summary",
+        "pm_suggestion_items",
         "final_artifact_refs",
         "acceptance_item_closure"
       ],

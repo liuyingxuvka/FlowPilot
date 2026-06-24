@@ -15,7 +15,7 @@
 </p>
 
 <p align="center">
-  Source version: <strong>v0.10.19</strong> · MIT License · Codex skill source package
+  Source version: <strong>v0.10.20</strong> · MIT License · Codex skill source package
 </p>
 <!-- README HERO END -->
 
@@ -88,7 +88,7 @@ In plain language:
 
 | Field | Value |
 | --- | --- |
-| Source version | `v0.10.19` |
+| Source version | `v0.10.20` |
 | Public project name | `FlowPilot` |
 | Skill slug | `flowpilot` |
 | Release shape | Source package only, no binary app bundle |
@@ -96,7 +96,7 @@ In plain language:
 | Required core dependency | Real `flowguard` Python package |
 | Current UI surface | Windows WPF startup intake dialog plus chat route signs |
 
-`v0.10.19` restores the strict two-step parent replay closure path. A parent backward replay task now produces raw replay evidence first; FlowPilot then opens or reuses a normal independent Reviewer packet for that replay result, and only that accepted review can unlock parent/module closure, parent-segment PM disposition, terminal replay, and final route-wide closure. This release keeps the path current-contract only: no old-run migration, compatibility alias, fallback translator, or historical-state promotion is added.
+`v0.10.20` simplifies parent backward closure to one Reviewer-owned parent backward review packet. After the last child of a parent or module closes, FlowPilot returns to that parent, opens exactly one `review.parent_backward_replay` packet, and the accepted review result itself becomes the parent-closure evidence. PM then absorbs that evidence before continuing. If a later ancestor, terminal, or final gate sees a missing or multiple parent-review gap, FlowPilot treats it as a control-plane ordering violation instead of late repair work. This release keeps the path current-contract only: no old-run migration, compatibility alias, fallback translator, or historical-state promotion is added.
 
 ## When To Use FlowPilot
 
@@ -191,7 +191,7 @@ MIT. See [`LICENSE`](./LICENSE).
 
 # FlowPilot 中文说明
 
-**Source version:** `v0.10.19`<br />
+**Source version:** `v0.10.20`<br />
 **许可证：** MIT<br />
 **形态：** Codex skill source package
 
@@ -262,7 +262,7 @@ startup intake
 
 | 字段 | 值 |
 | --- | --- |
-| Source version | `v0.10.19` |
+| Source version | `v0.10.20` |
 | Public project name | `FlowPilot` |
 | Skill slug | `flowpilot` |
 | Release shape | source package only, no binary app bundle |
@@ -270,7 +270,7 @@ startup intake
 | Required core dependency | real `flowguard` Python package |
 | Current UI surface | Windows WPF startup intake dialog plus chat route signs |
 
-`v0.10.19` 把 parent backward replay 收尾改回严格两步：先执行 parent replay task，得到原始 replay evidence；然后 FlowPilot 会为这个 replay result 打开或复用一个普通的独立 Reviewer packet；只有这个 review 被接受后，父级或模块节点收尾、parent-segment PM disposition、terminal replay 和 final route-wide closure 才能继续。本版本只保留当前合约路径：不加入旧运行迁移、兼容 alias、fallback translator，也不把历史状态提升成当前证据。
+`v0.10.20` 把父级倒查收尾简化成一个 Reviewer 负责的父级倒查审查包。某个父节点或模块的最后一个子节点关闭后，FlowPilot 会回到这个父节点，只打开一个 `review.parent_backward_replay` 包；这个审查结果被接受后，本身就算父级收尾证据。之后 PM 再吸收这份证据，决定是否继续往下走。如果更高层、终局或最后总验收才看见父级审查缺口，或者同时看见多个父级审查缺口，FlowPilot 会把它当成控制流程顺序坏掉，而不是临时补派修复审查。本版本只保留当前合约路径：不加入旧运行迁移、兼容 alias、fallback translator，也不把历史状态提升成当前证据。
 
 ## 什么时候用 FlowPilot
 

@@ -1,10 +1,10 @@
 {
   "covered_risks": [
-    "old_state_counts_raw_replay_as_complete",
-    "parallel_parent_replay_reviews",
-    "raw_replay_closes_parent",
-    "root_gap_selected_before_child_gap",
-    "segment_decision_before_review",
+    "final_parent_gap_not_hard_blocked",
+    "multiple_final_parent_gaps_dispatch_repair",
+    "old_state_translated_as_current",
+    "old_task_parent_backward_accepted",
+    "pm_segment_before_parent_review",
     "terminal_replay_before_parent_review"
   ],
   "flowguard": {
@@ -19,51 +19,54 @@
   "hazards": {
     "failures": [],
     "hazards": {
-      "old_state_counts_raw_replay_as_complete": {
+      "final_parent_gap_not_hard_blocked": {
         "detected": true,
-        "expected_failure": "fallback or old-state compatibility path was used for parent replay review",
+        "expected_failure": "final gate parent review gap was not hard-blocked as control-plane corruption",
         "failures": [
-          "fallback or old-state compatibility path was used for parent replay review",
-          "parent replay closure recorded before independent review accepted",
-          "PM parent segment decision offered before independent parent replay review",
-          "parent completion offered before independent parent replay review",
-          "terminal backward replay offered before required parent replay review",
-          "old raw parent replay completion claim counted as current closure without review"
+          "terminal backward replay offered before required parent backward review",
+          "final gate parent review gap was not hard-blocked as control-plane corruption"
         ]
       },
-      "parallel_parent_replay_reviews": {
+      "multiple_final_parent_gaps_dispatch_repair": {
         "detected": true,
-        "expected_failure": "Router did not issue exactly one current parent replay review packet",
+        "expected_failure": "final gate dispatched an ordinary late parent review instead of hard blocking",
         "failures": [
-          "Router did not issue exactly one current parent replay review packet for missing-review gaps"
+          "final gate dispatched an ordinary late parent review instead of hard blocking",
+          "final gate parent review gap was not hard-blocked as control-plane corruption",
+          "multiple parent review gaps reached final gate"
         ]
       },
-      "raw_replay_closes_parent": {
+      "old_state_translated_as_current": {
         "detected": true,
-        "expected_failure": "parent replay closure recorded before independent review accepted",
+        "expected_failure": "fallback or old-state compatibility path was used for parent backward review",
         "failures": [
-          "parent replay closure recorded before independent review accepted"
+          "fallback or old-state compatibility path was used for parent backward review",
+          "old task.parent_backward_replay result counted as current parent review"
         ]
       },
-      "root_gap_selected_before_child_gap": {
+      "old_task_parent_backward_accepted": {
         "detected": true,
-        "expected_failure": "Router selected a shallower parent replay review gap before the deepest current gap",
+        "expected_failure": "old task.parent_backward_replay result counted as current parent review",
         "failures": [
-          "Router selected a shallower parent replay review gap before the deepest current gap"
+          "old task.parent_backward_replay result counted as current parent review",
+          "parent closure recorded before review.parent_backward_replay accepted",
+          "PM parent segment decision offered before parent backward review",
+          "parent completion offered before parent backward review",
+          "terminal backward replay offered before required parent backward review"
         ]
       },
-      "segment_decision_before_review": {
+      "pm_segment_before_parent_review": {
         "detected": true,
-        "expected_failure": "PM parent segment decision offered before independent parent replay review",
+        "expected_failure": "PM parent segment decision offered before parent backward review",
         "failures": [
-          "PM parent segment decision offered before independent parent replay review"
+          "PM parent segment decision offered before parent backward review"
         ]
       },
       "terminal_replay_before_parent_review": {
         "detected": true,
-        "expected_failure": "terminal backward replay offered before required parent replay review",
+        "expected_failure": "terminal backward replay offered before required parent backward review",
         "failures": [
-          "terminal backward replay offered before required parent replay review"
+          "terminal backward replay offered before required parent backward review"
         ]
       }
     },
@@ -71,13 +74,13 @@
   },
   "intended": {
     "accepted_plan": [
-      "valid_deepest_gap_selected_first",
-      "valid_sequential_parent_replay_review"
+      "valid_active_parent_review_issued",
+      "valid_single_parent_backward_review"
     ],
     "failures": {},
     "ok": true
   },
-  "model": "flowpilot_sequential_parent_replay_review",
+  "model": "flowpilot_single_parent_backward_review",
   "ok": true,
   "progress": {
     "cannot_reach_terminal_count": 0,
@@ -88,19 +91,19 @@
   },
   "safe_graph": {
     "accepted_scenarios": [
-      "valid_deepest_gap_selected_first",
-      "valid_sequential_parent_replay_review"
+      "valid_active_parent_review_issued",
+      "valid_single_parent_backward_review"
     ],
     "edge_count": 16,
     "invariant_failures": [],
     "missing_labels": [],
     "ok": true,
     "rejected_scenarios": [
-      "old_state_counts_raw_replay_as_complete",
-      "parallel_parent_replay_reviews",
-      "raw_replay_closes_parent",
-      "root_gap_selected_before_child_gap",
-      "segment_decision_before_review",
+      "final_parent_gap_not_hard_blocked",
+      "multiple_final_parent_gaps_dispatch_repair",
+      "old_state_translated_as_current",
+      "old_task_parent_backward_accepted",
+      "pm_segment_before_parent_review",
       "terminal_replay_before_parent_review"
     ],
     "state_count": 17

@@ -34,7 +34,7 @@ def packet_for_family(family_id: str) -> dict[str, object]:
             "packet_kind": str(row["packet_kind"]),
             "route_scope": route_scope,
             "responsibility": "pm",
-            "route_node_id": "parent-node" if family_id == "task.parent_backward_replay" else "node-001",
+            "route_node_id": "parent-node" if family_id == "review.parent_backward_replay" else "node-001",
         },
     }
 
@@ -116,6 +116,10 @@ class FlowPilotContractSurfaceReductionTests(unittest.TestCase):
             "review.any_current_subject": {
                 "required": ("findings", "blockers", "contract_self_check"),
                 "deleted": ("direct_evidence_paths_checked", "independent_challenge"),
+            },
+            "review.parent_backward_replay": {
+                "required": ("parent_node_id", "child_node_ids", "child_evidence_refs", "passed"),
+                "deleted": ("task.parent_backward_replay", "composition_decision", "parent_backward_replay_review_id"),
             },
             "review.terminal_backward_replay": {
                 "required": ("route_segment_replay", "final_blockers"),
@@ -293,7 +297,7 @@ class FlowPilotContractSurfaceReductionTests(unittest.TestCase):
             "minimum_hard_gate_passed",
             "quality_assessment",
         }
-        for family_id in ("review.any_current_subject", "review.terminal_backward_replay"):
+        for family_id in ("review.any_current_subject", "review.parent_backward_replay", "review.terminal_backward_replay"):
             with self.subTest(family_id=family_id):
                 required_fields = set(packet_result_contracts.required_fields_for_family(family_id))
                 required_child_fields = set(packet_result_contracts.required_child_fields_for_family(family_id))

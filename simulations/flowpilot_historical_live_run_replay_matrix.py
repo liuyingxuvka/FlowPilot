@@ -98,7 +98,7 @@ CONTRACT_SURFACE_REDUCTION_PACKET_FAMILIES = (
     "review.any_current_subject",
     "pm_repair_decision.pm_repair_decision",
     "pm_disposition.node_pm_disposition",
-    "task.parent_backward_replay",
+    "review.parent_backward_replay",
     "review.terminal_backward_replay",
 )
 

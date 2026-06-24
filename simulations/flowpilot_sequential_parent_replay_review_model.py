@@ -1,13 +1,12 @@
-"""FlowGuard model for sequential parent replay review closure.
+"""FlowGuard model for single parent backward review closure.
 
 Risk purpose:
-- Parent/module backward replay execution is a task result, not the independent
-  review signature for that result.
-- A parent/module node, parent segment decision, and terminal backward replay
-  may progress only after the replay result has an accepted independent review.
-- When multiple current parent replay results are missing review, Router must
-  select one current review packet in topology order: deepest first, then route
-  order. It must not issue parallel parent replay reviews.
+- Parent/module backward replay is a Reviewer result family, not a task result.
+- The accepted ``review.parent_backward_replay`` result is the closure evidence
+  PM absorbs; there is no second reviewer packet over that result.
+- If more than one parent/module review gap reaches final closure, or any
+  parent/module review gap appears only at final closure, the control plane is
+  corrupt and must hard-block instead of dispatching late repair reviews.
 """
 
 from __future__ import annotations
@@ -18,34 +17,34 @@ from typing import Iterable, NamedTuple
 from flowguard import FunctionResult, Invariant, InvariantResult, Workflow
 
 
-VALID_SEQUENTIAL_PARENT_REPLAY_REVIEW = "valid_sequential_parent_replay_review"
-VALID_DEEPEST_GAP_SELECTED_FIRST = "valid_deepest_gap_selected_first"
+VALID_SINGLE_PARENT_BACKWARD_REVIEW = "valid_single_parent_backward_review"
+VALID_ACTIVE_PARENT_REVIEW_ISSUED = "valid_active_parent_review_issued"
 
-RAW_REPLAY_CLOSES_PARENT = "raw_replay_closes_parent"
-SEGMENT_DECISION_BEFORE_REVIEW = "segment_decision_before_review"
+OLD_TASK_PARENT_BACKWARD_ACCEPTED = "old_task_parent_backward_accepted"
+PM_SEGMENT_BEFORE_PARENT_REVIEW = "pm_segment_before_parent_review"
 TERMINAL_REPLAY_BEFORE_PARENT_REVIEW = "terminal_replay_before_parent_review"
-PARALLEL_PARENT_REPLAY_REVIEWS = "parallel_parent_replay_reviews"
-ROOT_GAP_SELECTED_BEFORE_CHILD_GAP = "root_gap_selected_before_child_gap"
-OLD_STATE_COUNTS_RAW_REPLAY_AS_COMPLETE = "old_state_counts_raw_replay_as_complete"
+MULTIPLE_FINAL_PARENT_GAPS_DISPATCH_REPAIR = "multiple_final_parent_gaps_dispatch_repair"
+FINAL_PARENT_GAP_NOT_HARD_BLOCKED = "final_parent_gap_not_hard_blocked"
+OLD_STATE_TRANSLATED_AS_CURRENT = "old_state_translated_as_current"
 
 VALID_SCENARIOS = (
-    VALID_SEQUENTIAL_PARENT_REPLAY_REVIEW,
-    VALID_DEEPEST_GAP_SELECTED_FIRST,
+    VALID_SINGLE_PARENT_BACKWARD_REVIEW,
+    VALID_ACTIVE_PARENT_REVIEW_ISSUED,
 )
 NEGATIVE_SCENARIOS = (
-    RAW_REPLAY_CLOSES_PARENT,
-    SEGMENT_DECISION_BEFORE_REVIEW,
+    OLD_TASK_PARENT_BACKWARD_ACCEPTED,
+    PM_SEGMENT_BEFORE_PARENT_REVIEW,
     TERMINAL_REPLAY_BEFORE_PARENT_REVIEW,
-    PARALLEL_PARENT_REPLAY_REVIEWS,
-    ROOT_GAP_SELECTED_BEFORE_CHILD_GAP,
-    OLD_STATE_COUNTS_RAW_REPLAY_AS_COMPLETE,
+    MULTIPLE_FINAL_PARENT_GAPS_DISPATCH_REPAIR,
+    FINAL_PARENT_GAP_NOT_HARD_BLOCKED,
+    OLD_STATE_TRANSLATED_AS_CURRENT,
 )
 SCENARIOS = VALID_SCENARIOS + NEGATIVE_SCENARIOS
 
 
 @dataclass(frozen=True)
 class Tick:
-    """One parent replay review ordering evaluation tick."""
+    """One parent backward review ordering evaluation tick."""
 
 
 @dataclass(frozen=True)
@@ -59,21 +58,18 @@ class State:
     scenario: str = "unset"
 
     child_chain_closed_current: bool = True
-    parent_replay_result_accepted: bool = False
-    independent_replay_review_accepted: bool = False
-    parent_replay_closure_recorded: bool = False
+    parent_review_packet_current: bool = False
+    parent_review_result_accepted: bool = False
+    old_task_parent_replay_result_accepted: bool = False
+    parent_closure_recorded: bool = False
     pm_segment_decision_offered: bool = False
     pm_parent_completion_offered: bool = False
     terminal_replay_offered: bool = False
 
-    current_missing_review_gap_count: int = 0
-    review_packets_issued_this_tick: int = 0
-    selected_gap_depth: int = 0
-    deepest_missing_gap_depth: int = 0
-    selected_gap_route_order_index: int = 0
-    earliest_deepest_gap_route_order_index: int = 0
-
-    old_state_raw_replay_claimed_complete: bool = False
+    current_parent_review_gap_count: int = 0
+    final_gate_ready: bool = False
+    ordinary_late_parent_review_dispatched: bool = False
+    control_plane_blocker_offered: bool = False
     fallback_or_compatibility_path_used: bool = False
     terminal_reason: str = "none"
 
@@ -83,27 +79,26 @@ class Transition(NamedTuple):
     state: State
 
 
-class SequentialParentReplayReviewStep:
-    """One transition for parent replay review ordering.
+class SingleParentBackwardReviewStep:
+    """One transition for parent backward review ordering.
 
     Input x State -> Set(Output x State)
-    reads: parent replay task result, independent review result, route topology,
-    final route-wide gate ledger, router next-action projection
-    writes: one accepted/rejected parent replay review ordering decision
+    reads: current parent review packet/result, route topology, final route-wide
+      gate ledger, router next-action projection
+    writes: one accepted/rejected parent review ordering decision
     idempotency: pure classification for one current route/frontier version.
     """
 
-    name = "SequentialParentReplayReviewStep"
-    input_description = "FlowPilot parent replay review ordering tick"
-    output_description = "one replay-review ordering transition"
+    name = "SingleParentBackwardReviewStep"
+    input_description = "FlowPilot parent backward review ordering tick"
+    output_description = "one parent-review ordering transition"
     reads = (
-        "parent_backward_replay_result",
-        "review.any_current_subject",
+        "review.parent_backward_replay",
         "route_topology",
         "final_route_wide_gate_ledger",
         "router_next_action_projection",
     )
-    writes = ("parent_replay_review_ordering_decision",)
+    writes = ("parent_backward_review_ordering_decision",)
     idempotency = "pure current-route classification"
 
     def apply(self, input_obj: Tick, state: State) -> Iterable[FunctionResult]:
@@ -116,87 +111,100 @@ class SequentialParentReplayReviewStep:
             )
 
 
-def _valid_sequence_state() -> State:
+def _valid_closed_state() -> State:
     return State(
         status="running",
-        scenario=VALID_SEQUENTIAL_PARENT_REPLAY_REVIEW,
+        scenario=VALID_SINGLE_PARENT_BACKWARD_REVIEW,
         child_chain_closed_current=True,
-        parent_replay_result_accepted=True,
-        independent_replay_review_accepted=True,
-        parent_replay_closure_recorded=True,
+        parent_review_packet_current=True,
+        parent_review_result_accepted=True,
+        parent_closure_recorded=True,
         pm_segment_decision_offered=True,
         pm_parent_completion_offered=True,
         terminal_replay_offered=True,
-        current_missing_review_gap_count=0,
-        review_packets_issued_this_tick=0,
+        current_parent_review_gap_count=0,
     )
 
 
-def _valid_deepest_gap_state() -> State:
+def _valid_active_parent_review_state() -> State:
     return State(
         status="running",
-        scenario=VALID_DEEPEST_GAP_SELECTED_FIRST,
+        scenario=VALID_ACTIVE_PARENT_REVIEW_ISSUED,
         child_chain_closed_current=True,
-        parent_replay_result_accepted=True,
-        independent_replay_review_accepted=False,
-        parent_replay_closure_recorded=False,
+        parent_review_packet_current=True,
+        parent_review_result_accepted=False,
+        parent_closure_recorded=False,
         pm_segment_decision_offered=False,
         pm_parent_completion_offered=False,
         terminal_replay_offered=False,
-        current_missing_review_gap_count=2,
-        review_packets_issued_this_tick=1,
-        selected_gap_depth=2,
-        deepest_missing_gap_depth=2,
-        selected_gap_route_order_index=3,
-        earliest_deepest_gap_route_order_index=3,
+        current_parent_review_gap_count=1,
+        final_gate_ready=False,
+        ordinary_late_parent_review_dispatched=False,
+        control_plane_blocker_offered=False,
     )
 
 
 def _scenario_state(scenario: str) -> State:
-    if scenario == VALID_SEQUENTIAL_PARENT_REPLAY_REVIEW:
-        return _valid_sequence_state()
-    if scenario == VALID_DEEPEST_GAP_SELECTED_FIRST:
-        return _valid_deepest_gap_state()
-    state = _valid_sequence_state()
+    if scenario == VALID_SINGLE_PARENT_BACKWARD_REVIEW:
+        return _valid_closed_state()
+    if scenario == VALID_ACTIVE_PARENT_REVIEW_ISSUED:
+        return _valid_active_parent_review_state()
+    state = _valid_closed_state()
     updates: dict[str, object] = {"scenario": scenario}
-    if scenario == RAW_REPLAY_CLOSES_PARENT:
+    if scenario == OLD_TASK_PARENT_BACKWARD_ACCEPTED:
         updates.update(
-            independent_replay_review_accepted=False,
-            parent_replay_closure_recorded=True,
-            pm_segment_decision_offered=False,
-            pm_parent_completion_offered=False,
-            terminal_replay_offered=False,
+            parent_review_packet_current=False,
+            parent_review_result_accepted=False,
+            old_task_parent_replay_result_accepted=True,
+            parent_closure_recorded=True,
         )
-    elif scenario == SEGMENT_DECISION_BEFORE_REVIEW:
+    elif scenario == PM_SEGMENT_BEFORE_PARENT_REVIEW:
         updates.update(
-            independent_replay_review_accepted=False,
-            parent_replay_closure_recorded=False,
+            parent_review_result_accepted=False,
+            parent_closure_recorded=False,
             pm_segment_decision_offered=True,
             pm_parent_completion_offered=False,
             terminal_replay_offered=False,
         )
     elif scenario == TERMINAL_REPLAY_BEFORE_PARENT_REVIEW:
         updates.update(
-            independent_replay_review_accepted=False,
-            parent_replay_closure_recorded=False,
+            parent_review_result_accepted=False,
+            parent_closure_recorded=False,
             pm_segment_decision_offered=False,
             pm_parent_completion_offered=False,
             terminal_replay_offered=True,
         )
-    elif scenario == PARALLEL_PARENT_REPLAY_REVIEWS:
-        state = _valid_deepest_gap_state()
-        updates.update(review_packets_issued_this_tick=2)
-    elif scenario == ROOT_GAP_SELECTED_BEFORE_CHILD_GAP:
-        state = _valid_deepest_gap_state()
-        updates.update(selected_gap_depth=0, deepest_missing_gap_depth=2)
-    elif scenario == OLD_STATE_COUNTS_RAW_REPLAY_AS_COMPLETE:
+    elif scenario == MULTIPLE_FINAL_PARENT_GAPS_DISPATCH_REPAIR:
         updates.update(
-            independent_replay_review_accepted=False,
-            parent_replay_closure_recorded=True,
-            pm_segment_decision_offered=True,
-            pm_parent_completion_offered=True,
+            parent_review_packet_current=False,
+            parent_review_result_accepted=False,
+            parent_closure_recorded=False,
+            pm_segment_decision_offered=False,
+            pm_parent_completion_offered=False,
+            terminal_replay_offered=False,
+            current_parent_review_gap_count=2,
+            final_gate_ready=True,
+            ordinary_late_parent_review_dispatched=True,
+            control_plane_blocker_offered=False,
+        )
+    elif scenario == FINAL_PARENT_GAP_NOT_HARD_BLOCKED:
+        updates.update(
+            parent_review_packet_current=False,
+            parent_review_result_accepted=False,
+            parent_closure_recorded=False,
+            pm_segment_decision_offered=False,
+            pm_parent_completion_offered=False,
             terminal_replay_offered=True,
-            old_state_raw_replay_claimed_complete=True,
+            current_parent_review_gap_count=1,
+            final_gate_ready=True,
+            ordinary_late_parent_review_dispatched=False,
+            control_plane_blocker_offered=False,
+        )
+    elif scenario == OLD_STATE_TRANSLATED_AS_CURRENT:
+        updates.update(
+            parent_review_packet_current=False,
+            parent_review_result_accepted=True,
+            old_task_parent_replay_result_accepted=True,
             fallback_or_compatibility_path_used=True,
         )
     else:
@@ -213,49 +221,46 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
         return ()
     if state.status == "new":
         return tuple(Transition(f"select_{scenario}", _scenario_state(scenario)) for scenario in SCENARIOS)
-    failures = replay_review_failures(state)
+    failures = parent_review_failures(state)
     if failures:
         return (Transition(f"reject_{state.scenario}", replace(state, status="rejected", terminal_reason=failures[0])),)
-    return (Transition(f"accept_{state.scenario}", replace(state, status="accepted", terminal_reason="sequential_replay_review_passed")),)
+    return (Transition(f"accept_{state.scenario}", replace(state, status="accepted", terminal_reason="single_parent_review_passed")),)
 
 
-def replay_review_failures(state: State) -> list[str]:
+def parent_review_failures(state: State) -> list[str]:
     failures: list[str] = []
     if state.fallback_or_compatibility_path_used:
-        failures.append("fallback or old-state compatibility path was used for parent replay review")
-    if state.parent_replay_result_accepted and not state.child_chain_closed_current:
-        failures.append("parent replay result was accepted before current child chain closed")
-    if state.parent_replay_closure_recorded and not state.independent_replay_review_accepted:
-        failures.append("parent replay closure recorded before independent review accepted")
-    if state.pm_segment_decision_offered and not state.independent_replay_review_accepted:
-        failures.append("PM parent segment decision offered before independent parent replay review")
-    if state.pm_parent_completion_offered and not state.independent_replay_review_accepted:
-        failures.append("parent completion offered before independent parent replay review")
-    if state.terminal_replay_offered and not state.independent_replay_review_accepted:
-        failures.append("terminal backward replay offered before required parent replay review")
-    if state.current_missing_review_gap_count > 0:
-        if state.review_packets_issued_this_tick != 1:
-            failures.append("Router did not issue exactly one current parent replay review packet for missing-review gaps")
-        if state.selected_gap_depth < state.deepest_missing_gap_depth:
-            failures.append("Router selected a shallower parent replay review gap before the deepest current gap")
-        if (
-            state.selected_gap_depth == state.deepest_missing_gap_depth
-            and state.selected_gap_route_order_index > state.earliest_deepest_gap_route_order_index
-        ):
-            failures.append("Router skipped the earliest route-order parent replay review gap at the deepest level")
-    if state.old_state_raw_replay_claimed_complete and not state.independent_replay_review_accepted:
-        failures.append("old raw parent replay completion claim counted as current closure without review")
+        failures.append("fallback or old-state compatibility path was used for parent backward review")
+    if state.old_task_parent_replay_result_accepted:
+        failures.append("old task.parent_backward_replay result counted as current parent review")
+    if state.parent_review_packet_current and not state.child_chain_closed_current:
+        failures.append("parent backward review packet was issued before current child chain closed")
+    if state.parent_closure_recorded and not state.parent_review_result_accepted:
+        failures.append("parent closure recorded before review.parent_backward_replay accepted")
+    if state.pm_segment_decision_offered and not state.parent_review_result_accepted:
+        failures.append("PM parent segment decision offered before parent backward review")
+    if state.pm_parent_completion_offered and not state.parent_review_result_accepted:
+        failures.append("parent completion offered before parent backward review")
+    if state.terminal_replay_offered and not state.parent_review_result_accepted:
+        failures.append("terminal backward replay offered before required parent backward review")
+    if state.final_gate_ready and state.current_parent_review_gap_count > 0:
+        if state.ordinary_late_parent_review_dispatched:
+            failures.append("final gate dispatched an ordinary late parent review instead of hard blocking")
+        if not state.control_plane_blocker_offered:
+            failures.append("final gate parent review gap was not hard-blocked as control-plane corruption")
+    if state.current_parent_review_gap_count > 1 and state.final_gate_ready:
+        failures.append("multiple parent review gaps reached final gate")
     return failures
 
 
 def invariant_failures(state: State) -> list[str]:
     failures: list[str] = []
     if state.status == "accepted":
-        failures.extend(replay_review_failures(state))
+        failures.extend(parent_review_failures(state))
         if state.scenario not in VALID_SCENARIOS:
             failures.append(f"negative scenario was accepted: {state.scenario}")
     if state.status == "rejected" and state.scenario in VALID_SCENARIOS:
-        failures.append("valid sequential parent replay review route was rejected")
+        failures.append("valid single parent backward review route was rejected")
     return failures
 
 
@@ -271,8 +276,12 @@ def _invariant(name: str, description: str) -> Invariant:
 
 INVARIANTS = (
     _invariant(
-        "parent_replay_closes_only_after_independent_review",
-        "Parent replay closure, PM segment decisions, and terminal replay require an accepted independent review.",
+        "parent_closes_only_after_single_review_parent_packet",
+        "Parent closure, PM decisions, and terminal replay require accepted review.parent_backward_replay.",
+    ),
+    _invariant(
+        "final_parent_review_gap_is_corruption_not_repair",
+        "Parent review gaps discovered at final gate hard-block as control-plane corruption.",
     ),
 )
 EXTERNAL_INPUTS = (Tick(),)
@@ -280,7 +289,7 @@ MAX_SEQUENCE_LENGTH = 3
 
 
 def build_workflow() -> Workflow:
-    return Workflow((SequentialParentReplayReviewStep(),), name="flowpilot_sequential_parent_replay_review")
+    return Workflow((SingleParentBackwardReviewStep(),), name="flowpilot_single_parent_backward_review")
 
 
 def is_terminal(state: State) -> bool:

@@ -280,16 +280,15 @@ Keep these failure modes in the model and tests.
 - Blocking inspection issues must be interrogated into specific repairable records,
   mutate the route into repair nodes, run repair process/product models, and
   close only after same-inspector recheck passes.
-- Every non-leaf parent/module/group must run composite backward replay before
-  closure, then route that replay result through an independent current
-  Reviewer review. The replay must inspect child evidence against the parent
-  product model and whether children compose into the parent goal; the
-  independent review must accept that replay result before PM continue or
-  parent closure. On failure, mutate the route to an affected existing child,
-  an adjacent sibling child, a rebuilt child subtree, or a bubbled parent
-  impact. Old child/parent evidence becomes stale until the changed
-  child/subtree passes and the parent backward replay plus independent review
-  reruns.
+- Every non-leaf parent/module/group must run a current
+  `review.parent_backward_replay` before closure. That Reviewer result is the
+  parent backward review signature: it must inspect child evidence against the
+  parent product model and whether children compose into the parent goal. PM
+  may continue or close the parent only after that review passes and PM
+  absorbs it. On failure, mutate the route to an affected existing child, an
+  adjacent sibling child, a rebuilt child subtree, or a bubbled parent impact.
+  Old child/parent evidence becomes stale until the changed child/subtree
+  passes and the same parent backward review reruns.
 - Final completion review must reconcile feature matrix, acceptance matrix, and
   quality candidates, replay the product-function model, and pass final
   human-like inspection before final self-interrogation closes the route.
