@@ -69,6 +69,14 @@
       "contract_id": "flowpilot.output_contract.flowguard_model_miss_report.v1"
     },
     {
+      "task_family": "flowguard_operator.terminal_flowguard_coverage_report",
+      "packet_type": "flowguard_operator_request",
+      "recipient_roles": [
+        "flowguard_operator"
+      ],
+      "contract_id": "flowpilot.output_contract.flowguard_terminal_coverage_report.v1"
+    },
+    {
       "task_family": "pm.model_miss_triage",
       "packet_type": "role_decision",
       "recipient_roles": [
@@ -708,6 +716,67 @@
       ]
     },
     {
+      "contract_id": "flowpilot.output_contract.flowguard_terminal_coverage_report.v1",
+      "schema_version": "flowpilot.output_contract.v1",
+      "task_family": "flowguard_operator.terminal_flowguard_coverage_report",
+      "recipient_roles": [
+        "flowguard_operator"
+      ],
+      "expected_return_envelope": "role_output_envelope",
+      "required_body_fields": [
+        "reviewed_by_role",
+        "passed",
+        "modeled_boundary",
+        "route_version",
+        "coverage_matrix_ref.path",
+        "coverage_matrix_ref.fresh",
+        "coverage_matrix_ref.route_version",
+        "acceptance_item_closure",
+        "route_nodes_examined",
+        "flowguard_required_items",
+        "flowguard_evidence_found",
+        "missing_or_stale_evidence",
+        "model_test_alignment_gaps",
+        "blockers",
+        "pm_suggestion_items",
+        "supplemental_repair_recommendations",
+        "commands_run",
+        "hard_invariants",
+        "counterexamples_or_absence",
+        "confidence_boundary",
+        "contract_self_check"
+      ],
+      "required_body_values": {
+        "reviewed_by_role": "flowguard_operator",
+        "passed": true,
+        "modeled_boundary": "terminal_flowguard_coverage",
+        "coverage_matrix_ref.fresh": true
+      },
+      "contract_self_check_required": true,
+      "runtime_channel": "role_output_runtime",
+      "output_type": "flowguard_terminal_coverage_report",
+      "body_schema_version": "flowpilot.flowguard_terminal_coverage_report.v1",
+      "default_subdir": "flowguard_operator_reports",
+      "default_filename_prefix": "flowguard_terminal_coverage_report",
+      "path_key": "report_path",
+      "hash_key": "report_hash",
+      "router_event_mode": "router_supplied",
+      "explicit_array_fields": [
+        "acceptance_item_closure",
+        "route_nodes_examined",
+        "flowguard_required_items",
+        "flowguard_evidence_found",
+        "missing_or_stale_evidence",
+        "model_test_alignment_gaps",
+        "blockers",
+        "pm_suggestion_items",
+        "supplemental_repair_recommendations",
+        "commands_run",
+        "hard_invariants",
+        "counterexamples_or_absence"
+      ]
+    },
+    {
       "contract_id": "flowpilot.output_contract.pm_model_miss_triage_decision.v1",
       "schema_version": "flowpilot.output_contract.v1",
       "task_family": "pm.model_miss_triage",
@@ -1099,13 +1168,15 @@
         "prior_path_context_review.prior_blocks_or_experiments_considered",
         "prior_path_context_review.impact_on_decision",
         "prior_path_context_review.controller_summary_used_as_evidence",
+        "lifecycle_reconciliation.flowguard_terminal_coverage_closure_clean",
         "structure_convergence_replay"
       ],
       "required_body_values": {
         "approved_by_role": "project_manager",
         "decision": "approve_terminal_closure",
         "prior_path_context_review.reviewed": true,
-        "prior_path_context_review.controller_summary_used_as_evidence": false
+        "prior_path_context_review.controller_summary_used_as_evidence": false,
+        "lifecycle_reconciliation.flowguard_terminal_coverage_closure_clean": true
       },
       "required_prior_path_context_source_paths": [
         ".flowpilot/runs/<run-id>/route_memory/pm_prior_path_context.json",
@@ -1121,6 +1192,7 @@
         "controller_summary_not_used_as_evidence",
         "clean_final_ledger_exists",
         "terminal_backward_replay_passed",
+        "terminal_flowguard_coverage_closure_clean",
         "task_completion_projection_ready",
         "lifecycle_ledgers_clean",
         "continuation_binding_closed_by_router"

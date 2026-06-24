@@ -38,6 +38,12 @@ FlowGuard Reports that PM accepted, or explicitly dispositioned by PM with a
 scoped waiver, deferral, quarantine, or user stop. Missing, stale, skipped,
 progress-only, blocked, or unaccepted FlowGuard reports block terminal
 closure.
+Closure also requires the runtime final ledger's
+`flowguard_terminal_coverage_closure` to be clean and the terminal Reviewer to
+have passed the `flowguard-coverage-governance` replay segment. PM may not
+approve terminal closure from scattered node-level FlowGuard notes, stale
+reports, progress-only logs, unaccepted reports, unresolved model-test gaps, or
+undispositioned FlowGuard PM suggestion items.
 Closure also requires all active target-realization obligations from
 `flowguard/target_realization_model.json` to be dispositioned in the final
 ledger. PM cannot close by saying the route ran if a thin-success trap,
@@ -161,7 +167,8 @@ paths from the router delivery envelope.
     "continuation_binding_current": true,
     "current_ledgers_clean": true,
     "pm_suggestion_ledger_clean": true,
-    "self_interrogation_index_clean": true
+    "self_interrogation_index_clean": true,
+    "flowguard_terminal_coverage_closure_clean": true
   },
   "final_user_outcome_replay": {
     "reviewed": true,

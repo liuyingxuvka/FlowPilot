@@ -1000,12 +1000,7 @@ class FlowPilotSyntheticExceptionTraceReplayTests(FlowPilotRouterRuntimeTestBase
                 self.role_decision_envelope(
                     root,
                     "systemic/terminal_total_gate_dirty_sources",
-                    {
-                        "approved_by_role": "project_manager",
-                        "decision": "approve_terminal_closure",
-                        **self.prior_path_context_review(root, "Terminal closure attempted with multiple dirty sources."),
-                        "final_report": {"status": "complete"},
-                    },
+                    self.pm_terminal_closure_body(root, "Terminal closure attempted with multiple dirty sources."),
                 ),
             )
         state = read_json(router.run_state_path(run_root))
@@ -1014,4 +1009,3 @@ class FlowPilotSyntheticExceptionTraceReplayTests(FlowPilotRouterRuntimeTestBase
 
 if __name__ == "__main__":
     unittest.main()
-

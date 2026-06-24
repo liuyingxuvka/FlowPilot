@@ -162,6 +162,7 @@ def _pm_terminal_closure_payload_contract(project_root: Path, run_root: Path) ->
             "lifecycle_reconciliation.current_ledgers_clean",
             "lifecycle_reconciliation.pm_suggestion_ledger_clean",
             "lifecycle_reconciliation.self_interrogation_index_clean",
+            "lifecycle_reconciliation.flowguard_terminal_coverage_closure_clean",
             "contract_self_check",
         ],
         allowed_values={
@@ -179,12 +180,13 @@ def _pm_terminal_closure_payload_contract(project_root: Path, run_root: Path) ->
             "lifecycle_reconciliation.current_ledgers_clean": [True],
             "lifecycle_reconciliation.pm_suggestion_ledger_clean": [True],
             "lifecycle_reconciliation.self_interrogation_index_clean": [True],
+            "lifecycle_reconciliation.flowguard_terminal_coverage_closure_clean": [True],
         },
         structural_requirements=[
             "Submit the body through `flowpilot_new.py submit-result --lease-id <lease-id> --packet-id <packet-id> --body <sealed_result_summary>`; the role_output_envelope must carry body_ref and runtime_receipt_ref metadata.",
             "Cite exactly the current-run pm_prior_path_context.json and route_history_index.json in prior_path_context_review.source_paths.",
             "Use empty arrays explicitly when no completed, superseded, stale, blocked, or experimental history applies.",
-            "Approve closure only after clean final ledger, passed terminal backward replay, current completion projection, clean PM suggestion ledger, clean self-interrogation index, clean lifecycle ledgers, and continuation binding are present.",
+            "Approve closure only after clean final ledger, passed terminal backward replay, PM-accepted terminal FlowGuard coverage closure, current completion projection, clean PM suggestion ledger, clean self-interrogation index, clean lifecycle ledgers, and continuation binding are present.",
         ],
         description=(
             "PM terminal closure approval. This is a role-output body contract; Controller may only "

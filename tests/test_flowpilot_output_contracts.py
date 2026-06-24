@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import shutil
 import sys
 import tempfile
 import unittest
@@ -12,6 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "skills" / "flowpilot" / "assets"))
 
 import packet_runtime  # noqa: E402
+import role_output_runtime  # noqa: E402
 
 
 def _write_json(path: Path, payload: dict) -> None:
@@ -29,6 +31,9 @@ class FlowPilotOutputContractTests(unittest.TestCase):
                 "run_root": ".flowpilot/runs/run-test",
             },
         )
+        run_root = root / ".flowpilot" / "runs" / "run-test"
+        run_root.mkdir(parents=True, exist_ok=True)
+        shutil.copytree(ROOT / "skills" / "flowpilot" / "assets" / "runtime_kit", run_root / "runtime_kit")
         return root
 
     def read_json(self, path: Path) -> dict:
@@ -196,6 +201,21 @@ class FlowPilotOutputContractTests(unittest.TestCase):
                     "recipient_role": "human_like_reviewer",
                 },
             )
+
+    def test_terminal_flowguard_coverage_report_contract_is_registered(self) -> None:
+        root = self.make_project()
+
+        skeleton = role_output_runtime.build_output_skeleton(
+            root,
+            output_type="flowguard_terminal_coverage_report",
+            role="flowguard_operator",
+        )
+
+        self.assertEqual(skeleton["schema_version"], "flowpilot.flowguard_terminal_coverage_report.v1")
+        self.assertEqual(skeleton["reviewed_by_role"], "flowguard_operator")
+        self.assertEqual(skeleton["modeled_boundary"], "terminal_flowguard_coverage")
+        self.assertTrue(skeleton["coverage_matrix_ref"]["fresh"])
+        self.assertIn("missing_or_stale_evidence", skeleton)
 
 
 if __name__ == "__main__":

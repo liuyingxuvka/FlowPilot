@@ -2,6 +2,31 @@
 
 All notable changes to FlowPilot will be documented in this file.
 
+## 0.10.19 - 2026-06-24
+
+### Fixed
+
+- Added terminal FlowGuard coverage governance to the PM final-ledger path:
+  final ledger creation now requires a PM-accepted current
+  `flowpilot.flowguard_terminal_coverage_report.v1` and fresh coverage matrix.
+- Added the mandatory `flowguard-coverage-governance` segment to terminal
+  backward replay and made PM terminal closure require that segment to pass.
+- Registered the dedicated
+  `flowpilot.output_contract.flowguard_terminal_coverage_report.v1` role-output
+  contract for the single `flowguard_operator` role.
+- Updated PM, Reviewer, FlowGuard operator, evidence-package, repair, and
+  closure cards so missing, stale, progress-only, blocked, or unaccepted
+  terminal FlowGuard coverage cannot close the project.
+
+### Validation
+
+- Added the terminal FlowGuard coverage model and runner with 95 Cartesian
+  fake-response hazard cases and zero misses.
+- Added runtime tests for missing terminal coverage closure, progress-only
+  reports, final-ledger segment recording, terminal replay, and PM closure.
+- Added output-contract and install-check coverage for the new terminal
+  FlowGuard coverage contract, model, runner, and result artifact.
+
 ## 0.10.18 - 2026-06-23
 
 ### Fixed

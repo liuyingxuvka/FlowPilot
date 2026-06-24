@@ -25,6 +25,7 @@ import flowpilot_runtime_closure
 import flowpilot_user_flow_diagram
 import packet_runtime
 import role_output_runtime
+from flowpilot_router_terminal_ledger_traceability import FLOWGUARD_TERMINAL_COVERAGE_SEGMENT_ID
 from flowpilot_prompt_store import PromptStoreError, card_manifest_entry, load_card_manifest_from_run
 from flowpilot_router_errors import RouterError, RouterLedgerCorruptionError, RouterLedgerWriteInProgress
 
@@ -71,11 +72,20 @@ def _write_terminal_backward_replay(router: ModuleType, project_root: Path, run_
         raise RouterError('terminal replay requires a PM-owned clean final ledger')
     if final_ledger.get('counts', {}).get('unresolved_count') != 0:
         raise RouterError('terminal replay cannot pass unless final ledger unresolved_count is zero')
+    route_version = int(final_ledger.get('built_from_route_version') or 0)
+    flowguard_coverage_status = router._validated_flowguard_terminal_coverage_status(
+        project_root,
+        run_root,
+        route_version,
+        final_ledger.get("flowguard_terminal_coverage_closure"),
+    )
     terminal_map = read_json(terminal_map_path)
     if terminal_map.get('status') != 'ready_for_reviewer':
         raise RouterError('terminal replay map must be ready_for_reviewer')
     segments = terminal_map.get('segments') if isinstance(terminal_map.get('segments'), list) else []
     required_segment_ids = [str(segment.get('segment_id')) for segment in segments if isinstance(segment, dict) and segment.get('segment_id')]
+    if FLOWGUARD_TERMINAL_COVERAGE_SEGMENT_ID not in required_segment_ids:
+        raise RouterError('terminal backward replay map missing FlowGuard coverage governance segment')
     segment_reviews = payload.get('segment_reviews')
     if not isinstance(segment_reviews, list) or not segment_reviews:
         raise RouterError('terminal backward replay requires segment_reviews for every replay-map segment')
@@ -95,6 +105,7 @@ def _write_terminal_backward_replay(router: ModuleType, project_root: Path, run_
     terminal_map['status'] = 'passed'
     terminal_map.setdefault('coverage', {})
     terminal_map['coverage'].update({'effective_nodes_reviewed_by_human': int(terminal_map['coverage'].get('effective_nodes_total', 1) or 1), 'segments_reviewed': len(required_segment_ids), 'root_acceptance_reviewed': True, 'parent_nodes_reviewed': True, 'leaf_nodes_reviewed': True, 'every_effective_node_has_pm_segment_decision': True})
+    terminal_map['coverage']['flowguard_coverage_governance_reviewed'] = True
     terminal_map.setdefault('completion_gate', {})
     terminal_map['completion_gate'].update({'reviewer_passed': True, 'pm_segment_decisions_recorded': True, 'repair_restart_policy_recorded': True, 'unresolved_repair_findings': 0, 'completion_allowed': True})
     terminal_map['reviewed_by_role'] = 'human_like_reviewer'
@@ -102,6 +113,20 @@ def _write_terminal_backward_replay(router: ModuleType, project_root: Path, run_
     write_json(terminal_map_path, terminal_map)
     final_ledger.setdefault('terminal_human_backward_replay', {})
     final_ledger['terminal_human_backward_replay'].update({'status': 'passed', 'review_map_path': project_relative(project_root, terminal_map_path), 'report_only_allowed': False, 'segments_reviewed': len(required_segment_ids)})
+    final_ledger.setdefault('flowguard_terminal_coverage_closure', {})
+    final_ledger['flowguard_terminal_coverage_closure'].update({
+        'segment_id': FLOWGUARD_TERMINAL_COVERAGE_SEGMENT_ID,
+        'status': flowguard_coverage_status['status'],
+        'terminal_replay_segment_status': 'passed',
+        'report_path': flowguard_coverage_status['report_path'],
+        'report_hash': flowguard_coverage_status['report_hash'],
+        'coverage_matrix_path': flowguard_coverage_status['coverage_matrix_path'],
+        'accepted_by_role': 'project_manager',
+        'route_version': route_version,
+        'current': True,
+        'blockers_resolved': True,
+        'pm_suggestion_items_disposed': True,
+    })
     final_ledger['completion_allowed'] = True
     final_ledger['terminal_replay_review_path'] = project_relative(project_root, run_root / 'reviews' / 'terminal_backward_replay.json')
     final_ledger['terminal_replay_reviewed_at'] = utc_now()
@@ -121,8 +146,16 @@ def _write_task_completion_projection(router: ModuleType, project_root: Path, ru
         raise RouterError('task completion projection requires completion_allowed final ledger')
     if terminal_replay.get('passed') is not True:
         raise RouterError('task completion projection requires passed terminal backward replay')
+    flowguard_coverage_status = router._validated_flowguard_terminal_coverage_status(
+        project_root,
+        run_root,
+        int(final_ledger.get('built_from_route_version') or frontier.get('route_version') or 0),
+        final_ledger.get("flowguard_terminal_coverage_closure"),
+    )
+    if final_ledger.get("flowguard_terminal_coverage_closure", {}).get("terminal_replay_segment_status") != "passed":
+        raise RouterError('task completion projection requires passed FlowGuard coverage governance segment')
     projection_path = _task_completion_projection_path(run_root)
-    write_json(projection_path, {'schema_version': 'flowpilot.task_completion_projection.v1', 'run_id': run_state['run_id'], 'task_status': 'ready_for_pm_terminal_closure', 'projection_owner': 'controller', 'completion_fact_owner': 'project_manager', 'source_event': source_event, 'derived_from': 'active_route_state_frontier_and_ledger', 'controller_may_declare_completion': False, 'ui_or_chat_is_display_only': True, 'source_paths': {'execution_frontier': project_relative(project_root, frontier_path), 'final_route_wide_gate_ledger': project_relative(project_root, final_ledger_path), 'terminal_backward_replay': project_relative(project_root, terminal_replay_path), 'latest_node_completion_ledger': str(frontier.get('latest_node_completion_ledger_path') or '')}, 'published_at': utc_now()})
+    write_json(projection_path, {'schema_version': 'flowpilot.task_completion_projection.v1', 'run_id': run_state['run_id'], 'task_status': 'ready_for_pm_terminal_closure', 'projection_owner': 'controller', 'completion_fact_owner': 'project_manager', 'source_event': source_event, 'derived_from': 'active_route_state_frontier_and_ledger', 'controller_may_declare_completion': False, 'ui_or_chat_is_display_only': True, 'source_paths': {'execution_frontier': project_relative(project_root, frontier_path), 'final_route_wide_gate_ledger': project_relative(project_root, final_ledger_path), 'terminal_backward_replay': project_relative(project_root, terminal_replay_path), 'flowguard_terminal_coverage_report': flowguard_coverage_status['report_path'], 'latest_node_completion_ledger': str(frontier.get('latest_node_completion_ledger_path') or '')}, 'lifecycle_reconciliation': {'flowguard_terminal_coverage_closure_clean': True}, 'published_at': utc_now()})
     run_state['flags']['task_completion_projection_published'] = True
     return projection_path
 
@@ -152,6 +185,17 @@ def _write_terminal_closure_suite(router: ModuleType, project_root: Path, run_ro
     task_projection = read_json(task_projection_path)
     if task_projection.get('task_status') != 'ready_for_pm_terminal_closure':
         raise RouterError('terminal closure requires task completion projection')
+    flowguard_coverage_status = router._validated_flowguard_terminal_coverage_status(
+        project_root,
+        run_root,
+        int(final_ledger.get('built_from_route_version') or 0),
+        final_ledger.get("flowguard_terminal_coverage_closure"),
+    )
+    if final_ledger.get("flowguard_terminal_coverage_closure", {}).get("terminal_replay_segment_status") != "passed":
+        raise RouterError('terminal closure requires passed FlowGuard coverage governance segment')
+    lifecycle_reconciliation = payload.get("lifecycle_reconciliation") if isinstance(payload.get("lifecycle_reconciliation"), dict) else {}
+    if lifecycle_reconciliation.get("flowguard_terminal_coverage_closure_clean") is not True:
+        raise RouterError('terminal closure requires lifecycle_reconciliation.flowguard_terminal_coverage_closure_clean=true')
     pm_suggestion_status = _pm_suggestion_ledger_status(run_root)
     if not pm_suggestion_status['clean']:
         first_issue = pm_suggestion_status['issues'][0]['message'] if pm_suggestion_status['issues'] else 'unknown issue'
@@ -171,7 +215,7 @@ def _write_terminal_closure_suite(router: ModuleType, project_root: Path, run_ro
     continuation['closed_at'] = utc_now()
     continuation['closure_reason'] = 'terminal_completion'
     write_json(continuation_path, continuation)
-    closure = {'schema_version': 'flowpilot.terminal_closure_suite.v1', 'run_id': run_state['run_id'], 'approved_by_role': 'project_manager', 'status': 'closed', 'closed_at': utc_now(), 'source_paths': {'final_route_wide_gate_ledger': project_relative(project_root, final_ledger_path), 'terminal_backward_replay': project_relative(project_root, terminal_replay_path), 'task_completion_projection': project_relative(project_root, task_projection_path), 'execution_frontier': project_relative(project_root, run_root / 'execution_frontier.json'), 'role_binding_ledger': project_relative(project_root, run_root / 'role_binding_ledger.json'), 'continuation_binding': project_relative(project_root, continuation_path), 'pm_prior_path_context': project_relative(project_root, router._pm_prior_path_context_path(run_root)), 'route_history_index': project_relative(project_root, router._route_history_index_path(run_root)), 'pm_suggestion_ledger': project_relative(project_root, _pm_suggestion_ledger_path(run_root)) if pm_suggestion_status['exists'] else None, 'self_interrogation_index': project_relative(project_root, _self_interrogation_index_path(run_root)) if self_interrogation_status['exists'] else None, 'defect_ledger': closure_reconciliation['defect_ledger']['path'], 'role_binding_memory': closure_reconciliation['role_memory']['path'], 'continuation_quarantine': closure_reconciliation['continuation_quarantine']['path']}, 'decision': decision, 'prior_path_context_review': prior_review, 'pm_suggestion_ledger_review': {'entry_count': pm_suggestion_status['entry_count'], 'issue_count': pm_suggestion_status['issue_count'], 'clean': pm_suggestion_status['clean']}, 'self_interrogation_review': {'record_count': self_interrogation_status['record_count'], 'issue_count': self_interrogation_status['issue_count'], 'unresolved_hard_finding_count': self_interrogation_status['unresolved_hard_finding_count'], 'clean': self_interrogation_status['clean']}, 'terminal_closure_reconciliation': closure_reconciliation, 'lifecycle': {'manual_resume_binding_active': False, 'manual_resume_notice_required': False, 'terminal_completion_notice_recorded': True, 'role_binding_memory_archived': True}, 'final_report': payload.get('final_report') or {}, **_role_output_envelope_record(payload)}
+    closure = {'schema_version': 'flowpilot.terminal_closure_suite.v1', 'run_id': run_state['run_id'], 'approved_by_role': 'project_manager', 'status': 'closed', 'closed_at': utc_now(), 'source_paths': {'final_route_wide_gate_ledger': project_relative(project_root, final_ledger_path), 'terminal_backward_replay': project_relative(project_root, terminal_replay_path), 'task_completion_projection': project_relative(project_root, task_projection_path), 'flowguard_terminal_coverage_report': flowguard_coverage_status['report_path'], 'execution_frontier': project_relative(project_root, run_root / 'execution_frontier.json'), 'role_binding_ledger': project_relative(project_root, run_root / 'role_binding_ledger.json'), 'continuation_binding': project_relative(project_root, continuation_path), 'pm_prior_path_context': project_relative(project_root, router._pm_prior_path_context_path(run_root)), 'route_history_index': project_relative(project_root, router._route_history_index_path(run_root)), 'pm_suggestion_ledger': project_relative(project_root, _pm_suggestion_ledger_path(run_root)) if pm_suggestion_status['exists'] else None, 'self_interrogation_index': project_relative(project_root, _self_interrogation_index_path(run_root)) if self_interrogation_status['exists'] else None, 'defect_ledger': closure_reconciliation['defect_ledger']['path'], 'role_binding_memory': closure_reconciliation['role_memory']['path'], 'continuation_quarantine': closure_reconciliation['continuation_quarantine']['path']}, 'decision': decision, 'prior_path_context_review': prior_review, 'pm_suggestion_ledger_review': {'entry_count': pm_suggestion_status['entry_count'], 'issue_count': pm_suggestion_status['issue_count'], 'clean': pm_suggestion_status['clean']}, 'self_interrogation_review': {'record_count': self_interrogation_status['record_count'], 'issue_count': self_interrogation_status['issue_count'], 'unresolved_hard_finding_count': self_interrogation_status['unresolved_hard_finding_count'], 'clean': self_interrogation_status['clean']}, 'flowguard_terminal_coverage_review': {'status': 'passed', 'segment_id': FLOWGUARD_TERMINAL_COVERAGE_SEGMENT_ID, 'report_path': flowguard_coverage_status['report_path'], 'coverage_matrix_path': flowguard_coverage_status['coverage_matrix_path'], 'report_hash': flowguard_coverage_status['report_hash']}, 'terminal_closure_reconciliation': closure_reconciliation, 'lifecycle': {'manual_resume_binding_active': False, 'manual_resume_notice_required': False, 'terminal_completion_notice_recorded': True, 'role_binding_memory_archived': True}, 'final_report': payload.get('final_report') or {}, **_role_output_envelope_record(payload)}
     write_json(run_root / 'closure' / 'terminal_closure_suite.json', closure)
     run_state['status'] = 'closed'
     run_state['phase'] = 'terminal'

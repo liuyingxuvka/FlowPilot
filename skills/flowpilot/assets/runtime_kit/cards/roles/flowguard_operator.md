@@ -85,6 +85,19 @@ Your FlowGuard Report supports PM and Reviewer decisions. It does not approve
 gates, mutate routes, close nodes, authorize Controller or Worker action, or
 replace human-like review.
 
+When the current output contract is
+`flowpilot.output_contract.flowguard_terminal_coverage_report.v1`, produce a
+terminal route-wide coverage report only. The report must use
+`schema_version: flowpilot.flowguard_terminal_coverage_report.v1`,
+`reviewed_by_role: flowguard_operator`, `passed: true`,
+`modeled_boundary: terminal_flowguard_coverage`, the current `route_version`,
+a fresh `coverage_matrix_ref`, non-empty closure/evidence/check/invariant
+lists, explicit empty arrays for unresolved evidence, model-test gaps,
+blockers, PM suggestion items, and supplemental repair recommendations, plus a
+contract self-check. Do not directly repair target project code, route nodes,
+tests, docs, prompts, or release files under this terminal coverage contract;
+report gaps so PM can create the correct repair node or role-work packet.
+
 ## Current Subject Simulation Boundary
 
 Model the current subject named by the opened packet. If the packet gives a

@@ -3,6 +3,68 @@
 This human-readable log summarizes FlowGuard adoption records for major protocol changes.
 Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
+## 2026-06-24 FlowPilot v0.10.19 Terminal FlowGuard Coverage Governance
+
+- Project: FlowPilot
+- Trigger reason: User asked to publish the terminal FlowGuard coverage
+  governance upgrade to GitHub with a new release version.
+- Status: implemented_validated_release_publish_pending
+- OpenSpec change: `enforce-terminal-flowguard-coverage`
+- Release version: `v0.10.19`
+- Skill decision: predictive KB preflight, OpenSpec apply context,
+  FlowGuard DevelopmentProcessFlow, contract/runtime/test alignment, install
+  checks, and public release validation.
+- FlowGuard schema: `1.0`
+
+### Findings
+
+- PM final ledger creation now requires
+  `flowguard_terminal_coverage_closure` with a current PM-accepted
+  `flowpilot.flowguard_terminal_coverage_report.v1` and fresh coverage matrix.
+- Terminal backward replay now includes the
+  `flowguard-coverage-governance` segment, and PM terminal closure requires
+  that segment to pass.
+- The coverage path is tied into existing FlowPilot surfaces: FlowGuard
+  operator request/report contracts, PM final ledger, Reviewer terminal replay,
+  PM repair, PM closure, quality packs, runtime tests, install checks, and
+  model-check runner records.
+
+### Model Files
+
+- `simulations/flowpilot_terminal_flowguard_coverage_model.py`
+- `simulations/run_flowpilot_terminal_flowguard_coverage_checks.py`
+- `simulations/flowpilot_terminal_flowguard_coverage_results.json`
+- `openspec/changes/enforce-terminal-flowguard-coverage/`
+
+### Commands
+
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> schema
+  `1.0`.
+- `python simulations/run_flowpilot_terminal_flowguard_coverage_checks.py
+  --json` -> passed, including 95 fake-response/cartesian hazard cases with
+  zero misses.
+- `python simulations/run_output_contract_checks.py` -> passed; accepted 8
+  valid contract scenarios, including
+  `valid_terminal_flowguard_coverage_report`, and rejected 7 negative
+  scenarios.
+- `python -m unittest -v tests.test_flowpilot_output_contracts
+  tests.router_runtime.terminal.TerminalRuntimeTests.test_final_ledger_requires_pm_accepted_terminal_flowguard_coverage
+  tests.router_runtime.terminal.TerminalRuntimeTests.test_final_ledger_rejects_progress_only_terminal_flowguard_report
+  tests.router_runtime.terminal.TerminalRuntimeTests.test_final_ledger_records_frozen_contract_replay_source_paths
+  tests.router_runtime.terminal.TerminalRuntimeTests.test_terminal_replay_requires_reviewed_segments_and_pm_segment_decisions
+  tests.router_runtime.closure.ClosureRuntimeTests.test_pm_terminal_closure_uses_file_backed_contract_and_prior_context`
+  -> 10 tests passed.
+- `python scripts/flowguard_project_topology.py build` and
+  `python scripts/flowguard_project_topology.py check` -> topology current with
+  no findings.
+- `python scripts/check_install.py --json` -> install self-check passed with
+  zero failures.
+- `python scripts/install_flowpilot.py --sync-repo-owned --json
+  --skip-self-check` and `python scripts/audit_local_install_sync.py --json`
+  -> local install sync/audit passed.
+- `python scripts/check_public_release.py --json` -> public release preflight
+  passed with zero failures and zero warnings.
+
 ## 2026-06-08 FlowPilot v0.10.6 Current-Contract Convergence Release
 
 - Project: FlowGuardProjectAutopilot_20260430

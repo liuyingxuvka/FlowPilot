@@ -52,6 +52,12 @@ cites long/background tests, record
 `background_artifact_completion` with log root, stdout, stderr, combined, exit,
 and meta paths, exit code, latest update time, completion status, and valid
 proof reuse. Progress lines are liveness evidence only.
+For terminal completion readiness, attach or cite
+`flowguard_terminal_coverage_pack` evidence. It must point to the current
+terminal FlowGuard coverage report, fresh coverage matrix, model-test
+alignment status, blocker disposition, PM suggestion disposition, and PM
+acceptance evidence. Progress-only FlowGuard logs are liveness evidence only,
+not terminal coverage proof.
 
 Apply Minimum Sufficient Complexity here as evidence hygiene. Identify
 artifacts, resources, route diagrams, reports, or evidence branches that no

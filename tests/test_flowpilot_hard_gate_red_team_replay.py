@@ -120,15 +120,10 @@ class FlowPilotHardGateRedTeamReplayTests(FlowPilotRouterRuntimeTestBase):
                 self.role_decision_envelope(
                     root,
                     "hard_gate/terminal_dirty_ledger_overclaim",
-                    {
-                        "approved_by_role": "project_manager",
-                        "decision": "approve_terminal_closure",
-                        **self.prior_path_context_review(
-                            root,
-                            "Terminal closure attempted while the PM suggestion ledger is dirty.",
-                        ),
-                        "final_report": {"status": "complete"},
-                    },
+                    self.pm_terminal_closure_body(
+                        root,
+                        "Terminal closure attempted while the PM suggestion ledger is dirty.",
+                    ),
                 ),
             )
 

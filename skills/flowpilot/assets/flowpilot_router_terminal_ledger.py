@@ -52,6 +52,9 @@ __all__ = (
     '_node_acceptance_traceability_issues',
     '_requirement_trace_closure_from_root_replay',
     '_final_ledger_traceability_issues',
+    '_flowguard_terminal_coverage_issues',
+    '_validated_flowguard_terminal_coverage_status',
+    '_flowguard_terminal_coverage_ledger_entry',
     '_validated_root_replay',
     '_build_source_of_truth_final_entries',
     '_route_mutation_completion_issues',
@@ -62,6 +65,10 @@ __all__ = (
     '_write_terminal_closure_suite',
     '_recover_terminal_status_from_run_authorities',
     'reconcile_current_run',
+    'FLOWGUARD_TERMINAL_COVERAGE_SCHEMA',
+    'FLOWGUARD_TERMINAL_COVERAGE_BOUNDARY',
+    'FLOWGUARD_TERMINAL_COVERAGE_SEGMENT_ID',
+    'FLOWGUARD_TERMINAL_COVERAGE_ACCEPTED_STATUSES',
 )
 
 _LOCAL_NAMES = set(globals())

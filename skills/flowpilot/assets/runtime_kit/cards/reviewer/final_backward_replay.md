@@ -90,6 +90,15 @@ or equivalent FlowGuard Work Order / FlowGuard Report record. Do not invent new
 FlowGuard approval in this terminal result; missing current FlowGuard support
 is a terminal blocker.
 
+The runtime-issued `flowguard-coverage-governance` segment is mandatory. Pass
+it only when the PM final ledger contains
+`flowguard_terminal_coverage_closure` with a current PM-accepted
+`flowpilot.flowguard_terminal_coverage_report.v1`, a fresh coverage matrix for
+the same route version, zero unresolved blockers, zero model-test alignment
+gaps, zero pending PM suggestion items, and explicit evidence that the report
+is not progress-only. Missing, stale, unaccepted, or report-only FlowGuard
+coverage is a terminal blocker.
+
 Submit only the five current fields above. If supporting details matter,
 express them inside those fields rather than adding extra top-level result
 objects.

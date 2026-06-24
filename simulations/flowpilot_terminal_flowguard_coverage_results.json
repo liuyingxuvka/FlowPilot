@@ -1,0 +1,111 @@
+{
+  "cartesian_fake_response_hazards": {
+    "axis_count": 6,
+    "case_count": 95,
+    "miss_count": 0,
+    "misses": [],
+    "ok": true
+  },
+  "flowguard": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "reachability_failures": [],
+    "summary": "sequences=10 initial_states=1 traces=55",
+    "violation_count": 0
+  },
+  "hazards": {
+    "hazards": {
+      "closure_with_missing_reviewer_segment": {
+        "detected": true,
+        "expected": "reviewer passed missing FlowGuard governance segment",
+        "failures": [
+          "reviewer passed missing FlowGuard governance segment"
+        ]
+      },
+      "closure_with_pending_pm_suggestion": {
+        "detected": true,
+        "expected": "terminal closure approved with pending FlowGuard PM suggestion",
+        "failures": [
+          "terminal closure approved with pending FlowGuard PM suggestion"
+        ]
+      },
+      "closure_with_progress_only_report": {
+        "detected": true,
+        "expected": "terminal closure approved with progress-only FlowGuard report",
+        "failures": [
+          "terminal closure approved with progress-only FlowGuard report"
+        ]
+      },
+      "closure_with_scattered_node_evidence_only": {
+        "detected": true,
+        "expected": "terminal closure approved with scattered node FlowGuard evidence only",
+        "failures": [
+          "terminal closure approved with scattered node FlowGuard evidence only"
+        ]
+      },
+      "closure_with_stale_report": {
+        "detected": true,
+        "expected": "terminal closure approved with stale FlowGuard coverage evidence",
+        "failures": [
+          "terminal closure approved with stale FlowGuard coverage report",
+          "terminal closure approved with stale FlowGuard coverage evidence"
+        ]
+      },
+      "closure_with_unaccepted_report": {
+        "detected": true,
+        "expected": "terminal closure approved with PM-unaccepted FlowGuard coverage evidence",
+        "failures": [
+          "final ledger records terminal FlowGuard coverage before PM accepts report",
+          "terminal closure approved with unaccepted FlowGuard coverage report",
+          "terminal closure approved with PM-unaccepted FlowGuard coverage evidence"
+        ]
+      },
+      "closure_with_unresolved_blocker": {
+        "detected": true,
+        "expected": "terminal closure approved with unresolved FlowGuard coverage blocker",
+        "failures": [
+          "terminal closure approved with unresolved FlowGuard coverage blocker"
+        ]
+      },
+      "closure_without_terminal_report": {
+        "detected": true,
+        "expected": "terminal closure approved with stale FlowGuard coverage report",
+        "failures": [
+          "final ledger records terminal FlowGuard coverage before PM accepts report",
+          "terminal closure approved with stale FlowGuard coverage report",
+          "terminal closure approved with unaccepted FlowGuard coverage report"
+        ]
+      },
+      "operator_direct_target_repair": {
+        "detected": true,
+        "expected": "FlowGuard operator directly repaired target project instead of reporting coverage",
+        "failures": [
+          "FlowGuard operator directly repaired target project instead of reporting coverage"
+        ]
+      }
+    },
+    "ok": true
+  },
+  "intended_plan": {
+    "failures": [],
+    "ok": true
+  },
+  "model_boundary": "terminal_flowguard_coverage",
+  "ok": true,
+  "progress": {
+    "cannot_reach_terminal_count": 0,
+    "ok": true,
+    "samples": [],
+    "stuck_state_count": 0
+  },
+  "safe_graph": {
+    "edge_count": 9,
+    "invariant_failures": [],
+    "missing_labels": [],
+    "ok": true,
+    "state_count": 10,
+    "terminal_state_count": 1
+  }
+}

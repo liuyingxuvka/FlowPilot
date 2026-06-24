@@ -2158,16 +2158,107 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
                 "empty_required_arrays_explicit": True,
             },
         }
-    def final_ledger_payload(self, root: Path) -> dict:
+    def write_terminal_flowguard_coverage_report(
+        self,
+        root: Path,
+        *,
+        route_version: int = 1,
+        report_overrides: dict | None = None,
+        closure_overrides: dict | None = None,
+    ) -> dict:
+        run_root = self.run_root_for(root)
+        report_dir = run_root / "flowguard_operator_reports"
+        report_dir.mkdir(parents=True, exist_ok=True)
+        matrix_path = report_dir / "terminal_flowguard_coverage_matrix.json"
+        matrix = {
+            "schema_version": "flowpilot.terminal_flowguard_coverage_matrix.v1",
+            "run_id": run_root.name,
+            "route_version": route_version,
+            "fresh": True,
+            "rows": [
+                {
+                    "item_id": "terminal-flowguard-coverage",
+                    "status": "covered",
+                    "evidence_paths": [self.rel(root, run_root / "reviews" / "evidence_quality_review.json")],
+                }
+            ],
+        }
+        matrix_path.write_text(json.dumps(matrix, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        report = {
+            "schema_version": "flowpilot.flowguard_terminal_coverage_report.v1",
+            "run_id": run_root.name,
+            "reviewed_by_role": "flowguard_operator",
+            "passed": True,
+            "modeled_boundary": "terminal_flowguard_coverage",
+            "route_version": route_version,
+            "coverage_matrix_ref": {
+                "path": self.rel(root, matrix_path),
+                "fresh": True,
+                "route_version": route_version,
+            },
+            "acceptance_item_closure": [{"id": "root-001", "status": "closed"}],
+            "route_nodes_examined": [{"node_id": "node-001", "status": "closed"}],
+            "flowguard_required_items": ["route-wide terminal coverage", "model-test alignment"],
+            "flowguard_evidence_found": [self.rel(root, run_root / "quality" / "quality_package.json")],
+            "missing_or_stale_evidence": [],
+            "model_test_alignment_gaps": [],
+            "blockers": [],
+            "pm_suggestion_items": [],
+            "supplemental_repair_recommendations": [],
+            "commands_run": ["python simulations/run_flowpilot_terminal_flowguard_coverage_checks.py --json"],
+            "hard_invariants": ["terminal closure requires PM-accepted current FlowGuard coverage report"],
+            "counterexamples_or_absence": ["cartesian fake-response hazards covered without misses"],
+            "confidence_boundary": "Fixture report covers the single-route terminal test run.",
+            "contract_self_check": {
+                "all_required_fields_present": True,
+                "no_progress_only_claim": True,
+                "no_unresolved_blockers": True,
+                "pm_acceptance_required": True,
+            },
+        }
+        if report_overrides:
+            report.update(report_overrides)
+        report_path = report_dir / "flowguard_terminal_coverage_report.json"
+        report_path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        closure = {
+            "schema_version": "flowpilot.terminal_flowguard_coverage_closure.v1",
+            "segment_id": "flowguard-coverage-governance",
+            "status": "accepted",
+            "accepted_by_role": "project_manager",
+            "report_path": self.rel(root, report_path),
+            "report_hash": hashlib.sha256(report_path.read_bytes()).hexdigest(),
+            "coverage_matrix_path": self.rel(root, matrix_path),
+            "route_version": route_version,
+            "current": True,
+            "blockers_resolved": True,
+            "pm_suggestion_items_disposed": True,
+        }
+        if closure_overrides:
+            closure.update(closure_overrides)
+        return closure
+
+    def final_ledger_payload(
+        self,
+        root: Path,
+        *,
+        flowguard_report_overrides: dict | None = None,
+        flowguard_closure_overrides: dict | None = None,
+    ) -> dict:
         run_root = self.run_root_for(root)
         root_contract_path = self.rel(root, run_root / "root_acceptance_contract.json")
         scenario_pack_path = self.rel(root, run_root / "standard_scenario_pack.json")
         route_flow_path = self.rel(root, run_root / "routes" / "route-001" / "flow.json")
         node_plan_path = self.rel(root, run_root / "routes" / "route-001" / "nodes" / "node-001" / "node_acceptance_plan.json")
         quality_review_path = self.rel(root, run_root / "reviews" / "evidence_quality_review.json")
+        flowguard_terminal_coverage_closure = self.write_terminal_flowguard_coverage_report(
+            root,
+            report_overrides=flowguard_report_overrides,
+            closure_overrides=flowguard_closure_overrides,
+        )
         return {
             "pm_owned": True,
             **self.prior_path_context_review(root, "PM rebuilt final ledger from current route memory and source-of-truth ledgers."),
+            "flowguard_terminal_coverage_closure": flowguard_terminal_coverage_closure,
             "standard_scenarios_replayed": True,
             "root_contract_replay": [
                 {
@@ -2209,6 +2300,40 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
                 {"segment_id": "root_acceptance", "decision": "continue"},
                 {"segment_id": "leaf:node-001", "decision": "continue"},
             ],
+        }
+    def pm_terminal_closure_body(self, root: Path, impact: str = "Terminal closure considered clean final ledger and current route memory.") -> dict:
+        return {
+            "approved_by_role": "project_manager",
+            "decision": "approve_terminal_closure",
+            **self.prior_path_context_review(root, impact),
+            "lifecycle_reconciliation": {
+                "final_route_wide_gate_ledger_clean": True,
+                "terminal_backward_replay_passed": True,
+                "task_completion_projection_ready_for_pm_terminal_closure": True,
+                "execution_frontier_current": True,
+                "role_binding_ledger_current": True,
+                "continuation_binding_current": True,
+                "current_ledgers_clean": True,
+                "pm_suggestion_ledger_clean": True,
+                "self_interrogation_index_clean": True,
+                "flowguard_terminal_coverage_closure_clean": True,
+            },
+            "structure_convergence_replay": {
+                "reviewed": True,
+                "final_ledger_structure_debt_dispositions_present": True,
+                "unresolved_structure_debt_count": 0,
+                "unowned_fallback_like_paths": [],
+                "compatibility_branches_retained": [],
+                "old_artifacts_used_as_current_completion_evidence": False,
+                "retained_surfaces_have_owner_scope_validation_and_sunset": True,
+            },
+            "final_report": {"status": "complete"},
+            "contract_self_check": {
+                "all_required_fields_present": True,
+                "exact_field_names_used": True,
+                "empty_required_arrays_explicit": True,
+                "current_run_route_memory_paths_cited": True,
+            },
         }
     def write_pm_suggestion_ledger(self, root: Path, entries: list[dict]) -> Path:
         run_root = self.run_root_for(root)
@@ -2512,5 +2637,4 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
             if action_type == expected_action_type:
                 return action
         raise AssertionError(f"did not apply {expected_action_type} within {max_steps} router steps")
-
 

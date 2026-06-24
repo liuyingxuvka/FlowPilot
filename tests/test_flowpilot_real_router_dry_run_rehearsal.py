@@ -59,15 +59,10 @@ class FlowPilotRealRouterDryRunRehearsalTests(FlowPilotRouterRuntimeTestBase):
             self.role_decision_envelope(
                 root,
                 f"real_router_dry_run/{name}/pm_terminal_closure_decision",
-                {
-                    "approved_by_role": "project_manager",
-                    "decision": "approve_terminal_closure",
-                    **self.prior_path_context_review(
-                        root,
-                        "Real Router dry-run rehearsal considered the clean fake AI package evidence.",
-                    ),
-                    "final_report": {"status": "complete"},
-                },
+                self.pm_terminal_closure_body(
+                    root,
+                    "Real Router dry-run rehearsal considered the clean fake AI package evidence.",
+                ),
             ),
         )
         self.assertTrue(result["ok"])
@@ -278,4 +273,3 @@ if __name__ == "__main__":
     import unittest
 
     unittest.main()
-

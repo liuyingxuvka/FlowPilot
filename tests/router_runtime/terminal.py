@@ -367,6 +367,42 @@ class TerminalRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 "reviewer_final_backward_replay_passed",
                 {"reviewed_by_role": "human_like_reviewer", "passed": True},
             )
+    def test_final_ledger_requires_pm_accepted_terminal_flowguard_coverage(self) -> None:
+        root = self.make_project()
+        self.boot_to_controller(root)
+        self.complete_pre_route_gates(root)
+        self.activate_route(root)
+        self.complete_leaf_node_with_reviewed_result(root, packet_id="node-packet-terminal-flowguard-required")
+        self.complete_evidence_quality_package(root)
+        self.deliver_expected_card(root, "pm.final_ledger")
+        payload = self.final_ledger_payload(root)
+        payload.pop("flowguard_terminal_coverage_closure")
+
+        with self.assertRaisesRegex(router.RouterError, "flowguard_terminal_coverage_closure"):
+            router.record_external_event(root, "pm_records_final_route_wide_ledger_clean", payload)
+    def test_final_ledger_rejects_progress_only_terminal_flowguard_report(self) -> None:
+        root = self.make_project()
+        self.boot_to_controller(root)
+        self.complete_pre_route_gates(root)
+        self.activate_route(root)
+        self.complete_leaf_node_with_reviewed_result(root, packet_id="node-packet-terminal-flowguard-progress")
+        self.complete_evidence_quality_package(root)
+        self.deliver_expected_card(root, "pm.final_ledger")
+        payload = self.final_ledger_payload(
+            root,
+            flowguard_report_overrides={
+                "progress_only": True,
+                "contract_self_check": {
+                    "all_required_fields_present": True,
+                    "no_progress_only_claim": False,
+                    "no_unresolved_blockers": True,
+                    "pm_acceptance_required": True,
+                },
+            },
+        )
+
+        with self.assertRaisesRegex(router.RouterError, "progress-only|no_progress_only_claim"):
+            router.record_external_event(root, "pm_records_final_route_wide_ledger_clean", payload)
     def test_final_ledger_records_frozen_contract_replay_source_paths(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
@@ -413,6 +449,12 @@ class TerminalRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertEqual(ledger["counts"]["defect_fixed_pending_recheck_count"], 0)
         self.assertEqual(ledger["counts"]["imported_artifact_authority_count"], 0)
         self.assertIn("terminal_closure_reconciliation", {entry["gate_family"] for entry in ledger["entries"]})
+        self.assertIn("flowguard_terminal_coverage", {entry["gate_family"] for entry in ledger["entries"]})
+        self.assertEqual(ledger["flowguard_terminal_coverage_closure"]["segment_id"], "flowguard-coverage-governance")
+        self.assertTrue(ledger["evidence_integrity"]["flowguard_terminal_coverage_report_current"])
+        terminal_map = read_json(run_root / "terminal_human_backward_replay_map.json")
+        self.assertIn("flowguard-coverage-governance", {segment["segment_id"] for segment in terminal_map["segments"]})
+        self.assertIn("flowguard_coverage_governance", terminal_map["replay_order"])
     def test_final_ledger_rejects_dirty_self_interrogation_index(self) -> None:
         root = self.make_project()
         self.boot_to_controller(root)
@@ -459,12 +501,7 @@ class TerminalRuntimeTests(FlowPilotRouterRuntimeTestBase):
             self.role_decision_envelope(
                 root,
                 "closure/pm_prior_terminal_closure_decision",
-                {
-                    "approved_by_role": "project_manager",
-                    "decision": "approve_terminal_closure",
-                    **self.prior_path_context_review(root, "Terminal closure considered clean final ledger and current route memory."),
-                    "final_report": {"status": "complete"},
-                },
+                self.pm_terminal_closure_body(root),
             ),
         )
         state_path = router.run_state_path(run_root)
@@ -503,4 +540,3 @@ class TerminalRuntimeTests(FlowPilotRouterRuntimeTestBase):
         action = router.next_action(root)
         self.assertEqual(action["action_type"], "run_lifecycle_terminal")
         self.assertEqual(action["run_lifecycle_status"], "closed")
-
