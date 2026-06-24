@@ -5588,6 +5588,63 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         self.assertEqual(ledger["packets"][recovery["fresh_packet_id"]]["envelope"]["packet_kind"], "pm_repair_decision")
         self.assertTrue(recovery["user_requested"])
 
+    def test_pm_repair_decision_break_glass_routes_control_plane_without_user_wait(self) -> None:
+        ledger, packet_id, worker = runtime_runner._base_ledger()
+        runtime.ack_lease(ledger, worker, packet_id)
+        runtime.submit_result(
+            ledger,
+            worker,
+            packet_id,
+            role_result_body(
+                "Worker reports that FlowPilot did not deliver the required material.",
+                decision="block",
+                blocking=True,
+                blocker_class="missing_required_information",
+                recommended_resolution="FlowPilot control-plane material delivery is contradictory.",
+            ),
+        )
+        blocker_id = next(iter(ledger["active_blockers"]))
+        pm_packet = ledger["active_blockers"][blocker_id]["pm_repair_packet_id"]
+        pm_lease = runtime.lease_agent(ledger, "pm", agent_id="pm-break-glass", packet_id=pm_packet)
+        runtime.assign_packet(ledger, pm_packet, pm_lease)
+        runtime.ack_lease(ledger, pm_lease, pm_packet)
+        open_required_result_reads(ledger, pm_packet, pm_lease)
+
+        runtime.submit_result(
+            ledger,
+            pm_lease,
+            pm_packet,
+            pm_repair_decision_body(
+                ledger,
+                pm_packet,
+                decision="break_glass",
+                reason="Current packet material delivery is a FlowPilot control-plane defect.",
+            ),
+        )
+
+        blocker = ledger["active_blockers"][blocker_id]
+        self.assertEqual(blocker["status"], "active")
+        self.assertTrue(blocker["pm_break_glass_decision_id"])
+        self.assertNotEqual(ledger["packets"][packet_id]["status"], "pm_stopped")
+        action = runtime.router_next_action(ledger)
+        self.assertEqual(action.action_type, "control_plane_blocker")
+        self.assertEqual(action.subject_id, blocker_id)
+        self.assertIn("break-glass", action.reason)
+        self.assertFalse(
+            any(
+                transaction.get("blocker_id") == blocker_id
+                for transaction in ledger.get("repair_transactions", {}).values()
+                if isinstance(transaction, dict)
+            )
+        )
+        self.assertTrue(
+            any(
+                event.get("event_type") == "pm_break_glass_requested"
+                and event.get("payload", {}).get("blocker_id") == blocker_id
+                for event in ledger["events"]
+            )
+        )
+
     def test_reattach_required_recheck_requires_user_request(self) -> None:
         ledger, _packet_id, blocker_id, _flowguard_packet, _review_packet, _pm_packet = (
             self._stopped_review_blocker_after_flowguard_failure()

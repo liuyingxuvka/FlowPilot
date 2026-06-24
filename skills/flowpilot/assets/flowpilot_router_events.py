@@ -141,6 +141,7 @@ def finalize_external_event_record(
     scoped_identity: dict[str, Any] | None,
     model_miss_triage_decision: str | None,
     parent_segment_decision: str | None,
+    pm_resume_decision: str | None,
 ) -> dict[str, Any]:
     for clear_flag in router.GATE_OUTCOME_PASS_CLEAR_FLAGS.get(event, ()):
         run_state.setdefault("flags", {})[clear_flag] = False
@@ -181,6 +182,7 @@ def finalize_external_event_record(
         run_state["model_miss_triage_followup_request"] = None
         run_state["model_miss_evidence_followup_request"] = None
         run_state["model_miss_triage_controlled_stop"] = None
+        run_state["model_miss_triage_break_glass"] = None
         run_state["flags"]["model_miss_triage_followup_request_pending"] = False
         run_state["flags"]["model_miss_triage_controlled_stop_recorded"] = False
     if (
@@ -189,6 +191,8 @@ def finalize_external_event_record(
     ):
         run_state["flags"][flag] = False
     if event == "pm_records_parent_segment_decision" and (parent_segment_decision or "continue") != "continue":
+        run_state["flags"][flag] = False
+    if event == "pm_resume_recovery_decision_returned" and pm_resume_decision == "break_glass":
         run_state["flags"][flag] = False
     if event == "pm_absorbs_reviewed_research":
         run_state["flags"]["material_accepted_by_pm"] = True

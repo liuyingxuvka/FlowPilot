@@ -1838,7 +1838,10 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
 
         pm_acceptance_packet = _open_packets(ledger, kind="pm_flowguard_acceptance")[0]
         pm_acceptance_body = json.loads(ledger["packets"][pm_acceptance_packet]["body"])
-        self.assertEqual(pm_acceptance_body["allowed_decisions"], ["accept", "redesign_route", "block", "stop_for_user"])
+        self.assertEqual(
+            pm_acceptance_body["allowed_decisions"],
+            ["accept", "break_glass", "redesign_route", "block", "stop_for_user"],
+        )
         self.assertIn("There is no optional or uncertain FlowGuard branch", pm_acceptance_body["instruction"])
         _complete_pm_flowguard_acceptance(ledger)
 
@@ -1854,6 +1857,58 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         self.assertEqual(ledger["execution_frontier"]["active_node_id"], "redesign-module-001")
         self.assertIn("node-redesign-accepted-001", ledger["route_nodes"]["redesign-module-001"]["child_node_ids"])
         self.assertTrue(_open_packets(ledger, scope="node_acceptance_plan"))
+
+    def test_pm_flowguard_acceptance_break_glass_routes_control_plane_without_review(self) -> None:
+        ledger = _ledger()
+        _complete_preplanning(ledger)
+        _complete_planning(ledger)
+        old_route_version = ledger["active_route_version"]
+
+        _complete_open_packet(
+            ledger,
+            _open_packets(ledger, scope="node_acceptance_plan")[0],
+            json.dumps(
+                {
+                    "decision": "redesign_route",
+                    "reason": "PM split the active node into a fresh route slice.",
+                    "route_plan": _route_plan_obj(
+                        [
+                            {
+                                "node_id": "node-redesign-break-glass-001",
+                                "title": "Break-glass redesign node",
+                                "responsibility": "worker",
+                                "modeled_target": "development_process",
+                                "acceptance_criteria": ["Redesigned node is reviewed before execution."],
+                            }
+                        ]
+                    ),
+                }
+            ),
+        )
+        gate = _latest_pm_decision_gate(ledger)
+        _complete_open_packet(
+            ledger,
+            _open_packets(ledger, kind="flowguard_check")[0],
+            _flowguard_pass_body("FlowGuard passed the route redesign."),
+        )
+        self.assertEqual(gate["status"], "awaiting_pm_flowguard_acceptance")
+
+        _complete_pm_flowguard_acceptance(ledger, decision="break_glass")
+
+        self.assertEqual(gate["status"], "pm_break_glass_requested")
+        self.assertEqual(ledger["active_route_version"], old_route_version)
+        self.assertFalse(_open_packets(ledger, kind="review"))
+        action = runtime.router_next_action(ledger)
+        self.assertEqual(action.action_type, "control_plane_blocker")
+        self.assertEqual(action.subject_id, gate["gate_id"])
+        self.assertIn("break-glass", action.reason)
+        self.assertTrue(
+            any(
+                event.get("event_type") == "pm_break_glass_requested"
+                and event.get("payload", {}).get("gate_id") == gate["gate_id"]
+                for event in ledger["events"]
+            )
+        )
 
     def test_pm_flowguard_acceptance_rewrite_restarts_flowguard_cycle(self) -> None:
         ledger = _ledger()

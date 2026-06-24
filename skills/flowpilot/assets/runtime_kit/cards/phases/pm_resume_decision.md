@@ -55,6 +55,8 @@ Your resume decision must choose exactly one outcome:
   current-run assignment/lease evidence;
 - bind manual-resume mode to current startup answers and lifecycle evidence;
 - create a repair or route-mutation node;
+- break glass when current-run evidence shows the FlowPilot control plane
+  cannot form a legal resume next action;
 - stop for user or environment action;
 - close only if final ledger and terminal replay already passed.
 
@@ -94,10 +96,16 @@ Return it through router event `pm_resume_recovery_decision_returned`.
 Write the decision body to a run-scoped file and submit it directly to Router with `flowpilot_new.py submit-result --lease-id <lease-id> --packet-id <packet-id> --body <sealed_result_summary>`. Use contract `flowpilot.output_contract.pm_resume_decision.v1` and router event `pm_resume_recovery_decision_returned`. The runtime-generated role-output envelope carries `body_ref`, `runtime_receipt_ref`, `controller_visibility: "role_output_envelope_only"`, and no inline decision body. Path/hash-only chat envelopes are not the live handoff path. Preferred path: run `flowpilot_new.py open-packet --lease-id <lease-id> --packet-id <packet-id>` to get the current `submission_checklist`, then submit the completed decision body with the same lease and packet id. Do not invent an output type, role name, or agent id for packet open. The runtime fills mechanical fixed fields, explicit empty arrays, quality-pack checklist rows when declared, hash, receipt, and ledger entry. PM still writes the decision, impact, evidence rationale, and semantic recovery judgement.
 
 Use these exact field names. The `decision` value must be one of:
-`continue_current_packet_loop`, `repair_current_scope`,
-`restore_or_replace_roles_from_memory`, `create_repair_or_route_redesign_node`,
+`break_glass`, `continue_current_packet_loop`, `request_sender_reissue`,
+`restore_or_replace_roles_from_memory`, `create_repair_or_route_mutation_node`,
 `stop_for_user_or_environment`, or
 `close_after_final_ledger_and_terminal_replay`.
+
+Use `stop_for_user_or_environment` only when the missing next step is a
+substantive user/environment decision. Use `break_glass` when the blocker is
+inside FlowPilot's control plane: missing current-run authority, contradictory
+runtime state, resume return-path contradiction, or another condition that
+prevents Router/Controller from forming any legal next action.
 
 ```json
 {

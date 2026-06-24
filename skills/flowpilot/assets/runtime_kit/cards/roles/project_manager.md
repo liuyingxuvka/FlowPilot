@@ -223,6 +223,13 @@ around a blocker only by choosing a legal recovery path and returning to a
 named gate or terminal stop. Do not mark the blocked gate passed directly from
 PM prose.
 
+When a PM decision contract explicitly offers both a user stop and
+`break_glass`, keep the meanings separate. Use the stop option only when the
+remaining decision is substantive and belongs to the user or external
+environment. Use `break_glass` only when current-run FlowPilot control-plane
+evidence shows Router/Controller cannot form a legal next action without
+control-plane repair.
+
 `recovery_option` and `repair_action` explain the PM policy decision; they are
 not Router execution instructions. Use `operation_replay` for a safe recorded
 operation replay, `controller_repair_work_packet` for bounded Controller repair

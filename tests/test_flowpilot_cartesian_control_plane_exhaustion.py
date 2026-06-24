@@ -386,9 +386,12 @@ class FlowPilotCartesianControlPlaneExhaustionTests(unittest.TestCase):
     def test_high_risk_cells_have_current_runtime_canaries(self) -> None:
         corpus_paths = [
             ROOT / "tests" / "test_flowpilot_core_runtime.py",
+            ROOT / "tests" / "test_flowpilot_high_standard_control_flow.py",
             ROOT / "tests" / "router_runtime" / "startup_bootstrap.py",
             ROOT / "tests" / "router_runtime" / "material_modeling.py",
             ROOT / "tests" / "router_runtime" / "route_mutation_parent_backward.py",
+            ROOT / "tests" / "router_runtime" / "route_mutation_model_miss_triage.py",
+            ROOT / "tests" / "router_runtime" / "resume.py",
             ROOT / "tests" / "router_runtime" / "packets.py",
             ROOT / "tests" / "router_runtime" / "quality_gates.py",
         ]
@@ -400,6 +403,10 @@ class FlowPilotCartesianControlPlaneExhaustionTests(unittest.TestCase):
             "fallback_rejected": "test_fallback_route_action_payload_is_rejected_without_translation",
             "legacy_alias_rejected": "test_unsupported_route_action_alias_is_rejected_without_translation",
             "break_glass_repeat_root": "test_break_glass_counts_same_flowguard_root_cause_across_surface_gates",
+            "pm_repair_break_glass": "test_pm_repair_decision_break_glass_routes_control_plane_without_user_wait",
+            "pm_flowguard_acceptance_break_glass": "test_pm_flowguard_acceptance_break_glass_routes_control_plane_without_review",
+            "pm_model_miss_break_glass": "test_pm_model_miss_break_glass_routes_control_blocker_without_unlocking_repair",
+            "pm_resume_break_glass": "test_pm_resume_break_glass_routes_control_blocker_without_resume_success",
             "stale_flowguard_evidence": "test_final_matrix_rejects_stale_flowguard_evidence_id",
             "wrong_stale_authority": "test_packet_open_rejects_wrong_stale_or_tampered_authority",
             "current_run_no_project_root_fallback": "test_current_run_resolver_accepts_new_schema_and_rejects_project_root_fallback",

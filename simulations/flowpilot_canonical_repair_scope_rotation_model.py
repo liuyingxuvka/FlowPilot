@@ -3,7 +3,7 @@
 Risk intent:
 - Prevent PM repair loops from marking a blocker repaired without a fresh
   executable packet.
-- Collapse the PM repair menu to one current five-choice contract.
+- Collapse the PM repair menu to one current contract.
 - Replace current, parent, or route scope cleanly instead of mutating an old
   node in place.
 """
@@ -19,6 +19,7 @@ from flowguard import FunctionResult, Invariant, InvariantResult, Workflow
 MODEL_ID = "flowpilot_canonical_repair_scope_rotation"
 MAX_SEQUENCE_LENGTH = 11
 CURRENT_PM_REPAIR_DECISIONS = (
+    "break_glass",
     "repair_current_scope",
     "repair_parent_scope",
     "redesign_route",
@@ -73,6 +74,7 @@ class State:
     old_decision_accepted: bool = False
     same_lineage_attempt_count: int = 0
     repair_loop_break_glass_required: bool = False
+    break_glass_routed_to_controller: bool = False
 
 
 @dataclass(frozen=True)
@@ -92,8 +94,10 @@ class Transition(NamedTuple):
 
 REQUIRED_SAFE_LABELS = (
     "record_current_blocker",
-    "declare_five_choice_pm_menu",
+    "declare_current_pm_menu",
     "reject_removed_pm_decisions",
+    "pm_selects_break_glass",
+    "runtime_routes_break_glass_to_controller",
     "pm_selects_repair_current_scope",
     "runtime_replaces_current_scope",
     "runtime_records_fresh_packet_transaction",
@@ -147,11 +151,15 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
     if state.status == "new":
         return (Transition("record_current_blocker", replace(state, status="running", blocker_detected=True)),)
     if not state.menu_declared:
-        return (Transition("declare_five_choice_pm_menu", replace(state, menu_declared=True)),)
+        return (Transition("declare_current_pm_menu", replace(state, menu_declared=True)),)
     if not state.old_decisions_rejected:
         return (Transition("reject_removed_pm_decisions", replace(state, old_decisions_rejected=True)),)
     if state.pm_decision == "none":
         return (
+            Transition(
+                "pm_selects_break_glass",
+                replace(state, pm_decision="break_glass", blocker_id="blocker-001"),
+            ),
             Transition(
                 "pm_selects_repair_current_scope",
                 replace(state, pm_decision="repair_current_scope", source_id="node-001", blocker_id="blocker-001"),
@@ -186,6 +194,13 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
             Transition(
                 "pm_selects_stop_for_user",
                 replace(state, pm_decision="stop_for_user", blocker_id="blocker-001", blocker_terminal=True, status="complete"),
+            ),
+        )
+    if state.pm_decision == "break_glass" and not state.break_glass_routed_to_controller:
+        return (
+            Transition(
+                "runtime_routes_break_glass_to_controller",
+                replace(state, break_glass_routed_to_controller=True, status="complete"),
             ),
         )
     if state.pm_decision == "repair_current_scope" and not state.replacement_scope_created:
@@ -293,6 +308,11 @@ def invariant_failures(state: State) -> list[str]:
             failures.append("waiver terminal state lacks authority reference")
         if state.fresh_packet_id or state.blocker_repair_packet_open:
             failures.append("authorized waiver created a repair packet")
+    if state.pm_decision == "break_glass":
+        if state.fresh_packet_id or state.blocker_repair_packet_open:
+            failures.append("break_glass created a repair packet")
+        if state.status == "complete" and not state.break_glass_routed_to_controller:
+            failures.append("break_glass completed without controller control-plane route")
     if state.pm_decision == "stop_for_user":
         if state.fresh_packet_id or state.blocker_repair_packet_open:
             failures.append("stop_for_user created a repair packet")
@@ -313,12 +333,12 @@ INVARIANTS = (
     Invariant(
         name="canonical_repair_scope_rotation_invariants",
         description=(
-            "PM repair decisions use exactly the current five-choice menu, "
+            "PM repair decisions use exactly the current menu, "
             "removed decisions are rejected, nonterminal repair opens only "
             "after a fresh current executable packet exists, parent repair "
             "uses a structured child-spec contract, abandons descendants into "
             "history, creates active repair children, route redesign is scanned before activation, "
-            "and terminal decisions create no packet."
+            "and terminal/control-plane exit decisions create no packet."
         ),
         predicate=invariant,
     ),
@@ -374,6 +394,8 @@ def is_success(state: State) -> bool:
         return state.authority_ref_present and state.blocker_terminal and not state.fresh_packet_id
     if state.pm_decision == "stop_for_user":
         return state.blocker_terminal and not state.fresh_packet_id
+    if state.pm_decision == "break_glass":
+        return state.break_glass_routed_to_controller and not state.fresh_packet_id
     return False
 
 
@@ -451,6 +473,20 @@ def hazard_states() -> dict[str, State]:
             pm_decision="stop_for_user",
             blocker_terminal=True,
             fresh_packet_id="packet-stop-should-not-exist",
+            blocker_repair_packet_open=False,
+        ),
+        "break_glass_created_packet": replace(
+            base,
+            pm_decision="break_glass",
+            break_glass_routed_to_controller=True,
+            fresh_packet_id="packet-break-glass-should-not-exist",
+            blocker_repair_packet_open=False,
+        ),
+        "break_glass_completed_without_controller_route": replace(
+            base,
+            pm_decision="break_glass",
+            break_glass_routed_to_controller=False,
+            fresh_packet_id="",
             blocker_repair_packet_open=False,
         ),
     }

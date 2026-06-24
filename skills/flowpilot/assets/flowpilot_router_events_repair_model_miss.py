@@ -143,7 +143,7 @@ def _write_model_miss_triage_decision(router: ModuleType, project_root: Path, ru
             raise RouterError('out-of-scope repair requires flowguard_capability.can_model_bug_class=false')
         if not str(capability.get('incapability_reason') or '').strip():
             raise RouterError('out-of-scope repair requires flowguard_capability.incapability_reason')
-    elif decision_value in {'request_flowguard_operator_model_miss_analysis', 'needs_evidence_before_modeling', 'stop_for_user'}:
+    elif decision_value in {'break_glass', 'request_flowguard_operator_model_miss_analysis', 'needs_evidence_before_modeling', 'stop_for_user'}:
         if decision.get('same_class_findings_reviewed') is True or decision.get('repair_recommendation_reviewed') is True:
             raise RouterError('non-authorizing model-miss decision must not claim reviewed repair evidence')
     if decision_value in PM_MODEL_MISS_TRIAGE_REPAIR_AUTHORIZED_VALUES:
@@ -173,10 +173,24 @@ def _write_model_miss_triage_decision(router: ModuleType, project_root: Path, ru
     elif decision_value == 'stop_for_user':
         run_state['model_miss_triage_controlled_stop'] = {'schema_version': 'flowpilot.model_miss_triage_controlled_stop.v1', 'status': 'waiting_for_user', 'source_decision_path': project_relative(project_root, decision_path), 'source_decision_hash': hashlib.sha256(decision_path.read_bytes()).hexdigest(), 'reason': 'model_miss_triage_controlled_stop', 'created_at': utc_now()}
         run_state['flags']['model_miss_triage_controlled_stop_recorded'] = True
+    elif decision_value == 'break_glass':
+        decision_hash = hashlib.sha256(decision_path.read_bytes()).hexdigest()
+        run_state['model_miss_triage_break_glass'] = {'schema_version': 'flowpilot.model_miss_triage_break_glass.v1', 'status': 'control_plane_blocker_requested', 'source_decision_path': project_relative(project_root, decision_path), 'source_decision_hash': decision_hash, 'reason': 'model_miss_triage_break_glass', 'created_at': utc_now()}
+        router._write_control_blocker(
+            project_root,
+            run_root,
+            run_state,
+            source='pm_model_miss_triage_break_glass',
+            error_message='PM requested break_glass during model-miss triage because current-run evidence shows the FlowPilot control plane cannot form a legal model-miss repair next action.',
+            event=PM_MODEL_MISS_TRIAGE_DECISION_EVENT,
+            action_type='pm_model_miss_triage_decision',
+            payload={'decision_path': project_relative(project_root, decision_path), 'decision_hash': decision_hash},
+        )
     elif decision_value in PM_MODEL_MISS_TRIAGE_REPAIR_AUTHORIZED_VALUES:
         run_state['model_miss_triage_followup_request'] = None
         run_state['model_miss_evidence_followup_request'] = None
         run_state['model_miss_triage_controlled_stop'] = None
+        run_state['model_miss_triage_break_glass'] = None
     return decision_value
 
 __all__ = (

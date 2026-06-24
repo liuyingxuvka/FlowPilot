@@ -4231,6 +4231,7 @@ _PROGRESS_PACKET_ENDED_STATUSES = {
     "superseded_after_repair",
 }
 _PM_REPAIR_DECISIONS = {
+    "break_glass",
     "repair_current_scope",
     "repair_parent_scope",
     "redesign_route",
@@ -4246,7 +4247,7 @@ _REMOVED_PM_REPAIR_DECISIONS = {
 }
 _GATED_PM_REPAIR_DECISIONS = {"repair_current_scope", "repair_parent_scope", "redesign_route"}
 _HIGH_RISK_PM_DISPOSITION_DECISIONS = {"redesign_route"}
-_PM_FLOWGUARD_ACCEPTANCE_DECISIONS = {"accept", "redesign_route", "block", "stop_for_user"}
+_PM_FLOWGUARD_ACCEPTANCE_DECISIONS = {"accept", "break_glass", "redesign_route", "block", "stop_for_user"}
 _REMOVED_PM_FLOWGUARD_ACCEPTANCE_DECISIONS = {
     "maybe",
     "needs_flowguard",
@@ -5102,6 +5103,7 @@ _REPAIR_OBLIGATION_CANNOT_BE_SATISFIED_BY = (
 )
 
 _REPAIR_OBLIGATION_ALLOWED_RESOLUTIONS = (
+    "break_glass",
     "fresh_repair_packet_required",
     "parent_scope_repair_required",
     "route_redesign_required",
@@ -5110,6 +5112,7 @@ _REPAIR_OBLIGATION_ALLOWED_RESOLUTIONS = (
 )
 
 _REPAIR_OBLIGATION_DISPOSITION_BY_DECISION = {
+    "break_glass": "break_glass",
     "repair_current_scope": "fresh_repair_packet_required",
     "repair_parent_scope": "parent_scope_repair_required",
     "redesign_route": "route_redesign_required",
@@ -5118,6 +5121,7 @@ _REPAIR_OBLIGATION_DISPOSITION_BY_DECISION = {
 }
 
 _REPAIR_OBLIGATION_RETURN_GATE_BY_DECISION = {
+    "break_glass": "controller_break_glass",
     "repair_current_scope": "flowguard_then_reviewer",
     "repair_parent_scope": "flowguard_then_reviewer",
     "redesign_route": "route_redesign_gate",
@@ -5600,7 +5604,14 @@ def _ensure_pm_repair_decision_packet_for_blocker(ledger: dict[str, Any], blocke
     }
     if repair_evidence_obligations:
         required_result_fields.append("repair_obligation_disposition when repair_evidence_obligations exist")
-        for branch in ("repair_current_scope", "repair_parent_scope", "redesign_route", "waive_with_authority", "stop_for_user"):
+        for branch in (
+            "break_glass",
+            "repair_current_scope",
+            "repair_parent_scope",
+            "redesign_route",
+            "waive_with_authority",
+            "stop_for_user",
+        ):
             conditional_required_fields.setdefault(branch, []).append("repair_obligation_disposition")
         minimal_valid_shape["repair_obligation_disposition"] = _repair_obligation_disposition_minimal_shape(
             repair_evidence_obligations,
@@ -5740,7 +5751,11 @@ def _ensure_pm_repair_decision_packet_for_blocker(ledger: dict[str, Any], blocke
                     "non-empty repair_child_specs. The old child nodes become inherited history only; PM must define "
                     "new current repair child specs for the replacement parent. Use redesign_route only with a strict "
                     "route_plan object; complex redesigns must preserve parent/module grouping instead of returning "
-                    "flat all-leaf peer nodes. Use waive_with_authority only with authority_ref. "
+                    "flat all-leaf peer nodes. Use waive_with_authority only with authority_ref. Use stop_for_user "
+                    "only for substantive user choices such as scope, goal, acceptance, waiver authority, or cancel. "
+                    "Use break_glass when current-run evidence shows the FlowPilot control plane cannot form a legal "
+                    "normal next action, such as missing delivered material, packet/result contract contradiction, "
+                    "event-authority contradiction, return-path failure, or foreground-duty contradiction. "
                     "Do not wrap the decision inside repair_decision, pm_repair_decision, prose, or any legacy shape. "
                     "PM chooses the repair route using the blocker recommendation and target contract. PM does not "
                     "impersonate the blocked reviewer, system validation check, FlowGuard pass, or worker deliverable. "
@@ -5781,7 +5796,7 @@ def _parse_pm_repair_decision_body(
     target_blocker_id = str(payload.get("target_blocker_id") or "").strip()
     next_action = _normalize_outcome_token(payload.get("next_action"))
     if decision in _REMOVED_PM_REPAIR_DECISIONS:
-        raise BlackBoxRuntimeError("PM repair decision uses a removed decision; request a current five-choice decision")
+        raise BlackBoxRuntimeError("PM repair decision uses a removed decision; request a current PM repair decision")
     if decision not in _PM_REPAIR_DECISIONS:
         raise BlackBoxRuntimeError("PM repair decision requires an explicit allowed decision")
     if not reason:
@@ -5920,7 +5935,7 @@ def _record_pm_repair_decision_from_packet_result(
             result=result,
         )
     blocker["pm_repair_decision_id"] = decision_id
-    if decision not in {"waive_with_authority", "stop_for_user"}:
+    if decision not in {"break_glass", "waive_with_authority", "stop_for_user"}:
         blocker["status"] = "repairing"
     _event(
         ledger,
@@ -6142,14 +6157,16 @@ def _ensure_pm_flowguard_acceptance_packet_for_gate(
         "flowguard_order_id": str(gate.get("flowguard_order_id") or ""),
         "flowguard_result_id": flowguard_result_id,
         **_staged_effect_public_reference(gate),
-        "allowed_decisions": ["accept", "redesign_route", "block", "stop_for_user"],
+        "allowed_decisions": ["accept", "break_glass", "redesign_route", "block", "stop_for_user"],
         "instruction": (
             "Read the current staged structural decision and the current FlowGuard report. "
             "Return one strict JSON result. Use decision=accept only after absorbing the FlowGuard findings; "
             "use decision=redesign_route with a strict route_plan when the report changes the route; "
             "do not replace a hierarchical route with a complex flat all-leaf route_plan, and keep node-entry "
             "splits under a replacement parent/module scope; "
-            "use decision=block or stop_for_user when the structural change cannot proceed. "
+            "use decision=block when FlowGuard blocks the structural change, stop_for_user only for substantive "
+            "user choices, and break_glass when current-run evidence shows the FlowPilot control plane cannot form "
+            "a legal normal next action. "
             "There is no optional or uncertain FlowGuard branch."
         ),
     }
@@ -6906,6 +6923,20 @@ def _apply_pm_repair_decision(ledger: dict[str, Any], blocker_id: str, decision_
             if target_packet.get("status") != "pm_stopped" and not target_packet.get("pm_stop_previous_status"):
                 target_packet["pm_stop_previous_status"] = str(target_packet.get("status") or "")
             target_packet["status"] = "pm_stopped"
+        return
+    if decision == "break_glass":
+        blocker["status"] = "active"
+        blocker["pm_break_glass_decision_id"] = decision_id
+        blocker["pm_break_glass_requested_at"] = now_iso()
+        blocker["recommended_resolution"] = reason or blocker.get("recommended_resolution", "")
+        _event(
+            ledger,
+            "pm_break_glass_requested",
+            blocker_id=blocker_id,
+            decision_id=decision_id,
+            reason=reason,
+        )
+        return
 
 
 def _advance_frontier_after_node_acceptance(ledger: dict[str, Any], node_id: str) -> None:
@@ -11001,7 +11032,7 @@ def _pm_repair_decision_result_violation(
             missing_required_fields=allowed_value_violations,
         )
     if decision in _REMOVED_PM_REPAIR_DECISIONS:
-        return _contract_block(packet, "PM repair decision uses a removed decision; request a current five-choice decision")
+        return _contract_block(packet, "PM repair decision uses a removed decision; request a current PM repair decision")
     if decision not in _PM_REPAIR_DECISIONS:
         return _contract_block(packet, "PM repair decision requires an explicit allowed decision")
     envelope = packet.get("envelope", {}) if isinstance(packet.get("envelope"), Mapping) else {}
@@ -11766,6 +11797,28 @@ def _apply_valid_packet_result(
                 blocker_id=str(gate.get("blocker_id") or ""),
                 node_id=str(gate.get("node_id") or packet["envelope"].get("route_node_id") or ""),
                 route_plan=route_plan,
+            )
+            return
+        if decision == "break_glass":
+            gate["status"] = "pm_break_glass_requested"
+            gate["pm_flowguard_acceptance_packet_id"] = packet["packet_id"]
+            gate["pm_flowguard_acceptance_result_id"] = result["result_id"]
+            gate["pm_break_glass_requested_at"] = now_iso()
+            gate["updated_at"] = now_iso()
+            blocker_id = str(gate.get("blocker_id") or "")
+            blocker = ledger.get("active_blockers", {}).get(blocker_id)
+            if isinstance(blocker, dict):
+                blocker["status"] = "active"
+                blocker["pm_break_glass_result_id"] = result["result_id"]
+                blocker["pm_break_glass_requested_at"] = gate["pm_break_glass_requested_at"]
+                blocker["recommended_resolution"] = reason or blocker.get("recommended_resolution", "")
+            _event(
+                ledger,
+                "pm_break_glass_requested",
+                gate_id=str(gate.get("gate_id") or ""),
+                blocker_id=blocker_id,
+                result_id=str(result.get("result_id") or ""),
+                reason=reason,
             )
             return
         gate["status"] = "pm_stopped" if decision == "stop_for_user" else "pm_blocked"
@@ -15427,6 +15480,36 @@ def _repair_loop_break_glass_action(ledger: Mapping[str, Any]) -> RuntimeAction 
     return None
 
 
+def _pm_requested_break_glass_action(ledger: Mapping[str, Any]) -> RuntimeAction | None:
+    for blocker in ledger.get("active_blockers", {}).values():
+        if not isinstance(blocker, Mapping):
+            continue
+        if not str(blocker.get("pm_break_glass_decision_id") or ""):
+            continue
+        if _route_node_is_noncurrent(ledger, str(blocker.get("route_node_id") or "")):
+            continue
+        blocker_id = str(blocker.get("blocker_id") or "")
+        return RuntimeAction(
+            "control_plane_blocker",
+            "PM requested Controller break-glass for a FlowPilot control-plane blocker",
+            blocker_id,
+            "controller",
+        )
+    for gate in ledger.get("pm_decision_gates", {}).values():
+        if not isinstance(gate, Mapping):
+            continue
+        if gate.get("status") != "pm_break_glass_requested":
+            continue
+        gate_id = str(gate.get("gate_id") or "")
+        return RuntimeAction(
+            "control_plane_blocker",
+            "PM requested Controller break-glass while absorbing FlowGuard for a structural decision",
+            gate_id,
+            "controller",
+        )
+    return None
+
+
 def _flowguard_formal_artifact_failure_key(
     ledger: Mapping[str, Any],
     result: Mapping[str, Any],
@@ -15563,6 +15646,10 @@ def router_next_action(ledger: Mapping[str, Any]) -> RuntimeAction:
         if not ledger.get("route_drafts"):
             return RuntimeAction("draft_route", "no active route exists")
         return RuntimeAction("activate_route", "route draft needs activation")
+
+    pm_break_glass_action = _pm_requested_break_glass_action(ledger)
+    if pm_break_glass_action is not None:
+        return pm_break_glass_action
 
     stopped_blockers = _stopped_semantic_blockers(ledger)
     if stopped_blockers:

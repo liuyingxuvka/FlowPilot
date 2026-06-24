@@ -93,6 +93,7 @@ BOOLEAN_OPTIONS: tuple[bool, bool] = (True, False)
 TRUE_ONLY_OPTIONS: tuple[bool, ...] = (True,)
 TERMINAL_REPLAY_STATUS_OPTIONS: tuple[str, ...] = ("closed", "blocked", "waived", "superseded")
 PM_REPAIR_DECISION_OPTIONS: tuple[str, ...] = (
+    "break_glass",
     "repair_current_scope",
     "repair_parent_scope",
     "redesign_route",
@@ -108,6 +109,7 @@ PM_DISPOSITION_DECISION_OPTIONS: tuple[str, ...] = (
 )
 PM_FLOWGUARD_ACCEPTANCE_DECISION_OPTIONS: tuple[str, ...] = (
     "accept",
+    "break_glass",
     "redesign_route",
     "block",
     "stop_for_user",

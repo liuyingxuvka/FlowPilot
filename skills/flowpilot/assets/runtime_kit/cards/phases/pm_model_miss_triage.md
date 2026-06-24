@@ -48,7 +48,14 @@ Allowed PM decisions:
 - proceed with model-backed repair;
 - mark out of scope / not modelable and proceed by another route;
 - request evidence before modeling;
+- break glass when current-run FlowPilot control-plane evidence prevents a
+  legal model-miss repair next action;
 - stop for user.
+
+Use `stop_for_user` only when the next decision is substantive and belongs to
+the user. Use `break_glass` when the model-miss triage lane itself exposes a
+FlowPilot control-plane blocker, such as missing current-run authority,
+contradictory event/return-path state, or a runtime contract contradiction.
 
 When choosing `request_flowguard_operator_model_miss_analysis` or
 `needs_evidence_before_modeling`, do not wait for a special-purpose router

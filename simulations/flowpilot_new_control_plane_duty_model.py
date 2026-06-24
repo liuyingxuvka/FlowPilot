@@ -36,12 +36,14 @@ class State:
     hostile_prose_ignored: bool = False
     missing_pm_decision_blocked: bool = False
     pm_stop_blocks_route: bool = False
+    pm_break_glass_routes_control_plane: bool = False
     fake_e2e_uses_public_fold: bool = False
     focused_tests_current: bool = False
     internal_action_exposed_to_controller: bool = False
     status_mutates_ledger: bool = False
     hostile_prose_controls_decision: bool = False
     stopped_blocker_route_continues: bool = False
+    pm_break_glass_waits_for_user: bool = False
     external_wait_uses_internal_tick: bool = False
 
 
@@ -70,6 +72,7 @@ REQUIRED_SAFE_LABELS = (
     "require_structured_pm_repair_decision",
     "block_missing_pm_repair_decision",
     "stop_for_user_pauses_route",
+    "break_glass_routes_control_plane",
     "route_fake_e2e_through_public_fold",
     "add_focused_regression_tests",
     "complete_control_plane_duty_repair",
@@ -118,6 +121,13 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
         return (Transition("block_missing_pm_repair_decision", replace(state, missing_pm_decision_blocked=True)),)
     if not state.pm_stop_blocks_route:
         return (Transition("stop_for_user_pauses_route", replace(state, pm_stop_blocks_route=True)),)
+    if not state.pm_break_glass_routes_control_plane:
+        return (
+            Transition(
+                "break_glass_routes_control_plane",
+                replace(state, pm_break_glass_routes_control_plane=True),
+            ),
+        )
     if not state.fake_e2e_uses_public_fold:
         return (Transition("route_fake_e2e_through_public_fold", replace(state, fake_e2e_uses_public_fold=True)),)
     if not state.focused_tests_current:
@@ -149,6 +159,8 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("structured PM parser does not prove hostile prose is ignored")
     if state.pm_stop_blocks_route and state.stopped_blocker_route_continues:
         failures.append("stopped PM blocker still allows route progress")
+    if state.pm_break_glass_routes_control_plane and state.pm_break_glass_waits_for_user:
+        failures.append("PM break_glass was treated as user wait instead of control-plane route")
     if state.status == "complete" and not is_success(state):
         failures.append("completion claimed before all repair obligations were satisfied")
     return failures
@@ -199,6 +211,7 @@ def is_success(state: State) -> bool:
         and state.hostile_prose_ignored
         and state.missing_pm_decision_blocked
         and state.pm_stop_blocks_route
+        and state.pm_break_glass_routes_control_plane
         and state.fake_e2e_uses_public_fold
         and state.focused_tests_current
     )
@@ -211,6 +224,7 @@ def hazard_states() -> dict[str, State]:
         "status_mutates_ledger": replace(target, status_mutates_ledger=True),
         "hostile_prose_controls_decision": replace(target, hostile_prose_controls_decision=True),
         "stopped_blocker_route_continues": replace(target, stopped_blocker_route_continues=True),
+        "pm_break_glass_waits_for_user": replace(target, pm_break_glass_waits_for_user=True),
         "external_wait_uses_internal_tick": replace(target, external_wait_uses_internal_tick=True),
         "wrong_role_wait_patrol_seconds": replace(target, role_wait_patrol_seconds=1),
     }
@@ -229,6 +243,7 @@ def target_state() -> State:
         hostile_prose_ignored=True,
         missing_pm_decision_blocked=True,
         pm_stop_blocks_route=True,
+        pm_break_glass_routes_control_plane=True,
         fake_e2e_uses_public_fold=True,
         focused_tests_current=True,
     )
@@ -243,4 +258,5 @@ def state_summary(state: State) -> dict[str, object]:
         "status_is_read_only": state.status_is_read_only,
         "structured_pm_decision_required": state.structured_pm_decision_required,
         "pm_stop_blocks_route": state.pm_stop_blocks_route,
+        "pm_break_glass_routes_control_plane": state.pm_break_glass_routes_control_plane,
     }

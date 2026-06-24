@@ -865,6 +865,29 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
         self.assertIn("--user-requested", pm_resume)
         self.assertIn("ordinary patrol, resume, or chat-history context must not do it automatically", pm_resume)
 
+    def test_pm_stop_options_distinguish_user_stop_from_break_glass(self) -> None:
+        def normalized(path: Path) -> str:
+            return " ".join(path.read_text(encoding="utf-8").lower().split())
+
+        pm_core = normalized(_card_path_by_id("pm.core"))
+        pm_repair = normalized(_card_path_by_id("pm.review_repair"))
+        pm_resume = normalized(_card_path_by_id("pm.resume_decision"))
+        pm_model_miss = normalized(_card_path_by_id("pm.model_miss_triage"))
+        pm_flowguard_loop = normalized(_card_path_by_id("pm.flowguard_operator_request_report_loop"))
+
+        for text in (pm_core, pm_repair, pm_resume, pm_model_miss, pm_flowguard_loop):
+            self.assertIn("break_glass", text)
+            self.assertTrue("control-plane" in text or "control plane" in text)
+
+        for text in (pm_repair, pm_model_miss, pm_flowguard_loop):
+            self.assertTrue("use `stop_for_user` only" in text or "choose `stop_for_user` only" in text)
+            self.assertIn("substantive", text)
+            self.assertIn("user", text)
+
+        self.assertIn("use `stop_for_user_or_environment` only", pm_resume)
+        self.assertIn("create_repair_or_route_mutation_node", pm_resume)
+        self.assertIn("request_sender_reissue", pm_resume)
+
     def test_control_plane_replayability_blocker_routes_to_existing_break_glass_before_user_stop(self) -> None:
         def normalized(path: Path) -> str:
             return " ".join(path.read_text(encoding="utf-8").lower().split())

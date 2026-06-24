@@ -188,7 +188,7 @@ required fields, missing projection rows, result-matrix gaps, or
 evidence-reference gaps. If Runtime has already issued a current mechanical
 reissue packet, answer that current packet. If the blocker is semantic and
 requires repair work, choose `repair_current_scope`, `repair_parent_scope`,
-`redesign_route`, `waive_with_authority`, or `stop_for_user`. The old blocked
+`redesign_route`, `waive_with_authority`, `break_glass`, or `stop_for_user`. The old blocked
 artifact may explain context, but it is stale and must not become passing
 evidence.
 
@@ -203,13 +203,16 @@ Allowed PM repair decisions are exactly:
 - `repair_parent_scope` with `repair_parent_scope_contract`;
 - `redesign_route` with strict `route_plan`;
 - `waive_with_authority` with `authority_ref`;
+- `break_glass`;
 - `stop_for_user`.
 
-Use Controller break-glass for FlowPilot control-plane blocker repair when the
-normal repair lane cannot form a legal next action, or when runtime shows the
-same repair lineage has repeated the same blocker problem five or more
-consecutive times rather than opening another ordinary PM repair decision for
-the same lineage/problem loop.
+Use `break_glass` for FlowPilot control-plane blocker repair when the normal
+repair lane cannot form a legal next action, or when runtime shows the same
+repair lineage has repeated the same blocker problem five or more consecutive
+times rather than opening another ordinary PM repair decision for the same
+lineage/problem loop. Use `stop_for_user` only for substantive user decisions,
+authority choices, or external environment action that PM/Controller cannot
+decide.
 
 For mutation or repair, record route version impact, invalidate stale evidence,
 affected ancestors, and the rerun target before new work starts.

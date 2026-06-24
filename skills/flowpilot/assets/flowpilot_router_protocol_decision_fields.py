@@ -43,6 +43,7 @@ PM_RESUME_CONTROLLER_REMINDER_REQUIRED_FIELDS = (
 )
 
 PM_RESUME_DECISION_ALLOWED_VALUES = {
+    "break_glass",
     "continue_current_packet_loop",
     "request_sender_reissue",
     "restore_or_replace_roles_from_memory",

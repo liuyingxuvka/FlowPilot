@@ -111,6 +111,38 @@ class FlowPilotFakeAIRuntimeReplayTests(unittest.TestCase):
                 else:
                     self.assertFalse(cell["glass_break_allowed"])
 
+    def test_pm_break_glass_branches_are_in_fake_ai_runtime_replay_matrix(self) -> None:
+        cells = list(runtime_replay.runtime_replay_cells())
+        branch_cells = [
+            cell
+            for cell in cells
+            if cell["contract_family_id"]
+            in {
+                "pm_repair_decision.pm_repair_decision",
+                "pm_flowguard_acceptance.pm_flowguard_acceptance",
+            }
+            and "break_glass" in str(cell).lower()
+        ]
+
+        self.assertGreater(len(branch_cells), 0)
+        families = {cell["contract_family_id"] for cell in branch_cells}
+        self.assertEqual(
+            families,
+            {
+                "pm_repair_decision.pm_repair_decision",
+                "pm_flowguard_acceptance.pm_flowguard_acceptance",
+            },
+        )
+        reactions = {cell["expected_runtime_reaction"] for cell in branch_cells}
+        self.assertIn("mechanical_reject_reissue", reactions)
+        self.assertIn("accepted_after_reissue", reactions)
+        self.assertTrue(
+            any(
+                "repair_obligation_disposition" in str(cell.get("contract_path", ""))
+                for cell in branch_cells
+            )
+        )
+
     def test_review_window_fake_ai_runtime_replay_is_cartesian(self) -> None:
         cells = [
             cell

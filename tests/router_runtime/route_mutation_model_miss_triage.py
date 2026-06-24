@@ -122,6 +122,35 @@ class RouteMutationModelMissTriageRuntimeTests(FlowPilotRouterRuntimeTestBase):
             self.assertEqual(wait["action_type"], "await_role_decision")
             self.assertEqual(wait["allowed_external_events"], ["pm_registers_role_work_request"])
 
+    def test_pm_model_miss_break_glass_routes_control_blocker_without_unlocking_repair(self) -> None:
+            root = self.make_project()
+            self.prepare_current_node_result_for_review(root, packet_id="node-packet-model-miss-break-glass")
+            router.record_external_event(root, "current_node_reviewer_blocks_result")
+            self.deliver_expected_card(root, "pm.model_miss_triage")
+            self.deliver_expected_card(root, "pm.event.reviewer_blocked")
+
+            router.record_external_event(
+                root,
+                "pm_records_model_miss_triage_decision",
+                self.role_decision_envelope(
+                    root,
+                    "decisions/model_miss_break_glass",
+                    self.model_miss_triage_body(root, decision="break_glass"),
+                ),
+            )
+
+            self.assertFalse(self.flag(root, "model_miss_triage_closed"))
+            self.assertFalse(self.flag(root, "pm_review_repair_card_delivered"))
+            state = read_json(router.run_state_path(self.run_root_for(root)))
+            self.assertEqual(
+                state["model_miss_triage_break_glass"]["status"],
+                "control_plane_blocker_requested",
+            )
+            self.assertEqual(state["active_control_blocker"]["originating_event"], "pm_records_model_miss_triage_decision")
+            self.assertEqual(state["active_control_blocker"]["originating_action_type"], "pm_model_miss_triage_decision")
+            action = self.next_after_display_sync(root)
+            self.assertEqual(action["action_type"], "handle_control_blocker")
+
 
     def test_pm_model_miss_followup_uses_generic_role_work_request_channel(self) -> None:
             root = self.make_project()

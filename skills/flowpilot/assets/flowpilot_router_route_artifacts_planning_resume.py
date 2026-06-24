@@ -56,7 +56,7 @@ def _bound_router() -> ModuleType:
 
 OWNER_MODULE = "flowpilot_router_route_artifacts"
 
-def _write_pm_resume_decision(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
+def _write_pm_resume_decision(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> str:
     payload = _load_file_backed_role_payload(project_root, payload)
     if payload.get("decision_owner") != "project_manager":
         raise RouterError("PM resume decision requires decision_owner=project_manager")
@@ -148,6 +148,34 @@ def _write_pm_resume_decision(project_root: Path, run_root: Path, run_state: dic
         payload,
         source_event="pm_resume_recovery_decision_returned",
     )
+    if decision == "break_glass":
+        decision_path = _resume_decision_path(run_root)
+        decision_hash = hashlib.sha256(decision_path.read_bytes()).hexdigest()
+        run_state["pm_resume_break_glass"] = {
+            "schema_version": "flowpilot.pm_resume_break_glass.v1",
+            "status": "control_plane_blocker_requested",
+            "source_decision_path": project_relative(project_root, decision_path),
+            "source_decision_hash": decision_hash,
+            "reason": "pm_resume_break_glass",
+            "created_at": utc_now(),
+        }
+        _bound_router()._write_control_blocker(
+            project_root,
+            run_root,
+            run_state,
+            source="pm_resume_break_glass",
+            error_message=(
+                "PM requested break_glass during resume because current-run evidence shows the "
+                "FlowPilot control plane cannot form a legal resume next action."
+            ),
+            event="pm_resume_recovery_decision_returned",
+            action_type="pm_resume_recovery_decision",
+            payload={
+                "decision_path": project_relative(project_root, decision_path),
+                "decision_hash": decision_hash,
+            },
+        )
+    return decision
 
 __all__ = (
     '_write_pm_resume_decision',

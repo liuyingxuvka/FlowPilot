@@ -1000,6 +1000,52 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
         decision = read_json(run_root / "continuation" / "pm_resume_decision.json")
         self.assertTrue(decision["resume_ambiguous"])
         self.assertEqual(decision["decision"], "restore_or_replace_roles_from_memory")
+
+    def test_pm_resume_break_glass_routes_control_blocker_without_resume_success(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.ensure_current_role_agent_for_role(root, "worker")
+        (run_root / "role_binding_memory" / "worker.json").unlink()
+
+        router.record_external_event(root, "manual_resume_requested")
+        self.assertEqual(self.next_after_display_sync(root)["action_type"], "load_resume_state")
+        router.apply_action(root, "load_resume_state")
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "rehydrate_role_bindings")
+        router.apply_action(root, "rehydrate_role_bindings", self.resume_role_agent_payload(root, action))
+        self.deliver_expected_card(root, "controller.resume_reentry")
+        self.deliver_expected_card(root, "pm.role_binding_recovery_freshness")
+        self.deliver_expected_card(root, "pm.resume_decision")
+
+        router.record_external_event(
+            root,
+            "pm_resume_recovery_decision_returned",
+            self.role_decision_envelope(
+                root,
+                "continuation/pm_resume_decision_break_glass",
+                {
+                    "decision_owner": "project_manager",
+                    "decision": "break_glass",
+                    "explicit_recovery_evidence_recorded": False,
+                    **self.prior_path_context_review(root, "PM found the resume control plane cannot form a legal next action."),
+                    "controller_reminder": {
+                        "controller_only": True,
+                        "controller_may_read_sealed_bodies": False,
+                        "controller_may_infer_from_chat_history": False,
+                        "controller_may_advance_or_close_route": False,
+                    },
+                },
+            ),
+        )
+
+        state = read_json(router.run_state_path(run_root))
+        self.assertFalse(state["flags"]["pm_resume_recovery_decision_returned"])
+        self.assertEqual(state["pm_resume_break_glass"]["status"], "control_plane_blocker_requested")
+        self.assertEqual(state["active_control_blocker"]["originating_event"], "pm_resume_recovery_decision_returned")
+        self.assertEqual(state["active_control_blocker"]["originating_action_type"], "pm_resume_recovery_decision")
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "handle_control_blocker")
+
     def test_manual_resume_alive_status_enters_router_resume_path(self) -> None:
         root = self.make_project()
         self.boot_to_controller(root)

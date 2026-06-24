@@ -140,6 +140,9 @@ submit a `pm_flowguard_acceptance` result that absorbs the report, states
 whether to accept or rewrite the route plan, and only then may Reviewer inspect
 the PM absorption package. A report that only says the model ran, without
 telling PM how it changes route or node design, is not sufficient.
+In `pm_flowguard_acceptance`, choose `stop_for_user` only for substantive user
+decisions and choose `break_glass` only when current-run FlowPilot control-plane
+evidence prevents PM/Controller from forming a legal next action.
 
 For model-miss reports that support `pm.model_miss_triage`, include these
 additional fields exactly:

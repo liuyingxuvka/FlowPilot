@@ -734,6 +734,7 @@
         "decided_by_role": "project_manager"
       },
       "allowed_decision_values": [
+        "break_glass",
         "request_flowguard_operator_model_miss_analysis",
         "proceed_with_model_backed_repair",
         "out_of_scope_not_modelable",
@@ -985,10 +986,11 @@
         ".flowpilot/runs/<run-id>/route_memory/route_history_index.json"
       ],
       "allowed_decision_values": [
+        "break_glass",
         "continue_current_packet_loop",
-        "repair_current_scope",
+        "request_sender_reissue",
         "restore_or_replace_roles_from_memory",
-        "create_repair_or_route_redesign_node",
+        "create_repair_or_route_mutation_node",
         "stop_for_user_or_environment",
         "close_after_final_ledger_and_terminal_replay"
       ],

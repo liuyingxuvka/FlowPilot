@@ -9,6 +9,7 @@ from flowpilot_router_protocol_control_repair import *
 from flowpilot_router_protocol_process_contracts import *
 
 PM_MODEL_MISS_TRIAGE_DECISION_ALLOWED_VALUES = {
+    "break_glass",
     "request_flowguard_operator_model_miss_analysis",
     "proceed_with_model_backed_repair",
     "out_of_scope_not_modelable",

@@ -5,13 +5,21 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=11 initial_states=1 traces=210",
+    "summary": "sequences=11 initial_states=1 traces=246",
     "violation_count": 0
   },
   "hazard_detection": {
     "expected": [
+      "break_glass_completed_without_controller_route",
+      "break_glass_created_packet",
+      "parent_repair_empty_replacement_parent",
       "parent_repair_guessed_parent",
+      "parent_repair_inherited_children_current",
+      "parent_repair_inherited_only_replay",
       "parent_repair_kept_descendants_current",
+      "parent_repair_missing_child_specs",
+      "parent_repair_missing_contract",
+      "parent_repair_missing_inherited_history",
       "removed_decision_reached_runtime",
       "repair_packet_open_without_current_open_packet",
       "repair_packet_open_without_fresh_packet",
@@ -19,16 +27,49 @@
       "route_redesign_without_flowguard_scan",
       "route_redesign_without_plan",
       "same_node_repair_in_place_survived",
+      "same_repair_lineage_loop_without_break_glass",
       "terminal_stop_created_packet",
       "waiver_without_authority"
     ],
     "hazards": {
+      "break_glass_completed_without_controller_route": [
+        "break_glass completed without controller control-plane route",
+        "completion claimed before repair-scope obligations were satisfied"
+      ],
+      "break_glass_created_packet": [
+        "break_glass created a repair packet",
+        "completion claimed before repair-scope obligations were satisfied"
+      ],
+      "parent_repair_empty_replacement_parent": [
+        "parent repair replacement parent has no active repair child nodes",
+        "completion claimed before repair-scope obligations were satisfied"
+      ],
       "parent_repair_guessed_parent": [
         "parent repair guessed a parent scope",
         "completion claimed before repair-scope obligations were satisfied"
       ],
+      "parent_repair_inherited_children_current": [
+        "parent repair kept inherited children as current closure path",
+        "completion claimed before repair-scope obligations were satisfied"
+      ],
+      "parent_repair_inherited_only_replay": [
+        "parent repair replay closed from inherited history without current repair child result",
+        "completion claimed before repair-scope obligations were satisfied"
+      ],
       "parent_repair_kept_descendants_current": [
         "parent repair kept descendants current",
+        "completion claimed before repair-scope obligations were satisfied"
+      ],
+      "parent_repair_missing_child_specs": [
+        "parent repair replacement accepted without repair_child_specs",
+        "completion claimed before repair-scope obligations were satisfied"
+      ],
+      "parent_repair_missing_contract": [
+        "parent repair replacement accepted without repair_parent_scope_contract",
+        "completion claimed before repair-scope obligations were satisfied"
+      ],
+      "parent_repair_missing_inherited_history": [
+        "parent repair replacement failed to record inherited child history",
         "completion claimed before repair-scope obligations were satisfied"
       ],
       "removed_decision_reached_runtime": [
@@ -58,6 +99,9 @@
       "same_node_repair_in_place_survived": [
         "same-node repair-in-place path survived"
       ],
+      "same_repair_lineage_loop_without_break_glass": [
+        "same repair lineage exceeded five attempts without break-glass"
+      ],
       "terminal_stop_created_packet": [
         "stop_for_user created a repair packet",
         "completion claimed before repair-scope obligations were satisfied"
@@ -79,14 +123,24 @@
     ],
     "missing": [],
     "obligations": {
+      "current_pm_menu_includes_break_glass": true,
       "current_scope_replacement_test": true,
-      "five_choice_menu": true,
+      "flowguard_subject_artifact_consumption_test": true,
       "fresh_packet_gate": true,
       "june3_regression_test": true,
+      "parent_repair_child_specs_runtime": true,
+      "parent_repair_contract_runtime": true,
+      "parent_repair_inherited_history_runtime": true,
+      "parent_repair_inherited_only_replay_test": true,
+      "parent_repair_missing_contract_test": true,
       "parent_scope_replacement_test": true,
+      "pm_break_glass_runtime_route": true,
       "pm_disposition_current_name": true,
+      "pm_flowguard_acceptance_break_glass_test": true,
+      "pm_repair_break_glass_test": true,
       "removed_decision_negative_test": true,
-      "route_redesign_test": true
+      "route_redesign_test": true,
+      "same_lineage_breakglass_runtime": true
     },
     "ok": true
   },
@@ -96,8 +150,10 @@
     "failures": [],
     "labels": [
       "record_current_blocker",
-      "declare_five_choice_pm_menu",
+      "declare_current_pm_menu",
       "reject_removed_pm_decisions",
+      "pm_selects_break_glass",
+      "runtime_routes_break_glass_to_controller",
       "pm_selects_repair_current_scope",
       "runtime_replaces_current_scope",
       "runtime_records_fresh_packet_transaction",
@@ -113,25 +169,34 @@
     ],
     "ok": true,
     "state": {
+      "active_repair_child_nodes_created": 0,
       "authority_ref_present": false,
       "blocker_detected": true,
       "blocker_id": "blocker-001",
       "blocker_repair_packet_open": true,
       "blocker_terminal": false,
+      "break_glass_routed_to_controller": false,
       "descendants_superseded": false,
       "flowguard_scan_passed": false,
       "fresh_packet_current_open": true,
       "fresh_packet_id": "packet-001-repair",
+      "inherited_child_history_recorded": false,
+      "inherited_children_current": false,
       "menu_declared": true,
       "old_decision_accepted": false,
       "old_decisions_rejected": true,
       "old_scope_superseded": true,
       "parent_found": false,
+      "parent_repair_contract_present": false,
+      "parent_repair_inherited_only_replay": false,
       "pm_decision": "repair_current_scope",
+      "repair_child_specs_count": 0,
+      "repair_loop_break_glass_required": false,
       "replacement_scope_created": true,
       "reviewer_scan_passed": false,
       "route_plan_packet_present": false,
       "route_version_switched": false,
+      "same_lineage_attempt_count": 0,
       "same_node_repair_in_place": false,
       "source_id": "node-001",
       "status": "complete",

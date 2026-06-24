@@ -108,3 +108,4 @@ def reset_resume_cycle_for_wakeup(router: ModuleType, run_state: dict[str, Any])
         "role_recovery_pm_escalation_required",
     ):
         run_state["flags"][flag] = False
+    run_state["pm_resume_break_glass"] = None

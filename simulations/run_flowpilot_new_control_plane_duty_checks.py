@@ -62,6 +62,7 @@ def _source_contract_report() -> dict[str, Any]:
     ).read_text(encoding="utf-8")
     fake_text = (REPO_ROOT / "skills/flowpilot/assets/flowpilot_core_runtime/fake_e2e.py").read_text(encoding="utf-8")
     runtime_tests = (REPO_ROOT / "tests/test_flowpilot_core_runtime.py").read_text(encoding="utf-8")
+    high_standard_tests = (REPO_ROOT / "tests/test_flowpilot_high_standard_control_flow.py").read_text(encoding="utf-8")
     entrypoint_tests = (REPO_ROOT / "tests/test_flowpilot_new_entrypoint.py").read_text(encoding="utf-8")
     checks = {
         "action_classifier_present": "def classify_runtime_action" in runtime_text,
@@ -75,6 +76,10 @@ def _source_contract_report() -> dict[str, Any]:
         and '"stop": "stop_for_user"' not in runtime_text
         and '"block": "stop_for_user"' not in runtime_text,
         "pm_stop_blocks_route": "_stopped_semantic_blockers" in runtime_text and "PM stopped a semantic blocker" in runtime_text,
+        "pm_break_glass_routes_control_plane": "_pm_requested_break_glass_action" in runtime_text
+        and "pm_break_glass_requested" in runtime_text,
+        "pm_break_glass_tests": "test_pm_repair_decision_break_glass_routes_control_plane_without_user_wait" in runtime_tests
+        and "test_pm_flowguard_acceptance_break_glass_routes_control_plane_without_review" in high_standard_tests,
         "fake_e2e_public_fold": "runtime.run_until_wait(ledger)" in fake_text,
         "runtime_tests_cover_parser_and_fold": "test_pm_repair_decision_ignores_hostile_prose" in runtime_tests
         and "test_run_until_wait_folds_internal_action_to_role_boundary" in runtime_tests,

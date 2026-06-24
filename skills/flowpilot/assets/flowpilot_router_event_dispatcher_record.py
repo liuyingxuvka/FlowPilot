@@ -56,6 +56,7 @@ def _record_external_event_unchecked(router: ModuleType, project_root: Path, eve
     required_flag = meta.get('requires_flag')
     parent_segment_decision: str | None = None
     model_miss_triage_decision: str | None = None
+    pm_resume_decision: str | None = None
     router._refresh_route_memory(project_root, run_root, run_state, trigger=f'before_external_event:{event}')
     migrated_precheck_result = flowpilot_router_events.handle_precheck_event(router, project_root, run_root, run_state, event, meta, payload)
     if migrated_precheck_result is not None:
@@ -163,7 +164,7 @@ def _record_external_event_unchecked(router: ModuleType, project_root: Path, eve
     if flowpilot_router_events.apply_migrated_event_side_effect(router, project_root, run_root, run_state, event, payload):
         pass
     elif event == 'pm_resume_recovery_decision_returned':
-        _write_pm_resume_decision(project_root, run_root, run_state, payload)
+        pm_resume_decision = _write_pm_resume_decision(project_root, run_root, run_state, payload)
     elif event == 'pm_writes_node_acceptance_plan':
         _write_node_acceptance_plan(project_root, run_root, run_state, payload)
     elif event == 'pm_revises_node_acceptance_plan':
@@ -336,4 +337,4 @@ def _record_external_event_unchecked(router: ModuleType, project_root: Path, eve
     elif event == 'pm_requests_research_after_material_insufficient':
         if run_state.get('material_review') != 'insufficient':
             raise RouterError('PM can request research on this path only after an insufficient reviewer material report')
-    return flowpilot_router_events.finalize_external_event_record(router, project_root, run_root, run_state, event, meta, payload, flag=flag, scoped_identity=scoped_identity, model_miss_triage_decision=model_miss_triage_decision, parent_segment_decision=parent_segment_decision)
+    return flowpilot_router_events.finalize_external_event_record(router, project_root, run_root, run_state, event, meta, payload, flag=flag, scoped_identity=scoped_identity, model_miss_triage_decision=model_miss_triage_decision, parent_segment_decision=parent_segment_decision, pm_resume_decision=pm_resume_decision)

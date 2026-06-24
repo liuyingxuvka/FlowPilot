@@ -76,13 +76,19 @@ def _model_test_alignment_report() -> dict[str, Any]:
     high_standard_test_text = high_standard_test_path.read_text(encoding="utf-8")
     recursive_test_text = recursive_test_path.read_text(encoding="utf-8")
     obligations = {
-        "five_choice_menu": (
-            '"repair_current_scope"' in runtime_text
+        "current_pm_menu_includes_break_glass": (
+            '"break_glass"' in runtime_text
+            and '"repair_current_scope"' in runtime_text
             and '"repair_parent_scope"' in runtime_text
             and '"redesign_route"' in runtime_text
             and '"waive_with_authority"' in runtime_text
             and '"stop_for_user"' in runtime_text
         ),
+        "pm_break_glass_runtime_route": "_pm_requested_break_glass_action" in runtime_text,
+        "pm_repair_break_glass_test": "test_pm_repair_decision_break_glass_routes_control_plane_without_user_wait"
+        in core_test_text,
+        "pm_flowguard_acceptance_break_glass_test": "test_pm_flowguard_acceptance_break_glass_routes_control_plane_without_review"
+        in high_standard_test_text,
         "removed_decision_negative_test": "test_removed_pm_repair_decisions_are_rejected" in core_test_text,
         "fresh_packet_gate": "fresh repair packet does not exist" in runtime_text,
         "current_scope_replacement_test": "test_pm_disposition_repair_current_scope_creates_replacement_node" in high_standard_test_text,

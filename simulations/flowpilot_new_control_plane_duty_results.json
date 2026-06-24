@@ -13,6 +13,7 @@
       "external_wait_uses_internal_tick",
       "hostile_prose_controls_decision",
       "internal_action_exposed_to_controller",
+      "pm_break_glass_waits_for_user",
       "status_mutates_ledger",
       "stopped_blocker_route_continues",
       "wrong_role_wait_patrol_seconds"
@@ -26,6 +27,9 @@
       ],
       "internal_action_exposed_to_controller": [
         "router-internal action leaked to Controller instead of folding to a boundary"
+      ],
+      "pm_break_glass_waits_for_user": [
+        "PM break_glass was treated as user wait instead of control-plane route"
       ],
       "status_mutates_ledger": [
         "status projection still mutates the ledger"
@@ -49,6 +53,8 @@
       "entrypoint_tests_cover_status": true,
       "fake_e2e_public_fold": true,
       "hostile_aliases_removed": true,
+      "pm_break_glass_routes_control_plane": true,
+      "pm_break_glass_tests": true,
       "pm_stop_blocks_route": true,
       "router_internal_whitelist_present": true,
       "run_until_wait_present": true,
@@ -65,6 +71,7 @@
     "state": {
       "internal_actions_folded_to_boundary": true,
       "internal_tick_seconds": 1,
+      "pm_break_glass_routes_control_plane": true,
       "pm_stop_blocks_route": true,
       "role_wait_patrol_seconds": 60,
       "status": "complete",

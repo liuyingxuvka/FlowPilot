@@ -1066,6 +1066,16 @@ def branch_valid_shapes_for_family(family_id: str) -> dict[str, Any]:
                     "user_input",
                 ),
             },
+            "decision=break_glass": {
+                "decision": "break_glass",
+                "reason": "Concrete FlowPilot control-plane break-glass reason.",
+                "target_blocker_id": "blocker-current",
+                "next_action": "break_glass",
+                "repair_obligation_disposition": repair_obligation_disposition_minimal_shape(
+                    "break_glass",
+                    "controller_break_glass",
+                ),
+            },
         }
     if family_id == "pm_flowguard_acceptance.pm_flowguard_acceptance":
         return {
@@ -1091,6 +1101,12 @@ def branch_valid_shapes_for_family(family_id: str) -> dict[str, Any]:
             "decision=stop_for_user": {
                 "decision": "stop_for_user",
                 "reason": "PM requires user input after absorbing FlowGuard.",
+                "flowguard_absorption": "Concrete PM absorption of current FlowGuard findings.",
+                "accepted_flowguard_result_id": "result-flowguard-current",
+            },
+            "decision=break_glass": {
+                "decision": "break_glass",
+                "reason": "PM found a FlowPilot control-plane defect while absorbing FlowGuard.",
                 "flowguard_absorption": "Concrete PM absorption of current FlowGuard findings.",
                 "accepted_flowguard_result_id": "result-flowguard-current",
             },
