@@ -32,6 +32,10 @@ from flowpilot_router_errors import RouterError, RouterLedgerCorruptionError, Ro
 
 _DEFAULT_SENTINEL = object()
 _BOUND_ROUTER: ModuleType | None = None
+FLOWGUARD_TERMINAL_COVERAGE_SCHEMA = "flowpilot.flowguard_terminal_coverage_report.v1"
+FLOWGUARD_TERMINAL_COVERAGE_BOUNDARY = "terminal_flowguard_coverage"
+FLOWGUARD_TERMINAL_COVERAGE_SEGMENT_ID = "flowguard-coverage-governance"
+FLOWGUARD_TERMINAL_COVERAGE_ACCEPTED_STATUSES = {"accepted", "repaired_and_accepted"}
 
 
 def _bind_router(router: ModuleType) -> None:
@@ -91,6 +95,168 @@ def _node_acceptance_traceability_issues(router: ModuleType, payload: dict[str, 
 def _requirement_trace_closure_from_root_replay(router: ModuleType, contract: dict[str, Any], root_replay: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return terminal_source_entries._requirement_trace_closure_from_root_replay(router, contract, root_replay)
 
+
+def _as_int(value: Any, *, default: int = 0) -> int:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _nonempty_list(value: Any) -> bool:
+    return isinstance(value, list) and bool(value)
+
+
+def _flowguard_terminal_coverage_issues(router: ModuleType, report: dict[str, Any], route_version: int) -> list[str]:
+    _bind_router(router)
+    issues: list[str] = []
+    if not isinstance(report, dict):
+        return ["terminal FlowGuard coverage report must be an object"]
+    if report.get("schema_version") != FLOWGUARD_TERMINAL_COVERAGE_SCHEMA:
+        issues.append("schema_version must be flowpilot.flowguard_terminal_coverage_report.v1")
+    if report.get("reviewed_by_role") != "flowguard_operator":
+        issues.append("reviewed_by_role must be flowguard_operator")
+    if report.get("passed") is not True:
+        issues.append("terminal FlowGuard coverage report must pass")
+    if report.get("modeled_boundary") != FLOWGUARD_TERMINAL_COVERAGE_BOUNDARY:
+        issues.append("modeled_boundary must be terminal_flowguard_coverage")
+    if _as_int(report.get("route_version"), default=-1) != route_version:
+        issues.append("route_version must match the active route version")
+    if report.get("progress_only") is True:
+        issues.append("progress-only FlowGuard reports cannot close terminal coverage")
+
+    matrix_ref = report.get("coverage_matrix_ref")
+    if not isinstance(matrix_ref, dict) or not str(matrix_ref.get("path") or ""):
+        issues.append("coverage_matrix_ref.path is required")
+    elif matrix_ref.get("fresh") is not True:
+        issues.append("coverage_matrix_ref.fresh must be true")
+    elif _as_int(matrix_ref.get("route_version"), default=-1) != route_version:
+        issues.append("coverage_matrix_ref.route_version must match the active route version")
+
+    for field in (
+        "acceptance_item_closure",
+        "route_nodes_examined",
+        "flowguard_required_items",
+        "flowguard_evidence_found",
+        "commands_run",
+        "hard_invariants",
+        "counterexamples_or_absence",
+    ):
+        if not _nonempty_list(report.get(field)):
+            issues.append(f"{field} must be a non-empty list")
+    for field in (
+        "missing_or_stale_evidence",
+        "model_test_alignment_gaps",
+        "blockers",
+        "pm_suggestion_items",
+        "supplemental_repair_recommendations",
+    ):
+        if report.get(field) != []:
+            issues.append(f"{field} must be an explicit empty list")
+    if not isinstance(report.get("confidence_boundary"), str) or not report.get("confidence_boundary").strip():
+        issues.append("confidence_boundary must explain the claim boundary")
+
+    self_check = report.get("contract_self_check")
+    if not isinstance(self_check, dict):
+        issues.append("contract_self_check is required")
+    else:
+        for field in (
+            "all_required_fields_present",
+            "no_progress_only_claim",
+            "no_unresolved_blockers",
+            "pm_acceptance_required",
+        ):
+            if self_check.get(field) is not True:
+                issues.append(f"contract_self_check.{field} must be true")
+    return issues
+
+
+def _validated_flowguard_terminal_coverage_status(
+    router: ModuleType,
+    project_root: Path,
+    run_root: Path,
+    route_version: int,
+    closure_payload: Any,
+) -> dict[str, Any]:
+    _bind_router(router)
+    if not isinstance(closure_payload, dict):
+        raise RouterError("final ledger requires flowguard_terminal_coverage_closure")
+    if closure_payload.get("status") not in FLOWGUARD_TERMINAL_COVERAGE_ACCEPTED_STATUSES:
+        raise RouterError("flowguard terminal coverage closure must be accepted by PM")
+    if closure_payload.get("accepted_by_role") != "project_manager":
+        raise RouterError("flowguard terminal coverage closure requires accepted_by_role=project_manager")
+    if _as_int(closure_payload.get("route_version"), default=-1) != route_version:
+        raise RouterError("flowguard terminal coverage closure route_version must match the active route version")
+    for field in ("current", "blockers_resolved", "pm_suggestion_items_disposed"):
+        if closure_payload.get(field) is not True:
+            raise RouterError(f"flowguard terminal coverage closure requires {field}=true")
+
+    report_rel = str(closure_payload.get("report_path") or "")
+    matrix_rel = str(closure_payload.get("coverage_matrix_path") or "")
+    if not report_rel:
+        raise RouterError("flowguard terminal coverage closure requires report_path")
+    if not matrix_rel:
+        raise RouterError("flowguard terminal coverage closure requires coverage_matrix_path")
+
+    report_path = Path(report_rel)
+    if not report_path.is_absolute():
+        report_path = project_root / report_path
+    report_path = report_path.resolve()
+    if not report_path.exists() or not report_path.is_file():
+        raise RouterError(f"flowguard terminal coverage report does not exist: {report_rel}")
+    expected_hash = str(closure_payload.get("report_hash") or "")
+    actual_hash = hashlib.sha256(report_path.read_bytes()).hexdigest()
+    if not expected_hash:
+        raise RouterError("flowguard terminal coverage closure requires report_hash")
+    if actual_hash != expected_hash:
+        raise RouterError("flowguard terminal coverage report_hash does not match report_path")
+
+    matrix_path = Path(matrix_rel)
+    if not matrix_path.is_absolute():
+        matrix_path = project_root / matrix_path
+    if not matrix_path.exists():
+        raise RouterError(f"flowguard terminal coverage matrix does not exist: {matrix_rel}")
+
+    report = read_json(report_path)
+    report_issues = router._flowguard_terminal_coverage_issues(report, route_version)
+    if report_issues:
+        raise RouterError("flowguard terminal coverage report invalid: " + "; ".join(report_issues[:5]))
+    return {
+        "schema_version": "flowpilot.terminal_flowguard_coverage_closure.v1",
+        "segment_id": FLOWGUARD_TERMINAL_COVERAGE_SEGMENT_ID,
+        "status": closure_payload["status"],
+        "accepted_by_role": "project_manager",
+        "report_path": project_relative(project_root, report_path),
+        "report_hash": actual_hash,
+        "coverage_matrix_path": project_relative(project_root, matrix_path),
+        "route_version": route_version,
+        "current": True,
+        "blockers_resolved": True,
+        "pm_suggestion_items_disposed": True,
+        "terminal_replay_segment_status": str(closure_payload.get("terminal_replay_segment_status") or "pending"),
+        "report": report,
+    }
+
+
+def _flowguard_terminal_coverage_ledger_entry(router: ModuleType, route_version: int, status: dict[str, Any]) -> dict[str, Any]:
+    _bind_router(router)
+    return {
+        "entry_id": FLOWGUARD_TERMINAL_COVERAGE_SEGMENT_ID,
+        "route_version": route_version,
+        "gate_family": "flowguard_terminal_coverage",
+        "required_approver": "project_manager",
+        "status": "passed",
+        "source_of_truth_paths": [status["report_path"], status["coverage_matrix_path"]],
+        "evidence_paths": [status["report_path"], status["coverage_matrix_path"]],
+        "modeled_boundary": FLOWGUARD_TERMINAL_COVERAGE_BOUNDARY,
+        "report_status": status["status"],
+        "report_hash": status["report_hash"],
+        "current": True,
+        "blockers_resolved": True,
+        "pm_suggestion_items_disposed": True,
+    }
+
+
 def _final_ledger_traceability_issues(router: ModuleType, payload: dict[str, Any]) -> list[dict[str, str]]:
     _bind_router(router)
     issues: list[dict[str, str]] = []
@@ -117,6 +283,27 @@ def _final_ledger_traceability_issues(router: ModuleType, payload: dict[str, Any
     for field in ('requirement_trace_checked', 'every_effective_requirement_closure_row_present', 'requirement_direct_evidence_checked', 'requirement_waiver_authority_checked', 'requirement_stale_status_checked'):
         if integrity.get(field) is not True:
             issues.append(_artifact_issue(f'evidence_integrity.{field}', 'final ledger traceability integrity field must be true', 'project_manager'))
+    coverage_closure = payload.get("flowguard_terminal_coverage_closure")
+    if not isinstance(coverage_closure, dict):
+        issues.append(_artifact_issue("flowguard_terminal_coverage_closure", "missing PM-accepted terminal FlowGuard coverage closure", "project_manager"))
+    else:
+        expected = {
+            "segment_id": FLOWGUARD_TERMINAL_COVERAGE_SEGMENT_ID,
+            "accepted_by_role": "project_manager",
+            "current": True,
+            "blockers_resolved": True,
+            "pm_suggestion_items_disposed": True,
+        }
+        for field, value in expected.items():
+            if coverage_closure.get(field) != value:
+                issues.append(_artifact_issue(f"flowguard_terminal_coverage_closure.{field}", "terminal FlowGuard coverage closure field is invalid", "project_manager"))
+        if coverage_closure.get("status") not in FLOWGUARD_TERMINAL_COVERAGE_ACCEPTED_STATUSES:
+            issues.append(_artifact_issue("flowguard_terminal_coverage_closure.status", "terminal FlowGuard coverage closure must be accepted", "project_manager"))
+        if coverage_closure.get("terminal_replay_segment_status") not in {"pending", "passed"}:
+            issues.append(_artifact_issue("flowguard_terminal_coverage_closure.terminal_replay_segment_status", "terminal FlowGuard replay segment status must be pending or passed", "project_manager"))
+        for field in ("report_path", "report_hash", "coverage_matrix_path"):
+            if not coverage_closure.get(field):
+                issues.append(_artifact_issue(f"flowguard_terminal_coverage_closure.{field}", "terminal FlowGuard coverage closure requires report and matrix references", "project_manager"))
     return issues
 
 def _validated_root_replay(router: ModuleType, payload: dict[str, Any], required_ids: list[str]) -> list[dict[str, Any]]:
@@ -208,6 +395,12 @@ def _write_final_route_wide_ledger(router: ModuleType, project_root: Path, run_r
         raise RouterError('final ledger requires frozen root acceptance contract')
     child_manifest = read_json(run_root / 'child_skill_gate_manifest.json')
     route_version = int(frontier.get('route_version') or 0)
+    flowguard_coverage_status = router._validated_flowguard_terminal_coverage_status(
+        project_root,
+        run_root,
+        route_version,
+        payload.get("flowguard_terminal_coverage_closure"),
+    )
     node_completion_ledger_path = _active_node_completion_ledger_path(run_root, frontier)
     if not run_state['flags'].get('node_completion_ledger_updated') or not node_completion_ledger_path.exists():
         raise RouterError('final ledger requires node completion ledger')
@@ -251,6 +444,7 @@ def _write_final_route_wide_ledger(router: ModuleType, project_root: Path, run_r
     if isinstance(map_ref, dict):
         entries.append({'entry_id': 'material_artifact_map:index', 'route_version': route_version, 'gate_family': 'material_artifact_map', 'required_approver': 'project_manager', 'status': 'indexed', 'source_of_truth_paths': [map_ref['path']], 'evidence_paths': [map_ref['path']], 'body_text_excluded': bool(map_summary.get('body_text_excluded')), 'entry_count': int(map_summary.get('entry_count', 0) or 0)})
     entries.extend(router._closure_reconciliation_entries(project_root, closure_reconciliation, route_version=route_version))
+    entries.append(router._flowguard_terminal_coverage_ledger_entry(route_version, flowguard_coverage_status))
     bad_entry_statuses = [str(entry.get('entry_id')) for entry in entries if entry.get('status') in {'pending', 'pending_review', 'blocked', 'unresolved', 'stale'}]
     if bad_entry_statuses:
         raise RouterError(f"final ledger has unresolved source-of-truth entries: {', '.join(bad_entry_statuses)}")
@@ -260,11 +454,29 @@ def _write_final_route_wide_ledger(router: ModuleType, project_root: Path, run_r
     gate_decision_ledger_path = run_root / 'gate_decisions' / 'gate_decision_ledger.json'
     gate_decisions = list(run_state.get('gate_decisions') or [])
     ledger = {'schema_version': 'flowpilot.final_route_wide_gate_ledger.v1', 'run_id': run_state['run_id'], 'pm_owned': True, 'status': 'clean', 'built_from_route': route_id, 'built_from_route_version': route_version, 'built_at': utc_now(), 'source_paths': {'execution_frontier': project_relative(project_root, run_root / 'execution_frontier.json'), 'active_flow': project_relative(project_root, route_path), 'node_completion_ledger': project_relative(project_root, node_completion_ledger_path), 'evidence_ledger': project_relative(project_root, run_root / 'evidence' / 'evidence_ledger.json'), 'generated_resource_ledger': project_relative(project_root, run_root / 'generated_resource_ledger.json'), 'material_artifact_map': map_ref.get('path') if isinstance(map_ref, dict) else None, 'quality_package': project_relative(project_root, run_root / 'quality' / 'quality_package.json'), 'product_function_architecture': project_relative(project_root, run_root / 'product_function_architecture.json') if (run_root / 'product_function_architecture.json').exists() else None, 'root_acceptance_contract': project_relative(project_root, run_root / 'root_acceptance_contract.json'), 'standard_scenario_pack': project_relative(project_root, run_root / 'standard_scenario_pack.json') if (run_root / 'standard_scenario_pack.json').exists() else None, 'child_skill_gate_manifest': project_relative(project_root, run_root / 'child_skill_gate_manifest.json'), 'route_mutations': project_relative(project_root, run_root / 'routes' / route_id / 'mutations.json') if (run_root / 'routes' / route_id / 'mutations.json').exists() else None, 'pm_prior_path_context': project_relative(project_root, router._pm_prior_path_context_path(run_root)), 'route_history_index': project_relative(project_root, router._route_history_index_path(run_root)), 'gate_decision_ledger': project_relative(project_root, gate_decision_ledger_path) if gate_decision_ledger_path.exists() else None, 'pm_suggestion_ledger': project_relative(project_root, _pm_suggestion_ledger_path(run_root)) if pm_suggestion_status['exists'] else None, 'self_interrogation_index': project_relative(project_root, _self_interrogation_index_path(run_root)) if self_interrogation_status['exists'] else None, 'defect_ledger': closure_reconciliation['defect_ledger']['path'], 'role_binding_memory': closure_reconciliation['role_memory']['path'], 'continuation_quarantine': closure_reconciliation['continuation_quarantine']['path']}, 'prior_path_context_review': prior_review, 'current_route_scanned': True, 'effective_nodes_resolved': True, 'gate_families': {'child_skill_gates_collected': True, 'human_review_gates_collected': True, 'parent_backward_replays_collected': True, 'product_process_gates_collected': True, 'generated_resource_lineage_collected': True, 'material_artifact_map_linked': isinstance(map_ref, dict), 'final_completion_gates_collected': True, 'gate_decisions_collected': True, 'pm_suggestions_disposed': True, 'self_interrogation_dispositions_collected': True, 'terminal_closure_reconciliation_collected': True}, 'evidence_integrity': {'generated_resource_lineage_resolved': True, 'material_artifact_map_body_text_excluded': bool(map_summary.get('body_text_excluded')), 'material_artifact_map_blocked_count_zero': int(map_summary.get('blocked_count', 0) or 0) == 0, 'material_artifact_map_stale_count_zero': int(map_summary.get('stale_count', 0) or 0) == 0, 'material_artifact_map_unresolved_count_zero': int(map_summary.get('unresolved_count', 0) or 0) == 0, 'stale_evidence_checked': True, 'superseded_nodes_explained': True, 'standard_scenarios_replayed': bool(payload.get('standard_scenarios_replayed', True)), 'residual_risk_triage_done': True, 'unresolved_residual_risk_count_zero': True, 'blocked_items_have_pm_repair_or_stop_decision': True, 'requirement_trace_checked': True, 'every_effective_requirement_closure_row_present': True, 'requirement_direct_evidence_checked': True, 'requirement_waiver_authority_checked': True, 'requirement_stale_status_checked': True, 'self_interrogation_index_clean': True, 'defect_ledger_reconciled': closure_reconciliation['defect_ledger']['clean'], 'role_memory_reconciled': closure_reconciliation['role_memory']['clean'], 'continuation_quarantine_reconciled': closure_reconciliation['continuation_quarantine']['clean'], 'terminal_closure_reconciliation_clean': closure_reconciliation['clean']}, 'counts': {'effective_node_count': len(router._effective_route_nodes(route, mutations)), 'effective_requirement_count': effective_requirement_count, 'resolved_requirement_count': resolved_requirement_count, 'superseded_requirement_count': superseded_requirement_count, 'waived_requirement_count': waived_requirement_count, 'unresolved_requirement_count': unresolved_requirement_count, 'gate_count': len(entries), 'stale_count': stale_count, 'generated_resource_count': int(generated_ledger.get('resource_count', 0) or 0), 'material_artifact_map_entry_count': int(map_summary.get('entry_count', 0) or 0), 'material_artifact_map_blocked_count': int(map_summary.get('blocked_count', 0) or 0), 'material_artifact_map_stale_count': int(map_summary.get('stale_count', 0) or 0), 'material_artifact_map_unresolved_count': int(map_summary.get('unresolved_count', 0) or 0), 'pending_resource_count': pending_resource_count, 'unresolved_resource_count': unresolved_resource_count, 'unresolved_residual_risk_count': unresolved_residual_risk_count, 'unresolved_count': unresolved_count, 'gate_decision_count': len(gate_decisions), 'pm_suggestion_count': pm_suggestion_status['entry_count'], 'pm_suggestion_issue_count': pm_suggestion_status['issue_count'], 'self_interrogation_record_count': self_interrogation_status['record_count'], 'self_interrogation_issue_count': self_interrogation_status['issue_count'], 'self_interrogation_unresolved_hard_finding_count': self_interrogation_status['unresolved_hard_finding_count'], 'defect_blocker_open_count': closure_reconciliation['defect_ledger']['blocker_open_count'], 'defect_fixed_pending_recheck_count': closure_reconciliation['defect_ledger']['fixed_pending_recheck_count'], 'role_memory_file_count': closure_reconciliation['role_memory']['file_count'], 'stale_role_memory_path_count': len(closure_reconciliation['role_memory']['stale_role_memory_paths']), 'imported_artifact_authority_count': closure_reconciliation['continuation_quarantine'].get('imported_artifact_authority_count', 0)}, 'material_artifact_map_summary': map_summary, 'entries': entries, 'gate_decisions': gate_decisions, 'terminal_closure_reconciliation': closure_reconciliation, 'root_contract_replay': root_replay, 'requirement_trace_closure': requirement_trace_closure, 'frozen_contract_replay': {'status': 'replayed', 'root_acceptance_contract_path': project_relative(project_root, run_root / 'root_acceptance_contract.json'), 'standard_scenario_pack_path': project_relative(project_root, run_root / 'standard_scenario_pack.json'), 'requirement_count': len(root_replay), 'standard_scenarios_replayed': bool(payload.get('standard_scenarios_replayed', True))}, 'terminal_human_backward_replay': {'required': True, 'status': 'ready_for_reviewer', 'review_map_path': project_relative(project_root, terminal_map_path), 'report_only_allowed': False}, 'completion_allowed': False}
+    ledger["source_paths"]["flowguard_terminal_coverage_report"] = flowguard_coverage_status["report_path"]
+    ledger["source_paths"]["flowguard_terminal_coverage_matrix"] = flowguard_coverage_status["coverage_matrix_path"]
+    ledger["gate_families"]["flowguard_coverage_governance_collected"] = True
+    ledger["evidence_integrity"]["flowguard_terminal_coverage_report_current"] = True
+    ledger["evidence_integrity"]["flowguard_terminal_coverage_model_test_alignment_clean"] = True
+    coverage_report = flowguard_coverage_status["report"]
+    ledger["counts"]["flowguard_terminal_required_item_count"] = len(coverage_report.get("flowguard_required_items") or [])
+    ledger["counts"]["flowguard_terminal_evidence_found_count"] = len(coverage_report.get("flowguard_evidence_found") or [])
+    ledger["counts"]["flowguard_terminal_gap_count"] = len(coverage_report.get("model_test_alignment_gaps") or [])
+    ledger["counts"]["flowguard_terminal_blocker_count"] = len(coverage_report.get("blockers") or [])
+    ledger["flowguard_terminal_coverage_closure"] = dict(flowguard_coverage_status)
+    ledger["flowguard_terminal_coverage_closure"].pop("report", None)
     traceability_issues = router._final_ledger_traceability_issues(ledger)
     if traceability_issues:
         raise RouterError('final ledger traceability invalid: ' + '; '.join((str(issue['message']) for issue in traceability_issues[:5])))
     write_json(final_ledger_path, ledger)
     write_json(terminal_map_path, {'schema_version': 'flowpilot.terminal_human_backward_replay_map.v1', 'run_id': run_state['run_id'], 'route_id': route_id, 'route_version': route_version, 'pm_owned': True, 'status': 'ready_for_reviewer', 'built_from_ledger_path': project_relative(project_root, final_ledger_path), 'built_at': utc_now(), 'replay_order': ['delivered_product', 'root_acceptance', 'parent_or_module_nodes', 'leaf_nodes', 'pm_segment_decisions', 'repair_restart_policy'], 'segments': terminal_segments, 'coverage': {'effective_nodes_total': len(router._effective_route_nodes(route, mutations)), 'requirement_trace_closure_total': effective_requirement_count, 'segments_total': len(terminal_segments), 'segments_reviewed': 0, 'effective_nodes_reviewed_by_human': 0, 'root_acceptance_reviewed': False, 'parent_nodes_reviewed': False, 'leaf_nodes_reviewed': False, 'every_effective_node_has_pm_segment_decision': False}, 'repair_restart_policy': {'default_restart': 'restart_from_delivered_product', 'latest_repair_invalidates_affected_segments': True, 'latest_repair_requires_ledger_rebuild': True, 'latest_repair_requires_replay_rerun': True, 'latest_repair_requires_pm_reapproval': True}, 'completion_gate': {'reviewer_passed': False, 'pm_segment_decisions_recorded': False, 'repair_restart_policy_recorded': True, 'unresolved_repair_findings': 0, 'completion_allowed': False}})
+    terminal_map = read_json(terminal_map_path)
+    terminal_map.setdefault("replay_order", [])
+    if "flowguard_coverage_governance" not in terminal_map["replay_order"]:
+        terminal_map["replay_order"].append("flowguard_coverage_governance")
+    terminal_map.setdefault("coverage", {})["flowguard_coverage_governance_reviewed"] = False
+    write_json(terminal_map_path, terminal_map)
 
 __all__ = (
     '_root_requirement_ids',
@@ -273,10 +485,17 @@ __all__ = (
     '_node_acceptance_traceability_issues',
     '_requirement_trace_closure_from_root_replay',
     '_final_ledger_traceability_issues',
+    '_flowguard_terminal_coverage_issues',
+    '_validated_flowguard_terminal_coverage_status',
+    '_flowguard_terminal_coverage_ledger_entry',
     '_validated_root_replay',
     '_build_source_of_truth_final_entries',
     '_route_mutation_completion_issues',
     '_write_final_route_wide_ledger',
+    'FLOWGUARD_TERMINAL_COVERAGE_SCHEMA',
+    'FLOWGUARD_TERMINAL_COVERAGE_BOUNDARY',
+    'FLOWGUARD_TERMINAL_COVERAGE_SEGMENT_ID',
+    'FLOWGUARD_TERMINAL_COVERAGE_ACCEPTED_STATUSES',
 )
 
 _LOCAL_NAMES = set(globals())

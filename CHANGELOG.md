@@ -34,30 +34,26 @@ All notable changes to FlowPilot will be documented in this file.
 
 ### Fixed
 
-- Restored the required independent review window after accepted
-  `task.parent_backward_replay` results. Parent replay execution now produces
-  raw replay evidence only; parent/module closure and parent-segment PM
-  disposition require a separate accepted current Reviewer pass over that
-  replay result.
-- Routed missing parent replay reviews through normal current
-  `review.any_current_subject` packets instead of generic final-closure repair
-  placeholders.
-- Blocked terminal backward replay and final route-wide closure when any
-  required parent/module replay result is accepted but not independently
-  reviewed.
-- Kept the repair path current-contract only: no old-run migration, fallback
-  translator, compatibility alias, or historical-state promotion was added.
+- Added terminal FlowGuard coverage governance to the PM final-ledger path:
+  final ledger creation now requires a PM-accepted current
+  `flowpilot.flowguard_terminal_coverage_report.v1` and fresh coverage matrix.
+- Added the mandatory `flowguard-coverage-governance` segment to terminal
+  backward replay and made PM terminal closure require that segment to pass.
+- Registered the dedicated
+  `flowpilot.output_contract.flowguard_terminal_coverage_report.v1` role-output
+  contract for the single `flowguard_operator` role.
+- Updated PM, Reviewer, FlowGuard operator, evidence-package, repair, and
+  closure cards so missing, stale, progress-only, blocked, or unaccepted
+  terminal FlowGuard coverage cannot close the project.
 
 ### Validation
 
-- Added focused FlowGuard coverage for sequential parent replay review
-  ordering, deepest-gap-first routing, terminal replay gating, and no-fallback
-  old-state rejection.
-- Added core runtime and fake end-to-end tests proving parent replay task
-  execution cannot substitute for independent review before parent closure.
-- Updated PM, Reviewer, terminal closure, break-glass, route-action policy, and
-  evidence-matrix surfaces to name reviewed parent replay as the required
-  parent-segment precondition.
+- Added the terminal FlowGuard coverage model and runner with 95 Cartesian
+  fake-response hazard cases and zero misses.
+- Added runtime tests for missing terminal coverage closure, progress-only
+  reports, final-ledger segment recording, terminal replay, and PM closure.
+- Added output-contract and install-check coverage for the new terminal
+  FlowGuard coverage contract, model, runner, and result artifact.
 
 ## 0.10.18 - 2026-06-23
 

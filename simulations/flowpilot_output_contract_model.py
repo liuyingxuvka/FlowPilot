@@ -36,6 +36,7 @@ VALID_REVIEW = "valid_review"
 VALID_FINAL_REPORT = "valid_final_report"
 VALID_GATE_DECISION = "valid_gate_decision"
 VALID_FLOWGUARD_OPERATOR_MODEL_REPORT = "valid_flowguard_operator_model_report"
+VALID_TERMINAL_FLOWGUARD_COVERAGE_REPORT = "valid_terminal_flowguard_coverage_report"
 VALID_MODEL_MISS_TRIAGE = "valid_model_miss_triage"
 VALID_MODEL_MISS_FLOWGUARD_OPERATOR_REPORT = "valid_model_miss_flowguard_operator_report"
 MISSING_CONTRACT = "missing_contract"
@@ -62,6 +63,7 @@ VALID_SCENARIOS = (
     VALID_FINAL_REPORT,
     VALID_GATE_DECISION,
     VALID_FLOWGUARD_OPERATOR_MODEL_REPORT,
+    VALID_TERMINAL_FLOWGUARD_COVERAGE_REPORT,
     VALID_MODEL_MISS_TRIAGE,
     VALID_MODEL_MISS_FLOWGUARD_OPERATOR_REPORT,
 )
@@ -189,6 +191,28 @@ FLOWGUARD_OPERATOR_MODEL_REPORT_CONTRACT = ContractSpec(
     ),
 )
 
+TERMINAL_FLOWGUARD_COVERAGE_REPORT_CONTRACT = ContractSpec(
+    contract_id="flowpilot.output_contract.flowguard_terminal_coverage_report.v1",
+    task_family="flowguard_operator.terminal_flowguard_coverage_report",
+    required_body_fields=frozenset(
+        {
+            "acceptance_item_closure",
+            "commands_run",
+            "confidence_boundary",
+            "contract_self_check",
+            "counterexamples_or_absence",
+            "evidence",
+            "flowguard_required_items",
+            "hard_invariants",
+            "modeled_boundary",
+            "passed",
+            "reviewed_by_role",
+            "route_nodes_examined",
+            "route_version",
+        }
+    ),
+)
+
 MODEL_MISS_TRIAGE_CONTRACT = ContractSpec(
     contract_id="flowpilot.output_contract.pm_model_miss_triage_decision.v1",
     task_family="pm.model_miss_triage",
@@ -236,6 +260,7 @@ CONTRACTS_BY_FAMILY = {
     FINAL_REPORT_CONTRACT.task_family: FINAL_REPORT_CONTRACT,
     GATE_DECISION_CONTRACT.task_family: GATE_DECISION_CONTRACT,
     FLOWGUARD_OPERATOR_MODEL_REPORT_CONTRACT.task_family: FLOWGUARD_OPERATOR_MODEL_REPORT_CONTRACT,
+    TERMINAL_FLOWGUARD_COVERAGE_REPORT_CONTRACT.task_family: TERMINAL_FLOWGUARD_COVERAGE_REPORT_CONTRACT,
     MODEL_MISS_TRIAGE_CONTRACT.task_family: MODEL_MISS_TRIAGE_CONTRACT,
     MODEL_MISS_FLOWGUARD_OPERATOR_REPORT_CONTRACT.task_family: MODEL_MISS_FLOWGUARD_OPERATOR_REPORT_CONTRACT,
 }
@@ -353,6 +378,11 @@ def _select_task_family(scenario: str) -> tuple[str, ContractSpec]:
         return GATE_DECISION_CONTRACT.task_family, GATE_DECISION_CONTRACT
     if scenario in {VALID_FLOWGUARD_OPERATOR_MODEL_REPORT, MISSING_MODEL_TEST_ALIGNMENT_FIELD}:
         return FLOWGUARD_OPERATOR_MODEL_REPORT_CONTRACT.task_family, FLOWGUARD_OPERATOR_MODEL_REPORT_CONTRACT
+    if scenario == VALID_TERMINAL_FLOWGUARD_COVERAGE_REPORT:
+        return (
+            TERMINAL_FLOWGUARD_COVERAGE_REPORT_CONTRACT.task_family,
+            TERMINAL_FLOWGUARD_COVERAGE_REPORT_CONTRACT,
+        )
     if scenario == VALID_MODEL_MISS_TRIAGE:
         return MODEL_MISS_TRIAGE_CONTRACT.task_family, MODEL_MISS_TRIAGE_CONTRACT
     if scenario == VALID_MODEL_MISS_FLOWGUARD_OPERATOR_REPORT:
@@ -462,6 +492,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             VALID_FINAL_REPORT: "packet_embeds_selected_contract",
             VALID_GATE_DECISION: "packet_embeds_selected_contract",
             VALID_FLOWGUARD_OPERATOR_MODEL_REPORT: "packet_embeds_selected_contract",
+            VALID_TERMINAL_FLOWGUARD_COVERAGE_REPORT: "packet_embeds_selected_contract",
             VALID_MODEL_MISS_TRIAGE: "packet_embeds_selected_contract",
             VALID_MODEL_MISS_FLOWGUARD_OPERATOR_REPORT: "packet_embeds_selected_contract",
             MISSING_CONTRACT: "packet_omits_selected_contract",

@@ -3453,6 +3453,14 @@
             "target": "_final_ledger_traceability_issues"
           },
           {
+            "public": "_flowguard_terminal_coverage_issues",
+            "target": "_flowguard_terminal_coverage_issues"
+          },
+          {
+            "public": "_flowguard_terminal_coverage_ledger_entry",
+            "target": "_flowguard_terminal_coverage_ledger_entry"
+          },
+          {
             "public": "_node_acceptance_traceability_issues",
             "target": "_node_acceptance_traceability_issues"
           },
@@ -3499,6 +3507,10 @@
           {
             "public": "_validate_terminal_summary_payload",
             "target": "_validate_terminal_summary_payload"
+          },
+          {
+            "public": "_validated_flowguard_terminal_coverage_status",
+            "target": "_validated_flowguard_terminal_coverage_status"
           },
           {
             "public": "_validated_root_replay",

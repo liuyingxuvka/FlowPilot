@@ -26,15 +26,10 @@ class FlowPilotEndToEndSyntheticChaosReplayTests(FlowPilotRouterRuntimeTestBase)
             self.role_decision_envelope(
                 root,
                 f"e2e/{name}/pm_terminal_closure_decision",
-                {
-                    "approved_by_role": "project_manager",
-                    "decision": "approve_terminal_closure",
-                    **self.prior_path_context_review(
-                        root,
-                        "Terminal closure considered the clean full-flow replay evidence.",
-                    ),
-                    "final_report": {"status": "complete"},
-                },
+                self.pm_terminal_closure_body(
+                    root,
+                    "Terminal closure considered the clean full-flow replay evidence.",
+                ),
             ),
         )
         self.assertTrue(result["ok"])
@@ -362,15 +357,10 @@ class FlowPilotEndToEndSyntheticChaosReplayTests(FlowPilotRouterRuntimeTestBase)
                 self.role_decision_envelope(
                     root,
                     "e2e/terminal/dirty_closure_overclaim",
-                    {
-                        "approved_by_role": "project_manager",
-                        "decision": "approve_terminal_closure",
-                        **self.prior_path_context_review(
-                            root,
-                            "Terminal closure attempted while a PM suggestion ledger is dirty.",
-                        ),
-                        "final_report": {"status": "complete"},
-                    },
+                    self.pm_terminal_closure_body(
+                        root,
+                        "Terminal closure attempted while a PM suggestion ledger is dirty.",
+                    ),
                 ),
             )
         state = read_json(router.run_state_path(run_root))
@@ -388,4 +378,3 @@ if __name__ == "__main__":
     import unittest
 
     unittest.main()
-

@@ -622,6 +622,15 @@ FlowGuard caught and fixed these design issues:
   `simulations/prompt_isolation_model.py`,
   `simulations/flowpilot_resume_model.py`, and
   `simulations/flowpilot_router_loop_model.py`.
+- Terminal FlowGuard coverage governance now has a focused model and runtime
+  gate: `simulations/flowpilot_terminal_flowguard_coverage_model.py` and
+  `simulations/run_flowpilot_terminal_flowguard_coverage_checks.py`. PM final
+  ledger creation requires a current PM-accepted
+  `flowguard_terminal_coverage_report`, Reviewer terminal backward replay must
+  include the `flowguard-coverage-governance` segment, and PM closure rechecks
+  the same report instead of accepting scattered node-level FlowGuard evidence,
+  stale reports, progress-only reports, unresolved blockers, or pending PM
+  suggestions.
 - Control-plane event-contract coverage lives in
   `simulations/flowpilot_event_contract_model.py`. It rejects any persisted
   role wait that contains an internal Router action, unknown event string,

@@ -60,6 +60,15 @@
       "summary": "Private data, sealed body, secret, local path, account, and public-boundary evidence."
     },
     {
+      "pack_id": "flowguard_terminal_coverage_pack",
+      "default_profiles": [
+        "software_engineering",
+        "release_delivery",
+        "long_running_multi_role"
+      ],
+      "summary": "Terminal FlowGuard model coverage, freshness, model-test alignment, blocker disposition, and PM-accepted coverage report evidence."
+    },
+    {
       "pack_id": "recovery_resume_quality_pack",
       "default_profiles": [
         "long_running_multi_role",

@@ -80,6 +80,13 @@ Resolve:
   `flowguard_route_used`, `flowguard_report_freshness`, skipped-check reason,
   progress-only status, and `flowguard_pm_acceptance`; unresolved, stale,
   blocked, or unaccepted FlowGuard reports keep the ledger open;
+  before writing the final route-wide ledger, include a PM-accepted
+  `flowguard_terminal_coverage_closure` that points to the current
+  `flowpilot.flowguard_terminal_coverage_report.v1` report and fresh coverage
+  matrix for this route version. Scattered node-level FlowGuard notes,
+  progress-only reports, stale reports, unresolved blockers, undispositioned
+  PM suggestion items, or unaccepted reports do not count as terminal
+  coverage closure;
 - effective and superseded nodes;
 - every major node, parent/module, child subtree, promoted former leaf, repair
   node, and supplemental node in the current route. Before project completion,
@@ -152,6 +159,9 @@ Then build `terminal_human_backward_replay_map.json` as ordered segments from
 delivered output to root, parents, leaves, child-skill gates, repairs, and
 generated resources. Request terminal backward replay from Reviewer; any repair
 or stale evidence found there requires ledger rebuild before closure.
+The replay map must include the `flowguard-coverage-governance` segment so
+Reviewer explicitly checks that the PM ledger contains current terminal
+FlowGuard coverage closure.
 The replay map must start from the delivered product or final output as a
 final user, reader, operator, maintainer, or recipient would experience it, and
 then walk backward to route evidence and root intent.

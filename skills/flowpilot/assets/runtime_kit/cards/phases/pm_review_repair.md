@@ -183,6 +183,15 @@ supplemental contract.
 Terminal supplemental repair is capped at three rounds by runtime. When round
 three is exhausted, stop rather than issuing another PM repair decision.
 
+If terminal replay or PM final ledger is blocked only because terminal
+FlowGuard coverage is missing, stale, progress-only, unaccepted, or still has
+blockers/model-test gaps/PM suggestion items, do not waive it in this repair
+decision. Reissue or create the smallest current FlowGuard operator work
+packet using `flowpilot.output_contract.flowguard_terminal_coverage_report.v1`,
+or add a repair node for the non-FlowGuard project work that the coverage
+report says is missing. After the report is repaired and PM-accepted, rebuild
+the final ledger and rerun terminal backward replay.
+
 Do not use PM repair decisions to paper over malformed result shapes, missing
 required fields, missing projection rows, result-matrix gaps, or
 evidence-reference gaps. If Runtime has already issued a current mechanical

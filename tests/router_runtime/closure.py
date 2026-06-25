@@ -139,12 +139,7 @@ class ClosureRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 self.role_decision_envelope(
                     root,
                     "closure/pm_terminal_closure_dirty_defect",
-                    {
-                        "approved_by_role": "project_manager",
-                        "decision": "approve_terminal_closure",
-                        **self.prior_path_context_review(root, "Terminal closure attempted with dirty defect ledger."),
-                        "final_report": {"status": "complete"},
-                    },
+                    self.pm_terminal_closure_body(root, "Terminal closure attempted with dirty defect ledger."),
                 ),
             )
     def test_pm_terminal_closure_uses_file_backed_contract_and_prior_context(self) -> None:
@@ -174,6 +169,7 @@ class ClosureRuntimeTests(FlowPilotRouterRuntimeTestBase):
             "current_ledgers_clean",
             "pm_suggestion_ledger_clean",
             "self_interrogation_index_clean",
+            "flowguard_terminal_coverage_closure_clean",
             "prior_path_context_review.controller_summary_used_as_evidence",
         )
 
@@ -183,12 +179,7 @@ class ClosureRuntimeTests(FlowPilotRouterRuntimeTestBase):
             self.role_decision_envelope(
                 root,
                 "closure/pm_terminal_closure_decision",
-                {
-                    "approved_by_role": "project_manager",
-                    "decision": "approve_terminal_closure",
-                    **self.prior_path_context_review(root, "Terminal closure considered clean final ledger and current route memory."),
-                    "final_report": {"status": "complete"},
-                },
+                self.pm_terminal_closure_body(root),
             ),
         )
         self.assertTrue(result["ok"])
@@ -199,6 +190,7 @@ class ClosureRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertTrue(closure["terminal_closure_reconciliation"]["clean"])
         self.assertTrue(closure["terminal_closure_reconciliation"]["role_memory"]["clean"])
         self.assertTrue(closure["terminal_closure_reconciliation"]["continuation_quarantine"]["clean"])
+        self.assertEqual(closure["flowguard_terminal_coverage_review"]["status"], "passed")
         self.assertEqual(closure["status"], "closed")
         frontier = read_json(run_root / "execution_frontier.json")
         self.assertEqual(frontier["status"], "closed")

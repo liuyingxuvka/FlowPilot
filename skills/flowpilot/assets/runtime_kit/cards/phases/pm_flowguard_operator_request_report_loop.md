@@ -33,6 +33,17 @@ acceptance record.
 Each FlowGuard operator request packet must include the registry `output_contract`
 `flowpilot.output_contract.flowguard_operator_model_report.v1` in both the packet envelope
 and packet body's `Output Contract` section.
+For terminal route-wide coverage after all effective nodes, parent/module
+replays, repairs, PM suggestions, and lifecycle ledgers are settled, use
+`task_family: flowguard_operator.terminal_flowguard_coverage_report` and
+contract `flowpilot.output_contract.flowguard_terminal_coverage_report.v1`.
+That packet must ask the FlowGuard operator to produce
+`flowpilot.flowguard_terminal_coverage_report.v1` for
+`modeled_boundary: terminal_flowguard_coverage`, cite a fresh coverage matrix
+for the current route version, list required FlowGuard items and evidence
+found, and return explicit empty arrays for missing/stale evidence,
+model-test alignment gaps, blockers, PM suggestion items, and supplemental
+repair recommendations before PM can accept terminal coverage closure.
 The packet body must also include the generated `Report Contract For This Task`
 block so the FlowGuard operator sees the exact report fields before modeling.
 When the packet body includes `subject_stage_evidence_matrix`, the FlowGuard

@@ -5,18 +5,18 @@ It is orientation only; it is not validation evidence.
 
 ## Summary
 
-- Model runners: 153
+- Model runners: 154
 - Model-test alignment families: 14
 - Code surfaces: 1067
 - Test commands: 452
 - Evidence summaries: 5
-- Known-bad/risk labels surfaced: 2576
+- Known-bad/risk labels surfaced: 2591
 
 ## Area Map
 
 | Area | Models | Alignment families | Code surfaces | Test commands | Known-bad labels |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| `closure` | 7 | 1 | 17 | 7 | 86 |
+| `closure` | 8 | 1 | 17 | 7 | 101 |
 | `controller` | 7 | 0 | 90 | 28 | 104 |
 | `install-validation` | 1 | 0 | 17 | 16 | 15 |
 | `material` | 1 | 0 | 24 | 30 | 11 |
