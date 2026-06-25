@@ -202,7 +202,7 @@
     "prompt-card": {
       "alignment_family_count": 0,
       "code_surface_count": 4,
-      "known_bad_count": 77,
+      "known_bad_count": 80,
       "model_count": 3,
       "runner_keys": [
         "flowpilot_derived_view_prompt_boundary",
@@ -14396,13 +14396,13 @@
       "path": "simulations/flowpilot_model_test_alignment_results.json"
     }
   },
-  "generated_at_epoch": 1782373146.8896034,
+  "generated_at_epoch": 1782397524.3736496,
   "generator_version": "1",
   "layer_counts": {
     "alignment_families": 14,
     "code_surfaces": 1068,
     "evidence_summaries": 5,
-    "known_bad_signals": 2592,
+    "known_bad_signals": 2595,
     "models": 154,
     "test_commands": 452
   },
@@ -18046,15 +18046,18 @@
       "evidence": {
         "confidence": "",
         "decision": "",
-        "edge_count": 32,
+        "edge_count": 40,
         "finding_count": null,
         "full_coverage_ok": null,
         "known_bad": [
+          "codex_only_role_surface_required",
           "controller_ledger_metadata_uses_apply",
           "daemon_prompt_prefers_run_until_wait",
           "lifecycle_resume_continues_router_loop",
           "missing_startup_phase_split",
           "partial_table_read_errors",
+          "reuse_assignment_opens_fresh_surface",
+          "role_work_runs_in_controller_foreground",
           "row_to_row_uses_router_command",
           "startup_intake_prompt_direct_apply",
           "unclear_step_returns_to_router",
@@ -18063,7 +18066,7 @@
         "ok": true,
         "present": true,
         "release_convergence_ok": null,
-        "state_count": 33
+        "state_count": 41
       },
       "model_path": "simulations/flowpilot_prompt_boundary_model.py",
       "result_path": "simulations/flowpilot_prompt_boundary_results.json",
@@ -20739,7 +20742,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1782372665972111100,
+      "mtime_ns": 1782397520495134500,
       "path": "simulations/capability_thin_parent_results.json",
       "size": 20668
     },
@@ -21801,15 +21804,15 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780677482138114500,
+      "mtime_ns": 1782395472156522300,
       "path": "simulations/flowpilot_prompt_boundary_model.py",
-      "size": 23453
+      "size": 28801
     },
     {
       "exists": true,
-      "mtime_ns": 1782284462112552400,
+      "mtime_ns": 1782397498287079000,
       "path": "simulations/flowpilot_prompt_boundary_results.json",
-      "size": 4505
+      "size": 6039
     },
     {
       "exists": true,
@@ -22509,7 +22512,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1782372635539876800,
+      "mtime_ns": 1782397510353519900,
       "path": "simulations/meta_thin_parent_results.json",
       "size": 26204
     },
@@ -23091,9 +23094,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1781511334461372800,
+      "mtime_ns": 1782395741751917300,
       "path": "simulations/run_flowpilot_prompt_boundary_checks.py",
-      "size": 16634
+      "size": 22167
     },
     {
       "exists": true,
@@ -23517,9 +23520,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1782276876545411800,
+      "mtime_ns": 1782396365163965800,
       "path": "skills/flowpilot/SKILL.md",
-      "size": 8385
+      "size": 9365
     },
     {
       "exists": true,
@@ -26421,7 +26424,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1782111772834730700,
+      "mtime_ns": 1782395412694585900,
       "path": "skills/flowpilot/assets/runtime_kit/prompts/manifest.json",
       "size": 3745
     },
@@ -26445,9 +26448,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780655831760218900,
+      "mtime_ns": 1782395386275337900,
       "path": "skills/flowpilot/assets/runtime_kit/prompts/startup/lifecycle_resume.md",
-      "size": 1271
+      "size": 1708
     },
     {
       "exists": true,
@@ -26553,9 +26556,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1782297928601425700,
+      "mtime_ns": 1782395472154517400,
       "path": "tests/test_flowpilot_card_instruction_coverage.py",
-      "size": 50741
+      "size": 53104
     },
     {
       "exists": true,

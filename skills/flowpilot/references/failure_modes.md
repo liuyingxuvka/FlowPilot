@@ -32,6 +32,11 @@ The FlowGuard models for FlowPilot found or guard against:
 - FlowPilot treats unavailable background or parallel role surfaces as
   permission to continue in a single-agent route instead of recording a
   blocker and stopping;
+- Controller receives `reuse_existing_role` but opens a fresh same-role AI
+  execution surface because the runtime-named host surface is inconvenient,
+  missing from chat context, or not immediately visible, instead of treating
+  the missing addressable surface as current role reattachment, recovery, or
+  blocker evidence;
 - manual-resume prompt rewritten for ordinary route/plan changes instead of
   using the current runtime resume/patrol path that reads persisted execution
   frontier state;
@@ -224,8 +229,10 @@ Keep these failure modes in the model and tests.
   mutation. Raw FlowGuard Mermaid exports stay off by default and are generated
   only on explicit request.
 - FlowPilot must use current manual-resume runtime continuation before route
-  execution. If required background or parallel role surfaces cannot be opened,
-  record a blocker and stop instead of switching to a single-agent route.
+  execution. If the required host-supported isolated addressable AI execution
+  surface for a runtime-requested role cannot be opened or reattached, record a
+  blocker and stop instead of switching to a single-agent route or trying to
+  perform role work in the Controller foreground.
 - Manual-resume mode must include state/frontier, packet-ledger,
   role-binding, and checkpoint freshness evidence instead of claiming
   unattended recovery.

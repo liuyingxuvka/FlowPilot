@@ -1,0 +1,254 @@
+{
+  "version": 1,
+  "change": "harden-isolated-role-surface-binding",
+  "status": "pass",
+  "generatedAt": "2026-06-25T14:25:31.340Z",
+  "contractPath": "openspec/changes/harden-isolated-role-surface-binding/verification-contract.yaml",
+  "reportPath": "openspec/changes/harden-isolated-role-surface-binding/verification-report.json",
+  "contractHash": "87f6eae77f869245fcc47d6667ad2694849afc2ef107a36ca4965dd44c3a713b",
+  "sourceHashes": {
+    "openspec/changes/harden-isolated-role-surface-binding/design.md": "83d99d34a6d996dc016ad13a5f4546a1ce546c9376e53a8de61d329a8a87cc8d",
+    "openspec/changes/harden-isolated-role-surface-binding/proposal.md": "3e40bbcdab0dfb87adc9b43fe466604c3d1be44da0e8719af1f176aa6161dc2b",
+    "openspec/changes/harden-isolated-role-surface-binding/specs/flowpilot-prompt-boundary-policy/spec.md": "2cec427b336ba9a15c27b0d85ec79bce4f6038f639ab0620b9e267d7f37a72c8",
+    "openspec/changes/harden-isolated-role-surface-binding/tasks.md": "91cc73664d45e0456bd50cd17a00726209c460644b4b5a39f218b4a00571bb96",
+    "openspec/changes/harden-isolated-role-surface-binding/verification-contract.yaml": "87f6eae77f869245fcc47d6667ad2694849afc2ef107a36ca4965dd44c3a713b",
+    "scripts/audit_local_install_sync.py": "0848272ab8c1c6f04f19a542ac0e24b141d2b3343e054314221e6fdc5fef6119",
+    "scripts/check_install.py": "4842c95742641d18e555cac4d89cee9a97949e083642d0b3a84bf9dcb8e18aec",
+    "scripts/install_flowpilot.py": "d93a7e37122cd2c93aceaf1bcbac76154e37d6078907b87aed7cc81c614fda24",
+    "simulations/flowpilot_prompt_boundary_model.py": "675cc7cae3f8942915a30634b4127666449007d0ada293e986a672c332c6089d",
+    "simulations/run_flowpilot_prompt_boundary_checks.py": "93b41dd2824e92f0bd6e79f3f4144194babcbf14d66fce09d847bd96ed5ecf3a",
+    "skills/flowpilot/SKILL.md": "f9b6b6f8169a3ac502bb4d59ecccb537f305166386a2238e88a44ab435f7c8bc",
+    "skills/flowpilot/assets/runtime_kit/prompts/startup/lifecycle_resume.md": "7d89a3a36fafe1515304fae33013290d88fd63d4ba1b8f78a23e62b898c98123",
+    "skills/flowpilot/references/failure_modes.md": "710d3329e6eed88d9c0def8f244445a2ba7b48f1bd165344b37419078bede279",
+    "skills/flowpilot/references/protocol.md": "8239efbcf0f3e4ff411bb84a5ca4bf41e1322bf2584b44a31d3a10cff2412a22",
+    "tests/test_flowpilot_card_instruction_coverage.py": "8257c06f19cc537c4e14f6092ab01db93e25af9763a9f7fb927b8110392c9d53"
+  },
+  "issues": [],
+  "checks": [
+    {
+      "id": "check.openspec.validate",
+      "kind": "command",
+      "required": true,
+      "covers": [
+        "req.flowpilot_prompt_boundary_policy.runtime_disposition_dispatch",
+        "req.flowpilot_prompt_boundary_policy.host_neutral_isolated_surface",
+        "req.flowpilot_prompt_boundary_policy.missing_reuse_surface_recovery",
+        "req.flowpilot_prompt_boundary_policy.validation_drift"
+      ],
+      "status": "passed",
+      "command": "openspec",
+      "args": [
+        "validate",
+        "harden-isolated-role-surface-binding",
+        "--strict",
+        "--no-interactive"
+      ],
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "durationMs": 3488,
+      "stdout": "Change 'harden-isolated-role-surface-binding' is valid\n",
+      "stderr": ""
+    },
+    {
+      "id": "check.prompt_boundary.unit_role_surface_dispatch",
+      "kind": "command",
+      "required": true,
+      "covers": [
+        "req.flowpilot_prompt_boundary_policy.runtime_disposition_dispatch",
+        "req.flowpilot_prompt_boundary_policy.host_neutral_isolated_surface",
+        "req.flowpilot_prompt_boundary_policy.missing_reuse_surface_recovery",
+        "req.flowpilot_prompt_boundary_policy.validation_drift"
+      ],
+      "status": "passed",
+      "command": "python",
+      "args": [
+        "-m",
+        "unittest",
+        "tests.test_flowpilot_card_instruction_coverage.FlowPilotCardInstructionCoverageTests.test_role_surface_dispatch_is_runtime_disposition_driven"
+      ],
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "durationMs": 1705,
+      "stdout": "",
+      "stderr": ".\r\n----------------------------------------------------------------------\r\nRan 1 test in 0.005s\r\n\r\nOK\r\n"
+    },
+    {
+      "id": "check.flowguard.prompt_boundary",
+      "kind": "command",
+      "required": true,
+      "covers": [
+        "req.flowpilot_prompt_boundary_policy.runtime_disposition_dispatch",
+        "req.flowpilot_prompt_boundary_policy.missing_reuse_surface_recovery",
+        "req.flowpilot_prompt_boundary_policy.validation_drift"
+      ],
+      "status": "passed",
+      "command": "python",
+      "args": [
+        "simulations/run_flowpilot_prompt_boundary_checks.py",
+        "--json-out",
+        "simulations/flowpilot_prompt_boundary_results.json"
+      ],
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "durationMs": 1796,
+      "stdout": "{\r\n  \"checks\": {\r\n    \"actual_prompt_sources\": {\r\n      \"checks\": {\r\n        \"controller_display_rows_use_receipt_wording\": true,\r\n        \"controller_has_reread_daemon_ledger_receipts\": true,\r\n        \"controller_no_unclear_return_to_router\": true,\r\n        \"controller_partial_table_reads_defer\": true,\r\n        \"failure_modes_manual_resume_blocks_without_isolated_surface\": true,\r\n        \"failure_modes_reject_fresh_surface_substitution\": true,\r\n        \"lifecycle_resume_forbids_foreground_role_work\": true,\r\n        \"lifecycle_resume_mentions_runtime_named_reuse_surface\": true,\r\n        \"lifecycle_resume_prompt_no_continue_router_loop\": true,\r\n        \"lifecycle_resume_prompt_uses_new_runtime_guard\": true,\r\n        \"lifecycle_resume_uses_host_neutral_new_surface_terms\": true,\r\n        \"packet_ack_continues_and_waits_for_router_result\": true,\r\n        \"protocol_defines_host_neutral_ai_surface_binding\": true,\r\n        \"protocol_scheduled_role_unavailable_stops_not_foreground\": true,\r\n        \"protocol_unreachable_reuse_surface_routes_recovery\": true,\r\n        \"router_card_checkin_policy_mentions_work_item_output\": true,\r\n        \"router_projection_disables_controller_apply_required\": true,\r\n        \"router_projects_controller_rows_to_receipt_metadata\": true,\r\n        \"router_startup_catalog_uses_current_receipt_repair\": true,\r\n        \"router_startup_intake_no_direct_apply_wording\": true,\r\n        \"router_startup_intake_returns_to_router_work_board\": true,\r\n        \"router_table_prompt_forbids_router_commands_between_rows\": true,\r\n        \"skill_daemon_rows_distinguish_receipt_from_apply\": true,\r\n        \"skill_dispatch_blocked_forbids_controller_foreground_role_work\": true,\r\n        \"skill_dispatch_create_requires_runtime_command\": true,\r\n        \"skill_dispatch_has_runtime_disposition_table\": true,\r\n        \"skill_dispatch_reuse_targets_existing_surface\": true,\r\n        \"skill_has_background_driver_bootloader_split\": true,\r\n        \"skill_has_only_current_start_entrypoint\": true,\r\n        \"skill_lifecycle_resume_no_return_to_router\": true,\r\n        \"skill_lists_host_neutral_surface_examples\": true,\r\n        \"skill_no_broad_wait_boundary_prefer_run_until_wait\": true,\r\n        \"skill_role_work_requires_addressed_isolated_surface\": true,\r\n        \"skill_startup_intake_no_direct_apply_wording\": true,\r\n        \"skill_startup_intake_returns_to_router_work_board\": true,\r\n        \"work_card_ack_continues_and_waits_for_router_output\": true\r\n      },\r\n      \"failures\": [],\r\n      \"ok\": true\r\n    },\r\n    \"expected_rejections\": {\r\n      \"failures\": [],\r\n      \"ok\": true,\r\n      \"results\": {\r\n        \"codex_only_role_surface_required\": \"rejected:codex_only_role_surface_required\",\r\n        \"controller_ledger_metadata_uses_apply\": \"rejected:controller_ledger_metadata_confuses_apply_with_receipt\",\r\n        \"daemon_prompt_prefers_run_until_wait\": \"rejected:daemon_mode_manual_router_metronome\",\r\n        \"lifecycle_resume_continues_router_loop\": \"rejected:resume_prompt_manual_router_loop\",\r\n        \"missing_startup_phase_split\": \"rejected:pre_daemon_and_daemon_phases_not_distinguished\",\r\n        \"partial_table_read_errors\": \"rejected:partial_table_read_not_deferred\",\r\n        \"reuse_assignment_opens_fresh_surface\": \"rejected:reuse_assignment_opens_fresh_surface\",\r\n        \"role_work_runs_in_controller_foreground\": \"rejected:role_work_runs_in_controller_foreground\",\r\n        \"row_to_row_uses_router_command\": \"rejected:row_completion_skips_controller_receipt\",\r\n        \"startup_intake_prompt_direct_apply\": \"rejected:startup_intake_prompt_bypasses_daemon_work_board\",\r\n        \"unclear_step_returns_to_router\": \"rejected:unclear_step_returns_to_router\",\r\n        \"valid_controller_ledger_receipt_metadata\": \"accepted\",\r\n        \"valid_daemon_ledger_prompt_set\": \"accepted\",\r\n        \"valid_lifecycle_resume_current_duty\": \"accepted\",\r\n        \"valid_lifecycle_resume_stale_duty_block\": \"accepted\",\r\n        \"valid_pre_daemon_bootloader_prompt\": \"accepted\",\n...[truncated]",
+      "stderr": "[flowguard] start phase=explore work_total=3 progress_steps=10\r\n[flowguard] progress 30% work=1/3 traces=20 violations=0\r\n[flowguard] progress 60% work=2/3 traces=60 violations=0\r\n[flowguard] progress 100% work=3/3 traces=120 violations=0\r\n"
+    },
+    {
+      "id": "check.flowguard.meta",
+      "kind": "command",
+      "required": true,
+      "covers": [
+        "req.flowpilot_prompt_boundary_policy.host_neutral_isolated_surface"
+      ],
+      "status": "passed",
+      "command": "python",
+      "args": [
+        "simulations/run_meta_checks.py"
+      ],
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "durationMs": 12049,
+      "stdout": "{\r\n  \"created_at\": \"2026-06-25T14:25:10.351525+00:00\",\r\n  \"graph\": {\r\n    \"edge_count\": 18,\r\n    \"invariant_failure_count\": 0,\r\n    \"invariant_failures\": [],\r\n    \"ok\": true,\r\n    \"state_count\": 10\r\n  },\r\n  \"layered_full_regression\": {\r\n    \"current\": true,\r\n    \"required_for_release\": true,\r\n    \"status\": {\r\n      \"created_at\": \"2026-06-25T07:30:26.311044+00:00\",\r\n      \"edge_count\": 20,\r\n      \"kind\": \"layered_full_parent\",\r\n      \"proof_file\": \"simulations/meta_layered_full_results.proof.json\",\r\n      \"reason\": \"valid proof\",\r\n      \"release_confidence\": \"current_with_layered_full_parent\",\r\n      \"result_file\": \"simulations/meta_layered_full_results.json\",\r\n      \"state_count\": 12,\r\n      \"valid\": true\r\n    }\r\n  },\r\n  \"loop\": {\r\n    \"nonterminating_component_count\": 0,\r\n    \"ok\": true,\r\n    \"stuck_state_count\": 0\r\n  },\r\n  \"model\": \"flowpilot_thin_parent\",\r\n  \"ok\": true,\r\n  \"parent\": \"meta\",\r\n  \"progress\": {\r\n    \"nonterminal_without_terminal_path_count\": 0,\r\n    \"ok\": true,\r\n    \"success_state_count\": 1\r\n  },\r\n  \"release_confidence\": \"current_with_layered_full_parent\",\r\n  \"result_type\": \"thin_parent\",\r\n  \"routine_confidence\": \"current\",\r\n  \"schema_version\": \"flowpilot.thin_parent_result.v1\",\r\n  \"thin_parent\": {\r\n    \"failures\": [],\r\n    \"full_regression_release_partitions\": [\r\n      \"evidence_mesh_and_install_sync\"\r\n    ],\r\n    \"ledger_file\": \"simulations/flowpilot_parent_responsibility_ledger.json\",\r\n    \"ok\": true,\r\n    \"partition_count\": 9,\r\n    \"partitions\": [\r\n      {\r\n        \"evidence\": [\r\n          {\r\n            \"edge_count\": 70,\r\n            \"failures\": [],\r\n            \"missing\": false,\r\n            \"model_id\": \"flowpilot_startup_control\",\r\n            \"ok\": true,\r\n            \"proof_status\": \"not_present\",\r\n            \"result_file\": \"simulations/flowpilot_startup_control_results.json\",\r\n            \"result_fingerprint\": \"6e41c0a63e30d7ea47ac6683ee39c5fbaeb1262d36cdd93f8595db2267aea588\",\r\n            \"skipped_required_checks\": [],\r\n            \"skipped_required_checks_visible\": true,\r\n            \"state_count\": 70\r\n          },\r\n          {\r\n            \"edge_count\": 183,\r\n            \"failures\": [],\r\n            \"missing\": false,\r\n            \"model_id\": \"startup_pm_review\",\r\n            \"ok\": true,\r\n            \"proof_status\": \"not_present\",\r\n            \"result_file\": \"simulations/startup_pm_review_results.json\",\r\n            \"result_fingerprint\": \"6d1a1ad1132b25e13512b197a9f4b0f9d3aae6f3be95e29e08d6bb5394871088\",\r\n            \"skipped_required_checks\": [],\r\n            \"skipped_required_checks_visible\": true,\r\n            \"state_count\": 180\r\n          },\r\n          {\r\n            \"edge_count\": 17,\r\n            \"failures\": [],\r\n            \"missing\": false,\r\n            \"model_id\": \"flowpilot_startup_intake_ui\",\r\n            \"ok\": true,\r\n            \"proof_status\": \"not_present\",\r\n            \"result_file\": \"simulations/flowpilot_startup_intake_ui_results.json\",\r\n            \"result_fingerprint\": \"92ea567beaee5b17065134369dd7fb9968f6558264f842ee508a219e1e116f76\",\r\n            \"skipped_required_checks\": [],\r\n            \"skipped_required_checks_visible\": true,\r\n            \"state_count\": 18\r\n          },\r\n          {\r\n            \"edge_count\": 38,\r\n            \"failures\": [],\r\n            \"missing\": false,\r\n            \"model_id\": \"flowpilot_deterministic_startup_bootstrap\",\r\n            \"ok\": true,\r\n            \"proof_status\": \"not_present\",\r\n            \"result_file\": \"simulations/flowpilot_deterministic_startup_bootstrap_results.json\",\r\n            \"result_fingerprint\": \"76ca61291e87b5e9ac50eaf1782f67bc7a8633160cb530271cadcb41e618c134\",\r\n            \"skipped_required_checks\": [],\r\n            \"skipped_required_checks_visible\": true,\r\n            \"state_count\": 39\r\n          }\r\n        ],\r\n        \"evidence_ids\": [\r\n          \"flowpilot_startup_control\",\r\n          \"startup_pm_review\",\r\n          \"flowpilot_startup_intake_ui\",\r\n          \"flowpilot_deterministic_startup_bootstrap\"\r\n        ],\r\n        \"id\": \n...[truncated]",
+      "stderr": ""
+    },
+    {
+      "id": "check.flowguard.capability",
+      "kind": "command",
+      "required": true,
+      "covers": [
+        "req.flowpilot_prompt_boundary_policy.host_neutral_isolated_surface"
+      ],
+      "status": "passed",
+      "command": "python",
+      "args": [
+        "simulations/run_capability_checks.py"
+      ],
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "durationMs": 10135,
+      "stdout": "{\r\n  \"created_at\": \"2026-06-25T14:25:20.494135+00:00\",\r\n  \"graph\": {\r\n    \"edge_count\": 14,\r\n    \"invariant_failure_count\": 0,\r\n    \"invariant_failures\": [],\r\n    \"ok\": true,\r\n    \"state_count\": 8\r\n  },\r\n  \"layered_full_regression\": {\r\n    \"current\": true,\r\n    \"required_for_release\": true,\r\n    \"status\": {\r\n      \"created_at\": \"2026-06-25T07:30:55.050567+00:00\",\r\n      \"edge_count\": 16,\r\n      \"kind\": \"layered_full_parent\",\r\n      \"proof_file\": \"simulations/capability_layered_full_results.proof.json\",\r\n      \"reason\": \"valid proof\",\r\n      \"release_confidence\": \"current_with_layered_full_parent\",\r\n      \"result_file\": \"simulations/capability_layered_full_results.json\",\r\n      \"state_count\": 10,\r\n      \"valid\": true\r\n    }\r\n  },\r\n  \"loop\": {\r\n    \"nonterminating_component_count\": 0,\r\n    \"ok\": true,\r\n    \"stuck_state_count\": 0\r\n  },\r\n  \"model\": \"flowpilot_thin_parent\",\r\n  \"ok\": true,\r\n  \"parent\": \"capability\",\r\n  \"progress\": {\r\n    \"nonterminal_without_terminal_path_count\": 0,\r\n    \"ok\": true,\r\n    \"success_state_count\": 1\r\n  },\r\n  \"release_confidence\": \"current_with_layered_full_parent\",\r\n  \"result_type\": \"thin_parent\",\r\n  \"routine_confidence\": \"current\",\r\n  \"schema_version\": \"flowpilot.thin_parent_result.v1\",\r\n  \"thin_parent\": {\r\n    \"failures\": [],\r\n    \"full_regression_release_partitions\": [\r\n      \"evidence_mesh_and_install_sync\"\r\n    ],\r\n    \"ledger_file\": \"simulations/flowpilot_parent_responsibility_ledger.json\",\r\n    \"ok\": true,\r\n    \"partition_count\": 7,\r\n    \"partitions\": [\r\n      {\r\n        \"evidence\": [\r\n          {\r\n            \"edge_count\": 70,\r\n            \"failures\": [],\r\n            \"missing\": false,\r\n            \"model_id\": \"flowpilot_startup_control\",\r\n            \"ok\": true,\r\n            \"proof_status\": \"not_present\",\r\n            \"result_file\": \"simulations/flowpilot_startup_control_results.json\",\r\n            \"result_fingerprint\": \"6e41c0a63e30d7ea47ac6683ee39c5fbaeb1262d36cdd93f8595db2267aea588\",\r\n            \"skipped_required_checks\": [],\r\n            \"skipped_required_checks_visible\": true,\r\n            \"state_count\": 70\r\n          },\r\n          {\r\n            \"edge_count\": 183,\r\n            \"failures\": [],\r\n            \"missing\": false,\r\n            \"model_id\": \"startup_pm_review\",\r\n            \"ok\": true,\r\n            \"proof_status\": \"not_present\",\r\n            \"result_file\": \"simulations/startup_pm_review_results.json\",\r\n            \"result_fingerprint\": \"6d1a1ad1132b25e13512b197a9f4b0f9d3aae6f3be95e29e08d6bb5394871088\",\r\n            \"skipped_required_checks\": [],\r\n            \"skipped_required_checks_visible\": true,\r\n            \"state_count\": 180\r\n          },\r\n          {\r\n            \"edge_count\": 17,\r\n            \"failures\": [],\r\n            \"missing\": false,\r\n            \"model_id\": \"flowpilot_startup_intake_ui\",\r\n            \"ok\": true,\r\n            \"proof_status\": \"not_present\",\r\n            \"result_file\": \"simulations/flowpilot_startup_intake_ui_results.json\",\r\n            \"result_fingerprint\": \"92ea567beaee5b17065134369dd7fb9968f6558264f842ee508a219e1e116f76\",\r\n            \"skipped_required_checks\": [],\r\n            \"skipped_required_checks_visible\": true,\r\n            \"state_count\": 18\r\n          },\r\n          {\r\n            \"edge_count\": 38,\r\n            \"failures\": [],\r\n            \"missing\": false,\r\n            \"model_id\": \"flowpilot_deterministic_startup_bootstrap\",\r\n            \"ok\": true,\r\n            \"proof_status\": \"not_present\",\r\n            \"result_file\": \"simulations/flowpilot_deterministic_startup_bootstrap_results.json\",\r\n            \"result_fingerprint\": \"76ca61291e87b5e9ac50eaf1782f67bc7a8633160cb530271cadcb41e618c134\",\r\n            \"skipped_required_checks\": [],\r\n            \"skipped_required_checks_visible\": true,\r\n            \"state_count\": 39\r\n          }\r\n        ],\r\n        \"evidence_ids\": [\r\n          \"flowpilot_startup_control\",\r\n          \"startup_pm_review\",\r\n          \"flowpilot_startup_intake_ui\",\r\n          \"flowpilot_deterministic_startup_bootstrap\"\r\n        ]\n...[truncated]",
+      "stderr": ""
+    },
+    {
+      "id": "check.flowguard.topology_build",
+      "kind": "command",
+      "required": true,
+      "covers": [
+        "req.flowpilot_prompt_boundary_policy.host_neutral_isolated_surface",
+        "req.flowpilot_prompt_boundary_policy.validation_drift"
+      ],
+      "status": "passed",
+      "command": "python",
+      "args": [
+        "scripts/flowguard_project_topology.py",
+        "build"
+      ],
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "durationMs": 3881,
+      "stdout": "{\r\n  \"json_path\": \"docs/flowguard_project_topology.json\",\r\n  \"layer_counts\": {\r\n    \"alignment_families\": 14,\r\n    \"code_surfaces\": 1068,\r\n    \"evidence_summaries\": 5,\r\n    \"known_bad_signals\": 2595,\r\n    \"models\": 154,\r\n    \"test_commands\": 452\r\n  },\r\n  \"markdown_path\": \"docs/flowguard_project_topology.md\",\r\n  \"ok\": true\r\n}\r\n",
+      "stderr": ""
+    },
+    {
+      "id": "check.flowguard.topology_check",
+      "kind": "command",
+      "required": true,
+      "covers": [
+        "req.flowpilot_prompt_boundary_policy.host_neutral_isolated_surface",
+        "req.flowpilot_prompt_boundary_policy.validation_drift"
+      ],
+      "status": "passed",
+      "command": "python",
+      "args": [
+        "scripts/flowguard_project_topology.py",
+        "check"
+      ],
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "durationMs": 420,
+      "stdout": "{\r\n  \"findings\": [],\r\n  \"json_path\": \"docs/flowguard_project_topology.json\",\r\n  \"layer_counts\": {\r\n    \"alignment_families\": 14,\r\n    \"code_surfaces\": 1068,\r\n    \"evidence_summaries\": 5,\r\n    \"known_bad_signals\": 2595,\r\n    \"models\": 154,\r\n    \"test_commands\": 452\r\n  },\r\n  \"markdown_path\": \"docs/flowguard_project_topology.md\",\r\n  \"ok\": true,\r\n  \"source_count\": 1038\r\n}\r\n",
+      "stderr": ""
+    },
+    {
+      "id": "check.install.sync_repo_owned",
+      "kind": "command",
+      "required": true,
+      "covers": [
+        "req.flowpilot_prompt_boundary_policy.host_neutral_isolated_surface"
+      ],
+      "status": "passed",
+      "command": "python",
+      "args": [
+        "scripts/install_flowpilot.py",
+        "--sync-repo-owned",
+        "--json",
+        "--skip-self-check"
+      ],
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "durationMs": 1587,
+      "stdout": "{\r\n  \"dependencies\": [\r\n    {\r\n      \"companion\": false,\r\n      \"installed\": true,\r\n      \"installed_digest\": \"17df5aff11a953a05270b4454c08604f6165e1b9988759b0815435a53b9096e0\",\r\n      \"name\": \"flowpilot\",\r\n      \"ok\": true,\r\n      \"path\": \"C:\\\\Users\\\\liu_y\\\\.codex\\\\skills\\\\flowpilot\",\r\n      \"required\": true,\r\n      \"source_digest\": \"17df5aff11a953a05270b4454c08604f6165e1b9988759b0815435a53b9096e0\",\r\n      \"source_fresh\": true,\r\n      \"source_path\": \"C:\\\\Users\\\\liu_y\\\\Documents\\\\FlowGuardProjectAutopilot_20260430\\\\skills\\\\flowpilot\",\r\n      \"type\": \"codex_skill\"\r\n    },\r\n    {\r\n      \"SCHEMA_VERSION\": \"1.0\",\r\n      \"companion\": false,\r\n      \"module\": \"flowguard\",\r\n      \"name\": \"flowguard\",\r\n      \"ok\": true,\r\n      \"path\": \"C:\\\\Users\\\\liu_y\\\\Documents\\\\FlowGuard_20260427\\\\flowguard\\\\__init__.py\",\r\n      \"required\": true,\r\n      \"type\": \"python_package\"\r\n    },\r\n    {\r\n      \"companion\": false,\r\n      \"installed\": true,\r\n      \"name\": \"model-first-function-flow\",\r\n      \"ok\": true,\r\n      \"path\": \"C:\\\\Users\\\\liu_y\\\\.codex\\\\skills\\\\model-first-function-flow\",\r\n      \"required\": true,\r\n      \"type\": \"codex_skill\"\r\n    },\r\n    {\r\n      \"companion\": true,\r\n      \"installed\": true,\r\n      \"name\": \"autonomous-concept-ui-redesign\",\r\n      \"ok\": true,\r\n      \"path\": \"C:\\\\Users\\\\liu_y\\\\.codex\\\\skills\\\\autonomous-concept-ui-redesign\",\r\n      \"required\": false,\r\n      \"type\": \"codex_skill\"\r\n    }\r\n  ],\r\n  \"dependency_policy\": {\r\n    \"optional\": [\r\n      \"autonomous-concept-ui-redesign\"\r\n    ],\r\n    \"optional_codex_skills\": [\r\n      \"autonomous-concept-ui-redesign\"\r\n    ],\r\n    \"policy\": \"Missing required Codex skills are installed with --install-missing. Missing FlowGuard is installed only when --install-flowguard explicitly authorizes Python environment changes. Optional UI companions are skipped unless --include-optional is used.\",\r\n    \"required\": [\r\n      \"flowpilot\",\r\n      \"flowguard\",\r\n      \"model-first-function-flow\"\r\n    ],\r\n    \"required_codex_skills\": [\r\n      \"flowpilot\",\r\n      \"model-first-function-flow\"\r\n    ],\r\n    \"required_python_packages\": [\r\n      \"flowguard\"\r\n    ]\r\n  },\r\n  \"host_capabilities\": [\r\n    {\r\n      \"available\": true,\r\n      \"detail\": \"Codex default provider found\",\r\n      \"id\": \"raster_image_generation\",\r\n      \"ok\": true,\r\n      \"path\": \"C:\\\\Users\\\\liu_y\\\\.codex\\\\skills\\\\.system\\\\imagegen\",\r\n      \"provider\": \"imagegen\",\r\n      \"provider_kind\": \"codex_skill\",\r\n      \"severity\": \"warning\",\r\n      \"type\": \"host_capability\"\r\n    }\r\n  ],\r\n  \"install_actions\": [\r\n    {\r\n      \"action\": \"already_fresh\",\r\n      \"name\": \"flowpilot\",\r\n      \"ok\": true,\r\n      \"path\": \"C:\\\\Users\\\\liu_y\\\\.codex\\\\skills\\\\flowpilot\"\r\n    }\r\n  ],\r\n  \"manifest\": \"C:\\\\Users\\\\liu_y\\\\Documents\\\\FlowGuardProjectAutopilot_20260430\\\\flowpilot.dependencies.json\",\r\n  \"ok\": true,\r\n  \"skills_root\": \"C:\\\\Users\\\\liu_y\\\\.codex\\\\skills\"\r\n}\r\n",
+      "stderr": ""
+    },
+    {
+      "id": "check.install.audit_sync",
+      "kind": "command",
+      "required": true,
+      "covers": [
+        "req.flowpilot_prompt_boundary_policy.validation_drift"
+      ],
+      "status": "passed",
+      "command": "python",
+      "args": [
+        "scripts/audit_local_install_sync.py",
+        "--json"
+      ],
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "durationMs": 1715,
+      "stdout": "{\r\n  \"checks\": [\r\n    {\r\n      \"name\": \"repo_owned_skill_fresh:flowpilot\",\r\n      \"ok\": true,\r\n      \"path\": \"C:\\\\Users\\\\liu_y\\\\.codex\\\\skills\\\\flowpilot\",\r\n      \"severity\": \"error\",\r\n      \"source_path\": \"C:\\\\Users\\\\liu_y\\\\Documents\\\\FlowGuardProjectAutopilot_20260430\\\\skills\\\\flowpilot\"\r\n    },\r\n    {\r\n      \"duplicates\": {},\r\n      \"name\": \"installed_skill_names_unique\",\r\n      \"ok\": true,\r\n      \"severity\": \"error\"\r\n    },\r\n    {\r\n      \"count\": 3641,\r\n      \"name\": \"git_tracked_files_available\",\r\n      \"ok\": true,\r\n      \"severity\": \"error\"\r\n    },\r\n    {\r\n      \"expected_absent\": [\r\n        \"flowpilot_cockpit\",\r\n        \"tests/test_flowpilot_cockpit_i18n.py\",\r\n        \"tests/test_flowpilot_cockpit_state_reader.py\"\r\n      ],\r\n      \"name\": \"unsupported_cockpit_source_not_tracked\",\r\n      \"ok\": true,\r\n      \"present\": [],\r\n      \"severity\": \"error\"\r\n    },\r\n    {\r\n      \"name\": \"unsupported_cockpit_source_absent_from_main_tree\",\r\n      \"ok\": true,\r\n      \"present\": [],\r\n      \"severity\": \"error\"\r\n    },\r\n    {\r\n      \"expected_absent\": [\r\n        \"docs/external_watchdog_loop_findings.md\",\r\n        \"scripts/flowpilot_busy_lease.py\",\r\n        \"scripts/flowpilot_global_supervisor.py\",\r\n        \"scripts/flowpilot_run_with_busy_lease.py\",\r\n        \"scripts/flowpilot_watchdog.py\",\r\n        \"scripts/register_windows_watchdog_task.ps1\",\r\n        \"templates/flowpilot/watchdog/watchdog.template.json\"\r\n      ],\r\n      \"name\": \"unsupported_watchdog_supervisor_sources_absent_from_main_tree\",\r\n      \"ok\": true,\r\n      \"present\": [],\r\n      \"severity\": \"error\"\r\n    }\r\n  ],\r\n  \"dependencies\": [\r\n    {\r\n      \"companion\": false,\r\n      \"installed\": true,\r\n      \"installed_digest\": \"17df5aff11a953a05270b4454c08604f6165e1b9988759b0815435a53b9096e0\",\r\n      \"name\": \"flowpilot\",\r\n      \"ok\": true,\r\n      \"path\": \"C:\\\\Users\\\\liu_y\\\\.codex\\\\skills\\\\flowpilot\",\r\n      \"required\": true,\r\n      \"source_digest\": \"17df5aff11a953a05270b4454c08604f6165e1b9988759b0815435a53b9096e0\",\r\n      \"source_fresh\": true,\r\n      \"source_path\": \"C:\\\\Users\\\\liu_y\\\\Documents\\\\FlowGuardProjectAutopilot_20260430\\\\skills\\\\flowpilot\",\r\n      \"type\": \"codex_skill\"\r\n    },\r\n    {\r\n      \"SCHEMA_VERSION\": \"1.0\",\r\n      \"companion\": false,\r\n      \"module\": \"flowguard\",\r\n      \"name\": \"flowguard\",\r\n      \"ok\": true,\r\n      \"path\": \"C:\\\\Users\\\\liu_y\\\\Documents\\\\FlowGuard_20260427\\\\flowguard\\\\__init__.py\",\r\n      \"required\": true,\r\n      \"type\": \"python_package\"\r\n    },\r\n    {\r\n      \"companion\": false,\r\n      \"installed\": true,\r\n      \"name\": \"model-first-function-flow\",\r\n      \"ok\": true,\r\n      \"path\": \"C:\\\\Users\\\\liu_y\\\\.codex\\\\skills\\\\model-first-function-flow\",\r\n      \"required\": true,\r\n      \"type\": \"codex_skill\"\r\n    },\r\n    {\r\n      \"companion\": true,\r\n      \"installed\": true,\r\n      \"name\": \"autonomous-concept-ui-redesign\",\r\n      \"ok\": true,\r\n      \"path\": \"C:\\\\Users\\\\liu_y\\\\.codex\\\\skills\\\\autonomous-concept-ui-redesign\",\r\n      \"required\": false,\r\n      \"type\": \"codex_skill\"\r\n    }\r\n  ],\r\n  \"ok\": true,\r\n  \"repo_root\": \"C:\\\\Users\\\\liu_y\\\\Documents\\\\FlowGuardProjectAutopilot_20260430\",\r\n  \"skills_root\": \"C:\\\\Users\\\\liu_y\\\\.codex\\\\skills\"\r\n}\r\n",
+      "stderr": ""
+    },
+    {
+      "id": "check.install.installed_skill",
+      "kind": "command",
+      "required": true,
+      "covers": [
+        "req.flowpilot_prompt_boundary_policy.host_neutral_isolated_surface"
+      ],
+      "status": "passed",
+      "command": "python",
+      "args": [
+        "scripts/install_flowpilot.py",
+        "--check",
+        "--json"
+      ],
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "durationMs": 1429,
+      "stdout": "{\r\n  \"dependencies\": [\r\n    {\r\n      \"companion\": false,\r\n      \"installed\": true,\r\n      \"installed_digest\": \"17df5aff11a953a05270b4454c08604f6165e1b9988759b0815435a53b9096e0\",\r\n      \"name\": \"flowpilot\",\r\n      \"ok\": true,\r\n      \"path\": \"C:\\\\Users\\\\liu_y\\\\.codex\\\\skills\\\\flowpilot\",\r\n      \"required\": true,\r\n      \"source_digest\": \"17df5aff11a953a05270b4454c08604f6165e1b9988759b0815435a53b9096e0\",\r\n      \"source_fresh\": true,\r\n      \"source_path\": \"C:\\\\Users\\\\liu_y\\\\Documents\\\\FlowGuardProjectAutopilot_20260430\\\\skills\\\\flowpilot\",\r\n      \"type\": \"codex_skill\"\r\n    },\r\n    {\r\n      \"SCHEMA_VERSION\": \"1.0\",\r\n      \"companion\": false,\r\n      \"module\": \"flowguard\",\r\n      \"name\": \"flowguard\",\r\n      \"ok\": true,\r\n      \"path\": \"C:\\\\Users\\\\liu_y\\\\Documents\\\\FlowGuard_20260427\\\\flowguard\\\\__init__.py\",\r\n      \"required\": true,\r\n      \"type\": \"python_package\"\r\n    },\r\n    {\r\n      \"companion\": false,\r\n      \"installed\": true,\r\n      \"name\": \"model-first-function-flow\",\r\n      \"ok\": true,\r\n      \"path\": \"C:\\\\Users\\\\liu_y\\\\.codex\\\\skills\\\\model-first-function-flow\",\r\n      \"required\": true,\r\n      \"type\": \"codex_skill\"\r\n    },\r\n    {\r\n      \"companion\": true,\r\n      \"installed\": true,\r\n      \"name\": \"autonomous-concept-ui-redesign\",\r\n      \"ok\": true,\r\n      \"path\": \"C:\\\\Users\\\\liu_y\\\\.codex\\\\skills\\\\autonomous-concept-ui-redesign\",\r\n      \"required\": false,\r\n      \"type\": \"codex_skill\"\r\n    }\r\n  ],\r\n  \"dependency_policy\": {\r\n    \"optional\": [\r\n      \"autonomous-concept-ui-redesign\"\r\n    ],\r\n    \"optional_codex_skills\": [\r\n      \"autonomous-concept-ui-redesign\"\r\n    ],\r\n    \"policy\": \"Missing required Codex skills are installed with --install-missing. Missing FlowGuard is installed only when --install-flowguard explicitly authorizes Python environment changes. Optional UI companions are skipped unless --include-optional is used.\",\r\n    \"required\": [\r\n      \"flowpilot\",\r\n      \"flowguard\",\r\n      \"model-first-function-flow\"\r\n    ],\r\n    \"required_codex_skills\": [\r\n      \"flowpilot\",\r\n      \"model-first-function-flow\"\r\n    ],\r\n    \"required_python_packages\": [\r\n      \"flowguard\"\r\n    ]\r\n  },\r\n  \"host_capabilities\": [\r\n    {\r\n      \"available\": true,\r\n      \"detail\": \"Codex default provider found\",\r\n      \"id\": \"raster_image_generation\",\r\n      \"ok\": true,\r\n      \"path\": \"C:\\\\Users\\\\liu_y\\\\.codex\\\\skills\\\\.system\\\\imagegen\",\r\n      \"provider\": \"imagegen\",\r\n      \"provider_kind\": \"codex_skill\",\r\n      \"severity\": \"warning\",\r\n      \"type\": \"host_capability\"\r\n    }\r\n  ],\r\n  \"install_actions\": [],\r\n  \"manifest\": \"C:\\\\Users\\\\liu_y\\\\Documents\\\\FlowGuardProjectAutopilot_20260430\\\\flowpilot.dependencies.json\",\r\n  \"ok\": true,\r\n  \"skills_root\": \"C:\\\\Users\\\\liu_y\\\\.codex\\\\skills\"\r\n}\r\n",
+      "stderr": ""
+    },
+    {
+      "id": "check.install.self_check",
+      "kind": "command",
+      "required": true,
+      "covers": [
+        "req.flowpilot_prompt_boundary_policy.host_neutral_isolated_surface",
+        "req.flowpilot_prompt_boundary_policy.validation_drift"
+      ],
+      "status": "passed",
+      "command": "python",
+      "args": [
+        "scripts/check_install.py",
+        "--json"
+      ],
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "durationMs": 1756,
+      "stdout": "{\r\n  \"checks\": [\r\n    {\r\n      \"name\": \"flowguard_import\",\r\n      \"ok\": true,\r\n      \"schema_version\": \"1.0\"\r\n    },\r\n    {\r\n      \"name\": \"file:README.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:CHANGELOG.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:VERSION\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:AGENTS.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:HANDOFF.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:pytest.ini\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/complete-black-box-flowpilot-system/proposal.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/complete-black-box-flowpilot-system/design.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/complete-black-box-flowpilot-system/tasks.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/complete-black-box-flowpilot-system/specs/complete-black-box-flowpilot-system/spec.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/complete-black-box-flowpilot-system/specs/flowpilot-maintenance-ideal-state/spec.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/complete-black-box-flowpilot-system/specs/historical-live-run-replay-package-suite/spec.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/complete-black-box-flowpilot-system/specs/interactive-startup-intake/spec.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/complete-black-box-flowpilot-system/specs/multiround-fake-ai-control-rehearsal/spec.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/complete-black-box-flowpilot-system/specs/runtime-ledger-persistence/spec.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/generate-new-flowpilot-formal-entrypoint/proposal.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/generate-new-flowpilot-formal-entrypoint/design.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/generate-new-flowpilot-formal-entrypoint/tasks.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/generate-new-flowpilot-formal-entrypoint/specs/new-flowpilot-formal-entrypoint/spec.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/unify-new-flowpilot-work-packet-lifecycle/proposal.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/unify-new-flowpilot-work-packet-lifecycle/design.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/unify-new-flowpilot-work-packet-lifecycle/tasks.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/unify-new-flowpilot-work-packet-lifecycle/specs/new-flowpilot-formal-entrypoint/spec.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/harden-flowpilot-enum-prompts-and-run-evidence/proposal.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/harden-flowpilot-enum-prompts-and-run-evidence/design.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/harden-flowpilot-enum-prompts-and-run-evidence/tasks.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/harden-flowpilot-enum-prompts-and-run-evidence/specs/flowpilot-prompt-boundary-policy/spec.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/harden-flowpilot-enum-prompts-and-run-evidence/specs/flowguard-background-observability/spec.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/restore-recursive-route-execution-runtime/proposal.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/restore-recursive-route-execution-runtime/design.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/restore-recursive-route-execution-runtime/tasks.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n     \n...[truncated]",
+      "stderr": ""
+    }
+  ]
+}

@@ -28,6 +28,7 @@ VALID_LIFECYCLE_RESUME_STALE_DUTY_BLOCK = "valid_lifecycle_resume_stale_duty_blo
 VALID_CONTROLLER_LEDGER_RECEIPT_METADATA = "valid_controller_ledger_receipt_metadata"
 VALID_STARTUP_INTAKE_LEDGER_RETURN_PROMPT = "valid_startup_intake_ledger_return_prompt"
 VALID_WORK_ITEM_ACK_CONTINUES_TO_OUTPUT = "valid_work_item_ack_continues_to_output"
+VALID_RUNTIME_DISPOSITION_ROLE_SURFACE_BINDING = "valid_runtime_disposition_role_surface_binding"
 
 DAEMON_PROMPT_PREFERS_RUN_UNTIL_WAIT = "daemon_prompt_prefers_run_until_wait"
 LIFECYCLE_RESUME_CONTINUES_ROUTER_LOOP = "lifecycle_resume_continues_router_loop"
@@ -38,6 +39,9 @@ MISSING_STARTUP_PHASE_SPLIT = "missing_startup_phase_split"
 CONTROLLER_LEDGER_METADATA_USES_APPLY = "controller_ledger_metadata_uses_apply"
 STARTUP_INTAKE_PROMPT_DIRECT_APPLY = "startup_intake_prompt_direct_apply"
 WORK_ITEM_ACK_STOPS_BEFORE_OUTPUT = "work_item_ack_stops_before_output"
+REUSE_ASSIGNMENT_OPENS_FRESH_SURFACE = "reuse_assignment_opens_fresh_surface"
+ROLE_WORK_RUNS_IN_CONTROLLER_FOREGROUND = "role_work_runs_in_controller_foreground"
+CODEX_ONLY_ROLE_SURFACE_REQUIRED = "codex_only_role_surface_required"
 
 VALID_SCENARIOS = (
     VALID_DAEMON_LEDGER_PROMPT_SET,
@@ -47,6 +51,7 @@ VALID_SCENARIOS = (
     VALID_CONTROLLER_LEDGER_RECEIPT_METADATA,
     VALID_STARTUP_INTAKE_LEDGER_RETURN_PROMPT,
     VALID_WORK_ITEM_ACK_CONTINUES_TO_OUTPUT,
+    VALID_RUNTIME_DISPOSITION_ROLE_SURFACE_BINDING,
 )
 NEGATIVE_SCENARIOS = (
     DAEMON_PROMPT_PREFERS_RUN_UNTIL_WAIT,
@@ -58,6 +63,9 @@ NEGATIVE_SCENARIOS = (
     CONTROLLER_LEDGER_METADATA_USES_APPLY,
     STARTUP_INTAKE_PROMPT_DIRECT_APPLY,
     WORK_ITEM_ACK_STOPS_BEFORE_OUTPUT,
+    REUSE_ASSIGNMENT_OPENS_FRESH_SURFACE,
+    ROLE_WORK_RUNS_IN_CONTROLLER_FOREGROUND,
+    CODEX_ONLY_ROLE_SURFACE_REQUIRED,
 )
 SCENARIOS = VALID_SCENARIOS + NEGATIVE_SCENARIOS
 
@@ -71,6 +79,9 @@ EXPECTED_REJECTIONS = {
     CONTROLLER_LEDGER_METADATA_USES_APPLY: "controller_ledger_metadata_confuses_apply_with_receipt",
     STARTUP_INTAKE_PROMPT_DIRECT_APPLY: "startup_intake_prompt_bypasses_daemon_work_board",
     WORK_ITEM_ACK_STOPS_BEFORE_OUTPUT: "work_item_ack_treated_as_completion",
+    REUSE_ASSIGNMENT_OPENS_FRESH_SURFACE: "reuse_assignment_opens_fresh_surface",
+    ROLE_WORK_RUNS_IN_CONTROLLER_FOREGROUND: "role_work_runs_in_controller_foreground",
+    CODEX_ONLY_ROLE_SURFACE_REQUIRED: "codex_only_role_surface_required",
 }
 
 
@@ -119,6 +130,16 @@ class State:
     work_item_submission_to_router_required: bool = False
     work_item_unfinished_until_router_output: bool = False
     work_item_ack_treated_as_completion: bool = False
+    role_assignment_disposition_table_present: bool = False
+    reuse_uses_effective_agent_surface: bool = False
+    reuse_opens_fresh_surface: bool = False
+    create_new_requires_runtime_surface_request: bool = False
+    blocked_role_dispatch_stops_or_recovers: bool = False
+    role_work_inside_isolated_ai_surface: bool = False
+    controller_foreground_role_work_allowed: bool = False
+    host_neutral_surface_terms_present: bool = False
+    codex_specific_surface_required: bool = False
+    unreachable_reuse_surface_routes_recovery: bool = False
     rejection_reason: str = "none"
 
 
@@ -293,6 +314,26 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         )
         return
 
+    if state.scenario == VALID_RUNTIME_DISPOSITION_ROLE_SURFACE_BINDING:
+        yield Transition(
+            f"accept_{VALID_RUNTIME_DISPOSITION_ROLE_SURFACE_BINDING}",
+            replace(
+                state,
+                status="accepted",
+                role_assignment_disposition_table_present=True,
+                reuse_uses_effective_agent_surface=True,
+                reuse_opens_fresh_surface=False,
+                create_new_requires_runtime_surface_request=True,
+                blocked_role_dispatch_stops_or_recovers=True,
+                role_work_inside_isolated_ai_surface=True,
+                controller_foreground_role_work_allowed=False,
+                host_neutral_surface_terms_present=True,
+                codex_specific_surface_required=False,
+                unreachable_reuse_surface_routes_recovery=True,
+            ),
+        )
+        return
+
     if state.scenario in EXPECTED_REJECTIONS:
         updates = {"status": "rejected", "rejection_reason": EXPECTED_REJECTIONS[state.scenario]}
         if state.scenario == DAEMON_PROMPT_PREFERS_RUN_UNTIL_WAIT:
@@ -332,6 +373,26 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 work_item_submission_to_router_required=False,
                 work_item_unfinished_until_router_output=False,
                 work_item_ack_treated_as_completion=True,
+            )
+        elif state.scenario == REUSE_ASSIGNMENT_OPENS_FRESH_SURFACE:
+            updates.update(
+                role_assignment_disposition_table_present=True,
+                reuse_uses_effective_agent_surface=False,
+                reuse_opens_fresh_surface=True,
+                host_neutral_surface_terms_present=True,
+            )
+        elif state.scenario == ROLE_WORK_RUNS_IN_CONTROLLER_FOREGROUND:
+            updates.update(
+                role_assignment_disposition_table_present=True,
+                role_work_inside_isolated_ai_surface=False,
+                controller_foreground_role_work_allowed=True,
+            )
+        elif state.scenario == CODEX_ONLY_ROLE_SURFACE_REQUIRED:
+            updates.update(
+                role_assignment_disposition_table_present=True,
+                role_work_inside_isolated_ai_surface=True,
+                host_neutral_surface_terms_present=False,
+                codex_specific_surface_required=True,
             )
         yield Transition(f"reject_{state.scenario}", replace(state, **updates))
         return
@@ -437,6 +498,31 @@ def accepted_work_item_ack_prompts_continue_to_router_output(state: State, _trac
     return InvariantResult.pass_()
 
 
+def accepted_role_surface_dispatch_is_runtime_disposition_driven(state: State, _trace) -> InvariantResult:
+    if state.status == "accepted" and state.scenario == VALID_RUNTIME_DISPOSITION_ROLE_SURFACE_BINDING:
+        if not state.role_assignment_disposition_table_present:
+            return InvariantResult.fail("accepted role-surface prompt lacks runtime disposition table")
+        if not state.reuse_uses_effective_agent_surface:
+            return InvariantResult.fail("accepted reuse prompt does not target effective_agent_id surface")
+        if state.reuse_opens_fresh_surface:
+            return InvariantResult.fail("accepted reuse prompt opens a fresh surface")
+        if not state.create_new_requires_runtime_surface_request:
+            return InvariantResult.fail("accepted create-new prompt lacks runtime surface request gate")
+        if not state.blocked_role_dispatch_stops_or_recovers:
+            return InvariantResult.fail("accepted blocked dispatch does not route to blocker or recovery")
+        if not state.role_work_inside_isolated_ai_surface:
+            return InvariantResult.fail("accepted role prompt does not require isolated AI execution surface")
+        if state.controller_foreground_role_work_allowed:
+            return InvariantResult.fail("accepted role prompt allows Controller foreground role work")
+        if not state.host_neutral_surface_terms_present:
+            return InvariantResult.fail("accepted role prompt lacks host-neutral surface terms")
+        if state.codex_specific_surface_required:
+            return InvariantResult.fail("accepted role prompt requires a Codex-specific surface")
+        if not state.unreachable_reuse_surface_routes_recovery:
+            return InvariantResult.fail("accepted role prompt lacks unreachable-reuse recovery/blocker path")
+    return InvariantResult.pass_()
+
+
 def negative_scenarios_rejected(state: State, _trace) -> InvariantResult:
     if state.scenario in NEGATIVE_SCENARIOS and state.status == "accepted":
         return InvariantResult.fail(f"known-bad prompt scenario was accepted: {state.scenario}")
@@ -489,6 +575,11 @@ INVARIANTS = (
         name="accepted_work_item_ack_prompts_continue_to_router_output",
         description="Work-card and packet ACK prompts continue to Router-directed output submission instead of stopping at ACK.",
         predicate=accepted_work_item_ack_prompts_continue_to_router_output,
+    ),
+    Invariant(
+        name="accepted_role_surface_dispatch_is_runtime_disposition_driven",
+        description="Role-surface prompts obey runtime dispositions, host-neutral isolated AI surfaces, and recovery/blocker boundaries.",
+        predicate=accepted_role_surface_dispatch_is_runtime_disposition_driven,
     ),
     Invariant(
         name="negative_scenarios_rejected",

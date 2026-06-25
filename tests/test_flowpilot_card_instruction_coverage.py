@@ -183,6 +183,60 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
         self.assertIn("model-capability limits", text)
         self.assertIn("when such surfaces are available", text)
 
+    def test_role_surface_dispatch_is_runtime_disposition_driven(self) -> None:
+        def normalized(path: Path) -> str:
+            return " ".join(path.read_text(encoding="utf-8").lower().split())
+
+        skill = normalized(ROOT / "skills/flowpilot/SKILL.md")
+        protocol = normalized(ROOT / "skills/flowpilot/references/protocol.md")
+        failure_modes = normalized(ROOT / "skills/flowpilot/references/failure_modes.md")
+        lifecycle_resume = normalized(
+            ROOT / "skills/flowpilot/assets/runtime_kit/prompts/startup/lifecycle_resume.md"
+        )
+
+        for term in (
+            "reuse_existing_role",
+            "create_new_role",
+            "blocked",
+            "effective_agent_id",
+            "role_surface_required=true",
+            "do not open a fresh ai surface",
+            "runtime-provided `flowpilot_new.py dispatch-current-role` command",
+        ):
+            self.assertIn(term, skill)
+
+        for text in (skill, protocol, lifecycle_resume):
+            with self.subTest(surface="host-neutral"):
+                self.assertIn("host-supported", text)
+                self.assertIn("isolated", text)
+                self.assertIn("addressable ai execution surface", text)
+
+        for example in (
+            "background agent",
+            "separate thread",
+            "new conversation",
+            "worker",
+            "independent ai session",
+            "equivalent host-supported mechanism",
+        ):
+            self.assertIn(example, skill)
+            self.assertIn(example, lifecycle_resume)
+
+        self.assertIn("not in the controller foreground", skill)
+        self.assertIn("controller must not open role-only packets", skill)
+        self.assertIn("perform role work in the controller foreground", failure_modes)
+        self.assertIn("controller foreground role work", protocol)
+
+        for text in (protocol, failure_modes, lifecycle_resume):
+            self.assertIn("runtime-named", text)
+            self.assertIn("recovery", text)
+            self.assertIn("blocker", text)
+
+        self.assertIn("reuse_existing_role", failure_modes)
+        self.assertIn("fresh same-role ai execution surface", failure_modes)
+        self.assertIn("silent same-role replacement", protocol)
+        self.assertIn("unless the runtime explicitly authorizes replacement", lifecycle_resume)
+
     def test_authorized_result_body_guidance_requires_all_related_bodies(self) -> None:
         def normalized(path: Path) -> str:
             return " ".join(path.read_text(encoding="utf-8").lower().split())

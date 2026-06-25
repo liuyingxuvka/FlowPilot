@@ -42,6 +42,16 @@ def _state_id(state: model.State) -> str:
         f"router_submit:{state.work_item_submission_to_router_required},"
         f"unfinished:{state.work_item_unfinished_until_router_output},"
         f"ack_completion:{state.work_item_ack_treated_as_completion}|"
+        f"role_surface=disp:{state.role_assignment_disposition_table_present},"
+        f"reuse_effective:{state.reuse_uses_effective_agent_surface},"
+        f"reuse_fresh:{state.reuse_opens_fresh_surface},"
+        f"create_gate:{state.create_new_requires_runtime_surface_request},"
+        f"blocked_recover:{state.blocked_role_dispatch_stops_or_recovers},"
+        f"isolated:{state.role_work_inside_isolated_ai_surface},"
+        f"foreground_allowed:{state.controller_foreground_role_work_allowed},"
+        f"host_neutral:{state.host_neutral_surface_terms_present},"
+        f"codex_only:{state.codex_specific_surface_required},"
+        f"reuse_recovery:{state.unreachable_reuse_surface_routes_recovery}|"
         f"reason={state.rejection_reason}"
     )
 
@@ -185,8 +195,8 @@ def _run_flowguard_explorer() -> dict[str, object]:
 
 
 def _contains_all(text: str, terms: tuple[str, ...]) -> bool:
-    lower = text.lower()
-    return all(term.lower() in lower for term in terms)
+    lower = " ".join(text.lower().split())
+    return all(" ".join(term.lower().split()) in lower for term in terms)
 
 
 def _source_text(path: str) -> str:
@@ -210,6 +220,8 @@ def _actual_prompt_source_report() -> dict[str, object]:
     lifecycle_resume_prompt = _source_text(
         "skills/flowpilot/assets/runtime_kit/prompts/startup/lifecycle_resume.md"
     )
+    protocol = _source_text("skills/flowpilot/references/protocol.md")
+    failure_modes = _source_text("skills/flowpilot/references/failure_modes.md")
     router = _source_bundle(
         "skills/flowpilot/assets/flowpilot_router.py",
         "skills/flowpilot/assets/flowpilot_router_action_factory_envelope.py",
@@ -341,6 +353,125 @@ def _actual_prompt_source_report() -> dict[str, object]:
                 "work cards that ask for an output, report, decision",
                 "must not stop after ACK",
                 "unfinished until the current runtime receives",
+            ),
+        ),
+        "skill_dispatch_has_runtime_disposition_table": _contains_all(
+            skill,
+            (
+                "reuse_existing_role",
+                "create_new_role",
+                "blocked",
+                "effective_agent_id",
+                "role_surface_required=true",
+            ),
+        ),
+        "skill_dispatch_reuse_targets_existing_surface": _contains_all(
+            skill,
+            (
+                "existing host-supported isolated addressable AI execution surface",
+                "do not open a fresh AI surface",
+            ),
+        ),
+        "skill_dispatch_create_requires_runtime_command": _contains_all(
+            skill,
+            (
+                "runtime-provided `flowpilot_new.py dispatch-current-role` command",
+                "with that surface id",
+            ),
+        ),
+        "skill_dispatch_blocked_forbids_controller_foreground_role_work": _contains_all(
+            skill,
+            (
+                "For `blocked`, follow the blocker or recovery path",
+                "perform role work in the Controller foreground",
+            ),
+        ),
+        "skill_role_work_requires_addressed_isolated_surface": _contains_all(
+            skill,
+            (
+                "PM, reviewer, worker, FlowGuard operator",
+                "addressed isolated AI execution surface",
+                "not in the Controller foreground",
+                "Controller must not open role-only packets",
+            ),
+        ),
+        "skill_lists_host_neutral_surface_examples": _contains_all(
+            skill,
+            (
+                "background agents",
+                "separate threads",
+                "new conversations",
+                "workers",
+                "independent AI sessions",
+                "equivalent host-supported mechanisms",
+            ),
+        ),
+        "protocol_defines_host_neutral_ai_surface_binding": _contains_all(
+            protocol,
+            (
+                "runtime role identity bound",
+                "host-supported isolated addressable AI execution surface",
+                "background agent, separate thread, new conversation, worker, independent AI session",
+                "equivalent host-supported mechanism",
+            ),
+        ),
+        "protocol_unreachable_reuse_surface_routes_recovery": _contains_all(
+            protocol,
+            (
+                "runtime-named reuse surface",
+                "role reattachment/recovery evidence",
+                "silent same-role replacement",
+            ),
+        ),
+        "protocol_scheduled_role_unavailable_stops_not_foreground": _contains_all(
+            protocol,
+            (
+                "required host-supported isolated addressable AI execution surface",
+                "structured blocker and stops",
+                "Controller foreground role work",
+            ),
+        ),
+        "failure_modes_reject_fresh_surface_substitution": _contains_all(
+            failure_modes,
+            (
+                "Controller receives `reuse_existing_role`",
+                "opens a fresh same-role AI execution surface",
+                "reattachment, recovery, or blocker",
+            ),
+        ),
+        "failure_modes_manual_resume_blocks_without_isolated_surface": _contains_all(
+            failure_modes,
+            (
+                "required host-supported isolated addressable AI execution surface",
+                "record a blocker and stop",
+                "perform role work in the Controller foreground",
+            ),
+        ),
+        "lifecycle_resume_mentions_runtime_named_reuse_surface": _contains_all(
+            lifecycle_resume_prompt,
+            (
+                "runtime-named reuse binding",
+                "existing addressable AI execution surface",
+                "unless the runtime explicitly authorizes replacement",
+            ),
+        ),
+        "lifecycle_resume_uses_host_neutral_new_surface_terms": _contains_all(
+            lifecycle_resume_prompt,
+            (
+                "host-supported, isolated, addressable AI execution surface",
+                "background agent",
+                "separate thread",
+                "new conversation",
+                "worker",
+                "independent AI session",
+                "equivalent host-supported mechanism",
+            ),
+        ),
+        "lifecycle_resume_forbids_foreground_role_work": _contains_all(
+            lifecycle_resume_prompt,
+            (
+                "Do not read sealed packet/result/report bodies",
+                "perform role work in the foreground",
             ),
         ),
     }

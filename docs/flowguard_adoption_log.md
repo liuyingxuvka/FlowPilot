@@ -20362,6 +20362,58 @@ to identify unsupported historical-layer branches that should be deleted.
 ### Next Actions
 - Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
 
+
+## harden-isolated-role-surface-binding-20260625 - Harden runtime-disposition role surface binding
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: user asked to ensure FlowPilot reuses runtime-selected worker/reviewer/PM surfaces and that less capable AIs understand they must open an isolated AI surface, such as a background agent, new thread, new conversation, worker, independent AI session, or equivalent, instead of doing role work in the Controller foreground.
+- Status: completed_validated_installed_synced_local
+- Skill decision: predictive_kb_preflight + OpenSpec change + FlowGuard development process + prompt boundary model + install sync
+- Recorded: 2026-06-25T22:22:06+08:00
+- Commands OK: True
+
+### Model Files
+- `simulations/flowpilot_prompt_boundary_model.py`
+- `simulations/run_flowpilot_prompt_boundary_checks.py`
+- `simulations/flowpilot_prompt_boundary_results.json`
+- `simulations/meta_thin_parent_results.json`
+- `simulations/capability_thin_parent_results.json`
+- `docs/flowguard_project_topology.json`
+- `docs/flowguard_project_topology.md`
+
+### Commands
+- `python -m unittest tests.test_flowpilot_card_instruction_coverage` - 33 tests OK.
+- `python simulations/run_flowpilot_prompt_boundary_checks.py --json-out simulations/flowpilot_prompt_boundary_results.json` - ok true.
+- `python -m py_compile simulations/flowpilot_prompt_boundary_model.py simulations/run_flowpilot_prompt_boundary_checks.py tests/test_flowpilot_card_instruction_coverage.py` - passed.
+- `python simulations/run_meta_checks.py` - passed.
+- `python simulations/run_capability_checks.py` - passed.
+- `openspec verify harden-isolated-role-surface-binding --json` - passed.
+- `python scripts/flowguard_project_topology.py build` and `python scripts/flowguard_project_topology.py check` - no findings.
+- `python scripts/install_flowpilot.py --sync-repo-owned --json --skip-self-check`, `python scripts/audit_local_install_sync.py --json`, `python scripts/install_flowpilot.py --check --json`, and `python scripts/check_install.py --json` - passed.
+
+### Findings
+- Controller wording now delegates role-surface selection to runtime dispositions instead of letting Controller choose reuse or replacement on its own.
+- Host-neutral isolated surface language covers background agent, separate thread, new conversation, worker, independent AI session, or equivalent host-supported mechanism.
+- Reuse assignments require the runtime-named existing role identity and effective agent/surface id; missing or unavailable reuse surfaces become recovery evidence and blockers, not fresh same-role creation.
+- Controller foreground role work is explicitly forbidden unless the user selected or authorized single-agent continuity.
+- Prompt-boundary model and coverage tests now include negative scenarios for fresh replacement on reuse, Controller foreground role work, and Codex-only backend wording.
+
+### Counterexamples
+- A `reuse_existing_role` assignment opens a fresh same-role surface.
+- Required role work is performed in the Controller foreground after the user did not authorize single-agent continuity.
+- The prompt requires only a Codex background role and excludes other host-supported isolated AI surfaces.
+- A missing runtime-named reuse surface is silently replaced instead of recorded as recovery/blocker evidence.
+
+### Friction Points
+- The first verification contract accidentally included `openspec verify` for the same change, causing recursive verification processes; the contract was corrected to use `openspec validate` inside the contract and keep `openspec verify` as the outer command.
+- Because meta/capability checks refresh result files, topology build/check must run after those checks and before install self-check claims.
+
+### Skipped Steps
+- No compatibility shim, fallback translator, old-run migration, role-specific new ledger, external publication, release, deploy, or OpenSpec archive was performed.
+
+### Risk Evidence Summary
+- Evidence supports local source and installed FlowPilot prompt/protocol behavior for runtime-disposition-driven isolated role-surface binding. It does not claim live semantic quality for arbitrary hosts beyond the host-supported isolated surface contract, nor compatibility with historical unsupported role-assignment shapes.
+
 ## 2026-06-24 - Clean Authorized Materials Proof
 
 - Task: `prove-flowpilot-clean-authorized-materials`

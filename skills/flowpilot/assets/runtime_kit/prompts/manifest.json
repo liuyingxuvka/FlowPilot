@@ -13,7 +13,7 @@
     {
       "id": "startup.lifecycle_resume",
       "path": "prompts/startup/lifecycle_resume.md",
-      "sha256": "18c04df2525e9895a004156587fae55fe9704b0d021721aad6033b3ba339d720",
+      "sha256": "7d89a3a36fafe1515304fae33013290d88fd63d4ba1b8f78a23e62b898c98123",
       "strip_trailing_newline": true,
       "template_variables": [
         "project_root",

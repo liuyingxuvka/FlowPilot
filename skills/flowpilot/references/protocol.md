@@ -248,8 +248,12 @@ long-form public explanation lives in `docs/protocol.md`.
     verify each runtime-required binding was opened for this FlowPilot task
     after that user decision and after current route allocation, and verify
     none of its `agent_id` values comes from prior route ledgers or older
-    role-memory packets. If single-agent continuity is explicitly selected,
-    verify the explicit user authorization and do not claim live role bindings.
+    role-memory packets. A live role binding is a runtime role identity bound
+    to a host-supported isolated addressable AI execution surface, such as a
+    background agent, separate thread, new conversation, worker, independent AI
+    session, or equivalent host-supported mechanism. If single-agent continuity
+    is explicitly selected, verify the explicit user authorization and do not
+    claim live role bindings.
 
     The PM reads the mechanical audit. If it contains blockers, PM sends
     remediation items back to authorized workers through a PM packet and
@@ -741,15 +745,19 @@ Repeat until complete or blocked:
 2. Rehydrate runtime-required role identities and work memories before PM runway work.
    Stored agent ids may be resumed only when they belong to the same active
    FlowPilot task-born cohort and a bounded host liveness preflight confirms
-   them. A new formal FlowPilot task must create fresh
-   live role bindings instead of resuming prior-route IDs. If host role bindings are
-   missing, cancelled, unknown, or timeout-unknown, ask for the missing
-   startup/continuity decision when needed before replacing roles from memory.
-   Record resumed, replaced, seeded, blocked, liveness status, and
-   unavailable roles in a role rehydration report covering project manager and
-   the runtime-required role bindings. Do not lazily rehydrate a required role
-   only when it is first needed. Role continuity through persisted memory is
-   allowed only after explicit current-role-continuity approval.
+   the matching host-supported isolated addressable AI execution surface is
+   still addressable. A new formal FlowPilot task must create fresh live role
+   bindings instead of resuming prior-route IDs. If a runtime-named reuse
+   surface is missing, cancelled, unknown, or timeout-unknown after resume or
+   compaction, treat that as current role reattachment/recovery evidence rather
+   than permission for Controller to open a silent same-role replacement. Ask
+   for the missing startup/continuity decision when needed before replacing
+   roles from memory. Record resumed, replaced, seeded, blocked, liveness
+   status, and unavailable roles in a role rehydration report covering project
+   manager and the runtime-required role bindings. Do not lazily rehydrate a
+   required role only when it is first needed. Role continuity through
+   persisted memory is allowed only after explicit current-role-continuity
+   approval.
 3. Ask the rehydrated project manager for a completion-oriented runway from
    the current position to project completion. The runway names the current
    gate, downstream steps, hard-stop conditions, checkpoint cadence, and any PM
@@ -1039,9 +1047,10 @@ gate, action attempted, result, and updated completion guard. A resume turn
 that only writes "next I will..." is a no-progress failure.
 
 The current runtime does not create, repair, register, restart, or disable
-scheduled continuation automation. If host policy prevents the required background or
-parallel role surfaces, FlowPilot records a structured blocker and stops
-instead of switching to a non-background route.
+scheduled continuation automation. If host policy prevents the required
+host-supported isolated addressable AI execution surface for a runtime-requested
+role, FlowPilot records a structured blocker and stops instead of switching to
+Controller foreground role work or a single-agent route.
 
 On terminal closure, write terminal/inactive route state, write the inactive
 lifecycle snapshot back to `.flowpilot/runs/<run-id>/state.json` and
@@ -1190,7 +1199,8 @@ Conditional:
   child node. They cannot own the child node, route advancement, acceptance
   floor, checkpoint, or completion decision.
 - Reuse a suitable idle role binding before opening a new one. Open only on demand
-  when no idle binding fits and the task is worth the coordination cost.
+  when the runtime or current recovery path authorizes a new host-supported
+  isolated addressable AI execution surface and no idle binding fits.
 - helper reports require an authorized integration/review packet before
   dependent implementation, checkpoint, route advancement, or completion.
 

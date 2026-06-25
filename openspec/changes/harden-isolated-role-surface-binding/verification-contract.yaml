@@ -1,0 +1,188 @@
+contract_version: 1
+change: harden-isolated-role-surface-binding
+obligations:
+  - id: req.flowpilot_prompt_boundary_policy.runtime_disposition_dispatch
+    source: "specs/flowpilot-prompt-boundary-policy/spec.md#Requirement: Controller dispatch instructions are runtime-disposition driven"
+    claim: Controller-facing prompts execute runtime role-assignment dispositions mechanically and forbid fresh surfaces for reuse assignments.
+    required: true
+    evidence:
+      - check.prompt_boundary.unit_role_surface_dispatch
+      - check.flowguard.prompt_boundary
+  - id: req.flowpilot_prompt_boundary_policy.host_neutral_isolated_surface
+    source: "specs/flowpilot-prompt-boundary-policy/spec.md#Requirement: Role work uses host-neutral isolated AI execution surfaces"
+    claim: Active prompts require formal role work to run in a host-supported isolated addressable AI execution surface without Codex-only implementation requirements.
+    required: true
+    evidence:
+      - check.prompt_boundary.unit_role_surface_dispatch
+      - check.install.self_check
+  - id: req.flowpilot_prompt_boundary_policy.missing_reuse_surface_recovery
+    source: "specs/flowpilot-prompt-boundary-policy/spec.md#Requirement: Missing reuse surfaces are recovery or blocker conditions"
+    claim: Prompt and protocol surfaces classify unreachable reuse surfaces as recovery/blocker conditions unless runtime authorizes replacement.
+    required: true
+    evidence:
+      - check.prompt_boundary.unit_role_surface_dispatch
+      - check.flowguard.prompt_boundary
+  - id: req.flowpilot_prompt_boundary_policy.validation_drift
+    source: "specs/flowpilot-prompt-boundary-policy/spec.md#Requirement: Prompt-boundary validation covers isolated-surface drift"
+    claim: Focused validation fails prompt drift toward Controller role work, Codex-only role surfaces, or fresh-surface creation during reuse.
+    required: true
+    evidence:
+      - check.prompt_boundary.unit_role_surface_dispatch
+      - check.flowguard.prompt_boundary
+      - check.flowguard.topology_check
+      - check.install.audit_sync
+checks:
+  - id: check.openspec.validate
+    kind: command
+    command: openspec
+    args:
+      - validate
+      - harden-isolated-role-surface-binding
+      - --strict
+      - --no-interactive
+    required: true
+    covers:
+      - req.flowpilot_prompt_boundary_policy.runtime_disposition_dispatch
+      - req.flowpilot_prompt_boundary_policy.host_neutral_isolated_surface
+      - req.flowpilot_prompt_boundary_policy.missing_reuse_surface_recovery
+      - req.flowpilot_prompt_boundary_policy.validation_drift
+    expected:
+      exit_code: 0
+  - id: check.prompt_boundary.unit_role_surface_dispatch
+    kind: command
+    command: python
+    args:
+      - -m
+      - unittest
+      - tests.test_flowpilot_card_instruction_coverage.FlowPilotCardInstructionCoverageTests.test_role_surface_dispatch_is_runtime_disposition_driven
+    required: true
+    covers:
+      - req.flowpilot_prompt_boundary_policy.runtime_disposition_dispatch
+      - req.flowpilot_prompt_boundary_policy.host_neutral_isolated_surface
+      - req.flowpilot_prompt_boundary_policy.missing_reuse_surface_recovery
+      - req.flowpilot_prompt_boundary_policy.validation_drift
+    expected:
+      exit_code: 0
+  - id: check.flowguard.prompt_boundary
+    kind: command
+    command: python
+    args:
+      - simulations/run_flowpilot_prompt_boundary_checks.py
+      - --json-out
+      - simulations/flowpilot_prompt_boundary_results.json
+    required: true
+    covers:
+      - req.flowpilot_prompt_boundary_policy.runtime_disposition_dispatch
+      - req.flowpilot_prompt_boundary_policy.missing_reuse_surface_recovery
+      - req.flowpilot_prompt_boundary_policy.validation_drift
+    expected:
+      exit_code: 0
+  - id: check.flowguard.meta
+    kind: command
+    command: python
+    args:
+      - simulations/run_meta_checks.py
+    required: true
+    covers:
+      - req.flowpilot_prompt_boundary_policy.host_neutral_isolated_surface
+    expected:
+      exit_code: 0
+  - id: check.flowguard.capability
+    kind: command
+    command: python
+    args:
+      - simulations/run_capability_checks.py
+    required: true
+    covers:
+      - req.flowpilot_prompt_boundary_policy.host_neutral_isolated_surface
+    expected:
+      exit_code: 0
+  - id: check.flowguard.topology_build
+    kind: command
+    command: python
+    args:
+      - scripts/flowguard_project_topology.py
+      - build
+    required: true
+    covers:
+      - req.flowpilot_prompt_boundary_policy.host_neutral_isolated_surface
+      - req.flowpilot_prompt_boundary_policy.validation_drift
+    expected:
+      exit_code: 0
+  - id: check.flowguard.topology_check
+    kind: command
+    command: python
+    args:
+      - scripts/flowguard_project_topology.py
+      - check
+    required: true
+    covers:
+      - req.flowpilot_prompt_boundary_policy.host_neutral_isolated_surface
+      - req.flowpilot_prompt_boundary_policy.validation_drift
+    expected:
+      exit_code: 0
+  - id: check.install.sync_repo_owned
+    kind: command
+    command: python
+    args:
+      - scripts/install_flowpilot.py
+      - --sync-repo-owned
+      - --json
+      - --skip-self-check
+    required: true
+    covers:
+      - req.flowpilot_prompt_boundary_policy.host_neutral_isolated_surface
+    expected:
+      exit_code: 0
+  - id: check.install.audit_sync
+    kind: command
+    command: python
+    args:
+      - scripts/audit_local_install_sync.py
+      - --json
+    required: true
+    covers:
+      - req.flowpilot_prompt_boundary_policy.validation_drift
+    expected:
+      exit_code: 0
+  - id: check.install.installed_skill
+    kind: command
+    command: python
+    args:
+      - scripts/install_flowpilot.py
+      - --check
+      - --json
+    required: true
+    covers:
+      - req.flowpilot_prompt_boundary_policy.host_neutral_isolated_surface
+    expected:
+      exit_code: 0
+  - id: check.install.self_check
+    kind: command
+    command: python
+    args:
+      - scripts/check_install.py
+      - --json
+    required: true
+    covers:
+      - req.flowpilot_prompt_boundary_policy.host_neutral_isolated_surface
+      - req.flowpilot_prompt_boundary_policy.validation_drift
+    expected:
+      exit_code: 0
+freshness:
+  watch:
+    - openspec/changes/harden-isolated-role-surface-binding/proposal.md
+    - openspec/changes/harden-isolated-role-surface-binding/design.md
+    - openspec/changes/harden-isolated-role-surface-binding/tasks.md
+    - openspec/changes/harden-isolated-role-surface-binding/specs/**/*.md
+    - openspec/changes/harden-isolated-role-surface-binding/verification-contract.yaml
+    - skills/flowpilot/SKILL.md
+    - skills/flowpilot/references/protocol.md
+    - skills/flowpilot/references/failure_modes.md
+    - skills/flowpilot/assets/runtime_kit/prompts/startup/lifecycle_resume.md
+    - tests/test_flowpilot_card_instruction_coverage.py
+    - simulations/flowpilot_prompt_boundary_model.py
+    - simulations/run_flowpilot_prompt_boundary_checks.py
+    - scripts/install_flowpilot.py
+    - scripts/audit_local_install_sync.py
+    - scripts/check_install.py
