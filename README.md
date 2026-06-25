@@ -15,7 +15,7 @@
 </p>
 
 <p align="center">
-  Source version: <strong>v0.10.21</strong> · MIT License · open-source AI-agent control runtime
+  Source version: <strong>v0.10.22</strong> · MIT License · open-source AI-agent control runtime
 </p>
 <!-- README HERO END -->
 
@@ -126,7 +126,7 @@ In plain language:
 
 | Field | Value |
 | --- | --- |
-| Source version | `v0.10.21` |
+| Source version | `v0.10.22` |
 | Public project name | `FlowPilot` |
 | Skill slug | `flowpilot` |
 | Release shape | Source package only, no binary app bundle |
@@ -134,7 +134,7 @@ In plain language:
 | Required core dependency | Real `flowguard` Python package |
 | Current UI surface | Windows WPF startup intake dialog plus chat route signs |
 
-`v0.10.21` hardens startup quality so a short "start FlowPilot" request still becomes normal high-quality current-run project work. PM startup intake now carries the strongest reasonable product target, acceptance evidence, and proof-oriented planning into product architecture and route drafting. Product architecture, route skeleton, node acceptance, packet/result templates, and Reviewer route challenge preserve that quality floor without adding new fields, launch modes, fallback paths, or role-facing rehearsal labels.
+`v0.10.22` hardens role dispatch so Controller follows the runtime's reuse, create-new, or blocked role-surface disposition. FlowPilot now describes required role work through host-supported isolated AI execution surfaces, including background agents, separate threads, new conversations, workers, independent AI sessions, or equivalent host mechanisms, and blocks instead of letting Controller perform PM, worker, reviewer, or FlowGuard-operator work in the foreground unless the user explicitly authorizes single-agent continuity.
 
 ## When To Use FlowPilot
 
@@ -229,7 +229,7 @@ MIT. See [`LICENSE`](./LICENSE).
 
 # FlowPilot 中文说明
 
-**Source version:** `v0.10.21`<br />
+**Source version:** `v0.10.22`<br />
 **许可证：** MIT<br />
 **形态：** open-source AI-agent control runtime
 
@@ -338,7 +338,7 @@ startup intake
 
 | 字段 | 值 |
 | --- | --- |
-| Source version | `v0.10.21` |
+| Source version | `v0.10.22` |
 | Public project name | `FlowPilot` |
 | Skill slug | `flowpilot` |
 | Release shape | source package only, no binary app bundle |
@@ -346,7 +346,7 @@ startup intake
 | Required core dependency | real `flowguard` Python package |
 | Current UI surface | Windows WPF startup intake dialog plus chat route signs |
 
-`v0.10.21` 加强了启动质量默认值：即使用户只说 “start FlowPilot”，FlowPilot 也会把它当成正式的、高质量的当前运行项目工作。PM startup intake 会把最合理的产品目标、验收证据和证明深度带入 product architecture 和 route drafting。Product architecture、route skeleton、node acceptance、packet/result templates 和 Reviewer route challenge 都会继续保留这个质量底线，同时不新增字段、不新增 launch mode、不新增 fallback，也不把 rehearsal 这类后台角色不需要知道的标签写进角色提示词。
+`v0.10.22` 加强了角色分发边界：Controller 必须服从 runtime 给出的复用、新建或阻塞的 role-surface disposition。FlowPilot 现在用 host-supported isolated AI execution surface 来描述必须隔离执行的角色工作；这可以是后台 agent、单独 thread、新 conversation、worker、独立 AI session，或宿主支持的等价机制。除非用户明确授权单智能体连续执行，否则 Controller 不能在前台代替 PM、worker、reviewer 或 FlowGuard operator 完成角色工作，而必须阻塞或进入恢复流程。
 
 ## 什么时候用 FlowPilot
 

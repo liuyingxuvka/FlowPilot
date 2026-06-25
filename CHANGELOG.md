@@ -2,6 +2,33 @@
 
 All notable changes to FlowPilot will be documented in this file.
 
+## 0.10.22 - 2026-06-25
+
+### Fixed
+
+- Hardened runtime-disposition-driven role dispatch so Controller follows the
+  runtime's `reuse_existing_role`, `create_new_role`, or `blocked` decision
+  instead of choosing whether to reuse or replace role surfaces on its own.
+- Rephrased role-surface requirements around host-supported isolated AI
+  execution surfaces, such as a background agent, separate thread, new
+  conversation, worker, independent AI session, or equivalent host mechanism.
+- Made missing or unavailable runtime-named reuse surfaces a recovery/blocker
+  condition instead of silently creating a fresh same-role surface.
+- Clarified that Controller foreground work cannot substitute for PM, worker,
+  reviewer, or FlowGuard-operator role work unless the user explicitly
+  authorizes single-agent continuity.
+
+### Validation
+
+- Added prompt-boundary FlowGuard scenarios for reuse replacement, Controller
+  foreground role work, and Codex-only backend wording hazards.
+- Added prompt-source checks and card-instruction coverage for runtime
+  disposition rows, host-neutral isolated surfaces, missing-reuse recovery,
+  and no-foreground-role-work behavior.
+- Verified the change through OpenSpec, FlowGuard prompt-boundary, meta and
+  capability checks, topology refresh, install sync/audit/check, and the
+  public release preflight.
+
 ## 0.10.21 - 2026-06-25
 
 ### Fixed

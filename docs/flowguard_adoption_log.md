@@ -20363,6 +20363,45 @@ to identify unsupported historical-layer branches that should be deleted.
 - Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
 
 
+## publish-flowpilot-v0.10.22 - Source-only GitHub release
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: user explicitly requested pushing the optimized FlowPilot changes to GitHub and assigning a new release version.
+- Status: release_candidate_validated
+- Skill decision: publish-github-release + FlowGuard development process freshness
+- Recorded: 2026-06-25
+- Commands OK: True
+
+### Model Files
+- `simulations/release_tooling_results.json`
+- `simulations/flowpilot_model_hierarchy_results.json`
+- `simulations/flowpilot_model_test_alignment_results.json`
+- `docs/flowguard_project_topology.json`
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` - schema `1.0`.
+- `python -c "import importlib.metadata as m; print(m.version('flowguard'))"` - package `0.52.2`.
+- `python -m flowguard project-audit --root .` - passed.
+- `python scripts/install_flowpilot.py --sync-repo-owned --json --skip-self-check` - installed skill already fresh.
+- `python scripts/audit_local_install_sync.py --json` - passed.
+- `python scripts/install_flowpilot.py --check --json` - passed.
+- `python scripts/flowguard_project_topology.py check` - passed.
+- `python scripts/check_public_release.py --json` - passed with zero errors; the only warning before commit was the expected dirty release-version files plus unrelated untracked local directories.
+
+### Findings
+- New release version selected: `0.10.22`, a patch bump from `0.10.21`.
+- Release shape remains source-only; no binary app bundle or companion skill publication is included.
+- Public version surfaces updated in `VERSION`, `CHANGELOG.md`, and both English and Chinese README status sections.
+- Default branch protection was verified through the GitHub repository ruleset named `Protect default branch`, targeting `~DEFAULT_BRANCH` with deletion and non-fast-forward rules active.
+- Public release preflight found no tracked private paths and no tracked secret-pattern matches.
+
+### Skipped Steps
+- No Windows binary, installer, checksum asset, companion repository publish, tag rewrite, or destructive git operation was performed.
+
+### Risk Evidence Summary
+- Evidence supports a source-only `v0.10.22` release candidate after the isolated role-surface hardening change. It does not claim binary asset availability or companion skill publication.
+
+
 ## harden-isolated-role-surface-binding-20260625 - Harden runtime-disposition role surface binding
 
 - Project: FlowGuardProjectAutopilot_20260430
