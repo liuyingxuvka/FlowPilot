@@ -10,12 +10,12 @@
 </p>
 
 <p align="center">
-  <strong>A project-control layer for long AI-agent software work.</strong><br />
-  <span>FlowGuard models, sealed packet mail, role authority, startup intake, and completion ledgers for disciplined agent runs.</span>
+  <strong>An open-source control loop for long AI-agent software work.</strong><br />
+  <span>FlowGuard route simulation, sealed packet mail, role authority, startup intake, route replanning, and completion ledgers for disciplined agent runs.</span>
 </p>
 
 <p align="center">
-  Source version: <strong>v0.10.20</strong> · MIT License · Codex skill source package
+  Source version: <strong>v0.10.20</strong> · MIT License · open-source AI-agent control runtime
 </p>
 <!-- README HERO END -->
 
@@ -23,11 +23,31 @@ English comes first. The second half is a full Chinese mirror.
 
 ## What FlowPilot Is
 
-FlowPilot is an opt-in Codex skill and local runtime for substantial AI-agent-led software projects.
+FlowPilot is an opt-in, open-source control loop and local runtime for substantial AI-agent-led software projects.
+
+The current public package is a Codex-compatible local skill runtime. The product idea is broader: give an AI agent a model-backed loop it can run under human control, with explicit route state, packet handoffs, review gates, and completion evidence.
 
 It is built for work that is too long or too risky to trust to one continuous chat memory. FlowPilot gives the agent a persistent route, sealed handoff packets, role-separated authority, FlowGuard model gates, startup intake, patrol/manual-resume continuity, and a final completion ledger.
 
 The language model still does the semantic work: reading materials, writing code, reviewing artifacts, using tools, and explaining tradeoffs. FlowPilot controls the process around that work so the run does not drift, skip gates, reuse stale evidence, or declare completion before the route-wide evidence supports it.
+
+## How To Start FlowPilot
+
+The human-facing workflow is:
+
+1. Open an AI agent interface that can use local tools and work with your repository.
+2. If the host offers a goal, target, or objective mode, turn it on.
+3. Send this instruction:
+
+```text
+Formally start FlowPilot. Keep using FlowPilot and do not stop until FlowPilot reaches terminal return, asks for my input, or explicitly says stopping is allowed.
+```
+
+4. Wait for the FlowPilot startup window.
+5. Put the project goal, constraints, and expected outcome into that startup window.
+6. Start the run and let FlowPilot control the loop.
+
+After startup, FlowPilot should drive the agent through route planning, packeted execution, review, repair, route replanning when needed, and final completion evidence.
 
 ## The Problem
 
@@ -50,7 +70,9 @@ FlowPilot replaces informal discipline with explicit runtime objects.
 
 The startup intake UI captures the user's work request and whether FlowPilot may use host-supported background collaboration for isolated role work. Manual continuation and chat route signs are fixed startup defaults. The request body is sealed into the PM intake packet; the Controller sees only envelope and hash metadata.
 
-## How It Works
+## Model First, Then Loop
+
+FlowPilot is not just "dispatch, check, record, decide, repeat." Before the loop treats a path as safe, FlowGuard models and rehearses the expected process route. During the run, that route can be redesigned when new evidence, failed checks, changed requirements, or stale assumptions make the old path unsafe.
 
 The core route is:
 
@@ -69,6 +91,7 @@ startup intake
 
 In plain language:
 
+- **Route simulation** models the likely development path before the agent starts treating it as the active loop.
 - **Router state** decides the next legal action from current run state, not from memory.
 - **Sealed packet mail** moves work through envelopes and sealed bodies with hashes and holder state.
 - **Role authority** separates planning, execution, review, modeling, approval, repair, stop, and controller duties.
@@ -79,10 +102,10 @@ In plain language:
 
 | Object | What it controls | Why it matters |
 | --- | --- | --- |
-| FlowGuard finite-state models | Process transitions and risky target behavior | Turns "be careful" into states, invariants, progress checks, and counterexamples |
+| FlowGuard finite-state models | Planned route transitions and risky target behavior | Turns "be careful" into states, invariants, progress checks, and counterexamples before and during the loop |
 | Sealed packets | Handoff bodies, envelopes, hashes, holder state, and role origin | Prevents the same context from planning, executing, reviewing, and accepting itself |
 | Role authority | PM, reviewer, FlowGuard operator, worker, and Controller boundaries | Makes approval and challenge visible |
-| Router rhythm | Startup, next action, packet re-entry, status projection, patrol, resume, and terminal closure | Keeps continuation tied to current run state |
+| Router rhythm | Startup, next action, packet re-entry, status projection, patrol, resume, route redesign, and terminal closure | Keeps continuation tied to current run state |
 
 ## Current Status
 
@@ -121,7 +144,7 @@ Do not use it for:
 Recommended human-facing path:
 
 1. Open a fresh AI agent or CLI window that supports local tools.
-2. If the host has a goal/target option, set the goal to keep using FlowPilot until FlowPilot reaches a terminal state, asks for user input, or explicitly says to stop.
+2. If the host has a goal, target, or objective option, turn it on.
 3. Ask the agent to install FlowPilot:
 
 ```text
@@ -137,7 +160,7 @@ cd FlowPilot
 python scripts\check_install.py
 ```
 
-Then ask the agent to start a FlowPilot run for your project-scale task.
+Then send the startup instruction from [How To Start FlowPilot](#how-to-start-flowpilot), wait for the startup window, enter your project request there, and let FlowPilot run the loop.
 
 ## Verification
 
@@ -193,15 +216,35 @@ MIT. See [`LICENSE`](./LICENSE).
 
 **Source version:** `v0.10.20`<br />
 **许可证：** MIT<br />
-**形态：** Codex skill source package
+**形态：** open-source AI-agent control runtime
 
 ## 它是什么
 
-FlowPilot 是一个 opt-in 的 Codex skill 和本地 runtime，用于较长、较复杂的 AI-agent 软件项目。
+FlowPilot 是一个 opt-in、开源的 control loop 和本地 runtime，用于较长、较复杂的 AI-agent 软件项目。
+
+当前公开包的第一种具体形态是 Codex-compatible local skill runtime。但产品概念更通用：给 AI agent 一个由人掌控、由模型约束的工作 loop，让 route state、packet handoff、review gates 和 completion evidence 都显式存在。
 
 它适合那种不能只靠一段连续聊天记忆管理的工作。FlowPilot 给 agent 一个持久 route、sealed handoff packets、角色分离的 authority、FlowGuard model gates、startup intake、patrol/manual-resume continuity 和 final completion ledger。
 
 语言模型仍然做语义工作：读材料、写代码、审查工件、使用工具、解释取舍。FlowPilot 控制这些工作外面的流程，防止 run 漂移、跳过门槛、复用旧证据，或在 route-wide evidence 不足时宣布完成。
+
+## 怎么启动 FlowPilot
+
+推荐的人类使用流程是：
+
+1. 打开一个可以使用本地工具、可以操作仓库的 AI agent 界面。
+2. 如果这个 host 有 goal、target 或 objective 模式，先打开。
+3. 发送这句话：
+
+```text
+正式启动 FlowPilot。在 FlowPilot 到达 terminal return、请求我输入或明确允许停止之前，不要停止使用 FlowPilot。
+```
+
+4. 等 FlowPilot 的 startup window 打开。
+5. 把项目目标、约束、期望结果写进 startup window。
+6. 点击启动，让 FlowPilot 接管这个 loop。
+
+启动之后，FlowPilot 应该推动 agent 完成 route planning、packeted execution、review、repair、必要时 route replanning，以及最后的 completion evidence。
 
 ## 为什么需要它
 
@@ -224,7 +267,9 @@ FlowPilot 用明确 runtime objects 替代“希望 agent 自觉”。
 
 Startup intake UI 收集用户的工作请求，并确认 FlowPilot 是否可以使用 host-supported background collaboration 来隔离角色工作。Manual continuation 和 chat route signs 是固定 startup defaults。请求正文会 sealed 到 PM intake packet；Controller 只能看到 envelope 和 hash metadata。
 
-## 它怎么工作
+## 先建模路线，再执行 loop
+
+FlowPilot 不是单纯地“持续触发、分派、检查、记录、再决定”。在 loop 把某条路径当成安全路径之前，FlowGuard 会先建模和预演预期的 process route。运行中如果出现新证据、检查失败、需求变化或旧假设失效，route 也可以被重新设计。
 
 核心路线是：
 
@@ -243,6 +288,7 @@ startup intake
 
 翻成人话：
 
+- **Route simulation** 在 agent 把路线当成 active loop 之前，先模拟可能的开发路径。
 - **Router state** 从当前 run state 决定下一步合法动作，而不是靠记忆。
 - **Sealed packet mail** 用 envelope、sealed body、hash 和 holder state 传递工作。
 - **Role authority** 分离 planning、execution、review、modeling、approval、repair、stop 和 controller duty。
@@ -253,10 +299,10 @@ startup intake
 
 | 对象 | 控制什么 | 为什么重要 |
 | --- | --- | --- |
-| FlowGuard finite-state models | 流程转移和高风险目标行为 | 把“要小心”变成 state、invariant、progress check 和 counterexample |
+| FlowGuard finite-state models | planned route transitions 和高风险目标行为 | 在 loop 前和 loop 中，把“要小心”变成 state、invariant、progress check 和 counterexample |
 | Sealed packets | handoff body、envelope、hash、holder state、role origin | 防止同一上下文计划、执行、审查、接受自己的工作 |
 | Role authority | PM、reviewer、FlowGuard operator、worker、Controller 边界 | 让批准和挑战可见 |
-| Router rhythm | startup、next action、packet re-entry、status projection、patrol、resume、terminal closure | 让 continuation 绑定当前 run state |
+| Router rhythm | startup、next action、packet re-entry、status projection、patrol、resume、route redesign、terminal closure | 让 continuation 绑定当前 run state |
 
 ## 当前状态
 
@@ -295,7 +341,7 @@ startup intake
 推荐的人类使用方式：
 
 1. 打开一个支持本地工具的新 AI agent 或 CLI 窗口。
-2. 如果 host 有 goal/target 选项，把 goal 设置为持续使用 FlowPilot，直到 FlowPilot 到达 terminal state、请求用户输入或明确说停止。
+2. 如果 host 有 goal、target 或 objective 选项，先打开。
 3. 请 agent 安装 FlowPilot：
 
 ```text
@@ -311,7 +357,7 @@ cd FlowPilot
 python scripts\check_install.py
 ```
 
-然后让 agent 为你的项目级任务启动 FlowPilot run。
+然后发送[怎么启动 FlowPilot](#怎么启动-flowpilot)里的启动指令，等待 startup window，在里面填写项目请求，再让 FlowPilot 执行这个 loop。
 
 ## 验证
 

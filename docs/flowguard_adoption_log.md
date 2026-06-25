@@ -20323,7 +20323,7 @@ to identify unsupported historical-layer branches that should be deleted.
   - `python simulations/run_flowpilot_contract_exhaustion_mesh_checks.py --json-out simulations/flowpilot_contract_exhaustion_mesh_results.json` -> OK.
   - `python simulations/run_meta_checks.py --full` and `python simulations/run_capability_checks.py --full` -> both OK with layered full parent evidence.
   - `python scripts/flowguard_project_topology.py build` and `python scripts/flowguard_project_topology.py check` -> OK, no findings.
-  - `python scripts/audit_local_install_sync.py --json`, `python C:\Users\liu_y\.codex\skills\flowpilot\assets\flowpilot_runtime_self_check.py --json`, `python scripts/install_flowpilot.py --check --json`, and `python scripts/check_install.py --json` -> all OK.
+  - `python scripts/audit_local_install_sync.py --json`, `python <local-codex-home>\skills\flowpilot\assets\flowpilot_runtime_self_check.py --json`, `python scripts/install_flowpilot.py --check --json`, and `python scripts/check_install.py --json` -> all OK.
   - Installed FlowPilot fake E2E entrypoint -> OK, closure complete, 31 authorized-input-opening rows. The clean happy path has required read roles for `flowguard_operator` and `reviewer`; PM/worker coverage remains in existing contract/test surfaces.
 - Friction points:
   - A first background launch for meta/capability checks did not write usable artifacts, so final evidence uses foreground commands and exit codes.
