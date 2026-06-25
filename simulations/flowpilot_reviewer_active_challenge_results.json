@@ -5,7 +5,7 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=3 initial_states=1 traces=186",
+    "summary": "sequences=3 initial_states=1 traces=192",
     "violation_count": 0
   },
   "hazard_checks": {
@@ -180,6 +180,13 @@
           "simple review was overburdened with irrelevant heavyweight challenge work"
         ]
       },
+      "structural_route_quality_floor_loss_accepted": {
+        "detected": true,
+        "expected_failure": "reviewer did not block route quality-floor loss",
+        "failures": [
+          "reviewer did not block route quality-floor loss"
+        ]
+      },
       "uncheckable_without_waiver": {
         "detected": true,
         "expected_failure": "reviewer found an uncheckable surface without waiver or blocker",
@@ -226,11 +233,11 @@
       "valid_simple_review",
       "valid_ui_review"
     ],
-    "edge_count": 62,
+    "edge_count": 64,
     "invariant_failures": [],
     "missing_labels": [],
     "ok": true,
-    "rejected_state_count": 26,
-    "state_count": 63
+    "rejected_state_count": 27,
+    "state_count": 65
   }
 }

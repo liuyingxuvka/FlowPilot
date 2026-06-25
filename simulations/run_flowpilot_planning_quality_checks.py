@@ -85,6 +85,10 @@ HAZARD_EXPECTED_FAILURES = {
     model.NODE_PLAN_MISSING_ACCEPTANCE_ITEM_PROJECTION: "node acceptance plan lacks acceptance item projection",
     model.WORK_PACKET_MISSING_ACCEPTANCE_ITEM_MATRIX: "work packet or result lacks acceptance item result matrix",
     model.FINAL_LEDGER_ACCEPTANCE_ITEM_UNRESOLVED: "final ledger or closure leaves acceptance items unresolved",
+    model.STARTUP_QUALITY_POSTURE_MISSING: "startup release does not carry high-quality current-run posture into PM product and route work",
+    model.PRODUCT_ARCHITECTURE_IGNORES_STARTUP_QUALITY: "product architecture does not consume startup high-quality posture",
+    model.ROUTE_QUALITY_POSTURE_DROPPED: "route design lowered the startup/product quality floor",
+    model.PACKET_QUALITY_FLOOR_DROPPED: "work packet does not preserve the current quality floor",
 }
 
 

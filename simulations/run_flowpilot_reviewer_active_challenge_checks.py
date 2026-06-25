@@ -48,6 +48,7 @@ HAZARD_EXPECTED_FAILURES = {
     model.EXISTENCE_ONLY_HARD_PART_EVIDENCE_ACCEPTED: "reviewer accepted hard-part quality claim from existence-only evidence",
     model.SHALLOW_COMPLETION_TRAPS_NOT_CHALLENGED: "reviewer pass lacks shallow-completion trap applicability decision",
     model.SHALLOW_COMPLETION_TRAP_DOWNGRADED: "reviewer did not block a still-plausible shallow-completion trap",
+    model.STRUCTURAL_ROUTE_QUALITY_FLOOR_LOSS_ACCEPTED: "reviewer did not block route quality-floor loss",
 }
 
 

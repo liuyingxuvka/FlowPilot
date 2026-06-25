@@ -67,16 +67,27 @@ USER_PERSPECTIVE_CARD_CHECKS = {
         r"final-user usefulness",
         r"evidence",
     ),
+    "skills/flowpilot/assets/runtime_kit/cards/reviewer/route_challenge.md": (
+        r"startup and product high-quality current-run posture",
+        r"merely passable plan",
+    ),
+    "skills/flowpilot/assets/runtime_kit/cards/phases/pm_startup_intake.md": (
+        r"normal\s+high-quality current-run project work",
+        r"short startup request does not lower",
+    ),
     "skills/flowpilot/assets/runtime_kit/cards/phases/pm_product_architecture.md": (
         r"final-user intent and product usefulness assumptions",
+        r"startup release as the first high-quality current-run posture source",
     ),
     "skills/flowpilot/assets/runtime_kit/cards/phases/pm_node_acceptance_plan.md": (
         r"final-user intent and product usefulness self-check",
         r"nonessential improvement",
+        r"no local hard part",
     ),
     "skills/flowpilot/assets/runtime_kit/cards/phases/pm_route_skeleton.md": (
         r"PM user-intent self-check",
         r"product usefulness failures",
+        r"startup and product high-quality current-run posture",
     ),
     "skills/flowpilot/assets/runtime_kit/cards/phases/pm_final_ledger.md": (
         r"final-user intent and delivered-product usefulness claims",

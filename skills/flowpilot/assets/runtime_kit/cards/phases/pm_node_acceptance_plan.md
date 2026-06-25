@@ -179,6 +179,9 @@ shortcut to avoid, and the proof of depth expected from the worker or reviewer
 evidence. Also identify each node-owned acceptance item in
 `acceptance_item_projection` so packet work cannot close a broad node by generic
 prose.
+If PM believes this node truly has no local hard part, the plan must say why
+the current node boundary has no task-specific hard part instead of omitting
+the check.
 Classify every higher-standard opportunity as hard current requirement,
 current-node improvement, future-route candidate, nonblocking note, or rejected
 with reason. Do not turn a nonessential improvement into a hard blocker unless

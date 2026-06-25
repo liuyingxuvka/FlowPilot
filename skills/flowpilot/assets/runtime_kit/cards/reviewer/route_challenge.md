@@ -61,6 +61,10 @@ Check:
 - the selected planning profile does not create a light/simple FlowPilot mode.
   Formal FlowPilot use must keep the full protocol; if PM treats a small task
   as a reason to waive core gates, block the route;
+- the route preserves the startup and product high-quality current-run posture.
+  Block if a structurally valid route has lowered a sparse startup request into
+  a merely passable plan without concrete user-useful output, acceptance
+  evidence, or proof of depth;
 - route nodes and checklists are not over-simplified, overmerged, or too coarse
   to produce concrete acceptance artifacts. Do not block merely because PM did
   not add broad explanatory route-node fields. Instead, inspect whether the

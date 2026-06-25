@@ -35,6 +35,7 @@ class FlowPilotReviewerActiveChallengeTests(unittest.TestCase):
         self.assertTrue(hazards[model.EXISTENCE_ONLY_HARD_PART_EVIDENCE_ACCEPTED]["detected"])
         self.assertTrue(hazards[model.SHALLOW_COMPLETION_TRAPS_NOT_CHALLENGED]["detected"])
         self.assertTrue(hazards[model.SHALLOW_COMPLETION_TRAP_DOWNGRADED]["detected"])
+        self.assertTrue(hazards[model.STRUCTURAL_ROUTE_QUALITY_FLOOR_LOSS_ACCEPTED]["detected"])
 
     def test_runtime_cards_templates_and_contracts_keep_reviewer_challenge_compact(self) -> None:
         reviewer_core = (
@@ -192,6 +193,8 @@ class FlowPilotReviewerActiveChallengeTests(unittest.TestCase):
         self.assertIn("high_standard_recheck", node_review)
         self.assertIn("PM-decision recommendations", node_review)
         self.assertIn("second route owner", route_review)
+        self.assertIn("startup and product high-quality current-run posture", route_review)
+        self.assertIn("merely passable plan", route_review)
 
 
 if __name__ == "__main__":

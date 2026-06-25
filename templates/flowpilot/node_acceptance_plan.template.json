@@ -84,7 +84,7 @@
     "local_low_quality_success_risk": {
       "required": true,
       "inherited_risk_ids": [],
-      "task_specific_hard_part": "<what-this-node-could-handle-too-superficially>",
+      "task_specific_hard_part": "<what-this-node-could-handle-too-superficially-or-why-this-node-has-no-local-hard-part>",
       "thin_success_shortcut": "<how-the-node-could-look-complete-while-still-being-low-quality>",
       "warning_signs": [],
       "existence_only_evidence_to_reject": "<artifact-log-report-or-screenshot-that-would-not-be-enough>",

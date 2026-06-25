@@ -68,7 +68,7 @@ events.
 
 ## Objective
 
-<role-specific objective>
+<role-specific objective; complete this current assignment as high-quality current-run work within the packet boundary>
 
 ## Inputs
 

@@ -102,10 +102,14 @@ Route requirements:
   run/current packet or node/blocking state/repair command/validation evidence,
   and any intentionally retained maintenance layer with owner, scope,
   validation evidence, and sunset or next-disposition criteria. Only
-  current-contract artifacts and current evidence may support completion;
+  current-contract artifacts and current evidence may support completion.
+  Old artifacts are orientation only and must not close current completion;
 - use the FlowGuard operator's product behavior model as route input:
   map the route to its essential user actions, product states,
   failure/recovery paths, forbidden downgrades, and completion evidence;
+- carry the startup and product high-quality current-run posture into route
+  design. A route can be small, but it must still produce user-useful output,
+  acceptance evidence, and proof of depth for the accepted product target;
 - use the FlowGuard operator's target-realization model as route input:
   every hard realization obligation must be owned by route structure, merged
   into an existing route node with reason, or explicitly blocked/waived by PM

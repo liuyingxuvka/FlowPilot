@@ -72,6 +72,8 @@ When the source packet includes a `Low-Quality Success Guard`, explain how the
 work proved the named hard part instead of only producing existence-only
 evidence. Use `not applicable` only when the source packet explicitly says the
 guard classification is `none`.
+Tie the explanation to the current packet's quality floor and acceptance-item
+projection, not only to artifact existence.
 
 - hard_part_addressed: <hard-part-or-not-applicable>
 - thin_success_shortcut_avoided: <what-was-not-done-casually-or-not-applicable>

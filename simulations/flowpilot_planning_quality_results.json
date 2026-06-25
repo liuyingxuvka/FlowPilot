@@ -5,7 +5,7 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=3 initial_states=1 traces=384",
+    "summary": "sequences=3 initial_states=1 traces=408",
     "violation_count": 0
   },
   "hazard_checks": {
@@ -162,6 +162,13 @@
           "complex implementation work was overmerged into one unverifiable node"
         ]
       },
+      "packet_quality_floor_dropped": {
+        "detected": true,
+        "expected_failure": "work packet does not preserve the current quality floor",
+        "failures": [
+          "work packet does not preserve the current quality floor"
+        ]
+      },
       "pm_closure_low_quality_risk_disposition_missing": {
         "detected": true,
         "expected_failure": "PM closure lacks low-quality-success risk disposition",
@@ -278,6 +285,13 @@
           "PM child-skill selection did not evaluate process-support skill candidates"
         ]
       },
+      "product_architecture_ignores_startup_quality": {
+        "detected": true,
+        "expected_failure": "product architecture does not consume startup high-quality posture",
+        "failures": [
+          "product architecture does not consume startup high-quality posture"
+        ]
+      },
       "product_model_missing": {
         "detected": true,
         "expected_failure": "route planning lacks a product behavior model from the FlowGuard operator product-scope",
@@ -349,6 +363,13 @@
           "route skeleton does not consume target-realization obligations"
         ]
       },
+      "route_quality_posture_dropped": {
+        "detected": true,
+        "expected_failure": "route design lowered the startup/product quality floor",
+        "failures": [
+          "route design lowered the startup/product quality floor"
+        ]
+      },
       "simple_task_formal_flowpilot_profile": {
         "detected": true,
         "expected_failure": "small/simple task entered formal FlowPilot instead of staying outside FlowPilot",
@@ -389,6 +410,13 @@
         "expected_failure": "selected child skill lacks a compiled Skill Standard Contract",
         "failures": [
           "selected child skill lacks a compiled Skill Standard Contract"
+        ]
+      },
+      "startup_quality_posture_missing": {
+        "detected": true,
+        "expected_failure": "startup release does not carry high-quality current-run posture into PM product and route work",
+        "failures": [
+          "startup release does not carry high-quality current-run posture into PM product and route work"
         ]
       },
       "target_realization_model_ignores_pm_intent": {
@@ -487,11 +515,11 @@
     "accepted_scenarios": [
       "valid_ui_route"
     ],
-    "edge_count": 128,
+    "edge_count": 136,
     "invariant_failures": [],
     "missing_labels": [],
     "ok": true,
-    "rejected_state_count": 63,
-    "state_count": 129
+    "rejected_state_count": 67,
+    "state_count": 137
   }
 }

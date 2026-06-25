@@ -26,6 +26,12 @@ runtime_context: Treat the runtime delivery envelope as the live source for the 
 Write `.flowpilot/runs/<run-id>/product_function_architecture.json` from
 reviewed material only.
 
+Use the startup release as the first high-quality current-run posture source.
+Before choosing features or route implications, state the strongest useful
+result the final user should receive and what proof would make PM comfortable
+handing it to a stakeholder. Short or sparse startup wording is not a reason to
+lower the product target.
+
 Before writing the product architecture, read the startup FlowGuard capability
 snapshot at `.flowpilot/runs/<run-id>/flowguard/capability_snapshot.json`.
 FlowGuard is a required foundation for every FlowPilot run, not an ordinary

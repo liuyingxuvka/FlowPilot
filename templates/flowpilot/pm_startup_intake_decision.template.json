@@ -67,5 +67,5 @@
   "remediation_items": [],
   "work_beyond_startup_allowed": false,
   "released_at": "<iso-8601-timestamp-or-null>",
-  "notes": "<pm-interpretation-of-mechanical-audit-and-node-package-decision>"
+  "notes": "<pm-interpretation-of-mechanical-audit-and-node-package-decision; include how release carries normal high-quality current-run work into product architecture and route planning, and why sparse startup wording does not lower the quality floor>"
 }

@@ -66,8 +66,22 @@ class FlowPilotPlanningQualityTests(unittest.TestCase):
         self.assertTrue(hazards[model.NODE_PLAN_MISSING_ACCEPTANCE_ITEM_PROJECTION]["detected"])
         self.assertTrue(hazards[model.WORK_PACKET_MISSING_ACCEPTANCE_ITEM_MATRIX]["detected"])
         self.assertTrue(hazards[model.FINAL_LEDGER_ACCEPTANCE_ITEM_UNRESOLVED]["detected"])
+        self.assertTrue(hazards[model.STARTUP_QUALITY_POSTURE_MISSING]["detected"])
+        self.assertTrue(hazards[model.PRODUCT_ARCHITECTURE_IGNORES_STARTUP_QUALITY]["detected"])
+        self.assertTrue(hazards[model.ROUTE_QUALITY_POSTURE_DROPPED]["detected"])
+        self.assertTrue(hazards[model.PACKET_QUALITY_FLOOR_DROPPED]["detected"])
 
     def test_runtime_cards_and_templates_expose_planning_quality_contracts(self) -> None:
+        startup_intake_card = (
+            ROOT
+            / "skills"
+            / "flowpilot"
+            / "assets"
+            / "runtime_kit"
+            / "cards"
+            / "phases"
+            / "pm_startup_intake.md"
+        ).read_text(encoding="utf-8")
         route_card = (
             ROOT
             / "skills"
@@ -194,6 +208,11 @@ class FlowPilotPlanningQualityTests(unittest.TestCase):
         result_template = (ROOT / "templates" / "flowpilot" / "packets" / "result_body.template.md").read_text(
             encoding="utf-8"
         )
+        startup_decision_template = json.loads(
+            (ROOT / "templates" / "flowpilot" / "pm_startup_intake_decision.template.json").read_text(
+                encoding="utf-8"
+            )
+        )
         product_template = json.loads(
             (ROOT / "templates" / "flowpilot" / "product_function_architecture.template.json").read_text(
                 encoding="utf-8"
@@ -240,7 +259,13 @@ class FlowPilotPlanningQualityTests(unittest.TestCase):
                 / "contract_index.json"
             ).read_text(encoding="utf-8")
         )
+        startup_intake_card_flat = " ".join(startup_intake_card.split())
 
+        self.assertIn("normal high-quality current-run project work", startup_intake_card_flat)
+        self.assertIn("short startup request does not lower", startup_intake_card)
+        self.assertIn("highest reasonable product target", startup_intake_card)
+        self.assertIn("release carries normal high-quality current-run work", startup_decision_template["notes"])
+        self.assertNotIn("startup_quality_posture", startup_decision_template)
         self.assertIn("planning_profile", route_card)
         self.assertIn("interactive_software_ui_product", route_card)
         self.assertIn("Structural convergence", pm_core_card)
@@ -277,11 +302,15 @@ class FlowPilotPlanningQualityTests(unittest.TestCase):
         self.assertIn("Structure Hygiene Delta", result_template)
         self.assertIn("Acceptance Item Projection", packet_template)
         self.assertIn("Acceptance Item Result Matrix", result_template)
+        self.assertIn("high-quality current-run work within the packet boundary", packet_template)
+        self.assertIn("current packet's quality floor", result_template)
         self.assertIn("acceptance_item_projection", node_plan_review_card)
         self.assertIn("structure_hygiene_expectation", node_plan_review_card)
         self.assertIn("unowned fallback", worker_result_review_card)
         self.assertIn("Negative rejection evidence", worker_result_review_card)
         self.assertIn("final-user intent and product usefulness assumptions", product_architecture_card)
+        self.assertIn("startup release as the first high-quality current-run posture source", product_architecture_card)
+        self.assertIn("Short or sparse startup wording is not a reason", product_architecture_card)
         self.assertIn("low-quality-success review", product_architecture_card)
         self.assertIn("acceptance_item_registry_seed", product_architecture_card)
         self.assertIn("thin-success shortcuts", product_architecture_card)
@@ -297,6 +326,8 @@ class FlowPilotPlanningQualityTests(unittest.TestCase):
         self.assertIn("practical next step", closure_card)
         self.assertIn("structural convergence", closure_card)
         self.assertIn("hard block", route_review_card)
+        self.assertIn("startup and product high-quality current-run posture", route_card)
+        self.assertIn("startup and product high-quality current-run posture", route_review_card)
         self.assertIn("Inherited Skill Standards", packet_template)
         self.assertIn("Active Child Skill Bindings", packet_template)
         self.assertIn("Role Skill Use Bindings", packet_template)
@@ -309,6 +340,14 @@ class FlowPilotPlanningQualityTests(unittest.TestCase):
         self.assertIn("low_quality_success_review", product_template)
         self.assertIn("acceptance_item_registry_seed", product_template["requirement_trace"])
         self.assertIn("proof_of_depth_required", product_template["low_quality_success_review"]["hard_parts"][0])
+        self.assertIn(
+            "short or sparse startup wording",
+            product_template["high_standard_posture"]["minimum_professional_bar"],
+        )
+        self.assertIn(
+            "startup release",
+            product_template["highest_achievable_product_target"]["product_vision"],
+        )
         self.assertIn("selection_dimensions", pm_selection_template)
         self.assertIn("FlowGuard satellite skills", pm_selection_template["selection_rule"])
         self.assertIn("process_support", pm_selection_template["selection_dimensions"])
@@ -347,6 +386,7 @@ class FlowPilotPlanningQualityTests(unittest.TestCase):
         self.assertFalse(node_template["role_skill_use_bindings"][0]["self_attestation_allowed"])
         self.assertNotIn("work_packet_projection", node_template)
         self.assertIn("local_low_quality_success_risk", node_template["pm_current_node_high_standard_recheck"])
+        self.assertIn("no-local-hard-part", node_template["pm_current_node_high_standard_recheck"]["local_low_quality_success_risk"]["task_specific_hard_part"])
         self.assertIn(
             "proof_of_depth_required",
             node_template["pm_current_node_high_standard_recheck"]["local_low_quality_success_risk"],

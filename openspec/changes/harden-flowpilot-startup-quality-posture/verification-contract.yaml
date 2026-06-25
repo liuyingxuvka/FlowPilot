@@ -1,0 +1,158 @@
+contract_version: 1
+change: harden-flowpilot-startup-quality-posture
+obligations:
+  - id: req.startup-intake-control-plane-prompt.high-quality-release
+    source: "specs/startup-intake-control-plane-prompt/spec.md#Requirement: Startup PM release preserves high-quality current-run posture"
+    claim: Startup PM intake cards and templates carry normal high-quality current-run posture into existing PM product and route work without a new field.
+    required: true
+    evidence:
+      - check.prompt-markers.unit
+      - check.runtime-card-reminders
+      - check.planning-quality.flowguard
+
+  - id: req.flowpilot-prompt-boundary-policy.one-formal-path
+    source: "specs/flowpilot-prompt-boundary-policy/spec.md#Requirement: Operational role prompts present one normal formal path"
+    claim: Role-facing operational prompts describe one current formal work path and do not introduce a new launcher, fallback, or alternate role choice.
+    required: true
+    evidence:
+      - check.prompt-markers.unit
+      - check.runtime-card-reminders
+      - check.install.self
+
+  - id: req.formal-gate-review-standards.preserve-quality-floor
+    source: "specs/formal-gate-review-standards/spec.md#Requirement: Route review preserves startup and product quality floor"
+    claim: Route, node, packet, result, and reviewer prompt surfaces preserve startup/product quality floor and block shallow structural compliance.
+    required: true
+    evidence:
+      - check.planning-quality.flowguard
+      - check.reviewer-active-challenge.flowguard
+      - check.prompt-markers.unit
+
+checks:
+  - id: check.openspec.validate
+    kind: command
+    command: openspec
+    args:
+      - validate
+      - harden-flowpilot-startup-quality-posture
+      - --strict
+    required: true
+    covers:
+      - req.startup-intake-control-plane-prompt.high-quality-release
+      - req.flowpilot-prompt-boundary-policy.one-formal-path
+      - req.formal-gate-review-standards.preserve-quality-floor
+    expected:
+      exit_code: 0
+
+  - id: check.planning-quality.flowguard
+    kind: command
+    command: python
+    args:
+      - simulations/run_flowpilot_planning_quality_checks.py
+      - --json-out
+      - simulations/flowpilot_planning_quality_results.json
+    required: true
+    covers:
+      - req.startup-intake-control-plane-prompt.high-quality-release
+      - req.formal-gate-review-standards.preserve-quality-floor
+    expected:
+      exit_code: 0
+
+  - id: check.reviewer-active-challenge.flowguard
+    kind: command
+    command: python
+    args:
+      - simulations/run_flowpilot_reviewer_active_challenge_checks.py
+      - --json-out
+      - simulations/flowpilot_reviewer_active_challenge_results.json
+    required: true
+    covers:
+      - req.formal-gate-review-standards.preserve-quality-floor
+    expected:
+      exit_code: 0
+
+  - id: check.prompt-markers.unit
+    kind: command
+    command: python
+    args:
+      - -m
+      - unittest
+      - -v
+      - tests.test_flowpilot_planning_quality
+      - tests.test_flowpilot_reviewer_active_challenge
+    required: true
+    covers:
+      - req.startup-intake-control-plane-prompt.high-quality-release
+      - req.flowpilot-prompt-boundary-policy.one-formal-path
+      - req.formal-gate-review-standards.preserve-quality-floor
+    expected:
+      exit_code: 0
+
+  - id: check.runtime-card-reminders
+    kind: command
+    command: python
+    args:
+      - scripts/check_runtime_card_capability_reminders.py
+    required: true
+    covers:
+      - req.startup-intake-control-plane-prompt.high-quality-release
+      - req.flowpilot-prompt-boundary-policy.one-formal-path
+    expected:
+      exit_code: 0
+
+  - id: check.topology.build
+    kind: command
+    command: python
+    args:
+      - scripts/flowguard_project_topology.py
+      - build
+    required: true
+    covers:
+      - req.startup-intake-control-plane-prompt.high-quality-release
+      - req.formal-gate-review-standards.preserve-quality-floor
+    expected:
+      exit_code: 0
+
+  - id: check.topology.check
+    kind: command
+    command: python
+    args:
+      - scripts/flowguard_project_topology.py
+      - check
+    required: true
+    covers:
+      - req.startup-intake-control-plane-prompt.high-quality-release
+      - req.formal-gate-review-standards.preserve-quality-floor
+    expected:
+      exit_code: 0
+
+  - id: check.install.self
+    kind: command
+    command: python
+    args:
+      - scripts/check_install.py
+      - --json
+    required: true
+    covers:
+      - req.flowpilot-prompt-boundary-policy.one-formal-path
+      - req.startup-intake-control-plane-prompt.high-quality-release
+    expected:
+      exit_code: 0
+
+freshness:
+  watch:
+    - openspec/changes/harden-flowpilot-startup-quality-posture/proposal.md
+    - openspec/changes/harden-flowpilot-startup-quality-posture/design.md
+    - openspec/changes/harden-flowpilot-startup-quality-posture/tasks.md
+    - openspec/changes/harden-flowpilot-startup-quality-posture/specs/**/*.md
+    - openspec/changes/harden-flowpilot-startup-quality-posture/verification-contract.yaml
+    - skills/flowpilot/SKILL.md
+    - skills/flowpilot/assets/runtime_kit/cards/**/*.md
+    - templates/flowpilot/**/*.json
+    - templates/flowpilot/**/*.md
+    - simulations/flowpilot_planning_quality_model.py
+    - simulations/flowpilot_reviewer_active_challenge_model.py
+    - tests/test_flowpilot_planning_quality.py
+    - tests/test_flowpilot_reviewer_active_challenge.py
+    - scripts/check_runtime_card_capability_reminders.py
+    - scripts/check_install.py

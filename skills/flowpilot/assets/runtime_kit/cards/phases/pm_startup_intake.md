@@ -28,6 +28,12 @@ identity, display evidence, role/continuation evidence, and user-intake
 envelope path/hash metadata. After Runtime writes the mechanical startup audit
 and display status, Router exposes `user_intake` as the first PM mail item.
 
+When startup mechanics pass, treat the first PM work item as normal
+high-quality current-run project work. A short startup request does not lower
+the product target or route quality floor. Carry forward a concrete user
+outcome, the highest reasonable product target, acceptance evidence, and
+proof-oriented planning into product architecture and route drafting.
+
 Do not use `flowpilot_new.py open-packet` for the full `user_intake` packet
 from this phase. That command is only for a later runtime-generated role
 handoff after a current lease and ACK assign an actual packet to PM. Do not ask

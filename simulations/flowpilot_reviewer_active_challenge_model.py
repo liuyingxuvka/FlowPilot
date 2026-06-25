@@ -66,6 +66,7 @@ LOW_QUALITY_SUCCESS_CHALLENGE_MISSING = "low_quality_success_challenge_missing"
 EXISTENCE_ONLY_HARD_PART_EVIDENCE_ACCEPTED = "existence_only_hard_part_evidence_accepted"
 SHALLOW_COMPLETION_TRAPS_NOT_CHALLENGED = "shallow_completion_traps_not_challenged"
 SHALLOW_COMPLETION_TRAP_DOWNGRADED = "shallow_completion_trap_downgraded"
+STRUCTURAL_ROUTE_QUALITY_FLOOR_LOSS_ACCEPTED = "structural_route_quality_floor_loss_accepted"
 
 VALID_SCENARIOS = (
     VALID_UI_REVIEW,
@@ -101,6 +102,7 @@ NEGATIVE_SCENARIOS = (
     EXISTENCE_ONLY_HARD_PART_EVIDENCE_ACCEPTED,
     SHALLOW_COMPLETION_TRAPS_NOT_CHALLENGED,
     SHALLOW_COMPLETION_TRAP_DOWNGRADED,
+    STRUCTURAL_ROUTE_QUALITY_FLOOR_LOSS_ACCEPTED,
 )
 SCENARIOS = VALID_SCENARIOS + NEGATIVE_SCENARIOS
 
@@ -153,6 +155,11 @@ class State:
     shallow_completion_traps_challenged: bool = False
     shallow_completion_traps_supported_by_next_step_evidence: bool = False
     shallow_completion_trap_still_plausible: bool = False
+    route_quality_floor_applicability_decided: bool = False
+    route_quality_floor_challenged: bool = False
+    route_quality_floor_loss_found: bool = False
+    route_quality_floor_loss_classified_blocker: bool = False
+    route_quality_floor_loss_downgraded_to_note: bool = False
 
     hard_issue_found: bool = False
     hard_issue_classified_blocker: bool = False
@@ -253,6 +260,8 @@ def _valid_review_state(scenario: str, task_family: str) -> State:
         shallow_completion_traps_applicability_decided=True,
         shallow_completion_traps_challenged=user_perspective_required,
         shallow_completion_traps_supported_by_next_step_evidence=user_perspective_required,
+        route_quality_floor_applicability_decided=True,
+        route_quality_floor_challenged=user_perspective_required,
         reviewer_passed=True,
         report_schema_complete=True,
     )
@@ -395,6 +404,15 @@ def _scenario_state(scenario: str) -> State:
             reviewer_passed=True,
             reviewer_blocked=False,
         )
+    if scenario == STRUCTURAL_ROUTE_QUALITY_FLOOR_LOSS_ACCEPTED:
+        return replace(
+            state,
+            route_quality_floor_loss_found=True,
+            route_quality_floor_loss_classified_blocker=False,
+            route_quality_floor_loss_downgraded_to_note=True,
+            reviewer_passed=True,
+            reviewer_blocked=False,
+        )
     return state
 
 
@@ -502,6 +520,20 @@ def reviewer_challenge_failures(state: State) -> list[str]:
         failures.append("reviewer did not block a hard final-user intent or product usefulness failure")
     if state.shallow_completion_trap_still_plausible and state.reviewer_passed:
         failures.append("reviewer did not block a still-plausible shallow-completion trap")
+    if state.reviewer_passed and not state.route_quality_floor_applicability_decided:
+        failures.append("reviewer pass lacks startup/product quality-floor applicability decision")
+    if (
+        state.reviewer_passed
+        and state.final_user_perspective_required
+        and not state.route_quality_floor_challenged
+    ):
+        failures.append("reviewer pass lacks startup/product quality-floor challenge")
+    if state.route_quality_floor_loss_found and (
+        not state.route_quality_floor_loss_classified_blocker
+        or state.route_quality_floor_loss_downgraded_to_note
+        or state.reviewer_passed
+    ):
+        failures.append("reviewer did not block route quality-floor loss")
     if state.uncheckable_surface_present and not state.waiver_or_blocker_for_uncheckable:
         failures.append("reviewer found an uncheckable surface without waiver or blocker")
     if state.reviewer_blocked and state.hard_issue_found and not state.reroute_request_recorded_when_needed:
@@ -635,6 +667,16 @@ def reviewer_respects_pm_authority(state: State, trace) -> InvariantResult:
     return InvariantResult.pass_()
 
 
+def reviewer_blocks_route_quality_floor_loss(state: State, trace) -> InvariantResult:
+    del trace
+    if state.status != "accepted":
+        return InvariantResult.pass_()
+    for failure in reviewer_challenge_failures(state):
+        if "quality-floor" in failure:
+            return InvariantResult.fail(failure)
+    return InvariantResult.pass_()
+
+
 def simple_reviews_stay_lightweight(state: State, trace) -> InvariantResult:
     del trace
     if state.status != "accepted":
@@ -685,6 +727,11 @@ INVARIANTS = (
         name="reviewer_respects_pm_authority",
         description="Reviewer may block or advise but must not take PM-owned route or repair decisions.",
         predicate=reviewer_respects_pm_authority,
+    ),
+    Invariant(
+        name="reviewer_blocks_route_quality_floor_loss",
+        description="Reviewer must block route quality-floor loss instead of accepting structural compliance alone.",
+        predicate=reviewer_blocks_route_quality_floor_loss,
     ),
     Invariant(
         name="low_quality_success_challenged_when_applicable",

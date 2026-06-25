@@ -112,6 +112,10 @@ ACCEPTANCE_ITEM_NO_ROUTE_OWNER = "acceptance_item_no_route_owner"
 NODE_PLAN_MISSING_ACCEPTANCE_ITEM_PROJECTION = "node_plan_missing_acceptance_item_projection"
 WORK_PACKET_MISSING_ACCEPTANCE_ITEM_MATRIX = "work_packet_missing_acceptance_item_matrix"
 FINAL_LEDGER_ACCEPTANCE_ITEM_UNRESOLVED = "final_ledger_acceptance_item_unresolved"
+STARTUP_QUALITY_POSTURE_MISSING = "startup_quality_posture_missing"
+PRODUCT_ARCHITECTURE_IGNORES_STARTUP_QUALITY = "product_architecture_ignores_startup_quality"
+ROUTE_QUALITY_POSTURE_DROPPED = "route_quality_posture_dropped"
+PACKET_QUALITY_FLOOR_DROPPED = "packet_quality_floor_dropped"
 
 VALID_SCENARIOS = (VALID_UI_ROUTE,)
 NEGATIVE_SCENARIOS = (
@@ -178,6 +182,10 @@ NEGATIVE_SCENARIOS = (
     NODE_PLAN_MISSING_ACCEPTANCE_ITEM_PROJECTION,
     WORK_PACKET_MISSING_ACCEPTANCE_ITEM_MATRIX,
     FINAL_LEDGER_ACCEPTANCE_ITEM_UNRESOLVED,
+    STARTUP_QUALITY_POSTURE_MISSING,
+    PRODUCT_ARCHITECTURE_IGNORES_STARTUP_QUALITY,
+    ROUTE_QUALITY_POSTURE_DROPPED,
+    PACKET_QUALITY_FLOOR_DROPPED,
 )
 SCENARIOS = VALID_SCENARIOS + NEGATIVE_SCENARIOS
 
@@ -210,6 +218,10 @@ class State:
     scenario: str = "unset"
     task_class: str = "unset"  # unset | ui_product | simple_bug
 
+    startup_release_projects_quality_posture: bool = False
+    product_architecture_consumes_startup_quality_posture: bool = False
+    route_preserves_startup_product_quality_posture: bool = False
+    packet_preserves_current_quality_floor: bool = False
     planning_profile_selected: bool = False
     planning_profile: str = "none"
     simple_task_profile_waiver: bool = False
@@ -368,6 +380,10 @@ def _valid_ui_state() -> State:
         status="running",
         scenario=VALID_UI_ROUTE,
         task_class="ui_product",
+        startup_release_projects_quality_posture=True,
+        product_architecture_consumes_startup_quality_posture=True,
+        route_preserves_startup_product_quality_posture=True,
+        packet_preserves_current_quality_floor=True,
         planning_profile_selected=True,
         planning_profile="interactive_software_ui_product",
         route_complexity_matches_profile=True,
@@ -586,6 +602,14 @@ def _scenario_state(scenario: str) -> State:
             closure_or_final_ledger_decision=True,
             final_acceptance_items_disposition_done=False,
         )
+    if scenario == STARTUP_QUALITY_POSTURE_MISSING:
+        return replace(state, startup_release_projects_quality_posture=False)
+    if scenario == PRODUCT_ARCHITECTURE_IGNORES_STARTUP_QUALITY:
+        return replace(state, product_architecture_consumes_startup_quality_posture=False)
+    if scenario == ROUTE_QUALITY_POSTURE_DROPPED:
+        return replace(state, route_preserves_startup_product_quality_posture=False)
+    if scenario == PACKET_QUALITY_FLOOR_DROPPED:
+        return replace(state, packet_preserves_current_quality_floor=False)
     if scenario == PM_ROUTE_NOT_MAPPED_TO_PRODUCT_MODEL:
         return replace(state, pm_route_maps_to_product_model=False)
     if scenario == PROCESS_FLOWGUARD_OPERATOR_ROUTE_VIABILITY_MISSING:
@@ -733,6 +757,14 @@ def planning_failures(state: State) -> list[str]:
     failures: list[str] = []
 
     complex_task = state.task_class not in {"simple_bug", "unset"}
+    if complex_task and not state.startup_release_projects_quality_posture:
+        failures.append("startup release does not carry high-quality current-run posture into PM product and route work")
+    if complex_task and not state.product_architecture_consumes_startup_quality_posture:
+        failures.append("product architecture does not consume startup high-quality posture")
+    if complex_task and not state.route_preserves_startup_product_quality_posture:
+        failures.append("route design lowered the startup/product quality floor")
+    if complex_task and not state.packet_preserves_current_quality_floor:
+        failures.append("work packet does not preserve the current quality floor")
     if complex_task and not state.planning_profile_selected:
         failures.append("complex task route lacks a selected planning profile")
     if state.planning_profile_selected and not state.route_complexity_matches_profile:
@@ -1011,6 +1043,16 @@ def profile_matches_task_complexity(state: State, trace) -> InvariantResult:
     return InvariantResult.pass_()
 
 
+def startup_quality_posture_projects_to_route(state: State, trace) -> InvariantResult:
+    del trace
+    if state.status != "accepted":
+        return InvariantResult.pass_()
+    for failure in planning_failures(state):
+        if "startup" in failure or "quality floor" in failure:
+            return InvariantResult.fail(failure)
+    return InvariantResult.pass_()
+
+
 def skill_standards_are_projected(state: State, trace) -> InvariantResult:
     del trace
     if state.status != "accepted":
@@ -1149,6 +1191,11 @@ INVARIANTS = (
         name="profile_matches_task_complexity",
         description="Task profile and route complexity must match the requested quality level.",
         predicate=profile_matches_task_complexity,
+    ),
+    Invariant(
+        name="startup_quality_posture_projects_to_route",
+        description="Startup release must carry high-quality current-run posture through product architecture, route design, and packets.",
+        predicate=startup_quality_posture_projects_to_route,
     ),
     Invariant(
         name="skill_standards_are_projected",
