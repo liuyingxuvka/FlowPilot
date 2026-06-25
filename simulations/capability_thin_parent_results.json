@@ -1,5 +1,5 @@
 {
-  "created_at": "2026-06-25T04:29:45.233381+00:00",
+  "created_at": "2026-06-25T07:31:05.970119+00:00",
   "graph": {
     "edge_count": 14,
     "invariant_failure_count": 0,
@@ -11,7 +11,7 @@
     "current": true,
     "required_for_release": true,
     "status": {
-      "created_at": "2026-06-24T10:03:56.490748+00:00",
+      "created_at": "2026-06-25T07:30:55.050567+00:00",
       "edge_count": 16,
       "kind": "layered_full_parent",
       "proof_file": "simulations/capability_layered_full_results.proof.json",
@@ -122,17 +122,17 @@
       {
         "evidence": [
           {
-            "edge_count": 128,
+            "edge_count": 136,
             "failures": [],
             "missing": false,
             "model_id": "flowpilot_planning_quality",
             "ok": true,
             "proof_status": "not_present",
             "result_file": "simulations/flowpilot_planning_quality_results.json",
-            "result_fingerprint": "6bdf369b7ea67e669dff12a0baa3faa25a0960244a52cf442faab977e9c9dd43",
+            "result_fingerprint": "2f5f2dcd2f9d48355c42125473cd12a231904e297be81e0535bc639d8f8b2ea9",
             "skipped_required_checks": [],
             "skipped_required_checks_visible": true,
-            "state_count": 129
+            "state_count": 137
           },
           {
             "edge_count": 40,
@@ -178,17 +178,17 @@
             "state_count": 67
           },
           {
-            "edge_count": 62,
+            "edge_count": 64,
             "failures": [],
             "missing": false,
             "model_id": "flowpilot_reviewer_active_challenge",
             "ok": true,
             "proof_status": "not_present",
             "result_file": "simulations/flowpilot_reviewer_active_challenge_results.json",
-            "result_fingerprint": "2995a4a012ea55cda925efc00e43623a9e51f3f4ec9ff6dd23d9559f84f71b25",
+            "result_fingerprint": "9fb4d3cc77e73b3c1f0621d371b6431f3ce6b8ca19a9748d4cbad5cd2419449a",
             "skipped_required_checks": [],
             "skipped_required_checks_visible": true,
-            "state_count": 63
+            "state_count": 65
           },
           {
             "edge_count": 7,

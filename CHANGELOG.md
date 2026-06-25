@@ -2,6 +2,30 @@
 
 All notable changes to FlowPilot will be documented in this file.
 
+## 0.10.21 - 2026-06-25
+
+### Fixed
+
+- Hardened startup intake so a short "start FlowPilot" request still enters
+  normal high-quality current-run project work instead of lowering the product
+  target or route quality floor.
+- Carried that high-quality startup posture through PM product architecture,
+  route skeleton, node acceptance, packet, result, and Reviewer route-challenge
+  prompt surfaces without adding new fields, launch modes, fallback paths, or
+  role-facing rehearsal labels.
+- Made Reviewer route challenge block structurally valid but merely passable
+  routes that lack concrete user-useful output, acceptance evidence, or proof
+  of depth.
+
+### Validation
+
+- Added planning-quality FlowGuard hazards for missing startup-quality
+  projection across startup, product architecture, route design, and packets.
+- Added Reviewer active-challenge coverage for route quality-floor loss.
+- Refreshed prompt marker tests, runtime-card reminder checks, FlowGuard
+  topology, OpenSpec verification evidence, and local install sync evidence for
+  the source release.
+
 ## 0.10.20 - 2026-06-24
 
 ### Changed

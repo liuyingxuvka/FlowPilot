@@ -15,7 +15,7 @@
 </p>
 
 <p align="center">
-  Source version: <strong>v0.10.20</strong> · MIT License · open-source AI-agent control runtime
+  Source version: <strong>v0.10.21</strong> · MIT License · open-source AI-agent control runtime
 </p>
 <!-- README HERO END -->
 
@@ -126,7 +126,7 @@ In plain language:
 
 | Field | Value |
 | --- | --- |
-| Source version | `v0.10.20` |
+| Source version | `v0.10.21` |
 | Public project name | `FlowPilot` |
 | Skill slug | `flowpilot` |
 | Release shape | Source package only, no binary app bundle |
@@ -134,7 +134,7 @@ In plain language:
 | Required core dependency | Real `flowguard` Python package |
 | Current UI surface | Windows WPF startup intake dialog plus chat route signs |
 
-`v0.10.20` simplifies parent backward closure to one Reviewer-owned parent backward review packet. After the last child of a parent or module closes, FlowPilot returns to that parent, opens exactly one `review.parent_backward_replay` packet, and the accepted review result itself becomes the parent-closure evidence. PM then absorbs that evidence before continuing. If a later ancestor, terminal, or final gate sees a missing or multiple parent-review gap, FlowPilot treats it as a control-plane ordering violation instead of late repair work. This release keeps the path current-contract only: no old-run migration, compatibility alias, fallback translator, or historical-state promotion is added.
+`v0.10.21` hardens startup quality so a short "start FlowPilot" request still becomes normal high-quality current-run project work. PM startup intake now carries the strongest reasonable product target, acceptance evidence, and proof-oriented planning into product architecture and route drafting. Product architecture, route skeleton, node acceptance, packet/result templates, and Reviewer route challenge preserve that quality floor without adding new fields, launch modes, fallback paths, or role-facing rehearsal labels.
 
 ## When To Use FlowPilot
 
@@ -229,7 +229,7 @@ MIT. See [`LICENSE`](./LICENSE).
 
 # FlowPilot 中文说明
 
-**Source version:** `v0.10.20`<br />
+**Source version:** `v0.10.21`<br />
 **许可证：** MIT<br />
 **形态：** open-source AI-agent control runtime
 
@@ -338,7 +338,7 @@ startup intake
 
 | 字段 | 值 |
 | --- | --- |
-| Source version | `v0.10.20` |
+| Source version | `v0.10.21` |
 | Public project name | `FlowPilot` |
 | Skill slug | `flowpilot` |
 | Release shape | source package only, no binary app bundle |
@@ -346,7 +346,7 @@ startup intake
 | Required core dependency | real `flowguard` Python package |
 | Current UI surface | Windows WPF startup intake dialog plus chat route signs |
 
-`v0.10.20` 把父级倒查收尾简化成一个 Reviewer 负责的父级倒查审查包。某个父节点或模块的最后一个子节点关闭后，FlowPilot 会回到这个父节点，只打开一个 `review.parent_backward_replay` 包；这个审查结果被接受后，本身就算父级收尾证据。之后 PM 再吸收这份证据，决定是否继续往下走。如果更高层、终局或最后总验收才看见父级审查缺口，或者同时看见多个父级审查缺口，FlowPilot 会把它当成控制流程顺序坏掉，而不是临时补派修复审查。本版本只保留当前合约路径：不加入旧运行迁移、兼容 alias、fallback translator，也不把历史状态提升成当前证据。
+`v0.10.21` 加强了启动质量默认值：即使用户只说 “start FlowPilot”，FlowPilot 也会把它当成正式的、高质量的当前运行项目工作。PM startup intake 会把最合理的产品目标、验收证据和证明深度带入 product architecture 和 route drafting。Product architecture、route skeleton、node acceptance、packet/result templates 和 Reviewer route challenge 都会继续保留这个质量底线，同时不新增字段、不新增 launch mode、不新增 fallback，也不把 rehearsal 这类后台角色不需要知道的标签写进角色提示词。
 
 ## 什么时候用 FlowPilot
 
