@@ -1,5 +1,5 @@
 {
-  "created_at": "2026-06-26T11:08:20.069085+00:00",
+  "created_at": "2026-06-26T14:43:54.907845+00:00",
   "graph": {
     "edge_count": 14,
     "invariant_failure_count": 0,
@@ -11,7 +11,7 @@
     "current": true,
     "required_for_release": true,
     "status": {
-      "created_at": "2026-06-26T11:08:00.968543+00:00",
+      "created_at": "2026-06-26T14:43:36.209992+00:00",
       "edge_count": 16,
       "kind": "layered_full_parent",
       "proof_file": "simulations/capability_layered_full_results.proof.json",

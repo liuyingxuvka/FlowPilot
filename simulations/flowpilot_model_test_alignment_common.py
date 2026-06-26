@@ -79,6 +79,8 @@ FACADE_PARITY_EXTERNAL_CONTRACT_SURFACE_IDS = {
     "asset:flowpilot_router_controller_scheduler_receipts_packet_folds",
     "asset:flowpilot_router_work_packets_pm_role",
     "asset:flowpilot_router_terminal_ledger",
+    "asset:flowpilot_router_terminal_ledger_flowguard_coverage",
+    "asset:flowpilot_router_terminal_ledger_writer",
     "asset:flowpilot_router_facade_export_manifest_controller_events",
     "asset:flowpilot_router_facade_export_manifest_controller_lifecycle",
     "asset:flowpilot_router_facade_export_manifest_controller_repair",

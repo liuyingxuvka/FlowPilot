@@ -233,7 +233,7 @@
     },
     "route": {
       "alignment_family_count": 3,
-      "code_surface_count": 351,
+      "code_surface_count": 353,
       "known_bad_count": 320,
       "model_count": 17,
       "runner_keys": [
@@ -257,7 +257,7 @@
       ],
       "surface_kinds": {
         "model_check_runner": 17,
-        "owner_module": 113,
+        "owner_module": 115,
         "public_facade": 52,
         "test_tier": 6,
         "test_tier_command": 163
@@ -5395,6 +5395,19 @@
       "evidence_status": "passed",
       "gap_codes": [],
       "kind": "owner_module",
+      "name": "flowpilot_router_terminal_ledger_flowguard_coverage",
+      "path": "skills/flowpilot/assets/flowpilot_router_terminal_ledger_flowguard_coverage.py",
+      "release_relevance": "runtime_contract",
+      "repair_types": [],
+      "surface_id": "asset:flowpilot_router_terminal_ledger_flowguard_coverage",
+      "surface_owner": "flowpilot_router_terminal_ledger_flowguard_coverage"
+    },
+    {
+      "area": "route",
+      "covered": true,
+      "evidence_status": "passed",
+      "gap_codes": [],
+      "kind": "owner_module",
       "name": "flowpilot_router_terminal_ledger_recovery",
       "path": "skills/flowpilot/assets/flowpilot_router_terminal_ledger_recovery.py",
       "release_relevance": "runtime_contract",
@@ -5427,6 +5440,19 @@
       "repair_types": [],
       "surface_id": "asset:flowpilot_router_terminal_ledger_summary",
       "surface_owner": "flowpilot_router_terminal_ledger_summary"
+    },
+    {
+      "area": "route",
+      "covered": true,
+      "evidence_status": "passed",
+      "gap_codes": [],
+      "kind": "owner_module",
+      "name": "flowpilot_router_terminal_ledger_writer",
+      "path": "skills/flowpilot/assets/flowpilot_router_terminal_ledger_writer.py",
+      "release_relevance": "runtime_contract",
+      "repair_types": [],
+      "surface_id": "asset:flowpilot_router_terminal_ledger_writer",
+      "surface_owner": "flowpilot_router_terminal_ledger_writer"
     },
     {
       "area": "packet",
@@ -7510,18 +7536,14 @@
     },
     {
       "area": "route",
-      "covered": false,
+      "covered": true,
       "evidence_status": "passed",
-      "gap_codes": [
-        "needs_structure_split"
-      ],
+      "gap_codes": [],
       "kind": "public_facade",
       "name": "flowpilot_router_terminal_ledger_traceability",
       "path": "skills/flowpilot/assets/flowpilot_router_terminal_ledger_traceability.py",
       "release_relevance": "runtime_contract",
-      "repair_types": [
-        "defer_structure_split"
-      ],
+      "repair_types": [],
       "surface_id": "asset:flowpilot_router_terminal_ledger_traceability",
       "surface_owner": "flowpilot_router_terminal_ledger_traceability"
     },
@@ -14356,7 +14378,7 @@
         "decision": "",
         "edge_count": null,
         "finding_count": 0,
-        "full_coverage_ok": false,
+        "full_coverage_ok": true,
         "known_bad": [
           "full_model_test_code_diagnostic.known_bad_ok",
           "orphan_code",
@@ -14396,11 +14418,11 @@
       "path": "simulations/flowpilot_model_test_alignment_results.json"
     }
   },
-  "generated_at_epoch": 1782471929.4490068,
+  "generated_at_epoch": 1782485069.422278,
   "generator_version": "1",
   "layer_counts": {
     "alignment_families": 14,
-    "code_surfaces": 1068,
+    "code_surfaces": 1070,
     "evidence_summaries": 5,
     "known_bad_signals": 2595,
     "models": 154,
@@ -17184,7 +17206,7 @@
         "decision": "",
         "edge_count": null,
         "finding_count": 0,
-        "full_coverage_ok": false,
+        "full_coverage_ok": true,
         "known_bad": [
           "full_model_test_code_diagnostic.known_bad_ok",
           "orphan_code",
@@ -20743,7 +20765,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1782397520495134500,
+      "mtime_ns": 1782485034911852300,
       "path": "simulations/capability_thin_parent_results.json",
       "size": 20668
     },
@@ -21541,9 +21563,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1782471249398310000,
+      "mtime_ns": 1782484939519573100,
       "path": "simulations/flowpilot_model_test_alignment_results.json",
-      "size": 4432428
+      "size": 4430688
     },
     {
       "exists": true,
@@ -22117,13 +22139,13 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780791948067973800,
+      "mtime_ns": 1782484059382578200,
       "path": "simulations/flowpilot_router_facade_split_model.py",
-      "size": 38567
+      "size": 38942
     },
     {
       "exists": true,
-      "mtime_ns": 1782398121023348000,
+      "mtime_ns": 1782484954473176800,
       "path": "simulations/flowpilot_router_facade_split_results.json",
       "size": 3635
     },
@@ -22339,7 +22361,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1782398119564710400,
+      "mtime_ns": 1782484927635556800,
       "path": "simulations/flowpilot_structure_maintenance_results.json",
       "size": 6722
     },
@@ -22513,7 +22535,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1782397510353519900,
+      "mtime_ns": 1782485034908838500,
       "path": "simulations/meta_thin_parent_results.json",
       "size": 26204
     },
@@ -22555,7 +22577,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1782398078036217100,
+      "mtime_ns": 1782484983492921100,
       "path": "simulations/release_tooling_results.json",
       "size": 28699
     },
@@ -25369,6 +25391,12 @@
     },
     {
       "exists": true,
+      "mtime_ns": 1782484096402548100,
+      "path": "skills/flowpilot/assets/flowpilot_router_terminal_ledger_flowguard_coverage.py",
+      "size": 8890
+    },
+    {
+      "exists": true,
       "mtime_ns": 1780671242756180900,
       "path": "skills/flowpilot/assets/flowpilot_router_terminal_ledger_recovery.py",
       "size": 7312
@@ -25387,9 +25415,15 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1782361521473262700,
+      "mtime_ns": 1782483898855608100,
       "path": "skills/flowpilot/assets/flowpilot_router_terminal_ledger_traceability.py",
-      "size": 39664
+      "size": 14499
+    },
+    {
+      "exists": true,
+      "mtime_ns": 1782483829373791000,
+      "path": "skills/flowpilot/assets/flowpilot_router_terminal_ledger_writer.py",
+      "size": 19646
     },
     {
       "exists": true,

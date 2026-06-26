@@ -87,6 +87,8 @@ ROUTER_FACADE_TARGET_RATIONALES = {
     "terminal_ledger": "Owns terminal ledger, replay, closure, and reconciliation outputs.",
     "terminal_ledger_summary": "Owns terminal summary validation and writes.",
     "terminal_ledger_traceability": "Owns final ledger traceability and source-of-truth entries.",
+    "terminal_ledger_flowguard_coverage": "Owns terminal FlowGuard coverage report and PM closure validation.",
+    "terminal_ledger_writer": "Owns final route-wide ledger persistence and replay-map preparation.",
     "terminal_ledger_closure": "Owns terminal backward replay and closure suite writes.",
     "terminal_ledger_recovery": "Owns terminal status recovery and unsupported_historical packet repair.",
 }
@@ -192,6 +194,8 @@ ROUTER_FACADE_FUNCTION_BLOCK_MAP = (
     ("terminal_ledger", "terminal_ledger"),
     ("terminal_ledger_summary", "terminal_ledger_summary"),
     ("terminal_ledger_traceability", "terminal_ledger_traceability"),
+    ("terminal_ledger_flowguard_coverage", "terminal_ledger_flowguard_coverage"),
+    ("terminal_ledger_writer", "terminal_ledger_writer"),
     ("terminal_ledger_closure", "terminal_ledger_closure"),
     ("terminal_ledger_recovery", "terminal_ledger_recovery"),
 )

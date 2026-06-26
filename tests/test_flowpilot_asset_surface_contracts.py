@@ -27,6 +27,8 @@ STRUCTURE_SPLIT_CHILD_SURFACES = (
     "flowpilot_router_route_frontier_policy_completion_authority",
     "flowpilot_router_route_frontier_policy_completion_context",
     "flowpilot_router_route_frontier_policy_completion_ledger",
+    "flowpilot_router_terminal_ledger_flowguard_coverage",
+    "flowpilot_router_terminal_ledger_writer",
     "role_output_runtime_envelope_receipts",
 )
 

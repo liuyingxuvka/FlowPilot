@@ -2,6 +2,33 @@
 
 All notable changes to FlowPilot will be documented in this file.
 
+## 0.10.23 - 2026-06-26
+
+### Changed
+
+- Hardened FlowGuard evidence review so reviewer packets now explicitly block
+  shallow FlowGuard reports that only prove mechanical shape, generic process,
+  or packet presence without target-specific inspection depth.
+- Made FlowGuard evidence artifact resolution prefer the packet-declared
+  evidence output policy path before any derived run-root path.
+- Split terminal ledger traceability into focused FlowGuard-coverage and final
+  ledger-writer owner modules while keeping the existing facade surface and
+  current workflow contract intact.
+- Registered the new terminal ledger owners in the structure-maintenance,
+  facade-split, and model-test-alignment catalogs so future full diagnostics
+  can see the same responsibilities the runtime uses.
+
+### Validation
+
+- Added direct tests for terminal FlowGuard coverage validation and final
+  ledger-writer facade export parity.
+- Added runtime, reviewer-card, fake end-to-end, and model-test-alignment
+  checks for FlowGuard evidence-path authority and shallow FlowGuard review
+  blocking.
+- Re-ran FlowGuard model-test alignment, structure-maintenance checks,
+  facade-split checks, topology checks, install checks, local install-sync
+  audit, release tier checks, and the router-terminal background tier.
+
 ## 0.10.22 - 2026-06-25
 
 ### Fixed
