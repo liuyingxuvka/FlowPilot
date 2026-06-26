@@ -954,6 +954,50 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
             ]
             self.assertTrue(blocks, result["mechanical_contract_blocks"])
 
+    def test_fake_end_to_end_shallow_flowguard_is_reviewer_blocked(self) -> None:
+        for inject_contract_faults in (False, True):
+            with self.subTest(inject_contract_faults=inject_contract_faults):
+                with tempfile.TemporaryDirectory() as tmp:
+                    root = Path(tmp)
+                    run_id = f"run-e2e-shallow-flowguard-{int(inject_contract_faults)}"
+                    result = flowpilot_new.run_fake_e2e(
+                        root,
+                        run_id=run_id,
+                        startup_text="Build and validate a toy command with shallow FlowGuard evidence.",
+                        inject_contract_faults=inject_contract_faults,
+                        inject_shallow_flowguard_report=True,
+                    )
+
+                    self.assertFalse(result["ok"], result)
+                    self.assertEqual(result["closure"]["decision"], "not_attempted")
+                    self.assertTrue(result["injected_shallow_flowguard_reports"], result)
+                    self.assertTrue(result["reviewer_shallow_flowguard_blocks"], result)
+                    self.assertEqual(result["next_action"]["responsibility"], "pm")
+
+                    shell = run_shell.load_run_shell(root, run_id=run_id)
+                    ledger = run_shell.load_run_ledger(shell)
+                    review_block = result["reviewer_shallow_flowguard_blocks"][0]
+                    review_packet = ledger["packets"][review_block["packet_id"]]
+                    review_reads = runtime._packet_authorized_result_reads(review_packet)
+                    self.assertTrue(
+                        any(row.get("purpose") == "matching_flowguard_result_for_review" for row in review_reads),
+                        review_reads,
+                    )
+                    active_blockers = list(ledger["active_blockers"].values())
+                    shallow_blockers = [
+                        blocker
+                        for blocker in active_blockers
+                        if blocker.get("blocker_class") == "flowguard_failure"
+                        and blocker.get("packet_id") == review_block["packet_id"]
+                    ]
+                    self.assertTrue(shallow_blockers, active_blockers)
+                    pm_repair_packet_id = shallow_blockers[0].get("pm_repair_packet_id")
+                    self.assertTrue(pm_repair_packet_id, shallow_blockers[0])
+                    self.assertEqual(
+                        ledger["packets"][pm_repair_packet_id]["envelope"]["responsibility"],
+                        "pm",
+                    )
+
     def test_fake_end_to_end_flowguard_formal_artifact_fault_modes_are_explicit(self) -> None:
         fault_modes = (
             ("missing", "flowguard_evidence.json"),

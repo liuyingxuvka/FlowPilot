@@ -20363,6 +20363,75 @@ to identify unsupported historical-layer branches that should be deleted.
 - Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
 
 
+## harden-flowguard-semantic-recheck-evidence-chain-20260626 - FlowGuard Semantic Recheck Evidence Chain
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: audit found the clean current FlowPilot flow carried result-body authority, but Reviewer prompts/tests did not force rejection of shallow FlowGuard reports, and artifact path lookup could prefer a derived path over the packet-declared evidence root.
+- Status: completed_validated_installed_synced_local
+- Skill decision: used_flowguard
+- FlowGuard schema: 1.0
+- FlowGuard package version: 0.52.2
+- Commands OK: True
+
+### Model Files
+- simulations/flowpilot_model_test_alignment_family_plans.py
+- simulations/flowpilot_model_test_alignment_results.json
+- simulations/flowpilot_current_contract_cartesian_matrix_results.json
+- simulations/flowpilot_cartesian_control_plane_exhaustion_results.json
+- simulations/flowpilot_contract_exhaustion_mesh_results.json
+- docs/flowguard_project_topology.json
+- docs/flowguard_project_topology.md
+- simulations/meta_thin_parent_results.json
+- simulations/meta_layered_full_results.json
+- simulations/capability_thin_parent_results.json
+- simulations/capability_layered_full_results.json
+
+### Commands
+- python -m pytest tests/test_flowpilot_core_runtime.py -k test_flowguard_artifact_path_uses_packet_policy_before_derived_run_root -q -> 1 passed
+- python -m pytest tests/test_flowpilot_card_instruction_coverage.py -k test_reviewer_card_blocks_shallow_flowguard_with_pm_recheck_guidance -q -> 1 passed
+- python -m pytest tests/test_flowpilot_model_test_alignment.py -k test_packet_result_family_covers_flowguard_current_report_gate -q -> 1 passed
+- python simulations/run_flowpilot_model_test_alignment_checks.py --json-out simulations/flowpilot_model_test_alignment_results.json -> alignment_ok true
+- python -m pytest tests/test_flowpilot_new_entrypoint.py -k selected_flowguard_e2e_paths -q -> 5 passed, 43 subtests passed
+- python -m pytest tests/test_flowpilot_core_runtime.py -k selected_flowguard_contract_paths -q -> 5 passed
+- custom 32-case Cartesian fake E2E matrix -> failed_count 0, reviewer_shallow_blocks 8
+- python simulations/run_flowpilot_current_contract_cartesian_matrix_checks.py --json-out simulations/flowpilot_current_contract_cartesian_matrix_results.json -> ok true
+- python -m pytest tests/test_flowpilot_current_contract_cartesian_matrix.py -q -> 8 passed, 79 subtests passed
+- python simulations/run_flowpilot_cartesian_control_plane_exhaustion_checks.py --json-out simulations/flowpilot_cartesian_control_plane_exhaustion_results.json -> ok true
+- python -m pytest tests/test_flowpilot_cartesian_control_plane_exhaustion.py -q -> 20 passed, 24801 subtests passed
+- python simulations/run_flowpilot_contract_exhaustion_mesh_checks.py --json-out simulations/flowpilot_contract_exhaustion_mesh_results.json -> ok true
+- python -m pytest tests/test_flowpilot_contract_exhaustion_mesh.py -q -> 18 passed, 886 subtests passed
+- python scripts/flowguard_project_topology.py build; python scripts/flowguard_project_topology.py check -> ok true
+- openspec validate harden-flowguard-semantic-recheck-evidence-chain --strict -> valid
+- python scripts/install_flowpilot.py --sync-repo-owned --json; python scripts/audit_local_install_sync.py --json; python scripts/install_flowpilot.py --check --json; python scripts/check_install.py --json -> ok true
+- installed FlowPilot shallow FlowGuard smoke -> Reviewer block count 1, next responsibility pm
+- python simulations/run_meta_checks.py --full --force -> ok true
+- python simulations/run_capability_checks.py --full --force -> ok true
+
+### Findings
+- Normal clean FlowPilot flow already gives FlowGuard the subject result body and gives Reviewer the matching FlowGuard result body.
+- Reviewer card and review packet instructions now require blocking FlowGuard reports that only check field shape, current-contract mechanics, role boundary, packet presence, or generic process form.
+- Fake E2E now injects shallow FlowGuard reports and verifies Reviewer blocks them instead of accepting a mechanical pass.
+- Mechanical same-packet reissue now preserves authorized_result_reads for the current packet family.
+- FlowGuard artifact path lookup now prefers evidence_output_policy.run_local_evidence_root from the current packet body before derived run-root paths.
+- OpenSpec verification-contract records the executable checks for Reviewer depth, artifact path authority, authorized-read preservation, Cartesian coverage, topology, and installed-skill sync.
+
+### Counterexamples
+- A shallow FlowGuard report passes mechanically and Reviewer accepts it.
+- A corrected review reissue loses access to the authorized FlowGuard result body.
+- Runtime accepts a derived FlowGuard evidence artifact when the packet declares a different evidence root.
+- Installed FlowPilot diverges from repository source after source-only fixes.
+
+### Friction Points
+- The full model-test-code diagnostic still reports an unrelated medium structure item: flowpilot_router_terminal_ledger_traceability.py exceeds the split threshold.
+- The artifact path authority issue was found by a read-only subagent and fixed as a no-fallback boundary issue.
+
+### Skipped Steps
+- No old-run migration, fallback translator, compatibility alias, legacy packet promotion, SkillGuard-specific workflow, extra FlowGuard formal field family for semantic depth, remote push, public release, deploy, or OpenSpec archive was performed.
+
+### Risk Evidence Summary
+- Evidence supports local current-contract FlowPilot behavior for clean new runs, shallow FlowGuard Reviewer blocking, packet-owned artifact authority, reissue authorized-read preservation, broad Cartesian coverage, topology freshness, installed-skill synchronization, and full Meta/Capability local regressions.
+
+
 ## publish-flowpilot-v0.10.22 - Source-only GitHub release
 
 - Project: FlowGuardProjectAutopilot_20260430

@@ -4049,6 +4049,60 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         self.assertEqual(result["contract_family_id"], "flowguard_check.post_result")
         self.assertIn("evidence_output_policy", result["missing_required_fields"])
 
+    def test_flowguard_artifact_path_uses_packet_policy_before_derived_run_root(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_root:
+            ledger, packet_id, worker = runtime_runner._base_ledger()
+            ledger["run_root"] = temp_root
+            runtime.ack_lease(ledger, worker, packet_id)
+            runtime.submit_result(ledger, worker, packet_id, role_result_body("Worker submitted current runtime evidence."))
+            flowguard_packet = runtime_runner._open_packet_by_kind(ledger, "flowguard_check")
+            declared_root = Path(temp_root) / "declared-flowguard-evidence" / flowguard_packet
+            packet = ledger["packets"][flowguard_packet]
+            packet_body = json.loads(packet["body"])
+            packet_body["evidence_output_policy"]["run_local_evidence_root"] = str(declared_root)
+            packet["body"] = json.dumps(packet_body, sort_keys=True)
+            packet["envelope"]["body_hash"] = runtime.hash_text(packet["body"])
+            derived_path = Path(temp_root) / "evidence" / "flowguard" / flowguard_packet / "flowguard_evidence.json"
+            derived_path.parent.mkdir(parents=True, exist_ok=True)
+            derived_path.write_text(
+                json.dumps(
+                    {
+                        "schema_version": "flowpilot.flowguard_evidence.v1",
+                        "model_test_alignment_report": {
+                            "decision": "pass",
+                            "failed_predicates": [],
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+            self.assertEqual(
+                runtime._flowguard_packet_evidence_artifact_path(ledger, packet),
+                declared_root / "flowguard_evidence.json",
+            )
+
+            flowguard_lease = runtime.lease_agent(
+                ledger,
+                "flowguard_operator",
+                agent_id="fg-policy-path-authority",
+                packet_id=flowguard_packet,
+            )
+            runtime.assign_packet(ledger, flowguard_packet, flowguard_lease)
+            runtime.ack_lease(ledger, flowguard_lease, flowguard_packet)
+            open_required_result_reads(ledger, flowguard_packet, flowguard_lease)
+
+            result_id = runtime.submit_result(
+                ledger,
+                flowguard_lease,
+                flowguard_packet,
+                flowguard_result_body("FlowGuard body cannot pass by using a derived artifact path."),
+            )
+            result = ledger["results"][result_id]
+
+            self.assertEqual(result["status"], "mechanical_contract_blocked")
+            self.assertEqual(result["contract_family_id"], "flowguard_check.post_result")
+            self.assertIn("flowguard_evidence.json", result["missing_required_fields"])
+
     def test_flowguard_packet_rejects_failed_contract_self_check_without_reviewer(self) -> None:
         ledger, packet_id, worker = runtime_runner._base_ledger()
         runtime.ack_lease(ledger, worker, packet_id)

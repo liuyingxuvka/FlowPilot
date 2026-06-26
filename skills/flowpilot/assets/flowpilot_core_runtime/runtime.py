@@ -10310,19 +10310,17 @@ def _flowguard_reissue_inherited_body_payload(
 
 
 def _flowguard_packet_evidence_artifact_path(ledger: Mapping[str, Any], packet: Mapping[str, Any]) -> Path | None:
-    packet_id = str(packet.get("packet_id") or "")
-    run_root = str(ledger.get("run_root") or "")
-    if run_root and packet_id:
-        return Path(run_root) / "evidence" / "flowguard" / packet_id / "flowguard_evidence.json"
     body_payload = _flowguard_packet_body_payload(packet)
     evidence_policy = body_payload.get("evidence_output_policy")
     root_value = ""
     if isinstance(evidence_policy, Mapping):
         root_value = str(evidence_policy.get("run_local_evidence_root") or "")
     if root_value:
-        root = Path(root_value)
-        if root.is_absolute():
-            return root / "flowguard_evidence.json"
+        return Path(root_value) / "flowguard_evidence.json"
+    packet_id = str(packet.get("packet_id") or "")
+    run_root = str(ledger.get("run_root") or "")
+    if run_root and packet_id:
+        return Path(run_root) / "evidence" / "flowguard" / packet_id / "flowguard_evidence.json"
     return None
 
 
@@ -11638,7 +11636,10 @@ def _block_result_and_reissue_current_packet_family(
                 current_blocker_id,
             )
     preassigned_packet_id = ""
-    reissue_authorized_result_reads: list[dict[str, Any]] = []
+    reissue_authorized_result_reads: list[dict[str, Any]] = _normalize_authorized_result_reads(
+        ledger,
+        list(_packet_authorized_result_reads(packet)),
+    )
     if packet_kind == "flowguard_check":
         preassigned_packet_id = _next_id(ledger, "packet")
         reissue_authorized_result_reads = _flowguard_reissue_inherited_authorized_result_reads(ledger, packet)
@@ -13215,7 +13216,10 @@ def _ensure_review_packet_for_task_result(
             "FlowGuard evidence is required, inspect it before pass. Start from node_context_package as the "
             "minimum checklist, then actively inspect relevant files, UI/screenshots, logs, commands, model "
             "artifacts, and evidence paths inside the authorized scope. Do not treat the package as the review "
-            "boundary."
+            "boundary. A mechanically passed FlowGuard result is not enough when it only checks field shape, "
+            "current-contract mechanics, role boundaries, packet presence, or generic process form; block the "
+            "review and return a PM-actionable repair suggestion unless the FlowGuard evidence demonstrates "
+            "target-specific depth for the subject result."
         )
     body_payload = {
         "schema_version": "black_box_flowpilot.review_packet.v1",

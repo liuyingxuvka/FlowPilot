@@ -159,6 +159,14 @@ skipped checks, progress-only background evidence, residual blindspots, and
 reason, progress-only, or unaccepted reports block the gate or require PM
 repair.
 
+A mechanically passed FlowGuard report is not enough by itself. If the report
+only checked field shape, current-contract mechanics, role boundaries, packet
+presence, or generic process form, and did not inspect the authorized subject
+result against the target risk or blocker, return `passed: false`. Prefer the
+allowed review blocker class `flowguard_failure`, and put a PM-actionable
+`pm_suggestion_items` entry asking PM to route a focused FlowGuard repair or
+recheck.
+
 When the review packet is an ordinary `node_acceptance_plan` pass branch and
 the runtime says matching FlowGuard reads are not required, do not invent a
 pre-worker FlowGuard requirement. Review the PM node plan, node context,

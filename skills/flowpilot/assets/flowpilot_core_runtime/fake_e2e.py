@@ -335,7 +335,7 @@ def _body_for_packet(
         payload.update(_subject_artifact_consumption_payload_for_packet(packet))
         return json.dumps(payload, sort_keys=True)
     if family_id == "review.any_current_subject":
-        return json.dumps(runtime._packet_result_minimal_valid_shape(packet), sort_keys=True)
+        return _review_body_for_packet(packet, ledger=ledger)
     if family_id == "pm_repair_decision.pm_repair_decision":
         payload = runtime._packet_result_minimal_valid_shape(packet)
         packet_body: dict[str, Any] = {}
@@ -485,6 +485,94 @@ def _consistency_fault_body_for_packet(packet: dict[str, Any], ledger: dict[str,
         }
         return json.dumps(payload, sort_keys=True)
     return _fault_body_for_packet(packet, ledger=ledger)
+
+
+def _shallow_flowguard_body_for_packet(packet: dict[str, Any], ledger: dict[str, Any] | None = None) -> str:
+    payload = runtime._packet_result_minimal_valid_shape(packet)
+    payload.update(_subject_artifact_consumption_payload_for_packet(packet))
+    payload["passed"] = True
+    payload["modeled_boundary"] = "current_contract_shape_only"
+    payload["pm_visible_summary"] = [
+        "FlowGuard pass only checked packet field shape and current-contract mechanics; target risk was not modeled."
+    ]
+    return json.dumps(payload, sort_keys=True)
+
+
+def _flowguard_result_ids_for_review_packet(packet: dict[str, Any]) -> list[str]:
+    result_ids = [
+        str(row.get("result_id") or "")
+        for row in runtime._packet_authorized_result_reads(packet)
+        if str(row.get("purpose") or "") == "matching_flowguard_result_for_review"
+        and str(row.get("result_id") or "")
+    ]
+    try:
+        packet_body = json.loads(packet.get("body") or "{}")
+    except json.JSONDecodeError:
+        return result_ids
+    manifest = packet_body.get("flowguard_evidence_manifest") if isinstance(packet_body, dict) else None
+    entries = manifest.get("entries") if isinstance(manifest, dict) else []
+    manifest_ids = [
+        str(entry.get("flowguard_result_id") or "")
+        for entry in entries
+        if isinstance(entry, dict) and str(entry.get("flowguard_result_id") or "")
+    ]
+    return list(dict.fromkeys(result_ids + manifest_ids))
+
+
+def _payload_is_shallow_flowguard_report(payload: Any) -> bool:
+    if not isinstance(payload, dict) or payload.get("passed") is not True:
+        return False
+    modeled_boundary = str(payload.get("modeled_boundary") or "").lower()
+    summary_text = " ".join(str(item) for item in payload.get("pm_visible_summary") or []).lower()
+    shallow_markers = (
+        "shape_only",
+        "field shape",
+        "current-contract",
+        "current_contract",
+        "role boundary",
+        "packet field",
+    )
+    return any(marker in modeled_boundary or marker in summary_text for marker in shallow_markers)
+
+
+def _review_body_for_packet(packet: dict[str, Any], ledger: dict[str, Any] | None = None) -> str:
+    payload = runtime._packet_result_minimal_valid_shape(packet)
+    if ledger is None:
+        return json.dumps(payload, sort_keys=True)
+    shallow_result_ids: list[str] = []
+    for result_id in _flowguard_result_ids_for_review_packet(packet):
+        result = ledger.get("results", {}).get(result_id)
+        if not isinstance(result, dict):
+            continue
+        try:
+            result_payload = json.loads(result.get("body") or "{}")
+        except json.JSONDecodeError:
+            continue
+        if _payload_is_shallow_flowguard_report(result_payload):
+            shallow_result_ids.append(result_id)
+    if shallow_result_ids:
+        payload["passed"] = False
+        payload["findings"] = [
+            {
+                "finding_id": "reviewer-found-shallow-flowguard-depth",
+                "summary": "Matching FlowGuard evidence mechanically passed but only checked shape/current-contract mechanics.",
+                "evidence_result_ids": shallow_result_ids,
+            }
+        ]
+        payload["blockers"] = [
+            {
+                "blocker_id": "reviewer-blocker-shallow-flowguard-depth",
+                "blocker_class": "flowguard_failure",
+                "recommended_resolution": (
+                    "PM must route a focused FlowGuard repair or recheck that consumes the authorized subject "
+                    "result and models the target risk before Reviewer can pass."
+                ),
+            }
+        ]
+        payload["pm_suggestion_items"] = [
+            "Ask FlowGuard to recheck the subject result against the target risk; packet-shape/current-contract-only coverage is not enough."
+        ]
+    return json.dumps(payload, sort_keys=True)
 
 
 def _semantic_recheck_required_read_ids_for_packet(packet: dict[str, Any]) -> list[str]:
@@ -666,6 +754,7 @@ def run_fake_e2e(
     inject_consistency_faults: bool = False,
     inject_artifact_consistency_faults: bool = False,
     flowguard_artifact_fault_mode: str = "",
+    inject_shallow_flowguard_report: bool = False,
     inject_terminal_replay_blocker: bool = False,
     repair_terminal_replay_blocker: bool = False,
     use_parent_route: bool = False,
@@ -711,6 +800,8 @@ def run_fake_e2e(
     injected_consistency_fault_families: set[str] = set()
     injected_artifact_consistency_fault_families: set[str] = set()
     injected_flowguard_artifact_fault_modes: list[dict[str, str]] = []
+    injected_shallow_flowguard_reports: list[dict[str, str]] = []
+    reviewer_shallow_flowguard_blocks: list[dict[str, str]] = []
     injected_terminal_replay_blockers: list[dict[str, str]] = []
     mechanical_contract_blocks: list[dict[str, Any]] = []
     for index in range(80):
@@ -746,6 +837,12 @@ def run_fake_e2e(
             and family_id == "flowguard_check.post_result"
             and family_id not in injected_artifact_consistency_fault_families
         )
+        should_shallow_flowguard_report = (
+            inject_shallow_flowguard_report
+            and family_id == "flowguard_check.post_result"
+            and not injected_shallow_flowguard_reports
+            and not should_artifact_consistency_fault
+        )
         should_terminal_replay_block = (
             inject_terminal_replay_blocker
             and family_id == "review.terminal_backward_replay"
@@ -759,6 +856,8 @@ def run_fake_e2e(
         elif should_artifact_consistency_fault:
             body = _body_for_packet(packet, ledger=ledger, parent_route=use_parent_route)
             injected_artifact_consistency_fault_families.add(family_id)
+        elif should_shallow_flowguard_report:
+            body = _shallow_flowguard_body_for_packet(packet, ledger=ledger)
         elif should_fault:
             body = _fault_body_for_packet(packet, ledger=ledger)
             injected_fault_families.add(family_id)
@@ -804,7 +903,33 @@ def run_fake_e2e(
                     "quarantine_reason": str(result.get("quarantine_reason") or ""),
                 }
             )
+        if should_shallow_flowguard_report:
+            injected_shallow_flowguard_reports.append(
+                {
+                    "packet_id": packet_id,
+                    "result_id": result_id,
+                    "status": str(result.get("status") or ""),
+                }
+            )
         completed_packets.append({"packet_id": packet_id, "packet_kind": kind, "lease_id": lease_id, "result_id": result_id})
+        if family_id == "review.any_current_subject":
+            try:
+                review_payload = json.loads(body)
+            except json.JSONDecodeError:
+                review_payload = {}
+            if isinstance(review_payload, dict) and review_payload.get("passed") is False and any(
+                isinstance(blocker, dict)
+                and str(blocker.get("blocker_id") or "") == "reviewer-blocker-shallow-flowguard-depth"
+                for blocker in review_payload.get("blockers") or []
+            ):
+                reviewer_shallow_flowguard_blocks.append(
+                    {
+                        "packet_id": packet_id,
+                        "result_id": result_id,
+                        "status": str(result.get("status") or ""),
+                    }
+                )
+                break
         if should_terminal_replay_block:
             injected_terminal_replay_blockers.append(
                 {
@@ -831,6 +956,8 @@ def run_fake_e2e(
         "injected_consistency_fault_families": sorted(injected_consistency_fault_families),
         "injected_artifact_consistency_fault_families": sorted(injected_artifact_consistency_fault_families),
         "injected_flowguard_artifact_fault_modes": injected_flowguard_artifact_fault_modes,
+        "injected_shallow_flowguard_reports": injected_shallow_flowguard_reports,
+        "reviewer_shallow_flowguard_blocks": reviewer_shallow_flowguard_blocks,
         "injected_terminal_replay_blockers": injected_terminal_replay_blockers,
         "active_blockers": runtime._copy_jsonable(ledger.get("active_blockers") or {}),
         "folded_boundaries": folded_boundaries,

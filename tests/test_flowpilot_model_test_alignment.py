@@ -134,6 +134,7 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
         self.assertIn("packet_result_family.flowguard_artifact_hard_decision_before_reviewer", obligations)
         self.assertIn("packet_result_family.flowguard_repair_blocker_identity_continuity", obligations)
         self.assertIn("packet_result_family.flowguard_semantic_recheck_subject_bound", obligations)
+        self.assertIn("packet_result_family.reviewer_blocks_shallow_flowguard_depth", obligations)
         self.assertIn("packet_result_family.flowguard_semantic_recheck_ai_facing_projection", obligations)
         self.assertIn("packet_result_family.flowguard_semantic_recheck_corrected_retry_convergence", obligations)
         self.assertIn("packet_result_family.contract_driven_fake_ai_cartesian_retry", obligations)
@@ -161,6 +162,8 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
         self.assertIn("packet_result_family.runtime.flowguard_current_report_gate", contracts)
         self.assertIn("packet_result_family.runtime.flowguard_artifact_hard_decision", contracts)
         self.assertIn("packet_result_family.runtime.flowguard_semantic_recheck_gate", contracts)
+        self.assertIn("packet_result_family.runtime.review_packet_flowguard_depth_instruction", contracts)
+        self.assertIn("packet_result_family.prompt.reviewer_shallow_flowguard_depth_card", contracts)
         self.assertIn("packet_result_family.runtime.effective_result_contract_profiles", contracts)
         self.assertIn("packet_result_family.runtime.current_handoff_result_profile_contract", contracts)
         self.assertIn("packet_result_family.runtime.current_contract_reissue_feedback", contracts)
@@ -172,6 +175,7 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
         self.assertIn("packet_result_family.runtime.flowguard_reissue_inherited_authorized_reads", contracts)
         self.assertIn("packet_result_family.runtime.flowguard_reissue_issue_task_packet_reads", contracts)
         self.assertIn("packet_result_family.simulation.fake_e2e_authorized_material_proof", contracts)
+        self.assertIn("packet_result_family.simulation.fake_e2e_shallow_flowguard_reviewer_block", contracts)
         self.assertIn("packet_result_family.runtime.flowguard_packet_issue_inherits_blocker", contracts)
         self.assertIn("packet_result_family.runtime.blocker_related_authorized_reads", contracts)
         self.assertIn("packet_result_family.runtime.pm_repair_obligation_disposition_gate", contracts)
@@ -202,6 +206,25 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
             "test_fake_end_to_end_flowguard_artifact_chaos_reissues_and_finishes",
         )
         self.assertEqual(
+            evidence["packet_result_family.replay.fake_e2e_shallow_flowguard_reviewer_block"].test_name,
+            "test_fake_end_to_end_shallow_flowguard_is_reviewer_blocked",
+        )
+        self.assertEqual(
+            evidence["packet_result_family.replay.fake_e2e_shallow_flowguard_reviewer_block"].covered_obligations,
+            (
+                "packet_result_family.reviewer_blocks_shallow_flowguard_depth",
+                "packet_result_family.sealed_body_related_context_reads",
+            ),
+        )
+        self.assertEqual(
+            evidence["packet_result_family.negative.shallow_flowguard_reviewer_block"].test_name,
+            "test_fake_end_to_end_shallow_flowguard_is_reviewer_blocked",
+        )
+        self.assertEqual(
+            evidence["packet_result_family.prompt.reviewer_shallow_flowguard_depth_card"].test_name,
+            "test_reviewer_card_blocks_shallow_flowguard_with_pm_recheck_guidance",
+        )
+        self.assertEqual(
             evidence["packet_result_family.replay.historical_skillguard_flowguard_artifact_block"].test_name,
             "test_historical_skillguard_flowguard_artifact_block_is_not_authoritative",
         )
@@ -212,6 +235,10 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
         self.assertEqual(
             evidence["packet_result_family.negative.flowguard_missing_evidence_output_policy"].test_name,
             "test_flowguard_packet_rejects_missing_evidence_output_policy",
+        )
+        self.assertEqual(
+            evidence["packet_result_family.negative.flowguard_packet_policy_path_authority"].test_name,
+            "test_flowguard_artifact_path_uses_packet_policy_before_derived_run_root",
         )
         self.assertEqual(
             evidence["packet_result_family.edge.flowguard_reissue_preserves_policy"].test_name,

@@ -503,6 +503,21 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
             self.assertIn("pm suggestion", text)
             self.assertIn("pm_suggestion", text)
 
+    def test_reviewer_card_blocks_shallow_flowguard_with_pm_recheck_guidance(self) -> None:
+        text = _normalized_path(_card_path_by_id("reviewer.core"))
+
+        for required in (
+            "mechanically passed flowguard report is not enough",
+            "field shape",
+            "current-contract mechanics",
+            "target risk",
+            "passed: false",
+            "flowguard_failure",
+            "pm_suggestion_items",
+            "focused flowguard repair or recheck",
+        ):
+            self.assertIn(required, text)
+
     def test_reviewer_quality_score_rubric_reaches_pm_worker_and_reviewer_cards(self) -> None:
         reviewer_core = _normalized_path(_card_path_by_id("reviewer.core"))
         reviewer_worker = _normalized_path(_card_path_by_id("reviewer.worker_result_review"))

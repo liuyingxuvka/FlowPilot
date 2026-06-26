@@ -519,6 +519,18 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 allow_shared_implementation=True,
             ),
             _obligation(
+                "packet_result_family.reviewer_blocks_shallow_flowguard_depth",
+                obligation_type="review_gate_contract",
+                description=(
+                    "Reviewer must block a mechanically passed FlowGuard report when it only "
+                    "proves field shape, current-contract mechanics, role boundary, packet "
+                    "presence, or generic process form instead of target-specific depth."
+                ),
+                required_test_kinds=(NEGATIVE, REPLAY),
+                allow_shared_evidence=True,
+                allow_shared_implementation=True,
+            ),
+            _obligation(
                 "packet_result_family.flowguard_semantic_recheck_ai_facing_projection",
                 obligation_type="ai_facing_contract_projection",
                 description=(
@@ -854,6 +866,33 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                     "packet_body.semantic_recheck_contract.context_only",
                     "flowguard_result.semantic_recheck",
                 ),
+            ),
+            _contract(
+                "packet_result_family.runtime.review_packet_flowguard_depth_instruction",
+                path="skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+                symbol="_ensure_review_packet_for_task_result",
+                implements=("packet_result_family.reviewer_blocks_shallow_flowguard_depth",),
+                external_inputs=("ledger", "subject_packet", "matching_flowguard_result"),
+                external_outputs=("review_packet_instruction", "authorized_result_reads"),
+                state_reads=("flowguard_evidence_manifest", "flowguard_result_body"),
+            ),
+            _contract(
+                "packet_result_family.prompt.reviewer_shallow_flowguard_depth_card",
+                path="skills/flowpilot/assets/runtime_kit/cards/roles/human_like_reviewer.md",
+                symbol="reviewer.core",
+                implements=("packet_result_family.reviewer_blocks_shallow_flowguard_depth",),
+                external_inputs=("review_packet", "matching_flowguard_result"),
+                external_outputs=("reviewer_blocker", "pm_suggestion_items"),
+                state_reads=("authorized_subject_result", "flowguard_result_body"),
+            ),
+            _contract(
+                "packet_result_family.simulation.fake_e2e_shallow_flowguard_reviewer_block",
+                path="skills/flowpilot/assets/flowpilot_core_runtime/fake_e2e.py",
+                symbol="run_fake_e2e",
+                implements=("packet_result_family.reviewer_blocks_shallow_flowguard_depth",),
+                external_inputs=("inject_shallow_flowguard_report", "inject_contract_faults"),
+                external_outputs=("reviewer_shallow_flowguard_blocks", "pm_repair_packet"),
+                state_reads=("review_packet.authorized_result_reads", "flowguard_result_body"),
             ),
             _contract(
                 "packet_result_family.runtime.effective_result_contract_profiles",
@@ -1386,6 +1425,18 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 ),
             ),
             _evidence(
+                "packet_result_family.negative.flowguard_packet_policy_path_authority",
+                test_name="test_flowguard_artifact_path_uses_packet_policy_before_derived_run_root",
+                path="tests/test_flowpilot_core_runtime.py",
+                command="python -m pytest tests/test_flowpilot_core_runtime.py -k test_flowguard_artifact_path_uses_packet_policy_before_derived_run_root -q",
+                test_kind=NEGATIVE,
+                covers=("packet_result_family.flowguard_artifact_hard_decision_before_reviewer",),
+                code_contracts=(
+                    "packet_result_family.runtime.flowguard_current_report_gate",
+                    "packet_result_family.runtime.flowguard_artifact_hard_decision",
+                ),
+            ),
+            _evidence(
                 "packet_result_family.edge.flowguard_reissue_preserves_policy",
                 test_name="test_flowguard_fallback_evidence_is_mechanically_reissued",
                 path="tests/test_flowpilot_core_runtime.py",
@@ -1787,6 +1838,42 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                     "packet_result_family.runtime.flowguard_current_report_gate",
                     "packet_result_family.runtime.flowguard_artifact_hard_decision",
                     "packet_result_family.runtime.flowguard_review_handoff",
+                ),
+            ),
+            _evidence(
+                "packet_result_family.replay.fake_e2e_shallow_flowguard_reviewer_block",
+                test_name="test_fake_end_to_end_shallow_flowguard_is_reviewer_blocked",
+                path="tests/test_flowpilot_new_entrypoint.py",
+                command="python -m pytest tests/test_flowpilot_new_entrypoint.py -k test_fake_end_to_end_shallow_flowguard_is_reviewer_blocked -q",
+                test_kind=REPLAY,
+                covers=(
+                    "packet_result_family.reviewer_blocks_shallow_flowguard_depth",
+                    "packet_result_family.sealed_body_related_context_reads",
+                ),
+                code_contracts=(
+                    "packet_result_family.runtime.review_packet_flowguard_depth_instruction",
+                    "packet_result_family.simulation.fake_e2e_shallow_flowguard_reviewer_block",
+                ),
+            ),
+            _evidence(
+                "packet_result_family.prompt.reviewer_shallow_flowguard_depth_card",
+                test_name="test_reviewer_card_blocks_shallow_flowguard_with_pm_recheck_guidance",
+                path="tests/test_flowpilot_card_instruction_coverage.py",
+                command="python -m pytest tests/test_flowpilot_card_instruction_coverage.py -k test_reviewer_card_blocks_shallow_flowguard_with_pm_recheck_guidance -q",
+                test_kind=REPLAY,
+                covers=("packet_result_family.reviewer_blocks_shallow_flowguard_depth",),
+                code_contracts=("packet_result_family.prompt.reviewer_shallow_flowguard_depth_card",),
+            ),
+            _evidence(
+                "packet_result_family.negative.shallow_flowguard_reviewer_block",
+                test_name="test_fake_end_to_end_shallow_flowguard_is_reviewer_blocked",
+                path="tests/test_flowpilot_new_entrypoint.py",
+                command="python -m pytest tests/test_flowpilot_new_entrypoint.py -k test_fake_end_to_end_shallow_flowguard_is_reviewer_blocked -q",
+                test_kind=NEGATIVE,
+                covers=("packet_result_family.reviewer_blocks_shallow_flowguard_depth",),
+                code_contracts=(
+                    "packet_result_family.runtime.review_packet_flowguard_depth_instruction",
+                    "packet_result_family.simulation.fake_e2e_shallow_flowguard_reviewer_block",
                 ),
             ),
             _evidence(

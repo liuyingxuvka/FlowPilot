@@ -79,7 +79,7 @@ Completion and readiness claims still need the owning FlowGuard checks, tests, r
 
 - `startup` (startup): 2 obligations, 4 test evidence rows
 - `packet/card/ack` (packet): 4 obligations, 7 test evidence rows
-- `packet result family` (packet): 36 obligations, 60 test evidence rows
+- `packet result family` (packet): 37 obligations, 64 test evidence rows
 - `route mutation` (route): 3 obligations, 6 test evidence rows
 - `field lifecycle currentness` (other): 12 obligations, 16 test evidence rows
 - `current-node trunk invariant` (other): 2 obligations, 4 test evidence rows
