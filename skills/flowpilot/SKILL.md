@@ -11,7 +11,7 @@ FlowPilot is a prompt-isolated router skill. This file is only a small launcher;
 
 Use FlowPilot only after an explicit user request in the current thread. If the user is editing, auditing, discussing, or repairing this skill, treat that as ordinary repository work unless they ask to run a formal FlowPilot route.
 
-Do not infer activation from task size, repository type, UI work, continuation language, or `.flowpilot/`.
+Do not infer activation from task size, repository type, UI work, continuation language, or .flowpilot/.
 
 ## Dependency Bootstrap
 
@@ -27,7 +27,7 @@ If only the skill directory is available, read `DEPENDENCIES.md` and ask before 
 
 ## Required Launcher Behavior
 
-The assistant is only the FlowPilot bootloader until a new `flowpilot_new.py` run has been created. A user request to start or use FlowPilot is always a fresh formal invocation, even if `.flowpilot/current.json` points at an old or still-running run.
+The assistant is only the FlowPilot bootloader until a new flowpilot_new.py run has been created. A user request to start or use FlowPilot is always a fresh formal invocation, even if .flowpilot/current.json points at an old or still-running run.
 
 Do not read FlowPilot reference files, prior run state, old screenshots, old UI assets, old prompt bodies, or runtime kit cards unless the Router action explicitly names them.
 
@@ -39,9 +39,9 @@ Fresh formal invocation:
 python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json start
 ```
 
-The public formal-run control surface is `flowpilot_new.py` only. The startup path uses the native startup intake UI; There is no requirement for a non-startup monitoring UI. `.flowpilot/runs/<run-id>/ledger.json` is authority; `.flowpilot/current.json` is UI focus/default-target metadata.
+The public formal-run control surface is flowpilot_new.py only. The startup path uses the native startup intake UI; There is no requirement for a non-startup monitoring UI. .flowpilot/runs/<run-id>/ledger.json is authority; .flowpilot/current.json is UI focus/default-target metadata.
 
-The internal router facade is retained for current tests and stateful runtime commands. Do not bypass `flowpilot_new.py` during a new formal run.
+The internal router facade is retained for current tests and stateful runtime commands. Do not bypass flowpilot_new.py during a new formal run.
 
 Before the background driver is started or attached, the bootloader may only create the fresh run shell, write the active pointer/index, copy current runtime kit material, and start or attach the current background driver. It must not run startup packet work, role work, direct apply loops, or historical recovery.
 
@@ -100,3 +100,47 @@ The active prompt content lives in the copied runtime kit and prompt manifest:
 - internal role-output contract helper modules
 
 Old long-form protocol material is source-history material only.
+
+
+<!-- BEGIN SKILLGUARD CONTRACT LAYER -->
+## Purpose
+
+Use this skill for its declared flowpilot workflow while binding each run to a route, evidence, checks, and a bounded completion claim.
+
+## Entrypoint Scope
+
+The entrypoint covers the installed flowpilot skill and the local materials explicitly routed by its instructions. It does not expand to unrelated repositories, private files, external services, publication, or release claims unless the user request and skill workflow explicitly include them.
+
+## Local Material Routing
+
+Resolve local materials from the active workspace, this skill directory, user-provided files, or explicitly configured project paths. Treat private machine paths as local-only inputs and keep public-facing instructions portable.
+
+## Entrypoint Acceptance Map
+
+A valid run selects one declared route, follows the phase order, records direct evidence, runs required checks, reports blockers and failures, and closes only inside the claim boundary. Available routes: opt in gate, route plan, execution checks, closure.
+
+## Use When
+
+Use when the user request matches the flowpilot activation boundary and needs this skill's governed workflow, source material, checks, or handoff behavior.
+
+## Do Not Use When
+
+Do not use when the task is outside this skill's domain, when required local materials are unavailable, when another more specific skill owns the request, or when the user asks only for a tiny direct answer.
+
+## Required Workflow
+
+Select the route, inspect local materials, perform the work in phase order, collect direct evidence, run the required checks, fix failures, and only then report progress or completion.
+
+## Hard Gates
+
+Do not skip phases, do not replace required evidence with prose, do not treat stale reports as current, do not weaken validation to pass, and do not claim completion when blockers remain.
+
+## Output Requirements
+
+When reporting, include evidence, failures, blockers, skipped_checks with reasons, residual_risk, and claim_boundary. State clearly what was checked, what was not checked, and what remains blocked or uncertain.
+
+## SkillGuard Maintenance
+
+Keep the `.skillguard` control root, work contract, check manifest, check scripts, evidence records, and progress ledger current. Re-run SkillGuard checks after changing this entrypoint, route behavior, evidence rules, or closure wording.
+
+<!-- END SKILLGUARD CONTRACT LAYER -->
