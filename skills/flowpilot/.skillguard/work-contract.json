@@ -2,16 +2,74 @@
   "schema_version": "skillguard.work_contract.v1",
   "skill_id": "flowpilot",
   "target_path": ".codex/skills/flowpilot",
-  "contract_version": "2",
+  "contract_version": "3",
+  "integration_mode": "native-integrated",
+  "native_route_owner": "FlowPilot flowpilot_new.py launcher, Router/Controller runtime, and FlowPilot regression checks",
+  "native_route_bindings": [
+    {
+      "binding_id": "opt_in_gate_native_route",
+      "native_route_id": "flowpilot.opt_in_gate",
+      "source": "FlowPilot flowpilot_new.py launcher, Router/Controller runtime, and FlowPilot regression checks",
+      "required_before_closure": true
+    },
+    {
+      "binding_id": "route_plan_native_route",
+      "native_route_id": "flowpilot.route_plan",
+      "source": "FlowPilot flowpilot_new.py launcher, Router/Controller runtime, and FlowPilot regression checks",
+      "required_before_closure": true
+    },
+    {
+      "binding_id": "execution_checks_native_route",
+      "native_route_id": "flowpilot.execution_checks",
+      "source": "FlowPilot flowpilot_new.py launcher, Router/Controller runtime, and FlowPilot regression checks",
+      "required_before_closure": true
+    },
+    {
+      "binding_id": "closure_native_route",
+      "native_route_id": "flowpilot.closure",
+      "source": "FlowPilot flowpilot_new.py launcher, Router/Controller runtime, and FlowPilot regression checks",
+      "required_before_closure": true
+    }
+  ],
+  "native_check_bindings": [
+    {
+      "binding_id": "flowpilot_router_liveness_native_check",
+      "native_check_id": "flowpilot_router_liveness",
+      "evidence_source": "FlowPilot flowpilot_new.py launcher, Router/Controller runtime, and FlowPilot regression checks",
+      "required": true
+    },
+    {
+      "binding_id": "flowpilot_runtime_regression_native_check",
+      "native_check_id": "flowpilot_runtime_regression",
+      "evidence_source": "FlowPilot flowpilot_new.py launcher, Router/Controller runtime, and FlowPilot regression checks",
+      "required": true
+    }
+  ],
+  "skillguard_role": "native_contract_executor",
+  "may_define_parallel_execution_route": false,
+  "may_define_skillguard_runtime_route": false,
+  "integration_claim_boundary": "SkillGuard executes the runtime contract against the native route/check system owned by FlowPilot flowpilot_new.py launcher, Router/Controller runtime, and FlowPilot regression checks. It may enforce contract gates before progress or closure, but must not create a competing execution router or bypass the native controller/checker.",
   "routes": [
     {
       "route_id": "opt_in_gate",
-      "summary": "Use the opt in gate route for flowpilot work when the task wording and local evidence match this path.",
+      "summary": "SkillGuard runtime contract executor for the target skill's native opt in gate route/check surface. Duplicate SkillGuard-owned execution paths are invalid; evidence, required checks, blockers, and closure run through the target skill's own workflow.",
+      "route_source": "native_binding",
       "activation_keywords": [
-        "flowpilot",
+        "opt_in_gate",
         "opt in gate",
-        "flowpilot"
+        "opt-in-gate",
+        "opt",
+        "选择",
+        "显式",
+        "in",
+        "启用",
+        "gate",
+        "门禁",
+        "入口",
+        "硬门槛"
       ],
+      "default_route": true,
+      "route_priority": 0,
       "do_not_use_when": [
         "The task is outside this skill's activation boundary."
       ],
@@ -25,12 +83,23 @@
     },
     {
       "route_id": "route_plan",
-      "summary": "Use the route plan route for flowpilot work when the task wording and local evidence match this path.",
+      "summary": "SkillGuard runtime contract executor for the target skill's native route plan route/check surface. Duplicate SkillGuard-owned execution paths are invalid; evidence, required checks, blockers, and closure run through the target skill's own workflow.",
+      "route_source": "native_binding",
       "activation_keywords": [
-        "flowpilot",
+        "route_plan",
         "route plan",
-        "flowpilot"
+        "route-plan",
+        "route",
+        "routing",
+        "路由",
+        "路线",
+        "路径",
+        "plan",
+        "计划",
+        "方案"
       ],
+      "default_route": false,
+      "route_priority": 1,
       "do_not_use_when": [
         "The task is outside this skill's activation boundary."
       ],
@@ -44,12 +113,26 @@
     },
     {
       "route_id": "execution_checks",
-      "summary": "Use the execution checks route for flowpilot work when the task wording and local evidence match this path.",
+      "summary": "SkillGuard runtime contract executor for the target skill's native execution checks route/check surface. Duplicate SkillGuard-owned execution paths are invalid; evidence, required checks, blockers, and closure run through the target skill's own workflow.",
+      "route_source": "native_binding",
       "activation_keywords": [
-        "flowpilot",
+        "execution_checks",
         "execution checks",
-        "flowpilot"
+        "execution-checks",
+        "execution",
+        "checks",
+        "check",
+        "verify",
+        "test",
+        "检查",
+        "验证",
+        "测试",
+        "审计",
+        "扫描",
+        "回归"
       ],
+      "default_route": false,
+      "route_priority": 2,
       "do_not_use_when": [
         "The task is outside this skill's activation boundary."
       ],
@@ -63,12 +146,19 @@
     },
     {
       "route_id": "closure",
-      "summary": "Use the closure route for flowpilot work when the task wording and local evidence match this path.",
+      "summary": "SkillGuard runtime contract executor for the target skill's native closure route/check surface. Duplicate SkillGuard-owned execution paths are invalid; evidence, required checks, blockers, and closure run through the target skill's own workflow.",
+      "route_source": "native_binding",
       "activation_keywords": [
-        "flowpilot",
         "closure",
-        "flowpilot"
+        "close",
+        "收尾",
+        "闭环",
+        "完成",
+        "归档",
+        "发布"
       ],
+      "default_route": false,
+      "route_priority": 3,
       "do_not_use_when": [
         "The task is outside this skill's activation boundary."
       ],
@@ -285,7 +375,7 @@
       "binding_id": "target_skill_prompt",
       "path": "SKILL.md",
       "stales": [
-        "route_selection",
+        "overlay_selection",
         "run_record",
         "closure_report"
       ]
@@ -294,12 +384,12 @@
       "binding_id": "work_contract",
       "path": ".skillguard/work-contract.json",
       "stales": [
-        "route_selection",
+        "overlay_selection",
         "run_record",
         "closure_report"
       ]
     }
   ],
-  "claim_boundary": "This work contract governs only the declared target skill and local run evidence. It does not prove external services, package publication, GitHub release readiness, or future AI correctness.",
-  "contract_hash": "4CC2287326F082E7A41C757AA5F2FE0E97D74E223CAA9D22A0A8E41C680E4A39"
+  "claim_boundary": "This work contract governs only SkillGuard overlay evidence for the declared target skill. It does not replace the target skill's native router/check system and does not prove external services, package publication, GitHub release readiness, or future AI correctness.",
+  "contract_hash": "F586C87581C3C28DA5661F39F36AE85C1C1D318B731C5A4F96EC450496590071"
 }
