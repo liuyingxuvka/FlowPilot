@@ -1,6 +1,9 @@
 # Local FlowPilot/FlowGuard runtime state from this development workspace.
 .flowpilot/
-.flowguard/
+.flowguard/*
+!.flowguard/
+!.flowguard/project.toml
+!.flowguard/adoption_log.jsonl
 .flowpilot_global_supervisor_last.json
 tmp/
 simulations/*.proof.json

@@ -45,6 +45,58 @@
       "required": true
     }
   ],
+  "phase_native_bindings": [
+    {
+      "phase_id": "intake",
+      "native_route_binding_id": "opt_in_gate_native_route",
+      "native_check_binding_ids": [
+        "flowpilot_router_liveness_native_check",
+        "flowpilot_runtime_regression_native_check"
+      ],
+      "evidence_source": "FlowPilot flowpilot_new.py startup/intake route evidence plus Router/Controller regression checks",
+      "required": true
+    },
+    {
+      "phase_id": "inventory",
+      "native_route_binding_id": "route_plan_native_route",
+      "native_check_binding_ids": [
+        "flowpilot_router_liveness_native_check",
+        "flowpilot_runtime_regression_native_check"
+      ],
+      "evidence_source": "FlowPilot native route plan and inventory evidence plus current regression checks",
+      "required": true
+    },
+    {
+      "phase_id": "execution",
+      "native_route_binding_id": "execution_checks_native_route",
+      "native_check_binding_ids": [
+        "flowpilot_router_liveness_native_check",
+        "flowpilot_runtime_regression_native_check"
+      ],
+      "evidence_source": "FlowPilot Router/Controller execution path and runtime regression evidence",
+      "required": true
+    },
+    {
+      "phase_id": "checks",
+      "native_route_binding_id": "execution_checks_native_route",
+      "native_check_binding_ids": [
+        "flowpilot_router_liveness_native_check",
+        "flowpilot_runtime_regression_native_check"
+      ],
+      "evidence_source": "FlowPilot current runtime checks and regression outputs",
+      "required": true
+    },
+    {
+      "phase_id": "closure",
+      "native_route_binding_id": "closure_native_route",
+      "native_check_binding_ids": [
+        "flowpilot_router_liveness_native_check",
+        "flowpilot_runtime_regression_native_check"
+      ],
+      "evidence_source": "FlowPilot final-preflight, closure, and regression evidence",
+      "required": true
+    }
+  ],
   "skillguard_role": "native_contract_executor",
   "may_define_parallel_execution_route": false,
   "may_define_skillguard_runtime_route": false,
@@ -391,5 +443,5 @@
     }
   ],
   "claim_boundary": "This work contract governs only SkillGuard overlay evidence for the declared target skill. It does not replace the target skill's native router/check system and does not prove external services, package publication, GitHub release readiness, or future AI correctness.",
-  "contract_hash": "F586C87581C3C28DA5661F39F36AE85C1C1D318B731C5A4F96EC450496590071"
+  "contract_hash": "82C2935E97F295840A99355545D2DA8C8CCB2D03A6B91CD24D97400214551A6C"
 }
