@@ -15,7 +15,7 @@
 </p>
 
 <p align="center">
-  Source version: <strong>v0.10.23</strong> · MIT License · open-source AI-agent control runtime
+  Source version: <strong>v0.10.24</strong> · MIT License · open-source AI-agent control runtime
 </p>
 <!-- README HERO END -->
 
@@ -126,7 +126,7 @@ In plain language:
 
 | Field | Value |
 | --- | --- |
-| Source version | `v0.10.23` |
+| Source version | `v0.10.24` |
 | Public project name | `FlowPilot` |
 | Skill slug | `flowpilot` |
 | Release shape | Source package only, no binary app bundle |
@@ -134,7 +134,7 @@ In plain language:
 | Required core dependency | Real `flowguard` Python package |
 | Current UI surface | Windows WPF startup intake dialog plus chat route signs |
 
-`v0.10.23` hardens the FlowGuard evidence review chain and completes terminal-ledger maintenance. Reviewer packets now block shallow FlowGuard reports that only prove mechanical shape, while FlowGuard terminal coverage validation and final ledger writing move into focused owner modules without changing the current facade or workflow contract. The release also refreshes model/test/catalog registration, topology evidence, local install-sync proof, release tier checks, and router-terminal background validation.
+`v0.10.24` adds SkillGuard runtime-contract governance for the installed FlowPilot Codex skill, including route selection, evidence gates, release-scope closure receipts, and synchronized installed/source skill material.
 
 ## When To Use FlowPilot
 
@@ -229,7 +229,7 @@ MIT. See [`LICENSE`](./LICENSE).
 
 # FlowPilot 中文说明
 
-**Source version:** `v0.10.23`<br />
+**Source version:** `v0.10.24`<br />
 **许可证：** MIT<br />
 **形态：** open-source AI-agent control runtime
 
@@ -338,7 +338,7 @@ startup intake
 
 | 字段 | 值 |
 | --- | --- |
-| Source version | `v0.10.23` |
+| Source version | `v0.10.24` |
 | Public project name | `FlowPilot` |
 | Skill slug | `flowpilot` |
 | Release shape | source package only, no binary app bundle |
@@ -346,7 +346,7 @@ startup intake
 | Required core dependency | real `flowguard` Python package |
 | Current UI surface | Windows WPF startup intake dialog plus chat route signs |
 
-`v0.10.23` 强化了 FlowGuard evidence review chain，并完成 terminal ledger 维护。Reviewer packet 现在会阻止只证明机械格式、泛化流程或 packet 存在的浅层 FlowGuard report；FlowGuard terminal coverage validation 和 final ledger writing 也被拆到明确的 owner module 里，同时保留当前 facade 和工作流 contract。这个版本还刷新了 model/test/catalog 登记、topology evidence、本机安装同步证明、release tier 检查和 router-terminal 后台验证。
+`v0.10.24` 为已安装的 FlowPilot Codex 技能加入 SkillGuard 运行合同治理，包括路径选择、证据门禁、发布范围收口记录，以及安装版/源仓库技能材料同步。
 
 ## 什么时候用 FlowPilot
 
