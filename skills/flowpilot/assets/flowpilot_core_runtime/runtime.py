@@ -10316,6 +10316,13 @@ def _flowguard_packet_evidence_artifact_path(ledger: Mapping[str, Any], packet: 
     if isinstance(evidence_policy, Mapping):
         root_value = str(evidence_policy.get("run_local_evidence_root") or "")
     if root_value:
+        packet_id = str(packet.get("packet_id") or "")
+        run_root = str(ledger.get("run_root") or "")
+        if "<run-id>" in root_value or "<packet-id>" in root_value:
+            if run_root and packet_id:
+                return Path(run_root) / "evidence" / "flowguard" / packet_id / "flowguard_evidence.json"
+            safe_run_id = str(ledger.get("run_id") or "unbound-run")
+            root_value = root_value.replace("<run-id>", safe_run_id).replace("<packet-id>", packet_id)
         return Path(root_value) / "flowguard_evidence.json"
     packet_id = str(packet.get("packet_id") or "")
     run_root = str(ledger.get("run_root") or "")
@@ -12787,7 +12794,8 @@ def _ensure_flowguard_packet_for_task_result(
             "suggestion items; do not turn it into a PM missing-field blocker. Simulate the current route, node, "
             "work, validation, failure, repair, and closure lines contained in that subject; do not choose an "
             "unrelated modeling target or mutate the route. Report pass or block with PM-visible repair guidance "
-            "using only allowed blocker classes."
+            "using only allowed blocker classes. Do not block on moved/deleted or future fields unless the "
+            "subject claims that evidence already exists in the current stage."
         ),
         "evidence_output_policy": {
             "run_local_evidence_root": evidence_root,
@@ -12956,12 +12964,11 @@ def _ensure_flowguard_packet_for_task_result(
 
 
 def _flowguard_packet_evidence_root(ledger: Mapping[str, Any], packet_id: str) -> str:
-    run_id = str(ledger.get("run_id") or "<run-id>")
-    relative_root = f".flowpilot/runs/{run_id}/evidence/flowguard/{packet_id}"
     run_root = ledger.get("run_root")
-    if not run_root:
-        return relative_root
-    return (Path(str(run_root)) / "evidence" / "flowguard" / packet_id).as_posix()
+    if run_root:
+        return (Path(str(run_root)) / "evidence" / "flowguard" / packet_id).as_posix()
+    run_id = str(ledger.get("run_id") or "unbound-run")
+    return f".flowpilot/runs/{run_id}/evidence/flowguard/{packet_id}"
 
 
 def _record_flowguard_from_packet_result(

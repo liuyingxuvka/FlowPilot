@@ -29,7 +29,7 @@ def test_information_flow_alignment_has_no_unbound_obligations() -> None:
     report = information_flow_alignment.build_report()
 
     assert report["ok"], report["findings"]
-    assert report["obligation_count"] == 12
+    assert report["obligation_count"] == 14
     assert report["alignment_ok"]
     assert report["marker_ok"]
     assert report["code_symbol_ok"]

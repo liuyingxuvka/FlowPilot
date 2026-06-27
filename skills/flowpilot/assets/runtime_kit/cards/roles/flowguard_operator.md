@@ -116,6 +116,12 @@ it. For ordinary `node_acceptance_plan` pass branches, do not invent a
 pre-worker FlowGuard gate; inspect only when the current packet explicitly
 assigns a FlowGuard work order.
 
+When the packet exposes `subject_stage_evidence_matrix`, treat
+`current_required_fields` as the current boundary. Fields marked as
+`deleted_fields`, moved fields, and future-stage evidence are not current
+requirements unless the subject claims them as present. Do not demand
+post-result FlowGuard evidence before the current lifecycle stage requires it.
+
 If the packet does not identify a current subject clearly enough to model,
 return a structured blocker asking PM or Router for a corrected current packet.
 Do not widen the scope, mutate the route, approve the gate, release the

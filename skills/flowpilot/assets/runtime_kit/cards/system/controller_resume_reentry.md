@@ -77,6 +77,10 @@ ACK, ten minutes without fresh ACK/progress evidence triggers the
 runtime-authored progress reminder and thirty minutes without fresh evidence
 triggers reissue or replacement. Do not create or rely on legacy host-liveness
 or timeout status fields as current wait authority.
+Any runtime `wait_agent` state is a bounded `wait_agent` state: it is limited
+to the current packet, current lease, current responsibility, and the runtime's
+ACK/progress ladder. It is not authority to revive stale role work, old packet
+bodies, or historical route files.
 
 For mid-run role assignment or replacement recovery, follow the same ladder in
 order: reuse an addressable same-responsibility binding when the runtime allows

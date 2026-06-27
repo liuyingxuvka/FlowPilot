@@ -67,6 +67,11 @@ authority. Use its subject lifecycle stage, required current fields, authorized
 read ids, allowed blocker classes, and forbidden future-stage demands before
 reading prose instructions. Do not replace the review window with a body-only
 interpretation or a wider personal checklist.
+When the packet exposes `subject_stage_evidence_matrix`, treat
+`current_required_fields` as the current review boundary. Fields listed as
+`deleted_fields`, moved fields, and future-stage evidence are not current
+requirements unless the subject claims they already exist. Do not demand
+post-result FlowGuard evidence before the current lifecycle stage requires it.
 
 ## Reviewer Anti-Repair Boundary
 

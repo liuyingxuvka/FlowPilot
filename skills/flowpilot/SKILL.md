@@ -36,7 +36,7 @@ FlowPilot is new-only by default. Do not add or rely on compatibility shims, leg
 Fresh formal invocation:
 
 ```powershell
-python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json start
+python assets\flowpilot_new.py --root <project-root> --json start
 ```
 
 The public formal-run control surface is flowpilot_new.py only. The startup path uses the native startup intake UI; There is no requirement for a non-startup monitoring UI. .flowpilot/runs/<run-id>/ledger.json is authority; .flowpilot/current.json is UI focus/default-target metadata.
@@ -47,7 +47,7 @@ Before the background driver is started or attached, the bootloader may only cre
 
 After the background driver startup action succeeds, startup and Controller work belong to background driver status plus the Controller action ledger. Run direct router progress commands only for diagnostic, test, or explicit repair cases; ordinary progress comes from driver rows, Controller receipts, and the current lifecycle guard.
 
-Common current-runtime commands are `status`, `patrol`, `final-preflight`, `resume --reason manual_resume`, `dispatch-current-role`, `role-handoff`, `ack`, `open-packet`, `submit-result`, and `repair-accepted-packet` through `python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json ...`.
+Common current-runtime commands are `status`, `patrol`, `final-preflight`, `resume --reason manual_resume`, `dispatch-current-role`, `role-handoff`, `ack`, `open-packet`, `submit-result`, and `repair-accepted-packet` through the `assets\flowpilot_new.py` launcher from this skill directory, passing `--root <project-root> --json ...`.
 
 The compact command list is not an argument schema. Execute the exact command strings returned by the runtime, or inspect the command help for a diagnostic/manual repair case; do not reconstruct packet, lease, role, or result arguments from memory. Copy exact fixed values from returned runtime output. If no listed value fits, stop and report the value-menu mismatch.
 
