@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.10.25 - 2026-07-02
+
+### Changed
+
+- Hardened FlowPilot repair closure so blocker repairs preserve current dossier context, route replacement lineage, reviewer subject alignment, and five-blocker glass-break behavior.
+- Clarified ordinary project material visibility while keeping sealed packet, result, report, and mail bodies under runtime authorization.
+- Split the material artifact map into a stable facade plus packet/result indexing and ordinary non-sealed material scanning modules.
+- Added public-material, identity-owner, final-projection, reviewer-quality, terminal-coverage, and repair-dossier verification meshes for the generalized FlowPilot control plane.
+
+### Validation
+
+- Verified OpenSpec strict checks and verification reports for repair dossier TestMesh, active child lineage, public material closure, and material-map structure closure.
+- Verified FlowGuard material-map checks, model-test-code alignment, repair-focused pytest coverage, 240-cell repair dossier TestMesh, topology build/check, installed-skill sync/audit/check, and public release preflight.
+
 ## v0.10.24 - 2026-06-27
 
 ### Changed

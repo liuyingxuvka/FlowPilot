@@ -1,5 +1,5 @@
 {
-  "created_at": "2026-06-29T02:50:05.229749+00:00",
+  "created_at": "2026-07-02T06:33:01.501506+00:00",
   "graph": {
     "edge_count": 14,
     "invariant_failure_count": 0,
@@ -283,7 +283,7 @@
             "ok": true,
             "proof_status": "not_present",
             "result_file": "simulations/flowpilot_role_output_runtime_results.json",
-            "result_fingerprint": "87a6dec833eb4dcf32553d9f60aad52bf1410cee53de72e28402f51b907f5b95",
+            "result_fingerprint": "0af63706a828f032f6de5db3e5a5335f9d625f144041c8294e620549f39fc8bf",
             "skipped_required_checks": [],
             "skipped_required_checks_visible": true,
             "state_count": null

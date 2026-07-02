@@ -29326,7 +29326,7 @@ Task id: `generate-new-flowpilot-formal-entrypoint-20260529`
 - python scripts/install_flowpilot.py --sync-repo-owned --json: ok true; installed source_fresh true.
 - python scripts/audit_local_install_sync.py --json: ok true.
 - python scripts/install_flowpilot.py --check --json: ok true.
-- python C:/Users/liu_y/.codex/skills/flowpilot/assets/flowpilot_runtime_self_check.py --json: ok true; FlowGuard 0.52.2 schema 1.0.
+- python $env:USERPROFILE/.codex/skills/flowpilot/assets/flowpilot_runtime_self_check.py --json: ok true; FlowGuard 0.52.2 schema 1.0.
 
 ### Friction Points
 - check_install initially failed because auxiliary installer/schema projections still expected old terminal Reviewer fields after the main terminal contract was reduced; scripts/install_checks/runtime.py and role_output_runtime_schema_specs.py were updated, then checks passed.
@@ -29374,7 +29374,7 @@ Evidence supports local repository and installed FlowPilot behavior for ordinary
 - `python scripts/install_flowpilot.py --sync-repo-owned --json`: ok true.
 - `python scripts/audit_local_install_sync.py --json`: ok true.
 - `python scripts/install_flowpilot.py --check --json`: ok true.
-- `python C:/Users/liu_y/.codex/skills/flowpilot/assets/flowpilot_runtime_self_check.py --json`: ok true.
+- `python $env:USERPROFILE/.codex/skills/flowpilot/assets/flowpilot_runtime_self_check.py --json`: ok true.
 
 ### Friction Points
 - The repair dossier focused tests were pytest-style functions; the initial unittest command ran zero tests, so the OpenSpec contract was corrected to use pytest.

@@ -155,7 +155,7 @@ checks:
         if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE };
         python scripts\install_flowpilot.py --check --json;
         if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE };
-        python C:\Users\liu_y\.codex\skills\flowpilot\assets\flowpilot_runtime_self_check.py --json;
+        python "$env:USERPROFILE\.codex\skills\flowpilot\assets\flowpilot_runtime_self_check.py" --json;
         if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     required: true
     covers:

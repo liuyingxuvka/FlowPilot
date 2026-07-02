@@ -2,7 +2,7 @@
   "version": 1,
   "change": "harden-flowpilot-public-material-closure-mesh",
   "status": "pass",
-  "generatedAt": "2026-07-02T05:08:37.798Z",
+  "generatedAt": "2026-07-02T06:39:27.136Z",
   "contractPath": "openspec/changes/harden-flowpilot-public-material-closure-mesh/verification-contract.yaml",
   "reportPath": "openspec/changes/harden-flowpilot-public-material-closure-mesh/verification-report.json",
   "contractHash": "ba85aa4d21b14bd57c51d7f769222a26f5a5a9e4a9ce20d60b41c9b0ba01b7bb",
@@ -91,12 +91,12 @@
     "simulations/flowpilot_model_mesh_model.py": "2ef5772b829370a6519d32e06f740001bd270c75f103a7d5b520792433decfa5",
     "simulations/flowpilot_model_test_alignment_common.py": "888d40c6c71e0005cd12ca6e31952c661db1f8196e48a76770b8d186d4602cc5",
     "simulations/flowpilot_model_test_alignment_diagnostics.py": "4b0c956b3f671eed9fc600e8f5f0508737ae8c78420921aab6c75243c70cc27f",
-    "simulations/flowpilot_model_test_alignment_family_plans.py": "46bf70fc01a7e7c0dcc811992cc261535808e447ad9f30345de519118e02a1da",
+    "simulations/flowpilot_model_test_alignment_family_plans.py": "d6d134b5f1ec088f3ab21fcc22592d3c43156b12282f56270e7cfb0100eef84f",
     "simulations/flowpilot_model_test_alignment_known_bad.py": "2680df4d18b980e85f1e67b71939ed81b687d762f3c21839c2b321277299df36",
-    "simulations/flowpilot_model_test_alignment_source_code_contracts.py": "245f3be8c260d9913d80789c6b727a550dc901ef42719fd6cbf176e363042f83",
+    "simulations/flowpilot_model_test_alignment_source_code_contracts.py": "2e8ee9d30b2e0845b679fcf32f73de265ae207011d730640d17350e768a71b41",
     "simulations/flowpilot_model_test_alignment_source_contracts.py": "309f92af99a568926f567a63fc92789b93e7ed9a0c86fafe9fb7e6150eca91cc",
     "simulations/flowpilot_model_test_alignment_source_obligations.py": "bc1da278f4e3f6afca330126121a505d011153646b993e6d68ceb10379770aa1",
-    "simulations/flowpilot_model_test_alignment_source_test_evidence.py": "ee1fbf741457dec03d3194f247ad48ad789a2b3f14e8ec7db959a4feab0c7d35",
+    "simulations/flowpilot_model_test_alignment_source_test_evidence.py": "d7c34aee6cff98f19facf627a2e9cbf538dbf2470b105f1e21c613513e8612ed",
     "simulations/flowpilot_modeling_coverage_model.py": "fcef47aff44ab1e5d8fd86bbfc34cf143a17443d71224512486f0f871ebd63bc",
     "simulations/flowpilot_new_control_plane_duty_model.py": "40912b3a40c9899506e9ac8ad486289edddebfef1f2d3d15e631a895ecd70c5b",
     "simulations/flowpilot_new_entrypoint_model.py": "a8cc01f166cc567031ed9b5ffa8b43774f97f9097935ccb3891c2e58552dd528",
@@ -191,7 +191,7 @@
     "simulations/run_flowpilot_complete_system_development_checks.py": "05278636eec45dfd3f748ca8dbcad62e88f210c5bd149aca581affd93e6b45ce",
     "simulations/run_flowpilot_complete_system_historical_replay_checks.py": "2237dbc44b540dafeb0b491491e41e0069a38d009d2e754dc506574523db5695",
     "simulations/run_flowpilot_complete_system_live_host_readiness_checks.py": "dcbcd892f586b79c070953fd0af39a5e6fd4e951ded6d00131fcaacf8a63a771",
-    "simulations/run_flowpilot_complete_system_runtime_checks.py": "01ffc8efffc7e7d726c0e8fd85d9c1a1508f193d141f99bc21286ca7fe8f4df5",
+    "simulations/run_flowpilot_complete_system_runtime_checks.py": "c4f1119ddd15c461d4a623c3c830d55f54ccc88c05cda4786c6cc9600d462b5c",
     "simulations/run_flowpilot_complete_system_structure_checks.py": "1804885b62dd550ffd3150ccacd6fa7a2e02bdccba9795833569a52aad8f9ee3",
     "simulations/run_flowpilot_complete_system_testmesh_checks.py": "efde3ebac1ac5119d0a1f23d86e93656081a4e7d7b8bcefbbcd1ba44b267a4f0",
     "simulations/run_flowpilot_complete_system_ui_checks.py": "0b5fe69a03b8a73fb0a19c04e06894526a9ad7c282e8153dfc2a05db521a4b67",
@@ -338,9 +338,11 @@
     "skills/flowpilot/assets/flowpilot_core_runtime/role_handoff.py": "c6fd03646504a99b86fb8ede60198887e9f748756d6777c8094acb12e6e9f853",
     "skills/flowpilot/assets/flowpilot_core_runtime/router.py": "bf2b9c4c06f6a5d46ece0336ca1ae3de663b68fc4e894fbf9b94bb553c87e5b4",
     "skills/flowpilot/assets/flowpilot_core_runtime/run_shell.py": "c16705a7c119aff95b136271e31fa24ce23ca539a836674efeae10a6ab8fd84a",
-    "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py": "3fa3dc796d16f4f253bdfa3c290d3ded29d8de6fa8a1b79842627dfa96bf1201",
-    "skills/flowpilot/assets/flowpilot_material_artifact_map.py": "8a9546036822ea9b49df9005ea77e962ae933882a8daaab7f7827eb818e9e986",
+    "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py": "e4447959e22c56caffbe02782ed1a9329f0bf2800eef813c4122d4665328bd7d",
+    "skills/flowpilot/assets/flowpilot_material_artifact_map.py": "52afd8cf21c9e5efc280420730e11a45324b754190912dbf4c203bfe69ba8d4d",
     "skills/flowpilot/assets/flowpilot_material_artifact_map_entries.py": "f6ad47df53b9b2b0f73a46f67b6e7bc05895b4e1f77ea57bcf9f06cc9514f301",
+    "skills/flowpilot/assets/flowpilot_material_artifact_map_ordinary.py": "6ab30d0857fc9ead41781264ce9f105b24fce9c9099568bcfdbd2daadcdb0c5d",
+    "skills/flowpilot/assets/flowpilot_material_artifact_map_packets.py": "789ea79f2b73ee0967a6a102b46badfc751ccfd685a0d1be3c7a028d2b5f4293",
     "skills/flowpilot/assets/run_packet_control_plane_checks.py": "6988dc1e317bda55b74c7eac48f929575a1f55e1a7db0303d330bcef57aba756",
     "skills/flowpilot/assets/runtime_kit/cards/events/pm_node_started.md": "ff412e74d5a3d5112fde4b7b59a05dea8bb03052cde73717e71dc3778d9429cb",
     "skills/flowpilot/assets/runtime_kit/cards/events/pm_reviewer_blocked.md": "eccb42ede90b465ad1881f51f70857646b275d3f2f5e10002496a262c957b190",
@@ -349,7 +351,7 @@
     "skills/flowpilot/assets/runtime_kit/cards/flowguard_operator/child_skill_product_fit.md": "e3c6e165d9e4e88709f5da7585f9b4c46ac359731ceb37598ccd9ef0d3acc108",
     "skills/flowpilot/assets/runtime_kit/cards/flowguard_operator/product_architecture_modelability.md": "41cca875331813300a74689b53ed70121ea1f76ab8e95b9da36de67ef61a8c4a",
     "skills/flowpilot/assets/runtime_kit/cards/flowguard_operator/root_contract_modelability.md": "676203bbe99d236135de249f7e02cea8d4f0b4f7fe5b49a446e420e3fc25f2e1",
-    "skills/flowpilot/assets/runtime_kit/cards/flowguard_operator/route_process_check.md": "fd711809512530d1bbd71632b5dc7cf795eed875afa0e073a1de375a37d8fc5e",
+    "skills/flowpilot/assets/runtime_kit/cards/flowguard_operator/route_process_check.md": "6e3d4e6c005ff42a7b25a6efda4be9b9e7a52be00a7b872b72630eaf78d93f9e",
     "skills/flowpilot/assets/runtime_kit/cards/flowguard_operator/target_realization_model.md": "71e300c12df9cc98b078d1b9072193c0e0b271e1ae23cc38a4e3ec342c6c36b4",
     "skills/flowpilot/assets/runtime_kit/cards/phases/pm_child_skill_gate_manifest.md": "bc926dd6bacaee257f0771deacf7107b1fa4e43d6b83f1a50f185b0cd8102051",
     "skills/flowpilot/assets/runtime_kit/cards/phases/pm_child_skill_selection.md": "3d17849d5c5658c6cfffcf427ca8e76f0420935b145cb96932bdd18dc6be5e68",
@@ -366,7 +368,7 @@
     "skills/flowpilot/assets/runtime_kit/cards/phases/pm_material_scan.md": "8dce16dcbab616f40354f2915d47c734723af43c4d659065d5efc1b7c90c9625",
     "skills/flowpilot/assets/runtime_kit/cards/phases/pm_material_understanding.md": "564ece403cfed6c0d9bcd39fb6a6595990ed310c9645a37ae50c9452e4ec6d2a",
     "skills/flowpilot/assets/runtime_kit/cards/phases/pm_model_miss_triage.md": "bdbc3a60d0cc0426a8df4e4d4027dbd16247437fb63ad6008fa07b53e2c4f070",
-    "skills/flowpilot/assets/runtime_kit/cards/phases/pm_node_acceptance_plan.md": "3bf4c06f44f57bc074a9231adefc5af3ef9303f66f7c00d82d7b11fa31d1e76f",
+    "skills/flowpilot/assets/runtime_kit/cards/phases/pm_node_acceptance_plan.md": "83d98275a02a0272e658db34937c489dd8b99a5d4735435908c23eddc117b6fb",
     "skills/flowpilot/assets/runtime_kit/cards/phases/pm_output_contract_catalog.md": "6832f819493d257adb6f8855d3ef68a82e18a5eca7ac87c30d887343543d2750",
     "skills/flowpilot/assets/runtime_kit/cards/phases/pm_parent_backward_targets.md": "943c0e7df4e59726d2341131ca6fef1b74e0b02d8f94b857bf2999ceade2f116",
     "skills/flowpilot/assets/runtime_kit/cards/phases/pm_parent_segment_decision.md": "28323be1898c08443a30c762a96b087a6b3741f34272340c43ae63e3ba48cbe2",
@@ -391,14 +393,14 @@
     "skills/flowpilot/assets/runtime_kit/cards/reviewer/implementation_intent_challenge.md": "f7614ba96c3f12e71c26bafc1c159726c8292eccaffa1e76bf86a49166e71ba5",
     "skills/flowpilot/assets/runtime_kit/cards/reviewer/material_sufficiency.md": "9763f29704b06f21d5078d35337dfbcb47584df81248e89e58743d792fba1556",
     "skills/flowpilot/assets/runtime_kit/cards/reviewer/node_acceptance_plan_review.md": "38ca57d56ff9bb55f30bda1816e05965d90c437c2c03168723b063c6bfd4bca4",
-    "skills/flowpilot/assets/runtime_kit/cards/reviewer/parent_backward_replay.md": "8c74ce7ab68ff568ef5bfae2b8283a938d86b45a1056a11209618d49b5eac2e5",
+    "skills/flowpilot/assets/runtime_kit/cards/reviewer/parent_backward_replay.md": "5cc88ed6c2bc69351ae961d9198a0e90499aa2a593c54a19b98e949902398cfe",
     "skills/flowpilot/assets/runtime_kit/cards/reviewer/product_architecture_challenge.md": "533da2a3d3c6100a007d1b2f1274066e628c341ac845072eeb560ef81a648b78",
     "skills/flowpilot/assets/runtime_kit/cards/reviewer/research_direct_source_check.md": "a8f6c67d7a4f4d9c33c1c87c20b67ff34cc6a80897b6a9660a7a8ed9fb4f8ab0",
     "skills/flowpilot/assets/runtime_kit/cards/reviewer/root_contract_challenge.md": "4c104780e58ebd12abed22817f86c5f9f13e6ad0e36a7d01111b65f4fbd43b63",
     "skills/flowpilot/assets/runtime_kit/cards/reviewer/route_challenge.md": "0371b1aeb5ca5561930d26226588f861e05677e384575bd5d405afa9db5c6735",
     "skills/flowpilot/assets/runtime_kit/cards/reviewer/strict_gate_obligation_review.md": "421458eeab882611bc54563d1d7bd3b26f3daee7e41610f767831642a6ab206e",
-    "skills/flowpilot/assets/runtime_kit/cards/reviewer/worker_result_review.md": "ec8c2dcd9ef7a450019a13582c54b3c84a1285d047cdea8613c39468d32a459f",
-    "skills/flowpilot/assets/runtime_kit/cards/roles/controller.md": "69e7ba7b98f4b021d5ed1d4de010e90dbdac74f05bc553184f50e99cdfff8301",
+    "skills/flowpilot/assets/runtime_kit/cards/reviewer/worker_result_review.md": "9827477c02d23e347331031665081f40feb3681bd8f089b33245defd1e64e443",
+    "skills/flowpilot/assets/runtime_kit/cards/roles/controller.md": "3634bea414aad5d01c63978c4f4479a6cc29af3bf71b1f4ee2b2229bcd835df8",
     "skills/flowpilot/assets/runtime_kit/cards/roles/flowguard_operator.md": "f29afe67a87a7b515deec80fc63d7f91665fb57aa36b9364ccaee6810a31f7ed",
     "skills/flowpilot/assets/runtime_kit/cards/roles/human_like_reviewer.md": "4cc262d3abbea5f9b4abf41f462c239f23a63b508974242979a347f72d44a815",
     "skills/flowpilot/assets/runtime_kit/cards/roles/project_manager.md": "1aba5ed159587938a09e804a0d3d5b76ae9877a99aa4596c805a6c59c10f83f6",
@@ -415,7 +417,7 @@
     "tests/test_flowpilot_final_projection_mesh.py": "4a46d6a99a0e3048d0bb17a4f3acd1efeffa7c6e1e036d02b3ebad169d505d85",
     "tests/test_flowpilot_flowguard_workorder_mesh.py": "be5d5416647e76a6e0556ff55e8d7b4b0ea48ed6218a956a71dafb0868fc5ef3",
     "tests/test_flowpilot_identity_owner_mesh.py": "9cd22c34ae869355d36546663bc1dca3e3c1428af55ac71a176cbdb95bf63ae2",
-    "tests/test_flowpilot_material_access_mesh.py": "3d6c192ce3bb83fbc13063d6b1eb4b7b0749fd0a2e831296abe108d4110677e8",
+    "tests/test_flowpilot_material_access_mesh.py": "6da76b31a74bdbb77596cf58dcbe996deda76c69db41f8a2a45410be9b3585e9",
     "tests/test_flowpilot_repair_dossier_testmesh.py": "71c2aaf9f9f691ed91bf20cfc3869304e9c53a9c6883082dcfea5d95f41fba3d",
     "tests/test_flowpilot_reviewer_quality_mesh.py": "5a3d7ff220afe5dcb39ea38b02a7fbd9c54371b85a651aae6e95c342d75aed35",
     "tests/test_flowpilot_semantic_blocker_mesh.py": "e2a42c8d03f4fe56f7bf9c61ee24027fc287135a7f87bc5058c221438988602b",
@@ -440,9 +442,9 @@
       ],
       "expectedExitCode": 0,
       "exitCode": 0,
-      "durationMs": 2815,
+      "durationMs": 4531,
       "stdout": "",
-      "stderr": "..................................\r\n----------------------------------------------------------------------\r\nRan 34 tests in 1.576s\r\n\r\nOK\r\n"
+      "stderr": "..................................\r\n----------------------------------------------------------------------\r\nRan 34 tests in 2.780s\r\n\r\nOK\r\n"
     },
     {
       "id": "check.prompts.repair_boundary",
@@ -461,9 +463,9 @@
       ],
       "expectedExitCode": 0,
       "exitCode": 0,
-      "durationMs": 2916,
+      "durationMs": 4578,
       "stdout": "",
-      "stderr": "..................................\r\n----------------------------------------------------------------------\r\nRan 34 tests in 1.752s\r\n\r\nOK\r\n"
+      "stderr": "..................................\r\n----------------------------------------------------------------------\r\nRan 34 tests in 2.630s\r\n\r\nOK\r\n"
     },
     {
       "id": "check.prompts.reviewer_boundary",
@@ -481,9 +483,9 @@
       ],
       "expectedExitCode": 0,
       "exitCode": 0,
-      "durationMs": 2682,
+      "durationMs": 3954,
       "stdout": "",
-      "stderr": "..................................\r\n----------------------------------------------------------------------\r\nRan 34 tests in 1.571s\r\n\r\nOK\r\n"
+      "stderr": "..................................\r\n----------------------------------------------------------------------\r\nRan 34 tests in 2.429s\r\n\r\nOK\r\n"
     },
     {
       "id": "check.tests.material_access_mesh",
@@ -503,9 +505,9 @@
       ],
       "expectedExitCode": 0,
       "exitCode": 0,
-      "durationMs": 500,
+      "durationMs": 594,
       "stdout": "",
-      "stderr": ".\r\n----------------------------------------------------------------------\r\nRan 1 test in 0.091s\r\n\r\nOK\r\n"
+      "stderr": ".\r\n----------------------------------------------------------------------\r\nRan 1 test in 0.145s\r\n\r\nOK\r\n"
     },
     {
       "id": "check.tests.semantic_blocker_mesh",
@@ -523,9 +525,9 @@
       ],
       "expectedExitCode": 0,
       "exitCode": 0,
-      "durationMs": 309,
+      "durationMs": 398,
       "stdout": "",
-      "stderr": ".\r\n----------------------------------------------------------------------\r\nRan 1 test in 0.002s\r\n\r\nOK\r\n"
+      "stderr": ".\r\n----------------------------------------------------------------------\r\nRan 1 test in 0.003s\r\n\r\nOK\r\n"
     },
     {
       "id": "check.tests.flowguard_workorder_mesh",
@@ -543,9 +545,9 @@
       ],
       "expectedExitCode": 0,
       "exitCode": 0,
-      "durationMs": 311,
+      "durationMs": 422,
       "stdout": "",
-      "stderr": ".\r\n----------------------------------------------------------------------\r\nRan 1 test in 0.001s\r\n\r\nOK\r\n"
+      "stderr": ".\r\n----------------------------------------------------------------------\r\nRan 1 test in 0.002s\r\n\r\nOK\r\n"
     },
     {
       "id": "check.tests.reviewer_quality_mesh",
@@ -563,9 +565,9 @@
       ],
       "expectedExitCode": 0,
       "exitCode": 0,
-      "durationMs": 476,
+      "durationMs": 502,
       "stdout": "",
-      "stderr": "..\r\n----------------------------------------------------------------------\r\nRan 2 tests in 0.005s\r\n\r\nOK\r\n"
+      "stderr": "..\r\n----------------------------------------------------------------------\r\nRan 2 tests in 0.006s\r\n\r\nOK\r\n"
     },
     {
       "id": "check.tests.identity_owner_mesh",
@@ -583,9 +585,9 @@
       ],
       "expectedExitCode": 0,
       "exitCode": 0,
-      "durationMs": 454,
+      "durationMs": 565,
       "stdout": "",
-      "stderr": "..\r\n----------------------------------------------------------------------\r\nRan 2 tests in 0.016s\r\n\r\nOK\r\n"
+      "stderr": "..\r\n----------------------------------------------------------------------\r\nRan 2 tests in 0.026s\r\n\r\nOK\r\n"
     },
     {
       "id": "check.tests.final_projection_mesh",
@@ -603,9 +605,9 @@
       ],
       "expectedExitCode": 0,
       "exitCode": 0,
-      "durationMs": 469,
+      "durationMs": 620,
       "stdout": "",
-      "stderr": "..\r\n----------------------------------------------------------------------\r\nRan 2 tests in 0.049s\r\n\r\nOK\r\n"
+      "stderr": "..\r\n----------------------------------------------------------------------\r\nRan 2 tests in 0.073s\r\n\r\nOK\r\n"
     },
     {
       "id": "check.tests.terminal_coverage_mesh",
@@ -624,9 +626,9 @@
       ],
       "expectedExitCode": 0,
       "exitCode": 0,
-      "durationMs": 374,
+      "durationMs": 520,
       "stdout": "",
-      "stderr": "..\r\n----------------------------------------------------------------------\r\nRan 2 tests in 0.005s\r\n\r\nOK\r\n"
+      "stderr": "..\r\n----------------------------------------------------------------------\r\nRan 2 tests in 0.008s\r\n\r\nOK\r\n"
     },
     {
       "id": "check.tests.breakglass_mesh",
@@ -644,9 +646,9 @@
       ],
       "expectedExitCode": 0,
       "exitCode": 0,
-      "durationMs": 372,
+      "durationMs": 497,
       "stdout": "",
-      "stderr": "..\r\n----------------------------------------------------------------------\r\nRan 2 tests in 0.002s\r\n\r\nOK\r\n"
+      "stderr": "..\r\n----------------------------------------------------------------------\r\nRan 2 tests in 0.003s\r\n\r\nOK\r\n"
     },
     {
       "id": "check.tests.full_mesh_suite",
@@ -671,9 +673,9 @@
       ],
       "expectedExitCode": 0,
       "exitCode": 0,
-      "durationMs": 844,
+      "durationMs": 928,
       "stdout": "",
-      "stderr": ".............\r\n----------------------------------------------------------------------\r\nRan 13 tests in 0.244s\r\n\r\nOK\r\n"
+      "stderr": ".............\r\n----------------------------------------------------------------------\r\nRan 13 tests in 0.265s\r\n\r\nOK\r\n"
     },
     {
       "id": "check.packet_control_plane",
@@ -689,7 +691,7 @@
       ],
       "expectedExitCode": 0,
       "exitCode": 0,
-      "durationMs": 1755,
+      "durationMs": 1583,
       "stdout": "status: OK\r\nsequences=37 initial_states=1 traces=37\r\ninvariant_violations: 0\r\ndead_branches: 0\r\nexceptions: 0\r\nreachability_failures: 0\r\n",
       "stderr": "[flowguard] start phase=explore work_total=37 progress_steps=10\r\n[flowguard] progress 10% work=4/37 traces=4 violations=0\r\n[flowguard] progress 20% work=8/37 traces=8 violations=0\r\n[flowguard] progress 30% work=12/37 traces=12 violations=0\r\n[flowguard] progress 40% work=15/37 traces=15 violations=0\r\n[flowguard] progress 50% work=19/37 traces=19 violations=0\r\n[flowguard] progress 60% work=23/37 traces=23 violations=0\r\n[flowguard] progress 70% work=26/37 traces=26 violations=0\r\n[flowguard] progress 80% work=30/37 traces=30 violations=0\r\n[flowguard] progress 90% work=34/37 traces=34 violations=0\r\n[flowguard] progress 100% work=37/37 traces=37 violations=0\r\n"
     },
@@ -709,7 +711,7 @@
       ],
       "expectedExitCode": 0,
       "exitCode": 0,
-      "durationMs": 1544,
+      "durationMs": 1507,
       "stdout": "{\r\n  \"claim_boundary\": {\r\n    \"covers\": [\r\n      \"blocker payload currency\",\r\n      \"PM repair decision delivered-body and current-blocker references\",\r\n      \"reviewer required repair and advice propagation\",\r\n      \"fresh PM repair package generation\",\r\n      \"worker repair packet semantic delta and success evidence\",\r\n      \"FlowGuard recheck evidence attachment for repaired results\",\r\n      \"Runtime mechanical blocker identity gate before reviewer review\",\r\n      \"formal blocker identity in PM package, staged_effect, FlowGuard evidence, and replay inputs\",\r\n      \"reviewer recheck binding\",\r\n      \"superseded repair blocker disposition after route replacement\",\r\n      \"stale prior-route repair blocker disposition after route mutation\",\r\n      \"final preflight current-effective blocker filtering\",\r\n      \"same-blocker no-progress loop escape\",\r\n      \"same-dossier repair attempts at five consecutive repair nodes route to Controller break-glass instead of ordinary PM repair\"\r\n    ],\r\n    \"does_not_cover\": [\r\n      \"concrete runtime packet builder conformance\",\r\n      \"prompt-card wording conformance\",\r\n      \"installed skill synchronization\"\r\n    ]\r\n  },\r\n  \"flowguard_explorer\": {\r\n    \"dead_branch_count\": 0,\r\n    \"exception_branch_count\": 0,\r\n    \"ok\": true,\r\n    \"reachability_failure_count\": 0,\r\n    \"reachability_failures\": [],\r\n    \"summary\": \"sequences=3 initial_states=1 traces=174\",\r\n    \"violation_count\": 0\r\n  },\r\n  \"hazard_detection\": {\r\n    \"failures\": [],\r\n    \"hazards\": {\r\n      \"accepted_noncurrent_repair_packet_blocks_final_preflight\": {\r\n        \"detected\": true,\r\n        \"expected_failure\": \"final preflight treated a noncurrent repair blocker as current authority\",\r\n        \"failures\": [\r\n          \"final preflight treated a noncurrent repair blocker as current authority\"\r\n        ]\r\n      },\r\n      \"blocker_routed_without_pm_decision\": {\r\n        \"detected\": true,\r\n        \"expected_failure\": \"repair packet was issued without a PM repair decision\",\r\n        \"failures\": [\r\n          \"repair packet was issued without a PM repair decision\"\r\n        ]\r\n      },\r\n      \"current_blocker_payload_missing_details\": {\r\n        \"detected\": true,\r\n        \"expected_failure\": \"current blocker payload lacks blocker id\",\r\n        \"failures\": [\r\n          \"current blocker payload lacks blocker id, source result reference, or specific failure\"\r\n        ]\r\n      },\r\n      \"flowguard_evidence_has_blocker_but_staged_effect_empty\": {\r\n        \"detected\": true,\r\n        \"expected_failure\": \"FlowGuard evidence contains blocker identity but staged_effect.blocker_id is empty\",\r\n        \"failures\": [\r\n          \"FlowGuard evidence contains blocker identity but staged_effect.blocker_id is empty\",\r\n          \"reviewer received repair package before Runtime mechanical blocker identity gate passed\"\r\n        ]\r\n      },\r\n      \"flowguard_recheck_evidence_not_delivered_to_reviewer\": {\r\n        \"detected\": true,\r\n        \"expected_failure\": \"reviewer recheck lacks the current FlowGuard evidence\",\r\n        \"failures\": [\r\n          \"FlowGuard recheck did not bind current repair result to an attached evidence manifest\",\r\n          \"reviewer recheck lacks the current FlowGuard evidence produced for the repair\",\r\n          \"blocker was closed without a bound reviewer recheck pass\"\r\n        ]\r\n      },\r\n      \"followup_blocker_lost\": {\r\n        \"detected\": true,\r\n        \"expected_failure\": \"follow-up blocker returned by recheck was not recorded as current work\",\r\n        \"failures\": [\r\n          \"follow-up blocker returned by recheck was not recorded as current work\"\r\n        ]\r\n      },\r\n      \"formal_blocker_id_only_in_prose_reaches_reviewer\": {\r\n        \"detected\": true,\r\n        \"expected_failure\": \"formal blocker identity missing reached Reviewer instead of Runtime reissue\",\r\n        \"failures\": [\r\n          \"PM repair package did not bind blocker identity as a formal runtime field\",\r\n          \"FlowGuard recheck evidence did not bind blocker\n...[truncated]",
       "stderr": "[flowguard] start phase=explore work_total=3 progress_steps=10\r\n[flowguard] progress 30% work=1/3 traces=29 violations=0\r\n[flowguard] progress 60% work=2/3 traces=87 violations=0\r\n[flowguard] progress 100% work=3/3 traces=174 violations=0\r\n"
     },
@@ -729,7 +731,7 @@
       ],
       "expectedExitCode": 0,
       "exitCode": 0,
-      "durationMs": 1599,
+      "durationMs": 1642,
       "stdout": "ok=True results=simulations\\flowpilot_terminal_flowguard_coverage_results.json\r\n",
       "stderr": "[flowguard] start phase=explore work_total=10 progress_steps=10\r\n[flowguard] progress 10% work=1/10 traces=1 violations=0\r\n[flowguard] progress 20% work=2/10 traces=3 violations=0\r\n[flowguard] progress 30% work=3/10 traces=6 violations=0\r\n[flowguard] progress 40% work=4/10 traces=10 violations=0\r\n[flowguard] progress 50% work=5/10 traces=15 violations=0\r\n[flowguard] progress 60% work=6/10 traces=21 violations=0\r\n[flowguard] progress 70% work=7/10 traces=28 violations=0\r\n[flowguard] progress 80% work=8/10 traces=36 violations=0\r\n[flowguard] progress 90% work=9/10 traces=45 violations=0\r\n[flowguard] progress 100% work=10/10 traces=55 violations=0\r\n"
     },
@@ -749,7 +751,7 @@
       ],
       "expectedExitCode": 0,
       "exitCode": 0,
-      "durationMs": 1475,
+      "durationMs": 2075,
       "stdout": "FlowPilot contract exhaustion mesh ok=True\r\n",
       "stderr": "[flowguard] start phase=explore work_total=2 progress_steps=10\r\n[flowguard] progress 50% work=1/2 traces=18 violations=0\r\n[flowguard] progress 100% work=2/2 traces=54 violations=0\r\n"
     },
@@ -769,8 +771,8 @@
       ],
       "expectedExitCode": 0,
       "exitCode": 0,
-      "durationMs": 7980,
-      "stdout": "{\r\n  \"alignment_ok\": true,\r\n  \"families\": [\r\n    \"startup\",\r\n    \"packet/card/ack\",\r\n    \"packet result family\",\r\n    \"route mutation\",\r\n    \"field lifecycle currentness\",\r\n    \"current-node trunk invariant\",\r\n    \"terminal/closure/resume\",\r\n    \"role/output contracts\",\r\n    \"router loop/daemon\",\r\n    \"repair transactions\",\r\n    \"test tiering/slow-test contracts\",\r\n    \"rejection/liveness matrix\",\r\n    \"route authority singularity\",\r\n    \"meta/capability parents\"\r\n  ],\r\n  \"finding_counts\": {},\r\n  \"findings\": [],\r\n  \"full_coverage_ok\": false,\r\n  \"full_diagnostic_boundary\": \"Full model-test-code diagnostics inventory repository maintenance surfaces and classify coverage gaps. They are coverage-accounting evidence: a covered row means the surface has model/test/code binding evidence, not that every internal behavior has been semantically proved.\",\r\n  \"full_diagnostic_ok\": true,\r\n  \"full_model_test_code_diagnostic\": {\r\n    \"actionable_findings\": [\r\n      {\r\n        \"code\": \"needs_structure_split\",\r\n        \"dedupe_key\": \"flowpilot_material_artifact_map|defer_structure_split|needs_structure_split\",\r\n        \"kind\": \"public_facade\",\r\n        \"maturation_actions\": [\r\n          \"split_child_model\"\r\n        ],\r\n        \"maturation_signal_type\": \"duplicate_primary_edge_path\",\r\n        \"message\": \"flowpilot_material_artifact_map has 389 lines, above the 320 line diagnostic threshold\",\r\n        \"name\": \"flowpilot_material_artifact_map\",\r\n        \"path\": \"skills/flowpilot/assets/flowpilot_material_artifact_map.py\",\r\n        \"priority_score\": 29,\r\n        \"release_relevance\": \"runtime_contract\",\r\n        \"repair_type\": \"defer_structure_split\",\r\n        \"severity\": \"medium\",\r\n        \"surface_id\": \"asset:flowpilot_material_artifact_map\",\r\n        \"surface_owner\": \"flowpilot_material_artifact_map\"\r\n      }\r\n    ],\r\n    \"actionable_summary\": [\r\n      {\r\n        \"dedupe_key\": \"flowpilot_material_artifact_map|defer_structure_split|needs_structure_split\",\r\n        \"finding_count\": 1,\r\n        \"gap_codes\": [\r\n          \"needs_structure_split\"\r\n        ],\r\n        \"message\": \"flowpilot_material_artifact_map has 389 lines, above the 320 line diagnostic threshold\",\r\n        \"paths\": [\r\n          \"skills/flowpilot/assets/flowpilot_material_artifact_map.py\"\r\n        ],\r\n        \"primary_code\": \"needs_structure_split\",\r\n        \"priority_score\": 29,\r\n        \"release_relevance\": \"runtime_contract\",\r\n        \"repair_type\": \"defer_structure_split\",\r\n        \"severity\": \"medium\",\r\n        \"surface_ids\": [\r\n          \"asset:flowpilot_material_artifact_map\"\r\n        ],\r\n        \"surface_owner\": \"flowpilot_material_artifact_map\"\r\n      }\r\n    ],\r\n    \"covered_surface_count\": 1070,\r\n    \"deferred_structure_split_count\": 1,\r\n    \"diagnostic_boundary\": \"Full model-test-code diagnostics inventory repository maintenance surfaces and classify coverage gaps. They are coverage-accounting evidence: a covered row means the surface has model/test/code binding evidence, not that every internal behavior has been semantically proved.\",\r\n    \"explicitly_skipped_structure_split_count\": 0,\r\n    \"explicitly_skipped_structure_split_surfaces\": [],\r\n    \"findings\": [\r\n      {\r\n        \"code\": \"needs_structure_split\",\r\n        \"dedupe_key\": \"flowpilot_material_artifact_map|defer_structure_split|needs_structure_split\",\r\n        \"kind\": \"public_facade\",\r\n        \"maturation_actions\": [\r\n          \"split_child_model\"\r\n        ],\r\n        \"maturation_signal_type\": \"duplicate_primary_edge_path\",\r\n        \"message\": \"flowpilot_material_artifact_map has 389 lines, above the 320 line diagnostic threshold\",\r\n        \"name\": \"flowpilot_material_artifact_map\",\r\n        \"path\": \"skills/flowpilot/assets/flowpilot_material_artifact_map.py\",\r\n        \"priority_score\": 29,\r\n        \"release_relevance\": \"runtime_contract\",\r\n        \"repair_type\": \"defer_structure_split\",\r\n        \"severity\": \"medium\",\r\n        \"surface_id\": \"asset:flowpilot_material_artifact_map\",\r\n        \"surface_owner\": \"flowpi\n...[truncated]",
+      "durationMs": 10773,
+      "stdout": "{\r\n  \"alignment_ok\": true,\r\n  \"families\": [\r\n    \"startup\",\r\n    \"packet/card/ack\",\r\n    \"packet result family\",\r\n    \"route mutation\",\r\n    \"field lifecycle currentness\",\r\n    \"current-node trunk invariant\",\r\n    \"terminal/closure/resume\",\r\n    \"role/output contracts\",\r\n    \"router loop/daemon\",\r\n    \"repair transactions\",\r\n    \"test tiering/slow-test contracts\",\r\n    \"rejection/liveness matrix\",\r\n    \"route authority singularity\",\r\n    \"meta/capability parents\"\r\n  ],\r\n  \"finding_counts\": {},\r\n  \"findings\": [],\r\n  \"full_coverage_ok\": true,\r\n  \"full_diagnostic_boundary\": \"Full model-test-code diagnostics inventory repository maintenance surfaces and classify coverage gaps. They are coverage-accounting evidence: a covered row means the surface has model/test/code binding evidence, not that every internal behavior has been semantically proved.\",\r\n  \"full_diagnostic_ok\": true,\r\n  \"full_model_test_code_diagnostic\": {\r\n    \"actionable_findings\": [],\r\n    \"actionable_summary\": [],\r\n    \"covered_surface_count\": 1073,\r\n    \"deferred_structure_split_count\": 0,\r\n    \"diagnostic_boundary\": \"Full model-test-code diagnostics inventory repository maintenance surfaces and classify coverage gaps. They are coverage-accounting evidence: a covered row means the surface has model/test/code binding evidence, not that every internal behavior has been semantically proved.\",\r\n    \"explicitly_skipped_structure_split_count\": 0,\r\n    \"explicitly_skipped_structure_split_surfaces\": [],\r\n    \"findings\": [],\r\n    \"full_coverage_ok\": true,\r\n    \"gap_counts\": {},\r\n    \"gap_counts_by_release_relevance\": {},\r\n    \"gap_counts_by_repair_type\": {},\r\n    \"gap_counts_by_severity\": {},\r\n    \"gap_surface_count\": 0,\r\n    \"known_bad_ok\": true,\r\n    \"known_bad_sanity_checks\": [\r\n      {\r\n        \"expected_codes\": [\r\n          \"extra_code\",\r\n          \"missing_model\",\r\n          \"missing_test\"\r\n        ],\r\n        \"finding_codes\": [\r\n          \"extra_code\",\r\n          \"missing_model\",\r\n          \"missing_test\"\r\n        ],\r\n        \"name\": \"orphan_code\",\r\n        \"ok\": true,\r\n        \"surface\": {\r\n          \"covered\": false,\r\n          \"evidence_status\": \"passed\",\r\n          \"gap_codes\": [\r\n            \"missing_model\",\r\n            \"missing_test\",\r\n            \"extra_code\"\r\n          ],\r\n          \"has_code\": true,\r\n          \"has_external_contract\": false,\r\n          \"has_model\": false,\r\n          \"has_test\": false,\r\n          \"kind\": \"owner_module\",\r\n          \"line_count\": 20,\r\n          \"max_severity\": \"high\",\r\n          \"name\": \"orphan_code\",\r\n          \"path\": \"skills/flowpilot/assets/orphan_code.py\",\r\n          \"release_relevance\": \"runtime_contract\",\r\n          \"repair_types\": [\r\n            \"add_external_contract_test\",\r\n            \"add_model_binding\",\r\n            \"classify_or_remove_code\"\r\n          ],\r\n          \"split_threshold\": 450,\r\n          \"surface_id\": \"synthetic:orphan_code\",\r\n          \"surface_owner\": \"orphan_code\"\r\n        }\r\n      },\r\n      {\r\n        \"expected_codes\": [\r\n          \"internal_only_test\"\r\n        ],\r\n        \"finding_codes\": [\r\n          \"internal_only_test\"\r\n        ],\r\n        \"name\": \"wrapper_only_evidence\",\r\n        \"ok\": true,\r\n        \"surface\": {\r\n          \"covered\": false,\r\n          \"evidence_status\": \"passed\",\r\n          \"gap_codes\": [\r\n            \"internal_only_test\"\r\n          ],\r\n          \"has_code\": true,\r\n          \"has_external_contract\": false,\r\n          \"has_model\": true,\r\n          \"has_test\": true,\r\n          \"kind\": \"public_facade\",\r\n          \"line_count\": 20,\r\n          \"max_severity\": \"high\",\r\n          \"name\": \"wrapper_only\",\r\n          \"path\": \"skills/flowpilot/assets/wrapper_only.py\",\r\n          \"release_relevance\": \"runtime_contract\",\r\n          \"repair_types\": [\r\n            \"upgrade_to_external_contract_test\"\r\n          ],\r\n          \"split_threshold\": 320,\r\n          \"surface_id\": \"synthetic:wrapper_only\",\r\n          \"surface_owner\": \"wrapper_only\"\r\n        }\r\n      },\r\n      {\r\n        \"expected_c\n...[truncated]",
       "stderr": ""
     },
     {
@@ -789,8 +791,8 @@
       ],
       "expectedExitCode": 0,
       "exitCode": 0,
-      "durationMs": 12333,
-      "stdout": "{\r\n  \"json_path\": \"docs/flowguard_project_topology.json\",\r\n  \"layer_counts\": {\r\n    \"alignment_families\": 14,\r\n    \"code_surfaces\": 1071,\r\n    \"evidence_summaries\": 5,\r\n    \"known_bad_signals\": 2597,\r\n    \"models\": 155,\r\n    \"test_commands\": 452\r\n  },\r\n  \"markdown_path\": \"docs/flowguard_project_topology.md\",\r\n  \"ok\": true\r\n}\r\n{\r\n  \"findings\": [],\r\n  \"json_path\": \"docs/flowguard_project_topology.json\",\r\n  \"layer_counts\": {\r\n    \"alignment_families\": 14,\r\n    \"code_surfaces\": 1071,\r\n    \"evidence_summaries\": 5,\r\n    \"known_bad_signals\": 2597,\r\n    \"models\": 155,\r\n    \"test_commands\": 452\r\n  },\r\n  \"markdown_path\": \"docs/flowguard_project_topology.md\",\r\n  \"ok\": true,\r\n  \"source_count\": 1042\r\n}\r\n{\r\n  \"checks\": [\r\n    {\r\n      \"name\": \"flowguard_import\",\r\n      \"ok\": true,\r\n      \"schema_version\": \"1.0\"\r\n    },\r\n    {\r\n      \"name\": \"file:README.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:CHANGELOG.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:VERSION\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:AGENTS.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:HANDOFF.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:pytest.ini\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/complete-black-box-flowpilot-system/proposal.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/complete-black-box-flowpilot-system/design.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/complete-black-box-flowpilot-system/tasks.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/complete-black-box-flowpilot-system/specs/complete-black-box-flowpilot-system/spec.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/complete-black-box-flowpilot-system/specs/flowpilot-maintenance-ideal-state/spec.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/complete-black-box-flowpilot-system/specs/historical-live-run-replay-package-suite/spec.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/complete-black-box-flowpilot-system/specs/interactive-startup-intake/spec.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/complete-black-box-flowpilot-system/specs/multiround-fake-ai-control-rehearsal/spec.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/complete-black-box-flowpilot-system/specs/runtime-ledger-persistence/spec.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/generate-new-flowpilot-formal-entrypoint/proposal.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/generate-new-flowpilot-formal-entrypoint/design.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/generate-new-flowpilot-formal-entrypoint/tasks.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/generate-new-flowpilot-formal-entrypoint/specs/new-flowpilot-formal-entrypoint/spec.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/unify-new-flowpilot-work-packet-lifecycle/proposal.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/unify-new-flowpilot-work-packet-lifecycle/design.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/unify-new-flowpilot-work-packet-lifecycle/tasks.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/unify-new-flowpilot-work-packet-lifecycle/specs/new-flowpilot-formal-entrypoint/spec.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/harden-flowpilot-enum-prompts-and-run-evidence/proposal.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/harden-flowpilot-enum-prompts-and-run-evidence/design.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/harden-flowpilot-enum-prompts-and-run-evidence/tasks.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"fi\n...[truncated]",
+      "durationMs": 11237,
+      "stdout": "{\r\n  \"json_path\": \"docs/flowguard_project_topology.json\",\r\n  \"layer_counts\": {\r\n    \"alignment_families\": 14,\r\n    \"code_surfaces\": 1073,\r\n    \"evidence_summaries\": 5,\r\n    \"known_bad_signals\": 2597,\r\n    \"models\": 155,\r\n    \"test_commands\": 452\r\n  },\r\n  \"markdown_path\": \"docs/flowguard_project_topology.md\",\r\n  \"ok\": true\r\n}\r\n{\r\n  \"findings\": [],\r\n  \"json_path\": \"docs/flowguard_project_topology.json\",\r\n  \"layer_counts\": {\r\n    \"alignment_families\": 14,\r\n    \"code_surfaces\": 1073,\r\n    \"evidence_summaries\": 5,\r\n    \"known_bad_signals\": 2597,\r\n    \"models\": 155,\r\n    \"test_commands\": 452\r\n  },\r\n  \"markdown_path\": \"docs/flowguard_project_topology.md\",\r\n  \"ok\": true,\r\n  \"source_count\": 1044\r\n}\r\n{\r\n  \"checks\": [\r\n    {\r\n      \"name\": \"flowguard_import\",\r\n      \"ok\": true,\r\n      \"schema_version\": \"1.0\"\r\n    },\r\n    {\r\n      \"name\": \"file:README.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:CHANGELOG.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:VERSION\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:AGENTS.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:HANDOFF.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:pytest.ini\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/complete-black-box-flowpilot-system/proposal.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/complete-black-box-flowpilot-system/design.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/complete-black-box-flowpilot-system/tasks.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/complete-black-box-flowpilot-system/specs/complete-black-box-flowpilot-system/spec.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/complete-black-box-flowpilot-system/specs/flowpilot-maintenance-ideal-state/spec.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/complete-black-box-flowpilot-system/specs/historical-live-run-replay-package-suite/spec.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/complete-black-box-flowpilot-system/specs/interactive-startup-intake/spec.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/complete-black-box-flowpilot-system/specs/multiround-fake-ai-control-rehearsal/spec.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/complete-black-box-flowpilot-system/specs/runtime-ledger-persistence/spec.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/generate-new-flowpilot-formal-entrypoint/proposal.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/generate-new-flowpilot-formal-entrypoint/design.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/generate-new-flowpilot-formal-entrypoint/tasks.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/generate-new-flowpilot-formal-entrypoint/specs/new-flowpilot-formal-entrypoint/spec.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/unify-new-flowpilot-work-packet-lifecycle/proposal.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/unify-new-flowpilot-work-packet-lifecycle/design.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/unify-new-flowpilot-work-packet-lifecycle/tasks.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/unify-new-flowpilot-work-packet-lifecycle/specs/new-flowpilot-formal-entrypoint/spec.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/harden-flowpilot-enum-prompts-and-run-evidence/proposal.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/harden-flowpilot-enum-prompts-and-run-evidence/design.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/harden-flowpilot-enum-prompts-and-run-evidence/tasks.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"fi\n...[truncated]",
       "stderr": ""
     }
   ]
