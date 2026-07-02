@@ -77,15 +77,22 @@ If the blocker is caused by non-replayable package scripts, package handoff
 defects, event-authority contradictions, or evidence-entry defects, and the
 normal PM repair lane cannot form a legal next action, prefer existing
 Controller break-glass repair before user stop / `stop_for_user`.
-If runtime metadata says the same repair lineage has repeated the same blocker
-problem more than five consecutive times, do not issue another ordinary PM
-repair decision packet, route mutation, or same-scope repair packet merely to
-try again. Treat that threshold as a control-plane diagnosis point:
-Controller break-glass must decide whether the threshold is a false alarm that
-can return to normal repair, a repairable FlowPilot control-plane fault, or a
-stop condition. Similar blocker classes spread across different route nodes do
-not trigger this threshold by themselves.
-This more-than-five-attempt threshold is only for ordinary same-lineage repair loops.
+If runtime metadata says the same repair dossier under the same parent has
+reached five consecutive repair nodes without returning to a normal non-repair
+business node, do not issue another ordinary PM repair decision packet, route
+mutation, or same-scope repair packet merely to try again. Treat that threshold
+as a control-plane diagnosis point: Controller break-glass must decide whether
+the threshold is a false alarm that can return to normal repair, a repairable
+FlowPilot control-plane fault, or a stop condition. The threshold does not
+require the same blocker class, same wording, or same root-cause label; PM plan
+passes and Reviewer plan reviews are still repair-path context, not normal
+business recovery.
+If older blockers for the same root cause were marked cleared but the runtime
+does not show active-lineage closure evidence, count them as still part of the
+same repair-loop threshold. A cleared row is not proof that stale child evidence
+or parent composition was actually fixed.
+This five-consecutive-repair-node threshold is only for ordinary same-dossier
+repair loops.
 Terminal supplemental repair contracts use the runtime's separate three-round
 cap; after the third supplemental round, PM must not open another supplemental
 contract for the same terminal gap.
@@ -117,6 +124,16 @@ sections where delivered quantity is short, treat that as hard-blocker repair
 material and carry the required/delivered/gap detail into the repair decision
 and repair packet.
 
+When writing a continuing repair decision, make the downstream repair work
+specific enough that the recipient can execute it without guessing. State the
+prior blocker id or terminal blocker id, the prior failure in plain terms, the
+exact itemized repair required now, the public non-sealed artifacts to inspect,
+the sealed bodies that must be opened through `authorized_result_reads`, and
+the same review/check gate that must re-run. Do not rely on a broad instruction
+such as "improve quality", "finish the missing parts", or "address Reviewer
+feedback" when the blocker named concrete missing evidence, quantity, user
+intent, FlowGuard coverage, or final artifact hygiene.
+
 When the PM repair packet includes `authorized_result_reads`, open the packet
 through runtime and read every delivered blocker, target, and upstream result
 body before selecting a repair path. A repair choice based only on
@@ -126,6 +143,14 @@ valid when the runtime delivered more related bodies. When the packet includes
 every obligation id in the decision body; reason text, summaries, registry
 entries, and old result references do not close those obligations by
 themselves.
+
+When the packet includes `repair_dossier_context`, treat it as runtime-owned
+repair-chain context for the current repair dossier: active blocker ids, prior
+PM decisions, prior repair packets, failed repair results, and authorized
+read refs. Use it to understand how the run reached this repair point, but do
+not treat historical bodies as current passing evidence. Read only the sealed
+bodies listed in `authorized_result_reads`; the dossier does not grant open
+access to every packet in the run.
 
 If PM runs a focused repair-strategy self-interrogation, write a
 `flowpilot.self_interrogation_record.v1` with scope `repair` and register it
@@ -217,14 +242,19 @@ Allowed PM repair decisions are exactly:
 
 Use `break_glass` for FlowPilot control-plane blocker repair when the normal
 repair lane cannot form a legal next action, or when runtime shows the same
-repair lineage has repeated the same blocker problem five or more consecutive
-times rather than opening another ordinary PM repair decision for the same
-lineage/problem loop. Use `stop_for_user` only for substantive user decisions,
-authority choices, or external environment action that PM/Controller cannot
-decide.
+repair dossier under the same parent has reached five consecutive repair nodes
+without normal business-node recovery rather than opening another ordinary PM
+repair decision for the same dossier loop. Use `stop_for_user` only for
+substantive user decisions, authority choices, or external environment action
+that PM/Controller cannot decide.
 
 For mutation or repair, record route version impact, invalidate stale evidence,
 affected ancestors, and the rerun target before new work starts.
+For parent/module composition repair, do not reuse a superseded child id or its
+accepted result as current evidence. If the runtime packet exposes
+`active_child_lineage`, use the active child ids and current child result ids
+only; unresolved active lineage is a control-plane blocker, not another
+ordinary same-shape repair.
 
 For route mutation, include `repair_return_to_node_id`, identifying the
 mainline node the repair is meant to rejoin. Router treats mutation as a fresh

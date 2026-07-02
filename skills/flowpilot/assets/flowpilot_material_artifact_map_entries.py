@@ -7,6 +7,13 @@ from typing import Any
 
 import packet_runtime
 
+ORDINARY_WORK_MATERIAL_ROLES = [
+    "project_manager",
+    "worker",
+    "flowguard_operator",
+    "human_like_reviewer",
+]
+
 
 def read_json_document(path: Path) -> dict[str, Any]:
     if not path.exists():
@@ -73,7 +80,7 @@ def make_entry(
         "body_text_included": False,
         "sealed_body_boundary_preserved": True,
         "requires_runtime_open": any(bool(ref.get("requires_runtime_open")) for ref in body_refs),
-        "allowed_role_reads": allowed_role_reads or ["project_manager", "human_like_reviewer", "worker"],
+        "allowed_role_reads": allowed_role_reads or list(ORDINARY_WORK_MATERIAL_ROLES),
         "related_entries": related_entries or [],
         "metadata": metadata or {},
     }
@@ -259,6 +266,7 @@ def static_artifact_entries(project_root: Path, run_root: Path) -> list[dict[str
 
 
 __all__ = [
+    "ORDINARY_WORK_MATERIAL_ROLES",
     "artifact_status",
     "entry_for_artifact",
     "make_entry",

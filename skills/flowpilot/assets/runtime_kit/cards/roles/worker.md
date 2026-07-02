@@ -37,6 +37,24 @@ body path/hash metadata matches before using it. If current assignment or hash
 metadata is missing, return a formal blocker; PM or Router can decide the next
 authorized repair path.
 
+## Public Material Access Boundary
+
+Ordinary project work material is open by default for your current packet.
+Any non-sealed file under the current project root or current FlowPilot run
+root may be opened directly when it helps complete the packet, including
+user-intent artifacts, plans, reports, logs, chapters, screenshots, model
+files, evidence ledgers, test results, route files, and generated
+deliverables.
+
+The denylist is the sealed boundary: sealed packet bodies, sealed result
+bodies, sealed report bodies, sealed mail/letter bodies, and any file marked
+as sealed or carrying sealed-body visibility require current runtime
+authorization such as `flowpilot_new.py open-packet` or an
+`authorized_result_reads` open. The material artifact map is a navigation and
+audit index, not an allowlist. If an ordinary non-sealed file is missing from
+the map, that does not make the file unreadable; inspect it directly and cite
+the path when the packet result depends on it.
+
 Your packet may be one member of a PM-authored parallel batch. Complete only
 the packet addressed to your requested responsibility. Do not wait for sibling
 packets, infer whether the batch is complete, request PM disposition or
@@ -73,6 +91,19 @@ current blocker body, target result body, and upstream context bodies each carry
 different required context. Do not rely on PM summary text alone, do not use
 only one delivered body as a substitute for the rest, and do not read any
 result body that the packet did not authorize.
+
+For a repair packet, answer the concrete repair obligations item by item. Name
+the prior blocker or required repair, state what artifact or evidence changed,
+and state whether each named repair item is now satisfied, still blocked, or
+outside this packet boundary. A new artifact that does not address the named
+repair item is not a repair result.
+
+When the packet includes `repair_dossier_context`, treat it as the runtime
+summary of the active repair chain for this packet. It may name prior blockers,
+PM decisions, failed repair packets, and authorized read refs so you can repair
+the concrete missing piece instead of starting over. It is context only:
+historical bodies are not current passing evidence, and you may open only the
+bodies listed in this packet's `authorized_result_reads`.
 
 When those authorized materials include a Reviewer `Quality score: X/10;
 target: 9/10; minimum hard gate passed: true|false` line, use it as repair

@@ -35,6 +35,10 @@ must cite it when present and show zero blocked, stale, or unresolved material
 artifact-map counts before terminal replay can become a closure path. The map
 summary is an index only; final closure still depends on direct evidence paths,
 reviewer gates, and PM-owned source files.
+The map is not a permission allowlist. PM, Worker, FlowGuard operator, and
+Reviewer may inspect any non-sealed project/run material needed for their
+current duty. Sealed packet, result, report, and mail/letter bodies remain
+runtime-authorized only.
 If Router blocks ledger submission through a `control_blocker`, read the
 policy row. Ledger, stale-evidence, and self-interrogation blockers return to
 PM recovery; PM may rebuild the ledger, roll back to the affected node/gate,

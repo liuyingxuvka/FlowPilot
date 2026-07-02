@@ -166,6 +166,9 @@ EVENT_FAMILY_BY_TYPE = {
     "semantic_blocker_cleared": "repair",
     "repair_loop_break_glass_required": "repair",
     "repair_loop_pm_repair_packets_superseded": "repair",
+    "repair_dossier_updated": "repair",
+    "semantic_blocker_requires_material_or_user": "repair",
+    "semantic_blocker_routed_to_matching_flowguard": "repair",
     "pm_repair_decision_recorded": "repair",
     "pm_decision_gate_staged": "repair",
     "pm_decision_gate_applied": "repair",
@@ -427,6 +430,7 @@ def new_ledger(
         "pm_repair_decisions": {},
         "pm_decision_gates": {},
         "repair_transactions": {},
+        "repair_dossiers": {},
         "reviews": {},
         "flowguard_work_orders": {},
         "validation_evidence": {},
@@ -1760,6 +1764,7 @@ def ensure_next_node_task_packet(ledger: dict[str, Any]) -> str:
         route_scope="node",
         acceptance_criteria=list(node["acceptance_criteria"]),
         node_context_package_id=str(node.get("node_context_package_id") or ""),
+        repair_blocker_id=str(node.get("repair_blocker_id") or ""),
     )
     node["packet_ids"].append(packet_id)
     node["status"] = "running"
@@ -1952,24 +1957,102 @@ def _parent_repair_scope_contract_for_decision(
     return None
 
 
+def _accepted_result_ids_for_route_node(ledger: Mapping[str, Any], node_id: str) -> list[str]:
+    accepted: list[str] = []
+    seen: set[str] = set()
+    node = ledger.get("route_nodes", {}).get(node_id)
+    result_id = str(node.get("accepted_result_id") or "") if isinstance(node, Mapping) else ""
+    if result_id:
+        return [result_id]
+    for packet in ledger.get("packets", {}).values():
+        envelope = packet.get("envelope", {}) if isinstance(packet, Mapping) and isinstance(packet.get("envelope"), Mapping) else {}
+        if str(envelope.get("route_node_id") or "") != node_id:
+            continue
+        result_id = str(packet.get("accepted_result_id") or "")
+        if result_id and result_id not in seen:
+            accepted.append(result_id)
+            seen.add(result_id)
+    return accepted
+
+
 def _accepted_result_ids_for_route_nodes(ledger: Mapping[str, Any], node_ids: list[str]) -> list[str]:
     accepted: list[str] = []
     seen: set[str] = set()
     for node_id in node_ids:
-        node = ledger.get("route_nodes", {}).get(node_id)
-        result_id = str(node.get("accepted_result_id") or "") if isinstance(node, Mapping) else ""
-        if result_id and result_id not in seen:
-            accepted.append(result_id)
-            seen.add(result_id)
-        for packet in ledger.get("packets", {}).values():
-            envelope = packet.get("envelope", {}) if isinstance(packet, Mapping) and isinstance(packet.get("envelope"), Mapping) else {}
-            if str(envelope.get("route_node_id") or "") != node_id:
-                continue
-            result_id = str(packet.get("accepted_result_id") or "")
-            if result_id and result_id not in seen:
+        for result_id in _accepted_result_ids_for_route_node(ledger, node_id):
+            if result_id not in seen:
                 accepted.append(result_id)
                 seen.add(result_id)
     return accepted
+
+
+def _active_route_node_lineage(ledger: Mapping[str, Any], node_id: str) -> dict[str, Any]:
+    route_nodes = ledger.get("route_nodes", {})
+    if not isinstance(route_nodes, Mapping):
+        raise BlackBoxRuntimeError("route_nodes must exist before resolving active child lineage")
+    original_id = str(node_id or "")
+    if not original_id:
+        raise BlackBoxRuntimeError("active child lineage requires a nonempty route node id")
+    current_id = original_id
+    path: list[str] = []
+    seen: set[str] = set()
+    while True:
+        if current_id in seen:
+            cycle = " -> ".join([*path, current_id])
+            raise BlackBoxRuntimeError(f"active child lineage cycle for {original_id}: {cycle}")
+        seen.add(current_id)
+        node = route_nodes.get(current_id)
+        if not isinstance(node, Mapping):
+            raise BlackBoxRuntimeError(f"active child lineage for {original_id} references missing route node {current_id}")
+        path.append(current_id)
+        replacement_id = str(node.get("superseded_by") or "")
+        if replacement_id:
+            if replacement_id.startswith("route-v"):
+                raise BlackBoxRuntimeError(
+                    f"active child lineage for {original_id} points to route replacement {replacement_id}, not a current child node"
+                )
+            current_id = replacement_id
+            continue
+        if str(node.get("status") or "") == "superseded":
+            raise BlackBoxRuntimeError(f"active child lineage for {original_id} ends at superseded node {current_id}")
+        return {
+            "original_child_node_id": original_id,
+            "active_child_node_id": current_id,
+            "lineage_node_ids": path,
+            "changed": current_id != original_id,
+        }
+
+
+def _active_route_child_lineage(
+    ledger: Mapping[str, Any],
+    child_node_ids: Iterable[str],
+) -> tuple[list[str], list[dict[str, Any]]]:
+    active_child_node_ids: list[str] = []
+    lineage_rows: list[dict[str, Any]] = []
+    seen_active: set[str] = set()
+    for raw_child_id in child_node_ids:
+        child_id = str(raw_child_id or "")
+        if not child_id:
+            raise BlackBoxRuntimeError("child_node_ids must not contain empty ids")
+        row = _active_route_node_lineage(ledger, child_id)
+        active_child_id = str(row["active_child_node_id"])
+        if active_child_id in seen_active:
+            raise BlackBoxRuntimeError(f"active child lineage resolves duplicate active child {active_child_id}")
+        seen_active.add(active_child_id)
+        active_child_node_ids.append(active_child_id)
+        lineage_rows.append(row)
+    return active_child_node_ids, lineage_rows
+
+
+def _active_child_ids_missing_accepted_results(ledger: Mapping[str, Any], node_ids: list[str]) -> list[str]:
+    missing: list[str] = []
+    for node_id in node_ids:
+        node = ledger.get("route_nodes", {}).get(node_id)
+        if isinstance(node, Mapping) and str(node.get("status") or "") == "waived":
+            continue
+        if not _accepted_result_ids_for_route_node(ledger, node_id):
+            missing.append(node_id)
+    return missing
 
 
 def _parent_repair_node_is_replacement(node: Mapping[str, Any]) -> bool:
@@ -2420,6 +2503,7 @@ def ensure_node_acceptance_plan_packet(ledger: dict[str, Any], node_id: str) -> 
             "Node proof obligations are explicit.",
             "Same-node repair is the default for ordinary quality, evidence, test, or skill-use gaps.",
         ],
+        repair_blocker_id=str(node.get("repair_blocker_id") or ""),
     )
 
 
@@ -2681,6 +2765,14 @@ def _terminal_backward_replay_segment_targets(ledger: Mapping[str, Any]) -> list
             "segment_kind": "final_artifact_hygiene",
             "summary": "Inspect final code, document, model, test, UI, artifact, and process hygiene before closure.",
         },
+        {
+            "segment_id": "flowguard-coverage-governance",
+            "segment_kind": "flowguard_coverage_governance",
+            "summary": (
+                "Verify PM accepted current terminal FlowGuard coverage closure with zero unresolved blockers, "
+                "model-test gaps, pending PM suggestion items, or progress-only evidence."
+            ),
+        },
     ]
     for item in _active_acceptance_items(ledger):
         item_id = str(item.get("acceptance_item_id") or "")
@@ -2831,9 +2923,8 @@ def ensure_terminal_backward_replay_packet(ledger: dict[str, Any], validation_ev
                 "minimal_valid_shape": packet_result_contracts.minimal_valid_shape_for_family(family_id),
                 "instruction": (
                     "Start from the delivered product, then replay root acceptance and every effective route node. "
-                    "Submit the terminal backward replay report with pm_visible_summary, reviewed_by_role, passed, "
-                    "findings, blockers, pm_suggestion_items, final_artifact_refs, acceptance_item_closure, "
-                    "route_segment_replay, waiver_records, final_blockers, and contract_self_check. "
+                    "Submit exactly the current terminal backward replay fields: final_artifact_refs, "
+                    "acceptance_item_closure, route_segment_replay, waiver_records, and final_blockers. "
                     "Do not pass from reports alone, accepted node ids alone, old UI evidence, or a completion summary."
                 ),
             },
@@ -2868,8 +2959,17 @@ def ensure_parent_backward_replay_packet(ledger: dict[str, Any], node_id: str) -
     )
     if parent_repair_violation:
         raise BlackBoxRuntimeError(parent_repair_violation)
-    active_child_node_ids = list(node.get("child_node_ids") or [])
-    active_child_result_ids = _accepted_result_ids_for_route_nodes(ledger, [str(item) for item in active_child_node_ids])
+    active_child_node_ids, active_child_lineage = _active_route_child_lineage(
+        ledger,
+        [str(item) for item in (node.get("child_node_ids") or [])],
+    )
+    missing_child_result_ids = _active_child_ids_missing_accepted_results(ledger, active_child_node_ids)
+    if missing_child_result_ids:
+        raise BlackBoxRuntimeError(
+            "parent backward replay requires accepted child results for active child_node_ids: "
+            + ", ".join(missing_child_result_ids)
+        )
+    active_child_result_ids = _accepted_result_ids_for_route_nodes(ledger, active_child_node_ids)
     family_id = "review.parent_backward_replay"
     return issue_task_packet(
         ledger,
@@ -2880,6 +2980,7 @@ def ensure_parent_backward_replay_packet(ledger: dict[str, Any], node_id: str) -
                 "schema_version": "black_box_flowpilot.parent_backward_review_packet.v1",
                 "route_node_id": node_id,
                 "child_node_ids": active_child_node_ids,
+                "active_child_lineage": active_child_lineage,
                 "current_repair_child_result_ids": active_child_result_ids,
                 "inherited_child_node_ids": list(node.get("inherited_child_node_ids") or []),
                 "inherited_accepted_result_ids": list(node.get("inherited_accepted_result_ids") or []),
@@ -5499,12 +5600,88 @@ def _pm_repair_obligation_disposition_violation(
     return None
 
 
+def _route_missing_matching_flowguard_blocker(
+    ledger: dict[str, Any],
+    blocker: dict[str, Any],
+) -> str:
+    subject_packet_id = str(blocker.get("subject_packet_id") or blocker.get("repair_target_packet_id") or blocker.get("packet_id") or "")
+    target_result_id = str(blocker.get("target_result_id") or blocker.get("result_id") or "")
+    subject_packet = ledger.get("packets", {}).get(subject_packet_id)
+    target_result = ledger.get("results", {}).get(target_result_id)
+    if not isinstance(subject_packet, Mapping) or not isinstance(target_result, Mapping):
+        blocker["pm_repair_packet_id"] = ""
+        blocker["status"] = "active"
+        blocker["runtime_next_action"] = "control_block_missing_matching_flowguard_subject"
+        blocker["recommended_resolution"] = (
+            str(blocker.get("recommended_resolution") or "")
+            + " Runtime cannot issue matching FlowGuard because the subject packet or target result is missing."
+        ).strip()
+        _event(
+            ledger,
+            "semantic_blocker_routed_to_matching_flowguard",
+            blocker_id=str(blocker.get("blocker_id") or ""),
+            status="blocked_missing_subject_or_result",
+        )
+        return ""
+    packet_id = _ensure_flowguard_packet_for_task_result(
+        ledger,
+        subject_packet,
+        target_result,
+        force_new=True,
+        repair_blocker_id=str(blocker["blocker_id"]),
+        recheck_reason="missing_matching_flowguard_report",
+    )
+    blocker["pm_repair_packet_id"] = ""
+    blocker["flowguard_repair_packet_id"] = packet_id
+    blocker["runtime_next_action"] = "issue_matching_flowguard_packet"
+    _event(
+        ledger,
+        "semantic_blocker_routed_to_matching_flowguard",
+        blocker_id=str(blocker.get("blocker_id") or ""),
+        flowguard_packet_id=packet_id,
+    )
+    return packet_id
+
+
+def _stop_missing_required_information_blocker(
+    ledger: dict[str, Any],
+    blocker: dict[str, Any],
+) -> None:
+    blocker["pm_repair_packet_id"] = ""
+    blocker["status"] = "stopped"
+    blocker["stopped_at"] = now_iso()
+    blocker["runtime_next_action"] = "same_packet_block_or_stop_for_user"
+    blocker["recommended_resolution"] = (
+        str(blocker.get("recommended_resolution") or "")
+        + " Runtime cannot turn missing required information into an ordinary PM repair route; "
+        "the same packet must receive the missing authorized material or the run must stop for user/control-plane input."
+    ).strip()
+    target_packet = ledger.get("packets", {}).get(str(blocker.get("repair_target_packet_id") or ""))
+    if isinstance(target_packet, dict):
+        if target_packet.get("status") != "pm_stopped" and not target_packet.get("pm_stop_previous_status"):
+            target_packet["pm_stop_previous_status"] = str(target_packet.get("status") or "")
+        target_packet["status"] = "pm_stopped"
+    _event(
+        ledger,
+        "semantic_blocker_requires_material_or_user",
+        blocker_id=str(blocker.get("blocker_id") or ""),
+        target_packet_id=str(blocker.get("repair_target_packet_id") or ""),
+    )
+
+
 def _ensure_pm_repair_decision_packet_for_blocker(ledger: dict[str, Any], blocker_id: str) -> str:
     blocker = _require(ledger.setdefault("active_blockers", {}), blocker_id, "semantic blocker")
     if blocker.get("status") not in _CLEARABLE_SEMANTIC_BLOCKER_STATUSES:
         raise BlackBoxRuntimeError(
             f"cannot issue PM repair decision packet for blocker {blocker_id} in status {blocker.get('status')}"
         )
+    blocker_class = str(blocker.get("blocker_class") or "")
+    required_next_action = _blocker_required_next_action(blocker_class)
+    if required_next_action == "issue_matching_flowguard_packet":
+        return _route_missing_matching_flowguard_blocker(ledger, blocker)
+    if required_next_action == "same_packet_block_or_stop_for_user":
+        _stop_missing_required_information_blocker(ledger, blocker)
+        return ""
     repair_loop_review = _repair_loop_break_glass_review(ledger, blocker)
     if repair_loop_review.get("threshold_exceeded"):
         _supersede_same_family_pm_repair_packets_for_break_glass(ledger, repair_loop_review)
@@ -5676,6 +5853,7 @@ def _ensure_pm_repair_decision_packet_for_blocker(ledger: dict[str, Any], blocke
                 "target_result_id": blocker.get("target_result_id", ""),
                 "gate_kind": blocker["gate_kind"],
                 "blocker_class": blocker.get("blocker_class", ""),
+                "hard_next_action": _blocker_required_next_action(str(blocker.get("blocker_class") or "")),
                 "blocker_status": blocker.get("status", ""),
                 "recommended_resolution": recommended_resolution,
                 "flowguard_evidence_path": str(flowguard_context.get("flowguard_evidence_path") or ""),
@@ -6475,6 +6653,7 @@ def _replace_scope_and_open_repair_packet(
                     break
     if not fresh_packet_id:
         raise BlackBoxRuntimeError("repair scope replacement did not create a fresh executable packet")
+    _bind_route_node_repair_dossier_identity(ledger, replacement_id, str(blocker["blocker_id"]))
     _bind_packet_repair_blocker_identity(ledger, fresh_packet_id, str(blocker["blocker_id"]))
     fresh_envelope = ledger["packets"][fresh_packet_id].get("envelope", {})
     fresh_role = str(fresh_envelope.get("responsibility") or "") if isinstance(fresh_envelope, Mapping) else ""
@@ -6826,6 +7005,8 @@ def _redesign_route_from_pm_decision(
         if not fresh_packet_id:
             raise BlackBoxRuntimeError("redesign_route did not create a fresh executable packet")
         _bind_packet_repair_blocker_identity(ledger, fresh_packet_id, str(blocker["blocker_id"]))
+        for node_id in materialized_ids:
+            _bind_route_node_repair_dossier_identity(ledger, node_id, str(blocker["blocker_id"]))
         _attach_repair_obligation_context_to_packet(ledger, fresh_packet_id, blocker, decision_id)
         _record_repair_transaction(
             ledger,
@@ -7156,6 +7337,7 @@ def _replace_route_node_for_repair(
     inherited_child_node_ids: list[str] = []
     inherited_accepted_result_ids: list[str] = []
     child_node_ids = list(node.get("child_node_ids") or [])
+    active_child_lineage: list[dict[str, Any]] = []
     if supersede_descendants:
         inherited_child_node_ids = [item for item in superseded_node_ids if item != node_id]
         inherited_accepted_result_ids = _accepted_result_ids_for_route_nodes(ledger, inherited_child_node_ids)
@@ -7168,6 +7350,20 @@ def _replace_route_node_for_repair(
         )
         if not child_node_ids:
             raise BlackBoxRuntimeError("repair_parent_scope replacement parent requires active repair child nodes")
+        active_child_lineage = [
+            {
+                "original_child_node_id": child_id,
+                "active_child_node_id": child_id,
+                "lineage_node_ids": [child_id],
+                "changed": False,
+            }
+            for child_id in child_node_ids
+        ]
+    else:
+        child_node_ids, active_child_lineage = _active_route_child_lineage(
+            ledger,
+            [str(item) for item in child_node_ids],
+        )
     replacement.update(
         {
             "node_id": replacement_id,
@@ -7175,6 +7371,7 @@ def _replace_route_node_for_repair(
             "title": f"Repair {node['title']}",
             "status": "pending",
             "child_node_ids": child_node_ids,
+            "active_child_lineage": active_child_lineage,
             "inherited_child_node_ids": inherited_child_node_ids,
             "inherited_accepted_result_ids": inherited_accepted_result_ids,
             "parent_repair_scope_contract_id": str(parent_repair_contract.get("contract_id") or "")
@@ -7198,6 +7395,7 @@ def _replace_route_node_for_repair(
             "parent_backward_waiver": "",
             "superseded_by": "",
             "stale_evidence": [],
+            "repair_generation": int(node.get("repair_generation", 0) or 0) + 1,
             "created_at": now_iso(),
         }
     )
@@ -7698,7 +7896,7 @@ def _repair_loop_family_parts(ledger: Mapping[str, Any], blocker: Mapping[str, A
 def _repair_loop_family_key(parts: Mapping[str, str]) -> str:
     return "|".join(
         f"{field}={str(parts.get(field) or '')}"
-        for field in ("family_subject", "blocker_class", "gate_kind", "required_recheck_role")
+        for field in ("family_subject",)
     )
 
 
@@ -7718,9 +7916,15 @@ def _flowguard_missing_evidence_root_cause_key(
     )
 
 
+def _blocker_lineage_verified_closed(candidate: Mapping[str, Any]) -> bool:
+    return bool(candidate.get("lineage_verified_closed_by"))
+
+
 def _blocker_counts_for_repair_loop(ledger: Mapping[str, Any], candidate: Mapping[str, Any]) -> bool:
-    if candidate.get("cleared_by_outcome_id"):
+    if _blocker_lineage_verified_closed(candidate):
         return False
+    if candidate.get("cleared_by_outcome_id"):
+        return True
     status = str(candidate.get("status") or "")
     return status in _REPAIR_LOOP_COUNTED_BLOCKER_STATUSES or status.startswith("retired_after_")
 
@@ -7738,10 +7942,7 @@ def _repair_loop_same_family_rows(ledger: Mapping[str, Any], blocker: Mapping[st
         candidate_key = _repair_loop_family_key(candidate_family)
         candidate_counts = _blocker_counts_for_repair_loop(ledger, candidate)
         candidate_root_key = str(candidate.get("root_cause_loop_key") or "")
-        if root_cause_key:
-            same_problem = candidate_root_key == root_cause_key
-        else:
-            same_problem = candidate_key == family_key
+        same_problem = candidate_key == family_key
         if same_problem:
             if candidate_counts:
                 rows.append(
@@ -7754,6 +7955,8 @@ def _repair_loop_same_family_rows(ledger: Mapping[str, Any], blocker: Mapping[st
                         "pm_repair_packet_id": str(candidate.get("pm_repair_packet_id") or ""),
                         "repair_packet_id": str(candidate.get("repair_packet_id") or ""),
                         "root_cause_loop_key": candidate_root_key,
+                        "cleared_by_outcome_id": str(candidate.get("cleared_by_outcome_id") or ""),
+                        "lineage_verified_closed_by": str(candidate.get("lineage_verified_closed_by") or ""),
                     }
                 )
             else:
@@ -7765,10 +7968,30 @@ def _repair_loop_same_family_rows(ledger: Mapping[str, Any], blocker: Mapping[st
     return family, rows
 
 
+def _repair_loop_verified_recovery_before_blocker(
+    ledger: Mapping[str, Any],
+    blocker: Mapping[str, Any],
+) -> bool:
+    family_key = _repair_loop_family_key(_repair_loop_family_parts(ledger, blocker))
+    target_blocker_id = str(blocker.get("blocker_id") or "")
+    for candidate in ledger.get("active_blockers", {}).values():
+        if not isinstance(candidate, Mapping):
+            continue
+        if target_blocker_id and str(candidate.get("blocker_id") or "") == target_blocker_id:
+            return False
+        candidate_key = _repair_loop_family_key(_repair_loop_family_parts(ledger, candidate))
+        if candidate_key == family_key and _blocker_lineage_verified_closed(candidate):
+            return True
+    return False
+
+
 def _repair_loop_break_glass_review(ledger: Mapping[str, Any], blocker: Mapping[str, Any]) -> dict[str, Any]:
     family, rows = _repair_loop_same_family_rows(ledger, blocker)
-    attempt_count = len(rows)
-    threshold_exceeded = attempt_count > _REPAIR_LOOP_BREAK_GLASS_THRESHOLD
+    repair_depth = _repair_dossier_repair_depth_for_blocker(ledger, blocker)
+    verified_recovery_before = _repair_loop_verified_recovery_before_blocker(ledger, blocker)
+    effective_repair_depth = 0 if verified_recovery_before else repair_depth
+    attempt_count = max(len(rows), effective_repair_depth)
+    threshold_exceeded = attempt_count >= _REPAIR_LOOP_BREAK_GLASS_THRESHOLD
     root_cause_key = str(blocker.get("root_cause_loop_key") or "")
     return {
         "schema_version": "black_box_flowpilot.repair_loop_break_glass_review.v1",
@@ -7777,15 +8000,18 @@ def _repair_loop_break_glass_review(ledger: Mapping[str, Any], blocker: Mapping[
         "root_cause_loop_key": root_cause_key,
         "attempt_count": attempt_count,
         "threshold": _REPAIR_LOOP_BREAK_GLASS_THRESHOLD,
+        "repair_depth": repair_depth,
+        "repair_depth_counted": effective_repair_depth,
+        "verified_recovery_before_current_blocker": verified_recovery_before,
         "threshold_exceeded": threshold_exceeded,
         "blocker_ids": [row["blocker_id"] for row in rows if row["blocker_id"]],
         "same_family_blockers": rows,
         "required_action": "controller_break_glass_diagnosis" if threshold_exceeded else "ordinary_pm_repair_allowed",
-        "consecutive_scope": "same_repair_lineage_problem_identity",
+        "consecutive_scope": "same_repair_dossier_same_parent_without_normal_recovery",
         "reason": (
-            "same repair lineage repeated the same blocker problem more than five consecutive times"
+            "same repair dossier reached five consecutive repair nodes without normal business-node recovery"
             if threshold_exceeded
-            else "same repair lineage problem remains within ordinary PM repair threshold"
+            else "same repair dossier remains within ordinary PM repair threshold"
         ),
         "sealed_bodies_visible": False,
     }
@@ -7837,14 +8063,20 @@ def _supersede_same_family_pm_repair_packets_for_break_glass(
 def _blocker_repeat_context(ledger: Mapping[str, Any], blocker: Mapping[str, Any]) -> dict[str, Any]:
     family, same_family = _repair_loop_same_family_rows(ledger, blocker)
     repeat_count = len(same_family)
+    repair_depth = _repair_dossier_repair_depth_for_blocker(ledger, blocker)
+    verified_recovery_before = _repair_loop_verified_recovery_before_blocker(ledger, blocker)
+    effective_repair_depth = 0 if verified_recovery_before else repair_depth
     return {
         "family_key": _repair_loop_family_key(family),
         "family": family,
         "repeat_count": repeat_count,
+        "repair_depth": repair_depth,
+        "repair_depth_counted": effective_repair_depth,
+        "verified_recovery_before_current_blocker": verified_recovery_before,
         "previous_blocker_ids": [row["blocker_id"] for row in same_family if row["blocker_id"] != blocker.get("blocker_id")],
         "same_family_blockers": same_family,
         "threshold": _REPAIR_LOOP_BREAK_GLASS_THRESHOLD,
-        "threshold_exceeded": repeat_count > _REPAIR_LOOP_BREAK_GLASS_THRESHOLD,
+        "threshold_exceeded": max(repeat_count, effective_repair_depth) >= _REPAIR_LOOP_BREAK_GLASS_THRESHOLD,
         "advisory_only": True,
     }
 
@@ -8464,16 +8696,51 @@ def _merge_authorized_result_reads(
     existing: list[Mapping[str, Any]],
     additions: list[Mapping[str, Any]],
 ) -> list[dict[str, Any]]:
-    merged: dict[tuple[str, str, tuple[str, ...]], dict[str, Any]] = {}
+    merged: dict[tuple[str, tuple[str, ...]], dict[str, Any]] = {}
     for row in list(existing) + list(additions):
         if not isinstance(row, Mapping):
             continue
         allowed = tuple(sorted(str(role) for role in row.get("allowed_roles", []) if str(role)))
-        key = (str(row.get("result_id") or ""), str(row.get("purpose") or ""), allowed)
+        key = (str(row.get("result_id") or ""), allowed)
         if not key[0] or not allowed:
             continue
-        merged[key] = json.loads(json.dumps(dict(row), sort_keys=True))
+        candidate = json.loads(json.dumps(dict(row), sort_keys=True))
+        current = merged.get(key)
+        if current is None:
+            merged[key] = candidate
+            continue
+        current_purpose = str(current.get("purpose") or "")
+        candidate_purpose = str(candidate.get("purpose") or "")
+        if candidate_purpose and candidate_purpose not in current_purpose.split(";"):
+            current["purpose"] = ";".join(item for item in (current_purpose, candidate_purpose) if item)
+        current["required_before_submit"] = bool(
+            current.get("required_before_submit") or candidate.get("required_before_submit")
+        )
     return list(merged.values())
+
+
+def _result_contract_profile_bindings_with_runtime_reads(
+    bindings: Mapping[str, Any] | None,
+    profile_ids: tuple[str, ...],
+    authorized_result_reads: list[Mapping[str, Any]],
+) -> dict[str, Any]:
+    updated = _copy_jsonable(bindings or {})
+    if "flowguard.semantic_recheck_required" not in profile_ids:
+        return updated
+    binding = updated.get("flowguard.semantic_recheck_required")
+    if not isinstance(binding, dict):
+        binding = {}
+        updated["flowguard.semantic_recheck_required"] = binding
+    read_ids = [
+        str(row.get("result_id") or "")
+        for row in authorized_result_reads
+        if isinstance(row, Mapping)
+        and row.get("required_before_submit") is True
+        and str(row.get("result_id") or "")
+    ]
+    if read_ids:
+        binding["authorized_result_read_ids"] = sorted(set(read_ids), key=read_ids.index)
+    return updated
 
 
 def _attach_authorized_result_reads_to_packet(
@@ -8497,6 +8764,11 @@ def _attach_authorized_result_reads_to_packet(
     handoff_contract = _build_current_handoff_contract(ledger, envelope, merged)
     envelope["current_handoff_contract"] = handoff_contract
     body = _packet_body_with_current_handoff_contract(body, handoff_contract, replace_existing=True)
+    repair_blocker_id = str(envelope.get("repair_blocker_id") or packet.get("repair_blocker_id") or "")
+    repair_context = _repair_dossier_context_for_packet(ledger, repair_blocker_id)
+    if repair_context:
+        envelope["repair_dossier_context"] = repair_context
+        body = _packet_body_with_repair_dossier_context(body, repair_context, replace_existing=True)
     body_hash = hash_text(body)
     packet["body"] = body
     envelope["body_hash"] = body_hash
@@ -8586,6 +8858,352 @@ def _blocker_authorized_result_reads(
             primary_purpose=purpose,
         )
     ]
+
+
+def _repair_dossier_base_node_id(ledger: Mapping[str, Any], blocker: Mapping[str, Any]) -> str:
+    route_node_id = _blocker_repair_loop_route_node_id(ledger, blocker)
+    normalized = _normalize_repair_loop_route_node_id(route_node_id)
+    return normalized or _blocker_repair_loop_target_id(blocker)
+
+
+def _repair_dossier_parent_scope_id(ledger: Mapping[str, Any], blocker: Mapping[str, Any]) -> str:
+    route_node_id = _blocker_repair_loop_route_node_id(ledger, blocker)
+    node = ledger.get("route_nodes", {}).get(route_node_id)
+    if isinstance(node, Mapping):
+        parent_id = str(node.get("parent_node_id") or "")
+        if parent_id:
+            return _normalize_repair_loop_route_node_id(parent_id)
+    return _repair_dossier_base_node_id(ledger, blocker)
+
+
+def _repair_dossier_id_for_blocker(ledger: Mapping[str, Any], blocker: Mapping[str, Any]) -> str:
+    parent_scope = _repair_dossier_parent_scope_id(ledger, blocker)
+    base_node = _repair_dossier_base_node_id(ledger, blocker)
+    return f"repair-dossier:{parent_scope or base_node}"
+
+
+def _repair_node_depth_from_node_id(route_node_id: str) -> int:
+    return len(re.findall(r"-repair-v\d+", str(route_node_id or "")))
+
+
+def _repair_dossier_repair_depth_for_blocker(ledger: Mapping[str, Any], blocker: Mapping[str, Any]) -> int:
+    route_node_id = _blocker_repair_loop_route_node_id(ledger, blocker)
+    node = ledger.get("route_nodes", {}).get(route_node_id)
+    if isinstance(node, Mapping):
+        try:
+            return max(0, int(node.get("repair_generation", 0) or 0))
+        except (TypeError, ValueError):
+            return _repair_node_depth_from_node_id(route_node_id)
+    return _repair_node_depth_from_node_id(route_node_id)
+
+
+def _repair_dossier_result_classification(
+    ledger: Mapping[str, Any],
+    result_id: str,
+    *,
+    repair_packet_ids: set[str],
+) -> str:
+    result = ledger.get("results", {}).get(result_id)
+    if not isinstance(result, Mapping):
+        return "missing"
+    packet_id = str(result.get("packet_id") or "")
+    packet = ledger.get("packets", {}).get(packet_id)
+    if (
+        packet_id in repair_packet_ids
+        and isinstance(packet, Mapping)
+        and packet.get("status") not in _NONCURRENT_PACKET_STATUSES
+        and result.get("status") == "accepted"
+    ):
+        return "current_evidence"
+    return "context_only"
+
+
+def _related_repair_blocker_ids_for_dossier(
+    ledger: Mapping[str, Any],
+    blocker: Mapping[str, Any],
+) -> list[str]:
+    dossier_id = _repair_dossier_id_for_blocker(ledger, blocker)
+    related: list[str] = []
+    for candidate_id, candidate in ledger.get("active_blockers", {}).items():
+        if not isinstance(candidate, Mapping):
+            continue
+        if _repair_dossier_id_for_blocker(ledger, candidate) != dossier_id:
+            continue
+        related.append(str(candidate_id))
+    current_id = str(blocker.get("blocker_id") or "")
+    if current_id and current_id not in related:
+        related.append(current_id)
+    return related
+
+
+def _repair_dossier_projection(
+    ledger: Mapping[str, Any],
+    blocker: Mapping[str, Any],
+) -> dict[str, Any]:
+    blocker_ids = _related_repair_blocker_ids_for_dossier(ledger, blocker)
+    blocker_id_set = set(blocker_ids)
+    repair_packet_ids: set[str] = set()
+    pm_decision_ids: list[str] = []
+    result_rows: dict[str, dict[str, str]] = {}
+
+    def add_result(result_id: str, purpose: str) -> None:
+        result_id = str(result_id or "")
+        if not result_id or not isinstance(ledger.get("results", {}).get(result_id), Mapping):
+            return
+        result_rows[result_id] = {"result_id": result_id, "purpose": purpose}
+
+    for related_id in blocker_ids:
+        candidate = ledger.get("active_blockers", {}).get(related_id, {})
+        if not isinstance(candidate, Mapping):
+            continue
+        add_result(str(candidate.get("result_id") or ""), "blocking_report_context")
+        add_result(str(candidate.get("target_result_id") or ""), "blocked_target_context")
+        for result_id, purpose in _blocker_related_result_reads(
+            ledger,
+            candidate,
+            primary_purpose="blocking_report_context",
+        ):
+            add_result(result_id, purpose)
+        repair_packet_id = str(candidate.get("repair_packet_id") or "")
+        pm_packet_id = str(candidate.get("pm_repair_packet_id") or "")
+        if repair_packet_id:
+            repair_packet_ids.add(repair_packet_id)
+        if pm_packet_id:
+            repair_packet_ids.add(pm_packet_id)
+
+    for decision_id, decision in ledger.get("pm_repair_decisions", {}).items():
+        if not isinstance(decision, Mapping):
+            continue
+        if str(decision.get("blocker_id") or "") not in blocker_id_set:
+            continue
+        pm_decision_ids.append(str(decision_id))
+        add_result(str(decision.get("result_id") or ""), "pm_repair_decision_context")
+
+    for transaction in ledger.get("repair_transactions", {}).values():
+        if not isinstance(transaction, Mapping):
+            continue
+        if str(transaction.get("blocker_id") or "") not in blocker_id_set:
+            continue
+        fresh_packet_id = str(transaction.get("fresh_packet_id") or "")
+        if fresh_packet_id:
+            repair_packet_ids.add(fresh_packet_id)
+            packet = ledger.get("packets", {}).get(fresh_packet_id)
+            if isinstance(packet, Mapping):
+                for result_id in packet.get("result_ids") or []:
+                    add_result(str(result_id), "repair_packet_result_context")
+
+    for packet_id, packet in ledger.get("packets", {}).items():
+        if not isinstance(packet, Mapping):
+            continue
+        packet_blocker_id = _packet_repair_blocker_id(ledger, str(packet_id))
+        if packet_blocker_id in blocker_id_set:
+            repair_packet_ids.add(str(packet_id))
+            for result_id in packet.get("result_ids") or []:
+                add_result(str(result_id), "repair_packet_result_context")
+
+    flowguard_result_ids: list[str] = []
+    for order in ledger.get("flowguard_work_orders", {}).values():
+        if not isinstance(order, Mapping):
+            continue
+        subject_id = str(order.get("subject_id") or "")
+        if str(order.get("blocker_id") or "") not in blocker_id_set and subject_id not in repair_packet_ids:
+            continue
+        result_id = str(order.get("proof_result_id") or order.get("producer_result_id") or "")
+        if result_id:
+            flowguard_result_ids.append(result_id)
+            add_result(result_id, "matching_flowguard_context")
+
+    review_result_ids: list[str] = []
+    for review in ledger.get("reviews", {}).values():
+        if not isinstance(review, Mapping):
+            continue
+        subject_packet_id = str(review.get("subject_packet_id") or "")
+        if subject_packet_id not in repair_packet_ids:
+            continue
+        for field in ("review_packet_result_id", "result_id"):
+            result_id = str(review.get(field) or "")
+            if result_id:
+                review_result_ids.append(result_id)
+                add_result(result_id, "reviewer_report_context")
+
+    repair_depth = _repair_dossier_repair_depth_for_blocker(ledger, blocker)
+    classified_results = []
+    for row in result_rows.values():
+        result_id = row["result_id"]
+        classified_results.append(
+            {
+                **row,
+                "classification": _repair_dossier_result_classification(
+                    ledger,
+                    result_id,
+                    repair_packet_ids=repair_packet_ids,
+                ),
+            }
+        )
+
+    return {
+        "schema_version": "black_box_flowpilot.repair_dossier.v1",
+        "repair_dossier_id": _repair_dossier_id_for_blocker(ledger, blocker),
+        "active_blocker_id": str(blocker.get("blocker_id") or ""),
+        "parent_scope_id": _repair_dossier_parent_scope_id(ledger, blocker),
+        "base_node_id": _repair_dossier_base_node_id(ledger, blocker),
+        "repair_depth": repair_depth,
+        "blocker_ids": blocker_ids,
+        "pm_repair_decision_ids": pm_decision_ids,
+        "repair_packet_ids": sorted(repair_packet_ids),
+        "flowguard_result_ids": list(dict.fromkeys(flowguard_result_ids)),
+        "review_result_ids": list(dict.fromkeys(review_result_ids)),
+        "result_refs": classified_results,
+        "context_only_result_ids": [
+            row["result_id"] for row in classified_results if row["classification"] == "context_only"
+        ],
+        "current_evidence_result_ids": [
+            row["result_id"] for row in classified_results if row["classification"] == "current_evidence"
+        ],
+        "updated_at": now_iso(),
+    }
+
+
+def _ensure_repair_dossier_for_blocker(
+    ledger: dict[str, Any],
+    blocker: Mapping[str, Any],
+) -> dict[str, Any]:
+    dossier = _repair_dossier_projection(ledger, blocker)
+    records = ledger.setdefault("repair_dossiers", {})
+    previous = records.get(dossier["repair_dossier_id"]) if isinstance(records, Mapping) else None
+    records[dossier["repair_dossier_id"]] = dossier
+    comparable = dict(dossier)
+    comparable.pop("updated_at", None)
+    previous_comparable = dict(previous) if isinstance(previous, Mapping) else {}
+    previous_comparable.pop("updated_at", None)
+    if comparable != previous_comparable:
+        _event(
+            ledger,
+            "repair_dossier_updated",
+            repair_dossier_id=dossier["repair_dossier_id"],
+            active_blocker_id=dossier["active_blocker_id"],
+            repair_depth=dossier["repair_depth"],
+        )
+    return dossier
+
+
+def _repair_dossier_authorized_result_reads(
+    ledger: Mapping[str, Any],
+    blocker: Mapping[str, Any],
+    *,
+    allowed_roles: list[str],
+    purpose: str,
+    required_before_submit: bool = True,
+) -> list[dict[str, Any]]:
+    dossier = _repair_dossier_projection(ledger, blocker)
+    reads: list[dict[str, Any]] = []
+    for row in dossier.get("result_refs") or []:
+        if not isinstance(row, Mapping):
+            continue
+        result_id = str(row.get("result_id") or "")
+        if not result_id:
+            continue
+        reads.append(
+            _authorized_read_for_result(
+                ledger,
+                result_id,
+                allowed_roles=allowed_roles,
+                purpose=f"{purpose}:{row.get('purpose') or 'repair_context'}",
+                required_before_submit=required_before_submit,
+            )
+        )
+    return reads
+
+
+def _repair_dossier_context_for_packet(
+    ledger: Mapping[str, Any],
+    repair_blocker_id: str,
+) -> dict[str, Any]:
+    blocker = ledger.get("active_blockers", {}).get(repair_blocker_id)
+    if not isinstance(blocker, Mapping):
+        return {}
+    dossier = _repair_dossier_projection(ledger, blocker)
+    blocker_class = str(blocker.get("blocker_class") or "")
+    return {
+        "schema_version": "black_box_flowpilot.repair_dossier_context.v1",
+        "repair_dossier_id": dossier["repair_dossier_id"],
+        "active_blocker_id": repair_blocker_id,
+        "parent_scope_id": dossier["parent_scope_id"],
+        "base_node_id": dossier["base_node_id"],
+        "repair_depth": dossier["repair_depth"],
+        "glassbreak_threshold": _REPAIR_LOOP_BREAK_GLASS_THRESHOLD,
+        "blocker_chain_ids": list(dossier.get("blocker_ids") or []),
+        "hard_next_action": _blocker_required_next_action(blocker_class),
+        "context_only_result_ids": list(dossier.get("context_only_result_ids") or []),
+        "current_evidence_result_ids": list(dossier.get("current_evidence_result_ids") or []),
+        "current_evidence_rule": (
+            "Repair dossier history is context only and does not define the current subject deliverable. "
+            "Use review_window and subject_stage_evidence_matrix for current required fields and "
+            "future-stage exclusions. Historical blocker, PM, review, and failed repair bodies cannot "
+            "close worker/result-stage or claimed-completion evidence obligations."
+        ),
+    }
+
+
+def _packet_body_with_repair_dossier_context(
+    body: str,
+    context: Mapping[str, Any],
+    *,
+    replace_existing: bool = False,
+) -> str:
+    if not context:
+        return body
+    payload = _strict_json_object_from_body(body)
+    if payload is None:
+        return body
+    if not replace_existing and "repair_dossier_context" in payload:
+        raise BlackBoxRuntimeError("repair_dossier_context must be issued by the runtime envelope")
+    payload["repair_dossier_context"] = _copy_jsonable(context)
+    return json.dumps(payload, indent=2, sort_keys=True)
+
+
+def _bind_route_node_repair_dossier_identity(
+    ledger: dict[str, Any],
+    node_id: str,
+    repair_blocker_id: str,
+) -> None:
+    if not repair_blocker_id:
+        return
+    node = ledger.get("route_nodes", {}).get(node_id)
+    if not isinstance(node, dict):
+        return
+    blocker = ledger.get("active_blockers", {}).get(repair_blocker_id)
+    if not isinstance(blocker, Mapping):
+        return
+    dossier = _ensure_repair_dossier_for_blocker(ledger, blocker)
+    node["repair_blocker_id"] = repair_blocker_id
+    node["repair_dossier_id"] = dossier["repair_dossier_id"]
+    for child_id in _route_node_child_ids(node):
+        child = ledger.get("route_nodes", {}).get(child_id)
+        if isinstance(child, dict):
+            child["repair_blocker_id"] = repair_blocker_id
+            child["repair_dossier_id"] = dossier["repair_dossier_id"]
+
+
+def _blocker_required_next_action(blocker_class: str) -> str:
+    try:
+        return packet_stage_evidence_matrix.next_action_for_blocker_class(blocker_class)
+    except KeyError:
+        return "pm_repair_decision"
+
+
+def _blocker_pm_decision_allowed_for_next_action(
+    blocker_class: str,
+    decision: str,
+) -> bool:
+    next_action = _blocker_required_next_action(blocker_class)
+    if next_action == "pm_repair_decision":
+        return True
+    if next_action == "same_packet_block_or_stop_for_user":
+        return decision in {"stop_for_user", "break_glass"}
+    if next_action == "issue_matching_flowguard_packet":
+        return False
+    return decision in {"stop_for_user", "break_glass"}
 
 
 def _packet_handoff_missing_information_response(
@@ -9067,6 +9685,7 @@ def issue_task_packet(
     repair_blocker_id: str = "",
     result_contract_profile_ids: list[str] | tuple[str, ...] | None = None,
     result_contract_profile_bindings: Mapping[str, Any] | None = None,
+    include_repair_dossier_reads: bool = True,
 ) -> str:
     _assert_not_terminal_lifecycle(ledger)
     if ledger.get("active_route_version") is None:
@@ -9076,9 +9695,30 @@ def issue_task_packet(
     if packet_kind not in PACKET_KINDS:
         raise BlackBoxRuntimeError(f"unknown packet kind: {packet_kind}")
     packet_id = preassigned_packet_id or _next_id(ledger, "packet")
-    normalized_result_reads = _normalize_authorized_result_reads(ledger, authorized_result_reads)
+    result_reads = list(authorized_result_reads or [])
+    if repair_blocker_id and include_repair_dossier_reads:
+        blocker = ledger.get("active_blockers", {}).get(repair_blocker_id)
+        if isinstance(blocker, Mapping):
+            _ensure_repair_dossier_for_blocker(ledger, blocker)
+            result_reads.extend(
+                _repair_dossier_authorized_result_reads(
+                    ledger,
+                    blocker,
+                    allowed_roles=[responsibility],
+                    purpose="repair_dossier_context",
+                    required_before_submit=True,
+                )
+            )
+    normalized_result_reads = _merge_authorized_result_reads(
+        [],
+        _normalize_authorized_result_reads(ledger, result_reads),
+    )
     body = _pm_packet_body_with_recent_role_reports(ledger, responsibility, body)
     body = _packet_body_with_authorized_result_reads(body, normalized_result_reads)
+    body = _packet_body_with_repair_dossier_context(
+        body,
+        _repair_dossier_context_for_packet(ledger, repair_blocker_id),
+    )
     envelope = {
         "packet_id": packet_id,
         "packet_kind": packet_kind,
@@ -9105,9 +9745,17 @@ def issue_task_packet(
     )
     if normalized_profile_ids:
         envelope["result_contract_profile_ids"] = list(normalized_profile_ids)
-        envelope["result_contract_profile_bindings"] = _copy_jsonable(result_contract_profile_bindings or {})
+        envelope["result_contract_profile_bindings"] = _result_contract_profile_bindings_with_runtime_reads(
+            result_contract_profile_bindings,
+            normalized_profile_ids,
+            normalized_result_reads,
+        )
     if normalized_result_reads:
         envelope["authorized_result_reads"] = normalized_result_reads
+    if repair_blocker_id:
+        repair_context = _repair_dossier_context_for_packet(ledger, repair_blocker_id)
+        if repair_context:
+            envelope["repair_dossier_context"] = repair_context
     envelope["output_contract"] = control_surface.build_packet_output_contract(
         packet_id=packet_id,
         responsibility=responsibility,
@@ -9175,15 +9823,32 @@ def _bind_packet_repair_blocker_identity(
         raise BlackBoxRuntimeError("packet envelope repair blocker identity already bound to a different blocker")
     packet["repair_blocker_id"] = repair_blocker_id
     envelope["repair_blocker_id"] = repair_blocker_id
+    role = str(envelope.get("responsibility") or "")
+    blocker = ledger.get("active_blockers", {}).get(repair_blocker_id)
+    if role and isinstance(blocker, Mapping):
+        dossier_reads = _repair_dossier_authorized_result_reads(
+            ledger,
+            blocker,
+            allowed_roles=[role],
+            purpose="repair_dossier_context",
+            required_before_submit=True,
+        )
+        if dossier_reads:
+            _attach_authorized_result_reads_to_packet(ledger, packet_id, dossier_reads)
+            return
     handoff_contract = _build_current_handoff_contract(
         ledger,
         envelope,
         _packet_authorized_result_reads(packet),
     )
     envelope["current_handoff_contract"] = handoff_contract
+    repair_context = _repair_dossier_context_for_packet(ledger, repair_blocker_id)
+    if repair_context:
+        envelope["repair_dossier_context"] = repair_context
     if isinstance(handoff_contract.get("review_window"), Mapping):
         envelope["review_window"] = _copy_jsonable(handoff_contract["review_window"])
     body = _packet_body_with_current_handoff_contract(str(packet.get("body", "")), handoff_contract, replace_existing=True)
+    body = _packet_body_with_repair_dossier_context(body, repair_context, replace_existing=True)
     packet["body"] = body
     envelope["body_hash"] = hash_text(body)
 
@@ -10624,21 +11289,6 @@ def _terminal_backward_replay_result_violation(packet: Mapping[str, Any], result
                 )
     final_blockers = payload.get("final_blockers")
     assert isinstance(final_blockers, list)
-    blockers = payload.get("blockers")
-    assert isinstance(blockers, list)
-    if bool(final_blockers) != bool(blockers):
-        return _contract_block(
-            packet,
-            "terminal backward replay common blockers must mirror final_blockers presence for PM routing",
-            missing_required_fields=("blockers", "final_blockers"),
-        )
-    expected_passed = not bool(final_blockers)
-    if payload.get("passed") is not expected_passed:
-        return _contract_block(
-            packet,
-            f"terminal backward replay passed must be {str(expected_passed).lower()} for the current final_blockers state",
-            missing_required_fields=("passed",),
-        )
     blocked_segment_ids = [
         str(segment.get("segment_id") or "")
         for segment in route_segment_replay
@@ -11058,6 +11708,22 @@ def _pm_repair_decision_result_violation(
             "PM repair decision next_action must match decision",
             missing_required_fields=("next_action",),
         )
+    if ledger is not None:
+        blocker = ledger.get("active_blockers", {}).get(blocker_id)
+        blocker_class = str(blocker.get("blocker_class") or "") if isinstance(blocker, Mapping) else ""
+        if blocker_class and not _blocker_pm_decision_allowed_for_next_action(blocker_class, decision):
+            required_next_action = _blocker_required_next_action(blocker_class)
+            return _contract_block(
+                packet,
+                (
+                    f"blocker_class={blocker_class} must follow runtime next_action={required_next_action}; "
+                    "ordinary PM repair decisions are not allowed for this blocker class"
+                ),
+                missing_required_fields=("next_action",),
+                required_result_body_fields=tuple(
+                    dict.fromkeys((*_packet_result_required_fields(packet), "target_blocker_id", "next_action"))
+                ),
+            )
     if decision == "repair_parent_scope":
         try:
             _parse_parent_repair_scope_contract_payload(payload)
@@ -11686,6 +12352,7 @@ def _block_result_and_reissue_current_packet_family(
         result_contract_profile_bindings=_copy_jsonable(
             effective_contract.get("result_contract_profile_bindings") or {}
         ),
+        include_repair_dossier_reads=packet_kind != "flowguard_check",
     )
     if packet_kind == "pm_repair_decision":
         blocker_id = str(envelope.get("subject_id") or "")
@@ -12558,7 +13225,30 @@ def _record_parent_backward_replay_closure(
             raise BlackBoxRuntimeError("parent backward replay closure requires current review.parent_backward_replay evidence")
         if not isinstance(payload, Mapping) or payload.get("passed") is not True:
             raise BlackBoxRuntimeError("parent backward replay closure requires a passing parent backward review result")
-    child_node_ids = list(node.get("child_node_ids") or [])
+    child_node_ids, active_child_lineage = _active_route_child_lineage(
+        ledger,
+        [str(item) for item in (node.get("child_node_ids") or [])],
+    )
+    missing_child_result_ids = _active_child_ids_missing_accepted_results(ledger, child_node_ids)
+    if missing_child_result_ids:
+        raise BlackBoxRuntimeError(
+            "parent backward replay closure requires accepted child results for active child_node_ids: "
+            + ", ".join(missing_child_result_ids)
+        )
+    active_child_result_ids = _accepted_result_ids_for_route_nodes(ledger, child_node_ids)
+    if isinstance(payload, Mapping):
+        payload_child_node_ids = [str(item) for item in (payload.get("child_node_ids") or []) if item]
+        if payload_child_node_ids and payload_child_node_ids != child_node_ids:
+            raise BlackBoxRuntimeError(
+                "parent backward replay result child_node_ids must match active child lineage: "
+                + ", ".join(child_node_ids)
+            )
+        payload_child_evidence_refs = [str(item) for item in (payload.get("child_evidence_refs") or []) if item]
+        if payload_child_evidence_refs != active_child_result_ids:
+            raise BlackBoxRuntimeError(
+                "parent backward replay result child_evidence_refs must match active child result ids: "
+                + ", ".join(active_child_result_ids)
+            )
     replay_id = _next_id(ledger, "parent_replay")
     ledger.setdefault("parent_backward_replays", {})[replay_id] = {
         "replay_id": replay_id,
@@ -12573,10 +13263,8 @@ def _record_parent_backward_replay_closure(
         "pm_suggestion_items": _copy_jsonable(payload.get("pm_suggestion_items") or []) if isinstance(payload, Mapping) else [],
         "child_evidence_refs": _copy_jsonable(payload.get("child_evidence_refs") or []) if isinstance(payload, Mapping) else [],
         "child_node_ids": child_node_ids,
-        "current_repair_child_result_ids": _accepted_result_ids_for_route_nodes(
-            ledger,
-            [str(item) for item in child_node_ids],
-        ),
+        "active_child_lineage": active_child_lineage,
+        "current_repair_child_result_ids": active_child_result_ids,
         "inherited_child_node_ids": list(node.get("inherited_child_node_ids") or []),
         "inherited_accepted_result_ids": list(node.get("inherited_accepted_result_ids") or []),
         "parent_repair_scope_contract_id": str(node.get("parent_repair_scope_contract_id") or ""),
@@ -13168,6 +13856,10 @@ def _ensure_review_packet_for_task_result(
     recheck_reason: str = "",
 ) -> str:
     subject_packet = _require(ledger["packets"], subject_id, "packet")
+    if not repair_blocker_id:
+        repair_blocker_id = _packet_repair_blocker_id(ledger, subject_id)
+    if repair_blocker_id and not recheck_reason:
+        recheck_reason = "repair_blocker_reviewer_recheck"
     result_ids = [str(item) for item in (subject_packet.get("result_ids") or []) if item]
     target_result_id = str(
         (result_ids[-1] if result_ids else "")
@@ -15484,7 +16176,7 @@ def _repair_loop_break_glass_action(ledger: Mapping[str, Any]) -> RuntimeAction 
         blocker_id = str(blocker.get("blocker_id") or "")
         return RuntimeAction(
             "control_plane_blocker",
-            "same current route node repeated the same blocker problem more than five consecutive times; Controller break-glass diagnosis is required",
+            "same repair dossier reached five consecutive repair nodes without normal business-node recovery; Controller break-glass diagnosis is required",
             blocker_id,
             "controller",
         )

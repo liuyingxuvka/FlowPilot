@@ -18,6 +18,14 @@ replay root acceptance, acceptance items, effective route nodes, supplemental
 repair contracts, waivers, and final blockers backward to the user's current
 goal.
 
+Ordinary non-sealed project/run material is reviewable during terminal replay.
+Use the delivered output, root user-intent artifacts, final route ledger,
+terminal replay map, public evidence files, generated artifacts, logs, tests,
+models, and other non-sealed project files directly when needed. Do not ask
+Controller or the material artifact map to authorize ordinary files. Sealed
+packet, result, report, and mail/letter bodies still require the current
+runtime-authorized open path.
+
 This is a terminal review gate. You may block completion, but you do not repair
 the artifact, mutate the route, or choose PM's repair strategy. PM owns repair
 current scope, repair parent scope, route redesign, waiver, or stop decisions.

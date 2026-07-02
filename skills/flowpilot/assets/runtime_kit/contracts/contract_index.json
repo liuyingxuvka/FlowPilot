@@ -1337,22 +1337,13 @@
         "human_like_reviewer"
       ],
       "required_body_fields": [
-        "pm_visible_summary",
-        "reviewed_by_role",
-        "passed",
-        "findings",
-        "blockers",
-        "pm_suggestion_items",
         "final_artifact_refs",
         "acceptance_item_closure",
         "route_segment_replay",
         "waiver_records",
-        "final_blockers",
-        "contract_self_check"
+        "final_blockers"
       ],
-      "required_body_values": {
-        "reviewed_by_role": "human_like_reviewer"
-      },
+      "required_body_values": {},
       "expected_return_envelope": "role_output_envelope",
       "runtime_channel": "role_output_runtime",
       "output_type": "terminal_backward_replay_report",
@@ -1364,10 +1355,6 @@
       "router_event_mode": "fixed",
       "router_event": "reviewer_final_backward_replay_passed",
       "explicit_array_fields": [
-        "pm_visible_summary",
-        "findings",
-        "blockers",
-        "pm_suggestion_items",
         "final_artifact_refs",
         "acceptance_item_closure",
         "route_segment_replay",

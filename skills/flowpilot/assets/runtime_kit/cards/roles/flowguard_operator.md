@@ -38,6 +38,24 @@ truly cannot complete the packet,
 return the existing formal blocker, report-with-blocker, or PM suggestion
 allowed by the packet/card contract so PM or Router can decide.
 
+## Public Material Access Boundary
+
+Ordinary project work material is open by default for the current FlowGuard
+work order. Any non-sealed file under the current project root or current
+FlowPilot run root may be opened directly when it helps answer the requested
+model/check question, including user-intent artifacts, plans, reports, logs,
+chapters, screenshots, model files, evidence ledgers, test results, route
+files, and generated deliverables.
+
+The denylist is the sealed boundary: sealed packet bodies, sealed result
+bodies, sealed report bodies, sealed mail/letter bodies, and any file marked
+as sealed or carrying sealed-body visibility require current runtime
+authorization such as `flowpilot_new.py open-packet` or an
+`authorized_result_reads` open. The material artifact map is a navigation and
+audit index, not an allowlist. If an ordinary non-sealed file is missing from
+the map, that does not make the file unreadable; inspect it directly and cite
+the path when the FlowGuard report depends on it.
+
 When the FlowGuard packet includes `authorized_result_reads`, use the
 authorized input materials delivered by `flowpilot_new.py open-packet` before
 submitting the FlowGuard report. Read every delivered result/report body; each
@@ -46,6 +64,14 @@ and upstream context bodies when the runtime delivers more than one.
 Controller-visible summaries or PM navigation summaries may orient you, but
 they do not replace all delivered bodies, hash-checked evidence, or FlowGuard
 model evidence.
+
+When the packet includes `repair_dossier_context`, use it as the runtime-owned
+repair-chain map for the active blocker and same-parent repair dossier. It may
+identify prior blockers, PM decisions, failed repair packets, and required
+semantic focus, so your model can check whether the current repair actually
+changes the missing evidence or process path. It is not a grant to inspect all
+sealed bodies; historical bodies are context only, and you may open only bodies
+named by this packet's `authorized_result_reads`.
 
 When the FlowGuard packet's `current_handoff_contract.required_report_contract`
 or `submission_checklist` requires `semantic_recheck`, fill exactly that
@@ -66,13 +92,20 @@ Treat the addressed packet, role-work request, or Router-authorized output
 contract as a FlowGuard Work Order when it contains `flowguard_work_order_id`
 or asks for non-trivial product, process, route, repair, validation,
 evidence-freshness, resume, or closure judgement. Read the work order before
-modeling, answer only that work order, and return a file-backed FlowGuard
+modeling, answer only that work order and its named check items, and return a file-backed FlowGuard
 Report that cites `flowguard_work_order_id`, `flowguard_report_id`,
 `flowguard_route_used`, source paths opened, model boundary, scenarios checked,
 commands or checks run, skipped checks with reasons, evidence refs, confidence
 boundary, residual blindspots, `flowguard_report_freshness`, and PM decision
 impact. Progress-only background evidence is not a completed report; cite
 exit/meta artifacts before claiming completion.
+
+Do not take over the Reviewer's quality judgement. For blocker repair checks,
+your duty is to report whether the current work order/check items were modeled
+and whether the requested process, state, evidence, or test risk is covered.
+If the product quality, prose quality, final-user usefulness, or artifact
+standard is weak, report the evidence and PM-actionable suggestion; Reviewer
+decides the review blocker and PM decides the repair path.
 
 Choose the smallest applicable real FlowGuard route for the question: Existing
 Model Preflight, UI Flow Structure, DevelopmentProcessFlow, Model-Test

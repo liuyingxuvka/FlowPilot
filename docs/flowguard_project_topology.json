@@ -115,9 +115,9 @@
     },
     "other": {
       "alignment_family_count": 7,
-      "code_surface_count": 250,
-      "known_bad_count": 1402,
-      "model_count": 87,
+      "code_surface_count": 251,
+      "known_bad_count": 1404,
+      "model_count": 88,
       "runner_keys": [
         "capability",
         "command_refinement",
@@ -161,7 +161,7 @@
         "flowpilot_gate_policy_audit"
       ],
       "surface_kinds": {
-        "model_check_runner": 87,
+        "model_check_runner": 88,
         "model_check_runner_helper": 16,
         "owner_module": 30,
         "public_facade": 5,
@@ -1553,6 +1553,19 @@
       "repair_types": [],
       "surface_id": "model-check:run_flowpilot_rejection_liveness_matrix_checks",
       "surface_owner": "model-check:run_flowpilot_rejection_liveness_matrix_checks"
+    },
+    {
+      "area": "other",
+      "covered": true,
+      "evidence_status": "passed",
+      "gap_codes": [],
+      "kind": "model_check_runner",
+      "name": "run_flowpilot_repair_dossier_testmesh_checks",
+      "path": "simulations/run_flowpilot_repair_dossier_testmesh_checks.py",
+      "release_relevance": "validation_gate",
+      "repair_types": [],
+      "surface_id": "model-check:run_flowpilot_repair_dossier_testmesh_checks",
+      "surface_owner": "model-check:run_flowpilot_repair_dossier_testmesh_checks"
     },
     {
       "area": "other",
@@ -6392,14 +6405,18 @@
     },
     {
       "area": "material",
-      "covered": true,
+      "covered": false,
       "evidence_status": "passed",
-      "gap_codes": [],
+      "gap_codes": [
+        "needs_structure_split"
+      ],
       "kind": "public_facade",
       "name": "flowpilot_material_artifact_map",
       "path": "skills/flowpilot/assets/flowpilot_material_artifact_map.py",
       "release_relevance": "runtime_contract",
-      "repair_types": [],
+      "repair_types": [
+        "defer_structure_split"
+      ],
       "surface_id": "asset:flowpilot_material_artifact_map",
       "surface_owner": "flowpilot_material_artifact_map"
     },
@@ -14223,7 +14240,7 @@
         "confidence": "",
         "decision": "",
         "edge_count": null,
-        "finding_count": 133,
+        "finding_count": 135,
         "full_coverage_ok": null,
         "known_bad": [
           "coverage_tier_counts.specialized_assertion_or_local_hazard",
@@ -14378,7 +14395,7 @@
         "decision": "",
         "edge_count": null,
         "finding_count": 0,
-        "full_coverage_ok": true,
+        "full_coverage_ok": false,
         "known_bad": [
           "full_model_test_code_diagnostic.known_bad_ok",
           "orphan_code",
@@ -14418,14 +14435,14 @@
       "path": "simulations/flowpilot_model_test_alignment_results.json"
     }
   },
-  "generated_at_epoch": 1782485069.422278,
+  "generated_at_epoch": 1782968914.245436,
   "generator_version": "1",
   "layer_counts": {
     "alignment_families": 14,
-    "code_surfaces": 1070,
+    "code_surfaces": 1071,
     "evidence_summaries": 5,
-    "known_bad_signals": 2595,
-    "models": 154,
+    "known_bad_signals": 2597,
+    "models": 155,
     "test_commands": 452
   },
   "model_test_alignment": [
@@ -14970,7 +14987,7 @@
           "route_redesign_without_flowguard_scan",
           "route_redesign_without_plan",
           "same_node_repair_in_place_survived",
-          "same_repair_lineage_loop_without_break_glass",
+          "same_repair_dossier_loop_without_break_glass",
           "terminal_stop_created_packet",
           "waiver_without_authority"
         ],
@@ -17206,7 +17223,7 @@
         "decision": "",
         "edge_count": null,
         "finding_count": 0,
-        "full_coverage_ok": true,
+        "full_coverage_ok": false,
         "known_bad": [
           "full_model_test_code_diagnostic.known_bad_ok",
           "orphan_code",
@@ -17963,7 +17980,7 @@
       "evidence": {
         "confidence": "",
         "decision": "",
-        "edge_count": 80,
+        "edge_count": 86,
         "finding_count": null,
         "full_coverage_ok": null,
         "known_bad": [
@@ -17975,6 +17992,7 @@
           "break_glass_bypasses_pm_reviewer_reintegration",
           "break_glass_unbounded_or_target_project_repair",
           "break_glass_without_normal_repair_failure",
+          "cleared_unclosed_root_cause_dropped_from_breakglass",
           "downstream_report_not_authorized",
           "final_closure_with_unresolved_information_gap",
           "final_preflight_promotes_noncurrent_repair_blocker",
@@ -17983,6 +18001,7 @@
           "historical_evidence_promoted_to_current",
           "missing_info_response_not_defined",
           "packet_result_contract_not_visible_to_role",
+          "parent_replay_uses_superseded_child_result",
           "pm_runway_omits_active_blocker",
           "reopen_reuses_old_agent_ids_as_current",
           "repair_loop_over_threshold_issues_pm_packet",
@@ -18002,7 +18021,7 @@
         "ok": true,
         "present": true,
         "release_convergence_ok": null,
-        "state_count": 81
+        "state_count": 87
       },
       "model_path": "simulations/flowpilot_project_control_information_flow_model.py",
       "result_path": "simulations/flowpilot_project_control_information_flow_results.json",
@@ -18362,6 +18381,26 @@
       "result_path": "simulations/flowpilot_rejection_liveness_matrix_results.json",
       "runner_key": "flowpilot_rejection_liveness_matrix",
       "runner_path": "simulations/run_flowpilot_rejection_liveness_matrix_checks.py"
+    },
+    {
+      "area": "other",
+      "coverage_tier": "supporting_model_owned",
+      "evidence": {
+        "confidence": "",
+        "decision": "",
+        "edge_count": null,
+        "finding_count": null,
+        "full_coverage_ok": null,
+        "known_bad": [],
+        "ok": true,
+        "present": true,
+        "release_convergence_ok": null,
+        "state_count": null
+      },
+      "model_path": "",
+      "result_path": "simulations/flowpilot_repair_dossier_testmesh_results.json",
+      "runner_key": "flowpilot_repair_dossier_testmesh",
+      "runner_path": "simulations/run_flowpilot_repair_dossier_testmesh_checks.py"
     },
     {
       "area": "other",
@@ -19237,7 +19276,7 @@
     },
     {
       "area": "review",
-      "coverage_tier": "unclassified_model_tier",
+      "coverage_tier": "supporting_model_owned",
       "evidence": {
         "confidence": "",
         "decision": "",
@@ -19696,7 +19735,7 @@
     },
     {
       "area": "closure",
-      "coverage_tier": "unclassified_model_tier",
+      "coverage_tier": "coverage_strong",
       "evidence": {
         "confidence": "",
         "decision": "",
@@ -20651,9 +20690,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1781936664145424100,
+      "mtime_ns": 1782701379874690200,
       "path": "scripts/run_flowguard_coverage_sweep.py",
-      "size": 20194
+      "size": 20329
     },
     {
       "exists": true,
@@ -20765,9 +20804,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1782485034911852300,
+      "mtime_ns": 1782701405231754900,
       "path": "simulations/capability_thin_parent_results.json",
-      "size": 20668
+      "size": 20676
     },
     {
       "exists": true,
@@ -20807,27 +20846,27 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1781245594389810900,
+      "mtime_ns": 1782699194733085700,
       "path": "simulations/flowpilot_blocker_repair_information_flow_model.py",
-      "size": 38212
+      "size": 38213
     },
     {
       "exists": true,
-      "mtime_ns": 1782207111722697300,
+      "mtime_ns": 1782968894328346000,
       "path": "simulations/flowpilot_blocker_repair_information_flow_results.json",
-      "size": 11190
+      "size": 11213
     },
     {
       "exists": true,
-      "mtime_ns": 1782298109860818900,
+      "mtime_ns": 1782699764107648100,
       "path": "simulations/flowpilot_canonical_repair_scope_rotation_model.py",
-      "size": 21035
+      "size": 21051
     },
     {
       "exists": true,
-      "mtime_ns": 1782298315223979100,
+      "mtime_ns": 1782700679528957300,
       "path": "simulations/flowpilot_canonical_repair_scope_rotation_results.json",
-      "size": 10024
+      "size": 10312
     },
     {
       "exists": true,
@@ -20945,9 +20984,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1782471768225238700,
+      "mtime_ns": 1782968897400799400,
       "path": "simulations/flowpilot_contract_exhaustion_mesh_results.json",
-      "size": 10272267
+      "size": 9988924
     },
     {
       "exists": true,
@@ -21203,7 +21242,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1781937289494496600,
+      "mtime_ns": 1782701421308116300,
       "path": "simulations/flowpilot_daemon_reconciliation_results.json",
       "size": 289584
     },
@@ -21233,9 +21272,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780644455067354600,
+      "mtime_ns": 1782498036353739000,
       "path": "simulations/flowpilot_decision_liveness_results.json",
-      "size": 61536
+      "size": 61697
     },
     {
       "exists": true,
@@ -21401,7 +21440,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1781937307142577800,
+      "mtime_ns": 1782701444517733100,
       "path": "simulations/flowpilot_final_confidence_gate_results.json",
       "size": 6509
     },
@@ -21419,9 +21458,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1781937390563949300,
+      "mtime_ns": 1782701542798699000,
       "path": "simulations/flowpilot_full_model_coverage_sweep_results.json",
-      "size": 418719
+      "size": 424322
     },
     {
       "exists": true,
@@ -21461,9 +21500,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1781649166115237200,
+      "mtime_ns": 1782612288042652600,
       "path": "simulations/flowpilot_information_flow_alignment_results.json",
-      "size": 212514
+      "size": 214458
     },
     {
       "exists": true,
@@ -21533,9 +21572,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1782398118167666100,
+      "mtime_ns": 1782701463501768900,
       "path": "simulations/flowpilot_model_hierarchy_results.json",
-      "size": 53572
+      "size": 53670
     },
     {
       "exists": true,
@@ -21545,7 +21584,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1782284485713032500,
+      "mtime_ns": 1782701464518615700,
       "path": "simulations/flowpilot_model_maturation_results.json",
       "size": 3278
     },
@@ -21563,9 +21602,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1782484939519573100,
+      "mtime_ns": 1782968905172115700,
       "path": "simulations/flowpilot_model_test_alignment_results.json",
-      "size": 4430688
+      "size": 4435386
     },
     {
       "exists": true,
@@ -21803,15 +21842,15 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1781245609766205900,
+      "mtime_ns": 1782699194734082000,
       "path": "simulations/flowpilot_project_control_information_flow_model.py",
-      "size": 44724
+      "size": 47710
     },
     {
       "exists": true,
-      "mtime_ns": 1781645595730623900,
+      "mtime_ns": 1782714044517920800,
       "path": "simulations/flowpilot_project_control_information_flow_results.json",
-      "size": 14151
+      "size": 15545
     },
     {
       "exists": true,
@@ -21851,7 +21890,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780468444144719600,
+      "mtime_ns": 1782510226769192000,
       "path": "simulations/flowpilot_protocol_kernel_results.json",
       "size": 3796
     },
@@ -21863,7 +21902,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780319386709732000,
+      "mtime_ns": 1782510226820195000,
       "path": "simulations/flowpilot_protocol_kernel_stress_results.json",
       "size": 53996
     },
@@ -21938,6 +21977,12 @@
       "mtime_ns": 1781503325262997300,
       "path": "simulations/flowpilot_rejection_liveness_matrix_results.json",
       "size": 60626
+    },
+    {
+      "exists": true,
+      "mtime_ns": 1782714042494033300,
+      "path": "simulations/flowpilot_repair_dossier_testmesh_results.json",
+      "size": 99035
     },
     {
       "exists": true,
@@ -22019,9 +22064,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1782298390278823900,
+      "mtime_ns": 1782701512452475700,
       "path": "simulations/flowpilot_role_output_runtime_results.json",
-      "size": 2892
+      "size": 2990
     },
     {
       "exists": true,
@@ -22037,7 +22082,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1781937148819866500,
+      "mtime_ns": 1782510360118111300,
       "path": "simulations/flowpilot_role_recovery_binding_evidence_results.json",
       "size": 1465
     },
@@ -22253,7 +22298,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1782398122349010600,
+      "mtime_ns": 1782701523785138400,
       "path": "simulations/flowpilot_similarity_convergence_results.json",
       "size": 127731
     },
@@ -22385,7 +22430,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1782361770113810800,
+      "mtime_ns": 1782968895949965100,
       "path": "simulations/flowpilot_terminal_flowguard_coverage_results.json",
       "size": 3910
     },
@@ -22535,9 +22580,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1782485034908838500,
+      "mtime_ns": 1782701540713553200,
       "path": "simulations/meta_thin_parent_results.json",
-      "size": 26204
+      "size": 26212
     },
     {
       "exists": true,
@@ -22625,15 +22670,15 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1781511332992948700,
+      "mtime_ns": 1782699637541584100,
       "path": "simulations/run_flowpilot_blocker_repair_information_flow_checks.py",
-      "size": 14392
+      "size": 14416
     },
     {
       "exists": true,
-      "mtime_ns": 1782298109862910200,
+      "mtime_ns": 1782699758001070500,
       "path": "simulations/run_flowpilot_canonical_repair_scope_rotation_checks.py",
-      "size": 8385
+      "size": 9018
     },
     {
       "exists": true,
@@ -22673,9 +22718,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780837355682587700,
+      "mtime_ns": 1782495371406005400,
       "path": "simulations/run_flowpilot_complete_system_runtime_checks.py",
-      "size": 17396
+      "size": 18878
     },
     {
       "exists": true,
@@ -22835,9 +22880,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1781511333595160900,
+      "mtime_ns": 1782498028271631800,
       "path": "simulations/run_flowpilot_decision_liveness_checks.py",
-      "size": 25083
+      "size": 25760
     },
     {
       "exists": true,
@@ -23009,9 +23054,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1782298142310606300,
+      "mtime_ns": 1782700201787795700,
       "path": "simulations/run_flowpilot_new_control_plane_duty_checks.py",
-      "size": 5807
+      "size": 5930
     },
     {
       "exists": true,
@@ -23105,9 +23150,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1781511334403371600,
+      "mtime_ns": 1782699643323125500,
       "path": "simulations/run_flowpilot_project_control_information_flow_checks.py",
-      "size": 16503
+      "size": 17418
     },
     {
       "exists": true,
@@ -23168,6 +23213,12 @@
       "mtime_ns": 1781511334586907000,
       "path": "simulations/run_flowpilot_rejection_liveness_matrix_checks.py",
       "size": 9001
+    },
+    {
+      "exists": true,
+      "mtime_ns": 1782713615305022700,
+      "path": "simulations/run_flowpilot_repair_dossier_testmesh_checks.py",
+      "size": 12369
     },
     {
       "exists": true,
@@ -23543,9 +23594,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1782396365163965800,
+      "mtime_ns": 1782611365418968800,
       "path": "skills/flowpilot/SKILL.md",
-      "size": 9365
+      "size": 10687
     },
     {
       "exists": true,
@@ -23627,15 +23678,15 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780319999453175300,
+      "mtime_ns": 1782967269495093100,
       "path": "skills/flowpilot/assets/flowpilot_material_artifact_map.py",
-      "size": 10600
+      "size": 15887
     },
     {
       "exists": true,
-      "mtime_ns": 1780221020771037000,
+      "mtime_ns": 1782967269494087600,
       "path": "skills/flowpilot/assets/flowpilot_material_artifact_map_entries.py",
-      "size": 8119
+      "size": 8263
     },
     {
       "exists": true,
@@ -25253,9 +25304,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1781848124768938800,
+      "mtime_ns": 1782502193089823300,
       "path": "skills/flowpilot/assets/flowpilot_router_startup_resume_binding_reports.py",
-      "size": 15981
+      "size": 16362
     },
     {
       "exists": true,
@@ -25379,7 +25430,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1782361521470955600,
+      "mtime_ns": 1782523007052622300,
       "path": "skills/flowpilot/assets/flowpilot_router_terminal_ledger.py",
       "size": 2520
     },
@@ -25997,9 +26048,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1781638797769185600,
+      "mtime_ns": 1782968361806044800,
       "path": "skills/flowpilot/assets/role_output_runtime_schema_specs.py",
-      "size": 12643
+      "size": 12526
     },
     {
       "exists": true,
@@ -26051,9 +26102,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1782206241295470700,
+      "mtime_ns": 1782699538988289400,
       "path": "skills/flowpilot/assets/runtime_kit/cards/flowguard_operator/route_process_check.md",
-      "size": 14365
+      "size": 14748
     },
     {
       "exists": true,
@@ -26111,9 +26162,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1782361521477844600,
+      "mtime_ns": 1782967269491581200,
       "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_final_ledger.md",
-      "size": 13668
+      "size": 13917
     },
     {
       "exists": true,
@@ -26153,9 +26204,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1782367978323333600,
+      "mtime_ns": 1782503213379395600,
       "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_node_acceptance_plan.md",
-      "size": 15547
+      "size": 15576
     },
     {
       "exists": true,
@@ -26225,9 +26276,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1782361521480843800,
+      "mtime_ns": 1782967269491581200,
       "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_review_repair.md",
-      "size": 24252
+      "size": 26202
     },
     {
       "exists": true,
@@ -26279,9 +26330,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1782361521481847900,
+      "mtime_ns": 1782967269492580800,
       "path": "skills/flowpilot/assets/runtime_kit/cards/reviewer/final_backward_replay.md",
-      "size": 7128
+      "size": 7615
     },
     {
       "exists": true,
@@ -26297,15 +26348,15 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1782104215712673600,
+      "mtime_ns": 1782713543446074700,
       "path": "skills/flowpilot/assets/runtime_kit/cards/reviewer/node_acceptance_plan_review.md",
-      "size": 16019
+      "size": 16210
     },
     {
       "exists": true,
-      "mtime_ns": 1782283175060459400,
+      "mtime_ns": 1782610632122524200,
       "path": "skills/flowpilot/assets/runtime_kit/cards/reviewer/parent_backward_replay.md",
-      "size": 5343
+      "size": 5766
     },
     {
       "exists": true,
@@ -26339,39 +26390,39 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1782016313134716500,
+      "mtime_ns": 1782699583105257800,
       "path": "skills/flowpilot/assets/runtime_kit/cards/reviewer/worker_result_review.md",
-      "size": 15123
+      "size": 15202
     },
     {
       "exists": true,
-      "mtime_ns": 1782206301842989000,
+      "mtime_ns": 1782699515730191200,
       "path": "skills/flowpilot/assets/runtime_kit/cards/roles/controller.md",
-      "size": 22316
+      "size": 22593
     },
     {
       "exists": true,
-      "mtime_ns": 1782361521482848100,
+      "mtime_ns": 1782967269488580300,
       "path": "skills/flowpilot/assets/runtime_kit/cards/roles/flowguard_operator.md",
-      "size": 19626
+      "size": 21984
     },
     {
       "exists": true,
-      "mtime_ns": 1782469562110640200,
+      "mtime_ns": 1782967269489584600,
       "path": "skills/flowpilot/assets/runtime_kit/cards/roles/human_like_reviewer.md",
-      "size": 29531
+      "size": 32213
     },
     {
       "exists": true,
-      "mtime_ns": 1782297823123406800,
+      "mtime_ns": 1782967269486069600,
       "path": "skills/flowpilot/assets/runtime_kit/cards/roles/project_manager.md",
-      "size": 39677
+      "size": 41258
     },
     {
       "exists": true,
-      "mtime_ns": 1781847116368961000,
+      "mtime_ns": 1782967269487574000,
       "path": "skills/flowpilot/assets/runtime_kit/cards/roles/worker.md",
-      "size": 11003
+      "size": 12772
     },
     {
       "exists": true,
@@ -26381,15 +26432,15 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1782283233303200800,
+      "mtime_ns": 1782699528669578100,
       "path": "skills/flowpilot/assets/runtime_kit/cards/system/controller_break_glass_repair.md",
-      "size": 16677
+      "size": 16993
     },
     {
       "exists": true,
-      "mtime_ns": 1782104264189298000,
+      "mtime_ns": 1782499516462343300,
       "path": "skills/flowpilot/assets/runtime_kit/cards/system/controller_resume_reentry.md",
-      "size": 11894
+      "size": 12166
     },
     {
       "exists": true,
@@ -26591,9 +26642,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1782471111357009500,
+      "mtime_ns": 1782699613272103500,
       "path": "tests/test_flowpilot_card_instruction_coverage.py",
-      "size": 53654
+      "size": 54501
     },
     {
       "exists": true,
@@ -26609,9 +26660,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1781846662406182100,
+      "mtime_ns": 1782700181440520600,
       "path": "tests/test_flowpilot_complete_system_runtime.py",
-      "size": 51914
+      "size": 51893
     },
     {
       "exists": true,
@@ -26639,9 +26690,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1782471098800253400,
+      "mtime_ns": 1782967269506802400,
       "path": "tests/test_flowpilot_core_runtime.py",
-      "size": 280896
+      "size": 307011
     },
     {
       "exists": true,
@@ -26669,9 +26720,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1782296855640850200,
+      "mtime_ns": 1782700295555035100,
       "path": "tests/test_flowpilot_high_standard_control_flow.py",
-      "size": 143848
+      "size": 145323
     },
     {
       "exists": true,

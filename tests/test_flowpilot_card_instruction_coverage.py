@@ -272,6 +272,14 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
                 self.assertIn("upstream", text)
                 self.assertNotIn("one selected result body is enough", text)
 
+        for card_id in ("pm.core", "pm.review_repair", "worker.core", "reviewer.core", "flowguard_operator.core"):
+            with self.subTest(card_id=f"{card_id}.repair_dossier_context"):
+                text = normalized(_card_path_by_id(card_id))
+                self.assertIn("repair_dossier_context", text)
+                self.assertIn("context", text)
+                self.assertIn("authorized_result_reads", text)
+                self.assertTrue("historical bodies" in text or "prior blocker bodies" in text)
+
         pm_text = normalized(_card_path_by_id("pm.core"))
         repair_text = normalized(_card_path_by_id("pm.review_repair"))
         flowguard_text = normalized(_card_path_by_id("flowguard_operator.core"))
@@ -986,20 +994,24 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
         worker_review = normalized(_card_path_by_id("reviewer.worker_result_review"))
         node_plan_review = normalized(_card_path_by_id("reviewer.node_acceptance_plan_review"))
 
-        self.assertIn("same repair lineage has repeated the same blocker problem more than five consecutive times", pm_repair)
+        self.assertIn("same repair dossier under the same parent has reached five consecutive repair nodes", pm_repair)
+        self.assertIn("does not require the same blocker class", pm_repair)
+        self.assertIn("repair_dossier_context", pm_repair)
         self.assertIn("do not issue another ordinary pm repair decision packet", pm_repair)
         self.assertIn("terminal supplemental repair contracts use the runtime's separate three-round cap", pm_repair)
         self.assertIn("after the third round, pm must choose a legal terminal disposition", pm_repair)
         self.assertIn("route a new pm decision from the current blocker context", pm_repair)
         self.assertIn("repair_loop_break_glass_review", controller)
-        self.assertIn("same repair lineage has repeated the same blocker problem more than five consecutive times", controller)
+        self.assertIn("same repair dossier under the same parent has reached five consecutive repair nodes", controller)
         self.assertIn("similar blocker classes spread across different route nodes are ordinary repair evidence", controller)
-        self.assertIn("same repair lineage has repeated the same blocker problem more than five consecutive times", break_glass)
+        self.assertIn("same repair dossier under the same parent has reached five consecutive repair nodes", break_glass)
         self.assertIn("false alarm", break_glass)
         self.assertIn("mechanical progress from semantic repair progress", flowguard_process)
-        self.assertIn("more than five consecutive same-lineage attempts", flowguard_process)
+        self.assertIn("five consecutive same-dossier repair nodes", flowguard_process)
         self.assertIn("reuse the prior `blocker_class`", worker_review)
+        self.assertIn("runtime break-glass threshold counts same-dossier repair continuity", worker_review)
         self.assertIn("reuse the prior `blocker_class`", node_plan_review)
+        self.assertIn("runtime break-glass threshold counts same-dossier repair continuity", node_plan_review)
 
     def test_flowguard_project_topology_guidance_is_role_scoped(self) -> None:
         def normalized(path: Path) -> str:

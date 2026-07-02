@@ -197,10 +197,6 @@ _BUILTIN_OUTPUT_TYPE_SPECS: dict[str, OutputTypeSpec] = {
         default_filename_prefix="terminal_backward_replay_report",
         body_schema_version="flowpilot.terminal_backward_replay_report.v1",
         explicit_array_fields=(
-            "pm_visible_summary",
-            "findings",
-            "blockers",
-            "pm_suggestion_items",
             "final_artifact_refs",
             "acceptance_item_closure",
             "route_segment_replay",

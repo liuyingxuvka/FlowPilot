@@ -1,0 +1,266 @@
+contract_version: 1
+change: harden-flowpilot-public-material-closure-mesh
+obligations:
+  - id: req.artifact_authority.ordinary_read
+    source: "specs/flowpilot-artifact-authority/spec.md#Requirement: Formal work roles can read non-sealed project material"
+    claim: "Formal work roles are told that current project/run non-sealed files are ordinary readable material."
+    required: true
+    evidence:
+      - check.prompts.material_boundary
+      - check.tests.material_access_mesh
+  - id: req.artifact_authority.sealed_denied
+    source: "specs/flowpilot-artifact-authority/spec.md#Requirement: Sealed bodies remain runtime-authorized only"
+    claim: "Sealed body refs remain metadata-only until runtime opens them for the current role."
+    required: true
+    evidence:
+      - check.prompts.material_boundary
+      - check.tests.material_access_mesh
+  - id: req.material_map.navigation_index
+    source: "specs/material-artifact-map/spec.md#Requirement: Material artifact map is a navigation index, not a permission allowlist"
+    claim: "Material map indexes important artifacts without constraining ordinary non-sealed reads."
+    required: true
+    evidence:
+      - check.tests.material_access_mesh
+      - check.install.self_check
+  - id: req.blocker_repair.itemized
+    source: "specs/blocker-repair-policy/spec.md#Requirement: PM repair packets state prior failure, required repair, and gate checks"
+    claim: "Repair prompts and tests require concrete itemized blocker repair context."
+    required: true
+    evidence:
+      - check.prompts.repair_boundary
+      - check.tests.semantic_blocker_mesh
+      - check.flowguard.blocker_information_flow
+  - id: req.flowguard_operator.work_order_scope
+    source: "specs/formal-gate-review-standards/spec.md#Requirement: FlowGuard Operator answers the work order, not final user quality"
+    claim: "FlowGuard Operator passes only when requested work-order/check items are answered."
+    required: true
+    evidence:
+      - check.prompts.repair_boundary
+      - check.tests.flowguard_workorder_mesh
+  - id: req.reviewer.quality_owner
+    source: "specs/formal-gate-review-standards/spec.md#Requirement: Reviewer owns terminal quality and public user-intent replay"
+    claim: "Reviewer blocks shallow repair, existence-only quality proof, and unproven terminal user-intent closure."
+    required: true
+    evidence:
+      - check.prompts.reviewer_boundary
+      - check.tests.reviewer_quality_mesh
+  - id: req.terminal.flowguard_segment
+    source: "specs/terminal-ledger/spec.md#Requirement: Terminal replay includes FlowGuard coverage governance"
+    claim: "Runtime issues and validates the terminal FlowGuard coverage governance segment."
+    required: true
+    evidence:
+      - check.tests.terminal_coverage_mesh
+      - check.flowguard.terminal_coverage
+  - id: req.terminal.final_projection
+    source: "specs/terminal-ledger/spec.md#Requirement: Final projection uses current non-superseded artifacts"
+    claim: "Final closure rejects stale or superseded accepted results/final artifacts."
+    required: true
+    evidence:
+      - check.tests.final_projection_mesh
+  - id: req.dispatch.current_owner
+    source: "specs/dispatch-recipient-gate/spec.md#Requirement: Current role and output ownership stay aligned"
+    claim: "Current packet role/lease/output ownership mismatch is rejected or repaired."
+    required: true
+    evidence:
+      - check.tests.identity_owner_mesh
+      - check.packet_control_plane
+  - id: req.coverage.finite_universe
+    source: "specs/synthetic-agent-coverage-matrix/spec.md#Requirement: Declared finite-universe Cartesian coverage exists"
+    claim: "The new tests declare finite axes and cover required cells or interaction groups."
+    required: true
+    evidence:
+      - check.tests.full_mesh_suite
+      - check.flowguard.contract_exhaustion
+      - check.flowguard.model_test_alignment
+  - id: req.breakglass.threshold
+    source: "specs/blocker-repair-policy/spec.md#Requirement: Repeated blocker repair remains normal until threshold, then glass-break"
+    claim: "Same-family five-attempt break-glass threshold and recovery reset behavior are covered."
+    required: true
+    evidence:
+      - check.tests.breakglass_mesh
+checks:
+  - id: check.prompts.material_boundary
+    kind: command
+    command: python
+    args:
+      - -m
+      - unittest
+      - tests.test_flowpilot_card_instruction_coverage
+    required: true
+    covers:
+      - req.artifact_authority.ordinary_read
+      - req.artifact_authority.sealed_denied
+    expected:
+      exit_code: 0
+  - id: check.prompts.repair_boundary
+    kind: command
+    command: python
+    args:
+      - -m
+      - unittest
+      - tests.test_flowpilot_card_instruction_coverage
+    required: true
+    covers:
+      - req.blocker_repair.itemized
+      - req.flowguard_operator.work_order_scope
+    expected:
+      exit_code: 0
+  - id: check.prompts.reviewer_boundary
+    kind: command
+    command: python
+    args:
+      - -m
+      - unittest
+      - tests.test_flowpilot_card_instruction_coverage
+    required: true
+    covers:
+      - req.reviewer.quality_owner
+    expected:
+      exit_code: 0
+  - id: check.tests.material_access_mesh
+    kind: command
+    command: python
+    args: [ -m, unittest, tests.test_flowpilot_material_access_mesh ]
+    required: true
+    covers:
+      - req.artifact_authority.ordinary_read
+      - req.artifact_authority.sealed_denied
+      - req.material_map.navigation_index
+    expected: { exit_code: 0 }
+  - id: check.tests.semantic_blocker_mesh
+    kind: command
+    command: python
+    args: [ -m, unittest, tests.test_flowpilot_semantic_blocker_mesh ]
+    required: true
+    covers:
+      - req.blocker_repair.itemized
+    expected: { exit_code: 0 }
+  - id: check.tests.flowguard_workorder_mesh
+    kind: command
+    command: python
+    args: [ -m, unittest, tests.test_flowpilot_flowguard_workorder_mesh ]
+    required: true
+    covers:
+      - req.flowguard_operator.work_order_scope
+    expected: { exit_code: 0 }
+  - id: check.tests.reviewer_quality_mesh
+    kind: command
+    command: python
+    args: [ -m, unittest, tests.test_flowpilot_reviewer_quality_mesh ]
+    required: true
+    covers:
+      - req.reviewer.quality_owner
+    expected: { exit_code: 0 }
+  - id: check.tests.identity_owner_mesh
+    kind: command
+    command: python
+    args: [ -m, unittest, tests.test_flowpilot_identity_owner_mesh ]
+    required: true
+    covers:
+      - req.dispatch.current_owner
+    expected: { exit_code: 0 }
+  - id: check.tests.final_projection_mesh
+    kind: command
+    command: python
+    args: [ -m, unittest, tests.test_flowpilot_final_projection_mesh ]
+    required: true
+    covers:
+      - req.terminal.final_projection
+    expected: { exit_code: 0 }
+  - id: check.tests.terminal_coverage_mesh
+    kind: command
+    command: python
+    args: [ -m, unittest, tests.test_flowpilot_terminal_coverage_mesh ]
+    required: true
+    covers:
+      - req.terminal.flowguard_segment
+      - req.reviewer.quality_owner
+    expected: { exit_code: 0 }
+  - id: check.tests.breakglass_mesh
+    kind: command
+    command: python
+    args: [ -m, unittest, tests.test_flowpilot_breakglass_mesh ]
+    required: true
+    covers:
+      - req.breakglass.threshold
+    expected: { exit_code: 0 }
+  - id: check.tests.full_mesh_suite
+    kind: command
+    command: python
+    args: [ -m, unittest, tests.test_flowpilot_material_access_mesh, tests.test_flowpilot_semantic_blocker_mesh, tests.test_flowpilot_flowguard_workorder_mesh, tests.test_flowpilot_reviewer_quality_mesh, tests.test_flowpilot_identity_owner_mesh, tests.test_flowpilot_final_projection_mesh, tests.test_flowpilot_terminal_coverage_mesh, tests.test_flowpilot_breakglass_mesh ]
+    required: true
+    covers:
+      - req.coverage.finite_universe
+    expected: { exit_code: 0 }
+  - id: check.packet_control_plane
+    kind: command
+    command: python
+    args: [ skills/flowpilot/assets/run_packet_control_plane_checks.py ]
+    required: true
+    covers:
+      - req.dispatch.current_owner
+    expected: { exit_code: 0 }
+  - id: check.flowguard.blocker_information_flow
+    kind: command
+    command: python
+    args: [ simulations/run_flowpilot_blocker_repair_information_flow_checks.py, --json-out, simulations/flowpilot_blocker_repair_information_flow_results.json ]
+    required: true
+    covers:
+      - req.blocker_repair.itemized
+    expected: { exit_code: 0 }
+  - id: check.flowguard.terminal_coverage
+    kind: command
+    command: python
+    args: [ simulations/run_flowpilot_terminal_flowguard_coverage_checks.py, --json-out, simulations/flowpilot_terminal_flowguard_coverage_results.json ]
+    required: true
+    covers:
+      - req.terminal.flowguard_segment
+    expected: { exit_code: 0 }
+  - id: check.flowguard.contract_exhaustion
+    kind: command
+    command: python
+    args: [ simulations/run_flowpilot_contract_exhaustion_mesh_checks.py, --json-out, simulations/flowpilot_contract_exhaustion_mesh_results.json ]
+    required: true
+    covers:
+      - req.coverage.finite_universe
+    expected: { exit_code: 0 }
+  - id: check.flowguard.model_test_alignment
+    kind: command
+    command: python
+    args: [ simulations/run_flowpilot_model_test_alignment_checks.py, --json-out, simulations/flowpilot_model_test_alignment_results.json ]
+    required: true
+    covers:
+      - req.coverage.finite_universe
+    expected: { exit_code: 0 }
+  - id: check.install.self_check
+    kind: command
+    command: powershell
+    args:
+      - -NoProfile
+      - -Command
+      - >-
+        python scripts\flowguard_project_topology.py build;
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE };
+        python scripts\flowguard_project_topology.py check;
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE };
+        python scripts\check_install.py --json
+    required: true
+    covers:
+      - req.material_map.navigation_index
+    expected: { exit_code: 0 }
+freshness:
+  watch:
+    - openspec/changes/harden-flowpilot-public-material-closure-mesh/proposal.md
+    - openspec/changes/harden-flowpilot-public-material-closure-mesh/design.md
+    - openspec/changes/harden-flowpilot-public-material-closure-mesh/tasks.md
+    - openspec/changes/harden-flowpilot-public-material-closure-mesh/specs/**/*.md
+    - openspec/changes/harden-flowpilot-public-material-closure-mesh/verification-contract.yaml
+    - skills/flowpilot/assets/runtime_kit/cards/**/*.md
+    - skills/flowpilot/assets/flowpilot_material_artifact_map*.py
+    - skills/flowpilot/assets/flowpilot_core_runtime/**/*.py
+    - skills/flowpilot/assets/run_packet_control_plane_checks.py
+    - simulations/run_flowpilot_*checks.py
+    - simulations/flowpilot_*model*.py
+    - tests/test_flowpilot_*mesh.py
+    - tests/test_flowpilot_card_instruction_coverage.py
+    - scripts/check_install.py

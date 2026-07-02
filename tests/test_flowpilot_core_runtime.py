@@ -187,6 +187,15 @@ def write_flowguard_evidence_artifact(
     if not ledger.get("run_root"):
         ledger["run_root"] = tempfile.mkdtemp(prefix="flowpilot-core-test-")
     packet = ledger["packets"][packet_id]
+    packet_body = json.loads(packet["body"])
+    evidence_policy = packet_body.get("evidence_output_policy")
+    if isinstance(evidence_policy, dict):
+        root_text = str(evidence_policy.get("run_local_evidence_root") or "")
+        if "<" in root_text or ">" in root_text:
+            evidence_root = Path(str(ledger["run_root"])) / "evidence" / "flowguard" / packet_id
+            evidence_policy["run_local_evidence_root"] = str(evidence_root)
+            packet["body"] = json.dumps(packet_body, sort_keys=True)
+            packet["envelope"]["body_hash"] = runtime.hash_text(packet["body"])
     path = runtime._flowguard_packet_evidence_artifact_path(ledger, packet)
     assert path is not None
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -319,12 +328,6 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
             }
         ]
         payload: dict[str, object] = {
-            "pm_visible_summary": ["Reviewer completed terminal backward replay."],
-            "reviewed_by_role": "human_like_reviewer",
-            "passed": True,
-            "findings": [],
-            "blockers": [],
-            "pm_suggestion_items": [DEFAULT_TERMINAL_PM_SUGGESTION],
             "final_artifact_refs": [
                 {"id": "delivered-product", "status": "closed", "basis": "Final artifact inspected directly."}
             ],
@@ -332,13 +335,6 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
             "route_segment_replay": route_segment_replay,
             "waiver_records": [],
             "final_blockers": [],
-            "contract_self_check": {
-                "all_required_fields_present": True,
-                "exact_field_names_used": True,
-                "empty_required_arrays_explicit": True,
-                "runtime_mechanical_validation_passed": True,
-                "semantic_sufficiency_reviewed_by_runtime": False,
-            },
         }
         return json.dumps(payload)
 
@@ -354,14 +350,8 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
                 "recommended_resolution": "Repair delivered-product signposting and restart terminal replay.",
             }
         ]
-        payload["blockers"] = list(payload["final_blockers"])
-        payload["findings"] = ["Delivered product signposting does not match the current accepted route."]
-        payload["passed"] = False
         if omit_blockers:
             payload["final_blockers"] = []
-            payload["blockers"] = []
-            payload["findings"] = []
-            payload["passed"] = True
         return json.dumps(payload)
 
     def _prepare_terminal_supplemental_projection(
@@ -2146,6 +2136,60 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         self.assertEqual(len(review_packets), 1)
         self.assertEqual(json.loads(review_packets[0]["body"])["staged_effect"]["effect_kind"], "commit_node_acceptance_plan")
 
+    def _parent_replacement_replay_fixture(
+        self,
+        *,
+        active_child_result_id: str = "active-child-result",
+    ) -> tuple[dict[str, object], str, str, str]:
+        ledger = runtime.new_ledger("Goal", "Acceptance")
+        authorize_background_collaboration(ledger)
+        ledger["high_standard_control_flow_required"] = True
+        runtime.create_route(ledger, "Route", ["Parent", "Child"])
+        route_version = ledger["active_route_version"]
+        parent_id = "parent-1"
+        old_child_id = "child-1"
+        active_child_id = "child-1-repair-v2"
+        ledger["routes"][str(route_version)]["node_order"] = [parent_id, old_child_id, active_child_id]
+        ledger["route_nodes"][parent_id] = {
+            "node_id": parent_id,
+            "route_version": route_version,
+            "title": "Parent",
+            "node_kind": "module",
+            "status": "awaiting_parent_backward_replay",
+            "responsibility": "reviewer",
+            "modeled_target": "development_process",
+            "repair_generation": 0,
+            "acceptance_criteria": ["children compose"],
+            "child_node_ids": [old_child_id],
+        }
+        ledger["route_nodes"][old_child_id] = {
+            "node_id": old_child_id,
+            "route_version": route_version,
+            "title": "Old Child",
+            "node_kind": "leaf",
+            "parent_node_id": parent_id,
+            "status": "superseded",
+            "accepted_result_id": "old-child-result",
+            "superseded_by": active_child_id,
+            "repair_generation": 0,
+            "acceptance_criteria": ["old child accepted"],
+            "child_node_ids": [],
+        }
+        ledger["route_nodes"][active_child_id] = {
+            "node_id": active_child_id,
+            "route_version": route_version,
+            "title": "Active Child Repair",
+            "node_kind": "leaf",
+            "parent_node_id": parent_id,
+            "status": "accepted",
+            "accepted_result_id": active_child_result_id,
+            "superseded_by": "",
+            "repair_generation": 1,
+            "acceptance_criteria": ["active child accepted"],
+            "child_node_ids": [],
+        }
+        return ledger, parent_id, old_child_id, active_child_id
+
     def test_parent_backward_review_closes_parent_without_second_reviewer_packet(self) -> None:
         ledger = runtime.new_ledger("Goal", "Acceptance")
         authorize_background_collaboration(ledger)
@@ -2231,6 +2275,257 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
             and packet["envelope"].get("subject_id") == packet_id
         ]
         self.assertEqual(len(pm_packets), 1)
+
+    def test_active_child_lineage_resolves_replacement_chain_and_rejects_bad_targets(self) -> None:
+        ledger = runtime.new_ledger("Goal", "Acceptance")
+        ledger["route_nodes"] = {
+            "child-old": {
+                "node_id": "child-old",
+                "status": "superseded",
+                "superseded_by": "child-repair-v2",
+            },
+            "child-repair-v2": {
+                "node_id": "child-repair-v2",
+                "status": "superseded",
+                "superseded_by": "child-repair-v3",
+            },
+            "child-repair-v3": {
+                "node_id": "child-repair-v3",
+                "status": "accepted",
+                "superseded_by": "",
+            },
+        }
+
+        active_ids, lineage = runtime._active_route_child_lineage(ledger, ["child-old"])
+
+        self.assertEqual(active_ids, ["child-repair-v3"])
+        self.assertEqual(lineage[0]["lineage_node_ids"], ["child-old", "child-repair-v2", "child-repair-v3"])
+        self.assertTrue(lineage[0]["changed"])
+
+        ledger["route_nodes"]["missing-old"] = {
+            "node_id": "missing-old",
+            "status": "superseded",
+            "superseded_by": "missing-repair",
+        }
+        with self.assertRaisesRegex(runtime.BlackBoxRuntimeError, "missing route node"):
+            runtime._active_route_child_lineage(ledger, ["missing-old"])
+
+        ledger["route_nodes"]["cycle-a"] = {
+            "node_id": "cycle-a",
+            "status": "superseded",
+            "superseded_by": "cycle-b",
+        }
+        ledger["route_nodes"]["cycle-b"] = {
+            "node_id": "cycle-b",
+            "status": "superseded",
+            "superseded_by": "cycle-a",
+        }
+        with self.assertRaisesRegex(runtime.BlackBoxRuntimeError, "cycle"):
+            runtime._active_route_child_lineage(ledger, ["cycle-a"])
+
+        ledger["route_nodes"]["route-replaced-child"] = {
+            "node_id": "route-replaced-child",
+            "status": "superseded",
+            "superseded_by": "route-v2",
+        }
+        with self.assertRaisesRegex(runtime.BlackBoxRuntimeError, "route replacement"):
+            runtime._active_route_child_lineage(ledger, ["route-replaced-child"])
+
+    def test_active_child_lineage_rejects_duplicate_active_targets(self) -> None:
+        ledger = runtime.new_ledger("Goal", "Acceptance")
+        ledger["route_nodes"] = {
+            "child-a-old": {
+                "node_id": "child-a-old",
+                "status": "superseded",
+                "superseded_by": "child-active",
+            },
+            "child-b-old": {
+                "node_id": "child-b-old",
+                "status": "superseded",
+                "superseded_by": "child-active",
+            },
+            "child-active": {
+                "node_id": "child-active",
+                "status": "accepted",
+                "superseded_by": "",
+            },
+        }
+
+        with self.assertRaisesRegex(runtime.BlackBoxRuntimeError, "duplicate active child"):
+            runtime._active_route_child_lineage(ledger, ["child-a-old", "child-b-old"])
+
+    def test_parent_backward_replay_uses_active_child_replacement_result(self) -> None:
+        ledger = runtime.new_ledger("Goal", "Acceptance")
+        authorize_background_collaboration(ledger)
+        ledger["high_standard_control_flow_required"] = True
+        runtime.create_route(ledger, "Route", ["Parent", "Child"])
+        route_version = ledger["active_route_version"]
+        parent_id = "parent-1"
+        old_child_id = "child-1"
+        active_child_id = "child-1-repair-v2"
+        ledger["routes"][str(route_version)]["node_order"] = [parent_id, old_child_id, active_child_id]
+        ledger["route_nodes"][parent_id] = {
+            "node_id": parent_id,
+            "route_version": route_version,
+            "title": "Parent",
+            "node_kind": "module",
+            "status": "awaiting_parent_backward_replay",
+            "responsibility": "reviewer",
+            "modeled_target": "development_process",
+            "repair_generation": 0,
+            "acceptance_criteria": ["children compose"],
+            "child_node_ids": [old_child_id],
+        }
+        ledger["route_nodes"][old_child_id] = {
+            "node_id": old_child_id,
+            "route_version": route_version,
+            "title": "Old Child",
+            "node_kind": "leaf",
+            "parent_node_id": parent_id,
+            "status": "superseded",
+            "accepted_result_id": "old-child-result",
+            "superseded_by": active_child_id,
+            "repair_generation": 0,
+            "acceptance_criteria": ["old child accepted"],
+            "child_node_ids": [],
+        }
+        ledger["route_nodes"][active_child_id] = {
+            "node_id": active_child_id,
+            "route_version": route_version,
+            "title": "Active Child Repair",
+            "node_kind": "leaf",
+            "parent_node_id": parent_id,
+            "status": "accepted",
+            "accepted_result_id": "active-child-result",
+            "superseded_by": "",
+            "repair_generation": 1,
+            "acceptance_criteria": ["active child accepted"],
+            "child_node_ids": [],
+        }
+
+        packet_id = runtime.ensure_parent_backward_replay_packet(ledger, parent_id)
+        packet_body = json.loads(ledger["packets"][packet_id]["body"])
+
+        self.assertEqual(packet_body["child_node_ids"], [active_child_id])
+        self.assertEqual(packet_body["current_repair_child_result_ids"], ["active-child-result"])
+        self.assertEqual(packet_body["active_child_lineage"][0]["original_child_node_id"], old_child_id)
+        self.assertEqual(packet_body["active_child_lineage"][0]["active_child_node_id"], active_child_id)
+        self.assertNotIn("old-child-result", packet_body["current_repair_child_result_ids"])
+
+        reviewer = runtime.lease_agent(ledger, "reviewer", agent_id="reviewer-parent-active", packet_id=packet_id)
+        runtime.assign_packet(ledger, packet_id, reviewer)
+        runtime.ack_lease(ledger, reviewer, packet_id)
+        replay_body = packet_result_contracts.minimal_valid_shape_for_family("review.parent_backward_replay")
+        replay_body.update(
+            {
+                "reviewed_by_role": "human_like_reviewer",
+                "passed": True,
+                "parent_node_id": parent_id,
+                "child_node_ids": [active_child_id],
+                "child_evidence_refs": ["active-child-result"],
+                "findings": [],
+                "blockers": [],
+            }
+        )
+        runtime.submit_result(ledger, reviewer, packet_id, json.dumps(replay_body))
+
+        replay_id = ledger["route_nodes"][parent_id]["parent_backward_replay_id"]
+        replay_record = ledger["parent_backward_replays"][replay_id]
+        self.assertEqual(replay_record["child_node_ids"], [active_child_id])
+        self.assertEqual(replay_record["current_repair_child_result_ids"], ["active-child-result"])
+        self.assertEqual(replay_record["active_child_lineage"][0]["original_child_node_id"], old_child_id)
+
+    def test_parent_backward_replay_blocks_active_child_without_current_result(self) -> None:
+        ledger, parent_id, _old_child_id, active_child_id = self._parent_replacement_replay_fixture(
+            active_child_result_id="",
+        )
+
+        with self.assertRaisesRegex(runtime.BlackBoxRuntimeError, "accepted child results.*" + active_child_id):
+            runtime.ensure_parent_backward_replay_packet(ledger, parent_id)
+
+    def test_parent_backward_replay_rejects_reviewer_superseded_child_ids(self) -> None:
+        ledger, parent_id, old_child_id, active_child_id = self._parent_replacement_replay_fixture()
+        packet_id = runtime.ensure_parent_backward_replay_packet(ledger, parent_id)
+        reviewer = runtime.lease_agent(ledger, "reviewer", agent_id="reviewer-parent-old-child", packet_id=packet_id)
+        runtime.assign_packet(ledger, packet_id, reviewer)
+        runtime.ack_lease(ledger, reviewer, packet_id)
+        replay_body = packet_result_contracts.minimal_valid_shape_for_family("review.parent_backward_replay")
+        replay_body.update(
+            {
+                "reviewed_by_role": "human_like_reviewer",
+                "passed": True,
+                "parent_node_id": parent_id,
+                "child_node_ids": [old_child_id],
+                "child_evidence_refs": ["active-child-result"],
+                "findings": [],
+                "blockers": [],
+            }
+        )
+
+        with self.assertRaisesRegex(runtime.BlackBoxRuntimeError, "child_node_ids must match active child lineage"):
+            runtime.submit_result(ledger, reviewer, packet_id, json.dumps(replay_body))
+        self.assertFalse(ledger["route_nodes"][parent_id].get("parent_backward_replay_id"))
+        self.assertEqual(json.loads(ledger["packets"][packet_id]["body"])["child_node_ids"], [active_child_id])
+
+    def test_parent_backward_replay_rejects_superseded_child_evidence_refs(self) -> None:
+        ledger, parent_id, _old_child_id, active_child_id = self._parent_replacement_replay_fixture()
+        packet_id = runtime.ensure_parent_backward_replay_packet(ledger, parent_id)
+        reviewer = runtime.lease_agent(ledger, "reviewer", agent_id="reviewer-parent-old-result", packet_id=packet_id)
+        runtime.assign_packet(ledger, packet_id, reviewer)
+        runtime.ack_lease(ledger, reviewer, packet_id)
+        replay_body = packet_result_contracts.minimal_valid_shape_for_family("review.parent_backward_replay")
+        replay_body.update(
+            {
+                "reviewed_by_role": "human_like_reviewer",
+                "passed": True,
+                "parent_node_id": parent_id,
+                "child_node_ids": [active_child_id],
+                "child_evidence_refs": ["old-child-result"],
+                "findings": [],
+                "blockers": [],
+            }
+        )
+
+        with self.assertRaisesRegex(runtime.BlackBoxRuntimeError, "child_evidence_refs must match active child result ids"):
+            runtime.submit_result(ledger, reviewer, packet_id, json.dumps(replay_body))
+        self.assertFalse(ledger["route_nodes"][parent_id].get("parent_backward_replay_id"))
+
+    def test_parent_backward_replay_rejects_unresolved_active_child_lineage(self) -> None:
+        ledger = runtime.new_ledger("Goal", "Acceptance")
+        authorize_background_collaboration(ledger)
+        ledger["high_standard_control_flow_required"] = True
+        runtime.create_route(ledger, "Route", ["Parent", "Child"])
+        route_version = ledger["active_route_version"]
+        parent_id = "parent-1"
+        child_id = "child-1"
+        ledger["route_nodes"][parent_id] = {
+            "node_id": parent_id,
+            "route_version": route_version,
+            "title": "Parent",
+            "node_kind": "module",
+            "status": "awaiting_parent_backward_replay",
+            "responsibility": "reviewer",
+            "modeled_target": "development_process",
+            "repair_generation": 0,
+            "acceptance_criteria": ["children compose"],
+            "child_node_ids": [child_id],
+        }
+        ledger["route_nodes"][child_id] = {
+            "node_id": child_id,
+            "route_version": route_version,
+            "title": "Child",
+            "node_kind": "leaf",
+            "parent_node_id": parent_id,
+            "status": "superseded",
+            "accepted_result_id": "old-child-result",
+            "superseded_by": "missing-repair",
+            "repair_generation": 0,
+            "acceptance_criteria": ["old child accepted"],
+            "child_node_ids": [],
+        }
+
+        with self.assertRaisesRegex(runtime.BlackBoxRuntimeError, "missing route node"):
+            runtime.ensure_parent_backward_replay_packet(ledger, parent_id)
 
     def test_multiple_parent_backward_review_gaps_are_control_plane_corruption(self) -> None:
         ledger = runtime.new_ledger("Goal", "Acceptance")
@@ -3114,13 +3409,23 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         self.assertEqual(blocker["target_result_id"], result_id)
         self.assertIn("flowguard_evidence_manifest.entries[].flowguard_result_id", blocker["missing_required_fields"])
         self.assertIn("flowguard_missing_matching_report", blocker["root_cause_loop_key"])
-        self.assertTrue(
+        self.assertFalse(
             [
                 packet
                 for packet in ledger["packets"].values()
                 if packet["envelope"]["packet_kind"] == "pm_repair_decision"
             ]
         )
+        flowguard_packets = [
+            packet
+            for packet in ledger["packets"].values()
+            if packet["envelope"]["packet_kind"] == "flowguard_check"
+            and packet.get("repair_blocker_id") == blocker["blocker_id"]
+        ]
+        self.assertEqual(len(flowguard_packets), 1)
+        flowguard_body = json.loads(flowguard_packets[0]["body"])
+        self.assertEqual(flowguard_body["recheck_reason"], "missing_matching_flowguard_report")
+        self.assertEqual(flowguard_body["repair_dossier_context"]["hard_next_action"], "issue_matching_flowguard_packet")
 
     def test_break_glass_counts_same_flowguard_root_cause_across_surface_gates(self) -> None:
         ledger = runtime.new_ledger("Goal", "Contract")
@@ -3153,14 +3458,14 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         self.assertEqual(review["family_key"], root_cause_key)
         self.assertEqual(review["root_cause_loop_key"], root_cause_key)
 
-    def test_break_glass_threshold_stays_normal_through_fifth_and_triggers_on_sixth(self) -> None:
+    def test_break_glass_threshold_triggers_on_fifth_repair_blocker(self) -> None:
         root_cause_key = runtime._flowguard_missing_evidence_root_cause_key(
             subject_packet_id="packet-subject",
             target_result_id="result-subject",
             repair_blocker_id="",
         )
 
-        for attempt_count, threshold_exceeded in ((4, False), (5, False), (6, True)):
+        for attempt_count, threshold_exceeded in ((4, False), (5, True), (6, True)):
             with self.subTest(attempt_count=attempt_count):
                 ledger = runtime.new_ledger("Goal", "Contract")
                 runtime.create_route(ledger, "Route", ["Do work"])
@@ -3189,6 +3494,189 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
                     review["required_action"],
                     "controller_break_glass_diagnosis" if threshold_exceeded else "ordinary_pm_repair_allowed",
                 )
+
+    def test_break_glass_counts_cleared_unclosed_same_root_blockers(self) -> None:
+        ledger = runtime.new_ledger("Goal", "Contract")
+        runtime.create_route(ledger, "Route", ["Do work"])
+        root_cause_key = "parent_backward_replay|node=parent-1|missing=active-child-lineage"
+        for index in range(6):
+            blocker_id = f"blocker-root-{index}"
+            ledger["active_blockers"][blocker_id] = {
+                "blocker_id": blocker_id,
+                "status": "cleared" if index < 5 else "active",
+                "cleared_by_outcome_id": f"outcome-{index}" if index < 5 else "",
+                "gate_kind": "parent_backward_replay",
+                "blocker_class": "composition_gap",
+                "required_recheck_role": "reviewer",
+                "route_node_id": "parent-1-repair-v5",
+                "repair_target_packet_id": "packet-subject",
+                "target_result_id": "result-subject",
+                "root_cause_loop_key": root_cause_key,
+            }
+
+        review = runtime._repair_loop_break_glass_review(
+            ledger,
+            ledger["active_blockers"]["blocker-root-5"],
+        )
+
+        self.assertTrue(review["threshold_exceeded"])
+        self.assertEqual(review["attempt_count"], 6)
+        self.assertEqual(review["family_key"], root_cause_key)
+        self.assertEqual(
+            [row["cleared_by_outcome_id"] for row in review["same_family_blockers"][:5]],
+            [f"outcome-{index}" for index in range(5)],
+        )
+
+    def test_break_glass_does_not_count_lineage_verified_closed_blockers(self) -> None:
+        ledger = runtime.new_ledger("Goal", "Contract")
+        runtime.create_route(ledger, "Route", ["Do work"])
+        root_cause_key = "parent_backward_replay|node=parent-1|missing=active-child-lineage"
+        for index in range(6):
+            blocker_id = f"blocker-root-{index}"
+            ledger["active_blockers"][blocker_id] = {
+                "blocker_id": blocker_id,
+                "status": "cleared" if index < 5 else "active",
+                "cleared_by_outcome_id": f"outcome-{index}" if index < 5 else "",
+                "lineage_verified_closed_by": f"parent-replay-{index}" if index < 5 else "",
+                "gate_kind": "parent_backward_replay",
+                "blocker_class": "composition_gap",
+                "required_recheck_role": "reviewer",
+                "route_node_id": "parent-1-repair-v5",
+                "repair_target_packet_id": "packet-subject",
+                "target_result_id": "result-subject",
+                "root_cause_loop_key": root_cause_key,
+            }
+
+        review = runtime._repair_loop_break_glass_review(
+            ledger,
+            ledger["active_blockers"]["blocker-root-5"],
+        )
+
+        self.assertFalse(review["threshold_exceeded"])
+        self.assertEqual(review["attempt_count"], 1)
+
+    def test_active_child_lineage_break_glass_cartesian_boundary(self) -> None:
+        child_cases = {
+            "active": ("child-active", False, "child-active"),
+            "single_replacement": ("child-old", False, "child-repair-v2"),
+            "replacement_chain": ("child-old", False, "child-repair-v3"),
+            "missing_replacement": ("child-missing", True, ""),
+            "cycle": ("cycle-a", True, ""),
+        }
+        blocker_history_cases = {
+            "active": (lambda index, last: ("active", "", "")),
+            "cleared_unclosed": (lambda index, last: ("active", "", "") if index == last else ("cleared", f"outcome-{index}", "")),
+            "verified_closed": (
+                lambda index, last: ("active", "", "")
+                if index == last
+                else ("cleared", f"outcome-{index}", f"parent-replay-{index}")
+            ),
+            "retired": (
+                lambda index, last: ("active", "", "")
+                if index == last
+                else ("retired_after_new_current_blocker", "", "")
+            ),
+            "different_root": (lambda index, last: ("active", "", "")),
+        }
+        threshold_counts = {1, 4, 5, 6}
+
+        for child_case, (start_child_id, child_errors, expected_active_child_id) in child_cases.items():
+            for blocker_case, blocker_state in blocker_history_cases.items():
+                for attempt_count in threshold_counts:
+                    with self.subTest(child_case=child_case, blocker_case=blocker_case, attempt_count=attempt_count):
+                        ledger = runtime.new_ledger("Goal", "Contract")
+                        if child_case == "active":
+                            ledger["route_nodes"] = {
+                                "child-active": {"node_id": "child-active", "status": "accepted", "superseded_by": ""}
+                            }
+                        elif child_case == "single_replacement":
+                            ledger["route_nodes"] = {
+                                "child-old": {
+                                    "node_id": "child-old",
+                                    "status": "superseded",
+                                    "superseded_by": "child-repair-v2",
+                                },
+                                "child-repair-v2": {
+                                    "node_id": "child-repair-v2",
+                                    "status": "accepted",
+                                    "superseded_by": "",
+                                },
+                            }
+                        elif child_case == "replacement_chain":
+                            ledger["route_nodes"] = {
+                                "child-old": {
+                                    "node_id": "child-old",
+                                    "status": "superseded",
+                                    "superseded_by": "child-repair-v2",
+                                },
+                                "child-repair-v2": {
+                                    "node_id": "child-repair-v2",
+                                    "status": "superseded",
+                                    "superseded_by": "child-repair-v3",
+                                },
+                                "child-repair-v3": {
+                                    "node_id": "child-repair-v3",
+                                    "status": "accepted",
+                                    "superseded_by": "",
+                                },
+                            }
+                        elif child_case == "missing_replacement":
+                            ledger["route_nodes"] = {
+                                "child-missing": {
+                                    "node_id": "child-missing",
+                                    "status": "superseded",
+                                    "superseded_by": "missing-child",
+                                }
+                            }
+                        else:
+                            ledger["route_nodes"] = {
+                                "cycle-a": {"node_id": "cycle-a", "status": "superseded", "superseded_by": "cycle-b"},
+                                "cycle-b": {"node_id": "cycle-b", "status": "superseded", "superseded_by": "cycle-a"},
+                            }
+
+                        if child_errors:
+                            with self.assertRaises(runtime.BlackBoxRuntimeError):
+                                runtime._active_route_child_lineage(ledger, [start_child_id])
+                        else:
+                            active_ids, lineage = runtime._active_route_child_lineage(ledger, [start_child_id])
+                            self.assertEqual(active_ids, [expected_active_child_id])
+                            self.assertEqual(lineage[0]["active_child_node_id"], expected_active_child_id)
+
+                        root_cause_key = "root-cause-active-child-lineage"
+                        current_blocker_id = f"blocker-{attempt_count - 1}"
+                        for index in range(attempt_count):
+                            blocker_id = f"blocker-{index}"
+                            status, cleared_by, verified_by = blocker_state(index, attempt_count - 1)
+                            candidate_root = (
+                                root_cause_key
+                                if blocker_case != "different_root" or index == attempt_count - 1
+                                else f"different-root-{index}"
+                            )
+                            ledger["active_blockers"][blocker_id] = {
+                                "blocker_id": blocker_id,
+                                "status": status,
+                                "cleared_by_outcome_id": cleared_by,
+                                "lineage_verified_closed_by": verified_by,
+                                "gate_kind": "parent_backward_replay",
+                                "blocker_class": "composition_gap",
+                                "required_recheck_role": "reviewer",
+                                "route_node_id": "parent-1-repair-v5",
+                                "repair_target_packet_id": "packet-subject",
+                                "target_result_id": "result-subject",
+                                "root_cause_loop_key": candidate_root,
+                            }
+
+                        review = runtime._repair_loop_break_glass_review(
+                            ledger,
+                            ledger["active_blockers"][current_blocker_id],
+                        )
+                        expected_count = (
+                            1
+                            if blocker_case in {"verified_closed"}
+                            else attempt_count
+                        )
+                        self.assertEqual(review["attempt_count"], expected_count)
+                        self.assertEqual(review["threshold_exceeded"], expected_count >= 5)
 
     def test_result_submitted_repair_target_is_superseded_after_reissue(self) -> None:
         ledger, packet_id, worker = runtime_runner._base_ledger()
@@ -3517,6 +4005,66 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
             ],
             preflight["blockers"],
         )
+
+    def test_repair_current_scope_parent_replacement_carries_active_child_lineage(self) -> None:
+        ledger = runtime.new_ledger("Goal", "Acceptance")
+        authorize_background_collaboration(ledger)
+        runtime.create_route(ledger, "Route", ["Parent", "Child"])
+        route_version = ledger["active_route_version"]
+        parent_id = "parent-1"
+        old_child_id = "child-1"
+        active_child_id = "child-1-repair-v2"
+        ledger["routes"][str(route_version)]["node_order"] = [parent_id, old_child_id, active_child_id]
+        ledger["route_nodes"][parent_id] = {
+            "node_id": parent_id,
+            "route_version": route_version,
+            "title": "Parent",
+            "node_kind": "module",
+            "status": "running",
+            "responsibility": "worker",
+            "modeled_target": "development_process",
+            "repair_generation": 0,
+            "acceptance_criteria": ["parent"],
+            "child_node_ids": [old_child_id],
+        }
+        ledger["route_nodes"][old_child_id] = {
+            "node_id": old_child_id,
+            "route_version": route_version,
+            "title": "Old Child",
+            "node_kind": "leaf",
+            "parent_node_id": parent_id,
+            "status": "superseded",
+            "accepted_result_id": "old-child-result",
+            "superseded_by": active_child_id,
+            "repair_generation": 0,
+            "acceptance_criteria": ["old"],
+            "child_node_ids": [],
+        }
+        ledger["route_nodes"][active_child_id] = {
+            "node_id": active_child_id,
+            "route_version": route_version,
+            "title": "Active Child",
+            "node_kind": "leaf",
+            "parent_node_id": parent_id,
+            "status": "accepted",
+            "accepted_result_id": "active-child-result",
+            "superseded_by": "",
+            "repair_generation": 1,
+            "acceptance_criteria": ["active"],
+            "child_node_ids": [],
+        }
+
+        replacement_id = runtime._replace_route_node_for_repair(
+            ledger,
+            parent_id,
+            disposition_id="pm-repair-active-child",
+            reason="Replace parent without stale child refs.",
+        )
+
+        replacement = ledger["route_nodes"][replacement_id]
+        self.assertEqual(replacement["child_node_ids"], [active_child_id])
+        self.assertEqual(replacement["active_child_lineage"][0]["original_child_node_id"], old_child_id)
+        self.assertEqual(replacement["active_child_lineage"][0]["active_child_node_id"], active_child_id)
 
     def test_route_mutation_supersedes_prior_route_repair_open_blockers(self) -> None:
         ledger = runtime.new_ledger("Goal", "Acceptance")
@@ -5642,7 +6190,7 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         self.assertEqual(ledger["packets"][recovery["fresh_packet_id"]]["envelope"]["packet_kind"], "pm_repair_decision")
         self.assertTrue(recovery["user_requested"])
 
-    def test_pm_repair_decision_break_glass_routes_control_plane_without_user_wait(self) -> None:
+    def test_missing_required_information_stops_without_pm_repair_packet(self) -> None:
         ledger, packet_id, worker = runtime_runner._base_ledger()
         runtime.ack_lease(ledger, worker, packet_id)
         runtime.submit_result(
@@ -5658,32 +6206,14 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
             ),
         )
         blocker_id = next(iter(ledger["active_blockers"]))
-        pm_packet = ledger["active_blockers"][blocker_id]["pm_repair_packet_id"]
-        pm_lease = runtime.lease_agent(ledger, "pm", agent_id="pm-break-glass", packet_id=pm_packet)
-        runtime.assign_packet(ledger, pm_packet, pm_lease)
-        runtime.ack_lease(ledger, pm_lease, pm_packet)
-        open_required_result_reads(ledger, pm_packet, pm_lease)
-
-        runtime.submit_result(
-            ledger,
-            pm_lease,
-            pm_packet,
-            pm_repair_decision_body(
-                ledger,
-                pm_packet,
-                decision="break_glass",
-                reason="Current packet material delivery is a FlowPilot control-plane defect.",
-            ),
-        )
-
         blocker = ledger["active_blockers"][blocker_id]
-        self.assertEqual(blocker["status"], "active")
-        self.assertTrue(blocker["pm_break_glass_decision_id"])
-        self.assertNotEqual(ledger["packets"][packet_id]["status"], "pm_stopped")
+        self.assertEqual(blocker["pm_repair_packet_id"], "")
+        self.assertEqual(blocker["status"], "stopped")
+        self.assertEqual(blocker["runtime_next_action"], "same_packet_block_or_stop_for_user")
+        self.assertEqual(ledger["packets"][packet_id]["status"], "pm_stopped")
         action = runtime.router_next_action(ledger)
-        self.assertEqual(action.action_type, "control_plane_blocker")
+        self.assertEqual(action.action_type, "wait_for_resume")
         self.assertEqual(action.subject_id, blocker_id)
-        self.assertIn("break-glass", action.reason)
         self.assertFalse(
             any(
                 transaction.get("blocker_id") == blocker_id
@@ -5693,7 +6223,7 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         )
         self.assertTrue(
             any(
-                event.get("event_type") == "pm_break_glass_requested"
+                event.get("event_type") == "semantic_blocker_requires_material_or_user"
                 and event.get("payload", {}).get("blocker_id") == blocker_id
                 for event in ledger["events"]
             )

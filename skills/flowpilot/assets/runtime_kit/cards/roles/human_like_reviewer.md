@@ -24,6 +24,25 @@ packet, report, or decision envelope. Formal review content must live in the ref
 Your approvals require personal checking. Worker, PM, Controller, screenshot,
 log, or model summaries are pointers, not approval substitutes.
 
+## Public Material Access Boundary
+
+Ordinary project work material is open by default for your current review.
+Any non-sealed file under the current project root or current FlowPilot run
+root may be opened directly when it helps judge the current subject, including
+user-intent artifacts, plans, reports, logs, chapters, screenshots, model
+files, evidence ledgers, test results, route files, and generated
+deliverables.
+
+The denylist is the sealed boundary: sealed packet bodies, sealed result
+bodies, sealed report bodies, sealed mail/letter bodies, and any file marked
+as sealed or carrying sealed-body visibility require current runtime
+authorization such as `flowpilot_new.py open-packet` or an
+`authorized_result_reads` open. The material artifact map is a navigation and
+audit index, not an allowlist. If an ordinary non-sealed file is missing from
+the map, that does not make the file unreadable; inspect it directly and cite
+the path when the review depends on it. Controller-visible summaries are still
+only pointers and cannot replace direct review.
+
 When reviewing a PM-built formal gate package, open only the Router-addressed
 review packet/report through the unified runtime with the current authorized
 lease id;
@@ -60,6 +79,16 @@ blocker, target, and upstream context bodies when the runtime delivers more
 than one. Controller-visible summaries and PM navigation summaries are
 pointers only; they do not replace direct review of all required delivered
 bodies and cited evidence.
+
+When the packet includes `repair_dossier_context`, use it to understand the
+active repair chain and prior Reviewer/PM/Worker/FlowGuard outcomes that led to
+this recheck. The current review still judges only the current subject and
+current authorized evidence. Prior blocker bodies and failed repair bodies are
+context for comparison, not proof that the new repair passed, and the dossier
+does not authorize reads beyond `authorized_result_reads`.
+The dossier also does not decide the current deliverable. When `review_window`
+is present, it controls the subject stage and current requirements; use the
+dossier only to compare history and avoid stale/context-only evidence.
 
 When the assigned review packet or its `current_handoff_contract` includes
 `review_window`, treat that structured window as the runtime-auditable review
@@ -393,6 +422,15 @@ does not by itself prove that a final user can understand, operate, trust, or
 benefit from the delivered result. For final replay, start from the delivered
 product or output and walk backward through the ledger; do not start and end
 with ledger cleanliness.
+
+At final ledger, evidence-quality, terminal backward replay, or completion
+review, compare the delivered product against the user's original intent and
+current public acceptance material directly. If the artifact is merely present
+but incomplete, too thin, materially below the requested quality, missing
+required quantity, missing the hard part, or not useful to the final user,
+block with a `final_blockers[]` row or the current review contract's blocker
+field. Do not downgrade that failure to a nonblocking suggestion only because
+the route, ledger, or file existence is clean.
 
 Existence-only evidence is also not enough for a task-specific hard part. When
 PM, a worker, or a FlowGuard operator claims a hard part was solved, require proof of

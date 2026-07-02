@@ -14,7 +14,7 @@
       "stale prior-route repair blocker disposition after route mutation",
       "final preflight current-effective blocker filtering",
       "same-blocker no-progress loop escape",
-      "same-family repair attempts above five route to Controller break-glass instead of ordinary PM repair"
+      "same-dossier repair attempts at five consecutive repair nodes route to Controller break-glass instead of ordinary PM repair"
     ],
     "does_not_cover": [
       "concrete runtime packet builder conformance",

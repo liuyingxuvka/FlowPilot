@@ -276,14 +276,28 @@ def _body_for_packet(
             }
         )
     if kind == "review" and scope == "parent_backward_replay":
+        try:
+            packet_body = json.loads(packet.get("body") or "{}")
+        except json.JSONDecodeError:
+            packet_body = {}
+        child_node_ids = (
+            [str(item) for item in packet_body.get("child_node_ids", []) if str(item)]
+            if isinstance(packet_body, dict) and isinstance(packet_body.get("child_node_ids"), list)
+            else []
+        )
+        child_evidence_refs = (
+            [str(item) for item in packet_body.get("current_repair_child_result_ids", []) if str(item)]
+            if isinstance(packet_body, dict) and isinstance(packet_body.get("current_repair_child_result_ids"), list)
+            else []
+        )
         return json.dumps(
             {
                 "pm_visible_summary": ["Parent backward review composes current child results."],
                 "reviewed_by_role": "human_like_reviewer",
                 "passed": True,
                 "parent_node_id": envelope.get("route_node_id", "") or "parent-node",
-                "child_node_ids": ["child-node"],
-                "child_evidence_refs": ["child-result"],
+                "child_node_ids": child_node_ids,
+                "child_evidence_refs": child_evidence_refs,
                 "findings": [],
                 "blockers": [],
                 "pm_suggestion_items": [
@@ -404,8 +418,6 @@ def _terminal_replay_block_body_for_packet(packet: dict[str, Any], ledger: dict[
         "recommended_resolution": "Repair delivered-product signposting and restart terminal replay.",
         "summary": blocker_text,
     }
-    payload["passed"] = False
-    payload["blockers"] = [blocker]
     payload["final_blockers"] = [
         {
             **blocker,

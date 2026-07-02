@@ -29259,7 +29259,6 @@ Task id: `generate-new-flowpilot-formal-entrypoint-20260529`
 ### Next Actions
 - Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
 
-
 ## flowguard-project-adopt - FlowGuard project adopt record update
 
 - Project: FlowPilot-main
@@ -29296,3 +29295,49 @@ Task id: `generate-new-flowpilot-formal-entrypoint-20260529`
 
 ### Next Actions
 - Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
+
+## harden-flowpilot-public-material-closure-mesh-20260702 - FlowPilot public material and closure mesh hardening
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User asked to implement the agreed FlowPilot control-plane repair plan after auditing blocker causes, without adding new workflow-field sprawl, while syncing the installed skill and preserving peer-agent work.
+- Status: completed_validated_installed_synced_local_git
+- Skill decision: used_flowguard
+- Recorded: 2026-07-02T13:02:21+08:00
+- Commands OK: True
+
+### Findings
+- Formal non-controller roles now get clear prompt policy: ordinary non-sealed files under the project/run are directly readable; sealed packet/result/report/mail bodies still require runtime authorization.
+- The material artifact map is a navigation/audit index, not a permission allowlist, and excludes sealed body-like paths.
+- PM and Worker repair guidance now requires itemized closure of the current blocker; FlowGuard Operator answers the work order/check items without replacing Reviewer quality judgment.
+- Reviewer terminal/final guidance blocks shallow repair, existence-only final proof, missing public user-intent replay, and low-quality final artifacts.
+- Terminal backward replay now uses the five current closure fields; old ordinary review fields are rejected for terminal replay.
+- The regression mesh covers material access, semantic blockers, FlowGuard work orders, Reviewer quality, identity ownership, final projection, terminal coverage, and same-family five-blocker break-glass threshold/recovery behavior.
+- Installed FlowPilot was synchronized from source and passed install audit, installer check, installed runtime self-check, and check_install.
+
+### Commands
+- python -m unittest card/boundary/core/output/new mesh suites: 226 tests OK.
+- python skills/flowpilot/assets/run_packet_control_plane_checks.py: 37 traces, no violations.
+- python simulations/run_flowpilot_blocker_repair_information_flow_checks.py --json-out simulations/flowpilot_blocker_repair_information_flow_results.json: ok true.
+- python simulations/run_flowpilot_terminal_flowguard_coverage_checks.py --json-out simulations/flowpilot_terminal_flowguard_coverage_results.json: ok true.
+- python simulations/run_flowpilot_contract_exhaustion_mesh_checks.py --json-out simulations/flowpilot_contract_exhaustion_mesh_results.json: ok true; 9528 required cells.
+- python simulations/run_flowpilot_model_test_alignment_checks.py --json-out simulations/flowpilot_model_test_alignment_results.json: alignment_ok true; one deferred material-artifact-map structure split remains.
+- python scripts/flowguard_project_topology.py build; python scripts/flowguard_project_topology.py check: ok true; no findings.
+- python scripts/check_install.py --json: ok true.
+- python scripts/install_flowpilot.py --sync-repo-owned --json: ok true; installed source_fresh true.
+- python scripts/audit_local_install_sync.py --json: ok true.
+- python scripts/install_flowpilot.py --check --json: ok true.
+- python C:/Users/liu_y/.codex/skills/flowpilot/assets/flowpilot_runtime_self_check.py --json: ok true; FlowGuard 0.52.2 schema 1.0.
+
+### Friction Points
+- check_install initially failed because auxiliary installer/schema projections still expected old terminal Reviewer fields after the main terminal contract was reduced; scripts/install_checks/runtime.py and role_output_runtime_schema_specs.py were updated, then checks passed.
+- Broad core-runtime tests caught an earlier accidental terminal-forbidden-fields patch leaking into the ordinary review contract row.
+- The full tests.router_runtime.material_modeling module was not claimed because a previous foreground run timed out; the targeted material artifact map runtime test passed and the verification contract did not require the full slow module.
+
+### Skipped Steps
+- No new workflow fields were added for blocker closure or material visibility.
+- No peer AI work was reverted or cleaned up.
+- No GitHub push, tag, public release, deploy, or OpenSpec archive was performed.
+- The deferred material-artifact-map structure split remains visible as maintenance debt.
+
+### Risk Evidence Summary
+Evidence supports local repository and installed FlowPilot behavior for ordinary non-sealed material visibility, sealed body preservation, itemized blocker repair, FlowGuard work-order scope, Reviewer terminal quality ownership, current owner projection, final projection freshness, terminal FlowGuard coverage, and five-blocker break-glass threshold. It does not prove live future AI prose quality on arbitrary tasks, remote publication readiness, or completion of unrelated peer-agent changes.

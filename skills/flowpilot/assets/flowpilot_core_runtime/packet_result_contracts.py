@@ -55,25 +55,14 @@ FLOWGUARD_REPORT_EXPLICIT_ARRAY_FIELDS = (
 FLOWGUARD_REPORT_NON_EMPTY_ARRAY_FIELDS = ("pm_visible_summary",)
 REVIEW_REPORT_NON_EMPTY_ARRAY_FIELDS = ("pm_visible_summary", "pm_suggestion_items")
 TERMINAL_BACKWARD_REPLAY_REQUIRED_FIELDS = (
-    "pm_visible_summary",
-    "reviewed_by_role",
-    "passed",
-    "findings",
-    "blockers",
-    "pm_suggestion_items",
     "final_artifact_refs",
     "acceptance_item_closure",
     "route_segment_replay",
     "waiver_records",
     "final_blockers",
-    "contract_self_check",
 )
 TERMINAL_BACKWARD_REPLAY_REQUIRED_CHILD_FIELDS = ()
 TERMINAL_BACKWARD_REPLAY_EXPLICIT_ARRAY_FIELDS = (
-    "pm_visible_summary",
-    "findings",
-    "blockers",
-    "pm_suggestion_items",
     "final_artifact_refs",
     "acceptance_item_closure",
     "route_segment_replay",
@@ -81,8 +70,6 @@ TERMINAL_BACKWARD_REPLAY_EXPLICIT_ARRAY_FIELDS = (
     "final_blockers",
 )
 TERMINAL_BACKWARD_REPLAY_NON_EMPTY_ARRAY_FIELDS = (
-    "pm_visible_summary",
-    "pm_suggestion_items",
     "final_artifact_refs",
     "acceptance_item_closure",
 )
@@ -398,6 +385,13 @@ PACKET_RESULT_CONTRACTS: tuple[dict[str, Any], ...] = (
         "explicit_array_fields": TERMINAL_BACKWARD_REPLAY_EXPLICIT_ARRAY_FIELDS,
         "non_empty_array_fields": TERMINAL_BACKWARD_REPLAY_NON_EMPTY_ARRAY_FIELDS,
         "forbidden_fields": (
+            "pm_visible_summary",
+            "reviewed_by_role",
+            "passed",
+            "findings",
+            "blockers",
+            "pm_suggestion_items",
+            "contract_self_check",
             "decision",
             "outcome",
             "status",
@@ -967,8 +961,8 @@ def branch_valid_shapes_for_family(family_id: str) -> dict[str, Any]:
             }
         ]
         return {
-            "passed=true": pass_shape,
-            "passed=false": block_shape,
+            "final_blockers=[]": pass_shape,
+            "final_blockers[]=present": block_shape,
         }
     if family_id == "task.node_acceptance_plan":
         pass_shape = minimal_valid_shape_for_family("task.node_acceptance_plan")
@@ -1248,14 +1242,6 @@ def minimal_valid_shape_for_family(family_id: str) -> dict[str, Any]:
         }
     if family_id == "review.terminal_backward_replay":
         return {
-            "pm_visible_summary": ["Terminal backward replay report is mechanically complete."],
-            "reviewed_by_role": "human_like_reviewer",
-            "passed": True,
-            "findings": [],
-            "blockers": [],
-            "pm_suggestion_items": [
-                "PM decision-support: terminal replay passes; consider whether any segment deserves an optional quality improvement before final close."
-            ],
             "final_artifact_refs": [
                 {"id": "delivered-product", "status": "closed", "basis": "Final artifact was inspected directly."}
             ],
@@ -1272,13 +1258,6 @@ def minimal_valid_shape_for_family(family_id: str) -> dict[str, Any]:
             ],
             "waiver_records": [],
             "final_blockers": [],
-            "contract_self_check": {
-                "all_required_fields_present": True,
-                "exact_field_names_used": True,
-                "empty_required_arrays_explicit": True,
-                "runtime_mechanical_validation_passed": True,
-                "semantic_sufficiency_reviewed_by_runtime": False,
-            },
         }
     if family_id == "task.node":
         return {

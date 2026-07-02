@@ -393,6 +393,13 @@ def run_checks(result: dict[str, object]) -> None:
                 "pm_suggestion_items",
                 "contract_self_check",
             }
+            terminal_backward_replay_fields = {
+                "final_artifact_refs",
+                "acceptance_item_closure",
+                "route_segment_replay",
+                "waiver_records",
+                "final_blockers",
+            }
             reviewer_contract_failures = []
             for contract in contract_index.get("contracts", []):
                 if not (
@@ -402,7 +409,13 @@ def run_checks(result: dict[str, object]) -> None:
                 ):
                     continue
                 fields = set(contract.get("required_body_fields", []))
-                missing_compact_fields = sorted(compact_reviewer_fields - fields)
+                task_family = str(contract.get("task_family", ""))
+                expected_fields = (
+                    terminal_backward_replay_fields
+                    if task_family == "reviewer.terminal_backward_replay"
+                    else compact_reviewer_fields
+                )
+                missing_compact_fields = sorted(expected_fields - fields)
                 deleted_fields_present = sorted(
                     field
                     for field in fields

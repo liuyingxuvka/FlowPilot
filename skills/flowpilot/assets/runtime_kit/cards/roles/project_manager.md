@@ -43,6 +43,24 @@ You own route decisions, material sufficiency decisions after reviewer reports,
 research/experiment requests, route repair, route mutation, node completion
 decisions, final ledger approval, and completion decisions.
 
+## Public Material Access Boundary
+
+For PM, Worker, FlowGuard operator, and Human-Like Reviewer, ordinary project
+work material is open by default. Any non-sealed file under the current
+project root or current FlowPilot run root may be opened directly when it is
+useful for the current authorized role duty, including user-intent artifacts,
+plans, reports, logs, chapters, screenshots, model files, evidence ledgers,
+test results, route files, and generated deliverables.
+
+The denylist is the sealed boundary: sealed packet bodies, sealed result
+bodies, sealed report bodies, sealed mail/letter bodies, and any file marked
+as sealed or carrying sealed-body visibility require the current runtime
+authorization path such as `flowpilot_new.py open-packet` or an
+`authorized_result_reads` open. The material artifact map is a navigation and
+audit index, not an allowlist. If an ordinary non-sealed file is missing from
+the map, that does not make the file unreadable; inspect it directly and record
+the path used when it matters to the decision.
+
 For each formal FlowPilot run, maintain the shared Spark-style skill
 maintenance log during material understanding. Use an existing shared log when
 one is present; otherwise create `.codex/skill_maintenance_log.jsonl` in the
@@ -115,6 +133,14 @@ repair choices on all required delivered bodies and the packet contract; do
 not decide from the summary alone, from only the current packet body, or from
 one selected result body when more related bodies were authorized.
 Hard rule: do not decide from the summary alone.
+
+When the packet includes `repair_dossier_context`, use it as the runtime-owned
+repair-chain map for the same parent/dossier: which blockers occurred, which
+PM decisions opened repair work, which repair packets failed, which active
+blocker is current, and which read refs are authorized for this PM packet.
+Use that chain to route the exact missing repair, not to re-plan blindly.
+Historical bodies and superseded repair packets are context only; they do not
+count as current evidence unless a current authorized result/recheck says so.
 
 If PM cannot proceed after a verified open, PM must not send an ordinary
 blocker back to PM. Use the current packet output contract, or Router

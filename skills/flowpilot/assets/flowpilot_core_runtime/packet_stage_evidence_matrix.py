@@ -246,6 +246,7 @@ PARENT_REPLACEMENT_CONTEXT_REQUIRED_FIELDS: tuple[str, ...] = (
     "inherited_accepted_result_ids",
     "replacement_parent_node_id",
     "child_node_ids",
+    "active_child_lineage",
 )
 
 
@@ -522,18 +523,11 @@ CURRENT_REQUIRED_FIELDS_BY_FAMILY: dict[str, tuple[str, ...]] = {
         "contract_self_check",
     ),
     "review.terminal_backward_replay": (
-        "pm_visible_summary",
-        "reviewed_by_role",
-        "passed",
-        "findings",
-        "blockers",
-        "pm_suggestion_items",
         "final_artifact_refs",
         "acceptance_item_closure",
         "route_segment_replay",
         "waiver_records",
         "final_blockers",
-        "contract_self_check",
     ),
     "pm_repair_decision.pm_repair_decision": PM_REPAIR_PAYLOAD_FIELDS,
     "pm_disposition.node_pm_disposition": (
@@ -770,17 +764,10 @@ ALLOWED_VALUE_OPTIONS_BY_FAMILY: dict[str, dict[str, tuple[Any, ...]]] = {
         "contract_self_check.runtime_mechanical_validation_passed": (True,),
     },
     "review.terminal_backward_replay": {
-        "reviewed_by_role": REVIEWER_ROLE_OPTIONS,
-        "passed": BOOLEAN_OPTIONS,
-        "blockers[].blocker_class": ALLOWED_BLOCKER_CLASSES_BY_FAMILY["review.terminal_backward_replay"],
         "route_segment_replay[].status": TERMINAL_REPLAY_STATUS_OPTIONS,
         "final_artifact_refs[].status": TERMINAL_REPLAY_STATUS_OPTIONS,
         "acceptance_item_closure[].status": TERMINAL_REPLAY_STATUS_OPTIONS,
         "final_blockers[].blocker_class": ALLOWED_BLOCKER_CLASSES_BY_FAMILY["review.terminal_backward_replay"],
-        "contract_self_check.all_required_fields_present": (True,),
-        "contract_self_check.exact_field_names_used": (True,),
-        "contract_self_check.empty_required_arrays_explicit": (True,),
-        "contract_self_check.runtime_mechanical_validation_passed": (True,),
     },
     "pm_repair_decision.pm_repair_decision": {
         "decision": PM_REPAIR_DECISION_OPTIONS,
