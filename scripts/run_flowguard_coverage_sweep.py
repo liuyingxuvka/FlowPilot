@@ -62,6 +62,7 @@ STRONG_COVERAGE = {
     "flowpilot_structure_maintenance",
     "flowpilot_router_facade_split",
     "flowpilot_model_test_alignment",
+    "flowpilot_terminal_flowguard_coverage",
     "prompt_isolation",
 }
 ABSTRACT_STRONG = {
@@ -145,6 +146,7 @@ SUPPORTING_COVERAGE = {
     "flowpilot_real_issue_backfeed",
     "flowpilot_role_packet_access",
     "flowpilot_role_output_runtime",
+    "flowpilot_repair_dossier_testmesh",
     "flowpilot_role_recovery",
     "flowpilot_role_recovery_liveness",
     "flowpilot_route_display",
@@ -155,6 +157,7 @@ SUPPORTING_COVERAGE = {
     "flowpilot_router_reconciliation_branch_pruning",
     "flowpilot_runtime_closure",
     "flowpilot_semantic_gate_outcome",
+    "flowpilot_sequential_parent_replay_review",
     "flowpilot_shared_maintenance_log",
     "flowpilot_slow_test_contract",
     "flowpilot_startup_intake_ui",

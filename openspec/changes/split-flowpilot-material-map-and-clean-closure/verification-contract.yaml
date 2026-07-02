@@ -1,0 +1,188 @@
+contract_version: 1
+change: split-flowpilot-material-map-and-clean-closure
+obligations:
+  - id: req.material_map.split_facade
+    source: "specs/material-artifact-map/spec.md#Requirement: Material artifact-map facade stays split and behavior-compatible"
+    claim: "The public material-map facade remains behavior-compatible and below the split threshold."
+    required: true
+    evidence:
+      - check.material_map.py_compile
+      - check.material_map.boundary_tests
+      - check.material_map.model
+      - check.model_test_alignment.full_coverage
+  - id: req.diagnostics.no_split_gap
+    source: "specs/full-model-test-code-diagnostics/spec.md#Requirement: Clean closure requires no material-map structure split gap"
+    claim: "Current model-test-code diagnostics have no material-map structure split gap."
+    required: true
+    evidence:
+      - check.model_test_alignment.full_coverage
+  - id: req.validation.historical_replay
+    source: "specs/tiered-flowpilot-test-validation/spec.md#Requirement: Clean closure validation separates source, replay, install, and peer-work evidence"
+    claim: "Historical blocker repair replay and repair dossier mesh evidence pass without rewriting peer work."
+    required: true
+    evidence:
+      - check.repair_replay.focused_tests
+      - check.repair_dossier.testmesh
+  - id: req.validation.install_sync
+    source: "specs/tiered-flowpilot-test-validation/spec.md#Requirement: Clean closure validation separates source, replay, install, and peer-work evidence"
+    claim: "Repository-owned FlowPilot source is synced to the installed local skill and audited after sync."
+    required: true
+    evidence:
+      - check.install.serialized_sync_audit
+  - id: req.validation.topology
+    source: "specs/tiered-flowpilot-test-validation/spec.md#Requirement: Clean closure validation separates source, replay, install, and peer-work evidence"
+    claim: "Project topology is rebuilt and checked after source/model/test ownership changes."
+    required: true
+    evidence:
+      - check.topology.build_check
+checks:
+  - id: check.material_map.py_compile
+    kind: command
+    command: python
+    args:
+      - -m
+      - py_compile
+      - skills/flowpilot/assets/flowpilot_material_artifact_map.py
+      - skills/flowpilot/assets/flowpilot_material_artifact_map_entries.py
+      - skills/flowpilot/assets/flowpilot_material_artifact_map_packets.py
+      - skills/flowpilot/assets/flowpilot_material_artifact_map_ordinary.py
+      - simulations/flowpilot_model_test_alignment_source_code_contracts.py
+      - simulations/flowpilot_model_test_alignment_source_test_evidence.py
+      - tests/test_flowpilot_boundary_contracts.py
+      - tests/test_flowpilot_material_access_mesh.py
+    required: true
+    covers:
+      - req.material_map.split_facade
+    expected:
+      exit_code: 0
+  - id: check.material_map.boundary_tests
+    kind: command
+    command: python
+    args:
+      - -m
+      - unittest
+      - tests.test_flowpilot_boundary_contracts.FlowPilotBoundaryContractTests.test_material_artifact_map_is_index_only_and_preserves_sealed_body_boundary
+      - tests.test_flowpilot_boundary_contracts.FlowPilotBoundaryContractTests.test_material_artifact_map_entry_policy_preserves_reference_boundaries
+      - tests.test_flowpilot_material_access_mesh
+      - tests.router_runtime.material_modeling.MaterialModelingRuntimeTests.test_material_artifact_map_indexes_material_flow_without_body_text
+      - tests.router_runtime.material_modeling.MaterialModelingRuntimeTests.test_pm_formal_material_package_includes_material_map_review_refs
+    required: true
+    covers:
+      - req.material_map.split_facade
+    expected:
+      exit_code: 0
+  - id: check.material_map.model
+    kind: command
+    command: python
+    args:
+      - simulations/run_flowpilot_material_artifact_map_checks.py
+      - --json-out
+      - simulations/flowpilot_material_artifact_map_results.json
+    required: true
+    covers:
+      - req.material_map.split_facade
+    expected:
+      exit_code: 0
+  - id: check.model_test_alignment.full_coverage
+    kind: command
+    command: python
+    args:
+      - simulations/run_flowpilot_model_test_alignment_checks.py
+      - --json-out
+      - simulations/flowpilot_model_test_alignment_results.json
+    required: true
+    covers:
+      - req.material_map.split_facade
+      - req.diagnostics.no_split_gap
+    expected:
+      exit_code: 0
+  - id: check.repair_replay.focused_tests
+    kind: command
+    command: python
+    args:
+      - -m
+      - pytest
+      - tests/test_flowpilot_repair_dossier_context.py
+      - tests/test_flowpilot_blocker_next_action_routing.py
+      - tests/test_flowpilot_break_glass_depth.py
+      - tests/test_flowpilot_observed_repair_loop_replay.py
+      - tests/test_flowpilot_reviewer_subject_alignment.py
+    required: true
+    covers:
+      - req.validation.historical_replay
+    expected:
+      exit_code: 0
+  - id: check.repair_dossier.testmesh
+    kind: command
+    command: python
+    args:
+      - simulations/run_flowpilot_repair_dossier_testmesh_checks.py
+      - --json
+      - --write
+    required: true
+    covers:
+      - req.validation.historical_replay
+    expected:
+      exit_code: 0
+  - id: check.topology.build_check
+    kind: command
+    command: powershell
+    args:
+      - -NoProfile
+      - -Command
+      - >-
+        python scripts\flowguard_project_topology.py build;
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE };
+        python scripts\flowguard_project_topology.py check;
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+    required: true
+    covers:
+      - req.validation.topology
+    expected:
+      exit_code: 0
+  - id: check.install.serialized_sync_audit
+    kind: command
+    command: powershell
+    args:
+      - -NoProfile
+      - -Command
+      - >-
+        python scripts\check_install.py --json;
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE };
+        python scripts\install_flowpilot.py --sync-repo-owned --json;
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE };
+        python scripts\audit_local_install_sync.py --json;
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE };
+        python scripts\install_flowpilot.py --check --json;
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE };
+        python C:\Users\liu_y\.codex\skills\flowpilot\assets\flowpilot_runtime_self_check.py --json;
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+    required: true
+    covers:
+      - req.validation.install_sync
+    expected:
+      exit_code: 0
+freshness:
+  watch:
+    - openspec/changes/split-flowpilot-material-map-and-clean-closure/proposal.md
+    - openspec/changes/split-flowpilot-material-map-and-clean-closure/design.md
+    - openspec/changes/split-flowpilot-material-map-and-clean-closure/tasks.md
+    - openspec/changes/split-flowpilot-material-map-and-clean-closure/specs/**/*.md
+    - openspec/changes/split-flowpilot-material-map-and-clean-closure/verification-contract.yaml
+    - skills/flowpilot/assets/flowpilot_material_artifact_map*.py
+    - simulations/flowpilot_material_artifact_map_model.py
+    - simulations/run_flowpilot_material_artifact_map_checks.py
+    - simulations/flowpilot_model_test_alignment*.py
+    - simulations/run_flowpilot_model_test_alignment_checks.py
+    - simulations/run_flowpilot_repair_dossier_testmesh_checks.py
+    - simulations/flowpilot_repair_dossier_testmesh_results.json
+    - tests/test_flowpilot_boundary_contracts.py
+    - tests/test_flowpilot_material_access_mesh.py
+    - tests/test_flowpilot_repair_dossier_context.py
+    - tests/test_flowpilot_blocker_next_action_routing.py
+    - tests/test_flowpilot_break_glass_depth.py
+    - tests/test_flowpilot_observed_repair_loop_replay.py
+    - tests/test_flowpilot_reviewer_subject_alignment.py
+    - scripts/check_install.py
+    - scripts/install_flowpilot.py
+    - scripts/audit_local_install_sync.py

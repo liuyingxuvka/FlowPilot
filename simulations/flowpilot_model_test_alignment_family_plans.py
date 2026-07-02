@@ -3462,7 +3462,7 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
             _obligation(
                 "repair_transactions.repair_loop_break_glass_threshold",
                 obligation_type="hazard",
-                description="A same-node same-problem consecutive repair loop may use ordinary PM repair through five attempts, but same-node attempts above five project Controller break-glass duty and supersede same-node PM repair packets instead of issuing another ordinary PM repair decision.",
+                description="A same-dossier same-parent consecutive repair loop may use ordinary PM repair through four repair nodes, but the fifth consecutive repair node without normal business recovery projects Controller break-glass duty and supersedes same-dossier PM repair packets instead of issuing another ordinary PM repair decision.",
                 required_test_kinds=(HAPPY, NEGATIVE, EDGE),
                 allow_shared_evidence=True,
                 allow_shared_implementation=True,
@@ -3475,9 +3475,9 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 allow_shared_implementation=True,
             ),
             _obligation(
-                "repair_transactions.repair_loop_consecutive_identity_reset",
+                "repair_transactions.repair_loop_blocker_class_does_not_reset",
                 obligation_type="hazard",
-                description="A different blocker problem identity in the same route node resets the consecutive same-node repair-loop count.",
+                description="A different blocker class in the same repair dossier does not reset the consecutive same-parent repair-loop count.",
                 required_test_kinds=(EDGE,),
                 allow_shared_implementation=True,
             ),
@@ -3490,7 +3490,7 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 implements=(
                     "repair_transactions.repair_loop_break_glass_threshold",
                     "repair_transactions.repair_loop_cross_node_non_trigger",
-                    "repair_transactions.repair_loop_consecutive_identity_reset",
+                    "repair_transactions.repair_loop_blocker_class_does_not_reset",
                 ),
                 external_inputs=("ledger", "blocker"),
                 state_reads=("active_blockers", "packets"),
@@ -3591,10 +3591,10 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 covers=("repair_transactions.route_mutation_supersedes_open_repair_blocker",),
             ),
             _evidence(
-                "repair_transactions.happy.repair_loop_fifth_allows_pm",
-                test_name="test_fifth_repeated_blocker_still_allows_pm_repair_decision",
-                path="tests/test_flowpilot_complete_system_runtime.py",
-                command="python -m pytest tests/test_flowpilot_complete_system_runtime.py -k test_fifth_repeated_blocker_still_allows_pm_repair_decision -q",
+                "repair_transactions.happy.repair_loop_fourth_allows_pm",
+                test_name="test_break_glass_threshold_triggers_on_fifth_repair_blocker",
+                path="tests/test_flowpilot_core_runtime.py",
+                command="python -m pytest tests/test_flowpilot_core_runtime.py -k test_break_glass_threshold_triggers_on_fifth_repair_blocker -q",
                 test_kind=HAPPY,
                 covers=("repair_transactions.repair_loop_break_glass_threshold",),
                 code_contracts=(
@@ -3603,10 +3603,10 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 ),
             ),
             _evidence(
-                "repair_transactions.negative.repair_loop_sixth_break_glass",
-                test_name="test_sixth_repeated_blocker_projects_break_glass_instead_of_pm_repair",
+                "repair_transactions.negative.repair_loop_fifth_break_glass",
+                test_name="test_fifth_repeated_blocker_projects_break_glass_instead_of_pm_repair",
                 path="tests/test_flowpilot_complete_system_runtime.py",
-                command="python -m pytest tests/test_flowpilot_complete_system_runtime.py -k test_sixth_repeated_blocker_projects_break_glass_instead_of_pm_repair -q",
+                command="python -m pytest tests/test_flowpilot_complete_system_runtime.py -k test_fifth_repeated_blocker_projects_break_glass_instead_of_pm_repair -q",
                 test_kind=NEGATIVE,
                 covers=("repair_transactions.repair_loop_break_glass_threshold",),
                 code_contracts=(
@@ -3635,12 +3635,12 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 code_contracts=("repair_transactions.runtime.repair_loop_review",),
             ),
             _evidence(
-                "repair_transactions.edge.repair_loop_consecutive_reset",
-                test_name="test_same_node_loop_count_resets_after_different_problem_identity",
+                "repair_transactions.edge.repair_loop_blocker_class_does_not_reset",
+                test_name="test_same_node_loop_count_does_not_reset_after_different_blocker_class",
                 path="tests/test_flowpilot_complete_system_runtime.py",
-                command="python -m pytest tests/test_flowpilot_complete_system_runtime.py -k test_same_node_loop_count_resets_after_different_problem_identity -q",
+                command="python -m pytest tests/test_flowpilot_complete_system_runtime.py -k test_same_node_loop_count_does_not_reset_after_different_blocker_class -q",
                 test_kind=EDGE,
-                covers=("repair_transactions.repair_loop_consecutive_identity_reset",),
+                covers=("repair_transactions.repair_loop_blocker_class_does_not_reset",),
                 code_contracts=("repair_transactions.runtime.repair_loop_review",),
             ),
             _evidence(

@@ -85,7 +85,7 @@
       "valid_refresh_metadata_only",
       "valid_route_memory_and_final_ledger",
       "valid_runtime_open_for_sealed_ref",
-      "valid_worker_authorized_read"
+      "valid_workeruthorized_read"
     ],
     "edge_count": 26,
     "invariant_failures": [],

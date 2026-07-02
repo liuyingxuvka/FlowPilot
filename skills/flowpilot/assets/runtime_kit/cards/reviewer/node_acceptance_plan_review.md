@@ -43,7 +43,8 @@ owner of final repair strategy.
 
 When blocking the same repair lineage for the same plan-stage defect as the
 prior review, reuse the prior `blocker_class` instead of inventing a new name.
-This preserves same-lineage repeat evidence for the runtime threshold; it
+This helps PM understand recurrence, but the runtime break-glass threshold
+counts same-dossier repair continuity even when the blocker class changes. It
 does not let Reviewer decide break-glass, and similar defects on different
 route nodes remain ordinary repair evidence.
 
@@ -61,8 +62,9 @@ not block solely because Worker artifacts, per-output artifact payloads,
 post-result FlowGuard evidence, or fresh Worker-result checker output do not
 exist yet. Those are result-stage requirements unless PM claims they already
 exist as evidence for the plan.
-Do not block solely because worker artifacts are absent at this plan-stage
-review.
+Inside a repair dossier, this remains true: use the dossier as history, but
+use the `review_window` and `subject_stage_evidence_matrix` to decide what the
+PM plan-stage subject must deliver now.
 
 Runtime owns mechanical validation for field names, top-level package shape,
 packet kind, route scope, hashes, current-run identity, and the small

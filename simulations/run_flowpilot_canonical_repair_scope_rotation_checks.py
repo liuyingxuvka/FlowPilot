@@ -71,10 +71,14 @@ def _model_test_alignment_report() -> dict[str, Any]:
     core_test_path = REPO_ROOT / "tests" / "test_flowpilot_core_runtime.py"
     high_standard_test_path = REPO_ROOT / "tests" / "test_flowpilot_high_standard_control_flow.py"
     recursive_test_path = REPO_ROOT / "tests" / "test_flowpilot_recursive_route_execution_runtime.py"
+    complete_system_test_path = REPO_ROOT / "tests" / "test_flowpilot_complete_system_runtime.py"
+    repair_depth_test_path = REPO_ROOT / "tests" / "test_flowpilot_break_glass_depth.py"
     runtime_text = runtime_path.read_text(encoding="utf-8")
     core_test_text = core_test_path.read_text(encoding="utf-8")
     high_standard_test_text = high_standard_test_path.read_text(encoding="utf-8")
     recursive_test_text = recursive_test_path.read_text(encoding="utf-8")
+    complete_system_test_text = complete_system_test_path.read_text(encoding="utf-8")
+    repair_depth_test_text = repair_depth_test_path.read_text(encoding="utf-8")
     obligations = {
         "current_pm_menu_includes_break_glass": (
             '"break_glass"' in runtime_text
@@ -85,8 +89,8 @@ def _model_test_alignment_report() -> dict[str, Any]:
             and '"stop_for_user"' in runtime_text
         ),
         "pm_break_glass_runtime_route": "_pm_requested_break_glass_action" in runtime_text,
-        "pm_repair_break_glass_test": "test_pm_repair_decision_break_glass_routes_control_plane_without_user_wait"
-        in core_test_text,
+        "pm_repair_break_glass_test": "test_fifth_repeated_blocker_projects_break_glass_instead_of_pm_repair"
+        in complete_system_test_text,
         "pm_flowguard_acceptance_break_glass_test": "test_pm_flowguard_acceptance_break_glass_routes_control_plane_without_review"
         in high_standard_test_text,
         "removed_decision_negative_test": "test_removed_pm_repair_decisions_are_rejected" in core_test_text,
@@ -103,7 +107,9 @@ def _model_test_alignment_report() -> dict[str, Any]:
         in high_standard_test_text,
         "flowguard_subject_artifact_consumption_test": "test_flowguard_parent_repair_requires_subject_artifact_consumption"
         in core_test_text,
-        "same_lineage_breakglass_runtime": "same_repair_lineage_problem_identity" in runtime_text,
+        "same_lineage_breakglass_runtime": "same_repair_dossier_same_parent_without_normal_recovery" in runtime_text,
+        "repair_depth_breakglass_test": "test_repair_depth_threshold_triggers_at_fifth_repair_node"
+        in repair_depth_test_text,
         "route_redesign_test": "test_pm_redesign_route_repair_is_gated_before_application" in high_standard_test_text,
         "june3_regression_test": "test_june3_same_node_empty_fresh_packet_regression_is_rejected" in core_test_text,
         "pm_disposition_current_name": "repair_current_scope" in high_standard_test_text,
@@ -118,6 +124,8 @@ def _model_test_alignment_report() -> dict[str, Any]:
             "tests/test_flowpilot_core_runtime.py",
             "tests/test_flowpilot_high_standard_control_flow.py",
             "tests/test_flowpilot_recursive_route_execution_runtime.py",
+            "tests/test_flowpilot_complete_system_runtime.py",
+            "tests/test_flowpilot_break_glass_depth.py",
         ],
     }
 

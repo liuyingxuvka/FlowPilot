@@ -17,6 +17,7 @@ import flowpilot_decision_liveness_model as model
 ROOT = Path(__file__).resolve().parents[1]
 ROUTER_ASSETS_ROOT = ROOT / "skills" / "flowpilot" / "assets"
 ROUTER_PATH = ROUTER_ASSETS_ROOT / "flowpilot_router.py"
+CORE_RUNTIME_PATH = ROUTER_ASSETS_ROOT / "flowpilot_core_runtime" / "runtime.py"
 RUNTIME_KIT_ROOT = ROOT / "skills" / "flowpilot" / "assets" / "runtime_kit"
 MANIFEST_PATH = RUNTIME_KIT_ROOT / "manifest.json"
 CONTRACT_INDEX_PATH = RUNTIME_KIT_ROOT / "contracts" / "contract_index.json"
@@ -345,6 +346,7 @@ def _contract_entries(contract_index: dict[str, Any]) -> list[dict[str, Any]]:
 
 def _router_static_audit() -> dict[str, object]:
     source = _combined_router_source()
+    core_runtime_source = CORE_RUNTIME_PATH.read_text(encoding="utf-8")
     manifest = _load_json(MANIFEST_PATH)
     contract_index = _load_json(CONTRACT_INDEX_PATH)
 
@@ -396,6 +398,12 @@ def _router_static_audit() -> dict[str, object]:
         "stop_for_user" in source
         and "model_miss_triage_controlled_stop" in source
     )
+    controller_break_glass_declared = (
+        "break_glass" in allowed
+        and "controller.break_glass_repair" in card_ids
+        and "controller_break_glass" in core_runtime_source
+        and "pm_break_glass_requested" in core_runtime_source
+    )
     non_authorizing_flag_reset_present = (
         "model_miss_triage_decision not in PM_MODEL_MISS_TRIAGE_REPAIR_AUTHORIZED_VALUES"
         in source
@@ -443,6 +451,9 @@ def _router_static_audit() -> dict[str, object]:
                 missing.append("controlled user-stop or pause channel opened from model-miss triage")
             if non_authorizing_flag_reset_present and not controlled_stop_declared:
                 missing.append("non-authorizing decision resets model_miss_triage_closed and waits on the same PM event")
+        elif decision == "break_glass":
+            if not controller_break_glass_declared:
+                missing.append("controller break-glass channel opened from model-miss triage")
         else:
             missing.append("declared non-authorizing decision has no classified next-channel policy")
 
@@ -477,6 +488,7 @@ def _router_static_audit() -> dict[str, object]:
             "model_miss_flowguard_operator_uses_generic_request": model_miss_flowguard_operator_uses_generic_request,
             "evidence_decision_uses_generic_request": evidence_decision_uses_generic_request,
             "controlled_stop_declared": controlled_stop_declared,
+            "controller_break_glass_declared": controller_break_glass_declared,
             "non_authorizing_flag_reset_present": non_authorizing_flag_reset_present,
         },
         "runtime_problem_occurrence_count": len(runtime_occurrences),

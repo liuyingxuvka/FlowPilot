@@ -56,6 +56,12 @@ parent-level user-facing outcome remains credible.
 Also check that child results closed any parent-level low-quality-success hard
 parts with proof of depth rather than existence-only evidence; a parent that
 only aggregates thin child outputs must block.
+Use the runtime packet's active `child_node_ids`, `active_child_lineage`, and
+`current_repair_child_result_ids` as the current replay input. If a child was
+superseded, the old child id and old accepted result are historical context
+only. Block if the replay can pass only by using a superseded child id, missing
+active child result, unresolved active lineage, or PM prose about child work
+that is not present in runtime child ids.
 Block when a child or child class appears omitted. The block must name whether
 this looks like a route execution miss, a FlowGuard operator product model miss, a
 FlowGuard operator process model miss, stale evidence, or an implementation bug, and

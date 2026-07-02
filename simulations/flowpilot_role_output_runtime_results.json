@@ -21,12 +21,13 @@
       "asset_unified_runtime_path_exists": true,
       "binding_report": {
         "facts": {
-          "bound_contract_count": 16,
+          "bound_contract_count": 17,
           "declared_output_types": [
             "controller_boundary_confirmation",
             "current_node_result_review_pass",
             "flowguard_model_miss_report",
             "flowguard_operator_model_report",
+            "flowguard_terminal_coverage_report",
             "gate_decision",
             "material_sufficiency_report",
             "pm_control_blocker_repair_decision",
@@ -59,6 +60,7 @@
         "current_node_result_review_pass",
         "flowguard_model_miss_report",
         "flowguard_operator_model_report",
+        "flowguard_terminal_coverage_report",
         "gate_decision",
         "material_sufficiency_report",
         "pm_control_blocker_repair_decision",

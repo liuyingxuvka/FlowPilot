@@ -14,7 +14,8 @@
       "missing-information response definition",
       "role-visible packet result output contracts",
       "FlowGuard evidence manifest handoff into reviewer packets",
-      "repair-chain status projection visibility"
+      "repair-chain status projection visibility",
+      "active child lineage and active result binding for parent backward replay"
     ],
     "does_not_cover": [
       "full concrete runtime conformance for every packet builder",
@@ -23,12 +24,13 @@
     ]
   },
   "coverage_matrix": {
+    "active_child_lineage_parent_replay": "parent backward replay uses active child ids/results and rejects superseded child evidence",
     "break_glass": "normal repair failure, bounded control-plane repair, PM/reviewer reintegration required",
     "closure_or_stop": "unresolved information gaps block closure; terminal stop preserves unresolved work",
     "interrupt_resume": "current run/frontier/ledger/blocker/PM runway required",
     "ordinary_repair_packet": "covered_by_parent_and_child_blocker_repair_information_flow_model",
     "reopen_continuation": "history import must remain historical; current run and current role assignment required",
-    "repair_loop_threshold": "same-family attempt count above five requires visible evidence and Controller break-glass duty",
+    "repair_loop_threshold": "same-dossier attempt count at five consecutive repair nodes requires visible evidence and Controller break-glass duty",
     "role_assignment": "requested role, current packet context, and current-task binding required",
     "route_mutation": "blocker context, new route version, stale evidence invalidation, acceptance plan, replay scope required"
   },
@@ -38,7 +40,7 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=3 initial_states=1 traces=240",
+    "summary": "sequences=3 initial_states=1 traces=258",
     "violation_count": 0
   },
   "hazard_detection": {
@@ -78,6 +80,14 @@
         "expected_failure": "break-glass used before normal PM/control-blocker repair was proven blocked",
         "failures": [
           "break-glass used before normal PM/control-blocker repair was proven blocked"
+        ]
+      },
+      "cleared_unclosed_root_cause_dropped_from_breakglass": {
+        "detected": true,
+        "expected_failure": "cleared but unclosed root-cause blockers were dropped from repair-loop count",
+        "failures": [
+          "cleared but unclosed root-cause blockers were dropped from repair-loop count",
+          "same-node consecutive repair loop threshold exceeded but ordinary PM repair continued instead of Controller break-glass"
         ]
       },
       "downstream_report_not_authorized": {
@@ -137,6 +147,15 @@
         "expected_failure": "role-visible result output contract",
         "failures": [
           "work packet lacks role-visible result output contract, minimal valid shape, or forbidden fields"
+        ]
+      },
+      "parent_replay_uses_superseded_child_result": {
+        "detected": true,
+        "expected_failure": "parent backward replay used a superseded child result as current evidence",
+        "failures": [
+          "historical state or evidence was promoted to current authority",
+          "parent backward replay lacks active child lineage, active child results, or reviewer active-lineage match",
+          "parent backward replay used a superseded child result as current evidence"
         ]
       },
       "pm_runway_omits_active_blocker": {
@@ -260,11 +279,12 @@
     "ok": true,
     "samples": [],
     "stuck_state_count": 0,
-    "terminal_state_count": 40
+    "terminal_state_count": 43
   },
   "result_type": "flowpilot_project_control_information_flow_checks",
   "safe_graph": {
     "accepted_scenarios": [
+      "valid_active_child_lineage_parent_replay",
       "valid_actor_handoff_material_and_report_contract",
       "valid_break_glass_control_repair",
       "valid_cross_node_similar_failures_normal_repair",
@@ -278,7 +298,7 @@
       "valid_run_ledger_persistence_stability",
       "valid_terminal_stop_preserves_unresolved_work"
     ],
-    "edge_count": 80,
+    "edge_count": 86,
     "invariant_failures": [],
     "missing_labels": [],
     "ok": true,
@@ -288,6 +308,7 @@
       "break_glass_bypasses_pm_reviewer_reintegration",
       "break_glass_unbounded_or_target_project_repair",
       "break_glass_without_normal_repair_failure",
+      "cleared_unclosed_root_cause_dropped_from_breakglass",
       "downstream_report_not_authorized",
       "final_closure_with_unresolved_information_gap",
       "final_preflight_promotes_noncurrent_repair_blocker",
@@ -296,6 +317,7 @@
       "historical_evidence_promoted_to_current",
       "missing_info_response_not_defined",
       "packet_result_contract_not_visible_to_role",
+      "parent_replay_uses_superseded_child_result",
       "pm_runway_omits_active_blocker",
       "reopen_reuses_old_agent_ids_as_current",
       "repair_loop_over_threshold_issues_pm_packet",
@@ -312,6 +334,6 @@
       "work_packet_missing_input_materials",
       "work_packet_missing_report_requirements"
     ],
-    "state_count": 81
+    "state_count": 87
   }
 }

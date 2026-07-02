@@ -43,9 +43,10 @@ PM-actionable recommendation for resolving the blocked review. PM remains the
 owner of final repair strategy.
 
 When blocking the same repair lineage for the same defect as the prior review,
-reuse the prior `blocker_class` instead of inventing a new name. This preserves
-same-lineage repeat evidence for the runtime threshold; it does not let
-Reviewer decide break-glass, and similar defects on different route nodes
+reuse the prior `blocker_class` instead of inventing a new name. This helps PM
+understand recurrence, but the runtime break-glass threshold counts
+same-dossier repair continuity even when the blocker class changes. It does not
+let Reviewer decide break-glass, and similar defects on different route nodes
 remain ordinary repair evidence.
 
 Review the PM-built node-completion package after PM has received and

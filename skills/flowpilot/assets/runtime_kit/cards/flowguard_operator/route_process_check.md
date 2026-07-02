@@ -112,7 +112,9 @@ model:
   final closure: parent/module entry, child node sequence, child skill
   projection, parent backward replay, PM parent disposition, and terminal
   closure gate. Block if the route can only pass by dispatching a parent/module
-  or by letting a Worker replan a broad leaf;
+  or by letting a Worker replan a broad leaf. When a child was superseded by a
+  repair node, the traversal must use the active child id and current accepted
+  child result, not the superseded child id or old accepted result;
 - for material or report handoff routes, simulate the producer packet, accepted
   result/report, downstream packet's authorized read, FlowGuard/reviewer
   recheck, and final preflight. Block if the handoff relies on summaries,
@@ -151,13 +153,16 @@ model:
   which product/process checks must rerun;
 - repair branches distinguish mechanical progress from semantic repair
   progress. Creating another packet, lease, or repair generation is not enough
-  if the same repair lineage keeps returning with the same blocker class, gate
-  kind, and required recheck role. Preserve that blocker class for a repeated
-  same-lineage defect so runtime can count the loop. If the process route would
-  allow more than five consecutive same-lineage attempts before Controller
-  break-glass diagnosis, block the route/process model and recommend PM repair
-  of the control path. Similar blocker classes across different route nodes do
-  not trigger this threshold by themselves.
+  if the same repair dossier under the same parent keeps returning to repair
+  nodes without normal business-node recovery, even when blocker class, wording,
+  gate kind, or root-cause label changes. If the process route would allow five
+  consecutive same-dossier repair nodes before Controller break-glass diagnosis,
+  block the route/process model and recommend PM repair of the control path.
+  Similar blocker classes across different route nodes do not trigger this
+  threshold by themselves. Do not mark a same-root attempt closed merely because
+  a blocker row says `cleared_by_outcome_id`; closure requires current
+  active-lineage evidence and replay effects that no longer reference
+  superseded child ids.
 - route mutation defines the stale subtree/frontier reset policy so a repaired
   child cannot accidentally advance the old parent/module path;
 - route structure avoids obvious no-op detours or complexity that does not add

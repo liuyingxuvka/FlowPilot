@@ -20367,7 +20367,7 @@ to identify unsupported historical-layer branches that should be deleted.
 
 - Project: FlowGuardProjectAutopilot_20260430
 - Trigger reason: audit found the clean current FlowPilot flow carried result-body authority, but Reviewer prompts/tests did not force rejection of shallow FlowGuard reports, and artifact path lookup could prefer a derived path over the packet-declared evidence root.
-- Status: completed_validated_installed_synced_local
+- Status: completed_validated_installed_synced_local_git
 - Skill decision: used_flowguard
 - FlowGuard schema: 1.0
 - FlowGuard package version: 0.52.2
@@ -29341,3 +29341,49 @@ Task id: `generate-new-flowpilot-formal-entrypoint-20260529`
 
 ### Risk Evidence Summary
 Evidence supports local repository and installed FlowPilot behavior for ordinary non-sealed material visibility, sealed body preservation, itemized blocker repair, FlowGuard work-order scope, Reviewer terminal quality ownership, current owner projection, final projection freshness, terminal FlowGuard coverage, and five-blocker break-glass threshold. It does not prove live future AI prose quality on arbitrary tasks, remote publication readiness, or completion of unrelated peer-agent changes.
+
+## split-flowpilot-material-map-and-clean-closure-20260702 - Material map split and historical repair closure
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User asked to finish the planned FlowPilot control-plane repairs end to end, preserve parallel AI work, close the remaining material artifact-map structure debt, verify historical blocker/repair evidence, sync the installed skill, and sync local git.
+- Status: completed_validated_installed_synced_local
+- Skill decision: used_flowguard
+- Recorded: 2026-07-02T13:53:00+08:00
+- Commands OK: True
+
+### Findings
+- `flowpilot_material_artifact_map.py` was reduced to a stable public facade; packet/result envelope indexing and ordinary non-sealed work-material scanning now live in focused child modules.
+- The material map policy remains unchanged: it is a navigation/audit index, ordinary non-sealed project/run files remain readable to formal work roles, and sealed bodies still require runtime authorization.
+- Model-test-code alignment now binds the new child modules to the existing material artifact-map boundary and reports `alignment_ok`, `full_diagnostic_ok`, and `full_coverage_ok` as true with zero findings.
+- Repair dossier focused tests and TestMesh evidence verify current blocker dossier context, hard next-action routing, reviewer/FlowGuard subject alignment, and five-repair-depth glass-break behavior.
+- OpenSpec verification for `split-flowpilot-material-map-and-clean-closure` passed with all required checks and zero issues.
+- Installed FlowPilot was synchronized from repository source and passed source check, install sync audit, install check, and installed runtime self-check.
+- Local git commit records the material-map split, repair dossier/lineage evidence, OpenSpec verification, topology refresh, and install-sync evidence.
+
+### Commands
+- `openspec validate split-flowpilot-material-map-and-clean-closure --strict`: valid.
+- `python -m py_compile` for material-map modules, model-test alignment contracts/evidence, and material tests: passed.
+- `python -m unittest` material-map boundary/runtime tests: 5 tests OK.
+- `python simulations/run_flowpilot_material_artifact_map_checks.py --json-out simulations/flowpilot_material_artifact_map_results.json`: ok true; 78 traces; expected hazards detected.
+- `python simulations/run_flowpilot_model_test_alignment_checks.py --json-out simulations/flowpilot_model_test_alignment_results.json`: alignment_ok true; full_diagnostic_ok true; full_coverage_ok true; findings empty.
+- `python -m pytest` repair dossier focused tests: 11 passed.
+- `python simulations/run_flowpilot_repair_dossier_testmesh_checks.py --json --write`: ok true; 240 cells; 0 failures.
+- `python scripts/flowguard_project_topology.py build; python scripts/flowguard_project_topology.py check`: ok true; 155 models; 452 test commands; 1073 code surfaces; no findings.
+- `openspec verify split-flowpilot-material-map-and-clean-closure --json`: pass; issues 0.
+- `python scripts/check_install.py --json`: ok true.
+- `python scripts/install_flowpilot.py --sync-repo-owned --json`: ok true.
+- `python scripts/audit_local_install_sync.py --json`: ok true.
+- `python scripts/install_flowpilot.py --check --json`: ok true.
+- `python C:/Users/liu_y/.codex/skills/flowpilot/assets/flowpilot_runtime_self_check.py --json`: ok true.
+
+### Friction Points
+- The repair dossier focused tests were pytest-style functions; the initial unittest command ran zero tests, so the OpenSpec contract was corrected to use pytest.
+- The repair dossier TestMesh script supports `--json --write`, not `--json-out`; the verification contract was corrected to use the existing script interface.
+- OpenSpec command execution split shell pipelines and `python -c` snippets too loosely for JSON post-processing, so the model-test alignment check was reduced to the existing diagnostic script command whose exit code already fails on actionable findings.
+
+### Skipped Steps
+- No compatibility shim, old-run migration, fallback translator, new workflow field family, GitHub push, release, deploy, or OpenSpec archive was performed.
+- Temporary directories, browser/plugin caches, ad hoc reports, and unrelated peer-agent work were not treated as validation evidence.
+
+### Risk Evidence Summary
+Evidence supports the local repository and installed FlowPilot skill for the material-map structure split, public-material/sealed-body boundary preservation, historical repair dossier replay, five-depth glass-break behavior, topology freshness, and install sync. It does not prove remote publication readiness or arbitrary future AI prose quality.

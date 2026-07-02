@@ -14,6 +14,8 @@ sys.path.insert(0, str(ASSETS_ROOT))
 
 import flowpilot_material_artifact_map as material_map  # noqa: E402
 import flowpilot_material_artifact_map_entries as material_entries  # noqa: E402
+import flowpilot_material_artifact_map_ordinary as material_ordinary  # noqa: E402
+import flowpilot_material_artifact_map_packets as material_packets  # noqa: E402
 import packet_runtime  # noqa: E402
 
 
@@ -90,6 +92,38 @@ class FlowPilotMaterialAccessMeshTests(unittest.TestCase):
             },
         )
 
+        public_source_paths = {
+            packet_runtime.project_relative(project_root, path)
+            for path in public_paths
+        }
+        direct_entries: list[dict[str, object]] = []
+        material_packets.add_packet_index_entries(
+            project_root,
+            direct_entries,
+            index_path=material_dir / "material_scan_packets.json",
+            batch_kind="material_scan",
+        )
+        material_ordinary.add_ordinary_work_artifact_entries(
+            project_root,
+            run_root,
+            direct_entries,
+            material_artifact_map_filename=material_map.MATERIAL_ARTIFACT_MAP_FILENAME,
+        )
+        direct_rendered = json.dumps(direct_entries, sort_keys=True)
+        self.assertIn("material_scan:packet:packet-001", {entry["entry_id"] for entry in direct_entries})
+        self.assertNotIn("SEALED PACKET TEXT", direct_rendered)
+        self.assertNotIn("SEALED RESULT TEXT", direct_rendered)
+        self.assertTrue(
+            public_source_paths.issubset(
+                {
+                    source_path
+                    for entry in direct_entries
+                    if entry["kind"] == "ordinary_work_artifact"
+                    for source_path in entry["source_paths"]
+                }
+            )
+        )
+
         doc = material_map.refresh_material_artifact_map(project_root, run_root, {"run_id": "run-material-mesh"})
         rendered = json.dumps(doc, sort_keys=True)
 
@@ -99,10 +133,6 @@ class FlowPilotMaterialAccessMeshTests(unittest.TestCase):
         self.assertNotIn("SEALED PACKET TEXT", rendered)
         self.assertNotIn("SEALED RESULT TEXT", rendered)
 
-        public_source_paths = {
-            packet_runtime.project_relative(project_root, path)
-            for path in public_paths
-        }
         indexed_public_paths = {
             source_path
             for entry in doc["entries"]

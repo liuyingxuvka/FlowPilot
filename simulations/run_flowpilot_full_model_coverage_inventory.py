@@ -98,12 +98,19 @@ def _ordinary_test_reference_strength(
     if runner in source_audited_runners:
         return "source_audited_alignment"
     script_stem = Path(script).stem
+    alias_tokens = {
+        "flowpilot_sequential_parent_replay_review": (
+            "parent_backward_replay",
+            "parent_replay",
+        ),
+    }
     tokens = {
         runner,
         script_stem,
         runner.removeprefix("flowpilot_"),
         runner.replace("_", "-"),
     }
+    tokens.update(alias_tokens.get(runner, ()))
     if any(token and token in test_text for token in tokens):
         return "ordinary_test_text_reference"
     return "none_detected"

@@ -7,7 +7,7 @@ It is orientation only; it is not validation evidence.
 
 - Model runners: 155
 - Model-test alignment families: 14
-- Code surfaces: 1071
+- Code surfaces: 1073
 - Test commands: 452
 - Evidence summaries: 5
 - Known-bad/risk labels surfaced: 2597
@@ -19,7 +19,7 @@ It is orientation only; it is not validation evidence.
 | `closure` | 8 | 1 | 18 | 7 | 101 |
 | `controller` | 7 | 0 | 90 | 28 | 104 |
 | `install-validation` | 1 | 0 | 17 | 16 | 15 |
-| `material` | 1 | 0 | 24 | 30 | 11 |
+| `material` | 1 | 0 | 26 | 30 | 11 |
 | `model-mesh` | 3 | 0 | 7 | 2 | 86 |
 | `model-test-alignment` | 4 | 0 | 13 | 12 | 64 |
 | `other` | 88 | 7 | 251 | 40 | 1404 |

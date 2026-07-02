@@ -3,16 +3,16 @@
   "alignment_path": "simulations/flowpilot_model_test_alignment_results.json",
   "claim_boundary": "This inventory proves that FlowGuard model/check entrypoints were enumerated and classified against current evidence. Scoped replay or skipped checks remain blocking unless the replay evidence manifest attaches them to exact current runtime or source evidence.",
   "classification_counts": {
-    "boundary_expected_or_informational": 133
+    "boundary_expected_or_informational": 135
   },
   "coverage_tier_counts": {
     "abstract_strong_live_mapping_weaker": 8,
-    "coverage_strong": 43,
+    "coverage_strong": 44,
     "specialized_assertion_or_local_hazard": 7,
-    "supporting_model_owned": 94
+    "supporting_model_owned": 95
   },
   "deferred_structure_split_count": 0,
-  "finding_count": 133,
+  "finding_count": 135,
   "full_coverage_ok": true,
   "gap_class_counts": {},
   "prioritized_groups": [],
@@ -241,10 +241,8 @@
     {
       "coverage_tier": "supporting_model_owned",
       "covered_skipped_checks": [],
-      "finding_count": 1,
-      "finding_counts": {
-        "boundary_expected_or_informational": 1
-      },
+      "finding_count": 0,
+      "finding_counts": {},
       "gap_classes": [
         "currently_consumable_inventory_evidence"
       ],
@@ -816,8 +814,10 @@
     {
       "coverage_tier": "coverage_strong",
       "covered_skipped_checks": [],
-      "finding_count": 0,
-      "finding_counts": {},
+      "finding_count": 6,
+      "finding_counts": {
+        "boundary_expected_or_informational": 6
+      },
       "gap_classes": [
         "currently_consumable_inventory_evidence"
       ],
@@ -3852,10 +3852,8 @@
     {
       "coverage_tier": "supporting_model_owned",
       "covered_skipped_checks": [],
-      "finding_count": 3,
-      "finding_counts": {
-        "boundary_expected_or_informational": 3
-      },
+      "finding_count": 0,
+      "finding_counts": {},
       "gap_classes": [
         "currently_consumable_inventory_evidence"
       ],
@@ -7131,6 +7129,61 @@
         "mode": "read_existing_result",
         "parse_error": null,
         "reason": "runner writes result files by default",
+        "result_path": "simulations/flowpilot_sequential_parent_replay_review_results.json"
+      },
+      "ok": true,
+      "ordinary_test_reference_strength": "ordinary_test_text_reference",
+      "parsed": true,
+      "read_only_mode": "read_existing_result",
+      "replay_evidence": {},
+      "runner": "flowpilot_sequential_parent_replay_review",
+      "script": "simulations/run_flowpilot_sequential_parent_replay_review_checks.py",
+      "sections": {
+        "abstract": {
+          "keys": [
+            "safe_graph"
+          ],
+          "ok": true,
+          "present": true
+        },
+        "hazards": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "live": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "progress": {
+          "keys": [
+            "progress"
+          ],
+          "ok": true,
+          "present": true
+        },
+        "source": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        }
+      },
+      "skipped_checks": {}
+    },
+    {
+      "coverage_tier": "supporting_model_owned",
+      "covered_skipped_checks": [],
+      "finding_count": 0,
+      "finding_counts": {},
+      "gap_classes": [
+        "currently_consumable_inventory_evidence"
+      ],
+      "metadata": {
+        "exit_code": null,
+        "mode": "read_existing_result",
+        "parse_error": null,
+        "reason": "runner writes result files by default",
         "result_path": "simulations/flowpilot_shared_maintenance_log_results.json"
       },
       "ok": true,
@@ -7801,6 +7854,61 @@
           "keys": [],
           "ok": null,
           "present": false
+        },
+        "source": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        }
+      },
+      "skipped_checks": {}
+    },
+    {
+      "coverage_tier": "coverage_strong",
+      "covered_skipped_checks": [],
+      "finding_count": 0,
+      "finding_counts": {},
+      "gap_classes": [
+        "currently_consumable_inventory_evidence"
+      ],
+      "metadata": {
+        "exit_code": null,
+        "mode": "read_existing_result",
+        "parse_error": null,
+        "reason": "runner writes result files by default",
+        "result_path": "simulations/flowpilot_terminal_flowguard_coverage_results.json"
+      },
+      "ok": true,
+      "ordinary_test_reference_strength": "ordinary_test_text_reference",
+      "parsed": true,
+      "read_only_mode": "read_existing_result",
+      "replay_evidence": {},
+      "runner": "flowpilot_terminal_flowguard_coverage",
+      "script": "simulations/run_flowpilot_terminal_flowguard_coverage_checks.py",
+      "sections": {
+        "abstract": {
+          "keys": [
+            "safe_graph"
+          ],
+          "ok": true,
+          "present": true
+        },
+        "hazards": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "live": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "progress": {
+          "keys": [
+            "progress"
+          ],
+          "ok": true,
+          "present": true
         },
         "source": {
           "keys": [],
@@ -8591,7 +8699,7 @@
         "exit_code": 0,
         "mode": "executed_read_only",
         "parse_error": null,
-        "stderr_tail": "[flowguard] start phase=explore work_total=8 progress_steps=10\n[flowguard] progress 10% work=1/8 traces=14 violations=0\n[flowguard] progress 20% work=2/8 traces=42 violations=0\n[flowguard] progress 30% work=3/8 traces=84 violations=0\n[flowguard] progress 50% work=4/8 traces=140 violations=0\n[flowguard] progress 60% work=5/8 traces=210 violations=0\n[flowguard] progress 70% work=6/8 traces=294 violations=0\n[flowguard] progress 80% work=7/8 traces=392 violations=0\n[flowguard] progress 100% work=8/8 traces=504 violations=0\n"
+        "stderr_tail": "[flowguard] start phase=explore work_total=8 progress_steps=10\n[flowguard] progress 10% work=1/8 traces=15 violations=0\n[flowguard] progress 20% work=2/8 traces=45 violations=0\n[flowguard] progress 30% work=3/8 traces=90 violations=0\n[flowguard] progress 50% work=4/8 traces=150 violations=0\n[flowguard] progress 60% work=5/8 traces=225 violations=0\n[flowguard] progress 70% work=6/8 traces=315 violations=0\n[flowguard] progress 80% work=7/8 traces=420 violations=0\n[flowguard] progress 100% work=8/8 traces=540 violations=0\n"
       },
       "ok": true,
       "ordinary_test_reference_strength": "source_audited_alignment",
@@ -9159,7 +9267,7 @@
   "release_convergence_ok": true,
   "replay_evidence_path": "simulations/flowpilot_full_model_replay_evidence.json",
   "result_type": "flowpilot_full_model_coverage_inventory",
-  "runner_count": 152,
+  "runner_count": 154,
   "schema_version": "flowpilot.full_model_coverage_inventory.v1",
   "source_audit_ok": true,
   "sweep_ok": true,

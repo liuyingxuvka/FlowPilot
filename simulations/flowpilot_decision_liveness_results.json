@@ -1228,9 +1228,10 @@
     "stuck_state_samples": []
   },
   "router_static_audit": {
-    "allowed_decision_count": 5,
+    "allowed_decision_count": 6,
     "catalog_facts": {
       "controlled_stop_declared": true,
+      "controller_break_glass_declared": true,
       "evidence_decision_uses_generic_request": true,
       "flowguard_operator_model_miss_contract_declared": true,
       "generic_pm_work_absorption_event_declared": true,
@@ -1244,6 +1245,10 @@
       "non_authorizing_flag_reset_present": false
     },
     "finding_by_decision": {
+      "break_glass": {
+        "missing_channels": [],
+        "status": "ok"
+      },
       "needs_evidence_before_modeling": {
         "missing_channels": [],
         "status": "ok"
@@ -1266,6 +1271,7 @@
       }
     },
     "non_authorizing_decisions": [
+      "break_glass",
       "needs_evidence_before_modeling",
       "request_flowguard_operator_model_miss_analysis",
       "stop_for_user"

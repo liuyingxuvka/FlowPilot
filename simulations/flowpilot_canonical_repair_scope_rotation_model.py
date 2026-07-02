@@ -296,8 +296,8 @@ def invariant_failures(state: State) -> list[str]:
             failures.append("parent repair guessed a parent scope")
         if state.blocker_repair_packet_open and not state.descendants_superseded:
             failures.append("parent repair kept descendants current")
-    if state.same_lineage_attempt_count > 5 and not state.repair_loop_break_glass_required:
-        failures.append("same repair lineage exceeded five attempts without break-glass")
+    if state.same_lineage_attempt_count >= 5 and not state.repair_loop_break_glass_required:
+        failures.append("same repair dossier reached five consecutive repair nodes without break-glass")
     if state.pm_decision == "redesign_route":
         if state.route_version_switched and not (state.route_plan_packet_present and state.flowguard_scan_passed and state.reviewer_scan_passed):
             failures.append("route redesign activated without strict route plan and scans")
@@ -453,9 +453,9 @@ def hazard_states() -> dict[str, State]:
         "parent_repair_inherited_children_current": replace(parent_base, inherited_children_current=True),
         "parent_repair_inherited_only_replay": replace(parent_base, parent_repair_inherited_only_replay=True),
         "parent_repair_kept_descendants_current": replace(parent_base, descendants_superseded=False),
-        "same_repair_lineage_loop_without_break_glass": replace(
+        "same_repair_dossier_loop_without_break_glass": replace(
             base,
-            same_lineage_attempt_count=6,
+            same_lineage_attempt_count=5,
             repair_loop_break_glass_required=False,
         ),
         "route_redesign_without_plan": replace(route_base, route_plan_packet_present=False),

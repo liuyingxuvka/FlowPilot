@@ -1,0 +1,5 @@
+schema: spec-driven
+created: 2026-06-28
+goal: Make FlowPilot resolve superseded child route nodes to active repair
+  lineage before parent replay and count unresolved same-root blockers through
+  break-glass.

@@ -291,6 +291,8 @@ def write_live_runtime_roles_slot(
                     "agent_id": agent_id,
                     "binding_open_result": "opened_for_current_task",
                     "opened_for_run_id": "run-test",
+                    "role_surface_addressable": True,
+                    "current_run_binding_decision": "existing_current_agent_reused",
                     "opened_after_startup_answers": True,
                     "role_binding_generation": 1,
                     "role_binding_epoch": 1,

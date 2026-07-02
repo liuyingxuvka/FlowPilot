@@ -63,7 +63,7 @@
     },
     "material": {
       "alignment_family_count": 0,
-      "code_surface_count": 24,
+      "code_surface_count": 26,
       "known_bad_count": 11,
       "model_count": 1,
       "runner_keys": [
@@ -71,7 +71,7 @@
       ],
       "surface_kinds": {
         "model_check_runner": 1,
-        "owner_module": 7,
+        "owner_module": 9,
         "public_facade": 2,
         "test_tier": 1,
         "test_tier_command": 13
@@ -2736,6 +2736,32 @@
       "repair_types": [],
       "surface_id": "asset:flowpilot_material_artifact_map_entries",
       "surface_owner": "flowpilot_material_artifact_map_entries"
+    },
+    {
+      "area": "material",
+      "covered": true,
+      "evidence_status": "passed",
+      "gap_codes": [],
+      "kind": "owner_module",
+      "name": "flowpilot_material_artifact_map_ordinary",
+      "path": "skills/flowpilot/assets/flowpilot_material_artifact_map_ordinary.py",
+      "release_relevance": "runtime_contract",
+      "repair_types": [],
+      "surface_id": "asset:flowpilot_material_artifact_map_ordinary",
+      "surface_owner": "flowpilot_material_artifact_map_ordinary"
+    },
+    {
+      "area": "material",
+      "covered": true,
+      "evidence_status": "passed",
+      "gap_codes": [],
+      "kind": "owner_module",
+      "name": "flowpilot_material_artifact_map_packets",
+      "path": "skills/flowpilot/assets/flowpilot_material_artifact_map_packets.py",
+      "release_relevance": "runtime_contract",
+      "repair_types": [],
+      "surface_id": "asset:flowpilot_material_artifact_map_packets",
+      "surface_owner": "flowpilot_material_artifact_map_packets"
     },
     {
       "area": "other",
@@ -6405,18 +6431,14 @@
     },
     {
       "area": "material",
-      "covered": false,
+      "covered": true,
       "evidence_status": "passed",
-      "gap_codes": [
-        "needs_structure_split"
-      ],
+      "gap_codes": [],
       "kind": "public_facade",
       "name": "flowpilot_material_artifact_map",
       "path": "skills/flowpilot/assets/flowpilot_material_artifact_map.py",
       "release_relevance": "runtime_contract",
-      "repair_types": [
-        "defer_structure_split"
-      ],
+      "repair_types": [],
       "surface_id": "asset:flowpilot_material_artifact_map",
       "surface_owner": "flowpilot_material_artifact_map"
     },
@@ -14395,7 +14417,7 @@
         "decision": "",
         "edge_count": null,
         "finding_count": 0,
-        "full_coverage_ok": false,
+        "full_coverage_ok": true,
         "known_bad": [
           "full_model_test_code_diagnostic.known_bad_ok",
           "orphan_code",
@@ -14435,11 +14457,11 @@
       "path": "simulations/flowpilot_model_test_alignment_results.json"
     }
   },
-  "generated_at_epoch": 1782968914.245436,
+  "generated_at_epoch": 1782971652.3707542,
   "generator_version": "1",
   "layer_counts": {
     "alignment_families": 14,
-    "code_surfaces": 1071,
+    "code_surfaces": 1073,
     "evidence_summaries": 5,
     "known_bad_signals": 2597,
     "models": 155,
@@ -17223,7 +17245,7 @@
         "decision": "",
         "edge_count": null,
         "finding_count": 0,
-        "full_coverage_ok": false,
+        "full_coverage_ok": true,
         "known_bad": [
           "full_model_test_code_diagnostic.known_bad_ok",
           "orphan_code",
@@ -20852,7 +20874,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1782968894328346000,
+      "mtime_ns": 1782969575973535800,
       "path": "simulations/flowpilot_blocker_repair_information_flow_results.json",
       "size": 11213
     },
@@ -21536,9 +21558,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1779402091989457900,
+      "mtime_ns": 1782971639010301500,
       "path": "simulations/flowpilot_material_artifact_map_results.json",
-      "size": 3431
+      "size": 3429
     },
     {
       "exists": true,
@@ -21602,9 +21624,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1782968905172115700,
+      "mtime_ns": 1782971646014711200,
       "path": "simulations/flowpilot_model_test_alignment_results.json",
-      "size": 4435386
+      "size": 4443985
     },
     {
       "exists": true,
@@ -21980,7 +22002,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1782714042494033300,
+      "mtime_ns": 1782971647802773600,
       "path": "simulations/flowpilot_repair_dossier_testmesh_results.json",
       "size": 99035
     },
@@ -22430,7 +22452,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1782968895949965100,
+      "mtime_ns": 1782969575065066400,
       "path": "simulations/flowpilot_terminal_flowguard_coverage_results.json",
       "size": 3910
     },
@@ -23678,15 +23700,27 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1782967269495093100,
+      "mtime_ns": 1782970884232942300,
       "path": "skills/flowpilot/assets/flowpilot_material_artifact_map.py",
-      "size": 15887
+      "size": 5971
     },
     {
       "exists": true,
       "mtime_ns": 1782967269494087600,
       "path": "skills/flowpilot/assets/flowpilot_material_artifact_map_entries.py",
       "size": 8263
+    },
+    {
+      "exists": true,
+      "mtime_ns": 1782970884231940400,
+      "path": "skills/flowpilot/assets/flowpilot_material_artifact_map_ordinary.py",
+      "size": 4912
+    },
+    {
+      "exists": true,
+      "mtime_ns": 1782970884230930600,
+      "path": "skills/flowpilot/assets/flowpilot_material_artifact_map_packets.py",
+      "size": 5858
     },
     {
       "exists": true,

@@ -96,8 +96,9 @@ failure shape that make the node executable and reviewable. For negative
 cases, bad fixtures, expected-failure examples, or status-sensitive checks,
 state the expected failure shape or accepted status vocabulary clearly enough
 that Worker and Reviewer do not have to invent the acceptance boundary. Keep
-this in existing plan text, acceptance criteria, known risks, supporting notes,
-or acceptance-item projection; do not add new node-context fields.
+this as the `leaf_readiness_gate` in existing plan text, acceptance criteria,
+known risks, supporting notes, or acceptance-item projection; do not add new
+node-context fields.
 
 If PM cannot make that current check surface concrete, treat it as evidence
 that the apparent leaf may be too broad, mixed, wrongly bounded, or

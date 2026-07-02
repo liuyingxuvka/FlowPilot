@@ -327,7 +327,7 @@ def _scenario_state(scenario: str) -> State:
             same_blocker_repeat_count=6,
             same_work_packet_hash_repeated=True,
             loop_escape_recorded=True,
-            same_family_repair_attempt_count=6,
+            same_family_repair_attempt_count=5,
             repair_loop_threshold=5,
             repair_loop_same_node_consecutive=True,
             repair_loop_threshold_evidence_visible=True,
@@ -342,7 +342,7 @@ def _scenario_state(scenario: str) -> State:
             _safe_reviewer_base(),
             scenario=scenario,
             blocker_closed=False,
-            same_family_repair_attempt_count=6,
+            same_family_repair_attempt_count=5,
             repair_loop_threshold=5,
             repair_loop_same_node_consecutive=False,
             repair_loop_threshold_evidence_visible=True,
@@ -653,7 +653,7 @@ def information_flow_failures(state: State) -> list[str]:
     ):
         failures.append("same blocker repeated with same work packet and no route mutation or terminal blocker")
 
-    if state.same_family_repair_attempt_count > state.repair_loop_threshold and state.repair_loop_same_node_consecutive:
+    if state.same_family_repair_attempt_count >= state.repair_loop_threshold and state.repair_loop_same_node_consecutive:
         if not state.repair_loop_threshold_evidence_visible:
             failures.append("same-node repair loop threshold exceeded without visible evidence")
         if (

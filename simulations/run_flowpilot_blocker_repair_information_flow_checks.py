@@ -101,7 +101,7 @@ def _state_id(state: model.State) -> str:
         f"followup={state.followup_blocker_returned},{state.followup_blocker_recorded}|"
         f"loop={state.same_blocker_repeat_count},{state.same_work_packet_hash_repeated},"
         f"{state.loop_escape_recorded},{state.terminal_stop_or_route_mutation}|"
-        f"repair_loop={state.same_family_repair_attempt_count}>{state.repair_loop_threshold},"
+        f"repair_loop={state.same_family_repair_attempt_count}>={state.repair_loop_threshold},"
         f"evidence={state.repair_loop_threshold_evidence_visible},"
         f"breakglass={state.break_glass_duty_projected},"
         f"ordinary_pm={state.ordinary_pm_repair_continued_over_threshold},"
@@ -266,7 +266,7 @@ def run_checks() -> dict[str, Any]:
                 "stale prior-route repair blocker disposition after route mutation",
                 "final preflight current-effective blocker filtering",
                 "same-blocker no-progress loop escape",
-                "same-family repair attempts above five route to Controller break-glass instead of ordinary PM repair",
+                "same-dossier repair attempts at five consecutive repair nodes route to Controller break-glass instead of ordinary PM repair",
             ],
             "does_not_cover": [
                 "concrete runtime packet builder conformance",

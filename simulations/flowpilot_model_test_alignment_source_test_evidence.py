@@ -511,6 +511,18 @@ def source_test_evidence() -> tuple[TestEvidence, ...]:
             ),
         ),
         _evidence(
+            "source.material_artifact_map.child_modules",
+            test_name="test_ordinary_project_material_is_public_but_sealed_bodies_stay_runtime_authorized",
+            path="tests/test_flowpilot_material_access_mesh.py",
+            command="python -m unittest tests.test_flowpilot_material_access_mesh.FlowPilotMaterialAccessMeshTests.test_ordinary_project_material_is_public_but_sealed_bodies_stay_runtime_authorized",
+            test_kind=HAPPY,
+            covers=("material_artifact_map.index_only_boundary",),
+            code_contracts=(
+                "material_artifact_map_packets.add_packet_index_entries",
+                "material_artifact_map_ordinary.add_ordinary_work_artifact_entries",
+            ),
+        ),
+        _evidence(
             "source.material_artifact_map.entry_policy",
             test_name="test_material_artifact_map_entry_policy_preserves_reference_boundaries",
             path="tests/test_flowpilot_boundary_contracts.py",

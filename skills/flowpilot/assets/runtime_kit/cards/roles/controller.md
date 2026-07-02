@@ -111,12 +111,16 @@ Allowed actions:
   never grants sealed-body access, gate approval, route mutation, target-product
   work, acceptance changes, publication, deployment, or secret handling;
 - if foreground duty includes `repair_loop_break_glass_review` showing that the
-  same repair lineage has repeated the same blocker problem more than five
-  consecutive times, treat the `control_plane_blocker` as a break-glass
-  diagnosis duty. Do not wait for another same-lineage PM repair packet and do not
-  open sealed bodies; read the break-glass playbook and report only
-  Controller-visible threshold metadata. Similar blocker classes spread across
-  different route nodes are ordinary repair evidence, not this threshold;
+  same repair dossier under the same parent has reached five consecutive repair
+  nodes without normal business-node recovery, treat the
+  `control_plane_blocker` as a break-glass diagnosis duty. Do not wait for
+  another same-dossier PM repair packet and do not open sealed bodies; read the
+  break-glass playbook and report only Controller-visible threshold metadata.
+  The threshold does not require the same blocker class or wording, and similar
+  blocker classes spread across different route nodes are ordinary repair
+  evidence, not this threshold. If threshold metadata includes cleared rows
+  without `lineage_verified_closed_by`, treat them as countable unresolved
+  root-cause attempts rather than completed repairs;
 - when runtime foreground duty includes an ACK reminder, relay the exact
   Router-authored reminder text. The runtime decides from lease age: five
   minutes without ACK reminds, ten minutes without ACK reissues or replaces.

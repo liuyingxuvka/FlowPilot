@@ -408,6 +408,23 @@ def _complete_open_packet(ledger: dict, packet_id: str, body: str | None = None)
 
 
 def _write_flowguard_evidence_artifact(ledger: dict, packet: dict, body: str) -> None:
+    packet_body = json.loads(packet["body"])
+    evidence_policy = packet_body.get("evidence_output_policy")
+    if isinstance(evidence_policy, dict):
+        root_text = str(evidence_policy.get("run_local_evidence_root") or "")
+        if "<" in root_text or ">" in root_text:
+            run_root = ledger.get("run_root")
+            if run_root:
+                evidence_root = Path(str(run_root)) / "evidence" / "flowguard" / packet["packet_id"]
+            else:
+                evidence_root = (
+                    Path(".tmp_flowguard_evidence")
+                    / "high_standard_control_flow"
+                    / packet["packet_id"]
+                )
+            evidence_policy["run_local_evidence_root"] = str(evidence_root)
+            packet["body"] = json.dumps(packet_body, sort_keys=True)
+            packet["envelope"]["body_hash"] = runtime.hash_text(packet["body"])
     path = runtime._flowguard_packet_evidence_artifact_path(ledger, packet)
     if path is None:
         return
@@ -1274,7 +1291,16 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         self.assertEqual(active[0]["blocker_class"], "missing_matching_flowguard_report")
         self.assertEqual(active[0]["required_recheck_role"], "flowguard_operator")
         self.assertIn("flowguard_missing_matching_report", active[0]["root_cause_loop_key"])
-        self.assertTrue(_open_packets(ledger, kind="pm_repair_decision"))
+        self.assertFalse(_open_packets(ledger, kind="pm_repair_decision"))
+        flowguard_packets = [
+            packet_id
+            for packet_id in _open_packets(ledger, kind="flowguard_check")
+            if ledger["packets"][packet_id]["repair_blocker_id"] == active[0]["blocker_id"]
+        ]
+        self.assertEqual(len(flowguard_packets), 1)
+        flowguard_body = json.loads(ledger["packets"][flowguard_packets[0]]["body"])
+        self.assertEqual(flowguard_body["recheck_reason"], "missing_matching_flowguard_report")
+        self.assertEqual(flowguard_body["repair_dossier_context"]["hard_next_action"], "issue_matching_flowguard_packet")
 
     def test_system_validation_failure_routes_to_pm_repair(self) -> None:
         ledger = _ledger()

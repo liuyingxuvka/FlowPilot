@@ -27,7 +27,7 @@
       "route_redesign_without_flowguard_scan",
       "route_redesign_without_plan",
       "same_node_repair_in_place_survived",
-      "same_repair_lineage_loop_without_break_glass",
+      "same_repair_dossier_loop_without_break_glass",
       "terminal_stop_created_packet",
       "waiver_without_authority"
     ],
@@ -99,8 +99,8 @@
       "same_node_repair_in_place_survived": [
         "same-node repair-in-place path survived"
       ],
-      "same_repair_lineage_loop_without_break_glass": [
-        "same repair lineage exceeded five attempts without break-glass"
+      "same_repair_dossier_loop_without_break_glass": [
+        "same repair dossier reached five consecutive repair nodes without break-glass"
       ],
       "terminal_stop_created_packet": [
         "stop_for_user created a repair packet",
@@ -119,7 +119,9 @@
       "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
       "tests/test_flowpilot_core_runtime.py",
       "tests/test_flowpilot_high_standard_control_flow.py",
-      "tests/test_flowpilot_recursive_route_execution_runtime.py"
+      "tests/test_flowpilot_recursive_route_execution_runtime.py",
+      "tests/test_flowpilot_complete_system_runtime.py",
+      "tests/test_flowpilot_break_glass_depth.py"
     ],
     "missing": [],
     "obligations": {
@@ -139,6 +141,7 @@
       "pm_flowguard_acceptance_break_glass_test": true,
       "pm_repair_break_glass_test": true,
       "removed_decision_negative_test": true,
+      "repair_depth_breakglass_test": true,
       "route_redesign_test": true,
       "same_lineage_breakglass_runtime": true
     },
@@ -240,7 +243,9 @@
           "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
           "tests/test_flowpilot_core_runtime.py",
           "tests/test_flowpilot_high_standard_control_flow.py",
-          "tests/test_flowpilot_recursive_route_execution_runtime.py"
+          "tests/test_flowpilot_recursive_route_execution_runtime.py",
+          "tests/test_flowpilot_complete_system_runtime.py",
+          "tests/test_flowpilot_break_glass_depth.py"
         ],
         "freshness": "current",
         "id": "canonical_repair_scope_model_test_alignment",

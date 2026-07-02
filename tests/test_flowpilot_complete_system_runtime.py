@@ -572,7 +572,7 @@ class FlowPilotCompleteSystemRuntimeTests(unittest.TestCase):
         self.assertTrue(pm_body["repeat_context"]["advisory_only"])
         self.assertIn(list(ledger["active_blockers"].values())[0]["blocker_id"], pm_body["repeat_context"]["previous_blocker_ids"])
 
-    def test_fifth_repeated_blocker_still_allows_pm_repair_decision(self) -> None:
+    def test_fifth_repeated_blocker_projects_break_glass_instead_of_pm_repair(self) -> None:
         ledger = runtime.new_ledger("Goal", "Contract")
         authorize_background_collaboration(ledger)
         runtime.create_route(ledger, "Route", ["Do work"])
@@ -608,14 +608,11 @@ class FlowPilotCompleteSystemRuntimeTests(unittest.TestCase):
 
         latest_blocker = list(ledger["active_blockers"].values())[-1]
         pm_packet_id = latest_blocker["pm_repair_packet_id"]
-        pm_body = json.loads(ledger["packets"][pm_packet_id]["body"])
 
-        self.assertTrue(pm_packet_id)
-        self.assertEqual(pm_body["repeat_context"]["repeat_count"], 5)
-        self.assertFalse(pm_body["repeat_context"]["threshold_exceeded"])
-        self.assertEqual(pm_body["repeat_context"]["threshold"], 5)
+        self.assertEqual(pm_packet_id, "")
+        self.assertEqual(runtime.router_next_action(ledger).action_type, "control_plane_blocker")
 
-    def test_sixth_repeated_blocker_projects_break_glass_instead_of_pm_repair(self) -> None:
+    def test_post_threshold_repeated_blocker_still_projects_break_glass(self) -> None:
         ledger = runtime.new_ledger("Goal", "Contract")
         authorize_background_collaboration(ledger)
         runtime.create_route(ledger, "Route", ["Do work"])
@@ -693,9 +690,9 @@ class FlowPilotCompleteSystemRuntimeTests(unittest.TestCase):
 
         self.assertEqual(review["attempt_count"], 1)
         self.assertFalse(review["threshold_exceeded"])
-        self.assertEqual(review["consecutive_scope"], "same_repair_lineage_problem_identity")
+        self.assertEqual(review["consecutive_scope"], "same_repair_dossier_same_parent_without_normal_recovery")
 
-    def test_same_node_loop_count_resets_after_different_problem_identity(self) -> None:
+    def test_same_node_loop_count_does_not_reset_after_different_blocker_class(self) -> None:
         ledger = runtime.new_ledger("Goal", "Contract")
         sequence = [
             ("same_gap", "retired_after_new_current_blocker"),
@@ -729,8 +726,9 @@ class FlowPilotCompleteSystemRuntimeTests(unittest.TestCase):
             ledger["active_blockers"]["blocker-0009"],
         )
 
-        self.assertEqual(review["attempt_count"], 5)
-        self.assertFalse(review["threshold_exceeded"])
+        self.assertEqual(review["attempt_count"], 9)
+        self.assertTrue(review["threshold_exceeded"])
+        self.assertEqual(review["consecutive_scope"], "same_repair_dossier_same_parent_without_normal_recovery")
 
     def test_repair_loop_family_count_normalizes_route_repair_versions(self) -> None:
         ledger = runtime.new_ledger("Goal", "Contract")
@@ -770,7 +768,7 @@ class FlowPilotCompleteSystemRuntimeTests(unittest.TestCase):
 
         self.assertEqual(review["attempt_count"], 6)
         self.assertTrue(review["threshold_exceeded"])
-        self.assertEqual(review["consecutive_scope"], "same_repair_lineage_problem_identity")
+        self.assertEqual(review["consecutive_scope"], "same_repair_dossier_same_parent_without_normal_recovery")
         self.assertEqual(
             review["family"]["normalized_route_node_id"],
             "node-032-v#-authorize-current-sourceguard-materials",

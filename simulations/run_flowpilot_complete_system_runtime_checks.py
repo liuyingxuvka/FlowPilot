@@ -69,6 +69,32 @@ def _current_contract_body(ledger: dict[str, Any], packet_id: str, **updates: An
 
 def _complete_open_packet(ledger: dict[str, Any], packet_id: str, *, agent_id: str, body: str = "") -> str:
     packet = ledger["packets"][packet_id]
+    if packet["envelope"].get("packet_kind") == "flowguard_check":
+        packet_body = json.loads(packet["body"])
+        evidence_root_text = str(packet_body["evidence_output_policy"]["run_local_evidence_root"])
+        if "<" in evidence_root_text or ">" in evidence_root_text:
+            evidence_root = ROOT / ".tmp_flowguard_evidence" / packet_id
+            packet_body["evidence_output_policy"]["run_local_evidence_root"] = str(evidence_root)
+            packet["body"] = json.dumps(packet_body, sort_keys=True)
+            packet["envelope"]["body_hash"] = runtime.hash_text(packet["body"])
+        else:
+            evidence_root = Path(evidence_root_text)
+        evidence_root.mkdir(parents=True, exist_ok=True)
+        (evidence_root / "flowguard_evidence.json").write_text(
+            json.dumps(
+                {
+                    "schema_version": "black_box_flowpilot.flowguard_evidence.v1",
+                    "model_test_alignment_report": {
+                        "decision": "pass",
+                        "subject_packet_id": packet["envelope"].get("subject_id", ""),
+                        "target_result_id": packet["envelope"].get("target_result_id", ""),
+                        "claim_boundary": "complete-system simulation current packet boundary",
+                    },
+                },
+                sort_keys=True,
+            ),
+            encoding="utf-8",
+        )
     lease_id = host.lease_responsibility(
         ledger,
         packet["envelope"]["responsibility"],
@@ -107,12 +133,14 @@ def _complete_packet(ledger: dict[str, Any], packet_id: str, lease_id: str) -> s
         _current_contract_body(ledger, packet_id),
         evidence_ids=["runtime-unit"],
     )
+    runtime.run_until_wait(ledger)
     flowguard_packet = _open_packet_by_kind(ledger, "flowguard_check")
     _complete_open_packet(
         ledger,
         flowguard_packet,
         agent_id="flowguard-complete-system",
     )
+    runtime.run_until_wait(ledger)
     review_packet = _open_packet_by_kind(ledger, "review")
     _complete_open_packet(
         ledger,

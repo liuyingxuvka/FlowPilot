@@ -206,17 +206,22 @@ def _contract_exhaustion_cells(report: dict[str, Any]) -> tuple[LeafBoundaryMatr
     required = report.get("required_cells") if isinstance(report.get("required_cells"), dict) else {}
     cells_payload = required.get("required_cells") if isinstance(required, dict) else []
     cells: list[LeafBoundaryMatrixCell] = []
+    seen_cell_ids: set[str] = set()
     for cell in cells_payload:
         if not isinstance(cell, dict):
             continue
         cell_id = str(cell.get("cell_id") or "")
+        matrix_cell_id = f"contract_exhaustion:{cell_id}"
+        if matrix_cell_id in seen_cell_ids:
+            continue
+        seen_cell_ids.add(matrix_cell_id)
         family = str(cell.get("family") or "")
         mutation = str(cell.get("mutation_kind") or "")
         owner = str(cell.get("required_evidence_owner") or "")
         boundary = str(cell.get("confidence_boundary") or "")
         cells.append(
             LeafBoundaryMatrixCell(
-                cell_id=f"contract_exhaustion:{cell_id}",
+                cell_id=matrix_cell_id,
                 input_case=f"family={family};mutation={mutation}",
                 state_case=str(cell.get("contract_path") or family),
                 expected_outputs=(f"owner:{owner}", f"boundary:{boundary}"),

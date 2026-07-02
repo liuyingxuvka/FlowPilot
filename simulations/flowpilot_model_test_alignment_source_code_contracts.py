@@ -473,6 +473,22 @@ def source_code_contracts() -> tuple[CodeContract, ...]:
             external_inputs=("doc", "entry_ids"),
         ),
         _contract(
+            "material_artifact_map_packets.add_packet_index_entries",
+            path="skills/flowpilot/assets/flowpilot_material_artifact_map_packets.py",
+            symbol="add_packet_index_entries",
+            implements=("material_artifact_map.index_only_boundary",),
+            external_inputs=("project_root", "entries", "index_path", "batch_kind"),
+            external_outputs=(),
+        ),
+        _contract(
+            "material_artifact_map_ordinary.add_ordinary_work_artifact_entries",
+            path="skills/flowpilot/assets/flowpilot_material_artifact_map_ordinary.py",
+            symbol="add_ordinary_work_artifact_entries",
+            implements=("material_artifact_map.index_only_boundary",),
+            external_inputs=("project_root", "run_root", "entries", "material_artifact_map_filename"),
+            external_outputs=(),
+        ),
+        _contract(
             "material_artifact_map_entries.make_entry",
             path="skills/flowpilot/assets/flowpilot_material_artifact_map_entries.py",
             symbol="make_entry",

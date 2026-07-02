@@ -44,6 +44,7 @@ VALID_TERMINAL_STOP_PRESERVES_UNRESOLVED_WORK = "valid_terminal_stop_preserves_u
 VALID_PACKET_CONTRACT_AND_REVIEW_EVIDENCE_HANDOFF = "valid_packet_contract_and_review_evidence_handoff"
 VALID_ACTOR_HANDOFF_MATERIAL_AND_REPORT_CONTRACT = "valid_actor_handoff_material_and_report_contract"
 VALID_RUN_LEDGER_PERSISTENCE_STABILITY = "valid_run_ledger_persistence_stability"
+VALID_ACTIVE_CHILD_LINEAGE_PARENT_REPLAY = "valid_active_child_lineage_parent_replay"
 
 RESUME_FROM_CHAT_HISTORY_LOSES_BLOCKER = "resume_from_chat_history_loses_blocker"
 RESUME_LOADS_OLD_RUN_AS_CURRENT = "resume_loads_old_run_as_current"
@@ -75,6 +76,8 @@ ROUTE_MUTATION_LEAVES_STALE_PRIOR_ROUTE_REPAIR_BLOCKER = (
 )
 REPAIR_LOOP_OVER_THRESHOLD_ISSUES_PM_PACKET = "repair_loop_over_threshold_issues_pm_packet"
 RUN_LEDGER_PARTIAL_READ_ACCEPTED_AS_DEFAULT = "run_ledger_partial_read_accepted_as_default"
+PARENT_REPLAY_USES_SUPERSEDED_CHILD_RESULT = "parent_replay_uses_superseded_child_result"
+CLEARED_UNCLOSED_ROOT_CAUSE_DROPPED_FROM_BREAKGLASS = "cleared_unclosed_root_cause_dropped_from_breakglass"
 
 VALID_SCENARIOS = (
     VALID_REPAIR_PACKET_PROGRESS,
@@ -89,6 +92,7 @@ VALID_SCENARIOS = (
     VALID_PACKET_CONTRACT_AND_REVIEW_EVIDENCE_HANDOFF,
     VALID_ACTOR_HANDOFF_MATERIAL_AND_REPORT_CONTRACT,
     VALID_RUN_LEDGER_PERSISTENCE_STABILITY,
+    VALID_ACTIVE_CHILD_LINEAGE_PARENT_REPLAY,
 )
 
 NEGATIVE_SCENARIOS = (
@@ -120,6 +124,8 @@ NEGATIVE_SCENARIOS = (
     ROUTE_MUTATION_LEAVES_STALE_PRIOR_ROUTE_REPAIR_BLOCKER,
     REPAIR_LOOP_OVER_THRESHOLD_ISSUES_PM_PACKET,
     RUN_LEDGER_PARTIAL_READ_ACCEPTED_AS_DEFAULT,
+    PARENT_REPLAY_USES_SUPERSEDED_CHILD_RESULT,
+    CLEARED_UNCLOSED_ROOT_CAUSE_DROPPED_FROM_BREAKGLASS,
 )
 
 SCENARIOS = VALID_SCENARIOS + NEGATIVE_SCENARIOS
@@ -191,6 +197,11 @@ class State:
     reviewer_packet_authorized_to_read_subject_result: bool = False
     reviewer_packet_authorized_to_read_flowguard_evidence: bool = False
     reviewer_packet_names_flowguard_evidence_id: bool = False
+    parent_backward_replay_used: bool = False
+    active_child_lineage_resolved: bool = False
+    active_child_results_current: bool = False
+    superseded_child_result_used_as_current: bool = False
+    reviewer_replay_child_ids_match_active_lineage: bool = False
 
     blocker_repair_chain_open: bool = False
     blocker_status_reflects_current_stage: bool = False
@@ -205,6 +216,7 @@ class State:
     repair_loop_threshold: int = 5
     repair_loop_same_node_consecutive: bool = False
     repair_loop_threshold_evidence_visible: bool = False
+    cleared_unclosed_root_attempts_counted: bool = True
     break_glass_duty_projected: bool = False
     ordinary_pm_repair_packet_issued_over_threshold: bool = False
     same_family_pm_packets_superseded: bool = True
@@ -338,7 +350,7 @@ def _scenario_state(scenario: str) -> State:
         return replace(
             _scenario_state(VALID_BREAK_GLASS_CONTROL_REPAIR),
             scenario=scenario,
-            repair_loop_attempt_count=6,
+            repair_loop_attempt_count=5,
             repair_loop_threshold=5,
             repair_loop_same_node_consecutive=True,
             repair_loop_threshold_evidence_visible=True,
@@ -351,7 +363,7 @@ def _scenario_state(scenario: str) -> State:
             _base_work_packet(),
             scenario=scenario,
             surface="repair_packet",
-            repair_loop_attempt_count=6,
+            repair_loop_attempt_count=5,
             repair_loop_threshold=5,
             repair_loop_same_node_consecutive=False,
             repair_loop_threshold_evidence_visible=True,
@@ -424,6 +436,20 @@ def _scenario_state(scenario: str) -> State:
             run_ledger_transient_read_retry=True,
             run_ledger_persistent_invalid_fails=True,
             run_ledger_default_synthesized=False,
+            new_information_delta_present=True,
+        )
+    if scenario == VALID_ACTIVE_CHILD_LINEAGE_PARENT_REPLAY:
+        return replace(
+            _base_current(),
+            scenario=scenario,
+            surface="parent_backward_replay",
+            parent_backward_replay_used=True,
+            active_child_lineage_resolved=True,
+            active_child_results_current=True,
+            superseded_child_result_used_as_current=False,
+            reviewer_replay_child_ids_match_active_lineage=True,
+            old_evidence_marked_historical=True,
+            historical_evidence_used_as_current=False,
             new_information_delta_present=True,
         )
 
@@ -654,6 +680,25 @@ def _scenario_state(scenario: str) -> State:
             run_ledger_persistent_invalid_fails=False,
             run_ledger_default_synthesized=True,
         )
+    if scenario == PARENT_REPLAY_USES_SUPERSEDED_CHILD_RESULT:
+        return replace(
+            _scenario_state(VALID_ACTIVE_CHILD_LINEAGE_PARENT_REPLAY),
+            scenario=scenario,
+            active_child_lineage_resolved=False,
+            active_child_results_current=False,
+            superseded_child_result_used_as_current=True,
+            reviewer_replay_child_ids_match_active_lineage=False,
+            historical_evidence_used_as_current=True,
+        )
+    if scenario == CLEARED_UNCLOSED_ROOT_CAUSE_DROPPED_FROM_BREAKGLASS:
+        return replace(
+            _scenario_state(VALID_REPAIR_LOOP_THRESHOLD_BREAK_GLASS),
+            scenario=scenario,
+            cleared_unclosed_root_attempts_counted=False,
+            break_glass_duty_projected=False,
+            ordinary_pm_repair_packet_issued_over_threshold=True,
+            same_family_pm_packets_superseded=False,
+        )
     raise ValueError(f"unknown scenario: {scenario}")
 
 
@@ -733,6 +778,16 @@ def information_sufficiency_failures(state: State) -> list[str]:
         ):
             failures.append("reviewer packet lacks authorized subject result and FlowGuard evidence reads")
 
+    if state.parent_backward_replay_used:
+        if not (
+            state.active_child_lineage_resolved
+            and state.active_child_results_current
+            and state.reviewer_replay_child_ids_match_active_lineage
+        ):
+            failures.append("parent backward replay lacks active child lineage, active child results, or reviewer active-lineage match")
+        if state.superseded_child_result_used_as_current:
+            failures.append("parent backward replay used a superseded child result as current evidence")
+
     if state.blocker_repair_chain_open and not (
         state.blocker_status_reflects_current_stage and state.status_projection_shows_repair_chain
     ):
@@ -749,9 +804,11 @@ def information_sufficiency_failures(state: State) -> list[str]:
     ):
         failures.append("same work repeated without new information, blocker, terminal stop, or route mutation")
 
-    if state.repair_loop_attempt_count > state.repair_loop_threshold and state.repair_loop_same_node_consecutive:
+    if state.repair_loop_attempt_count >= state.repair_loop_threshold and state.repair_loop_same_node_consecutive:
         if not state.repair_loop_threshold_evidence_visible:
             failures.append("repair loop threshold exceeded without visible threshold evidence")
+        if not state.cleared_unclosed_root_attempts_counted:
+            failures.append("cleared but unclosed root-cause blockers were dropped from repair-loop count")
         if (
             state.ordinary_pm_repair_packet_issued_over_threshold
             or not state.break_glass_duty_projected

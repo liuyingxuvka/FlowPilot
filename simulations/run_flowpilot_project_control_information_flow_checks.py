@@ -63,6 +63,12 @@ HAZARD_EXPECTED_FAILURES = {
     model.RUN_LEDGER_PARTIAL_READ_ACCEPTED_AS_DEFAULT: (
         "run ledger persistence accepted partial JSON or synthesized fallback state"
     ),
+    model.PARENT_REPLAY_USES_SUPERSEDED_CHILD_RESULT: (
+        "parent backward replay used a superseded child result as current evidence"
+    ),
+    model.CLEARED_UNCLOSED_ROOT_CAUSE_DROPPED_FROM_BREAKGLASS: (
+        "cleared but unclosed root-cause blockers were dropped from repair-loop count"
+    ),
 }
 
 
@@ -98,14 +104,18 @@ def _state_id(state: model.State) -> str:
         f"{state.flowguard_evidence_manifest_attached},{state.flowguard_evidence_subject_matches_result},"
         f"reviewer={state.reviewer_packet_issued},{state.reviewer_packet_authorized_to_read_subject_result},"
         f"{state.reviewer_packet_authorized_to_read_flowguard_evidence},"
-        f"{state.reviewer_packet_names_flowguard_evidence_id}|"
+        f"{state.reviewer_packet_names_flowguard_evidence_id},"
+        f"parent_replay={state.parent_backward_replay_used},{state.active_child_lineage_resolved},"
+        f"{state.active_child_results_current},{state.superseded_child_result_used_as_current},"
+        f"{state.reviewer_replay_child_ids_match_active_lineage}|"
         f"blocker_stage={state.blocker_repair_chain_open},{state.blocker_status_reflects_current_stage},"
         f"{state.status_projection_shows_repair_chain},"
         f"final_preflight={state.final_preflight_uses_current_effective_blockers},"
         f"{state.final_preflight_reports_noncurrent_repair_blocker},"
         f"stale_prior_route_superseded={state.stale_prior_route_repair_blockers_superseded}|"
-        f"repair_loop={state.repair_loop_attempt_count}>{state.repair_loop_threshold},"
+        f"repair_loop={state.repair_loop_attempt_count}>={state.repair_loop_threshold},"
         f"evidence={state.repair_loop_threshold_evidence_visible},"
+        f"cleared_unclosed_counted={state.cleared_unclosed_root_attempts_counted},"
         f"breakglass_duty={state.break_glass_duty_projected},"
         f"ordinary_pm_over_threshold={state.ordinary_pm_repair_packet_issued_over_threshold},"
         f"pm_superseded={state.same_family_pm_packets_superseded}|"
@@ -256,7 +266,8 @@ def run_checks() -> dict[str, Any]:
         "hazard_detection": hazards,
         "coverage_matrix": {
             "ordinary_repair_packet": "covered_by_parent_and_child_blocker_repair_information_flow_model",
-            "repair_loop_threshold": "same-family attempt count above five requires visible evidence and Controller break-glass duty",
+            "repair_loop_threshold": "same-dossier attempt count at five consecutive repair nodes requires visible evidence and Controller break-glass duty",
+            "active_child_lineage_parent_replay": "parent backward replay uses active child ids/results and rejects superseded child evidence",
             "interrupt_resume": "current run/frontier/ledger/blocker/PM runway required",
             "reopen_continuation": "history import must remain historical; current run and current role assignment required",
             "break_glass": "normal repair failure, bounded control-plane repair, PM/reviewer reintegration required",
@@ -280,6 +291,7 @@ def run_checks() -> dict[str, Any]:
                 "role-visible packet result output contracts",
                 "FlowGuard evidence manifest handoff into reviewer packets",
                 "repair-chain status projection visibility",
+                "active child lineage and active result binding for parent backward replay",
             ],
             "does_not_cover": [
                 "full concrete runtime conformance for every packet builder",

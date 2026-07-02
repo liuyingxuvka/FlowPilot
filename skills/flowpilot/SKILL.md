@@ -39,7 +39,7 @@ Fresh formal invocation:
 python assets\flowpilot_new.py --root <project-root> --json start
 ```
 
-The public formal-run control surface is flowpilot_new.py only. The startup path uses the native startup intake UI; There is no requirement for a non-startup monitoring UI. .flowpilot/runs/<run-id>/ledger.json is authority; .flowpilot/current.json is UI focus/default-target metadata.
+The public formal-run control surface is `flowpilot_new.py` only. The startup path uses the native startup intake UI; There is no requirement for a non-startup monitoring UI. `.flowpilot/runs/<run-id>/ledger.json` is authority; `.flowpilot/current.json` is UI focus/default-target metadata.
 
 The internal router facade is retained for current tests and stateful runtime commands. Do not bypass flowpilot_new.py during a new formal run.
 

@@ -153,6 +153,19 @@ def _complete_open_packet(ledger: dict, packet_id: str, body: str | None = None)
 
 
 def _write_flowguard_evidence_artifact(ledger: dict, packet: dict, body: str) -> None:
+    packet_body = json.loads(packet.get("body") or "{}")
+    evidence_policy = packet_body.get("evidence_output_policy")
+    if isinstance(evidence_policy, dict):
+        root = str(evidence_policy.get("run_local_evidence_root") or "")
+        if "<" in root or ">" in root:
+            run_root = str(ledger.get("run_root") or "")
+            if run_root:
+                root_path = Path(run_root) / "evidence" / "flowguard" / packet["packet_id"]
+            else:
+                root_path = ROOT / ".tmp_flowguard_evidence" / "recursive_route_execution_runtime" / packet["packet_id"]
+            evidence_policy["run_local_evidence_root"] = str(root_path)
+            packet["body"] = json.dumps(packet_body, sort_keys=True)
+            packet["envelope"]["body_hash"] = runtime.hash_text(packet["body"])
     path = runtime._flowguard_packet_evidence_artifact_path(ledger, packet)
     if path is None:
         return
