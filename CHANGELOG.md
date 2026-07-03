@@ -1,5 +1,36 @@
 # Changelog
 
+## v0.11.0 - 2026-07-03
+
+### Changed
+
+- Strengthened FlowPilot's PM-owned system integration duty so route plans,
+  node packets, reviews, FlowGuard checks, and terminal ledgers keep whole-run
+  continuity, structure, handoff relationships, and duplicate-control pressure
+  visible.
+- Added optimization-level Reviewer, FlowGuard operator, and Worker guidance for
+  composition review, state continuity, integration touchpoints, and route-wide
+  closure without adding new runtime hard blockers, roles, ledgers, packet
+  families, or self-stop surfaces.
+- Extended planning templates with system integration intent, route composition
+  review, node integration touchpoints, and final whole-output composition
+  review while preserving the current five-field node context package contract.
+- Added full integration Cartesian coverage for FlowPilot planning quality so
+  software, writing, research, release, repair, simple, and multi-role paths are
+  checked for coherent route-wide behavior instead of isolated local completion.
+
+### Validation
+
+- Verified OpenSpec strict status for the `strengthen-pm-system-integration-duty`
+  change and refreshed FlowGuard project topology.
+- Verified focused unit coverage, card instruction coverage, planning-quality
+  runners, fake-AI replay, ContractExhaustionMesh, Model-Test Alignment,
+  Acceptance TestMesh, current-contract Cartesian checks, and a 132,000-cell
+  integration Cartesian matrix.
+- Verified router child evidence, FlowGuard meta and capability background
+  regressions, installed-skill sync/audit/check, install self-check, and local
+  source/package consistency before the release candidate.
+
 ## v0.10.25 - 2026-07-02
 
 ### Changed

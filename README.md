@@ -15,7 +15,7 @@
 </p>
 
 <p align="center">
-  Source version: <strong>v0.10.25</strong> · MIT License · open-source AI-agent control runtime
+  Source version: <strong>v0.11.0</strong> · MIT License · open-source AI-agent control runtime
 </p>
 <!-- README HERO END -->
 
@@ -126,7 +126,7 @@ In plain language:
 
 | Field | Value |
 | --- | --- |
-| Source version | `v0.10.25` |
+| Source version | `v0.11.0` |
 | Public project name | `FlowPilot` |
 | Skill slug | `flowpilot` |
 | Release shape | Source package only, no binary app bundle |
@@ -134,7 +134,7 @@ In plain language:
 | Required core dependency | Real `flowguard` Python package |
 | Current UI surface | Windows WPF startup intake dialog plus chat route signs |
 
-`v0.10.25` hardens FlowPilot's generalized control plane around ordinary material visibility, sealed-body authorization, itemized blocker repair, reviewer quality ownership, current identity projection, terminal coverage, and five-blocker glass-break behavior.
+`v0.11.0` strengthens FlowPilot's PM-owned system integration loop so route plans, node packets, reviews, FlowGuard checks, and final ledgers push for one coherent whole instead of a pile of locally complete pieces.
 
 ## When To Use FlowPilot
 
@@ -229,7 +229,7 @@ MIT. See [`LICENSE`](./LICENSE).
 
 # FlowPilot 中文说明
 
-**Source version:** `v0.10.25`<br />
+**Source version:** `v0.11.0`<br />
 **许可证：** MIT<br />
 **形态：** open-source AI-agent control runtime
 
@@ -338,7 +338,7 @@ startup intake
 
 | 字段 | 值 |
 | --- | --- |
-| Source version | `v0.10.25` |
+| Source version | `v0.11.0` |
 | Public project name | `FlowPilot` |
 | Skill slug | `flowpilot` |
 | Release shape | source package only, no binary app bundle |
@@ -346,7 +346,7 @@ startup intake
 | Required core dependency | real `flowguard` Python package |
 | Current UI surface | Windows WPF startup intake dialog plus chat route signs |
 
-`v0.10.25` 加强 FlowPilot 的通用控制面：普通材料可见性、sealed body 授权、逐项 blocker 修复、Reviewer 质量归属、当前身份投影、terminal 覆盖，以及连续五次 blocker 后进入 glass-break 的行为。
+`v0.11.0` 加强 FlowPilot 的 PM 整体整合循环，让 route plan、node packet、review、FlowGuard check 和 final ledger 都持续推动一个连贯整体，而不是一堆局部完成但彼此松散的小块。
 
 ## 什么时候用 FlowPilot
 
