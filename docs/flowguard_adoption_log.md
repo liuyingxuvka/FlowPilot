@@ -20363,6 +20363,57 @@ to identify unsupported historical-layer branches that should be deleted.
 - Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
 
 
+## show-active-route-progress-only - Stabilize progress fraction initial-node semantics
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: user observed visible progress switching from packet-count progress to route-node progress after route materialization, causing the apparent count to reset.
+- Status: completed
+- Skill decision: used OpenSpec plus FlowGuard development-process validation
+- Started: 2026-07-03T09:00:00Z
+- Ended: 2026-07-03T09:19:37Z
+
+### Model Files
+- `simulations/flowpilot_core_runtime_development_model.py`
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`: `1.0`
+- `python -c "import importlib.metadata as m; print(m.version('flowguard'))"`: `0.52.4`
+- `python -m flowguard project-audit --root .`: pass
+- `openspec validate show-active-route-progress-only --strict`: pass
+- `python simulations/run_flowpilot_core_runtime_development_checks.py --no-write-results`: ok true
+- `python -m unittest tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_current_progress_fraction_is_zero_before_work_expands tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_current_progress_fraction_does_not_use_packet_projection_before_route_nodes tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_current_progress_fraction_uses_active_route_node_order_not_history tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_current_progress_fraction_repair_replacement_preserves_route_slot_count tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_public_console_exposes_progress_fraction_without_completion_authority`: 5 passed
+- `python -m unittest tests.test_flowpilot_new_entrypoint.FlowPilotNewEntrypointTests.test_start_rehearsal_reuses_old_startup_ui_and_enters_new_ledger`: passed
+- `python simulations/run_flowpilot_core_runtime_checks.py --no-write-results`: ok true
+- `python -m pytest tests/test_flowpilot_core_runtime.py -k progress_fraction`: 5 passed
+- `python -m py_compile skills\flowpilot\assets\flowpilot_core_runtime\runtime.py`: pass
+- `python scripts\flowguard_project_topology.py build`: ok true
+- `python scripts\flowguard_project_topology.py check`: ok true
+- `python scripts\check_install.py --json`: ok true
+- `python scripts\audit_local_install_sync.py --json`: ok true
+- `python scripts\install_flowpilot.py --check --json`: ok true
+
+### Findings
+- `progress_fraction` now uses a display-only initial planning node before route materialization (`0/1`) instead of packet projection.
+- Once active route `node_order` exists, `progress_fraction` reports `1 + ended current route nodes` over `1 + current route nodes`.
+- Packet progress remains liveness evidence only and no longer changes the public progress denominator or numerator.
+- The installed Codex skill digest matches the repository source after manual copy recovery from a Windows directory-lock interruption.
+
+### Counterexamples
+- Packet ACK/progress before route-node materialization no longer changes public progress from `0/1`.
+- Superseded old route history no longer contributes to active-route progress.
+
+### Friction Points
+- `scripts/install_flowpilot.py --sync-repo-owned --json` hit a Windows directory lock after clearing the installed skill directory. The install was recovered by copying the repository-owned skill directory into the existing install directory and then proving source/install digest parity.
+- `scripts/check_install.py --json` initially failed only because the generated FlowGuard topology source map was stale. Rebuilding and checking the topology resolved it.
+
+### Skipped Steps
+- Meta and Capability parent regressions were not rerun because this change affects display-only progress accounting, not project-control flow or capability routing. Existing focused core-runtime checks and the development-process FlowGuard model were used instead.
+- No compatibility fallback, old packet-progress translation, release, tag, push, deploy, or OpenSpec archive was performed.
+
+### Risk Evidence Summary
+- Evidence supports the local repository and installed FlowPilot skill for the corrected progress-fraction behavior. It does not claim remote publication readiness or release-level Meta/Capability proof freshness.
+
+
 ## harden-flowguard-semantic-recheck-evidence-chain-20260626 - FlowGuard Semantic Recheck Evidence Chain
 
 - Project: FlowGuardProjectAutopilot_20260430

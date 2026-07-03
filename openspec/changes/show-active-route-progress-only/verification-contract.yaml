@@ -1,0 +1,76 @@
+contract_version: 1
+change: show-active-route-progress-only
+obligations:
+  - id: req.progress.initial_plus_active_route
+    source: "specs/flowpilot-progress-fraction/spec.md#Requirement: Progress fraction uses the initial node plus active route order"
+    claim: "Runtime progress_fraction counts one display-only initial planning node plus current active route node_order, excluding historical route nodes and task packets."
+    required: true
+    evidence:
+      - check.progress.focused_unittest
+      - check.progress.core_runtime_scenarios
+  - id: req.progress.repair_replacement_slot_count
+    source: "specs/flowpilot-progress-fraction/spec.md#Requirement: Repair replacement preserves the active route slot count"
+    claim: "Repair replacements occupy the active route slot and superseded route nodes do not expand user-visible progress."
+    required: true
+    evidence:
+      - check.progress.focused_unittest
+  - id: req.progress.no_packet_projection_fallback
+    source: "specs/flowpilot-progress-fraction/spec.md#Requirement: Initial planning node replaces packet projection fallback"
+    claim: "Before materialized route nodes exist, progress_fraction is 0/1 and packet_projection_used remains false even when packets exist."
+    required: true
+    evidence:
+      - check.progress.focused_unittest
+      - check.progress.entrypoint_status
+checks:
+  - id: check.progress.focused_unittest
+    kind: command
+    command: python
+    args:
+      - -m
+      - unittest
+      - tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_current_progress_fraction_is_zero_before_work_expands
+      - tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_current_progress_fraction_does_not_use_packet_projection_before_route_nodes
+      - tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_current_progress_fraction_uses_active_route_node_order_not_history
+      - tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_current_progress_fraction_repair_replacement_preserves_route_slot_count
+      - tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_public_console_exposes_progress_fraction_without_completion_authority
+    required: true
+    covers:
+      - req.progress.initial_plus_active_route
+      - req.progress.repair_replacement_slot_count
+      - req.progress.no_packet_projection_fallback
+    expected:
+      exit_code: 0
+  - id: check.progress.entrypoint_status
+    kind: command
+    command: python
+    args:
+      - -m
+      - unittest
+      - tests.test_flowpilot_new_entrypoint.FlowPilotNewEntrypointTests.test_start_rehearsal_reuses_old_startup_ui_and_enters_new_ledger
+    required: true
+    covers:
+      - req.progress.no_packet_projection_fallback
+    expected:
+      exit_code: 0
+  - id: check.progress.core_runtime_scenarios
+    kind: command
+    command: python
+    args:
+      - simulations/run_flowpilot_core_runtime_checks.py
+      - --no-write-results
+    required: true
+    covers:
+      - req.progress.initial_plus_active_route
+    expected:
+      exit_code: 0
+freshness:
+  watch:
+    - openspec/changes/show-active-route-progress-only/proposal.md
+    - openspec/changes/show-active-route-progress-only/design.md
+    - openspec/changes/show-active-route-progress-only/tasks.md
+    - openspec/changes/show-active-route-progress-only/specs/**/*.md
+    - openspec/changes/show-active-route-progress-only/verification-contract.yaml
+    - skills/flowpilot/assets/flowpilot_core_runtime/runtime.py
+    - skills/flowpilot/assets/flowpilot_new_shared.py
+    - tests/test_flowpilot_core_runtime.py
+    - tests/test_flowpilot_new_entrypoint.py

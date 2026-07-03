@@ -635,14 +635,16 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
 
         progress = runtime.current_progress_fraction(ledger)
 
-        self.assertEqual(progress["display"], "0/0")
+        self.assertEqual(progress["display"], "0/1")
         self.assertEqual(progress["ended_nodes"], 0)
-        self.assertEqual(progress["expanded_nodes"], 0)
+        self.assertEqual(progress["expanded_nodes"], 1)
+        self.assertEqual(progress["source"], "initial_planning_node")
+        self.assertFalse(progress["packet_projection_used"])
         self.assertFalse(progress["percent_provided"])
         self.assertTrue(progress["controller_relay_only"])
         self.assertFalse(progress["sealed_bodies_visible"])
 
-    def test_current_progress_fraction_packet_projection_ignores_control_plane_mechanics(self) -> None:
+    def test_current_progress_fraction_does_not_use_packet_projection_before_route_nodes(self) -> None:
         ledger = runtime.new_ledger("Goal", "Contract")
         authorize_background_collaboration(ledger)
         runtime.create_route(ledger, "Route", ["Do work"])
@@ -657,8 +659,10 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         progress = runtime.current_progress_fraction(ledger)
 
         self.assertEqual(progress["display"], "0/1")
-        self.assertEqual(progress["source"], "packets")
-        self.assertTrue(progress["packet_projection_used"])
+        self.assertEqual(progress["ended_nodes"], 0)
+        self.assertEqual(progress["expanded_nodes"], 1)
+        self.assertEqual(progress["source"], "initial_planning_node")
+        self.assertFalse(progress["packet_projection_used"])
 
     def test_task_packet_acceptance_criteria_include_replayable_artifact_rule(self) -> None:
         ledger = runtime.new_ledger("Goal", "Contract")
@@ -1089,10 +1093,10 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
 
         progress = runtime.current_progress_fraction(ledger)
 
-        self.assertEqual(progress["display"], "3/6")
+        self.assertEqual(progress["display"], "3/5")
         self.assertEqual(progress["ended_nodes"], 3)
-        self.assertEqual(progress["expanded_nodes"], 6)
-        self.assertEqual(progress["source"], "cumulative_route_node_order")
+        self.assertEqual(progress["expanded_nodes"], 5)
+        self.assertEqual(progress["source"], "active_route_node_order_with_initial_planning_node")
         self.assertFalse(progress["includes_repair_generations"])
         self.assertFalse(progress["packet_projection_used"])
 
@@ -1130,8 +1134,8 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         self.assertEqual(progress["display"], "2/4")
         self.assertEqual(progress["ended_nodes"], 2)
         self.assertEqual(progress["expanded_nodes"], 4)
-        self.assertEqual(progress["repair_generations"], 4)
-        self.assertEqual(progress["source"], "cumulative_route_node_order")
+        self.assertEqual(progress["repair_generations"], 1)
+        self.assertEqual(progress["source"], "active_route_node_order_with_initial_planning_node")
         self.assertTrue(progress["includes_repair_generations"])
         self.assertFalse(progress["packet_projection_used"])
 
@@ -1149,11 +1153,11 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         full = runtime.render_console(ledger)
         compact = runtime.render_compact_console(ledger)
 
-        self.assertEqual(full["progress_fraction"]["display"], "1/2")
-        self.assertEqual(compact["progress_fraction"]["display"], "1/2")
+        self.assertEqual(full["progress_fraction"]["display"], "2/3")
+        self.assertEqual(compact["progress_fraction"]["display"], "2/3")
         self.assertFalse(compact["progress_fraction"]["percent_provided"])
-        self.assertEqual(compact["counts"]["progress_ended_nodes"], 1)
-        self.assertEqual(compact["counts"]["progress_expanded_nodes"], 2)
+        self.assertEqual(compact["counts"]["progress_ended_nodes"], 2)
+        self.assertEqual(compact["counts"]["progress_expanded_nodes"], 3)
         self.assertEqual(compact["status_projection_authority"], "display_only")
 
     def test_reassignment_supersedes_older_active_packet_lease(self) -> None:

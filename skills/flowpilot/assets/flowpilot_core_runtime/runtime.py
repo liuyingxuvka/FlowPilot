@@ -4322,15 +4322,6 @@ _REPAIR_REPLACED_PACKET_STATUSES = _CURRENT_PACKET_BLOCKING_STATUSES | {"result_
 _NONCURRENT_PACKET_STATUSES = {"accepted", "quarantined_after_route_mutation", "superseded_after_repair"}
 _NONCURRENT_ROUTE_NODE_STATUSES = {"accepted", "waived", "superseded"}
 _PROGRESS_ROUTE_NODE_ENDED_STATUSES = {"accepted", "waived", "superseded", "blocked", "stopped"}
-_PROGRESS_PACKET_ENDED_STATUSES = {
-    "accepted",
-    "result_blocked",
-    "review_blocked",
-    "system_validation_blocked",
-    "flowguard_blocked",
-    "quarantined_after_route_mutation",
-    "superseded_after_repair",
-}
 _PM_REPAIR_DECISIONS = {
     "break_glass",
     "repair_current_scope",
@@ -4617,51 +4608,43 @@ def _progress_active_subject(ledger: Mapping[str, Any]) -> dict[str, Any]:
     }
 
 
-def _progress_packets(ledger: Mapping[str, Any]) -> list[Mapping[str, Any]]:
-    active_route = ledger.get("active_route_version")
-    packets: list[Mapping[str, Any]] = []
-    for packet in ledger.get("packets", {}).values():
-        if not isinstance(packet, Mapping):
-            continue
-        envelope = packet.get("envelope", {}) if isinstance(packet.get("envelope"), Mapping) else {}
-        packet_kind = str(envelope.get("packet_kind") or "task")
-        if packet_kind not in PACKET_KINDS:
-            continue
-        if active_route is not None and envelope.get("route_version") != active_route:
-            continue
-        packets.append(packet)
-    return packets
-
-
-def _cumulative_route_node_order_for_progress(ledger: Mapping[str, Any]) -> list[str]:
+def _active_route_node_order_for_progress(ledger: Mapping[str, Any]) -> list[str]:
     active_route = ledger.get("active_route_version")
     if active_route is None:
         return []
     routes = ledger.get("routes", {})
     if not isinstance(routes, Mapping):
         return []
-    active_route_number = _coerce_nonnegative_int(active_route)
-    ordered_routes: list[tuple[int, str, Mapping[str, Any]]] = []
-    for route_key, route in routes.items():
-        if not isinstance(route, Mapping):
-            continue
-        route_version = _coerce_nonnegative_int(route.get("route_version", route_key))
-        if active_route_number and route_version > active_route_number:
-            continue
-        ordered_routes.append((route_version, str(route_key), route))
-    ordered_routes.sort(key=lambda item: (item[0], item[1]))
+    route = routes.get(str(active_route))
+    if not isinstance(route, Mapping):
+        route = routes.get(active_route)
+    if not isinstance(route, Mapping):
+        active_route_number = _coerce_nonnegative_int(active_route)
+        for route_key, candidate in routes.items():
+            if not isinstance(candidate, Mapping):
+                continue
+            route_version = _coerce_nonnegative_int(candidate.get("route_version", route_key))
+            if route_version == active_route_number:
+                route = candidate
+                break
+    if not isinstance(route, Mapping):
+        for candidate in routes.values():
+            if isinstance(candidate, Mapping) and str(candidate.get("status") or "") == "active":
+                route = candidate
+                break
+    if not isinstance(route, Mapping):
+        return []
+    node_order = route.get("node_order")
+    if not isinstance(node_order, (list, tuple)):
+        return []
     node_ids: list[str] = []
     seen: set[str] = set()
-    for _route_version, _route_key, route in ordered_routes:
-        node_order = route.get("node_order")
-        if not isinstance(node_order, (list, tuple)):
+    for item in node_order:
+        node_id = str(item or "").strip()
+        if not node_id or node_id in seen:
             continue
-        for item in node_order:
-            node_id = str(item or "").strip()
-            if not node_id or node_id in seen:
-                continue
-            seen.add(node_id)
-            node_ids.append(node_id)
+        seen.add(node_id)
+        node_ids.append(node_id)
     return node_ids
 
 
@@ -4671,10 +4654,10 @@ def current_progress_fraction(ledger: Mapping[str, Any]) -> dict[str, Any]:
     route_nodes = ledger.get("route_nodes", {})
     if not isinstance(route_nodes, Mapping):
         route_nodes = {}
-    active_route_node_ids = _cumulative_route_node_order_for_progress(ledger)
+    active_route_node_ids = _active_route_node_order_for_progress(ledger)
     if active_route_node_ids:
-        expanded_nodes = len(active_route_node_ids)
-        ended_nodes = 0
+        expanded_nodes = 1 + len(active_route_node_ids)
+        ended_nodes = 1
         repair_generations = 0
         for node_id in active_route_node_ids:
             node = route_nodes.get(node_id)
@@ -4683,19 +4666,12 @@ def current_progress_fraction(ledger: Mapping[str, Any]) -> dict[str, Any]:
             repair_generations += _coerce_nonnegative_int(node.get("repair_generation", 0))
             if str(node.get("status") or "") in _PROGRESS_ROUTE_NODE_ENDED_STATUSES:
                 ended_nodes += 1
-        source = "cumulative_route_node_order"
-        packet_projection_used = False
+        source = "active_route_node_order_with_initial_planning_node"
     else:
-        packets = _progress_packets(ledger)
-        expanded_nodes = len(packets)
-        ended_nodes = sum(
-            1
-            for packet in packets
-            if str(packet.get("status") or "") in _PROGRESS_PACKET_ENDED_STATUSES
-        )
+        expanded_nodes = 1
+        ended_nodes = 0
         repair_generations = 0
-        source = "packets"
-        packet_projection_used = True
+        source = "initial_planning_node"
 
     ended_nodes = min(ended_nodes, expanded_nodes)
     return {
@@ -4707,7 +4683,7 @@ def current_progress_fraction(ledger: Mapping[str, Any]) -> dict[str, Any]:
         "equal_weight_nodes": True,
         "includes_repair_generations": repair_generations > 0,
         "repair_generations": repair_generations,
-        "packet_projection_used": packet_projection_used,
+        "packet_projection_used": False,
         "controller_relay_only": True,
         "percent_provided": False,
         "active_subject": _progress_active_subject(ledger),

@@ -6,12 +6,15 @@ makes a nearly finished route look like dozens of unfinished nodes remain.
 
 ## What Changes
 
-- Make the runtime-owned `progress_fraction` reflect only the current active
-  route when that route has a materialized `node_order`.
+- Make the runtime-owned `progress_fraction` reflect a stable initial planning
+  node plus the current active route when that route has a materialized
+  `node_order`.
 - Treat repair replacements as replacements of the original route slot, not as
   extra historical work that increases the user-visible denominator.
-- Keep the existing packet projection only for the early phase before the
-  active route has materialized route nodes.
+- Replace the packet-count early fallback with one display-only initial
+  planning node: before route nodes exist the fraction is `0/1`; after route
+  nodes exist the initial node is counted as complete and real route nodes are
+  added after it.
 - Do not change execution authority, sealed packet visibility, or completion
   gates; this is a display/progress-accounting fix only.
 
@@ -30,6 +33,6 @@ None.
 
 - FlowPilot runtime progress-fraction calculation.
 - Focused runtime tests for active route, repair replacement, and packet
-  projection behavior.
+  non-projection behavior.
 - OpenSpec and FlowGuard validation evidence.
 - Local installed FlowPilot skill sync after repository changes.
