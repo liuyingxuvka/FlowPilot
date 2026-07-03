@@ -1,0 +1,327 @@
+{
+  "version": 1,
+  "change": "stabilize-progress-lifecycle-counting",
+  "status": "pass",
+  "generatedAt": "2026-07-03T14:17:35.776Z",
+  "contractPath": "openspec/changes/stabilize-progress-lifecycle-counting/verification-contract.yaml",
+  "reportPath": "openspec/changes/stabilize-progress-lifecycle-counting/verification-report.json",
+  "contractHash": "22c87872a4ea63ceb5afea8bf28f99acca56978ecdaee5016c06d7c4667c3f8a",
+  "sourceHashes": {
+    "openspec/changes/stabilize-progress-lifecycle-counting/design.md": "148bc2d8985229358a43b6c090940dd7e697cc76466fee2cafa7958feaa3a607",
+    "openspec/changes/stabilize-progress-lifecycle-counting/specs/flowpilot-progress-fraction/spec.md": "62547786b28b465bd802846c26e96fe89ab8203d5abe5f0b974b91fc4da445d3",
+    "openspec/changes/stabilize-progress-lifecycle-counting/tasks.md": "884e43a6e13e621014d1ca91fc95bd2930ca6457028bcf87fe6184c085e42aa7",
+    "openspec/changes/stabilize-progress-lifecycle-counting/verification-contract.yaml": "22c87872a4ea63ceb5afea8bf28f99acca56978ecdaee5016c06d7c4667c3f8a",
+    "simulations/flowpilot_progress_lifecycle_cartesian_model.py": "9c4d502a7483cd7883a336b6b7cfe8ae75202ae0bba5fd04bea7a9af3124b840",
+    "simulations/run_flowpilot_progress_lifecycle_cartesian_checks.py": "52cb0133bc24d96e41899f5ebbeeb4fce1dc3ce1fbaa24db3c468233d6f87f44",
+    "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py": "41e04fb2e9adc550f2e08b7e22e2d6c961a34ac60f94b2dd55b767bfaa3503fb",
+    "tests/test_flowpilot_core_runtime.py": "fc32547b7047a1a30b271d361d81a0c6459fd774eed6b88c8cb1764dfc6842da",
+    "tests/test_flowpilot_progress_lifecycle_cartesian.py": "f4acf744bfd9360ae2e307c50889b8773f77b752792c07de27d01bab09bd91b1"
+  },
+  "issues": [],
+  "checks": [
+    {
+      "id": "check.openspec.validate",
+      "kind": "command",
+      "required": true,
+      "covers": [
+        "req.progress.lifecycle_counting"
+      ],
+      "status": "passed",
+      "command": "openspec",
+      "args": [
+        "validate",
+        "stabilize-progress-lifecycle-counting",
+        "--strict"
+      ],
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "durationMs": 1830,
+      "stdout": "Change 'stabilize-progress-lifecycle-counting' is valid\n",
+      "stderr": ""
+    },
+    {
+      "id": "check.flowguard.route_replanning_policy",
+      "kind": "command",
+      "required": true,
+      "covers": [
+        "req.progress.route_structure"
+      ],
+      "status": "passed",
+      "command": "python",
+      "args": [
+        "simulations/run_flowpilot_route_replanning_policy_checks.py",
+        "--json-out",
+        "simulations/flowpilot_route_replanning_policy_results.json"
+      ],
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "durationMs": 1175,
+      "stdout": "{\r\n  \"flowguard_explorer\": {\r\n    \"dead_branch_count\": 0,\r\n    \"exception_branch_count\": 0,\r\n    \"ok\": true,\r\n    \"reachability_failure_count\": 0,\r\n    \"reachability_failures\": [],\r\n    \"summary\": \"sequences=3 initial_states=1 traces=126\",\r\n    \"violation_count\": 0\r\n  },\r\n  \"hazard_checks\": {\r\n    \"failures\": [],\r\n    \"hazards\": {\r\n      \"active_node_not_executable\": {\r\n        \"detected\": true,\r\n        \"expected_failure\": \"active node is not executable before route use\",\r\n        \"failures\": [\r\n          \"active node is not executable before route use\"\r\n        ]\r\n      },\r\n      \"capability_change_without_product_check\": {\r\n        \"detected\": true,\r\n        \"expected_failure\": \"product capability change lacks product-scope FlowGuard check\",\r\n        \"failures\": [\r\n          \"product capability change lacks product-scope FlowGuard check\"\r\n        ]\r\n      },\r\n      \"changed_route_without_reviewer\": {\r\n        \"detected\": true,\r\n        \"expected_failure\": \"changed route was used before Reviewer approval\",\r\n        \"failures\": [\r\n          \"changed route was used before Reviewer approval\"\r\n        ]\r\n      },\r\n      \"controller_direct_implementation\": {\r\n        \"detected\": true,\r\n        \"expected_failure\": \"Controller performed product work before route gate\",\r\n        \"failures\": [\r\n          \"Controller performed product work before route gate\"\r\n        ]\r\n      },\r\n      \"in_progress_repair_before_review_failure\": {\r\n        \"detected\": true,\r\n        \"expected_failure\": \"in-progress capability gap used a repair node before reviewed failure\",\r\n        \"failures\": [\r\n          \"in-progress capability gap used a repair node before reviewed failure\",\r\n          \"repair node lacks reviewed failure trigger\",\r\n          \"repair node lacks stale evidence reset\",\r\n          \"repair node lacks mainline return\",\r\n          \"repair node lacks rerun obligations\"\r\n        ]\r\n      },\r\n      \"node_entry_repair_before_work\": {\r\n        \"detected\": true,\r\n        \"expected_failure\": \"node-entry capability gap used a repair node before node work started\",\r\n        \"failures\": [\r\n          \"node-entry capability gap used a repair node before node work started\",\r\n          \"repair node lacks reviewed failure trigger\",\r\n          \"repair node lacks stale evidence reset\",\r\n          \"repair node lacks mainline return\",\r\n          \"repair node lacks rerun obligations\"\r\n        ]\r\n      },\r\n      \"ordinary_node_missing_fields\": {\r\n        \"detected\": true,\r\n        \"expected_failure\": \"added ordinary node lacks owner input output evidence or acceptance fields\",\r\n        \"failures\": [\r\n          \"added ordinary node lacks owner input output evidence or acceptance fields\"\r\n        ]\r\n      },\r\n      \"planning_repair_node_created\": {\r\n        \"detected\": true,\r\n        \"expected_failure\": \"planning-phase issue used a repair node instead of route draft rewrite or ordinary node expansion\",\r\n        \"failures\": [\r\n          \"planning-phase issue used a repair node instead of route draft rewrite or ordinary node expansion\",\r\n          \"root planning created a repair node before any child execution\",\r\n          \"repair node lacks reviewed failure trigger\",\r\n          \"repair node lacks rerun obligations\"\r\n        ]\r\n      },\r\n      \"process_before_product_for_capability_change\": {\r\n        \"detected\": true,\r\n        \"expected_failure\": \"route-scope FlowGuard ran before product-scope FlowGuard for a product capability change\",\r\n        \"failures\": [\r\n          \"route-scope FlowGuard ran before product-scope FlowGuard for a product capability change\"\r\n        ]\r\n      },\r\n      \"repair_node_missing_fields\": {\r\n        \"detected\": true,\r\n        \"expected_failure\": \"repair node lacks target reason input output evidence return or recheck fields\",\r\n        \"failures\": [\r\n          \"repair node lacks target reason input output evidence return or recheck fields\"\r\n        ]\r\n      },\r\n      \"repair_without_mainline_return\": {\r\n        \"detected\": true,\r\n    \n...[truncated]",
+      "stderr": "[flowguard] start phase=explore work_total=3 progress_steps=10\r\n[flowguard] progress 30% work=1/3 traces=21 violations=0\r\n[flowguard] progress 60% work=2/3 traces=63 violations=0\r\n[flowguard] progress 100% work=3/3 traces=126 violations=0\r\n"
+    },
+    {
+      "id": "check.flowguard.route_mutation_activation",
+      "kind": "command",
+      "required": true,
+      "covers": [
+        "req.progress.route_structure"
+      ],
+      "status": "passed",
+      "command": "python",
+      "args": [
+        "simulations/run_flowpilot_route_mutation_activation_checks.py",
+        "--json-out",
+        "simulations/flowpilot_route_mutation_activation_results.json"
+      ],
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "durationMs": 1129,
+      "stdout": "{\r\n  \"flowguard_explorer\": {\r\n    \"dead_branch_count\": 0,\r\n    \"exception_branch_count\": 0,\r\n    \"ok\": true,\r\n    \"reachability_failure_count\": 0,\r\n    \"reachability_failures\": [],\r\n    \"summary\": \"sequences=32 initial_states=1 traces=2016\",\r\n    \"violation_count\": 0\r\n  },\r\n  \"hazard_checks\": {\r\n    \"hazards\": {\r\n      \"activation_without_process_recheck\": {\r\n        \"detected\": true,\r\n        \"expected_failure\": \"PM activated candidate route before process FlowGuard recheck\",\r\n        \"failures\": [\r\n          \"PM activated candidate route before process FlowGuard recheck\"\r\n        ],\r\n        \"state\": {\r\n          \"active_route_overwritten_before_activation\": false,\r\n          \"affected_sibling_nodes_declared\": false,\r\n          \"candidate_node_entry_recorded\": false,\r\n          \"candidate_route_displayed_as_current\": false,\r\n          \"continue_target_declared\": false,\r\n          \"display_receipt_recorded\": false,\r\n          \"final_ledger_started\": false,\r\n          \"forced_return_for_supersede\": false,\r\n          \"frontier_entered_candidate_before_activation\": false,\r\n          \"generated_files_only_display\": false,\r\n          \"holder\": \"project_manager\",\r\n          \"mermaid_topology_projected\": false,\r\n          \"old_current_node_packet_superseded\": true,\r\n          \"old_sibling_evidence_reused_as_current\": false,\r\n          \"pm_activation_recorded\": true,\r\n          \"pm_mutation_proposed\": true,\r\n          \"process_recheck_passed\": false,\r\n          \"product_recheck_passed\": true,\r\n          \"repair_node_id_declared\": true,\r\n          \"repair_of_node_id_declared\": true,\r\n          \"repair_rendered_as_final_mainline\": false,\r\n          \"replay_scope_declared\": false,\r\n          \"return_target_declared\": true,\r\n          \"reviewer_block_recorded\": true,\r\n          \"reviewer_recheck_passed\": true,\r\n          \"route_visible_as_current\": false,\r\n          \"same_scope_replay_rerun_after_mutation\": false,\r\n          \"sealed_body_boundary_preserved\": true,\r\n          \"stale_evidence_invalidated\": true,\r\n          \"status\": \"running\",\r\n          \"superseded_node_shown_as_pending\": false,\r\n          \"superseded_nodes_declared\": false,\r\n          \"topology_strategy\": \"return_to_original\"\r\n        }\r\n      },\r\n      \"activation_without_product_or_reviewer_recheck\": {\r\n        \"detected\": true,\r\n        \"expected_failure\": \"PM activated candidate route before product FlowGuard recheck\",\r\n        \"failures\": [\r\n          \"PM activated candidate route before product FlowGuard recheck\",\r\n          \"PM activated candidate route before reviewer route challenge\"\r\n        ],\r\n        \"state\": {\r\n          \"active_route_overwritten_before_activation\": false,\r\n          \"affected_sibling_nodes_declared\": false,\r\n          \"candidate_node_entry_recorded\": false,\r\n          \"candidate_route_displayed_as_current\": false,\r\n          \"continue_target_declared\": false,\r\n          \"display_receipt_recorded\": false,\r\n          \"final_ledger_started\": false,\r\n          \"forced_return_for_supersede\": false,\r\n          \"frontier_entered_candidate_before_activation\": false,\r\n          \"generated_files_only_display\": false,\r\n          \"holder\": \"project_manager\",\r\n          \"mermaid_topology_projected\": false,\r\n          \"old_current_node_packet_superseded\": true,\r\n          \"old_sibling_evidence_reused_as_current\": false,\r\n          \"pm_activation_recorded\": true,\r\n          \"pm_mutation_proposed\": true,\r\n          \"process_recheck_passed\": true,\r\n          \"product_recheck_passed\": false,\r\n          \"repair_node_id_declared\": true,\r\n          \"repair_of_node_id_declared\": true,\r\n          \"repair_rendered_as_final_mainline\": false,\r\n          \"replay_scope_declared\": false,\r\n          \"return_target_declared\": true,\r\n          \"reviewer_block_recorded\": true,\r\n          \"reviewer_recheck_passed\": false,\r\n          \"route_visible_as_current\": false,\r\n          \"same_scope_replay_rerun_after_mutation\": false,\r\n          \"sealed_body_boundary_preserved\": tr\n...[truncated]",
+      "stderr": "[flowguard] start phase=explore work_total=32 progress_steps=10\r\n[flowguard] progress 10% work=4/32 traces=28 violations=0\r\n[flowguard] progress 20% work=7/32 traces=91 violations=0\r\n[flowguard] progress 30% work=10/32 traces=190 violations=0\r\n[flowguard] progress 40% work=13/32 traces=325 violations=0\r\n[flowguard] progress 50% work=16/32 traces=496 violations=0\r\n[flowguard] progress 60% work=20/32 traces=780 violations=0\r\n[flowguard] progress 70% work=23/32 traces=1035 violations=0\r\n[flowguard] progress 80% work=26/32 traces=1326 violations=0\r\n[flowguard] progress 90% work=29/32 traces=1653 violations=0\r\n[flowguard] progress 100% work=32/32 traces=2016 violations=0\r\n"
+    },
+    {
+      "id": "check.flowguard.recursive_route_execution",
+      "kind": "command",
+      "required": true,
+      "covers": [
+        "req.progress.route_structure"
+      ],
+      "status": "passed",
+      "command": "python",
+      "args": [
+        "simulations/run_flowpilot_recursive_route_execution_checks.py",
+        "--json-out",
+        "simulations/flowpilot_recursive_route_execution_results.json"
+      ],
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "durationMs": 1279,
+      "stdout": "{\r\n  \"flowguard\": {\r\n    \"dead_branch_count\": 0,\r\n    \"exception_branch_count\": 0,\r\n    \"ok\": true,\r\n    \"reachability_failure_count\": 0,\r\n    \"reachability_failures\": [],\r\n    \"summary\": \"sequences=19 initial_states=1 traces=190\",\r\n    \"violation_count\": 0\r\n  },\r\n  \"hazard_detection\": {\r\n    \"expected\": [\r\n      \"dead_lease_advances_node\",\r\n      \"final_without_requirement_matrix\",\r\n      \"manifest_only_skill_evidence\",\r\n      \"missing_node_terminal_complete\",\r\n      \"mutation_without_frontier_rewrite\",\r\n      \"node_task_without_acceptance_plan\",\r\n      \"parent_without_backward_replay_accepted\",\r\n      \"planning_without_high_standard_gates\",\r\n      \"pm_plan_terminal_complete\",\r\n      \"quality_gap_mutated_route_by_default\",\r\n      \"stale_node_evidence_accepted\",\r\n      \"wrong_flowguard_target_accepted\"\r\n    ],\r\n    \"hazards\": {\r\n      \"dead_lease_advances_node\": [\r\n        \"dead or inactive lease advanced a node\"\r\n      ],\r\n      \"final_without_requirement_matrix\": [\r\n        \"terminal closure completed before final requirement-evidence matrix\",\r\n        \"final closure passed without requirement-evidence matrix\"\r\n      ],\r\n      \"manifest_only_skill_evidence\": [\r\n        \"manifest-only child skill evidence accepted\"\r\n      ],\r\n      \"missing_node_terminal_complete\": [\r\n        \"final route-wide ledger built before all node dispositions\",\r\n        \"terminal closure passed with an incomplete effective node\"\r\n      ],\r\n      \"mutation_without_frontier_rewrite\": [\r\n        \"route mutation did not rewrite execution frontier\"\r\n      ],\r\n      \"node_task_without_acceptance_plan\": [\r\n        \"node 2 task started before acceptance plan\",\r\n        \"node task packet issued without accepted node acceptance plan\"\r\n      ],\r\n      \"parent_without_backward_replay_accepted\": [\r\n        \"parent/module node accepted without backward replay\"\r\n      ],\r\n      \"planning_without_high_standard_gates\": [\r\n        \"PM planning accepted before high-standard preplanning gates\",\r\n        \"route planning proceeded without high-standard preplanning gates\"\r\n      ],\r\n      \"pm_plan_terminal_complete\": [\r\n        \"PM planning packet chain reached terminal completion\"\r\n      ],\r\n      \"quality_gap_mutated_route_by_default\": [\r\n        \"ordinary quality gap mutated route instead of same-node repair\"\r\n      ],\r\n      \"stale_node_evidence_accepted\": [\r\n        \"stale node evidence was accepted after route/source change\"\r\n      ],\r\n      \"wrong_flowguard_target_accepted\": [\r\n        \"wrong FlowGuard modeled target satisfied a node\"\r\n      ]\r\n    },\r\n    \"ok\": true\r\n  },\r\n  \"model_id\": \"flowpilot_recursive_route_execution\",\r\n  \"ok\": true,\r\n  \"result_type\": \"flowpilot_recursive_route_execution_checks\",\r\n  \"target_plan\": {\r\n    \"failures\": [],\r\n    \"labels\": [\r\n      \"record_startup_intake\",\r\n      \"accept_high_standard_contract\",\r\n      \"accept_current_discovery\",\r\n      \"accept_skill_standard_contract\",\r\n      \"accept_pm_planning_packet\",\r\n      \"materialize_route_nodes\",\r\n      \"initialize_execution_frontier\",\r\n      \"accept_node_1_acceptance_plan\",\r\n      \"complete_node_1_packet_loop\",\r\n      \"record_node_1_pm_disposition\",\r\n      \"accept_node_2_acceptance_plan\",\r\n      \"complete_node_2_packet_loop\",\r\n      \"record_node_2_pm_disposition\",\r\n      \"accept_node_3_acceptance_plan\",\r\n      \"complete_node_3_packet_loop\",\r\n      \"record_node_3_pm_disposition\",\r\n      \"build_final_route_wide_ledger\",\r\n      \"build_final_requirement_evidence_matrix\",\r\n      \"complete_terminal_closure\"\r\n    ],\r\n    \"ok\": true,\r\n    \"state\": {\r\n      \"dead_lease_advances_node\": false,\r\n      \"discovery_accepted\": true,\r\n      \"final_requirement_evidence_matrix_built\": true,\r\n      \"final_route_wide_ledger_built\": true,\r\n      \"final_without_requirement_matrix\": false,\r\n      \"frontier_ready\": true,\r\n      \"high_standard_contract_accepted\": true,\r\n      \"manifest_only_skill_evidence\": false,\r\n      \"missing_node_terminal_complete\": false,\r\n      \"mutation_without_frontier_rewrite\": false,\r\n\n...[truncated]",
+      "stderr": "[flowguard] start phase=explore work_total=19 progress_steps=10\r\n[flowguard] progress 10% work=2/19 traces=3 violations=0\r\n[flowguard] progress 20% work=4/19 traces=10 violations=0\r\n[flowguard] progress 30% work=6/19 traces=21 violations=0\r\n[flowguard] progress 40% work=8/19 traces=36 violations=0\r\n[flowguard] progress 50% work=10/19 traces=55 violations=0\r\n[flowguard] progress 60% work=12/19 traces=78 violations=0\r\n[flowguard] progress 70% work=14/19 traces=105 violations=0\r\n[flowguard] progress 80% work=16/19 traces=136 violations=0\r\n[flowguard] progress 90% work=18/19 traces=171 violations=0\r\n[flowguard] progress 100% work=19/19 traces=190 violations=0\r\n"
+    },
+    {
+      "id": "check.flowguard.progress_cartesian",
+      "kind": "command",
+      "required": true,
+      "covers": [
+        "req.progress.lifecycle_counting",
+        "req.progress.formal_removal",
+        "req.progress.route_structure",
+        "req.progress.control_plane_excluded",
+        "req.progress.cartesian_universe"
+      ],
+      "status": "passed",
+      "command": "python",
+      "args": [
+        "simulations/run_flowpilot_progress_lifecycle_cartesian_checks.py",
+        "--json-out",
+        "simulations/flowpilot_progress_lifecycle_cartesian_results.json"
+      ],
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "durationMs": 6602,
+      "stdout": "{\r\n  \"flowguard_explorer\": {\r\n    \"dead_branch_count\": 0,\r\n    \"exception_branch_count\": 0,\r\n    \"ok\": true,\r\n    \"reachability_failure_count\": 0,\r\n    \"reachability_failures\": [],\r\n    \"summary\": \"sequences=2 initial_states=1 traces=15\",\r\n    \"violation_count\": 0\r\n  },\r\n  \"hazard_checks\": {\r\n    \"expected\": [\r\n      \"control_noise_changes_progress\",\r\n      \"node_order_absence_removes_effective_node\",\r\n      \"packet_projection_used\",\r\n      \"removed_node_remains_pending\"\r\n    ],\r\n    \"hazards\": {\r\n      \"control_noise_changes_progress\": [\r\n        \"control-plane packet lease patrol or sealed-body noise changed progress counts\",\r\n        \"runtime progress output diverged from lifecycle oracle\"\r\n      ],\r\n      \"node_order_absence_removes_effective_node\": [\r\n        \"active node_order projection changed progress counts\",\r\n        \"runtime progress output diverged from lifecycle oracle\"\r\n      ],\r\n      \"packet_projection_used\": [\r\n        \"packet projection was used for progress_fraction\",\r\n        \"runtime progress output diverged from lifecycle oracle\"\r\n      ],\r\n      \"removed_node_remains_pending\": [\r\n        \"formally removed route node remained visible as pending or active progress\",\r\n        \"runtime progress output diverged from lifecycle oracle\"\r\n      ]\r\n    },\r\n    \"missing_expected_failures\": {},\r\n    \"ok\": true\r\n  },\r\n  \"matrix\": {\r\n    \"axis_counts\": {\r\n      \"control_plane_noise\": 5,\r\n      \"node_kind\": 4,\r\n      \"node_order_projection\": 5,\r\n      \"node_status\": 11,\r\n      \"repair_generation\": 2,\r\n      \"route_topology\": 10\r\n    },\r\n    \"axis_coverage\": {\r\n      \"control_plane_noise\": {\r\n        \"expected\": [\r\n          \"none\",\r\n          \"packet_activity\",\r\n          \"lease_ack_progress\",\r\n          \"patrol_role_receipt\",\r\n          \"sealed_body_payload\"\r\n        ],\r\n        \"missing\": [],\r\n        \"observed\": [\r\n          \"lease_ack_progress\",\r\n          \"none\",\r\n          \"packet_activity\",\r\n          \"patrol_role_receipt\",\r\n          \"sealed_body_payload\"\r\n        ]\r\n      },\r\n      \"node_kind\": {\r\n        \"expected\": [\r\n          \"leaf\",\r\n          \"parent\",\r\n          \"module\",\r\n          \"repair\"\r\n        ],\r\n        \"missing\": [],\r\n        \"observed\": [\r\n          \"leaf\",\r\n          \"module\",\r\n          \"parent\",\r\n          \"repair\"\r\n        ]\r\n      },\r\n      \"node_order_projection\": {\r\n        \"expected\": [\r\n          \"complete_effective_order\",\r\n          \"short_active_only\",\r\n          \"missing_effective_node\",\r\n          \"includes_superseded_node\",\r\n          \"duplicates_effective_node\"\r\n        ],\r\n        \"missing\": [],\r\n        \"observed\": [\r\n          \"complete_effective_order\",\r\n          \"duplicates_effective_node\",\r\n          \"includes_superseded_node\",\r\n          \"missing_effective_node\",\r\n          \"short_active_only\"\r\n        ]\r\n      },\r\n      \"node_status\": {\r\n        \"expected\": [\r\n          \"pending\",\r\n          \"running\",\r\n          \"awaiting_pm_disposition\",\r\n          \"awaiting_children\",\r\n          \"accepted\",\r\n          \"waived\",\r\n          \"blocked\",\r\n          \"stopped\",\r\n          \"superseded\",\r\n          \"cancelled\",\r\n          \"canceled\"\r\n        ],\r\n        \"missing\": [],\r\n        \"observed\": [\r\n          \"accepted\",\r\n          \"awaiting_children\",\r\n          \"awaiting_pm_disposition\",\r\n          \"blocked\",\r\n          \"canceled\",\r\n          \"cancelled\",\r\n          \"pending\",\r\n          \"running\",\r\n          \"stopped\",\r\n          \"superseded\",\r\n          \"waived\"\r\n        ]\r\n      },\r\n      \"repair_generation\": {\r\n        \"expected\": [\r\n          \"zero\",\r\n          \"positive\"\r\n        ],\r\n        \"missing\": [],\r\n        \"observed\": [\r\n          \"positive\",\r\n          \"zero\"\r\n        ]\r\n      },\r\n      \"route_topology\": {\r\n        \"expected\": [\r\n          \"no_route_nodes\",\r\n          \"stable_active_route\",\r\n          \"supplemental_materialization_short_node_order\",\r\n          \"ordinary_node_addition\",\r\n          \"parallel_node_addition\",\r\n          \"child_node_expansion\",\r\n     \n...[truncated]",
+      "stderr": "[flowguard] start phase=explore work_total=2 progress_steps=10\r\n[flowguard] progress 50% work=1/2 traces=5 violations=0\r\n[flowguard] progress 100% work=2/2 traces=15 violations=0\r\n"
+    },
+    {
+      "id": "check.tests.progress_fraction",
+      "kind": "command",
+      "required": true,
+      "covers": [
+        "req.progress.lifecycle_counting",
+        "req.progress.formal_removal"
+      ],
+      "status": "passed",
+      "command": "python",
+      "args": [
+        "-m",
+        "pytest",
+        "tests/test_flowpilot_core_runtime.py",
+        "-k",
+        "progress_fraction"
+      ],
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "durationMs": 1802,
+      "stdout": "============================= test session starts =============================\r\nplatform win32 -- Python 3.12.10, pytest-9.0.3, pluggy-1.6.0\r\nrootdir: C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\r\nconfigfile: pytest.ini\r\ncollected 158 items / 153 deselected / 5 selected\r\n\r\ntests\\test_flowpilot_core_runtime.py .....                               [100%]\r\n\r\n====================== 5 passed, 153 deselected in 0.95s ======================\r\n",
+      "stderr": ""
+    },
+    {
+      "id": "check.tests.progress_cartesian",
+      "kind": "command",
+      "required": true,
+      "covers": [
+        "req.progress.lifecycle_counting",
+        "req.progress.formal_removal",
+        "req.progress.cartesian_universe"
+      ],
+      "status": "passed",
+      "command": "python",
+      "args": [
+        "-m",
+        "pytest",
+        "tests/test_flowpilot_progress_lifecycle_cartesian.py"
+      ],
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "durationMs": 20553,
+      "stdout": "============================= test session starts =============================\r\nplatform win32 -- Python 3.12.10, pytest-9.0.3, pluggy-1.6.0\r\nrootdir: C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\r\nconfigfile: pytest.ini\r\ncollected 6 items\r\n\r\ntests\\test_flowpilot_progress_lifecycle_cartesian.py ......              [100%]\r\n\r\n============================= 6 passed in 19.72s ==============================\r\n",
+      "stderr": ""
+    },
+    {
+      "id": "check.tests.public_console",
+      "kind": "command",
+      "required": true,
+      "covers": [
+        "req.progress.control_plane_excluded"
+      ],
+      "status": "passed",
+      "command": "python",
+      "args": [
+        "-m",
+        "unittest",
+        "tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_public_console_exposes_progress_fraction_without_completion_authority"
+      ],
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "durationMs": 1685,
+      "stdout": "",
+      "stderr": ".\r\n----------------------------------------------------------------------\r\nRan 1 test in 0.001s\r\n\r\nOK\r\n"
+    },
+    {
+      "id": "check.repo.topology_build",
+      "kind": "command",
+      "required": true,
+      "covers": [
+        "req.progress.install_and_topology"
+      ],
+      "status": "passed",
+      "command": "python",
+      "args": [
+        "scripts/flowguard_project_topology.py",
+        "build"
+      ],
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "durationMs": 5080,
+      "stdout": "{\r\n  \"json_path\": \"docs/flowguard_project_topology.json\",\r\n  \"layer_counts\": {\r\n    \"alignment_families\": 14,\r\n    \"code_surfaces\": 1074,\r\n    \"evidence_summaries\": 5,\r\n    \"known_bad_signals\": 2619,\r\n    \"models\": 157,\r\n    \"test_commands\": 452\r\n  },\r\n  \"markdown_path\": \"docs/flowguard_project_topology.md\",\r\n  \"ok\": true\r\n}\r\n",
+      "stderr": ""
+    },
+    {
+      "id": "check.repo.topology_check",
+      "kind": "command",
+      "required": true,
+      "covers": [
+        "req.progress.install_and_topology"
+      ],
+      "status": "passed",
+      "command": "python",
+      "args": [
+        "scripts/flowguard_project_topology.py",
+        "check"
+      ],
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "durationMs": 424,
+      "stdout": "{\r\n  \"findings\": [],\r\n  \"json_path\": \"docs/flowguard_project_topology.json\",\r\n  \"layer_counts\": {\r\n    \"alignment_families\": 14,\r\n    \"code_surfaces\": 1074,\r\n    \"evidence_summaries\": 5,\r\n    \"known_bad_signals\": 2619,\r\n    \"models\": 157,\r\n    \"test_commands\": 452\r\n  },\r\n  \"markdown_path\": \"docs/flowguard_project_topology.md\",\r\n  \"ok\": true,\r\n  \"source_count\": 1051\r\n}\r\n",
+      "stderr": ""
+    },
+    {
+      "id": "check.install.sync_repo_owned",
+      "kind": "command",
+      "required": true,
+      "covers": [
+        "req.progress.install_and_topology"
+      ],
+      "status": "passed",
+      "command": "python",
+      "args": [
+        "scripts/install_flowpilot.py",
+        "--sync-repo-owned",
+        "--json"
+      ],
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "durationMs": 4216,
+      "stdout": "{\r\n  \"dependencies\": [\r\n    {\r\n      \"companion\": false,\r\n      \"installed\": true,\r\n      \"installed_digest\": \"4a1cced8a51f2083caa21a25ca59ada6b902b383450c000d471fd5fcdc908c07\",\r\n      \"name\": \"flowpilot\",\r\n      \"ok\": true,\r\n      \"path\": \"C:\\\\Users\\\\liu_y\\\\.codex\\\\skills\\\\flowpilot\",\r\n      \"required\": true,\r\n      \"source_digest\": \"4a1cced8a51f2083caa21a25ca59ada6b902b383450c000d471fd5fcdc908c07\",\r\n      \"source_fresh\": true,\r\n      \"source_path\": \"C:\\\\Users\\\\liu_y\\\\Documents\\\\FlowGuardProjectAutopilot_20260430\\\\skills\\\\flowpilot\",\r\n      \"type\": \"codex_skill\"\r\n    },\r\n    {\r\n      \"SCHEMA_VERSION\": \"1.0\",\r\n      \"companion\": false,\r\n      \"module\": \"flowguard\",\r\n      \"name\": \"flowguard\",\r\n      \"ok\": true,\r\n      \"path\": \"C:\\\\Users\\\\liu_y\\\\Documents\\\\FlowGuard_20260427\\\\flowguard\\\\__init__.py\",\r\n      \"required\": true,\r\n      \"type\": \"python_package\"\r\n    },\r\n    {\r\n      \"companion\": false,\r\n      \"installed\": true,\r\n      \"name\": \"model-first-function-flow\",\r\n      \"ok\": true,\r\n      \"path\": \"C:\\\\Users\\\\liu_y\\\\.codex\\\\skills\\\\model-first-function-flow\",\r\n      \"required\": true,\r\n      \"type\": \"codex_skill\"\r\n    },\r\n    {\r\n      \"companion\": true,\r\n      \"installed\": true,\r\n      \"name\": \"autonomous-concept-ui-redesign\",\r\n      \"ok\": true,\r\n      \"path\": \"C:\\\\Users\\\\liu_y\\\\.codex\\\\skills\\\\autonomous-concept-ui-redesign\",\r\n      \"required\": false,\r\n      \"type\": \"codex_skill\"\r\n    }\r\n  ],\r\n  \"dependency_policy\": {\r\n    \"optional\": [\r\n      \"autonomous-concept-ui-redesign\"\r\n    ],\r\n    \"optional_codex_skills\": [\r\n      \"autonomous-concept-ui-redesign\"\r\n    ],\r\n    \"policy\": \"Missing required Codex skills are installed with --install-missing. Missing FlowGuard is installed only when --install-flowguard explicitly authorizes Python environment changes. Optional UI companions are skipped unless --include-optional is used.\",\r\n    \"required\": [\r\n      \"flowpilot\",\r\n      \"flowguard\",\r\n      \"model-first-function-flow\"\r\n    ],\r\n    \"required_codex_skills\": [\r\n      \"flowpilot\",\r\n      \"model-first-function-flow\"\r\n    ],\r\n    \"required_python_packages\": [\r\n      \"flowguard\"\r\n    ]\r\n  },\r\n  \"host_capabilities\": [\r\n    {\r\n      \"available\": true,\r\n      \"detail\": \"Codex default provider found\",\r\n      \"id\": \"raster_image_generation\",\r\n      \"ok\": true,\r\n      \"path\": \"C:\\\\Users\\\\liu_y\\\\.codex\\\\skills\\\\.system\\\\imagegen\",\r\n      \"provider\": \"imagegen\",\r\n      \"provider_kind\": \"codex_skill\",\r\n      \"severity\": \"warning\",\r\n      \"type\": \"host_capability\"\r\n    }\r\n  ],\r\n  \"install_actions\": [\r\n    {\r\n      \"action\": \"already_fresh\",\r\n      \"name\": \"flowpilot\",\r\n      \"ok\": true,\r\n      \"path\": \"C:\\\\Users\\\\liu_y\\\\.codex\\\\skills\\\\flowpilot\"\r\n    }\r\n  ],\r\n  \"manifest\": \"C:\\\\Users\\\\liu_y\\\\Documents\\\\FlowGuardProjectAutopilot_20260430\\\\flowpilot.dependencies.json\",\r\n  \"ok\": true,\r\n  \"self_check\": {\r\n    \"ok\": true,\r\n    \"returncode\": 0,\r\n    \"stderr\": \"\",\r\n    \"stdout\": \"{\\n  \\\"checks\\\": [\\n    {\\n      \\\"name\\\": \\\"flowguard_import\\\",\\n      \\\"ok\\\": true,\\n      \\\"schema_version\\\": \\\"1.0\\\"\\n    },\\n    {\\n      \\\"name\\\": \\\"file:README.md\\\",\\n      \\\"ok\\\": true\\n    },\\n    {\\n      \\\"name\\\": \\\"file:CHANGELOG.md\\\",\\n      \\\"ok\\\": true\\n    },\\n    {\\n      \\\"name\\\": \\\"file:VERSION\\\",\\n      \\\"ok\\\": true\\n    },\\n    {\\n      \\\"name\\\": \\\"file:AGENTS.md\\\",\\n      \\\"ok\\\": true\\n    },\\n    {\\n      \\\"name\\\": \\\"file:HANDOFF.md\\\",\\n      \\\"ok\\\": true\\n    },\\n    {\\n      \\\"name\\\": \\\"file:pytest.ini\\\",\\n      \\\"ok\\\": true\\n    },\\n    {\\n      \\\"name\\\": \\\"file:openspec/changes/complete-black-box-flowpilot-system/proposal.md\\\",\\n      \\\"ok\\\": true\\n    },\\n    {\\n      \\\"name\\\": \\\"file:openspec/changes/complete-black-box-flowpilot-system/design.md\\\",\\n      \\\"ok\\\": true\\n    },\\n    {\\n      \\\"name\\\": \\\"file:openspec/changes/complete-black-box-flowpilot-system/tasks.md\\\",\\n      \\\"ok\\\": true\\n    },\\n    {\\n      \\\"name\\\": \\\"file:openspec/changes/complete-black-box-flowpilot-system/specs/complete-black-box-flowpilot-system/spec.md\\\",\\n      \\\"ok\\\":\n...[truncated]",
+      "stderr": ""
+    },
+    {
+      "id": "check.install.audit_local_sync",
+      "kind": "command",
+      "required": true,
+      "covers": [
+        "req.progress.install_and_topology"
+      ],
+      "status": "passed",
+      "command": "python",
+      "args": [
+        "scripts/audit_local_install_sync.py",
+        "--json"
+      ],
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "durationMs": 2302,
+      "stdout": "{\r\n  \"checks\": [\r\n    {\r\n      \"name\": \"repo_owned_skill_fresh:flowpilot\",\r\n      \"ok\": true,\r\n      \"path\": \"C:\\\\Users\\\\liu_y\\\\.codex\\\\skills\\\\flowpilot\",\r\n      \"severity\": \"error\",\r\n      \"source_path\": \"C:\\\\Users\\\\liu_y\\\\Documents\\\\FlowGuardProjectAutopilot_20260430\\\\skills\\\\flowpilot\"\r\n    },\r\n    {\r\n      \"duplicates\": {},\r\n      \"name\": \"installed_skill_names_unique\",\r\n      \"ok\": true,\r\n      \"severity\": \"error\"\r\n    },\r\n    {\r\n      \"count\": 3755,\r\n      \"name\": \"git_tracked_files_available\",\r\n      \"ok\": true,\r\n      \"severity\": \"error\"\r\n    },\r\n    {\r\n      \"expected_absent\": [\r\n        \"flowpilot_cockpit\",\r\n        \"tests/test_flowpilot_cockpit_i18n.py\",\r\n        \"tests/test_flowpilot_cockpit_state_reader.py\"\r\n      ],\r\n      \"name\": \"unsupported_cockpit_source_not_tracked\",\r\n      \"ok\": true,\r\n      \"present\": [],\r\n      \"severity\": \"error\"\r\n    },\r\n    {\r\n      \"name\": \"unsupported_cockpit_source_absent_from_main_tree\",\r\n      \"ok\": true,\r\n      \"present\": [],\r\n      \"severity\": \"error\"\r\n    },\r\n    {\r\n      \"expected_absent\": [\r\n        \"docs/external_watchdog_loop_findings.md\",\r\n        \"scripts/flowpilot_busy_lease.py\",\r\n        \"scripts/flowpilot_global_supervisor.py\",\r\n        \"scripts/flowpilot_run_with_busy_lease.py\",\r\n        \"scripts/flowpilot_watchdog.py\",\r\n        \"scripts/register_windows_watchdog_task.ps1\",\r\n        \"templates/flowpilot/watchdog/watchdog.template.json\"\r\n      ],\r\n      \"name\": \"unsupported_watchdog_supervisor_sources_absent_from_main_tree\",\r\n      \"ok\": true,\r\n      \"present\": [],\r\n      \"severity\": \"error\"\r\n    }\r\n  ],\r\n  \"dependencies\": [\r\n    {\r\n      \"companion\": false,\r\n      \"installed\": true,\r\n      \"installed_digest\": \"4a1cced8a51f2083caa21a25ca59ada6b902b383450c000d471fd5fcdc908c07\",\r\n      \"name\": \"flowpilot\",\r\n      \"ok\": true,\r\n      \"path\": \"C:\\\\Users\\\\liu_y\\\\.codex\\\\skills\\\\flowpilot\",\r\n      \"required\": true,\r\n      \"source_digest\": \"4a1cced8a51f2083caa21a25ca59ada6b902b383450c000d471fd5fcdc908c07\",\r\n      \"source_fresh\": true,\r\n      \"source_path\": \"C:\\\\Users\\\\liu_y\\\\Documents\\\\FlowGuardProjectAutopilot_20260430\\\\skills\\\\flowpilot\",\r\n      \"type\": \"codex_skill\"\r\n    },\r\n    {\r\n      \"SCHEMA_VERSION\": \"1.0\",\r\n      \"companion\": false,\r\n      \"module\": \"flowguard\",\r\n      \"name\": \"flowguard\",\r\n      \"ok\": true,\r\n      \"path\": \"C:\\\\Users\\\\liu_y\\\\Documents\\\\FlowGuard_20260427\\\\flowguard\\\\__init__.py\",\r\n      \"required\": true,\r\n      \"type\": \"python_package\"\r\n    },\r\n    {\r\n      \"companion\": false,\r\n      \"installed\": true,\r\n      \"name\": \"model-first-function-flow\",\r\n      \"ok\": true,\r\n      \"path\": \"C:\\\\Users\\\\liu_y\\\\.codex\\\\skills\\\\model-first-function-flow\",\r\n      \"required\": true,\r\n      \"type\": \"codex_skill\"\r\n    },\r\n    {\r\n      \"companion\": true,\r\n      \"installed\": true,\r\n      \"name\": \"autonomous-concept-ui-redesign\",\r\n      \"ok\": true,\r\n      \"path\": \"C:\\\\Users\\\\liu_y\\\\.codex\\\\skills\\\\autonomous-concept-ui-redesign\",\r\n      \"required\": false,\r\n      \"type\": \"codex_skill\"\r\n    }\r\n  ],\r\n  \"ok\": true,\r\n  \"repo_root\": \"C:\\\\Users\\\\liu_y\\\\Documents\\\\FlowGuardProjectAutopilot_20260430\",\r\n  \"skills_root\": \"C:\\\\Users\\\\liu_y\\\\.codex\\\\skills\"\r\n}\r\n",
+      "stderr": ""
+    },
+    {
+      "id": "check.install.check",
+      "kind": "command",
+      "required": true,
+      "covers": [
+        "req.progress.install_and_topology"
+      ],
+      "status": "passed",
+      "command": "python",
+      "args": [
+        "scripts/install_flowpilot.py",
+        "--check",
+        "--json"
+      ],
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "durationMs": 1856,
+      "stdout": "{\r\n  \"dependencies\": [\r\n    {\r\n      \"companion\": false,\r\n      \"installed\": true,\r\n      \"installed_digest\": \"4a1cced8a51f2083caa21a25ca59ada6b902b383450c000d471fd5fcdc908c07\",\r\n      \"name\": \"flowpilot\",\r\n      \"ok\": true,\r\n      \"path\": \"C:\\\\Users\\\\liu_y\\\\.codex\\\\skills\\\\flowpilot\",\r\n      \"required\": true,\r\n      \"source_digest\": \"4a1cced8a51f2083caa21a25ca59ada6b902b383450c000d471fd5fcdc908c07\",\r\n      \"source_fresh\": true,\r\n      \"source_path\": \"C:\\\\Users\\\\liu_y\\\\Documents\\\\FlowGuardProjectAutopilot_20260430\\\\skills\\\\flowpilot\",\r\n      \"type\": \"codex_skill\"\r\n    },\r\n    {\r\n      \"SCHEMA_VERSION\": \"1.0\",\r\n      \"companion\": false,\r\n      \"module\": \"flowguard\",\r\n      \"name\": \"flowguard\",\r\n      \"ok\": true,\r\n      \"path\": \"C:\\\\Users\\\\liu_y\\\\Documents\\\\FlowGuard_20260427\\\\flowguard\\\\__init__.py\",\r\n      \"required\": true,\r\n      \"type\": \"python_package\"\r\n    },\r\n    {\r\n      \"companion\": false,\r\n      \"installed\": true,\r\n      \"name\": \"model-first-function-flow\",\r\n      \"ok\": true,\r\n      \"path\": \"C:\\\\Users\\\\liu_y\\\\.codex\\\\skills\\\\model-first-function-flow\",\r\n      \"required\": true,\r\n      \"type\": \"codex_skill\"\r\n    },\r\n    {\r\n      \"companion\": true,\r\n      \"installed\": true,\r\n      \"name\": \"autonomous-concept-ui-redesign\",\r\n      \"ok\": true,\r\n      \"path\": \"C:\\\\Users\\\\liu_y\\\\.codex\\\\skills\\\\autonomous-concept-ui-redesign\",\r\n      \"required\": false,\r\n      \"type\": \"codex_skill\"\r\n    }\r\n  ],\r\n  \"dependency_policy\": {\r\n    \"optional\": [\r\n      \"autonomous-concept-ui-redesign\"\r\n    ],\r\n    \"optional_codex_skills\": [\r\n      \"autonomous-concept-ui-redesign\"\r\n    ],\r\n    \"policy\": \"Missing required Codex skills are installed with --install-missing. Missing FlowGuard is installed only when --install-flowguard explicitly authorizes Python environment changes. Optional UI companions are skipped unless --include-optional is used.\",\r\n    \"required\": [\r\n      \"flowpilot\",\r\n      \"flowguard\",\r\n      \"model-first-function-flow\"\r\n    ],\r\n    \"required_codex_skills\": [\r\n      \"flowpilot\",\r\n      \"model-first-function-flow\"\r\n    ],\r\n    \"required_python_packages\": [\r\n      \"flowguard\"\r\n    ]\r\n  },\r\n  \"host_capabilities\": [\r\n    {\r\n      \"available\": true,\r\n      \"detail\": \"Codex default provider found\",\r\n      \"id\": \"raster_image_generation\",\r\n      \"ok\": true,\r\n      \"path\": \"C:\\\\Users\\\\liu_y\\\\.codex\\\\skills\\\\.system\\\\imagegen\",\r\n      \"provider\": \"imagegen\",\r\n      \"provider_kind\": \"codex_skill\",\r\n      \"severity\": \"warning\",\r\n      \"type\": \"host_capability\"\r\n    }\r\n  ],\r\n  \"install_actions\": [],\r\n  \"manifest\": \"C:\\\\Users\\\\liu_y\\\\Documents\\\\FlowGuardProjectAutopilot_20260430\\\\flowpilot.dependencies.json\",\r\n  \"ok\": true,\r\n  \"skills_root\": \"C:\\\\Users\\\\liu_y\\\\.codex\\\\skills\"\r\n}\r\n",
+      "stderr": ""
+    },
+    {
+      "id": "check.install.self_check",
+      "kind": "command",
+      "required": true,
+      "covers": [
+        "req.progress.install_and_topology"
+      ],
+      "status": "passed",
+      "command": "python",
+      "args": [
+        "scripts/check_install.py",
+        "--json"
+      ],
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "durationMs": 2426,
+      "stdout": "{\r\n  \"checks\": [\r\n    {\r\n      \"name\": \"flowguard_import\",\r\n      \"ok\": true,\r\n      \"schema_version\": \"1.0\"\r\n    },\r\n    {\r\n      \"name\": \"file:README.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:CHANGELOG.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:VERSION\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:AGENTS.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:HANDOFF.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:pytest.ini\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/complete-black-box-flowpilot-system/proposal.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/complete-black-box-flowpilot-system/design.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/complete-black-box-flowpilot-system/tasks.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/complete-black-box-flowpilot-system/specs/complete-black-box-flowpilot-system/spec.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/complete-black-box-flowpilot-system/specs/flowpilot-maintenance-ideal-state/spec.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/complete-black-box-flowpilot-system/specs/historical-live-run-replay-package-suite/spec.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/complete-black-box-flowpilot-system/specs/interactive-startup-intake/spec.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/complete-black-box-flowpilot-system/specs/multiround-fake-ai-control-rehearsal/spec.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/complete-black-box-flowpilot-system/specs/runtime-ledger-persistence/spec.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/generate-new-flowpilot-formal-entrypoint/proposal.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/generate-new-flowpilot-formal-entrypoint/design.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/generate-new-flowpilot-formal-entrypoint/tasks.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/generate-new-flowpilot-formal-entrypoint/specs/new-flowpilot-formal-entrypoint/spec.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/unify-new-flowpilot-work-packet-lifecycle/proposal.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/unify-new-flowpilot-work-packet-lifecycle/design.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/unify-new-flowpilot-work-packet-lifecycle/tasks.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/unify-new-flowpilot-work-packet-lifecycle/specs/new-flowpilot-formal-entrypoint/spec.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/harden-flowpilot-enum-prompts-and-run-evidence/proposal.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/harden-flowpilot-enum-prompts-and-run-evidence/design.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/harden-flowpilot-enum-prompts-and-run-evidence/tasks.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/harden-flowpilot-enum-prompts-and-run-evidence/specs/flowpilot-prompt-boundary-policy/spec.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/harden-flowpilot-enum-prompts-and-run-evidence/specs/flowguard-background-observability/spec.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/restore-recursive-route-execution-runtime/proposal.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/restore-recursive-route-execution-runtime/design.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/restore-recursive-route-execution-runtime/tasks.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n     \n...[truncated]",
+      "stderr": ""
+    },
+    {
+      "id": "check.repo.diff_check",
+      "kind": "command",
+      "required": true,
+      "covers": [
+        "req.progress.install_and_topology"
+      ],
+      "status": "passed",
+      "command": "git",
+      "args": [
+        "diff",
+        "--check"
+      ],
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "durationMs": 356,
+      "stdout": "",
+      "stderr": "warning: in the working copy of 'docs/flowguard_project_topology.json', CRLF will be replaced by LF the next time Git touches it\nwarning: in the working copy of 'docs/flowguard_project_topology.md', CRLF will be replaced by LF the next time Git touches it\n"
+    }
+  ]
+}

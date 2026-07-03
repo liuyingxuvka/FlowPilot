@@ -4322,7 +4322,7 @@ _REPAIR_REPLACED_PACKET_STATUSES = _CURRENT_PACKET_BLOCKING_STATUSES | {"result_
 _NONCURRENT_PACKET_STATUSES = {"accepted", "quarantined_after_route_mutation", "superseded_after_repair"}
 _NONCURRENT_ROUTE_NODE_STATUSES = {"accepted", "waived", "superseded"}
 _PROGRESS_ROUTE_NODE_ENDED_STATUSES = {"accepted", "waived", "blocked", "stopped"}
-_PROGRESS_ROUTE_NODE_REMOVED_STATUSES = {"superseded"}
+_PROGRESS_ROUTE_NODE_REMOVED_STATUSES = {"superseded", "cancelled", "canceled"}
 _PM_REPAIR_DECISIONS = {
     "break_glass",
     "repair_current_scope",

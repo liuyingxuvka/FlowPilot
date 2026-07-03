@@ -1,54 +1,254 @@
-schema_version: openspec.verification_contract.v1
+contract_version: 1
 change: stabilize-progress-lifecycle-counting
-claim_boundary:
-  proves:
-    - progress_fraction no longer collapses to a short active node_order when earlier nodes remain undispositioned
-    - progress_fraction keeps the no-node initial planning display
-    - packet and lease activity still does not affect progress counts
-    - formal route/node lifecycle status controls ended-node counting
-    - installed FlowPilot skill matches repository source after the change
-  does_not_prove:
-    - terminal completion
-    - publication readiness
-    - heavyweight release confidence from full Meta and Capability regressions
-    - correctness of unrelated parallel-agent artifacts
-required_evidence:
-  openspec:
-    - command: openspec validate stabilize-progress-lifecycle-counting --strict
-      expected: pass
-  flowguard:
-    - command: python simulations/run_flowpilot_route_replanning_policy_checks.py --json-out simulations/flowpilot_route_replanning_policy_results.json
-      expected: pass
-    - command: python simulations/run_flowpilot_route_mutation_activation_checks.py --json-out simulations/flowpilot_route_mutation_activation_results.json
-      expected: pass
-    - command: python simulations/run_flowpilot_recursive_route_execution_checks.py --json-out simulations/flowpilot_recursive_route_execution_results.json
-      expected: pass
-  tests:
-    - command: python -m pytest tests/test_flowpilot_core_runtime.py -k progress_fraction
-      expected: pass
-    - command: python -m unittest tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_public_console_exposes_progress_fraction_without_completion_authority
-      expected: pass
-  install_sync:
-    - command: python scripts/install_flowpilot.py --sync-repo-owned --json
-      expected: pass_or_documented_windows_lock_recovery
-    - command: python scripts/audit_local_install_sync.py --json
-      expected: pass
-    - command: python scripts/install_flowpilot.py --check --json
-      expected: pass
-    - command: python scripts/check_install.py --json
-      expected: pass
-  repository:
-    - command: python scripts/flowguard_project_topology.py build
-      expected: pass_if_topology_staled_by_changed_sources
-    - command: python scripts/flowguard_project_topology.py check
-      expected: pass
-    - command: git diff --check
-      expected: pass
-peer_agent_boundary:
-  do_not_stage:
-    - .playwright-mcp/
-    - .tmp_flowguard_evidence/
-    - promotion-kit/
-    - reports/
-    - simulations/.tmp_flowguard_evidence/
-  rule: preserve unrelated peer-agent changes and untracked artifacts
+
+obligations:
+  - id: req.progress.lifecycle_counting
+    source: "specs/flowpilot-progress-fraction/spec.md#Requirement: Runtime counts expanded route nodes by lifecycle disposition"
+    claim: "Runtime progress_fraction counts the display-only initial planning node plus current-run effective route_nodes, and does not collapse to a short active node_order projection."
+    required: true
+    evidence:
+      - check.openspec.validate
+      - check.flowguard.progress_cartesian
+      - check.tests.progress_fraction
+      - check.tests.progress_cartesian
+  - id: req.progress.formal_removal
+    source: "specs/flowpilot-progress-fraction/spec.md#Requirement: Denominator reduction requires formal node or route disposition"
+    claim: "Runtime denominator reduction requires formal removal status such as superseded, cancelled, or canceled; absence from active node_order alone is not removal authority."
+    required: true
+    evidence:
+      - check.flowguard.progress_cartesian
+      - check.tests.progress_fraction
+      - check.tests.progress_cartesian
+  - id: req.progress.route_structure
+    source: "specs/flowpilot-progress-fraction/spec.md#Requirement: Route structure changes map to progress consistently"
+    claim: "Route replanning, mutation, child expansion, repair replacement, branch-then-continue, and full rewrite topologies map to progress through lifecycle-effective route_nodes."
+    required: true
+    evidence:
+      - check.flowguard.route_replanning_policy
+      - check.flowguard.route_mutation_activation
+      - check.flowguard.recursive_route_execution
+      - check.flowguard.progress_cartesian
+  - id: req.progress.control_plane_excluded
+    source: "specs/flowpilot-progress-fraction/spec.md#Requirement: Control-plane records remain excluded"
+    claim: "Packets, ACKs, leases, patrols, role records, Controller receipts, and sealed bodies do not affect progress numerator or denominator."
+    required: true
+    evidence:
+      - check.flowguard.progress_cartesian
+      - check.tests.public_console
+  - id: req.progress.cartesian_universe
+    source: "specs/flowpilot-progress-fraction/spec.md#Requirement: Progress lifecycle coverage is Cartesian within the declared finite universe"
+    claim: "The declared finite progress lifecycle universe is exercised as a full Cartesian product, with ContractExhaustion and TestMesh receipts consuming the generated shards."
+    required: true
+    evidence:
+      - check.flowguard.progress_cartesian
+      - check.tests.progress_cartesian
+  - id: req.progress.install_and_topology
+    source: "verification-contract.yaml#repository-and-install-sync"
+    claim: "Repository evidence topology is current and the installed local FlowPilot skill matches the repository-owned source after the change."
+    required: true
+    evidence:
+      - check.repo.topology_build
+      - check.repo.topology_check
+      - check.install.sync_repo_owned
+      - check.install.audit_local_sync
+      - check.install.check
+      - check.install.self_check
+      - check.repo.diff_check
+
+checks:
+  - id: check.openspec.validate
+    kind: command
+    command: openspec
+    args:
+      - validate
+      - stabilize-progress-lifecycle-counting
+      - --strict
+    required: true
+    covers:
+      - req.progress.lifecycle_counting
+    expected:
+      exit_code: 0
+  - id: check.flowguard.route_replanning_policy
+    kind: command
+    command: python
+    args:
+      - simulations/run_flowpilot_route_replanning_policy_checks.py
+      - --json-out
+      - simulations/flowpilot_route_replanning_policy_results.json
+    required: true
+    covers:
+      - req.progress.route_structure
+    expected:
+      exit_code: 0
+  - id: check.flowguard.route_mutation_activation
+    kind: command
+    command: python
+    args:
+      - simulations/run_flowpilot_route_mutation_activation_checks.py
+      - --json-out
+      - simulations/flowpilot_route_mutation_activation_results.json
+    required: true
+    covers:
+      - req.progress.route_structure
+    expected:
+      exit_code: 0
+  - id: check.flowguard.recursive_route_execution
+    kind: command
+    command: python
+    args:
+      - simulations/run_flowpilot_recursive_route_execution_checks.py
+      - --json-out
+      - simulations/flowpilot_recursive_route_execution_results.json
+    required: true
+    covers:
+      - req.progress.route_structure
+    expected:
+      exit_code: 0
+  - id: check.flowguard.progress_cartesian
+    kind: command
+    command: python
+    args:
+      - simulations/run_flowpilot_progress_lifecycle_cartesian_checks.py
+      - --json-out
+      - simulations/flowpilot_progress_lifecycle_cartesian_results.json
+    required: true
+    covers:
+      - req.progress.lifecycle_counting
+      - req.progress.formal_removal
+      - req.progress.route_structure
+      - req.progress.control_plane_excluded
+      - req.progress.cartesian_universe
+    expected:
+      exit_code: 0
+  - id: check.tests.progress_fraction
+    kind: command
+    command: python
+    args:
+      - -m
+      - pytest
+      - tests/test_flowpilot_core_runtime.py
+      - -k
+      - progress_fraction
+    required: true
+    covers:
+      - req.progress.lifecycle_counting
+      - req.progress.formal_removal
+    expected:
+      exit_code: 0
+  - id: check.tests.progress_cartesian
+    kind: command
+    command: python
+    args:
+      - -m
+      - pytest
+      - tests/test_flowpilot_progress_lifecycle_cartesian.py
+    required: true
+    covers:
+      - req.progress.lifecycle_counting
+      - req.progress.formal_removal
+      - req.progress.cartesian_universe
+    expected:
+      exit_code: 0
+  - id: check.tests.public_console
+    kind: command
+    command: python
+    args:
+      - -m
+      - unittest
+      - tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_public_console_exposes_progress_fraction_without_completion_authority
+    required: true
+    covers:
+      - req.progress.control_plane_excluded
+    expected:
+      exit_code: 0
+  - id: check.repo.topology_build
+    kind: command
+    command: python
+    args:
+      - scripts/flowguard_project_topology.py
+      - build
+    required: true
+    covers:
+      - req.progress.install_and_topology
+    expected:
+      exit_code: 0
+  - id: check.repo.topology_check
+    kind: command
+    command: python
+    args:
+      - scripts/flowguard_project_topology.py
+      - check
+    required: true
+    covers:
+      - req.progress.install_and_topology
+    expected:
+      exit_code: 0
+  - id: check.install.sync_repo_owned
+    kind: command
+    command: python
+    args:
+      - scripts/install_flowpilot.py
+      - --sync-repo-owned
+      - --json
+    required: true
+    covers:
+      - req.progress.install_and_topology
+    expected:
+      exit_code: 0
+  - id: check.install.audit_local_sync
+    kind: command
+    command: python
+    args:
+      - scripts/audit_local_install_sync.py
+      - --json
+    required: true
+    covers:
+      - req.progress.install_and_topology
+    expected:
+      exit_code: 0
+  - id: check.install.check
+    kind: command
+    command: python
+    args:
+      - scripts/install_flowpilot.py
+      - --check
+      - --json
+    required: true
+    covers:
+      - req.progress.install_and_topology
+    expected:
+      exit_code: 0
+  - id: check.install.self_check
+    kind: command
+    command: python
+    args:
+      - scripts/check_install.py
+      - --json
+    required: true
+    covers:
+      - req.progress.install_and_topology
+    expected:
+      exit_code: 0
+  - id: check.repo.diff_check
+    kind: command
+    command: git
+    args:
+      - diff
+      - --check
+    required: true
+    covers:
+      - req.progress.install_and_topology
+    expected:
+      exit_code: 0
+
+freshness:
+  watch:
+    - openspec/changes/stabilize-progress-lifecycle-counting/design.md
+    - openspec/changes/stabilize-progress-lifecycle-counting/tasks.md
+    - openspec/changes/stabilize-progress-lifecycle-counting/specs/**/*.md
+    - openspec/changes/stabilize-progress-lifecycle-counting/verification-contract.yaml
+    - skills/flowpilot/assets/flowpilot_core_runtime/runtime.py
+    - simulations/flowpilot_progress_lifecycle_cartesian_model.py
+    - simulations/run_flowpilot_progress_lifecycle_cartesian_checks.py
+    - tests/test_flowpilot_core_runtime.py
+    - tests/test_flowpilot_progress_lifecycle_cartesian.py

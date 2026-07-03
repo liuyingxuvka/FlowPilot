@@ -23,3 +23,11 @@
 - [x] 4.2 Sync the repository-owned FlowPilot skill into the local installed skill directory.
 - [x] 4.3 Verify install digests and local install checks.
 - [x] 4.4 Commit the scoped repository changes without staging peer-agent artifacts.
+
+## 5. Cartesian coverage hardening
+
+- [x] 5.1 Declare the progress lifecycle finite Cartesian universe and FlowGuard ContractExhaustion/TestMesh evidence path.
+- [x] 5.2 Add a dedicated progress lifecycle Cartesian model and runner.
+- [x] 5.3 Bind the Cartesian runner to runtime `current_progress_fraction` outputs for every generated cell.
+- [x] 5.4 Add pytest coverage for persisted matrix evidence, axis coverage, node_order independence, removed statuses, and TestMesh consumption.
+- [x] 5.5 Re-run the expanded verification contract, install sync, and topology checks.

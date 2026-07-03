@@ -117,8 +117,8 @@
     "other": {
       "alignment_family_count": 7,
       "code_surface_count": 251,
-      "known_bad_count": 1408,
-      "model_count": 88,
+      "known_bad_count": 1416,
+      "model_count": 89,
       "runner_keys": [
         "capability",
         "command_refinement",
@@ -14471,14 +14471,14 @@
       "path": "simulations/flowpilot_model_test_alignment_results.json"
     }
   },
-  "generated_at_epoch": 1783085343.39224,
+  "generated_at_epoch": 1783088244.1295702,
   "generator_version": "1",
   "layer_counts": {
     "alignment_families": 14,
     "code_surfaces": 1074,
     "evidence_summaries": 5,
-    "known_bad_signals": 2611,
-    "models": 156,
+    "known_bad_signals": 2619,
+    "models": 157,
     "test_commands": 452
   },
   "model_test_alignment": [
@@ -18045,6 +18045,35 @@
       "result_path": "simulations/flowpilot_process_liveness_results.json",
       "runner_key": "flowpilot_process_liveness",
       "runner_path": "simulations/run_flowpilot_process_liveness_checks.py"
+    },
+    {
+      "area": "other",
+      "coverage_tier": "unclassified_model_tier",
+      "evidence": {
+        "confidence": "",
+        "decision": "",
+        "edge_count": null,
+        "finding_count": null,
+        "full_coverage_ok": null,
+        "known_bad": [
+          "expected",
+          "hazards",
+          "missing_expected_failures",
+          "ok",
+          "control_noise_changes_progress",
+          "node_order_absence_removes_effective_node",
+          "packet_projection_used",
+          "removed_node_remains_pending"
+        ],
+        "ok": true,
+        "present": true,
+        "release_convergence_ok": null,
+        "state_count": 11
+      },
+      "model_path": "simulations/flowpilot_progress_lifecycle_cartesian_model.py",
+      "result_path": "simulations/flowpilot_progress_lifecycle_cartesian_results.json",
+      "runner_key": "flowpilot_progress_lifecycle_cartesian",
+      "runner_path": "simulations/run_flowpilot_progress_lifecycle_cartesian_checks.py"
     },
     {
       "area": "other",
@@ -21926,6 +21955,18 @@
     },
     {
       "exists": true,
+      "mtime_ns": 1783087673007374500,
+      "path": "simulations/flowpilot_progress_lifecycle_cartesian_model.py",
+      "size": 22379
+    },
+    {
+      "exists": true,
+      "mtime_ns": 1783088215012812300,
+      "path": "simulations/flowpilot_progress_lifecycle_cartesian_results.json",
+      "size": 78081
+    },
+    {
+      "exists": true,
       "mtime_ns": 1782973797350863500,
       "path": "simulations/flowpilot_project_control_information_flow_model.py",
       "size": 47710
@@ -22046,7 +22087,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1783085277024018600,
+      "mtime_ns": 1783088208380826000,
       "path": "simulations/flowpilot_recursive_route_execution_results.json",
       "size": 5991
     },
@@ -22232,7 +22273,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1783085277127539200,
+      "mtime_ns": 1783088207143384700,
       "path": "simulations/flowpilot_route_mutation_activation_results.json",
       "size": 35975
     },
@@ -22244,7 +22285,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1783085276953486500,
+      "mtime_ns": 1783088206003204100,
       "path": "simulations/flowpilot_route_replanning_policy_results.json",
       "size": 6256
     },
@@ -23237,6 +23278,12 @@
       "mtime_ns": 1780667460618924500,
       "path": "simulations/run_flowpilot_process_liveness_checks.py",
       "size": 906
+    },
+    {
+      "exists": true,
+      "mtime_ns": 1783087722894294600,
+      "path": "simulations/run_flowpilot_progress_lifecycle_cartesian_checks.py",
+      "size": 21563
     },
     {
       "exists": true,

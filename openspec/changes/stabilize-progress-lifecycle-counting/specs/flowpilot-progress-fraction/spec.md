@@ -48,3 +48,13 @@ FlowPilot progress counting SHALL exclude packets, ACKs, leases, patrols, livene
 - **WHEN** packet, lease, ACK, or role-assignment records change
 - **AND** no route node is added or lifecycle-dispositioned
 - **THEN** `progress_fraction.ended_nodes` and `progress_fraction.expanded_nodes` do not change because of those control-plane records
+
+### Requirement: Progress lifecycle coverage is Cartesian within the declared finite universe
+FlowPilot SHALL maintain executable coverage for the finite progress lifecycle universe covering node status, route topology, active `node_order` projection, route node kind, control-plane noise, and repair generation. The coverage SHALL include a FlowGuard ContractExhaustion receipt and TestMesh evidence for the generated combination shards.
+
+#### Scenario: Declared progress universe is exhaustively exercised
+- **WHEN** the progress lifecycle Cartesian runner executes
+- **THEN** every declared axis value appears in at least one generated cell
+- **AND** every generated cell's runtime `progress_fraction` matches the lifecycle oracle
+- **AND** active `node_order` projection variants do not change numerator, denominator, or source
+- **AND** control-plane noise variants do not change numerator, denominator, or source

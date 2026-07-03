@@ -48,6 +48,12 @@ If a later materialization overwrites `node_order` but old nodes remain in `rout
 
 Alternative considered: infer removal from absence in active `node_order`. Rejected because the observed failure was exactly an unintended absence after supplemental materialization.
 
+### Decision: Use a declared finite Cartesian coverage model for progress
+
+The progress projection now has a model-scoped ContractExhaustion/TestMesh matrix with finite axes for node status, route topology, active `node_order` projection, node kind, control-plane noise, and repair generation. The broad claim is scoped to that declared finite universe, not every future ledger field in the repository.
+
+Alternative considered: add more hand-written unit examples. Rejected because examples do not prove that every declared lifecycle/topology/noise combination is covered or that active `node_order` stays non-authoritative across the full product.
+
 ### Decision: Keep initial planning node as display-only
 
 Before any route node exists, progress remains `0/1`. Once route nodes exist, the initial planning node contributes one ended unit so the public denominator grows from the same vocabulary rather than switching to packet counts.
