@@ -1066,41 +1066,40 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         self.assertIn("review_not_independent:self_review", evidence["blockers"])
         self.assertIn("review_missing_direct_evidence", evidence["blockers"])
 
-    def test_current_progress_fraction_uses_active_route_node_order_not_history(self) -> None:
+    def test_current_progress_fraction_counts_undispositioned_nodes_when_node_order_shrinks(self) -> None:
         ledger = runtime.new_ledger("Goal", "Contract")
-        ledger["active_route_version"] = 2
+        ledger["active_route_version"] = 1
         ledger["routes"] = {
-            "1": {"route_version": 1, "status": "superseded", "node_order": ["old-1", "old-2"]},
-            "2": {
-                "route_version": 2,
-                "status": "active",
-                "node_order": ["node-1", "node-2", "node-3", "node-4"],
-            },
+            "1": {"route_version": 1, "status": "active", "node_order": ["node-cover-active-acceptance-items"]},
         }
         ledger["route_nodes"] = {
-            "old-1": {"node_id": "old-1", "route_version": 1, "status": "accepted"},
-            "old-2": {"node_id": "old-2", "route_version": 1, "status": "pending"},
-            "node-1": {"node_id": "node-1", "route_version": 1, "status": "accepted"},
-            "node-2": {"node_id": "node-2", "route_version": 2, "status": "running"},
-            "node-3": {
-                "node_id": "node-3",
-                "route_version": 2,
-                "status": "awaiting_children",
-                "child_node_ids": ["node-4"],
+            "node-previous-accepted": {
+                "node_id": "node-previous-accepted",
+                "route_version": 1,
+                "status": "accepted",
             },
-            "node-4": {"node_id": "node-4", "route_version": 2, "status": "accepted"},
+            "node-previous-awaiting": {
+                "node_id": "node-previous-awaiting",
+                "route_version": 1,
+                "status": "awaiting_pm_disposition",
+            },
+            "node-cover-active-acceptance-items": {
+                "node_id": "node-cover-active-acceptance-items",
+                "route_version": 1,
+                "status": "running",
+            },
         }
 
         progress = runtime.current_progress_fraction(ledger)
 
-        self.assertEqual(progress["display"], "3/5")
-        self.assertEqual(progress["ended_nodes"], 3)
-        self.assertEqual(progress["expanded_nodes"], 5)
-        self.assertEqual(progress["source"], "active_route_node_order_with_initial_planning_node")
+        self.assertEqual(progress["display"], "2/4")
+        self.assertEqual(progress["ended_nodes"], 2)
+        self.assertEqual(progress["expanded_nodes"], 4)
+        self.assertEqual(progress["source"], "route_nodes_lifecycle_with_initial_planning_node")
         self.assertFalse(progress["includes_repair_generations"])
         self.assertFalse(progress["packet_projection_used"])
 
-    def test_current_progress_fraction_repair_replacement_preserves_route_slot_count(self) -> None:
+    def test_current_progress_fraction_repair_replacement_removes_superseded_node(self) -> None:
         ledger = runtime.new_ledger("Goal", "Contract")
         ledger["active_route_version"] = 2
         ledger["routes"] = {
@@ -1135,7 +1134,7 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         self.assertEqual(progress["ended_nodes"], 2)
         self.assertEqual(progress["expanded_nodes"], 4)
         self.assertEqual(progress["repair_generations"], 1)
-        self.assertEqual(progress["source"], "active_route_node_order_with_initial_planning_node")
+        self.assertEqual(progress["source"], "route_nodes_lifecycle_with_initial_planning_node")
         self.assertTrue(progress["includes_repair_generations"])
         self.assertFalse(progress["packet_projection_used"])
 

@@ -4321,7 +4321,8 @@ _REPAIR_LOOP_COUNTED_BLOCKER_STATUSES = _CLEARABLE_SEMANTIC_BLOCKER_STATUSES | {
 _REPAIR_REPLACED_PACKET_STATUSES = _CURRENT_PACKET_BLOCKING_STATUSES | {"result_submitted"}
 _NONCURRENT_PACKET_STATUSES = {"accepted", "quarantined_after_route_mutation", "superseded_after_repair"}
 _NONCURRENT_ROUTE_NODE_STATUSES = {"accepted", "waived", "superseded"}
-_PROGRESS_ROUTE_NODE_ENDED_STATUSES = {"accepted", "waived", "superseded", "blocked", "stopped"}
+_PROGRESS_ROUTE_NODE_ENDED_STATUSES = {"accepted", "waived", "blocked", "stopped"}
+_PROGRESS_ROUTE_NODE_REMOVED_STATUSES = {"superseded"}
 _PM_REPAIR_DECISIONS = {
     "break_glass",
     "repair_current_scope",
@@ -4608,65 +4609,39 @@ def _progress_active_subject(ledger: Mapping[str, Any]) -> dict[str, Any]:
     }
 
 
-def _active_route_node_order_for_progress(ledger: Mapping[str, Any]) -> list[str]:
-    active_route = ledger.get("active_route_version")
-    if active_route is None:
+def _route_node_records_for_progress(ledger: Mapping[str, Any]) -> list[tuple[str, Mapping[str, Any]]]:
+    route_nodes = ledger.get("route_nodes", {})
+    if not isinstance(route_nodes, Mapping):
         return []
-    routes = ledger.get("routes", {})
-    if not isinstance(routes, Mapping):
-        return []
-    route = routes.get(str(active_route))
-    if not isinstance(route, Mapping):
-        route = routes.get(active_route)
-    if not isinstance(route, Mapping):
-        active_route_number = _coerce_nonnegative_int(active_route)
-        for route_key, candidate in routes.items():
-            if not isinstance(candidate, Mapping):
-                continue
-            route_version = _coerce_nonnegative_int(candidate.get("route_version", route_key))
-            if route_version == active_route_number:
-                route = candidate
-                break
-    if not isinstance(route, Mapping):
-        for candidate in routes.values():
-            if isinstance(candidate, Mapping) and str(candidate.get("status") or "") == "active":
-                route = candidate
-                break
-    if not isinstance(route, Mapping):
-        return []
-    node_order = route.get("node_order")
-    if not isinstance(node_order, (list, tuple)):
-        return []
-    node_ids: list[str] = []
+    records: list[tuple[str, Mapping[str, Any]]] = []
     seen: set[str] = set()
-    for item in node_order:
-        node_id = str(item or "").strip()
+    for key, node in route_nodes.items():
+        if not isinstance(node, Mapping):
+            continue
+        node_id = str(node.get("node_id") or key or "").strip()
         if not node_id or node_id in seen:
             continue
+        status = str(node.get("status") or "").strip().lower()
+        if status in _PROGRESS_ROUTE_NODE_REMOVED_STATUSES:
+            continue
         seen.add(node_id)
-        node_ids.append(node_id)
-    return node_ids
+        records.append((node_id, node))
+    return records
 
 
 def current_progress_fraction(ledger: Mapping[str, Any]) -> dict[str, Any]:
     """Return Controller-safe current expanded node progress."""
 
-    route_nodes = ledger.get("route_nodes", {})
-    if not isinstance(route_nodes, Mapping):
-        route_nodes = {}
-    active_route_node_ids = _active_route_node_order_for_progress(ledger)
-    if active_route_node_ids:
-        expanded_nodes = 1 + len(active_route_node_ids)
+    route_node_records = _route_node_records_for_progress(ledger)
+    if route_node_records:
+        expanded_nodes = 1 + len(route_node_records)
         ended_nodes = 1
         repair_generations = 0
-        for node_id in active_route_node_ids:
-            node = route_nodes.get(node_id)
-            if not isinstance(node, Mapping):
-                continue
+        for _node_id, node in route_node_records:
             repair_generations += _coerce_nonnegative_int(node.get("repair_generation", 0))
-            if str(node.get("status") or "") in _PROGRESS_ROUTE_NODE_ENDED_STATUSES:
+            if str(node.get("status") or "").strip().lower() in _PROGRESS_ROUTE_NODE_ENDED_STATUSES:
                 ended_nodes += 1
-        source = "active_route_node_order_with_initial_planning_node"
+        source = "route_nodes_lifecycle_with_initial_planning_node"
     else:
         expanded_nodes = 1
         ended_nodes = 0

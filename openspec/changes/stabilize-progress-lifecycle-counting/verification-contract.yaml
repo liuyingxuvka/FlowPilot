@@ -1,0 +1,54 @@
+schema_version: openspec.verification_contract.v1
+change: stabilize-progress-lifecycle-counting
+claim_boundary:
+  proves:
+    - progress_fraction no longer collapses to a short active node_order when earlier nodes remain undispositioned
+    - progress_fraction keeps the no-node initial planning display
+    - packet and lease activity still does not affect progress counts
+    - formal route/node lifecycle status controls ended-node counting
+    - installed FlowPilot skill matches repository source after the change
+  does_not_prove:
+    - terminal completion
+    - publication readiness
+    - heavyweight release confidence from full Meta and Capability regressions
+    - correctness of unrelated parallel-agent artifacts
+required_evidence:
+  openspec:
+    - command: openspec validate stabilize-progress-lifecycle-counting --strict
+      expected: pass
+  flowguard:
+    - command: python simulations/run_flowpilot_route_replanning_policy_checks.py --json-out simulations/flowpilot_route_replanning_policy_results.json
+      expected: pass
+    - command: python simulations/run_flowpilot_route_mutation_activation_checks.py --json-out simulations/flowpilot_route_mutation_activation_results.json
+      expected: pass
+    - command: python simulations/run_flowpilot_recursive_route_execution_checks.py --json-out simulations/flowpilot_recursive_route_execution_results.json
+      expected: pass
+  tests:
+    - command: python -m pytest tests/test_flowpilot_core_runtime.py -k progress_fraction
+      expected: pass
+    - command: python -m unittest tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_public_console_exposes_progress_fraction_without_completion_authority
+      expected: pass
+  install_sync:
+    - command: python scripts/install_flowpilot.py --sync-repo-owned --json
+      expected: pass_or_documented_windows_lock_recovery
+    - command: python scripts/audit_local_install_sync.py --json
+      expected: pass
+    - command: python scripts/install_flowpilot.py --check --json
+      expected: pass
+    - command: python scripts/check_install.py --json
+      expected: pass
+  repository:
+    - command: python scripts/flowguard_project_topology.py build
+      expected: pass_if_topology_staled_by_changed_sources
+    - command: python scripts/flowguard_project_topology.py check
+      expected: pass
+    - command: git diff --check
+      expected: pass
+peer_agent_boundary:
+  do_not_stage:
+    - .playwright-mcp/
+    - .tmp_flowguard_evidence/
+    - promotion-kit/
+    - reports/
+    - simulations/.tmp_flowguard_evidence/
+  rule: preserve unrelated peer-agent changes and untracked artifacts
