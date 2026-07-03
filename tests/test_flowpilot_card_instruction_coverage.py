@@ -733,6 +733,63 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
         self.assertIn("later unfinished route node", reviewer_node)
         self.assertIn("do not require future-stage worker artifacts", reviewer_node)
 
+    def test_system_integration_duty_is_prompt_owned_without_runtime_shape_expansion(self) -> None:
+        def normalized(card_id: str) -> str:
+            return " ".join(_card_path_by_id(card_id).read_text(encoding="utf-8").lower().split())
+
+        pm_core = normalized("pm.core")
+        reviewer_core = normalized("reviewer.core")
+        flowguard_core = normalized("flowguard_operator.core")
+        worker_core = normalized("worker.core")
+        pm_product = normalized("pm.product_architecture")
+        pm_route = normalized("pm.route_skeleton")
+        pm_node = normalized("pm.node_acceptance_plan")
+        reviewer_node = normalized("reviewer.node_acceptance_plan_review")
+        pm_current_node = normalized("pm.current_node_loop")
+        parent_replay = normalized("reviewer.parent_backward_replay")
+        final_replay = normalized("reviewer.final_backward_replay")
+        pm_final_ledger = normalized("pm.final_ledger")
+        pm_model_miss = normalized("pm.model_miss_triage")
+        flowguard_route = normalized("flowguard_operator.route_process_check")
+
+        self.assertIn("system integration owner", pm_core)
+        self.assertIn("not a new role, runtime hard blocker, ledger, packet family, or self-stop", pm_core)
+        self.assertIn("scattered local-pass/global-incoherent output", pm_core)
+        self.assertIn("whole-output composition", reviewer_core)
+        self.assertIn("pm decision-support", reviewer_core)
+        self.assertIn("scattered local-pass/global-incoherent output as a process or state hazard", flowguard_core)
+        self.assertIn("you are not the system integrator", worker_core)
+        self.assertIn("do not silently redesign the route", worker_core)
+        self.assertIn("suggestions must not use `current_gate_blocker`", worker_core)
+
+        self.assertIn("system_integration_intent", pm_product)
+        self.assertIn("system_integration_intent", pm_route)
+        self.assertIn("flat checklist of unrelated local completions", pm_route)
+        self.assertIn("integration_touchpoint", pm_node)
+        self.assertIn("not a runtime-expanded node context field", pm_node)
+        self.assertIn("integration_touchpoint", reviewer_node)
+        self.assertIn("integration_touchpoint", pm_current_node)
+        self.assertIn("existing disposition vocabulary", pm_current_node)
+        self.assertIn("locally passing child outputs", parent_replay)
+        self.assertIn("coherent as one whole artifact or system", final_replay)
+        self.assertIn("whole-output composition closure", pm_final_ledger)
+        self.assertIn("local packets passed but the parent/final output is globally incoherent", pm_model_miss)
+        self.assertIn("scattered local-pass outputs", flowguard_route)
+
+        node_template = json.loads((ROOT / "templates/flowpilot/node_acceptance_plan.template.json").read_text(encoding="utf-8"))
+        self.assertIn("integration_touchpoint", node_template)
+        self.assertEqual(
+            set(node_template["node_context_package"]),
+            {
+                "purpose",
+                "acceptance_criteria",
+                "relevant_references",
+                "known_risks",
+                "acceptance_item_projection",
+            },
+        )
+        self.assertNotIn("integration_touchpoint", node_template["node_context_package"])
+
     def test_reviewer_formal_package_reuses_existing_acceptance_sources(self) -> None:
         def normalized(path: Path) -> str:
             return " ".join(path.read_text(encoding="utf-8").lower().split())

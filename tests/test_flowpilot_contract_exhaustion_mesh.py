@@ -117,6 +117,7 @@ class FlowPilotContractExhaustionMeshTests(unittest.TestCase):
         self.assertIn("review_window_fake_ai_matrix", owners)
         self.assertIn("fake_ai_runtime_replay_matrix", owners)
         self.assertIn("real_issue_backfeed_matrix", owners)
+        self.assertIn("integration_cartesian_coverage_matrix", owners)
         self.assertLessEqual(model.SYNTHETIC_MUTATION_KINDS, mutation_kinds)
         self.assertTrue(
             [
@@ -166,6 +167,14 @@ class FlowPilotContractExhaustionMeshTests(unittest.TestCase):
                 if cell["family"] == "task_packet_body"
                 and cell.get("contract_path")
                 == "current_handoff_contract.required_report_contract.ownership_coverage_rule"
+            ]
+        )
+        self.assertTrue(
+            [
+                cell
+                for cell in cells
+                if cell["family"] == "integration_cartesian_coverage"
+                and cell["mutation_kind"] == "missing_integration_cartesian_shard"
             ]
         )
 

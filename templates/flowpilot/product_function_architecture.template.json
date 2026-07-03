@@ -83,6 +83,19 @@
     "experience_quality_bar": "<visual, interaction, data, document, automation, or domain quality expectations>",
     "verification_quality_bar": "<proof needed before PM can call the result high quality>"
   },
+  "system_integration_intent": {
+    "whole_output_structure": "<how the final software, document, story, report, workflow, or skill behavior should hold together as one product>",
+    "continuity_and_callback_expectations": [],
+    "upstream_downstream_handoff_expectations": [],
+    "duplicate_vs_reinforcement_policy": "<when repetition is useful reinforcement versus harmful duplication>",
+    "artifact_family_integration_risks": [
+      {
+        "artifact_family": "<software|ui|writing|research|skill|workflow|other>",
+        "local_pass_global_failure_pattern": "<how local completion could still produce a scattered or incoherent whole>",
+        "required_pm_attention": "<route_structure|node_plan|parent_replay|final_replay|model_miss_triage|other>"
+      }
+    ]
+  },
   "unacceptable_result_review": [
     {
       "failure_id": "<failure-id>",

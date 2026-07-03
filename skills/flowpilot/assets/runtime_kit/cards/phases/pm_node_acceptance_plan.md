@@ -80,6 +80,15 @@ packet contracts. If a role discovers a model/test/quality gap, it reports the
 gap through its own blockers or PM suggestion items; PM then chooses the next
 current repair path.
 
+Record a plan-level `integration_touchpoint` outside `node_context_package`
+when the node participates in a larger product, route, document, story,
+workflow, or software system. Use it to name upstream inputs this node assumes,
+downstream handoffs this node must make usable, sibling duplication or conflict
+risk, and the parent contribution this node must preserve. Keep this as PM
+planning context for Reviewer, FlowGuard operator, Worker, and final replay; it
+is not a runtime-expanded node context field and is not a reason to demand
+future-stage evidence before it exists.
+
 At node entry, re-ask whether this apparent leaf is still too broad, too
 narrow, or wrongly ordered. This is the PM self-check before work packet
 release. If it is too broad, do not ask the Worker to split it and do not
@@ -174,6 +183,8 @@ dispatch solely because these notes are absent from `node_context_package`.
 Use `structure_hygiene_expectation` in the plan artifact to preserve expected
 dispositions for fallbacks, compatibility branches, duplicate adapters, stale
 generated artifacts, and maintenance layers that matter to this node.
+Use `integration_touchpoint` in the plan artifact to preserve expected
+upstream/downstream/sibling/parent composition duties that matter to this node.
 Before dispatch, PM must perform a final-user intent and product usefulness self-check.
 The low-quality-success self-check must name the hard part, the thin-success
 shortcut to avoid, and the proof of depth expected from the worker or reviewer

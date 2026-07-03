@@ -87,6 +87,15 @@ class FlowPilotFakeAIRuntimeReplayTests(unittest.TestCase):
         ):
             with self.subTest(profile_id=profile_id):
                 self.assertIn(profile_id, mutations)
+        for mutation in (
+            "flat_checklist_route",
+            "child_outputs_do_not_compose",
+            "final_output_scattered",
+            "optimization_incorrectly_hard_blocked",
+            "model_miss_not_triggered",
+        ):
+            with self.subTest(integration_mutation=mutation):
+                self.assertIn(mutation, mutations)
         for reaction in (
             "mechanical_reject_reissue_with_strict_json_feedback",
             "mechanical_reject_reissue_with_options",
@@ -94,6 +103,10 @@ class FlowPilotFakeAIRuntimeReplayTests(unittest.TestCase):
             "accepted_after_reissue",
             "same_family_repair_or_reissue_without_glassbreak_before_threshold",
             "breakglass_after_fifth_same_failure",
+            "pm_route_mutation_for_integration",
+            "pm_integration_suggestion_without_runtime_blocker",
+            "terminal_composition_block_from_existing_gate",
+            "pm_model_miss_triage",
         ):
             with self.subTest(reaction=reaction):
                 self.assertIn(reaction, reactions)
@@ -110,6 +123,61 @@ class FlowPilotFakeAIRuntimeReplayTests(unittest.TestCase):
                     self.assertTrue(cell["glass_break_allowed"])
                 else:
                     self.assertFalse(cell["glass_break_allowed"])
+
+    def test_fake_ai_runtime_replay_includes_system_integration_cases(self) -> None:
+        integration_cells = [
+            cell
+            for cell in runtime_replay.runtime_replay_cells()
+            if cell["source_matrix"] == "integration_cartesian_coverage"
+        ]
+        reactions = {cell["expected_runtime_reaction"] for cell in integration_cells}
+        mutation_kinds = {cell["mutation_kind"] for cell in integration_cells}
+
+        self.assertGreaterEqual(len(integration_cells), 100)
+        self.assertLessEqual(
+            {
+                "missing_integration_intent",
+                "flat_checklist_route",
+                "child_outputs_do_not_compose",
+                "final_output_scattered",
+                "optimization_incorrectly_hard_blocked",
+                "model_miss_not_triggered",
+            },
+            mutation_kinds,
+        )
+        self.assertLessEqual(
+            {
+                "continue_current_flow_without_runtime_blocker",
+                "pm_integration_suggestion_without_runtime_blocker",
+                "pm_same_node_integration_repair",
+                "pm_route_mutation_for_integration",
+                "terminal_composition_block_from_existing_gate",
+                "pm_model_miss_triage",
+            },
+            reactions,
+        )
+        self.assertFalse([cell["cell_id"] for cell in integration_cells if cell["semantic_runtime_blocker_allowed"]])
+        self.assertFalse([cell["cell_id"] for cell in integration_cells if cell["worker_current_gate_blocker_allowed"]])
+
+    def test_system_integration_replay_hazards_are_explicit(self) -> None:
+        expected = runtime_replay.expected_failures_by_hazard()
+
+        self.assertEqual(
+            expected["integration_hard_underblocked"],
+            ("hard_integration_failure_lacked_pm_disposition",),
+        )
+        self.assertEqual(
+            expected["integration_advisory_runtime_overblock"],
+            ("advisory_integration_finding_became_runtime_hard_blocker",),
+        )
+        self.assertEqual(
+            expected["integration_worker_current_gate_blocker"],
+            ("worker_claimed_current_gate_blocker_for_integration",),
+        )
+        self.assertEqual(
+            expected["integration_model_miss_without_triage"],
+            ("integration_model_miss_candidate_lacked_triage",),
+        )
 
     def test_pm_break_glass_branches_are_in_fake_ai_runtime_replay_matrix(self) -> None:
         cells = list(runtime_replay.runtime_replay_cells())

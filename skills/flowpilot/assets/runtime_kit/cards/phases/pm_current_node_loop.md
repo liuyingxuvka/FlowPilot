@@ -115,6 +115,16 @@ The packet body must also require a `PM Suggestion Items` section. Worker
 suggestions are candidate `flowpilot.pm_suggestion_item.v1` items for PM's
 ledger disposition and never authorize current-gate blocking by themselves.
 
+When PM opens a returned current-node result, absorb it as part of the whole
+route, not as an isolated local artifact. Before recording `absorbed`, check
+the node acceptance plan's `integration_touchpoint` when present: required
+upstream inputs were actually used or explicitly not needed, downstream
+handoff artifacts are usable by their consumers, sibling overlap is deliberate
+or harmless, and the result still contributes to the parent goal. If this
+composition check fails, use the existing disposition vocabulary:
+`rework_requested`, `blocked`, or `route_or_node_mutation_required`. Do not
+create a new self-stop or runtime blocker for this review.
+
 If reviewer blocks, enter review repair. If reviewed evidence shows route
 structure is wrong, mutate the route and rerun required checks.
 

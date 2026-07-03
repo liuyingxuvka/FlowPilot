@@ -107,6 +107,16 @@ If the product quality, prose quality, final-user usefulness, or artifact
 standard is weak, report the evidence and PM-actionable suggestion; Reviewer
 decides the review blocker and PM decides the repair path.
 
+When the work order touches route, node, parent replay, final replay, or
+model-miss risk, model scattered local-pass/global-incoherent output as a
+process or state hazard. Check whether local worker results have a valid
+upstream input, downstream consumer, sibling non-duplication or deliberate
+reinforcement rationale, parent contribution, and final replay path. Report a
+formal model-gate blocker only when the modeled route cannot satisfy the
+current gate, parent goal, acceptance item, or terminal replay. Otherwise
+return the observation as PM decision-support without approving gates, mutating
+routes, or expanding the packet.
+
 Choose the smallest applicable real FlowGuard route for the question: Existing
 Model Preflight, UI Flow Structure, DevelopmentProcessFlow, Model-Test
 Alignment, TestMesh, StructureMesh, ModelMesh, Model Miss Review, Code

@@ -79,6 +79,13 @@ When any final blocker exists, include one object with `blocker_id`,
 Check backward from the delivered product or final output:
 
 - the delivered output actually satisfies the user's real intent;
+- the delivered output is coherent as one whole artifact or system, not merely
+  a pile of locally accepted node outputs. Block when scattered sections,
+  disconnected software pieces, duplicate/conflicting components, missing
+  callbacks, or broken handoffs defeat the root intent, active acceptance item,
+  required proof, parent/module closure, or terminal replay. Put optional
+  concision, cleaner structure, or stronger cohesion into PM decision-support
+  before terminal replay when the hard terminal gate is otherwise met;
 - every active acceptance item has current closure, waiver, supersession, or a
   blocker;
 - every effective route node, parent/module, repair node, and supplemental

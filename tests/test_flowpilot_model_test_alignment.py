@@ -159,6 +159,10 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
         self.assertIn("packet_result_family.glass_break_is_alarm_not_success_path", obligations)
         self.assertIn("packet_result_family.contract_exhaustion_matrix_owners_are_child_suites", obligations)
         self.assertIn("packet_result_family.cartesian_control_plane_cells_have_oracles", obligations)
+        self.assertIn(
+            "packet_result_family.integration_cartesian_coverage_keeps_pm_optimization_boundary",
+            obligations,
+        )
         self.assertIn("packet_result_family.runtime.flowguard_current_report_gate", contracts)
         self.assertIn("packet_result_family.runtime.flowguard_artifact_hard_decision", contracts)
         self.assertIn("packet_result_family.runtime.flowguard_semantic_recheck_gate", contracts)
@@ -189,6 +193,8 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
         self.assertIn("packet_result_family.runner.contract_exhaustion_test_mesh_owner_consumption", contracts)
         self.assertIn("packet_result_family.model.cartesian_control_plane_exhaustion_matrix", contracts)
         self.assertIn("packet_result_family.runner.cartesian_control_plane_owner_consumption", contracts)
+        self.assertIn("packet_result_family.model.integration_cartesian_coverage_matrix", contracts)
+        self.assertIn("packet_result_family.runner.integration_cartesian_coverage_checks", contracts)
         self.assertEqual(
             evidence["packet_result_family.negative.flowguard_blocked_child_evidence"].test_name,
             "test_flowguard_packet_rejects_deleted_evidence_consistency_field_without_reviewer",
@@ -386,6 +392,14 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
         self.assertEqual(
             evidence["packet_result_family.negative.cartesian_normal_repair_not_glassbreak"].test_name,
             "test_normal_repair_cells_never_expect_glassbreak",
+        )
+        self.assertEqual(
+            evidence["packet_result_family.replay.integration_cartesian_full_matrix"].test_name,
+            "test_integration_cartesian_runner_accepts_full_matrix",
+        )
+        self.assertEqual(
+            evidence["packet_result_family.negative.integration_cartesian_authority_boundary"].test_name,
+            "test_worker_and_runtime_do_not_gain_semantic_integration_authority",
         )
 
     def test_full_diagnostic_inventory_reports_current_gap_classes(self) -> None:

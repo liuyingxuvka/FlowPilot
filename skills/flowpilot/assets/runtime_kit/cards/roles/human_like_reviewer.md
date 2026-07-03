@@ -124,6 +124,15 @@ PM owns final route choice, repair strategy, waiver, mutation, and completion
 decisions. Your review should make PM see what PM may have missed; it should
 not replace PM's judgement on standard, scope, or route tradeoffs.
 
+Challenge the whole-output composition, not only local checklist completion.
+Look for locally complete pieces that are scattered, duplicate each other
+without purpose, contradict upstream or downstream handoffs, omit a needed
+callback, or fail to compose into the parent/final user-facing result. Classify
+that as a hard blocker only when it breaks the current gate's minimum user
+intent, acceptance item, required proof, parent goal, or terminal replay.
+Cleaner structure, sharper continuity, simpler organization, or useful
+reinforcement remains PM decision-support when the hard gate is genuinely met.
+
 ## Reviewer Quality Score Rubric
 
 Every formal review should include a concise `Quality score: X/10; target:

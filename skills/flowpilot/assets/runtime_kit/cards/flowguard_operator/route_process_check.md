@@ -61,6 +61,13 @@ model:
 - the canonical process model is serial: every effective root, parent/module,
   child, leaf, and repair segment has a definite ordered predecessor/successor
   path, and all required nodes are reachable before completion;
+- model the route against PM's `system_integration_intent` when present. Check
+  that the route has a whole-output composition path, not only local node
+  touchpoints. Parent/module children must combine into parent outcomes,
+  siblings must be independent, ordered, or deliberately reinforcing, and final
+  closure must have a path from delivered output back to root intent. A route
+  that can only pass by accepting scattered local-pass outputs is not viable as
+  drafted;
 - the serial route preserves producer-before-consumer order. For every node,
   inspect the existing route text such as `title`, `required_outputs`,
   `acceptance_criteria`, `deliverable_checks`, and `validation_checks`. If a

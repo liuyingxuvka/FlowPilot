@@ -27,6 +27,9 @@ ORDINARY_WORK_ARTIFACT_SUFFIXES = {
     ".webp",
     ".pdf",
 }
+ORDINARY_WORK_ARTIFACT_EXCLUDED_TOP_LEVEL_DIRS = {
+    "runtime_kit",
+}
 
 
 def _normalized_resolved_path(path: str | Path) -> str:
@@ -71,6 +74,35 @@ def _ordinary_work_artifact_entry_id(run_root: Path, path: Path) -> str:
     return f"ordinary:{safe[:180]}"
 
 
+def _is_excluded_ordinary_work_artifact(run_root: Path, path: Path) -> bool:
+    try:
+        rel_parts = path.relative_to(run_root).parts
+    except ValueError:
+        return False
+    return bool(rel_parts and rel_parts[0] in ORDINARY_WORK_ARTIFACT_EXCLUDED_TOP_LEVEL_DIRS)
+
+
+def _iter_ordinary_work_artifact_files(run_root: Path):
+    stack = [run_root]
+    while stack:
+        current = stack.pop()
+        try:
+            children = sorted(current.iterdir(), key=lambda item: item.as_posix())
+        except OSError:
+            continue
+        directories: list[Path] = []
+        for item in children:
+            if item.is_symlink():
+                continue
+            if item.is_dir():
+                if not _is_excluded_ordinary_work_artifact(run_root, item):
+                    directories.append(item)
+                continue
+            if item.is_file():
+                yield item
+        stack.extend(reversed(directories))
+
+
 def add_ordinary_work_artifact_entries(
     project_root: Path,
     run_root: Path,
@@ -88,7 +120,7 @@ def add_ordinary_work_artifact_entries(
     count = 0
     if not run_root.exists():
         return
-    for path in sorted((item for item in run_root.rglob("*") if item.is_file()), key=lambda item: item.as_posix()):
+    for path in _iter_ordinary_work_artifact_files(run_root):
         if count >= ORDINARY_WORK_ARTIFACT_MAX_ENTRIES:
             entries.append(
                 entry_policy.make_entry(
@@ -107,6 +139,8 @@ def add_ordinary_work_artifact_entries(
             )
             return
         if path.name == material_artifact_map_filename:
+            continue
+        if _is_excluded_ordinary_work_artifact(run_root, path):
             continue
         if path.suffix.lower() not in ORDINARY_WORK_ARTIFACT_SUFFIXES:
             continue

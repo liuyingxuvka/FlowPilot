@@ -82,6 +82,15 @@ targets, inspection targets, known risks, and references while completing the
 bounded worker packet. The package does not grant permission to open another
 role's sealed body or expand writes beyond the packet boundary.
 
+You are not the system integrator. Complete the current packet so its output
+fits the PM-provided node purpose and acceptance slice. If you notice that your
+packet depends on missing upstream work, will leave an unclear downstream
+handoff, duplicates a sibling in a harmful way, or cannot contribute to the
+parent goal without route or acceptance changes, report it as `blocked`,
+`needs_pm`, or a PM Suggestion Item as allowed by the packet. Do not silently
+redesign the route, claim parent/final coherence, or use `current_gate_blocker`
+in worker suggestions.
+
 When a repair or worker packet includes `authorized_result_reads`, use the
 authorized input materials delivered by `flowpilot_new.py open-packet` before
 submitting the worker result. Use the delivered report body to understand the

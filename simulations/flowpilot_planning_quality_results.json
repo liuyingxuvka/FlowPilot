@@ -5,7 +5,7 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=3 initial_states=1 traces=408",
+    "summary": "sequences=3 initial_states=1 traces=450",
     "violation_count": 0
   },
   "hazard_checks": {
@@ -44,6 +44,14 @@
         "expected_failure": "final ledger or closure leaves acceptance items unresolved",
         "failures": [
           "final ledger or closure leaves acceptance items unresolved",
+          "PM closure lacks final-user outcome replay"
+        ]
+      },
+      "final_ledger_passes_node_level_only_composition": {
+        "detected": true,
+        "expected_failure": "final ledger passed node-level completion without whole-output composition closure",
+        "failures": [
+          "final ledger passed node-level completion without whole-output composition closure",
           "PM closure lacks final-user outcome replay"
         ]
       },
@@ -119,6 +127,13 @@
           "node acceptance plan lacks current executable check surface, status vocabulary, expected failure shape, or bounded worker outcome"
         ]
       },
+      "node_plan_missing_integration_touchpoint": {
+        "detected": true,
+        "expected_failure": "node acceptance plan lacks plan-level integration touchpoint",
+        "failures": [
+          "node acceptance plan lacks plan-level integration touchpoint"
+        ]
+      },
       "node_plan_missing_low_quality_mapping": {
         "detected": true,
         "expected_failure": "node acceptance plan lacks local low-quality-success mapping and proof of depth",
@@ -167,6 +182,20 @@
         "expected_failure": "work packet does not preserve the current quality floor",
         "failures": [
           "work packet does not preserve the current quality floor"
+        ]
+      },
+      "parent_replay_passes_scattered_child_outputs": {
+        "detected": true,
+        "expected_failure": "parent backward replay passed scattered local child outputs that do not compose into the parent goal",
+        "failures": [
+          "parent backward replay passed scattered local child outputs that do not compose into the parent goal"
+        ]
+      },
+      "pm_absorbs_local_result_with_broken_integration": {
+        "detected": true,
+        "expected_failure": "PM absorbed current-node result without checking upstream downstream sibling and parent integration",
+        "failures": [
+          "PM absorbed current-node result without checking upstream downstream sibling and parent integration"
         ]
       },
       "pm_closure_low_quality_risk_disposition_missing": {
@@ -292,6 +321,13 @@
           "product architecture does not consume startup high-quality posture"
         ]
       },
+      "product_architecture_missing_system_integration_intent": {
+        "detected": true,
+        "expected_failure": "PM product architecture lacks system integration intent for the whole output",
+        "failures": [
+          "PM product architecture lacks system integration intent for the whole output"
+        ]
+      },
       "product_model_missing": {
         "detected": true,
         "expected_failure": "route planning lacks a product behavior model from the FlowGuard operator product-scope",
@@ -356,6 +392,13 @@
           "selected role skill use was self-attested without evidence"
         ]
       },
+      "route_convergence_missing_composition_review": {
+        "detected": true,
+        "expected_failure": "route structure convergence lacks parent child sibling composition review",
+        "failures": [
+          "route structure convergence lacks parent child sibling composition review"
+        ]
+      },
       "route_missing_realization_obligations": {
         "detected": true,
         "expected_failure": "route skeleton does not consume target-realization obligations",
@@ -368,6 +411,13 @@
         "expected_failure": "route design lowered the startup/product quality floor",
         "failures": [
           "route design lowered the startup/product quality floor"
+        ]
+      },
+      "scattered_output_not_routed_to_model_miss": {
+        "detected": true,
+        "expected_failure": "scattered local-pass global-incoherence defect class lacks model-miss triage coverage",
+        "failures": [
+          "scattered local-pass global-incoherence defect class lacks model-miss triage coverage"
         ]
       },
       "simple_task_formal_flowpilot_profile": {
@@ -515,11 +565,11 @@
     "accepted_scenarios": [
       "valid_ui_route"
     ],
-    "edge_count": 136,
+    "edge_count": 150,
     "invariant_failures": [],
     "missing_labels": [],
     "ok": true,
-    "rejected_state_count": 67,
-    "state_count": 137
+    "rejected_state_count": 74,
+    "state_count": 151
   }
 }

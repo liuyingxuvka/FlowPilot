@@ -34,6 +34,7 @@ from flowpilot_contract_driven_fake_ai import (  # noqa: E402
     REVIEW_WINDOW_FAKE_AI_PROFILE_IDS,
     review_window_behavior_cells,
 )
+from flowpilot_integration_cartesian_coverage_model import iter_required_cells as integration_cartesian_cells  # noqa: E402
 
 
 MODEL_ID = "flowpilot_fake_ai_runtime_replay"
@@ -89,6 +90,22 @@ CONCRETE_RUNTIME_TESTS: dict[str, str] = {
     "breakglass_threshold": (
         "tests.test_flowpilot_cartesian_control_plane_exhaustion."
         "FlowPilotCartesianControlPlaneExhaustionTests.test_glassbreak_cells_are_threshold_only_and_name_loop_key"
+    ),
+    "integration_full_matrix": (
+        "tests.test_flowpilot_integration_cartesian_coverage."
+        "FlowPilotIntegrationCartesianCoverageTests.test_integration_cartesian_runner_accepts_full_matrix"
+    ),
+    "integration_hard_failure": (
+        "tests.test_flowpilot_integration_cartesian_coverage."
+        "FlowPilotIntegrationCartesianCoverageTests.test_hard_composition_failures_are_not_downgraded_to_advisory"
+    ),
+    "integration_authority_boundary": (
+        "tests.test_flowpilot_integration_cartesian_coverage."
+        "FlowPilotIntegrationCartesianCoverageTests.test_worker_and_runtime_do_not_gain_semantic_integration_authority"
+    ),
+    "integration_hazards": (
+        "tests.test_flowpilot_integration_cartesian_coverage."
+        "FlowPilotIntegrationCartesianCoverageTests.test_flowguard_hazards_cover_underblocking_overblocking_and_model_miss"
     ),
 }
 
@@ -252,6 +269,68 @@ def _runtime_replay_cell(
     }
 
 
+def _integration_expected_reaction(cell: Mapping[str, Any]) -> str:
+    outcome = str(cell["expected_outcome"])
+    if outcome == "continue_current_flow":
+        return "continue_current_flow_without_runtime_blocker"
+    if outcome == "pm_suggestion":
+        return "pm_integration_suggestion_without_runtime_blocker"
+    if outcome == "same_node_repair":
+        return "pm_same_node_integration_repair"
+    if outcome == "route_mutation":
+        return "pm_route_mutation_for_integration"
+    if outcome == "model_miss_triage":
+        return "pm_model_miss_triage"
+    if outcome == "terminal_block":
+        return "terminal_composition_block_from_existing_gate"
+    return "pm_integration_disposition"
+
+
+def _integration_evidence_key(cell: Mapping[str, Any]) -> str:
+    if str(cell["authority"]) == "runtime_mechanical_rejection" or str(cell["role"]) == "worker":
+        return "integration_authority_boundary"
+    if str(cell["expected_outcome"]) == "model_miss_triage":
+        return "integration_hazards"
+    if str(cell["expected_outcome"]) in {"same_node_repair", "route_mutation", "terminal_block"}:
+        return "integration_hard_failure"
+    return "integration_full_matrix"
+
+
+def _integration_runtime_replay_cells() -> tuple[dict[str, Any], ...]:
+    representatives: dict[tuple[str, str, str, str], Mapping[str, Any]] = {}
+    for cell in integration_cartesian_cells():
+        key = (
+            str(cell["failure_class"]),
+            str(cell["severity"]),
+            str(cell["authority"]),
+            str(cell["expected_outcome"]),
+        )
+        representatives.setdefault(key, cell)
+    return tuple(
+        {
+            "cell_id": f"runtime_replay.flowpilot_integration_cartesian_coverage.{cell['cell_id']}",
+            "source_cell_id": str(cell["cell_id"]),
+            "source_matrix": "integration_cartesian_coverage",
+            "family": "system_integration_result",
+            "contract_family_id": "flowpilot_integration_cartesian_coverage",
+            "contract_path": str(cell["coverage_shard_id"]),
+            "mutation_kind": str(cell["failure_class"]),
+            "branch_kind": "runtime_replay",
+            "confidence_boundary": "synthetic_non_live_runtime_replay",
+            "required_evidence_owner": REQUIRED_EVIDENCE_OWNER,
+            "attempt_class": "integration_decision",
+            "expected_runtime_reaction": _integration_expected_reaction(cell),
+            "expected_test_name": CONCRETE_RUNTIME_TESTS[_integration_evidence_key(cell)],
+            "glass_break_allowed": False,
+            "normal_path_required": True,
+            "live_completion_allowed": False,
+            "semantic_runtime_blocker_allowed": False,
+            "worker_current_gate_blocker_allowed": False,
+        }
+        for cell in representatives.values()
+    )
+
+
 def runtime_replay_cells() -> tuple[dict[str, Any], ...]:
     cells: list[dict[str, Any]] = []
     for contract_id, contract in _responder_contracts().items():
@@ -275,6 +354,7 @@ def runtime_replay_cells() -> tuple[dict[str, Any], ...]:
                 family="review_window_result",
             )
         )
+    cells.extend(_integration_runtime_replay_cells())
     return tuple(cells)
 
 
@@ -292,6 +372,13 @@ class State:
     accepted: bool = False
     synthetic_only: bool = True
     live_completion_claimed: bool = False
+    integration_hard_failure_seen: bool = False
+    pm_integration_disposition_seen: bool = False
+    integration_advisory_only: bool = False
+    runtime_semantic_hard_blocker: bool = False
+    worker_current_gate_blocker: bool = False
+    integration_model_miss_candidate_seen: bool = False
+    model_miss_triage_seen: bool = False
 
 
 @dataclass(frozen=True)
@@ -361,11 +448,41 @@ def _valid_fifth_breakglass() -> State:
     )
 
 
+def _valid_integration_hard_pm_disposition() -> State:
+    return State(
+        scenario="valid_integration_hard_pm_disposition",
+        status="selected",
+        integration_hard_failure_seen=True,
+        pm_integration_disposition_seen=True,
+    )
+
+
+def _valid_integration_advisory_pm_support() -> State:
+    return State(
+        scenario="valid_integration_advisory_pm_support",
+        status="selected",
+        integration_advisory_only=True,
+        pm_integration_disposition_seen=True,
+    )
+
+
+def _valid_integration_model_miss_triage() -> State:
+    return State(
+        scenario="valid_integration_model_miss_triage",
+        status="selected",
+        integration_model_miss_candidate_seen=True,
+        model_miss_triage_seen=True,
+    )
+
+
 SCENARIOS: dict[str, State] = {
     "valid_first_reissue": _valid_first_reissue(),
     "valid_corrected_second": _valid_corrected_second(),
     "valid_attempts_one_to_four": _valid_attempts_one_to_four(),
     "valid_fifth_breakglass": _valid_fifth_breakglass(),
+    "valid_integration_hard_pm_disposition": _valid_integration_hard_pm_disposition(),
+    "valid_integration_advisory_pm_support": _valid_integration_advisory_pm_support(),
+    "valid_integration_model_miss_triage": _valid_integration_model_miss_triage(),
 }
 
 VALID_SCENARIOS = tuple(SCENARIOS)
@@ -375,6 +492,10 @@ NEGATIVE_SCENARIOS = (
     "attempts_one_to_four_glassbreak",
     "fifth_attempt_no_glassbreak",
     "synthetic_claims_live_completion",
+    "integration_hard_underblocked",
+    "integration_advisory_runtime_overblock",
+    "integration_worker_current_gate_blocker",
+    "integration_model_miss_without_triage",
 )
 
 
@@ -388,6 +509,22 @@ def hazard_states() -> dict[str, State]:
         ),
         "fifth_attempt_no_glassbreak": replace(_valid_fifth_breakglass(), breakglass_triggered=False),
         "synthetic_claims_live_completion": replace(_valid_corrected_second(), live_completion_claimed=True),
+        "integration_hard_underblocked": replace(
+            _valid_integration_hard_pm_disposition(),
+            pm_integration_disposition_seen=False,
+        ),
+        "integration_advisory_runtime_overblock": replace(
+            _valid_integration_advisory_pm_support(),
+            runtime_semantic_hard_blocker=True,
+        ),
+        "integration_worker_current_gate_blocker": replace(
+            _valid_integration_advisory_pm_support(),
+            worker_current_gate_blocker=True,
+        ),
+        "integration_model_miss_without_triage": replace(
+            _valid_integration_model_miss_triage(),
+            model_miss_triage_seen=False,
+        ),
     }
 
 
@@ -403,6 +540,14 @@ def runtime_replay_failures(state: State) -> list[str]:
         failures.append("fifth_same_failure_did_not_trigger_glassbreak")
     if state.synthetic_only and state.live_completion_claimed:
         failures.append("synthetic_replay_claimed_live_completion")
+    if state.integration_hard_failure_seen and not state.pm_integration_disposition_seen:
+        failures.append("hard_integration_failure_lacked_pm_disposition")
+    if state.integration_advisory_only and state.runtime_semantic_hard_blocker:
+        failures.append("advisory_integration_finding_became_runtime_hard_blocker")
+    if state.worker_current_gate_blocker:
+        failures.append("worker_claimed_current_gate_blocker_for_integration")
+    if state.integration_model_miss_candidate_seen and not state.model_miss_triage_seen:
+        failures.append("integration_model_miss_candidate_lacked_triage")
     return failures
 
 
@@ -464,7 +609,7 @@ def runtime_replay_states_are_safe(state: State, _trace: object = ()) -> Invaria
 INVARIANTS = (
     Invariant(
         "fake_ai_runtime_replay_safety",
-        "Accepted fake-AI replay states cannot miss feedback, overuse GlassBreak, skip the fifth-attempt fuse, or claim live completion.",
+        "Accepted fake-AI replay states cannot miss feedback, overuse GlassBreak, skip the fifth-attempt fuse, claim live completion, or lose the PM-owned system-integration boundary.",
         runtime_replay_states_are_safe,
     ),
 )

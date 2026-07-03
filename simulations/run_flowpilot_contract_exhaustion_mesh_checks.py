@@ -72,6 +72,12 @@ TEST_MESH_CHILD_SUITE_DEFINITIONS = {
         "evidence_current": True,
         "coverage_boundary": "historical_same_class_non_live_control_flow",
     },
+    "integration_cartesian_coverage_matrix": {
+        "layer": "executable_flowguard_cartesian",
+        "result_status": "passed",
+        "evidence_current": True,
+        "coverage_boundary": "prompt_workflow_integration_coverage",
+    },
 }
 
 

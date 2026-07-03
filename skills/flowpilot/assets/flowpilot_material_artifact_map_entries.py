@@ -28,8 +28,12 @@ def read_json_document(path: Path) -> dict[str, Any]:
 def safe_source_ref(project_root: Path, path: Path) -> dict[str, Any] | None:
     if not path.exists():
         return None
+    try:
+        source_path = path.relative_to(project_root).as_posix()
+    except ValueError:
+        source_path = packet_runtime.project_relative(project_root, path)
     return {
-        "path": packet_runtime.project_relative(project_root, path),
+        "path": source_path,
         "hash": packet_runtime.sha256_file(path),
         "hash_algorithm": "sha256",
     }

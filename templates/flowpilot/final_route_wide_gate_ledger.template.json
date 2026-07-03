@@ -62,6 +62,18 @@
     "unresolved_model_family_count": null,
     "completion_blocked_when_unresolved": true
   },
+  "whole_output_composition_review": {
+    "starts_from_delivered_output": true,
+    "delivered_output_ref": "<path-or-surface-id-or-null>",
+    "root_intent_preserved": false,
+    "node_results_compose_into_one_output": false,
+    "parent_child_callbacks_closed": false,
+    "upstream_downstream_handoffs_closed": false,
+    "harmful_duplication_or_conflict_resolved": false,
+    "scattered_local_pass_detected": false,
+    "pm_decision_support_items": [],
+    "unresolved_composition_blocker_count": null
+  },
   "evidence_integrity": {
     "generated_resource_lineage_resolved": false,
     "structure_debt_dispositions_checked": false,

@@ -143,6 +143,13 @@ Resolve:
 - generated-resource lineage;
 - stale, invalid, missing, waived, blocked, or superseded evidence;
 - old evidence that attempts to close a changed or superseded requirement;
+- whole-output composition closure: start from the final delivered artifact,
+  software behavior, document, story, report, workflow, or skill behavior and
+  confirm that route results form one coherent user-facing outcome. Node-level
+  passes do not close this row by themselves when the final output is
+  scattered, contradictory, duplicative without purpose, missing callbacks, or
+  unable to carry the root intent. Optional concision or polish improvements
+  remain PM decision-support when hard root/acceptance proof is closed;
 - zero unresolved count;
 - zero unresolved requirement count;
 - zero unresolved residual risks.

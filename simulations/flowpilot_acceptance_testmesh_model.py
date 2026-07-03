@@ -59,6 +59,11 @@ PAYLOAD_CELLS = (
     "parent_review_old_task_family_rejected",
     "parent_review_fake_ai_contract_recovery",
     "parent_review_final_gate_gap_hard_block",
+    "integration_cartesian_hard_underblock",
+    "integration_cartesian_advisory_overblock",
+    "integration_cartesian_worker_boundary",
+    "integration_cartesian_runtime_no_hard_blocker",
+    "integration_cartesian_model_miss",
 )
 
 FORMAL_EXIT_RELEASE_CELLS = (
@@ -75,6 +80,7 @@ CHILD_SUITE_IDS = (
     "acceptance_terminal_supplemental_repair",
     "acceptance_field_contract_mesh",
     "acceptance_model_test_alignment",
+    "acceptance_integration_cartesian_coverage",
     "acceptance_router_quality_gate_children",
     "acceptance_router_packet_tier",
     "acceptance_router_route_tier",
@@ -238,6 +244,17 @@ def _partition_items() -> tuple[TestPartitionItem, ...]:
             "child",
             "Model obligations, code contracts, and test evidence remain aligned.",
             ("simulations/flowpilot_model_test_alignment_results.json",),
+        ),
+        TestPartitionItem(
+            "integration_cartesian_coverage",
+            "integration",
+            "acceptance_integration_cartesian_coverage",
+            "child",
+            "PM system-integration duty covers every stage, role, artifact family, failure class, severity, authority, and evidence timing while preventing runtime hard-blocker expansion.",
+            (
+                "simulations/flowpilot_integration_cartesian_coverage_model.py",
+                "tests/test_flowpilot_integration_cartesian_coverage.py",
+            ),
         ),
         TestPartitionItem(
             "slow_quality_gate_evidence",
@@ -553,6 +570,24 @@ def build_testmesh_plan(
             owns_state=("model_test_alignment",),
             owns_side_effects=("coverage_accounting",),
         ),
+        TestSuiteEvidence(
+            "acceptance_integration_cartesian_coverage",
+            command="python simulations/run_flowpilot_integration_cartesian_coverage_checks.py --json-out simulations/flowpilot_integration_cartesian_coverage_results.json",
+            result_status="passed",
+            evidence_tier="executable_flowguard",
+            test_count=6,
+            exit_code=0,
+            result_path="simulations/flowpilot_integration_cartesian_coverage_results.json",
+            owns_state=("integration_cartesian_coverage",),
+            owns_side_effects=("prompt_authority_boundary_coverage",),
+            owned_leaf_cell_ids=(
+                "integration_cartesian_hard_underblock",
+                "integration_cartesian_advisory_overblock",
+                "integration_cartesian_worker_boundary",
+                "integration_cartesian_runtime_no_hard_blocker",
+                "integration_cartesian_model_miss",
+            ),
+        ),
         _tier_child(
             **_with_override(
                 {
@@ -643,6 +678,7 @@ def build_testmesh_plan(
                 "final_artifact_hygiene_review",
                 "final_artifact_hygiene_closure",
                 "supplemental_repair_contracts.repair_items",
+                "integration_cartesian_coverage.expected_outcome",
             ),
             side_effect_owner_fields=(
                 "packet_reissue",
@@ -654,6 +690,7 @@ def build_testmesh_plan(
                 "terminal_supplemental_repair_exhausted",
                 "formal_exit_terminal_return_missing",
                 "formal_exit_startup_intake_blocks",
+                "prompt_authority_boundary_coverage",
             ),
             rationale="Acceptance-registry validation is split by current-contract ownership, payload cell, route mutation, and release evidence boundary.",
             derived_from_flowguard_model=True,

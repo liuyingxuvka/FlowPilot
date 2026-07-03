@@ -12,7 +12,7 @@
     "formal_exit_startup_intake_blocks"
   ],
   "missing_payload_cells": [],
-  "mode": "release",
+  "mode": "routine",
   "model_id": "flowpilot_acceptance_registry_testmesh",
   "ok": true,
   "payload_cell_owners": {
@@ -39,6 +39,21 @@
     ],
     "ai_contract_semantic_recheck_wrong_value_corrected_retry": [
       "acceptance_fake_ai_payload_chaos"
+    ],
+    "integration_cartesian_advisory_overblock": [
+      "acceptance_integration_cartesian_coverage"
+    ],
+    "integration_cartesian_hard_underblock": [
+      "acceptance_integration_cartesian_coverage"
+    ],
+    "integration_cartesian_model_miss": [
+      "acceptance_integration_cartesian_coverage"
+    ],
+    "integration_cartesian_runtime_no_hard_blocker": [
+      "acceptance_integration_cartesian_coverage"
+    ],
+    "integration_cartesian_worker_boundary": [
+      "acceptance_integration_cartesian_coverage"
     ],
     "node_plan_missing_item_projection": [
       "acceptance_contract_runtime_tests",
@@ -135,9 +150,24 @@
     ]
   },
   "release_gate": {
-    "deferred_suites": [],
-    "ok": true,
-    "release_evidence_requested": true,
+    "deferred_suites": [
+      {
+        "background": false,
+        "has_exit_artifact": true,
+        "has_result_artifact": true,
+        "nonpass_reasons": [
+          "not_run",
+          "not_current"
+        ],
+        "progress_only": false,
+        "reason": "full release tier evidence is visible but not required for routine confidence",
+        "stale_reasons": [],
+        "status": "not_run",
+        "suite_id": "acceptance_router_release_tiers"
+      }
+    ],
+    "ok": false,
+    "release_evidence_requested": false,
     "required_suites": [
       "acceptance_router_release_tiers"
     ]
@@ -145,11 +175,55 @@
   "report": {
     "decision": "test_mesh_green_can_continue",
     "decision_scope": "routine",
-    "findings": [],
+    "findings": [
+      {
+        "code": "release_suite_deferred",
+        "item_id": "",
+        "message": "release-only suite acceptance_router_release_tiers is deferred for routine confidence",
+        "metadata": {
+          "background": false,
+          "command": "python scripts/run_test_tier.py --tier router-packets/router-route/router-terminal/integration/release/final-confidence",
+          "duration_seconds": null,
+          "evidence_current": false,
+          "evidence_tier": "candidate_only",
+          "exit_code": null,
+          "has_exit_artifact": true,
+          "has_result_artifact": true,
+          "layer": "child",
+          "log_root": "",
+          "not_run_reason": "full release tier evidence is visible but not required for routine confidence",
+          "owned_coverage_shard_ids": [],
+          "owned_leaf_cell_ids": [
+            "formal_exit_terminal_return_missing",
+            "formal_exit_startup_intake_blocks"
+          ],
+          "owns_side_effects": [],
+          "owns_state": [],
+          "progress_only": false,
+          "proof_artifact": null,
+          "release_required": true,
+          "result_path": "tmp/test_background acceptance tier artifacts",
+          "result_reused": false,
+          "result_status": "not_run",
+          "reuse_ticket": null,
+          "selected_count": 0,
+          "skipped_count": 0,
+          "skipped_visible": true,
+          "stale_reasons": [],
+          "suite_id": "acceptance_router_release_tiers",
+          "test_count": 0,
+          "timeout_seconds": null
+        },
+        "severity": "warning",
+        "suite_id": "acceptance_router_release_tiers"
+      }
+    ],
     "ok": true,
     "parent_suite_id": "flowpilot_acceptance_registry_testmesh",
-    "release_obligations": [],
-    "summary": "OK: parent=flowpilot_acceptance_registry_testmesh scope=routine decision=test_mesh_green_can_continue findings=0"
+    "release_obligations": [
+      "acceptance_router_release_tiers"
+    ],
+    "summary": "OK: parent=flowpilot_acceptance_registry_testmesh scope=routine decision=test_mesh_green_can_continue findings=1"
   },
   "required_payload_cells": [
     "registry_missing",
@@ -185,152 +259,157 @@
     "parent_review_single_reviewer_packet",
     "parent_review_old_task_family_rejected",
     "parent_review_fake_ai_contract_recovery",
-    "parent_review_final_gate_gap_hard_block"
+    "parent_review_final_gate_gap_hard_block",
+    "integration_cartesian_hard_underblock",
+    "integration_cartesian_advisory_overblock",
+    "integration_cartesian_worker_boundary",
+    "integration_cartesian_runtime_no_hard_blocker",
+    "integration_cartesian_model_miss"
   ],
   "result_type": "flowpilot_acceptance_testmesh_checks",
   "router_tier_background_details": [
     {
-      "background_dir": "tmp\\test_background_parent_backward_20260624",
+      "background_dir": "tmp\\test_background",
       "children": [
         {
-          "combined_artifact": "tmp\\test_background_parent_backward_20260624\\router_quality_gates_background_manifest.combined.txt",
-          "exit_artifact": "tmp\\test_background_parent_backward_20260624\\router_quality_gates_background_manifest.exit.txt",
+          "combined_artifact": "tmp\\test_background\\router_quality_gates_background_manifest.combined.txt",
+          "exit_artifact": "tmp\\test_background\\router_quality_gates_background_manifest.exit.txt",
           "exit_code": 0,
           "has_exit_artifact": true,
           "has_result_artifact": true,
-          "meta_artifact": "tmp\\test_background_parent_backward_20260624\\router_quality_gates_background_manifest.meta.json",
+          "meta_artifact": "tmp\\test_background\\router_quality_gates_background_manifest.meta.json",
           "meta_status": "passed",
           "name": "router_quality_gates_background_manifest",
           "status": "passed"
         },
         {
-          "combined_artifact": "tmp\\test_background_parent_backward_20260624\\router_quality_gates_decisions.combined.txt",
-          "exit_artifact": "tmp\\test_background_parent_backward_20260624\\router_quality_gates_decisions.exit.txt",
+          "combined_artifact": "tmp\\test_background\\router_quality_gates_decisions.combined.txt",
+          "exit_artifact": "tmp\\test_background\\router_quality_gates_decisions.exit.txt",
           "exit_code": 0,
           "has_exit_artifact": true,
           "has_result_artifact": true,
-          "meta_artifact": "tmp\\test_background_parent_backward_20260624\\router_quality_gates_decisions.meta.json",
+          "meta_artifact": "tmp\\test_background\\router_quality_gates_decisions.meta.json",
           "meta_status": "passed",
           "name": "router_quality_gates_decisions",
           "status": "passed"
         },
         {
-          "combined_artifact": "tmp\\test_background_parent_backward_20260624\\router_quality_gates_evidence_package.combined.txt",
-          "exit_artifact": "tmp\\test_background_parent_backward_20260624\\router_quality_gates_evidence_package.exit.txt",
+          "combined_artifact": "tmp\\test_background\\router_quality_gates_evidence_package.combined.txt",
+          "exit_artifact": "tmp\\test_background\\router_quality_gates_evidence_package.exit.txt",
           "exit_code": 0,
           "has_exit_artifact": true,
           "has_result_artifact": true,
-          "meta_artifact": "tmp\\test_background_parent_backward_20260624\\router_quality_gates_evidence_package.meta.json",
+          "meta_artifact": "tmp\\test_background\\router_quality_gates_evidence_package.meta.json",
           "meta_status": "passed",
           "name": "router_quality_gates_evidence_package",
           "status": "passed"
         },
         {
-          "combined_artifact": "tmp\\test_background_parent_backward_20260624\\router_quality_gates_route_check_reports.combined.txt",
-          "exit_artifact": "tmp\\test_background_parent_backward_20260624\\router_quality_gates_route_check_reports.exit.txt",
+          "combined_artifact": "tmp\\test_background\\router_quality_gates_route_check_reports.combined.txt",
+          "exit_artifact": "tmp\\test_background\\router_quality_gates_route_check_reports.exit.txt",
           "exit_code": 0,
           "has_exit_artifact": true,
           "has_result_artifact": true,
-          "meta_artifact": "tmp\\test_background_parent_backward_20260624\\router_quality_gates_route_check_reports.meta.json",
+          "meta_artifact": "tmp\\test_background\\router_quality_gates_route_check_reports.meta.json",
           "meta_status": "passed",
           "name": "router_quality_gates_route_check_reports",
           "status": "passed"
         },
         {
-          "combined_artifact": "tmp\\test_background_parent_backward_20260624\\router_quality_gates_route_check_delivery.combined.txt",
-          "exit_artifact": "tmp\\test_background_parent_backward_20260624\\router_quality_gates_route_check_delivery.exit.txt",
+          "combined_artifact": "tmp\\test_background\\router_quality_gates_route_check_delivery.combined.txt",
+          "exit_artifact": "tmp\\test_background\\router_quality_gates_route_check_delivery.exit.txt",
           "exit_code": 0,
           "has_exit_artifact": true,
           "has_result_artifact": true,
-          "meta_artifact": "tmp\\test_background_parent_backward_20260624\\router_quality_gates_route_check_delivery.meta.json",
+          "meta_artifact": "tmp\\test_background\\router_quality_gates_route_check_delivery.meta.json",
           "meta_status": "passed",
           "name": "router_quality_gates_route_check_delivery",
           "status": "passed"
         },
         {
-          "combined_artifact": "tmp\\test_background_parent_backward_20260624\\router_quality_gates_router_owned_proof.combined.txt",
-          "exit_artifact": "tmp\\test_background_parent_backward_20260624\\router_quality_gates_router_owned_proof.exit.txt",
+          "combined_artifact": "tmp\\test_background\\router_quality_gates_router_owned_proof.combined.txt",
+          "exit_artifact": "tmp\\test_background\\router_quality_gates_router_owned_proof.exit.txt",
           "exit_code": 0,
           "has_exit_artifact": true,
           "has_result_artifact": true,
-          "meta_artifact": "tmp\\test_background_parent_backward_20260624\\router_quality_gates_router_owned_proof.meta.json",
+          "meta_artifact": "tmp\\test_background\\router_quality_gates_router_owned_proof.meta.json",
           "meta_status": "passed",
           "name": "router_quality_gates_router_owned_proof",
           "status": "passed"
         },
         {
-          "combined_artifact": "tmp\\test_background_parent_backward_20260624\\router_quality_gates_artifact_validation.combined.txt",
-          "exit_artifact": "tmp\\test_background_parent_backward_20260624\\router_quality_gates_artifact_validation.exit.txt",
+          "combined_artifact": "tmp\\test_background\\router_quality_gates_artifact_validation.combined.txt",
+          "exit_artifact": "tmp\\test_background\\router_quality_gates_artifact_validation.exit.txt",
           "exit_code": 0,
           "has_exit_artifact": true,
           "has_result_artifact": true,
-          "meta_artifact": "tmp\\test_background_parent_backward_20260624\\router_quality_gates_artifact_validation.meta.json",
+          "meta_artifact": "tmp\\test_background\\router_quality_gates_artifact_validation.meta.json",
           "meta_status": "passed",
           "name": "router_quality_gates_artifact_validation",
           "status": "passed"
         },
         {
-          "combined_artifact": "tmp\\test_background_parent_backward_20260624\\router_quality_gates_model_miss_sync.combined.txt",
-          "exit_artifact": "tmp\\test_background_parent_backward_20260624\\router_quality_gates_model_miss_sync.exit.txt",
+          "combined_artifact": "tmp\\test_background\\router_quality_gates_model_miss_sync.combined.txt",
+          "exit_artifact": "tmp\\test_background\\router_quality_gates_model_miss_sync.exit.txt",
           "exit_code": 0,
           "has_exit_artifact": true,
           "has_result_artifact": true,
-          "meta_artifact": "tmp\\test_background_parent_backward_20260624\\router_quality_gates_model_miss_sync.meta.json",
+          "meta_artifact": "tmp\\test_background\\router_quality_gates_model_miss_sync.meta.json",
           "meta_status": "passed",
           "name": "router_quality_gates_model_miss_sync",
           "status": "passed"
         },
         {
-          "combined_artifact": "tmp\\test_background_parent_backward_20260624\\router_quality_gates_node_acceptance_plan.combined.txt",
-          "exit_artifact": "tmp\\test_background_parent_backward_20260624\\router_quality_gates_node_acceptance_plan.exit.txt",
+          "combined_artifact": "tmp\\test_background\\router_quality_gates_node_acceptance_plan.combined.txt",
+          "exit_artifact": "tmp\\test_background\\router_quality_gates_node_acceptance_plan.exit.txt",
           "exit_code": 0,
           "has_exit_artifact": true,
           "has_result_artifact": true,
-          "meta_artifact": "tmp\\test_background_parent_backward_20260624\\router_quality_gates_node_acceptance_plan.meta.json",
+          "meta_artifact": "tmp\\test_background\\router_quality_gates_node_acceptance_plan.meta.json",
           "meta_status": "passed",
           "name": "router_quality_gates_node_acceptance_plan",
           "status": "passed"
         },
         {
-          "combined_artifact": "tmp\\test_background_parent_backward_20260624\\router_quality_gates_route_repair_reopens_draft.combined.txt",
-          "exit_artifact": "tmp\\test_background_parent_backward_20260624\\router_quality_gates_route_repair_reopens_draft.exit.txt",
+          "combined_artifact": "tmp\\test_background\\router_quality_gates_route_repair_reopens_draft.combined.txt",
+          "exit_artifact": "tmp\\test_background\\router_quality_gates_route_repair_reopens_draft.exit.txt",
           "exit_code": 0,
           "has_exit_artifact": true,
           "has_result_artifact": true,
-          "meta_artifact": "tmp\\test_background_parent_backward_20260624\\router_quality_gates_route_repair_reopens_draft.meta.json",
+          "meta_artifact": "tmp\\test_background\\router_quality_gates_route_repair_reopens_draft.meta.json",
           "meta_status": "passed",
           "name": "router_quality_gates_route_repair_reopens_draft",
           "status": "passed"
         },
         {
-          "combined_artifact": "tmp\\test_background_parent_backward_20260624\\router_quality_gates_root_contract.combined.txt",
-          "exit_artifact": "tmp\\test_background_parent_backward_20260624\\router_quality_gates_root_contract.exit.txt",
+          "combined_artifact": "tmp\\test_background\\router_quality_gates_root_contract.combined.txt",
+          "exit_artifact": "tmp\\test_background\\router_quality_gates_root_contract.exit.txt",
           "exit_code": 0,
           "has_exit_artifact": true,
           "has_result_artifact": true,
-          "meta_artifact": "tmp\\test_background_parent_backward_20260624\\router_quality_gates_root_contract.meta.json",
+          "meta_artifact": "tmp\\test_background\\router_quality_gates_root_contract.meta.json",
           "meta_status": "passed",
           "name": "router_quality_gates_root_contract",
           "status": "passed"
         },
         {
-          "combined_artifact": "tmp\\test_background_parent_backward_20260624\\router_quality_gates_route_draft_product_model.combined.txt",
-          "exit_artifact": "tmp\\test_background_parent_backward_20260624\\router_quality_gates_route_draft_product_model.exit.txt",
+          "combined_artifact": "tmp\\test_background\\router_quality_gates_route_draft_product_model.combined.txt",
+          "exit_artifact": "tmp\\test_background\\router_quality_gates_route_draft_product_model.exit.txt",
           "exit_code": 0,
           "has_exit_artifact": true,
           "has_result_artifact": true,
-          "meta_artifact": "tmp\\test_background_parent_backward_20260624\\router_quality_gates_route_draft_product_model.meta.json",
+          "meta_artifact": "tmp\\test_background\\router_quality_gates_route_draft_product_model.meta.json",
           "meta_status": "passed",
           "name": "router_quality_gates_route_draft_product_model",
           "status": "passed"
         },
         {
-          "combined_artifact": "tmp\\test_background_parent_backward_20260624\\router_quality_gates_node_contracts.combined.txt",
-          "exit_artifact": "tmp\\test_background_parent_backward_20260624\\router_quality_gates_node_contracts.exit.txt",
+          "combined_artifact": "tmp\\test_background\\router_quality_gates_node_contracts.combined.txt",
+          "exit_artifact": "tmp\\test_background\\router_quality_gates_node_contracts.exit.txt",
           "exit_code": 0,
           "has_exit_artifact": true,
           "has_result_artifact": true,
-          "meta_artifact": "tmp\\test_background_parent_backward_20260624\\router_quality_gates_node_contracts.meta.json",
+          "meta_artifact": "tmp\\test_background\\router_quality_gates_node_contracts.meta.json",
           "meta_status": "passed",
           "name": "router_quality_gates_node_contracts",
           "status": "passed"
@@ -359,224 +438,224 @@
       "tier": "router-quality-gates"
     },
     {
-      "background_dir": "tmp\\test_background_parent_backward_20260624",
+      "background_dir": "tmp\\test_background",
       "children": [
         {
-          "combined_artifact": "tmp\\test_background_parent_backward_20260624\\router_packet_runtime.combined.txt",
-          "exit_artifact": "tmp\\test_background_parent_backward_20260624\\router_packet_runtime.exit.txt",
+          "combined_artifact": "tmp\\test_background\\router_packet_runtime.combined.txt",
+          "exit_artifact": "tmp\\test_background\\router_packet_runtime.exit.txt",
           "exit_code": 0,
           "has_exit_artifact": true,
           "has_result_artifact": true,
-          "meta_artifact": "tmp\\test_background_parent_backward_20260624\\router_packet_runtime.meta.json",
+          "meta_artifact": "tmp\\test_background\\router_packet_runtime.meta.json",
           "meta_status": "passed",
           "name": "router_packet_runtime",
           "status": "passed"
         },
         {
-          "combined_artifact": "tmp\\test_background_parent_backward_20260624\\router_packets_material.combined.txt",
-          "exit_artifact": "tmp\\test_background_parent_backward_20260624\\router_packets_material.exit.txt",
+          "combined_artifact": "tmp\\test_background\\router_packets_material.combined.txt",
+          "exit_artifact": "tmp\\test_background\\router_packets_material.exit.txt",
           "exit_code": 0,
           "has_exit_artifact": true,
           "has_result_artifact": true,
-          "meta_artifact": "tmp\\test_background_parent_backward_20260624\\router_packets_material.meta.json",
+          "meta_artifact": "tmp\\test_background\\router_packets_material.meta.json",
           "meta_status": "passed",
           "name": "router_packets_material",
           "status": "passed"
         },
         {
-          "combined_artifact": "tmp\\test_background_parent_backward_20260624\\router_packets_current_node_direct.combined.txt",
-          "exit_artifact": "tmp\\test_background_parent_backward_20260624\\router_packets_current_node_direct.exit.txt",
+          "combined_artifact": "tmp\\test_background\\router_packets_current_node_direct.combined.txt",
+          "exit_artifact": "tmp\\test_background\\router_packets_current_node_direct.exit.txt",
           "exit_code": 0,
           "has_exit_artifact": true,
           "has_result_artifact": true,
-          "meta_artifact": "tmp\\test_background_parent_backward_20260624\\router_packets_current_node_direct.meta.json",
+          "meta_artifact": "tmp\\test_background\\router_packets_current_node_direct.meta.json",
           "meta_status": "passed",
           "name": "router_packets_current_node_direct",
           "status": "passed"
         },
         {
-          "combined_artifact": "tmp\\test_background_parent_backward_20260624\\router_packets_current_node_dispatch_relay.combined.txt",
-          "exit_artifact": "tmp\\test_background_parent_backward_20260624\\router_packets_current_node_dispatch_relay.exit.txt",
+          "combined_artifact": "tmp\\test_background\\router_packets_current_node_dispatch_relay.combined.txt",
+          "exit_artifact": "tmp\\test_background\\router_packets_current_node_dispatch_relay.exit.txt",
           "exit_code": 0,
           "has_exit_artifact": true,
           "has_result_artifact": true,
-          "meta_artifact": "tmp\\test_background_parent_backward_20260624\\router_packets_current_node_dispatch_relay.meta.json",
+          "meta_artifact": "tmp\\test_background\\router_packets_current_node_dispatch_relay.meta.json",
           "meta_status": "passed",
           "name": "router_packets_current_node_dispatch_relay",
           "status": "passed"
         },
         {
-          "combined_artifact": "tmp\\test_background_parent_backward_20260624\\router_packets_current_node_dispatch_worker_binding.combined.txt",
-          "exit_artifact": "tmp\\test_background_parent_backward_20260624\\router_packets_current_node_dispatch_worker_binding.exit.txt",
+          "combined_artifact": "tmp\\test_background\\router_packets_current_node_dispatch_worker_binding.combined.txt",
+          "exit_artifact": "tmp\\test_background\\router_packets_current_node_dispatch_worker_binding.exit.txt",
           "exit_code": 0,
           "has_exit_artifact": true,
           "has_result_artifact": true,
-          "meta_artifact": "tmp\\test_background_parent_backward_20260624\\router_packets_current_node_dispatch_worker_binding.meta.json",
+          "meta_artifact": "tmp\\test_background\\router_packets_current_node_dispatch_worker_binding.meta.json",
           "meta_status": "passed",
           "name": "router_packets_current_node_dispatch_worker_binding",
           "status": "passed"
         },
         {
-          "combined_artifact": "tmp\\test_background_parent_backward_20260624\\router_packets_current_node_dispatch_unready_leaf.combined.txt",
-          "exit_artifact": "tmp\\test_background_parent_backward_20260624\\router_packets_current_node_dispatch_unready_leaf.exit.txt",
+          "combined_artifact": "tmp\\test_background\\router_packets_current_node_dispatch_unready_leaf.combined.txt",
+          "exit_artifact": "tmp\\test_background\\router_packets_current_node_dispatch_unready_leaf.exit.txt",
           "exit_code": 0,
           "has_exit_artifact": true,
           "has_result_artifact": true,
-          "meta_artifact": "tmp\\test_background_parent_backward_20260624\\router_packets_current_node_dispatch_unready_leaf.meta.json",
+          "meta_artifact": "tmp\\test_background\\router_packets_current_node_dispatch_unready_leaf.meta.json",
           "meta_status": "passed",
           "name": "router_packets_current_node_dispatch_unready_leaf",
           "status": "passed"
         },
         {
-          "combined_artifact": "tmp\\test_background_parent_backward_20260624\\router_packets_result_audit_completion.combined.txt",
-          "exit_artifact": "tmp\\test_background_parent_backward_20260624\\router_packets_result_audit_completion.exit.txt",
+          "combined_artifact": "tmp\\test_background\\router_packets_result_audit_completion.combined.txt",
+          "exit_artifact": "tmp\\test_background\\router_packets_result_audit_completion.exit.txt",
           "exit_code": 0,
           "has_exit_artifact": true,
           "has_result_artifact": true,
-          "meta_artifact": "tmp\\test_background_parent_backward_20260624\\router_packets_result_audit_completion.meta.json",
+          "meta_artifact": "tmp\\test_background\\router_packets_result_audit_completion.meta.json",
           "meta_status": "passed",
           "name": "router_packets_result_audit_completion",
           "status": "passed"
         },
         {
-          "combined_artifact": "tmp\\test_background_parent_backward_20260624\\router_packets_result_audit_reviewer_map.combined.txt",
-          "exit_artifact": "tmp\\test_background_parent_backward_20260624\\router_packets_result_audit_reviewer_map.exit.txt",
+          "combined_artifact": "tmp\\test_background\\router_packets_result_audit_reviewer_map.combined.txt",
+          "exit_artifact": "tmp\\test_background\\router_packets_result_audit_reviewer_map.exit.txt",
           "exit_code": 0,
           "has_exit_artifact": true,
           "has_result_artifact": true,
-          "meta_artifact": "tmp\\test_background_parent_backward_20260624\\router_packets_result_audit_reviewer_map.meta.json",
+          "meta_artifact": "tmp\\test_background\\router_packets_result_audit_reviewer_map.meta.json",
           "meta_status": "passed",
           "name": "router_packets_result_audit_reviewer_map",
           "status": "passed"
         },
         {
-          "combined_artifact": "tmp\\test_background_parent_backward_20260624\\router_packets_result_audit_rejection.combined.txt",
-          "exit_artifact": "tmp\\test_background_parent_backward_20260624\\router_packets_result_audit_rejection.exit.txt",
+          "combined_artifact": "tmp\\test_background\\router_packets_result_audit_rejection.combined.txt",
+          "exit_artifact": "tmp\\test_background\\router_packets_result_audit_rejection.exit.txt",
           "exit_code": 0,
           "has_exit_artifact": true,
           "has_result_artifact": true,
-          "meta_artifact": "tmp\\test_background_parent_backward_20260624\\router_packets_result_audit_rejection.meta.json",
+          "meta_artifact": "tmp\\test_background\\router_packets_result_audit_rejection.meta.json",
           "meta_status": "passed",
           "name": "router_packets_result_audit_rejection",
           "status": "passed"
         },
         {
-          "combined_artifact": "tmp\\test_background_parent_backward_20260624\\router_packets_result_decision_review_card.combined.txt",
-          "exit_artifact": "tmp\\test_background_parent_backward_20260624\\router_packets_result_decision_review_card.exit.txt",
+          "combined_artifact": "tmp\\test_background\\router_packets_result_decision_review_card.combined.txt",
+          "exit_artifact": "tmp\\test_background\\router_packets_result_decision_review_card.exit.txt",
           "exit_code": 0,
           "has_exit_artifact": true,
           "has_result_artifact": true,
-          "meta_artifact": "tmp\\test_background_parent_backward_20260624\\router_packets_result_decision_review_card.meta.json",
+          "meta_artifact": "tmp\\test_background\\router_packets_result_decision_review_card.meta.json",
           "meta_status": "passed",
           "name": "router_packets_result_decision_review_card",
           "status": "passed"
         },
         {
-          "combined_artifact": "tmp\\test_background_parent_backward_20260624\\router_packets_result_decision_relay.combined.txt",
-          "exit_artifact": "tmp\\test_background_parent_backward_20260624\\router_packets_result_decision_relay.exit.txt",
+          "combined_artifact": "tmp\\test_background\\router_packets_result_decision_relay.combined.txt",
+          "exit_artifact": "tmp\\test_background\\router_packets_result_decision_relay.exit.txt",
           "exit_code": 0,
           "has_exit_artifact": true,
           "has_result_artifact": true,
-          "meta_artifact": "tmp\\test_background_parent_backward_20260624\\router_packets_result_decision_relay.meta.json",
+          "meta_artifact": "tmp\\test_background\\router_packets_result_decision_relay.meta.json",
           "meta_status": "passed",
           "name": "router_packets_result_decision_relay",
           "status": "passed"
         },
         {
-          "combined_artifact": "tmp\\test_background_parent_backward_20260624\\router_packets_result_decision_pm_repair.combined.txt",
-          "exit_artifact": "tmp\\test_background_parent_backward_20260624\\router_packets_result_decision_pm_repair.exit.txt",
+          "combined_artifact": "tmp\\test_background\\router_packets_result_decision_pm_repair.combined.txt",
+          "exit_artifact": "tmp\\test_background\\router_packets_result_decision_pm_repair.exit.txt",
           "exit_code": 0,
           "has_exit_artifact": true,
           "has_result_artifact": true,
-          "meta_artifact": "tmp\\test_background_parent_backward_20260624\\router_packets_result_decision_pm_repair.meta.json",
+          "meta_artifact": "tmp\\test_background\\router_packets_result_decision_pm_repair.meta.json",
           "meta_status": "passed",
           "name": "router_packets_result_decision_pm_repair",
           "status": "passed"
         },
         {
-          "combined_artifact": "tmp\\test_background_parent_backward_20260624\\router_packets_batch_existing_results.combined.txt",
-          "exit_artifact": "tmp\\test_background_parent_backward_20260624\\router_packets_batch_existing_results.exit.txt",
+          "combined_artifact": "tmp\\test_background\\router_packets_batch_existing_results.combined.txt",
+          "exit_artifact": "tmp\\test_background\\router_packets_batch_existing_results.exit.txt",
           "exit_code": 0,
           "has_exit_artifact": true,
           "has_result_artifact": true,
-          "meta_artifact": "tmp\\test_background_parent_backward_20260624\\router_packets_batch_existing_results.meta.json",
+          "meta_artifact": "tmp\\test_background\\router_packets_batch_existing_results.meta.json",
           "meta_status": "passed",
           "name": "router_packets_batch_existing_results",
           "status": "passed"
         },
         {
-          "combined_artifact": "tmp\\test_background_parent_backward_20260624\\router_packets_batch_duplicate_worker.combined.txt",
-          "exit_artifact": "tmp\\test_background_parent_backward_20260624\\router_packets_batch_duplicate_worker.exit.txt",
+          "combined_artifact": "tmp\\test_background\\router_packets_batch_duplicate_worker.combined.txt",
+          "exit_artifact": "tmp\\test_background\\router_packets_batch_duplicate_worker.exit.txt",
           "exit_code": 0,
           "has_exit_artifact": true,
           "has_result_artifact": true,
-          "meta_artifact": "tmp\\test_background_parent_backward_20260624\\router_packets_batch_duplicate_worker.meta.json",
+          "meta_artifact": "tmp\\test_background\\router_packets_batch_duplicate_worker.meta.json",
           "meta_status": "passed",
           "name": "router_packets_batch_duplicate_worker",
           "status": "passed"
         },
         {
-          "combined_artifact": "tmp\\test_background_parent_backward_20260624\\router_packets_batch_full_wait_missing_roles.combined.txt",
-          "exit_artifact": "tmp\\test_background_parent_backward_20260624\\router_packets_batch_full_wait_missing_roles.exit.txt",
+          "combined_artifact": "tmp\\test_background\\router_packets_batch_full_wait_missing_roles.combined.txt",
+          "exit_artifact": "tmp\\test_background\\router_packets_batch_full_wait_missing_roles.exit.txt",
           "exit_code": 0,
           "has_exit_artifact": true,
           "has_result_artifact": true,
-          "meta_artifact": "tmp\\test_background_parent_backward_20260624\\router_packets_batch_full_wait_missing_roles.meta.json",
+          "meta_artifact": "tmp\\test_background\\router_packets_batch_full_wait_missing_roles.meta.json",
           "meta_status": "passed",
           "name": "router_packets_batch_full_wait_missing_roles",
           "status": "passed"
         },
         {
-          "combined_artifact": "tmp\\test_background_parent_backward_20260624\\router_packets_grant_result_requires_write.combined.txt",
-          "exit_artifact": "tmp\\test_background_parent_backward_20260624\\router_packets_grant_result_requires_write.exit.txt",
+          "combined_artifact": "tmp\\test_background\\router_packets_grant_result_requires_write.combined.txt",
+          "exit_artifact": "tmp\\test_background\\router_packets_grant_result_requires_write.exit.txt",
           "exit_code": 0,
           "has_exit_artifact": true,
           "has_result_artifact": true,
-          "meta_artifact": "tmp\\test_background_parent_backward_20260624\\router_packets_grant_result_requires_write.meta.json",
+          "meta_artifact": "tmp\\test_background\\router_packets_grant_result_requires_write.meta.json",
           "meta_status": "passed",
           "name": "router_packets_grant_result_requires_write",
           "status": "passed"
         },
         {
-          "combined_artifact": "tmp\\test_background_parent_backward_20260624\\router_packets_grant_unresolved_node_entry.combined.txt",
-          "exit_artifact": "tmp\\test_background_parent_backward_20260624\\router_packets_grant_unresolved_node_entry.exit.txt",
+          "combined_artifact": "tmp\\test_background\\router_packets_grant_unresolved_node_entry.combined.txt",
+          "exit_artifact": "tmp\\test_background\\router_packets_grant_unresolved_node_entry.exit.txt",
           "exit_code": 0,
           "has_exit_artifact": true,
           "has_result_artifact": true,
-          "meta_artifact": "tmp\\test_background_parent_backward_20260624\\router_packets_grant_unresolved_node_entry.meta.json",
+          "meta_artifact": "tmp\\test_background\\router_packets_grant_unresolved_node_entry.meta.json",
           "meta_status": "passed",
           "name": "router_packets_grant_unresolved_node_entry",
           "status": "passed"
         },
         {
-          "combined_artifact": "tmp\\test_background_parent_backward_20260624\\router_packet_result_family.combined.txt",
-          "exit_artifact": "tmp\\test_background_parent_backward_20260624\\router_packet_result_family.exit.txt",
+          "combined_artifact": "tmp\\test_background\\router_packet_result_family.combined.txt",
+          "exit_artifact": "tmp\\test_background\\router_packet_result_family.exit.txt",
           "exit_code": 0,
           "has_exit_artifact": true,
           "has_result_artifact": true,
-          "meta_artifact": "tmp\\test_background_parent_backward_20260624\\router_packet_result_family.meta.json",
+          "meta_artifact": "tmp\\test_background\\router_packet_result_family.meta.json",
           "meta_status": "passed",
           "name": "router_packet_result_family",
           "status": "passed"
         },
         {
-          "combined_artifact": "tmp\\test_background_parent_backward_20260624\\router_cards.combined.txt",
-          "exit_artifact": "tmp\\test_background_parent_backward_20260624\\router_cards.exit.txt",
+          "combined_artifact": "tmp\\test_background\\router_cards.combined.txt",
+          "exit_artifact": "tmp\\test_background\\router_cards.exit.txt",
           "exit_code": 0,
           "has_exit_artifact": true,
           "has_result_artifact": true,
-          "meta_artifact": "tmp\\test_background_parent_backward_20260624\\router_cards.meta.json",
+          "meta_artifact": "tmp\\test_background\\router_cards.meta.json",
           "meta_status": "passed",
           "name": "router_cards",
           "status": "passed"
         },
         {
-          "combined_artifact": "tmp\\test_background_parent_backward_20260624\\router_ack_return.combined.txt",
-          "exit_artifact": "tmp\\test_background_parent_backward_20260624\\router_ack_return.exit.txt",
+          "combined_artifact": "tmp\\test_background\\router_ack_return.combined.txt",
+          "exit_artifact": "tmp\\test_background\\router_ack_return.exit.txt",
           "exit_code": 0,
           "has_exit_artifact": true,
           "has_result_artifact": true,
-          "meta_artifact": "tmp\\test_background_parent_backward_20260624\\router_ack_return.meta.json",
+          "meta_artifact": "tmp\\test_background\\router_ack_return.meta.json",
           "meta_status": "passed",
           "name": "router_ack_return",
           "status": "passed"
@@ -612,257 +691,257 @@
       "tier": "router-packets"
     },
     {
-      "background_dir": "tmp\\test_background_parent_backward_20260624",
+      "background_dir": "tmp\\test_background",
       "children": [
         {
-          "combined_artifact": "tmp\\test_background_parent_backward_20260624\\router_boundaries.combined.txt",
-          "exit_artifact": "tmp\\test_background_parent_backward_20260624\\router_boundaries.exit.txt",
+          "combined_artifact": "tmp\\test_background\\router_boundaries.combined.txt",
+          "exit_artifact": "tmp\\test_background\\router_boundaries.exit.txt",
           "exit_code": 0,
           "has_exit_artifact": true,
           "has_result_artifact": true,
-          "meta_artifact": "tmp\\test_background_parent_backward_20260624\\router_boundaries.meta.json",
+          "meta_artifact": "tmp\\test_background\\router_boundaries.meta.json",
           "meta_status": "passed",
           "name": "router_boundaries",
           "status": "passed"
         },
         {
-          "combined_artifact": "tmp\\test_background_parent_backward_20260624\\router_route_mutation_draft_policy.combined.txt",
-          "exit_artifact": "tmp\\test_background_parent_backward_20260624\\router_route_mutation_draft_policy.exit.txt",
+          "combined_artifact": "tmp\\test_background\\router_route_mutation_draft_policy.combined.txt",
+          "exit_artifact": "tmp\\test_background\\router_route_mutation_draft_policy.exit.txt",
           "exit_code": 0,
           "has_exit_artifact": true,
           "has_result_artifact": true,
-          "meta_artifact": "tmp\\test_background_parent_backward_20260624\\router_route_mutation_draft_policy.meta.json",
+          "meta_artifact": "tmp\\test_background\\router_route_mutation_draft_policy.meta.json",
           "meta_status": "passed",
           "name": "router_route_mutation_draft_policy",
           "status": "passed"
         },
         {
-          "combined_artifact": "tmp\\test_background_parent_backward_20260624\\router_route_mutation_draft_activation_reviewed.combined.txt",
-          "exit_artifact": "tmp\\test_background_parent_backward_20260624\\router_route_mutation_draft_activation_reviewed.exit.txt",
+          "combined_artifact": "tmp\\test_background\\router_route_mutation_draft_activation_reviewed.combined.txt",
+          "exit_artifact": "tmp\\test_background\\router_route_mutation_draft_activation_reviewed.exit.txt",
           "exit_code": 0,
           "has_exit_artifact": true,
           "has_result_artifact": true,
-          "meta_artifact": "tmp\\test_background_parent_backward_20260624\\router_route_mutation_draft_activation_reviewed.meta.json",
+          "meta_artifact": "tmp\\test_background\\router_route_mutation_draft_activation_reviewed.meta.json",
           "meta_status": "passed",
           "name": "router_route_mutation_draft_activation_reviewed",
           "status": "passed"
         },
         {
-          "combined_artifact": "tmp\\test_background_parent_backward_20260624\\router_route_mutation_draft_missing_active_node.combined.txt",
-          "exit_artifact": "tmp\\test_background_parent_backward_20260624\\router_route_mutation_draft_missing_active_node.exit.txt",
+          "combined_artifact": "tmp\\test_background\\router_route_mutation_draft_missing_active_node.combined.txt",
+          "exit_artifact": "tmp\\test_background\\router_route_mutation_draft_missing_active_node.exit.txt",
           "exit_code": 0,
           "has_exit_artifact": true,
           "has_result_artifact": true,
-          "meta_artifact": "tmp\\test_background_parent_backward_20260624\\router_route_mutation_draft_missing_active_node.meta.json",
+          "meta_artifact": "tmp\\test_background\\router_route_mutation_draft_missing_active_node.meta.json",
           "meta_status": "passed",
           "name": "router_route_mutation_draft_missing_active_node",
           "status": "passed"
         },
         {
-          "combined_artifact": "tmp\\test_background_parent_backward_20260624\\router_route_mutation_model_miss_refs.combined.txt",
-          "exit_artifact": "tmp\\test_background_parent_backward_20260624\\router_route_mutation_model_miss_refs.exit.txt",
+          "combined_artifact": "tmp\\test_background\\router_route_mutation_model_miss_refs.combined.txt",
+          "exit_artifact": "tmp\\test_background\\router_route_mutation_model_miss_refs.exit.txt",
           "exit_code": 0,
           "has_exit_artifact": true,
           "has_result_artifact": true,
-          "meta_artifact": "tmp\\test_background_parent_backward_20260624\\router_route_mutation_model_miss_refs.meta.json",
+          "meta_artifact": "tmp\\test_background\\router_route_mutation_model_miss_refs.meta.json",
           "meta_status": "passed",
           "name": "router_route_mutation_model_miss_refs",
           "status": "passed"
         },
         {
-          "combined_artifact": "tmp\\test_background_parent_backward_20260624\\router_route_mutation_model_miss_unlocks.combined.txt",
-          "exit_artifact": "tmp\\test_background_parent_backward_20260624\\router_route_mutation_model_miss_unlocks.exit.txt",
+          "combined_artifact": "tmp\\test_background\\router_route_mutation_model_miss_unlocks.combined.txt",
+          "exit_artifact": "tmp\\test_background\\router_route_mutation_model_miss_unlocks.exit.txt",
           "exit_code": 0,
           "has_exit_artifact": true,
           "has_result_artifact": true,
-          "meta_artifact": "tmp\\test_background_parent_backward_20260624\\router_route_mutation_model_miss_unlocks.meta.json",
+          "meta_artifact": "tmp\\test_background\\router_route_mutation_model_miss_unlocks.meta.json",
           "meta_status": "passed",
           "name": "router_route_mutation_model_miss_unlocks",
           "status": "passed"
         },
         {
-          "combined_artifact": "tmp\\test_background_parent_backward_20260624\\router_route_mutation_model_miss_non_authorizing.combined.txt",
-          "exit_artifact": "tmp\\test_background_parent_backward_20260624\\router_route_mutation_model_miss_non_authorizing.exit.txt",
+          "combined_artifact": "tmp\\test_background\\router_route_mutation_model_miss_non_authorizing.combined.txt",
+          "exit_artifact": "tmp\\test_background\\router_route_mutation_model_miss_non_authorizing.exit.txt",
           "exit_code": 0,
           "has_exit_artifact": true,
           "has_result_artifact": true,
-          "meta_artifact": "tmp\\test_background_parent_backward_20260624\\router_route_mutation_model_miss_non_authorizing.meta.json",
+          "meta_artifact": "tmp\\test_background\\router_route_mutation_model_miss_non_authorizing.meta.json",
           "meta_status": "passed",
           "name": "router_route_mutation_model_miss_non_authorizing",
           "status": "passed"
         },
         {
-          "combined_artifact": "tmp\\test_background_parent_backward_20260624\\router_route_mutation_model_miss_out_of_scope.combined.txt",
-          "exit_artifact": "tmp\\test_background_parent_backward_20260624\\router_route_mutation_model_miss_out_of_scope.exit.txt",
+          "combined_artifact": "tmp\\test_background\\router_route_mutation_model_miss_out_of_scope.combined.txt",
+          "exit_artifact": "tmp\\test_background\\router_route_mutation_model_miss_out_of_scope.exit.txt",
           "exit_code": 0,
           "has_exit_artifact": true,
           "has_result_artifact": true,
-          "meta_artifact": "tmp\\test_background_parent_backward_20260624\\router_route_mutation_model_miss_out_of_scope.meta.json",
+          "meta_artifact": "tmp\\test_background\\router_route_mutation_model_miss_out_of_scope.meta.json",
           "meta_status": "passed",
           "name": "router_route_mutation_model_miss_out_of_scope",
           "status": "passed"
         },
         {
-          "combined_artifact": "tmp\\test_background_parent_backward_20260624\\router_route_mutation_model_miss_role_work.combined.txt",
-          "exit_artifact": "tmp\\test_background_parent_backward_20260624\\router_route_mutation_model_miss_role_work.exit.txt",
+          "combined_artifact": "tmp\\test_background\\router_route_mutation_model_miss_role_work.combined.txt",
+          "exit_artifact": "tmp\\test_background\\router_route_mutation_model_miss_role_work.exit.txt",
           "exit_code": 0,
           "has_exit_artifact": true,
           "has_result_artifact": true,
-          "meta_artifact": "tmp\\test_background_parent_backward_20260624\\router_route_mutation_model_miss_role_work.meta.json",
+          "meta_artifact": "tmp\\test_background\\router_route_mutation_model_miss_role_work.meta.json",
           "meta_status": "passed",
           "name": "router_route_mutation_model_miss_role_work",
           "status": "passed"
         },
         {
-          "combined_artifact": "tmp\\test_background_parent_backward_20260624\\router_route_mutation_model_miss_closed_triage.combined.txt",
-          "exit_artifact": "tmp\\test_background_parent_backward_20260624\\router_route_mutation_model_miss_closed_triage.exit.txt",
+          "combined_artifact": "tmp\\test_background\\router_route_mutation_model_miss_closed_triage.combined.txt",
+          "exit_artifact": "tmp\\test_background\\router_route_mutation_model_miss_closed_triage.exit.txt",
           "exit_code": 0,
           "has_exit_artifact": true,
           "has_result_artifact": true,
-          "meta_artifact": "tmp\\test_background_parent_backward_20260624\\router_route_mutation_model_miss_closed_triage.meta.json",
+          "meta_artifact": "tmp\\test_background\\router_route_mutation_model_miss_closed_triage.meta.json",
           "meta_status": "passed",
           "name": "router_route_mutation_model_miss_closed_triage",
           "status": "passed"
         },
         {
-          "combined_artifact": "tmp\\test_background_parent_backward_20260624\\router_route_mutation_model_miss_delivery.combined.txt",
-          "exit_artifact": "tmp\\test_background_parent_backward_20260624\\router_route_mutation_model_miss_delivery.exit.txt",
+          "combined_artifact": "tmp\\test_background\\router_route_mutation_model_miss_delivery.combined.txt",
+          "exit_artifact": "tmp\\test_background\\router_route_mutation_model_miss_delivery.exit.txt",
           "exit_code": 0,
           "has_exit_artifact": true,
           "has_result_artifact": true,
-          "meta_artifact": "tmp\\test_background_parent_backward_20260624\\router_route_mutation_model_miss_delivery.meta.json",
+          "meta_artifact": "tmp\\test_background\\router_route_mutation_model_miss_delivery.meta.json",
           "meta_status": "passed",
           "name": "router_route_mutation_model_miss_delivery",
           "status": "passed"
         },
         {
-          "combined_artifact": "tmp\\test_background_parent_backward_20260624\\router_route_mutation_model_miss_stale_wait.combined.txt",
-          "exit_artifact": "tmp\\test_background_parent_backward_20260624\\router_route_mutation_model_miss_stale_wait.exit.txt",
+          "combined_artifact": "tmp\\test_background\\router_route_mutation_model_miss_stale_wait.combined.txt",
+          "exit_artifact": "tmp\\test_background\\router_route_mutation_model_miss_stale_wait.exit.txt",
           "exit_code": 0,
           "has_exit_artifact": true,
           "has_result_artifact": true,
-          "meta_artifact": "tmp\\test_background_parent_backward_20260624\\router_route_mutation_model_miss_stale_wait.meta.json",
+          "meta_artifact": "tmp\\test_background\\router_route_mutation_model_miss_stale_wait.meta.json",
           "meta_status": "passed",
           "name": "router_route_mutation_model_miss_stale_wait",
           "status": "passed"
         },
         {
-          "combined_artifact": "tmp\\test_background_parent_backward_20260624\\router_route_mutation_acceptance_revise.combined.txt",
-          "exit_artifact": "tmp\\test_background_parent_backward_20260624\\router_route_mutation_acceptance_revise.exit.txt",
+          "combined_artifact": "tmp\\test_background\\router_route_mutation_acceptance_revise.combined.txt",
+          "exit_artifact": "tmp\\test_background\\router_route_mutation_acceptance_revise.exit.txt",
           "exit_code": 0,
           "has_exit_artifact": true,
           "has_result_artifact": true,
-          "meta_artifact": "tmp\\test_background_parent_backward_20260624\\router_route_mutation_acceptance_revise.meta.json",
+          "meta_artifact": "tmp\\test_background\\router_route_mutation_acceptance_revise.meta.json",
           "meta_status": "passed",
           "name": "router_route_mutation_acceptance_revise",
           "status": "passed"
         },
         {
-          "combined_artifact": "tmp\\test_background_parent_backward_20260624\\router_route_mutation_acceptance_model_miss.combined.txt",
-          "exit_artifact": "tmp\\test_background_parent_backward_20260624\\router_route_mutation_acceptance_model_miss.exit.txt",
+          "combined_artifact": "tmp\\test_background\\router_route_mutation_acceptance_model_miss.combined.txt",
+          "exit_artifact": "tmp\\test_background\\router_route_mutation_acceptance_model_miss.exit.txt",
           "exit_code": 0,
           "has_exit_artifact": true,
           "has_result_artifact": true,
-          "meta_artifact": "tmp\\test_background_parent_backward_20260624\\router_route_mutation_acceptance_model_miss.meta.json",
+          "meta_artifact": "tmp\\test_background\\router_route_mutation_acceptance_model_miss.meta.json",
           "meta_status": "passed",
           "name": "router_route_mutation_acceptance_model_miss",
           "status": "passed"
         },
         {
-          "combined_artifact": "tmp\\test_background_parent_backward_20260624\\router_route_mutation_preconditions_final_ledger.combined.txt",
-          "exit_artifact": "tmp\\test_background_parent_backward_20260624\\router_route_mutation_preconditions_final_ledger.exit.txt",
+          "combined_artifact": "tmp\\test_background\\router_route_mutation_preconditions_final_ledger.combined.txt",
+          "exit_artifact": "tmp\\test_background\\router_route_mutation_preconditions_final_ledger.exit.txt",
           "exit_code": 0,
           "has_exit_artifact": true,
           "has_result_artifact": true,
-          "meta_artifact": "tmp\\test_background_parent_backward_20260624\\router_route_mutation_preconditions_final_ledger.meta.json",
+          "meta_artifact": "tmp\\test_background\\router_route_mutation_preconditions_final_ledger.meta.json",
           "meta_status": "passed",
           "name": "router_route_mutation_preconditions_final_ledger",
           "status": "passed"
         },
         {
-          "combined_artifact": "tmp\\test_background_parent_backward_20260624\\router_route_mutation_preconditions_topology_reset.combined.txt",
-          "exit_artifact": "tmp\\test_background_parent_backward_20260624\\router_route_mutation_preconditions_topology_reset.exit.txt",
+          "combined_artifact": "tmp\\test_background\\router_route_mutation_preconditions_topology_reset.combined.txt",
+          "exit_artifact": "tmp\\test_background\\router_route_mutation_preconditions_topology_reset.exit.txt",
           "exit_code": 0,
           "has_exit_artifact": true,
           "has_result_artifact": true,
-          "meta_artifact": "tmp\\test_background_parent_backward_20260624\\router_route_mutation_preconditions_topology_reset.meta.json",
+          "meta_artifact": "tmp\\test_background\\router_route_mutation_preconditions_topology_reset.meta.json",
           "meta_status": "passed",
           "name": "router_route_mutation_preconditions_topology_reset",
           "status": "passed"
         },
         {
-          "combined_artifact": "tmp\\test_background_parent_backward_20260624\\router_route_mutation_preconditions_root_gap.combined.txt",
-          "exit_artifact": "tmp\\test_background_parent_backward_20260624\\router_route_mutation_preconditions_root_gap.exit.txt",
+          "combined_artifact": "tmp\\test_background\\router_route_mutation_preconditions_root_gap.combined.txt",
+          "exit_artifact": "tmp\\test_background\\router_route_mutation_preconditions_root_gap.exit.txt",
           "exit_code": 0,
           "has_exit_artifact": true,
           "has_result_artifact": true,
-          "meta_artifact": "tmp\\test_background_parent_backward_20260624\\router_route_mutation_preconditions_root_gap.meta.json",
+          "meta_artifact": "tmp\\test_background\\router_route_mutation_preconditions_root_gap.meta.json",
           "meta_status": "passed",
           "name": "router_route_mutation_preconditions_root_gap",
           "status": "passed"
         },
         {
-          "combined_artifact": "tmp\\test_background_parent_backward_20260624\\router_route_mutation_transactions.combined.txt",
-          "exit_artifact": "tmp\\test_background_parent_backward_20260624\\router_route_mutation_transactions.exit.txt",
+          "combined_artifact": "tmp\\test_background\\router_route_mutation_transactions.combined.txt",
+          "exit_artifact": "tmp\\test_background\\router_route_mutation_transactions.exit.txt",
           "exit_code": 0,
           "has_exit_artifact": true,
           "has_result_artifact": true,
-          "meta_artifact": "tmp\\test_background_parent_backward_20260624\\router_route_mutation_transactions.meta.json",
+          "meta_artifact": "tmp\\test_background\\router_route_mutation_transactions.meta.json",
           "meta_status": "passed",
           "name": "router_route_mutation_transactions",
           "status": "passed"
         },
         {
-          "combined_artifact": "tmp\\test_background_parent_backward_20260624\\router_route_mutation_topology.combined.txt",
-          "exit_artifact": "tmp\\test_background_parent_backward_20260624\\router_route_mutation_topology.exit.txt",
+          "combined_artifact": "tmp\\test_background\\router_route_mutation_topology.combined.txt",
+          "exit_artifact": "tmp\\test_background\\router_route_mutation_topology.exit.txt",
           "exit_code": 0,
           "has_exit_artifact": true,
           "has_result_artifact": true,
-          "meta_artifact": "tmp\\test_background_parent_backward_20260624\\router_route_mutation_topology.meta.json",
+          "meta_artifact": "tmp\\test_background\\router_route_mutation_topology.meta.json",
           "meta_status": "passed",
           "name": "router_route_mutation_topology",
           "status": "passed"
         },
         {
-          "combined_artifact": "tmp\\test_background_parent_backward_20260624\\router_route_mutation_sibling_replacement.combined.txt",
-          "exit_artifact": "tmp\\test_background_parent_backward_20260624\\router_route_mutation_sibling_replacement.exit.txt",
+          "combined_artifact": "tmp\\test_background\\router_route_mutation_sibling_replacement.combined.txt",
+          "exit_artifact": "tmp\\test_background\\router_route_mutation_sibling_replacement.exit.txt",
           "exit_code": 0,
           "has_exit_artifact": true,
           "has_result_artifact": true,
-          "meta_artifact": "tmp\\test_background_parent_backward_20260624\\router_route_mutation_sibling_replacement.meta.json",
+          "meta_artifact": "tmp\\test_background\\router_route_mutation_sibling_replacement.meta.json",
           "meta_status": "passed",
           "name": "router_route_mutation_sibling_replacement",
           "status": "passed"
         },
         {
-          "combined_artifact": "tmp\\test_background_parent_backward_20260624\\router_route_mutation_parent_backward.combined.txt",
-          "exit_artifact": "tmp\\test_background_parent_backward_20260624\\router_route_mutation_parent_backward.exit.txt",
+          "combined_artifact": "tmp\\test_background\\router_route_mutation_parent_backward.combined.txt",
+          "exit_artifact": "tmp\\test_background\\router_route_mutation_parent_backward.exit.txt",
           "exit_code": 0,
           "has_exit_artifact": true,
           "has_result_artifact": true,
-          "meta_artifact": "tmp\\test_background_parent_backward_20260624\\router_route_mutation_parent_backward.meta.json",
+          "meta_artifact": "tmp\\test_background\\router_route_mutation_parent_backward.meta.json",
           "meta_status": "passed",
           "name": "router_route_mutation_parent_backward",
           "status": "passed"
         },
         {
-          "combined_artifact": "tmp\\test_background_parent_backward_20260624\\router_route_mutation_contracts.combined.txt",
-          "exit_artifact": "tmp\\test_background_parent_backward_20260624\\router_route_mutation_contracts.exit.txt",
+          "combined_artifact": "tmp\\test_background\\router_route_mutation_contracts.combined.txt",
+          "exit_artifact": "tmp\\test_background\\router_route_mutation_contracts.exit.txt",
           "exit_code": 0,
           "has_exit_artifact": true,
           "has_result_artifact": true,
-          "meta_artifact": "tmp\\test_background_parent_backward_20260624\\router_route_mutation_contracts.meta.json",
+          "meta_artifact": "tmp\\test_background\\router_route_mutation_contracts.meta.json",
           "meta_status": "passed",
           "name": "router_route_mutation_contracts",
           "status": "passed"
         },
         {
-          "combined_artifact": "tmp\\test_background_parent_backward_20260624\\router_user_flow_diagram.combined.txt",
-          "exit_artifact": "tmp\\test_background_parent_backward_20260624\\router_user_flow_diagram.exit.txt",
+          "combined_artifact": "tmp\\test_background\\router_user_flow_diagram.combined.txt",
+          "exit_artifact": "tmp\\test_background\\router_user_flow_diagram.exit.txt",
           "exit_code": 0,
           "has_exit_artifact": true,
           "has_result_artifact": true,
-          "meta_artifact": "tmp\\test_background_parent_backward_20260624\\router_user_flow_diagram.meta.json",
+          "meta_artifact": "tmp\\test_background\\router_user_flow_diagram.meta.json",
           "meta_status": "passed",
           "name": "router_user_flow_diagram",
           "status": "passed"
@@ -901,158 +980,158 @@
       "tier": "router-route"
     },
     {
-      "background_dir": "tmp\\test_background_parent_backward_terminal_20260624",
+      "background_dir": "tmp\\test_background",
       "children": [
         {
-          "combined_artifact": "tmp\\test_background_parent_backward_terminal_20260624\\router_terminal_final_ledger.combined.txt",
-          "exit_artifact": "tmp\\test_background_parent_backward_terminal_20260624\\router_terminal_final_ledger.exit.txt",
+          "combined_artifact": "tmp\\test_background\\router_terminal_final_ledger.combined.txt",
+          "exit_artifact": "tmp\\test_background\\router_terminal_final_ledger.exit.txt",
           "exit_code": 0,
           "has_exit_artifact": true,
           "has_result_artifact": true,
-          "meta_artifact": "tmp\\test_background_parent_backward_terminal_20260624\\router_terminal_final_ledger.meta.json",
+          "meta_artifact": "tmp\\test_background\\router_terminal_final_ledger.meta.json",
           "meta_status": "passed",
           "name": "router_terminal_final_ledger",
           "status": "passed"
         },
         {
-          "combined_artifact": "tmp\\test_background_parent_backward_terminal_20260624\\router_terminal_replay_summary.combined.txt",
-          "exit_artifact": "tmp\\test_background_parent_backward_terminal_20260624\\router_terminal_replay_summary.exit.txt",
+          "combined_artifact": "tmp\\test_background\\router_terminal_replay_summary.combined.txt",
+          "exit_artifact": "tmp\\test_background\\router_terminal_replay_summary.exit.txt",
           "exit_code": 0,
           "has_exit_artifact": true,
           "has_result_artifact": true,
-          "meta_artifact": "tmp\\test_background_parent_backward_terminal_20260624\\router_terminal_replay_summary.meta.json",
+          "meta_artifact": "tmp\\test_background\\router_terminal_replay_summary.meta.json",
           "meta_status": "passed",
           "name": "router_terminal_replay_summary",
           "status": "passed"
         },
         {
-          "combined_artifact": "tmp\\test_background_parent_backward_terminal_20260624\\router_terminal_node_stop.combined.txt",
-          "exit_artifact": "tmp\\test_background_parent_backward_terminal_20260624\\router_terminal_node_stop.exit.txt",
+          "combined_artifact": "tmp\\test_background\\router_terminal_node_stop.combined.txt",
+          "exit_artifact": "tmp\\test_background\\router_terminal_node_stop.exit.txt",
           "exit_code": 0,
           "has_exit_artifact": true,
           "has_result_artifact": true,
-          "meta_artifact": "tmp\\test_background_parent_backward_terminal_20260624\\router_terminal_node_stop.meta.json",
+          "meta_artifact": "tmp\\test_background\\router_terminal_node_stop.meta.json",
           "meta_status": "passed",
           "name": "router_terminal_node_stop",
           "status": "passed"
         },
         {
-          "combined_artifact": "tmp\\test_background_parent_backward_terminal_20260624\\router_closure_dirty_ledgers.combined.txt",
-          "exit_artifact": "tmp\\test_background_parent_backward_terminal_20260624\\router_closure_dirty_ledgers.exit.txt",
+          "combined_artifact": "tmp\\test_background\\router_closure_dirty_ledgers.combined.txt",
+          "exit_artifact": "tmp\\test_background\\router_closure_dirty_ledgers.exit.txt",
           "exit_code": 0,
           "has_exit_artifact": true,
           "has_result_artifact": true,
-          "meta_artifact": "tmp\\test_background_parent_backward_terminal_20260624\\router_closure_dirty_ledgers.meta.json",
+          "meta_artifact": "tmp\\test_background\\router_closure_dirty_ledgers.meta.json",
           "meta_status": "passed",
           "name": "router_closure_dirty_ledgers",
           "status": "passed"
         },
         {
-          "combined_artifact": "tmp\\test_background_parent_backward_terminal_20260624\\router_closure_pm_role_work.combined.txt",
-          "exit_artifact": "tmp\\test_background_parent_backward_terminal_20260624\\router_closure_pm_role_work.exit.txt",
+          "combined_artifact": "tmp\\test_background\\router_closure_pm_role_work.combined.txt",
+          "exit_artifact": "tmp\\test_background\\router_closure_pm_role_work.exit.txt",
           "exit_code": 0,
           "has_exit_artifact": true,
           "has_result_artifact": true,
-          "meta_artifact": "tmp\\test_background_parent_backward_terminal_20260624\\router_closure_pm_role_work.meta.json",
+          "meta_artifact": "tmp\\test_background\\router_closure_pm_role_work.meta.json",
           "meta_status": "passed",
           "name": "router_closure_pm_role_work",
           "status": "passed"
         },
         {
-          "combined_artifact": "tmp\\test_background_parent_backward_terminal_20260624\\router_resume_reentry.combined.txt",
-          "exit_artifact": "tmp\\test_background_parent_backward_terminal_20260624\\router_resume_reentry.exit.txt",
+          "combined_artifact": "tmp\\test_background\\router_resume_reentry.combined.txt",
+          "exit_artifact": "tmp\\test_background\\router_resume_reentry.exit.txt",
           "exit_code": 0,
           "has_exit_artifact": true,
           "has_result_artifact": true,
-          "meta_artifact": "tmp\\test_background_parent_backward_terminal_20260624\\router_resume_reentry.meta.json",
+          "meta_artifact": "tmp\\test_background\\router_resume_reentry.meta.json",
           "meta_status": "passed",
           "name": "router_resume_reentry",
           "status": "passed"
         },
         {
-          "combined_artifact": "tmp\\test_background_parent_backward_terminal_20260624\\router_resume_rehydration.combined.txt",
-          "exit_artifact": "tmp\\test_background_parent_backward_terminal_20260624\\router_resume_rehydration.exit.txt",
+          "combined_artifact": "tmp\\test_background\\router_resume_rehydration.combined.txt",
+          "exit_artifact": "tmp\\test_background\\router_resume_rehydration.exit.txt",
           "exit_code": 0,
           "has_exit_artifact": true,
           "has_result_artifact": true,
-          "meta_artifact": "tmp\\test_background_parent_backward_terminal_20260624\\router_resume_rehydration.meta.json",
+          "meta_artifact": "tmp\\test_background\\router_resume_rehydration.meta.json",
           "meta_status": "passed",
           "name": "router_resume_rehydration",
           "status": "passed"
         },
         {
-          "combined_artifact": "tmp\\test_background_parent_backward_terminal_20260624\\router_resume_role_recovery.combined.txt",
-          "exit_artifact": "tmp\\test_background_parent_backward_terminal_20260624\\router_resume_role_recovery.exit.txt",
+          "combined_artifact": "tmp\\test_background\\router_resume_role_recovery.combined.txt",
+          "exit_artifact": "tmp\\test_background\\router_resume_role_recovery.exit.txt",
           "exit_code": 0,
           "has_exit_artifact": true,
           "has_result_artifact": true,
-          "meta_artifact": "tmp\\test_background_parent_backward_terminal_20260624\\router_resume_role_recovery.meta.json",
+          "meta_artifact": "tmp\\test_background\\router_resume_role_recovery.meta.json",
           "meta_status": "passed",
           "name": "router_resume_role_recovery",
           "status": "passed"
         },
         {
-          "combined_artifact": "tmp\\test_background_parent_backward_terminal_20260624\\router_resume_liveness_faults.combined.txt",
-          "exit_artifact": "tmp\\test_background_parent_backward_terminal_20260624\\router_resume_liveness_faults.exit.txt",
+          "combined_artifact": "tmp\\test_background\\router_resume_liveness_faults.combined.txt",
+          "exit_artifact": "tmp\\test_background\\router_resume_liveness_faults.exit.txt",
           "exit_code": 0,
           "has_exit_artifact": true,
           "has_result_artifact": true,
-          "meta_artifact": "tmp\\test_background_parent_backward_terminal_20260624\\router_resume_liveness_faults.meta.json",
+          "meta_artifact": "tmp\\test_background\\router_resume_liveness_faults.meta.json",
           "meta_status": "passed",
           "name": "router_resume_liveness_faults",
           "status": "passed"
         },
         {
-          "combined_artifact": "tmp\\test_background_parent_backward_terminal_20260624\\router_control_blockers_recorded_events.combined.txt",
-          "exit_artifact": "tmp\\test_background_parent_backward_terminal_20260624\\router_control_blockers_recorded_events.exit.txt",
+          "combined_artifact": "tmp\\test_background\\router_control_blockers_recorded_events.combined.txt",
+          "exit_artifact": "tmp\\test_background\\router_control_blockers_recorded_events.exit.txt",
           "exit_code": 0,
           "has_exit_artifact": true,
           "has_result_artifact": true,
-          "meta_artifact": "tmp\\test_background_parent_backward_terminal_20260624\\router_control_blockers_recorded_events.meta.json",
+          "meta_artifact": "tmp\\test_background\\router_control_blockers_recorded_events.meta.json",
           "meta_status": "passed",
           "name": "router_control_blockers_recorded_events",
           "status": "passed"
         },
         {
-          "combined_artifact": "tmp\\test_background_parent_backward_terminal_20260624\\router_control_blockers_reissue_retry.combined.txt",
-          "exit_artifact": "tmp\\test_background_parent_backward_terminal_20260624\\router_control_blockers_reissue_retry.exit.txt",
+          "combined_artifact": "tmp\\test_background\\router_control_blockers_reissue_retry.combined.txt",
+          "exit_artifact": "tmp\\test_background\\router_control_blockers_reissue_retry.exit.txt",
           "exit_code": 0,
           "has_exit_artifact": true,
           "has_result_artifact": true,
-          "meta_artifact": "tmp\\test_background_parent_backward_terminal_20260624\\router_control_blockers_reissue_retry.meta.json",
+          "meta_artifact": "tmp\\test_background\\router_control_blockers_reissue_retry.meta.json",
           "meta_status": "passed",
           "name": "router_control_blockers_reissue_retry",
           "status": "passed"
         },
         {
-          "combined_artifact": "tmp\\test_background_parent_backward_terminal_20260624\\router_control_blockers_pm_repair_decisions.combined.txt",
-          "exit_artifact": "tmp\\test_background_parent_backward_terminal_20260624\\router_control_blockers_pm_repair_decisions.exit.txt",
+          "combined_artifact": "tmp\\test_background\\router_control_blockers_pm_repair_decisions.combined.txt",
+          "exit_artifact": "tmp\\test_background\\router_control_blockers_pm_repair_decisions.exit.txt",
           "exit_code": 0,
           "has_exit_artifact": true,
           "has_result_artifact": true,
-          "meta_artifact": "tmp\\test_background_parent_backward_terminal_20260624\\router_control_blockers_pm_repair_decisions.meta.json",
+          "meta_artifact": "tmp\\test_background\\router_control_blockers_pm_repair_decisions.meta.json",
           "meta_status": "passed",
           "name": "router_control_blockers_pm_repair_decisions",
           "status": "passed"
         },
         {
-          "combined_artifact": "tmp\\test_background_parent_backward_terminal_20260624\\router_control_blockers_protocol_transactions.combined.txt",
-          "exit_artifact": "tmp\\test_background_parent_backward_terminal_20260624\\router_control_blockers_protocol_transactions.exit.txt",
+          "combined_artifact": "tmp\\test_background\\router_control_blockers_protocol_transactions.combined.txt",
+          "exit_artifact": "tmp\\test_background\\router_control_blockers_protocol_transactions.exit.txt",
           "exit_code": 0,
           "has_exit_artifact": true,
           "has_result_artifact": true,
-          "meta_artifact": "tmp\\test_background_parent_backward_terminal_20260624\\router_control_blockers_protocol_transactions.meta.json",
+          "meta_artifact": "tmp\\test_background\\router_control_blockers_protocol_transactions.meta.json",
           "meta_status": "passed",
           "name": "router_control_blockers_protocol_transactions",
           "status": "passed"
         },
         {
-          "combined_artifact": "tmp\\test_background_parent_backward_terminal_20260624\\router_control_blockers_followup_fatal.combined.txt",
-          "exit_artifact": "tmp\\test_background_parent_backward_terminal_20260624\\router_control_blockers_followup_fatal.exit.txt",
+          "combined_artifact": "tmp\\test_background\\router_control_blockers_followup_fatal.combined.txt",
+          "exit_artifact": "tmp\\test_background\\router_control_blockers_followup_fatal.exit.txt",
           "exit_code": 0,
           "has_exit_artifact": true,
           "has_result_artifact": true,
-          "meta_artifact": "tmp\\test_background_parent_backward_terminal_20260624\\router_control_blockers_followup_fatal.meta.json",
+          "meta_artifact": "tmp\\test_background\\router_control_blockers_followup_fatal.meta.json",
           "meta_status": "passed",
           "name": "router_control_blockers_followup_fatal",
           "status": "passed"
@@ -1152,7 +1231,7 @@
   },
   "test_mesh": {
     "release_gate": {
-      "ok": true
+      "ok": false
     },
     "routine_gate": {
       "ok": true
@@ -1358,10 +1437,34 @@
         "timeout_seconds": null
       },
       {
+        "background": false,
+        "duration_seconds": null,
+        "evidence": [
+          "simulations/flowpilot_integration_cartesian_coverage_results.json"
+        ],
+        "freshness": "current",
+        "has_exit_artifact": true,
+        "has_result_artifact": true,
+        "id": "acceptance_integration_cartesian_coverage",
+        "nonpass_reasons": [],
+        "owned_leaf_cell_ids": [
+          "integration_cartesian_hard_underblock",
+          "integration_cartesian_advisory_overblock",
+          "integration_cartesian_worker_boundary",
+          "integration_cartesian_runtime_no_hard_blocker",
+          "integration_cartesian_model_miss"
+        ],
+        "progress_only": false,
+        "scope": "routine",
+        "stale_reasons": [],
+        "status": "passed",
+        "timeout_seconds": null
+      },
+      {
         "background": true,
         "duration_seconds": null,
         "evidence": [
-          "tmp\\test_background_parent_backward_20260624"
+          "tmp\\test_background"
         ],
         "freshness": "current",
         "has_exit_artifact": true,
@@ -1379,7 +1482,7 @@
         "background": true,
         "duration_seconds": null,
         "evidence": [
-          "tmp\\test_background_parent_backward_20260624"
+          "tmp\\test_background"
         ],
         "freshness": "current",
         "has_exit_artifact": true,
@@ -1397,7 +1500,7 @@
         "background": true,
         "duration_seconds": null,
         "evidence": [
-          "tmp\\test_background_parent_backward_20260624"
+          "tmp\\test_background"
         ],
         "freshness": "current",
         "has_exit_artifact": true,
@@ -1415,7 +1518,7 @@
         "background": true,
         "duration_seconds": null,
         "evidence": [
-          "tmp\\test_background_parent_backward_terminal_20260624"
+          "tmp\\test_background"
         ],
         "freshness": "current",
         "has_exit_artifact": true,
@@ -1430,16 +1533,19 @@
         "timeout_seconds": null
       },
       {
-        "background": true,
+        "background": false,
         "duration_seconds": null,
         "evidence": [
-          "tmp/test_background_parent_backward_release_20260624"
+          "tmp/test_background acceptance tier artifacts"
         ],
-        "freshness": "current",
+        "freshness": "not_current",
         "has_exit_artifact": true,
         "has_result_artifact": true,
         "id": "acceptance_router_release_tiers",
-        "nonpass_reasons": [],
+        "nonpass_reasons": [
+          "not_run",
+          "not_current"
+        ],
         "owned_leaf_cell_ids": [
           "formal_exit_terminal_return_missing",
           "formal_exit_startup_intake_blocks"
@@ -1447,7 +1553,7 @@
         "progress_only": false,
         "scope": "release",
         "stale_reasons": [],
-        "status": "passed",
+        "status": "not_run",
         "timeout_seconds": null
       }
     ]

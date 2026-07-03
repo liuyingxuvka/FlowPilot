@@ -89,6 +89,13 @@ HAZARD_EXPECTED_FAILURES = {
     model.PRODUCT_ARCHITECTURE_IGNORES_STARTUP_QUALITY: "product architecture does not consume startup high-quality posture",
     model.ROUTE_QUALITY_POSTURE_DROPPED: "route design lowered the startup/product quality floor",
     model.PACKET_QUALITY_FLOOR_DROPPED: "work packet does not preserve the current quality floor",
+    model.PRODUCT_ARCHITECTURE_MISSING_SYSTEM_INTEGRATION_INTENT: "PM product architecture lacks system integration intent for the whole output",
+    model.ROUTE_CONVERGENCE_MISSING_COMPOSITION_REVIEW: "route structure convergence lacks parent child sibling composition review",
+    model.NODE_PLAN_MISSING_INTEGRATION_TOUCHPOINT: "node acceptance plan lacks plan-level integration touchpoint",
+    model.PM_ABSORBS_LOCAL_RESULT_WITH_BROKEN_INTEGRATION: "PM absorbed current-node result without checking upstream downstream sibling and parent integration",
+    model.PARENT_REPLAY_PASSES_SCATTERED_CHILD_OUTPUTS: "parent backward replay passed scattered local child outputs that do not compose into the parent goal",
+    model.FINAL_LEDGER_PASSES_NODE_LEVEL_ONLY_COMPOSITION: "final ledger passed node-level completion without whole-output composition closure",
+    model.SCATTERED_OUTPUT_NOT_ROUTED_TO_MODEL_MISS: "scattered local-pass global-incoherence defect class lacks model-miss triage coverage",
 }
 
 

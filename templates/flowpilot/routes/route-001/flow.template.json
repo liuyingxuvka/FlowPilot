@@ -29,6 +29,14 @@
         "sunset_or_next_disposition": "<condition-or-null>"
       }
     ],
+    "composition_review": {
+      "source_system_integration_intent": ".flowpilot/runs/<run-id>/product_function_architecture.json#system_integration_intent",
+      "parent_child_contribution_checked": false,
+      "sibling_overlap_or_dependency_checked": false,
+      "upstream_downstream_handoffs_checked": false,
+      "flat_local_pass_route_rejected": false,
+      "pm_decision_support_items": []
+    },
     "old_artifacts_may_close_current_completion": false,
     "unresolved_structure_debt_blocks_activation": true
   },

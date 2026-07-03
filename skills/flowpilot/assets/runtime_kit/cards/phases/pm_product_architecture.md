@@ -78,6 +78,11 @@ Include:
 - final-user intent and product usefulness assumptions, including what would
   make the result feel incomplete, unusable, misleading, or below the user's
   real goal;
+- `system_integration_intent`: describe the intended whole-product or
+  whole-artifact structure, the major continuity/callback/handoff expectations,
+  where repetition is useful reinforcement versus harmful duplication, and
+  which artifact families could look locally complete while failing as one
+  coherent product;
 - product capability map;
 - negative scope and explicit user prohibitions;
 - semantic fidelity risks and forbidden downgrades;

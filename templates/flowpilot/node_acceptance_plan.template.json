@@ -28,6 +28,14 @@
     "known_risks": [],
     "acceptance_item_projection": []
   },
+  "integration_touchpoint": {
+    "required_before_packet_dispatch": false,
+    "upstream_inputs_assumed": [],
+    "downstream_handoffs_to_preserve": [],
+    "sibling_duplication_or_conflict_risk": "<none|possible|active>",
+    "parent_contribution": "<how-this-node-contributes-to-parent-or-root-output>",
+    "pm_decision_support_items": []
+  },
   "supplemental_repair_projection": [
     {
       "supplemental_contract_id": "<contract-id>",

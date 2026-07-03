@@ -27,6 +27,7 @@ if str(ASSETS_PATH) not in sys.path:
 
 from flowpilot_core_runtime import formal_artifact_contracts, packet_result_contracts, review_window_contracts  # noqa: E402
 from flowpilot_fake_ai_runtime_replay_model import runtime_replay_cells  # noqa: E402
+from flowpilot_integration_cartesian_coverage_model import iter_required_cells as integration_cartesian_cells  # noqa: E402
 from flowpilot_real_issue_backfeed import backfeed_cells  # noqa: E402
 
 
@@ -46,6 +47,7 @@ CONTRACT_FAMILIES = (
     "runtime_install_self_check",
     "pm_repair_packet",
     "break_glass_loop",
+    "integration_cartesian_coverage",
 )
 
 MALFORMED_BODY_MUTATION_KINDS = (
@@ -409,6 +411,8 @@ CONTROL_PLANE_REQUIRED_PATHS = (
 
 
 def _mutation_applicable(family: str, mutation: str) -> bool:
+    if family == "integration_cartesian_coverage":
+        return False
     if mutation in MALFORMED_BODY_MUTATION_KINDS:
         return family in {"task_result_body", "flowguard_check_result", "review_packet", "pm_repair_packet"}
     if mutation == "empty_required_manifest":
@@ -950,6 +954,23 @@ def _historical_failure_family_cells() -> tuple[dict[str, object], ...]:
     return tuple(cells)
 
 
+def _integration_cartesian_coverage_cells() -> tuple[dict[str, str], ...]:
+    shard_ids = sorted({str(cell["coverage_shard_id"]) for cell in integration_cartesian_cells()})
+    return tuple(
+        {
+            "cell_id": f"integration_cartesian_coverage.{_sanitize_path(shard_id)}",
+            "family": "integration_cartesian_coverage",
+            "contract_family_id": "flowpilot_integration_cartesian_coverage",
+            "contract_path": shard_id,
+            "mutation_kind": "missing_integration_cartesian_shard",
+            "branch_kind": "executable_flowguard_cartesian",
+            "confidence_boundary": "prompt_workflow_integration_coverage",
+            "required_evidence_owner": "integration_cartesian_coverage_matrix",
+        }
+        for shard_id in shard_ids
+    )
+
+
 STATIC_CONTRACT_EXHAUSTION_CELLS = REQUIRED_CONTRACT_EXHAUSTION_CELLS
 REQUIRED_CONTRACT_EXHAUSTION_CELLS = (
     *STATIC_CONTRACT_EXHAUSTION_CELLS,
@@ -958,6 +979,7 @@ REQUIRED_CONTRACT_EXHAUSTION_CELLS = (
     *_formal_artifact_contract_cells(),
     *_control_plane_required_path_cells(),
     *_historical_failure_family_cells(),
+    *_integration_cartesian_coverage_cells(),
     *review_window_contracts.review_window_completeness_cells(),
     *runtime_replay_cells(),
     *backfeed_cells(),

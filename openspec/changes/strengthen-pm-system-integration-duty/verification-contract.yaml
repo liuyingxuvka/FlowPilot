@@ -1,0 +1,391 @@
+contract_version: 1
+change: strengthen-pm-system-integration-duty
+obligations:
+  - id: req.system_integration.pm_thread
+    source: "specs/flowpilot-system-integration-duty/spec.md#Requirement: PM owns the system integration thread"
+    claim: "PM-owned integration intent, route composition, node integration touchpoints, result absorption, parent/final replay, and model-miss triage are present in cards/templates/models."
+    required: true
+    evidence:
+      - check.focused.planning_quality
+      - check.focused.card_instruction_coverage
+      - check.focused.template_contracts
+  - id: req.system_integration.parent_final_composition
+    source: "specs/flowpilot-system-integration-duty/spec.md#Requirement: Parent and final replay judge composition, not only local completion"
+    claim: "Parent and final replay reject local-only completion when child/node outputs fail to compose into the parent or root goal."
+    required: true
+    evidence:
+      - check.focused.planning_quality
+      - check.focused.fake_ai_runtime_replay
+      - check.flowguard.planning_quality_runner
+  - id: req.system_integration.model_miss
+    source: "specs/flowpilot-system-integration-duty/spec.md#Requirement: Integration misses enter model-miss triage"
+    claim: "Escaped scattered local-pass/global-incoherence defects are routed to model-miss analysis."
+    required: true
+    evidence:
+      - check.focused.planning_quality
+      - check.focused.fake_ai_runtime_replay
+  - id: req.cartesian.declared_axes
+    source: "specs/flowpilot-integration-cartesian-coverage/spec.md#Requirement: Integration coverage uses declared Cartesian axes"
+    claim: "The integration coverage matrix declares finite axes for stage, role, artifact family, failure class, severity, authority, evidence timing, and outcome."
+    required: true
+    evidence:
+      - check.focused.integration_cartesian
+      - check.flowguard.contract_exhaustion_mesh
+  - id: req.cartesian.under_and_over_blocking
+    source: "specs/flowpilot-integration-cartesian-coverage/spec.md#Requirement: Integration coverage tests underblocking and overblocking"
+    claim: "Hard integration failures cannot pass as advisory, and advisory improvements cannot become runtime hard blockers."
+    required: true
+    evidence:
+      - check.focused.integration_cartesian
+      - check.focused.current_contract_cartesian
+      - check.focused.fake_ai_runtime_replay
+  - id: req.cartesian.testmesh_mta
+    source: "specs/flowpilot-integration-cartesian-coverage/spec.md#Requirement: Coverage evidence is consumed by TestMesh and MTA"
+    claim: "Generated integration case ids are owned by focused tests and bound to model obligations before broad claims."
+    required: true
+    evidence:
+      - check.flowguard.contract_exhaustion_mesh
+      - check.flowguard.acceptance_testmesh
+      - check.flowguard.model_test_alignment
+  - id: req.prompt.authority_boundaries
+    source: "specs/flowpilot-prompt-boundary-policy/spec.md#Requirement: Integration prompts preserve existing authority boundaries"
+    claim: "Prompt/card text adds integration duties without adding new runtime authority, compatibility paths, or legacy parsing."
+    required: true
+    evidence:
+      - check.focused.card_instruction_coverage
+      - check.install.self_check
+  - id: req.prompt.node_context_fixed
+    source: "specs/flowpilot-prompt-boundary-policy/spec.md#Requirement: Node context package remains fixed"
+    claim: "`node_context_package` remains the current five-field worker starting context."
+    required: true
+    evidence:
+      - check.focused.planning_quality
+      - check.focused.template_contracts
+  - id: req.review.hard_vs_advisory
+    source: "specs/formal-gate-review-standards/spec.md#Requirement: Integration review findings keep hard and advisory classes separate"
+    claim: "Reviewer/FlowGuard hard integration failures use existing blockers while advisory improvements stay PM decision support."
+    required: true
+    evidence:
+      - check.focused.card_instruction_coverage
+      - check.focused.integration_cartesian
+      - check.focused.fake_ai_runtime_replay
+  - id: req.review.repairable_findings
+    source: "specs/formal-gate-review-standards/spec.md#Requirement: Integration findings are repairable"
+    claim: "Hard integration blockers name the broken relation, root/parent impact, and existing repair lane."
+    required: true
+    evidence:
+      - check.focused.card_instruction_coverage
+      - check.focused.fake_ai_runtime_replay
+  - id: req.closure.parent_final
+    source: "specs/flowpilot-closure-kernel/spec.md#Requirement: Parent closure consumes composition evidence"
+    claim: "Parent closure consumes composition evidence and does not infer parent pass from child-local evidence."
+    required: true
+    evidence:
+      - check.focused.planning_quality
+      - check.focused.fake_ai_runtime_replay
+  - id: req.closure.whole_output
+    source: "specs/flowpilot-closure-kernel/spec.md#Requirement: Terminal closure consumes whole-output evidence"
+    claim: "Terminal closure includes whole-output composition review from the delivered artifact."
+    required: true
+    evidence:
+      - check.focused.planning_quality
+      - check.flowguard.planning_quality_runner
+  - id: req.flowguard.integration_hazards
+    source: "specs/flowguard-modeling-coverage/spec.md#Requirement: FlowGuard models scattered local-pass/global-incoherence"
+    claim: "FlowGuard planning-quality hazards detect missing integration intent, route composition review, node integration touchpoint, and final whole-output review."
+    required: true
+    evidence:
+      - check.flowguard.planning_quality_runner
+      - check.focused.planning_quality
+  - id: req.flowguard.model_maturation
+    source: "specs/flowguard-modeling-coverage/spec.md#Requirement: Escaped integration defects feed model maturation"
+    claim: "Escaped hard integration defects are represented as model-miss or maturation obligations."
+    required: true
+    evidence:
+      - check.focused.planning_quality
+      - check.flowguard.model_maturation
+  - id: req.hard_gate.underblocking
+    source: "specs/hard-gate-coverage-matrix/spec.md#Requirement: Hard gate coverage includes integration underblocking"
+    claim: "Hard parent/final composition failures are covered as hard-gate cases."
+    required: true
+    evidence:
+      - check.focused.integration_cartesian
+      - check.flowguard.contract_exhaustion_mesh
+  - id: req.hard_gate.overblocking
+    source: "specs/hard-gate-coverage-matrix/spec.md#Requirement: Hard gate coverage includes integration overblocking"
+    claim: "Optional concision, optional duplicate reduction, and substantive quality feedback are not runtime mechanical rejections."
+    required: true
+    evidence:
+      - check.focused.integration_cartesian
+      - check.focused.current_contract_cartesian
+  - id: req.validation.tiers
+    source: "specs/tiered-flowpilot-test-validation/spec.md#Requirement: Integration-duty validation has focused and broad tiers"
+    claim: "Focused prompt/template/model tests run before broad regressions and install sync."
+    required: true
+    evidence:
+      - check.focused.planning_quality
+      - check.focused.card_instruction_coverage
+      - check.sync.install
+      - check.topology.check
+  - id: req.validation.background_artifacts
+    source: "specs/tiered-flowpilot-test-validation/spec.md#Requirement: Background model regressions require final artifacts"
+    claim: "Background meta/capability regressions provide final log, metadata, and exit artifacts before being cited."
+    required: true
+    evidence:
+      - check.background.meta
+      - check.background.capability
+
+checks:
+  - id: check.flowguard.import
+    kind: command
+    command: python
+    args: ["-c", "import flowguard; print(flowguard.SCHEMA_VERSION)"]
+    required: true
+    covers: []
+    expected:
+      exit_code: 0
+  - id: check.flowguard.project_audit
+    kind: command
+    command: python
+    args: ["-m", "flowguard", "project-audit", "--root", "."]
+    required: true
+    covers: []
+    expected:
+      exit_code: 0
+  - id: check.focused.planning_quality
+    kind: command
+    command: python
+    args: ["-m", "pytest", "tests/test_flowpilot_planning_quality.py"]
+    required: true
+    covers:
+      - req.system_integration.pm_thread
+      - req.system_integration.parent_final_composition
+      - req.system_integration.model_miss
+      - req.prompt.node_context_fixed
+      - req.closure.parent_final
+      - req.closure.whole_output
+      - req.flowguard.integration_hazards
+      - req.flowguard.model_maturation
+      - req.validation.tiers
+    expected:
+      exit_code: 0
+  - id: check.focused.card_instruction_coverage
+    kind: command
+    command: python
+    args: ["-m", "pytest", "tests/test_flowpilot_card_instruction_coverage.py"]
+    required: true
+    covers:
+      - req.system_integration.pm_thread
+      - req.prompt.authority_boundaries
+      - req.review.hard_vs_advisory
+      - req.review.repairable_findings
+      - req.validation.tiers
+    expected:
+      exit_code: 0
+  - id: check.focused.template_contracts
+    kind: command
+    command: python
+    args: ["-m", "pytest", "tests/test_flowpilot_planning_quality.py", "-k", "template"]
+    required: true
+    covers:
+      - req.system_integration.pm_thread
+      - req.prompt.node_context_fixed
+    expected:
+      exit_code: 0
+  - id: check.focused.integration_cartesian
+    kind: command
+    command: python
+    args: ["-m", "pytest", "tests/test_flowpilot_integration_cartesian_coverage.py"]
+    required: true
+    covers:
+      - req.cartesian.declared_axes
+      - req.cartesian.under_and_over_blocking
+      - req.review.hard_vs_advisory
+      - req.hard_gate.underblocking
+      - req.hard_gate.overblocking
+    expected:
+      exit_code: 0
+  - id: check.focused.current_contract_cartesian
+    kind: command
+    command: python
+    args: ["-m", "pytest", "tests/test_flowpilot_current_contract_cartesian_matrix.py"]
+    required: true
+    covers:
+      - req.cartesian.under_and_over_blocking
+      - req.hard_gate.overblocking
+    expected:
+      exit_code: 0
+  - id: check.focused.fake_ai_runtime_replay
+    kind: command
+    command: python
+    args: ["-m", "pytest", "tests/test_flowpilot_fake_ai_runtime_replay.py"]
+    required: true
+    covers:
+      - req.system_integration.parent_final_composition
+      - req.system_integration.model_miss
+      - req.cartesian.under_and_over_blocking
+      - req.review.hard_vs_advisory
+      - req.review.repairable_findings
+      - req.closure.parent_final
+    expected:
+      exit_code: 0
+  - id: check.flowguard.planning_quality_runner
+    kind: command
+    command: python
+    args: ["simulations/run_flowpilot_planning_quality_checks.py", "--json-out", "simulations/flowpilot_planning_quality_results.json"]
+    required: true
+    covers:
+      - req.system_integration.parent_final_composition
+      - req.closure.whole_output
+      - req.flowguard.integration_hazards
+    expected:
+      exit_code: 0
+  - id: check.flowguard.contract_exhaustion_mesh
+    kind: command
+    command: python
+    args: ["simulations/run_flowpilot_contract_exhaustion_mesh_checks.py", "--json-out", "simulations/flowpilot_contract_exhaustion_mesh_results.json"]
+    required: true
+    covers:
+      - req.cartesian.declared_axes
+      - req.cartesian.testmesh_mta
+      - req.hard_gate.underblocking
+    expected:
+      exit_code: 0
+  - id: check.flowguard.acceptance_testmesh
+    kind: command
+    command: python
+    args: ["simulations/run_flowpilot_acceptance_testmesh_checks.py", "--json-out", "simulations/flowpilot_acceptance_testmesh_results.json"]
+    required: true
+    covers:
+      - req.cartesian.testmesh_mta
+    expected:
+      exit_code: 0
+  - id: check.flowguard.model_test_alignment
+    kind: command
+    command: python
+    args: ["simulations/run_flowpilot_model_test_alignment_checks.py", "--json-out", "simulations/flowpilot_model_test_alignment_results.json"]
+    required: true
+    covers:
+      - req.cartesian.testmesh_mta
+    expected:
+      exit_code: 0
+  - id: check.flowguard.model_maturation
+    kind: command
+    command: python
+    args: ["simulations/run_flowpilot_model_maturation_checks.py", "--json-out", "simulations/flowpilot_model_maturation_results.json"]
+    required: true
+    covers:
+      - req.flowguard.model_maturation
+    expected:
+      exit_code: 0
+  - id: check.background.meta
+    kind: background-command
+    command: python
+    args: ["simulations/run_meta_checks.py"]
+    background_log_base: "tmp/flowguard_background/run_meta_checks"
+    required: true
+    covers:
+      - req.validation.background_artifacts
+    expected:
+      exit_code: 0
+      required_artifacts:
+        - "tmp/flowguard_background/run_meta_checks.out.txt"
+        - "tmp/flowguard_background/run_meta_checks.err.txt"
+        - "tmp/flowguard_background/run_meta_checks.combined.txt"
+        - "tmp/flowguard_background/run_meta_checks.exit.txt"
+        - "tmp/flowguard_background/run_meta_checks.meta.json"
+  - id: check.background.capability
+    kind: background-command
+    command: python
+    args: ["simulations/run_capability_checks.py"]
+    background_log_base: "tmp/flowguard_background/run_capability_checks"
+    required: true
+    covers:
+      - req.validation.background_artifacts
+    expected:
+      exit_code: 0
+      required_artifacts:
+        - "tmp/flowguard_background/run_capability_checks.out.txt"
+        - "tmp/flowguard_background/run_capability_checks.err.txt"
+        - "tmp/flowguard_background/run_capability_checks.combined.txt"
+        - "tmp/flowguard_background/run_capability_checks.exit.txt"
+        - "tmp/flowguard_background/run_capability_checks.meta.json"
+  - id: check.topology.build
+    kind: command
+    command: python
+    args: ["scripts/flowguard_project_topology.py", "build"]
+    required: true
+    covers: []
+    expected:
+      exit_code: 0
+  - id: check.topology.check
+    kind: command
+    command: python
+    args: ["scripts/flowguard_project_topology.py", "check"]
+    required: true
+    covers:
+      - req.validation.tiers
+    expected:
+      exit_code: 0
+  - id: check.sync.install
+    kind: command
+    command: python
+    args: ["scripts/install_flowpilot.py", "--sync-repo-owned", "--json"]
+    required: true
+    covers:
+      - req.validation.tiers
+    expected:
+      exit_code: 0
+  - id: check.sync.audit
+    kind: command
+    command: python
+    args: ["scripts/audit_local_install_sync.py", "--json"]
+    required: true
+    covers: []
+    expected:
+      exit_code: 0
+  - id: check.sync.install_check
+    kind: command
+    command: python
+    args: ["scripts/install_flowpilot.py", "--check", "--json"]
+    required: true
+    covers: []
+    expected:
+      exit_code: 0
+  - id: check.install.self_check
+    kind: command
+    command: python
+    args: ["scripts/check_install.py", "--json"]
+    required: true
+    covers:
+      - req.prompt.authority_boundaries
+    expected:
+      exit_code: 0
+freshness:
+  watch:
+    - openspec/changes/strengthen-pm-system-integration-duty/proposal.md
+    - openspec/changes/strengthen-pm-system-integration-duty/design.md
+    - openspec/changes/strengthen-pm-system-integration-duty/tasks.md
+    - openspec/changes/strengthen-pm-system-integration-duty/specs/**/*.md
+    - openspec/changes/strengthen-pm-system-integration-duty/verification-contract.yaml
+    - skills/flowpilot/assets/runtime_kit/cards/**/*.md
+    - skills/flowpilot/assets/runtime_kit/cards/**/*.json
+    - templates/flowpilot/**/*.json
+    - simulations/flowpilot_planning_quality_model.py
+    - simulations/flowpilot_integration_cartesian_coverage_model.py
+    - simulations/flowpilot_current_contract_cartesian_matrix.py
+    - simulations/flowpilot_contract_exhaustion_mesh_model.py
+    - simulations/flowpilot_acceptance_testmesh_model.py
+    - simulations/meta_model.py
+    - simulations/capability_model.py
+    - tests/test_flowpilot_planning_quality.py
+    - tests/test_flowpilot_card_instruction_coverage.py
+    - tests/test_flowpilot_integration_cartesian_coverage.py
+    - tests/test_flowpilot_current_contract_cartesian_matrix.py
+    - tests/test_flowpilot_contract_exhaustion_mesh.py
+    - tests/test_flowpilot_fake_ai_runtime_replay.py
+    - tests/test_flowpilot_acceptance_testmesh.py
+    - scripts/install_flowpilot.py
+    - scripts/audit_local_install_sync.py
+    - scripts/check_install.py
+    - scripts/flowguard_project_topology.py

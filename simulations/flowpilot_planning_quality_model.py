@@ -116,6 +116,13 @@ STARTUP_QUALITY_POSTURE_MISSING = "startup_quality_posture_missing"
 PRODUCT_ARCHITECTURE_IGNORES_STARTUP_QUALITY = "product_architecture_ignores_startup_quality"
 ROUTE_QUALITY_POSTURE_DROPPED = "route_quality_posture_dropped"
 PACKET_QUALITY_FLOOR_DROPPED = "packet_quality_floor_dropped"
+PRODUCT_ARCHITECTURE_MISSING_SYSTEM_INTEGRATION_INTENT = "product_architecture_missing_system_integration_intent"
+ROUTE_CONVERGENCE_MISSING_COMPOSITION_REVIEW = "route_convergence_missing_composition_review"
+NODE_PLAN_MISSING_INTEGRATION_TOUCHPOINT = "node_plan_missing_integration_touchpoint"
+PM_ABSORBS_LOCAL_RESULT_WITH_BROKEN_INTEGRATION = "pm_absorbs_local_result_with_broken_integration"
+PARENT_REPLAY_PASSES_SCATTERED_CHILD_OUTPUTS = "parent_replay_passes_scattered_child_outputs"
+FINAL_LEDGER_PASSES_NODE_LEVEL_ONLY_COMPOSITION = "final_ledger_passes_node_level_only_composition"
+SCATTERED_OUTPUT_NOT_ROUTED_TO_MODEL_MISS = "scattered_output_not_routed_to_model_miss"
 
 VALID_SCENARIOS = (VALID_UI_ROUTE,)
 NEGATIVE_SCENARIOS = (
@@ -186,6 +193,13 @@ NEGATIVE_SCENARIOS = (
     PRODUCT_ARCHITECTURE_IGNORES_STARTUP_QUALITY,
     ROUTE_QUALITY_POSTURE_DROPPED,
     PACKET_QUALITY_FLOOR_DROPPED,
+    PRODUCT_ARCHITECTURE_MISSING_SYSTEM_INTEGRATION_INTENT,
+    ROUTE_CONVERGENCE_MISSING_COMPOSITION_REVIEW,
+    NODE_PLAN_MISSING_INTEGRATION_TOUCHPOINT,
+    PM_ABSORBS_LOCAL_RESULT_WITH_BROKEN_INTEGRATION,
+    PARENT_REPLAY_PASSES_SCATTERED_CHILD_OUTPUTS,
+    FINAL_LEDGER_PASSES_NODE_LEVEL_ONLY_COMPOSITION,
+    SCATTERED_OUTPUT_NOT_ROUTED_TO_MODEL_MISS,
 )
 SCENARIOS = VALID_SCENARIOS + NEGATIVE_SCENARIOS
 
@@ -222,6 +236,15 @@ class State:
     product_architecture_consumes_startup_quality_posture: bool = False
     route_preserves_startup_product_quality_posture: bool = False
     packet_preserves_current_quality_floor: bool = False
+    product_architecture_system_integration_intent_written: bool = False
+    route_structure_composition_review_written: bool = False
+    node_plan_integration_touchpoint_written: bool = False
+    pm_result_absorption_integration_check_done: bool = False
+    parent_replay_rejects_scattered_child_outputs: bool = False
+    parent_child_outputs_scattered: bool = False
+    final_whole_output_composition_review_done: bool = False
+    final_output_scattered: bool = False
+    model_miss_triage_covers_scattered_local_pass: bool = False
     planning_profile_selected: bool = False
     planning_profile: str = "none"
     simple_task_profile_waiver: bool = False
@@ -384,6 +407,13 @@ def _valid_ui_state() -> State:
         product_architecture_consumes_startup_quality_posture=True,
         route_preserves_startup_product_quality_posture=True,
         packet_preserves_current_quality_floor=True,
+        product_architecture_system_integration_intent_written=True,
+        route_structure_composition_review_written=True,
+        node_plan_integration_touchpoint_written=True,
+        pm_result_absorption_integration_check_done=True,
+        parent_replay_rejects_scattered_child_outputs=True,
+        final_whole_output_composition_review_done=True,
+        model_miss_triage_covers_scattered_local_pass=True,
         planning_profile_selected=True,
         planning_profile="interactive_software_ui_product",
         route_complexity_matches_profile=True,
@@ -610,6 +640,33 @@ def _scenario_state(scenario: str) -> State:
         return replace(state, route_preserves_startup_product_quality_posture=False)
     if scenario == PACKET_QUALITY_FLOOR_DROPPED:
         return replace(state, packet_preserves_current_quality_floor=False)
+    if scenario == PRODUCT_ARCHITECTURE_MISSING_SYSTEM_INTEGRATION_INTENT:
+        return replace(state, product_architecture_system_integration_intent_written=False)
+    if scenario == ROUTE_CONVERGENCE_MISSING_COMPOSITION_REVIEW:
+        return replace(state, route_structure_composition_review_written=False)
+    if scenario == NODE_PLAN_MISSING_INTEGRATION_TOUCHPOINT:
+        return replace(state, node_plan_integration_touchpoint_written=False)
+    if scenario == PM_ABSORBS_LOCAL_RESULT_WITH_BROKEN_INTEGRATION:
+        return replace(
+            state,
+            pm_result_absorption_integration_check_done=False,
+            parent_child_outputs_scattered=True,
+        )
+    if scenario == PARENT_REPLAY_PASSES_SCATTERED_CHILD_OUTPUTS:
+        return replace(
+            state,
+            parent_child_outputs_scattered=True,
+            parent_replay_rejects_scattered_child_outputs=False,
+        )
+    if scenario == FINAL_LEDGER_PASSES_NODE_LEVEL_ONLY_COMPOSITION:
+        return replace(
+            state,
+            closure_or_final_ledger_decision=True,
+            final_whole_output_composition_review_done=False,
+            final_output_scattered=True,
+        )
+    if scenario == SCATTERED_OUTPUT_NOT_ROUTED_TO_MODEL_MISS:
+        return replace(state, model_miss_triage_covers_scattered_local_pass=False)
     if scenario == PM_ROUTE_NOT_MAPPED_TO_PRODUCT_MODEL:
         return replace(state, pm_route_maps_to_product_model=False)
     if scenario == PROCESS_FLOWGUARD_OPERATOR_ROUTE_VIABILITY_MISSING:
@@ -765,6 +822,28 @@ def planning_failures(state: State) -> list[str]:
         failures.append("route design lowered the startup/product quality floor")
     if complex_task and not state.packet_preserves_current_quality_floor:
         failures.append("work packet does not preserve the current quality floor")
+    if complex_task and not state.product_architecture_system_integration_intent_written:
+        failures.append("PM product architecture lacks system integration intent for the whole output")
+    if complex_task and not state.route_structure_composition_review_written:
+        failures.append("route structure convergence lacks parent child sibling composition review")
+    if complex_task and not state.node_plan_integration_touchpoint_written:
+        failures.append("node acceptance plan lacks plan-level integration touchpoint")
+    if complex_task and not state.pm_result_absorption_integration_check_done:
+        failures.append("PM absorbed current-node result without checking upstream downstream sibling and parent integration")
+    if (
+        complex_task
+        and state.parent_child_outputs_scattered
+        and not state.parent_replay_rejects_scattered_child_outputs
+    ):
+        failures.append("parent backward replay passed scattered local child outputs that do not compose into the parent goal")
+    if (
+        complex_task
+        and state.closure_or_final_ledger_decision
+        and (not state.final_whole_output_composition_review_done or state.final_output_scattered)
+    ):
+        failures.append("final ledger passed node-level completion without whole-output composition closure")
+    if complex_task and not state.model_miss_triage_covers_scattered_local_pass:
+        failures.append("scattered local-pass global-incoherence defect class lacks model-miss triage coverage")
     if complex_task and not state.planning_profile_selected:
         failures.append("complex task route lacks a selected planning profile")
     if state.planning_profile_selected and not state.route_complexity_matches_profile:

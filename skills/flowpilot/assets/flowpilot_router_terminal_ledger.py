@@ -65,10 +65,6 @@ __all__ = (
     '_write_terminal_closure_suite',
     '_recover_terminal_status_from_run_authorities',
     'reconcile_current_run',
-    'FLOWGUARD_TERMINAL_COVERAGE_SCHEMA',
-    'FLOWGUARD_TERMINAL_COVERAGE_BOUNDARY',
-    'FLOWGUARD_TERMINAL_COVERAGE_SEGMENT_ID',
-    'FLOWGUARD_TERMINAL_COVERAGE_ACCEPTED_STATUSES',
 )
 
 _LOCAL_NAMES = set(globals())

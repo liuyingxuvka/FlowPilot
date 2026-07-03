@@ -44,6 +44,13 @@ repair.
 
 If repair affects sibling, ancestor, child-skill, or terminal evidence, record
 those stale scopes now so the final ledger cannot count old passes as current.
+The `decision_rationale` must include a composition impact review: whether
+child outputs compose into the parent goal, whether upstream/downstream
+handoffs remain valid, whether sibling duplication or conflict was dispositioned,
+and whether any PM decision-support item should be recorded. If composition
+breaks a hard parent goal, acceptance item, required proof, or terminal replay
+path, do not record `continue`. If the issue is only optional cleanup,
+deduplication, or stronger organization, keep it as PM decision-support.
 
 ## Decision Contract For This Task
 
@@ -80,7 +87,7 @@ paths from the router delivery envelope.
     "impact_on_decision": "Parent backward review passed and current route memory does not require mutation.",
     "controller_summary_used_as_evidence": false
   },
-  "decision_rationale": "The parent backward review passed and the current prior-path context supports continuing.",
+  "decision_rationale": "The parent backward review passed, child outputs compose into the parent goal, upstream/downstream handoffs remain valid, sibling duplication or conflict is dispositioned, and the current prior-path context supports continuing.",
   "same_parent_replay_rerun_plan": null,
   "stale_evidence_to_mark": [],
   "superseded_nodes": [],

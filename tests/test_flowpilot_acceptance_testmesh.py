@@ -174,6 +174,26 @@ class FlowPilotAcceptanceTestMeshTests(unittest.TestCase):
             {item.item_id for item in plan.partition_items},
         )
 
+    def test_integration_cartesian_cells_are_required_and_owned(self) -> None:
+        plan = acceptance_model.build_testmesh_plan()
+        owners = acceptance_model.payload_cell_owners(plan)
+
+        integration_cells = {
+            "integration_cartesian_hard_underblock",
+            "integration_cartesian_advisory_overblock",
+            "integration_cartesian_worker_boundary",
+            "integration_cartesian_runtime_no_hard_blocker",
+            "integration_cartesian_model_miss",
+        }
+        self.assertTrue(integration_cells.issubset(set(acceptance_model.PAYLOAD_CELLS)))
+        for cell_id in integration_cells:
+            with self.subTest(cell_id=cell_id):
+                self.assertEqual(set(owners[cell_id]), {"acceptance_integration_cartesian_coverage"})
+        self.assertIn(
+            "integration_cartesian_coverage",
+            {item.item_id for item in plan.partition_items},
+        )
+
     def test_release_child_progress_only_or_not_run_is_not_a_pass(self) -> None:
         routine = acceptance_runner.run_checks(release_evidence=False)
         release_rows = [

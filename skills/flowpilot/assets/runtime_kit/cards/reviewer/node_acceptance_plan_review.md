@@ -91,6 +91,14 @@ Check:
   delivered product, the plan states how the node contributes to user intent,
   final-user usefulness, and experience or product quality, plus what evidence
   will prove that contribution;
+- when the plan includes `integration_touchpoint`, check that upstream inputs,
+  downstream handoffs, sibling duplication/conflict risk, and parent
+  contribution are understandable enough for the current stage. Block only
+  when the missing touchpoint makes the node non-dispatchable, breaks the
+  parent goal, hides a producer/consumer inversion, or would leave an
+  acceptance item or hard proof unowned. Treat clearer continuity, cleaner
+  callbacks, or optional simplification as PM decision-support when the hard
+  gate is otherwise met;
 - node requirements are concrete and testable;
 - the plan identifies the current executable check surface at the level needed
   for this node: current files, artifacts, behavior surface, checker, command,

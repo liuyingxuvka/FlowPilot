@@ -5,12 +5,12 @@ It is orientation only; it is not validation evidence.
 
 ## Summary
 
-- Model runners: 155
+- Model runners: 156
 - Model-test alignment families: 14
-- Code surfaces: 1073
+- Code surfaces: 1074
 - Test commands: 452
 - Evidence summaries: 5
-- Known-bad/risk labels surfaced: 2597
+- Known-bad/risk labels surfaced: 2611
 
 ## Area Map
 
@@ -21,8 +21,8 @@ It is orientation only; it is not validation evidence.
 | `install-validation` | 1 | 0 | 17 | 16 | 15 |
 | `material` | 1 | 0 | 26 | 30 | 11 |
 | `model-mesh` | 3 | 0 | 7 | 2 | 86 |
-| `model-test-alignment` | 4 | 0 | 13 | 12 | 64 |
-| `other` | 88 | 7 | 251 | 40 | 1404 |
+| `model-test-alignment` | 5 | 0 | 14 | 12 | 74 |
+| `other` | 88 | 7 | 251 | 40 | 1408 |
 | `packet` | 10 | 2 | 210 | 165 | 169 |
 | `prompt-card` | 3 | 0 | 4 | 0 | 80 |
 | `review` | 4 | 0 | 4 | 0 | 77 |
@@ -79,7 +79,7 @@ Completion and readiness claims still need the owning FlowGuard checks, tests, r
 
 - `startup` (startup): 2 obligations, 4 test evidence rows
 - `packet/card/ack` (packet): 4 obligations, 7 test evidence rows
-- `packet result family` (packet): 37 obligations, 64 test evidence rows
+- `packet result family` (packet): 38 obligations, 66 test evidence rows
 - `route mutation` (route): 3 obligations, 6 test evidence rows
 - `field lifecycle currentness` (other): 12 obligations, 16 test evidence rows
 - `current-node trunk invariant` (other): 2 obligations, 4 test evidence rows

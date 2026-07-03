@@ -746,6 +746,19 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 allow_shared_implementation=True,
             ),
             _obligation(
+                "packet_result_family.integration_cartesian_coverage_keeps_pm_optimization_boundary",
+                obligation_type="prompt_workflow_integration_cartesian_contract",
+                description=(
+                    "PM-owned system-integration coverage must exercise stage, role, artifact-family, "
+                    "failure-class, severity, authority, and evidence-timing combinations while keeping "
+                    "hard composition failures repairable through existing PM/review/FlowGuard paths and "
+                    "keeping advisory cohesion improvements out of runtime semantic hard blockers."
+                ),
+                required_test_kinds=(NEGATIVE, REPLAY),
+                allow_shared_evidence=True,
+                allow_shared_implementation=True,
+            ),
+            _obligation(
                 "packet_result_family.stage_evidence_matrix_all_families",
                 obligation_type="stage_evidence_contract",
                 description=(
@@ -1188,6 +1201,38 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                     "coverage_shard_id",
                     "coverage_receipt_id",
                 ),
+            ),
+            _contract(
+                "packet_result_family.model.integration_cartesian_coverage_matrix",
+                path="simulations/flowpilot_integration_cartesian_coverage_model.py",
+                symbol="iter_required_cells",
+                implements=("packet_result_family.integration_cartesian_coverage_keeps_pm_optimization_boundary",),
+                external_inputs=(
+                    "stage_axis",
+                    "role_axis",
+                    "artifact_family_axis",
+                    "failure_class_axis",
+                    "severity_axis",
+                    "authority_axis",
+                    "evidence_timing_axis",
+                ),
+                external_outputs=(
+                    "required_cells",
+                    "expected_outcomes",
+                    "coverage_shard_ids",
+                    "runtime_hard_blocker_boundary",
+                    "worker_current_gate_blocker_boundary",
+                ),
+                state_reads=("pm_system_integration_intent", "reviewer_composition_challenge", "flowguard_route_process_check"),
+            ),
+            _contract(
+                "packet_result_family.runner.integration_cartesian_coverage_checks",
+                path="simulations/run_flowpilot_integration_cartesian_coverage_checks.py",
+                symbol="run_checks",
+                implements=("packet_result_family.integration_cartesian_coverage_keeps_pm_optimization_boundary",),
+                external_inputs=("required_cells", "hazard_states"),
+                external_outputs=("coverage_report", "hazard_report", "flowguard_report"),
+                state_reads=("flowguard_model", "coverage_matrix"),
             ),
         ),
         test_evidence=(
@@ -1990,6 +2035,30 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 code_contracts=(
                     "packet_result_family.model.cartesian_control_plane_exhaustion_matrix",
                     "packet_result_family.runner.cartesian_control_plane_owner_consumption",
+                ),
+            ),
+            _evidence(
+                "packet_result_family.replay.integration_cartesian_full_matrix",
+                test_name="test_integration_cartesian_runner_accepts_full_matrix",
+                path="tests/test_flowpilot_integration_cartesian_coverage.py",
+                command="python -m pytest tests/test_flowpilot_integration_cartesian_coverage.py -q",
+                test_kind=REPLAY,
+                covers=("packet_result_family.integration_cartesian_coverage_keeps_pm_optimization_boundary",),
+                code_contracts=(
+                    "packet_result_family.model.integration_cartesian_coverage_matrix",
+                    "packet_result_family.runner.integration_cartesian_coverage_checks",
+                ),
+            ),
+            _evidence(
+                "packet_result_family.negative.integration_cartesian_authority_boundary",
+                test_name="test_worker_and_runtime_do_not_gain_semantic_integration_authority",
+                path="tests/test_flowpilot_integration_cartesian_coverage.py",
+                command="python -m pytest tests/test_flowpilot_integration_cartesian_coverage.py -q",
+                test_kind=NEGATIVE,
+                covers=("packet_result_family.integration_cartesian_coverage_keeps_pm_optimization_boundary",),
+                code_contracts=(
+                    "packet_result_family.model.integration_cartesian_coverage_matrix",
+                    "packet_result_family.runner.integration_cartesian_coverage_checks",
                 ),
             ),
         ),

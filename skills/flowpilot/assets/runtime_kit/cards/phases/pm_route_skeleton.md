@@ -103,7 +103,12 @@ Route requirements:
   and any intentionally retained maintenance layer with owner, scope,
   validation evidence, and sunset or next-disposition criteria. Only
   current-contract artifacts and current evidence may support completion.
-  Old artifacts are orientation only and must not close current completion;
+  Old artifacts are orientation only and must not close current completion.
+  Also include a composition review against the product
+  `system_integration_intent`: identify parent/child contribution, sibling
+  overlap or dependency risk, upstream producer/downstream consumer handoffs,
+  and the reason the route is not merely a flat checklist of unrelated local
+  completions;
 - use the FlowGuard operator's product behavior model as route input:
   map the route to its essential user actions, product states,
   failure/recovery paths, forbidden downgrades, and completion evidence;
@@ -183,6 +188,13 @@ Route requirements:
   current external material. Do not place a consumer node before a later
   unfinished producer and expect Worker, Reviewer, or FlowGuard operator to
   manufacture the missing future output;
+- preserve parent/child and sibling composition. For each parent/module, PM
+  must be able to state how ordered child results combine into the parent goal.
+  For siblings, PM must know whether they are independent, producer/consumer,
+  deliberate reinforcement, or possible duplication/conflict. A route that only
+  proves many local tasks were touched, while leaving callback, continuity,
+  handoff, or final structure to be invented later, needs route repair through
+  the existing route shape;
 - route decomposition quality is semantic, not field count. Use the current
   strict route fields plus existing `acceptance_criteria`, `required_outputs`,
   `deliverable_checks`, `validation_checks`, and requirement/skill ids when

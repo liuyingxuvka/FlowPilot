@@ -30,6 +30,12 @@ If it is modelable:
 
 - issue a bounded FlowGuard operator request for the bug class, not just the
   current error message;
+- treat "local packets passed but the parent/final output is globally
+  incoherent" as a modelable same-class candidate when it concerns route state,
+  parent composition, handoff continuity, acceptance-item ownership, final
+  replay, or evidence closure. The bug class should cover scattered local-pass
+  outputs, harmful duplication, missing callbacks, and broken producer/consumer
+  handoffs across the route, not only the single visible symptom;
 - require the FlowGuard operator report to state why the old model missed it, what same
   class means, which same-class findings were discovered, what coverage was
   added, which repair candidates were compared, and which repair is minimal and

@@ -1,0 +1,636 @@
+{
+  "flowguard_explorer": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "reachability_failures": [],
+    "summary": "sequences=2 initial_states=1 traces=24",
+    "violation_count": 0
+  },
+  "hazard_checks": {
+    "failures": [],
+    "hazards": {
+      "advisory_overblocked": {
+        "detected": true,
+        "expected_failures": [
+          "advisory_integration_finding_overblocked"
+        ],
+        "failures": [
+          "advisory_integration_finding_overblocked"
+        ]
+      },
+      "hard_failure_underblocked": {
+        "detected": true,
+        "expected_failures": [
+          "hard_integration_failure_underblocked_as_advisory"
+        ],
+        "failures": [
+          "hard_integration_failure_underblocked_as_advisory"
+        ]
+      },
+      "missing_axis_value": {
+        "detected": true,
+        "expected_failures": [
+          "integration_cartesian_axis_value_missing"
+        ],
+        "failures": [
+          "integration_cartesian_axis_value_missing"
+        ]
+      },
+      "missing_expected_outcome": {
+        "detected": true,
+        "expected_failures": [
+          "integration_cartesian_expected_outcome_missing"
+        ],
+        "failures": [
+          "integration_cartesian_expected_outcome_missing"
+        ]
+      },
+      "model_miss_not_routed": {
+        "detected": true,
+        "expected_failures": [
+          "scattered_integration_model_miss_not_routed"
+        ],
+        "failures": [
+          "scattered_integration_model_miss_not_routed"
+        ]
+      },
+      "runtime_semantic_hard_blocker": {
+        "detected": true,
+        "expected_failures": [
+          "semantic_integration_added_runtime_hard_blocker"
+        ],
+        "failures": [
+          "semantic_integration_added_runtime_hard_blocker"
+        ]
+      },
+      "worker_current_gate_blocker": {
+        "detected": true,
+        "expected_failures": [
+          "worker_claimed_current_gate_blocker_for_integration"
+        ],
+        "failures": [
+          "worker_claimed_current_gate_blocker_for_integration"
+        ]
+      }
+    },
+    "ok": true
+  },
+  "matrix": {
+    "axis_coverage": {
+      "artifact_family": {
+        "missing": [],
+        "present": [
+          "research_source_backed",
+          "skill_workflow",
+          "software_code",
+          "ui_app",
+          "writing_report_novel"
+        ]
+      },
+      "authority": {
+        "missing": [],
+        "present": [
+          "flowguard_suggestion",
+          "pm_hard_disposition",
+          "prompt_only",
+          "reviewer_suggestion",
+          "runtime_mechanical_rejection"
+        ]
+      },
+      "evidence_timing": {
+        "missing": [],
+        "present": [
+          "node_entry",
+          "parent_closure",
+          "post_worker",
+          "pre_work",
+          "terminal_closure"
+        ]
+      },
+      "expected_outcome": {
+        "missing": [],
+        "present": [
+          "continue_current_flow",
+          "model_miss_triage",
+          "pm_suggestion",
+          "route_mutation",
+          "same_node_repair",
+          "terminal_block"
+        ]
+      },
+      "failure_class": {
+        "missing": [],
+        "present": [
+          "child_outputs_do_not_compose",
+          "consumer_missing",
+          "duplicate_sibling_work",
+          "final_output_scattered",
+          "flat_checklist_route",
+          "integration_issue_downgraded_to_nonblocking",
+          "missing_integration_intent",
+          "model_miss_not_triggered",
+          "optimization_incorrectly_hard_blocked",
+          "orphan_output",
+          "producer_after_consumer"
+        ]
+      },
+      "role": {
+        "missing": [],
+        "present": [
+          "flowguard_operator",
+          "human_like_reviewer",
+          "project_manager",
+          "worker"
+        ]
+      },
+      "severity": {
+        "missing": [],
+        "present": [
+          "hard_failure",
+          "nonblocking_note",
+          "pm_decision_support"
+        ]
+      },
+      "stage": {
+        "missing": [],
+        "present": [
+          "final_backward_replay",
+          "final_ledger",
+          "model_miss_triage",
+          "node_acceptance",
+          "parent_backward_replay",
+          "product_architecture",
+          "route_skeleton",
+          "worker_result_absorption"
+        ]
+      }
+    },
+    "by_expected_outcome": {
+      "continue_current_flow": 36000,
+      "model_miss_triage": 4000,
+      "pm_suggestion": 60000,
+      "route_mutation": 26000,
+      "same_node_repair": 4000,
+      "terminal_block": 2000
+    },
+    "by_required_authority": {
+      "flowguard_pm_decision_support": 19200,
+      "project_manager": 40800,
+      "prompt_or_pm_decision_not_runtime_mechanical_rejection": 26400,
+      "reviewer_pm_decision_support": 19200,
+      "worker_reports_blocked_needs_pm_or_pm_suggestion": 26400
+    },
+    "declared_counts": {
+      "axis_count": 8,
+      "required_cell_count": 132000
+    },
+    "matrix_failures": [],
+    "missing_axis_values": {},
+    "observed_cell_count": 132000,
+    "ok": true,
+    "runtime_hard_blocker_cells": [],
+    "sampled_cells": [
+      {
+        "artifact_family": "software_code",
+        "authority": "prompt_only",
+        "cell_id": "product-architecture.project-manager.software-code.missing-integration-intent.hard-failure.prompt-only.pre-work",
+        "coverage_shard_id": "integration:product_architecture:project_manager:software_code:missing_integration_intent:hard_failure",
+        "evidence_timing": "pre_work",
+        "expected_outcome": "same_node_repair",
+        "failure_class": "missing_integration_intent",
+        "model_id": "flowpilot_integration_cartesian_coverage",
+        "prompt_level_optimization": true,
+        "required_authority": "project_manager",
+        "role": "project_manager",
+        "runtime_hard_blocker_allowed": false,
+        "severity": "hard_failure",
+        "stage": "product_architecture",
+        "worker_current_gate_blocker_allowed": false
+      },
+      {
+        "artifact_family": "software_code",
+        "authority": "prompt_only",
+        "cell_id": "product-architecture.project-manager.software-code.missing-integration-intent.hard-failure.prompt-only.node-entry",
+        "coverage_shard_id": "integration:product_architecture:project_manager:software_code:missing_integration_intent:hard_failure",
+        "evidence_timing": "node_entry",
+        "expected_outcome": "same_node_repair",
+        "failure_class": "missing_integration_intent",
+        "model_id": "flowpilot_integration_cartesian_coverage",
+        "prompt_level_optimization": true,
+        "required_authority": "project_manager",
+        "role": "project_manager",
+        "runtime_hard_blocker_allowed": false,
+        "severity": "hard_failure",
+        "stage": "product_architecture",
+        "worker_current_gate_blocker_allowed": false
+      },
+      {
+        "artifact_family": "software_code",
+        "authority": "prompt_only",
+        "cell_id": "product-architecture.project-manager.software-code.missing-integration-intent.hard-failure.prompt-only.post-worker",
+        "coverage_shard_id": "integration:product_architecture:project_manager:software_code:missing_integration_intent:hard_failure",
+        "evidence_timing": "post_worker",
+        "expected_outcome": "same_node_repair",
+        "failure_class": "missing_integration_intent",
+        "model_id": "flowpilot_integration_cartesian_coverage",
+        "prompt_level_optimization": true,
+        "required_authority": "project_manager",
+        "role": "project_manager",
+        "runtime_hard_blocker_allowed": false,
+        "severity": "hard_failure",
+        "stage": "product_architecture",
+        "worker_current_gate_blocker_allowed": false
+      },
+      {
+        "artifact_family": "software_code",
+        "authority": "prompt_only",
+        "cell_id": "product-architecture.project-manager.software-code.missing-integration-intent.hard-failure.prompt-only.parent-closure",
+        "coverage_shard_id": "integration:product_architecture:project_manager:software_code:missing_integration_intent:hard_failure",
+        "evidence_timing": "parent_closure",
+        "expected_outcome": "same_node_repair",
+        "failure_class": "missing_integration_intent",
+        "model_id": "flowpilot_integration_cartesian_coverage",
+        "prompt_level_optimization": true,
+        "required_authority": "project_manager",
+        "role": "project_manager",
+        "runtime_hard_blocker_allowed": false,
+        "severity": "hard_failure",
+        "stage": "product_architecture",
+        "worker_current_gate_blocker_allowed": false
+      },
+      {
+        "artifact_family": "software_code",
+        "authority": "prompt_only",
+        "cell_id": "product-architecture.project-manager.software-code.missing-integration-intent.hard-failure.prompt-only.terminal-closure",
+        "coverage_shard_id": "integration:product_architecture:project_manager:software_code:missing_integration_intent:hard_failure",
+        "evidence_timing": "terminal_closure",
+        "expected_outcome": "same_node_repair",
+        "failure_class": "missing_integration_intent",
+        "model_id": "flowpilot_integration_cartesian_coverage",
+        "prompt_level_optimization": true,
+        "required_authority": "project_manager",
+        "role": "project_manager",
+        "runtime_hard_blocker_allowed": false,
+        "severity": "hard_failure",
+        "stage": "product_architecture",
+        "worker_current_gate_blocker_allowed": false
+      },
+      {
+        "artifact_family": "software_code",
+        "authority": "reviewer_suggestion",
+        "cell_id": "product-architecture.project-manager.software-code.missing-integration-intent.hard-failure.reviewer-suggestion.pre-work",
+        "coverage_shard_id": "integration:product_architecture:project_manager:software_code:missing_integration_intent:hard_failure",
+        "evidence_timing": "pre_work",
+        "expected_outcome": "same_node_repair",
+        "failure_class": "missing_integration_intent",
+        "model_id": "flowpilot_integration_cartesian_coverage",
+        "prompt_level_optimization": true,
+        "required_authority": "project_manager",
+        "role": "project_manager",
+        "runtime_hard_blocker_allowed": false,
+        "severity": "hard_failure",
+        "stage": "product_architecture",
+        "worker_current_gate_blocker_allowed": false
+      },
+      {
+        "artifact_family": "software_code",
+        "authority": "reviewer_suggestion",
+        "cell_id": "product-architecture.project-manager.software-code.missing-integration-intent.hard-failure.reviewer-suggestion.node-entry",
+        "coverage_shard_id": "integration:product_architecture:project_manager:software_code:missing_integration_intent:hard_failure",
+        "evidence_timing": "node_entry",
+        "expected_outcome": "same_node_repair",
+        "failure_class": "missing_integration_intent",
+        "model_id": "flowpilot_integration_cartesian_coverage",
+        "prompt_level_optimization": true,
+        "required_authority": "project_manager",
+        "role": "project_manager",
+        "runtime_hard_blocker_allowed": false,
+        "severity": "hard_failure",
+        "stage": "product_architecture",
+        "worker_current_gate_blocker_allowed": false
+      },
+      {
+        "artifact_family": "software_code",
+        "authority": "reviewer_suggestion",
+        "cell_id": "product-architecture.project-manager.software-code.missing-integration-intent.hard-failure.reviewer-suggestion.post-worker",
+        "coverage_shard_id": "integration:product_architecture:project_manager:software_code:missing_integration_intent:hard_failure",
+        "evidence_timing": "post_worker",
+        "expected_outcome": "same_node_repair",
+        "failure_class": "missing_integration_intent",
+        "model_id": "flowpilot_integration_cartesian_coverage",
+        "prompt_level_optimization": true,
+        "required_authority": "project_manager",
+        "role": "project_manager",
+        "runtime_hard_blocker_allowed": false,
+        "severity": "hard_failure",
+        "stage": "product_architecture",
+        "worker_current_gate_blocker_allowed": false
+      },
+      {
+        "artifact_family": "software_code",
+        "authority": "reviewer_suggestion",
+        "cell_id": "product-architecture.project-manager.software-code.missing-integration-intent.hard-failure.reviewer-suggestion.parent-closure",
+        "coverage_shard_id": "integration:product_architecture:project_manager:software_code:missing_integration_intent:hard_failure",
+        "evidence_timing": "parent_closure",
+        "expected_outcome": "same_node_repair",
+        "failure_class": "missing_integration_intent",
+        "model_id": "flowpilot_integration_cartesian_coverage",
+        "prompt_level_optimization": true,
+        "required_authority": "project_manager",
+        "role": "project_manager",
+        "runtime_hard_blocker_allowed": false,
+        "severity": "hard_failure",
+        "stage": "product_architecture",
+        "worker_current_gate_blocker_allowed": false
+      },
+      {
+        "artifact_family": "software_code",
+        "authority": "reviewer_suggestion",
+        "cell_id": "product-architecture.project-manager.software-code.missing-integration-intent.hard-failure.reviewer-suggestion.terminal-closure",
+        "coverage_shard_id": "integration:product_architecture:project_manager:software_code:missing_integration_intent:hard_failure",
+        "evidence_timing": "terminal_closure",
+        "expected_outcome": "same_node_repair",
+        "failure_class": "missing_integration_intent",
+        "model_id": "flowpilot_integration_cartesian_coverage",
+        "prompt_level_optimization": true,
+        "required_authority": "project_manager",
+        "role": "project_manager",
+        "runtime_hard_blocker_allowed": false,
+        "severity": "hard_failure",
+        "stage": "product_architecture",
+        "worker_current_gate_blocker_allowed": false
+      },
+      {
+        "artifact_family": "software_code",
+        "authority": "flowguard_suggestion",
+        "cell_id": "product-architecture.project-manager.software-code.missing-integration-intent.hard-failure.flowguard-suggestion.pre-work",
+        "coverage_shard_id": "integration:product_architecture:project_manager:software_code:missing_integration_intent:hard_failure",
+        "evidence_timing": "pre_work",
+        "expected_outcome": "same_node_repair",
+        "failure_class": "missing_integration_intent",
+        "model_id": "flowpilot_integration_cartesian_coverage",
+        "prompt_level_optimization": true,
+        "required_authority": "project_manager",
+        "role": "project_manager",
+        "runtime_hard_blocker_allowed": false,
+        "severity": "hard_failure",
+        "stage": "product_architecture",
+        "worker_current_gate_blocker_allowed": false
+      },
+      {
+        "artifact_family": "software_code",
+        "authority": "flowguard_suggestion",
+        "cell_id": "product-architecture.project-manager.software-code.missing-integration-intent.hard-failure.flowguard-suggestion.node-entry",
+        "coverage_shard_id": "integration:product_architecture:project_manager:software_code:missing_integration_intent:hard_failure",
+        "evidence_timing": "node_entry",
+        "expected_outcome": "same_node_repair",
+        "failure_class": "missing_integration_intent",
+        "model_id": "flowpilot_integration_cartesian_coverage",
+        "prompt_level_optimization": true,
+        "required_authority": "project_manager",
+        "role": "project_manager",
+        "runtime_hard_blocker_allowed": false,
+        "severity": "hard_failure",
+        "stage": "product_architecture",
+        "worker_current_gate_blocker_allowed": false
+      },
+      {
+        "artifact_family": "software_code",
+        "authority": "flowguard_suggestion",
+        "cell_id": "product-architecture.project-manager.software-code.missing-integration-intent.hard-failure.flowguard-suggestion.post-worker",
+        "coverage_shard_id": "integration:product_architecture:project_manager:software_code:missing_integration_intent:hard_failure",
+        "evidence_timing": "post_worker",
+        "expected_outcome": "same_node_repair",
+        "failure_class": "missing_integration_intent",
+        "model_id": "flowpilot_integration_cartesian_coverage",
+        "prompt_level_optimization": true,
+        "required_authority": "project_manager",
+        "role": "project_manager",
+        "runtime_hard_blocker_allowed": false,
+        "severity": "hard_failure",
+        "stage": "product_architecture",
+        "worker_current_gate_blocker_allowed": false
+      },
+      {
+        "artifact_family": "software_code",
+        "authority": "flowguard_suggestion",
+        "cell_id": "product-architecture.project-manager.software-code.missing-integration-intent.hard-failure.flowguard-suggestion.parent-closure",
+        "coverage_shard_id": "integration:product_architecture:project_manager:software_code:missing_integration_intent:hard_failure",
+        "evidence_timing": "parent_closure",
+        "expected_outcome": "same_node_repair",
+        "failure_class": "missing_integration_intent",
+        "model_id": "flowpilot_integration_cartesian_coverage",
+        "prompt_level_optimization": true,
+        "required_authority": "project_manager",
+        "role": "project_manager",
+        "runtime_hard_blocker_allowed": false,
+        "severity": "hard_failure",
+        "stage": "product_architecture",
+        "worker_current_gate_blocker_allowed": false
+      },
+      {
+        "artifact_family": "software_code",
+        "authority": "flowguard_suggestion",
+        "cell_id": "product-architecture.project-manager.software-code.missing-integration-intent.hard-failure.flowguard-suggestion.terminal-closure",
+        "coverage_shard_id": "integration:product_architecture:project_manager:software_code:missing_integration_intent:hard_failure",
+        "evidence_timing": "terminal_closure",
+        "expected_outcome": "same_node_repair",
+        "failure_class": "missing_integration_intent",
+        "model_id": "flowpilot_integration_cartesian_coverage",
+        "prompt_level_optimization": true,
+        "required_authority": "project_manager",
+        "role": "project_manager",
+        "runtime_hard_blocker_allowed": false,
+        "severity": "hard_failure",
+        "stage": "product_architecture",
+        "worker_current_gate_blocker_allowed": false
+      },
+      {
+        "artifact_family": "software_code",
+        "authority": "pm_hard_disposition",
+        "cell_id": "product-architecture.project-manager.software-code.missing-integration-intent.hard-failure.pm-hard-disposition.pre-work",
+        "coverage_shard_id": "integration:product_architecture:project_manager:software_code:missing_integration_intent:hard_failure",
+        "evidence_timing": "pre_work",
+        "expected_outcome": "same_node_repair",
+        "failure_class": "missing_integration_intent",
+        "model_id": "flowpilot_integration_cartesian_coverage",
+        "prompt_level_optimization": true,
+        "required_authority": "project_manager",
+        "role": "project_manager",
+        "runtime_hard_blocker_allowed": false,
+        "severity": "hard_failure",
+        "stage": "product_architecture",
+        "worker_current_gate_blocker_allowed": false
+      },
+      {
+        "artifact_family": "software_code",
+        "authority": "pm_hard_disposition",
+        "cell_id": "product-architecture.project-manager.software-code.missing-integration-intent.hard-failure.pm-hard-disposition.node-entry",
+        "coverage_shard_id": "integration:product_architecture:project_manager:software_code:missing_integration_intent:hard_failure",
+        "evidence_timing": "node_entry",
+        "expected_outcome": "same_node_repair",
+        "failure_class": "missing_integration_intent",
+        "model_id": "flowpilot_integration_cartesian_coverage",
+        "prompt_level_optimization": true,
+        "required_authority": "project_manager",
+        "role": "project_manager",
+        "runtime_hard_blocker_allowed": false,
+        "severity": "hard_failure",
+        "stage": "product_architecture",
+        "worker_current_gate_blocker_allowed": false
+      },
+      {
+        "artifact_family": "software_code",
+        "authority": "pm_hard_disposition",
+        "cell_id": "product-architecture.project-manager.software-code.missing-integration-intent.hard-failure.pm-hard-disposition.post-worker",
+        "coverage_shard_id": "integration:product_architecture:project_manager:software_code:missing_integration_intent:hard_failure",
+        "evidence_timing": "post_worker",
+        "expected_outcome": "same_node_repair",
+        "failure_class": "missing_integration_intent",
+        "model_id": "flowpilot_integration_cartesian_coverage",
+        "prompt_level_optimization": true,
+        "required_authority": "project_manager",
+        "role": "project_manager",
+        "runtime_hard_blocker_allowed": false,
+        "severity": "hard_failure",
+        "stage": "product_architecture",
+        "worker_current_gate_blocker_allowed": false
+      },
+      {
+        "artifact_family": "software_code",
+        "authority": "pm_hard_disposition",
+        "cell_id": "product-architecture.project-manager.software-code.missing-integration-intent.hard-failure.pm-hard-disposition.parent-closure",
+        "coverage_shard_id": "integration:product_architecture:project_manager:software_code:missing_integration_intent:hard_failure",
+        "evidence_timing": "parent_closure",
+        "expected_outcome": "same_node_repair",
+        "failure_class": "missing_integration_intent",
+        "model_id": "flowpilot_integration_cartesian_coverage",
+        "prompt_level_optimization": true,
+        "required_authority": "project_manager",
+        "role": "project_manager",
+        "runtime_hard_blocker_allowed": false,
+        "severity": "hard_failure",
+        "stage": "product_architecture",
+        "worker_current_gate_blocker_allowed": false
+      },
+      {
+        "artifact_family": "software_code",
+        "authority": "pm_hard_disposition",
+        "cell_id": "product-architecture.project-manager.software-code.missing-integration-intent.hard-failure.pm-hard-disposition.terminal-closure",
+        "coverage_shard_id": "integration:product_architecture:project_manager:software_code:missing_integration_intent:hard_failure",
+        "evidence_timing": "terminal_closure",
+        "expected_outcome": "same_node_repair",
+        "failure_class": "missing_integration_intent",
+        "model_id": "flowpilot_integration_cartesian_coverage",
+        "prompt_level_optimization": true,
+        "required_authority": "project_manager",
+        "role": "project_manager",
+        "runtime_hard_blocker_allowed": false,
+        "severity": "hard_failure",
+        "stage": "product_architecture",
+        "worker_current_gate_blocker_allowed": false
+      },
+      {
+        "artifact_family": "software_code",
+        "authority": "runtime_mechanical_rejection",
+        "cell_id": "product-architecture.project-manager.software-code.missing-integration-intent.hard-failure.runtime-mechanical-rejection.pre-work",
+        "coverage_shard_id": "integration:product_architecture:project_manager:software_code:missing_integration_intent:hard_failure",
+        "evidence_timing": "pre_work",
+        "expected_outcome": "same_node_repair",
+        "failure_class": "missing_integration_intent",
+        "model_id": "flowpilot_integration_cartesian_coverage",
+        "prompt_level_optimization": true,
+        "required_authority": "prompt_or_pm_decision_not_runtime_mechanical_rejection",
+        "role": "project_manager",
+        "runtime_hard_blocker_allowed": false,
+        "severity": "hard_failure",
+        "stage": "product_architecture",
+        "worker_current_gate_blocker_allowed": false
+      },
+      {
+        "artifact_family": "software_code",
+        "authority": "runtime_mechanical_rejection",
+        "cell_id": "product-architecture.project-manager.software-code.missing-integration-intent.hard-failure.runtime-mechanical-rejection.node-entry",
+        "coverage_shard_id": "integration:product_architecture:project_manager:software_code:missing_integration_intent:hard_failure",
+        "evidence_timing": "node_entry",
+        "expected_outcome": "same_node_repair",
+        "failure_class": "missing_integration_intent",
+        "model_id": "flowpilot_integration_cartesian_coverage",
+        "prompt_level_optimization": true,
+        "required_authority": "prompt_or_pm_decision_not_runtime_mechanical_rejection",
+        "role": "project_manager",
+        "runtime_hard_blocker_allowed": false,
+        "severity": "hard_failure",
+        "stage": "product_architecture",
+        "worker_current_gate_blocker_allowed": false
+      },
+      {
+        "artifact_family": "software_code",
+        "authority": "runtime_mechanical_rejection",
+        "cell_id": "product-architecture.project-manager.software-code.missing-integration-intent.hard-failure.runtime-mechanical-rejection.post-worker",
+        "coverage_shard_id": "integration:product_architecture:project_manager:software_code:missing_integration_intent:hard_failure",
+        "evidence_timing": "post_worker",
+        "expected_outcome": "same_node_repair",
+        "failure_class": "missing_integration_intent",
+        "model_id": "flowpilot_integration_cartesian_coverage",
+        "prompt_level_optimization": true,
+        "required_authority": "prompt_or_pm_decision_not_runtime_mechanical_rejection",
+        "role": "project_manager",
+        "runtime_hard_blocker_allowed": false,
+        "severity": "hard_failure",
+        "stage": "product_architecture",
+        "worker_current_gate_blocker_allowed": false
+      },
+      {
+        "artifact_family": "software_code",
+        "authority": "runtime_mechanical_rejection",
+        "cell_id": "product-architecture.project-manager.software-code.missing-integration-intent.hard-failure.runtime-mechanical-rejection.parent-closure",
+        "coverage_shard_id": "integration:product_architecture:project_manager:software_code:missing_integration_intent:hard_failure",
+        "evidence_timing": "parent_closure",
+        "expected_outcome": "same_node_repair",
+        "failure_class": "missing_integration_intent",
+        "model_id": "flowpilot_integration_cartesian_coverage",
+        "prompt_level_optimization": true,
+        "required_authority": "prompt_or_pm_decision_not_runtime_mechanical_rejection",
+        "role": "project_manager",
+        "runtime_hard_blocker_allowed": false,
+        "severity": "hard_failure",
+        "stage": "product_architecture",
+        "worker_current_gate_blocker_allowed": false
+      },
+      {
+        "artifact_family": "software_code",
+        "authority": "runtime_mechanical_rejection",
+        "cell_id": "product-architecture.project-manager.software-code.missing-integration-intent.hard-failure.runtime-mechanical-rejection.terminal-closure",
+        "coverage_shard_id": "integration:product_architecture:project_manager:software_code:missing_integration_intent:hard_failure",
+        "evidence_timing": "terminal_closure",
+        "expected_outcome": "same_node_repair",
+        "failure_class": "missing_integration_intent",
+        "model_id": "flowpilot_integration_cartesian_coverage",
+        "prompt_level_optimization": true,
+        "required_authority": "prompt_or_pm_decision_not_runtime_mechanical_rejection",
+        "role": "project_manager",
+        "runtime_hard_blocker_allowed": false,
+        "severity": "hard_failure",
+        "stage": "product_architecture",
+        "worker_current_gate_blocker_allowed": false
+      }
+    ],
+    "worker_current_gate_blocker_cells": []
+  },
+  "model_id": "flowpilot_integration_cartesian_coverage",
+  "ok": true,
+  "safe_graph": {
+    "accepted_scenarios": [
+      "valid_integration_cartesian_matrix"
+    ],
+    "edge_count": 16,
+    "invariant_failures": [],
+    "missing_labels": [],
+    "ok": true,
+    "rejected_state_count": 7,
+    "state_count": 17
+  }
+}

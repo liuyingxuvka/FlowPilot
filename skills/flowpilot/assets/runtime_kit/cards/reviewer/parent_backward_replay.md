@@ -53,6 +53,11 @@ PM decision-support.
 
 Pass only when the effective children compose into the parent goal and the
 parent-level user-facing outcome remains credible.
+Block a parent that is merely a collection of locally passing child outputs
+when those outputs are scattered, duplicative without purpose, missing required
+callbacks, or unable to produce the parent outcome. If the children compose
+well enough for the hard parent goal but could be cleaner, shorter, or better
+organized, report that as PM decision-support instead of a hard blocker.
 Also check that child results closed any parent-level low-quality-success hard
 parts with proof of depth rather than existence-only evidence; a parent that
 only aggregates thin child outputs must block.
