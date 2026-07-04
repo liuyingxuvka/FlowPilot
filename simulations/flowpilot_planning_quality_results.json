@@ -5,7 +5,7 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=3 initial_states=1 traces=450",
+    "summary": "sequences=3 initial_states=1 traces=468",
     "violation_count": 0
   },
   "hazard_checks": {
@@ -30,6 +30,13 @@
         "expected_failure": "major route node lacks a concrete acceptance artifact",
         "failures": [
           "major route node lacks a concrete acceptance artifact"
+        ]
+      },
+      "child_skill_theme_only_standard": {
+        "detected": true,
+        "expected_failure": "selected child skill is theme-only and lacks a concrete standards-lens projection",
+        "failures": [
+          "selected child skill is theme-only and lacks a concrete standards-lens projection"
         ]
       },
       "evidence_packet_repairs_target_artifact": {
@@ -392,6 +399,13 @@
           "selected role skill use was self-attested without evidence"
         ]
       },
+      "root_contract_accepts_generic_user_goal": {
+        "detected": true,
+        "expected_failure": "root contract allows generic user-goal wording instead of concrete source-intent acceptance",
+        "failures": [
+          "root contract allows generic user-goal wording instead of concrete source-intent acceptance"
+        ]
+      },
       "route_convergence_missing_composition_review": {
         "detected": true,
         "expected_failure": "route structure convergence lacks parent child sibling composition review",
@@ -431,6 +445,7 @@
         "detected": true,
         "expected_failure": "small/simple task entered formal FlowPilot instead of staying outside FlowPilot",
         "failures": [
+          "selected child skill is theme-only and lacks a concrete standards-lens projection",
           "Skill Standard Contract lacks source paths",
           "Skill Standard Contract is not mapped through route, packet, reviewer, and artifact obligations",
           "LOOP/VERIFY/ARTIFACT standards were not inherited into execution",
@@ -460,6 +475,13 @@
         "expected_failure": "selected child skill lacks a compiled Skill Standard Contract",
         "failures": [
           "selected child skill lacks a compiled Skill Standard Contract"
+        ]
+      },
+      "source_intent_collapsed_to_generic_acceptance": {
+        "detected": true,
+        "expected_failure": "PM collapsed source intent into generic acceptance instead of concrete current-run acceptance rows",
+        "failures": [
+          "PM collapsed source intent into generic acceptance instead of concrete current-run acceptance rows"
         ]
       },
       "startup_quality_posture_missing": {
@@ -565,11 +587,11 @@
     "accepted_scenarios": [
       "valid_ui_route"
     ],
-    "edge_count": 150,
+    "edge_count": 156,
     "invariant_failures": [],
     "missing_labels": [],
     "ok": true,
-    "rejected_state_count": 74,
-    "state_count": 151
+    "rejected_state_count": 77,
+    "state_count": 157
   }
 }

@@ -875,6 +875,20 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         )
         return
 
+    if not state.control_plane_hard_gate_escape_returned_to_owner_gate:
+        yield Transition(
+            "control_plane_hard_gate_escape_returns_to_owner_gate",
+            _inc(
+                state,
+                holder="router",
+                control_plane_hard_gate_escape_seen=True,
+                control_plane_hard_gate_escape_returned_to_owner_gate=True,
+                control_plane_hard_gate_escape_escalated_to_break_glass=False,
+                control_plane_hard_gate_escape_sent_to_final_review=False,
+            ),
+        )
+        return
+
     if state.route_process_check_passed and state.review_block_scope == "none":
         yield Transition(
             "reviewer_block_classified_as_node_local",

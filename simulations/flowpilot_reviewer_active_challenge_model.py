@@ -61,6 +61,7 @@ USER_PERSPECTIVE_FAILURE_HYPOTHESIS_MISSING = "user_perspective_failure_hypothes
 HARD_USER_INTENT_FAILURE_DOWNGRADED = "hard_user_intent_failure_downgraded"
 FINAL_REPLAY_LEDGER_ONLY = "final_replay_ledger_only"
 USER_FACING_EVIDENCE_EXISTS_ONLY = "user_facing_evidence_exists_only"
+SOURCE_INTENT_DILUTION_ACCEPTED = "source_intent_dilution_accepted"
 REVIEWER_MADE_PM_ROUTE_DECISION = "reviewer_made_pm_route_decision"
 LOW_QUALITY_SUCCESS_CHALLENGE_MISSING = "low_quality_success_challenge_missing"
 EXISTENCE_ONLY_HARD_PART_EVIDENCE_ACCEPTED = "existence_only_hard_part_evidence_accepted"
@@ -97,6 +98,7 @@ NEGATIVE_SCENARIOS = (
     HARD_USER_INTENT_FAILURE_DOWNGRADED,
     FINAL_REPLAY_LEDGER_ONLY,
     USER_FACING_EVIDENCE_EXISTS_ONLY,
+    SOURCE_INTENT_DILUTION_ACCEPTED,
     REVIEWER_MADE_PM_ROUTE_DECISION,
     LOW_QUALITY_SUCCESS_CHALLENGE_MISSING,
     EXISTENCE_ONLY_HARD_PART_EVIDENCE_ACCEPTED,
@@ -141,6 +143,7 @@ class State:
     final_user_perspective_applicability_decided: bool = False
     final_user_perspective_required: bool = False
     final_user_intent_considered: bool = False
+    source_intent_compared_to_current_artifact: bool = False
     user_perspective_failure_hypothesis_recorded: bool = False
     user_facing_evidence_supports_claims: bool = False
     delivery_replay_required: bool = False
@@ -167,6 +170,8 @@ class State:
     hard_user_intent_failure_found: bool = False
     hard_user_intent_failure_classified_blocker: bool = False
     hard_user_intent_failure_downgraded_to_suggestion: bool = False
+    semantic_dilution_found: bool = False
+    semantic_dilution_classified_blocker: bool = False
     uncheckable_surface_present: bool = False
     waiver_or_blocker_for_uncheckable: bool = False
     reroute_request_recorded_when_needed: bool = True
@@ -247,6 +252,7 @@ def _valid_review_state(scenario: str, task_family: str) -> State:
         final_user_perspective_applicability_decided=True,
         final_user_perspective_required=user_perspective_required,
         final_user_intent_considered=user_perspective_required,
+        source_intent_compared_to_current_artifact=user_perspective_required,
         user_perspective_failure_hypothesis_recorded=user_perspective_required,
         user_facing_evidence_supports_claims=user_perspective_required,
         delivery_replay_required=delivery_replay_required,
@@ -378,6 +384,15 @@ def _scenario_state(scenario: str) -> State:
         )
     if scenario == USER_FACING_EVIDENCE_EXISTS_ONLY:
         return replace(state, user_facing_evidence_supports_claims=False)
+    if scenario == SOURCE_INTENT_DILUTION_ACCEPTED:
+        return replace(
+            state,
+            source_intent_compared_to_current_artifact=False,
+            semantic_dilution_found=True,
+            semantic_dilution_classified_blocker=False,
+            reviewer_passed=True,
+            reviewer_blocked=False,
+        )
     if scenario == REVIEWER_MADE_PM_ROUTE_DECISION:
         return replace(state, reviewer_made_pm_route_decision=True)
     if scenario == LOW_QUALITY_SUCCESS_CHALLENGE_MISSING:
@@ -456,6 +471,12 @@ def reviewer_challenge_failures(state: State) -> list[str]:
     if (
         state.reviewer_passed
         and state.final_user_perspective_required
+        and not state.source_intent_compared_to_current_artifact
+    ):
+        failures.append("reviewer pass lacks source-intent comparison against the current artifact")
+    if (
+        state.reviewer_passed
+        and state.final_user_perspective_required
         and not state.user_perspective_failure_hypothesis_recorded
     ):
         failures.append("reviewer pass lacks final-user failure hypothesis")
@@ -518,6 +539,11 @@ def reviewer_challenge_failures(state: State) -> list[str]:
         or state.reviewer_passed
     ):
         failures.append("reviewer did not block a hard final-user intent or product usefulness failure")
+    if state.semantic_dilution_found and (
+        not state.semantic_dilution_classified_blocker
+        or state.reviewer_passed
+    ):
+        failures.append("reviewer did not block source-intent semantic dilution")
     if state.shallow_completion_trap_still_plausible and state.reviewer_passed:
         failures.append("reviewer did not block a still-plausible shallow-completion trap")
     if state.reviewer_passed and not state.route_quality_floor_applicability_decided:

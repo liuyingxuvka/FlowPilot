@@ -56,7 +56,22 @@
         "detected": true,
         "expected": "sibling leaf entered before sibling parent/module",
         "failures": [
-          "sibling leaf entered before sibling parent/module"
+          "sibling leaf entered before sibling parent/module",
+          "sibling leaf entered before sibling parent plan/context entry gate"
+        ]
+      },
+      "sibling_leaf_before_parent_entry_gate": {
+        "detected": true,
+        "expected": "sibling leaf entered before sibling parent plan/context entry gate",
+        "failures": [
+          "sibling leaf entered before sibling parent plan/context entry gate"
+        ]
+      },
+      "sibling_parent_entry_gate_without_parent_entry": {
+        "detected": true,
+        "expected": "sibling parent entry gate accepted before parent/module was entered",
+        "failures": [
+          "sibling parent entry gate accepted before parent/module was entered"
         ]
       }
     },
@@ -71,11 +86,11 @@
     "stuck_state_count": 0
   },
   "safe_graph": {
-    "edge_count": 14,
+    "edge_count": 15,
     "invariant_failures": [],
     "missing_labels": [],
     "ok": true,
-    "state_count": 15,
+    "state_count": 16,
     "terminal_state_count": 2
   }
 }

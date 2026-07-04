@@ -30,6 +30,7 @@ class FlowPilotReviewerActiveChallengeTests(unittest.TestCase):
         self.assertTrue(hazards[model.HARD_USER_INTENT_FAILURE_DOWNGRADED]["detected"])
         self.assertTrue(hazards[model.FINAL_REPLAY_LEDGER_ONLY]["detected"])
         self.assertTrue(hazards[model.USER_FACING_EVIDENCE_EXISTS_ONLY]["detected"])
+        self.assertTrue(hazards[model.SOURCE_INTENT_DILUTION_ACCEPTED]["detected"])
         self.assertTrue(hazards[model.REVIEWER_MADE_PM_ROUTE_DECISION]["detected"])
         self.assertTrue(hazards[model.LOW_QUALITY_SUCCESS_CHALLENGE_MISSING]["detected"])
         self.assertTrue(hazards[model.EXISTENCE_ONLY_HARD_PART_EVIDENCE_ACCEPTED]["detected"])
@@ -89,6 +90,8 @@ class FlowPilotReviewerActiveChallengeTests(unittest.TestCase):
             "Treat self-attested AI claims as claims",
             "higher-standard recommendation",
             "final-user intent",
+            "source-intent comparison",
+            "semantic dilution",
             "product usefulness",
             "Existence evidence is not enough",
             "low-quality success",
@@ -101,6 +104,8 @@ class FlowPilotReviewerActiveChallengeTests(unittest.TestCase):
         self.assertNotIn("independent_challenge", worker_review_card)
         self.assertIn("final-user usefulness", worker_review_card_flat)
         self.assertIn("file existence", worker_review_card_flat)
+        self.assertIn("source-intent", worker_review_card_flat)
+        self.assertIn("current artifact", worker_review_card_flat)
         self.assertIn("Low-Quality Success Guard", worker_review_card_flat)
         self.assertIn("Proof of Depth", worker_review_card_flat)
         self.assertIn("shallow-completion traps", worker_review_card_flat)
@@ -131,6 +136,18 @@ class FlowPilotReviewerActiveChallengeTests(unittest.TestCase):
         self.assertTrue(reviewer_contracts)
         for contract in reviewer_contracts:
             fields = contract.get("required_body_fields", [])
+            if contract["contract_id"] == "flowpilot.output_contract.terminal_backward_replay_report.v1":
+                self.assertEqual(
+                    fields,
+                    [
+                        "final_artifact_refs",
+                        "acceptance_item_closure",
+                        "route_segment_replay",
+                        "waiver_records",
+                        "final_blockers",
+                    ],
+                )
+                continue
             self.assertIn("pm_visible_summary", fields, contract["contract_id"])
             self.assertIn("reviewed_by_role", fields, contract["contract_id"])
             self.assertIn("passed", fields, contract["contract_id"])

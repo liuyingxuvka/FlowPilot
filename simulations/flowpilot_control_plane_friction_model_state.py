@@ -152,6 +152,10 @@ class State:
     router_internal_postcondition_exposed_as_role_wait: bool = False
     router_internal_postcondition_expected_evidence_exists: bool = False
     router_internal_postcondition_executable_action_pending: bool = False
+    control_plane_hard_gate_escape_seen: bool = False
+    control_plane_hard_gate_escape_returned_to_owner_gate: bool = False
+    control_plane_hard_gate_escape_escalated_to_break_glass: bool = False
+    control_plane_hard_gate_escape_sent_to_final_review: bool = False
     resolved_obligation_evidence_exists: bool = False
     resolved_obligation_live_passive_wait: bool = False
     resolved_obligation_live_blocked_reminder: bool = False

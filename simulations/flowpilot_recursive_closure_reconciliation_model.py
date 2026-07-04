@@ -28,6 +28,7 @@ REQUIRED_LABELS = (
     "child_coverage_complete_for_parent_a",
     "complete_parent_a_after_child_review",
     "enter_sibling_parent_b",
+    "accept_sibling_parent_b_entry_gate",
     "enter_leaf_b1_after_parent_b",
     "sibling_parent_entry_complete",
     "select_terminal_closure_reconciliation",
@@ -60,6 +61,7 @@ class State:
     parent_a_children_completed: bool = False
     parent_a_completed: bool = False
     sibling_parent_b_entered: bool = False
+    sibling_parent_b_entry_gate_accepted: bool = False
     leaf_b1_entered: bool = False
     route_root_selected_as_worker: bool = False
 
@@ -133,6 +135,13 @@ def next_states(state: State) -> tuple[tuple[str, State], ...]:
             return (("complete_parent_a_after_child_review", replace(state, parent_a_completed=True)),)
         if not state.sibling_parent_b_entered:
             return (("enter_sibling_parent_b", replace(state, sibling_parent_b_entered=True)),)
+        if not state.sibling_parent_b_entry_gate_accepted:
+            return (
+                (
+                    "accept_sibling_parent_b_entry_gate",
+                    replace(state, sibling_parent_b_entry_gate_accepted=True),
+                ),
+            )
         if not state.leaf_b1_entered:
             return (("enter_leaf_b1_after_parent_b", replace(state, leaf_b1_entered=True)),)
         return (("sibling_parent_entry_complete", replace(state, status="complete")),)
@@ -169,6 +178,10 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("parent completed before child coverage")
     if state.leaf_b1_entered and not state.sibling_parent_b_entered:
         failures.append("sibling leaf entered before sibling parent/module")
+    if state.leaf_b1_entered and not state.sibling_parent_b_entry_gate_accepted:
+        failures.append("sibling leaf entered before sibling parent plan/context entry gate")
+    if state.sibling_parent_b_entry_gate_accepted and not state.sibling_parent_b_entered:
+        failures.append("sibling parent entry gate accepted before parent/module was entered")
 
     if state.pm_closure_approved and not state.final_ledger_clean:
         failures.append("terminal closure approved without clean final ledger")
@@ -205,6 +218,8 @@ INVARIANTS = (
     _invariant("route_root_not_worker_scope", "route root selected as executable worker scope"),
     _invariant("parent_requires_child_coverage", "parent completed before child coverage"),
     _invariant("sibling_parent_before_leaf", "sibling leaf entered before sibling parent/module"),
+    _invariant("sibling_parent_entry_gate_before_leaf", "sibling leaf entered before sibling parent plan/context entry gate"),
+    _invariant("sibling_parent_entry_gate_after_parent_entry", "sibling parent entry gate accepted before parent/module was entered"),
     _invariant("closure_requires_clean_final_ledger", "terminal closure approved without clean final ledger"),
     _invariant("closure_requires_terminal_replay", "terminal closure approved without terminal backward replay"),
     _invariant("closure_requires_defect_reconciliation", "terminal closure approved without clean defect ledger reconciliation"),
@@ -231,6 +246,23 @@ HAZARD_STATES = {
         parent_a_children_completed=True,
         parent_a_completed=True,
         leaf_b1_entered=True,
+    ),
+    "sibling_leaf_before_parent_entry_gate": replace(
+        initial_state(),
+        status="complete",
+        scenario=SIBLING_PARENT_ENTRY,
+        parent_a_children_completed=True,
+        parent_a_completed=True,
+        sibling_parent_b_entered=True,
+        leaf_b1_entered=True,
+    ),
+    "sibling_parent_entry_gate_without_parent_entry": replace(
+        initial_state(),
+        status="complete",
+        scenario=SIBLING_PARENT_ENTRY,
+        parent_a_children_completed=True,
+        parent_a_completed=True,
+        sibling_parent_b_entry_gate_accepted=True,
     ),
     "closure_without_defect_reconciliation": replace(
         initial_state(),
@@ -284,6 +316,8 @@ HAZARD_EXPECTED_FAILURES = {
     "root_selected_as_worker": "route root selected as executable worker scope",
     "parent_done_before_children": "parent completed before child coverage",
     "sibling_leaf_before_parent": "sibling leaf entered before sibling parent/module",
+    "sibling_leaf_before_parent_entry_gate": "sibling leaf entered before sibling parent plan/context entry gate",
+    "sibling_parent_entry_gate_without_parent_entry": "sibling parent entry gate accepted before parent/module was entered",
     "closure_without_defect_reconciliation": "terminal closure approved without clean defect ledger reconciliation",
     "closure_with_unresolved_defect": "terminal closure approved with unresolved defect",
     "closure_with_stale_role_memory": "terminal closure approved with stale role memory authority",

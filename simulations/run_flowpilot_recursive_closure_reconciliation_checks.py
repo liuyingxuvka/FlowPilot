@@ -20,7 +20,8 @@ def _state_id(state: model.State) -> str:
     return (
         f"status={state.status}|scenario={state.scenario}|"
         f"parent={state.parent_a_children_completed},{state.parent_a_completed}|"
-        f"sibling={state.sibling_parent_b_entered},{state.leaf_b1_entered}|"
+        f"sibling={state.sibling_parent_b_entered},{state.sibling_parent_b_entry_gate_accepted},"
+        f"{state.leaf_b1_entered}|"
         f"closure={state.final_ledger_clean},{state.terminal_backward_replay_passed},"
         f"{state.defect_ledger_clean},{state.role_memory_current},"
         f"{state.continuation_quarantine_clean},{state.pm_closure_approved}"

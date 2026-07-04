@@ -114,8 +114,11 @@ WORK_PACKET_MISSING_ACCEPTANCE_ITEM_MATRIX = "work_packet_missing_acceptance_ite
 FINAL_LEDGER_ACCEPTANCE_ITEM_UNRESOLVED = "final_ledger_acceptance_item_unresolved"
 STARTUP_QUALITY_POSTURE_MISSING = "startup_quality_posture_missing"
 PRODUCT_ARCHITECTURE_IGNORES_STARTUP_QUALITY = "product_architecture_ignores_startup_quality"
+SOURCE_INTENT_COLLAPSED_TO_GENERIC_ACCEPTANCE = "source_intent_collapsed_to_generic_acceptance"
+ROOT_CONTRACT_ACCEPTS_GENERIC_USER_GOAL = "root_contract_accepts_generic_user_goal"
 ROUTE_QUALITY_POSTURE_DROPPED = "route_quality_posture_dropped"
 PACKET_QUALITY_FLOOR_DROPPED = "packet_quality_floor_dropped"
+CHILD_SKILL_THEME_ONLY_STANDARD = "child_skill_theme_only_standard"
 PRODUCT_ARCHITECTURE_MISSING_SYSTEM_INTEGRATION_INTENT = "product_architecture_missing_system_integration_intent"
 ROUTE_CONVERGENCE_MISSING_COMPOSITION_REVIEW = "route_convergence_missing_composition_review"
 NODE_PLAN_MISSING_INTEGRATION_TOUCHPOINT = "node_plan_missing_integration_touchpoint"
@@ -191,8 +194,11 @@ NEGATIVE_SCENARIOS = (
     FINAL_LEDGER_ACCEPTANCE_ITEM_UNRESOLVED,
     STARTUP_QUALITY_POSTURE_MISSING,
     PRODUCT_ARCHITECTURE_IGNORES_STARTUP_QUALITY,
+    SOURCE_INTENT_COLLAPSED_TO_GENERIC_ACCEPTANCE,
+    ROOT_CONTRACT_ACCEPTS_GENERIC_USER_GOAL,
     ROUTE_QUALITY_POSTURE_DROPPED,
     PACKET_QUALITY_FLOOR_DROPPED,
+    CHILD_SKILL_THEME_ONLY_STANDARD,
     PRODUCT_ARCHITECTURE_MISSING_SYSTEM_INTEGRATION_INTENT,
     ROUTE_CONVERGENCE_MISSING_COMPOSITION_REVIEW,
     NODE_PLAN_MISSING_INTEGRATION_TOUCHPOINT,
@@ -234,6 +240,8 @@ class State:
 
     startup_release_projects_quality_posture: bool = False
     product_architecture_consumes_startup_quality_posture: bool = False
+    source_intent_preserved_as_concrete_acceptance_rows: bool = False
+    root_contract_blocks_generic_user_goal_wording: bool = False
     route_preserves_startup_product_quality_posture: bool = False
     packet_preserves_current_quality_floor: bool = False
     product_architecture_system_integration_intent_written: bool = False
@@ -338,6 +346,7 @@ class State:
     role_skill_use_evidence_required: bool = False
     role_skill_use_evidence_reviewer_check_bound: bool = False
     role_skill_use_self_attested_without_evidence: bool = False
+    child_skill_standard_lens_has_concrete_projection: bool = False
 
     node_acceptance_plan_consumes_projection: bool = False
     work_packet_carries_projection: bool = False
@@ -405,6 +414,8 @@ def _valid_ui_state() -> State:
         task_class="ui_product",
         startup_release_projects_quality_posture=True,
         product_architecture_consumes_startup_quality_posture=True,
+        source_intent_preserved_as_concrete_acceptance_rows=True,
+        root_contract_blocks_generic_user_goal_wording=True,
         route_preserves_startup_product_quality_posture=True,
         packet_preserves_current_quality_floor=True,
         product_architecture_system_integration_intent_written=True,
@@ -494,6 +505,7 @@ def _valid_ui_state() -> State:
         role_skill_use_binding_written=True,
         role_skill_use_evidence_required=True,
         role_skill_use_evidence_reviewer_check_bound=True,
+        child_skill_standard_lens_has_concrete_projection=True,
         node_acceptance_plan_consumes_projection=True,
         work_packet_carries_projection=True,
         result_matrix_required=True,
@@ -636,10 +648,16 @@ def _scenario_state(scenario: str) -> State:
         return replace(state, startup_release_projects_quality_posture=False)
     if scenario == PRODUCT_ARCHITECTURE_IGNORES_STARTUP_QUALITY:
         return replace(state, product_architecture_consumes_startup_quality_posture=False)
+    if scenario == SOURCE_INTENT_COLLAPSED_TO_GENERIC_ACCEPTANCE:
+        return replace(state, source_intent_preserved_as_concrete_acceptance_rows=False)
+    if scenario == ROOT_CONTRACT_ACCEPTS_GENERIC_USER_GOAL:
+        return replace(state, root_contract_blocks_generic_user_goal_wording=False)
     if scenario == ROUTE_QUALITY_POSTURE_DROPPED:
         return replace(state, route_preserves_startup_product_quality_posture=False)
     if scenario == PACKET_QUALITY_FLOOR_DROPPED:
         return replace(state, packet_preserves_current_quality_floor=False)
+    if scenario == CHILD_SKILL_THEME_ONLY_STANDARD:
+        return replace(state, child_skill_standard_lens_has_concrete_projection=False)
     if scenario == PRODUCT_ARCHITECTURE_MISSING_SYSTEM_INTEGRATION_INTENT:
         return replace(state, product_architecture_system_integration_intent_written=False)
     if scenario == ROUTE_CONVERGENCE_MISSING_COMPOSITION_REVIEW:
@@ -818,6 +836,10 @@ def planning_failures(state: State) -> list[str]:
         failures.append("startup release does not carry high-quality current-run posture into PM product and route work")
     if complex_task and not state.product_architecture_consumes_startup_quality_posture:
         failures.append("product architecture does not consume startup high-quality posture")
+    if complex_task and not state.source_intent_preserved_as_concrete_acceptance_rows:
+        failures.append("PM collapsed source intent into generic acceptance instead of concrete current-run acceptance rows")
+    if complex_task and not state.root_contract_blocks_generic_user_goal_wording:
+        failures.append("root contract allows generic user-goal wording instead of concrete source-intent acceptance")
     if complex_task and not state.route_preserves_startup_product_quality_posture:
         failures.append("route design lowered the startup/product quality floor")
     if complex_task and not state.packet_preserves_current_quality_floor:
@@ -1026,6 +1048,8 @@ def planning_failures(state: State) -> list[str]:
         failures.append("final ledger leaves structural debt unresolved")
 
     if state.child_skill_selected:
+        if not state.child_skill_standard_lens_has_concrete_projection:
+            failures.append("selected child skill is theme-only and lacks a concrete standards-lens projection")
         if not state.skill_standard_contract_compiled:
             failures.append("selected child skill lacks a compiled Skill Standard Contract")
         missing_fields = STANDARD_FIELDS - state.skill_standard_fields
@@ -1127,7 +1151,12 @@ def startup_quality_posture_projects_to_route(state: State, trace) -> InvariantR
     if state.status != "accepted":
         return InvariantResult.pass_()
     for failure in planning_failures(state):
-        if "startup" in failure or "quality floor" in failure:
+        if (
+            "startup" in failure
+            or "quality floor" in failure
+            or "source intent" in failure
+            or "generic user-goal" in failure
+        ):
             return InvariantResult.fail(failure)
     return InvariantResult.pass_()
 
@@ -1137,7 +1166,11 @@ def skill_standards_are_projected(state: State, trace) -> InvariantResult:
     if state.status != "accepted":
         return InvariantResult.pass_()
     for failure in planning_failures(state):
-        if "Skill Standard Contract" in failure or "skill-standard projection" in failure:
+        if (
+            "Skill Standard Contract" in failure
+            or "skill-standard projection" in failure
+            or "standards-lens projection" in failure
+        ):
             return InvariantResult.fail(failure)
     return InvariantResult.pass_()
 

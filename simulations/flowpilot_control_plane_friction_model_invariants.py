@@ -286,6 +286,24 @@ def router_internal_postconditions_materialize_or_block(state: State, trace) -> 
         )
     return InvariantResult.pass_()
 
+def control_plane_hard_gate_escape_returns_to_owner_gate(state: State, trace) -> InvariantResult:
+    del trace
+    if not state.control_plane_hard_gate_escape_seen:
+        return InvariantResult.pass_()
+    if not state.control_plane_hard_gate_escape_returned_to_owner_gate:
+        return InvariantResult.fail(
+            "control-plane hard gate escape did not return to the owning runtime gate"
+        )
+    if state.control_plane_hard_gate_escape_escalated_to_break_glass:
+        return InvariantResult.fail(
+            "control-plane hard gate escape escalated to break glass instead of the owning runtime gate"
+        )
+    if state.control_plane_hard_gate_escape_sent_to_final_review:
+        return InvariantResult.fail(
+            "control-plane hard gate escape was sent to final quality review instead of the owning runtime gate"
+        )
+    return InvariantResult.pass_()
+
 def resolved_obligation_projections_are_cleared(state: State, trace) -> InvariantResult:
     del trace
     if (
@@ -1329,6 +1347,11 @@ INVARIANTS = (
         name="router_internal_postconditions_materialize_or_block",
         description="Router-owned internal postconditions materialize evidence or emit router-visible blockers instead of passive role waits.",
         predicate=router_internal_postconditions_materialize_or_block,
+    ),
+    Invariant(
+        name="control_plane_hard_gate_escape_returns_to_owner_gate",
+        description="A hard gate escape before final review returns to the owning runtime gate, not break-glass or terminal quality review.",
+        predicate=control_plane_hard_gate_escape_returns_to_owner_gate,
     ),
     Invariant(
         name="resolved_obligation_projections_are_cleared",

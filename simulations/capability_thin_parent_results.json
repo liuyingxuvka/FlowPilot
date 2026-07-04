@@ -1,5 +1,5 @@
 {
-  "created_at": "2026-07-03T05:05:24.053800+00:00",
+  "created_at": "2026-07-04T02:09:00.257152+00:00",
   "graph": {
     "edge_count": 14,
     "invariant_failure_count": 0,
@@ -122,17 +122,17 @@
       {
         "evidence": [
           {
-            "edge_count": 150,
+            "edge_count": 156,
             "failures": [],
             "missing": false,
             "model_id": "flowpilot_planning_quality",
             "ok": true,
             "proof_status": "not_present",
             "result_file": "simulations/flowpilot_planning_quality_results.json",
-            "result_fingerprint": "0e77a389b19c7afd01b3487fa986ed0973ce22aa64858bf5092b23984c9b7c01",
+            "result_fingerprint": "a90e09d36e8be2044497c15b08975e923cc8979fb4c75ce677adb53baf022c9f",
             "skipped_required_checks": [],
             "skipped_required_checks_visible": true,
-            "state_count": 151
+            "state_count": 157
           },
           {
             "edge_count": 40,
@@ -178,17 +178,17 @@
             "state_count": 67
           },
           {
-            "edge_count": 64,
+            "edge_count": 66,
             "failures": [],
             "missing": false,
             "model_id": "flowpilot_reviewer_active_challenge",
             "ok": true,
             "proof_status": "not_present",
             "result_file": "simulations/flowpilot_reviewer_active_challenge_results.json",
-            "result_fingerprint": "9fb4d3cc77e73b3c1f0621d371b6431f3ce6b8ca19a9748d4cbad5cd2419449a",
+            "result_fingerprint": "ef673d850f91c65b7bafb7a29351a67048fa9a023c0382419c75392f77212b0b",
             "skipped_required_checks": [],
             "skipped_required_checks_visible": true,
-            "state_count": 65
+            "state_count": 67
           },
           {
             "edge_count": 7,

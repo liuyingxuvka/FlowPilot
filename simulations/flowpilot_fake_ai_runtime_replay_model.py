@@ -107,6 +107,10 @@ CONCRETE_RUNTIME_TESTS: dict[str, str] = {
         "tests.test_flowpilot_integration_cartesian_coverage."
         "FlowPilotIntegrationCartesianCoverageTests.test_flowguard_hazards_cover_underblocking_overblocking_and_model_miss"
     ),
+    "parent_entry_return_path": (
+        "tests.test_flowpilot_parent_entry_return_path."
+        "FlowPilotParentEntryReturnPathTests.test_final_hard_gate_escape_matrix_returns_each_runtime_gate_to_owner"
+    ),
 }
 
 
@@ -133,6 +137,26 @@ EXPECTED_REACTION_BY_MUTATION = {
     "partial_repair_then_corrected": "same_family_repair_or_reissue_without_glassbreak_before_threshold",
     "same_payload_retry": "same_family_repair_or_reissue_without_glassbreak_before_threshold",
 }
+
+PARENT_ENTRY_GATE_TYPES = (
+    "missing_node_acceptance_plan",
+    "missing_node_context_package",
+    "missing_parent_backward_replay",
+    "missing_pm_disposition",
+    "active_packet_unresolved",
+    "stale_current_evidence",
+)
+PARENT_ENTRY_SUBJECT_TOPOLOGIES = (
+    "ancestor_parent",
+    "descendant_child",
+    "mutation_created_parent",
+)
+PARENT_ENTRY_DETECTION_STAGES = (
+    "node_entry",
+    "parent_backward_replay",
+    "pm_disposition",
+    "final_preflight",
+)
 
 
 def _contract_family_bucket(contract_id: str) -> str:
@@ -331,6 +355,48 @@ def _integration_runtime_replay_cells() -> tuple[dict[str, Any], ...]:
     )
 
 
+def _parent_entry_return_path_replay_cells() -> tuple[dict[str, Any], ...]:
+    reactions = {
+        "missing_node_acceptance_plan": "return_to_pm_node_acceptance_plan",
+        "missing_node_context_package": "return_to_pm_node_acceptance_plan",
+        "missing_parent_backward_replay": "return_to_parent_backward_replay",
+        "missing_pm_disposition": "return_to_pm_disposition",
+        "active_packet_unresolved": "return_to_current_packet_repair",
+        "stale_current_evidence": "return_to_pm_node_acceptance_plan",
+    }
+    rows: list[dict[str, Any]] = []
+    for gate_type in PARENT_ENTRY_GATE_TYPES:
+        for topology in PARENT_ENTRY_SUBJECT_TOPOLOGIES:
+            for stage in PARENT_ENTRY_DETECTION_STAGES:
+                cell_id = f"{gate_type}.{topology}.{stage}"
+                rows.append(
+                    {
+                        "cell_id": f"runtime_replay.parent_entry_return_path.{cell_id}",
+                        "source_cell_id": cell_id,
+                        "source_matrix": "parent_entry_return_path_cartesian",
+                        "family": "runtime_hard_gate_return_path",
+                        "contract_family_id": "flowpilot_parent_entry_return_path",
+                        "contract_path": f"{stage}:{topology}",
+                        "mutation_kind": f"hard_gate_escape.{gate_type}",
+                        "branch_kind": "runtime_replay",
+                        "confidence_boundary": "synthetic_non_live_runtime_replay",
+                        "required_evidence_owner": REQUIRED_EVIDENCE_OWNER,
+                        "attempt_class": "runtime_hard_gate_escape",
+                        "expected_runtime_reaction": reactions[gate_type],
+                        "expected_test_name": CONCRETE_RUNTIME_TESTS["parent_entry_return_path"],
+                        "glass_break_allowed": False,
+                        "normal_path_required": True,
+                        "live_completion_allowed": False,
+                        "final_quality_review_allowed": False,
+                        "fallback_allowed": False,
+                        "gate_type": gate_type,
+                        "subject_topology": topology,
+                        "detection_stage": stage,
+                    }
+                )
+    return tuple(rows)
+
+
 def runtime_replay_cells() -> tuple[dict[str, Any], ...]:
     cells: list[dict[str, Any]] = []
     for contract_id, contract in _responder_contracts().items():
@@ -355,6 +421,7 @@ def runtime_replay_cells() -> tuple[dict[str, Any], ...]:
             )
         )
     cells.extend(_integration_runtime_replay_cells())
+    cells.extend(_parent_entry_return_path_replay_cells())
     return tuple(cells)
 
 
@@ -379,6 +446,10 @@ class State:
     worker_current_gate_blocker: bool = False
     integration_model_miss_candidate_seen: bool = False
     model_miss_triage_seen: bool = False
+    hard_gate_escape_seen: bool = False
+    hard_gate_returned_to_owner_gate: bool = False
+    hard_gate_breakglass_triggered: bool = False
+    hard_gate_sent_to_final_quality_review: bool = False
 
 
 @dataclass(frozen=True)
@@ -475,6 +546,15 @@ def _valid_integration_model_miss_triage() -> State:
     )
 
 
+def _valid_hard_gate_escape_owner_return() -> State:
+    return State(
+        scenario="valid_hard_gate_escape_owner_return",
+        status="selected",
+        hard_gate_escape_seen=True,
+        hard_gate_returned_to_owner_gate=True,
+    )
+
+
 SCENARIOS: dict[str, State] = {
     "valid_first_reissue": _valid_first_reissue(),
     "valid_corrected_second": _valid_corrected_second(),
@@ -483,6 +563,7 @@ SCENARIOS: dict[str, State] = {
     "valid_integration_hard_pm_disposition": _valid_integration_hard_pm_disposition(),
     "valid_integration_advisory_pm_support": _valid_integration_advisory_pm_support(),
     "valid_integration_model_miss_triage": _valid_integration_model_miss_triage(),
+    "valid_hard_gate_escape_owner_return": _valid_hard_gate_escape_owner_return(),
 }
 
 VALID_SCENARIOS = tuple(SCENARIOS)
@@ -496,6 +577,9 @@ NEGATIVE_SCENARIOS = (
     "integration_advisory_runtime_overblock",
     "integration_worker_current_gate_blocker",
     "integration_model_miss_without_triage",
+    "hard_gate_escape_not_returned_to_owner",
+    "hard_gate_escape_entered_breakglass",
+    "hard_gate_escape_entered_final_quality_review",
 )
 
 
@@ -525,6 +609,18 @@ def hazard_states() -> dict[str, State]:
             _valid_integration_model_miss_triage(),
             model_miss_triage_seen=False,
         ),
+        "hard_gate_escape_not_returned_to_owner": replace(
+            _valid_hard_gate_escape_owner_return(),
+            hard_gate_returned_to_owner_gate=False,
+        ),
+        "hard_gate_escape_entered_breakglass": replace(
+            _valid_hard_gate_escape_owner_return(),
+            hard_gate_breakglass_triggered=True,
+        ),
+        "hard_gate_escape_entered_final_quality_review": replace(
+            _valid_hard_gate_escape_owner_return(),
+            hard_gate_sent_to_final_quality_review=True,
+        ),
     }
 
 
@@ -548,6 +644,12 @@ def runtime_replay_failures(state: State) -> list[str]:
         failures.append("worker_claimed_current_gate_blocker_for_integration")
     if state.integration_model_miss_candidate_seen and not state.model_miss_triage_seen:
         failures.append("integration_model_miss_candidate_lacked_triage")
+    if state.hard_gate_escape_seen and not state.hard_gate_returned_to_owner_gate:
+        failures.append("hard_gate_escape_did_not_return_to_owner_gate")
+    if state.hard_gate_escape_seen and state.hard_gate_breakglass_triggered:
+        failures.append("hard_gate_escape_entered_breakglass")
+    if state.hard_gate_escape_seen and state.hard_gate_sent_to_final_quality_review:
+        failures.append("hard_gate_escape_entered_final_quality_review")
     return failures
 
 
@@ -635,6 +737,7 @@ def cell_findings(cells: Iterable[Mapping[str, Any]] | None = None) -> list[dict
         "missing_required_field",
         "wrong_allowed_value",
         "wrong_type",
+        *(f"hard_gate_escape.{gate_type}" for gate_type in PARENT_ENTRY_GATE_TYPES),
     }
     mutations = {str(row.get("mutation_kind") or "") for row in rows}
     for mutation in sorted(required_mutations - mutations):

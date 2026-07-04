@@ -5,7 +5,7 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=3 initial_states=1 traces=192",
+    "summary": "sequences=3 initial_states=1 traces=198",
     "violation_count": 0
   },
   "hazard_checks": {
@@ -180,6 +180,14 @@
           "simple review was overburdened with irrelevant heavyweight challenge work"
         ]
       },
+      "source_intent_dilution_accepted": {
+        "detected": true,
+        "expected_failure": "reviewer pass lacks source-intent comparison against the current artifact",
+        "failures": [
+          "reviewer pass lacks source-intent comparison against the current artifact",
+          "reviewer did not block source-intent semantic dilution"
+        ]
+      },
       "structural_route_quality_floor_loss_accepted": {
         "detected": true,
         "expected_failure": "reviewer did not block route quality-floor loss",
@@ -233,11 +241,11 @@
       "valid_simple_review",
       "valid_ui_review"
     ],
-    "edge_count": 64,
+    "edge_count": 66,
     "invariant_failures": [],
     "missing_labels": [],
     "ok": true,
-    "rejected_state_count": 27,
-    "state_count": 65
+    "rejected_state_count": 28,
+    "state_count": 67
   }
 }

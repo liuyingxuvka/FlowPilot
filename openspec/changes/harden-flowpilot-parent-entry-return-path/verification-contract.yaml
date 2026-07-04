@@ -1,0 +1,206 @@
+contract_version: 1
+change: harden-flowpilot-parent-entry-return-path
+obligations:
+  - id: req.recursive_route.parent_entry_gate
+    source: "specs/recursive-route-parent-entry/spec.md#Requirement: Parent entry gate precedes child descent"
+    claim: Runtime selects and gates the parent/module node itself before any child descent, including later sibling and mutation-created parents.
+    required: true
+    evidence:
+      - check.unit.parent_entry_gate
+      - check.fake_e2e.sibling_parent_gate
+      - check.model.parent_entry_gate
+  - id: req.recursive_route.late_assertion
+    source: "specs/recursive-route-parent-entry/spec.md#Requirement: Parent late-stage gates assert impossible missing entry state"
+    claim: Parent replay and PM disposition stop missing parent-entry gates as control-plane escapes instead of backfilling.
+    required: true
+    evidence:
+      - check.unit.parent_late_assertions
+      - check.fake_e2e.hard_gate_escape
+  - id: req.control_plane.return_to_owner_gate
+    source: "specs/control-plane-failure-canary/spec.md#Requirement: Hard-gate escape returns to the owning normal gate"
+    claim: Final-dispatch preflight freezes hard-gate leaks and returns to the original owning gate.
+    required: true
+    evidence:
+      - check.unit.final_preflight_return_path
+      - check.model.control_plane_escape_return
+  - id: req.control_plane.final_quality_boundary
+    source: "specs/control-plane-failure-canary/spec.md#Requirement: Final quality review starts only after runtime hard-gate preflight passes"
+    claim: Reviewer final packets are issued only after hard-gate preflight passes and remain quality/composition reviews.
+    required: true
+    evidence:
+      - check.unit.final_quality_boundary
+      - check.cards.role_boundary
+  - id: req.hard_gate.cartesian_parent_entry
+    source: "specs/hard-gate-coverage-matrix/spec.md#Requirement: Parent-entry hard-gate coverage is Cartesian"
+    claim: Tests enumerate valid and scoped-out parent-entry combinations across node kind, gate state, entry source, action, child state, and route history.
+    required: true
+    evidence:
+      - check.unit.cartesian_parent_entry
+      - check.model_test_alignment.parent_entry
+  - id: req.hard_gate.final_dispatch_return_path
+    source: "specs/hard-gate-coverage-matrix/spec.md#Requirement: Final-dispatch return-path coverage is executable"
+    claim: Focused tests prove each final-dispatch hard-gate leak class returns to its owner without Reviewer dispatch.
+    required: true
+    evidence:
+      - check.unit.final_preflight_return_path
+      - check.fake_e2e.hard_gate_escape
+checks:
+  - id: check.unit.parent_entry_gate
+    kind: command
+    command: python
+    args:
+      - -m
+      - unittest
+      - tests.test_flowpilot_parent_entry_return_path.FlowPilotParentEntryReturnPathTests.test_nonworker_scope_entry_opens_parent_plan_before_child_descent
+      - tests.test_flowpilot_parent_entry_return_path.FlowPilotParentEntryReturnPathTests.test_frontier_enters_next_parent_plan_before_child_after_prior_node_acceptance
+      - tests.test_flowpilot_parent_entry_return_path.FlowPilotParentEntryReturnPathTests.test_frontier_reclaims_awaiting_children_parent_missing_entry_before_child
+      - tests.test_flowpilot_parent_entry_return_path.FlowPilotParentEntryReturnPathTests.test_child_plan_cannot_satisfy_parent_entry_gate
+    required: true
+    covers:
+      - req.recursive_route.parent_entry_gate
+    expected:
+      exit_code: 0
+  - id: check.unit.parent_late_assertions
+    kind: command
+    command: python
+    args:
+      - -m
+      - unittest
+      - tests.test_flowpilot_parent_entry_return_path.FlowPilotParentEntryReturnPathTests.test_parent_replay_closure_rejects_missing_parent_entry_gate
+      - tests.test_flowpilot_parent_entry_return_path.FlowPilotParentEntryReturnPathTests.test_pm_disposition_rejects_missing_parent_entry_gate
+    required: true
+    covers:
+      - req.recursive_route.late_assertion
+    expected:
+      exit_code: 0
+  - id: check.unit.final_preflight_return_path
+    kind: command
+    command: python
+    args:
+      - -m
+      - unittest
+      - tests.test_flowpilot_parent_entry_return_path.FlowPilotParentEntryReturnPathTests.test_final_hard_gate_escape_matrix_returns_each_runtime_gate_to_owner
+      - tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_multiple_parent_backward_review_gaps_return_oldest_parent_gap_to_owner
+      - tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_terminal_replay_hard_blocks_when_parent_review_gap_reaches_final_gate
+    required: true
+    covers:
+      - req.control_plane.return_to_owner_gate
+      - req.hard_gate.final_dispatch_return_path
+    expected:
+      exit_code: 0
+  - id: check.unit.final_quality_boundary
+    kind: command
+    command: python
+    args:
+      - -m
+      - unittest
+      - tests.test_flowpilot_parent_entry_return_path.FlowPilotParentEntryReturnPathTests.test_final_quality_review_reachable_only_after_runtime_hard_gates_clean
+    required: true
+    covers:
+      - req.control_plane.final_quality_boundary
+    expected:
+      exit_code: 0
+  - id: check.unit.cartesian_parent_entry
+    kind: command
+    command: python
+    args:
+      - -m
+      - unittest
+      - tests.test_flowpilot_fake_ai_runtime_replay.FlowPilotFakeAIRuntimeReplayTests.test_parent_entry_return_path_replay_is_cartesian
+    required: true
+    covers:
+      - req.hard_gate.cartesian_parent_entry
+    expected:
+      exit_code: 0
+  - id: check.fake_e2e.sibling_parent_gate
+    kind: command
+    command: python
+    args:
+      - -m
+      - unittest
+      - tests.test_flowpilot_fake_ai_runtime_replay.FlowPilotFakeAIRuntimeReplayTests.test_parent_entry_return_path_replay_is_cartesian
+    required: true
+    covers:
+      - req.recursive_route.parent_entry_gate
+    expected:
+      exit_code: 0
+  - id: check.fake_e2e.hard_gate_escape
+    kind: command
+    command: python
+    args:
+      - -m
+      - unittest
+      - tests.test_flowpilot_fake_ai_runtime_replay.FlowPilotFakeAIRuntimeReplayTests.test_parent_entry_return_path_replay_is_cartesian
+    required: true
+    covers:
+      - req.recursive_route.late_assertion
+      - req.hard_gate.final_dispatch_return_path
+    expected:
+      exit_code: 0
+  - id: check.model.parent_entry_gate
+    kind: command
+    command: python
+    args:
+      - simulations/run_flowpilot_recursive_closure_reconciliation_checks.py
+      - --json-out
+      - simulations/flowpilot_recursive_closure_reconciliation_results.json
+    required: true
+    covers:
+      - req.recursive_route.parent_entry_gate
+    expected:
+      exit_code: 0
+  - id: check.model.control_plane_escape_return
+    kind: command
+    command: python
+    args:
+      - simulations/run_flowpilot_control_plane_friction_checks.py
+      - --json-out
+      - simulations/flowpilot_control_plane_friction_results.json
+    required: true
+    covers:
+      - req.control_plane.return_to_owner_gate
+    expected:
+      exit_code: 0
+  - id: check.model_test_alignment.parent_entry
+    kind: command
+    command: python
+    args:
+      - simulations/run_flowpilot_model_test_alignment_checks.py
+      - --json-out
+      - simulations/flowpilot_model_test_alignment_results.json
+    required: true
+    covers:
+      - req.hard_gate.cartesian_parent_entry
+    expected:
+      exit_code: 0
+  - id: check.cards.role_boundary
+    kind: command
+    command: python
+    args:
+      - -m
+      - unittest
+      - tests.test_flowpilot_card_instruction_coverage
+    required: true
+    covers:
+      - req.control_plane.final_quality_boundary
+    expected:
+      exit_code: 0
+freshness:
+  watch:
+    - openspec/changes/harden-flowpilot-parent-entry-return-path/proposal.md
+    - openspec/changes/harden-flowpilot-parent-entry-return-path/design.md
+    - openspec/changes/harden-flowpilot-parent-entry-return-path/tasks.md
+    - openspec/changes/harden-flowpilot-parent-entry-return-path/specs/**/*.md
+    - openspec/changes/harden-flowpilot-parent-entry-return-path/verification-contract.yaml
+    - openspec/specs/recursive-route-parent-entry/spec.md
+    - openspec/specs/control-plane-failure-canary/spec.md
+    - openspec/specs/hard-gate-coverage-matrix/spec.md
+    - skills/flowpilot/assets/flowpilot_core_runtime/runtime.py
+    - skills/flowpilot/assets/flowpilot_core_runtime/packet_stage_evidence_matrix.py
+    - skills/flowpilot/assets/flowpilot_core_runtime/packet_result_contracts.py
+    - skills/flowpilot/assets/runtime_kit/cards/**/*.md
+    - simulations/flowpilot_recursive_closure_reconciliation_model.py
+    - simulations/flowpilot_control_plane_friction_model.py
+    - simulations/run_flowpilot_model_test_alignment_checks.py
+    - tests/test_flowpilot_parent_entry_return_path.py
+    - tests/test_flowpilot_fake_ai_runtime_replay.py

@@ -1789,6 +1789,37 @@ def _node_acceptance_plan_accepted(ledger: Mapping[str, Any], node_id: str) -> b
     )
 
 
+def _node_entry_gate_missing_reason(ledger: Mapping[str, Any], node_id: str) -> str:
+    node = ledger.get("route_nodes", {}).get(node_id, {})
+    if not isinstance(node, Mapping):
+        return "missing_route_node"
+    plan_id = str(node.get("node_acceptance_plan_id") or "")
+    if not plan_id:
+        return "missing_node_acceptance_plan"
+    plan = ledger.get("node_acceptance_plans", {}).get(plan_id, {})
+    if not isinstance(plan, Mapping):
+        return "missing_node_acceptance_plan_record"
+    if plan.get("status") != "accepted":
+        return "node_acceptance_plan_not_accepted"
+    if plan.get("node_id") != node_id:
+        return "node_acceptance_plan_wrong_node"
+    if int(plan.get("repair_generation", -1)) != int(node.get("repair_generation", 0)):
+        return "node_acceptance_plan_stale_generation"
+    if not str(node.get("node_context_package_id") or ""):
+        return "missing_node_context_package"
+    if not _node_context_package_current(ledger, node_id):
+        return "node_context_package_not_current"
+    return ""
+
+
+def _node_entry_gate_complete(ledger: Mapping[str, Any], node_id: str) -> bool:
+    return _node_entry_gate_missing_reason(ledger, node_id) == ""
+
+
+def _control_plane_hard_gate_escape(reason: str, node_id: str) -> str:
+    return f"control_plane_hard_gate_escape:{reason}:{node_id}"
+
+
 def _node_context_package_current(ledger: Mapping[str, Any], node_id: str) -> bool:
     node = ledger.get("route_nodes", {}).get(node_id, {})
     if not isinstance(node, Mapping):
@@ -2395,6 +2426,10 @@ def _enter_nonworker_route_scope(ledger: dict[str, Any], node_id: str, *, reason
         return False
     if _route_node_kind(node) in {"leaf", "repair"} and _route_node_child_ids(node):
         raise BlackBoxRuntimeError(blocker)
+    if high_standard_flow_required(ledger) and not _node_entry_gate_complete(ledger, node_id):
+        _frontier_update(ledger, node_id, "node_execution", reason)
+        ensure_node_acceptance_plan_packet(ledger, node_id)
+        return True
     child_id = _first_unresolved_child_node_id(ledger, node)
     if child_id:
         node["status"] = "awaiting_children"
@@ -2850,6 +2885,168 @@ def _final_gate_ledgers_clean_for_terminal_replay(ledger: dict[str, Any]) -> boo
     return True
 
 
+def _control_plane_hard_gate_escape_return_action(ledger: Mapping[str, Any]) -> RuntimeAction | None:
+    if not high_standard_flow_required(ledger) or not recursive_route_required(ledger):
+        return None
+    if not isinstance(ledger, dict):
+        return None
+    frontier = ledger.get("execution_frontier") or {}
+    if frontier.get("active_node_id") or frontier.get("status") != "ready_for_final_closure":
+        return None
+    route_wide = build_final_route_wide_gate_ledger(ledger)
+    unresolved = [str(item) for item in route_wide.get("unresolved", [])]
+    node_priority = lambda node_id: (_route_node_depth(ledger, node_id), _route_node_order_index(ledger, node_id), node_id)
+    node_entry_gaps: list[tuple[str, str]] = []
+    for item in unresolved:
+        if item.startswith("node_entry_gate_missing:"):
+            parts = item.split(":", 2)
+            node_id = parts[1] if len(parts) > 1 else ""
+            reason = parts[2] if len(parts) > 2 else "missing_node_entry_gate"
+            if node_id:
+                node_entry_gaps.append((node_id, reason))
+    for node_id, reason in sorted(node_entry_gaps, key=lambda row: node_priority(row[0])):
+        return RuntimeAction(
+            "issue_node_acceptance_plan_packet",
+            _control_plane_hard_gate_escape(reason, node_id),
+            node_id,
+            "pm",
+            "development_process",
+        )
+    parent_review_gaps: list[str] = []
+    for item in unresolved:
+        if item.startswith("parent_backward_review_missing:"):
+            node_id = item.split(":", 1)[1]
+            if node_id:
+                parent_review_gaps.append(node_id)
+    for node_id in sorted(parent_review_gaps, key=node_priority):
+        return RuntimeAction(
+            "issue_parent_backward_replay_packet",
+            _control_plane_hard_gate_escape("missing_parent_backward_replay", node_id),
+            node_id,
+            "reviewer",
+            "development_process",
+        )
+    pm_disposition_gaps: list[str] = []
+    for item in unresolved:
+        if item.startswith("pm_disposition_missing:"):
+            node_id = item.split(":", 1)[1]
+            if node_id:
+                pm_disposition_gaps.append(node_id)
+    for node_id in sorted(pm_disposition_gaps, key=node_priority):
+        return RuntimeAction(
+            "issue_pm_disposition_packet",
+            _control_plane_hard_gate_escape("missing_pm_disposition", node_id),
+            node_id,
+            "pm",
+            "development_process",
+        )
+    for item in unresolved:
+        if item.startswith("packet_not_accepted:"):
+            packet_id = item.split(":", 1)[1]
+            if packet_id:
+                packet = ledger.get("packets", {}).get(packet_id, {})
+                if isinstance(packet, Mapping) and packet.get("status") in {"open", "assigned", "acknowledged", "result_submitted"}:
+                    continue
+                if _packet_has_owner_repair_path(ledger, packet_id):
+                    continue
+                return RuntimeAction(
+                    "repair_packet",
+                    _control_plane_hard_gate_escape("active_packet_unresolved", packet_id),
+                    packet_id,
+                    "pm",
+                    "development_process",
+                )
+    if route_wide.get("stale_node_ids"):
+        node_id = sorted([str(item) for item in route_wide["stale_node_ids"]], key=node_priority)[0]
+        return RuntimeAction(
+            "issue_node_acceptance_plan_packet",
+            _control_plane_hard_gate_escape("stale_current_evidence", node_id),
+            node_id,
+            "pm",
+            "development_process",
+        )
+    return None
+
+
+def _blocker_target_packet_ids(blocker: Mapping[str, Any]) -> set[str]:
+    return {
+        str(blocker.get("packet_id") or ""),
+        str(blocker.get("repair_target_packet_id") or ""),
+        str(blocker.get("subject_packet_id") or ""),
+    }
+
+
+def _packet_directly_current_for_routing(ledger: Mapping[str, Any], packet: Mapping[str, Any]) -> bool:
+    if packet.get("status") in _NONCURRENT_PACKET_STATUSES:
+        return False
+    envelope = packet.get("envelope", {}) if isinstance(packet.get("envelope"), Mapping) else {}
+    active_route = ledger.get("active_route_version")
+    if active_route is not None and envelope.get("route_version") != active_route:
+        return False
+    return not _route_node_is_noncurrent(ledger, _packet_route_node_id(packet))
+
+
+def _repair_blocker_has_current_owner_packet(
+    ledger: Mapping[str, Any],
+    blocker_id: str,
+    *,
+    exclude_packet_id: str = "",
+) -> bool:
+    if not blocker_id:
+        return False
+    blocker = ledger.get("active_blockers", {}).get(blocker_id, {})
+    pm_repair_packet_id = str(blocker.get("pm_repair_packet_id") or blocker.get("repair_packet_id") or "")
+    for candidate in ledger.get("packets", {}).values():
+        if not isinstance(candidate, Mapping):
+            continue
+        candidate_id = str(candidate.get("packet_id") or "")
+        if candidate_id and candidate_id == exclude_packet_id:
+            continue
+        envelope = candidate.get("envelope", {}) if isinstance(candidate.get("envelope"), Mapping) else {}
+        candidate_blocker_id = str(candidate.get("repair_blocker_id") or envelope.get("repair_blocker_id") or "")
+        if candidate_blocker_id != blocker_id and candidate_id != pm_repair_packet_id:
+            continue
+        if _packet_directly_current_for_routing(ledger, candidate):
+            return True
+    return False
+
+
+def _packet_has_active_repair_chain(ledger: Mapping[str, Any], packet_id: str) -> bool:
+    for blocker_id, blocker in ledger.get("active_blockers", {}).items():
+        if not isinstance(blocker, Mapping):
+            continue
+        if blocker.get("status") in {"cleared", "waived", "superseded"} or blocker.get("cleared_by_outcome_id"):
+            continue
+        if packet_id not in _blocker_target_packet_ids(blocker):
+            continue
+        if _repair_blocker_has_current_owner_packet(ledger, str(blocker_id), exclude_packet_id=packet_id):
+            return True
+    return False
+
+
+def _packet_has_owner_repair_path(ledger: Mapping[str, Any], packet_id: str) -> bool:
+    for blocker in ledger.get("active_blockers", {}).values():
+        if not isinstance(blocker, Mapping):
+            continue
+        if packet_id not in _blocker_target_packet_ids(blocker):
+            continue
+        blocker_id = str(blocker.get("blocker_id") or "")
+        if _repair_blocker_has_current_owner_packet(ledger, blocker_id, exclude_packet_id=packet_id):
+            return True
+    return False
+
+
+def _packet_has_resolved_repair_blocker(ledger: Mapping[str, Any], packet_id: str) -> bool:
+    for blocker in ledger.get("active_blockers", {}).values():
+        if not isinstance(blocker, Mapping):
+            continue
+        if packet_id not in _blocker_target_packet_ids(blocker):
+            continue
+        if blocker.get("status") in {"cleared", "waived", "superseded"} or blocker.get("cleared_by_outcome_id"):
+            return True
+    return False
+
+
 def _parent_backward_review_order_corruption_action(ledger: Mapping[str, Any]) -> RuntimeAction | None:
     if not high_standard_flow_required(ledger) or not recursive_route_required(ledger):
         return None
@@ -2951,6 +3148,10 @@ def ensure_parent_backward_replay_packet(ledger: dict[str, Any], node_id: str) -
     if existing:
         return str(existing["packet_id"])
     node = _require(ledger.setdefault("route_nodes", {}), node_id, "route node")
+    if high_standard_flow_required(ledger):
+        entry_reason = _node_entry_gate_missing_reason(ledger, node_id)
+        if entry_reason:
+            raise BlackBoxRuntimeError(_control_plane_hard_gate_escape(entry_reason, node_id))
     parent_repair_violation = _parent_repair_node_current_child_violation(
         ledger,
         node_id,
@@ -3029,6 +3230,10 @@ def record_pm_disposition(
     disposition_id = _next_id(ledger, "pm_disposition")
     if decision not in {"accept", "repair_current_scope", "redesign_route", "block", "stop"}:
         raise BlackBoxRuntimeError("PM disposition requires an explicit allowed decision")
+    if high_standard_flow_required(ledger):
+        entry_reason = _node_entry_gate_missing_reason(ledger, node_id)
+        if entry_reason:
+            raise BlackBoxRuntimeError(_control_plane_hard_gate_escape(entry_reason, node_id))
     result = ledger.get("results", {}).get(result_id, {})
     payload = _parse_json_object(str(result.get("body", ""))) if isinstance(result, Mapping) else {}
     normalized = decision
@@ -3572,8 +3777,16 @@ def build_final_route_wide_gate_ledger(ledger: dict[str, Any]) -> dict[str, Any]
         node_id = str(node.get("node_id", ""))
         if node.get("status") not in {"accepted", "waived"}:
             unresolved.append(f"incomplete_node:{node_id}")
-        if high_standard_flow_required(ledger) and not _node_context_package_current(ledger, node_id):
-            unresolved.append(f"node_context_package_missing:{node_id}")
+        if high_standard_flow_required(ledger):
+            entry_reason = _node_entry_gate_missing_reason(ledger, node_id)
+            if entry_reason:
+                unresolved.append(f"node_entry_gate_missing:{node_id}:{entry_reason}")
+                if not _node_context_package_current(ledger, node_id):
+                    unresolved.append(f"node_context_package_missing:{node_id}")
+        if high_standard_flow_required(ledger) and node.get("status") == "accepted" and not str(
+            node.get("pm_disposition_id") or ""
+        ):
+            unresolved.append(f"pm_disposition_missing:{node_id}")
         dispatch_blocker = _node_worker_dispatch_blocker(ledger, node_id, node)
         if dispatch_blocker and _route_node_kind(node) in {"leaf", "repair"}:
             unresolved.append(f"route_node_shape_conflict:{node_id}")
@@ -4525,6 +4738,11 @@ def _packet_route_node_id(packet: Mapping[str, Any]) -> str:
 
 def _packet_is_noncurrent_for_routing(ledger: Mapping[str, Any], packet: Mapping[str, Any]) -> bool:
     if packet.get("status") in _NONCURRENT_PACKET_STATUSES:
+        return True
+    packet_id = str(packet.get("packet_id") or "")
+    if packet_id and _packet_has_resolved_repair_blocker(ledger, packet_id):
+        return True
+    if packet_id and _packet_has_active_repair_chain(ledger, packet_id):
         return True
     envelope = packet.get("envelope", {}) if isinstance(packet.get("envelope"), Mapping) else {}
     active_route = ledger.get("active_route_version")
@@ -7083,6 +7301,11 @@ def _advance_frontier_after_node_acceptance(ledger: dict[str, Any], node_id: str
     for candidate in node_order:
         node = ledger.get("route_nodes", {}).get(candidate, {})
         if node.get("status") == "awaiting_children" and not _route_node_all_children_resolved(ledger, node):
+            if high_standard_flow_required(ledger):
+                entry_reason = _node_entry_gate_missing_reason(ledger, candidate)
+                if entry_reason:
+                    next_node = candidate
+                    break
             continue
         if node.get("status") not in {"accepted", "superseded", "waived"}:
             next_node = candidate
@@ -7094,6 +7317,10 @@ def _advance_frontier_after_node_acceptance(ledger: dict[str, Any], node_id: str
     ledger["execution_frontier"] = frontier
     _event(ledger, "execution_frontier_updated", status=frontier["status"], active_node_id=next_node)
     if next_node:
+        if high_standard_flow_required(ledger):
+            if not _node_entry_gate_complete(ledger, next_node):
+                ensure_node_acceptance_plan_packet(ledger, next_node)
+                return
         if _enter_nonworker_route_scope(ledger, next_node, reason="nonworker_route_scope_after_child_acceptance"):
             return
         if high_standard_flow_required(ledger):
@@ -13159,6 +13386,10 @@ def _record_parent_backward_replay_closure(
     subject_packet: Mapping[str, Any],
 ) -> str:
     node = _require(ledger.setdefault("route_nodes", {}), node_id, "route node")
+    if high_standard_flow_required(ledger):
+        entry_reason = _node_entry_gate_missing_reason(ledger, node_id)
+        if entry_reason:
+            raise BlackBoxRuntimeError(_control_plane_hard_gate_escape(entry_reason, node_id))
     parent_repair_violation = _parent_repair_node_current_child_violation(
         ledger,
         node_id,
@@ -15616,6 +15847,9 @@ def final_return_preflight(
         if not isinstance(finding, Mapping):
             continue
         blockers.append(f"accepted_packet_lease_health:{finding.get('packet_id', 'unknown')}")
+    next_reason = str(next_action.get("reason") or "")
+    if next_reason.startswith("control_plane_hard_gate_escape:"):
+        blockers.append(next_reason)
     blockers.extend(_current_target_preflight_blockers(ledger, next_action))
     if guard_map.get("controller_stop_allowed") is not True:
         blockers.append("lifecycle_guard_disallows_stop")
@@ -16322,6 +16556,9 @@ def router_next_action(ledger: Mapping[str, Any]) -> RuntimeAction:
     closure = ledger.get("closure") or {}
     if closure.get("decision") == "complete":
         return RuntimeAction("terminal_complete", "final backward chain is complete")
+    hard_gate_escape_action = _control_plane_hard_gate_escape_return_action(ledger)
+    if hard_gate_escape_action is not None:
+        return hard_gate_escape_action
     parent_order_action = _parent_backward_review_order_corruption_action(ledger)
     if parent_order_action is not None:
         return parent_order_action
@@ -16341,6 +16578,9 @@ def router_next_action(ledger: Mapping[str, Any]) -> RuntimeAction:
             and frontier.get("status") == "ready_for_final_closure"
             and closure.get("decision") != "blocked"
         ):
+            hard_gate_escape_action = _control_plane_hard_gate_escape_return_action(ledger)
+            if hard_gate_escape_action is not None:
+                return hard_gate_escape_action
             parent_order_action = _parent_backward_review_order_corruption_action(ledger)
             if parent_order_action is not None:
                 return parent_order_action
@@ -16357,6 +16597,9 @@ def router_next_action(ledger: Mapping[str, Any]) -> RuntimeAction:
         if recursive_route_required(ledger) and ledger.get("route_nodes"):
             frontier = ledger.get("execution_frontier") or {}
             if not frontier.get("active_node_id") and frontier.get("status") == "ready_for_final_closure":
+                hard_gate_escape_action = _control_plane_hard_gate_escape_return_action(ledger)
+                if hard_gate_escape_action is not None:
+                    return hard_gate_escape_action
                 parent_order_action = _parent_backward_review_order_corruption_action(ledger)
                 if parent_order_action is not None:
                     return parent_order_action

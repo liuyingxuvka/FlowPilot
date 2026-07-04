@@ -76,6 +76,7 @@ REQUIRED_LABELS = (
     "same_reviewer_rechecks_repair_before_continue",
     "pm_selects_route_mutation_for_route_invalidating_block",
     "route_mutation_resets_route_checks_for_reapproval",
+    "control_plane_hard_gate_escape_returns_to_owner_gate",
     "controller_waits_for_role_work_with_status_packet_read",
     "target_role_updates_progress_status_via_runtime",
     "controller_waits_for_role_output_with_status_packet_read",
@@ -192,6 +193,9 @@ HAZARD_EXPECTED_FAILURES = {
     "same_node_repair_without_reviewer_recheck": "same-node repair continued without same-review-class recheck",
     "route_mutation_without_current_node_incapability_reason": "route mutation lacked why the current node cannot contain the repair",
     "route_mutation_continues_without_route_recheck": "route mutation continued without resetting and rerunning route checks",
+    "control_plane_hard_gate_escape_not_returned": "control-plane hard gate escape did not return to the owning runtime gate",
+    "control_plane_hard_gate_escape_break_glass": "control-plane hard gate escape escalated to break glass instead of the owning runtime gate",
+    "control_plane_hard_gate_escape_final_review": "control-plane hard gate escape was sent to final quality review instead of the owning runtime gate",
     "multiple_active_tasks_without_explicit_active_set": "multiple active UI tasks were exposed without explicit active-set authority",
     "role_work_wait_without_status_packet_read": "role-work wait did not expose matching controller status packet",
     "role_work_status_grants_packet_dir": "role-work progress visibility grant exposed more than controller status packet",
@@ -484,4 +488,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

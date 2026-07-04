@@ -68,8 +68,11 @@ class FlowPilotPlanningQualityTests(unittest.TestCase):
         self.assertTrue(hazards[model.FINAL_LEDGER_ACCEPTANCE_ITEM_UNRESOLVED]["detected"])
         self.assertTrue(hazards[model.STARTUP_QUALITY_POSTURE_MISSING]["detected"])
         self.assertTrue(hazards[model.PRODUCT_ARCHITECTURE_IGNORES_STARTUP_QUALITY]["detected"])
+        self.assertTrue(hazards[model.SOURCE_INTENT_COLLAPSED_TO_GENERIC_ACCEPTANCE]["detected"])
+        self.assertTrue(hazards[model.ROOT_CONTRACT_ACCEPTS_GENERIC_USER_GOAL]["detected"])
         self.assertTrue(hazards[model.ROUTE_QUALITY_POSTURE_DROPPED]["detected"])
         self.assertTrue(hazards[model.PACKET_QUALITY_FLOOR_DROPPED]["detected"])
+        self.assertTrue(hazards[model.CHILD_SKILL_THEME_ONLY_STANDARD]["detected"])
         self.assertTrue(hazards[model.PRODUCT_ARCHITECTURE_MISSING_SYSTEM_INTEGRATION_INTENT]["detected"])
         self.assertTrue(hazards[model.ROUTE_CONVERGENCE_MISSING_COMPOSITION_REVIEW]["detected"])
         self.assertTrue(hazards[model.NODE_PLAN_MISSING_INTEGRATION_TOUCHPOINT]["detected"])
@@ -271,6 +274,9 @@ class FlowPilotPlanningQualityTests(unittest.TestCase):
         self.assertIn("normal high-quality current-run project work", startup_intake_card_flat)
         self.assertIn("short startup request does not lower", startup_intake_card)
         self.assertIn("highest reasonable product target", startup_intake_card)
+        self.assertIn("source-intent", startup_intake_card)
+        self.assertIn("Do not collapse", startup_intake_card)
+        self.assertIn("generic completion goal", startup_intake_card)
         self.assertIn("release carries normal high-quality current-run work", startup_decision_template["notes"])
         self.assertNotIn("startup_quality_posture", startup_decision_template)
         self.assertIn("planning_profile", route_card)
@@ -290,11 +296,29 @@ class FlowPilotPlanningQualityTests(unittest.TestCase):
         self.assertIn("practical next-step evidence", route_card)
         self.assertIn("acceptance_item_registry", route_card)
         self.assertIn("acceptance_item_ids", route_card)
+        self.assertIn("concrete source-intent", product_architecture_card)
+        self.assertIn("do not replace", " ".join(product_architecture_card.lower().split()))
+        self.assertIn("generic wording", product_architecture_card)
+        self.assertIn("generic user-goal wording", root_contract_card := (
+            ROOT
+            / "skills"
+            / "flowpilot"
+            / "assets"
+            / "runtime_kit"
+            / "cards"
+            / "phases"
+            / "pm_root_contract.md"
+        ).read_text(encoding="utf-8"))
+        self.assertIn("source-intent acceptance", root_contract_card)
         self.assertIn("deliverable_support", child_selection_card)
         self.assertIn("process_support", child_selection_card)
         self.assertIn("FlowGuard satellite skills", child_selection_card)
+        self.assertIn("standards lens", child_selection_card)
+        self.assertIn("not a task-family route split", child_selection_card)
         self.assertIn("skill_standard_contracts", child_manifest_card)
         self.assertIn("role_skill_use_bindings", child_manifest_card)
+        self.assertIn("theme-level", child_manifest_card)
+        self.assertIn("concrete standards lens", child_manifest_card)
         for category in model.STANDARD_FIELDS:
             self.assertIn(category, child_manifest_card)
         self.assertIn("skill_standard_projection", node_plan_card)

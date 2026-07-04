@@ -93,6 +93,12 @@ class FlowPilotFakeAIRuntimeReplayTests(unittest.TestCase):
             "final_output_scattered",
             "optimization_incorrectly_hard_blocked",
             "model_miss_not_triggered",
+            "hard_gate_escape.missing_node_acceptance_plan",
+            "hard_gate_escape.missing_node_context_package",
+            "hard_gate_escape.missing_parent_backward_replay",
+            "hard_gate_escape.missing_pm_disposition",
+            "hard_gate_escape.active_packet_unresolved",
+            "hard_gate_escape.stale_current_evidence",
         ):
             with self.subTest(integration_mutation=mutation):
                 self.assertIn(mutation, mutations)
@@ -107,6 +113,10 @@ class FlowPilotFakeAIRuntimeReplayTests(unittest.TestCase):
             "pm_integration_suggestion_without_runtime_blocker",
             "terminal_composition_block_from_existing_gate",
             "pm_model_miss_triage",
+            "return_to_pm_node_acceptance_plan",
+            "return_to_parent_backward_replay",
+            "return_to_pm_disposition",
+            "return_to_current_packet_repair",
         ):
             with self.subTest(reaction=reaction):
                 self.assertIn(reaction, reactions)
@@ -177,6 +187,54 @@ class FlowPilotFakeAIRuntimeReplayTests(unittest.TestCase):
         self.assertEqual(
             expected["integration_model_miss_without_triage"],
             ("integration_model_miss_candidate_lacked_triage",),
+        )
+        self.assertEqual(
+            expected["hard_gate_escape_not_returned_to_owner"],
+            ("hard_gate_escape_did_not_return_to_owner_gate",),
+        )
+        self.assertEqual(
+            expected["hard_gate_escape_entered_breakglass"],
+            ("hard_gate_escape_entered_breakglass",),
+        )
+        self.assertEqual(
+            expected["hard_gate_escape_entered_final_quality_review"],
+            ("hard_gate_escape_entered_final_quality_review",),
+        )
+
+    def test_parent_entry_return_path_replay_is_cartesian(self) -> None:
+        cells = [
+            cell
+            for cell in runtime_replay.runtime_replay_cells()
+            if cell["source_matrix"] == "parent_entry_return_path_cartesian"
+        ]
+        keys = {
+            (
+                cell["gate_type"],
+                cell["subject_topology"],
+                cell["detection_stage"],
+            )
+            for cell in cells
+        }
+        expected_count = (
+            len(runtime_replay.PARENT_ENTRY_GATE_TYPES)
+            * len(runtime_replay.PARENT_ENTRY_SUBJECT_TOPOLOGIES)
+            * len(runtime_replay.PARENT_ENTRY_DETECTION_STAGES)
+        )
+
+        self.assertEqual(len(cells), expected_count)
+        self.assertEqual(len(keys), expected_count)
+        self.assertFalse([cell["cell_id"] for cell in cells if cell["glass_break_allowed"]])
+        self.assertFalse([cell["cell_id"] for cell in cells if cell["fallback_allowed"]])
+        self.assertFalse([cell["cell_id"] for cell in cells if cell["final_quality_review_allowed"]])
+        reactions = {cell["expected_runtime_reaction"] for cell in cells}
+        self.assertLessEqual(
+            {
+                "return_to_pm_node_acceptance_plan",
+                "return_to_parent_backward_replay",
+                "return_to_pm_disposition",
+                "return_to_current_packet_repair",
+            },
+            reactions,
         )
 
     def test_pm_break_glass_branches_are_in_fake_ai_runtime_replay_matrix(self) -> None:

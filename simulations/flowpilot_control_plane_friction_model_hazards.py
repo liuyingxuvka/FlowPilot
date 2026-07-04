@@ -1198,6 +1198,20 @@ def hazard_states() -> dict[str, State]:
         "break_glass_patch_validation_pending": _safe_base(
             break_glass_patch_validation_finalized=False,
         ),
+        "control_plane_hard_gate_escape_not_returned": _safe_base(
+            control_plane_hard_gate_escape_seen=True,
+            control_plane_hard_gate_escape_returned_to_owner_gate=False,
+        ),
+        "control_plane_hard_gate_escape_break_glass": _safe_base(
+            control_plane_hard_gate_escape_seen=True,
+            control_plane_hard_gate_escape_returned_to_owner_gate=True,
+            control_plane_hard_gate_escape_escalated_to_break_glass=True,
+        ),
+        "control_plane_hard_gate_escape_final_review": _safe_base(
+            control_plane_hard_gate_escape_seen=True,
+            control_plane_hard_gate_escape_returned_to_owner_gate=True,
+            control_plane_hard_gate_escape_sent_to_final_review=True,
+        ),
         "controller_reads_sealed_body": _safe_base(controller_read_sealed_body=True),
     }
 
