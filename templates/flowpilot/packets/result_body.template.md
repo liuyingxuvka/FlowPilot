@@ -18,7 +18,7 @@ recipient_role: <same-as-result-envelope-next_recipient>
 recipient_identity: I completed this as `<completed_by_role>` for this packet result only; the next recipient must read it only as the result envelope recipient.
 allowed_scope: Read and review only this result body, its result envelope, and the source packet evidence after verifying current assignment, body hash, and completed_by_role identity.
 forbidden_scope: I did not approve gates unless my role is the approver; do not act as another role, bypass the current runtime, hide unresolved issues, or relabel this result.
-required_return: If this is the current packet result, submit completion through `flowpilot_new.py submit-result` for the assigned lease and packet. Later review, PM decision, FlowGuard operator response, blocker, or reissue/repair mail follows the current FlowPilot packet path. Result producers do not advance route state directly.
+required_return: If this is the current packet result, submit completion through `flowpilot_new.py submit-result --body-file <sealed_result_body_file>` for the assigned lease and packet. Later review, PM decision, FlowGuard operator response, blocker, or reissue/repair mail follows the current FlowPilot packet path. Result producers do not advance route state directly.
 controller_aside: The result envelope may include an optional `controller_aside` for a short Controller-only process/status note. It is not evidence, not a finding, not a recommendation, not an approval, and not a runtime event source.
 ---
 

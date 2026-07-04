@@ -84,7 +84,7 @@ def render_current_packet_handoff(
     )
     submit_command = (
         f"python {_quote(script_path)} --root {_quote(root)} --json "
-        f"submit-result --lease-id {lease_id} --packet-id {packet_id} --body <sealed_result_summary>"
+        f"submit-result --lease-id {lease_id} --packet-id {packet_id} --body-file <sealed_result_body_file>"
     )
     authorized_result_reads = [
         dict(row)

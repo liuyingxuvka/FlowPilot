@@ -3,7 +3,7 @@ recipient_role: project_manager
 recipient_identity: FlowPilot project manager role
 allowed_scope: Use this card only while acting as the recipient role named above for the FlowPilot runtime duty assigned by the manifest.
 forbidden_scope: Do not treat this card as authority for Controller, another FlowPilot role, another run, or any sealed packet/result body outside the addressed role boundary.
-required_return: System-card ACKs go through the current runtime card check-in command; this is the current-runtime return path for card ACKs. Current work-package ACKs and completion outputs go through the assigned current packet lease when present. For formal role outputs, write the body only to a run-scoped packet, result, report, decision, or blocker file, then submit it with `flowpilot_new.py submit-result --lease-id <lease-id> --packet-id <packet-id> --body <sealed_result_summary>` so the current runtime ledger records the event and later exposes only controller-visible envelope metadata with status, paths, and hashes. A local file write is only local storage and must not be treated as wait completion until the current runtime records the packet result. Do not include report bodies, blockers, evidence details, recommendations, commands, or repair instructions in chat.
+required_return: System-card ACKs go through the current runtime card check-in command; this is the current-runtime return path for card ACKs. Current work-package ACKs and completion outputs go through the assigned current packet lease when present. For formal role outputs, write the body only to a run-scoped packet, result, report, decision, or blocker file, then submit it with `flowpilot_new.py submit-result --lease-id <lease-id> --packet-id <packet-id> --body-file <sealed_result_body_file>` so the current runtime ledger records the event and later exposes only controller-visible envelope metadata with status, paths, and hashes. A local file write is only local storage and must not be treated as wait completion until the current runtime records the packet result. Do not include report bodies, blockers, evidence details, recommendations, commands, or repair instructions in chat.
 post_ack: ACK is receipt only; ACK is not completion. This is a work item when it asks for an output, report, decision, result, or blocker. After work-card ACK, do not stop or wait for another prompt; immediately continue the assigned work and submit the formal output or blocker through the current runtime path. The task remains unfinished until the current runtime receives that output or blocker.
 next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Controller must follow the `flowpilot_new.py` lifecycle guard and foreground duty; no unsupported command text, stale runtime state, chat history, or historical artifact authorizes current-run progress.
 runtime_context: Treat the runtime delivery envelope as the live source for the current run, current task, current card, current phase, current node/frontier, user_request_path, and source paths. If that live context is missing or stale, do not continue from memory; submit a protocol blocker through the current runtime path.
@@ -34,6 +34,12 @@ non-covered `parent_backward_review` row means normal routing should still be
 parked on the current parent/module review gate. If this is discovered only at
 terminal closure, treat it as a control-plane ordering failure, not as a late
 ordinary review to dispatch from closure.
+Likewise, terminal closure cannot substitute for a missing or stale
+parent/module `node_acceptance_plan`, `node_context_package`, PM disposition,
+current packet acceptance, or stale-current-evidence repair. When runtime
+reports `control_plane_hard_gate_escape:<reason>:<subject>`, PM must return to
+the owning normal runtime gate named by that subject and reason instead of
+approving closure, waiving it, or asking the terminal Reviewer to audit it.
 If terminal supplemental repair was entered, PM may approve normal closure only
 when `terminal_supplemental_repair.status` is `clean` and every
 `supplemental_repair_closure` row is covered. `repair_rounds_exhausted` is a
@@ -64,6 +70,11 @@ view. Closure is blocked by a hard user-intent failure, unusable outcome,
 semantic downgrade, missing proof, or unverifiable user-facing quality claim.
 Better but nonessential experience, simplicity, or quality opportunities must
 be dispositioned as PM suggestion items before closure.
+This self-check must compare the delivered product against the concrete
+source-intent acceptance rows, not only against a generic current goal summary.
+If closure would pass because the route ran while the delivered output lost the
+user's concrete object, requested action, quality floor, quantity, constraint,
+or prohibition, block closure and return to the smallest current repair path.
 Closure also requires `self_interrogation_index.json` to be clean. Do not
 approve terminal closure while any startup, product-architecture, node-entry,
 repair, completion, or role-result self-interrogation record has an unresolved
@@ -138,7 +149,7 @@ Return event: `pm_approves_terminal_closure`.
 Write the closure decision body to a run-scoped decision JSON file and return
 only a runtime-generated role-output envelope with `body_ref` and
 `runtime_receipt_ref`. Do not include the decision body in chat. Use
-`flowpilot_new.py open-packet` and `flowpilot_new.py submit-result --lease-id <lease-id> --packet-id <packet-id> --body <sealed_result_summary>`
+`flowpilot_new.py open-packet` and `flowpilot_new.py submit-result --lease-id <lease-id> --packet-id <packet-id> --body-file <sealed_result_body_file>`
 for submissions; plain `decision_path`/`decision_hash` envelopes are
 not the live handoff path.
 

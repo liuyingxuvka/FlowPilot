@@ -163,6 +163,8 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
             "packet_result_family.integration_cartesian_coverage_keeps_pm_optimization_boundary",
             obligations,
         )
+        self.assertIn("packet_result_family.pointer_persistence_hardening", obligations)
+        self.assertIn("packet_result_family.submit_result_body_entry_hardening", obligations)
         self.assertIn("packet_result_family.runtime.flowguard_current_report_gate", contracts)
         self.assertIn("packet_result_family.runtime.flowguard_artifact_hard_decision", contracts)
         self.assertIn("packet_result_family.runtime.flowguard_semantic_recheck_gate", contracts)
@@ -195,9 +197,21 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
         self.assertIn("packet_result_family.runner.cartesian_control_plane_owner_consumption", contracts)
         self.assertIn("packet_result_family.model.integration_cartesian_coverage_matrix", contracts)
         self.assertIn("packet_result_family.runner.integration_cartesian_coverage_checks", contracts)
+        self.assertIn("packet_result_family.runtime.pointer_store_write", contracts)
+        self.assertIn("packet_result_family.runtime.pointer_store_recovery", contracts)
+        self.assertIn("packet_result_family.runtime.submit_result_body_entry", contracts)
+        self.assertIn("packet_result_family.cli.submit_result_body_file", contracts)
         self.assertEqual(
             evidence["packet_result_family.negative.flowguard_blocked_child_evidence"].test_name,
             "test_flowguard_packet_rejects_deleted_evidence_consistency_field_without_reviewer",
+        )
+        self.assertEqual(
+            evidence["packet_result_family.edge.pointer_current_recovery"].test_name,
+            "test_corrupt_current_pointer_recovers_from_single_current_run_evidence",
+        )
+        self.assertEqual(
+            evidence["packet_result_family.negative.submit_result_pseudo_json"].test_name,
+            "test_submit_result_rejects_pseudo_json_before_loading_current_run",
         )
         self.assertEqual(
             evidence["packet_result_family.negative.flowguard_failed_self_check"].test_name,

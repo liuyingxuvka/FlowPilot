@@ -46,7 +46,7 @@ class FlowPilotIntegrationCartesianCoverageTests(unittest.TestCase):
 
         self.assertTrue(report["ok"], report)
         self.assertEqual(report["model_id"], model.MODEL_ID)
-        self.assertEqual(report["matrix"]["declared_counts"]["required_cell_count"], 132_000)
+        self.assertEqual(report["matrix"]["declared_counts"]["required_cell_count"], 144_000)
         self.assertEqual(
             report["matrix"]["observed_cell_count"],
             report["matrix"]["declared_counts"]["required_cell_count"],
@@ -78,6 +78,7 @@ class FlowPilotIntegrationCartesianCoverageTests(unittest.TestCase):
                 "final_output_scattered",
                 "integration_issue_downgraded_to_nonblocking",
                 "model_miss_not_triggered",
+                "pointer_recovery_infers_invocation_intent",
             }
         ]
         self.assertTrue(hard_cases)
@@ -124,6 +125,21 @@ class FlowPilotIntegrationCartesianCoverageTests(unittest.TestCase):
         self.assertIn("semantic_integration_added_runtime_hard_blocker", hazards["runtime_semantic_hard_blocker"]["failures"])
         self.assertIn("worker_claimed_current_gate_blocker_for_integration", hazards["worker_current_gate_blocker"]["failures"])
         self.assertIn("scattered_integration_model_miss_not_routed", hazards["model_miss_not_routed"]["failures"])
+
+    def test_pointer_recovery_never_gains_invocation_intent_authority(self) -> None:
+        cells = [
+            cell
+            for cell in model.iter_required_cells()
+            if cell["failure_class"] == "pointer_recovery_infers_invocation_intent"
+        ]
+
+        self.assertTrue(cells)
+        self.assertFalse([cell["cell_id"] for cell in cells if cell["runtime_hard_blocker_allowed"]])
+        self.assertFalse([
+            cell["cell_id"]
+            for cell in cells
+            if cell["required_authority"] == "runtime_mechanical_rejection"
+        ])
 
 
 if __name__ == "__main__":

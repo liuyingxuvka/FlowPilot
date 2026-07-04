@@ -37,7 +37,7 @@
     {
       "id": "cards.required_return_policy",
       "path": "prompts/cards/required_return_policy.md",
-      "sha256": "5a254a879e0baaacaa66bfb0879e7a7900d6f4f70bc0475e0bb3f916599ed75e",
+      "sha256": "e4fab7f0bf96036b56373fa89e35b5f0b703817f37c305ccd4b3580273f8ad02",
       "strip_trailing_newline": true,
       "template_variables": []
     },

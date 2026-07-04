@@ -256,6 +256,7 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
             "skills/flowpilot/assets/flowpilot_core_runtime/packet_result_contracts.py",
             "skills/flowpilot/assets/flowpilot_core_runtime/packet_stage_evidence_matrix.py",
             "skills/flowpilot/assets/flowpilot_runtime_self_check.py",
+            "skills/flowpilot/assets/flowpilot_core_runtime/pointer_store.py",
         ):
             self.assertIn(path, required)
 
@@ -629,6 +630,102 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
             rendered = json.dumps(result["status"], sort_keys=True)
             self.assertNotIn("Build a tiny project through new FlowPilot.", rendered)
             self.assertIn("flowpilot_startup_intake.ps1", " ".join(flowpilot_new.startup_ui_command(root, "run-new-entry")[0]))
+
+    def test_submit_result_body_file_accepts_top_level_json_object(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            started = flowpilot_new.start_run(
+                root,
+                run_id="run-body-file",
+                headless_startup_text="Exercise body-file submission.",
+                require_formal_ui=False,
+            )
+            packet_id = str(started["next_action"]["subject_id"])
+            lease_id = self._lease_packet(
+                root,
+                packet_id=packet_id,
+                responsibility="pm",
+                agent_id="pm-body-file",
+            )
+            flowpilot_new.ack(root, lease_id=lease_id, packet_id=packet_id)
+            flowpilot_new.open_packet(root, lease_id=lease_id, packet_id=packet_id)
+            body_path = root / ".flowpilot" / "runs" / "run-body-file" / "results" / "bodies" / "pm-result.json"
+            body_path.parent.mkdir(parents=True, exist_ok=True)
+            body_path.write_text(high_standard_contract_body(), encoding="utf-8")
+
+            submitted = flowpilot_new.submit_result(
+                root,
+                lease_id=lease_id,
+                packet_id=packet_id,
+                body_file=body_path,
+            )
+
+            self.assertTrue(submitted["ok"], submitted)
+            self.assertTrue(str(submitted["result_id"]).startswith("result-"))
+
+    def test_submit_result_rejects_pseudo_json_before_loading_current_run(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            pseudo_json = json.dumps(json.dumps({"decision": "pass"}))
+
+            with self.assertRaises(runtime.BlackBoxRuntimeError) as caught:
+                flowpilot_new.submit_result(root, lease_id="lease", packet_id="packet", body=pseudo_json)
+
+            self.assertIn("top-level JSON object", str(caught.exception))
+            self.assertIn("payload_type=str", str(caught.exception))
+            self.assertFalse((root / ".flowpilot").exists())
+
+    def test_submit_result_rejects_invalid_body_sources_without_normalizing(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            body_file = root / "body.json"
+            body_file.write_text('{"decision": "pass"}', encoding="utf-8")
+            cases = (
+                {"body": "", "body_file": None, "needle": "payload_type=empty"},
+                {"body": "[1, 2, 3]", "body_file": None, "needle": "payload_type=list"},
+                {"body": "{bad", "body_file": None, "needle": "payload_type=invalid_json"},
+                {"body": '{"decision": "pass"}', "body_file": body_file, "needle": "exactly one body source"},
+                {"body": None, "body_file": root / "missing.json", "needle": "--body-file is unreadable"},
+            )
+
+            for case in cases:
+                with self.subTest(needle=case["needle"]):
+                    with self.assertRaises(runtime.BlackBoxRuntimeError) as caught:
+                        flowpilot_new.submit_result(
+                            root,
+                            lease_id="lease",
+                            packet_id="packet",
+                            body=case["body"],
+                            body_file=case["body_file"],
+                        )
+                    self.assertIn(str(case["needle"]), str(caught.exception))
+                    self.assertFalse((root / ".flowpilot").exists())
+
+    def test_cli_submit_result_reports_body_type_as_json_error(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            stdout = io.StringIO()
+            with contextlib.redirect_stdout(stdout):
+                exit_code = flowpilot_new.main(
+                    [
+                        "--root",
+                        str(root),
+                        "--json",
+                        "submit-result",
+                        "--lease-id",
+                        "lease",
+                        "--packet-id",
+                        "packet",
+                        "--body",
+                        json.dumps(["not", "object"]),
+                    ]
+                )
+
+            self.assertEqual(exit_code, 1)
+            payload = json.loads(stdout.getvalue())
+            self.assertFalse(payload["ok"])
+            self.assertIn("payload_type=list", payload["error"])
+            self.assertFalse((root / ".flowpilot").exists())
 
     def test_manual_resume_uses_lifecycle_guard_without_heartbeat_or_role_prewarm(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

@@ -121,6 +121,21 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
             self.assertIn("flowpilot_new.py open-packet", text)
             self.assertIn("flowpilot_new.py submit-result", text)
 
+    def test_formal_result_return_defaults_to_body_file_submission(self) -> None:
+        required_return = (RUNTIME_KIT / "prompts" / "cards" / "required_return_policy.md").read_text(
+            encoding="utf-8"
+        )
+        scan_roots = (RUNTIME_KIT / "prompts", RUNTIME_KIT / "cards")
+        scanned = [path for root in scan_roots for path in root.rglob("*.md")]
+        legacy_body_examples = [
+            str(path.relative_to(ROOT)).replace("\\", "/")
+            for path in scanned
+            if "--body <sealed_result_summary>" in path.read_text(encoding="utf-8")
+        ]
+
+        self.assertIn("--body-file <sealed_result_body_file>", required_return)
+        self.assertEqual(legacy_body_examples, [])
+
     def test_controller_progress_fraction_guidance_is_runtime_owned(self) -> None:
         guidance_texts = [
             _normalized_path(_card_path_by_id("controller.core")),
@@ -443,6 +458,68 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
                 self.assertIn("anti-repair", text)
                 self.assertIn("do not repair", text)
                 self.assertNotIn("fix in-scope defects", text)
+
+    def test_prompt_first_quality_chain_preserves_source_intent_without_runtime_semantic_gate(self) -> None:
+        def normalized(card_id: str) -> str:
+            return " ".join(_card_path_by_id(card_id).read_text(encoding="utf-8").lower().split())
+
+        pm_cards = [
+            normalized("pm.core"),
+            normalized("pm.startup_intake"),
+            normalized("pm.product_architecture"),
+            normalized("pm.root_contract"),
+            normalized("pm.node_acceptance_plan"),
+            normalized("pm.review_repair"),
+            normalized("pm.evidence_quality_package"),
+            normalized("pm.final_ledger"),
+            normalized("pm.closure"),
+        ]
+        for text in pm_cards:
+            with self.subTest(surface="pm"):
+                self.assertIn("source-intent", text)
+                self.assertTrue("generic" in text or "vague" in text)
+
+        reviewer_cards = [
+            normalized("reviewer.core"),
+            normalized("reviewer.root_contract_challenge"),
+            normalized("reviewer.node_acceptance_plan_review"),
+            normalized("reviewer.worker_result_review"),
+            normalized("reviewer.evidence_quality_review"),
+            normalized("reviewer.final_backward_replay"),
+        ]
+        for text in reviewer_cards:
+            with self.subTest(surface="reviewer"):
+                self.assertIn("source-intent", text)
+                self.assertTrue("block" in text or "blocker" in text)
+
+        child_skill_cards = [
+            normalized("pm.child_skill_selection"),
+            normalized("pm.child_skill_gate_manifest"),
+            normalized("pm.node_acceptance_plan"),
+            normalized("reviewer.node_acceptance_plan_review"),
+        ]
+        for text in child_skill_cards:
+            with self.subTest(surface="child-skill"):
+                self.assertTrue("standards lens" in text or "skill_standard_projection" in text)
+                self.assertTrue("theme" in text or "generic phrase" in text or "silent weakening" in text)
+
+        flowguard_core = normalized("flowguard_operator.core")
+        self.assertIn("process/model/state evidence", flowguard_core)
+        self.assertIn("not product-quality proof by itself", flowguard_core)
+        self.assertIn("reviewer still owns the semantic pass/block judgement", flowguard_core)
+        self.assertIn("pm owns repair", flowguard_core)
+
+        runtime_text = " ".join(
+            (
+                (ROOT / "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py").read_text(encoding="utf-8").lower(),
+                (ROOT / "skills/flowpilot/assets/flowpilot_core_runtime/control_surface.py").read_text(
+                    encoding="utf-8"
+                ).lower(),
+            )
+        )
+        self.assertNotIn("source-intent comparison", runtime_text)
+        self.assertNotIn("generic user-goal wording", runtime_text)
+        self.assertNotIn("semantic dilution", runtime_text)
 
     def test_pm_suggestion_disposition_guidance_is_unified_but_role_scoped(self) -> None:
         pm_card = (

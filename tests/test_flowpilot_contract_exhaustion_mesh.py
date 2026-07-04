@@ -151,6 +151,25 @@ class FlowPilotContractExhaustionMeshTests(unittest.TestCase):
                 and cell["mutation_kind"] == "empty_required_manifest"
             ]
         )
+        for family, mutation in (
+            ("runtime_pointer_file", "current_pointer.zero_bytes"),
+            ("runtime_pointer_file", "index_pointer.zero_bytes"),
+            ("runtime_pointer_file", "current_pointer.ambiguous_recovery"),
+            ("runtime_pointer_file", "pointer_write_lock.active"),
+            ("submit_result_body_entry", "body_entry.stringified_json_object"),
+            ("submit_result_body_entry", "body_entry.source_conflict"),
+            ("submit_result_body_entry", "body_entry.file_unreadable"),
+        ):
+            with self.subTest(family=family, mutation=mutation):
+                self.assertTrue(
+                    [
+                        cell
+                        for cell in cells
+                        if cell["family"] == family
+                        and cell["mutation_kind"] == mutation
+                        and cell["required_evidence_owner"] == "contract_exhaustion_runtime_matrix"
+                    ]
+                )
         self.assertTrue(
             [
                 cell
@@ -301,6 +320,7 @@ class FlowPilotContractExhaustionMeshTests(unittest.TestCase):
             "pm_repair_target_or_producer_loss",
             "pm_repair_information_flow_loss",
             "same_family_control_blocker_repetition",
+            "current_control_pointer_corruption",
         ):
             with self.subTest(source_class=source_class):
                 self.assertIn(source_class, source_classes)
@@ -718,6 +738,12 @@ class FlowPilotContractExhaustionMeshTests(unittest.TestCase):
             "test_semantic_recheck_contract_projects_ai_facing_fields_and_options",
             "test_semantic_recheck_near_synonyms_reissue_with_correct_minimal_shape",
             "test_semantic_recheck_wrong_value_then_corrected_retry_returns_to_legal_path",
+            "test_corrupt_current_pointer_recovers_from_single_current_run_evidence",
+            "test_corrupt_index_pointer_rebuilds_without_new_pointer_fields",
+            "test_pointer_recovery_respects_active_runtime_json_write_lock",
+            "test_submit_result_body_file_accepts_top_level_json_object",
+            "test_submit_result_rejects_pseudo_json_before_loading_current_run",
+            "test_submit_result_rejects_invalid_body_sources_without_normalizing",
         ):
             with self.subTest(test_name=test_name):
                 if test_name.startswith("test_semantic_recheck_"):
@@ -725,6 +751,11 @@ class FlowPilotContractExhaustionMeshTests(unittest.TestCase):
                         encoding="utf-8"
                     )
                     self.assertIn(test_name, projection_text)
+                elif test_name.startswith("test_submit_result_"):
+                    entrypoint_text = (ROOT / "tests" / "test_flowpilot_new_entrypoint.py").read_text(
+                        encoding="utf-8"
+                    )
+                    self.assertIn(test_name, entrypoint_text)
                 else:
                     self.assertIn(test_name, test_text)
 

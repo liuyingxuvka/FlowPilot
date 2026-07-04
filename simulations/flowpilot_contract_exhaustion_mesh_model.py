@@ -45,6 +45,8 @@ CONTRACT_FAMILIES = (
     "review_packet",
     "system_validation",
     "runtime_install_self_check",
+    "runtime_pointer_file",
+    "submit_result_body_entry",
     "pm_repair_packet",
     "break_glass_loop",
     "integration_cartesian_coverage",
@@ -65,6 +67,13 @@ MUTATION_KINDS = (
     "wrong_type",
     "wrong_owner",
     "wrong_current_path",
+    "current_pointer.zero_bytes",
+    "index_pointer.zero_bytes",
+    "current_pointer.ambiguous_recovery",
+    "pointer_write_lock.active",
+    "body_entry.stringified_json_object",
+    "body_entry.source_conflict",
+    "body_entry.file_unreadable",
     "stale_id",
     "evidence_path_mismatch",
     "empty_required_manifest",
@@ -183,6 +192,20 @@ HISTORICAL_FAILURE_FAMILIES = (
             "target_requires_dev_repo_simulation",
         ),
         "normal_repair_route": "sync_repo_owned_skill_then_recheck_source_hashes",
+        "glass_break_allowed_in_acceptance": False,
+    },
+    {
+        "failure_id": "history.pointer_files_written_as_nul_bytes",
+        "family": "runtime_pointer_file",
+        "source_class": "current_control_pointer_corruption",
+        "historical_source": "known_friction.current_and_index_json_nul_bytes",
+        "mutation_kinds": (
+            "current_pointer.zero_bytes",
+            "index_pointer.zero_bytes",
+            "current_pointer.ambiguous_recovery",
+            "pointer_write_lock.active",
+        ),
+        "normal_repair_route": "atomic_json_write_then_recover_only_from_unambiguous_current_run_evidence",
         "glass_break_allowed_in_acceptance": False,
     },
     {
@@ -407,14 +430,47 @@ CONTROL_PLANE_REQUIRED_PATHS = (
         "mutation_kinds": ("missing_root_cause_loop_key", "same_root_no_delta_retry"),
         "required_evidence_owner": "contract_exhaustion_runtime_matrix",
     },
+    {
+        "family": "runtime_pointer_file",
+        "path": ".flowpilot/current.json",
+        "mutation_kinds": ("current_pointer.zero_bytes", "current_pointer.ambiguous_recovery", "pointer_write_lock.active"),
+        "required_evidence_owner": "contract_exhaustion_runtime_matrix",
+    },
+    {
+        "family": "runtime_pointer_file",
+        "path": ".flowpilot/index.json",
+        "mutation_kinds": ("index_pointer.zero_bytes",),
+        "required_evidence_owner": "contract_exhaustion_runtime_matrix",
+    },
+    {
+        "family": "submit_result_body_entry",
+        "path": "cli.submit_result.body_source",
+        "mutation_kinds": ("body_entry.stringified_json_object", "body_entry.source_conflict", "body_entry.file_unreadable"),
+        "required_evidence_owner": "contract_exhaustion_runtime_matrix",
+    },
 )
 
 
 def _mutation_applicable(family: str, mutation: str) -> bool:
     if family == "integration_cartesian_coverage":
         return False
+    pointer_mutations = {
+        "current_pointer.zero_bytes",
+        "index_pointer.zero_bytes",
+        "current_pointer.ambiguous_recovery",
+        "pointer_write_lock.active",
+    }
+    body_entry_mutations = {
+        "body_entry.stringified_json_object",
+        "body_entry.source_conflict",
+        "body_entry.file_unreadable",
+    }
+    if mutation in pointer_mutations:
+        return family == "runtime_pointer_file"
+    if mutation in body_entry_mutations:
+        return family == "submit_result_body_entry"
     if mutation in MALFORMED_BODY_MUTATION_KINDS:
-        return family in {"task_result_body", "flowguard_check_result", "review_packet", "pm_repair_packet"}
+        return family in {"task_result_body", "flowguard_check_result", "review_packet", "pm_repair_packet", "submit_result_body_entry"}
     if mutation == "empty_required_manifest":
         return family in {"review_packet", "system_validation"}
     if mutation == "empty_required_array":

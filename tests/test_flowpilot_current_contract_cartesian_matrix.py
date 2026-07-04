@@ -133,6 +133,7 @@ class FlowPilotCurrentContractCartesianMatrixTests(unittest.TestCase):
                 "malformed_json_top_level_array",
                 "malformed_json_empty_body",
                 "malformed_json_trailing_comma",
+                "malformed_json_stringified_object",
             },
         )
         cells = [
@@ -145,7 +146,46 @@ class FlowPilotCurrentContractCartesianMatrixTests(unittest.TestCase):
             cell["cell_id"]
             for cell in cells[:500]
             if cell["expected_reaction"] != "mechanical_reject"
-            or cell["existing_test_link_id"] != "fake_ai_malformed_body_profiles"
+        ])
+        ordinary_malformed = [cell for cell in cells if cell["ai_return_profile"] != "malformed_json_stringified_object"]
+        self.assertFalse([
+            cell["cell_id"]
+            for cell in ordinary_malformed[:500]
+            if cell["existing_test_link_id"] != "fake_ai_malformed_body_profiles"
+        ])
+        stringified_cells = [cell for cell in cells if cell["ai_return_profile"] == "malformed_json_stringified_object"]
+        self.assertTrue(stringified_cells)
+        self.assertFalse([
+            cell["cell_id"]
+            for cell in stringified_cells[:500]
+            if cell["existing_test_link_id"] != "submit_result_body_entry_canaries"
+        ])
+
+    def test_pointer_corruption_cells_recover_or_block_without_guessing(self) -> None:
+        pointer_states = {
+            "current_pointer_corrupt_unambiguous",
+            "current_pointer_corrupt_ambiguous",
+            "index_pointer_corrupt",
+            "pointer_write_in_progress",
+        }
+        pointer_cells = [
+            cell
+            for cell in model.REQUIRED_FULL_CARTESIAN_CELLS
+            if cell["object_state"] in pointer_states
+        ]
+
+        self.assertTrue(pointer_cells)
+        reactions_by_state = {}
+        for cell in pointer_cells:
+            reactions_by_state.setdefault(cell["object_state"], cell["expected_reaction"])
+        self.assertEqual(reactions_by_state["current_pointer_corrupt_unambiguous"], "recover_pointer")
+        self.assertEqual(reactions_by_state["index_pointer_corrupt"], "recover_pointer")
+        self.assertEqual(reactions_by_state["current_pointer_corrupt_ambiguous"], "structured_blocker")
+        self.assertEqual(reactions_by_state["pointer_write_in_progress"], "structured_blocker")
+        self.assertFalse([
+            cell["cell_id"]
+            for cell in pointer_cells[:500]
+            if cell["existing_test_link_id"] != "pointer_persistence_canaries"
         ])
 
     def test_reused_existing_tests_are_current_contract_audited(self) -> None:

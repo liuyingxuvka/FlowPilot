@@ -140,6 +140,32 @@ def resolve_current_run(root: str | Path, *, run_id: str | None = None) -> Curre
 
     current_read = safe_read_json(pointer_path, require_object=True)
     if not current_read.ok:
+        if current_read.error_code in {"invalid_json", "invalid_utf8", "json_not_object"}:
+            try:
+                from . import pointer_store
+            except ImportError:  # pragma: no cover - direct module loading in tests
+                from flowpilot_core_runtime import pointer_store
+
+            recovery = pointer_store.recover_current_pointer(resolved_root)
+            if recovery.ok and recovery.current is not None:
+                current_read = SafeReadResult(pointer_path, True, value=recovery.current)
+            else:
+                return CurrentRunResolution(
+                    resolved_root,
+                    False,
+                    pointer_path=pointer_path,
+                    error_code=recovery.error_code or current_read.error_code,
+                    message=recovery.message or current_read.message,
+                )
+        else:
+            return CurrentRunResolution(
+                resolved_root,
+                False,
+                pointer_path=pointer_path,
+                error_code=current_read.error_code,
+                message=current_read.message,
+            )
+    if not current_read.ok:
         return CurrentRunResolution(
             resolved_root,
             False,

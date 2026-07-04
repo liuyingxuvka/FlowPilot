@@ -823,9 +823,13 @@ def run_fake_e2e(
         action_type = str(action_json.get("action_type") or "")
         if action_type == "terminal_complete":
             break
-        if action_type != "dispatch_current_role":
+        if action_type not in {"dispatch_current_role", "repair_packet"}:
+            run_shell.save_run_ledger(shell, ledger)
             raise runtime.BlackBoxRuntimeError(f"fake e2e cannot satisfy next action: {action_json}")
         packet_id = str(action_json.get("subject_id") or "")
+        if packet_id not in ledger.get("packets", {}):
+            run_shell.save_run_ledger(shell, ledger)
+            raise runtime.BlackBoxRuntimeError(f"fake e2e cannot satisfy next action: {action_json}")
         packet = ledger["packets"][packet_id]
         kind = packet["envelope"].get("packet_kind", "task")
         family_id = runtime._packet_result_family_id(packet)

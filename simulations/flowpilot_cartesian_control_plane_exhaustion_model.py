@@ -79,6 +79,7 @@ EVIDENCE_OWNER_BY_CONSUMER = {
 }
 
 REPAIR_COMMAND_BY_REACTION = {
+    "recover_pointer": "flowpilot.runtime.recover_pointer_from_unambiguous_current_run_evidence",
     "mechanical_reject": "flowpilot.runtime.reject_current_material_with_precise_contract_error",
     "repairable_reissue": "flowpilot.pm.reissue_current_packet_with_material_delta",
     "terminal_blocker": "flowpilot.runtime.block_terminal_claim_until_current_evidence_exists",
@@ -97,6 +98,7 @@ MUTATION_GROUPS = {
     "gate",
     "terminal",
     "compatibility",
+    "pointer",
 }
 
 FORMAL_ARTIFACT_MUTATIONS = tuple(
@@ -108,6 +110,9 @@ MUTATIONS = (
     {"id": "missing_body", "group": "body"},
     {"id": "empty_body", "group": "body"},
     {"id": "malformed_json", "group": "body"},
+    {"id": "json_object_stringified_as_string", "group": "body"},
+    {"id": "body_source_conflict", "group": "compatibility"},
+    {"id": "body_file_unreadable", "group": "path"},
     {"id": "body_hash_mismatch", "group": "body"},
     {"id": "missing_required_field", "group": "field"},
     {"id": "missing_required_child_field", "group": "field"},
@@ -128,6 +133,10 @@ MUTATIONS = (
     {"id": "path_outside_root", "group": "path"},
     {"id": "target_not_found", "group": "path"},
     {"id": "wrong_run_id", "group": "identity"},
+    {"id": "current_pointer_zero_bytes", "group": "pointer"},
+    {"id": "index_pointer_zero_bytes", "group": "pointer"},
+    {"id": "current_pointer_ambiguous_recovery", "group": "pointer"},
+    {"id": "pointer_write_lock_active", "group": "pointer"},
     {"id": "wrong_node_id", "group": "identity"},
     {"id": "wrong_role_id", "group": "identity"},
     {"id": "wrong_owner", "group": "identity"},
@@ -177,6 +186,32 @@ MUTATION_IDS = tuple(str(mutation["id"]) for mutation in MUTATIONS)
 MUTATION_BY_ID = {str(mutation["id"]): mutation for mutation in MUTATIONS}
 
 CONTRACT_EXHAUSTION_MUTATION_CANONICALIZATION = {
+    "body_entry.file_unreadable": "body_file_unreadable",
+    "body_entry.source_conflict": "body_source_conflict",
+    "body_entry.stringified_json_object": "json_object_stringified_as_string",
+    "child_outputs_do_not_compose": "stage_evidence_mismatch",
+    "consumer_missing": "missing_required_field",
+    "current_pointer.ambiguous_recovery": "current_pointer_ambiguous_recovery",
+    "current_pointer.zero_bytes": "current_pointer_zero_bytes",
+    "duplicate_sibling_work": "duplicate_packet",
+    "final_output_scattered": "accepted_result_work_order_split",
+    "flat_checklist_route": "stage_evidence_mismatch",
+    "hard_gate_escape.active_packet_unresolved": "progress_only_evidence",
+    "hard_gate_escape.missing_node_acceptance_plan": "missing_required_field",
+    "hard_gate_escape.missing_node_context_package": "missing_evidence_manifest",
+    "hard_gate_escape.missing_parent_backward_replay": "missing_stage_evidence_matrix",
+    "hard_gate_escape.missing_pm_disposition": "missing_required_field",
+    "hard_gate_escape.stale_current_evidence": "stale_evidence",
+    "index_pointer.zero_bytes": "index_pointer_zero_bytes",
+    "integration_issue_downgraded_to_nonblocking": "accepted_result_work_order_split",
+    "missing_integration_cartesian_shard": "missing_stage_evidence_matrix",
+    "missing_integration_intent": "missing_required_field",
+    "model_miss_not_triggered": "missing_evidence_manifest",
+    "optimization_incorrectly_hard_blocked": "wrong_owner",
+    "orphan_output": "wrong_current_path",
+    "pointer_recovery_infers_invocation_intent": "wrong_owner",
+    "pointer_write_lock.active": "pointer_write_lock_active",
+    "producer_after_consumer": "stage_evidence_mismatch",
     "malformed_body.empty_body": "empty_body",
     "malformed_body.markdown_wrapped_json": "malformed_json",
     "malformed_body.prose_plus_json": "malformed_json",
@@ -263,11 +298,27 @@ BOUNDARIES = (
         "consumers": ("runtime_router", "reviewer", "testmesh_child_suite", "modelmesh_closure"),
     },
     {
+        "id": "submit_result_body_entry",
+        "subject": "submit-result body transport and top-level object entry",
+        "owner": "runtime_router",
+        "groups": ("body", "path", "compatibility"),
+        "contexts": ("post_result_review", "synthetic_ai_rehearsal"),
+        "consumers": ("runtime_router", "testmesh_child_suite", "modelmesh_closure"),
+    },
+    {
         "id": "route_run_identity",
         "subject": "current route run id",
         "owner": "runtime_router",
         "groups": ("identity", "path", "compatibility"),
         "contexts": ("startup_intake", "active_packet_dispatch", "route_mutation", "terminal_closure"),
+        "consumers": ("runtime_router", "project_manager", "testmesh_child_suite", "modelmesh_closure"),
+    },
+    {
+        "id": "current_run_pointer",
+        "subject": ".flowpilot current/index pointer files",
+        "owner": "runtime_router",
+        "groups": ("pointer", "identity", "path", "compatibility"),
+        "contexts": ("startup_intake", "active_packet_dispatch", "terminal_closure"),
         "consumers": ("runtime_router", "project_manager", "testmesh_child_suite", "modelmesh_closure"),
     },
     {
@@ -450,7 +501,14 @@ BOUNDARIES = (
 
 BOUNDARY_IDS = tuple(str(boundary["id"]) for boundary in BOUNDARIES)
 
-COMPATIBILITY_MUTATIONS = {"unsupported_command", "legacy_alias", "fallback_prose", "wrapper_shape", "forbidden_alias_used"}
+COMPATIBILITY_MUTATIONS = {
+    "unsupported_command",
+    "legacy_alias",
+    "fallback_prose",
+    "wrapper_shape",
+    "forbidden_alias_used",
+    "body_source_conflict",
+}
 RETRY_MUTATIONS = {
     "duplicate_packet",
     "same_payload_retry",
@@ -462,6 +520,8 @@ RETRY_MUTATIONS = {
 }
 GLASSBREAK_MUTATIONS = {"same_blocker_repeat", "same_root_no_delta_retry", "retry_without_delta"}
 TERMINAL_MUTATIONS = {"dirty_terminal", "lock_conflict", "lease_expired", "progress_only_evidence"}
+POINTER_RECOVERY_MUTATIONS = {"current_pointer_zero_bytes", "index_pointer_zero_bytes"}
+POINTER_BLOCKER_MUTATIONS = {"current_pointer_ambiguous_recovery", "pointer_write_lock_active"}
 
 
 def _sanitize(value: str) -> str:
@@ -540,6 +600,10 @@ def _skip_reason(
 def expected_reaction(mutation_id: str, context: str, consumer: str) -> str:
     if context == "glassbreak_threshold_probe" and mutation_id in GLASSBREAK_MUTATIONS and consumer == "glassbreak_controller":
         return "glassbreak_alarm"
+    if mutation_id in POINTER_RECOVERY_MUTATIONS:
+        return "recover_pointer"
+    if mutation_id in POINTER_BLOCKER_MUTATIONS:
+        return "terminal_blocker"
     if mutation_id in COMPATIBILITY_MUTATIONS:
         return "mechanical_reject"
     if mutation_id in TERMINAL_MUTATIONS:
@@ -564,6 +628,8 @@ def _repair_fields(mutation_id: str, reaction: str) -> tuple[str, ...]:
         return (*base, "root_cause_loop_key", "same_blocker_attempt_count")
     if reaction == "mechanical_reject":
         return (*base, "minimum_valid_shape")
+    if reaction == "recover_pointer":
+        return (*base, "corrupt_pointer_backup_path", "current_run_evidence")
     if mutation_id in RETRY_MUTATIONS:
         return (*base, "required_delta")
     if reaction == "terminal_blocker":
@@ -780,15 +846,31 @@ def historical_failure_bridge_cells() -> tuple[dict[str, Any], ...]:
     rows: list[dict[str, Any]] = []
     for family in contract_model.HISTORICAL_FAILURE_FAMILIES:
         for mutation in family.get("mutation_kinds", ()):
+            source_mutation = str(mutation)
+            cartesian_mutation = CONTRACT_EXHAUSTION_MUTATION_CANONICALIZATION.get(
+                source_mutation, source_mutation
+            )
+            translation_kind = "identity"
+            translation_reason = "source mutation is part of the control-plane mutation alphabet"
+            if cartesian_mutation != source_mutation:
+                translation_kind = "canonical_current_control_plane"
+                translation_reason = (
+                    "source mutation is a detailed historical-failure subtype of the "
+                    "named control-plane mutation"
+                )
             rows.append(
                 {
-                    "bridge_id": f"historical_failure.{family['failure_id']}.{mutation}",
+                    "bridge_id": f"historical_failure.{family['failure_id']}.{source_mutation}",
                     "source_failure_id": str(family["failure_id"]),
                     "source_class": str(family["source_class"]),
-                    "source_mutation_kind": str(mutation),
+                    "source_mutation_kind": source_mutation,
+                    "source_mutation_known": source_mutation in MUTATION_BY_ID
+                    or source_mutation in CONTRACT_EXHAUSTION_MUTATION_CANONICALIZATION,
                     "cartesian_boundary_id": "historical_failure_bridge",
-                    "cartesian_mutation_kind": str(mutation),
-                    "cartesian_mutation_known": str(mutation) in MUTATION_BY_ID,
+                    "cartesian_mutation_kind": cartesian_mutation,
+                    "cartesian_mutation_known": cartesian_mutation in MUTATION_BY_ID,
+                    "bridge_translation_kind": translation_kind,
+                    "bridge_translation_reason": translation_reason,
                     "glass_break_allowed_in_acceptance": bool(
                         family.get("glass_break_allowed_in_acceptance", False)
                     ),

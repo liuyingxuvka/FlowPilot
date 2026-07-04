@@ -104,7 +104,8 @@ def main(argv: list[str] | None = None) -> int:
     submit = sub.add_parser("submit-result", help="Submit a sealed result body for a packet")
     submit.add_argument("--lease-id", required=True)
     submit.add_argument("--packet-id", required=True)
-    submit.add_argument("--body", required=True)
+    submit.add_argument("--body", default=None)
+    submit.add_argument("--body-file", type=Path, default=None)
 
     repair_parser = sub.add_parser("repair-accepted-packet", help="Repair accepted packet assignment race state")
     repair_parser.add_argument("--packet-id", required=True)
@@ -159,7 +160,13 @@ def main(argv: list[str] | None = None) -> int:
         elif args.command == "cancel":
             payload = cancel_run(root, reason=args.reason)
         elif args.command == "submit-result":
-            payload = submit_result(root, lease_id=args.lease_id, packet_id=args.packet_id, body=args.body)
+            payload = submit_result(
+                root,
+                lease_id=args.lease_id,
+                packet_id=args.packet_id,
+                body=args.body,
+                body_file=args.body_file,
+            )
         elif args.command == "repair-accepted-packet":
             payload = repair_accepted_packet(root, packet_id=args.packet_id)
         else:  # pragma: no cover

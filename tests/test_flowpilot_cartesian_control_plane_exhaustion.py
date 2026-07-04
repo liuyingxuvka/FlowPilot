@@ -147,6 +147,10 @@ class FlowPilotCartesianControlPlaneExhaustionTests(unittest.TestCase):
             "wrong_current_path",
             "target_not_found",
             "wrong_run_id",
+            "current_pointer_zero_bytes",
+            "index_pointer_zero_bytes",
+            "current_pointer_ambiguous_recovery",
+            "pointer_write_lock_active",
             "wrong_node_id",
             "missing_evidence_manifest",
             "missing_authorized_read",
@@ -168,9 +172,52 @@ class FlowPilotCartesianControlPlaneExhaustionTests(unittest.TestCase):
             "legacy_alias",
             "fallback_prose",
             "wrapper_shape",
+            "json_object_stringified_as_string",
+            "body_source_conflict",
+            "body_file_unreadable",
         ):
             with self.subTest(mutation=mutation):
                 self.assertIn(mutation, mutation_kinds)
+
+    def test_pointer_and_submit_body_entry_cells_have_current_runtime_oracles(self) -> None:
+        pointer_cells = [
+            cell
+            for cell in model.REQUIRED_CARTESIAN_CELLS
+            if cell["boundary_id"] == "current_run_pointer"
+        ]
+        body_entry_cells = [
+            cell
+            for cell in model.REQUIRED_CARTESIAN_CELLS
+            if cell["boundary_id"] == "submit_result_body_entry"
+        ]
+
+        self.assertTrue(pointer_cells)
+        self.assertTrue(body_entry_cells)
+        pointer_mutations = {cell["mutation_kind"] for cell in pointer_cells}
+        self.assertLessEqual(
+            {
+                "current_pointer_zero_bytes",
+                "index_pointer_zero_bytes",
+                "current_pointer_ambiguous_recovery",
+                "pointer_write_lock_active",
+            },
+            pointer_mutations,
+        )
+        for cell in pointer_cells:
+            if cell["mutation_kind"] in model.POINTER_RECOVERY_MUTATIONS:
+                with self.subTest(cell_id=cell["cell_id"]):
+                    self.assertEqual(cell["expected_reaction"], "recover_pointer")
+                    self.assertIn("corrupt_pointer_backup_path", cell["required_feedback_fields"])
+                    self.assertIn("current_run_evidence", cell["required_feedback_fields"])
+            if cell["mutation_kind"] in model.POINTER_BLOCKER_MUTATIONS:
+                with self.subTest(cell_id=cell["cell_id"]):
+                    self.assertEqual(cell["expected_reaction"], "terminal_blocker")
+
+        body_entry_mutations = {cell["mutation_kind"] for cell in body_entry_cells}
+        self.assertLessEqual(
+            {"json_object_stringified_as_string", "body_source_conflict", "body_file_unreadable"},
+            body_entry_mutations,
+        )
 
     def test_repair_obligation_boundary_enters_pm_and_flowguard_contexts(self) -> None:
         cells = [

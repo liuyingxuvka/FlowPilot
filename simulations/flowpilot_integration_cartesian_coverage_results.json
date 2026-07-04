@@ -133,6 +133,7 @@
           "model_miss_not_triggered",
           "optimization_incorrectly_hard_blocked",
           "orphan_output",
+          "pointer_recovery_infers_invocation_intent",
           "producer_after_consumer"
         ]
       },
@@ -168,27 +169,27 @@
       }
     },
     "by_expected_outcome": {
-      "continue_current_flow": 36000,
+      "continue_current_flow": 40000,
       "model_miss_triage": 4000,
-      "pm_suggestion": 60000,
+      "pm_suggestion": 64000,
       "route_mutation": 26000,
-      "same_node_repair": 4000,
+      "same_node_repair": 8000,
       "terminal_block": 2000
     },
     "by_required_authority": {
-      "flowguard_pm_decision_support": 19200,
-      "project_manager": 40800,
-      "prompt_or_pm_decision_not_runtime_mechanical_rejection": 26400,
-      "reviewer_pm_decision_support": 19200,
-      "worker_reports_blocked_needs_pm_or_pm_suggestion": 26400
+      "flowguard_pm_decision_support": 20800,
+      "project_manager": 44800,
+      "prompt_or_pm_decision_not_runtime_mechanical_rejection": 28800,
+      "reviewer_pm_decision_support": 20800,
+      "worker_reports_blocked_needs_pm_or_pm_suggestion": 28800
     },
     "declared_counts": {
       "axis_count": 8,
-      "required_cell_count": 132000
+      "required_cell_count": 144000
     },
     "matrix_failures": [],
     "missing_axis_values": {},
-    "observed_cell_count": 132000,
+    "observed_cell_count": 144000,
     "ok": true,
     "runtime_hard_blocker_cells": [],
     "sampled_cells": [

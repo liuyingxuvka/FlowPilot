@@ -56,6 +56,7 @@ FAILURE_CLASSES = (
     "integration_issue_downgraded_to_nonblocking",
     "optimization_incorrectly_hard_blocked",
     "model_miss_not_triggered",
+    "pointer_recovery_infers_invocation_intent",
 )
 
 SEVERITIES = (

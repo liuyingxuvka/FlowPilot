@@ -78,6 +78,7 @@ PACKET_BODY_DIRECT_ACK_TERMS = (
 )
 PACKET_BODY_RESULT_TERMS = (
     "flowpilot_new.py submit-result",
+    "--body-file",
     "sealed result",
 )
 RESULT_BODY_DIRECT_COMPLETION_TERMS = (

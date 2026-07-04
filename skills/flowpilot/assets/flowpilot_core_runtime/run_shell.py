@@ -11,6 +11,7 @@ import shutil
 from typing import Any
 
 from . import control_surface
+from . import pointer_store
 from . import runtime
 
 
@@ -98,19 +99,16 @@ def create_run_shell(
     save_run_ledger(shell, ledger)
 
     flowpilot_root.mkdir(parents=True, exist_ok=True)
-    current = {
-        "schema_version": RUN_SCHEMA_VERSION,
-        "run_id": selected_run_id,
-        "run_root": str(run_root),
-        "ledger_path": str(ledger_path),
-        "authority": "current_run_ledger",
-        "lifecycle_state": str((ledger.get("lifecycle") or {}).get("state", "")),
-        "terminal_lifecycle_status": runtime.terminal_lifecycle_status(ledger),
-        "controller_stop_allowed": bool((ledger.get("lifecycle_guard") or {}).get("controller_stop_allowed") is True),
-        "updated_at": runtime.now_iso(),
-    }
-    (flowpilot_root / "current.json").write_text(json.dumps(current, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    _append_index(flowpilot_root / "index.json", current)
+    current = pointer_store.current_payload_from_ledger(
+        root,
+        run_id=selected_run_id,
+        run_root=run_root,
+        ledger_path=ledger_path,
+        ledger=ledger,
+        include_refresh_fields=False,
+    )
+    pointer_store.write_pointer_json(flowpilot_root / "current.json", current)
+    pointer_store.append_index(root, current)
     return shell
 
 
@@ -364,14 +362,7 @@ def materialize_run_artifacts(shell: RunShell, ledger: dict[str, Any]) -> None:
 
 
 def _append_index(index_path: Path, current: dict[str, Any]) -> None:
-    if index_path.exists():
-        payload = json.loads(index_path.read_text(encoding="utf-8"))
-    else:
-        payload = {"schema_version": RUN_SCHEMA_VERSION, "runs": []}
-    runs = [item for item in payload.get("runs", []) if item.get("run_id") != current["run_id"]]
-    runs.append(current)
-    payload["runs"] = runs
-    index_path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    pointer_store.append_index(index_path.parent.parent, current)
 
 
 def _refresh_current_pointer_status(shell: RunShell, ledger: dict[str, Any]) -> None:
@@ -381,31 +372,21 @@ def _refresh_current_pointer_status(shell: RunShell, ledger: dict[str, Any]) -> 
     try:
         current = json.loads(current_path.read_text(encoding="utf-8"))
     except json.JSONDecodeError:
-        return
+        recovery = pointer_store.recover_current_pointer(shell.root)
+        if not recovery.ok or recovery.current is None:
+            return
+        current = recovery.current
     if not isinstance(current, dict) or current.get("run_id") != shell.run_id:
         return
-    guard = ledger.get("lifecycle_guard") if isinstance(ledger.get("lifecycle_guard"), dict) else {}
-    preflight = runtime.final_return_preflight(ledger, guard=guard)
-    closure = ledger.get("closure") if isinstance(ledger.get("closure"), dict) else {}
-    terminal_status = runtime.terminal_lifecycle_status(ledger)
-    lifecycle_state = str((ledger.get("lifecycle") or {}).get("state", ""))
-    derived_status = lifecycle_state
-    if terminal_status:
-        derived_status = terminal_status
-    elif preflight.get("allowed") is True and closure.get("decision") == "complete":
-        derived_status = "terminal_complete"
-    current.update(
-        {
-            "lifecycle_state": derived_status,
-            "ledger_lifecycle_state": lifecycle_state,
-            "terminal_lifecycle_status": terminal_status,
-            "controller_stop_allowed": bool(preflight.get("controller_stop_allowed") is True),
-            "final_return_allowed": bool(preflight.get("allowed") is True),
-            "closure_decision": str(closure.get("decision", "not_attempted")),
-            "updated_at": runtime.now_iso(),
-        }
+    current = pointer_store.current_payload_from_ledger(
+        shell.root,
+        run_id=shell.run_id,
+        run_root=shell.run_root,
+        ledger_path=shell.ledger_path,
+        ledger=ledger,
+        include_refresh_fields=True,
     )
-    _write_json(current_path, current)
+    pointer_store.write_pointer_json(current_path, current)
     _append_index(shell.flowpilot_root / "index.json", current)
 
 

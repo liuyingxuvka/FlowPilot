@@ -3,7 +3,7 @@ recipient_role: project_manager
 recipient_identity: FlowPilot project manager role
 allowed_scope: Use this card only while acting as the recipient role named above for the FlowPilot runtime duty assigned by the manifest.
 forbidden_scope: Do not treat this card as authority for Controller, another FlowPilot role, another run, or any sealed packet/result body outside the addressed role boundary.
-required_return: System-card ACKs go through the current runtime card check-in command; this is the current-runtime return path for card ACKs. Current work-package ACKs and completion outputs go through the assigned current packet lease when present. For formal role outputs, write the body only to a run-scoped packet, result, report, decision, or blocker file, then submit it with `flowpilot_new.py submit-result --lease-id <lease-id> --packet-id <packet-id> --body <sealed_result_summary>` so the current runtime ledger records the event and later exposes only controller-visible envelope metadata with status, paths, and hashes. A local file write is only local storage and must not be treated as wait completion until the current runtime records the packet result. Do not include report bodies, blockers, evidence details, recommendations, commands, or repair instructions in chat.
+required_return: System-card ACKs go through the current runtime card check-in command; this is the current-runtime return path for card ACKs. Current work-package ACKs and completion outputs go through the assigned current packet lease when present. For formal role outputs, write the body only to a run-scoped packet, result, report, decision, or blocker file, then submit it with `flowpilot_new.py submit-result --lease-id <lease-id> --packet-id <packet-id> --body-file <sealed_result_body_file>` so the current runtime ledger records the event and later exposes only controller-visible envelope metadata with status, paths, and hashes. A local file write is only local storage and must not be treated as wait completion until the current runtime records the packet result. Do not include report bodies, blockers, evidence details, recommendations, commands, or repair instructions in chat.
 post_ack: ACK is receipt only; ACK is not completion. This is a work item when it asks for an output, report, decision, result, or blocker. After work-card ACK, do not stop or wait for another prompt; immediately continue the assigned work and submit the formal output or blocker through the current runtime path. The task remains unfinished until the current runtime receives that output or blocker.
 next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Controller must follow the `flowpilot_new.py` lifecycle guard and foreground duty; no unsupported command text, stale runtime state, chat history, or historical artifact authorizes current-run progress.
 runtime_context: Treat the runtime delivery envelope as the live source for the current run, current task, current card, current phase, current node/frontier, user_request_path, and source paths. If that live context is missing or stale, do not continue from memory; submit a protocol blocker through the current runtime path.
@@ -29,6 +29,12 @@ runtime_context: Treat the runtime delivery envelope as the live source for the 
 
 Before issuing a current-node work packet, write the active node acceptance
 plan.
+
+For parent or module nodes, this node acceptance plan is the parent/module
+entry gate before any child descent. The parent/module must have its own
+accepted `node_acceptance_plan` and current `node_context_package`; a child
+plan, child context package, later parent replay, or terminal replay cannot
+substitute for the parent/module entry gate.
 
 Submit the node acceptance plan as a current packet result with one top-level
 `decision`:
@@ -71,6 +77,13 @@ stale evidence close this node. If `decision: "pass"`, the result body must incl
 - `acceptance_item_projection`: one row for every acceptance item assigned to
   this route node, with `acceptance_item_id`, `status_for_this_node`, and
   `future_evidence_rule`.
+
+For user-sourced acceptance items, preserve the source-intent acceptance force
+in the projection. Do not shorten a concrete user requirement into a generic
+"do the work" or "finish quality" note. The current node may own only a slice
+of the requirement, but that slice must still identify the concrete object,
+action, quality floor, quantity, constraint, or prohibition it is responsible
+for preserving.
 
 Do not add PM-only pre-worker test matrices, work-packet projection fields,
 FlowGuard target fields, Reviewer starting-point fields, or structure hygiene
@@ -133,7 +146,9 @@ the replacement parent and cannot substitute for a non-empty active
 This plan is context for executing the canonical route node; it must not
 override `node_kind`, `parent_node_id`, or `child_node_ids`. If those fields
 show the node is not worker-dispatchable, deepen or mutate the route rather
-than writing a worker-ready plan.
+than writing a worker-ready plan. If the node is a parent/module, first close
+this node-entry plan and context package, then let the runtime descend to the
+first current child.
 
 ## Supporting Skill Fidelity
 

@@ -78,6 +78,10 @@ OBJECT_STATES = (
     "wrong_owner",
     "duplicate_conflict",
     "unreadable_path",
+    "current_pointer_corrupt_unambiguous",
+    "current_pointer_corrupt_ambiguous",
+    "index_pointer_corrupt",
+    "pointer_write_in_progress",
     "future_claim_without_evidence",
     "unsupported_legacy_shape",
 )
@@ -92,6 +96,7 @@ AI_RETURN_PROFILES = (
     "malformed_json_top_level_array",
     "malformed_json_empty_body",
     "malformed_json_trailing_comma",
+    "malformed_json_stringified_object",
     "ack_only",
     "summary_only",
     "old_protocol",
@@ -255,6 +260,10 @@ PROFILE_BY_STAGE_GROUP: dict[str, dict[str, tuple[str, ...]]] = {
             "wrong_owner",
             "duplicate_conflict",
             "unreadable_path",
+            "current_pointer_corrupt_unambiguous",
+            "current_pointer_corrupt_ambiguous",
+            "index_pointer_corrupt",
+            "pointer_write_in_progress",
         ),
         "ai_profiles": (
             "well_formed_pass",
@@ -265,6 +274,7 @@ PROFILE_BY_STAGE_GROUP: dict[str, dict[str, tuple[str, ...]]] = {
             "malformed_json_top_level_array",
             "malformed_json_empty_body",
             "malformed_json_trailing_comma",
+            "malformed_json_stringified_object",
             "ack_only",
             "summary_only",
             "old_protocol",
@@ -561,6 +571,29 @@ EXISTING_TEST_LINKS = (
         "covers": ("stale_workspace", "no_newest_run_fallback"),
         "required_markers": ("test_current_run_resolver_accepts_new_schema_and_rejects_project_root_fallback",),
     },
+    {
+        "link_id": "pointer_persistence_canaries",
+        "path": "tests/test_flowpilot_core_runtime.py",
+        "test_name": "test_corrupt_current_pointer_recovers_from_single_current_run_evidence",
+        "covers": ("pointer_recovery",),
+        "required_markers": (
+            "test_corrupt_current_pointer_recovers_from_single_current_run_evidence",
+            "test_corrupt_index_pointer_rebuilds_without_new_pointer_fields",
+            "test_pointer_recovery_respects_active_runtime_json_write_lock",
+        ),
+    },
+    {
+        "link_id": "submit_result_body_entry_canaries",
+        "path": "tests/test_flowpilot_new_entrypoint.py",
+        "test_name": "test_submit_result_rejects_pseudo_json_before_loading_current_run",
+        "covers": ("submit_result_body_entry",),
+        "required_markers": (
+            "test_submit_result_body_file_accepts_top_level_json_object",
+            "test_submit_result_rejects_pseudo_json_before_loading_current_run",
+            "test_submit_result_rejects_invalid_body_sources_without_normalizing",
+            "test_cli_submit_result_reports_body_type_as_json_error",
+        ),
+    },
 )
 
 
@@ -597,6 +630,10 @@ def expected_reaction(
         return "mechanical_reject"
     if object_state == "unsupported_legacy_shape" or ai_profile == "old_protocol":
         return "mechanical_reject"
+    if object_state in {"current_pointer_corrupt_unambiguous", "index_pointer_corrupt"}:
+        return "recover_pointer"
+    if object_state in {"current_pointer_corrupt_ambiguous", "pointer_write_in_progress"}:
+        return "structured_blocker"
     if source == "stale_workspace":
         return "reject_stale_authority"
     if object_state in {"stale_run", "stale_route", "stale_packet"} or timing == "old_result_after_reissue":
@@ -644,6 +681,7 @@ REACTION_OWNER = {
     "ignore_stale_late_material": "current_contract_runtime_matrix",
     "not_due_structured_wait": "current_contract_stage_timing_matrix",
     "structured_blocker": "current_contract_blocker_repair_matrix",
+    "recover_pointer": "current_contract_runtime_matrix",
     "progress_only_not_evidence": "current_contract_evidence_freshness_matrix",
     "reject_overclaim": "current_contract_overclaim_matrix",
     "reissue_current_packet": "current_contract_reissue_matrix",
@@ -659,6 +697,7 @@ ABSORBING_NEXT_ACTION_BY_REACTION = {
     "ignore_stale_late_material": "ignore_late_or_stale_material_and_wait_for_current_packet",
     "not_due_structured_wait": "record_not_due_wait_with_current_stage_pointer",
     "structured_blocker": "issue_owner_named_repair_or_reissue_packet",
+    "recover_pointer": "backup_corrupt_pointer_and_restore_only_unambiguous_current_run",
     "progress_only_not_evidence": "keep_packet_open_and_require_real_result_artifact",
     "reject_overclaim": "reject_overclaim_and_reissue_current_packet_with_evidence_boundary",
     "reissue_current_packet": "reissue_same_current_packet_with_missing_delta_feedback",
@@ -678,6 +717,18 @@ def _existing_test_link_for_cell(
 ) -> str:
     if object_state == "unsupported_legacy_shape" or ai_profile == "old_protocol":
         return "cartesian_control_plane_existing_matrix"
+    if (
+        object_state
+        in {
+            "current_pointer_corrupt_unambiguous",
+            "current_pointer_corrupt_ambiguous",
+            "index_pointer_corrupt",
+            "pointer_write_in_progress",
+        }
+    ):
+        return "pointer_persistence_canaries"
+    if ai_profile == "malformed_json_stringified_object":
+        return "submit_result_body_entry_canaries"
     if ai_profile.startswith("malformed_json_"):
         return "fake_ai_malformed_body_profiles"
     if ai_profile in {"ack_only", "summary_only", "overclaims_completion"} or reaction == "reject_overclaim":

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import Any
 
@@ -54,10 +55,18 @@ def cancel_run(root: Path, *, reason: str = "manual_cancel") -> dict[str, Any]:
     }
 
 
-def submit_result(root: Path, *, lease_id: str, packet_id: str, body: str) -> dict[str, Any]:
+def submit_result(
+    root: Path,
+    *,
+    lease_id: str,
+    packet_id: str,
+    body: str | None = None,
+    body_file: Path | None = None,
+) -> dict[str, Any]:
+    resolved_body = _resolve_submit_result_body(body=body, body_file=body_file)
     shell = run_shell.load_run_shell(root)
     ledger = run_shell.load_run_ledger(shell)
-    result_id = host.submit_host_result(ledger, lease_id, packet_id, body)
+    result_id = host.submit_host_result(ledger, lease_id, packet_id, resolved_body)
     run_shell.save_run_ledger(shell, ledger, guard_trigger="submit_result_submitted")
     folded = _run_until_wait_and_save(shell, ledger, guard_trigger="submit_result")
     return {
@@ -66,6 +75,51 @@ def submit_result(root: Path, *, lease_id: str, packet_id: str, body: str) -> di
         "run_until_wait": folded,
         **_runtime_state(ledger),
     }
+
+
+def _resolve_submit_result_body(*, body: str | None, body_file: Path | None) -> str:
+    sources = [value is not None for value in (body, body_file)]
+    if sources.count(True) != 1:
+        raise runtime.BlackBoxRuntimeError("submit-result requires exactly one body source: --body or --body-file")
+    if body_file is not None:
+        try:
+            body = Path(body_file).read_text(encoding="utf-8")
+        except OSError as exc:
+            raise runtime.BlackBoxRuntimeError(
+                f"submit-result --body-file is unreadable: {body_file} ({type(exc).__name__})"
+            ) from exc
+        source = "--body-file"
+    else:
+        source = "--body"
+    assert body is not None
+    return _require_json_object_body(body, source=source)
+
+
+def _require_json_object_body(body: str, *, source: str) -> str:
+    if not body.strip():
+        raise runtime.BlackBoxRuntimeError(
+            f"submit-result body must be a top-level JSON object; source={source}; payload_type=empty"
+        )
+    try:
+        payload = json.loads(body)
+    except json.JSONDecodeError as exc:
+        raise runtime.BlackBoxRuntimeError(
+            "submit-result body must be a top-level JSON object; "
+            f"source={source}; payload_type=invalid_json; error={exc}; preview={_payload_preview(body)}"
+        ) from exc
+    if not isinstance(payload, dict):
+        raise runtime.BlackBoxRuntimeError(
+            "submit-result body must be a top-level JSON object; "
+            f"source={source}; payload_type={type(payload).__name__}; preview={_payload_preview(body)}"
+        )
+    return body
+
+
+def _payload_preview(text: str, *, limit: int = 80) -> str:
+    compact = " ".join(text.split())
+    if len(compact) <= limit:
+        return compact
+    return f"{compact[:limit]}...{compact[-limit:]}"
 
 
 def run_fake_e2e(

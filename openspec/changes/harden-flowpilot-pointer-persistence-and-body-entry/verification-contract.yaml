@@ -1,0 +1,315 @@
+contract_version: 1
+change: harden-flowpilot-pointer-persistence-and-body-entry
+claim_boundary:
+  routine: >
+    Proves local repository implementation, model/test coverage, prompt/card
+    synchronization, and installed local FlowPilot skill synchronization for
+    pointer persistence and submit-result body entry.
+  excludes:
+    - remote push
+    - public release
+    - GitHub publication
+    - live AI semantic quality
+obligations:
+  - id: req.pointer.atomic_write
+    source: "specs/runtime-ledger-persistence/spec.md#Requirement: Pointer files use runtime-owned atomic JSON persistence"
+    claim: "current.json and index.json writes go through runtime-owned atomic JSON persistence rather than direct partial-file writes."
+    required: true
+    evidence:
+      - check.tests.core_runtime
+      - check.flowguard.control_plane_exhaustion
+      - check.install.self_check
+  - id: req.pointer.recovery
+    source: "specs/active-writer-settlement/spec.md#Requirement: Pointer reads recover only from current authoritative run evidence"
+    claim: "Corrupt pointer files are backed up and repaired only when the current run evidence is unambiguous, with no new pointer business fields."
+    required: true
+    evidence:
+      - check.tests.core_runtime
+      - check.tests.defects
+      - check.flowguard.current_contract_matrix
+  - id: req.pointer.no_intent_guessing
+    source: "specs/flowpilot-invocation-intent-isolation/spec.md#Requirement: Pointer recovery never infers a user invocation intent"
+    claim: "Recovery repairs control pointers but does not silently choose a requested command, packet, or route intent."
+    required: true
+    evidence:
+      - check.tests.core_runtime
+      - check.flowguard.integration_cartesian
+  - id: req.submit_result.body_object
+    source: "specs/packet-open-authority-exits/spec.md#Requirement: submit-result body entry accepts exactly one top-level JSON object source"
+    claim: "submit-result accepts exactly one body source and rejects malformed, stringified, empty, non-object, or unreadable body input before ledger mutation."
+    required: true
+    evidence:
+      - check.tests.new_entrypoint
+      - check.tests.core_runtime
+      - check.flowguard.contract_exhaustion
+  - id: req.prompts.body_file_default
+    source: "specs/flowpilot-prompt-boundary-policy/spec.md#Requirement: Formal result prompts prefer body-file submission"
+    claim: "Prompt and card surfaces steer formal agents toward body-file submission instead of raw shell-escaped JSON."
+    required: true
+    evidence:
+      - check.tests.card_instruction_coverage
+      - check.install.self_check
+  - id: req.coverage.cartesian
+    source: "specs/end-to-end-chaos-coverage-matrix/spec.md#Requirement: Pointer and body-entry faults have Cartesian coverage"
+    claim: "Pointer write/recovery and body-entry failures are represented in the Cartesian/model coverage suites."
+    required: true
+    evidence:
+      - check.flowguard.control_plane_exhaustion
+      - check.flowguard.current_contract_matrix
+      - check.flowguard.integration_cartesian
+      - check.flowguard.contract_exhaustion
+      - check.flowguard.model_test_alignment
+  - id: req.ownership.model_test_alignment
+    source: "specs/flowguard-test-obligation-ownership/spec.md#Requirement: Pointer/body hardening obligations bind to test ownership"
+    claim: "Model-Test Alignment maps the pointer/body obligations to owner code surfaces and ordinary tests."
+    required: true
+    evidence:
+      - check.tests.model_test_alignment
+      - check.flowguard.model_test_alignment
+checks:
+  - id: check.tests.core_runtime
+    kind: command
+    command: python
+    args:
+      - -m
+      - unittest
+      - -v
+      - tests.test_flowpilot_core_runtime
+    required: true
+    covers:
+      - req.pointer.atomic_write
+      - req.pointer.recovery
+      - req.pointer.no_intent_guessing
+      - req.submit_result.body_object
+    expected:
+      exit_code: 0
+  - id: check.tests.new_entrypoint
+    kind: command
+    command: python
+    args:
+      - -m
+      - unittest
+      - -v
+      - tests.test_flowpilot_new_entrypoint
+    required: true
+    covers:
+      - req.submit_result.body_object
+    expected:
+      exit_code: 0
+  - id: check.tests.defects
+    kind: command
+    command: python
+    args:
+      - -m
+      - unittest
+      - -v
+      - tests.test_flowpilot_defects
+    required: true
+    covers:
+      - req.pointer.recovery
+    expected:
+      exit_code: 0
+  - id: check.tests.card_instruction_coverage
+    kind: command
+    command: python
+    args:
+      - -m
+      - unittest
+      - -v
+      - tests.test_flowpilot_card_instruction_coverage
+    required: true
+    covers:
+      - req.prompts.body_file_default
+    expected:
+      exit_code: 0
+  - id: check.tests.model_test_alignment
+    kind: command
+    command: python
+    args:
+      - -m
+      - unittest
+      - -v
+      - tests.test_flowpilot_model_test_alignment
+    required: true
+    covers:
+      - req.ownership.model_test_alignment
+      - req.coverage.cartesian
+    expected:
+      exit_code: 0
+  - id: check.flowguard.control_plane_exhaustion
+    kind: command
+    command: python
+    args:
+      - simulations/run_flowpilot_cartesian_control_plane_exhaustion_checks.py
+      - --json-out
+      - simulations/flowpilot_cartesian_control_plane_exhaustion_results.json
+    required: true
+    covers:
+      - req.pointer.atomic_write
+      - req.coverage.cartesian
+    expected:
+      exit_code: 0
+  - id: check.flowguard.current_contract_matrix
+    kind: command
+    command: python
+    args:
+      - simulations/run_flowpilot_current_contract_cartesian_matrix_checks.py
+      - --json-out
+      - simulations/flowpilot_current_contract_cartesian_matrix_results.json
+    required: true
+    covers:
+      - req.pointer.recovery
+      - req.coverage.cartesian
+    expected:
+      exit_code: 0
+  - id: check.flowguard.integration_cartesian
+    kind: command
+    command: python
+    args:
+      - simulations/run_flowpilot_integration_cartesian_coverage_checks.py
+      - --json-out
+      - simulations/flowpilot_integration_cartesian_coverage_results.json
+    required: true
+    covers:
+      - req.pointer.no_intent_guessing
+      - req.coverage.cartesian
+    expected:
+      exit_code: 0
+  - id: check.flowguard.contract_exhaustion
+    kind: command
+    command: python
+    args:
+      - simulations/run_flowpilot_contract_exhaustion_mesh_checks.py
+      - --summary-json
+    required: true
+    covers:
+      - req.submit_result.body_object
+      - req.coverage.cartesian
+    expected:
+      exit_code: 0
+  - id: check.flowguard.model_test_alignment
+    kind: command
+    command: python
+    args:
+      - simulations/run_flowpilot_model_test_alignment_checks.py
+      - --json-out
+      - simulations/flowpilot_model_test_alignment_results.json
+    required: true
+    covers:
+      - req.ownership.model_test_alignment
+      - req.coverage.cartesian
+    expected:
+      exit_code: 0
+  - id: check.final.meta
+    kind: command
+    command: python
+    args:
+      - simulations/run_meta_checks.py
+    required: true
+    covers:
+      - req.coverage.cartesian
+    expected:
+      exit_code: 0
+  - id: check.final.capability
+    kind: command
+    command: python
+    args:
+      - simulations/run_capability_checks.py
+    required: true
+    covers:
+      - req.coverage.cartesian
+    expected:
+      exit_code: 0
+  - id: check.final.topology_build
+    kind: command
+    command: python
+    args:
+      - scripts/flowguard_project_topology.py
+      - build
+    required: true
+    covers:
+      - req.coverage.cartesian
+    expected:
+      exit_code: 0
+  - id: check.final.topology_check
+    kind: command
+    command: python
+    args:
+      - scripts/flowguard_project_topology.py
+      - check
+    required: true
+    covers:
+      - req.coverage.cartesian
+    expected:
+      exit_code: 0
+  - id: check.install.sync
+    kind: command
+    command: python
+    args:
+      - scripts/install_flowpilot.py
+      - --sync-repo-owned
+      - --json
+    required: true
+    covers:
+      - req.pointer.atomic_write
+      - req.prompts.body_file_default
+    expected:
+      exit_code: 0
+  - id: check.install.audit
+    kind: command
+    command: python
+    args:
+      - scripts/audit_local_install_sync.py
+      - --json
+    required: true
+    covers:
+      - req.prompts.body_file_default
+    expected:
+      exit_code: 0
+  - id: check.install.check
+    kind: command
+    command: python
+    args:
+      - scripts/install_flowpilot.py
+      - --check
+      - --json
+    required: true
+    covers:
+      - req.pointer.atomic_write
+      - req.prompts.body_file_default
+    expected:
+      exit_code: 0
+  - id: check.install.self_check
+    kind: command
+    command: python
+    args:
+      - scripts/check_install.py
+      - --json
+    required: true
+    covers:
+      - req.pointer.atomic_write
+      - req.prompts.body_file_default
+    expected:
+      exit_code: 0
+freshness:
+  watch:
+    - openspec/changes/harden-flowpilot-pointer-persistence-and-body-entry/proposal.md
+    - openspec/changes/harden-flowpilot-pointer-persistence-and-body-entry/design.md
+    - openspec/changes/harden-flowpilot-pointer-persistence-and-body-entry/tasks.md
+    - openspec/changes/harden-flowpilot-pointer-persistence-and-body-entry/specs/**/*.md
+    - openspec/changes/harden-flowpilot-pointer-persistence-and-body-entry/verification-contract.yaml
+    - skills/flowpilot/assets/flowpilot_core_runtime/**/*.py
+    - skills/flowpilot/assets/flowpilot_new_cli.py
+    - skills/flowpilot/assets/flowpilot_new_run_commands.py
+    - skills/flowpilot/assets/runtime_kit/prompts/**/*.md
+    - skills/flowpilot/assets/runtime_kit/cards/**/*.md
+    - simulations/flowpilot_*cartesian*.py
+    - simulations/flowpilot_*exhaustion*.py
+    - simulations/run_flowpilot_*checks.py
+    - tests/test_flowpilot_core_runtime.py
+    - tests/test_flowpilot_new_entrypoint.py
+    - tests/test_flowpilot_defects.py
+    - tests/test_flowpilot_card_instruction_coverage.py
+    - tests/test_flowpilot_model_test_alignment.py
+skipped_checks_policy: skipped checks do not count as pass evidence
+background_policy: background runs count only after exit/result artifacts are inspected

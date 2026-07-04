@@ -94,6 +94,7 @@ REQUIRED_FILES = [
     "skills/flowpilot/assets/flowpilot_core_runtime/packet_result_contracts.py",
     "skills/flowpilot/assets/flowpilot_core_runtime/packet_stage_evidence_matrix.py",
     "skills/flowpilot/assets/flowpilot_core_runtime/packets.py",
+    "skills/flowpilot/assets/flowpilot_core_runtime/pointer_store.py",
     "skills/flowpilot/assets/flowpilot_core_runtime/review_closure.py",
     "skills/flowpilot/assets/flowpilot_core_runtime/role_handoff.py",
     "skills/flowpilot/assets/flowpilot_core_runtime/router.py",

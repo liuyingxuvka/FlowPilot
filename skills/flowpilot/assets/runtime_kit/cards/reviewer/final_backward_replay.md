@@ -3,7 +3,7 @@ recipient_role: human_like_reviewer
 recipient_identity: FlowPilot human-like reviewer role
 allowed_scope: Use this card only while acting as the recipient role named above for the FlowPilot runtime duty assigned by the manifest.
 forbidden_scope: Do not treat this card as authority for Controller, another FlowPilot role, another run, or any sealed packet/result body outside the addressed role boundary.
-required_return: System-card ACKs go through the current runtime card check-in command; this is the current-runtime return path for card ACKs. Current work-package ACKs and completion outputs go through the assigned current packet lease when present. For formal role outputs, write the body only to a run-scoped packet, result, report, decision, or blocker file, then submit it with `flowpilot_new.py submit-result --lease-id <lease-id> --packet-id <packet-id> --body <sealed_result_summary>` so the current runtime ledger records the event and later exposes only controller-visible envelope metadata with status, paths, and hashes. A local file write is only local storage and must not be treated as wait completion until the current runtime records the packet result. Do not include report bodies, blockers, evidence details, recommendations, decisions, or result details in chat.
+required_return: System-card ACKs go through the current runtime card check-in command; this is the current-runtime return path for card ACKs. Current work-package ACKs and completion outputs go through the assigned current packet lease when present. For formal role outputs, write the body only to a run-scoped packet, result, report, decision, or blocker file, then submit it with `flowpilot_new.py submit-result --lease-id <lease-id> --packet-id <packet-id> --body-file <sealed_result_body_file>` so the current runtime ledger records the event and later exposes only controller-visible envelope metadata with status, paths, and hashes. A local file write is only local storage and must not be treated as wait completion until the current runtime records the packet result. Do not include report bodies, blockers, evidence details, recommendations, decisions, or result details in chat.
 post_ack: ACK is receipt only; ACK is not completion. This is a work item when it asks for an output, report, decision, result, or blocker. After work-card ACK, do not stop or wait for another prompt; immediately continue the assigned work and submit the formal output or blocker through the current runtime path. The task remains unfinished until the current runtime receives that output or blocker.
 next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Controller must follow the `flowpilot_new.py` lifecycle guard and foreground duty; no unsupported command text, stale runtime state, chat history, or historical artifact authorizes current-run progress.
 runtime_context: Treat the runtime delivery envelope as the live source for the current run, current task, current card, current phase, current node/frontier, user_request_path, and source paths. If that live context is missing or stale, do not continue from memory; submit a protocol blocker through the current runtime path.
@@ -69,6 +69,13 @@ final ledger reports `parent_backward_review_missing` or a non-covered
 control-plane ordering failure; do not create a late parent repair review from
 the terminal gate.
 
+Terminal backward replay also cannot substitute for runtime hard gates such as
+missing node-entry plan/context, missing PM disposition, unresolved current
+packets, or stale-current-evidence repair. If the runtime or PM final ledger
+reports `control_plane_hard_gate_escape:<reason>:<subject>`, treat that as a
+return to the owning normal runtime gate, not as a terminal quality finding to
+audit around.
+
 Allowed row statuses are `closed`, `blocked`, `waived`, and `superseded`.
 Completion can pass only when `final_blockers` is an explicit empty array.
 When any final blocker exists, include one object with `blocker_id`,
@@ -79,6 +86,11 @@ When any final blocker exists, include one object with `blocker_id`,
 Check backward from the delivered product or final output:
 
 - the delivered output actually satisfies the user's real intent;
+- the delivered output preserves source-intent acceptance rows rather than only
+  a generic current-goal summary. Compare the actual final artifact, software
+  behavior, document, story, report, workflow, or skill behavior against the
+  user's concrete objects, requested actions, quality floor, quantities,
+  constraints, and prohibitions;
 - the delivered output is coherent as one whole artifact or system, not merely
   a pile of locally accepted node outputs. Block when scattered sections,
   disconnected software pieces, duplicate/conflicting components, missing

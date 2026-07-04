@@ -16,7 +16,7 @@ RUNTIME_ROOT = ROOT / "skills" / "flowpilot" / "assets" / "flowpilot_core_runtim
 if str(ASSETS_ROOT) not in sys.path:
     sys.path.insert(0, str(ASSETS_ROOT))
 
-from flowpilot_core_runtime import packet_result_contracts, packets, role_handoff, run_shell  # noqa: E402
+from flowpilot_core_runtime import packet_result_contracts, packets, pointer_store, role_handoff, run_shell  # noqa: E402
 
 
 def load_module(name: str, path: Path):
@@ -2139,6 +2139,34 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         self.assertEqual(len(review_packets), 1)
         self.assertEqual(json.loads(review_packets[0]["body"])["staged_effect"]["effect_kind"], "commit_node_acceptance_plan")
 
+    def _accept_node_entry_gate(self, ledger: dict[str, object], node_id: str) -> None:
+        node = ledger["route_nodes"][node_id]
+        generation = int(node.get("repair_generation", 0))
+        plan_id = f"plan-{node_id}"
+        context_id = f"context-{node_id}"
+        ledger.setdefault("node_acceptance_plans", {})[plan_id] = {
+            "plan_id": plan_id,
+            "status": "accepted",
+            "node_id": node_id,
+            "repair_generation": generation,
+            "created_at": runtime.now_iso(),
+        }
+        ledger.setdefault("node_context_packages", {})[context_id] = {
+            "context_package_id": context_id,
+            "status": "accepted",
+            "node_id": node_id,
+            "repair_generation": generation,
+            "purpose": "Current parent/module entry context.",
+            "acceptance_criteria": list(node.get("acceptance_criteria") or []),
+            "relevant_references": [],
+            "known_risks": [],
+            "acceptance_item_projection": [],
+            "created_at": runtime.now_iso(),
+        }
+        node["node_acceptance_plan_id"] = plan_id
+        node["node_context_package_id"] = context_id
+        node["node_context_package_repair_generation"] = generation
+
     def _parent_replacement_replay_fixture(
         self,
         *,
@@ -2191,6 +2219,7 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
             "acceptance_criteria": ["active child accepted"],
             "child_node_ids": [],
         }
+        self._accept_node_entry_gate(ledger, parent_id)
         return ledger, parent_id, old_child_id, active_child_id
 
     def test_parent_backward_review_closes_parent_without_second_reviewer_packet(self) -> None:
@@ -2226,6 +2255,7 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
             "acceptance_criteria": ["child accepted"],
             "child_node_ids": [],
         }
+        self._accept_node_entry_gate(ledger, parent_id)
         packet_id = runtime.ensure_parent_backward_replay_packet(ledger, parent_id)
         packet = ledger["packets"][packet_id]
         self.assertEqual(packet["envelope"]["packet_kind"], "review")
@@ -2405,6 +2435,7 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
             "acceptance_criteria": ["active child accepted"],
             "child_node_ids": [],
         }
+        self._accept_node_entry_gate(ledger, parent_id)
 
         packet_id = runtime.ensure_parent_backward_replay_packet(ledger, parent_id)
         packet_body = json.loads(ledger["packets"][packet_id]["body"])
@@ -2526,11 +2557,12 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
             "acceptance_criteria": ["old child accepted"],
             "child_node_ids": [],
         }
+        self._accept_node_entry_gate(ledger, parent_id)
 
         with self.assertRaisesRegex(runtime.BlackBoxRuntimeError, "missing route node"):
             runtime.ensure_parent_backward_replay_packet(ledger, parent_id)
 
-    def test_multiple_parent_backward_review_gaps_are_control_plane_corruption(self) -> None:
+    def test_multiple_parent_backward_review_gaps_return_oldest_parent_gap_to_owner(self) -> None:
         ledger = runtime.new_ledger("Goal", "Acceptance")
         authorize_background_collaboration(ledger)
         ledger["contract_frozen"] = True
@@ -2567,6 +2599,9 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
                 "child_node_ids": [],
             },
         }
+        self._accept_node_entry_gate(ledger, "root")
+        self._accept_node_entry_gate(ledger, "parent")
+        self._accept_node_entry_gate(ledger, "child")
         ledger["execution_frontier"] = {
             "active_route_version": route_version,
             "active_node_id": "",
@@ -2576,8 +2611,9 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
 
         action = runtime.router_next_action(ledger)
 
-        self.assertEqual(action.action_type, "control_plane_blocker")
-        self.assertEqual(action.subject_id, "control_plane_parent_backward_review_order_violation")
+        self.assertEqual(action.action_type, "issue_parent_backward_replay_packet")
+        self.assertEqual(action.subject_id, "root")
+        self.assertEqual(action.reason, "control_plane_hard_gate_escape:missing_parent_backward_replay:root")
         unresolved = ledger["final_route_wide_gate_ledger"]["unresolved"]
         self.assertIn("control_plane_parent_backward_review_multiple_gaps", unresolved)
 
@@ -2616,11 +2652,14 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
                 "child_node_ids": [],
             },
         }
+        self._accept_node_entry_gate(ledger, "parent")
+        self._accept_node_entry_gate(ledger, "child")
 
         action = runtime.router_next_action(ledger)
 
-        self.assertEqual(action.action_type, "control_plane_blocker")
-        self.assertEqual(action.subject_id, "control_plane_parent_backward_review_order_violation")
+        self.assertEqual(action.action_type, "issue_parent_backward_replay_packet")
+        self.assertEqual(action.subject_id, "parent")
+        self.assertEqual(action.reason, "control_plane_hard_gate_escape:missing_parent_backward_replay:parent")
         self.assertFalse(runtime._final_gate_ledgers_clean_for_terminal_replay(ledger))
 
     def test_pm_disposition_packet_minimal_shape_uses_current_node_acceptance_items(self) -> None:
@@ -4384,6 +4423,111 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
             self.assertEqual(finding["code"], "current_run_resolution_failed")
             self.assertIn("current.json", finding["evidence"]["pointer_path"])
 
+    def test_corrupt_current_pointer_recovers_from_single_current_run_evidence(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            shell = run_shell.create_run_shell(root, "Goal", "Acceptance", run_id="run-recover-current")
+            current_path = root / ".flowpilot" / "current.json"
+            current_path.write_bytes(b"\x00\x00\x00\x00")
+
+            resolution = control_surface.resolve_current_run(root)
+
+            self.assertTrue(resolution.ok, resolution)
+            self.assertEqual(resolution.run_id, "run-recover-current")
+            current = json.loads(current_path.read_text(encoding="utf-8"))
+            self.assertEqual(current["run_id"], "run-recover-current")
+            self.assertEqual(current["run_root"], str(shell.run_root.resolve()))
+            self.assertLessEqual(
+                set(current),
+                {
+                    "schema_version",
+                    "run_id",
+                    "run_root",
+                    "ledger_path",
+                    "authority",
+                    "lifecycle_state",
+                    "ledger_lifecycle_state",
+                    "terminal_lifecycle_status",
+                    "controller_stop_allowed",
+                    "final_return_allowed",
+                    "closure_decision",
+                    "updated_at",
+                },
+            )
+            backups = list((root / ".flowpilot").glob("current.json.corrupt-backup-*"))
+            self.assertEqual(len(backups), 1)
+            self.assertEqual(backups[0].read_bytes(), b"\x00\x00\x00\x00")
+
+    def test_corrupt_current_pointer_does_not_guess_between_multiple_runs(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            run_shell.create_run_shell(root, "Goal A", "Acceptance", run_id="run-a")
+            run_shell.create_run_shell(root, "Goal B", "Acceptance", run_id="run-b")
+            current_path = root / ".flowpilot" / "current.json"
+            current_path.write_bytes(b"\x00")
+
+            resolution = control_surface.resolve_current_run(root)
+
+            self.assertFalse(resolution.ok)
+            self.assertEqual(resolution.error_code, "ambiguous_current_recovery")
+            self.assertEqual(current_path.read_bytes(), b"\x00")
+
+    def test_corrupt_index_pointer_rebuilds_without_new_pointer_fields(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            shell = run_shell.create_run_shell(root, "Goal", "Acceptance", run_id="run-recover-index")
+            index_path = root / ".flowpilot" / "index.json"
+            index_path.write_bytes(b"\x00\x00")
+            ledger = run_shell.load_run_ledger(shell)
+            ledger["lifecycle"] = {"state": "index_recovery_probe"}
+
+            run_shell.save_run_ledger(shell, ledger, guard_trigger="index_recovery_probe")
+
+            index = json.loads(index_path.read_text(encoding="utf-8"))
+            self.assertEqual(index["schema_version"], "black_box_flowpilot_run_shell.v1")
+            self.assertEqual([row["run_id"] for row in index["runs"]], ["run-recover-index"])
+            self.assertLessEqual(
+                set(index["runs"][0]),
+                {
+                    "schema_version",
+                    "run_id",
+                    "run_root",
+                    "ledger_path",
+                    "authority",
+                    "lifecycle_state",
+                    "ledger_lifecycle_state",
+                    "terminal_lifecycle_status",
+                    "controller_stop_allowed",
+                    "final_return_allowed",
+                    "closure_decision",
+                    "updated_at",
+                },
+            )
+            self.assertEqual(len(list((root / ".flowpilot").glob("index.json.corrupt-backup-*"))), 1)
+
+    def test_pointer_recovery_respects_active_runtime_json_write_lock(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            run_shell.create_run_shell(root, "Goal", "Acceptance", run_id="run-locked-current")
+            current_path = root / ".flowpilot" / "current.json"
+            current_path.write_bytes(b"\x00")
+            lock_path = current_path.with_name("current.json.write.lock")
+            lock_path.write_text(
+                json.dumps(
+                    {
+                        "pid": 999999,
+                        "target_initial_signature": {"exists": True, "mtime_ns": 0, "size": 1},
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            result = pointer_store.recover_current_pointer(root)
+
+            self.assertFalse(result.ok)
+            self.assertEqual(result.error_code, "pointer_write_in_progress")
+            self.assertEqual(current_path.read_bytes(), b"\x00")
+
     def test_safe_json_read_and_live_audit_report_invalid_utf8_without_traceback(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -5694,6 +5838,8 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
                 self.assertIn("flowpilot_new.py", handoff["commands"]["ack"])
                 self.assertIn("open-packet", handoff["commands"]["open_packet"])
                 self.assertIn("submit-result", handoff["commands"]["submit_result"])
+                self.assertIn("--body-file", handoff["commands"]["submit_result"])
+                self.assertNotIn("--body <sealed_result_summary>", handoff["commands"]["submit_result"])
                 self.assertNotIn(body, rendered)
 
                 with self.assertRaises(Exception):
@@ -6192,6 +6338,49 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         self.assertNotEqual(recovery["fresh_packet_id"], fresh_pm_packet)
         self.assertEqual(ledger["packets"][recovery["fresh_packet_id"]]["envelope"]["packet_kind"], "pm_repair_decision")
         self.assertTrue(recovery["user_requested"])
+
+    def test_pm_repair_decision_break_glass_routes_control_plane_without_user_wait(self) -> None:
+        ledger, packet_id, worker = runtime_runner._base_ledger()
+        runtime.ack_lease(ledger, worker, packet_id)
+        runtime.submit_result(
+            ledger,
+            worker,
+            packet_id,
+            role_result_body(
+                "Worker reports a FlowPilot control-plane blocker.",
+                decision="block",
+                blocking=True,
+                recommended_resolution="PM should decide whether control-plane break-glass is required.",
+            ),
+        )
+        blocker_id = next(iter(ledger["active_blockers"]))
+        pm_packet = ledger["active_blockers"][blocker_id]["pm_repair_packet_id"]
+        pm_lease = runtime.lease_agent(ledger, "pm", agent_id="pm-break-glass", packet_id=pm_packet)
+        runtime.assign_packet(ledger, pm_packet, pm_lease)
+        runtime.ack_lease(ledger, pm_lease, pm_packet)
+        open_required_result_reads(ledger, pm_packet, pm_lease)
+
+        runtime.submit_result(
+            ledger,
+            pm_lease,
+            pm_packet,
+            pm_repair_decision_body(
+                ledger,
+                pm_packet,
+                decision="break_glass",
+                reason="PM requests Controller diagnosis for a FlowPilot control-plane blocker.",
+            ),
+        )
+
+        blocker = ledger["active_blockers"][blocker_id]
+        action = runtime.router_next_action(ledger)
+        self.assertEqual(blocker["status"], "active")
+        self.assertTrue(blocker["pm_break_glass_decision_id"])
+        self.assertEqual(action.action_type, "control_plane_blocker")
+        self.assertEqual(action.subject_id, blocker_id)
+        self.assertEqual(action.responsibility, "controller")
+        self.assertIn("PM requested Controller break-glass", action.reason)
+        self.assertNotEqual(action.action_type, "wait_for_resume")
 
     def test_missing_required_information_stops_without_pm_repair_packet(self) -> None:
         ledger, packet_id, worker = runtime_runner._base_ledger()
