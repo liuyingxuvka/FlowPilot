@@ -1,0 +1,264 @@
+contract_version: 1
+change: harden-flowpilot-prompt-first-quality-chain
+
+obligations:
+  - id: req.formal_gate_review.source_intent
+    source: "specs/formal-gate-review-standards/spec.md#Requirement: Reviewer gates preserve source intent"
+    claim: "Reviewer prompt cards require comparison against source intent, accepted requirement trace, current acceptance rows, and the reviewed artifact or package."
+    required: true
+    evidence:
+      - check.prompt_card_instruction_coverage
+      - check.reviewer_active_challenge
+
+  - id: req.formal_gate_review.generic_root_block
+    source: "specs/formal-gate-review-standards/spec.md#Scenario: Reviewer blocks generic root contract"
+    claim: "Reviewer root-contract review blocks generic or diluted acceptance language rather than passing a contract that only says to satisfy the user goal."
+    required: true
+    evidence:
+      - check.prompt_card_instruction_coverage
+      - check.planning_quality_model
+
+  - id: req.formal_gate_review.actual_artifact
+    source: "specs/formal-gate-review-standards/spec.md#Scenario: Reviewer compares actual artifact, not process evidence"
+    claim: "Reviewer worker, evidence, and final replay prompts reject process-only proof when user-facing artifact evidence is required."
+    required: true
+    evidence:
+      - check.reviewer_active_challenge
+      - check.prompt_card_instruction_coverage
+
+  - id: req.role_repair.pm_source_intent
+    source: "specs/role-scoped-quality-repair-prompts/spec.md#Requirement: PM owns source-intent preservation and repair"
+    claim: "PM prompt cards require concrete source-intent acceptance rows and PM-owned repair when reviewer challenge finds dilution or unverifiable acceptance."
+    required: true
+    evidence:
+      - check.prompt_card_instruction_coverage
+      - check.planning_quality_model
+
+  - id: req.role_repair.reviewer_antirepair
+    source: "specs/role-scoped-quality-repair-prompts/spec.md#Requirement: Reviewer remains anti-repair while enforcing quality"
+    claim: "Reviewer prompt cards preserve pass/block authority and do not instruct Reviewer to rewrite or directly repair PM or worker artifacts."
+    required: true
+    evidence:
+      - check.prompt_card_instruction_coverage
+
+  - id: req.role_repair.worker_evidence
+    source: "specs/role-scoped-quality-repair-prompts/spec.md#Requirement: Worker output evidence must address accepted task"
+    claim: "Worker-result and evidence-quality review prompts block existence-only evidence for user-facing or artifact-facing quality claims."
+    required: true
+    evidence:
+      - check.reviewer_active_challenge
+      - check.prompt_card_instruction_coverage
+
+  - id: req.child_skill.standards_lens
+    source: "specs/role-child-skill-use/spec.md#Requirement: Child skills standards lenses in same route"
+    claim: "Child-skill selection, gate-manifest, and node-plan prompts carry selected skills as standards lenses inside the single FlowPilot route."
+    required: true
+    evidence:
+      - check.prompt_card_instruction_coverage
+      - check.planning_quality_model
+
+  - id: req.child_skill.not_theme_only
+    source: "specs/role-child-skill-use/spec.md#Scenario: Selected skill standards cannot be theme-only"
+    claim: "Prompt cards require selected child skills to name the concrete standard, owner role, projection point, and evidence expectation."
+    required: true
+    evidence:
+      - check.prompt_card_instruction_coverage
+      - check.planning_quality_model
+
+  - id: req.boundary.runtime_mechanical
+    source: "specs/flowpilot-prompt-boundary-policy/spec.md#Requirement: Prompt boundaries keep runtime mechanical"
+    claim: "The change does not add runtime semantic vagueness judging; runtime remains responsible for mechanical packet, review, ledger, and state checks."
+    required: true
+    evidence:
+      - check.runtime_boundary_diff
+      - check.prompt_card_instruction_coverage
+
+  - id: req.boundary.reviewer_vague_contract
+    source: "specs/flowpilot-prompt-boundary-policy/spec.md#Requirement: Reviewer owns vague-contract blocking"
+    claim: "Reviewer cards explicitly own vague-contract and semantic-dilution blocking."
+    required: true
+    evidence:
+      - check.prompt_card_instruction_coverage
+      - check.reviewer_active_challenge
+
+  - id: req.terminal.final_output_replay
+    source: "specs/terminal-ledger/spec.md#Requirement: Final ledger closes source intent against delivered product"
+    claim: "PM final ledger, PM closure, and final backward replay prompts start from the delivered output and trace back to source requirements and active acceptance items."
+    required: true
+    evidence:
+      - check.prompt_card_instruction_coverage
+      - check.reviewer_active_challenge
+
+  - id: req.terminal.ledger_only_insufficient
+    source: "specs/terminal-ledger/spec.md#Scenario: Ledger-only replay insufficient"
+    claim: "Final replay rejects ledger-only closure when delivered artifact evidence or source-intent mapping is missing."
+    required: true
+    evidence:
+      - check.reviewer_active_challenge
+      - check.prompt_card_instruction_coverage
+
+checks:
+  - id: check.openspec_status
+    kind: command
+    command: openspec
+    args:
+      - status
+      - --change
+      - harden-flowpilot-prompt-first-quality-chain
+      - --json
+    required: true
+    covers:
+      - req.formal_gate_review.source_intent
+      - req.role_repair.pm_source_intent
+      - req.boundary.runtime_mechanical
+    expected:
+      exit_code: 0
+
+  - id: check.flowguard_import
+    kind: command
+    command: python
+    args:
+      - -c
+      - "print(__import__('flowguard').SCHEMA_VERSION)"
+    required: true
+    covers:
+      - req.formal_gate_review.source_intent
+      - req.boundary.runtime_mechanical
+    expected:
+      exit_code: 0
+
+  - id: check.prompt_card_instruction_coverage
+    kind: command
+    command: python
+    args:
+      - -m
+      - pytest
+      - tests/test_flowpilot_card_instruction_coverage.py
+      - -q
+    required: true
+    covers:
+      - req.formal_gate_review.source_intent
+      - req.formal_gate_review.generic_root_block
+      - req.formal_gate_review.actual_artifact
+      - req.role_repair.pm_source_intent
+      - req.role_repair.reviewer_antirepair
+      - req.role_repair.worker_evidence
+      - req.child_skill.standards_lens
+      - req.child_skill.not_theme_only
+      - req.boundary.runtime_mechanical
+      - req.boundary.reviewer_vague_contract
+      - req.terminal.final_output_replay
+      - req.terminal.ledger_only_insufficient
+    expected:
+      exit_code: 0
+
+  - id: check.planning_quality_model
+    kind: command
+    command: python
+    args:
+      - simulations/run_flowpilot_planning_quality_checks.py
+      - --json-out
+      - simulations/flowpilot_planning_quality_results.json
+    required: true
+    covers:
+      - req.formal_gate_review.generic_root_block
+      - req.role_repair.pm_source_intent
+      - req.child_skill.standards_lens
+      - req.child_skill.not_theme_only
+    expected:
+      exit_code: 0
+
+  - id: check.reviewer_active_challenge
+    kind: command
+    command: python
+    args:
+      - simulations/run_flowpilot_reviewer_active_challenge_checks.py
+      - --json-out
+      - simulations/flowpilot_reviewer_active_challenge_results.json
+    required: true
+    covers:
+      - req.formal_gate_review.source_intent
+      - req.formal_gate_review.actual_artifact
+      - req.role_repair.worker_evidence
+      - req.boundary.reviewer_vague_contract
+      - req.terminal.final_output_replay
+      - req.terminal.ledger_only_insufficient
+    expected:
+      exit_code: 0
+
+  - id: check.runtime_boundary_diff
+    kind: manual
+    required: true
+    covers:
+      - req.boundary.runtime_mechanical
+    manual:
+      reason: "The proof is a scoped repository diff review: this change must not add a runtime semantic-vagueness evaluator or phrase-blocking heuristic."
+      evidence: "Ran `git diff -- skills/flowpilot/assets/flowpilot_core_runtime skills/flowpilot/assets/flowpilot_new_cli.py skills/flowpilot/assets/flowpilot_new_run_commands.py | rg -n \"source-intent comparison|generic user-goal wording|semantic dilution|source-intent|source intent|vague contract\"`; rg exited 1 with no matches, so the runtime/CLI diff contains no new semantic gate wording."
+
+  - id: check.flowguard_project_topology_refresh
+    kind: command
+    command: python
+    args:
+      - scripts/flowguard_project_topology.py
+      - build
+    required: true
+    covers:
+      - req.boundary.runtime_mechanical
+    expected:
+      exit_code: 0
+
+  - id: check.flowguard_project_topology_check
+    kind: command
+    command: python
+    args:
+      - scripts/flowguard_project_topology.py
+      - check
+      - --json
+    required: true
+    covers:
+      - req.boundary.runtime_mechanical
+    expected:
+      exit_code: 0
+
+  - id: check.install_sync
+    kind: command
+    command: python
+    args:
+      - scripts/check_install.py
+      - --json
+    required: true
+    covers:
+      - req.boundary.runtime_mechanical
+    expected:
+      exit_code: 0
+
+freshness:
+  watch:
+    - openspec/changes/harden-flowpilot-prompt-first-quality-chain/proposal.md
+    - openspec/changes/harden-flowpilot-prompt-first-quality-chain/design.md
+    - openspec/changes/harden-flowpilot-prompt-first-quality-chain/tasks.md
+    - openspec/changes/harden-flowpilot-prompt-first-quality-chain/specs/**/*.md
+    - openspec/changes/harden-flowpilot-prompt-first-quality-chain/verification-contract.yaml
+    - skills/flowpilot/assets/runtime_kit/cards/roles/project_manager.md
+    - skills/flowpilot/assets/runtime_kit/cards/roles/human_like_reviewer.md
+    - skills/flowpilot/assets/runtime_kit/cards/roles/flowguard_operator.md
+    - skills/flowpilot/assets/runtime_kit/cards/phases/pm_product_architecture.md
+    - skills/flowpilot/assets/runtime_kit/cards/phases/pm_root_contract.md
+    - skills/flowpilot/assets/runtime_kit/cards/phases/pm_child_skill_selection.md
+    - skills/flowpilot/assets/runtime_kit/cards/phases/pm_child_skill_gate_manifest.md
+    - skills/flowpilot/assets/runtime_kit/cards/phases/pm_node_acceptance_plan.md
+    - skills/flowpilot/assets/runtime_kit/cards/phases/pm_review_repair.md
+    - skills/flowpilot/assets/runtime_kit/cards/phases/pm_evidence_quality_package.md
+    - skills/flowpilot/assets/runtime_kit/cards/phases/pm_final_ledger.md
+    - skills/flowpilot/assets/runtime_kit/cards/phases/pm_closure.md
+    - skills/flowpilot/assets/runtime_kit/cards/reviewer/root_contract_challenge.md
+    - skills/flowpilot/assets/runtime_kit/cards/reviewer/node_acceptance_plan_review.md
+    - skills/flowpilot/assets/runtime_kit/cards/reviewer/worker_result_review.md
+    - skills/flowpilot/assets/runtime_kit/cards/reviewer/evidence_quality_review.md
+    - skills/flowpilot/assets/runtime_kit/cards/reviewer/final_backward_replay.md
+    - tests/test_flowpilot_card_instruction_coverage.py
+    - tests/test_flowpilot_reviewer_active_challenge.py
+    - simulations/flowpilot_planning_quality_model.py
+    - simulations/run_flowpilot_planning_quality_checks.py
+    - simulations/flowpilot_reviewer_active_challenge_model.py
+    - simulations/run_flowpilot_reviewer_active_challenge_checks.py

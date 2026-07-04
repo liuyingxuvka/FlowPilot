@@ -1,0 +1,237 @@
+{
+  "version": 1,
+  "change": "harden-flowpilot-prompt-first-quality-chain",
+  "status": "pass",
+  "generatedAt": "2026-07-04T03:27:48.720Z",
+  "contractPath": "openspec/changes/harden-flowpilot-prompt-first-quality-chain/verification-contract.yaml",
+  "reportPath": "openspec/changes/harden-flowpilot-prompt-first-quality-chain/verification-report.json",
+  "contractHash": "042feee901a499e2ac8ebc4b4b4acdeef12365d1025390711a6a452f69cdd966",
+  "sourceHashes": {
+    "openspec/changes/harden-flowpilot-prompt-first-quality-chain/design.md": "285c2420a9172ccedc5c8851713d47582ef4b9cb9668a5ff4013b47a752d0f90",
+    "openspec/changes/harden-flowpilot-prompt-first-quality-chain/proposal.md": "3179598cda461f86f65e01ee63e2cf940aa65d7b55b1db5da6c491217438b2a9",
+    "openspec/changes/harden-flowpilot-prompt-first-quality-chain/specs/flowpilot-prompt-boundary-policy/spec.md": "54cf8655906eec301afeada4a89dbeeb677b2c23706a592499aab162d35f2dc1",
+    "openspec/changes/harden-flowpilot-prompt-first-quality-chain/specs/formal-gate-review-standards/spec.md": "8b1c90f6895cd21968fddcbbe159724b512e3f33883806261190660ec5fab9fe",
+    "openspec/changes/harden-flowpilot-prompt-first-quality-chain/specs/role-child-skill-use/spec.md": "26d6380276cff0c572526130aa14f16d976a2c9efe94561424f33b990f447dd3",
+    "openspec/changes/harden-flowpilot-prompt-first-quality-chain/specs/role-scoped-quality-repair-prompts/spec.md": "607c8b31edd6d9aef70c5c13616b056d964ae7d29e1d53e1bcb3535dfd3c0584",
+    "openspec/changes/harden-flowpilot-prompt-first-quality-chain/specs/terminal-ledger/spec.md": "0577d28d446fa0e154e472156b218818dfba89fbaba7d17c6453c5f3148ac851",
+    "openspec/changes/harden-flowpilot-prompt-first-quality-chain/tasks.md": "53004445c39da0186384170d3c6a6ab760380cbe612e6a92205564390740414a",
+    "openspec/changes/harden-flowpilot-prompt-first-quality-chain/verification-contract.yaml": "042feee901a499e2ac8ebc4b4b4acdeef12365d1025390711a6a452f69cdd966",
+    "simulations/flowpilot_planning_quality_model.py": "7d5428634f6f3475ee7c1db52ac45da0cfccf61ae634af6f908e626b4f8732de",
+    "simulations/flowpilot_reviewer_active_challenge_model.py": "9ea32ea1f0f9aa837265edece47a308d75cf3b303b8c5e113bc8193f31d0f7f2",
+    "simulations/run_flowpilot_planning_quality_checks.py": "4d8e50ed23b730e1cde6b61aaadbac1deaa058ea72d059601b391643b562ffef",
+    "simulations/run_flowpilot_reviewer_active_challenge_checks.py": "87ceb9a598ebb83a2f2d047d32e75ec2913cb6a20dc75100c7b023124bc00220",
+    "skills/flowpilot/assets/runtime_kit/cards/phases/pm_child_skill_gate_manifest.md": "8d045e0f37f32484d21082493236d7c95cd6ecae90fca3e7939fa456cb319a15",
+    "skills/flowpilot/assets/runtime_kit/cards/phases/pm_child_skill_selection.md": "803a5264bbb003709985f2851a3a0a0e72662a02cffb56b12e9ed99c7c4f41ff",
+    "skills/flowpilot/assets/runtime_kit/cards/phases/pm_closure.md": "f3c4db81e99a4e1c71fcb1126d30a490c525aff964964f1a6cc5df341ba677cb",
+    "skills/flowpilot/assets/runtime_kit/cards/phases/pm_evidence_quality_package.md": "0647c0b15a7e849c2124546fe7d18090e6f4b3ec3275e68396edfbfa1b33a355",
+    "skills/flowpilot/assets/runtime_kit/cards/phases/pm_final_ledger.md": "4ae1d8dc14a1b78376a7fed4f6b76dc62dd9cc8d2c3644e23dd8d0b996674250",
+    "skills/flowpilot/assets/runtime_kit/cards/phases/pm_node_acceptance_plan.md": "ac77dfb84579487199a363426d62a31a1b5648e8262997e6630ede430245668e",
+    "skills/flowpilot/assets/runtime_kit/cards/phases/pm_product_architecture.md": "8612c625c8fd334b6432dcae066a375c2777c3fae29518e7ab083259d9c908e9",
+    "skills/flowpilot/assets/runtime_kit/cards/phases/pm_review_repair.md": "aee1bc6dbae934951c5213b3fed722ea1784ba21c38407219529811726ee2728",
+    "skills/flowpilot/assets/runtime_kit/cards/phases/pm_root_contract.md": "05adc9f61d3c2440ccfd95263771d4da869d148637e9ac92873199da98f66d91",
+    "skills/flowpilot/assets/runtime_kit/cards/reviewer/evidence_quality_review.md": "830493e4ee2b7e5dae842bd039b3ab72b40994af1bfbcbf419aff4759d4cf193",
+    "skills/flowpilot/assets/runtime_kit/cards/reviewer/final_backward_replay.md": "d356c85b81f11889049ee2e6bd2ecc47c26841d41f4fe3f3a56a0eb32e5436aa",
+    "skills/flowpilot/assets/runtime_kit/cards/reviewer/node_acceptance_plan_review.md": "fb7ad9982a0b99ea69f0b6e77b26400a3102e0623f252d23ea2fe4da0dd82efd",
+    "skills/flowpilot/assets/runtime_kit/cards/reviewer/root_contract_challenge.md": "949c971e7f26ae51ce5c16c34b05de71cccc24b2a794d70a44787a7df9230d3b",
+    "skills/flowpilot/assets/runtime_kit/cards/reviewer/worker_result_review.md": "e0519b3dd9d2cb9bcbea60df1e14c41cc1a5e9c1253a6ad9d2dd7f7f46435808",
+    "skills/flowpilot/assets/runtime_kit/cards/roles/flowguard_operator.md": "4563da2bb1eecfd0c7531a5cd363da036dda3d86030e9d3d8f776f3a1a6db75a",
+    "skills/flowpilot/assets/runtime_kit/cards/roles/human_like_reviewer.md": "be1da06f91f8694c53ff18d441a7a04bdde7c41aec6e45fdeaa97f41669b8a92",
+    "skills/flowpilot/assets/runtime_kit/cards/roles/project_manager.md": "716e988997b04444d9d433b5d3120659c8966ae922584763d05353c3d0e78255",
+    "tests/test_flowpilot_card_instruction_coverage.py": "1a5a3f9a26a33051ed6e4a8b87a963e2257059bb479fdf6507431358f57c40ea",
+    "tests/test_flowpilot_reviewer_active_challenge.py": "2829450dc330aaa105cd330e57946a6c720eb2e39e5dc3bcc4709ee3bf77ff58"
+  },
+  "issues": [],
+  "checks": [
+    {
+      "id": "check.openspec_status",
+      "kind": "command",
+      "required": true,
+      "covers": [
+        "req.formal_gate_review.source_intent",
+        "req.role_repair.pm_source_intent",
+        "req.boundary.runtime_mechanical"
+      ],
+      "status": "passed",
+      "command": "openspec",
+      "args": [
+        "status",
+        "--change",
+        "harden-flowpilot-prompt-first-quality-chain",
+        "--json"
+      ],
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "durationMs": 1930,
+      "stdout": "{\n  \"changeName\": \"harden-flowpilot-prompt-first-quality-chain\",\n  \"schemaName\": \"spec-driven\",\n  \"planningHome\": {\n    \"kind\": \"repo\",\n    \"root\": \"C:\\\\Users\\\\liu_y\\\\Documents\\\\FlowGuardProjectAutopilot_20260430\",\n    \"changesDir\": \"C:\\\\Users\\\\liu_y\\\\Documents\\\\FlowGuardProjectAutopilot_20260430\\\\openspec\\\\changes\",\n    \"defaultSchema\": \"spec-driven\"\n  },\n  \"changeRoot\": \"C:\\\\Users\\\\liu_y\\\\Documents\\\\FlowGuardProjectAutopilot_20260430\\\\openspec\\\\changes\\\\harden-flowpilot-prompt-first-quality-chain\",\n  \"artifactPaths\": {\n    \"proposal\": {\n      \"outputPath\": \"proposal.md\",\n      \"resolvedOutputPath\": \"C:\\\\Users\\\\liu_y\\\\Documents\\\\FlowGuardProjectAutopilot_20260430\\\\openspec\\\\changes\\\\harden-flowpilot-prompt-first-quality-chain\\\\proposal.md\",\n      \"existingOutputPaths\": [\n        \"C:\\\\Users\\\\liu_y\\\\Documents\\\\FlowGuardProjectAutopilot_20260430\\\\openspec\\\\changes\\\\harden-flowpilot-prompt-first-quality-chain\\\\proposal.md\"\n      ]\n    },\n    \"specs\": {\n      \"outputPath\": \"specs/**/*.md\",\n      \"resolvedOutputPath\": \"C:\\\\Users\\\\liu_y\\\\Documents\\\\FlowGuardProjectAutopilot_20260430\\\\openspec\\\\changes\\\\harden-flowpilot-prompt-first-quality-chain\\\\specs\\\\**\\\\*.md\",\n      \"existingOutputPaths\": [\n        \"C:\\\\Users\\\\liu_y\\\\Documents\\\\FlowGuardProjectAutopilot_20260430\\\\openspec\\\\changes\\\\harden-flowpilot-prompt-first-quality-chain\\\\specs\\\\flowpilot-prompt-boundary-policy\\\\spec.md\",\n        \"C:\\\\Users\\\\liu_y\\\\Documents\\\\FlowGuardProjectAutopilot_20260430\\\\openspec\\\\changes\\\\harden-flowpilot-prompt-first-quality-chain\\\\specs\\\\formal-gate-review-standards\\\\spec.md\",\n        \"C:\\\\Users\\\\liu_y\\\\Documents\\\\FlowGuardProjectAutopilot_20260430\\\\openspec\\\\changes\\\\harden-flowpilot-prompt-first-quality-chain\\\\specs\\\\role-child-skill-use\\\\spec.md\",\n        \"C:\\\\Users\\\\liu_y\\\\Documents\\\\FlowGuardProjectAutopilot_20260430\\\\openspec\\\\changes\\\\harden-flowpilot-prompt-first-quality-chain\\\\specs\\\\role-scoped-quality-repair-prompts\\\\spec.md\",\n        \"C:\\\\Users\\\\liu_y\\\\Documents\\\\FlowGuardProjectAutopilot_20260430\\\\openspec\\\\changes\\\\harden-flowpilot-prompt-first-quality-chain\\\\specs\\\\terminal-ledger\\\\spec.md\"\n      ]\n    },\n    \"design\": {\n      \"outputPath\": \"design.md\",\n      \"resolvedOutputPath\": \"C:\\\\Users\\\\liu_y\\\\Documents\\\\FlowGuardProjectAutopilot_20260430\\\\openspec\\\\changes\\\\harden-flowpilot-prompt-first-quality-chain\\\\design.md\",\n      \"existingOutputPaths\": [\n        \"C:\\\\Users\\\\liu_y\\\\Documents\\\\FlowGuardProjectAutopilot_20260430\\\\openspec\\\\changes\\\\harden-flowpilot-prompt-first-quality-chain\\\\design.md\"\n      ]\n    },\n    \"verification-contract\": {\n      \"outputPath\": \"verification-contract.yaml\",\n      \"resolvedOutputPath\": \"C:\\\\Users\\\\liu_y\\\\Documents\\\\FlowGuardProjectAutopilot_20260430\\\\openspec\\\\changes\\\\harden-flowpilot-prompt-first-quality-chain\\\\verification-contract.yaml\",\n      \"existingOutputPaths\": [\n        \"C:\\\\Users\\\\liu_y\\\\Documents\\\\FlowGuardProjectAutopilot_20260430\\\\openspec\\\\changes\\\\harden-flowpilot-prompt-first-quality-chain\\\\verification-contract.yaml\"\n      ]\n    },\n    \"tasks\": {\n      \"outputPath\": \"tasks.md\",\n      \"resolvedOutputPath\": \"C:\\\\Users\\\\liu_y\\\\Documents\\\\FlowGuardProjectAutopilot_20260430\\\\openspec\\\\changes\\\\harden-flowpilot-prompt-first-quality-chain\\\\tasks.md\",\n      \"existingOutputPaths\": [\n        \"C:\\\\Users\\\\liu_y\\\\Documents\\\\FlowGuardProjectAutopilot_20260430\\\\openspec\\\\changes\\\\harden-flowpilot-prompt-first-quality-chain\\\\tasks.md\"\n      ]\n    }\n  },\n  \"isComplete\": true,\n  \"applyRequires\": [\n    \"verification-contract\",\n    \"tasks\"\n  ],\n  \"nextSteps\": [\n    \"All planning artifacts are complete; review tasks before implementation.\"\n  ],\n  \"actionContext\": {\n    \"mode\": \"repo-local\",\n    \"sourceOfTruth\": \"repo\",\n    \"planningArtifacts\": [\n      \"proposal\",\n      \"design\",\n      \"specs\",\n      \"verification-contract\",\n      \"tasks\"\n    ],\n    \"linkedContext\": [],\n    \"allowedEditRoots\": [\n      \"C:\\\\Users\\\\liu_y\\\\Documents\\\\FlowGuardProjectAutopilot_20260430\"\n    ],\n    \"requiresAffectedAreaSelecti\n...[truncated]",
+      "stderr": ""
+    },
+    {
+      "id": "check.flowguard_import",
+      "kind": "command",
+      "required": true,
+      "covers": [
+        "req.formal_gate_review.source_intent",
+        "req.boundary.runtime_mechanical"
+      ],
+      "status": "passed",
+      "command": "python",
+      "args": [
+        "-c",
+        "print(__import__('flowguard').SCHEMA_VERSION)"
+      ],
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "durationMs": 1173,
+      "stdout": "1.0\r\n",
+      "stderr": ""
+    },
+    {
+      "id": "check.prompt_card_instruction_coverage",
+      "kind": "command",
+      "required": true,
+      "covers": [
+        "req.formal_gate_review.source_intent",
+        "req.formal_gate_review.generic_root_block",
+        "req.formal_gate_review.actual_artifact",
+        "req.role_repair.pm_source_intent",
+        "req.role_repair.reviewer_antirepair",
+        "req.role_repair.worker_evidence",
+        "req.child_skill.standards_lens",
+        "req.child_skill.not_theme_only",
+        "req.boundary.runtime_mechanical",
+        "req.boundary.reviewer_vague_contract",
+        "req.terminal.final_output_replay",
+        "req.terminal.ledger_only_insufficient"
+      ],
+      "status": "passed",
+      "command": "python",
+      "args": [
+        "-m",
+        "pytest",
+        "tests/test_flowpilot_card_instruction_coverage.py",
+        "-q"
+      ],
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "durationMs": 3758,
+      "stdout": "..................................... [100%]\r\n37 passed, 179 subtests passed in 2.96s\r\n",
+      "stderr": ""
+    },
+    {
+      "id": "check.planning_quality_model",
+      "kind": "command",
+      "required": true,
+      "covers": [
+        "req.formal_gate_review.generic_root_block",
+        "req.role_repair.pm_source_intent",
+        "req.child_skill.standards_lens",
+        "req.child_skill.not_theme_only"
+      ],
+      "status": "passed",
+      "command": "python",
+      "args": [
+        "simulations/run_flowpilot_planning_quality_checks.py",
+        "--json-out",
+        "simulations/flowpilot_planning_quality_results.json"
+      ],
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "durationMs": 1292,
+      "stdout": "{\r\n  \"flowguard_explorer\": {\r\n    \"dead_branch_count\": 0,\r\n    \"exception_branch_count\": 0,\r\n    \"ok\": true,\r\n    \"reachability_failure_count\": 0,\r\n    \"reachability_failures\": [],\r\n    \"summary\": \"sequences=3 initial_states=1 traces=468\",\r\n    \"violation_count\": 0\r\n  },\r\n  \"hazard_checks\": {\r\n    \"failures\": [],\r\n    \"hazards\": {\r\n      \"acceptance_item_no_route_owner\": {\r\n        \"detected\": true,\r\n        \"expected_failure\": \"active acceptance item lacks a route node owner\",\r\n        \"failures\": [\r\n          \"active acceptance item lacks a route node owner\"\r\n        ]\r\n      },\r\n      \"acceptance_item_registry_missing\": {\r\n        \"detected\": true,\r\n        \"expected_failure\": \"PM high-standard contract lacks acceptance item registry with user and PM high-standard items\",\r\n        \"failures\": [\r\n          \"PM high-standard contract lacks acceptance item registry with user and PM high-standard items\"\r\n        ]\r\n      },\r\n      \"artifactless_major_node\": {\r\n        \"detected\": true,\r\n        \"expected_failure\": \"major route node lacks a concrete acceptance artifact\",\r\n        \"failures\": [\r\n          \"major route node lacks a concrete acceptance artifact\"\r\n        ]\r\n      },\r\n      \"child_skill_theme_only_standard\": {\r\n        \"detected\": true,\r\n        \"expected_failure\": \"selected child skill is theme-only and lacks a concrete standards-lens projection\",\r\n        \"failures\": [\r\n          \"selected child skill is theme-only and lacks a concrete standards-lens projection\"\r\n        ]\r\n      },\r\n      \"evidence_packet_repairs_target_artifact\": {\r\n        \"detected\": true,\r\n        \"expected_failure\": \"research or material-scan packet grants target artifact repair instead of report self-correction\",\r\n        \"failures\": [\r\n          \"research or material-scan packet grants target artifact repair instead of report self-correction\"\r\n        ]\r\n      },\r\n      \"final_ledger_acceptance_item_unresolved\": {\r\n        \"detected\": true,\r\n        \"expected_failure\": \"final ledger or closure leaves acceptance items unresolved\",\r\n        \"failures\": [\r\n          \"final ledger or closure leaves acceptance items unresolved\",\r\n          \"PM closure lacks final-user outcome replay\"\r\n        ]\r\n      },\r\n      \"final_ledger_passes_node_level_only_composition\": {\r\n        \"detected\": true,\r\n        \"expected_failure\": \"final ledger passed node-level completion without whole-output composition closure\",\r\n        \"failures\": [\r\n          \"final ledger passed node-level completion without whole-output composition closure\",\r\n          \"PM closure lacks final-user outcome replay\"\r\n        ]\r\n      },\r\n      \"final_ledger_realization_obligations_unresolved\": {\r\n        \"detected\": true,\r\n        \"expected_failure\": \"final ledger or closure leaves target-realization obligations unresolved\",\r\n        \"failures\": [\r\n          \"final ledger or closure leaves target-realization obligations unresolved\",\r\n          \"PM closure lacks final-user outcome replay\"\r\n        ]\r\n      },\r\n      \"final_ledger_structure_debt_unresolved\": {\r\n        \"detected\": true,\r\n        \"expected_failure\": \"final ledger leaves structural debt unresolved\",\r\n        \"failures\": [\r\n          \"PM closure lacks final-user outcome replay\",\r\n          \"final ledger leaves structural debt unresolved\"\r\n        ]\r\n      },\r\n      \"flowguard_operator_packet_repairs_target_artifact\": {\r\n        \"detected\": true,\r\n        \"expected_failure\": \"FlowGuard operator packet grants target artifact repair instead of model/report self-correction\",\r\n        \"failures\": [\r\n          \"FlowGuard operator packet grants target artifact repair instead of model/report self-correction\"\r\n        ]\r\n      },\r\n      \"flowguard_operator_route_scope_route_viability_missing\": {\r\n        \"detected\": true,\r\n        \"expected_failure\": \"FlowGuard operator route-scope did not validate route viability against the product model\",\r\n        \"failures\": [\r\n          \"FlowGuard operator route-scope did not validate route via\n...[truncated]",
+      "stderr": "[flowguard] start phase=explore work_total=3 progress_steps=10\r\n[flowguard] progress 30% work=1/3 traces=78 violations=0\r\n[flowguard] progress 60% work=2/3 traces=234 violations=0\r\n[flowguard] progress 100% work=3/3 traces=468 violations=0\r\n"
+    },
+    {
+      "id": "check.reviewer_active_challenge",
+      "kind": "command",
+      "required": true,
+      "covers": [
+        "req.formal_gate_review.source_intent",
+        "req.formal_gate_review.actual_artifact",
+        "req.role_repair.worker_evidence",
+        "req.boundary.reviewer_vague_contract",
+        "req.terminal.final_output_replay",
+        "req.terminal.ledger_only_insufficient"
+      ],
+      "status": "passed",
+      "command": "python",
+      "args": [
+        "simulations/run_flowpilot_reviewer_active_challenge_checks.py",
+        "--json-out",
+        "simulations/flowpilot_reviewer_active_challenge_results.json"
+      ],
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "durationMs": 985,
+      "stdout": "{\r\n  \"flowguard_explorer\": {\r\n    \"dead_branch_count\": 0,\r\n    \"exception_branch_count\": 0,\r\n    \"ok\": true,\r\n    \"reachability_failure_count\": 0,\r\n    \"reachability_failures\": [],\r\n    \"summary\": \"sequences=3 initial_states=1 traces=198\",\r\n    \"violation_count\": 0\r\n  },\r\n  \"hazard_checks\": {\r\n    \"failures\": [],\r\n    \"hazards\": {\r\n      \"checklist_only_pass\": {\r\n        \"detected\": true,\r\n        \"expected_failure\": \"reviewer treated PM checklist as the full review instead of the floor\",\r\n        \"failures\": [\r\n          \"reviewer treated PM checklist as the full review instead of the floor\",\r\n          \"reviewer pass lacks scope restatement\",\r\n          \"reviewer pass lacks explicit commitment extraction\",\r\n          \"reviewer pass lacks implicit commitment extraction\",\r\n          \"reviewer pass lacks active failure hypotheses\",\r\n          \"reviewer pass lacks recorded challenge actions\",\r\n          \"reviewer challenge actions do not fit the task family\",\r\n          \"reviewer pass lacks executed challenge actions or a blocker\",\r\n          \"reviewer pass lacks direct evidence or an approved waiver\",\r\n          \"reviewer pass leaves core commitments unverified and unblocked\",\r\n          \"reviewer pass lacks independent challenge report fields\"\r\n        ]\r\n      },\r\n      \"core_commitment_unverified\": {\r\n        \"detected\": true,\r\n        \"expected_failure\": \"reviewer pass leaves core commitments unverified and unblocked\",\r\n        \"failures\": [\r\n          \"reviewer pass leaves core commitments unverified and unblocked\"\r\n        ]\r\n      },\r\n      \"existence_only_hard_part_evidence_accepted\": {\r\n        \"detected\": true,\r\n        \"expected_failure\": \"reviewer accepted hard-part quality claim from existence-only evidence\",\r\n        \"failures\": [\r\n          \"reviewer accepted hard-part quality claim from existence-only evidence\"\r\n        ]\r\n      },\r\n      \"final_replay_ledger_only\": {\r\n        \"detected\": true,\r\n        \"expected_failure\": \"final replay used ledger cleanliness without delivered-product user-perspective replay\",\r\n        \"failures\": [\r\n          \"final replay used ledger cleanliness without delivered-product user-perspective replay\"\r\n        ]\r\n      },\r\n      \"final_user_intent_omitted\": {\r\n        \"detected\": true,\r\n        \"expected_failure\": \"reviewer pass omits final-user intent and product usefulness challenge\",\r\n        \"failures\": [\r\n          \"reviewer pass omits final-user intent and product usefulness challenge\"\r\n        ]\r\n      },\r\n      \"generic_actions_not_task_specific\": {\r\n        \"detected\": true,\r\n        \"expected_failure\": \"reviewer challenge actions do not fit the task family\",\r\n        \"failures\": [\r\n          \"reviewer challenge actions do not fit the task family\"\r\n        ]\r\n      },\r\n      \"hard_issue_downgraded_to_residual\": {\r\n        \"detected\": true,\r\n        \"expected_failure\": \"reviewer did not block a hard requirement or core commitment failure\",\r\n        \"failures\": [\r\n          \"reviewer did not block a hard requirement or core commitment failure\"\r\n        ]\r\n      },\r\n      \"hard_user_intent_failure_downgraded\": {\r\n        \"detected\": true,\r\n        \"expected_failure\": \"reviewer did not block a hard final-user intent or product usefulness failure\",\r\n        \"failures\": [\r\n          \"reviewer did not block a hard final-user intent or product usefulness failure\"\r\n        ]\r\n      },\r\n      \"low_quality_success_challenge_missing\": {\r\n        \"detected\": true,\r\n        \"expected_failure\": \"reviewer pass lacks low-quality-success challenge, thin-success hypothesis, or proof-of-depth probe\",\r\n        \"failures\": [\r\n          \"reviewer pass lacks low-quality-success challenge, thin-success hypothesis, or proof-of-depth probe\"\r\n        ]\r\n      },\r\n      \"missing_implicit_commitments\": {\r\n        \"detected\": true,\r\n        \"expected_failure\": \"reviewer pass lacks implicit commitment extraction\",\r\n        \"failures\": [\r\n          \"reviewer pass lacks implicit commitment extraction\"\r\n   \n...[truncated]",
+      "stderr": "[flowguard] start phase=explore work_total=3 progress_steps=10\r\n[flowguard] progress 30% work=1/3 traces=33 violations=0\r\n[flowguard] progress 60% work=2/3 traces=99 violations=0\r\n[flowguard] progress 100% work=3/3 traces=198 violations=0\r\n"
+    },
+    {
+      "id": "check.runtime_boundary_diff",
+      "kind": "manual",
+      "required": true,
+      "covers": [
+        "req.boundary.runtime_mechanical"
+      ],
+      "status": "passed",
+      "message": "Manual evidence declared: Ran `git diff -- skills/flowpilot/assets/flowpilot_core_runtime skills/flowpilot/assets/flowpilot_new_cli.py skills/flowpilot/assets/flowpilot_new_run_commands.py | rg -n \"source-intent comparison|generic user-goal wording|semantic dilution|source-intent|source intent|vague contract\"`; rg exited 1 with no matches, so the runtime/CLI diff contains no new semantic gate wording."
+    },
+    {
+      "id": "check.flowguard_project_topology_refresh",
+      "kind": "command",
+      "required": true,
+      "covers": [
+        "req.boundary.runtime_mechanical"
+      ],
+      "status": "passed",
+      "command": "python",
+      "args": [
+        "scripts/flowguard_project_topology.py",
+        "build"
+      ],
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "durationMs": 4316,
+      "stdout": "{\r\n  \"json_path\": \"docs/flowguard_project_topology.json\",\r\n  \"layer_counts\": {\r\n    \"alignment_families\": 14,\r\n    \"code_surfaces\": 1075,\r\n    \"evidence_summaries\": 5,\r\n    \"known_bad_signals\": 2625,\r\n    \"models\": 157,\r\n    \"test_commands\": 452\r\n  },\r\n  \"markdown_path\": \"docs/flowguard_project_topology.md\",\r\n  \"ok\": true\r\n}\r\n",
+      "stderr": ""
+    },
+    {
+      "id": "check.flowguard_project_topology_check",
+      "kind": "command",
+      "required": true,
+      "covers": [
+        "req.boundary.runtime_mechanical"
+      ],
+      "status": "passed",
+      "command": "python",
+      "args": [
+        "scripts/flowguard_project_topology.py",
+        "check",
+        "--json"
+      ],
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "durationMs": 449,
+      "stdout": "{\r\n  \"findings\": [],\r\n  \"json_path\": \"docs/flowguard_project_topology.json\",\r\n  \"layer_counts\": {\r\n    \"alignment_families\": 14,\r\n    \"code_surfaces\": 1075,\r\n    \"evidence_summaries\": 5,\r\n    \"known_bad_signals\": 2625,\r\n    \"models\": 157,\r\n    \"test_commands\": 452\r\n  },\r\n  \"markdown_path\": \"docs/flowguard_project_topology.md\",\r\n  \"ok\": true,\r\n  \"source_count\": 1052\r\n}\r\n",
+      "stderr": ""
+    },
+    {
+      "id": "check.install_sync",
+      "kind": "command",
+      "required": true,
+      "covers": [
+        "req.boundary.runtime_mechanical"
+      ],
+      "status": "passed",
+      "command": "python",
+      "args": [
+        "scripts/check_install.py",
+        "--json"
+      ],
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "durationMs": 1988,
+      "stdout": "{\r\n  \"checks\": [\r\n    {\r\n      \"name\": \"flowguard_import\",\r\n      \"ok\": true,\r\n      \"schema_version\": \"1.0\"\r\n    },\r\n    {\r\n      \"name\": \"file:README.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:CHANGELOG.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:VERSION\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:AGENTS.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:HANDOFF.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:pytest.ini\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/complete-black-box-flowpilot-system/proposal.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/complete-black-box-flowpilot-system/design.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/complete-black-box-flowpilot-system/tasks.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/complete-black-box-flowpilot-system/specs/complete-black-box-flowpilot-system/spec.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/complete-black-box-flowpilot-system/specs/flowpilot-maintenance-ideal-state/spec.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/complete-black-box-flowpilot-system/specs/historical-live-run-replay-package-suite/spec.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/complete-black-box-flowpilot-system/specs/interactive-startup-intake/spec.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/complete-black-box-flowpilot-system/specs/multiround-fake-ai-control-rehearsal/spec.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/complete-black-box-flowpilot-system/specs/runtime-ledger-persistence/spec.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/generate-new-flowpilot-formal-entrypoint/proposal.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/generate-new-flowpilot-formal-entrypoint/design.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/generate-new-flowpilot-formal-entrypoint/tasks.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/generate-new-flowpilot-formal-entrypoint/specs/new-flowpilot-formal-entrypoint/spec.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/unify-new-flowpilot-work-packet-lifecycle/proposal.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/unify-new-flowpilot-work-packet-lifecycle/design.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/unify-new-flowpilot-work-packet-lifecycle/tasks.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/unify-new-flowpilot-work-packet-lifecycle/specs/new-flowpilot-formal-entrypoint/spec.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/harden-flowpilot-enum-prompts-and-run-evidence/proposal.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/harden-flowpilot-enum-prompts-and-run-evidence/design.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/harden-flowpilot-enum-prompts-and-run-evidence/tasks.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/harden-flowpilot-enum-prompts-and-run-evidence/specs/flowpilot-prompt-boundary-policy/spec.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/harden-flowpilot-enum-prompts-and-run-evidence/specs/flowguard-background-observability/spec.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/restore-recursive-route-execution-runtime/proposal.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/restore-recursive-route-execution-runtime/design.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n      \"name\": \"file:openspec/changes/restore-recursive-route-execution-runtime/tasks.md\",\r\n      \"ok\": true\r\n    },\r\n    {\r\n     \n...[truncated]",
+      "stderr": ""
+    }
+  ]
+}
