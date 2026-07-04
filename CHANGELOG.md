@@ -1,5 +1,30 @@
 # Changelog
 
+## v0.11.1 - 2026-07-04
+
+### Fixed
+
+- Hardened FlowPilot's prompt-first quality chain so PM prompts preserve
+  concrete source intent, block generic root-contract wording, and repair
+  semantic dilution without adding task-family-specific workflows.
+- Strengthened Reviewer prompt cards so review gates compare the current
+  artifact against accepted source intent, reject process-only evidence, and
+  block ledger-only final replay when delivered-output proof is missing.
+- Clarified the FlowGuard operator boundary: FlowGuard evidence supports
+  process/model/state confidence, while PM and Reviewer prompts own semantic
+  product-quality judgment.
+
+### Validation
+
+- Verified prompt-card instruction coverage, planning-quality FlowGuard
+  scenarios, reviewer-active-challenge scenarios, runtime semantic-boundary
+  diff review, topology refresh/check, local installed-skill sync, and install
+  self-check.
+- Verified the OpenSpec change
+  `harden-flowpilot-prompt-first-quality-chain` with `9/9` required checks
+  passing.
+- Verified the router background regression tier with `95/95` commands passing.
+
 ## v0.11.0 - 2026-07-03
 
 ### Changed

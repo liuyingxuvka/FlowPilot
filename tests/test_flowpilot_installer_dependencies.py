@@ -95,6 +95,11 @@ class FlowPilotInstallerDependencyTests(unittest.TestCase):
             "https://raw.githubusercontent.com/liuyingxuvka/FlowGuard/main/pyproject.toml",
         )
 
+    def test_public_release_secret_patterns_reject_escaped_local_paths(self) -> None:
+        text = '{"root": "' + "C:" + "\\\\" + "Users" + "\\\\" + "liu_y" + "\\\\" + "Documents" + '"}'
+
+        self.assertTrue(any(pattern.search(text) for pattern in check_public_release.SECRET_PATTERNS))
+
     def test_flowpilot_skill_package_includes_startup_intake_icon(self) -> None:
         flowpilot = self.dependency("flowpilot")
 

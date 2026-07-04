@@ -280,7 +280,7 @@
         "detail": "current pointer is present and treated as UI focus/default target",
         "evidence": {
           "run_id": "run-20260614-184920",
-          "run_root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\.flowpilot\\runs\\run-20260614-184920"
+          "run_root": "<repo-root>\\.flowpilot\\runs\\run-20260614-184920"
         },
         "status": "safe",
         "surface": "current_run_pointer"

@@ -23,6 +23,7 @@ from flowguard_project_topology_lib.common import (
     _dedupe_sources,
     _evidence_status,
     _model_path_for_key,
+    _public_command,
     _read_json,
     _read_text,
     _rel,
@@ -149,7 +150,7 @@ def _build_test_tier_rows(root: Path) -> tuple[list[dict[str, Any]], list[Path]]
                     "tier": tier,
                     "name": command.name,
                     "area": _classify_area(command.name, command_text, command.description),
-                    "command": command.command,
+                    "command": _public_command(command.command, root),
                     "description": command.description,
                     "long_running": command.long_running,
                     "release_only": command.release_only,
@@ -261,7 +262,7 @@ def build_report(root: Path = ROOT) -> dict[str, Any]:
         "artifact_type": "flowguard_project_topology",
         "generator_version": GENERATOR_VERSION,
         "generated_at_epoch": generated_at_epoch,
-        "root": str(root),
+        "root": "<repo-root>",
         "orientation_only": True,
         "validation_warning": (
             "Topology guides project understanding only; it does not replace executable "

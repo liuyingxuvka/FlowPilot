@@ -700,7 +700,7 @@
     "Split scripts only around stable command groups or install-check manifests; preserve CLI behavior.",
     "Split tests by externally visible contract family before moving internal fixtures."
   ],
-  "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430",
+  "root": "<repo-root>",
   "runtime_owner_modules": {
     "file_count": 297,
     "largest": [

@@ -143,7 +143,7 @@
       "expectedExitCode": 0,
       "exitCode": 0,
       "durationMs": 1802,
-      "stdout": "============================= test session starts =============================\r\nplatform win32 -- Python 3.12.10, pytest-9.0.3, pluggy-1.6.0\r\nrootdir: C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\r\nconfigfile: pytest.ini\r\ncollected 158 items / 153 deselected / 5 selected\r\n\r\ntests\\test_flowpilot_core_runtime.py .....                               [100%]\r\n\r\n====================== 5 passed, 153 deselected in 0.95s ======================\r\n",
+      "stdout": "============================= test session starts =============================\r\nplatform win32 -- Python 3.12.10, pytest-9.0.3, pluggy-1.6.0\r\nrootdir: <repo-root>\r\nconfigfile: pytest.ini\r\ncollected 158 items / 153 deselected / 5 selected\r\n\r\ntests\\test_flowpilot_core_runtime.py .....                               [100%]\r\n\r\n====================== 5 passed, 153 deselected in 0.95s ======================\r\n",
       "stderr": ""
     },
     {
@@ -165,7 +165,7 @@
       "expectedExitCode": 0,
       "exitCode": 0,
       "durationMs": 20553,
-      "stdout": "============================= test session starts =============================\r\nplatform win32 -- Python 3.12.10, pytest-9.0.3, pluggy-1.6.0\r\nrootdir: C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\r\nconfigfile: pytest.ini\r\ncollected 6 items\r\n\r\ntests\\test_flowpilot_progress_lifecycle_cartesian.py ......              [100%]\r\n\r\n============================= 6 passed in 19.72s ==============================\r\n",
+      "stdout": "============================= test session starts =============================\r\nplatform win32 -- Python 3.12.10, pytest-9.0.3, pluggy-1.6.0\r\nrootdir: <repo-root>\r\nconfigfile: pytest.ini\r\ncollected 6 items\r\n\r\ntests\\test_flowpilot_progress_lifecycle_cartesian.py ......              [100%]\r\n\r\n============================= 6 passed in 19.72s ==============================\r\n",
       "stderr": ""
     },
     {

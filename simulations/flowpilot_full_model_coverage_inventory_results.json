@@ -28,7 +28,7 @@
       ],
       "metadata": {
         "command": [
-          "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+          "python",
           "simulations\\run_capability_checks.py"
         ],
         "exit_code": 0,
@@ -978,7 +978,7 @@
       ],
       "metadata": {
         "command": [
-          "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+          "python",
           "simulations\\run_flowpilot_control_plane_friction_checks.py"
         ],
         "exit_code": 0,
@@ -1176,7 +1176,7 @@
       ],
       "metadata": {
         "command": [
-          "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+          "python",
           "simulations\\run_flowpilot_control_surface_contract_checks.py"
         ],
         "exit_code": 0,
@@ -1717,7 +1717,7 @@
       ],
       "metadata": {
         "command": [
-          "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+          "python",
           "simulations\\run_flowpilot_cross_plane_friction_checks.py"
         ],
         "exit_code": 0,
@@ -2093,7 +2093,7 @@
       ],
       "metadata": {
         "command": [
-          "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+          "python",
           "simulations\\run_flowpilot_daemon_reconciliation_checks.py"
         ],
         "exit_code": 0,
@@ -2352,7 +2352,7 @@
       ],
       "metadata": {
         "command": [
-          "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+          "python",
           "simulations\\run_flowpilot_decision_liveness_checks.py"
         ],
         "exit_code": 0,
@@ -2587,7 +2587,7 @@
       ],
       "metadata": {
         "command": [
-          "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+          "python",
           "simulations\\run_flowpilot_dispatch_recipient_gate_checks.py",
           "--json"
         ],
@@ -3197,12 +3197,12 @@
       ],
       "metadata": {
         "command": [
-          "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+          "python",
           "simulations\\run_flowpilot_final_confidence_gate_checks.py",
           "--run-checks",
           "--repository-confidence-only",
           "--json-out",
-          "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\simulations\\flowpilot_final_confidence_gate_results.json"
+          "<repo-root>\\simulations\\flowpilot_final_confidence_gate_results.json"
         ],
         "exit_code": 0,
         "mode": "executed_read_only",
@@ -3313,7 +3313,7 @@
       ],
       "metadata": {
         "command": [
-          "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+          "python",
           "simulations\\run_flowpilot_gate_decision_contract_checks.py"
         ],
         "exit_code": 0,
@@ -3376,7 +3376,7 @@
       ],
       "metadata": {
         "command": [
-          "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+          "python",
           "simulations\\run_flowpilot_gate_policy_audit_checks.py"
         ],
         "exit_code": 0,
@@ -3800,7 +3800,7 @@
       ],
       "metadata": {
         "command": [
-          "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+          "python",
           "simulations\\run_flowpilot_model_hierarchy_checks.py"
         ],
         "exit_code": 0,
@@ -3859,7 +3859,7 @@
       ],
       "metadata": {
         "command": [
-          "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+          "python",
           "simulations\\run_flowpilot_model_maturation_checks.py"
         ],
         "exit_code": 0,
@@ -3913,7 +3913,7 @@
       ],
       "metadata": {
         "command": [
-          "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+          "python",
           "simulations\\run_flowpilot_model_mesh_checks.py"
         ],
         "exit_code": 0,
@@ -3976,7 +3976,7 @@
       ],
       "metadata": {
         "command": [
-          "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+          "python",
           "simulations\\run_flowpilot_model_test_alignment_checks.py"
         ],
         "exit_code": 0,
@@ -4194,7 +4194,7 @@
       ],
       "metadata": {
         "command": [
-          "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+          "python",
           "simulations\\run_flowpilot_optimization_proposal_checks.py"
         ],
         "exit_code": 0,
@@ -4371,7 +4371,7 @@
       ],
       "metadata": {
         "command": [
-          "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+          "python",
           "simulations\\run_flowpilot_packet_result_family_parity_checks.py"
         ],
         "exit_code": 0,
@@ -4425,7 +4425,7 @@
       ],
       "metadata": {
         "command": [
-          "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+          "python",
           "simulations\\run_flowpilot_parallel_packet_batch_checks.py",
           "--json"
         ],
@@ -4964,7 +4964,7 @@
       ],
       "metadata": {
         "command": [
-          "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+          "python",
           "simulations\\run_flowpilot_process_liveness_checks.py",
           "--json",
           "--no-write-results"
@@ -5623,7 +5623,7 @@
       ],
       "metadata": {
         "command": [
-          "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+          "python",
           "simulations\\run_flowpilot_repair_transaction_checks.py"
         ],
         "exit_code": 0,
@@ -5712,7 +5712,7 @@
       ],
       "metadata": {
         "command": [
-          "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+          "python",
           "simulations\\run_flowpilot_requirement_traceability_checks.py"
         ],
         "exit_code": 0,
@@ -5971,7 +5971,7 @@
       ],
       "metadata": {
         "command": [
-          "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+          "python",
           "simulations\\run_flowpilot_role_output_runtime_checks.py"
         ],
         "exit_code": 0,
@@ -6056,7 +6056,7 @@
       ],
       "metadata": {
         "command": [
-          "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+          "python",
           "simulations\\run_flowpilot_role_packet_access_checks.py"
         ],
         "exit_code": 0,
@@ -6312,7 +6312,7 @@
       ],
       "metadata": {
         "command": [
-          "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+          "python",
           "simulations\\run_flowpilot_route_display_checks.py"
         ],
         "exit_code": 0,
@@ -6468,7 +6468,7 @@
       ],
       "metadata": {
         "command": [
-          "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+          "python",
           "simulations\\run_flowpilot_route_mutation_activation_checks.py"
         ],
         "exit_code": 0,
@@ -6608,7 +6608,7 @@
       ],
       "metadata": {
         "command": [
-          "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+          "python",
           "simulations\\run_flowpilot_router_error_recovery_checks.py"
         ],
         "exit_code": 0,
@@ -6811,7 +6811,7 @@
       ],
       "metadata": {
         "command": [
-          "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+          "python",
           "simulations\\run_flowpilot_router_loop_checks.py"
         ],
         "exit_code": 0,
@@ -7241,7 +7241,7 @@
       ],
       "metadata": {
         "command": [
-          "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+          "python",
           "simulations\\run_flowpilot_similarity_convergence_checks.py"
         ],
         "exit_code": 0,
@@ -8025,7 +8025,7 @@
       ],
       "metadata": {
         "command": [
-          "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+          "python",
           "simulations\\run_flowpilot_terminal_summary_checks.py"
         ],
         "exit_code": 0,
@@ -8521,7 +8521,7 @@
       ],
       "metadata": {
         "command": [
-          "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+          "python",
           "simulations\\run_long_check_observability_checks.py"
         ],
         "exit_code": 0,
@@ -8575,7 +8575,7 @@
       ],
       "metadata": {
         "command": [
-          "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+          "python",
           "simulations\\run_meta_checks.py"
         ],
         "exit_code": 0,
@@ -8693,7 +8693,7 @@
       ],
       "metadata": {
         "command": [
-          "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+          "python",
           "simulations\\run_output_contract_checks.py"
         ],
         "exit_code": 0,

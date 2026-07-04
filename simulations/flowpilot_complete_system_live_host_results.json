@@ -1,7 +1,7 @@
 {
   "claim_boundary": "live",
   "evidence_blockers": [],
-  "evidence_file": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\simulations\\flowpilot_complete_system_live_host_evidence.json",
+  "evidence_file": "<repo-root>\\simulations\\flowpilot_complete_system_live_host_evidence.json",
   "evidence_summary": {
     "agent_count": 2,
     "host_surface": "multi_agent_v1"
@@ -21,7 +21,7 @@
     },
     {
       "evidence": [
-        "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\simulations\\flowpilot_complete_system_live_host_evidence.json"
+        "<repo-root>\\simulations\\flowpilot_complete_system_live_host_evidence.json"
       ],
       "freshness": "current",
       "id": "real_live_host_project_run",

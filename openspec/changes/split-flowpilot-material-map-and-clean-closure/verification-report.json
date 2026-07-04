@@ -157,7 +157,7 @@
       "expectedExitCode": 0,
       "exitCode": 0,
       "durationMs": 1232,
-      "stdout": "============================= test session starts =============================\r\nplatform win32 -- Python 3.12.10, pytest-9.0.3, pluggy-1.6.0\r\nrootdir: C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\r\nconfigfile: pytest.ini\r\ncollected 11 items\r\n\r\ntests\\test_flowpilot_repair_dossier_context.py ....                      [ 36%]\r\ntests\\test_flowpilot_blocker_next_action_routing.py ...                  [ 63%]\r\ntests\\test_flowpilot_break_glass_depth.py ..                             [ 81%]\r\ntests\\test_flowpilot_observed_repair_loop_replay.py .                    [ 90%]\r\ntests\\test_flowpilot_reviewer_subject_alignment.py .                     [100%]\r\n\r\n============================= 11 passed in 0.44s ==============================\r\n",
+      "stdout": "============================= test session starts =============================\r\nplatform win32 -- Python 3.12.10, pytest-9.0.3, pluggy-1.6.0\r\nrootdir: <repo-root>\r\nconfigfile: pytest.ini\r\ncollected 11 items\r\n\r\ntests\\test_flowpilot_repair_dossier_context.py ....                      [ 36%]\r\ntests\\test_flowpilot_blocker_next_action_routing.py ...                  [ 63%]\r\ntests\\test_flowpilot_break_glass_depth.py ..                             [ 81%]\r\ntests\\test_flowpilot_observed_repair_loop_replay.py .                    [ 90%]\r\ntests\\test_flowpilot_reviewer_subject_alignment.py .                     [100%]\r\n\r\n============================= 11 passed in 0.44s ==============================\r\n",
       "stderr": ""
     },
     {

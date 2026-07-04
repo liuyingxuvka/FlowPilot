@@ -47,6 +47,14 @@ class FlowGuardProjectTopologyTests(unittest.TestCase):
         self.assertIn("model_test_alignment", report["evidence_summary"])
         self.assertIn("Topology guides project understanding only", report["validation_warning"])
 
+    def test_build_report_uses_public_safe_paths(self) -> None:
+        report = topology.build_report(ROOT)
+        serialized = json.dumps(report, sort_keys=True)
+
+        self.assertEqual(report["root"], "<repo-root>")
+        self.assertNotIn("C:\\\\Users\\\\", serialized)
+        self.assertNotIn("C:/Users/", serialized)
+
     def test_render_markdown_names_orientation_boundary_and_area_map(self) -> None:
         report = topology.build_report(ROOT)
         markdown = topology.render_markdown(report)
@@ -86,6 +94,21 @@ class FlowGuardProjectTopologyTests(unittest.TestCase):
 
         self.assertFalse(check["ok"])
         self.assertIn("topology_source_stale", {finding["code"] for finding in check["findings"]})
+
+    def test_check_rejects_public_local_path_leaks(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="flowguard-topology-leak-") as tmp_name:
+            tmp = Path(tmp_name)
+            json_path = tmp / "topology.json"
+            markdown_path = tmp / "topology.md"
+            topology.write_topology(ROOT, json_path=json_path, markdown_path=markdown_path)
+            payload = json.loads(json_path.read_text(encoding="utf-8"))
+            payload["root"] = "C:" + "\\" + "Users" + "\\" + "liu_y" + "\\" + "Documents"
+            json_path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+
+            check = topology.check_topology(ROOT, json_path=json_path, markdown_path=markdown_path)
+
+        self.assertFalse(check["ok"])
+        self.assertIn("topology_local_path_leak", {finding["code"] for finding in check["findings"]})
 
     def test_check_rejects_missing_required_layers(self) -> None:
         with tempfile.TemporaryDirectory(prefix="flowguard-topology-layer-") as tmp_name:

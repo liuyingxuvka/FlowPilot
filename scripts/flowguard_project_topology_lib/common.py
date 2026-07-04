@@ -19,6 +19,8 @@ from typing import Any, Iterable, Mapping
 
 ROOT = Path(__file__).resolve().parents[2]
 GENERATOR_VERSION = "1"
+PUBLIC_ROOT_LABEL = "<repo-root>"
+PUBLIC_PYTHON_LABEL = "python"
 DEFAULT_JSON_PATH = ROOT / "docs" / "flowguard_project_topology.json"
 DEFAULT_MARKDOWN_PATH = ROOT / "docs" / "flowguard_project_topology.md"
 ALIGNMENT_RESULT_PATH = ROOT / "simulations" / "flowpilot_model_test_alignment_results.json"
@@ -61,6 +63,28 @@ def _rel(path: Path, root: Path = ROOT) -> str:
         return resolved.relative_to(root.resolve()).as_posix()
     except ValueError:
         return resolved.as_posix()
+
+
+def _public_command_arg(value: str, root: Path = ROOT) -> str:
+    text = str(value)
+    lower = text.lower()
+    if lower.endswith(("python.exe", "python")) and (":\\" in text or ":/" in text):
+        return PUBLIC_PYTHON_LABEL
+    root_text = str(root.resolve())
+    root_posix = root.resolve().as_posix()
+    if text == root_text or text == root_posix:
+        return PUBLIC_ROOT_LABEL
+    if text.startswith(root_text + "\\") or text.startswith(root_text + "/"):
+        suffix = text[len(root_text) + 1 :].replace("\\", "/")
+        return f"{PUBLIC_ROOT_LABEL}/{suffix}"
+    if text.startswith(root_posix + "/"):
+        suffix = text[len(root_posix) + 1 :]
+        return f"{PUBLIC_ROOT_LABEL}/{suffix}"
+    return text
+
+
+def _public_command(command: Iterable[str], root: Path = ROOT) -> list[str]:
+    return [_public_command_arg(item, root) for item in command]
 
 
 def _read_text(path: Path) -> str:

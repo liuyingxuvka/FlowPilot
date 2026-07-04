@@ -37,13 +37,20 @@ PRIVATE_PATH_NAMES = {
     "__pycache__",
 }
 
+WINDOWS_DRIVE_PATTERN = r"[A-Za-z]:"
+WINDOWS_USER_PATH_PATTERNS = (
+    re.compile(WINDOWS_DRIVE_PATTERN + r"\\Users\\[^\\\s\"']+", re.IGNORECASE),
+    re.compile(WINDOWS_DRIVE_PATTERN + r"\\\\Users\\\\[^\\\\\s\"']+", re.IGNORECASE),
+    re.compile(WINDOWS_DRIVE_PATTERN + r"/Users/[^/\s\"']+", re.IGNORECASE),
+)
+
 SECRET_PATTERNS = (
     re.compile(r"-----BEGIN (?:RSA |OPENSSH |EC )?PRIVATE KEY-----"),
     re.compile(r"\bgh[pousr]_[A-Za-z0-9_]{20,}\b"),
     re.compile(r"\bgithub_pat_[A-Za-z0-9_]{20,}\b"),
     re.compile(r"\bsk-[A-Za-z0-9]{20,}\b"),
     re.compile(r"\bAKIA[0-9A-Z]{16}\b"),
-    re.compile(r"C:\\Users\\liu_y", re.IGNORECASE),
+    *WINDOWS_USER_PATH_PATTERNS,
 )
 
 VALIDATION_COMMANDS = (

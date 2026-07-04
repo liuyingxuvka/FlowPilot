@@ -5,7 +5,7 @@
     "uses_public_cli_subprocesses": true,
     "uses_startup_ui_script": true
   },
-  "entrypoint": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\skills\\flowpilot\\assets\\flowpilot_new.py",
+  "entrypoint": "<repo-root>\\skills\\flowpilot\\assets\\flowpilot_new.py",
   "flowguard": {
     "dead_branch_count": 0,
     "exception_branch_count": 0,
@@ -3266,7 +3266,7 @@
         "terminal_replay_blocked": false
       },
       "ok": true,
-      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal\\normal_full_path"
+      "root": "<repo-root>\\tmp\\flowpilot_fake_project_rehearsal\\normal_full_path"
     },
     {
       "commands": [
@@ -5087,7 +5087,7 @@
         "wrong_role_rejected": true
       },
       "ok": true,
-      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal\\wrong_role_recovery"
+      "root": "<repo-root>\\tmp\\flowpilot_fake_project_rehearsal\\wrong_role_recovery"
     },
     {
       "commands": [
@@ -6256,7 +6256,7 @@
         "route_node_count": 3
       },
       "ok": true,
-      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal\\planning_chain_does_not_terminal"
+      "root": "<repo-root>\\tmp\\flowpilot_fake_project_rehearsal\\planning_chain_does_not_terminal"
     },
     {
       "commands": [
@@ -8882,7 +8882,7 @@
         "terminal": "terminal_complete"
       },
       "ok": true,
-      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal\\route_mutation_recovery"
+      "root": "<repo-root>\\tmp\\flowpilot_fake_project_rehearsal\\route_mutation_recovery"
     },
     {
       "commands": [
@@ -13376,7 +13376,7 @@
         "terminal_replay_blocked": true
       },
       "ok": true,
-      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal\\terminal_supplemental_repair"
+      "root": "<repo-root>\\tmp\\flowpilot_fake_project_rehearsal\\terminal_supplemental_repair"
     },
     {
       "commands": [
@@ -13487,7 +13487,7 @@
         "result_status": "result_blocked"
       },
       "ok": true,
-      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal\\missing_ack_block"
+      "root": "<repo-root>\\tmp\\flowpilot_fake_project_rehearsal\\missing_ack_block"
     },
     {
       "commands": [
@@ -13614,7 +13614,7 @@
         "next_action": "wait_for_result"
       },
       "ok": true,
-      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal\\ack_only_wait"
+      "root": "<repo-root>\\tmp\\flowpilot_fake_project_rehearsal\\ack_only_wait"
     },
     {
       "commands": [
@@ -13805,7 +13805,7 @@
         "resume_decision": "wait_for_result"
       },
       "ok": true,
-      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal\\lifecycle_guard_resume_and_patrol"
+      "root": "<repo-root>\\tmp\\flowpilot_fake_project_rehearsal\\lifecycle_guard_resume_and_patrol"
     },
     {
       "commands": [
@@ -14199,7 +14199,7 @@
         ]
       },
       "ok": true,
-      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal\\missing_current_result_fields_reissue"
+      "root": "<repo-root>\\tmp\\flowpilot_fake_project_rehearsal\\missing_current_result_fields_reissue"
     },
     {
       "commands": [
@@ -14605,7 +14605,7 @@
         "review_packet": "packet-0003"
       },
       "ok": true,
-      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal\\slow_reviewer_progress_preserved"
+      "root": "<repo-root>\\tmp\\flowpilot_fake_project_rehearsal\\slow_reviewer_progress_preserved"
     },
     {
       "commands": [
@@ -15083,7 +15083,7 @@
         "reassignment_rejected": true
       },
       "ok": true,
-      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal\\accepted_packet_reassignment_rejected"
+      "root": "<repo-root>\\tmp\\flowpilot_fake_project_rehearsal\\accepted_packet_reassignment_rejected"
     },
     {
       "commands": [
@@ -15201,7 +15201,7 @@
         "terminal_lifecycle": "stopped_by_user"
       },
       "ok": true,
-      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal\\stop_terminal_fence"
+      "root": "<repo-root>\\tmp\\flowpilot_fake_project_rehearsal\\stop_terminal_fence"
     },
     {
       "commands": [
@@ -15331,7 +15331,7 @@
         "wait_recovery_state": "progress_replacement_due"
       },
       "ok": true,
-      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal\\progress_evidence_replacement"
+      "root": "<repo-root>\\tmp\\flowpilot_fake_project_rehearsal\\progress_evidence_replacement"
     },
     {
       "commands": [
@@ -15456,7 +15456,7 @@
         "packet_status": "acknowledged"
       },
       "ok": true,
-      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal\\orphan_runner_summary_recovery"
+      "root": "<repo-root>\\tmp\\flowpilot_fake_project_rehearsal\\orphan_runner_summary_recovery"
     },
     {
       "commands": [
@@ -15483,7 +15483,7 @@
         "complete_flowguard_invalid_choice": true
       },
       "ok": true,
-      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal\\unsupported_side_command"
+      "root": "<repo-root>\\tmp\\flowpilot_fake_project_rehearsal\\unsupported_side_command"
     }
   ],
   "target_plan": {
@@ -15761,5 +15761,5 @@
       }
     ]
   },
-  "work_root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal"
+  "work_root": "<repo-root>\\tmp\\flowpilot_fake_project_rehearsal"
 }

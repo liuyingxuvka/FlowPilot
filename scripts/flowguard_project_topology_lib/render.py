@@ -128,6 +128,9 @@ def check_topology(
     if not isinstance(payload, Mapping):
         findings.append({"code": "topology_json_invalid", "path": _rel(json_path, root)})
         return {"ok": False, "findings": findings}
+    raw_json = json_path.read_text(encoding="utf-8", errors="replace")
+    if "C:\\\\Users\\\\" in raw_json or "C:/Users/" in raw_json or "C:\\Users\\" in raw_json:
+        findings.append({"code": "topology_local_path_leak", "path": _rel(json_path, root)})
     if payload.get("generator_version") != GENERATOR_VERSION:
         findings.append(
             {

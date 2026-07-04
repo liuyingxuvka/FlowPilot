@@ -86,7 +86,7 @@
       },
       "name": "terminal_return",
       "ok": true,
-      "path": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\simulations\\flowpilot_terminal_return_preflight_results.json",
+      "path": "<repo-root>\\simulations\\flowpilot_terminal_return_preflight_results.json",
       "status": "repository_confidence_only"
     }
   ],

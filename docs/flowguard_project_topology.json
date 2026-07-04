@@ -14484,7 +14484,7 @@
       "path": "simulations/flowpilot_model_test_alignment_results.json"
     }
   },
-  "generated_at_epoch": 1783135666.2171323,
+  "generated_at_epoch": 1783136756.758587,
   "generator_version": "1",
   "layer_counts": {
     "alignment_families": 14,
@@ -15395,7 +15395,7 @@
       "evidence": {
         "confidence": "",
         "decision": "",
-        "edge_count": 269,
+        "edge_count": 275,
         "finding_count": null,
         "full_coverage_ok": null,
         "known_bad": [
@@ -15413,6 +15413,9 @@
           "control_blocker_done_receipt_without_delivery_postcondition",
           "control_blocker_identity_missing_blocker_id",
           "control_blocker_index_stale_after_artifact_update",
+          "control_plane_hard_gate_escape_break_glass",
+          "control_plane_hard_gate_escape_final_review",
+          "control_plane_hard_gate_escape_not_returned",
           "controller_delivery_failed_marked_done",
           "controller_delivery_receipt_missing_role_output_blocker",
           "controller_delivery_receipt_treated_as_role_completion",
@@ -15455,15 +15458,12 @@
           "missing_ack_report_accepted_without_ack",
           "missing_receipt_blocker_escalated_to_pm",
           "multiple_active_tasks_without_explicit_active_set",
-          "newer_same_family_repair_left_old_blocker_live",
-          "no_legal_next_with_valid_role_output",
-          "node_local_block_route_mutated_without_reason",
-          "old_packet_outcome_shape_accepted"
+          "newer_same_family_repair_left_old_blocker_live"
         ],
         "ok": true,
         "present": true,
         "release_convergence_ok": null,
-        "state_count": 270
+        "state_count": 276
       },
       "model_path": "simulations/flowpilot_control_plane_friction_model.py",
       "result_path": "simulations/flowpilot_control_plane_friction_results.json",
@@ -20699,7 +20699,7 @@
     }
   ],
   "orientation_only": true,
-  "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430",
+  "root": "<repo-root>",
   "sources": [
     {
       "exists": true,
@@ -20727,9 +20727,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780231930215958500,
+      "mtime_ns": 1783136465572258600,
       "path": "scripts/check_public_release.py",
-      "size": 15752
+      "size": 16039
     },
     {
       "exists": true,
@@ -20937,7 +20937,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1783131416999250300,
+      "mtime_ns": 1783136665046708800,
       "path": "simulations/card_instruction_coverage_results.json",
       "size": 45730
     },
@@ -21021,7 +21021,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1783060595914889900,
+      "mtime_ns": 1783136667454325000,
       "path": "simulations/flowpilot_command_refinement_results.json",
       "size": 2741
     },
@@ -21057,9 +21057,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1781561222974465000,
+      "mtime_ns": 1783136504357710400,
       "path": "simulations/flowpilot_complete_system_live_host_results.json",
-      "size": 983
+      "size": 879
     },
     {
       "exists": true,
@@ -21123,9 +21123,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1783060603248913700,
+      "mtime_ns": 1783136674015375100,
       "path": "simulations/flowpilot_control_plane_friction_results.json",
-      "size": 3544032
+      "size": 3654709
     },
     {
       "exists": true,
@@ -21171,7 +21171,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1783060610722191900,
+      "mtime_ns": 1783136680051606900,
       "path": "simulations/flowpilot_control_transaction_registry_results.json",
       "size": 33456
     },
@@ -21261,7 +21261,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1783060604418894600,
+      "mtime_ns": 1783136675064393800,
       "path": "simulations/flowpilot_cross_plane_friction_results.json",
       "size": 62777
     },
@@ -21291,7 +21291,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1783060606845907300,
+      "mtime_ns": 1783136676913794700,
       "path": "simulations/flowpilot_daemon_controller_actions_results.json",
       "size": 3972
     },
@@ -21369,19 +21369,19 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1783060605562248900,
+      "mtime_ns": 1783136675998792000,
       "path": "simulations/flowpilot_daemon_startup_lock_results.json",
       "size": 3826
     },
     {
       "exists": true,
-      "mtime_ns": 1783060609283423200,
+      "mtime_ns": 1783136679085305300,
       "path": "simulations/flowpilot_daemon_terminal_projection_results.json",
       "size": 3952
     },
     {
       "exists": true,
-      "mtime_ns": 1783060608041040600,
+      "mtime_ns": 1783136678001628500,
       "path": "simulations/flowpilot_daemon_wait_liveness_results.json",
       "size": 3866
     },
@@ -21525,9 +21525,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1781858965441188800,
+      "mtime_ns": 1783136504371716800,
       "path": "simulations/flowpilot_fake_project_rehearsal_results.json",
-      "size": 433978
+      "size": 433094
     },
     {
       "exists": true,
@@ -21561,9 +21561,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1782701444517733100,
+      "mtime_ns": 1783136504373719200,
       "path": "simulations/flowpilot_final_confidence_gate_results.json",
-      "size": 6509
+      "size": 6457
     },
     {
       "exists": true,
@@ -21579,9 +21579,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1782973797307011300,
+      "mtime_ns": 1783136504396257700,
       "path": "simulations/flowpilot_full_model_coverage_sweep_results.json",
-      "size": 411659
+      "size": 408073
     },
     {
       "exists": true,
@@ -21705,9 +21705,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1783061022758628700,
+      "mtime_ns": 1783136701858287400,
       "path": "simulations/flowpilot_model_hierarchy_results.json",
-      "size": 52028
+      "size": 53670
     },
     {
       "exists": true,
@@ -21729,15 +21729,15 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1783060612289548900,
+      "mtime_ns": 1783136681045601700,
       "path": "simulations/flowpilot_model_mesh_results.json",
       "size": 25603
     },
     {
       "exists": true,
-      "mtime_ns": 1783130619587778500,
+      "mtime_ns": 1783136750673397100,
       "path": "simulations/flowpilot_model_test_alignment_results.json",
-      "size": 4516565
+      "size": 4404669
     },
     {
       "exists": true,
@@ -22005,7 +22005,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1783060657285026300,
+      "mtime_ns": 1783136713484257900,
       "path": "simulations/flowpilot_project_topology_orientation_results.json",
       "size": 18792
     },
@@ -22173,7 +22173,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1783135661922695700,
+      "mtime_ns": 1783136668461297500,
       "path": "simulations/flowpilot_reviewer_active_challenge_results.json",
       "size": 10136
     },
@@ -22335,7 +22335,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1783060640336518800,
+      "mtime_ns": 1783136703733270000,
       "path": "simulations/flowpilot_router_facade_split_results.json",
       "size": 3635
     },
@@ -22443,7 +22443,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1783060641476036600,
+      "mtime_ns": 1783136704614784400,
       "path": "simulations/flowpilot_similarity_convergence_results.json",
       "size": 127731
     },
@@ -22455,9 +22455,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1781768041406139800,
+      "mtime_ns": 1783136504763688100,
       "path": "simulations/flowpilot_singleton_identity_results.json",
-      "size": 16628
+      "size": 16576
     },
     {
       "exists": true,
@@ -22551,7 +22551,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1783060638885356800,
+      "mtime_ns": 1783136702791990600,
       "path": "simulations/flowpilot_structure_maintenance_results.json",
       "size": 6722
     },
@@ -22737,7 +22737,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1783060598584098300,
+      "mtime_ns": 1783136669717690100,
       "path": "simulations/prompt_isolation_results.json",
       "size": 768705
     },
@@ -22767,7 +22767,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1783060594003934200,
+      "mtime_ns": 1783136666172230500,
       "path": "simulations/release_tooling_results.json",
       "size": 28699
     },
@@ -23733,7 +23733,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1783060594310971300,
+      "mtime_ns": 1783136666408632300,
       "path": "simulations/startup_pm_review_results.json",
       "size": 141226
     },
@@ -27019,7 +27019,7 @@
       "area": "other",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests",
@@ -27036,7 +27036,7 @@
       "area": "other",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "simulations/run_flowpilot_test_tiering_checks.py",
         "--json-out",
         "simulations/flowpilot_test_tiering_results.json"
@@ -27051,7 +27051,7 @@
       "area": "structure",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "simulations/run_flowpilot_slow_test_contract_checks.py",
         "--json-out",
         "simulations/flowpilot_slow_test_contract_results.json"
@@ -27066,7 +27066,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "simulations/run_flowpilot_packet_result_family_parity_checks.py",
         "--json-out",
         "simulations/flowpilot_packet_result_family_parity_results.json"
@@ -27081,7 +27081,7 @@
       "area": "model-test-alignment",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "simulations/run_flowpilot_model_test_alignment_checks.py",
         "--json-out",
         "simulations/flowpilot_model_test_alignment_results.json"
@@ -27096,7 +27096,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "simulations/run_flowpilot_contract_exhaustion_mesh_checks.py",
         "--json-out",
         "simulations/flowpilot_contract_exhaustion_mesh_results.json"
@@ -27111,7 +27111,7 @@
       "area": "material",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "simulations/run_flowpilot_cartesian_control_plane_exhaustion_checks.py",
         "--json-out",
         "simulations/flowpilot_cartesian_control_plane_exhaustion_results.json"
@@ -27126,7 +27126,7 @@
       "area": "other",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "simulations/run_flowpilot_project_topology_orientation_checks.py",
         "--json-out",
         "simulations/flowpilot_project_topology_orientation_results.json"
@@ -27141,7 +27141,7 @@
       "area": "model-test-alignment",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "simulations/flowpilot_synthetic_agent_coverage_matrix.py",
         "--json-out",
         "simulations/flowpilot_synthetic_agent_coverage_matrix_results.json"
@@ -27156,7 +27156,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "simulations/flowpilot_hard_gate_red_team_matrix.py",
         "--json-out",
         "simulations/flowpilot_hard_gate_red_team_matrix_results.json"
@@ -27171,7 +27171,7 @@
       "area": "other",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "simulations/flowpilot_e2e_synthetic_chaos_matrix.py",
         "--json-out",
         "simulations/flowpilot_e2e_synthetic_chaos_matrix_results.json"
@@ -27186,7 +27186,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "simulations/flowpilot_real_router_dry_run_rehearsal_matrix.py",
         "--json-out",
         "simulations/flowpilot_real_router_dry_run_rehearsal_matrix_results.json"
@@ -27201,7 +27201,7 @@
       "area": "other",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "simulations/flowpilot_control_plane_failure_canary_matrix.py",
         "--json-out",
         "simulations/flowpilot_control_plane_failure_canary_matrix_results.json"
@@ -27216,7 +27216,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "simulations/flowpilot_shadow_launcher_chaos_matrix.py",
         "--json-out",
         "simulations/flowpilot_shadow_launcher_chaos_matrix_results.json"
@@ -27231,7 +27231,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "simulations/flowpilot_historical_live_run_replay_matrix.py",
         "--json-out",
         "simulations/flowpilot_historical_live_run_replay_matrix_results.json"
@@ -27246,7 +27246,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "simulations/flowpilot_known_friction_regression_matrix.py",
         "--json-out",
         "simulations/flowpilot_known_friction_regression_matrix_results.json"
@@ -27261,7 +27261,7 @@
       "area": "controller",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "simulations/run_flowpilot_controller_break_glass_checks.py",
         "--json-out",
         "simulations/flowpilot_controller_break_glass_results.json"
@@ -27276,7 +27276,7 @@
       "area": "other",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/flowguard_project_topology.py",
         "build"
       ],
@@ -27290,7 +27290,7 @@
       "area": "other",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/flowguard_project_topology.py",
         "check"
       ],
@@ -27304,7 +27304,7 @@
       "area": "other",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowguard_project_topology.py",
@@ -27320,7 +27320,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_test_tiers.py",
@@ -27336,7 +27336,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_synthetic_agent_trace_replay.py",
@@ -27354,7 +27354,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_synthetic_agent_trace_replay.py",
@@ -27372,7 +27372,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_synthetic_agent_trace_replay.py",
@@ -27390,7 +27390,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_synthetic_agent_trace_replay.py",
@@ -27408,7 +27408,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_synthetic_agent_trace_replay.py",
@@ -27426,7 +27426,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_synthetic_agent_trace_replay.py",
@@ -27444,7 +27444,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_synthetic_agent_trace_replay.py",
@@ -27462,7 +27462,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_synthetic_agent_trace_replay.py",
@@ -27480,7 +27480,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_synthetic_agent_trace_replay.py",
@@ -27498,7 +27498,7 @@
       "area": "material",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_synthetic_agent_trace_replay.py",
@@ -27516,7 +27516,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_synthetic_agent_trace_replay.py",
@@ -27534,7 +27534,7 @@
       "area": "other",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_synthetic_agent_trace_replay.py",
@@ -27552,7 +27552,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_synthetic_agent_trace_replay.py",
@@ -27570,7 +27570,7 @@
       "area": "other",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_synthetic_agent_trace_replay.py",
@@ -27588,7 +27588,7 @@
       "area": "other",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_synthetic_agent_trace_replay.py",
@@ -27606,7 +27606,7 @@
       "area": "other",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_synthetic_agent_trace_replay.py",
@@ -27624,7 +27624,7 @@
       "area": "closure",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_synthetic_agent_trace_replay.py",
@@ -27642,7 +27642,7 @@
       "area": "model-test-alignment",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_hard_gate_red_team_matrix.py",
@@ -27658,7 +27658,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_hard_gate_red_team_replay.py",
@@ -27674,7 +27674,7 @@
       "area": "model-test-alignment",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_e2e_synthetic_chaos_matrix.py",
@@ -27690,7 +27690,7 @@
       "area": "closure",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_e2e_synthetic_chaos_replay.py",
@@ -27708,7 +27708,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_e2e_synthetic_chaos_replay.py",
@@ -27726,7 +27726,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_e2e_synthetic_chaos_replay.py",
@@ -27744,7 +27744,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_e2e_synthetic_chaos_replay.py",
@@ -27762,7 +27762,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_e2e_synthetic_chaos_replay.py",
@@ -27780,7 +27780,7 @@
       "area": "other",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_e2e_synthetic_chaos_replay.py",
@@ -27798,7 +27798,7 @@
       "area": "closure",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_e2e_synthetic_chaos_replay.py",
@@ -27816,7 +27816,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_real_router_dry_run_rehearsal_matrix.py",
@@ -27832,7 +27832,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_real_router_dry_run_rehearsal.py",
@@ -27848,7 +27848,7 @@
       "area": "other",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_control_plane_failure_canary_matrix.py",
@@ -27864,7 +27864,7 @@
       "area": "other",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_control_plane_failure_canary_replay.py",
@@ -27880,7 +27880,7 @@
       "area": "install-validation",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_shadow_launcher_chaos_matrix.py",
@@ -27896,7 +27896,7 @@
       "area": "install-validation",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_shadow_launcher_chaos_replay.py",
@@ -27914,7 +27914,7 @@
       "area": "other",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_shadow_launcher_chaos_replay.py",
@@ -27932,7 +27932,7 @@
       "area": "other",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_shadow_launcher_chaos_replay.py",
@@ -27950,7 +27950,7 @@
       "area": "install-validation",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_shadow_launcher_chaos_replay.py",
@@ -27968,7 +27968,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_shadow_launcher_chaos_replay.py",
@@ -27986,7 +27986,7 @@
       "area": "startup",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_shadow_launcher_chaos_replay.py",
@@ -28004,7 +28004,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_historical_live_run_replay_matrix.py",
@@ -28020,7 +28020,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_historical_live_run_replay.py",
@@ -28036,7 +28036,7 @@
       "area": "other",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_known_friction_regression_matrix.py",
@@ -28052,7 +28052,7 @@
       "area": "model-test-alignment",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_model_test_alignment.py",
@@ -28068,7 +28068,7 @@
       "area": "controller",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_controller_break_glass.py",
@@ -28084,7 +28084,7 @@
       "area": "other",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowguard_result_proof.py",
@@ -28100,7 +28100,7 @@
       "area": "model-mesh",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_thin_parent_checks.py",
@@ -28116,7 +28116,7 @@
       "area": "structure",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_maintenance_tools.py",
@@ -28132,7 +28132,7 @@
       "area": "install-validation",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_cli_entrypoints.py",
@@ -28148,7 +28148,7 @@
       "area": "startup",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "unittest",
         "-v",
@@ -28164,7 +28164,7 @@
       "area": "startup",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "unittest",
         "-v",
@@ -28180,7 +28180,7 @@
       "area": "startup",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -28219,7 +28219,7 @@
       "area": "startup",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -28244,7 +28244,7 @@
       "area": "startup",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -28273,7 +28273,7 @@
       "area": "startup",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -28298,7 +28298,7 @@
       "area": "startup",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -28319,7 +28319,7 @@
       "area": "startup",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "unittest",
         "-v",
@@ -28335,7 +28335,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "unittest",
         "-v",
@@ -28351,7 +28351,7 @@
       "area": "controller",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "unittest",
         "-v",
@@ -28367,7 +28367,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -28392,7 +28392,7 @@
       "area": "startup",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -28427,7 +28427,7 @@
       "area": "startup",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -28448,7 +28448,7 @@
       "area": "controller",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -28477,7 +28477,7 @@
       "area": "material",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -28520,7 +28520,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -28551,7 +28551,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -28584,7 +28584,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -28605,7 +28605,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "unittest",
         "-v",
@@ -28621,7 +28621,7 @@
       "area": "material",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -28654,7 +28654,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -28673,7 +28673,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -28690,7 +28690,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -28707,7 +28707,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -28724,7 +28724,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -28741,7 +28741,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -28758,7 +28758,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -28775,7 +28775,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -28792,7 +28792,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -28809,7 +28809,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -28826,7 +28826,7 @@
       "area": "material",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -28843,7 +28843,7 @@
       "area": "material",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -28860,7 +28860,7 @@
       "area": "material",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -28877,7 +28877,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -28894,7 +28894,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -28911,7 +28911,7 @@
       "area": "packet",
       "background_recommended": true,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "unittest",
         "-v",
@@ -28927,7 +28927,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "unittest",
         "-v",
@@ -28943,7 +28943,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "unittest",
         "-v",
@@ -28959,7 +28959,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "unittest",
         "-v",
@@ -28975,7 +28975,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -28992,7 +28992,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -29009,7 +29009,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -29026,7 +29026,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -29043,7 +29043,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -29060,7 +29060,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -29077,7 +29077,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -29094,7 +29094,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -29111,7 +29111,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -29128,7 +29128,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -29145,7 +29145,7 @@
       "area": "controller",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -29162,7 +29162,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -29179,7 +29179,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -29196,7 +29196,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -29213,7 +29213,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -29230,7 +29230,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -29247,7 +29247,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "unittest",
         "-v",
@@ -29263,7 +29263,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "unittest",
         "-v",
@@ -29279,7 +29279,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "unittest",
         "-v",
@@ -29295,7 +29295,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_isolated_shard.py",
         "-v",
         "-k",
@@ -29322,7 +29322,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "unittest",
         "-v",
@@ -29338,7 +29338,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "unittest",
         "-v",
@@ -29354,7 +29354,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -29377,7 +29377,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -29398,7 +29398,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -29417,7 +29417,7 @@
       "area": "startup",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -29440,7 +29440,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -29467,7 +29467,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -29484,7 +29484,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -29501,7 +29501,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -29518,7 +29518,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -29535,7 +29535,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -29554,7 +29554,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -29571,7 +29571,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -29588,7 +29588,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -29605,7 +29605,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -29622,7 +29622,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -29639,7 +29639,7 @@
       "area": "startup",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -29662,7 +29662,7 @@
       "area": "startup",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -29691,7 +29691,7 @@
       "area": "material",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -29724,7 +29724,7 @@
       "area": "material",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -29753,7 +29753,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -29776,7 +29776,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -29797,7 +29797,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -29816,7 +29816,7 @@
       "area": "startup",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -29839,7 +29839,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -29866,7 +29866,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -29883,7 +29883,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -29900,7 +29900,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -29917,7 +29917,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -29934,7 +29934,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -29953,7 +29953,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -29970,7 +29970,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -29987,7 +29987,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -30004,7 +30004,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -30021,7 +30021,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -30038,7 +30038,7 @@
       "area": "startup",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -30061,7 +30061,7 @@
       "area": "startup",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -30090,7 +30090,7 @@
       "area": "material",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -30123,7 +30123,7 @@
       "area": "material",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -30152,7 +30152,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -30175,7 +30175,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -30198,7 +30198,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -30225,7 +30225,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -30246,7 +30246,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -30265,7 +30265,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -30296,7 +30296,7 @@
       "area": "controller",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -30321,7 +30321,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -30346,7 +30346,7 @@
       "area": "controller",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -30373,7 +30373,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -30394,7 +30394,7 @@
       "area": "controller",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -30415,7 +30415,7 @@
       "area": "controller",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -30448,7 +30448,7 @@
       "area": "material",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -30473,7 +30473,7 @@
       "area": "controller",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -30494,7 +30494,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "simulations/run_flowpilot_test_tiering_checks.py",
         "--json-out",
         "simulations/flowpilot_test_tiering_results.json"
@@ -30509,7 +30509,7 @@
       "area": "startup",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "unittest",
         "-v",
@@ -30525,7 +30525,7 @@
       "area": "startup",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "unittest",
         "-v",
@@ -30541,7 +30541,7 @@
       "area": "startup",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -30580,7 +30580,7 @@
       "area": "startup",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -30605,7 +30605,7 @@
       "area": "startup",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -30634,7 +30634,7 @@
       "area": "startup",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -30659,7 +30659,7 @@
       "area": "startup",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -30680,7 +30680,7 @@
       "area": "startup",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "unittest",
         "-v",
@@ -30696,7 +30696,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "unittest",
         "-v",
@@ -30712,7 +30712,7 @@
       "area": "controller",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "unittest",
         "-v",
@@ -30728,7 +30728,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -30753,7 +30753,7 @@
       "area": "startup",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -30788,7 +30788,7 @@
       "area": "startup",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -30809,7 +30809,7 @@
       "area": "controller",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -30838,7 +30838,7 @@
       "area": "material",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -30881,7 +30881,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -30912,7 +30912,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -30945,7 +30945,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -30966,7 +30966,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "unittest",
         "-v",
@@ -30982,7 +30982,7 @@
       "area": "material",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -31015,7 +31015,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -31034,7 +31034,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -31051,7 +31051,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -31068,7 +31068,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -31085,7 +31085,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -31102,7 +31102,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -31119,7 +31119,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -31136,7 +31136,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -31153,7 +31153,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -31170,7 +31170,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -31187,7 +31187,7 @@
       "area": "material",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -31204,7 +31204,7 @@
       "area": "material",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -31221,7 +31221,7 @@
       "area": "material",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -31238,7 +31238,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -31255,7 +31255,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -31272,7 +31272,7 @@
       "area": "packet",
       "background_recommended": true,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "unittest",
         "-v",
@@ -31288,7 +31288,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "unittest",
         "-v",
@@ -31304,7 +31304,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "unittest",
         "-v",
@@ -31320,7 +31320,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "unittest",
         "-v",
@@ -31336,7 +31336,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -31353,7 +31353,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -31370,7 +31370,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -31387,7 +31387,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -31404,7 +31404,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -31421,7 +31421,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -31438,7 +31438,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -31455,7 +31455,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -31472,7 +31472,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -31489,7 +31489,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -31506,7 +31506,7 @@
       "area": "controller",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -31523,7 +31523,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -31540,7 +31540,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -31557,7 +31557,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -31574,7 +31574,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -31591,7 +31591,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -31608,7 +31608,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "unittest",
         "-v",
@@ -31624,7 +31624,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "unittest",
         "-v",
@@ -31640,7 +31640,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "unittest",
         "-v",
@@ -31656,7 +31656,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_isolated_shard.py",
         "-v",
         "-k",
@@ -31683,7 +31683,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "unittest",
         "-v",
@@ -31699,7 +31699,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "unittest",
         "-v",
@@ -31715,7 +31715,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -31738,7 +31738,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -31759,7 +31759,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -31778,7 +31778,7 @@
       "area": "startup",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -31801,7 +31801,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -31828,7 +31828,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -31845,7 +31845,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -31862,7 +31862,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -31879,7 +31879,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -31896,7 +31896,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -31915,7 +31915,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -31932,7 +31932,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -31949,7 +31949,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -31966,7 +31966,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -31983,7 +31983,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -32000,7 +32000,7 @@
       "area": "startup",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -32023,7 +32023,7 @@
       "area": "startup",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -32052,7 +32052,7 @@
       "area": "material",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -32085,7 +32085,7 @@
       "area": "material",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -32114,7 +32114,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -32137,7 +32137,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -32160,7 +32160,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -32187,7 +32187,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -32208,7 +32208,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -32227,7 +32227,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -32258,7 +32258,7 @@
       "area": "controller",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -32283,7 +32283,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -32308,7 +32308,7 @@
       "area": "controller",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -32335,7 +32335,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -32356,7 +32356,7 @@
       "area": "controller",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -32377,7 +32377,7 @@
       "area": "controller",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -32410,7 +32410,7 @@
       "area": "material",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -32435,7 +32435,7 @@
       "area": "controller",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -32456,7 +32456,7 @@
       "area": "install-validation",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/check_install.py",
         "--json"
       ],
@@ -32470,7 +32470,7 @@
       "area": "install-validation",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/audit_local_install_sync.py",
         "--json"
       ],
@@ -32484,7 +32484,7 @@
       "area": "install-validation",
       "background_recommended": true,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/smoke_flowpilot.py",
         "--fast"
       ],
@@ -32498,7 +32498,7 @@
       "area": "model-test-alignment",
       "background_recommended": true,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/run_flowguard_coverage_sweep.py",
         "--timeout-seconds",
         "300"
@@ -32513,7 +32513,7 @@
       "area": "install-validation",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "simulations/run_release_tooling_checks.py"
       ],
       "description": "Release-tooling FlowGuard checks.",
@@ -32526,7 +32526,7 @@
       "area": "other",
       "background_recommended": true,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "simulations/run_meta_checks.py",
         "--full"
       ],
@@ -32540,7 +32540,7 @@
       "area": "other",
       "background_recommended": true,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "simulations/run_capability_checks.py",
         "--full"
       ],
@@ -32554,7 +32554,7 @@
       "area": "install-validation",
       "background_recommended": true,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/check_public_release.py",
         "--json",
         "--skip-validation"
@@ -32569,7 +32569,7 @@
       "area": "closure",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "simulations/run_flowpilot_final_confidence_gate_checks.py",
         "--run-checks",
         "--json-out",
@@ -32585,7 +32585,7 @@
       "area": "other",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests",
@@ -32602,7 +32602,7 @@
       "area": "other",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "simulations/run_flowpilot_test_tiering_checks.py",
         "--json-out",
         "simulations/flowpilot_test_tiering_results.json"
@@ -32617,7 +32617,7 @@
       "area": "structure",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "simulations/run_flowpilot_slow_test_contract_checks.py",
         "--json-out",
         "simulations/flowpilot_slow_test_contract_results.json"
@@ -32632,7 +32632,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "simulations/run_flowpilot_packet_result_family_parity_checks.py",
         "--json-out",
         "simulations/flowpilot_packet_result_family_parity_results.json"
@@ -32647,7 +32647,7 @@
       "area": "model-test-alignment",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "simulations/run_flowpilot_model_test_alignment_checks.py",
         "--json-out",
         "simulations/flowpilot_model_test_alignment_results.json"
@@ -32662,7 +32662,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "simulations/run_flowpilot_contract_exhaustion_mesh_checks.py",
         "--json-out",
         "simulations/flowpilot_contract_exhaustion_mesh_results.json"
@@ -32677,7 +32677,7 @@
       "area": "material",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "simulations/run_flowpilot_cartesian_control_plane_exhaustion_checks.py",
         "--json-out",
         "simulations/flowpilot_cartesian_control_plane_exhaustion_results.json"
@@ -32692,7 +32692,7 @@
       "area": "other",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "simulations/run_flowpilot_project_topology_orientation_checks.py",
         "--json-out",
         "simulations/flowpilot_project_topology_orientation_results.json"
@@ -32707,7 +32707,7 @@
       "area": "model-test-alignment",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "simulations/flowpilot_synthetic_agent_coverage_matrix.py",
         "--json-out",
         "simulations/flowpilot_synthetic_agent_coverage_matrix_results.json"
@@ -32722,7 +32722,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "simulations/flowpilot_hard_gate_red_team_matrix.py",
         "--json-out",
         "simulations/flowpilot_hard_gate_red_team_matrix_results.json"
@@ -32737,7 +32737,7 @@
       "area": "other",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "simulations/flowpilot_e2e_synthetic_chaos_matrix.py",
         "--json-out",
         "simulations/flowpilot_e2e_synthetic_chaos_matrix_results.json"
@@ -32752,7 +32752,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "simulations/flowpilot_real_router_dry_run_rehearsal_matrix.py",
         "--json-out",
         "simulations/flowpilot_real_router_dry_run_rehearsal_matrix_results.json"
@@ -32767,7 +32767,7 @@
       "area": "other",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "simulations/flowpilot_control_plane_failure_canary_matrix.py",
         "--json-out",
         "simulations/flowpilot_control_plane_failure_canary_matrix_results.json"
@@ -32782,7 +32782,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "simulations/flowpilot_shadow_launcher_chaos_matrix.py",
         "--json-out",
         "simulations/flowpilot_shadow_launcher_chaos_matrix_results.json"
@@ -32797,7 +32797,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "simulations/flowpilot_historical_live_run_replay_matrix.py",
         "--json-out",
         "simulations/flowpilot_historical_live_run_replay_matrix_results.json"
@@ -32812,7 +32812,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "simulations/flowpilot_known_friction_regression_matrix.py",
         "--json-out",
         "simulations/flowpilot_known_friction_regression_matrix_results.json"
@@ -32827,7 +32827,7 @@
       "area": "controller",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "simulations/run_flowpilot_controller_break_glass_checks.py",
         "--json-out",
         "simulations/flowpilot_controller_break_glass_results.json"
@@ -32842,7 +32842,7 @@
       "area": "other",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/flowguard_project_topology.py",
         "build"
       ],
@@ -32856,7 +32856,7 @@
       "area": "other",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/flowguard_project_topology.py",
         "check"
       ],
@@ -32870,7 +32870,7 @@
       "area": "other",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowguard_project_topology.py",
@@ -32886,7 +32886,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_test_tiers.py",
@@ -32902,7 +32902,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_synthetic_agent_trace_replay.py",
@@ -32920,7 +32920,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_synthetic_agent_trace_replay.py",
@@ -32938,7 +32938,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_synthetic_agent_trace_replay.py",
@@ -32956,7 +32956,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_synthetic_agent_trace_replay.py",
@@ -32974,7 +32974,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_synthetic_agent_trace_replay.py",
@@ -32992,7 +32992,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_synthetic_agent_trace_replay.py",
@@ -33010,7 +33010,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_synthetic_agent_trace_replay.py",
@@ -33028,7 +33028,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_synthetic_agent_trace_replay.py",
@@ -33046,7 +33046,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_synthetic_agent_trace_replay.py",
@@ -33064,7 +33064,7 @@
       "area": "material",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_synthetic_agent_trace_replay.py",
@@ -33082,7 +33082,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_synthetic_agent_trace_replay.py",
@@ -33100,7 +33100,7 @@
       "area": "other",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_synthetic_agent_trace_replay.py",
@@ -33118,7 +33118,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_synthetic_agent_trace_replay.py",
@@ -33136,7 +33136,7 @@
       "area": "other",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_synthetic_agent_trace_replay.py",
@@ -33154,7 +33154,7 @@
       "area": "other",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_synthetic_agent_trace_replay.py",
@@ -33172,7 +33172,7 @@
       "area": "other",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_synthetic_agent_trace_replay.py",
@@ -33190,7 +33190,7 @@
       "area": "closure",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_synthetic_agent_trace_replay.py",
@@ -33208,7 +33208,7 @@
       "area": "model-test-alignment",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_hard_gate_red_team_matrix.py",
@@ -33224,7 +33224,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_hard_gate_red_team_replay.py",
@@ -33240,7 +33240,7 @@
       "area": "model-test-alignment",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_e2e_synthetic_chaos_matrix.py",
@@ -33256,7 +33256,7 @@
       "area": "closure",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_e2e_synthetic_chaos_replay.py",
@@ -33274,7 +33274,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_e2e_synthetic_chaos_replay.py",
@@ -33292,7 +33292,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_e2e_synthetic_chaos_replay.py",
@@ -33310,7 +33310,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_e2e_synthetic_chaos_replay.py",
@@ -33328,7 +33328,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_e2e_synthetic_chaos_replay.py",
@@ -33346,7 +33346,7 @@
       "area": "other",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_e2e_synthetic_chaos_replay.py",
@@ -33364,7 +33364,7 @@
       "area": "closure",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_e2e_synthetic_chaos_replay.py",
@@ -33382,7 +33382,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_real_router_dry_run_rehearsal_matrix.py",
@@ -33398,7 +33398,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_real_router_dry_run_rehearsal.py",
@@ -33414,7 +33414,7 @@
       "area": "other",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_control_plane_failure_canary_matrix.py",
@@ -33430,7 +33430,7 @@
       "area": "other",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_control_plane_failure_canary_replay.py",
@@ -33446,7 +33446,7 @@
       "area": "install-validation",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_shadow_launcher_chaos_matrix.py",
@@ -33462,7 +33462,7 @@
       "area": "install-validation",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_shadow_launcher_chaos_replay.py",
@@ -33480,7 +33480,7 @@
       "area": "other",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_shadow_launcher_chaos_replay.py",
@@ -33498,7 +33498,7 @@
       "area": "other",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_shadow_launcher_chaos_replay.py",
@@ -33516,7 +33516,7 @@
       "area": "install-validation",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_shadow_launcher_chaos_replay.py",
@@ -33534,7 +33534,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_shadow_launcher_chaos_replay.py",
@@ -33552,7 +33552,7 @@
       "area": "startup",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_shadow_launcher_chaos_replay.py",
@@ -33570,7 +33570,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_historical_live_run_replay_matrix.py",
@@ -33586,7 +33586,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_historical_live_run_replay.py",
@@ -33602,7 +33602,7 @@
       "area": "other",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_known_friction_regression_matrix.py",
@@ -33618,7 +33618,7 @@
       "area": "model-test-alignment",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_model_test_alignment.py",
@@ -33634,7 +33634,7 @@
       "area": "controller",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_controller_break_glass.py",
@@ -33650,7 +33650,7 @@
       "area": "other",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowguard_result_proof.py",
@@ -33666,7 +33666,7 @@
       "area": "model-mesh",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_thin_parent_checks.py",
@@ -33682,7 +33682,7 @@
       "area": "structure",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_maintenance_tools.py",
@@ -33698,7 +33698,7 @@
       "area": "install-validation",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "pytest",
         "tests/test_flowpilot_cli_entrypoints.py",
@@ -33714,7 +33714,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "simulations/run_flowpilot_test_tiering_checks.py",
         "--json-out",
         "simulations/flowpilot_test_tiering_results.json"
@@ -33729,7 +33729,7 @@
       "area": "startup",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "unittest",
         "-v",
@@ -33745,7 +33745,7 @@
       "area": "startup",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "unittest",
         "-v",
@@ -33761,7 +33761,7 @@
       "area": "startup",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -33800,7 +33800,7 @@
       "area": "startup",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -33825,7 +33825,7 @@
       "area": "startup",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -33854,7 +33854,7 @@
       "area": "startup",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -33879,7 +33879,7 @@
       "area": "startup",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -33900,7 +33900,7 @@
       "area": "startup",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "unittest",
         "-v",
@@ -33916,7 +33916,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "unittest",
         "-v",
@@ -33932,7 +33932,7 @@
       "area": "controller",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "unittest",
         "-v",
@@ -33948,7 +33948,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -33973,7 +33973,7 @@
       "area": "startup",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -34008,7 +34008,7 @@
       "area": "startup",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -34029,7 +34029,7 @@
       "area": "controller",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -34058,7 +34058,7 @@
       "area": "material",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -34101,7 +34101,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -34132,7 +34132,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -34165,7 +34165,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -34186,7 +34186,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "unittest",
         "-v",
@@ -34202,7 +34202,7 @@
       "area": "material",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -34235,7 +34235,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -34254,7 +34254,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -34271,7 +34271,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -34288,7 +34288,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -34305,7 +34305,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -34322,7 +34322,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -34339,7 +34339,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -34356,7 +34356,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -34373,7 +34373,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -34390,7 +34390,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -34407,7 +34407,7 @@
       "area": "material",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -34424,7 +34424,7 @@
       "area": "material",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -34441,7 +34441,7 @@
       "area": "material",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -34458,7 +34458,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -34475,7 +34475,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -34492,7 +34492,7 @@
       "area": "packet",
       "background_recommended": true,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "unittest",
         "-v",
@@ -34508,7 +34508,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "unittest",
         "-v",
@@ -34524,7 +34524,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "unittest",
         "-v",
@@ -34540,7 +34540,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "unittest",
         "-v",
@@ -34556,7 +34556,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -34573,7 +34573,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -34590,7 +34590,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -34607,7 +34607,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -34624,7 +34624,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -34641,7 +34641,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -34658,7 +34658,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -34675,7 +34675,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -34692,7 +34692,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -34709,7 +34709,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -34726,7 +34726,7 @@
       "area": "controller",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -34743,7 +34743,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -34760,7 +34760,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -34777,7 +34777,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -34794,7 +34794,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -34811,7 +34811,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -34828,7 +34828,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "unittest",
         "-v",
@@ -34844,7 +34844,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "unittest",
         "-v",
@@ -34860,7 +34860,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "unittest",
         "-v",
@@ -34876,7 +34876,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_isolated_shard.py",
         "-v",
         "-k",
@@ -34903,7 +34903,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "unittest",
         "-v",
@@ -34919,7 +34919,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "-m",
         "unittest",
         "-v",
@@ -34935,7 +34935,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -34958,7 +34958,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -34979,7 +34979,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -34998,7 +34998,7 @@
       "area": "startup",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -35021,7 +35021,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -35048,7 +35048,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -35065,7 +35065,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -35082,7 +35082,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -35099,7 +35099,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -35116,7 +35116,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -35135,7 +35135,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -35152,7 +35152,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -35169,7 +35169,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -35186,7 +35186,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -35203,7 +35203,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -35220,7 +35220,7 @@
       "area": "startup",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -35243,7 +35243,7 @@
       "area": "startup",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -35272,7 +35272,7 @@
       "area": "material",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -35305,7 +35305,7 @@
       "area": "material",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -35334,7 +35334,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -35357,7 +35357,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -35380,7 +35380,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -35407,7 +35407,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -35428,7 +35428,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -35447,7 +35447,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -35478,7 +35478,7 @@
       "area": "controller",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -35503,7 +35503,7 @@
       "area": "packet",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -35528,7 +35528,7 @@
       "area": "controller",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -35555,7 +35555,7 @@
       "area": "route",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -35576,7 +35576,7 @@
       "area": "controller",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -35597,7 +35597,7 @@
       "area": "controller",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -35630,7 +35630,7 @@
       "area": "material",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -35655,7 +35655,7 @@
       "area": "controller",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/test_tier/unittest_shard.py",
         "-v",
         "-k",
@@ -35676,7 +35676,7 @@
       "area": "install-validation",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/check_install.py",
         "--json"
       ],
@@ -35690,7 +35690,7 @@
       "area": "install-validation",
       "background_recommended": false,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/audit_local_install_sync.py",
         "--json"
       ],
@@ -35704,7 +35704,7 @@
       "area": "install-validation",
       "background_recommended": true,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/smoke_flowpilot.py",
         "--fast"
       ],
@@ -35718,7 +35718,7 @@
       "area": "model-test-alignment",
       "background_recommended": true,
       "command": [
-        "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "python",
         "scripts/run_flowguard_coverage_sweep.py",
         "--timeout-seconds",
         "300"
