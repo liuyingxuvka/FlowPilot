@@ -969,6 +969,11 @@ class FlowPilotAIContractProjectionTests(unittest.TestCase):
             "reviewer_recheck_consumes_score_context",
         }
         self.assertLessEqual(expected_score_profiles, set(contract_fake_ai.REVIEW_WINDOW_FAKE_AI_PROFILE_IDS))
+        expected_challenge_profiles = {
+            "reviewer_stage_specific_challenge_pass",
+            "reviewer_generic_optimization_only",
+        }
+        self.assertLessEqual(expected_challenge_profiles, set(contract_fake_ai.REVIEW_WINDOW_FAKE_AI_PROFILE_IDS))
         score_10 = responder.review_window_behavior_payload(
             "reviewer_quality_score_10_exceeds_standard",
             sample_window,
@@ -1002,6 +1007,27 @@ class FlowPilotAIContractProjectionTests(unittest.TestCase):
         self.assertEqual(overblock["passed"], False)
         self.assertTrue(overblock["review_window_trace"]["overblocked_soft_score"])
         self.assertTrue(recheck["review_window_trace"]["prior_score_context_consumed"])
+
+        stage_specific = responder.review_window_behavior_payload(
+            "reviewer_stage_specific_challenge_pass",
+            sample_window,
+        )
+        generic_only = responder.review_window_behavior_payload(
+            "reviewer_generic_optimization_only",
+            sample_window,
+        )
+        self.assertTrue(stage_specific["review_window_trace"]["stage_specific_challenge_projected"])
+        self.assertTrue(stage_specific["review_window_trace"]["stage_specific_challenge_performed"])
+        self.assertEqual(
+            stage_specific["review_window_trace"]["stage_challenge_binding_card_id"],
+            "reviewer.node_acceptance_plan_review",
+        )
+        self.assertIn("node acceptance plan", stage_specific["pm_visible_summary"][0])
+        self.assertIn("weakest evidence", stage_specific["pm_suggestion_items"][0])
+        self.assertTrue(generic_only["review_window_trace"]["generic_optimization_only"])
+        self.assertFalse(generic_only["review_window_trace"]["stage_specific_challenge_projected"])
+        self.assertIn("mechanical pass style", generic_only["pm_visible_summary"][0])
+        self.assertIn("consider optimization toward 9/10", generic_only["pm_suggestion_items"][0])
 
     def test_body_semantic_recheck_context_without_profile_does_not_create_hidden_fields(self) -> None:
         ledger, packet_id = self.issue_semantic_recheck_packet(include_profile=False)

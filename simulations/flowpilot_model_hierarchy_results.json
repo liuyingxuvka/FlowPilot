@@ -272,7 +272,6 @@
     },
     "evidence_contract_version": "flowpilot.parent_evidence_layers.v1",
     "heavy_parent_full_regression_obligations": [
-      "meta",
       "capability"
     ],
     "heavyweight_threshold": 10000,
@@ -283,33 +282,33 @@
       {
         "edge_count": 18,
         "layered_full_regression": {
-          "current": false,
+          "current": true,
           "proof": {
-            "created_at": "2026-06-26T14:43:36.176002+00:00",
+            "created_at": "2026-07-07T13:37:52.277313+00:00",
             "edge_count": 20,
             "kind": "layered_full_parent",
             "proof_file": "simulations/meta_layered_full_results.proof.json",
-            "reason": "input fingerprint changed",
+            "reason": "valid proof",
             "release_confidence": "current_with_layered_full_parent",
             "result_file": "simulations/meta_layered_full_results.json",
             "state_count": 12,
-            "valid": false
+            "valid": true
           }
         },
         "model_id": "meta",
         "ok": true,
         "proof": {
-          "created_at": "2026-06-26T14:43:36.176002+00:00",
+          "created_at": "2026-07-07T13:37:52.277313+00:00",
           "edge_count": 20,
           "kind": "layered_full_parent",
           "proof_file": "simulations/meta_layered_full_results.proof.json",
-          "reason": "input fingerprint changed",
+          "reason": "valid proof",
           "release_confidence": "current_with_layered_full_parent",
           "result_file": "simulations/meta_layered_full_results.json",
           "state_count": 12,
-          "valid": false
+          "valid": true
         },
-        "release_confidence": "requires_full_regression",
+        "release_confidence": "current_with_layered_full_parent",
         "release_validation_command": "python simulations/run_meta_checks.py --full",
         "result_file": "simulations/meta_thin_parent_results.json",
         "result_type": "thin_parent",
@@ -320,7 +319,7 @@
         "state_count": 10,
         "thin_parent": {
           "proof": {
-            "created_at": "2026-07-04T02:09:00.220154+00:00",
+            "created_at": "2026-07-07T13:38:00.938207+00:00",
             "proof_file": "simulations/meta_thin_parent_results.proof.json",
             "reason": "valid proof",
             "result_file": "simulations/meta_thin_parent_results.json",
@@ -331,7 +330,7 @@
             "edge_count": 18,
             "model_id": "meta",
             "ok": true,
-            "release_confidence": "requires_full_regression",
+            "release_confidence": "current_with_layered_full_parent",
             "result_file": "simulations/meta_thin_parent_results.json",
             "result_type": "thin_parent",
             "routine_confidence": "current",
@@ -346,7 +345,7 @@
         "layered_full_regression": {
           "current": false,
           "proof": {
-            "created_at": "2026-06-26T14:43:36.209992+00:00",
+            "created_at": "2026-07-07T13:38:16.647313+00:00",
             "edge_count": 16,
             "kind": "layered_full_parent",
             "proof_file": "simulations/capability_layered_full_results.proof.json",
@@ -360,7 +359,7 @@
         "model_id": "capability",
         "ok": true,
         "proof": {
-          "created_at": "2026-06-26T14:43:36.209992+00:00",
+          "created_at": "2026-07-07T13:38:16.647313+00:00",
           "edge_count": 16,
           "kind": "layered_full_parent",
           "proof_file": "simulations/capability_layered_full_results.proof.json",
@@ -381,7 +380,7 @@
         "state_count": 8,
         "thin_parent": {
           "proof": {
-            "created_at": "2026-07-04T02:09:00.281163+00:00",
+            "created_at": "2026-07-07T13:47:15.494621+00:00",
             "proof_file": "simulations/capability_thin_parent_results.proof.json",
             "reason": "valid proof",
             "result_file": "simulations/capability_thin_parent_results.json",
@@ -1242,7 +1241,7 @@
         "registered_in_partition": true,
         "result_file": "simulations/card_instruction_coverage_results.json",
         "role": "child_evidence",
-        "state_count": 67,
+        "state_count": 71,
         "tier": "small"
       },
       {

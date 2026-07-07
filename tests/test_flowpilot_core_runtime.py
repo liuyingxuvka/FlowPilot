@@ -20,6 +20,7 @@ from flowpilot_core_runtime import (  # noqa: E402
     packet_result_contracts,
     packets,
     pointer_store,
+    review_window_contracts,
     runtime as package_runtime,
     role_handoff,
     run_shell,
@@ -67,7 +68,7 @@ control_plane_audit = load_module(
 control_surface = runtime.control_surface
 
 DEFAULT_REVIEW_PM_SUGGESTION = (
-    "PM decision-support: current minimum gate passes; consider whether a 9/10 quality optimization pass is useful."
+    "PM decision-support: weakest evidence was inspected; PM may adopt a named verification or reject it because current evidence already supports this gate."
 )
 DEFAULT_TERMINAL_PM_SUGGESTION = (
     "PM decision-support: terminal replay passes; consider whether an optional quality improvement is useful."
@@ -3152,6 +3153,15 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
             and packet["envelope"]["subject_id"] == packet_id
         ]
         self.assertEqual(len(review_packets), 1)
+        review_window = review_packets[0]["envelope"]["review_window"]
+        self.assertEqual(review_window["review_flow_id"], "node_acceptance_plan_review")
+        self.assertEqual(
+            review_window["review_depth_rule"],
+            review_window_contracts.review_flow_stage_challenge_rule("node_acceptance_plan_review"),
+        )
+        self.assertIn("reviewer.node_acceptance_plan_review", review_window["review_depth_rule"])
+        self.assertIn("weakest", review_window["review_depth_rule"].lower())
+        self.assertIn("hypothesis", review_window["review_depth_rule"].lower())
         review_body = json.loads(review_packets[0]["body"])
         self.assertIn("plan-stage review", review_body["instruction"])
         self.assertIn("Do not block solely because Worker artifacts", review_body["instruction"])
@@ -5869,7 +5879,7 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
                     "minimum user standard is just met."
                 ),
                 pm_suggestion_items=[
-                    "PM decision-support: consider optimizing toward 9/10 before closure."
+                    "PM decision-support: weakest evidence is polish depth after the minimum gate; PM may adopt a named verification or reject it because current hard-gate evidence is sufficient."
                 ],
             ),
         )

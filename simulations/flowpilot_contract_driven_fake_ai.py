@@ -541,19 +541,35 @@ class ContractDrivenFakeAIResponder:
         if retry_count_class not in review_window_contracts.RETRY_COUNT_CLASSES:
             raise KeyError(f"unknown review-window retry count class: {retry_count_class}")
         flow_id = str(review_window.get("review_flow_id") or "")
+        stage_binding = {}
+        try:
+            stage_binding = review_window_contracts.review_flow_stage_challenge_binding(flow_id)
+        except KeyError:
+            stage_binding = {}
+        stage_focus = str(stage_binding.get("stage_focus") or "current subject")
+        stage_card_id = str(stage_binding.get("reviewer_card_id") or "reviewer.unbound")
         required_reads = [
             str(item)
             for item in review_window.get("required_authorized_result_read_ids_before_submit", [])
             if str(item)
         ]
         base = {
-            "pm_visible_summary": [f"Fake reviewer profile {profile_id} for {flow_id}."],
+            "pm_visible_summary": [
+                (
+                    f"Fake reviewer profile {profile_id} challenged {stage_focus} for {flow_id}; "
+                    "weakest evidence and a current-stage failure hypothesis were inspected."
+                )
+            ],
             "reviewed_by_role": "human_like_reviewer",
             "passed": True,
             "findings": [],
             "blockers": [],
             "pm_suggestion_items": [
-                "PM decision-support: fake review passes the minimum gate; consider whether a 9/10 optimization pass is useful."
+                (
+                    f"PM decision-support: weakest evidence for {flow_id} is the current-stage proof boundary; "
+                    "PM should adopt a targeted verification if that boundary is still thin, or reject the suggestion "
+                    "because the cited current evidence already disproves the failure hypothesis."
+                )
             ],
             "contract_self_check": {
                 "all_required_fields_present": True,
@@ -568,6 +584,8 @@ class ContractDrivenFakeAIResponder:
                 "material_state_class": material_state_class,
                 "retry_count_class": retry_count_class,
                 "boundary": "review_window_control_rehearsal",
+                "stage_challenge_binding_card_id": stage_card_id,
+                "stage_specific_challenge_projected": bool(stage_binding),
             },
         }
         if material_state_class == "missing_required_material":
@@ -588,6 +606,17 @@ class ContractDrivenFakeAIResponder:
         if profile_id == "reviewer_shallow_pass":
             base["review_window_trace"]["challenge_work_omitted"] = True
             base["findings"] = []
+        if profile_id == "reviewer_stage_specific_challenge_pass":
+            base["review_window_trace"]["stage_specific_challenge_performed"] = True
+        if profile_id == "reviewer_generic_optimization_only":
+            base["pm_visible_summary"] = [
+                "Fake reviewer copied the mechanical pass style without a stage-specific challenge."
+            ]
+            base["pm_suggestion_items"] = [
+                "PM decision-support: consider optimization toward 9/10; no hard blocker is present."
+            ]
+            base["review_window_trace"]["generic_optimization_only"] = True
+            base["review_window_trace"]["stage_specific_challenge_projected"] = False
         if profile_id == "reviewer_skips_required_read":
             base["review_window_trace"]["consumed_authorized_result_read_ids"] = []
             base["review_window_trace"]["required_reads_skipped"] = required_reads
@@ -634,7 +663,10 @@ class ContractDrivenFakeAIResponder:
                 )
             ]
             base["pm_suggestion_items"] = [
-                "PM decision-support: consider optimization toward 9/10; no hard blocker is present."
+                (
+                    "PM decision-support: weakest evidence is polish depth after the minimum gate; "
+                    "PM may adopt a named verification or reject it because the current hard gate evidence is sufficient."
+                )
             ]
             base["review_window_trace"]["quality_score"] = 6
             base["review_window_trace"]["minimum_hard_gate_passed"] = True

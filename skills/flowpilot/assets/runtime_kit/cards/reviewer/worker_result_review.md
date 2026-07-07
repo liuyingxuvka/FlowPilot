@@ -42,6 +42,13 @@ If this review blocks, requests more evidence, or requires reroute, include
 PM-actionable recommendation for resolving the blocked review. PM remains the
 owner of final repair strategy.
 
+For every pass or block, make the challenge visible in existing fields: name
+the current-stage object, the weakest evidence inspected, one concrete failure
+hypothesis or a no-hypothesis rationale, any thin-success or existence-only
+risk that applies, and a PM-actionable adopt/reject/no-action rationale. Do not
+answer with only mechanical completeness, boundary language, or generic `9/10`
+optimization advice.
+
 When blocking the same repair lineage for the same defect as the prior review,
 reuse the prior `blocker_class` instead of inventing a new name. This helps PM
 understand recurrence, but the runtime break-glass threshold counts
@@ -210,7 +217,7 @@ field even when the PM-built node-completion package is blocked.
   "findings": [],
   "blockers": [],
   "pm_suggestion_items": [
-    "PM decision-support: include at least one higher-standard suggestion, quality-score implication, or explicit no-extra-optimization rationale for PM."
+    "PM decision-support: weakest result evidence is <current evidence gap or none>; PM should adopt <specific repair/reissue/verification> or reject it because <current result-specific no-action rationale>."
   ],
   "contract_self_check": {
     "all_required_fields_present": true,

@@ -62,6 +62,44 @@ def _load_module_from_path(module_name: str, path: Path):
     return module
 
 
+PUBLIC_REPO_ROOT = "<repo-root>"
+PUBLIC_PYTHON = "python"
+
+
+def _public_string(value: str) -> str:
+    text = str(value)
+    normalized = text.replace("\\", "/")
+    python_executable = sys.executable.replace("\\", "/").lower()
+    if normalized.lower() == python_executable:
+        return PUBLIC_PYTHON
+    if normalized.lower().endswith(("/python.exe", "/python")) and (
+        ":/" in normalized or normalized.startswith("/")
+    ):
+        return PUBLIC_PYTHON
+    root = ROOT.resolve().as_posix()
+    if normalized == root:
+        return PUBLIC_REPO_ROOT
+    if normalized.startswith(root + "/"):
+        return f"{PUBLIC_REPO_ROOT}/{normalized[len(root) + 1:]}"
+    return _repo_path(text)
+
+
+def _public_command(command: Sequence[str]) -> list[str]:
+    return [_public_string(str(token)) for token in command]
+
+
+def _public_projection(value: Any) -> Any:
+    if isinstance(value, str):
+        return _public_string(value)
+    if isinstance(value, list):
+        return [_public_projection(item) for item in value]
+    if isinstance(value, tuple):
+        return [_public_projection(item) for item in value]
+    if isinstance(value, dict):
+        return {str(key): _public_projection(item) for key, item in value.items()}
+    return value
+
+
 def _python_summary(path: Path) -> dict[str, Any]:
     text = _read_text(path)
     rel_path = _repo_path(str(path.relative_to(ROOT)))
@@ -566,7 +604,12 @@ def _background_evidence_for_command(
                 command=command,
                 tier=tier,
             )
-            evidence["artifact_root"] = _repo_path(str(root.relative_to(ROOT))) if root.is_relative_to(ROOT) else str(root)
+            evidence = _public_projection(evidence)
+            evidence["artifact_root"] = (
+                _repo_path(str(root.relative_to(ROOT)))
+                if root.is_relative_to(ROOT)
+                else _public_string(str(root))
+            )
             evidence["artifact_name"] = name
             inspected.append(evidence)
             status = str(evidence.get("status", ""))
@@ -636,7 +679,8 @@ def _test_tier_command_surfaces(
         )
         surfaces.append(tier_surface)
         for command in commands:
-            command_text = " ".join(command.command)
+            public_command = _public_command(command.command)
+            command_text = " ".join(public_command)
             evidence_status = "passed"
             background_evidence: dict[str, Any] | None = None
             if command.background_recommended or command.long_running:
@@ -653,7 +697,7 @@ def _test_tier_command_surfaces(
                 "name": command.name,
                 "path": "scripts/run_test_tier.py",
                 "tier": tier,
-                "command": list(command.command),
+                "command": public_command,
                 "has_model": tier_surface["has_model"] or command.name in model_text or command.name in test_text,
                 "has_code": _command_references_exist(command.command),
                 "has_test": has_validation_target or command.name in test_text,

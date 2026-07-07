@@ -1,5 +1,34 @@
 # Changelog
 
+## v0.11.3 - 2026-07-07
+
+### Changed
+
+- Hardened FlowPilot Reviewer/PM challenge flow so every declared review flow
+  receives a fixed stage challenge focus through the existing review-window
+  path, without adding result fields, fallback review packets, or a parallel
+  review workflow.
+- Strengthened Reviewer cards and result examples so pass/block reviews name
+  the reviewed object, weakest evidence, a concrete failure hypothesis or
+  no-hypothesis rationale, thin-success risk, and PM-actionable decision
+  support.
+- Tightened PM suggestion handling so actionable Reviewer suggestions must be
+  adopted, rejected with reason, repaired, waived, stopped for the user, or
+  bound to an already named downstream node/gate instead of vague later
+  deferral.
+- Hardened current status projection so FlowPilot status remains tied to the
+  current runtime state and route evidence.
+
+### Validation
+
+- Verified the OpenSpec change
+  `strengthen-flowpilot-reviewer-pm-challenge-chain` with `13/13` required
+  checks passing.
+- Verified focused runtime, AI contract projection, card instruction coverage,
+  synthetic-agent Cartesian coverage, ContractExhaustionMesh, FlowGuard project
+  audit, meta/capability full parent checks, topology build/check, local install
+  sync audit, and install self-check.
+
 ## v0.11.2 - 2026-07-07
 
 ### Changed

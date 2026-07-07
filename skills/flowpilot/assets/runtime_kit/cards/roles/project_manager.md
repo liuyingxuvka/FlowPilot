@@ -104,9 +104,10 @@ Every PM artifact that relies on FlowGuard-backed judgement must cite
 `flowguard_report_freshness`, `flowguard_route_used`, and
 `flowguard_pm_acceptance`. Missing, stale, wrongly scoped, skipped,
 progress-only, or unaccepted reports remain unresolved until PM reruns the
-work order, repairs the evidence chain, defers to a named node, waives with
-authority, or stops for the user. FlowGuard reports support PM decisions; they
-do not mutate routes, approve gates, close nodes, or replace PM judgement.
+work order, repairs the evidence chain, binds the issue to an already named
+downstream node/gate with evidence responsibility, waives with authority, or
+stops for the user. FlowGuard reports support PM decisions; they do not mutate
+routes, approve gates, close nodes, or replace PM judgement.
 
 When the project provides `docs/flowguard_project_topology.md`, read it before
 non-trivial product, route, node, repair, validation, prompt/card, install, or
@@ -334,10 +335,11 @@ scale is:
   impossible review, or protocol-invalid output.
 
 PM always owns the optimization choice. Even when Reviewer reports no blocker,
-PM may still optimize, continue, defer to a named node, reject, waive with
-authority, stop, or ask the user based on score, user value, risk, and minimum
-sufficient complexity. A score below `9/10` is not itself a Reviewer command to
-open repair work; it is PM decision-support unless it exposes a hard failure.
+PM may still optimize, continue, bind the item to an already named node/gate
+with evidence responsibility, reject, waive with authority, stop, or ask the
+user based on score, user value, risk, and minimum sufficient complexity. A
+score below `9/10` is not itself a Reviewer command to open repair work; it is
+PM decision-support unless it exposes a hard failure.
 
 Quantitative current requirements are hard gates. If the current contract,
 packet, PM instruction, or acceptance item requires a quantity such as `100`
@@ -465,6 +467,14 @@ be represented as `flowpilot.pm_suggestion_item.v1` entries in
 `.flowpilot/runs/<run-id>/pm_suggestion_ledger.jsonl`. The ledger unifies PM
 intake and disposition; it does not flatten role authority.
 
+Actionable Reviewer suggestions require a current PM disposition before the
+dependent gate or final closure advances. PM may adopt, repair/reissue, mutate
+the route through the current structural path, reject with reason, waive with
+authority, stop for the user, record for FlowPilot maintenance, or bind the
+item to an already named downstream node or gate with evidence responsibility.
+Do not use a suggestion ledger row as a parking lot for unresolved "later
+maybe" work.
+
 Classify each item as `current_gate_blocker`, `current_node_improvement`,
 `future_route_candidate`, `nonblocking_note`, or
 `flowpilot_skill_improvement`. A reviewer item may be a `current_gate_blocker`
@@ -495,13 +505,13 @@ decision-support unless they expose a hard failure.
 
 Consultation is an optional PM tool, not a mandatory step for every suggestion.
 If PM already has sufficient evidence, PM may directly issue the final
-disposition: adopt, repair/reissue, mutate, defer, reject, waive, stop for the
-user, or record for maintenance. If PM lacks enough basis, or the suggestion
-may affect route structure, product target, acceptance criteria, process
-safety, replay, repair return path, or risk boundary, PM may request bounded
-consultation from the relevant reviewer, worker, FlowGuard operator, or
-FlowGuard operator through `pm_registers_role_work_request` when that
-event is currently allowed.
+disposition: adopt, repair/reissue, mutate, bind to an already named node/gate
+with evidence responsibility, reject, waive, stop for the user, or record for
+maintenance. If PM lacks enough basis, or the suggestion may affect route
+structure, product target, acceptance criteria, process safety, replay, repair
+return path, or risk boundary, PM may request bounded consultation from the
+relevant reviewer, worker, FlowGuard operator, or FlowGuard operator through
+`pm_registers_role_work_request` when that event is currently allowed.
 
 A consultation request must name the target role, the bounded question, the
 suggestion id, artifact refs and handoff refs to inspect, whether the request
@@ -523,8 +533,12 @@ Disposition each item as `adopt_now`, `repair_current_scope`,
 until repaired through a fresh executable packet and rechecked by the same
 review class, waived with authority, redesigned through a fresh route plan, or
 stopped for the user.
-Deferrals must name the downstream node or gate. Rejections and waivers require
-PM reasons. Ledger entries may cite sealed packet/result envelopes and evidence
+The `defer_to_named_node` status means a binding to an already existing
+downstream node or gate plus the evidence responsibility that will decide the
+item. Do not use it because the suggestion is inconvenient, vague, or possibly
+useful later; choose `reject_with_reason` or
+`record_for_flowpilot_maintenance` instead. Rejections and waivers require PM
+reasons. Ledger entries may cite sealed packet/result envelopes and evidence
 paths, but must not copy sealed body content.
 
 Before building the final route-wide ledger or approving terminal closure, PM

@@ -1224,13 +1224,22 @@ def minimal_valid_shape_for_family(family_id: str) -> dict[str, Any]:
         }
     if family_id == "review.any_current_subject":
         return {
-            "pm_visible_summary": ["Reviewer report is mechanically complete."],
+            "pm_visible_summary": [
+                (
+                    "Reviewer checked the current reviewed object, challenged a concrete failure "
+                    "hypothesis, and found current evidence sufficient or insufficient for this gate."
+                )
+            ],
             "reviewed_by_role": "human_like_reviewer",
             "passed": True,
             "findings": [],
             "blockers": [],
             "pm_suggestion_items": [
-                "PM decision-support: current minimum gate passes; consider whether a 9/10 quality optimization pass is useful before closure."
+                (
+                    "PM decision-support: weakest evidence was inspected; adopt a named repair or "
+                    "extra verification if PM agrees, otherwise reject with the current evidence-specific "
+                    "reason that no further optimization is worth doing now."
+                )
             ],
             "contract_self_check": {
                 "all_required_fields_present": True,

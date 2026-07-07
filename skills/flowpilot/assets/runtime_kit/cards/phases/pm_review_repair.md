@@ -32,6 +32,11 @@ navigation only; they do not close repair evidence obligations.
 - Treat the router's current `allowed_external_events` as the active authority for what this card may return.
 - Put reviewer, worker, and FlowGuard operator advice that needs PM disposition into the PM suggestion/blocker ledger instead of leaving it only in prose.
 - For non-trivial repair, model-miss, validation, stale-evidence, route-mutation, or return-path judgement, cite a FlowGuard Work Order and FlowGuard Report with `flowguard_work_order_id`, `flowguard_report_id`, `flowguard_report_freshness`, and PM acceptance, or record a scoped `flowguard_not_required_reason`.
+- Actionable Reviewer suggestions must be adopted, rejected with reason,
+  repaired/reissued, routed through current route mutation, waived with
+  authority, stopped for the user, recorded for FlowPilot maintenance, or bound
+  to an already named downstream node/gate with evidence responsibility. Do not
+  use suggestion disposition as vague later work.
 
 
 Current state contains a reviewer block.
@@ -114,10 +119,11 @@ minimum hard gate passed: true|false` line, interpret it with the Reviewer
 score rubric: `6/10` means the minimum user standard is just met, `9/10` is the
 high-quality target, and `10/10` substantially exceeds the user's standard.
 Scores below `9/10` are PM decision-support when the hard gate is met; PM
-always owns the optimization choice and whether to continue, defer, waive,
-stop, ask the user, or issue repair. Do not treat the score alone as Reviewer
-authority to force repair. This remains true even when Reviewer reports no
-blocker and PM is considering optional optimization.
+always owns the optimization choice and whether to continue, bind the item to
+an already named node/gate, reject with reason, waive, stop, ask the user, or
+issue repair. Do not treat the score alone as Reviewer authority to force
+repair. This remains true even when Reviewer reports no blocker and PM is
+considering optional optimization.
 If Reviewer identifies an explicit current quantitative gap, such as required
 item count, word count, coverage rows, required ids, evidence count, or named
 sections where delivered quantity is short, treat that as hard-blocker repair

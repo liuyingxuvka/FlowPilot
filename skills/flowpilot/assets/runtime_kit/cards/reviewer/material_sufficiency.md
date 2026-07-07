@@ -81,7 +81,7 @@ missing materials into `findings`, `blockers`, or `pm_suggestion_items`.
   "findings": [],
   "blockers": [],
   "pm_suggestion_items": [
-    "PM decision-support: include at least one source-quality, coverage, or follow-up research suggestion for PM."
+    "PM decision-support: weakest source boundary is <source gap or none>; PM should adopt <specific research/source-quality action> or reject it because <current material-specific no-action rationale>."
   ],
   "contract_self_check": {
     "all_required_fields_present": true,

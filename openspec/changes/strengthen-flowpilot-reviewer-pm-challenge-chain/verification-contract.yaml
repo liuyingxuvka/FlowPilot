@@ -1,0 +1,232 @@
+contract_version: 1
+change: strengthen-flowpilot-reviewer-pm-challenge-chain
+obligations:
+  - id: req.formal_gate_review_standards.fixed_stage_bindings
+    source: "specs/formal-gate-review-standards/spec.md#Requirement: Review flows have fixed stage challenge bindings"
+    claim: Every declared review_flow_id has one deterministic stage challenge binding and no fallback review path.
+    required: true
+    evidence:
+      - check.unit.card_instruction_coverage
+      - check.unit.core_runtime
+  - id: req.formal_gate_review_standards.stage_challenge_projection
+    source: "specs/formal-gate-review-standards/spec.md#Requirement: Review packets project stage-specific challenge context"
+    claim: Review windows project concrete current-stage challenge context through existing review window fields.
+    required: true
+    evidence:
+      - check.unit.core_runtime
+      - check.unit.ai_contract_projection
+  - id: req.formal_gate_review_standards.no_mechanical_samples
+    source: "specs/formal-gate-review-standards/spec.md#Requirement: Reviewer examples reject mechanical pass prose"
+    claim: Repository-owned skeletons, cards, and templates no longer teach mechanical pass prose or generic 9/10 advice.
+    required: true
+    evidence:
+      - check.unit.card_instruction_coverage
+  - id: req.formal_gate_review_standards.pm_flowguard_absorption_review
+    source: "specs/formal-gate-review-standards/spec.md#Requirement: PM FlowGuard absorption review has a stage challenge"
+    claim: PM FlowGuard acceptance review has a fixed Reviewer challenge focus for PM absorption of current FlowGuard evidence.
+    required: true
+    evidence:
+      - check.unit.card_instruction_coverage
+      - check.unit.core_runtime
+  - id: req.role_scoped_quality_repair_prompts.pm_disposition_closure
+    source: "specs/role-scoped-quality-repair-prompts/spec.md#Requirement: PM dispositions close actionable Reviewer suggestions"
+    claim: PM guidance requires actionable Reviewer suggestions to receive a concrete current disposition.
+    required: true
+    evidence:
+      - check.unit.card_instruction_coverage
+  - id: req.role_scoped_quality_repair_prompts.pm_optimization_authority
+    source: "specs/role-scoped-quality-repair-prompts/spec.md#Requirement: PM preserves optimization authority"
+    claim: Prompt guidance preserves PM ownership of soft optimization while keeping hard failures repair-bound.
+    required: true
+    evidence:
+      - check.unit.card_instruction_coverage
+      - check.unit.core_runtime
+  - id: req.synthetic_agent_coverage_matrix.specific_and_generic_profiles
+    source: "specs/synthetic-agent-coverage-matrix/spec.md#Requirement: Fake reviewer profiles cover specific and generic behavior"
+    claim: Fake AI profiles include specific challenge responses and generic low-quality review responses.
+    required: true
+    evidence:
+      - check.unit.ai_contract_projection
+      - check.model.contract_exhaustion_mesh
+  - id: req.synthetic_agent_coverage_matrix.cartesian_coverage
+    source: "specs/synthetic-agent-coverage-matrix/spec.md#Requirement: Review-window Cartesian coverage remains exhaustive"
+    claim: Review-window fake-AI cells cover all declared review flows, profiles, material states, and retry classes.
+    required: true
+    evidence:
+      - check.unit.ai_contract_projection
+      - check.unit.synthetic_agent_coverage_matrix
+  - id: req.tiered_flowpilot_test_validation.focused_validation
+    source: "specs/tiered-flowpilot-test-validation/spec.md#Requirement: Reviewer challenge chain has focused validation"
+    claim: Focused runtime, AI projection, and card tests prove the changed chain.
+    required: true
+    evidence:
+      - check.unit.core_runtime
+      - check.unit.ai_contract_projection
+      - check.unit.card_instruction_coverage
+  - id: req.tiered_flowpilot_test_validation.install_and_model_refresh
+    source: "specs/tiered-flowpilot-test-validation/spec.md#Requirement: Install and model evidence are refreshed after prompt/runtime changes"
+    claim: FlowGuard project record, topology, install sync, and affected model checks are refreshed after implementation.
+    required: true
+    evidence:
+      - check.flowguard.project_audit
+      - check.install.sync_repo_owned
+      - check.install.local_sync_audit
+      - check.install.self_check
+      - check.topology.build
+      - check.topology.check
+      - check.model.meta
+      - check.model.capability
+
+checks:
+  - id: check.unit.core_runtime
+    kind: command
+    command: python
+    args: ["-m", "unittest", "tests.test_flowpilot_core_runtime"]
+    required: true
+    covers:
+      - req.formal_gate_review_standards.fixed_stage_bindings
+      - req.formal_gate_review_standards.stage_challenge_projection
+      - req.formal_gate_review_standards.pm_flowguard_absorption_review
+      - req.role_scoped_quality_repair_prompts.pm_optimization_authority
+      - req.tiered_flowpilot_test_validation.focused_validation
+    expected:
+      exit_code: 0
+  - id: check.unit.ai_contract_projection
+    kind: command
+    command: python
+    args: ["-m", "unittest", "tests.test_flowpilot_ai_contract_projection"]
+    required: true
+    covers:
+      - req.formal_gate_review_standards.stage_challenge_projection
+      - req.synthetic_agent_coverage_matrix.specific_and_generic_profiles
+      - req.synthetic_agent_coverage_matrix.cartesian_coverage
+      - req.tiered_flowpilot_test_validation.focused_validation
+    expected:
+      exit_code: 0
+  - id: check.unit.card_instruction_coverage
+    kind: command
+    command: python
+    args: ["-m", "unittest", "tests.test_flowpilot_card_instruction_coverage"]
+    required: true
+    covers:
+      - req.formal_gate_review_standards.fixed_stage_bindings
+      - req.formal_gate_review_standards.no_mechanical_samples
+      - req.formal_gate_review_standards.pm_flowguard_absorption_review
+      - req.role_scoped_quality_repair_prompts.pm_disposition_closure
+      - req.role_scoped_quality_repair_prompts.pm_optimization_authority
+      - req.tiered_flowpilot_test_validation.focused_validation
+    expected:
+      exit_code: 0
+  - id: check.unit.synthetic_agent_coverage_matrix
+    kind: command
+    command: python
+    args: ["-m", "unittest", "tests.test_flowpilot_synthetic_agent_coverage_matrix"]
+    required: true
+    covers:
+      - req.synthetic_agent_coverage_matrix.cartesian_coverage
+    expected:
+      exit_code: 0
+  - id: check.model.contract_exhaustion_mesh
+    kind: command
+    command: python
+    args: ["simulations/run_flowpilot_contract_exhaustion_mesh_checks.py"]
+    required: true
+    covers:
+      - req.synthetic_agent_coverage_matrix.specific_and_generic_profiles
+    expected:
+      exit_code: 0
+  - id: check.flowguard.project_audit
+    kind: command
+    command: python
+    args: ["-m", "flowguard", "project-audit", "--root", "."]
+    required: true
+    covers:
+      - req.tiered_flowpilot_test_validation.install_and_model_refresh
+    expected:
+      exit_code: 0
+  - id: check.model.meta
+    kind: command
+    command: python
+    args: ["simulations/run_meta_checks.py", "--full"]
+    artifact_base: tmp/flowguard_background/run_meta_checks
+    required: true
+    covers:
+      - req.tiered_flowpilot_test_validation.install_and_model_refresh
+    expected:
+      exit_code: 0
+  - id: check.model.capability
+    kind: command
+    command: python
+    args: ["simulations/run_capability_checks.py", "--full"]
+    artifact_base: tmp/flowguard_background/run_capability_checks
+    required: true
+    covers:
+      - req.tiered_flowpilot_test_validation.install_and_model_refresh
+    expected:
+      exit_code: 0
+  - id: check.install.sync_repo_owned
+    kind: command
+    command: python
+    args: ["scripts/install_flowpilot.py", "--sync-repo-owned", "--skip-self-check", "--json"]
+    required: true
+    covers:
+      - req.tiered_flowpilot_test_validation.install_and_model_refresh
+    expected:
+      exit_code: 0
+  - id: check.topology.build
+    kind: command
+    command: python
+    args: ["scripts/flowguard_project_topology.py", "build"]
+    required: true
+    covers:
+      - req.tiered_flowpilot_test_validation.install_and_model_refresh
+    expected:
+      exit_code: 0
+  - id: check.topology.check
+    kind: command
+    command: python
+    args: ["scripts/flowguard_project_topology.py", "check"]
+    required: true
+    covers:
+      - req.tiered_flowpilot_test_validation.install_and_model_refresh
+    expected:
+      exit_code: 0
+  - id: check.install.local_sync_audit
+    kind: command
+    command: python
+    args: ["scripts/audit_local_install_sync.py", "--json"]
+    required: true
+    covers:
+      - req.tiered_flowpilot_test_validation.install_and_model_refresh
+    expected:
+      exit_code: 0
+  - id: check.install.self_check
+    kind: command
+    command: python
+    args: ["scripts/check_install.py", "--json"]
+    required: true
+    covers:
+      - req.tiered_flowpilot_test_validation.install_and_model_refresh
+    expected:
+      exit_code: 0
+
+freshness:
+  watch:
+    - openspec/changes/strengthen-flowpilot-reviewer-pm-challenge-chain/proposal.md
+    - openspec/changes/strengthen-flowpilot-reviewer-pm-challenge-chain/design.md
+    - openspec/changes/strengthen-flowpilot-reviewer-pm-challenge-chain/tasks.md
+    - openspec/changes/strengthen-flowpilot-reviewer-pm-challenge-chain/specs/**/*.md
+    - openspec/changes/strengthen-flowpilot-reviewer-pm-challenge-chain/verification-contract.yaml
+    - skills/flowpilot/assets/flowpilot_core_runtime/review_window_contracts.py
+    - skills/flowpilot/assets/flowpilot_core_runtime/runtime.py
+    - skills/flowpilot/assets/flowpilot_core_runtime/packet_result_contracts.py
+    - skills/flowpilot/assets/flowpilot_core_runtime/role_handoff.py
+    - templates/flowpilot/packets/packet_body.template.md
+    - skills/flowpilot/assets/runtime_kit/cards/roles/human_like_reviewer.md
+    - skills/flowpilot/assets/runtime_kit/cards/roles/project_manager.md
+    - skills/flowpilot/assets/runtime_kit/cards/reviewer/**/*.md
+    - simulations/flowpilot_contract_driven_fake_ai.py
+    - tests/test_flowpilot_core_runtime.py
+    - tests/test_flowpilot_ai_contract_projection.py
+    - tests/test_flowpilot_card_instruction_coverage.py
+    - tests/test_flowpilot_synthetic_agent_coverage_matrix.py

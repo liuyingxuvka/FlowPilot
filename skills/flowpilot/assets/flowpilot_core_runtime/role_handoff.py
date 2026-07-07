@@ -134,6 +134,7 @@ def render_current_packet_handoff(
             f"`{open_command}`",
             "The open-packet output includes `current_handoff_contract`, `submission_checklist`, and any authorized input materials this packet may use.",
             "Before submit-result, use `submission_checklist.result_skeleton` or the packet body's `minimal_valid_shape` as the current mechanical checklist.",
+            "The skeleton is not answer prose. Replace every example sentence with packet-specific evidence, challenge, and PM-action reasoning; copying generic skeleton style is low-quality role work.",
             "If the checklist lists required fields, required child fields, explicit or non-empty arrays, branch-valid shapes, forbidden fields, or required authorized reads, follow those rows for this packet instead of using a remembered or shortened result shape.",
             "",
             *(

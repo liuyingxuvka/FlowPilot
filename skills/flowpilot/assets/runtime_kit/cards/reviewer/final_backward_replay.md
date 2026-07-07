@@ -32,6 +32,14 @@ current scope, repair parent scope, route redesign, waiver, or stop decisions.
 Do not contact workers or FlowGuard operators directly; return blockers and
 PM-actionable recommendations through the current reviewer result path.
 
+For every terminal pass or block, make the challenge visible in the existing
+terminal fields: name the delivered object, the weakest evidence inspected at
+closure, one concrete failure hypothesis or a no-hypothesis rationale, any
+thin-success or existence-only risk that applies, and a PM-actionable
+adopt/reject/no-action rationale in `basis`, `final_blockers`, or the relevant
+current review packet. Do not answer with only ledger cleanliness, boundary
+language, or generic `9/10` optimization advice.
+
 ## Current Contract
 
 Return exactly this current five-part result shape:

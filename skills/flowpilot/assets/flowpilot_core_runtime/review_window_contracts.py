@@ -53,7 +53,9 @@ REVIEW_WINDOW_MUTATION_KINDS = (
 )
 
 REVIEW_WINDOW_FAKE_AI_PROFILE_IDS = (
+    "reviewer_stage_specific_challenge_pass",
     "reviewer_shallow_pass",
+    "reviewer_generic_optimization_only",
     "reviewer_skips_required_read",
     "reviewer_future_stage_demand",
     "reviewer_unauthorized_sealed_body_request",
@@ -84,6 +86,98 @@ RETRY_COUNT_CLASSES = (
     "same_failure_attempts_1_to_4",
     "same_failure_attempt_5",
 )
+
+REVIEW_FLOW_STAGE_CHALLENGE_BINDINGS = {
+    "preplanning_high_standard_contract_review": {
+        "reviewer_card_id": "reviewer.high_standard_contract_review",
+        "stage_focus": "high-standard contract definition",
+        "challenge_rule": (
+            "Challenge whether the current contract preserves the user's concrete objects, "
+            "requested actions, quality floor, quantities, constraints, and prohibitions. "
+            "Name the weakest contract evidence, test a semantic-dilution failure hypothesis, "
+            "and give PM either a concrete contract repair or a source-specific no-action rationale."
+        ),
+    },
+    "preplanning_discovery_review": {
+        "reviewer_card_id": "reviewer.discovery_review",
+        "stage_focus": "preplanning material discovery",
+        "challenge_rule": (
+            "Challenge source sufficiency, source quality, stale or inferred material, and whether "
+            "PM can proceed without more research. Name the weakest material boundary, a missing-source "
+            "or contradiction hypothesis, and a concrete PM action or no-action rationale."
+        ),
+    },
+    "preplanning_skill_standard_review": {
+        "reviewer_card_id": "reviewer.skill_standard_review",
+        "stage_focus": "preplanning skill-standard contract",
+        "challenge_rule": (
+            "Challenge whether selected skill standards are preserved as current obligations instead "
+            "of softened into generic prose. Name any MUST/VERIFY/LOOP/ARTIFACT/WAIVER weakening "
+            "as the weakest projection evidence, test a weakening hypothesis, and give PM a concrete "
+            "projection repair or rejection rationale."
+        ),
+    },
+    "route_planning_review": {
+        "reviewer_card_id": "reviewer.route_challenge",
+        "stage_focus": "route planning",
+        "challenge_rule": (
+            "Challenge route depth, order, producer-before-consumer direction, under/over-decomposition, "
+            "owned proof paths, and thin-success risks before activation. Name the weakest route proof "
+            "boundary, test a route-failure hypothesis, and give PM a concrete route repair, merge/split "
+            "suggestion, or no-action rationale."
+        ),
+    },
+    "node_acceptance_plan_review": {
+        "reviewer_card_id": "reviewer.node_acceptance_plan_review",
+        "stage_focus": "node acceptance plan",
+        "challenge_rule": (
+            "Challenge whether the node plan is worker-ready without worker replanning, preserves assigned "
+            "acceptance items, names proof-of-depth for hard parts, and rejects existence-only evidence. "
+            "Name the weakest dispatch evidence, test a worker-readiness failure hypothesis, and give PM "
+            "a concrete plan repair or dispatch-ready rationale."
+        ),
+    },
+    "worker_node_result_review": {
+        "reviewer_card_id": "reviewer.worker_result_review",
+        "stage_focus": "worker node result",
+        "challenge_rule": (
+            "Challenge whether the PM-absorbed worker result closes the actual packet acceptance slice "
+            "with current evidence, proves the hard part, preserves final-user intent, and avoids stale "
+            "or existence-only proof. Name the weakest result evidence, test a stale-result or thin-success "
+            "failure hypothesis, and give PM a concrete repair/reissue suggestion or pass rationale."
+        ),
+    },
+    "parent_backward_review": {
+        "reviewer_card_id": "reviewer.parent_backward_replay",
+        "stage_focus": "parent backward replay",
+        "challenge_rule": (
+            "Challenge whether current child results compose back into the parent objective, whether "
+            "child evidence is fresh and attached, and whether parent closure hides sibling gaps. "
+            "Name the weakest parent-composition evidence, test a composition failure hypothesis, and "
+            "give PM a concrete replay repair or closure rationale."
+        ),
+    },
+    "pm_flowguard_acceptance_review": {
+        "reviewer_card_id": "reviewer.pm_flowguard_acceptance_review",
+        "stage_focus": "PM FlowGuard absorption",
+        "challenge_rule": (
+            "Challenge whether PM absorbed the actual current FlowGuard report, structural decision, "
+            "residual risks, skipped/progress-only evidence, and route-effect scope before Reviewer "
+            "approval. Name the weakest FlowGuard-absorption evidence, test a PM-absorption failure "
+            "hypothesis, and give PM a concrete absorption repair, route rework, or no-action rationale."
+        ),
+    },
+    "terminal_backward_replay_review": {
+        "reviewer_card_id": "reviewer.final_backward_replay",
+        "stage_focus": "terminal backward replay",
+        "challenge_rule": (
+            "Challenge whether final artifacts, acceptance items, route segments, PM suggestion ledger, "
+            "and final hygiene all close against current evidence. Name the weakest terminal closure "
+            "evidence, test a final-overclaim failure hypothesis, and give PM a concrete terminal repair, "
+            "waiver need, or closure rationale."
+        ),
+    },
+}
 
 REVIEW_WINDOW_COMPLETENESS_ROWS = (
     {
@@ -204,6 +298,31 @@ def review_flow_row(review_flow_id: str) -> dict[str, Any]:
         if row["review_flow_id"] == review_flow_id:
             return deepcopy(dict(row))
     raise KeyError(f"unknown review_flow_id: {review_flow_id}")
+
+
+def review_flow_stage_challenge_binding(review_flow_id: str) -> dict[str, str]:
+    try:
+        return deepcopy(dict(REVIEW_FLOW_STAGE_CHALLENGE_BINDINGS[review_flow_id]))
+    except KeyError as exc:
+        raise KeyError(f"unknown review_flow_id stage challenge binding: {review_flow_id}") from exc
+
+
+def review_flow_stage_challenge_bindings() -> dict[str, dict[str, str]]:
+    return {
+        str(flow_id): deepcopy(dict(binding))
+        for flow_id, binding in REVIEW_FLOW_STAGE_CHALLENGE_BINDINGS.items()
+    }
+
+
+def review_flow_stage_challenge_rule(review_flow_id: str) -> str:
+    binding = review_flow_stage_challenge_binding(review_flow_id)
+    return (
+        f"Fixed Reviewer stage card: {binding['reviewer_card_id']}. "
+        f"Stage focus: {binding['stage_focus']}. "
+        f"{binding['challenge_rule']} "
+        "Use existing review result fields only; do not add fields, select a fallback card, "
+        "repair the reviewed artifact directly, or demand future-stage evidence outside this review window."
+    )
 
 
 def find_review_flow_row(

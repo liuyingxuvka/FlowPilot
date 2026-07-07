@@ -272,6 +272,15 @@ When reviewer findings contain PM-actionable suggestions, represent them as
 candidate `flowpilot.pm_suggestion_item.v1` items for the PM ledger. Use
 `current_gate_blocker` only when the current gate's minimum standard cannot be
 guaranteed.
+The packet `minimal_valid_shape` and `submission_checklist.result_skeleton` are
+mechanical field checklists, not answer templates. For every review, replace
+generic sample wording with task-specific challenge content: the current object
+reviewed, weakest evidence, at least one concrete failure hypothesis or a
+reason no plausible hypothesis remains, any thin-success or existence-only
+evidence risk, and a PM-actionable adopt/reject/no-action rationale inside
+existing fields. A pass that only repeats that the package is mechanically
+complete or only says PM may consider `9/10` optimization is not a substantive
+review.
 
 ## Inherited Skill Standards
 

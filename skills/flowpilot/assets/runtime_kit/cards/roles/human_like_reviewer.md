@@ -383,7 +383,7 @@ review result body stays on the current small contract:
   "findings": [],
   "blockers": [],
   "pm_suggestion_items": [
-    "PM decision-support: include at least one higher-standard suggestion, quality-score implication, or explicit no-extra-optimization rationale for PM."
+    "PM decision-support: weakest evidence is <current evidence gap or none>; PM should adopt <specific repair/verification> or reject it because <current evidence-specific no-action rationale>."
   ],
   "contract_self_check": {
     "all_required_fields_present": true,

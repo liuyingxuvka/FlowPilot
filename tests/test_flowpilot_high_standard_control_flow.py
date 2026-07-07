@@ -767,6 +767,20 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
             ("review_window_not_structured",),
         )
 
+    def test_runtime_refuses_orphan_review_window_instead_of_fallback_review_packet(self) -> None:
+        with self.assertRaisesRegex(runtime.BlackBoxRuntimeError, "no fallback review packet is allowed"):
+            runtime._review_window_for_handoff(
+                {"packets": {}},
+                {
+                    "packet_id": "packet-review-orphan",
+                    "packet_kind": "review",
+                    "route_scope": "node",
+                    "subject_id": "missing-subject-packet",
+                },
+                [],
+                {"lifecycle_stage": "missing_subject_stage"},
+            )
+
     def test_runtime_issued_review_packets_have_complete_declared_windows(self) -> None:
         ledger = _ledger()
         _complete_preplanning(ledger)
@@ -1014,18 +1028,11 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         self.assertIn("current_evidence_refs", node_row["current_required_fields"])
         self.assertEqual(
             [
-                "pm_visible_summary",
-                "reviewed_by_role",
-                "passed",
-                "findings",
-                "blockers",
-                "pm_suggestion_items",
                 "final_artifact_refs",
                 "acceptance_item_closure",
                 "route_segment_replay",
                 "waiver_records",
                 "final_blockers",
-                "contract_self_check",
             ],
             terminal_row["current_required_fields"],
         )

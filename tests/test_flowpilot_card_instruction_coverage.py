@@ -8,14 +8,26 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 RUNTIME_KIT = ROOT / "skills" / "flowpilot" / "assets" / "runtime_kit"
+FLOWPILOT_ASSETS = ROOT / "skills" / "flowpilot" / "assets"
+FLOWPILOT_CORE_RUNTIME = FLOWPILOT_ASSETS / "flowpilot_core_runtime"
 sys.path.insert(0, str(ROOT / "simulations"))
+sys.path.insert(0, str(FLOWPILOT_ASSETS))
 
 import card_instruction_coverage_model as model  # noqa: E402
+from flowpilot_core_runtime import review_window_contracts  # noqa: E402
 
 
 def _runtime_manifest_cards() -> list[dict[str, object]]:
     manifest = json.loads((RUNTIME_KIT / "manifest.json").read_text(encoding="utf-8"))
     return [card for card in manifest.get("cards", []) if isinstance(card, dict)]
+
+
+def _runtime_manifest_card_ids() -> set[str]:
+    return {
+        str(card.get("id"))
+        for card in _runtime_manifest_cards()
+        if isinstance(card.get("id"), str)
+    }
 
 
 def _card_path_by_id(card_id: str) -> Path:
@@ -587,6 +599,100 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
         for text in (packet_template, result_template, contract_text):
             self.assertIn("pm suggestion", text)
             self.assertIn("pm_suggestion", text)
+
+        pm_event_and_repair_text = " ".join(
+            path.read_text(encoding="utf-8").lower()
+            for path in (
+                _card_path_by_id("pm.core"),
+                _card_path_by_id("pm.event.reviewer_report"),
+                _card_path_by_id("pm.event.reviewer_blocked"),
+                _card_path_by_id("pm.review_repair"),
+            )
+        )
+        for forbidden in (
+            "continue, optimize, defer",
+            "whether to continue, defer",
+            "mutate, defer, reject",
+            "defer a suggestion as vague later work",
+        ):
+            self.assertNotIn(forbidden, pm_event_and_repair_text)
+
+    def test_review_flow_stage_challenge_bindings_cover_all_declared_review_windows(self) -> None:
+        bindings = review_window_contracts.review_flow_stage_challenge_bindings()
+        self.assertEqual(set(bindings), set(review_window_contracts.review_flow_ids()))
+
+        manifest_card_ids = _runtime_manifest_card_ids()
+        for flow_id, binding in sorted(bindings.items()):
+            with self.subTest(flow_id=flow_id):
+                card_id = binding["reviewer_card_id"]
+                self.assertIn(card_id, manifest_card_ids)
+                self.assertTrue(card_id.startswith("reviewer."))
+                self.assertNotEqual(card_id, "reviewer.core")
+                self.assertNotEqual(card_id, "reviewer.strict_gate_obligation_review")
+
+                rule = review_window_contracts.review_flow_stage_challenge_rule(flow_id).lower()
+                self.assertIn("fixed reviewer stage card", rule)
+                self.assertIn(card_id.lower(), rule)
+                self.assertIn("stage focus", rule)
+                self.assertIn("weakest", rule)
+                self.assertIn("hypothesis", rule)
+                self.assertIn("pm", rule)
+                self.assertIn("use existing review result fields only", rule)
+                self.assertIn("do not add fields", rule)
+                self.assertIn("fallback", rule)
+
+                card_text = _normalized_path(_card_path_by_id(card_id))
+                for required in (
+                    "weakest evidence",
+                    "failure hypothesis",
+                    "no-hypothesis rationale",
+                    "thin-success",
+                    "adopt/reject/no-action",
+                    "generic `9/10` optimization advice",
+                ):
+                    self.assertIn(required, card_text)
+
+        self.assertEqual(
+            bindings["pm_flowguard_acceptance_review"]["reviewer_card_id"],
+            "reviewer.pm_flowguard_acceptance_review",
+        )
+
+    def test_reviewer_and_pm_prompt_surfaces_reject_weak_mechanical_review_templates(self) -> None:
+        prompt_paths = [
+            FLOWPILOT_CORE_RUNTIME / "packet_result_contracts.py",
+            FLOWPILOT_CORE_RUNTIME / "role_handoff.py",
+            ROOT / "templates" / "flowpilot" / "packets" / "packet_body.template.md",
+            _card_path_by_id("reviewer.core"),
+            _card_path_by_id("reviewer.worker_result_review"),
+            _card_path_by_id("reviewer.material_sufficiency"),
+            _card_path_by_id("pm.core"),
+            _card_path_by_id("pm.event.reviewer_report"),
+            _card_path_by_id("pm.event.reviewer_blocked"),
+            _card_path_by_id("pm.review_repair"),
+        ]
+        forbidden_fragments = (
+            "current minimum gate passes; consider whether",
+            "include at least one higher-standard suggestion",
+            "include at least one source-quality",
+            "pm may consider whether a 9/10 quality optimization pass is useful",
+        )
+        for path in prompt_paths:
+            text = path.read_text(encoding="utf-8").lower()
+            with self.subTest(path=path.relative_to(ROOT).as_posix()):
+                for fragment in forbidden_fragments:
+                    self.assertNotIn(fragment, text)
+
+        packet_template = (
+            ROOT / "templates" / "flowpilot" / "packets" / "packet_body.template.md"
+        ).read_text(encoding="utf-8").lower()
+        for required in (
+            "mechanical field checklists, not answer templates",
+            "weakest evidence",
+            "concrete failure hypothesis",
+            "thin-success",
+            "pm-actionable adopt/reject/no-action rationale",
+        ):
+            self.assertIn(required, packet_template)
 
     def test_reviewer_card_blocks_shallow_flowguard_with_pm_recheck_guidance(self) -> None:
         text = _normalized_path(_card_path_by_id("reviewer.core"))

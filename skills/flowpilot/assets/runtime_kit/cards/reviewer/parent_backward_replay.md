@@ -31,6 +31,13 @@ If this review blocks, requests more evidence, or requires reroute, include
 PM-actionable recommendation for resolving the blocked review. PM remains the
 owner of final repair strategy.
 
+For every pass or block, make the challenge visible in existing fields: name
+the current-stage object, the weakest evidence inspected, one concrete failure
+hypothesis or a no-hypothesis rationale, any thin-success or existence-only
+risk that applies, and a PM-actionable adopt/reject/no-action rationale. Do not
+answer with only mechanical completeness, boundary language, or generic `9/10`
+optimization advice.
+
 For an active parent node, replay child outcomes backward from the parent
 delivered result to the parent goal.
 

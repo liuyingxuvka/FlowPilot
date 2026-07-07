@@ -79,7 +79,7 @@ def review_result_body(summary: str, **fields: object) -> str:
         "findings": [],
         "blockers": [],
         "pm_suggestion_items": [
-            "PM decision-support: current minimum gate passes; consider whether a 9/10 quality optimization pass is useful."
+            "PM decision-support: weakest evidence was inspected; PM may adopt a named verification or reject it because current evidence already supports this gate."
         ],
         "contract_self_check": {
             "all_required_fields_present": True,

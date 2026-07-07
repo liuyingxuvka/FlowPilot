@@ -3148,10 +3148,6 @@ def ensure_parent_backward_replay_packet(ledger: dict[str, Any], node_id: str) -
     if existing:
         return str(existing["packet_id"])
     node = _require(ledger.setdefault("route_nodes", {}), node_id, "route node")
-    if high_standard_flow_required(ledger):
-        entry_reason = _node_entry_gate_missing_reason(ledger, node_id)
-        if entry_reason:
-            raise BlackBoxRuntimeError(_control_plane_hard_gate_escape(entry_reason, node_id))
     parent_repair_violation = _parent_repair_node_current_child_violation(
         ledger,
         node_id,
@@ -3160,6 +3156,10 @@ def ensure_parent_backward_replay_packet(ledger: dict[str, Any], node_id: str) -
     )
     if parent_repair_violation:
         raise BlackBoxRuntimeError(parent_repair_violation)
+    if high_standard_flow_required(ledger):
+        entry_reason = _node_entry_gate_missing_reason(ledger, node_id)
+        if entry_reason:
+            raise BlackBoxRuntimeError(_control_plane_hard_gate_escape(entry_reason, node_id))
     active_child_node_ids, active_child_lineage = _active_route_child_lineage(
         ledger,
         [str(item) for item in (node.get("child_node_ids") or [])],
@@ -9647,15 +9647,24 @@ def _review_window_for_handoff(
         subject_family_id=subject_family_id,
         subject_lifecycle_stage=stage,
     )
+    coverage_status = str(completeness.get("coverage_status") or "")
+    if coverage_status != "declared":
+        raise BlackBoxRuntimeError(
+            "review window is not declared for "
+            f"{review_family_id}:{subject_family_id}:{stage}; "
+            "no fallback review packet is allowed"
+        )
     forbidden_future_stage_demands = [
         "Do not require Worker/result-stage artifacts for a plan-stage subject unless the subject claims they already exist.",
         "Do not require terminal replay evidence before the terminal replay packet.",
         "Do not treat PM navigation summaries as reviewed evidence bodies.",
     ]
+    review_flow_id = str(completeness.get("review_flow_id") or "")
+    review_depth_rule = review_window_contracts.review_flow_stage_challenge_rule(review_flow_id)
     return {
         "schema_version": review_window_contracts.REVIEW_WINDOW_SCHEMA_VERSION,
-        "review_flow_id": str(completeness.get("review_flow_id") or ""),
-        "review_window_coverage_status": str(completeness.get("coverage_status") or "unknown"),
+        "review_flow_id": review_flow_id,
+        "review_window_coverage_status": coverage_status,
         "review_result_family_id": review_family_id,
         "subject_packet_id": subject_id,
         "target_result_id": str(envelope.get("target_result_id") or ""),
@@ -9684,10 +9693,7 @@ def _review_window_for_handoff(
         ],
         "required_authorized_result_read_ids_before_submit": required_read_ids,
         "sealed_body_access": "authorized_result_reads_only",
-        "review_depth_rule": (
-            "Reviewer must independently challenge the current subject using the subject stage, "
-            "authorized reads, node context, FlowGuard manifest, and current-stage evidence; the package checklist is a floor, not the boundary."
-        ),
+        "review_depth_rule": review_depth_rule,
         "forbidden_future_stage_demands": forbidden_future_stage_demands,
         "pm_repair_return_rule": "Reviewer hard blockers return to PM repair work and then to Reviewer recheck; PM text alone does not bypass Reviewer.",
     }

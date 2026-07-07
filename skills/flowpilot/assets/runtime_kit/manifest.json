@@ -102,6 +102,14 @@
     },
     {
       "audience": "human_like_reviewer",
+      "id": "reviewer.discovery_review",
+      "issued_by": "router",
+      "kind": "reviewer_gate",
+      "path": "cards/reviewer/discovery_review.md",
+      "source": "system"
+    },
+    {
+      "audience": "human_like_reviewer",
       "id": "reviewer.material_sufficiency",
       "issued_by": "router",
       "kind": "reviewer_gate",
@@ -231,6 +239,14 @@
     },
     {
       "audience": "human_like_reviewer",
+      "id": "reviewer.high_standard_contract_review",
+      "issued_by": "router",
+      "kind": "reviewer_gate",
+      "path": "cards/reviewer/high_standard_contract_review.md",
+      "source": "system"
+    },
+    {
+      "audience": "human_like_reviewer",
       "id": "reviewer.root_contract_challenge",
       "issued_by": "router",
       "kind": "reviewer_gate",
@@ -270,6 +286,14 @@
       "kind": "phase",
       "path": "cards/phases/pm_child_skill_gate_manifest.md",
       "phase": "child_skill_gate_manifest",
+      "source": "system"
+    },
+    {
+      "audience": "human_like_reviewer",
+      "id": "reviewer.skill_standard_review",
+      "issued_by": "router",
+      "kind": "reviewer_gate",
+      "path": "cards/reviewer/skill_standard_review.md",
       "source": "system"
     },
     {
@@ -371,6 +395,14 @@
       "issued_by": "router",
       "kind": "flowguard_operator_gate",
       "path": "cards/flowguard_operator/route_process_check.md",
+      "source": "system"
+    },
+    {
+      "audience": "human_like_reviewer",
+      "id": "reviewer.pm_flowguard_acceptance_review",
+      "issued_by": "router",
+      "kind": "reviewer_gate",
+      "path": "cards/reviewer/pm_flowguard_acceptance_review.md",
       "source": "system"
     },
     {
