@@ -15,7 +15,7 @@
 </p>
 
 <p align="center">
-  Source version: <strong>v0.11.1</strong> · MIT License · open-source AI-agent control runtime
+  Source version: <strong>v0.11.2</strong> · MIT License · open-source AI-agent control runtime
 </p>
 <!-- README HERO END -->
 
@@ -126,7 +126,7 @@ In plain language:
 
 | Field | Value |
 | --- | --- |
-| Source version | `v0.11.1` |
+| Source version | `v0.11.2` |
 | Public project name | `FlowPilot` |
 | Skill slug | `flowpilot` |
 | Release shape | Source package only, no binary app bundle |
@@ -134,7 +134,7 @@ In plain language:
 | Required core dependency | Real `flowguard` Python package |
 | Current UI surface | Windows WPF startup intake dialog plus chat route signs |
 
-`v0.11.1` hardens FlowPilot's prompt-first quality chain so PM and Reviewer prompts preserve source intent, block semantic dilution, and keep runtime checks mechanical.
+`v0.11.2` refreshes the FlowGuard project adoption record for check-engine `0.52.5` and updates the durable adoption log for the project-record upgrade.
 
 ## When To Use FlowPilot
 
@@ -229,7 +229,7 @@ MIT. See [`LICENSE`](./LICENSE).
 
 # FlowPilot 中文说明
 
-**Source version:** `v0.11.1`<br />
+**Source version:** `v0.11.2`<br />
 **许可证：** MIT<br />
 **形态：** open-source AI-agent control runtime
 
@@ -338,7 +338,7 @@ startup intake
 
 | 字段 | 值 |
 | --- | --- |
-| Source version | `v0.11.1` |
+| Source version | `v0.11.2` |
 | Public project name | `FlowPilot` |
 | Skill slug | `flowpilot` |
 | Release shape | source package only, no binary app bundle |
@@ -346,7 +346,7 @@ startup intake
 | Required core dependency | real `flowguard` Python package |
 | Current UI surface | Windows WPF startup intake dialog plus chat route signs |
 
-`v0.11.1` 强化 FlowPilot 的 prompt-first quality chain，让 PM 和 Reviewer prompts 保留 source intent、阻断 semantic dilution，并让 runtime checks 继续只负责机械边界。
+`v0.11.2` 刷新 FlowGuard project adoption record 到 check-engine `0.52.5`，并更新这次 project-record upgrade 的 durable adoption log。
 
 ## 什么时候用 FlowPilot
 

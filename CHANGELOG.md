@@ -1,5 +1,20 @@
 # Changelog
 
+## v0.11.2 - 2026-07-07
+
+### Changed
+
+- Refreshed the FlowGuard project adoption record for check-engine `0.52.5`.
+- Updated the durable FlowGuard adoption log for the project-record upgrade.
+- Refreshed generated FlowGuard project-topology freshness metadata after the
+  release validation pass.
+
+### Validation
+
+- Verified the FlowGuard project audit after upgrade.
+- Verified the project topology check and public release preflight before
+  publishing.
+
 ## v0.11.1 - 2026-07-04
 
 ### Fixed
