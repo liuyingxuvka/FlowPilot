@@ -143,6 +143,7 @@ def save_run_ledger(
         record_history=record_guard_progress,
         record_event=record_guard_progress,
     )
+    runtime.refresh_status_projection(ledger)
     runtime.save_ledger(ledger, shell.ledger_path)
     _write_events_jsonl(ledger, shell.events_path)
     materialize_run_artifacts(shell, ledger)
@@ -336,7 +337,7 @@ def materialize_run_artifacts(shell: RunShell, ledger: dict[str, Any]) -> None:
     if isinstance(ledger.get("cutover_gate"), dict):
         _write_json(shell.run_root / "closure" / "cutover_gate.json", ledger["cutover_gate"])
     if isinstance(ledger.get("closure"), dict):
-        _write_json(shell.run_root / "closure" / "final_closure.json", ledger["closure"])
+        _write_json(shell.run_root / "closure" / "final_closure.json", runtime.render_final_closure_projection(ledger))
     if isinstance(ledger.get("lifecycle_guard"), dict):
         _write_json(shell.run_root / "lifecycle" / "guard.json", ledger["lifecycle_guard"])
     if isinstance(ledger.get("terminal_lifecycle"), dict):
@@ -358,7 +359,11 @@ def materialize_run_artifacts(shell: RunShell, ledger: dict[str, Any]) -> None:
         _write_json(shell.run_root / "closure" / "final_requirement_evidence_matrix.json", ledger["final_requirement_evidence_matrix"])
     if ledger.get("orphan_evidence"):
         _write_json(shell.run_root / "evidence" / "orphan_evidence.json", ledger["orphan_evidence"])
-    _write_json(shell.run_root / "console" / "status.json", runtime.render_console(ledger))
+    status_projection = ledger.get("status_projection")
+    _write_json(
+        shell.run_root / "console" / "status.json",
+        status_projection if isinstance(status_projection, dict) else runtime.render_console(ledger),
+    )
 
 
 def _append_index(index_path: Path, current: dict[str, Any]) -> None:

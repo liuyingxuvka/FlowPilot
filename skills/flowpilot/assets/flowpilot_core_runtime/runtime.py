@@ -3254,6 +3254,12 @@ def record_pm_disposition(
         "created_at": now_iso(),
     }
     node["pm_disposition_id"] = disposition_id
+    _converge_node_closure_after_pm_disposition(
+        ledger,
+        node_id,
+        disposition_id=disposition_id,
+        decision=normalized,
+    )
     if normalized == "accept":
         if high_standard_flow_required(ledger) and _node_requires_parent_backward_replay(node):
             if not _parent_backward_replay_accepted(ledger, node_id):
@@ -3274,6 +3280,46 @@ def record_pm_disposition(
         _frontier_update(ledger, node_id, node["status"], reason or f"pm_disposition_{normalized}")
     _event(ledger, "pm_disposition_recorded", node_id=node_id, disposition_id=disposition_id, decision=normalized)
     return disposition_id
+
+
+def _converge_node_closure_after_pm_disposition(
+    ledger: dict[str, Any],
+    node_id: str,
+    *,
+    disposition_id: str,
+    decision: str,
+) -> None:
+    node = ledger.get("route_nodes", {}).get(node_id)
+    closure_id = str(node.get("closure_id") or "") if isinstance(node, Mapping) else ""
+    if not closure_id:
+        return
+    closure = ledger.setdefault("node_closures", {}).get(closure_id)
+    if not isinstance(closure, dict):
+        return
+    status_by_decision = {
+        "accept": "accepted",
+        "repair_current_scope": "repair_current_scope",
+        "redesign_route": "redesign_route",
+        "block": "blocked",
+        "stop": "stopped",
+    }
+    resolved_status = status_by_decision.get(decision)
+    if not resolved_status:
+        return
+    if closure.get("status") == resolved_status and closure.get("pm_disposition_id") == disposition_id:
+        return
+    closure["status"] = resolved_status
+    closure["pm_disposition_id"] = disposition_id
+    closure["pm_disposition_decision"] = decision
+    closure["resolved_at"] = now_iso()
+    _event(
+        ledger,
+        "node_closure_converged_after_pm_disposition",
+        node_id=node_id,
+        closure_id=closure_id,
+        disposition_id=disposition_id,
+        status=resolved_status,
+    )
 
 
 def _evaluate_route_deliverable_checks(ledger: Mapping[str, Any], node: Mapping[str, Any]) -> list[dict[str, Any]]:
@@ -4955,6 +5001,10 @@ def _active_semantic_blockers(ledger: Mapping[str, Any]) -> list[Mapping[str, An
         for blocker in ledger.get("active_blockers", {}).values()
         if isinstance(blocker, Mapping) and _blocker_current_effective(ledger, blocker)
     ]
+
+
+def _blocker_current_visible(ledger: Mapping[str, Any], blocker: Mapping[str, Any]) -> bool:
+    return _blocker_current_effective(ledger, blocker) or blocker.get("status") == "awaiting_pm_decision_gate"
 
 
 def _stopped_semantic_blockers(ledger: Mapping[str, Any]) -> list[Mapping[str, Any]]:
@@ -8305,6 +8355,8 @@ def _build_role_memory_seed(
     for blocker in reversed(list(ledger.get("active_blockers", {}).values())):
         if not isinstance(blocker, Mapping):
             continue
+        if not _blocker_current_visible(ledger, blocker):
+            continue
         if role != "pm" and role not in {
             str(blocker.get("required_recheck_role") or ""),
             str(blocker.get("owner_role") or ""),
@@ -9222,7 +9274,7 @@ def _repair_dossier_projection(
     return {
         "schema_version": "black_box_flowpilot.repair_dossier.v1",
         "repair_dossier_id": _repair_dossier_id_for_blocker(ledger, blocker),
-        "active_blocker_id": str(blocker.get("blocker_id") or ""),
+        "active_blocker_id": str(blocker.get("blocker_id") or "") if _blocker_current_visible(ledger, blocker) else "",
         "parent_scope_id": _repair_dossier_parent_scope_id(ledger, blocker),
         "base_node_id": _repair_dossier_base_node_id(ledger, blocker),
         "repair_depth": repair_depth,
@@ -16846,10 +16898,65 @@ def _packet_outcome_is_current_blocker(ledger: Mapping[str, Any], outcome: Mappi
     return True
 
 
+def _current_status_projection_fields(
+    ledger: Mapping[str, Any],
+    *,
+    guard: Mapping[str, Any] | None = None,
+    preflight: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    guard_map = guard if isinstance(guard, Mapping) else preview_lifecycle_guard(ledger, trigger="status_projection")
+    preflight_map = (
+        preflight
+        if isinstance(preflight, Mapping)
+        else final_return_preflight(ledger, guard=guard_map)
+    )
+    closure = ledger.get("closure") if isinstance(ledger.get("closure"), Mapping) else {}
+    return {
+        "run_id": str(ledger.get("run_id") or ledger.get("project_id") or ""),
+        "closure_decision": str(closure.get("decision", "not_attempted")),
+        "controller_stop_allowed": bool(preflight_map.get("controller_stop_allowed") is True),
+        "final_return_allowed": bool(preflight_map.get("allowed") is True),
+        "terminal_lifecycle_status": terminal_lifecycle_status(ledger),
+        "runtime_authority": "current_run_ledger_lifecycle_guard_foreground_duty_final_preflight",
+        "updated_at": now_iso(),
+    }
+
+
+def _public_display_surface_projection(
+    ledger: Mapping[str, Any],
+    *,
+    preflight: Mapping[str, Any],
+) -> dict[str, Any]:
+    surface = _copy_jsonable(ledger.get("display_surface") or {})
+    if surface.get("active") == "unknown" and preflight.get("allowed") is True:
+        surface["active"] = "status_projection"
+        surface["block_reason"] = ""
+        surface["repair_required"] = False
+        surface["authority"] = "current_run_ledger"
+    return surface
+
+
 def render_console(ledger: Mapping[str, Any]) -> dict[str, Any]:
     """Return public status without sealed task or result bodies."""
 
     progress_fraction = current_progress_fraction(ledger)
+    lifecycle_guard = _copy_jsonable(
+        ledger.get("lifecycle_guard") or preview_lifecycle_guard(ledger, trigger="render")
+    )
+    foreground_duty = _copy_jsonable(
+        ledger.get("foreground_duty")
+        or preview_foreground_duty(
+            ledger,
+            guard=ledger.get("lifecycle_guard") if isinstance(ledger.get("lifecycle_guard"), Mapping) else lifecycle_guard,
+            trigger="render",
+        )
+    )
+    preflight = final_return_preflight(ledger, guard=lifecycle_guard)
+    projection_fields = _current_status_projection_fields(
+        ledger,
+        guard=lifecycle_guard,
+        preflight=preflight,
+    )
     packet_rows = []
     for packet in ledger.get("packets", {}).values():
         envelope = packet["envelope"]
@@ -16873,6 +16980,7 @@ def render_console(ledger: Mapping[str, Any]) -> dict[str, Any]:
         )
 
     return {
+        **projection_fields,
         "project_id": ledger.get("project_id"),
         "goal": ledger.get("goal"),
         "lifecycle": _copy_jsonable(ledger.get("lifecycle") or {}),
@@ -16881,17 +16989,9 @@ def render_console(ledger: Mapping[str, Any]) -> dict[str, Any]:
         "source_generation": ledger.get("source_generation"),
         "progress_fraction": progress_fraction,
         "next_action": router_next_action(ledger).to_json(),
-        "lifecycle_guard": _copy_jsonable(ledger.get("lifecycle_guard") or preview_lifecycle_guard(ledger, trigger="render")),
-        "foreground_duty": _copy_jsonable(
-            ledger.get("foreground_duty")
-            or preview_foreground_duty(
-                ledger,
-                guard=ledger.get("lifecycle_guard") if isinstance(ledger.get("lifecycle_guard"), Mapping) else None,
-                trigger="render",
-            )
-        ),
+        "lifecycle_guard": lifecycle_guard,
+        "foreground_duty": foreground_duty,
         "status_projection_authority": "display_only",
-        "runtime_authority": "current_run_ledger_lifecycle_guard_foreground_duty",
         "unsupported_historical_monitor_required": False,
         "sealed_bodies_visible": False,
         "packets": packet_rows,
@@ -16962,7 +17062,7 @@ def render_console(ledger: Mapping[str, Any]) -> dict[str, Any]:
                 "pm_repair_decision_id": blocker.get("pm_repair_decision_id", ""),
             }
             for blocker in ledger.get("active_blockers", {}).values()
-            if _blocker_current_effective(ledger, blocker) or blocker.get("status") == "awaiting_pm_decision_gate"
+            if _blocker_current_visible(ledger, blocker)
         ],
         "pm_decision_gates": [
             {
@@ -17013,9 +17113,33 @@ def render_console(ledger: Mapping[str, Any]) -> dict[str, Any]:
         "final_route_wide_gate_ledger": _copy_jsonable(ledger.get("final_route_wide_gate_ledger") or {"decision": "not_built"}),
         "final_requirement_evidence_matrix": _copy_jsonable(ledger.get("final_requirement_evidence_matrix") or {"decision": "not_built"}),
         "cutover_gate": _copy_jsonable(ledger.get("cutover_gate") or {"decision": "not_evaluated"}),
-        "display_surface": _copy_jsonable(ledger.get("display_surface") or {}),
+        "display_surface": _public_display_surface_projection(ledger, preflight=preflight),
         "closure": _copy_jsonable(ledger.get("closure") or {"decision": "not_attempted"}),
     }
+
+
+def refresh_status_projection(ledger: dict[str, Any]) -> dict[str, Any]:
+    projection = render_console(ledger)
+    projection["projection_only"] = True
+    ledger["status_projection"] = projection
+    return projection
+
+
+def render_final_closure_projection(ledger: Mapping[str, Any]) -> dict[str, Any]:
+    closure = _copy_jsonable(ledger.get("closure") or {"decision": "not_attempted"})
+    fields = _current_status_projection_fields(ledger)
+    closure.update(
+        {
+            "run_id": fields["run_id"],
+            "closure_decision": fields["closure_decision"],
+            "controller_stop_allowed": fields["controller_stop_allowed"],
+            "final_return_allowed": fields["final_return_allowed"],
+            "terminal_lifecycle_status": fields["terminal_lifecycle_status"],
+            "runtime_authority": fields["runtime_authority"],
+            "updated_at": fields["updated_at"],
+        }
+    )
+    return closure
 
 
 def render_redacted_ledger_projection(ledger: Mapping[str, Any]) -> dict[str, Any]:
@@ -17067,6 +17191,12 @@ def render_compact_console(ledger: Mapping[str, Any]) -> dict[str, Any]:
     return {
         "schema_version": "black_box_flowpilot.compact_status.v1",
         "projection": "compact_controller_status",
+        "run_id": full.get("run_id", ""),
+        "closure_decision": full.get("closure_decision", "not_attempted"),
+        "controller_stop_allowed": bool(full.get("controller_stop_allowed") is True),
+        "final_return_allowed": bool(full.get("final_return_allowed") is True),
+        "terminal_lifecycle_status": full.get("terminal_lifecycle_status", ""),
+        "updated_at": full.get("updated_at", ""),
         "project_id": full.get("project_id"),
         "goal": full.get("goal"),
         "lifecycle": full.get("lifecycle", {}),

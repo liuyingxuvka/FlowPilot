@@ -1,0 +1,98 @@
+{
+  "flowguard": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "reachability_failures": [],
+    "summary": "sequences=2 initial_states=1 traces=10800",
+    "violation_count": 0
+  },
+  "hazards": {
+    "by_failure": {
+      "historical_blocker_projected_as_current_role_memory": 120,
+      "noncurrent_repair_dossier_projected_active": 150,
+      "pm_resolved_node_closure_left_awaiting": 180,
+      "projection_used_historical_or_fallback_authority": 300,
+      "terminal_console_missing_current_top_level_fields": 100,
+      "terminal_status_projection_left_null": 100
+    },
+    "missed_negative_cells": {},
+    "negative_cell_count": 950,
+    "ok": true
+  },
+  "matrix": {
+    "axis_counts": {
+      "authority_states": 3,
+      "blocker_lifecycles": 5,
+      "node_closure_lifecycles": 5,
+      "projection_surface_behaviors": 12,
+      "repair_dossier_lifecycles": 4
+    },
+    "by_failure": {
+      "historical_blocker_projected_as_current_role_memory": 120,
+      "noncurrent_repair_dossier_projected_active": 150,
+      "pm_resolved_node_closure_left_awaiting": 180,
+      "projection_used_historical_or_fallback_authority": 300,
+      "terminal_console_missing_current_top_level_fields": 100,
+      "terminal_status_projection_left_null": 100
+    },
+    "by_surface": {
+      "console_missing_top_level": 300,
+      "console_ok": 300,
+      "current_pointer_ok": 300,
+      "historical_run_fallback_used": 300,
+      "node_closure_projection_ok": 300,
+      "node_closure_stale_awaiting": 300,
+      "repair_dossier_projection_ok": 300,
+      "repair_dossier_stale_active": 300,
+      "role_memory_ok": 300,
+      "role_memory_stale_blocker_current": 300,
+      "status_projection_null": 300,
+      "status_projection_ok": 300
+    },
+    "classified_counts": {
+      "current": 1269,
+      "history_only": 1381,
+      "reject": 950
+    },
+    "full_product_count": 3600,
+    "missing_classification": [],
+    "negative_cell_count": 950,
+    "ok": true,
+    "sample_negative_cells": [
+      "running.none.none.none.historical_run_fallback_used",
+      "running.none.none.current_active_pointer.historical_run_fallback_used",
+      "running.none.none.history_only_noncurrent_pointer.repair_dossier_stale_active",
+      "running.none.none.history_only_noncurrent_pointer.historical_run_fallback_used",
+      "running.none.none.stale_noncurrent_pointer_as_active.repair_dossier_stale_active",
+      "running.none.none.stale_noncurrent_pointer_as_active.historical_run_fallback_used",
+      "running.none.awaiting_without_pm_disposition.none.historical_run_fallback_used",
+      "running.none.awaiting_without_pm_disposition.current_active_pointer.historical_run_fallback_used",
+      "running.none.awaiting_without_pm_disposition.history_only_noncurrent_pointer.repair_dossier_stale_active",
+      "running.none.awaiting_without_pm_disposition.history_only_noncurrent_pointer.historical_run_fallback_used",
+      "running.none.awaiting_without_pm_disposition.stale_noncurrent_pointer_as_active.repair_dossier_stale_active",
+      "running.none.awaiting_without_pm_disposition.stale_noncurrent_pointer_as_active.historical_run_fallback_used",
+      "running.none.accepted_after_pm_disposition.none.node_closure_stale_awaiting",
+      "running.none.accepted_after_pm_disposition.none.historical_run_fallback_used",
+      "running.none.accepted_after_pm_disposition.current_active_pointer.node_closure_stale_awaiting",
+      "running.none.accepted_after_pm_disposition.current_active_pointer.historical_run_fallback_used",
+      "running.none.accepted_after_pm_disposition.history_only_noncurrent_pointer.node_closure_stale_awaiting",
+      "running.none.accepted_after_pm_disposition.history_only_noncurrent_pointer.repair_dossier_stale_active",
+      "running.none.accepted_after_pm_disposition.history_only_noncurrent_pointer.historical_run_fallback_used",
+      "running.none.accepted_after_pm_disposition.stale_noncurrent_pointer_as_active.node_closure_stale_awaiting"
+    ],
+    "valid_cell_count": 2650
+  },
+  "model_id": "flowpilot_current_status_projection",
+  "ok": true,
+  "walk": {
+    "accepted_count": 2650,
+    "invariant_failures": [],
+    "missing_label_count": 0,
+    "missing_labels": [],
+    "ok": true,
+    "rejected_count": 950,
+    "state_count": 7201
+  }
+}

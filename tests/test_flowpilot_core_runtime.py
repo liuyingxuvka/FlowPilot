@@ -16,7 +16,14 @@ RUNTIME_ROOT = ROOT / "skills" / "flowpilot" / "assets" / "flowpilot_core_runtim
 if str(ASSETS_ROOT) not in sys.path:
     sys.path.insert(0, str(ASSETS_ROOT))
 
-from flowpilot_core_runtime import packet_result_contracts, packets, pointer_store, role_handoff, run_shell  # noqa: E402
+from flowpilot_core_runtime import (  # noqa: E402
+    packet_result_contracts,
+    packets,
+    pointer_store,
+    runtime as package_runtime,
+    role_handoff,
+    run_shell,
+)
 
 
 def load_module(name: str, path: Path):
@@ -1266,6 +1273,125 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         self.assertNotIn("SEALED_TASK_BODY", rendered)
         self.assertNotIn("SEALED_RESULT_BODY", rendered)
         self.assertIn("body_free", compact["body_policy"])
+
+    def test_terminal_status_projection_converges_current_console_closure_and_pointer(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            shell = run_shell.create_run_shell(Path(tmp), "Goal", "Contract", run_id="run-status-projection")
+            ledger = run_shell.load_run_ledger(shell)
+            ledger["closure"] = {"decision": "complete", "blockers": []}
+            package_runtime.record_terminal_lifecycle(
+                ledger,
+                "stopped_by_user",
+                reason="terminal closure accepted",
+            )
+
+            run_shell.save_run_ledger(shell, ledger)
+
+            saved_ledger = json.loads(shell.ledger_path.read_text(encoding="utf-8"))
+            console = json.loads((shell.run_root / "console" / "status.json").read_text(encoding="utf-8"))
+            final_closure = json.loads((shell.run_root / "closure" / "final_closure.json").read_text(encoding="utf-8"))
+            current = json.loads((shell.root / ".flowpilot" / "current.json").read_text(encoding="utf-8"))
+
+        projection = saved_ledger["status_projection"]
+        for surface in (projection, console, final_closure, current):
+            self.assertEqual(surface["run_id"], "run-status-projection")
+            self.assertEqual(surface["closure_decision"], "complete")
+            self.assertTrue(surface["controller_stop_allowed"])
+            self.assertTrue(surface["final_return_allowed"])
+            self.assertTrue(surface["updated_at"])
+        self.assertNotEqual(projection["display_surface"]["active"], "unknown")
+        self.assertEqual(console["status_projection_authority"], "display_only")
+
+    def test_role_memory_seed_exposes_only_current_visible_blockers(self) -> None:
+        ledger = runtime.new_ledger("Goal", "Contract")
+        ledger["active_blockers"]["blocker-cleared"] = {
+            "blocker_id": "blocker-cleared",
+            "status": "cleared",
+            "packet_id": "",
+            "subject_packet_id": "",
+            "repair_target_packet_id": "",
+            "required_recheck_role": "reviewer",
+            "owner_role": "worker",
+            "blocker_class": "local_artifact",
+            "cleared_by_outcome_id": "outcome-accepted",
+        }
+        ledger["active_blockers"]["blocker-current"] = {
+            "blocker_id": "blocker-current",
+            "status": "active",
+            "packet_id": "",
+            "subject_packet_id": "",
+            "repair_target_packet_id": "",
+            "required_recheck_role": "reviewer",
+            "owner_role": "worker",
+            "blocker_class": "local_artifact",
+            "cleared_by_outcome_id": "",
+        }
+
+        seed = runtime._build_role_memory_seed(ledger, "pm")
+        blocker_ids = {row["blocker_id"] for row in seed["active_blockers"]}
+
+        self.assertEqual(blocker_ids, {"blocker-current"})
+
+    def test_repair_dossier_projection_does_not_keep_noncurrent_blocker_active(self) -> None:
+        ledger = runtime.new_ledger("Goal", "Contract")
+        blocker = {
+            "blocker_id": "blocker-cleared",
+            "status": "cleared",
+            "packet_id": "",
+            "subject_packet_id": "",
+            "repair_target_packet_id": "",
+            "route_node_id": "node-1",
+            "required_recheck_role": "reviewer",
+            "owner_role": "worker",
+            "blocker_class": "local_artifact",
+            "cleared_by_outcome_id": "outcome-accepted",
+        }
+        ledger["route_nodes"]["node-1"] = {"node_id": "node-1", "status": "accepted"}
+        ledger["active_blockers"]["blocker-cleared"] = blocker
+
+        dossier = runtime._repair_dossier_projection(ledger, blocker)
+
+        self.assertEqual(dossier["active_blocker_id"], "")
+        self.assertIn("blocker-cleared", dossier["blocker_ids"])
+
+    def test_pm_disposition_converges_node_closure_projection(self) -> None:
+        for decision, expected_status in (
+            ("accept", "accepted"),
+            ("repair_current_scope", "repair_current_scope"),
+            ("redesign_route", "redesign_route"),
+            ("block", "blocked"),
+            ("stop", "stopped"),
+        ):
+            with self.subTest(decision=decision):
+                ledger = runtime.new_ledger("Goal", "Contract")
+                ledger["active_route_version"] = 1
+                ledger["routes"] = {
+                    "1": {"route_version": 1, "status": "active", "node_order": ["node-1"]},
+                }
+                ledger["route_nodes"]["node-1"] = {
+                    "node_id": "node-1",
+                    "route_version": 1,
+                    "title": "Node One",
+                    "status": "running",
+                    "responsibility": "worker",
+                    "modeled_target": "development_process",
+                    "acceptance_criteria": ["current acceptance"],
+                    "child_node_ids": [],
+                    "repair_generation": 0,
+                }
+                closure_id = runtime._record_node_closure(ledger, "node-1", "system-closure-1")
+
+                disposition_id = runtime.record_pm_disposition(
+                    ledger,
+                    "node-1",
+                    "result-1",
+                    decision=decision,
+                )
+
+                closure = ledger["node_closures"][closure_id]
+                self.assertEqual(closure["status"], expected_status)
+                self.assertEqual(closure["pm_disposition_id"], disposition_id)
+                self.assertEqual(closure["pm_disposition_decision"], decision)
 
     def test_routing_projection_excludes_noncurrent_node_packets_without_blocking_closure(self) -> None:
         ledger = runtime.new_ledger("Goal", "Contract")

@@ -20363,6 +20363,68 @@ to identify unsupported historical-layer branches that should be deleted.
 - Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
 
 
+## harden-flowpilot-current-status-projection - FlowPilot current status projection repair
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: FlowPilot control-plane display surfaces could remain null, unknown, awaiting, or history-looking after current-run terminal closure.
+- Status: completed
+- Skill decision: used_openspec_and_flowguard_development_process
+- Started: 2026-07-07T11:53:51+00:00
+- Ended: 2026-07-07T12:50:10+00:00
+- Commands OK: partial_broad_router_tier_not_counted
+
+### Model Files
+- simulations/flowpilot_current_status_projection_model.py
+- simulations/run_flowpilot_current_status_projection_checks.py
+- simulations/flowpilot_current_status_projection_results.json
+
+### Commands
+- python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"
+- python -c "import importlib.metadata as m; print(m.version('flowguard'))"
+- python -m flowguard project-audit --root .
+- openspec validate harden-flowpilot-current-status-projection --strict
+- python simulations/run_flowpilot_current_status_projection_checks.py --json-out simulations/flowpilot_current_status_projection_results.json
+- python -m pytest tests/test_flowpilot_current_status_projection.py tests/test_flowpilot_repair_dossier_context.py tests/test_flowpilot_reviewer_active_challenge.py tests/test_flowpilot_contract_surface_reduction.py -q
+- python -m unittest tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_terminal_status_projection_converges_current_console_closure_and_pointer tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_role_memory_seed_exposes_only_current_visible_blockers tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_repair_dossier_projection_does_not_keep_noncurrent_blocker_active tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_pm_disposition_converges_node_closure_projection
+- python simulations/run_flowpilot_control_plane_state_consistency_checks.py --json-out simulations/flowpilot_control_plane_state_consistency_results.json
+- python scripts/flowguard_project_topology.py build
+- python scripts/flowguard_project_topology.py check
+- python scripts/check_install.py --json
+- python scripts/audit_local_install_sync.py
+- python scripts/install_flowpilot.py --sync-repo-owned
+
+### Findings
+- Current status projection now derives top-level run, closure, lifecycle, and final-return fields from the current run ledger path.
+- Ledger status_projection, console/status.json, closure/final_closure.json, and .flowpilot/current.json converge for terminal completion.
+- Public current blockers and role-memory current blockers filter through the current-visible blocker predicate; cleared, retired, and superseded rows remain history-only.
+- Node closure rows converge when PM disposition resolves a node.
+- Repair dossier projection no longer exposes noncurrent blockers as active.
+- The FlowGuard model covers the finite Cartesian product of 3 authority states, 5 blocker lifecycles, 5 node-closure lifecycles, 4 repair-dossier lifecycles, and 12 projection surfaces: 3600 cells, 950 negative cells.
+
+### Counterexamples
+- terminal_complete with console_missing_top_level is rejected.
+- terminal_complete with status_projection_null is rejected.
+- cleared or superseded blocker exposed as current role memory is rejected.
+- PM-resolved node closure left awaiting is rejected.
+- noncurrent repair dossier pointer exposed as active is rejected.
+- historical_run_fallback_used is rejected.
+
+### Friction Points
+- A broad router tier background run completed 42 shards with pass evidence, then failed while serializing its large supervisor meta JSON with MemoryError. That overbroad tier result is not counted as a full pass.
+- Re-running the current-status model updates its result timestamp, requiring topology rebuild/check before install self-check can pass.
+
+### Skipped Steps
+- No target-project-specific fields, DataBank-specific branches, compatibility aliases, newest-run fallback, old-field translation, missing-field defaults, new packet family, new role, or second status authority were added.
+- No release, tag, push, deploy, or OpenSpec archive was performed.
+
+### Risk Evidence Summary
+- Evidence supports the FlowPilot current-status projection repair and local installed skill sync.
+- Broad router-tier release confidence remains outside this task because the extra tier run hit an environment/meta-serialization memory boundary.
+
+### Next Actions
+- Fix or split the router-tier background supervisor meta writer before using full router-tier background evidence as a release gate.
+
+
 ## show-active-route-progress-only - Stabilize progress fraction initial-node semantics
 
 - Project: FlowGuardProjectAutopilot_20260430
@@ -29498,6 +29560,45 @@ Evidence supports the local repository and installed FlowPilot skill for the mat
 ### Findings
 - FlowGuard repository recorded: https://github.com/liuyingxuvka/FlowGuard
 - FlowGuard check-engine version recorded: 0.52.5
+- FlowGuard schema version recorded: 1.0
+- Artifact upgrade scan: apply: scanned=4 upgraded=1 blocked=0 changed=1
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- Project adoption record does not replace executable model checks, tests, replay, or closure evidence.
+
+### Risk Evidence Summary
+- none recorded
+
+### Next Actions
+- Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
+
+
+## flowguard-project-upgrade - FlowGuard project upgrade record update
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: target project uses FlowGuard and needs durable AGENTS/version records
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-07-07T11:53:51+00:00
+- Ended: 2026-07-07T11:53:51+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- none recorded
+
+### Commands
+- none recorded
+
+### Findings
+- FlowGuard repository recorded: https://github.com/liuyingxuvka/FlowGuard
+- FlowGuard check-engine version recorded: 0.52.6
 - FlowGuard schema version recorded: 1.0
 - Artifact upgrade scan: apply: scanned=4 upgraded=1 blocked=0 changed=1
 
