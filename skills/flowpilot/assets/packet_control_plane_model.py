@@ -9,6 +9,7 @@ from packet_control_plane_model_transitions import *  # noqa: F403
 
 EXTERNAL_INPUTS = (
     NodeCase("valid_worker_packet", "pass", "worker"),
+    NodeCase("repeated_dispatch_packet", "pass", "worker"),
     NodeCase("cockpit_missing_major_packet", "pass", "worker"),
     NodeCase("missing_physical_files_packet", "block", "worker"),
     NodeCase("controller_handoff_leaks_body_packet", "block", "controller"),
@@ -39,6 +40,11 @@ EXTERNAL_INPUTS = (
     NodeCase("result_open_ledger_only_packet", "block", "worker"),
     NodeCase("result_body_hash_mismatch_packet", "block", "worker"),
     NodeCase("stale_result_body_packet", "block", "worker"),
+    NodeCase("closed_lease_result_packet", "block", "worker"),
+    NodeCase("noncurrent_result_packet", "block", "worker"),
+    NodeCase("stale_route_result_packet", "block", "worker"),
+    NodeCase("duplicate_after_accepted_result_packet", "block", "worker"),
+    NodeCase("duplicate_current_lease_result_packet", "block", "worker"),
     NodeCase("missing_reminder_packet", "pass", "worker"),
     ManualResumeCase("manual_resume_valid_packet"),
     ManualResumeCase("manual_resume_missing_state"),

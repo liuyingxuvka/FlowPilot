@@ -867,7 +867,10 @@ class FlowPilotCompleteSystemRuntimeTests(unittest.TestCase):
             packet_body_hash="not-the-packet-hash",
         )
         good_result = host.submit_host_result(ledger, new_lease, new_packet, role_result_body(summary="Good worker result."))
-        duplicate_result = host.submit_host_result(ledger, new_lease, new_packet, role_result_body(summary="Duplicate worker result."))
+        before_duplicate_result_ids = list(ledger["packets"][new_packet]["result_ids"])
+        before_duplicate_result_count = len(ledger["results"])
+        with self.assertRaisesRegex(runtime.BlackBoxRuntimeError, "duplicate_output_from_same_lease"):
+            host.submit_host_result(ledger, new_lease, new_packet, role_result_body(summary="Duplicate worker result."))
         order_id = flowguard_orders.create_work_order(ledger, "development_process", "done_claim", new_packet)
         flowguard_orders.complete_work_order(ledger, order_id, proof_artifact="simulations/result.json")
         reviewer = host.lease_responsibility(ledger, "reviewer", host_kind="fake")
@@ -888,7 +891,8 @@ class FlowPilotCompleteSystemRuntimeTests(unittest.TestCase):
         self.assertEqual(ledger["packets"][old_packet]["status"], "quarantined_after_route_mutation")
         self.assertTrue(ledger["route_mutations"][0]["requires_replay_or_rebinding"])
         self.assertIn("body_hash_mismatch", ledger["results"][bad_hash_result]["mechanical_blockers"])
-        self.assertIn("duplicate_output_from_same_lease", ledger["results"][duplicate_result]["mechanical_blockers"])
+        self.assertEqual(ledger["packets"][new_packet]["result_ids"], before_duplicate_result_ids)
+        self.assertEqual(len(ledger["results"]), before_duplicate_result_count)
         self.assertIn("completion_report_only_not_sufficient", closure["blockers"])
         self.assertIn("unresolved_resources", closure["blockers"])
         self.assertIn("unresolved_residual_risks", closure["blockers"])
@@ -904,7 +908,10 @@ class FlowPilotCompleteSystemRuntimeTests(unittest.TestCase):
         runtime.supersede_lease(ledger, first, replacement)
         runtime.assign_packet(ledger, packet_id, replacement)
         runtime.ack_lease(ledger, replacement, packet_id)
-        late = host.submit_host_result(ledger, first, packet_id, role_result_body(summary="Late worker result."))
+        before_late_result_ids = list(ledger["packets"][packet_id]["result_ids"])
+        before_late_result_count = len(ledger["results"])
+        with self.assertRaisesRegex(runtime.BlackBoxRuntimeError, "closed_or_inactive_lease|wrong_lease_for_packet"):
+            host.submit_host_result(ledger, first, packet_id, role_result_body(summary="Late worker result."))
         result_id = host.submit_host_result(ledger, replacement, packet_id, role_result_body(summary="Replacement worker result."))
         with self.assertRaises(runtime.BlackBoxRuntimeError):
             flowguard_orders.create_work_order(ledger, "", "done_claim", packet_id)
@@ -913,7 +920,8 @@ class FlowPilotCompleteSystemRuntimeTests(unittest.TestCase):
         reviewer = host.lease_responsibility(ledger, "reviewer", host_kind="fake")
         review_id = review_closure.review_result(ledger, result_id, reviewer)
 
-        self.assertIn("closed_or_inactive_lease", ledger["results"][late]["mechanical_blockers"])
+        self.assertEqual(ledger["packets"][packet_id]["result_ids"], before_late_result_ids + [result_id])
+        self.assertEqual(len(ledger["results"]), before_late_result_count + 1)
         self.assertEqual(ledger["reviews"][review_id]["decision"], "block")
         self.assertIn("missing_matching_flowguard_report", ledger["reviews"][review_id]["blockers"])
 

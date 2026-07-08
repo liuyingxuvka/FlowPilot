@@ -1,5 +1,32 @@
 # Changelog
 
+## v0.11.4 - 2026-07-08
+
+### Fixed
+
+- Hardened result submission ingress so stale, accepted, noncurrent,
+  stale-route, closed-lease, mismatched-lease, and duplicate current-lease
+  backend submissions are rejected before result id allocation or ledger
+  mutation.
+- Made repeated current-role dispatch idempotent when the existing active lease
+  is still valid.
+- Repaired accepted-result authority so accepted packet review and FlowGuard
+  issue paths prefer `accepted_result_id` over polluted historical
+  `result_ids[-1]`.
+- Strengthened Reviewer cards so reviewers are explicitly expected to inspect
+  current artifacts and evidence, run targeted tests or FlowGuard/model/contract
+  checks when needed, and add review-scope tests or fixtures without repairing
+  production artifacts under review.
+
+### Validation
+
+- Verified packet-control-plane FlowGuard coverage, lifecycle/runtime unit
+  tests, Reviewer active challenge tests, card instruction coverage,
+  fake-AI runtime replay, ContractExhaustionMesh, synthetic-agent Cartesian
+  coverage, model-test alignment, topology build/check, local install sync,
+  install self-check, meta checks, capability checks, and the OpenSpec change
+  `harden-flowpilot-stale-submit-authority`.
+
 ## v0.11.3 - 2026-07-07
 
 ### Changed

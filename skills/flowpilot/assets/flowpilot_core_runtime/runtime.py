@@ -224,6 +224,15 @@ _STALE_RESULT_BLOCKERS = {
     "wrong_lease_for_packet",
     "duplicate_after_packet_accepted",
 }
+_RESULT_INGRESS_REJECTION_BLOCKERS = {
+    "closed_or_inactive_lease",
+    "wrong_lease_for_packet",
+    "quarantined_packet",
+    "noncurrent_packet",
+    "stale_route_version",
+    "duplicate_after_packet_accepted",
+    "duplicate_output_from_same_lease",
+}
 BACKGROUND_COLLABORATION_ACK_FIELD = "background_collaboration_authorized"
 BACKGROUND_COLLABORATION_REQUIRED_MESSAGE = "background_collaboration_authorized=true required"
 
@@ -4797,6 +4806,16 @@ def _packet_is_noncurrent_for_routing(ledger: Mapping[str, Any], packet: Mapping
     return _route_node_is_noncurrent(ledger, _packet_route_node_id(packet))
 
 
+def _packet_is_stale_or_terminal_for_assignment(ledger: Mapping[str, Any], packet: Mapping[str, Any]) -> bool:
+    if packet.get("status") in _NONCURRENT_PACKET_STATUSES:
+        return True
+    envelope = packet.get("envelope", {}) if isinstance(packet.get("envelope"), Mapping) else {}
+    active_route = ledger.get("active_route_version")
+    if active_route is not None and envelope.get("route_version") != active_route:
+        return True
+    return _route_node_is_noncurrent(ledger, _packet_route_node_id(packet))
+
+
 def _packet_requires_current_acceptance(ledger: Mapping[str, Any], packet: Mapping[str, Any]) -> bool:
     if _packet_is_noncurrent_for_routing(ledger, packet):
         return False
@@ -7919,6 +7938,8 @@ def resolve_role_assignment(
         packet = _require(ledger["packets"], packet_id, "packet")
         if packet.get("accepted_result_id"):
             raise BlackBoxRuntimeError("cannot assign accepted packet")
+        if _packet_is_stale_or_terminal_for_assignment(ledger, packet):
+            raise BlackBoxRuntimeError("cannot assign noncurrent packet")
         envelope = packet.get("envelope", {}) if isinstance(packet.get("envelope"), Mapping) else {}
         if str(envelope.get("responsibility") or "") != responsibility:
             raise BlackBoxRuntimeError("assignment responsibility does not match packet")
@@ -10151,6 +10172,8 @@ def assign_packet(ledger: dict[str, Any], packet_id: str, lease_id: str) -> None
     lease = _require(ledger["leases"], lease_id, "lease")
     if packet.get("accepted_result_id"):
         raise BlackBoxRuntimeError("cannot assign accepted packet to a new lease")
+    if _packet_is_stale_or_terminal_for_assignment(ledger, packet):
+        raise BlackBoxRuntimeError("cannot assign noncurrent packet to a new lease")
     if lease["status"] != "active":
         raise BlackBoxRuntimeError("cannot assign packet to inactive lease")
     if lease["responsibility"] != packet["envelope"]["responsibility"]:
@@ -10171,6 +10194,32 @@ def assign_packet(ledger: dict[str, Any], packet_id: str, lease_id: str) -> None
         lease_id=lease_id,
         superseded_active_lease_ids=superseded_lease_ids,
     )
+
+
+def active_assigned_lease_for_packet(
+    ledger: Mapping[str, Any],
+    packet_id: str,
+    responsibility: str,
+) -> str:
+    packet = _require(ledger["packets"], packet_id, "packet")
+    envelope = packet.get("envelope", {}) if isinstance(packet.get("envelope"), Mapping) else {}
+    if packet.get("accepted_result_id") or _packet_is_stale_or_terminal_for_assignment(ledger, packet):
+        return ""
+    if str(envelope.get("responsibility") or "") != responsibility:
+        return ""
+    lease_id = str(packet.get("assigned_lease_id") or "")
+    if not lease_id:
+        return ""
+    lease = ledger.get("leases", {}).get(lease_id)
+    if not isinstance(lease, Mapping):
+        return ""
+    if str(lease.get("status") or "") != "active":
+        return ""
+    if str(lease.get("packet_id") or "") not in {"", packet_id}:
+        return ""
+    if str(lease.get("responsibility") or "") != responsibility:
+        return ""
+    return lease_id
 
 
 def ack_lease(ledger: dict[str, Any], lease_id: str, packet_id: str) -> None:
@@ -10354,8 +10403,14 @@ def submit_result(
     _assert_not_terminal_lifecycle(ledger)
     lease = _require(ledger["leases"], lease_id, "lease")
     packet = _require(ledger["packets"], packet_id, "packet")
-    result_id = _next_id(ledger, "result")
     generation = evidence_generation if evidence_generation is not None else ledger["source_generation"]
+    ingress_blockers = _result_ingress_rejection_blockers(ledger, lease=lease, packet=packet)
+    if ingress_blockers:
+        detail = ", ".join(ingress_blockers)
+        if "duplicate_after_packet_accepted" in ingress_blockers:
+            detail = f"packet already accepted; {detail}"
+        raise BlackBoxRuntimeError(f"result submission rejected before result allocation: {detail}")
+    result_id = _next_id(ledger, "result")
     body_hash = hash_text(body)
     blockers = _result_mechanical_blockers(
         ledger,
@@ -10419,6 +10474,52 @@ def submit_result(
     if not blockers:
         _apply_valid_packet_result(ledger, packet, result, lease)
     return result_id
+
+
+def _append_unique_blocker(blockers: list[str], blocker: str) -> None:
+    if blocker and blocker not in blockers:
+        blockers.append(blocker)
+
+
+def _result_ingress_rejection_blockers(
+    ledger: Mapping[str, Any],
+    *,
+    lease: Mapping[str, Any],
+    packet: Mapping[str, Any],
+) -> list[str]:
+    blockers: list[str] = []
+    lease_id = str(lease.get("lease_id") or "")
+    packet_id = str(packet.get("packet_id") or "")
+    envelope = packet.get("envelope", {}) if isinstance(packet.get("envelope"), Mapping) else {}
+    if str(lease.get("status") or "") != "active":
+        _append_unique_blocker(blockers, "closed_or_inactive_lease")
+    if str(packet.get("assigned_lease_id") or "") != lease_id:
+        _append_unique_blocker(blockers, "wrong_lease_for_packet")
+    if str(lease.get("packet_id") or "") not in {"", packet_id}:
+        _append_unique_blocker(blockers, "wrong_lease_for_packet")
+    if str(lease.get("responsibility") or "") != str(envelope.get("responsibility") or ""):
+        _append_unique_blocker(blockers, "wrong_lease_for_packet")
+    if packet.get("status") == "quarantined_after_route_mutation":
+        _append_unique_blocker(blockers, "quarantined_packet")
+    elif packet.get("status") in _NONCURRENT_PACKET_STATUSES:
+        _append_unique_blocker(blockers, "noncurrent_packet")
+    if envelope.get("route_version") != ledger.get("active_route_version"):
+        _append_unique_blocker(blockers, "stale_route_version")
+    elif _packet_is_stale_or_terminal_for_assignment(ledger, packet):
+        _append_unique_blocker(blockers, "noncurrent_packet")
+    if packet.get("accepted_result_id"):
+        _append_unique_blocker(blockers, "duplicate_after_packet_accepted")
+    for result in ledger.get("results", {}).values():
+        if not isinstance(result, Mapping):
+            continue
+        if (
+            str(result.get("packet_id") or "") == packet_id
+            and str(result.get("producer_lease_id") or "") == lease_id
+            and str(result.get("status") or "") == "mechanically_valid"
+        ):
+            _append_unique_blocker(blockers, "duplicate_output_from_same_lease")
+            break
+    return [blocker for blocker in blockers if blocker in _RESULT_INGRESS_REJECTION_BLOCKERS]
 
 
 _OUTCOME_ALIAS_KEYS = {
@@ -14102,8 +14203,8 @@ def _ensure_review_packet_for_task_result(
         recheck_reason = "repair_blocker_reviewer_recheck"
     result_ids = [str(item) for item in (subject_packet.get("result_ids") or []) if item]
     target_result_id = str(
-        (result_ids[-1] if result_ids else "")
-        or subject_packet.get("accepted_result_id")
+        subject_packet.get("accepted_result_id")
+        or (result_ids[-1] if result_ids else "")
         or subject_packet["envelope"].get("target_result_id")
         or ""
     )
@@ -14145,7 +14246,11 @@ def _ensure_review_packet_for_task_result(
             "because Worker artifacts, per-output artifact payloads, post-result FlowGuard evidence, or fresh "
             "Worker-result checker output do not exist yet; those are result-stage requirements unless PM "
             "claims them as already produced. Start from node_context_package as the minimum checklist and "
-            "actively inspect current route, node, and plan evidence inside the authorized scope."
+            "actively inspect current route, node, and plan evidence inside the authorized scope. Run targeted "
+            "tests, FlowGuard/model checks, or contract checks when they are relevant to the plan-stage quality "
+            "question, and add or repair review-scope tests or fixtures when the review cannot be reliable "
+            "without them. Do not repair the production artifact or route under review; return PM-actionable "
+            "blockers or suggestions through the current review contract."
         )
     else:
         review_instruction = (
@@ -14158,7 +14263,11 @@ def _ensure_review_packet_for_task_result(
             "boundary. A mechanically passed FlowGuard result is not enough when it only checks field shape, "
             "current-contract mechanics, role boundaries, packet presence, or generic process form; block the "
             "review and return a PM-actionable repair suggestion unless the FlowGuard evidence demonstrates "
-            "target-specific depth for the subject result."
+            "target-specific depth for the subject result. Run targeted tests, FlowGuard/model checks, or "
+            "contract checks when they are relevant to the result-quality judgement, and add or repair "
+            "review-scope tests or fixtures when the review cannot be reliable without them. Do not repair the "
+            "production artifact under review; return PM-actionable blockers or suggestions through the "
+            "current review contract."
         )
     body_payload = {
         "schema_version": "black_box_flowpilot.review_packet.v1",
@@ -15203,10 +15312,11 @@ def _apply_router_internal_action(ledger: dict[str, Any], action: RuntimeAction)
         result["packet_id"] = ensure_terminal_backward_replay_packet(ledger, action.subject_id)
     elif action_type == "issue_flowguard_packet":
         subject_packet = _require(ledger["packets"], action.subject_id, "packet")
+        subject_result_id = str(subject_packet.get("accepted_result_id") or "")
         result_ids = subject_packet.get("result_ids") or []
-        if not result_ids:
+        if not subject_result_id and not result_ids:
             raise BlackBoxRuntimeError("issue_flowguard_packet requires a submitted packet result")
-        subject_result = _require(ledger["results"], str(result_ids[-1]), "result")
+        subject_result = _require(ledger["results"], subject_result_id or str(result_ids[-1]), "result")
         result["packet_id"] = _ensure_flowguard_packet_for_task_result(ledger, subject_packet, subject_result)
     elif action_type == "issue_review_packet":
         result["packet_id"] = _ensure_review_packet_for_task_result(ledger, action.subject_id)

@@ -155,16 +155,20 @@ def dead_worker_replaced() -> dict[str, Any]:
     runtime.ack_lease(ledger, worker, packet_id)
     runtime.record_progress(ledger, worker, packet_id, "working")
     runtime.expire_lease(ledger, worker)
-    late = host.submit_host_result(ledger, worker, packet_id, _current_contract_body(ledger, packet_id))
+    late_rejected_reason = ""
+    try:
+        host.submit_host_result(ledger, worker, packet_id, _current_contract_body(ledger, packet_id))
+    except runtime.BlackBoxRuntimeError as exc:
+        late_rejected_reason = str(exc)
     replacement = host.lease_responsibility(ledger, "worker", host_kind="fake", scope="replacement")
     runtime.assign_packet(ledger, packet_id, replacement)
     _complete_packet(ledger, packet_id, replacement)
     closure = ledger["closure"]
     return _scenario_result(
         "dead_worker_replaced",
-        closure["decision"] == "complete" and "closed_or_inactive_lease" in ledger["results"][late]["mechanical_blockers"],
+        closure["decision"] == "complete" and "closed_or_inactive_lease" in late_rejected_reason,
         ledger,
-        {"late_blockers": ledger["results"][late]["mechanical_blockers"]},
+        {"late_rejected_reason": late_rejected_reason},
     )
 
 
@@ -275,13 +279,19 @@ def duplicate_output_blocks_second_result() -> dict[str, Any]:
     ledger, packet_id, worker = _base_ledger()
     runtime.ack_lease(ledger, worker, packet_id)
     first = host.submit_host_result(ledger, worker, packet_id, _current_contract_body(ledger, packet_id))
-    second = host.submit_host_result(ledger, worker, packet_id, _current_contract_body(ledger, packet_id))
+    second_rejected_reason = ""
+    before_result_ids = list(ledger["packets"][packet_id]["result_ids"])
+    try:
+        host.submit_host_result(ledger, worker, packet_id, _current_contract_body(ledger, packet_id))
+    except runtime.BlackBoxRuntimeError as exc:
+        second_rejected_reason = str(exc)
     return _scenario_result(
         "duplicate_output_blocks_second_result",
         ledger["results"][first]["status"] == "mechanically_valid"
-        and "duplicate_output_from_same_lease" in ledger["results"][second]["mechanical_blockers"],
+        and "duplicate_output_from_same_lease" in second_rejected_reason
+        and ledger["packets"][packet_id]["result_ids"] == before_result_ids,
         ledger,
-        {"first": ledger["results"][first], "second": ledger["results"][second]},
+        {"first": ledger["results"][first], "second_rejected_reason": second_rejected_reason},
     )
 
 

@@ -5,6 +5,7 @@
 tmp/
 simulations/*.proof.json
 simulations/*.background_latest.json
+simulations/flowpilot_synthetic_agent_coverage_matrix_results.json
 
 # Local Codex runtime artifacts.
 .codex/tmp/

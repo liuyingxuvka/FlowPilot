@@ -100,6 +100,43 @@ class FlowPilotLifecycleGuardTests(unittest.TestCase):
             self.assertEqual(duty["action"], "terminal_return")
             self.assertTrue(duty["final_return_preflight"]["allowed"])
 
+    def test_repeated_dispatch_current_role_reuses_current_active_lease(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            started = flowpilot_new.start_run(
+                root,
+                run_id="run-dispatch-idempotent",
+                headless_startup_text="Exercise repeated dispatch.",
+                require_formal_ui=False,
+            )
+            packet_id = started["next_action"]["subject_id"]
+
+            first = flowpilot_new.dispatch_current_role(
+                root,
+                packet_id=packet_id,
+                responsibility="pm",
+                host_kind="fake",
+                agent_id="fake-pm",
+            )
+            shell = run_shell.load_run_shell(root, run_id="run-dispatch-idempotent")
+            first_ledger = run_shell.load_run_ledger(shell)
+            first_lease_count = len(first_ledger["leases"])
+            second = flowpilot_new.dispatch_current_role(
+                root,
+                packet_id=packet_id,
+                responsibility="pm",
+                host_kind="fake",
+                agent_id="fake-pm",
+            )
+            second_ledger = run_shell.load_run_ledger(shell)
+
+            self.assertTrue(first["ok"], first)
+            self.assertTrue(second["ok"], second)
+            self.assertEqual(second["lease_id"], first["lease_id"])
+            self.assertEqual(len(second_ledger["leases"]), first_lease_count)
+            self.assertEqual(second_ledger["packets"][packet_id]["assigned_lease_id"], first["lease_id"])
+            self.assertEqual(second_ledger["leases"][first["lease_id"]]["status"], "active")
+
     def test_manual_resume_rehydrates_wait_state_from_current_run(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -472,6 +509,8 @@ class FlowPilotLifecycleGuardTests(unittest.TestCase):
             )["result_id"]
             shell = run_shell.load_run_shell(root, run_id="run-accepted-race-repair")
             ledger = run_shell.load_run_ledger(shell)
+            ledger["packets"][packet_id]["status"] = "acknowledged"
+            ledger["packets"][packet_id]["accepted_result_id"] = ""
             assignment = runtime.resolve_role_assignment(ledger, "pm", packet_id=packet_id, host_kind="fake")
             replacement_lease = runtime.lease_agent(
                 ledger,
@@ -548,7 +587,7 @@ class FlowPilotLifecycleGuardTests(unittest.TestCase):
         self.assertTrue(absorbed["stuck_absorbed_from_history"])
         self.assertIn("same nonterminal action", absorbed["reason"])
 
-    def test_inactive_lease_result_is_quarantined_by_guard(self) -> None:
+    def test_inactive_lease_result_is_rejected_before_result_allocation(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             started = flowpilot_new.start_run(
@@ -571,17 +610,21 @@ class FlowPilotLifecycleGuardTests(unittest.TestCase):
             runtime.expire_lease(ledger, lease_id, "test_inactive")
             run_shell.save_run_ledger(shell, ledger, guard_trigger="test_expire")
 
-            result = flowpilot_new.submit_result(
-                root,
-                lease_id=lease_id,
-                packet_id=packet_id,
-                body=role_result_body("late inactive lease result"),
-            )
-            self.assertEqual(result["next_action"]["action_type"], "repair_packet")
-            self.assertEqual(result["lifecycle_guard"]["decision"], "quarantine_stale_result")
-            self.assertIn("closed_or_inactive_lease", result["lifecycle_guard"]["reason"])
+            before = run_shell.load_run_ledger(shell)
+            before_result_ids = list(before["packets"][packet_id]["result_ids"])
+            before_result_count = len(before["results"])
+            with self.assertRaisesRegex(Exception, "closed_or_inactive_lease"):
+                flowpilot_new.submit_result(
+                    root,
+                    lease_id=lease_id,
+                    packet_id=packet_id,
+                    body=role_result_body("late inactive lease result"),
+                )
+            after = run_shell.load_run_ledger(shell)
+            self.assertEqual(after["packets"][packet_id]["result_ids"], before_result_ids)
+            self.assertEqual(len(after["results"]), before_result_count)
 
-    def test_late_result_after_route_mutation_stays_quarantined(self) -> None:
+    def test_late_result_after_route_mutation_is_rejected_before_result_allocation(self) -> None:
         ledger = runtime.new_ledger("Build", "Finish")
         ledger["startup_intake"] = {
             "sealed": True,
@@ -603,20 +646,22 @@ class FlowPilotLifecycleGuardTests(unittest.TestCase):
         runtime.ack_lease(ledger, lease_id, packet_id)
         runtime.create_route(ledger, "route two", ["two"])
 
-        result_id = host.submit_host_result(
-            ledger,
-            lease_id,
-            packet_id,
-            role_result_body("late"),
-        )
-        result = ledger["results"][result_id]
+        packet = ledger["packets"][packet_id]
+        before_result_ids = list(packet["result_ids"])
+        before_result_count = len(ledger["results"])
+        with self.assertRaisesRegex(runtime.BlackBoxRuntimeError, "quarantined_packet|stale_route_version"):
+            host.submit_host_result(
+                ledger,
+                lease_id,
+                packet_id,
+                role_result_body("late"),
+            )
 
         self.assertEqual(ledger["packets"][packet_id]["status"], "quarantined_after_route_mutation")
-        self.assertTrue(result["quarantined"])
-        self.assertIn("quarantined_packet", result["mechanical_blockers"])
-        self.assertIn("stale_route_version", result["mechanical_blockers"])
+        self.assertEqual(packet["result_ids"], before_result_ids)
+        self.assertEqual(len(ledger["results"]), before_result_count)
 
-    def test_late_result_preserves_noncurrent_packet_statuses(self) -> None:
+    def test_late_result_rejects_noncurrent_packet_statuses_without_mutation(self) -> None:
         for terminal_status in ("accepted", "quarantined_after_route_mutation", "superseded_after_repair"):
             with self.subTest(terminal_status=terminal_status):
                 ledger = runtime.new_ledger("Build", "Finish")
@@ -651,24 +696,23 @@ class FlowPilotLifecycleGuardTests(unittest.TestCase):
                     packet["accepted_result_id"] = "result-existing"
 
                 before_result_ids = list(packet["result_ids"])
-                result_id = host.submit_host_result(
-                    ledger,
-                    lease_id,
-                    packet_id,
-                    role_result_body(f"late {terminal_status}"),
-                )
-                result = ledger["results"][result_id]
+                before_result_count = len(ledger["results"])
+                with self.assertRaisesRegex(
+                    runtime.BlackBoxRuntimeError,
+                    "duplicate_after_packet_accepted|noncurrent_packet|quarantined_packet",
+                ):
+                    host.submit_host_result(
+                        ledger,
+                        lease_id,
+                        packet_id,
+                        role_result_body(f"late {terminal_status}"),
+                    )
 
                 self.assertEqual(packet["status"], terminal_status)
-                self.assertEqual(packet["result_ids"], before_result_ids + [result_id])
-                self.assertTrue(result["non_authoritative"])
-                if terminal_status == "quarantined_after_route_mutation":
-                    self.assertIn("quarantined_packet", result["mechanical_blockers"])
-                    self.assertEqual(packet["latest_quarantined_result_id"], result_id)
-                else:
-                    self.assertIn("noncurrent_packet", result["mechanical_blockers"])
+                self.assertEqual(packet["result_ids"], before_result_ids)
+                self.assertEqual(len(ledger["results"]), before_result_count)
 
-    def test_fake_host_late_result_appends_audit_without_reactivation(self) -> None:
+    def test_fake_host_late_result_is_rejected_without_reactivation(self) -> None:
         ledger = runtime.new_ledger("Build", "Finish")
         ledger["startup_intake"] = {
             "sealed": True,
@@ -691,12 +735,14 @@ class FlowPilotLifecycleGuardTests(unittest.TestCase):
         packet = ledger["packets"][packet_id]
         packet["status"] = "superseded_after_repair"
 
-        result_id = host.submit_host_result(ledger, lease_id, packet_id, role_result_body("late fake host"))
+        before_result_ids = list(packet["result_ids"])
+        before_result_count = len(ledger["results"])
+        with self.assertRaisesRegex(runtime.BlackBoxRuntimeError, "noncurrent_packet"):
+            host.submit_host_result(ledger, lease_id, packet_id, role_result_body("late fake host"))
 
         self.assertEqual(packet["status"], "superseded_after_repair")
-        self.assertEqual(packet["result_ids"], [result_id])
-        self.assertEqual(ledger["results"][result_id]["status"], "blocked")
-        self.assertIn("noncurrent_packet", ledger["results"][result_id]["mechanical_blockers"])
+        self.assertEqual(packet["result_ids"], before_result_ids)
+        self.assertEqual(len(ledger["results"]), before_result_count)
 
     def test_current_result_history_appends_on_open_packet(self) -> None:
         ledger = runtime.new_ledger("Build", "Finish")
@@ -764,7 +810,7 @@ class FlowPilotLifecycleGuardTests(unittest.TestCase):
         self.assertEqual(result["status"], "accepted")
         self.assertTrue(result["accepted"])
 
-    def test_duplicate_after_accepted_preserves_accepted_result_pointer(self) -> None:
+    def test_duplicate_after_accepted_rejects_without_polluting_accepted_result_pointer(self) -> None:
         ledger = runtime.new_ledger("Build", "Finish")
         ledger["startup_intake"] = {
             "sealed": True,
@@ -791,13 +837,48 @@ class FlowPilotLifecycleGuardTests(unittest.TestCase):
         ledger["results"][first_result_id]["status"] = "accepted"
         ledger["results"][first_result_id]["accepted"] = True
 
-        duplicate_id = host.submit_host_result(ledger, lease_id, packet_id, role_result_body("duplicate"))
+        before_result_ids = list(packet["result_ids"])
+        before_result_count = len(ledger["results"])
+        with self.assertRaisesRegex(runtime.BlackBoxRuntimeError, "packet already accepted"):
+            host.submit_host_result(ledger, lease_id, packet_id, role_result_body("duplicate"))
 
         self.assertEqual(packet["status"], "accepted")
         self.assertEqual(packet["accepted_result_id"], first_result_id)
-        self.assertIn(duplicate_id, packet["result_ids"])
-        self.assertIn("duplicate_after_packet_accepted", ledger["results"][duplicate_id]["mechanical_blockers"])
-        self.assertIn("noncurrent_packet", ledger["results"][duplicate_id]["mechanical_blockers"])
+        self.assertEqual(packet["result_ids"], before_result_ids)
+        self.assertEqual(len(ledger["results"]), before_result_count)
+
+    def test_duplicate_current_same_lease_result_rejects_without_second_result(self) -> None:
+        ledger = runtime.new_ledger("Build", "Finish")
+        ledger["startup_intake"] = {
+            "sealed": True,
+            "startup_answers": {
+                runtime.BACKGROUND_COLLABORATION_ACK_FIELD: True,
+            },
+        }
+        runtime.create_route(ledger, "route", ["one"])
+        packet_id = runtime.issue_task_packet(ledger, "worker", "Do work", "sealed body")
+        lease_id = host.lease_responsibility(
+            ledger,
+            "worker",
+            host_kind="fake",
+            agent_id="fake-worker",
+            packet_id=packet_id,
+            scope="test",
+        )
+        runtime.assign_packet(ledger, packet_id, lease_id)
+        runtime.ack_lease(ledger, lease_id, packet_id)
+        first_result_id = host.submit_host_result(ledger, lease_id, packet_id, role_result_body("first"))
+        packet = ledger["packets"][packet_id]
+        before_result_ids = list(packet["result_ids"])
+        before_result_count = len(ledger["results"])
+
+        with self.assertRaisesRegex(runtime.BlackBoxRuntimeError, "duplicate_output_from_same_lease"):
+            host.submit_host_result(ledger, lease_id, packet_id, role_result_body("second"))
+
+        self.assertEqual(packet["status"], "result_submitted")
+        self.assertEqual(packet["result_ids"], before_result_ids)
+        self.assertEqual(len(ledger["results"]), before_result_count)
+        self.assertEqual(packet["result_ids"], [first_result_id])
 
     def test_flowguard_lifecycle_model_is_green_and_catches_hazards(self) -> None:
         result = lifecycle_runner.run_checks()

@@ -125,6 +125,11 @@ INVARIANTS = (
         packet_open_blocks_never_produce_result_or_advance,
     ),
     Invariant(
+        "result_ingress_rejection_never_produces_result_or_advance",
+        "Stale, duplicate, inactive-lease, or noncurrent result submissions are rejected before result allocation.",
+        result_ingress_rejection_never_produces_result_or_advance,
+    ),
+    Invariant(
         "manual_resume_packet_requires_pm_request",
         "Manual resume cannot mint a resume packet without first asking PM.",
         manual_resume_packet_requires_pm_request,
@@ -170,6 +175,7 @@ __all__ = [
     "result_requires_dispatch",
     "dispatch_requires_controller_reminder",
     "packet_open_blocks_never_produce_result_or_advance",
+    "result_ingress_rejection_never_produces_result_or_advance",
     "manual_resume_packet_requires_pm_request",
     "manual_resume_packet_requires_loaded_state",
     "ambiguous_worker_state_never_advances",

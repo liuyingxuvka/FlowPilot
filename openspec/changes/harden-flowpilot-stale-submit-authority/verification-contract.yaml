@@ -1,0 +1,489 @@
+contract_version: 1
+change: harden-flowpilot-stale-submit-authority
+claim_boundary:
+  routine: >
+    Proves local repository implementation, FlowGuard model coverage,
+    runtime/fake-AI regression coverage, Reviewer prompt/card synchronization,
+    projection hardening, and local installed FlowPilot skill synchronization
+    for stale result submission authority.
+  excludes:
+    - remote push
+    - public release
+    - GitHub publication
+    - live AI semantic quality
+    - runtime semantic grading of Reviewer prose
+obligations:
+  - id: req.submit.ingress_rejects_stale
+    source: "specs/flowpilot-control-plane-contract-kernel/spec.md#Requirement: Stale result submissions are rejected before result allocation"
+    claim: "Accepted, noncurrent, stale, or inactive-lease submissions are rejected before result id allocation, result row writes, or packet.result_ids append."
+    required: true
+    evidence:
+      - check.tests.lifecycle_guard
+      - check.flowguard.packet_control_plane
+      - check.flowguard.lifecycle_guard
+      - check.flowguard.model_test_alignment
+  - id: req.dispatch.idempotent_active_lease
+    source: "specs/flowpilot-control-plane-contract-kernel/spec.md#Requirement: Current role dispatch is idempotent for active packet leases"
+    claim: "Repeated dispatch-current-role reuses the active current lease and does not create a second active lease."
+    required: true
+    evidence:
+      - check.tests.new_entrypoint
+      - check.tests.lifecycle_guard
+      - check.flowguard.packet_control_plane
+      - check.flowguard.model_test_alignment
+  - id: req.authority.accepted_result_id
+    source: "specs/flowpilot-packet-review-flow/spec.md#Requirement: Accepted result pointer is authoritative for accepted packets"
+    claim: "Review, validation, PM disposition, projection, repair, and closure code use accepted_result_id for accepted packets rather than result_ids[-1]."
+    required: true
+    evidence:
+      - check.tests.lifecycle_guard
+      - check.tests.core_runtime
+      - check.tests.model_test_alignment
+      - check.flowguard.model_test_alignment
+  - id: req.review.current_object_bound
+    source: "specs/flowpilot-packet-review-flow/spec.md#Requirement: Review targets are current-object bound"
+    claim: "Reviewer and validation targets cannot approve stale packet/result objects."
+    required: true
+    evidence:
+      - check.tests.reviewer_active_challenge
+      - check.tests.fake_ai_runtime_replay
+      - check.flowguard.reviewer_active_challenge
+      - check.flowguard.fake_ai_runtime_replay
+  - id: req.persistence.projection_no_replay
+    source: "specs/runtime-ledger-persistence/spec.md#Requirement: Projection failures do not replay business submissions"
+    claim: "Projection/materialization failures surface as persistence errors and never cause duplicate business result submission."
+    required: true
+    evidence:
+      - check.tests.lifecycle_guard
+      - check.flowguard.model_test_alignment
+      - check.install.self_check
+  - id: req.persistence.projection_atomic
+    source: "specs/runtime-ledger-persistence/spec.md#Requirement: Projection writes are atomic enough for readers"
+    claim: "Materialized run projections use complete write-and-replace behavior for JSON/text projections."
+    required: true
+    evidence:
+      - check.tests.lifecycle_guard
+      - check.install.self_check
+  - id: req.reviewer.mechanical_not_semantic
+    source: "specs/formal-gate-review-standards/spec.md#Requirement: Reviewer runtime gates are mechanical, not semantic"
+    claim: "Runtime enforces currentness, required fields, receipts, and evidence paths without keyword or semantic grading of Reviewer prose."
+    required: true
+    evidence:
+      - check.tests.reviewer_active_challenge
+      - check.tests.ai_contract_projection
+      - check.flowguard.reviewer_active_challenge
+      - check.flowguard.contract_exhaustion
+  - id: req.reviewer.current_receipts
+    source: "specs/formal-gate-review-standards/spec.md#Requirement: Reviewer pass authority requires current subject receipts"
+    claim: "Reviewer pass authority requires current authorized-read/open evidence for the accepted result and current material."
+    required: true
+    evidence:
+      - check.tests.reviewer_active_challenge
+      - check.tests.fake_ai_runtime_replay
+      - check.flowguard.reviewer_active_challenge
+  - id: req.reviewer.active_verification_prompt
+    source: "specs/formal-gate-review-standards/spec.md#Requirement: Reviewer prompts require active verification behavior"
+    claim: "Every Reviewer review packet/card instructs active inspection, relevant test/model/FlowGuard checks, and review-scope test additions when needed, while preserving Reviewer role boundaries."
+    required: true
+    evidence:
+      - check.tests.reviewer_active_challenge
+      - check.tests.card_instruction_coverage
+      - check.flowguard.reviewer_active_challenge
+  - id: req.coverage.stale_submit_matrix
+    source: "specs/synthetic-agent-coverage-matrix/spec.md#Requirement: Coverage matrix includes stale submit and duplicate dispatch bad cases"
+    claim: "Synthetic/D-card coverage owns stale submit, accepted duplicate, noncurrent packet, inactive lease, repeated dispatch, and stale historical result authority cases."
+    required: true
+    evidence:
+      - check.tests.synthetic_coverage_matrix
+      - check.flowguard.contract_exhaustion
+      - check.flowguard.model_test_alignment
+  - id: req.coverage.reviewer_boundary_matrix
+    source: "specs/synthetic-agent-coverage-matrix/spec.md#Requirement: Reviewer mechanical-boundary bad cases are covered"
+    claim: "Coverage distinguishes Reviewer mechanical gate failures from semantic quality obligations and does not overclaim runtime semantic grading."
+    required: true
+    evidence:
+      - check.tests.synthetic_coverage_matrix
+      - check.tests.ai_contract_projection
+      - check.flowguard.contract_exhaustion
+  - id: req.fake_ai.old_backend_rejected
+    source: "specs/multiround-fake-ai-control-rehearsal/spec.md#Requirement: Fake AI replay rejects old backend submissions at runtime ingress"
+    claim: "Fake backend replay proves accepted/noncurrent/inactive-lease submissions are rejected at runtime ingress with no result mutation."
+    required: true
+    evidence:
+      - check.tests.fake_ai_runtime_replay
+      - check.flowguard.fake_ai_runtime_replay
+  - id: req.fake_ai.reviewer_semantic_boundary
+    source: "specs/multiround-fake-ai-control-rehearsal/spec.md#Requirement: Fake Reviewer replay preserves runtime semantic boundary"
+    claim: "Fake Reviewer replay proves mechanical currentness/evidence failures while preserving no runtime semantic prose grading."
+    required: true
+    evidence:
+      - check.tests.fake_ai_runtime_replay
+      - check.tests.reviewer_active_challenge
+      - check.flowguard.fake_ai_runtime_replay
+checks:
+  - id: check.preflight.flowguard_schema
+    kind: command
+    command: python
+    args:
+      - -c
+      - "import flowguard; print(flowguard.SCHEMA_VERSION)"
+    required: true
+    covers:
+      - req.submit.ingress_rejects_stale
+    expected:
+      exit_code: 0
+  - id: check.preflight.project_audit
+    kind: command
+    command: python
+    args:
+      - -m
+      - flowguard
+      - project-audit
+      - --root
+      - .
+    required: true
+    covers:
+      - req.submit.ingress_rejects_stale
+    expected:
+      exit_code: 0
+  - id: check.flowguard.packet_control_plane
+    kind: command
+    command: python
+    args:
+      - skills/flowpilot/assets/run_packet_control_plane_checks.py
+    required: true
+    covers:
+      - req.submit.ingress_rejects_stale
+      - req.dispatch.idempotent_active_lease
+    expected:
+      exit_code: 0
+  - id: check.flowguard.lifecycle_guard
+    kind: command
+    command: python
+    args:
+      - simulations/run_flowpilot_lifecycle_guard_checks.py
+      - --json-out
+      - simulations/flowpilot_lifecycle_guard_results.json
+    required: true
+    covers:
+      - req.submit.ingress_rejects_stale
+    expected:
+      exit_code: 0
+  - id: check.flowguard.reviewer_active_challenge
+    kind: command
+    command: python
+    args:
+      - simulations/run_flowpilot_reviewer_active_challenge_checks.py
+      - --json-out
+      - simulations/flowpilot_reviewer_active_challenge_results.json
+    required: true
+    covers:
+      - req.review.current_object_bound
+      - req.reviewer.mechanical_not_semantic
+      - req.reviewer.current_receipts
+      - req.reviewer.active_verification_prompt
+      - req.fake_ai.reviewer_semantic_boundary
+    expected:
+      exit_code: 0
+  - id: check.flowguard.fake_ai_runtime_replay
+    kind: command
+    command: python
+    args:
+      - simulations/run_flowpilot_fake_ai_runtime_replay_checks.py
+      - --json-out
+      - simulations/flowpilot_fake_ai_runtime_replay_results.json
+    required: true
+    covers:
+      - req.review.current_object_bound
+      - req.reviewer.current_receipts
+      - req.fake_ai.old_backend_rejected
+      - req.fake_ai.reviewer_semantic_boundary
+    expected:
+      exit_code: 0
+  - id: check.flowguard.contract_exhaustion
+    kind: command
+    command: python
+    args:
+      - simulations/run_flowpilot_contract_exhaustion_mesh_checks.py
+      - --summary-json
+    required: true
+    covers:
+      - req.reviewer.mechanical_not_semantic
+      - req.coverage.stale_submit_matrix
+      - req.coverage.reviewer_boundary_matrix
+    expected:
+      exit_code: 0
+  - id: check.flowguard.model_test_alignment
+    kind: command
+    command: python
+    args:
+      - simulations/run_flowpilot_model_test_alignment_checks.py
+      - --json-out
+      - simulations/flowpilot_model_test_alignment_results.json
+    required: true
+    covers:
+      - req.submit.ingress_rejects_stale
+      - req.dispatch.idempotent_active_lease
+      - req.authority.accepted_result_id
+      - req.persistence.projection_no_replay
+      - req.coverage.stale_submit_matrix
+    expected:
+      exit_code: 0
+  - id: check.tests.lifecycle_guard
+    kind: command
+    command: python
+    args:
+      - -m
+      - unittest
+      - -v
+      - tests.test_flowpilot_lifecycle_guard
+    required: true
+    covers:
+      - req.submit.ingress_rejects_stale
+      - req.dispatch.idempotent_active_lease
+      - req.authority.accepted_result_id
+      - req.persistence.projection_no_replay
+      - req.persistence.projection_atomic
+    expected:
+      exit_code: 0
+  - id: check.tests.core_runtime
+    kind: command
+    command: python
+    args:
+      - -m
+      - unittest
+      - -v
+      - tests.test_flowpilot_core_runtime
+    required: true
+    covers:
+      - req.authority.accepted_result_id
+    expected:
+      exit_code: 0
+  - id: check.tests.new_entrypoint
+    kind: command
+    command: python
+    args:
+      - -m
+      - unittest
+      - -v
+      - tests.test_flowpilot_new_entrypoint
+    required: true
+    covers:
+      - req.dispatch.idempotent_active_lease
+    expected:
+      exit_code: 0
+  - id: check.tests.reviewer_active_challenge
+    kind: command
+    command: python
+    args:
+      - -m
+      - unittest
+      - -v
+      - tests.test_flowpilot_reviewer_active_challenge
+    required: true
+    covers:
+      - req.review.current_object_bound
+      - req.reviewer.mechanical_not_semantic
+      - req.reviewer.current_receipts
+      - req.reviewer.active_verification_prompt
+      - req.fake_ai.reviewer_semantic_boundary
+    expected:
+      exit_code: 0
+  - id: check.tests.fake_ai_runtime_replay
+    kind: command
+    command: python
+    args:
+      - -m
+      - unittest
+      - -v
+      - tests.test_flowpilot_fake_ai_runtime_replay
+    required: true
+    covers:
+      - req.review.current_object_bound
+      - req.reviewer.current_receipts
+      - req.fake_ai.old_backend_rejected
+      - req.fake_ai.reviewer_semantic_boundary
+    expected:
+      exit_code: 0
+  - id: check.tests.synthetic_coverage_matrix
+    kind: command
+    command: python
+    args:
+      - -m
+      - unittest
+      - -v
+      - tests.test_flowpilot_synthetic_agent_coverage_matrix
+    required: true
+    covers:
+      - req.coverage.stale_submit_matrix
+      - req.coverage.reviewer_boundary_matrix
+    expected:
+      exit_code: 0
+  - id: check.tests.ai_contract_projection
+    kind: command
+    command: python
+    args:
+      - -m
+      - unittest
+      - -v
+      - tests.test_flowpilot_ai_contract_projection
+    required: true
+    covers:
+      - req.reviewer.mechanical_not_semantic
+      - req.coverage.reviewer_boundary_matrix
+    expected:
+      exit_code: 0
+  - id: check.tests.card_instruction_coverage
+    kind: command
+    command: python
+    args:
+      - -m
+      - unittest
+      - -v
+      - tests.test_flowpilot_card_instruction_coverage
+    required: true
+    covers:
+      - req.reviewer.active_verification_prompt
+    expected:
+      exit_code: 0
+  - id: check.tests.model_test_alignment
+    kind: command
+    command: python
+    args:
+      - -m
+      - unittest
+      - -v
+      - tests.test_flowpilot_model_test_alignment
+    required: true
+    covers:
+      - req.authority.accepted_result_id
+    expected:
+      exit_code: 0
+  - id: check.final.topology_build
+    kind: command
+    command: python
+    args:
+      - scripts/flowguard_project_topology.py
+      - build
+    required: true
+    covers:
+      - req.coverage.stale_submit_matrix
+      - req.coverage.reviewer_boundary_matrix
+    expected:
+      exit_code: 0
+  - id: check.final.topology_check
+    kind: command
+    command: python
+    args:
+      - scripts/flowguard_project_topology.py
+      - check
+    required: true
+    covers:
+      - req.coverage.stale_submit_matrix
+      - req.coverage.reviewer_boundary_matrix
+    expected:
+      exit_code: 0
+  - id: check.install.sync
+    kind: command
+    command: python
+    args:
+      - scripts/install_flowpilot.py
+      - --sync-repo-owned
+      - --json
+    required: true
+    covers:
+      - req.reviewer.active_verification_prompt
+      - req.persistence.projection_atomic
+    expected:
+      exit_code: 0
+  - id: check.install.audit
+    kind: command
+    command: python
+    args:
+      - scripts/audit_local_install_sync.py
+      - --json
+    required: true
+    covers:
+      - req.reviewer.active_verification_prompt
+    expected:
+      exit_code: 0
+  - id: check.install.check
+    kind: command
+    command: python
+    args:
+      - scripts/install_flowpilot.py
+      - --check
+      - --json
+    required: true
+    covers:
+      - req.reviewer.active_verification_prompt
+    expected:
+      exit_code: 0
+  - id: check.install.self_check
+    kind: command
+    command: python
+    args:
+      - scripts/check_install.py
+      - --json
+    required: true
+    covers:
+      - req.persistence.projection_no_replay
+      - req.persistence.projection_atomic
+    expected:
+      exit_code: 0
+  - id: check.final.meta_background
+    kind: background_command
+    command: python
+    args:
+      - simulations/run_meta_checks.py
+    required: true
+    covers:
+      - req.coverage.stale_submit_matrix
+      - req.coverage.reviewer_boundary_matrix
+    expected:
+      exit_code: 0
+      artifact_base: tmp/flowguard_background/run_meta_checks
+  - id: check.final.capability_background
+    kind: background_command
+    command: python
+    args:
+      - simulations/run_capability_checks.py
+    required: true
+    covers:
+      - req.coverage.stale_submit_matrix
+      - req.coverage.reviewer_boundary_matrix
+    expected:
+      exit_code: 0
+      artifact_base: tmp/flowguard_background/run_capability_checks
+freshness:
+  watch:
+    - openspec/changes/harden-flowpilot-stale-submit-authority/proposal.md
+    - openspec/changes/harden-flowpilot-stale-submit-authority/design.md
+    - openspec/changes/harden-flowpilot-stale-submit-authority/tasks.md
+    - openspec/changes/harden-flowpilot-stale-submit-authority/specs/**/*.md
+    - openspec/changes/harden-flowpilot-stale-submit-authority/verification-contract.yaml
+    - skills/flowpilot/assets/flowpilot_new_cli.py
+    - skills/flowpilot/assets/flowpilot_new_run_commands.py
+    - skills/flowpilot/assets/flowpilot_new_role_commands.py
+    - skills/flowpilot/assets/flowpilot_core_runtime/**/*.py
+    - skills/flowpilot/assets/packet_control_plane_model*.py
+    - skills/flowpilot/assets/runtime_kit/cards/**/*.md
+    - skills/flowpilot/assets/runtime_kit/prompts/**/*.md
+    - simulations/flowpilot_lifecycle_guard_model.py
+    - simulations/flowpilot_fake_ai_runtime_replay_model.py
+    - simulations/flowpilot_reviewer_active_challenge_model.py
+    - simulations/flowpilot_synthetic_agent_coverage_matrix.py
+    - simulations/flowpilot_contract_exhaustion_mesh_model.py
+    - simulations/flowpilot_model_test_alignment_*.py
+    - simulations/run_flowpilot_*checks.py
+    - tests/test_flowpilot_lifecycle_guard.py
+    - tests/test_flowpilot_core_runtime.py
+    - tests/test_flowpilot_new_entrypoint.py
+    - tests/test_flowpilot_reviewer_active_challenge.py
+    - tests/test_flowpilot_fake_ai_runtime_replay.py
+    - tests/test_flowpilot_synthetic_agent_coverage_matrix.py
+    - tests/test_flowpilot_ai_contract_projection.py
+    - tests/test_flowpilot_card_instruction_coverage.py
+    - tests/test_flowpilot_model_test_alignment.py
+skipped_checks_policy: skipped checks do not count as pass evidence
+background_policy: background runs count only after final exit/result artifacts are inspected

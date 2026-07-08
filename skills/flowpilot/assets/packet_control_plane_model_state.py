@@ -140,6 +140,7 @@ class State:
     result_envelopes: tuple[str, ...] = ()
     result_ledger_records: tuple[str, ...] = ()
     result_ledger_blocks: tuple[str, ...] = ()
+    result_ingress_rejections: tuple[str, ...] = ()
     result_current_assignments: tuple[str, ...] = ()
     result_mutual_role_reminders: tuple[str, ...] = ()
     result_mutual_role_reminder_blocks: tuple[str, ...] = ()

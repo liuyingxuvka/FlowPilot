@@ -1182,6 +1182,20 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
         self.assertIn("--user-requested", pm_resume)
         self.assertIn("ordinary patrol, resume, or chat-history context must not do it automatically", pm_resume)
 
+    def test_reviewer_cards_require_active_verification_checks_without_extra_contract_fields(self) -> None:
+        for card_id in (
+            "reviewer.core",
+            "reviewer.worker_result_review",
+            "reviewer.node_acceptance_plan_review",
+        ):
+            with self.subTest(card_id=card_id):
+                text = _normalized_path(_card_path_by_id(card_id))
+                self.assertIn("run targeted tests", text)
+                self.assertIn("flowguard/model checks", text)
+                self.assertIn("review-scope tests or fixtures", text)
+                self.assertIn("do not repair", text)
+                self.assertNotIn("reviewer_active_verification", text)
+
     def test_pm_stop_options_distinguish_user_stop_from_break_glass(self) -> None:
         def normalized(path: Path) -> str:
             return " ".join(path.read_text(encoding="utf-8").lower().split())

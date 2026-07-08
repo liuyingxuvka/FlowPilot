@@ -172,6 +172,28 @@ def dispatch_current_role(
 ) -> dict[str, Any]:
     shell = run_shell.load_run_shell(root)
     ledger = run_shell.load_run_ledger(shell)
+    existing_lease_id = runtime.active_assigned_lease_for_packet(ledger, packet_id, responsibility)
+    if existing_lease_id:
+        existing_lease = ledger.get("leases", {}).get(existing_lease_id, {})
+        role_assignment_id = str(existing_lease.get("role_assignment_id") or "")
+        handoff = role_handoff.render_current_packet_handoff(
+            ledger,
+            root=root,
+            script_path=ENTRYPOINT_PATH,
+            run_id=shell.run_id,
+            packet_id=packet_id,
+            lease_id=existing_lease_id,
+        )
+        return {
+            "ok": True,
+            "lease_id": existing_lease_id,
+            "role_assignment_id": role_assignment_id,
+            "role_assignment": ledger.get("role_assignments", {}).get(role_assignment_id, {}),
+            "role_handoff": handoff,
+            "role_handoff_text": handoff["text"],
+            "sealed_bodies_visible": False,
+            **_runtime_state(ledger),
+        }
     assignment = runtime.resolve_role_assignment(
         ledger,
         responsibility,

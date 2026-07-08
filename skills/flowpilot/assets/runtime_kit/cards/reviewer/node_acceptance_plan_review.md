@@ -14,6 +14,7 @@ runtime_context: Treat the runtime delivery envelope as the live source for the 
 
 - Do not contact workers or FlowGuard operators directly; when another role's work is needed, make it a blocker or PM suggestion for PM to route.
 - Classify findings as hard blockers for this gate, future requirements, or nonblocking notes; only hard current-gate failures should block this gate.
+- Actively verify the gate when quality depends on it: inspect the current plan, route, node, model, and cited evidence, run targeted tests, relevant FlowGuard/model checks, or contract checks, and add or repair review-scope tests or fixtures when a sharper probe is needed. Keep those probes inside reviewer authority; do not repair the production plan or route under review.
 
 
 ## Decision-Support Findings

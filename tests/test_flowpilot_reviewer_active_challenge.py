@@ -98,6 +98,9 @@ class FlowPilotReviewerActiveChallengeTests(unittest.TestCase):
             "thin-success hypothesis",
             "proof of depth",
             "Existence-only evidence",
+            "Active verification is part of your review duty",
+            "Run targeted tests",
+            "review-scope tests or fixtures",
         ):
             self.assertIn(text, reviewer_core_flat)
 
@@ -110,6 +113,8 @@ class FlowPilotReviewerActiveChallengeTests(unittest.TestCase):
         self.assertIn("Proof of Depth", worker_review_card_flat)
         self.assertIn("shallow-completion traps", worker_review_card_flat)
         self.assertIn("practical next step", worker_review_card_flat)
+        self.assertIn("run targeted tests", worker_review_card_flat)
+        self.assertIn("review-scope tests or fixtures", worker_review_card_flat)
         self.assertIn("Reviewer Independent Challenge Context", packet_template)
         self.assertIn("starting points, not the outer boundary", packet_template_flat)
         self.assertIn("PM decision-support recommendations", packet_template_flat)

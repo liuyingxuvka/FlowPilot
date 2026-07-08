@@ -111,7 +111,98 @@ CONCRETE_RUNTIME_TESTS: dict[str, str] = {
         "tests.test_flowpilot_parent_entry_return_path."
         "FlowPilotParentEntryReturnPathTests.test_final_hard_gate_escape_matrix_returns_each_runtime_gate_to_owner"
     ),
+    "runtime_submit_result_ingress": (
+        "tests.test_flowpilot_lifecycle_guard."
+        "FlowPilotLifecycleGuardTests.test_late_result_rejects_noncurrent_packet_statuses_without_mutation"
+    ),
+    "runtime_duplicate_current_submit": (
+        "tests.test_flowpilot_lifecycle_guard."
+        "FlowPilotLifecycleGuardTests.test_duplicate_current_same_lease_result_rejects_without_second_result"
+    ),
+    "runtime_accepted_result_authority": (
+        "tests.test_flowpilot_core_runtime."
+        "FlowPilotCoreRuntimeTests.test_review_packet_target_result_uses_accepted_result_id_over_result_ids_tail"
+    ),
+    "reviewer_runtime_mechanical_boundary": (
+        "tests.test_flowpilot_reviewer_active_challenge."
+        "FlowPilotReviewerActiveChallengeTests.test_runtime_cards_templates_and_contracts_keep_reviewer_challenge_compact"
+    ),
 }
+
+RUNTIME_OWNED_BAD_AI_REPLAY_CELLS: tuple[dict[str, str], ...] = (
+    {
+        "cell_id": "accepted_packet_resubmit_rejected",
+        "family": "submit_result_body_entry",
+        "contract_family_id": "runtime.submit_result_ingress",
+        "contract_path": "submit-result.packet.accepted_result_id",
+        "mutation_kind": "submit_result.accepted_packet_resubmit",
+        "expected_runtime_reaction": "hard_reject_before_result_allocation",
+        "expected_test_key": "runtime_submit_result_ingress",
+    },
+    {
+        "cell_id": "noncurrent_packet_submit_rejected",
+        "family": "submit_result_body_entry",
+        "contract_family_id": "runtime.submit_result_ingress",
+        "contract_path": "submit-result.packet.status",
+        "mutation_kind": "submit_result.noncurrent_packet_submit",
+        "expected_runtime_reaction": "hard_reject_before_result_allocation",
+        "expected_test_key": "runtime_submit_result_ingress",
+    },
+    {
+        "cell_id": "closed_lease_submit_rejected",
+        "family": "submit_result_body_entry",
+        "contract_family_id": "runtime.submit_result_ingress",
+        "contract_path": "submit-result.lease.status",
+        "mutation_kind": "submit_result.closed_lease_submit",
+        "expected_runtime_reaction": "hard_reject_before_result_allocation",
+        "expected_test_key": "runtime_submit_result_ingress",
+    },
+    {
+        "cell_id": "stale_route_submit_rejected",
+        "family": "submit_result_body_entry",
+        "contract_family_id": "runtime.submit_result_ingress",
+        "contract_path": "submit-result.packet.route_version",
+        "mutation_kind": "submit_result.stale_route_submit",
+        "expected_runtime_reaction": "hard_reject_before_result_allocation",
+        "expected_test_key": "runtime_submit_result_ingress",
+    },
+    {
+        "cell_id": "duplicate_current_lease_submit_rejected",
+        "family": "submit_result_body_entry",
+        "contract_family_id": "runtime.submit_result_ingress",
+        "contract_path": "submit-result.packet.result_ids",
+        "mutation_kind": "submit_result.duplicate_current_lease_submit",
+        "expected_runtime_reaction": "hard_reject_before_result_allocation",
+        "expected_test_key": "runtime_duplicate_current_submit",
+    },
+    {
+        "cell_id": "review_uses_accepted_result_id_not_tail",
+        "family": "review_packet",
+        "contract_family_id": "runtime.accepted_result_authority",
+        "contract_path": "review_packet.target_result_id",
+        "mutation_kind": "review_packet.result_ids_tail_after_accepted_result",
+        "expected_runtime_reaction": "accepted_result_id_authority_preserved",
+        "expected_test_key": "runtime_accepted_result_authority",
+    },
+    {
+        "cell_id": "reviewer_semantic_keyword_gate_rejected_as_runtime_authority",
+        "family": "review_result",
+        "contract_family_id": "runtime.reviewer_mechanical_boundary",
+        "contract_path": "review_result.runtime_mechanical_shape_only",
+        "mutation_kind": "reviewer.semantic_keyword_gate_attempt",
+        "expected_runtime_reaction": "runtime_mechanical_only_reviewer_boundary",
+        "expected_test_key": "reviewer_runtime_mechanical_boundary",
+    },
+    {
+        "cell_id": "reviewer_active_verification_prompt_required",
+        "family": "review_packet",
+        "contract_family_id": "runtime.reviewer_active_verification_prompt",
+        "contract_path": "review_packet.instruction",
+        "mutation_kind": "reviewer.prompt_omits_active_verification",
+        "expected_runtime_reaction": "reviewer_prompt_requires_active_verification_without_new_fields",
+        "expected_test_key": "runtime_accepted_result_authority",
+    },
+)
 
 
 EXPECTED_REACTION_BY_MUTATION = {
@@ -397,6 +488,32 @@ def _parent_entry_return_path_replay_cells() -> tuple[dict[str, Any], ...]:
     return tuple(rows)
 
 
+def _runtime_owned_bad_ai_replay_cells() -> tuple[dict[str, Any], ...]:
+    return tuple(
+        {
+            "cell_id": f"runtime_replay.runtime_owned_bad_ai.{cell['cell_id']}",
+            "source_cell_id": cell["cell_id"],
+            "source_matrix": "runtime_owned_bad_ai_submit_and_reviewer_boundary",
+            "family": cell["family"],
+            "contract_family_id": cell["contract_family_id"],
+            "contract_path": cell["contract_path"],
+            "mutation_kind": cell["mutation_kind"],
+            "branch_kind": "runtime_replay",
+            "confidence_boundary": "synthetic_non_live_runtime_replay",
+            "required_evidence_owner": REQUIRED_EVIDENCE_OWNER,
+            "attempt_class": "runtime_hard_reject" if cell["family"] == "submit_result_body_entry" else "runtime_boundary",
+            "expected_runtime_reaction": cell["expected_runtime_reaction"],
+            "expected_test_name": CONCRETE_RUNTIME_TESTS[cell["expected_test_key"]],
+            "glass_break_allowed": False,
+            "normal_path_required": True,
+            "live_completion_allowed": False,
+            "semantic_runtime_blocker_allowed": False,
+            "fallback_allowed": False,
+        }
+        for cell in RUNTIME_OWNED_BAD_AI_REPLAY_CELLS
+    )
+
+
 def runtime_replay_cells() -> tuple[dict[str, Any], ...]:
     cells: list[dict[str, Any]] = []
     for contract_id, contract in _responder_contracts().items():
@@ -422,6 +539,7 @@ def runtime_replay_cells() -> tuple[dict[str, Any], ...]:
         )
     cells.extend(_integration_runtime_replay_cells())
     cells.extend(_parent_entry_return_path_replay_cells())
+    cells.extend(_runtime_owned_bad_ai_replay_cells())
     return tuple(cells)
 
 
@@ -738,6 +856,7 @@ def cell_findings(cells: Iterable[Mapping[str, Any]] | None = None) -> list[dict
         "wrong_allowed_value",
         "wrong_type",
         *(f"hard_gate_escape.{gate_type}" for gate_type in PARENT_ENTRY_GATE_TYPES),
+        *(cell["mutation_kind"] for cell in RUNTIME_OWNED_BAD_AI_REPLAY_CELLS),
     }
     mutations = {str(row.get("mutation_kind") or "") for row in rows}
     for mutation in sorted(required_mutations - mutations):

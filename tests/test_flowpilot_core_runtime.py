@@ -603,7 +603,7 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         report = runtime_runner.replacement_worker_success()
         self.assertTrue(report["ok"], report)
         self.assertTrue(report["accepted"])
-        self.assertIn("closed_or_inactive_lease", report["details"]["late_result_blockers"])
+        self.assertIn("closed_or_inactive_lease", report["details"]["late_result_rejected_reason"])
 
     def test_wrong_flowguard_target_self_review_stale_route_and_stale_evidence_block(self) -> None:
         for scenario_name in (
@@ -1990,18 +1990,22 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         self.assertEqual(action.action_type, "dispatch_current_role")
         self.assertEqual(action.subject_id, reissue_packet_id)
 
-    def test_quarantined_packet_projection_replay_uses_currentness_predicate(self) -> None:
+    def test_quarantined_packet_rejects_late_submit_and_stays_out_of_active_projection(self) -> None:
         ledger, packet_id, worker = runtime_runner._base_ledger()
         runtime.ack_lease(ledger, worker, packet_id)
         runtime.create_route(ledger, "Replacement route", ["Replacement node"])
 
-        result_id = runtime.submit_result(ledger, worker, packet_id, role_result_body("Late result"))
+        before_result_ids = list(ledger["packets"][packet_id]["result_ids"])
+        before_result_count = len(ledger["results"])
+        with self.assertRaisesRegex(runtime.BlackBoxRuntimeError, "quarantined_packet|stale_route_version"):
+            runtime.submit_result(ledger, worker, packet_id, role_result_body("Late result"))
         runtime.record_validation_evidence(ledger, "unit-validation")
         compact = runtime.render_compact_console(ledger)
         closure = runtime.attempt_final_closure(ledger, "unit-validation")
 
         self.assertEqual(ledger["packets"][packet_id]["status"], "quarantined_after_route_mutation")
-        self.assertEqual(ledger["packets"][packet_id]["latest_quarantined_result_id"], result_id)
+        self.assertEqual(ledger["packets"][packet_id]["result_ids"], before_result_ids)
+        self.assertEqual(len(ledger["results"]), before_result_count)
         self.assertNotIn(packet_id, {packet["packet_id"] for packet in compact["active_packets"]})
         self.assertNotIn(f"packet_not_accepted:{packet_id}", closure["blockers"])
 
@@ -3604,6 +3608,51 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         flowguard_body = json.loads(flowguard_packets[0]["body"])
         self.assertEqual(flowguard_body["recheck_reason"], "missing_matching_flowguard_report")
         self.assertEqual(flowguard_body["repair_dossier_context"]["hard_next_action"], "issue_matching_flowguard_packet")
+
+    def test_review_packet_target_result_uses_accepted_result_id_over_result_ids_tail(self) -> None:
+        ledger = runtime.new_ledger("Build", "Finish")
+        ledger["startup_intake"] = {
+            "sealed": True,
+            "startup_answers": {
+                runtime.BACKGROUND_COLLABORATION_ACK_FIELD: True,
+            },
+        }
+        runtime.create_route(ledger, "Route", ["Work"])
+        packet_id = runtime.issue_task_packet(
+            ledger,
+            "worker",
+            "Do work",
+            "sealed body",
+            required_flowguard_target="",
+        )
+        lease_id = runtime.lease_agent(ledger, "worker", agent_id="worker-a", packet_id=packet_id)
+        runtime.assign_packet(ledger, packet_id, lease_id)
+        runtime.ack_lease(ledger, lease_id, packet_id)
+        accepted_result_id = runtime.submit_result(ledger, lease_id, packet_id, role_result_body("accepted"))
+        stale_tail_result_id = "result-historical-stale-tail"
+        ledger["results"][stale_tail_result_id] = {
+            "result_id": stale_tail_result_id,
+            "packet_id": packet_id,
+            "producer_lease_id": lease_id,
+            "status": "blocked",
+            "accepted": False,
+        }
+        packet = ledger["packets"][packet_id]
+        packet["accepted_result_id"] = accepted_result_id
+        packet["result_ids"].append(stale_tail_result_id)
+
+        review_packet_id = runtime._ensure_review_packet_for_task_result(ledger, packet_id, force_new=True)
+        review_packet = ledger["packets"][review_packet_id]
+        review_body = json.loads(review_packet["body"])
+
+        self.assertEqual(review_packet["envelope"]["target_result_id"], accepted_result_id)
+        self.assertEqual(review_body["target_result_id"], accepted_result_id)
+        self.assertIn("Run targeted tests", review_body["instruction"])
+        self.assertIn("review-scope tests or fixtures", review_body["instruction"])
+        self.assertEqual(
+            [row["result_id"] for row in review_packet["envelope"]["authorized_result_reads"]],
+            [accepted_result_id],
+        )
 
     def test_break_glass_counts_same_flowguard_root_cause_across_surface_gates(self) -> None:
         ledger = runtime.new_ledger("Goal", "Contract")

@@ -455,13 +455,17 @@ def replacement_worker_success() -> dict[str, Any]:
     runtime.ack_lease(ledger, worker, packet_id)
     runtime.record_progress(ledger, worker, packet_id, "still working")
     runtime.close_lease(ledger, worker, "no final result")
-    late_result = runtime.submit_result(
-        ledger,
-        worker,
-        packet_id,
-        _role_result_body("Worker produced a late stale result."),
-        evidence_ids=["late"],
-    )
+    late_result_rejected_reason = ""
+    try:
+        runtime.submit_result(
+            ledger,
+            worker,
+            packet_id,
+            _role_result_body("Worker produced a late stale result."),
+            evidence_ids=["late"],
+        )
+    except runtime.BlackBoxRuntimeError as exc:
+        late_result_rejected_reason = str(exc)
     replacement = runtime.lease_agent(ledger, "worker", agent_id="worker-2")
     runtime.assign_packet(ledger, packet_id, replacement)
     result_id = _complete_happy_path(ledger, packet_id, replacement)
@@ -471,7 +475,7 @@ def replacement_worker_success() -> dict[str, Any]:
         accepted=ledger["closure"]["decision"] == "complete",
         expected=True,
         details={
-            "late_result_blockers": ledger["results"][late_result]["mechanical_blockers"],
+            "late_result_rejected_reason": late_result_rejected_reason,
             "accepted_result_id": result_id,
         },
     )
@@ -693,13 +697,17 @@ def stale_route_output_blocks() -> dict[str, Any]:
     ledger, packet_id, worker = _base_ledger()
     runtime.ack_lease(ledger, worker, packet_id)
     runtime.create_route(ledger, "Mutated route", ["new implementation path"])
-    result_id = runtime.submit_result(ledger, worker, packet_id, _role_result_body("Worker result is stale after route mutation."))
+    blockers: list[str] = []
+    try:
+        runtime.submit_result(ledger, worker, packet_id, _role_result_body("Worker result is stale after route mutation."))
+    except runtime.BlackBoxRuntimeError as exc:
+        blockers = [str(exc)]
     return _scenario_result(
         "stale_route_output_blocks",
         ledger,
         accepted=False,
         expected=False,
-        details={"blockers": ledger["results"][result_id]["mechanical_blockers"]},
+        details={"blockers": blockers},
     )
 
 

@@ -184,7 +184,12 @@ class RouterDirectDispatch:
             if input_obj.packet_id in checked_state.dispatches
             else replace(checked_state, dispatches=checked_state.dispatches + (input_obj.packet_id,))
         )
-        yield FunctionResult(ApprovedPacket(input_obj.packet_id, input_obj.to_role), new_state, "router_direct_dispatch_approved")
+        label = (
+            "router_direct_dispatch_idempotent_current_assignment_reused"
+            if input_obj.packet_id.startswith("repeated_dispatch") or input_obj.packet_id in checked_state.dispatches
+            else "router_direct_dispatch_approved"
+        )
+        yield FunctionResult(ApprovedPacket(input_obj.packet_id, input_obj.to_role), new_state, label)
 
 class WorkerOrControllerResult:
     name = "WorkerOrControllerResult"
@@ -200,6 +205,7 @@ class WorkerOrControllerResult:
         "controller_artifacts",
         "result_envelopes",
         "result_ledger_records",
+        "result_ingress_rejections",
         "review_blocks",
         "pm_repair_requirements",
     )
@@ -272,6 +278,36 @@ class WorkerOrControllerResult:
                 DispatchBlocked(input_obj.packet_id, "packet_body_open_ledger_receipt_missing"),
                 new_state,
                 "packet_body_open_ledger_receipt_missing_blocked",
+            )
+            return
+        ingress_rejection_reason = ""
+        ingress_rejection_label = ""
+        if input_obj.packet_id.startswith("closed_lease_result"):
+            ingress_rejection_reason = "closed_or_inactive_lease"
+            ingress_rejection_label = "closed_lease_result_hard_rejected_before_ledger_result"
+        elif input_obj.packet_id.startswith("noncurrent_result"):
+            ingress_rejection_reason = "noncurrent_packet"
+            ingress_rejection_label = "noncurrent_packet_result_hard_rejected_before_ledger_result"
+        elif input_obj.packet_id.startswith("stale_route_result"):
+            ingress_rejection_reason = "stale_route_version"
+            ingress_rejection_label = "stale_route_result_hard_rejected_before_ledger_result"
+        elif input_obj.packet_id.startswith("duplicate_after_accepted_result"):
+            ingress_rejection_reason = "duplicate_after_packet_accepted"
+            ingress_rejection_label = "duplicate_after_accepted_result_hard_rejected_before_ledger_result"
+        elif input_obj.packet_id.startswith("duplicate_current_lease_result"):
+            ingress_rejection_reason = "duplicate_output_from_same_lease"
+            ingress_rejection_label = "duplicate_current_lease_result_hard_rejected_before_ledger_result"
+        if ingress_rejection_reason:
+            new_state = replace(
+                checked_state,
+                result_ingress_rejections=checked_state.result_ingress_rejections + (input_obj.packet_id,),
+                review_blocks=checked_state.review_blocks + (input_obj.packet_id,),
+                pm_repair_requirements=checked_state.pm_repair_requirements + (input_obj.packet_id,),
+            )
+            yield FunctionResult(
+                DispatchBlocked(input_obj.packet_id, ingress_rejection_reason),
+                new_state,
+                ingress_rejection_label,
             )
             return
         if input_obj.packet_id.startswith("controller_origin"):

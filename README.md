@@ -15,7 +15,7 @@
 </p>
 
 <p align="center">
-  Source version: <strong>v0.11.3</strong> · MIT License · open-source AI-agent control runtime
+  Source version: <strong>v0.11.4</strong> · MIT License · open-source AI-agent control runtime
 </p>
 <!-- README HERO END -->
 
@@ -126,7 +126,7 @@ In plain language:
 
 | Field | Value |
 | --- | --- |
-| Source version | `v0.11.3` |
+| Source version | `v0.11.4` |
 | Public project name | `FlowPilot` |
 | Skill slug | `flowpilot` |
 | Release shape | Source package only, no binary app bundle |
@@ -134,7 +134,7 @@ In plain language:
 | Required core dependency | Real `flowguard` Python package |
 | Current UI surface | Windows WPF startup intake dialog plus chat route signs |
 
-`v0.11.3` strengthens the existing Reviewer/PM challenge chain with fixed stage review bindings, concrete PM-actionable Reviewer guidance, current status projection hardening, and refreshed OpenSpec, FlowGuard, topology, and install-sync validation.
+`v0.11.4` hardens the current-contract runtime path for stale and duplicate backend submissions, makes repeated current dispatch idempotent, keeps accepted-result authority tied to `accepted_result_id`, and strengthens Reviewer cards with explicit active verification duties while preserving runtime as a mechanical contract gate.
 
 ## When To Use FlowPilot
 
@@ -229,7 +229,7 @@ MIT. See [`LICENSE`](./LICENSE).
 
 # FlowPilot 中文说明
 
-**Source version:** `v0.11.3`<br />
+**Source version:** `v0.11.4`<br />
 **许可证：** MIT<br />
 **形态：** open-source AI-agent control runtime
 
@@ -338,7 +338,7 @@ startup intake
 
 | 字段 | 值 |
 | --- | --- |
-| Source version | `v0.11.3` |
+| Source version | `v0.11.4` |
 | Public project name | `FlowPilot` |
 | Skill slug | `flowpilot` |
 | Release shape | source package only, no binary app bundle |
@@ -346,7 +346,7 @@ startup intake
 | Required core dependency | real `flowguard` Python package |
 | Current UI surface | Windows WPF startup intake dialog plus chat route signs |
 
-`v0.11.3` 在现有 Reviewer/PM challenge chain 上增加固定阶段审查绑定、具体可执行的 Reviewer 给 PM 建议、current status projection hardening，并刷新 OpenSpec、FlowGuard、topology 和 install-sync validation。
+`v0.11.4` 加固 current-contract runtime 路径：旧包和重复后台提交会在结果分配前被拒绝，重复 current dispatch 会复用有效 lease，已接受结果以 `accepted_result_id` 为准，并让 Reviewer 卡片明确承担主动检查、跑测试、跑模型/FlowGuard/contract 检查的职责，同时 runtime 仍只作为机械 contract gate。
 
 ## 什么时候用 FlowPilot
 

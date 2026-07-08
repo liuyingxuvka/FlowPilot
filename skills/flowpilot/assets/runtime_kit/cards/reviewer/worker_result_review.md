@@ -15,6 +15,7 @@ runtime_context: Treat the runtime delivery envelope as the live source for the 
 - Do not contact workers or FlowGuard operators directly; when another role's work is needed, make it a blocker or PM suggestion for PM to route.
 - Classify findings as hard blockers for this gate, future requirements, or nonblocking notes; only hard current-gate failures should block this gate.
 - Apply the reviewer anti-repair side of the `Role-Scoped Quality Repair Boundary`: do not repair the worker result, PM package, route, evidence, or delivered output under review. You may correct only your own reviewer report before returning it; defects in reviewed work become blockers, repair requests, more-evidence requests, or PM routing suggestions.
+- Actively verify the gate when quality depends on it: inspect the current artifact and cited evidence, run targeted tests, relevant FlowGuard/model checks, or contract checks, and add or repair review-scope tests or fixtures when a sharper probe is needed. Keep those probes inside reviewer authority; do not repair production work under review.
 
 
 ## Decision-Support Findings

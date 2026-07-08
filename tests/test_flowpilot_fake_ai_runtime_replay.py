@@ -75,6 +75,14 @@ class FlowPilotFakeAIRuntimeReplayTests(unittest.TestCase):
             "missing_active_id_coverage",
             "corrected_second_retry",
             "same_payload_retry",
+            "submit_result.accepted_packet_resubmit",
+            "submit_result.noncurrent_packet_submit",
+            "submit_result.closed_lease_submit",
+            "submit_result.stale_route_submit",
+            "submit_result.duplicate_current_lease_submit",
+            "review_packet.result_ids_tail_after_accepted_result",
+            "reviewer.semantic_keyword_gate_attempt",
+            "reviewer.prompt_omits_active_verification",
         ):
             with self.subTest(mutation=mutation):
                 self.assertIn(mutation, mutations)
@@ -117,6 +125,10 @@ class FlowPilotFakeAIRuntimeReplayTests(unittest.TestCase):
             "return_to_parent_backward_replay",
             "return_to_pm_disposition",
             "return_to_current_packet_repair",
+            "hard_reject_before_result_allocation",
+            "accepted_result_id_authority_preserved",
+            "runtime_mechanical_only_reviewer_boundary",
+            "reviewer_prompt_requires_active_verification_without_new_fields",
         ):
             with self.subTest(reaction=reaction):
                 self.assertIn(reaction, reactions)

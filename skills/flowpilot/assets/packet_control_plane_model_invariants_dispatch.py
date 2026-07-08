@@ -132,6 +132,21 @@ def packet_open_blocks_never_produce_result_or_advance(state: State, trace) -> I
         return InvariantResult.fail(f"packet open blocker produced result or advanced: {sorted(unsafe)!r}")
     return InvariantResult.pass_()
 
+def result_ingress_rejection_never_produces_result_or_advance(state: State, trace) -> InvariantResult:
+    del trace
+    rejected = set(state.result_ingress_rejections)
+    unsafe = rejected & (
+        set(state.worker_results)
+        | set(state.controller_artifacts)
+        | set(state.result_envelopes)
+        | set(state.result_ledger_records)
+        | set(state.review_passes)
+        | set(state.advances)
+    )
+    if unsafe:
+        return InvariantResult.fail(f"hard-rejected result ingress produced result or advanced: {sorted(unsafe)!r}")
+    return InvariantResult.pass_()
+
 __all__ = (
     'dispatch_requires_packet_envelope_and_hash_checks',
     'dispatch_requires_output_contract_and_run_scoped_result_paths',
@@ -143,4 +158,5 @@ __all__ = (
     'result_requires_dispatch',
     'dispatch_requires_controller_reminder',
     'packet_open_blocks_never_produce_result_or_advance',
+    'result_ingress_rejection_never_produces_result_or_advance',
 )
