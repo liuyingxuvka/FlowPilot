@@ -47,6 +47,12 @@ Check:
   and applicable current-node slice;
 - MUST, DEFAULT, FORBID, VERIFY, LOOP, ARTIFACT, and WAIVER obligations are not
   weakened into generic prose;
+- selected skill standards preserve the parent core deliverable, source-intent
+  slice, quality floor, quantity, required evidence, and prohibitions. Block if
+  the projection lets a child skill close the parent target through a
+  reachable-only subset, status-only note, report-only artifact, honest missing
+  explanation, external-only label, partial count, not-yet-done marker, or
+  weaker child output without explicit user authority;
 - expected artifacts, iteration rules, evidence requirements, reviewer gates,
   and waiver/blocker rules remain reviewable by downstream roles;
 - stricter child-skill standards override the PM packet floor unless PM records

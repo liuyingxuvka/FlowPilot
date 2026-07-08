@@ -54,6 +54,16 @@ route node, reviewer gate, FlowGuard gate, terminal acceptance item, or
 separate FlowPilot-private maintenance table for it. It does not replace the
 run's final report or FlowPilot skill-improvement report.
 
+When material is missing, inaccessible, partial, stale, or not verified, record
+that as a material gap and its effect on user intent. Do not let the material
+understanding memo silently change the user's requested deliverable into a
+status-only inventory, reachable-only subset, honest missing explanation,
+report-only artifact about missing sources, external-only label, partial
+count, or not-yet-done marker. Preserve the user's core deliverable. If the
+gap blocks the actual deliverable, route research, repair, user
+clarification, route mutation, waiver with authority, or stop-for-user before
+product architecture uses the material.
+
 This memo is the only material basis for product architecture. Do not proceed
 from raw worker reports, unchecked research, or a material-map summary by
 itself. The map points to material; it is not substitute evidence.

@@ -23,6 +23,10 @@ Report:
 
 - whether root requirements are modelable or testable;
 - which proof obligations need product FlowGuard modeling;
+- whether any root requirement can pass only by downgrading the core
+  deliverable into a reachable-only subset, status-only note, report-only
+  artifact, honest missing explanation, external-only label, partial count,
+  not-yet-done marker, or absence-of-fabrication proof;
 - scenario gaps or ambiguous acceptance criteria;
 - confidence boundary;
 - whether PM must repair the contract before route design.

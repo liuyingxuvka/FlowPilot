@@ -252,6 +252,40 @@ SYNTHETIC_TRACE_ROWS: tuple[dict[str, Any], ...] = (
         "covered_failure_mode": "background_progress_without_exit_is_not_pass_evidence",
     },
     {
+        "family": "core deliverable non-downgrade",
+        "model_id": "core_deliverable_non_downgrade",
+        "obligation_id": "core_deliverable.downgrade_chain_blocks_completion",
+        "branch_kind": "system_negative_path",
+        "coverage_kind": "synthetic_trace",
+        "evidence_owner": "synthetic_agent_trace_replay",
+        "evidence_id": "synthetic.core_deliverable.negative.downgrade_chain",
+        "test_name": "test_core_deliverable_downgrade_chain_blocks_completion",
+        "path": "tests/test_flowpilot_synthetic_agent_trace_replay.py",
+        "command": "python -m pytest tests/test_flowpilot_synthetic_agent_trace_replay.py",
+        "evidence_status": "passed",
+        "evidence_current": True,
+        "live_completion_allowed": False,
+        "coverage_boundary": "control_flow_only",
+        "risk_tier": "P0",
+        "synthetic_replay_required": True,
+        "synthetic_replay_status": "present",
+        "covered_failure_mode": (
+            "pm_route_downgrade;worker_honest_missing_substitute;"
+            "reviewer_shallow_pass;final_ledger_status_only_closure;"
+            "child_skill_lower_standard_output"
+        ),
+        "story_level": "system",
+        "recovery_loop": "block_or_repair_missing_required_information_before_completion",
+        "story_steps": [
+            "pm_route_downgrade",
+            "worker_honest_missing_substitute",
+            "reviewer_shallow_pass",
+            "final_ledger_status_only_closure",
+            "child_skill_lower_standard_output",
+        ],
+        "terminal_expectation": "completion_rejected",
+    },
+    {
         "family": "control blockers",
         "model_id": "control_blocker_repair",
         "obligation_id": "control_blocker.retry_budget_escalates_to_pm",

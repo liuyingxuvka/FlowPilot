@@ -51,6 +51,9 @@ PROJECTION_GAP_PROFILE_IDS = (
 )
 
 REVIEW_WINDOW_FAKE_AI_PROFILE_IDS = review_window_contracts.REVIEW_WINDOW_FAKE_AI_PROFILE_IDS
+CORE_DELIVERABLE_DOWNGRADE_FAKE_AI_PROFILE_IDS = (
+    review_window_contracts.CORE_DELIVERABLE_DOWNGRADE_FAKE_AI_PROFILE_IDS
+)
 
 FORMAL_ARTIFACT_PROFILE_IDS = formal_artifact_contracts.FORMAL_ARTIFACT_FAULT_MODES
 
@@ -731,6 +734,56 @@ class ContractDrivenFakeAIResponder:
             base["review_window_trace"]["quality_score"] = 9
             base["review_window_trace"]["prior_score_context_consumed"] = True
             base["review_window_trace"]["prior_quantitative_gap_rechecked"] = True
+        core_downgrade_profiles = {
+            "reviewer_reachable_only_downgrade_blocks": (
+                "reachable_only_subset",
+                "Reachable-only subset cannot complete the accepted deliverable.",
+            ),
+            "reviewer_honest_missing_substitute_blocks": (
+                "honest_missing_substitute",
+                "Honest missing explanation cannot complete the accepted deliverable.",
+            ),
+            "reviewer_status_only_closure_blocks": (
+                "status_only_closure",
+                "Status-only closure cannot complete the accepted deliverable.",
+            ),
+            "reviewer_partial_deliverable_count_blocks": (
+                "partial_deliverable_count",
+                "Partial count cannot complete the accepted quantity.",
+            ),
+            "reviewer_weaker_child_skill_output_blocks": (
+                "weaker_child_skill_output",
+                "Weaker child-skill output cannot close the parent deliverable.",
+            ),
+        }
+        if profile_id in core_downgrade_profiles:
+            downgrade_kind, summary = core_downgrade_profiles[profile_id]
+            base["pm_visible_summary"] = [
+                (
+                    "Quality score: 2/10; target: 9/10; minimum hard gate passed: false; "
+                    f"{summary}"
+                )
+            ]
+            base["passed"] = False
+            base["blockers"] = [
+                {
+                    "blocker_id": f"fake-review-window-core-deliverable-{downgrade_kind}",
+                    "blocker_class": "current_gate_blocker",
+                    "summary": summary,
+                    "required_repair": (
+                        "Return to PM for the existing repair, evidence, research, waiver, "
+                        "route mutation, or user-stop path before claiming completion."
+                    ),
+                }
+            ]
+            base["recommended_resolution"] = (
+                "Preserve the original core deliverable or route the missing proof through "
+                "the existing blocker/repair/research/waiver/mutation/user-stop path."
+            )
+            base["review_window_trace"]["stage_specific_challenge_performed"] = True
+            base["review_window_trace"]["core_deliverable_non_downgrade_checked"] = True
+            base["review_window_trace"]["core_deliverable_downgrade_kind"] = downgrade_kind
+            base["review_window_trace"]["minimum_hard_gate_passed"] = False
         if profile_id == "pm_bypasses_reviewer_blocker":
             base["review_window_trace"]["pm_text_bypass_attempted"] = True
             base["passed"] = False

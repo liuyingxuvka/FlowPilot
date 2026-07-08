@@ -491,11 +491,42 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
                 self.assertIn("source-intent", text)
                 self.assertTrue("generic" in text or "vague" in text)
 
+        pm_non_downgrade_cards = [
+            normalized("pm.core"),
+            normalized("pm.startup_intake"),
+            normalized("pm.product_architecture"),
+            normalized("pm.implementation_intent"),
+            normalized("pm.root_contract"),
+            normalized("pm.route_skeleton"),
+            normalized("pm.node_acceptance_plan"),
+            normalized("pm.material_scan"),
+            normalized("pm.material_understanding"),
+            normalized("pm.material_absorb_or_research"),
+            normalized("pm.research_package"),
+            normalized("pm.research_absorb_or_mutate"),
+            normalized("pm.final_ledger"),
+            normalized("pm.closure"),
+        ]
+        for text in pm_non_downgrade_cards:
+            with self.subTest(surface="pm-non-downgrade"):
+                self.assertTrue("core deliverable" in text or "concrete deliverable" in text)
+                self.assertTrue("reachable-only" in text or "currently reachable" in text or "current reachable" in text)
+                self.assertTrue("status-only" in text or "status" in text)
+                self.assertTrue("honest missing" in text or "honest-missing" in text or "missing" in text)
+                self.assertTrue("block" in text or "repair" in text or "stop" in text)
+
         reviewer_cards = [
             normalized("reviewer.core"),
+            normalized("reviewer.high_standard_contract_review"),
             normalized("reviewer.root_contract_challenge"),
+            normalized("reviewer.product_architecture_challenge"),
+            normalized("reviewer.implementation_intent_challenge"),
+            normalized("reviewer.route_challenge"),
             normalized("reviewer.node_acceptance_plan_review"),
             normalized("reviewer.worker_result_review"),
+            normalized("reviewer.material_sufficiency"),
+            normalized("reviewer.research_direct_source_check"),
+            normalized("reviewer.strict_gate_obligation_review"),
             normalized("reviewer.evidence_quality_review"),
             normalized("reviewer.final_backward_replay"),
         ]
@@ -503,23 +534,57 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
             with self.subTest(surface="reviewer"):
                 self.assertIn("source-intent", text)
                 self.assertTrue("block" in text or "blocker" in text)
+                self.assertTrue(
+                    "core deliverable" in text
+                    or "accepted deliverable" in text
+                    or "concrete deliverable" in text
+                )
+                self.assertTrue("reachable-only" in text or "reachable" in text)
+                self.assertTrue("status-only" in text or "status" in text)
 
         child_skill_cards = [
             normalized("pm.child_skill_selection"),
             normalized("pm.child_skill_gate_manifest"),
             normalized("pm.node_acceptance_plan"),
             normalized("reviewer.node_acceptance_plan_review"),
+            normalized("reviewer.child_skill_gate_manifest_review"),
+            normalized("reviewer.skill_standard_review"),
+            normalized("flowguard_operator.child_skill_product_fit"),
+            normalized("flowguard_operator.child_skill_conformance_model"),
         ]
         for text in child_skill_cards:
             with self.subTest(surface="child-skill"):
-                self.assertTrue("standards lens" in text or "skill_standard_projection" in text)
-                self.assertTrue("theme" in text or "generic phrase" in text or "silent weakening" in text)
+                self.assertTrue(
+                    "standards lens" in text
+                    or "skill_standard_projection" in text
+                    or "parent core deliverable" in text
+                )
+                self.assertTrue(
+                    "theme" in text
+                    or "generic phrase" in text
+                    or "silent weakening" in text
+                    or "weaker child" in text
+                )
+                self.assertTrue("core deliverable" in text or "concrete deliverable" in text)
 
         flowguard_core = normalized("flowguard_operator.core")
         self.assertIn("process/model/state evidence", flowguard_core)
         self.assertIn("not product-quality proof by itself", flowguard_core)
         self.assertIn("reviewer still owns the semantic pass/block judgement", flowguard_core)
         self.assertIn("pm owns repair", flowguard_core)
+        flowguard_non_downgrade_cards = [
+            normalized("flowguard_operator.root_contract_modelability"),
+            normalized("flowguard_operator.product_architecture_modelability"),
+            normalized("flowguard_operator.target_realization_model"),
+            normalized("flowguard_operator.route_process_check"),
+            normalized("flowguard_operator.child_skill_product_fit"),
+            normalized("flowguard_operator.child_skill_conformance_model"),
+        ]
+        for text in flowguard_non_downgrade_cards:
+            with self.subTest(surface="flowguard-non-downgrade"):
+                self.assertIn("core deliverable", text)
+                self.assertTrue("reachable-only" in text or "reachable" in text or "missing access" in text)
+                self.assertTrue("status-only" in text or "status" in text)
 
         runtime_text = " ".join(
             (
@@ -532,6 +597,8 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
         self.assertNotIn("source-intent comparison", runtime_text)
         self.assertNotIn("generic user-goal wording", runtime_text)
         self.assertNotIn("semantic dilution", runtime_text)
+        self.assertNotIn("core deliverable non-downgrade", runtime_text)
+        self.assertNotIn("reachable-only subset", runtime_text)
 
     def test_pm_suggestion_disposition_guidance_is_unified_but_role_scoped(self) -> None:
         pm_card = (

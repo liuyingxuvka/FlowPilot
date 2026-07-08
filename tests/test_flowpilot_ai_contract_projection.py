@@ -974,6 +974,18 @@ class FlowPilotAIContractProjectionTests(unittest.TestCase):
             "reviewer_generic_optimization_only",
         }
         self.assertLessEqual(expected_challenge_profiles, set(contract_fake_ai.REVIEW_WINDOW_FAKE_AI_PROFILE_IDS))
+        expected_core_downgrade_profiles = {
+            "reviewer_reachable_only_downgrade_blocks",
+            "reviewer_honest_missing_substitute_blocks",
+            "reviewer_status_only_closure_blocks",
+            "reviewer_partial_deliverable_count_blocks",
+            "reviewer_weaker_child_skill_output_blocks",
+        }
+        self.assertEqual(
+            set(contract_fake_ai.CORE_DELIVERABLE_DOWNGRADE_FAKE_AI_PROFILE_IDS),
+            expected_core_downgrade_profiles,
+        )
+        self.assertLessEqual(expected_core_downgrade_profiles, set(contract_fake_ai.REVIEW_WINDOW_FAKE_AI_PROFILE_IDS))
         score_10 = responder.review_window_behavior_payload(
             "reviewer_quality_score_10_exceeds_standard",
             sample_window,
@@ -1028,6 +1040,16 @@ class FlowPilotAIContractProjectionTests(unittest.TestCase):
         self.assertFalse(generic_only["review_window_trace"]["stage_specific_challenge_projected"])
         self.assertIn("mechanical pass style", generic_only["pm_visible_summary"][0])
         self.assertIn("consider optimization toward 9/10", generic_only["pm_suggestion_items"][0])
+
+        for profile_id in expected_core_downgrade_profiles:
+            with self.subTest(profile_id=profile_id):
+                payload = responder.review_window_behavior_payload(profile_id, sample_window)
+                trace = payload["review_window_trace"]
+                self.assertEqual(payload["passed"], False)
+                self.assertEqual(trace["minimum_hard_gate_passed"], False)
+                self.assertTrue(trace["core_deliverable_non_downgrade_checked"])
+                self.assertIn("core-deliverable", payload["blockers"][0]["blocker_id"])
+                self.assertIn("existing blocker/repair/research/waiver/mutation/user-stop path", payload["recommended_resolution"])
 
     def test_body_semantic_recheck_context_without_profile_does_not_create_hidden_fields(self) -> None:
         ledger, packet_id = self.issue_semantic_recheck_packet(include_profile=False)

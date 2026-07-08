@@ -46,7 +46,8 @@ FlowGuard operator process-model has produced a serial route model, and PM has
 accepted that process model.
 
 Independently challenge whether the route is understandable, executable, and
-faithful to the user's current request and frozen contract. Treat FlowGuard operator
+faithful to the user's current request and frozen contract. Treat source-intent
+from those artifacts as part of route fidelity. Treat FlowGuard operator
 reports as pointers, not as your own inspection.
 
 Check:
@@ -56,6 +57,12 @@ Check:
 - the route carries the accepted target-realization obligations, thin-success
   traps, non-downgrade rules, and evidence gates into route nodes, packet
   boundaries, reviewer checks, FlowGuard checks, and final closure;
+- the route keeps core deliverable non-downgrade on the single execution path.
+  Block if any node or closure path can mark the original target complete with
+  a reachable-only subset, status-only note, report-only artifact, honest
+  missing explanation, external-only label, partial count, not-yet-done marker,
+  or absence-of-fabrication proof unless the route cites explicit user
+  authority to lower that target;
 - the process route is a single ordered execution line, including ordered
   children for every parent/module and ordered deeper children as needed;
 - the ordered route satisfies producer-before-consumer dependency direction.

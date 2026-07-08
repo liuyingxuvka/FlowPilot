@@ -39,6 +39,11 @@ Check:
 - root requirements preserve concrete source intent from the user-intent
   artifacts and product architecture trace, including objects, actions, quality
   floor, quantities, constraints, and prohibitions;
+- root requirements preserve core deliverable non-downgrade. Block if the
+  contract can pass by replacing the requested deliverable, source, evidence,
+  quality, quantity, or prohibition with a reachable-only subset, status-only
+  ledger, report-only artifact, honest missing explanation, external-only
+  label, partial count, or not-yet-done marker;
 - generic root-contract wording such as "satisfy the user", "complete the
   task", or "make a good result" does not replace source-intent acceptance
   rows. Block generic wording when it hides what must actually be delivered or

@@ -99,6 +99,12 @@ Check backward from the delivered product or final output:
   behavior, document, story, report, workflow, or skill behavior against the
   user's concrete objects, requested actions, quality floor, quantities,
   constraints, and prohibitions;
+- the delivered output preserves core deliverable non-downgrade. Block terminal
+  replay when the route claims completion through a reachable-only subset,
+  status-only ledger, report-only artifact, honest missing explanation,
+  external-only label, partial count, not-yet-done marker, or
+  absence-of-fabrication proof while the accepted target still requires the
+  actual deliverable;
 - the delivered output is coherent as one whole artifact or system, not merely
   a pile of locally accepted node outputs. Block when scattered sections,
   disconnected software pieces, duplicate/conflicting components, missing

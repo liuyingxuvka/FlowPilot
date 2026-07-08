@@ -314,6 +314,54 @@ class FlowPilotSyntheticAgentTraceReplayTests(unittest.TestCase):
         self.assertFalse(evidence["ok"])
         self.assertIn("missing_exit", evidence["reasons"])
 
+    def test_core_deliverable_downgrade_chain_blocks_completion(self) -> None:
+        trace_steps = [
+            {
+                "stage": "pm_route_downgrade",
+                "bad_output": "reachable-only route slice replaces the accepted deliverable",
+                "required_runtime_path": "route_blocker_or_mutation",
+            },
+            {
+                "stage": "worker_honest_missing_substitute",
+                "bad_output": "honest missing deliverable result claims completion without required material",
+                "required_runtime_path": "missing_required_information",
+            },
+            {
+                "stage": "reviewer_shallow_pass",
+                "bad_output": "reviewer passes deliverable status language without source-intent challenge",
+                "required_runtime_path": "reviewer_blocker_repair",
+            },
+            {
+                "stage": "final_ledger_status_only_closure",
+                "bad_output": "status-only final ledger row closes an actual deliverable",
+                "required_runtime_path": "terminal_repair_or_user_stop",
+            },
+            {
+                "stage": "child_skill_lower_standard_output",
+                "bad_output": "weaker child-skill deliverable output closes the parent target",
+                "required_runtime_path": "child_skill_gate_blocker",
+            },
+        ]
+
+        for step in trace_steps:
+            with self.subTest(stage=step["stage"]):
+                self.assertNotEqual(step["required_runtime_path"], "completion")
+                self.assertIn(
+                    step["required_runtime_path"],
+                    {
+                        "route_blocker_or_mutation",
+                        "missing_required_information",
+                        "reviewer_blocker_repair",
+                        "terminal_repair_or_user_stop",
+                        "child_skill_gate_blocker",
+                    },
+                )
+                self.assertIn("deliverable", step["bad_output"])
+                self.assertFalse(
+                    step["bad_output"].endswith("completion accepted"),
+                    "core deliverable downgrade traces are blockers, not live completion evidence",
+                )
+
 
 class FlowPilotSyntheticExceptionTraceReplayTests(FlowPilotRouterRuntimeTestBase):
     def test_control_blocker_reissue_retry_budget_escalates_to_pm_fake_reviewer_package(self) -> None:

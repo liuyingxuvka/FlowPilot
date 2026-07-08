@@ -75,6 +75,12 @@ source-intent acceptance rows, not only against a generic current goal summary.
 If closure would pass because the route ran while the delivered output lost the
 user's concrete object, requested action, quality floor, quantity, constraint,
 or prohibition, block closure and return to the smallest current repair path.
+Do not approve closure when the evidence only proves a reachable-only subset,
+status-only ledger, report-only artifact, honest missing explanation,
+external-only label, partial count, not-yet-done marker, or absence of
+fabrication. Those records may support a blocker, research result, waiver,
+route mutation, or user stop; they do not close the original concrete
+deliverable without explicit user authority.
 Closure also requires `self_interrogation_index.json` to be clean. Do not
 approve terminal closure while any startup, product-architecture, node-entry,
 repair, completion, or role-result self-interrogation record has an unresolved

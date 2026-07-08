@@ -52,6 +52,14 @@ REVIEW_WINDOW_MUTATION_KINDS = (
     "prose_only_review_scope",
 )
 
+CORE_DELIVERABLE_DOWNGRADE_FAKE_AI_PROFILE_IDS = (
+    "reviewer_reachable_only_downgrade_blocks",
+    "reviewer_honest_missing_substitute_blocks",
+    "reviewer_status_only_closure_blocks",
+    "reviewer_partial_deliverable_count_blocks",
+    "reviewer_weaker_child_skill_output_blocks",
+)
+
 REVIEW_WINDOW_FAKE_AI_PROFILE_IDS = (
     "reviewer_stage_specific_challenge_pass",
     "reviewer_shallow_pass",
@@ -70,6 +78,7 @@ REVIEW_WINDOW_FAKE_AI_PROFILE_IDS = (
     "corrected_second_reviewer_retry",
     "same_review_failure_attempts_1_to_4",
     "same_review_failure_attempt_5_break_glass",
+    *CORE_DELIVERABLE_DOWNGRADE_FAKE_AI_PROFILE_IDS,
 )
 
 REVIEW_WINDOW_MATERIAL_STATE_CLASSES = (
@@ -320,6 +329,10 @@ def review_flow_stage_challenge_rule(review_flow_id: str) -> str:
         f"Fixed Reviewer stage card: {binding['reviewer_card_id']}. "
         f"Stage focus: {binding['stage_focus']}. "
         f"{binding['challenge_rule']} "
+        "Also challenge core deliverable non-downgrade: a reachable-only subset, status-only note, "
+        "report-only artifact, honest missing explanation, external-only label, partial count, "
+        "not-yet-done marker, or absence-of-fabrication proof is not completion when the accepted target "
+        "still requires the actual deliverable. "
         "Use existing review result fields only; do not add fields, select a fallback card, "
         "repair the reviewed artifact directly, or demand future-stage evidence outside this review window."
     )
@@ -504,6 +517,7 @@ def review_window_completeness_cells() -> tuple[dict[str, str], ...]:
                     "required_evidence_owner": "review_window_completeness_matrix",
                 }
             )
+        downgrade_profiles = set(CORE_DELIVERABLE_DOWNGRADE_FAKE_AI_PROFILE_IDS)
         for material_state in REVIEW_WINDOW_MATERIAL_STATE_CLASSES:
             for profile in REVIEW_WINDOW_FAKE_AI_PROFILE_IDS:
                 for retry_class in RETRY_COUNT_CLASSES:
@@ -511,6 +525,8 @@ def review_window_completeness_cells() -> tuple[dict[str, str], ...]:
                         expected = "break_glass_threshold"
                     elif retry_class == "corrected_second_attempt":
                         expected = "accepted_after_reviewer_recheck"
+                    elif profile in downgrade_profiles:
+                        expected = "reviewer_blocks_core_deliverable_downgrade"
                     else:
                         expected = "normal_repair_or_reissue"
                     cells.append(

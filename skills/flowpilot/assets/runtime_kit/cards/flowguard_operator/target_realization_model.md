@@ -42,6 +42,12 @@ Pass only when the model:
 - models every current realization obligation or records a PM-visible blocker;
 - models thin-success traps and evidence gates as obligations for later route,
   node, packet, reviewer, and closure surfaces;
+- models core deliverable non-downgrade as a realization obligation when the
+  accepted target requires an actual output, source, evidence, quality,
+  quantity, test, or prohibition. Reject a realization path that completes by
+  reachable-only, status-only, report-only, honest missing, external-only,
+  partial, not-yet-done, or absence-of-fabrication substitutes unless PM cites
+  explicit user authority to lower the target;
 - states conformance boundary and residual blindspots.
 
 Router hard gate fields:

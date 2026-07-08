@@ -63,6 +63,17 @@ wording, PM must repair the relevant existing artifact or route decision rather
 than treating runtime mechanics, FlowGuard process evidence, or ledger
 existence as product-quality proof.
 
+Core deliverable non-downgrade is part of that source-intent duty. When the
+user asks for a concrete deliverable, evidence source, quantity, quality floor,
+scope, material access, or prohibition, do not replace it with a weaker
+"current reachable scope", inventory, status label, report-only artifact,
+honest missing explanation, partial count, or unverified claim. Those weaker
+outputs may be useful evidence that something is blocked or missing; they are
+not completion evidence for the original deliverable unless the user explicitly
+approves the reduced scope. Use existing blockers, research/material packets,
+route mutation, repair/reissue, waiver with authority, or stop-for-user paths;
+do not add a field, side flow, fallback, or runtime semantic gate.
+
 ## Public Material Access Boundary
 
 For PM, Worker, FlowGuard operator, and Human-Like Reviewer, ordinary project

@@ -41,6 +41,15 @@ such as "complete the user's task"; if the startup material is too sparse to
 derive concrete acceptance rows, block for user clarification or bounded PM
 material intake instead of inventing a vague target.
 
+Do not narrow the user's core deliverable during startup. A request for an
+actual artifact, complete scope, required evidence, required quantity, required
+quality, or named material/source must not become "inventory what is currently
+reachable", "record honest missing status", "write a report about gaps", or
+"process only the easy subset" unless the user explicitly agrees to that
+lowered scope. Missing material, permissions, paths, accounts, external
+systems, test environments, or source access are blockers or material/research
+needs, not acceptance rows.
+
 Do not use `flowpilot_new.py open-packet` for the full `user_intake` packet
 from this phase. That command is only for a later runtime-generated role
 handoff after a current lease and ACK assign an actual packet to PM. Do not ask

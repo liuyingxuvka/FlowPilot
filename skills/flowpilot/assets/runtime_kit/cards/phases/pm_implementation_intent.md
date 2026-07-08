@@ -38,6 +38,12 @@ The intent must explain:
   unusable;
 - non-downgrade rules that preserve the user's real goal and highest
   reasonable product standard;
+- core deliverable non-downgrade rules that reject realization paths where the
+  accepted output, source, evidence, quality floor, quantity, material access,
+  test, or prohibition is replaced by a reachable-only subset, status-only
+  note, report-only artifact, honest missing explanation, external-only label,
+  partial count, not-yet-done marker, or absence-of-fabrication proof without
+  explicit user authority;
 - evidence gates PM expects the future route, node plans, packets, reviewer
   checks, and final closure to carry forward.
 

@@ -30,10 +30,18 @@ skeleton drafting.
 Pass only when:
 
 - PM intent is understandable enough to guide route drafting;
+- PM intent preserves source-intent from the accepted user request and root
+  contract before it is handed to target-realization modeling;
 - FlowGuard target-realization model preserves the intent instead of reducing
   it to a thinner implementation;
 - every hard realization obligation, shallow-success trap, non-downgrade rule,
   and evidence gate is either modeled or explicitly bounded;
+- core deliverable non-downgrade is preserved from PM intent into the
+  target-realization model. Block if the bridge would let route skeleton
+  drafting replace the accepted deliverable, source, evidence, quality,
+  quantity, test, or prohibition with a reachable-only, status-only,
+  report-only, honest missing, external-only, partial, not-yet-done, or
+  no-fabrication substitute without explicit user authority;
 - PM's acceptance decision explains why the model is safe to use;
 - no hidden downgrade would let route skeleton drafting skip work that a final
   user would still need.

@@ -45,6 +45,11 @@ Check:
 
 - the contract preserves concrete user-sourced objects, requested actions,
   quality floors, quantities, constraints, and prohibitions;
+- the contract preserves core deliverable non-downgrade. Block if the high
+  standard can be satisfied by a reachable-only subset, status-only note,
+  report-only artifact, honest missing explanation, external-only label,
+  partial count, not-yet-done marker, or absence-of-fabrication proof while
+  the original accepted target still requires the actual deliverable;
 - no source-intent slice is replaced by generic wording such as "satisfy the
   user", "finish the task", "good result", or "high quality" without a
   verifiable obligation;

@@ -43,6 +43,14 @@ and Reviewer passed the implementation-intent challenge. PM must carry
 `realization_obligations`, `thin_success_traps`, `non_downgrade_rules`, and
 `evidence_gates` into the route instead of treating them as background prose.
 
+The route must preserve core deliverables, not just honest process visibility.
+If a required deliverable depends on material, permissions, external systems,
+source access, tests, quantities, or evidence that are not currently reachable,
+the route must create the existing blocker, material/research, user-question,
+repair, or route-mutation path. It must not silently redefine the node or final
+goal as "do the currently reachable subset", "label missing items", "produce
+a status report", or "prove no fabrication happened".
+
 Before asking FlowGuard operator to model the route, write
 `.flowpilot/runs/<run-id>/flowguard/process_modeling_plan.json`. The plan must
 reference the startup FlowGuard capability snapshot, the PM-accepted product
@@ -143,6 +151,12 @@ Route requirements:
 - include a PM user-intent self-check: how the route preserves the user's real
   goal, final-user usefulness, and highest reasonable product standard without
   importing unnecessary nodes or validation surfaces;
+- include a core-deliverable non-downgrade self-check: how every concrete
+  deliverable, source/evidence requirement, quantity, quality floor, scope
+  constraint, and prohibition is either owned by route work, explicitly blocked
+  for user/material/research resolution, or waived with authority. A
+  reachable-only, status-only, honest-missing, report-only, or partial result
+  must not be routed as completion for the original target;
 - include a requirement traceability map: every route node must list
   `covers_requirement_ids`, `covers_scenario_ids`,
   `source_product_capability_ids`, `why_this_node_exists`, `why_not_merged`,

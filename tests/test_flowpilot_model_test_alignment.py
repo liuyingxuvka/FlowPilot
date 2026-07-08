@@ -77,6 +77,7 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
                 "test tiering/slow-test contracts",
                 "rejection/liveness matrix",
                 "route authority singularity",
+                "core deliverable non-downgrade",
                 "meta/capability parents",
             ],
         )

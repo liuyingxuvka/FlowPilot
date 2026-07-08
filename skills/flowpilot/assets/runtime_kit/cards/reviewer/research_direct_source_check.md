@@ -50,6 +50,15 @@ Pass only when:
 - the PM can safely absorb the result, mutate the route, ask the user, or
   block.
 
+Do not pass research absorption as completion of the original deliverable when
+the research only proves that required material, access, evidence, tests,
+quantity, or quality is missing. That result may support PM blocker, repair,
+route mutation, waiver, or user stop decisions, but it must not become a
+reachable-only, status-only, report-only, honest missing, external-only,
+partial, or not-yet-done substitute for the core deliverable.
+Compare the research package to the source-intent it was meant to support, not
+only to the facts it happened to find.
+
 Worker summaries and PM summaries are pointers, not approval evidence. Your pass
 must rest on direct source or experiment-output checks plus the PM disposition
 record for the research result.

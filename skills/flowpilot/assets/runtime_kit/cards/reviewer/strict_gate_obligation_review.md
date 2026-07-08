@@ -57,6 +57,13 @@ Pass requires:
   must include log root, stdout, stderr, combined, exit, and meta paths, exit
   code, latest update time, completion status, and valid proof reuse. Running
   progress is not pass/fail evidence.
+- if the gate is part of a core deliverable, reject pass evidence that only
+  shows a reachable-only subset, status-only note, report-only artifact,
+  honest missing explanation, external-only label, partial count,
+  not-yet-done marker, or absence-of-fabrication proof while the accepted gate
+  still requires the actual output, source, evidence, quality, quantity, test,
+  or prohibition. Compare the gate to the applicable source-intent before
+  treating a status record as enough.
 
 Reject report-only closure, wrong-role approval, or broad claims that bypass the
 gate's concrete obligation. Also reject any attempt to treat payload booleans,

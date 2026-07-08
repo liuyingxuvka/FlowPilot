@@ -20363,6 +20363,58 @@ to identify unsupported historical-layer branches that should be deleted.
 - Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
 
 
+## harden-flowpilot-core-deliverable-non-downgrade - Core deliverable non-downgrade hardening
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User reported FlowPilot could convert a concrete deliverable into reachable-only or honest-missing status output and asked for a generic no-downgrade repair.
+- Status: completed
+- Skill decision: used_openspec_and_flowguard_development_process
+- Started: 2026-07-08T18:20:00+02:00
+- Ended: 2026-07-08T18:49:02+02:00
+- Duration seconds: 1740
+- Commands OK: True
+
+### Model Files
+- simulations/meta_model.py
+- simulations/capability_model.py
+- simulations/flowpilot_model_test_alignment_family_plans.py
+- simulations/flowpilot_contract_driven_fake_ai.py
+- simulations/flowpilot_synthetic_agent_coverage_matrix.py
+- skills/flowpilot/assets/flowpilot_core_runtime/review_window_contracts.py
+
+### Findings
+- PM, Reviewer, child-skill, and FlowGuard operator prompt cards now state generic core-deliverable non-downgrade rules without image/VPN-specific wording.
+- Contract-driven fake-AI review-window profiles cover reachable-only, honest-missing, status-only, partial-count, and weaker-child-output downgrade cases.
+- Synthetic coverage matrix includes the core-deliverable downgrade chain as a non-live system-level replay row.
+- Meta and capability models require existing semantic-fidelity, root acceptance, final replay, delivered-output backward replay, and route-wide ledger gates before completion.
+- Model-test alignment has a dedicated core-deliverable non-downgrade family and refreshed field-lifecycle evidence names.
+- Installed flowpilot skill was overwritten from the repository and audited fresh.
+
+### Counterexamples
+- PM route downgrade to currently reachable/status-only output is rejected in synthetic replay.
+- Worker honest-missing substitute routes to missing_required_information instead of completion.
+- Reviewer shallow pass over downgraded deliverable becomes reviewer_blocker_repair.
+- Final ledger status-only closure remains terminal_repair_or_user_stop.
+- Child-skill lower-standard output remains a child-skill gate blocker.
+- Capability hazard cases reject missing semantic-fidelity and unresolved final-ledger gates.
+
+### Friction Points
+- A first local-install audit ran concurrently with the sync command and saw the pre-sync stale digest; rerunning after sync passed.
+- The new model-test evidence initially used the source-audit external-contract layer incorrectly; it was moved to ordinary family-level alignment to avoid inventing code contracts.
+- Four field-lifecycle evidence rows had stale test names and were updated to current test names so source-auditable evidence checks pass.
+
+### Skipped Steps
+- No target-project-specific image/VPN rule, new field, new packet kind, new role, UI, legacy alias, fallback compatibility, missing-field default, old-router fallback, or runtime semantic matcher was added.
+- No release, tag, push, deploy, or OpenSpec archive was performed.
+
+### Risk Evidence Summary
+- Evidence supports local repository behavior, prompt-card hardening, synthetic bad-AI coverage, FlowGuard meta/capability model checks, model-test alignment, topology refresh, and local installed-skill sync.
+- Synthetic replay proves rejection/control-flow coverage and does not claim live semantic completion.
+
+### Next Actions
+- Release or GitHub publication remains a separate explicit gate if requested after local commit.
+
+
 ## harden-flowpilot-current-status-projection - FlowPilot current status projection repair
 
 - Project: FlowGuardProjectAutopilot_20260430

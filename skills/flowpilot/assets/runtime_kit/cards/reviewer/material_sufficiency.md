@@ -52,6 +52,16 @@ report must identify:
 - stale, inferred, or unverified evidence;
 - whether more research is required before PM can proceed.
 
+Judge sufficiency against the original source-intent, concrete deliverable,
+and active acceptance items, not against a weaker "known available material"
+target.
+Missing access, missing source material, incomplete evidence, or unreachable
+required inputs that prevent the actual deliverable must stay insufficient or
+blocked. A reachable-only inventory, honest missing explanation, status-only
+map, external-only label, partial count, or not-yet-done marker does not make
+material sufficient unless PM cites explicit user authority to lower the
+target.
+
 If you report `direct_material_sources_checked: true`, include non-empty
 `checked_source_paths` or `runtime_open_receipt_refs` naming the sources or
 runtime-open receipts you actually checked.

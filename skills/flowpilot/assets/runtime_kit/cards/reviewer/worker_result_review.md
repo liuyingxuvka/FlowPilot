@@ -126,6 +126,13 @@ Check:
   a user-sourced object, requested action, quality floor, quantity, constraint,
   or prohibition from the accepted item or packet acceptance slice, block for
   PM repair/reissue instead of passing on packet shape or file existence;
+- block core deliverable downgrade in the worker result. If the accepted packet
+  required an actual output, source, evidence, quality, quantity, test, or
+  prohibition, a reachable-only inventory, status-only note, report-only
+  artifact, honest missing explanation, external-only label, partial count,
+  not-yet-done marker, or no-fabrication proof is not completion evidence. It
+  may justify `needs more material`, PM repair/reissue, research, waiver,
+  route mutation, or user stop through the existing review contract;
 - result body includes `Contract Self-Check` against the source packet
   `output_contract`, and missing or failed self-check blocks pass;
 - when the source packet declares inherited skill-standard ids, the result body

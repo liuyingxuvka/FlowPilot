@@ -472,9 +472,10 @@ class FlowPilotSyntheticAgentCoverageMatrixTests(unittest.TestCase):
         ]
         evidence_ids = {row["evidence_id"] for row in system_rows}
 
-        self.assertEqual(len(system_rows), 6)
+        self.assertEqual(len(system_rows), 7)
         self.assertLessEqual(
             {
+                "synthetic.core_deliverable.negative.downgrade_chain",
                 "systemic.valid_envelope_bad_content.pm_repair_self_check",
                 "systemic.stacked_blockers.control_preempts_dirty_ledger",
                 "systemic.pm_repair_loop.followup_blocker",

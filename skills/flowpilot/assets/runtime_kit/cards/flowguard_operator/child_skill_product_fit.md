@@ -21,6 +21,11 @@ Check the child-skill gate manifest for product fit.
 Report:
 
 - whether each selected child skill supports a product capability;
+- whether each selected child skill preserves the parent core deliverable,
+  source-intent slice, quality floor, quantity, required evidence, and
+  prohibitions instead of lowering them into a reachable-only, status-only,
+  report-only, honest missing, external-only, partial, not-yet-done, or weaker
+  child output;
 - whether rejected/deferred skills leave product gaps;
 - product risks that need scenarios, route nodes, or final replay checks;
 - confidence boundary and PM review-required hotspots.

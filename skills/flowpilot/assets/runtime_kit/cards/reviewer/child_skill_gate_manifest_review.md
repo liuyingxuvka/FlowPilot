@@ -36,6 +36,12 @@ Personally review the PM child-skill gate manifest.
 Check:
 
 - selected skills follow product needs and frozen contract;
+- selected skills preserve the parent core deliverable, source-intent slice,
+  quality floor, quantity, required evidence, and prohibitions. Block if the
+  manifest lets a child skill turn the parent target into a reachable-only
+  subset, status-only note, report-only artifact, honest missing explanation,
+  external-only label, partial count, not-yet-done marker, or weaker child
+  output without explicit user authority;
 - selected skills also consider FlowPilot process needs such as PM planning,
   specification, acceptance writing, reviewer review, FlowGuard operator modeling, and
   validation support;

@@ -23,6 +23,14 @@ runtime_context: Treat the runtime delivery envelope as the live source for the 
 
 After reviewer-approved research, decide how the result changes the project.
 
+Absorb research only when it supports the original core deliverable standard
+or creates an explicit blocker/repair/user-question path for what remains
+missing. If research merely explains that the required deliverable, source,
+quantity, quality, test, or scope cannot be produced now, that explanation is
+not completion evidence. Do not mutate the route into a weaker reachable-only,
+status-only, honest-missing, report-only, external-only, partial, or
+not-yet-done target without explicit user approval.
+
 Allowed outcomes:
 
 - absorb the research into material understanding;

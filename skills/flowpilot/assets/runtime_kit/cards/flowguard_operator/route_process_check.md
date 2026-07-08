@@ -58,6 +58,12 @@ model:
   process model must show where realization obligations, thin-success traps,
   non-downgrade rules, and evidence gates are carried by route nodes,
   reviewer/FlowGuard checks, worker packets, and final closure;
+- reject any process path where the accepted core deliverable can be completed
+  by a reachable-only subset, status-only note, report-only artifact, honest
+  missing explanation, external-only label, partial count, not-yet-done marker,
+  or absence-of-fabrication proof without explicit user authority. Model that
+  path as a blocker, repair, research, waiver, route mutation, or user stop
+  through the existing route flow, not as completion;
 - the canonical process model is serial: every effective root, parent/module,
   child, leaf, and repair segment has a definite ordered predecessor/successor
   path, and all required nodes are reachable before completion;

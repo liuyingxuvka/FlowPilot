@@ -21,6 +21,10 @@ Check the child-skill gate manifest for process conformance.
 Report:
 
 - whether the child-skill workflow can be mapped to FlowPilot gates;
+- whether the child-skill workflow preserves the parent core deliverable and
+  routes missing access, missing material, status-only output, honest missing
+  output, partial output, or weaker child output through existing blocker,
+  repair, waiver, route mutation, or user-stop gates instead of completion;
 - process risks from skipped steps, missing approvers, or unsupported tools;
 - whether a child-skill conformance model is needed now or can be deferred;
 - confidence boundary and PM review-required hotspots.

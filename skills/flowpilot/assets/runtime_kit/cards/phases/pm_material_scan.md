@@ -26,6 +26,13 @@ Issue only bounded material and capability scan packets. The purpose is to
 discover what information exists and what is missing before product
 understanding or route design.
 
+Material intake is not a license to lower the target. If the user's concrete
+deliverable depends on materials, paths, accounts, source systems, external
+access, test environments, source files, or evidence that the scan cannot
+reach, the result is a material blocker, research need, user question, or
+route-scope decision. Do not turn the original deliverable into a
+reachable-only inventory or honest missing-status report.
+
 Before assigning a worker packet, consider worker balance and packet shape. Keep worker opportunities roughly balanced across the current run. When scope naturally splits, use bounded separate packets for disjoint work without overlapping files, evidence duties, or review ownership.
 
 Register material intake as one router-owned packet batch. Even when the batch

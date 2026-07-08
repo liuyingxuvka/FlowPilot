@@ -99,6 +99,11 @@ Check:
   node owns. Block if the PM plan replaces a concrete source object, requested
   action, quantity, quality floor, constraint, or prohibition with generic
   node wording that a worker or reviewer could interpret too broadly;
+- the plan preserves core deliverable non-downgrade for this node. Block if PM
+  turns the node's owed deliverable, source, evidence, quality, quantity, or
+  prohibition into a reachable-only subset, status-only note, report-only
+  output, honest missing explanation, external-only label, partial count, or
+  not-yet-done marker without explicit user authority;
 - when the node affects a final user, operator, maintainer, reader, or
   delivered product, the plan states how the node contributes to user intent,
   final-user usefulness, and experience or product quality, plus what evidence

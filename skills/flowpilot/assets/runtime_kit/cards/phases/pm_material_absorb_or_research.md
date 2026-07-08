@@ -30,4 +30,13 @@ If the reviewer reports insufficient material, you must request bounded
 research or return blockers. Do not write product understanding from incomplete
 or unreviewed material.
 
+Sufficiency must be measured against the user's core deliverable, not against
+whether the material report is honest. If missing or inaccessible material
+prevents the actual deliverable, full scope, required quantity, required
+quality, or required evidence, the correct outcome is research, repair,
+clarification, route mutation, waiver with authority, or stop-for-user. Do not
+accept a reachable-only subset, status-only note, honest missing explanation,
+external-only label, partial count, not-yet-done marker, or "missing status
+recorded" as material sufficiency for the original target.
+
 Your decision must cite the reviewer report, not raw worker output.

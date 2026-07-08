@@ -46,6 +46,13 @@ the user actually supplied. If the source request is ambiguous, preserve the
 ambiguity as a named blocker or clarification need instead of freezing a vague
 acceptance row.
 
+A root contract is also not frozen when a concrete deliverable is replaced by
+reachable-only scope, status-only reporting, honest missing labels, partial
+quantity, unverified evidence, or report existence. Those can be blocker or
+research evidence, but they do not satisfy a root acceptance row that requires
+the actual deliverable, source-backed proof, full scope, quantity, quality
+floor, or prohibited substitution.
+
 Preserve requirement traceability from product architecture:
 
 - every root requirement must name `source_requirement_ids`;

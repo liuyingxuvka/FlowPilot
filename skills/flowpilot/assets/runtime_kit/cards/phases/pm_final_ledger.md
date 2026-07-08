@@ -60,14 +60,23 @@ Resolve:
   satisfies a generic restatement of the goal while dropping the user's
   concrete objects, requested actions, quality floor, quantities, constraints,
   or prohibitions, keep the row unresolved and route repair before terminal
-  replay;
+  replay. A reachable-only subset, status-only ledger, report-only artifact,
+  honest missing explanation, external-only label, partial count, not-yet-done
+  marker, or no-fabrication proof is not completion evidence for a concrete
+  deliverable unless the user explicitly accepted that lowered target;
 - acceptance item closure for every active `acceptance_item_id` in the
   accepted registry. Each row must name source type, source requirement ids,
   quality floor, required evidence, owner nodes, closed-by nodes, reviewer or
   FlowGuard gates, evidence paths, waiver authority, final replay requirement,
   and unresolved reason. A user-sourced or PM high-standard item that is
   orphaned, missing evidence, waived without authority, or closed only by
-  generic prose keeps the final ledger open;
+  generic prose keeps the final ledger open. If the row is closed by
+  "currently reachable", "missing but honest", "not extracted yet",
+  "not run", "partial", "external only", "inventory complete", or similar
+  status language while the acceptance item required the actual output,
+  source, evidence, quality, quantity, or prohibition, keep the row unresolved
+  and return to the existing blocker, repair, research, waiver, route mutation,
+  or user-stop path;
 - terminal supplemental repair closure for every
   `supplemental_repair_contract` created after terminal backward replay.
   Each row must cite the original frozen contract hash, terminal Reviewer gap

@@ -85,6 +85,15 @@ of the requirement, but that slice must still identify the concrete object,
 action, quality floor, quantity, constraint, or prohibition it is responsible
 for preserving.
 
+Do not convert this node's acceptance slice into a weaker substitute. If the
+node owes a concrete deliverable, full or named scope, source-backed evidence,
+required quantity, required quality, runnable test, or prohibited substitution,
+the plan must require that current outcome or route a blocker/repair/research
+need through existing fields. A plan that accepts "currently reachable",
+"missing but honest", "not extracted", "not run", "partial", "external only",
+or "status documented" as completion is not worker-ready unless the user
+explicitly approved that lowered node scope.
+
 Do not add PM-only pre-worker test matrices, work-packet projection fields,
 FlowGuard target fields, Reviewer starting-point fields, or structure hygiene
 fields to `node_context_package`. FlowGuard operator, Reviewer, Worker, and

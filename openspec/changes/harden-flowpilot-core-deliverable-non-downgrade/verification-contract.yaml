@@ -1,0 +1,262 @@
+contract_version: 1
+change: harden-flowpilot-core-deliverable-non-downgrade
+
+obligations:
+  - id: req.prompt.core_deliverable_prompt_boundary
+    source: "specs/flowpilot-prompt-boundary-policy/spec.md#Requirement: Prompt Cards Preserve Core Deliverables Without Runtime Semantics"
+    claim: "PM, Reviewer, and FlowGuard prompt cards preserve core deliverables without moving semantic judgement into runtime/router."
+    required: true
+    evidence:
+      - check.cards.non_downgrade_instruction_coverage
+      - check.runtime.no_semantic_gate
+
+  - id: req.review.core_deliverable_substitution_block
+    source: "specs/formal-gate-review-standards/spec.md#Requirement: Reviewers Block Core Deliverable Substitution"
+    claim: "Reviewer gates block status-only, reachable-only, report-only, honest-missing, partial, or unverified substitutes for required deliverables."
+    required: true
+    evidence:
+      - check.cards.non_downgrade_instruction_coverage
+      - check.fake_ai.review_window_profiles
+
+  - id: req.packet.pm_disposition_no_status_substitute
+    source: "specs/flowpilot-packet-review-flow/spec.md#Requirement: PM Disposition Cannot Accept Status-Only Substitutes"
+    claim: "PM disposition and Reviewer package review cannot accept missing-deliverable explanations as completion evidence."
+    required: true
+    evidence:
+      - check.fake_ai.review_window_profiles
+      - check.synthetic.trace_replay
+      - check.blocker.missing_required_information
+
+  - id: req.child_skill.inherit_parent_deliverable
+    source: "specs/role-child-skill-use/spec.md#Requirement: Child Skills Inherit Parent Deliverable Standards"
+    claim: "Selected child skills inherit parent node deliverable standards and cannot lower the parent target."
+    required: true
+    evidence:
+      - check.cards.non_downgrade_instruction_coverage
+      - check.model.capability_process
+
+  - id: req.synthetic.core_deliverable_downgrade_matrix
+    source: "specs/synthetic-agent-coverage-matrix/spec.md#Requirement: Synthetic Matrix Covers Core Deliverable Downgrade Branches"
+    claim: "Synthetic coverage includes generic downgrade branches across finite deliverable classes and keeps synthetic evidence non-live."
+    required: true
+    evidence:
+      - check.fake_ai.review_window_profiles
+      - check.synthetic.trace_replay
+      - check.synthetic.coverage_matrix
+
+  - id: req.alignment.non_downgrade_evidence_binding
+    source: "specs/flowguard-boundary-test-alignment/spec.md#Requirement: Non-Downgrade Obligations Bind To Current Tests"
+    claim: "Model-test alignment binds non-downgrade obligations to current card, fake-AI, synthetic, FlowGuard, and install evidence."
+    required: true
+    evidence:
+      - check.model_test_alignment
+      - check.install.sync_audit
+      - check.install.self_check
+
+checks:
+  - id: check.openspec.strict
+    kind: command
+    command: openspec
+    args:
+      - validate
+      - harden-flowpilot-core-deliverable-non-downgrade
+      - --strict
+    required: true
+    covers:
+      - req.prompt.core_deliverable_prompt_boundary
+      - req.review.core_deliverable_substitution_block
+      - req.packet.pm_disposition_no_status_substitute
+      - req.child_skill.inherit_parent_deliverable
+      - req.synthetic.core_deliverable_downgrade_matrix
+      - req.alignment.non_downgrade_evidence_binding
+    expected:
+      exit_code: 0
+
+  - id: check.cards.non_downgrade_instruction_coverage
+    kind: command
+    command: python
+    args:
+      - -m
+      - pytest
+      - tests/test_flowpilot_card_instruction_coverage.py
+    required: true
+    covers:
+      - req.prompt.core_deliverable_prompt_boundary
+      - req.review.core_deliverable_substitution_block
+      - req.child_skill.inherit_parent_deliverable
+    expected:
+      exit_code: 0
+
+  - id: check.runtime.no_semantic_gate
+    kind: command
+    command: python
+    args:
+      - -m
+      - pytest
+      - tests/test_flowpilot_card_instruction_coverage.py
+      - -k
+      - prompt_first_quality_chain_preserves_source_intent_without_runtime_semantic_gate
+    required: true
+    covers:
+      - req.prompt.core_deliverable_prompt_boundary
+    expected:
+      exit_code: 0
+
+  - id: check.fake_ai.review_window_profiles
+    kind: command
+    command: python
+    args:
+      - -m
+      - pytest
+      - tests/test_flowpilot_ai_contract_projection.py
+      - -k
+      - review_window_profiles
+    required: true
+    covers:
+      - req.review.core_deliverable_substitution_block
+      - req.packet.pm_disposition_no_status_substitute
+      - req.synthetic.core_deliverable_downgrade_matrix
+    expected:
+      exit_code: 0
+
+  - id: check.synthetic.trace_replay
+    kind: command
+    command: python
+    args:
+      - -m
+      - pytest
+      - tests/test_flowpilot_synthetic_agent_trace_replay.py
+    required: true
+    covers:
+      - req.packet.pm_disposition_no_status_substitute
+      - req.synthetic.core_deliverable_downgrade_matrix
+    expected:
+      exit_code: 0
+
+  - id: check.blocker.missing_required_information
+    kind: command
+    command: python
+    args:
+      - -m
+      - pytest
+      - tests/test_flowpilot_blocker_next_action_routing.py
+    required: true
+    covers:
+      - req.packet.pm_disposition_no_status_substitute
+    expected:
+      exit_code: 0
+
+  - id: check.synthetic.coverage_matrix
+    kind: command
+    command: python
+    args:
+      - simulations/flowpilot_synthetic_agent_coverage_matrix.py
+    required: true
+    covers:
+      - req.synthetic.core_deliverable_downgrade_matrix
+    expected:
+      exit_code: 0
+
+  - id: check.model.capability_process
+    kind: command
+    command: python
+    args:
+      - simulations/run_capability_checks.py
+    required: true
+    covers:
+      - req.child_skill.inherit_parent_deliverable
+    expected:
+      exit_code: 0
+
+  - id: check.model.meta_process
+    kind: command
+    command: python
+    args:
+      - simulations/run_meta_checks.py
+    required: true
+    covers:
+      - req.review.core_deliverable_substitution_block
+      - req.packet.pm_disposition_no_status_substitute
+    expected:
+      exit_code: 0
+
+  - id: check.model_test_alignment
+    kind: command
+    command: python
+    args:
+      - simulations/run_flowpilot_model_test_alignment_checks.py
+    required: true
+    covers:
+      - req.alignment.non_downgrade_evidence_binding
+    expected:
+      exit_code: 0
+
+  - id: check.topology
+    kind: command
+    command: python
+    args:
+      - scripts/flowguard_project_topology.py
+      - check
+    required: true
+    covers:
+      - req.alignment.non_downgrade_evidence_binding
+    expected:
+      exit_code: 0
+
+  - id: check.install.sync
+    kind: command
+    command: python
+    args:
+      - scripts/install_flowpilot.py
+      - --sync-repo-owned
+      - --json
+    required: true
+    covers:
+      - req.alignment.non_downgrade_evidence_binding
+    expected:
+      exit_code: 0
+
+  - id: check.install.sync_audit
+    kind: command
+    command: python
+    args:
+      - scripts/audit_local_install_sync.py
+      - --json
+    required: true
+    covers:
+      - req.alignment.non_downgrade_evidence_binding
+    expected:
+      exit_code: 0
+
+  - id: check.install.self_check
+    kind: command
+    command: python
+    args:
+      - scripts/check_install.py
+      - --json
+    required: true
+    covers:
+      - req.alignment.non_downgrade_evidence_binding
+    expected:
+      exit_code: 0
+
+freshness:
+  watch:
+    - openspec/changes/harden-flowpilot-core-deliverable-non-downgrade/proposal.md
+    - openspec/changes/harden-flowpilot-core-deliverable-non-downgrade/design.md
+    - openspec/changes/harden-flowpilot-core-deliverable-non-downgrade/tasks.md
+    - openspec/changes/harden-flowpilot-core-deliverable-non-downgrade/specs/**/*.md
+    - openspec/changes/harden-flowpilot-core-deliverable-non-downgrade/verification-contract.yaml
+    - skills/flowpilot/assets/runtime_kit/cards/**/*.md
+    - simulations/capability_model*.py
+    - simulations/meta_model*.py
+    - simulations/flowpilot_contract_driven_fake_ai.py
+    - simulations/flowpilot_synthetic_agent_coverage_matrix.py
+    - simulations/flowpilot_model_test_alignment_*.py
+    - tests/test_flowpilot_card_instruction_coverage.py
+    - tests/test_flowpilot_ai_contract_projection.py
+    - tests/test_flowpilot_synthetic_agent_trace_replay.py
+    - tests/test_flowpilot_blocker_next_action_routing.py
+    - scripts/install_flowpilot.py
+    - scripts/audit_local_install_sync.py
+    - scripts/check_install.py

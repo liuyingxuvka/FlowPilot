@@ -72,6 +72,15 @@ Include:
   constraints, and explicit exclusions when they define the work. Do not
   replace concrete source-intent with generic wording such as "satisfy the
   user", "complete the task", or "deliver a good result";
+  preserve core deliverable non-downgrade for every user-sourced row. Do not
+  replace a requested output, source, evidence, quality floor, quantity,
+  material access, test, or prohibition with a reachable-only subset,
+  status-only note, report-only artifact, honest missing explanation,
+  external-only label, partial count, not-yet-done marker, or
+  absence-of-fabrication proof unless the user explicitly accepts that lowered
+  target. If the source, access, material, evidence, or test is unavailable,
+  carry it as a blocker, research need, route decision, waiver need, or user
+  stop instead of lowering the product architecture;
 - `acceptance_item_registry_seed`: compile atomic current-run acceptance
   items from explicit user requirements, implicit user commitments, PM-added
   high standards, low-quality-success risks, child-skill standards, and

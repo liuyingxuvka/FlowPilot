@@ -38,6 +38,12 @@ Write `.flowpilot/runs/<run-id>/child_skill_gate_manifest.json` with:
 - selected skills and supported capabilities;
 - whether each selected skill supports the deliverable, the FlowPilot process,
   or both;
+- how selected skills preserve the parent core deliverable, accepted
+  source-intent slice, quality floor, quantity, required evidence, and
+  prohibitions. The manifest must not use a child skill to lower the parent
+  target into a reachable-only subset, status-only note, report-only artifact,
+  honest missing explanation, external-only label, partial count,
+  not-yet-done marker, or weaker child output without explicit user authority;
 - `role_skill_use_bindings` for every selected skill use that affects PM
   planning, route design, acceptance writing, worker execution, reviewer
   review, FlowGuard operator modeling, or validation. Each binding must name the

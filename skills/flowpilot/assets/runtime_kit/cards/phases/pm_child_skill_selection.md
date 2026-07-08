@@ -55,6 +55,12 @@ existing route/node/review artifact where it will be projected, and the
 evidence that will prove use. A theme-only selection such as "this is a story
 task, so use a story skill" or "this is software, so use a coding skill" is
 not enough unless the skill's concrete standards affect acceptance or proof.
+Child-skill selection must preserve the parent core deliverable. A child skill
+may add stricter standards, checks, artifacts, or proof duties, but it must not
+turn the parent target into a reachable-only subset, status-only note,
+report-only artifact, honest missing explanation, external-only label, partial
+count, not-yet-done marker, or lower-quality child output unless PM records
+explicit user authority to change the parent target.
 
 A skill can be selected for PM planning, reviewer review, FlowGuard operator process-model
 FlowGuard operator modeling, FlowGuard operator product analysis, or worker

@@ -31,6 +31,13 @@ Write a bounded research package that names:
 - how the result can affect material understanding, route mutation, user
   questions, or blocking.
 
+The research package must preserve the original core deliverable boundary.
+When the unresolved fact concerns required material, external access, source
+evidence, tests, quantity, quality, or scope, ask the worker/reviewer to prove,
+recover, or block that requirement directly. Do not phrase the research goal as
+accepting only the currently reachable subset or writing a status-only
+substitute unless PM already has explicit user authority to lower the target.
+
 Before assigning a worker packet, consider worker balance and packet shape. Keep worker opportunities roughly balanced across the current run. When scope naturally splits, use bounded separate packets for disjoint work without overlapping files, evidence duties, or review ownership.
 
 Register research as one router-owned packet batch with `batch_id` and

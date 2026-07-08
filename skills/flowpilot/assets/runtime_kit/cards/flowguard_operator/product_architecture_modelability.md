@@ -40,6 +40,12 @@ Report:
 - modelable product states and transitions;
 - user actions, product states, failure/recovery paths, forbidden downgrades,
   and completion evidence that route nodes must cover;
+- core deliverable non-downgrade states and hazards, including any path where
+  the product could claim completion through a reachable-only subset,
+  status-only note, report-only artifact, honest missing explanation,
+  external-only label, partial count, not-yet-done marker, or
+  absence-of-fabrication proof while the accepted target still requires the
+  actual deliverable;
 - `product_model_family_coverage`: every PM-planned product family, model file,
   covered scenarios/invariants/hazards/contracts, and merge/skip disposition;
 - the smallest useful hierarchy of product behavior segments that PM can later

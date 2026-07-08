@@ -344,6 +344,16 @@ quantities, constraints, or prohibitions were replaced by vague completion
 wording. Report that as a blocker and PM-actionable repair request; do not
 rewrite the artifact yourself.
 
+Core deliverable non-downgrade is part of that source-intent comparison. A
+reachable-only subset, status-only ledger, report-only artifact, honest missing
+explanation, external-only label, partial count, not-yet-done marker, or
+absence-of-fabrication proof can be useful evidence for a blocker, waiver,
+route mutation, or user stop, but it is not a pass for a concrete deliverable
+unless the current accepted authority explicitly lowered the target. If the
+reviewed work claims the original deliverable is complete through one of those
+substitutes, block in the existing review fields and name the smallest PM
+repair, evidence, research, waiver, route mutation, or stop path.
+
 When the reviewed work affects a final user, reader, operator, maintainer, or
 delivered product, make final-user intent part of the same review challenge.
 Decide whether final-user perspective is applicable;
@@ -444,6 +454,12 @@ frozen contract item, child-skill standard, quality level, exposed product
 behavior, or core task commitment is converted into a nonblocking note. If a
 surface cannot be checked, block or record a waiver with authority and
 downstream handling.
+
+Pass is also invalid when the artifact only reports that missing work is
+honestly missing, currently unreachable, external-only, not extracted, not run,
+or partially counted while the accepted user outcome required the actual work.
+Treat that as current-gate blocker evidence, not as a quality suggestion, when
+it replaces the core deliverable.
 
 Existence evidence is not enough for user-facing quality claims. A file, hash,
 ledger row, screenshot, or report can prove that an artifact exists, but it

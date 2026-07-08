@@ -2585,9 +2585,9 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
         test_evidence=(
             _evidence(
                 "field_lifecycle_currentness.negative.late_terminal_statuses",
-                test_name="test_late_result_preserves_noncurrent_packet_statuses",
+                test_name="test_late_result_rejects_noncurrent_packet_statuses_without_mutation",
                 path="tests/test_flowpilot_lifecycle_guard.py",
-                command="python -m unittest tests.test_flowpilot_lifecycle_guard.FlowPilotLifecycleGuardTests.test_late_result_preserves_noncurrent_packet_statuses",
+                command="python -m unittest tests.test_flowpilot_lifecycle_guard.FlowPilotLifecycleGuardTests.test_late_result_rejects_noncurrent_packet_statuses_without_mutation",
                 test_kind=NEGATIVE,
                 covers=("field_lifecycle_currentness.packet_terminal_monotonic",),
                 code_contracts=("field_lifecycle_currentness.runtime.submit_result_terminal_packet_preservation",),
@@ -2603,9 +2603,9 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
             ),
             _evidence(
                 "field_lifecycle_currentness.replay.fake_host_late_result_audit",
-                test_name="test_fake_host_late_result_appends_audit_without_reactivation",
+                test_name="test_fake_host_late_result_is_rejected_without_reactivation",
                 path="tests/test_flowpilot_lifecycle_guard.py",
-                command="python -m unittest tests.test_flowpilot_lifecycle_guard.FlowPilotLifecycleGuardTests.test_fake_host_late_result_appends_audit_without_reactivation",
+                command="python -m unittest tests.test_flowpilot_lifecycle_guard.FlowPilotLifecycleGuardTests.test_fake_host_late_result_is_rejected_without_reactivation",
                 test_kind=REPLAY,
                 covers=(
                     "field_lifecycle_currentness.packet_terminal_monotonic",
@@ -2627,9 +2627,9 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
             ),
             _evidence(
                 "field_lifecycle_currentness.negative.accepted_pointer_duplicate",
-                test_name="test_duplicate_after_accepted_preserves_accepted_result_pointer",
+                test_name="test_duplicate_after_accepted_rejects_without_polluting_accepted_result_pointer",
                 path="tests/test_flowpilot_lifecycle_guard.py",
-                command="python -m unittest tests.test_flowpilot_lifecycle_guard.FlowPilotLifecycleGuardTests.test_duplicate_after_accepted_preserves_accepted_result_pointer",
+                command="python -m unittest tests.test_flowpilot_lifecycle_guard.FlowPilotLifecycleGuardTests.test_duplicate_after_accepted_rejects_without_polluting_accepted_result_pointer",
                 test_kind=NEGATIVE,
                 covers=("field_lifecycle_currentness.accepted_result_pointer_single_commit",),
                 code_contracts=("field_lifecycle_currentness.runtime.accept_packet_result_commit",),
@@ -2696,9 +2696,9 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
             ),
             _evidence(
                 "field_lifecycle_currentness.replay.quarantined_projection_currentness",
-                test_name="test_quarantined_packet_projection_replay_uses_currentness_predicate",
+                test_name="test_quarantined_packet_rejects_late_submit_and_stays_out_of_active_projection",
                 path="tests/test_flowpilot_core_runtime.py",
-                command="python -m unittest tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_quarantined_packet_projection_replay_uses_currentness_predicate",
+                command="python -m unittest tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_quarantined_packet_rejects_late_submit_and_stays_out_of_active_projection",
                 test_kind=REPLAY,
                 covers=("field_lifecycle_currentness.active_packets_derive_from_currentness",),
                 code_contracts=("field_lifecycle_currentness.runtime.current_packets_for_routing",),
@@ -4296,6 +4296,51 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
         ),
     )
 
+    core_deliverable = ModelTestAlignmentPlan(
+        model_id="core_deliverable_non_downgrade",
+        obligations=(
+            _obligation(
+                "core_deliverable.non_downgrade_prompt_and_replay",
+                obligation_type="hazard",
+                description=(
+                    "PM, Reviewer, child-skill, and FlowGuard operator prompt surfaces plus "
+                    "synthetic bad-chain replay reject reachable-only, status-only, report-only, "
+                    "honest-missing, partial, external-only, not-yet-done, or weaker child-output "
+                    "substitutes for the accepted deliverable."
+                ),
+                required_test_kinds=(NEGATIVE, REPLAY),
+                allow_shared_evidence=True,
+                allow_shared_implementation=True,
+            ),
+        ),
+        test_evidence=(
+            _evidence(
+                "core_deliverable.negative.prompt_cards",
+                test_name="test_prompt_first_quality_chain_preserves_source_intent_without_runtime_semantic_gate",
+                path="tests/test_flowpilot_card_instruction_coverage.py",
+                command=(
+                    "python -m unittest tests.test_flowpilot_card_instruction_coverage."
+                    "FlowPilotCardInstructionCoverageTests."
+                    "test_prompt_first_quality_chain_preserves_source_intent_without_runtime_semantic_gate"
+                ),
+                test_kind=NEGATIVE,
+                covers=("core_deliverable.non_downgrade_prompt_and_replay",),
+            ),
+            _evidence(
+                "core_deliverable.replay.synthetic_downgrade_chain",
+                test_name="test_core_deliverable_downgrade_chain_blocks_completion",
+                path="tests/test_flowpilot_synthetic_agent_trace_replay.py",
+                command=(
+                    "python -m unittest tests.test_flowpilot_synthetic_agent_trace_replay."
+                    "FlowPilotSyntheticAgentTraceReplayTests."
+                    "test_core_deliverable_downgrade_chain_blocks_completion"
+                ),
+                test_kind=REPLAY,
+                covers=("core_deliverable.non_downgrade_prompt_and_replay",),
+            ),
+        ),
+    )
+
     startup = _with_runtime_path(startup, "startup")
     packet_card_ack = _with_runtime_path(packet_card_ack, "packet/card/ack")
     packet_result_family = _with_runtime_path(packet_result_family, "packet result family")
@@ -4309,6 +4354,7 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
     tiering = _with_runtime_path(tiering, "test tiering/slow-test contracts")
     rejection_liveness = _with_runtime_path(rejection_liveness, "rejection/liveness matrix")
     route_authority = _with_runtime_path(route_authority, "route authority singularity")
+    core_deliverable = _with_runtime_path(core_deliverable, "core deliverable non-downgrade")
     meta_capability = _with_runtime_path(meta_capability, "meta/capability parents")
 
     return [
@@ -4448,6 +4494,20 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 "feedback, corrected retry behavior, and ModelMesh parent hazards. "
                 "Synthetic replay proves control flow only and cannot claim live "
                 "semantic completion."
+            ),
+        ),
+        _plan_entry(
+            "core deliverable non-downgrade",
+            core_deliverable,
+            model_checks=(
+                "python -m unittest tests.test_flowpilot_card_instruction_coverage.FlowPilotCardInstructionCoverageTests.test_prompt_first_quality_chain_preserves_source_intent_without_runtime_semantic_gate",
+                "python -m unittest tests.test_flowpilot_synthetic_agent_trace_replay.FlowPilotSyntheticAgentTraceReplayTests.test_core_deliverable_downgrade_chain_blocks_completion",
+                "python simulations/flowpilot_synthetic_agent_coverage_matrix.py --json-out simulations/flowpilot_synthetic_agent_coverage_matrix_results.json",
+            ),
+            coverage_boundary=(
+                "Core-deliverable non-downgrade alignment covers prompt-card standards "
+                "and synthetic bad-chain replay. It proves rejection and repair routing "
+                "for substitute completion claims, not live semantic completion."
             ),
         ),
         _plan_entry(

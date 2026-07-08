@@ -2004,6 +2004,49 @@ def no_completion_before_verified_contract(state: State, trace) -> InvariantResu
     return InvariantResult.pass_()
 
 
+def core_deliverable_non_downgrade_gates_required(
+    state: State, trace
+) -> InvariantResult:
+    del trace
+    route_or_later = (
+        state.flowguard_process_design_done
+        or state.node_acceptance_plan_written
+        or state.final_route_wide_gate_ledger_pm_built
+        or state.pm_completion_decision_recorded
+        or state.final_report_emitted
+        or state.status == "complete"
+    )
+    if route_or_later and not (
+        state.product_function_target_and_failure_bar_written
+        and state.product_function_semantic_fidelity_policy_written
+        and state.product_function_acceptance_matrix_written
+        and state.root_acceptance_thresholds_defined
+        and state.root_acceptance_proof_matrix_written
+    ):
+        return InvariantResult.fail(
+            "core deliverable non-downgrade gates were missing product target/failure bar, semantic fidelity, acceptance matrix, or root proof matrix"
+        )
+
+    terminal_or_later = (
+        state.final_route_wide_gate_ledger_pm_completion_approved
+        or state.pm_completion_decision_recorded
+        or state.final_report_emitted
+        or state.status == "complete"
+    )
+    if terminal_or_later and not (
+        state.final_feature_matrix_review_done
+        and state.final_acceptance_matrix_review_done
+        and state.final_product_function_model_replayed
+        and state.final_human_inspection_passed
+        and _final_route_wide_gate_ledger_ready(state)
+        and state.terminal_human_backward_replay_started_from_delivered_product
+    ):
+        return InvariantResult.fail(
+            "core deliverable non-downgrade terminal gates were missing final acceptance review, product-model replay, delivered-output backward replay, or the route-wide gate ledger"
+        )
+    return InvariantResult.pass_()
+
+
 def frozen_contract_never_changes(state: State, trace) -> InvariantResult:
     del trace
     if state.contract_revision != 0:
@@ -3232,6 +3275,11 @@ INVARIANTS = (
         name="no_completion_before_verified_contract",
         description="Final report requires frozen contract, checked route, synced summary, verified chunks, and checkpoint.",
         predicate=no_completion_before_verified_contract,
+    ),
+    Invariant(
+        name="core_deliverable_non_downgrade_gates_required",
+        description="Completion path preserves the PM source intent through semantic fidelity, root acceptance, final replay, and route-wide ledger gates.",
+        predicate=core_deliverable_non_downgrade_gates_required,
     ),
     Invariant(
         name="frozen_contract_never_changes",

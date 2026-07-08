@@ -37,6 +37,8 @@ FlowGuard operator product behavior model before they can feed the root contract
 Check:
 
 - user request and reviewed material were represented honestly;
+- source-intent from the user request is preserved in product capability,
+  acceptance, negative scope, and evidence implications;
 - target users, use intent, and final product usefulness are represented
   explicitly enough to challenge the architecture;
 - required product capabilities are not missing;
@@ -50,6 +52,12 @@ Check:
 - PM accepted the current FlowGuard operator product behavior model after reading it,
   and the model's states, failure/recovery paths, forbidden downgrades, and
   completion evidence are consistent with the PM product architecture;
+- core deliverable non-downgrade is represented as product architecture risk.
+  Block if the architecture can complete through a reachable-only subset,
+  status-only note, report-only artifact, honest missing explanation,
+  external-only label, partial count, not-yet-done marker, or
+  absence-of-fabrication proof while the accepted user target still requires
+  the actual deliverable;
 - low-quality, placeholder, or semantic-downgrade outcomes are blocked.
 - higher-standard product, experience, or simplicity improvements that are not
   hard requirements are returned as PM decision-support, not as reviewer-owned

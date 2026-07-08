@@ -52,6 +52,11 @@ Check:
   row is clean while the user's concrete object, requested action, quality
   floor, quantity, constraint, or prohibition is not directly supported by
   current artifact evidence;
+- core deliverable non-downgrade evidence is direct. A reachable-only subset,
+  status-only ledger, report-only artifact, honest missing explanation,
+  external-only label, partial count, not-yet-done marker, or
+  absence-of-fabrication proof is not evidence quality closure for an actual
+  deliverable unless PM cites explicit user authority to lower the target;
 - low-quality-success hard parts have proof of depth. Evidence that only shows
   a file, report, command, screenshot, or ledger row exists must not close a
   hard-part claim unless it directly disproves the named thin-success shortcut;
