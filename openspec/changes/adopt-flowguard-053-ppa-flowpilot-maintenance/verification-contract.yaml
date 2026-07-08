@@ -1,0 +1,341 @@
+contract_version: 1
+change: adopt-flowguard-053-ppa-flowpilot-maintenance
+obligations:
+  - id: req.flowguard_053.project_record_matches_installed
+    source: "specs/flowguard-053-project-adoption/spec.md#Requirement: Project Record Matches Installed FlowGuard"
+    claim: "The project record must be upgraded to the installed FlowGuard engine before project maintenance confidence is claimed."
+    required: true
+    evidence:
+      - check.flowguard.import_schema
+      - check.flowguard.project_audit
+  - id: req.flowguard_053.routes_available
+    source: "specs/flowguard-053-project-adoption/spec.md#Requirement: FlowGuard 0.53 Routes Are Available To Maintenance"
+    claim: "FlowPilot maintenance must use real FlowGuard 0.53 PPA/BCL APIs instead of local substitute logic."
+    required: true
+    evidence:
+      - check.flowguard.import_schema
+      - check.flowpilot.ppa_maintenance
+  - id: req.flowpilot_ppa.no_fallback_commitments
+    source: "specs/flowpilot-primary-path-authority/spec.md#Requirement: No-Fallback Claims Use Behavior Commitments"
+    claim: "Broad no-fallback claims must be registered as behavior commitments and reviewed by FlowGuard."
+    required: true
+    evidence:
+      - check.flowpilot.ppa_maintenance
+      - check.flowpilot.model_test_alignment
+  - id: req.flowpilot_ppa.single_primary_path
+    source: "specs/flowpilot-primary-path-authority/spec.md#Requirement: Path-Sensitive Commitments Use One Primary Authority"
+    claim: "Package/result/blocker repair flows must have one current primary path and must reject fallback routes."
+    required: true
+    evidence:
+      - check.flowpilot.ppa_maintenance
+      - check.flowpilot.synthetic_agent_matrix
+  - id: req.flowpilot_ppa.projects_to_tests
+    source: "specs/flowpilot-primary-path-authority/spec.md#Requirement: PPA Evidence Projects To Tests And Risk Gates"
+    claim: "PPA and BCL evidence must point to current tests, risk gates, and coverage receipts."
+    required: true
+    evidence:
+      - check.flowpilot.ppa_maintenance
+      - check.flowpilot.model_test_alignment
+  - id: req.field_surface.lifecycle_ownership
+    source: "specs/flowpilot-field-surface-review/spec.md#Requirement: Field-Bearing Changes Have Lifecycle Ownership"
+    claim: "Disputed or behavior-bearing fields must have owner, lifecycle, reader, writer, and test disposition evidence."
+    required: true
+    evidence:
+      - check.flowpilot.ppa_maintenance
+      - check.flowpilot.field_lifecycle_tests
+  - id: req.field_surface.no_compatibility
+    source: "specs/flowpilot-field-surface-review/spec.md#Requirement: Field Review Does Not Create Compatibility"
+    claim: "Unsupported fields must be rejected or removed, not accepted through fallback, alias, or translation."
+    required: true
+    evidence:
+      - check.flowpilot.ppa_maintenance
+      - check.flowpilot.field_lifecycle_tests
+  - id: req.field_surface.authorized_reads_mechanical
+    source: "specs/flowpilot-field-surface-review/spec.md#Requirement: Authorized Read Surfaces Stay Mechanical"
+    claim: "Runtime may require declared read surfaces mechanically, but must not infer semantic reviewer quality."
+    required: true
+    evidence:
+      - check.flowpilot.ppa_maintenance
+      - check.flowpilot.field_lifecycle_tests
+  - id: req.role_output.current_contract_only
+    source: "specs/role-output-transaction-boundaries/spec.md#Requirement: Role Output Fields Remain Current-Contract Only"
+    claim: "Role output contracts must reject unsupported fields and must not preserve old aliases."
+    required: true
+    evidence:
+      - check.flowpilot.field_lifecycle_tests
+  - id: req.role_output.runtime_no_summary_generation
+    source: "specs/role-output-transaction-boundaries/spec.md#Requirement: Runtime Does Not Generate Role Summaries"
+    claim: "Runtime must require current structured fields mechanically but must not generate reviewer/PM semantic summaries."
+    required: true
+    evidence:
+      - check.flowpilot.field_lifecycle_tests
+  - id: req.packet_review.no_unreviewed_field_expansion
+    source: "specs/flowpilot-packet-review-flow/spec.md#Requirement: Packet Review Does Not Accept Unreviewed Field Expansion"
+    claim: "The unfinished PM-visible role summary work must be re-reviewed before being treated as complete current contract."
+    required: true
+    evidence:
+      - check.openspec.pm_visible_summary_status
+      - check.flowpilot.field_lifecycle_tests
+  - id: req.blocker_repair.current_paths_first
+    source: "specs/blocker-repair-policy/spec.md#Requirement: Repair Guidance Uses Existing Current Paths First"
+    claim: "Repair guidance must use existing packet/result/gate/blocker paths unless a new field is proven necessary."
+    required: true
+    evidence:
+      - check.flowpilot.ppa_maintenance
+      - check.flowpilot.synthetic_agent_matrix
+  - id: req.model_hierarchy.rejects_stale_layered_proof
+    source: "specs/flowguard-model-hierarchy/spec.md#Requirement: Parent Release Confidence Rejects Stale Layered Proof"
+    claim: "Parent confidence must report stale full-proof fingerprints as release blockers until refreshed."
+    required: true
+    evidence:
+      - check.flowguard.meta_checks
+      - check.flowguard.capability_checks
+  - id: req.boundary_alignment.bcl_ppa_current_evidence
+    source: "specs/flowguard-boundary-test-alignment/spec.md#Requirement: BCL And PPA Obligations Bind To Current Evidence"
+    claim: "BCL and PPA maintenance obligations must appear in model-test alignment with current tests."
+    required: true
+    evidence:
+      - check.flowpilot.model_test_alignment
+      - check.flowpilot.ppa_maintenance
+  - id: req.boundary_alignment.field_lifecycle_tests
+    source: "specs/flowguard-boundary-test-alignment/spec.md#Requirement: Field Lifecycle Projections Bind To Tests"
+    claim: "Field lifecycle decisions must be covered by tests, not only by notes."
+    required: true
+    evidence:
+      - check.flowpilot.model_test_alignment
+      - check.flowpilot.field_lifecycle_tests
+  - id: req.test_tiers.release_suites_current
+    source: "specs/tiered-flowpilot-test-validation/spec.md#Requirement: Release Claims Require Current Release Suites"
+    claim: "Release confidence must distinguish routine-green evidence from complete release-suite evidence."
+    required: true
+    evidence:
+      - check.flowpilot.complete_system_testmesh
+      - check.flowguard.meta_checks
+      - check.flowguard.capability_checks
+  - id: req.test_tiers.background_artifacts_final
+    source: "specs/tiered-flowpilot-test-validation/spec.md#Requirement: Background Evidence Has Final Artifacts"
+    claim: "Long-running background checks must leave final exit/status/log artifacts before they count as pass evidence."
+    required: true
+    evidence:
+      - check.flowguard.meta_checks
+      - check.flowguard.capability_checks
+  - id: req.maintenance.completion_consumes_upgrade_and_ppa
+    source: "specs/repository-maintenance-guardrails/spec.md#Requirement: Maintenance Completion Consumes Upgrade And PPA Evidence"
+    claim: "Completion must consume FlowGuard upgrade, PPA/BCL, alignment, test, install, and topology evidence."
+    required: true
+    evidence:
+      - check.flowguard.project_audit
+      - check.flowpilot.ppa_maintenance
+      - check.flowpilot.model_test_alignment
+      - check.flowpilot.topology
+      - check.install.audit_sync
+      - check.install.local_check
+  - id: req.maintenance.parallel_work_preserved
+    source: "specs/repository-maintenance-guardrails/spec.md#Requirement: Parallel Work Is Preserved"
+    claim: "Unrelated untracked peer-agent paths must not be staged, removed, or used as completion evidence."
+    required: true
+    evidence:
+      - check.git.peer_work_preserved
+checks:
+  - id: check.flowguard.import_schema
+    kind: command
+    command: python
+    args:
+      - "-c"
+      - "import flowguard, importlib.metadata as m; print(flowguard.SCHEMA_VERSION); print(m.version('flowguard'))"
+    required: true
+    covers:
+      - req.flowguard_053.project_record_matches_installed
+      - req.flowguard_053.routes_available
+    expected:
+      exit_code: 0
+  - id: check.flowguard.project_audit
+    kind: command
+    command: python
+    args:
+      - "-m"
+      - "flowguard"
+      - "project-audit"
+      - "--root"
+      - "."
+    required: true
+    covers:
+      - req.flowguard_053.project_record_matches_installed
+      - req.maintenance.completion_consumes_upgrade_and_ppa
+    expected:
+      exit_code: 0
+  - id: check.flowpilot.ppa_maintenance
+    kind: command
+    command: python
+    args:
+      - "simulations/run_flowpilot_053_ppa_maintenance_checks.py"
+    required: true
+    covers:
+      - req.flowguard_053.routes_available
+      - req.flowpilot_ppa.no_fallback_commitments
+      - req.flowpilot_ppa.single_primary_path
+      - req.flowpilot_ppa.projects_to_tests
+      - req.field_surface.lifecycle_ownership
+      - req.field_surface.no_compatibility
+      - req.field_surface.authorized_reads_mechanical
+      - req.blocker_repair.current_paths_first
+      - req.boundary_alignment.bcl_ppa_current_evidence
+      - req.maintenance.completion_consumes_upgrade_and_ppa
+    expected:
+      exit_code: 0
+  - id: check.flowpilot.field_lifecycle_tests
+    kind: command
+    command: python
+    args:
+      - "-m"
+      - "pytest"
+      - "tests/test_flowpilot_053_ppa_maintenance.py"
+    required: true
+    covers:
+      - req.field_surface.lifecycle_ownership
+      - req.field_surface.no_compatibility
+      - req.field_surface.authorized_reads_mechanical
+      - req.role_output.current_contract_only
+      - req.role_output.runtime_no_summary_generation
+      - req.packet_review.no_unreviewed_field_expansion
+      - req.boundary_alignment.field_lifecycle_tests
+    expected:
+      exit_code: 0
+  - id: check.openspec.pm_visible_summary_status
+    kind: command
+    command: openspec
+    args:
+      - "status"
+      - "--change"
+      - "enforce-pm-visible-role-summaries"
+      - "--json"
+    required: true
+    covers:
+      - req.packet_review.no_unreviewed_field_expansion
+    expected:
+      exit_code: 0
+  - id: check.flowpilot.model_test_alignment
+    kind: command
+    command: python
+    args:
+      - "simulations/run_flowpilot_model_test_alignment_checks.py"
+    required: true
+    covers:
+      - req.flowpilot_ppa.no_fallback_commitments
+      - req.flowpilot_ppa.projects_to_tests
+      - req.boundary_alignment.bcl_ppa_current_evidence
+      - req.boundary_alignment.field_lifecycle_tests
+      - req.maintenance.completion_consumes_upgrade_and_ppa
+    expected:
+      exit_code: 0
+  - id: check.flowpilot.synthetic_agent_matrix
+    kind: command
+    command: python
+    args:
+      - "simulations/flowpilot_synthetic_agent_coverage_matrix.py"
+    required: true
+    covers:
+      - req.flowpilot_ppa.single_primary_path
+      - req.blocker_repair.current_paths_first
+    expected:
+      exit_code: 0
+  - id: check.flowpilot.complete_system_testmesh
+    kind: command
+    command: python
+    args:
+      - "simulations/run_flowpilot_complete_system_runtime_checks.py"
+    required: true
+    covers:
+      - req.test_tiers.release_suites_current
+    expected:
+      exit_code: 0
+  - id: check.flowguard.meta_checks
+    kind: command
+    command: python
+    args:
+      - "simulations/run_meta_checks.py"
+    required: true
+    covers:
+      - req.model_hierarchy.rejects_stale_layered_proof
+      - req.test_tiers.release_suites_current
+      - req.test_tiers.background_artifacts_final
+    expected:
+      exit_code: 0
+  - id: check.flowguard.capability_checks
+    kind: command
+    command: python
+    args:
+      - "simulations/run_capability_checks.py"
+    required: true
+    covers:
+      - req.model_hierarchy.rejects_stale_layered_proof
+      - req.test_tiers.release_suites_current
+      - req.test_tiers.background_artifacts_final
+    expected:
+      exit_code: 0
+  - id: check.flowpilot.topology
+    kind: command
+    command: python
+    args:
+      - "scripts/flowguard_project_topology.py"
+      - "check"
+    required: true
+    covers:
+      - req.maintenance.completion_consumes_upgrade_and_ppa
+    expected:
+      exit_code: 0
+  - id: check.install.audit_sync
+    kind: command
+    command: python
+    args:
+      - "scripts/audit_local_install_sync.py"
+      - "--json"
+    required: true
+    covers:
+      - req.maintenance.completion_consumes_upgrade_and_ppa
+    expected:
+      exit_code: 0
+  - id: check.install.local_check
+    kind: command
+    command: python
+    args:
+      - "scripts/install_flowpilot.py"
+      - "--check"
+      - "--json"
+    required: true
+    covers:
+      - req.maintenance.completion_consumes_upgrade_and_ppa
+    expected:
+      exit_code: 0
+  - id: check.git.peer_work_preserved
+    kind: command
+    command: git
+    args:
+      - "status"
+      - "--short"
+    required: true
+    covers:
+      - req.maintenance.parallel_work_preserved
+    expected:
+      exit_code: 0
+freshness:
+  watch:
+    - AGENTS.md
+    - HANDOFF.md
+    - .flowguard/project.toml
+    - .flowguard/adoption_log.jsonl
+    - docs/flowguard_adoption_log.md
+    - docs/flowguard_project_topology.json
+    - docs/flowguard_project_topology.md
+    - docs/flowpilot_current_contract_repair_discipline.md
+    - openspec/changes/adopt-flowguard-053-ppa-flowpilot-maintenance/proposal.md
+    - openspec/changes/adopt-flowguard-053-ppa-flowpilot-maintenance/design.md
+    - openspec/changes/adopt-flowguard-053-ppa-flowpilot-maintenance/tasks.md
+    - openspec/changes/adopt-flowguard-053-ppa-flowpilot-maintenance/specs/**/*.md
+    - openspec/changes/adopt-flowguard-053-ppa-flowpilot-maintenance/verification-contract.yaml
+    - openspec/changes/enforce-pm-visible-role-summaries/**/*.md
+    - flowpilot/**/*.py
+    - simulations/**/*.py
+    - simulations/**/*.json
+    - scripts/**/*.py
+    - tests/**/*.py

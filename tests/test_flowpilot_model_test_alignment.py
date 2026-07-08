@@ -78,6 +78,7 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
                 "rejection/liveness matrix",
                 "route authority singularity",
                 "core deliverable non-downgrade",
+                "flowguard 0.53 ppa maintenance",
                 "meta/capability parents",
             ],
         )

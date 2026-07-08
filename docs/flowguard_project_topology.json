@@ -115,7 +115,7 @@
       "test_command_count": 12
     },
     "other": {
-      "alignment_family_count": 7,
+      "alignment_family_count": 8,
       "code_surface_count": 253,
       "known_bad_count": 1423,
       "model_count": 90,
@@ -288,17 +288,18 @@
       "test_command_count": 44
     },
     "structure": {
-      "alignment_family_count": 0,
-      "code_surface_count": 7,
-      "known_bad_count": 37,
-      "model_count": 3,
+      "alignment_family_count": 1,
+      "code_surface_count": 8,
+      "known_bad_count": 45,
+      "model_count": 4,
       "runner_keys": [
+        "flowpilot_053_ppa_maintenance",
         "flowpilot_complete_system_structure",
         "flowpilot_shared_maintenance_log",
         "flowpilot_structure_maintenance"
       ],
       "surface_kinds": {
-        "model_check_runner": 3,
+        "model_check_runner": 4,
         "script_entrypoint": 2,
         "test_tier_command": 2
       },
@@ -358,6 +359,19 @@
       "repair_types": [],
       "surface_id": "model-check:run_defect_governance_checks",
       "surface_owner": "model-check:run_defect_governance_checks"
+    },
+    {
+      "area": "structure",
+      "covered": true,
+      "evidence_status": "passed",
+      "gap_codes": [],
+      "kind": "model_check_runner",
+      "name": "run_flowpilot_053_ppa_maintenance_checks",
+      "path": "simulations/run_flowpilot_053_ppa_maintenance_checks.py",
+      "release_relevance": "validation_gate",
+      "repair_types": [],
+      "surface_id": "model-check:run_flowpilot_053_ppa_maintenance_checks",
+      "surface_owner": "model-check:run_flowpilot_053_ppa_maintenance_checks"
     },
     {
       "area": "other",
@@ -14497,14 +14511,14 @@
       "path": "simulations/flowpilot_model_test_alignment_results.json"
     }
   },
-  "generated_at_epoch": 1783529160.3387377,
+  "generated_at_epoch": 1783545574.241454,
   "generator_version": "1",
   "layer_counts": {
-    "alignment_families": 14,
-    "code_surfaces": 1076,
+    "alignment_families": 16,
+    "code_surfaces": 1077,
     "evidence_summaries": 5,
-    "known_bad_signals": 2629,
-    "models": 158,
+    "known_bad_signals": 2637,
+    "models": 159,
     "test_commands": 452
   },
   "model_test_alignment": [
@@ -14793,6 +14807,43 @@
     },
     {
       "area": "other",
+      "coverage_boundary": "Core-deliverable non-downgrade alignment covers prompt-card standards and synthetic bad-chain replay. It proves rejection and repair routing for substitute completion claims, not live semantic completion.",
+      "decision": "model_test_alignment_green",
+      "family": "core deliverable non-downgrade",
+      "model_checks": [
+        "python -m unittest tests.test_flowpilot_card_instruction_coverage.FlowPilotCardInstructionCoverageTests.test_prompt_first_quality_chain_preserves_source_intent_without_runtime_semantic_gate",
+        "python -m unittest tests.test_flowpilot_synthetic_agent_trace_replay.FlowPilotSyntheticAgentTraceReplayTests.test_core_deliverable_downgrade_chain_blocks_completion",
+        "python simulations/flowpilot_synthetic_agent_coverage_matrix.py --json-out simulations/flowpilot_synthetic_agent_coverage_matrix_results.json"
+      ],
+      "model_id": "core_deliverable_non_downgrade",
+      "obligation_count": 1,
+      "ok": true,
+      "test_evidence_count": 2,
+      "test_paths": [
+        "tests/test_flowpilot_card_instruction_coverage.py",
+        "tests/test_flowpilot_synthetic_agent_trace_replay.py"
+      ]
+    },
+    {
+      "area": "structure",
+      "coverage_boundary": "FlowGuard 0.53 PPA maintenance alignment covers current-contract no-fallback commitments, field lifecycle ownership, risk gates, and release-evidence freshness. It does not add runtime fields, compatibility aliases, or semantic runtime review.",
+      "decision": "model_test_alignment_green",
+      "family": "flowguard 0.53 ppa maintenance",
+      "model_checks": [
+        "python simulations/run_flowpilot_053_ppa_maintenance_checks.py --json-out simulations/flowpilot_053_ppa_maintenance_results.json",
+        "python -m pytest tests/test_flowpilot_053_ppa_maintenance.py -q"
+      ],
+      "model_id": "flowpilot_053_ppa_maintenance",
+      "obligation_count": 4,
+      "ok": true,
+      "test_evidence_count": 5,
+      "test_paths": [
+        "simulations/flowpilot_synthetic_agent_coverage_matrix.py",
+        "tests/test_flowpilot_053_ppa_maintenance.py"
+      ]
+    },
+    {
+      "area": "other",
       "coverage_boundary": "Meta/Capability alignment covers parent-runner proof boundaries and control-gate unit evidence only. Parent results remain abstract model confidence, not ordinary production conformance.",
       "decision": "model_test_alignment_green",
       "family": "meta/capability parents",
@@ -14953,6 +15004,35 @@
       "result_path": "simulations/defect_governance_results.json",
       "runner_key": "defect_governance",
       "runner_path": "simulations/run_defect_governance_checks.py"
+    },
+    {
+      "area": "structure",
+      "coverage_tier": "unclassified_model_tier",
+      "evidence": {
+        "confidence": "",
+        "decision": "",
+        "edge_count": null,
+        "finding_count": null,
+        "full_coverage_ok": null,
+        "known_bad": [
+          "expected",
+          "hazards",
+          "ok",
+          "accepted_without_summary",
+          "blocked_without_reissue",
+          "generic_repair_overrode_concrete_repair",
+          "pm_packet_missing_summary_context",
+          "runner_synthesized_summary"
+        ],
+        "ok": true,
+        "present": true,
+        "release_convergence_ok": null,
+        "state_count": null
+      },
+      "model_path": "simulations/flowpilot_053_ppa_maintenance_model.py",
+      "result_path": "simulations/flowpilot_053_ppa_maintenance_results.json",
+      "runner_key": "flowpilot_053_ppa_maintenance",
+      "runner_path": "simulations/run_flowpilot_053_ppa_maintenance_checks.py"
     },
     {
       "area": "other",
@@ -20741,7 +20821,7 @@
   "sources": [
     {
       "exists": true,
-      "mtime_ns": 1783425231509671100,
+      "mtime_ns": 1783543950025269400,
       "path": "AGENTS.md",
       "size": 12484
     },
@@ -20963,9 +21043,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1783493503632307800,
+      "mtime_ns": 1783542950697991200,
       "path": "simulations/capability_thin_parent_results.json",
-      "size": 20676
+      "size": 20138
     },
     {
       "exists": true,
@@ -20990,6 +21070,18 @@
       "mtime_ns": 1780706074969197000,
       "path": "simulations/defect_governance_results.json",
       "size": 23592
+    },
+    {
+      "exists": true,
+      "mtime_ns": 1783544364705992000,
+      "path": "simulations/flowpilot_053_ppa_maintenance_model.py",
+      "size": 38847
+    },
+    {
+      "exists": true,
+      "mtime_ns": 1783545200884622800,
+      "path": "simulations/flowpilot_053_ppa_maintenance_results.json",
+      "size": 97970
     },
     {
       "exists": true,
@@ -21785,9 +21877,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1783494474875722100,
+      "mtime_ns": 1783545209474509800,
       "path": "simulations/flowpilot_model_test_alignment_results.json",
-      "size": 4812015
+      "size": 4938028
     },
     {
       "exists": true,
@@ -21983,7 +22075,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780741321176065200,
+      "mtime_ns": 1783545377525690700,
       "path": "simulations/flowpilot_pm_visible_summary_results.json",
       "size": 6662
     },
@@ -22619,6 +22711,12 @@
     },
     {
       "exists": true,
+      "mtime_ns": 1783527735919769700,
+      "path": "simulations/flowpilot_synthetic_agent_coverage_matrix.py",
+      "size": 84554
+    },
+    {
+      "exists": true,
       "mtime_ns": 1782361521466956300,
       "path": "simulations/flowpilot_terminal_flowguard_coverage_model.py",
       "size": 17519
@@ -22775,9 +22873,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1783493503670825500,
+      "mtime_ns": 1783542950700988200,
       "path": "simulations/meta_thin_parent_results.json",
-      "size": 26204
+      "size": 25525
     },
     {
       "exists": true,
@@ -22856,6 +22954,12 @@
       "mtime_ns": 1780706041767616700,
       "path": "simulations/run_defect_governance_checks.py",
       "size": 3647
+    },
+    {
+      "exists": true,
+      "mtime_ns": 1783544371450899900,
+      "path": "simulations/run_flowpilot_053_ppa_maintenance_checks.py",
+      "size": 8304
     },
     {
       "exists": true,
@@ -26882,6 +26986,12 @@
       "mtime_ns": 1781674309685087600,
       "path": "tests/test_flowguard_result_proof.py",
       "size": 5201
+    },
+    {
+      "exists": true,
+      "mtime_ns": 1783544377288819800,
+      "path": "tests/test_flowpilot_053_ppa_maintenance.py",
+      "size": 6102
     },
     {
       "exists": true,

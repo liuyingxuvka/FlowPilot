@@ -4341,6 +4341,183 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
         ),
     )
 
+    flowguard_053_ppa_maintenance = ModelTestAlignmentPlan(
+        model_id="flowpilot_053_ppa_maintenance",
+        obligations=(
+            _obligation(
+                "flowpilot_053.primary_path_authority_no_fallback",
+                obligation_type="primary_path_authority",
+                description=(
+                    "FlowPilot package/result/blocker repair behavior is registered "
+                    "through FlowGuard 0.53 Primary Path Authority with one current "
+                    "primary path per business intent and no old-field, alias, prose, "
+                    "or helper fallback success."
+                ),
+                required_test_kinds=(NEGATIVE, REPLAY),
+                allow_shared_evidence=True,
+                allow_shared_implementation=True,
+            ),
+            _obligation(
+                "flowpilot_053.behavior_commitments_cover_current_contract_promises",
+                obligation_type="behavior_commitment",
+                description=(
+                    "User-visible FlowPilot no-fallback, PM-visible summary, "
+                    "authorized result read, and release evidence promises are "
+                    "registered in the Behavior Commitment Ledger with current "
+                    "evidence and PPA handoff."
+                ),
+                required_test_kinds=(HAPPY, NEGATIVE),
+                allow_shared_evidence=True,
+                allow_shared_implementation=True,
+            ),
+            _obligation(
+                "flowpilot_053.field_lifecycle_current_fields_no_compatibility",
+                obligation_type="field_lifecycle",
+                description=(
+                    "Existing current fields pm_visible_summary, "
+                    "recent_role_report_summary, and authorized_result_reads have "
+                    "FieldLifecycle ownership and tests, while legacy summary fields "
+                    "remain blocked rather than accepted through compatibility."
+                ),
+                required_test_kinds=(HAPPY, NEGATIVE),
+                allow_shared_evidence=True,
+                allow_shared_implementation=True,
+            ),
+            _obligation(
+                "flowpilot_053.release_evidence_consumes_upgrade_and_ppa",
+                obligation_type="release_evidence",
+                description=(
+                    "Release or broad maintenance confidence consumes the 0.53 "
+                    "project upgrade, PPA/BCL, FieldLifecycle, RiskEvidence, MTA, "
+                    "synthetic fake-agent coverage, topology, and install-sync "
+                    "evidence instead of treating routine green evidence as release proof."
+                ),
+                required_test_kinds=(HAPPY, REPLAY),
+                allow_shared_evidence=True,
+                allow_shared_implementation=True,
+            ),
+        ),
+        code_contracts=(
+            _contract(
+                "flowpilot_053.runner.build_report",
+                path="simulations/run_flowpilot_053_ppa_maintenance_checks.py",
+                symbol="build_report",
+                implements=(
+                    "flowpilot_053.primary_path_authority_no_fallback",
+                    "flowpilot_053.behavior_commitments_cover_current_contract_promises",
+                    "flowpilot_053.field_lifecycle_current_fields_no_compatibility",
+                    "flowpilot_053.release_evidence_consumes_upgrade_and_ppa",
+                ),
+                external_inputs=("FlowGuard 0.53 PPA/BCL/FieldLifecycle/RiskEvidence plans",),
+                external_outputs=("green report or blocked findings",),
+                error_paths=("negative case expected codes missing",),
+            ),
+            _contract(
+                "flowpilot_053.model.primary_path_plan",
+                path="simulations/flowpilot_053_ppa_maintenance_model.py",
+                symbol="build_primary_path_plan",
+                implements=("flowpilot_053.primary_path_authority_no_fallback",),
+                external_outputs=("PrimaryPathAuthorityPlan",),
+                error_paths=("fallback candidate masks primary failure",),
+            ),
+            _contract(
+                "flowpilot_053.model.behavior_commitment_ledger",
+                path="simulations/flowpilot_053_ppa_maintenance_model.py",
+                symbol="build_behavior_commitment_ledger",
+                implements=("flowpilot_053.behavior_commitments_cover_current_contract_promises",),
+                external_inputs=("PrimaryPathAuthorityReport",),
+                external_outputs=("BehaviorCommitmentLedger",),
+                error_paths=("missing PPA handoff or stale evidence",),
+            ),
+            _contract(
+                "flowpilot_053.model.field_lifecycle_plan",
+                path="simulations/flowpilot_053_ppa_maintenance_model.py",
+                symbol="build_field_lifecycle_plan",
+                implements=("flowpilot_053.field_lifecycle_current_fields_no_compatibility",),
+                external_outputs=("FieldLifecyclePlan",),
+                error_paths=("behavior-bearing field lacks projection",),
+            ),
+            _contract(
+                "flowpilot_053.model.risk_evidence_plan",
+                path="simulations/flowpilot_053_ppa_maintenance_model.py",
+                symbol="build_risk_evidence_ledger_plan",
+                implements=("flowpilot_053.release_evidence_consumes_upgrade_and_ppa",),
+                external_inputs=("PPA, BCL, and FieldLifecycle reports",),
+                external_outputs=("RiskEvidenceLedgerPlan",),
+                error_paths=("release claim has stale or routine-only proof",),
+            ),
+        ),
+        test_evidence=(
+            _evidence(
+                "flowpilot_053.runner.all_gates",
+                test_name="test_runner_consumes_real_flowguard_053_routes",
+                path="tests/test_flowpilot_053_ppa_maintenance.py",
+                command="python -m pytest tests/test_flowpilot_053_ppa_maintenance.py -q",
+                test_kind=HAPPY,
+                covers=(
+                    "flowpilot_053.primary_path_authority_no_fallback",
+                    "flowpilot_053.behavior_commitments_cover_current_contract_promises",
+                    "flowpilot_053.field_lifecycle_current_fields_no_compatibility",
+                    "flowpilot_053.release_evidence_consumes_upgrade_and_ppa",
+                ),
+                code_contracts=(
+                    "flowpilot_053.runner.build_report",
+                    "flowpilot_053.model.primary_path_plan",
+                    "flowpilot_053.model.behavior_commitment_ledger",
+                    "flowpilot_053.model.field_lifecycle_plan",
+                    "flowpilot_053.model.risk_evidence_plan",
+                ),
+            ),
+            _evidence(
+                "flowpilot_053.negative.primary_path_authority",
+                test_name="test_primary_path_authority_rejects_old_field_and_duplicate_primary_paths",
+                path="tests/test_flowpilot_053_ppa_maintenance.py",
+                command=(
+                    "python -m pytest tests/test_flowpilot_053_ppa_maintenance.py "
+                    "-k test_primary_path_authority_rejects_old_field_and_duplicate_primary_paths -q"
+                ),
+                test_kind=NEGATIVE,
+                covers=("flowpilot_053.primary_path_authority_no_fallback",),
+                code_contracts=("flowpilot_053.model.primary_path_plan",),
+            ),
+            _evidence(
+                "flowpilot_053.negative.behavior_commitment",
+                test_name="test_behavior_commitment_ledger_requires_ppa_and_current_evidence",
+                path="tests/test_flowpilot_053_ppa_maintenance.py",
+                command=(
+                    "python -m pytest tests/test_flowpilot_053_ppa_maintenance.py "
+                    "-k test_behavior_commitment_ledger_requires_ppa_and_current_evidence -q"
+                ),
+                test_kind=NEGATIVE,
+                covers=("flowpilot_053.behavior_commitments_cover_current_contract_promises",),
+                code_contracts=("flowpilot_053.model.behavior_commitment_ledger",),
+            ),
+            _evidence(
+                "flowpilot_053.negative.field_lifecycle",
+                test_name="test_field_lifecycle_covers_existing_fields_without_new_contract_fields",
+                path="tests/test_flowpilot_053_ppa_maintenance.py",
+                command=(
+                    "python -m pytest tests/test_flowpilot_053_ppa_maintenance.py "
+                    "-k test_field_lifecycle_covers_existing_fields_without_new_contract_fields -q"
+                ),
+                test_kind=NEGATIVE,
+                covers=("flowpilot_053.field_lifecycle_current_fields_no_compatibility",),
+                code_contracts=("flowpilot_053.model.field_lifecycle_plan",),
+            ),
+            _evidence(
+                "flowpilot_053.replay.synthetic_agent_global_matrix",
+                test_name="flowpilot_synthetic_agent_coverage_matrix",
+                path="simulations/flowpilot_synthetic_agent_coverage_matrix.py",
+                command="python simulations/flowpilot_synthetic_agent_coverage_matrix.py",
+                test_kind=REPLAY,
+                covers=(
+                    "flowpilot_053.primary_path_authority_no_fallback",
+                    "flowpilot_053.release_evidence_consumes_upgrade_and_ppa",
+                ),
+            ),
+        ),
+    )
+
     startup = _with_runtime_path(startup, "startup")
     packet_card_ack = _with_runtime_path(packet_card_ack, "packet/card/ack")
     packet_result_family = _with_runtime_path(packet_result_family, "packet result family")
@@ -4355,6 +4532,10 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
     rejection_liveness = _with_runtime_path(rejection_liveness, "rejection/liveness matrix")
     route_authority = _with_runtime_path(route_authority, "route authority singularity")
     core_deliverable = _with_runtime_path(core_deliverable, "core deliverable non-downgrade")
+    flowguard_053_ppa_maintenance = _with_runtime_path(
+        flowguard_053_ppa_maintenance,
+        "flowguard 0.53 ppa maintenance",
+    )
     meta_capability = _with_runtime_path(meta_capability, "meta/capability parents")
 
     return [
@@ -4508,6 +4689,20 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 "Core-deliverable non-downgrade alignment covers prompt-card standards "
                 "and synthetic bad-chain replay. It proves rejection and repair routing "
                 "for substitute completion claims, not live semantic completion."
+            ),
+        ),
+        _plan_entry(
+            "flowguard 0.53 ppa maintenance",
+            flowguard_053_ppa_maintenance,
+            model_checks=(
+                "python simulations/run_flowpilot_053_ppa_maintenance_checks.py --json-out simulations/flowpilot_053_ppa_maintenance_results.json",
+                "python -m pytest tests/test_flowpilot_053_ppa_maintenance.py -q",
+            ),
+            coverage_boundary=(
+                "FlowGuard 0.53 PPA maintenance alignment covers current-contract "
+                "no-fallback commitments, field lifecycle ownership, risk gates, "
+                "and release-evidence freshness. It does not add runtime fields, "
+                "compatibility aliases, or semantic runtime review."
             ),
         ),
         _plan_entry(

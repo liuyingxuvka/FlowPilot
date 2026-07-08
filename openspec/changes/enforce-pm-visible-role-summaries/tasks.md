@@ -24,4 +24,4 @@
 - [x] 4.1 Add focused unit tests.
 - [x] 4.2 Run focused runtime tests and FlowGuard checks.
 - [x] 4.3 Run install sync/check and verify installed skill matches source.
-- [ ] 4.4 Record FlowGuard adoption evidence and KB postflight.
+- [x] 4.4 Record FlowGuard adoption evidence and KB postflight.

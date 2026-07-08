@@ -20363,6 +20363,82 @@ to identify unsupported historical-layer branches that should be deleted.
 - Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
 
 
+## flowpilot-053-ppa-maintenance - FlowPilot current-contract maintenance pass
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: adopt FlowGuard 0.53.0 project records and bind FlowPilot no-fallback maintenance to BCL, PPA, field lifecycle, release evidence, install sync, and local git evidence.
+- Status: completed
+- Skill decision: used_flowguard_development_process_flow
+- Started: 2026-07-08T20:52:30+00:00
+- Ended: 2026-07-08T21:25:00+00:00
+- Commands OK: True
+
+### Model Files
+- simulations/flowpilot_053_ppa_maintenance_model.py
+- simulations/run_flowpilot_053_ppa_maintenance_checks.py
+- simulations/flowpilot_053_ppa_maintenance_results.json
+- simulations/flowpilot_model_test_alignment_family_plans.py
+- tests/test_flowpilot_053_ppa_maintenance.py
+
+### Commands
+- python -c "import flowguard, importlib.metadata as m; print(flowguard.SCHEMA_VERSION); print(m.version('flowguard'))" -> ok, schema 1.0, package 0.53.0
+- python -m flowguard project-upgrade --root . -> ok
+- python -m flowguard project-audit --root . -> ok, manifest package version 0.53.0
+- python simulations/run_flowpilot_053_ppa_maintenance_checks.py --json-out simulations/flowpilot_053_ppa_maintenance_results.json -> ok
+- python -m pytest tests/test_flowpilot_053_ppa_maintenance.py -q -> 5 passed
+- openspec status --change enforce-pm-visible-role-summaries --json -> ok, artifacts complete
+- python simulations/run_flowpilot_model_test_alignment_checks.py --json-out simulations/flowpilot_model_test_alignment_results.json -> ok, alignment_ok true, full_coverage_ok true
+- python simulations/flowpilot_synthetic_agent_coverage_matrix.py --json-out simulations/flowpilot_synthetic_agent_coverage_matrix_results.json -> ok, required_cell_count 32894
+- python simulations/run_flowpilot_pm_visible_summary_checks.py -> ok
+- python -m pytest tests/test_flowpilot_core_runtime.py tests/test_flowpilot_new_entrypoint.py -q -> 204 passed, 212 subtests passed
+- python -m pytest tests/test_flowpilot_model_test_alignment.py -q -> 20 passed, 562 subtests passed
+- python scripts/flowguard_project_topology.py build -> ok, models 159, code_surfaces 1077, alignment_families 16
+- python scripts/flowguard_project_topology.py check -> ok, findings []
+- python scripts/install_flowpilot.py --sync-repo-owned --json -> ok, flowpilot source and installed digest f8f5c60cdf33e6dc1596ea3715c4a95634ab58378e0bbae51745963c61ca3378
+- python scripts/audit_local_install_sync.py --json -> ok
+- python scripts/install_flowpilot.py --check --json -> ok
+- python scripts/check_install.py --json -> ok
+
+### Background Long Checks
+- tmp/flowguard_background/run_meta_checks.meta.json -> complete, exit_code 0, release_confidence current_with_layered_full_parent, proof reuse unknown because the command was forced.
+- tmp/flowguard_background/run_capability_checks.meta.json -> complete, exit_code 0, release_confidence current_with_layered_full_parent, proof reuse unknown because the command was forced.
+- tmp/flowguard_background/run_flowpilot_complete_system_runtime_checks.meta.json -> complete, exit_code 0.
+- Log root: tmp/flowguard_background/
+- Logs: run_meta_checks.out.txt/.err.txt/.combined.txt/.exit.txt, run_capability_checks.out.txt/.err.txt/.combined.txt/.exit.txt, run_flowpilot_complete_system_runtime_checks.out.txt/.err.txt/.combined.txt/.exit.txt
+- Proof artifacts: run_meta_checks.proof.json, run_capability_checks.proof.json, run_meta_checks.thin_proof.json, run_capability_checks.thin_proof.json.
+
+### Findings
+- The managed FlowGuard project record now matches installed FlowGuard 0.53.0 with schema 1.0.
+- FlowPilot no-fallback claims are bound through Behavior Commitment Ledger, Primary Path Authority, field lifecycle rows, model-test alignment, risk gates, and negative coverage.
+- The disputed PM-visible summary and authorized-result-read surfaces stay current-contract only: runtime mechanically requires and relays role-authored fields, but does not synthesize reviewer or PM semantic summaries.
+- No runtime compatibility shim, legacy alias, prose fallback, old-field translation, UI surface, or new runtime state family was added.
+- The install-sync path initially failed only because topology evidence was stale after result files changed; rebuilding topology closed that freshness gap before install completion was claimed.
+- Peer-agent untracked paths remained visible and unstaged: .playwright-mcp/, .tmp_flowguard_evidence/, promotion-kit/, reports/, and simulations/.tmp_flowguard_evidence/.
+
+### Counterexamples
+- old summary field as success fallback -> blocked by PPA negative candidate fallback.old_result_summary_field.
+- alias submit-result body path -> blocked by PPA negative candidate fallback.alias_submit_result_body.
+- prose reviewer pass as alternate success -> blocked by PPA negative candidate fallback.prose_reviewer_pass.
+- missing field projection, missing PPA ledger, stale evidence ledger, and duplicate authority plans are negative cases in tests/test_flowpilot_053_ppa_maintenance.py.
+
+### Friction Points
+- Large JSON-emitting checks are easy to misread from terminal output; final evidence should be summarized from result JSON and metadata artifacts.
+- Topology must be rebuilt after result JSONs change, otherwise install self-check correctly reports topology_source_stale.
+
+### Skipped Steps
+- No public GitHub release, tag, push, deployment, or UI validation was performed in this local maintenance pass.
+- No compatibility migration was performed because the repair stayed on current-contract fields and paths.
+
+### Risk Evidence Summary
+- PPA decision: primary_path_authority_green with full confidence and findings [].
+- BCL decision: behavior_commitment_coverage_green with findings [].
+- Risk ledger decision: risk_evidence_full_confidence with findings [].
+- Meta and Capability release confidence: current_with_layered_full_parent after forced full proof refresh.
+
+### Next Actions
+- Keep result JSON, topology, install sync, and OpenSpec task state fresh together; changing one of those evidence surfaces stales the others until rerun.
+
+
 ## harden-flowpilot-core-deliverable-non-downgrade - Core deliverable non-downgrade hardening
 
 - Project: FlowGuardProjectAutopilot_20260430
@@ -29651,6 +29727,45 @@ Evidence supports the local repository and installed FlowPilot skill for the mat
 ### Findings
 - FlowGuard repository recorded: https://github.com/liuyingxuvka/FlowGuard
 - FlowGuard check-engine version recorded: 0.52.6
+- FlowGuard schema version recorded: 1.0
+- Artifact upgrade scan: apply: scanned=4 upgraded=1 blocked=0 changed=1
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- Project adoption record does not replace executable model checks, tests, replay, or closure evidence.
+
+### Risk Evidence Summary
+- none recorded
+
+### Next Actions
+- Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
+
+
+## flowguard-project-upgrade - FlowGuard project upgrade record update
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: target project uses FlowGuard and needs durable AGENTS/version records
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-07-08T20:52:30+00:00
+- Ended: 2026-07-08T20:52:30+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- none recorded
+
+### Commands
+- none recorded
+
+### Findings
+- FlowGuard repository recorded: https://github.com/liuyingxuvka/FlowGuard
+- FlowGuard check-engine version recorded: 0.53.0
 - FlowGuard schema version recorded: 1.0
 - Artifact upgrade scan: apply: scanned=4 upgraded=1 blocked=0 changed=1
 

@@ -1,0 +1,109 @@
+contract_version: 1
+change: enforce-pm-visible-role-summaries
+obligations:
+  - id: req.role_output.pm_visible_role_authored_summaries
+    source: "specs/role-output-transaction-boundaries/spec.md#Requirement: Formal role results carry PM-visible role-authored summaries"
+    claim: "Formal non-PM role results must carry a non-empty role-authored pm_visible_summary; runtime may require and relay it but must not synthesize semantic text."
+    required: true
+    evidence:
+      - check.pm_visible_summary.flowguard_runner
+      - check.pm_visible_summary.ppa_lifecycle
+  - id: req.role_output.authorized_result_body_reads
+    source: "specs/role-output-transaction-boundaries/spec.md#Requirement: Downstream roles can open explicitly authorized result bodies"
+    claim: "Authorized result reads are current mechanical material grants, and required reads block submission until opened by the assigned role."
+    required: true
+    evidence:
+      - check.pm_visible_summary.focused_runtime_tests
+      - check.pm_visible_summary.ppa_lifecycle
+  - id: req.packet_review.recent_role_summaries
+    source: "specs/flowpilot-packet-review-flow/spec.md#Requirement: PM packets include recent role-authored report summaries"
+    claim: "PM packets may carry recent_role_report_summary as navigation context, not as a substitute for required sealed-body reads."
+    required: true
+    evidence:
+      - check.pm_visible_summary.flowguard_runner
+      - check.pm_visible_summary.focused_runtime_tests
+  - id: req.packet_review.required_result_read_grants
+    source: "specs/flowpilot-packet-review-flow/spec.md#Requirement: Packets carry required result-read grants for downstream review"
+    claim: "Reviewer, PM repair, and fresh repair packets preserve required authorized_result_reads for current downstream review."
+    required: true
+    evidence:
+      - check.pm_visible_summary.focused_runtime_tests
+      - check.pm_visible_summary.ppa_lifecycle
+  - id: req.blocker_repair.concrete_role_repair_guidance
+    source: "specs/blocker-repair-policy/spec.md#Requirement: PM repair packets preserve concrete role repair guidance"
+    claim: "Concrete reviewer required_repair guidance is preserved into PM repair context when present."
+    required: true
+    evidence:
+      - check.pm_visible_summary.flowguard_runner
+      - check.pm_visible_summary.focused_runtime_tests
+  - id: req.blocker_repair.opened_blocking_reports
+    source: "specs/blocker-repair-policy/spec.md#Requirement: PM repair decisions are based on opened blocking reports"
+    claim: "PM repair decisions must consume authorized blocking report bodies; summaries alone are insufficient."
+    required: true
+    evidence:
+      - check.pm_visible_summary.focused_runtime_tests
+      - check.pm_visible_summary.ppa_lifecycle
+checks:
+  - id: check.pm_visible_summary.flowguard_runner
+    kind: command
+    command: python
+    args:
+      - "simulations/run_flowpilot_pm_visible_summary_checks.py"
+    required: true
+    covers:
+      - req.role_output.pm_visible_role_authored_summaries
+      - req.packet_review.recent_role_summaries
+      - req.blocker_repair.concrete_role_repair_guidance
+    expected:
+      exit_code: 0
+  - id: check.pm_visible_summary.focused_runtime_tests
+    kind: command
+    command: python
+    args:
+      - "-m"
+      - "pytest"
+      - "tests/test_flowpilot_core_runtime.py"
+      - "tests/test_flowpilot_new_entrypoint.py"
+      - "-q"
+    required: true
+    covers:
+      - req.role_output.authorized_result_body_reads
+      - req.packet_review.recent_role_summaries
+      - req.packet_review.required_result_read_grants
+      - req.blocker_repair.concrete_role_repair_guidance
+      - req.blocker_repair.opened_blocking_reports
+    expected:
+      exit_code: 0
+  - id: check.pm_visible_summary.ppa_lifecycle
+    kind: command
+    command: python
+    args:
+      - "simulations/run_flowpilot_053_ppa_maintenance_checks.py"
+    required: true
+    covers:
+      - req.role_output.pm_visible_role_authored_summaries
+      - req.role_output.authorized_result_body_reads
+      - req.packet_review.required_result_read_grants
+      - req.blocker_repair.opened_blocking_reports
+    expected:
+      exit_code: 0
+freshness:
+  watch:
+    - openspec/changes/enforce-pm-visible-role-summaries/proposal.md
+    - openspec/changes/enforce-pm-visible-role-summaries/design.md
+    - openspec/changes/enforce-pm-visible-role-summaries/tasks.md
+    - openspec/changes/enforce-pm-visible-role-summaries/specs/**/*.md
+    - openspec/changes/enforce-pm-visible-role-summaries/verification-contract.yaml
+    - skills/flowpilot/assets/flowpilot_core_runtime/runtime.py
+    - skills/flowpilot/assets/flowpilot_core_runtime/packet_result_contracts.py
+    - skills/flowpilot/assets/flowpilot_core_runtime/packet_stage_evidence_matrix.py
+    - skills/flowpilot/assets/flowpilot_new_role_commands.py
+    - skills/flowpilot/assets/runtime_kit/cards/**/*.md
+    - skills/flowpilot/assets/runtime_kit/prompts/**/*.md
+    - simulations/flowpilot_pm_visible_summary_model.py
+    - simulations/run_flowpilot_pm_visible_summary_checks.py
+    - simulations/flowpilot_053_ppa_maintenance_model.py
+    - simulations/run_flowpilot_053_ppa_maintenance_checks.py
+    - tests/test_flowpilot_core_runtime.py
+    - tests/test_flowpilot_new_entrypoint.py
+    - tests/test_flowpilot_053_ppa_maintenance.py

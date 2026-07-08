@@ -5,12 +5,12 @@ It is orientation only; it is not validation evidence.
 
 ## Summary
 
-- Model runners: 158
-- Model-test alignment families: 14
-- Code surfaces: 1076
+- Model runners: 159
+- Model-test alignment families: 16
+- Code surfaces: 1077
 - Test commands: 452
 - Evidence summaries: 5
-- Known-bad/risk labels surfaced: 2629
+- Known-bad/risk labels surfaced: 2637
 
 ## Area Map
 
@@ -22,13 +22,13 @@ It is orientation only; it is not validation evidence.
 | `material` | 1 | 0 | 26 | 30 | 11 |
 | `model-mesh` | 3 | 0 | 7 | 2 | 86 |
 | `model-test-alignment` | 5 | 0 | 14 | 12 | 74 |
-| `other` | 90 | 7 | 253 | 40 | 1423 |
+| `other` | 90 | 8 | 253 | 40 | 1423 |
 | `packet` | 10 | 2 | 210 | 165 | 169 |
 | `prompt-card` | 3 | 0 | 4 | 0 | 80 |
 | `review` | 4 | 0 | 4 | 0 | 78 |
 | `route` | 17 | 3 | 353 | 104 | 322 |
 | `startup` | 6 | 1 | 73 | 44 | 129 |
-| `structure` | 3 | 0 | 7 | 4 | 37 |
+| `structure` | 4 | 1 | 8 | 4 | 45 |
 
 ## Evidence Boundaries
 
@@ -53,6 +53,7 @@ Completion and readiness claims still need the owning FlowGuard checks, tests, r
 - `card_instruction_coverage` (packet, specialized_assertion_or_local_hazard): `simulations/run_card_instruction_coverage_checks.py` -> `simulations/card_instruction_coverage_results.json`; known-bad: hazards, ok, packet_prompt_hazards
 - `command_refinement` (other, supporting_model_owned): `simulations/run_command_refinement_checks.py` -> `simulations/flowpilot_command_refinement_results.json`; known-bad: background_collaboration_start_fold, card_bundle_fold, final_replay_fold
 - `defect_governance` (other, specialized_assertion_or_local_hazard): `simulations/run_defect_governance_checks.py` -> `simulations/defect_governance_results.json`; known-bad: hazards, ok, blocker_never_logged
+- `flowpilot_053_ppa_maintenance` (structure, unclassified_model_tier): `simulations/run_flowpilot_053_ppa_maintenance_checks.py` -> `simulations/flowpilot_053_ppa_maintenance_results.json`; known-bad: expected, hazards, ok
 - `flowpilot_acceptance_testmesh` (other, supporting_model_owned): `simulations/run_flowpilot_acceptance_testmesh_checks.py` -> `simulations/flowpilot_acceptance_testmesh_results.json`
 - `flowpilot_blocker_repair_information_flow` (other, supporting_model_owned): `simulations/run_flowpilot_blocker_repair_information_flow_checks.py` -> `simulations/flowpilot_blocker_repair_information_flow_results.json`; known-bad: failures, hazards, ok
 - `flowpilot_canonical_repair_scope_rotation` (other, supporting_model_owned): `simulations/run_flowpilot_canonical_repair_scope_rotation_checks.py` -> `simulations/flowpilot_canonical_repair_scope_rotation_results.json`; known-bad: expected, hazards, ok
@@ -73,7 +74,6 @@ Completion and readiness claims still need the owning FlowGuard checks, tests, r
 - `flowpilot_control_surface_contract` (other, supporting_model_owned): `simulations/run_flowpilot_control_surface_contract_checks.py` -> `simulations/flowpilot_control_surface_contract_results.json`; known-bad: hazards, ok, accepted_result_reassigned_accepted
 - `flowpilot_control_transaction_registry` (other, coverage_strong): `simulations/run_flowpilot_control_transaction_registry_checks.py` -> `simulations/flowpilot_control_transaction_registry_results.json`; known-bad: failures, hazards, ok
 - `flowpilot_controller_break_glass` (controller, supporting_model_owned): `simulations/run_flowpilot_controller_break_glass_checks.py` -> `simulations/flowpilot_controller_break_glass_results.json`; known-bad: failures, hazards, ok
-- `flowpilot_controller_patrol` (controller, supporting_model_owned): `simulations/run_flowpilot_controller_patrol_checks.py` -> `simulations/flowpilot_controller_patrol_results.json`; known-bad: hazards, ok, command_restart_marked_complete
 
 ## Alignment Families
 
@@ -90,6 +90,8 @@ Completion and readiness claims still need the owning FlowGuard checks, tests, r
 - `test tiering/slow-test contracts` (other): 3 obligations, 5 test evidence rows
 - `rejection/liveness matrix` (other): 5 obligations, 9 test evidence rows
 - `route authority singularity` (route): 5 obligations, 6 test evidence rows
+- `core deliverable non-downgrade` (other): 1 obligations, 2 test evidence rows
+- `flowguard 0.53 ppa maintenance` (structure): 4 obligations, 5 test evidence rows
 - `meta/capability parents` (other): 3 obligations, 5 test evidence rows
 
 ## Maintenance Rule

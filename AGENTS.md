@@ -212,7 +212,7 @@ Project FlowGuard record:
 - Human log: `docs/flowguard_adoption_log.md`
 
 Current adoption record:
-- FlowGuard check-engine version: `0.52.6`
+- FlowGuard check-engine version: `0.53.0`
 - FlowGuard schema version: `1.0`
 
 Before non-trivial work:
