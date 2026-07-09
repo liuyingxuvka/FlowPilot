@@ -20363,6 +20363,83 @@ to identify unsupported historical-layer branches that should be deleted.
 - Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
 
 
+## harden-flowpilot-control-plane-ledger-hygiene - FlowPilot control-plane ledger hygiene repair
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: DataBank run evidence showed dirty accepted-result pointers, dropped repair identity, open break-glass incidents, stale active blockers, and missing final Reviewer authorization.
+- Status: completed
+- Skill decision: used_openspec_and_flowguard_development_process
+- Started: 2026-07-09T05:20:00+02:00
+- Ended: 2026-07-09T08:16:35+02:00
+- Duration seconds: 9995
+- Commands OK: True
+
+### Model Files
+- `simulations/flowpilot_control_surface_contract_model.py`
+- `simulations/flowpilot_blocker_repair_information_flow_model.py`
+- `simulations/flowpilot_controller_break_glass_model.py`
+- `simulations/flowpilot_runtime_closure_model.py`
+- `simulations/flowpilot_recursive_closure_reconciliation_model.py`
+- `simulations/flowpilot_fake_ai_runtime_replay_model.py`
+- `simulations/flowpilot_synthetic_agent_coverage_matrix.py`
+- `simulations/flowpilot_model_test_alignment_family_plans.py`
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`
+- `python -c "import importlib.metadata as m; print(m.version('flowguard'))"`
+- `python -m flowguard project-audit --root .`
+- `python -m pytest tests/test_flowpilot_core_runtime.py tests/test_flowpilot_high_standard_control_flow.py tests/test_flowpilot_historical_live_run_replay.py tests/test_flowpilot_synthetic_agent_trace_replay.py tests/test_flowpilot_fake_ai_runtime_replay.py tests/test_flowpilot_synthetic_agent_coverage_matrix.py -q`
+- `python simulations/run_flowpilot_control_surface_contract_checks.py --json-out simulations/flowpilot_control_surface_contract_results.json`
+- `python simulations/run_flowpilot_blocker_repair_information_flow_checks.py --json-out simulations/flowpilot_blocker_repair_information_flow_results.json`
+- `python simulations/run_flowpilot_controller_break_glass_checks.py --json-out simulations/flowpilot_controller_break_glass_results.json`
+- `python simulations/run_flowpilot_runtime_closure_checks.py --json-out simulations/flowpilot_runtime_closure_results.json`
+- `python simulations/run_flowpilot_recursive_closure_reconciliation_checks.py --json-out simulations/flowpilot_recursive_closure_reconciliation_results.json`
+- `python simulations/run_flowpilot_fake_ai_runtime_replay_checks.py --json-out simulations/flowpilot_fake_ai_runtime_replay_summary.json`
+- `python simulations/run_flowpilot_cartesian_control_plane_exhaustion_checks.py --json-out simulations/flowpilot_cartesian_control_plane_exhaustion_results.json`
+- `python simulations/run_flowpilot_model_test_alignment_checks.py --json-out simulations/flowpilot_model_test_alignment_results.json`
+- `python simulations/flowpilot_synthetic_agent_coverage_matrix.py --json-out simulations/flowpilot_synthetic_agent_coverage_matrix_results.json`
+- `python scripts/flowguard_project_topology.py build`
+- `python scripts/flowguard_project_topology.py check`
+- `python scripts/check_install.py --json`
+- `python scripts/install_flowpilot.py --sync-repo-owned --json`
+- `python scripts/install_flowpilot.py --check --json`
+- `python scripts/audit_local_install_sync.py --json`
+- `python simulations/run_meta_checks.py`
+- `python simulations/run_capability_checks.py`
+- `openspec verify harden-flowpilot-control-plane-ledger-hygiene --json`
+
+### Findings
+- Runtime now prevents a review-blocked or rejected result from staying attached as a packet's accepted result.
+- PM FlowGuard acceptance no longer writes final packet acceptance before Reviewer/System acceptance.
+- Gate-derived PM FlowGuard acceptance packets carry the existing repair blocker identity instead of clearing it.
+- Final closure and terminal return now inspect whole-ledger hygiene, including stale active blockers, open break-glass incidents, and pending temporary permanent-fix patches.
+- Final Reviewer and terminal backward replay packets receive authorized result-body evidence through existing `authorized_result_reads`.
+- Fake-AI/D-card coverage adds a full control-plane ledger hygiene Cartesian matrix with 972000 cells, owned runtime reactions, and compact summary output.
+
+### Counterexamples
+- Dirty `accepted_result_id` pointing at `review_blocked` or rejected result is blocked.
+- Assignment repair cannot resurrect a dirty accepted packet.
+- PM FlowGuard acceptance `decision=accept` cannot become final packet acceptance early.
+- Dropped repair identity in gate-derived acceptance packets is rejected by model/test evidence.
+- Open break-glass incidents and pending permanent-fix patches block final closure.
+- Empty final Reviewer authorization is rejected.
+
+### Friction Points
+- The full fake-AI Cartesian report became too large for a normal repository artifact, so the current command writes compact summary evidence while tests still enumerate the full matrix in memory.
+- The installed local FlowPilot skill was stale before sync; repository-owned install sync and audit passed after overwrite.
+
+### Skipped Steps
+- No new runtime fields, packet kinds, roles, UI, legacy aliases, fallback compatibility, old-field translation, missing-field defaults, or runtime semantic matcher were added.
+- No release, tag, push, deploy, or OpenSpec archive was performed.
+
+### Risk Evidence Summary
+- Evidence supports local runtime behavior, FlowGuard model alignment, focused regressions, synthetic run replay, fake-AI Cartesian coverage, topology freshness, OpenSpec verification, and installed-skill sync.
+- The repair is based on reproduced ledger shapes and summarized DataBank evidence, not the original remote run directory.
+
+### Next Actions
+- Release, tag, push, or OpenSpec archive remains a separate explicit gate after final diff review.
+
+
 ## flowpilot-053-ppa-maintenance - FlowPilot current-contract maintenance pass
 
 - Project: FlowGuardProjectAutopilot_20260430

@@ -19,6 +19,9 @@ ACK_TREATED_AS_RESULT = "ack_treated_as_result"
 ACCEPTED_RESULT_REASSIGNED = "accepted_result_reassigned"
 OLD_GENERATION_RESULT_ACCEPTED = "old_generation_result_accepted"
 UNSUPPORTED_HISTORICAL_POINTER_ACCEPTED = "unsupported_historical_pointer_accepted"
+REVIEW_BLOCKED_ACCEPTED_POINTER = "review_blocked_accepted_pointer"
+ASSIGNMENT_REPAIR_TRUSTS_DIRTY_POINTER = "assignment_repair_trusts_dirty_pointer"
+PM_FLOWGUARD_ACCEPTANCE_EARLY_ACCEPTED = "pm_flowguard_acceptance_early_accepted"
 
 SCENARIOS = (
     SUCCESS,
@@ -30,6 +33,9 @@ SCENARIOS = (
     ACCEPTED_RESULT_REASSIGNED,
     OLD_GENERATION_RESULT_ACCEPTED,
     UNSUPPORTED_HISTORICAL_POINTER_ACCEPTED,
+    REVIEW_BLOCKED_ACCEPTED_POINTER,
+    ASSIGNMENT_REPAIR_TRUSTS_DIRTY_POINTER,
+    PM_FLOWGUARD_ACCEPTANCE_EARLY_ACCEPTED,
 )
 RISK_SCENARIOS = set(SCENARIOS) - {SUCCESS}
 
@@ -73,6 +79,12 @@ class State:
     accepted_seen: bool = True
     accepted_packet_reassigned: bool = False
     accepted_packet_ack_regressed: bool = False
+    accepted_result_id_present: bool = True
+    accepted_result_status: str = "accepted"  # accepted | review_blocked | rejected | validation_failed | missing
+    accepted_result_review_accepted: bool = True
+    accepted_result_validation_passed: bool = True
+    assignment_repair_validates_accepted_pointer: bool = True
+    pm_flowguard_acceptance_waits_for_review: bool = True
     current_generation: int = 2
     result_generation: int = 2
     stale_generation_quarantined: bool = True
@@ -145,6 +157,22 @@ def _selected_state(scenario: str) -> State:
             unsupported_historical_current_fields_present=True,
             resolver_accepts_unsupported_historical_fields=True,
         )
+    if scenario == REVIEW_BLOCKED_ACCEPTED_POINTER:
+        return replace(
+            base,
+            scenario=scenario,
+            accepted_result_status="review_blocked",
+            accepted_result_review_accepted=False,
+            accepted_result_validation_passed=False,
+        )
+    if scenario == ASSIGNMENT_REPAIR_TRUSTS_DIRTY_POINTER:
+        return replace(
+            base,
+            scenario=scenario,
+            assignment_repair_validates_accepted_pointer=False,
+        )
+    if scenario == PM_FLOWGUARD_ACCEPTANCE_EARLY_ACCEPTED:
+        return replace(base, scenario=scenario, pm_flowguard_acceptance_waits_for_review=False)
     raise ValueError(f"unknown scenario: {scenario}")
 
 
@@ -158,6 +186,14 @@ def control_surface_ready(state: State) -> bool:
     fresh_or_quarantined = (
         state.result_generation >= state.current_generation
         or state.stale_generation_quarantined
+    )
+    accepted_pointer_clean = (
+        not state.accepted_result_id_present
+        or (
+            state.accepted_result_status == "accepted"
+            and state.accepted_result_review_accepted
+            and state.accepted_result_validation_passed
+        )
     )
     return (
         state.status == "running"
@@ -175,6 +211,9 @@ def control_surface_ready(state: State) -> bool:
         and state.accepted_seen
         and not state.accepted_packet_reassigned
         and not state.accepted_packet_ack_regressed
+        and accepted_pointer_clean
+        and state.assignment_repair_validates_accepted_pointer
+        and state.pm_flowguard_acceptance_waits_for_review
         and fresh_or_quarantined
     )
 
@@ -202,6 +241,16 @@ def _block_label(state: State) -> str:
         return "block_ack_treated_as_result"
     if state.accepted_packet_reassigned or state.accepted_packet_ack_regressed:
         return "block_accepted_packet_mutated"
+    if state.accepted_result_id_present and (
+        state.accepted_result_status != "accepted"
+        or not state.accepted_result_review_accepted
+        or not state.accepted_result_validation_passed
+    ):
+        return "block_dirty_accepted_result_pointer"
+    if not state.assignment_repair_validates_accepted_pointer:
+        return "block_assignment_repair_trusts_dirty_accepted_pointer"
+    if not state.pm_flowguard_acceptance_waits_for_review:
+        return "block_pm_flowguard_acceptance_early_accepted"
     if state.result_generation < state.current_generation and not state.stale_generation_quarantined:
         return "block_old_generation_result_accepted"
     return "block_control_surface_contract_incomplete"

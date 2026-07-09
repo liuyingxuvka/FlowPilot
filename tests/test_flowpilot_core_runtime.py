@@ -3305,6 +3305,340 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
             blocker_id,
         )
 
+    def test_dirty_accepted_result_pointer_blocks_assignment_repair_and_terminal_hygiene(self) -> None:
+        ledger = runtime.new_ledger("Goal", "Contract")
+        authorize_background_collaboration(ledger)
+        runtime.create_route(ledger, "Route", ["Do work"])
+        packet_id = runtime.issue_task_packet(ledger, "worker", "Do work", "BODY")
+        lease_id = runtime.lease_agent(ledger, "worker", agent_id="worker-dirty", packet_id=packet_id)
+        runtime.assign_packet(ledger, packet_id, lease_id)
+        body = role_result_body("This result was later review-blocked.")
+        result_id = "result-review-blocked"
+        ledger["results"][result_id] = {
+            "result_id": result_id,
+            "packet_id": packet_id,
+            "producer_lease_id": lease_id,
+            "status": "review_blocked",
+            "accepted": False,
+            "body": body,
+            "envelope": {
+                "body_hash": runtime.hash_text(body),
+                "evidence_generation": ledger["source_generation"],
+            },
+        }
+        packet = ledger["packets"][packet_id]
+        packet["status"] = "accepted"
+        packet["accepted_result_id"] = result_id
+        packet["assigned_lease_id"] = lease_id
+        ledger["closure"] = {"decision": "complete"}
+
+        with self.assertRaises(runtime.BlackBoxRuntimeError):
+            runtime.repair_accepted_packet_assignment(ledger, packet_id)
+
+        preflight = runtime.final_return_preflight(
+            ledger,
+            guard={
+                "controller_stop_allowed": True,
+                "decision": "terminal_return",
+                "next_action": {"action_type": "terminal_complete"},
+            },
+        )
+
+        self.assertFalse(preflight["allowed"], preflight)
+        self.assertTrue(
+            any("accepted_result_pointer" in item for item in preflight["blockers"]),
+            preflight["blockers"],
+        )
+
+    def test_pm_flowguard_acceptance_waits_for_review_before_accepted_pointer(self) -> None:
+        ledger, packet_id, worker = runtime_runner._base_ledger()
+        runtime.ack_lease(ledger, worker, packet_id)
+        runtime.submit_result(
+            ledger,
+            worker,
+            packet_id,
+            role_result_body(
+                "Worker found a current blocker.",
+                decision="block",
+                blocking=True,
+                blocker_class="needs_repair",
+                recommended_resolution="repair current scope",
+            ),
+        )
+        blocker_id = next(iter(ledger["active_blockers"]))
+        pm_packet = ledger["active_blockers"][blocker_id]["pm_repair_packet_id"]
+        pm_lease = self._lease_ack_and_open_packet(ledger, pm_packet, "pm")
+        runtime.submit_result(
+            ledger,
+            pm_lease,
+            pm_packet,
+            pm_repair_decision_body(
+                ledger,
+                pm_packet,
+                decision="repair_current_scope",
+                reason="Repair current packet.",
+            ),
+        )
+        flowguard_packet = runtime_runner._open_packet_by_kind(ledger, "flowguard_check")
+        flowguard_lease = self._lease_ack_and_open_packet(ledger, flowguard_packet, "flowguard_operator")
+        write_flowguard_evidence_artifact(ledger, flowguard_packet)
+        runtime.submit_result(
+            ledger,
+            flowguard_lease,
+            flowguard_packet,
+            flowguard_result_body(
+                "FlowGuard accepted the staged PM continue-repair decision.",
+                **semantic_recheck_fields_from_packet(ledger, flowguard_packet, blocker_id),
+            ),
+        )
+
+        gate = next(
+            row
+            for row in ledger["pm_decision_gates"].values()
+            if row.get("status") == "awaiting_pm_flowguard_acceptance"
+        )
+        order = ledger["flowguard_work_orders"][gate["flowguard_order_id"]]
+        pm_flowguard_packet_id = runtime_runner._open_packet_by_kind(ledger, "pm_flowguard_acceptance")
+        pm_flowguard_lease = self._lease_ack_and_open_packet(ledger, pm_flowguard_packet_id, "pm")
+        payload = packet_result_contracts.minimal_valid_shape_for_family("pm_flowguard_acceptance.pm_flowguard_acceptance")
+        payload.update(
+            {
+                "reason": "PM absorbed FlowGuard before continuing repair.",
+                "flowguard_absorption": "PM accepted the current FlowGuard recheck for the staged repair decision.",
+                "accepted_flowguard_result_id": order["proof_result_id"],
+            }
+        )
+
+        result_id = runtime.submit_result(ledger, pm_flowguard_lease, pm_flowguard_packet_id, json.dumps(payload))
+        packet = ledger["packets"][pm_flowguard_packet_id]
+        result = ledger["results"][result_id]
+
+        self.assertNotEqual(packet["status"], "accepted")
+        self.assertFalse(packet.get("accepted_result_id"))
+        self.assertNotEqual(result["status"], "accepted")
+        review_packets = [
+            candidate
+            for candidate in ledger["packets"].values()
+            if candidate["envelope"].get("packet_kind") == "review"
+            and candidate["envelope"].get("subject_id") == pm_flowguard_packet_id
+            and candidate["status"] == "open"
+        ]
+        self.assertEqual(len(review_packets), 1)
+
+    def test_pm_flowguard_acceptance_packet_inherits_gate_repair_blocker_identity(self) -> None:
+        ledger, packet_id, worker = runtime_runner._base_ledger()
+        runtime.ack_lease(ledger, worker, packet_id)
+        runtime.submit_result(
+            ledger,
+            worker,
+            packet_id,
+            role_result_body(
+                "Worker found a current blocker.",
+                decision="block",
+                blocking=True,
+                blocker_class="needs_repair",
+                recommended_resolution="repair current scope",
+            ),
+        )
+        blocker_id = next(iter(ledger["active_blockers"]))
+        pm_packet = ledger["active_blockers"][blocker_id]["pm_repair_packet_id"]
+        pm_lease = self._lease_ack_and_open_packet(ledger, pm_packet, "pm")
+        runtime.submit_result(
+            ledger,
+            pm_lease,
+            pm_packet,
+            pm_repair_decision_body(
+                ledger,
+                pm_packet,
+                decision="repair_current_scope",
+                reason="Repair current packet.",
+            ),
+        )
+        flowguard_packet = runtime_runner._open_packet_by_kind(ledger, "flowguard_check")
+        flowguard_lease = self._lease_ack_and_open_packet(ledger, flowguard_packet, "flowguard_operator")
+        write_flowguard_evidence_artifact(ledger, flowguard_packet)
+        runtime.submit_result(
+            ledger,
+            flowguard_lease,
+            flowguard_packet,
+            flowguard_result_body(
+                "FlowGuard accepted the staged PM continue-repair decision.",
+                **semantic_recheck_fields_from_packet(ledger, flowguard_packet, blocker_id),
+            ),
+        )
+
+        pm_flowguard_packet_id = runtime_runner._open_packet_by_kind(ledger, "pm_flowguard_acceptance")
+        packet = ledger["packets"][pm_flowguard_packet_id]
+        body = json.loads(packet["body"])
+
+        self.assertEqual(packet.get("repair_blocker_id"), blocker_id)
+        self.assertEqual(packet["envelope"].get("repair_blocker_id"), blocker_id)
+        self.assertEqual(
+            packet["envelope"]["current_handoff_contract"]["input_material_manifest"]["blocker_id"],
+            blocker_id,
+        )
+        self.assertEqual(
+            body["current_handoff_contract"]["input_material_manifest"]["blocker_id"],
+            blocker_id,
+        )
+
+    def test_final_closure_blocks_open_break_glass_incident_and_pending_patch(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            ledger = runtime.new_ledger("Goal", "Contract")
+            authorize_background_collaboration(ledger)
+            runtime.create_route(ledger, "Route", ["Do work"])
+            ledger["run_root"] = tmpdir
+            root = Path(tmpdir) / "controller_break_glass"
+            incidents = root / "incidents"
+            patches = root / "patches"
+            incidents.mkdir(parents=True)
+            patches.mkdir(parents=True)
+            (incidents / "incident-blocker-0006.json").write_text(
+                json.dumps(
+                    {
+                        "incident_id": "incident-blocker-0006",
+                        "status": "open",
+                        "final_disposition": None,
+                        "closed_at": None,
+                        "related_patch_ids": ["patch-blocker-0006-accepted-review-sync"],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            (patches / "patch-blocker-0006-accepted-review-sync.json").write_text(
+                json.dumps(
+                    {
+                        "patch_id": "patch-blocker-0006-accepted-review-sync",
+                        "temporary": True,
+                        "permanent_fix_needed": True,
+                        "validation_status": "pending",
+                    }
+                ),
+                encoding="utf-8",
+            )
+            ledger["closure"] = {"decision": "complete"}
+
+            blockers = runtime._closure_blockers(
+                ledger,
+                validation_evidence_id="validation-current",
+                required_flowguard_target="development_process",
+            )
+            preflight = runtime.final_return_preflight(
+                ledger,
+                guard={
+                    "controller_stop_allowed": True,
+                    "decision": "terminal_return",
+                    "next_action": {"action_type": "terminal_complete"},
+                },
+            )
+
+        self.assertTrue(any("break_glass_incident_open" in item for item in blockers), blockers)
+        self.assertTrue(any("break_glass_patch_pending" in item for item in blockers), blockers)
+        self.assertFalse(preflight["allowed"], preflight)
+        self.assertTrue(any("break_glass_incident_open" in item for item in preflight["blockers"]), preflight)
+        self.assertTrue(any("break_glass_patch_pending" in item for item in preflight["blockers"]), preflight)
+
+    def test_stale_active_blocker_blocks_terminal_hygiene_even_when_not_current_effective(self) -> None:
+        ledger = runtime.new_ledger("Goal", "Contract")
+        authorize_background_collaboration(ledger)
+        runtime.create_route(ledger, "Route", ["Do work"])
+        active_route = ledger["active_route_version"]
+        node_id = "node-stale"
+        ledger["route_nodes"][node_id] = {
+            "node_id": node_id,
+            "route_version": active_route,
+            "status": "accepted",
+            "responsibility": "worker",
+            "modeled_target": "development_process",
+            "acceptance_criteria": ["done"],
+            "packet_ids": [],
+        }
+        packet_id = runtime.issue_task_packet(
+            ledger,
+            "worker",
+            "Historical repair target",
+            "BODY",
+            route_node_id=node_id,
+            route_scope="node",
+        )
+        ledger["packets"][packet_id]["status"] = "accepted"
+        ledger["active_blockers"]["blocker-stale"] = {
+            "blocker_id": "blocker-stale",
+            "status": "active",
+            "route_node_id": node_id,
+            "packet_id": packet_id,
+            "subject_packet_id": packet_id,
+            "repair_target_packet_id": packet_id,
+            "target_result_id": "result-stale",
+            "blocker_class": "system_validation_failure",
+        }
+        ledger["closure"] = {"decision": "complete"}
+
+        preflight = runtime.final_return_preflight(
+            ledger,
+            guard={
+                "controller_stop_allowed": True,
+                "decision": "terminal_return",
+                "next_action": {"action_type": "terminal_complete"},
+            },
+        )
+
+        self.assertFalse(preflight["allowed"], preflight)
+        self.assertTrue(any("active_blocker:blocker-stale" in item for item in preflight["blockers"]), preflight)
+
+    def test_final_reviewer_node_task_receives_authorized_evidence_bundle(self) -> None:
+        ledger = runtime.new_ledger("Goal", "Contract")
+        authorize_background_collaboration(ledger)
+        runtime.create_route(ledger, "Route", ["Final review"])
+        source_packet_id = runtime.issue_task_packet(ledger, "worker", "Prior accepted work", "BODY")
+        body = role_result_body("Prior current result body.")
+        result_id = "result-prior-current"
+        ledger["results"][result_id] = {
+            "result_id": result_id,
+            "packet_id": source_packet_id,
+            "producer_lease_id": "",
+            "status": "accepted",
+            "accepted": True,
+            "body": body,
+            "envelope": {
+                "body_hash": runtime.hash_text(body),
+                "evidence_generation": ledger["source_generation"],
+            },
+        }
+        ledger["packets"][source_packet_id]["status"] = "accepted"
+        ledger["packets"][source_packet_id]["accepted_result_id"] = result_id
+        node_id = "node-final-review"
+        active_route = ledger["active_route_version"]
+        ledger["routes"][str(active_route)]["node_order"] = [node_id]
+        ledger["route_nodes"][node_id] = {
+            "node_id": node_id,
+            "title": "Final review and backward replay",
+            "route_version": active_route,
+            "status": "active",
+            "responsibility": "reviewer",
+            "modeled_target": "development_process",
+            "acceptance_criteria": ["Review final claim from current evidence."],
+            "packet_ids": [],
+            "repair_generation": 0,
+        }
+        ledger["execution_frontier"] = {
+            "active_route_version": active_route,
+            "active_node_id": node_id,
+            "completed_nodes": [],
+            "status": "node_execution",
+            "pending_route_mutation": None,
+            "updated_at": runtime.now_iso(),
+        }
+
+        final_packet_id = runtime.ensure_next_node_task_packet(ledger)
+        final_packet = ledger["packets"][final_packet_id]
+        reads = final_packet["envelope"].get("authorized_result_reads") or []
+        body_payload = json.loads(final_packet["body"])
+
+        self.assertTrue(reads, final_packet)
+        self.assertIn(result_id, {row.get("result_id") for row in reads})
+        self.assertEqual(reads, body_payload.get("authorized_result_reads"))
+
     def test_formal_repair_identity_prose_only_is_runtime_mechanical_blocker(self) -> None:
         ledger = runtime.new_ledger("Goal", "Contract")
         authorize_background_collaboration(ledger)

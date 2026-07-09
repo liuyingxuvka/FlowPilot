@@ -30,8 +30,12 @@ from flowpilot_contract_exhaustion_mesh_model import (  # noqa: E402
     SYNTHETIC_MUTATION_KINDS as CONTRACT_EXHAUSTION_SYNTHETIC_MUTATIONS,
 )
 from flowpilot_fake_ai_runtime_replay_model import (  # noqa: E402
+    CONTROL_PLANE_LEDGER_HYGIENE_EXPECTED_CELL_COUNT,
+    CONTROL_PLANE_LEDGER_HYGIENE_OWNER,
+    CONTROL_PLANE_LEDGER_HYGIENE_SOURCE,
     MODEL_ID as FAKE_AI_RUNTIME_REPLAY_MODEL_ID,
     REQUIRED_EVIDENCE_OWNER as FAKE_AI_RUNTIME_REPLAY_OWNER,
+    control_plane_ledger_hygiene_cells,
 )
 from flowpilot_real_issue_backfeed import (  # noqa: E402
     MODEL_ID as REAL_ISSUE_BACKFEED_MODEL_ID,
@@ -1009,6 +1013,7 @@ def _alignment_required_cells() -> list[dict[str, str]]:
     cells.extend(_rejection_liveness_required_cells())
     cells.extend(_contract_exhaustion_required_cells())
     cells.extend(_cartesian_exhaustion_required_cells())
+    cells.extend(_control_plane_ledger_hygiene_required_cells())
     return cells
 
 
@@ -1049,6 +1054,20 @@ def _cartesian_exhaustion_required_cells() -> list[dict[str, str]]:
                 "model_id": CARTESIAN_EXHAUSTION_MODEL_ID,
                 "obligation_id": f"cartesian_exhaustion.{cell['cell_id']}",
                 "branch_kind": str(cell["expected_reaction"]),
+            }
+        )
+    return cells
+
+
+def _control_plane_ledger_hygiene_required_cells() -> list[dict[str, str]]:
+    cells: list[dict[str, str]] = []
+    for cell in control_plane_ledger_hygiene_cells():
+        cells.append(
+            {
+                "family": str(cell["family"]),
+                "model_id": FAKE_AI_RUNTIME_REPLAY_MODEL_ID,
+                "obligation_id": f"fake_ai_runtime_replay.{cell['cell_id']}",
+                "branch_kind": str(cell["expected_runtime_reaction"]),
             }
         )
     return cells
@@ -1281,6 +1300,47 @@ def _cartesian_exhaustion_rows() -> list[dict[str, Any]]:
     return rows
 
 
+def _control_plane_ledger_hygiene_rows() -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for cell in control_plane_ledger_hygiene_cells():
+        reaction = str(cell["expected_runtime_reaction"])
+        terminal_block = reaction.startswith("block_terminal") or reaction.startswith("reject_")
+        rows.append(
+            {
+                **ALIGNMENT_ROW_DEFAULTS,
+                "family": str(cell["family"]),
+                "model_id": FAKE_AI_RUNTIME_REPLAY_MODEL_ID,
+                "obligation_id": f"fake_ai_runtime_replay.{cell['cell_id']}",
+                "branch_kind": reaction,
+                "coverage_kind": "synthetic_trace",
+                "evidence_owner": CONTROL_PLANE_LEDGER_HYGIENE_OWNER,
+                "evidence_id": f"fake_ai_runtime_replay.{cell['cell_id']}",
+                "test_name": "test_control_plane_ledger_hygiene_fake_ai_matrix_is_cartesian",
+                "path": "tests/test_flowpilot_fake_ai_runtime_replay.py",
+                "command": "python -m unittest tests.test_flowpilot_fake_ai_runtime_replay",
+                "evidence_status": "passed",
+                "evidence_current": True,
+                "evidence_role": "primary",
+                "live_completion_allowed": False,
+                "coverage_boundary": "control_flow_only",
+                "risk_tier": "P0" if terminal_block else "P1",
+                "synthetic_replay_required": True,
+                "synthetic_replay_status": "present",
+                "covered_failure_mode": reaction,
+                "source": CONTROL_PLANE_LEDGER_HYGIENE_SOURCE,
+                "result_status": cell["result_status"],
+                "accepted_pointer": cell["accepted_pointer"],
+                "repair_identity": cell["repair_identity"],
+                "packet_family": cell["packet_family"],
+                "blocker": cell["blocker"],
+                "break_glass": cell["break_glass"],
+                "reviewer_authorization": cell["reviewer_authorization"],
+                "closure_phase": cell["closure_phase"],
+            }
+        )
+    return rows
+
+
 def _alignment_rows() -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     for entry in build_alignment_plan_entries():
@@ -1359,6 +1419,7 @@ def build_coverage_rows() -> list[dict[str, Any]]:
     rows.extend(_rejection_liveness_rows())
     rows.extend(_contract_exhaustion_rows())
     rows.extend(_cartesian_exhaustion_rows())
+    rows.extend(_control_plane_ledger_hygiene_rows())
     rows.extend(_liveness_evidence_cartesian_rows())
     for row in SYNTHETIC_TRACE_ROWS:
         rows.append(
@@ -1650,7 +1711,7 @@ def known_bad_cases() -> list[dict[str, Any]]:
     ]
 
 
-def build_report() -> dict[str, Any]:
+def build_report(*, include_rows: bool = True) -> dict[str, Any]:
     required_cells = _alignment_required_cells()
     rows = build_coverage_rows()
     findings = validate_coverage_rows(rows, required_cells)
@@ -1702,7 +1763,7 @@ def build_report() -> dict[str, Any]:
         rows_by_family[str(row["family"])] += 1
         rows_by_coverage_kind[str(row["coverage_kind"])] += 1
 
-    return {
+    report = {
         "ok": not findings,
         "result_type": "flowpilot_synthetic_agent_coverage_matrix",
         "coverage_boundary": (
@@ -1740,9 +1801,19 @@ def build_report() -> dict[str, Any]:
             "legacy_pollution_case_count": liveness_cartesian["legacy_pollution_case_count"],
             "by_reaction": liveness_cartesian["by_reaction"],
         },
+        "control_plane_ledger_hygiene": {
+            "source": CONTROL_PLANE_LEDGER_HYGIENE_SOURCE,
+            "owner": CONTROL_PLANE_LEDGER_HYGIENE_OWNER,
+            "expected_cell_count": CONTROL_PLANE_LEDGER_HYGIENE_EXPECTED_CELL_COUNT,
+            "row_count": sum(
+                1
+                for row in rows
+                if row.get("source") == CONTROL_PLANE_LEDGER_HYGIENE_SOURCE
+            ),
+        },
         "findings": findings,
-        "required_cells": required_cells,
-        "rows": rows,
+        "required_cell_sample": required_cells[:25],
+        "row_sample": rows[:25],
         "full_diagnostic": {
             "ok": full_diagnostic["ok"],
             "full_coverage_ok": full_diagnostic["full_coverage_ok"],
@@ -1753,6 +1824,10 @@ def build_report() -> dict[str, Any]:
             "deferred_structure_split_findings": deferred_diagnostic_findings,
         },
     }
+    if include_rows:
+        report["required_cells"] = required_cells
+        report["rows"] = rows
+    return report
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -1760,7 +1835,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--json-out", type=Path, default=None)
     args = parser.parse_args(argv)
 
-    report = build_report()
+    report = build_report(include_rows=False)
     output = json.dumps(report, indent=2, sort_keys=True) + "\n"
     if args.json_out:
         args.json_out.parent.mkdir(parents=True, exist_ok=True)

@@ -18,6 +18,7 @@ import role_output_runtime  # noqa: E402
 import flowpilot_router as router  # noqa: E402
 import flowpilot_rejection_liveness_matrix_model as rejection_liveness_model  # noqa: E402
 import flowpilot_route_authority_singularity_model as route_authority_model  # noqa: E402
+from flowpilot_core_runtime import runtime as core_runtime  # noqa: E402
 from scripts.test_tier import background as test_tier_background  # noqa: E402
 from tests.router_runtime.common import FlowPilotRouterRuntimeTestBase  # noqa: E402
 from tests.flowpilot_route_mutation_contracts import (  # noqa: E402
@@ -364,6 +365,87 @@ class FlowPilotSyntheticAgentTraceReplayTests(unittest.TestCase):
 
 
 class FlowPilotSyntheticExceptionTraceReplayTests(FlowPilotRouterRuntimeTestBase):
+    def test_databank_control_plane_miss_trace_rejects_dirty_acceptance_and_empty_final_review_auth(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_root:
+            ledger = core_runtime.new_ledger(
+                "Synthetic DataBank control-plane miss",
+                "Reject dirty accepted pointers and unauthorised final reviewer replay.",
+            )
+            ledger["run_root"] = temp_root
+            ledger["startup_intake"] = {
+                "status": "confirmed",
+                "current_run_authority": True,
+                "controller_may_read_body": False,
+                "body_text_included": False,
+                "startup_answers": {"background_collaboration_authorized": True},
+            }
+            core_runtime.create_route(ledger, "Synthetic replay route", ["Final replay"])
+            packet_id = core_runtime.issue_task_packet(
+                ledger,
+                "pm",
+                "Absorb FlowGuard report for structural decision pm_decision_gate-0005",
+                json.dumps({"decision": "accept", "accepted_flowguard_result_id": "result-0208"}),
+                packet_kind="pm_flowguard_acceptance",
+                route_scope="pm_flowguard_acceptance",
+                subject_id="pm_decision_gate-0005",
+                target_result_id="result-0208",
+            )
+            packet = ledger["packets"][packet_id]
+            dirty_body = json.dumps({"decision": "accept", "accepted_flowguard_result_id": "result-0208"})
+            ledger["results"]["result-0209"] = {
+                "result_id": "result-0209",
+                "packet_id": packet_id,
+                "producer_lease_id": "lease-0206",
+                "status": "review_blocked",
+                "accepted": False,
+                "body": dirty_body,
+                "review_id": "review-0064",
+                "envelope": {
+                    "body_hash": core_runtime.hash_text(dirty_body),
+                    "evidence_generation": ledger["source_generation"],
+                },
+            }
+            ledger["reviews"]["review-0064"] = {
+                "review_id": "review-0064",
+                "result_id": "result-0209",
+                "accepted": False,
+                "blockers": ["result_not_mechanically_valid"],
+            }
+            packet["status"] = "accepted"
+            packet["accepted_result_id"] = "result-0209"
+            packet["assigned_lease_id"] = "lease-0206"
+            final_packet_id = core_runtime.issue_task_packet(
+                ledger,
+                "reviewer",
+                "Execute route node node-65-final-review-and-replay",
+                json.dumps({"schema_version": "black_box_flowpilot.node_task_packet.v1"}),
+                packet_kind="task",
+                route_scope="node",
+                route_node_id="node-65-final-review-and-replay",
+                authorized_result_reads=[],
+            )
+            ledger["packets"][final_packet_id]["envelope"]["responsibility"] = "reviewer"
+            ledger["packets"][final_packet_id]["envelope"]["authorized_result_reads"] = []
+
+            with self.assertRaises(core_runtime.BlackBoxRuntimeError):
+                core_runtime.repair_accepted_packet_assignment(ledger, packet_id)
+
+            preflight = core_runtime.final_return_preflight(
+                ledger,
+                guard={
+                    "controller_stop_allowed": True,
+                    "decision": "terminal_return",
+                    "next_action": {"action_type": "terminal_complete"},
+                },
+            )
+
+        self.assertFalse(preflight["allowed"], preflight)
+        self.assertTrue(
+            any("accepted_result_pointer" in item for item in preflight["blockers"]),
+            preflight["blockers"],
+        )
+        self.assertFalse(ledger["packets"][final_packet_id]["envelope"].get("authorized_result_reads"))
+
     def test_control_blocker_reissue_retry_budget_escalates_to_pm_fake_reviewer_package(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)

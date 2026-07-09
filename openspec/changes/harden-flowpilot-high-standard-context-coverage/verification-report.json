@@ -1,0 +1,345 @@
+{
+  "version": 1,
+  "change": "harden-flowpilot-high-standard-context-coverage",
+  "status": "pass",
+  "generatedAt": "2026-07-09T07:00:59.646Z",
+  "contractPath": "openspec/changes/harden-flowpilot-high-standard-context-coverage/verification-contract.yaml",
+  "reportPath": "openspec/changes/harden-flowpilot-high-standard-context-coverage/verification-report.json",
+  "contractHash": "86de6000873f5dca6b238c327d004a748e3dab0d6cc1986e851e6b6eac1d94f2",
+  "sourceHashes": {
+    "docs/flowguard_project_topology.json": "fafde02e63f4649ab1d653ab776d83e31ed056990f86414f6715984ec7a8aa40",
+    "docs/flowguard_project_topology.md": "f92cc871f9cd7cf91abe260720ccbdc70d20c3526c357b209b0d3f6d2b0f15bd",
+    "openspec/changes/harden-flowpilot-high-standard-context-coverage/design.md": "2f5233c3c266e82ff811a7fbeed0756a1741636e8996c08508e845bee4e39a35",
+    "openspec/changes/harden-flowpilot-high-standard-context-coverage/proposal.md": "c50601fa0a5f89ccf6ee22615e31dc86c493408907517740c3482e7d298665b3",
+    "openspec/changes/harden-flowpilot-high-standard-context-coverage/specs/end-to-end-synthetic-agent-chaos-replay/spec.md": "f6c27f345b8e4aba82bb9cee384f9d653654706e728d596e630f57e147e2d3ae",
+    "openspec/changes/harden-flowpilot-high-standard-context-coverage/specs/flowpilot-prompt-boundary-policy/spec.md": "393659daaa4a5d09a064d7050055ed72026ca0a8929550391eaa2893d543c464",
+    "openspec/changes/harden-flowpilot-high-standard-context-coverage/specs/formal-gate-review-standards/spec.md": "14f60815e19f4c395163367a57ebe658aed975980f32a0830907d599e9d58a75",
+    "openspec/changes/harden-flowpilot-high-standard-context-coverage/specs/role-scoped-quality-repair-prompts/spec.md": "189925c0ca685f41c218309b863f890330b878e178a01ddf08c41950bc392ab1",
+    "openspec/changes/harden-flowpilot-high-standard-context-coverage/specs/synthetic-agent-coverage-matrix/spec.md": "039d9a67ad274ac7fc81f3929491a70851ea76ce84b96c48a7922762777d6350",
+    "openspec/changes/harden-flowpilot-high-standard-context-coverage/tasks.md": "dbea831371f8d9425d47eec284cd43ef617a7fff4376030a19d72503a3f3955d",
+    "openspec/changes/harden-flowpilot-high-standard-context-coverage/verification-contract.yaml": "86de6000873f5dca6b238c327d004a748e3dab0d6cc1986e851e6b6eac1d94f2",
+    "simulations/flowpilot_contract_exhaustion_mesh_model.py": "41052ec7cb99bbc09b07e8b48f30977c2cd7e40904f40a37af693434bfd57fbc",
+    "simulations/flowpilot_fake_ai_runtime_replay_model.py": "1920dee2cf10c94196e9035674e7bae29e9cb779d2a6bff22d43368516b33672",
+    "simulations/flowpilot_planning_quality_model.py": "7fc4cae773c0dac7090ba1fddb0b2f9aa3095871d2307a3b951fe00f47223d04",
+    "skills/flowpilot/assets/flowpilot_core_runtime/packet_result_contracts.py": "7edb00e5ecd93434ca14bd3c05bd9e9b7648b50b4cdc0b7f149296c889968583",
+    "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py": "5e6ec60c27c17b74f804d186df750b5c5e98fd4a63f3624ece6246b4d89e24c6",
+    "skills/flowpilot/assets/runtime_kit/cards/events/pm_node_started.md": "2524a71dc486294db47a9df5d254ac8b9e425b0545dc05b42fb35307c6166b6b",
+    "skills/flowpilot/assets/runtime_kit/cards/events/pm_reviewer_blocked.md": "10ae2fbee790b2ee8b6a535c091e60b43853c56058f950c1887b5b662bc1b7cc",
+    "skills/flowpilot/assets/runtime_kit/cards/events/pm_reviewer_report.md": "bf26bacaf7910f204e0488eac3ca5ba4e33ed7f750ac035190b9defb8b3df766",
+    "skills/flowpilot/assets/runtime_kit/cards/flowguard_operator/child_skill_conformance_model.md": "5fc6f1e960da13f4d083aa4693ffe8f110eae1a401a623a1fc35e8ef21d09296",
+    "skills/flowpilot/assets/runtime_kit/cards/flowguard_operator/child_skill_product_fit.md": "c04f94ebf0d6dbd86d24608a41abfb37e1fd0a22fa60133c849b82e6663be907",
+    "skills/flowpilot/assets/runtime_kit/cards/flowguard_operator/product_architecture_modelability.md": "3be6d81e5b1e1b4c0141702c04386d012bb954caa0f367738778dde1aaa154ab",
+    "skills/flowpilot/assets/runtime_kit/cards/flowguard_operator/root_contract_modelability.md": "aff5f427f7cd4abe55e836d7fab4e643d9b92c4b3df828338e9c60a37e5e4b2c",
+    "skills/flowpilot/assets/runtime_kit/cards/flowguard_operator/route_process_check.md": "4d15ea0a1a0983e2335e017d65f964a3499415cedbdc1d83faf24b1097e67445",
+    "skills/flowpilot/assets/runtime_kit/cards/flowguard_operator/target_realization_model.md": "6562b0b7b63109b168da3354cf25edc79da958540e96db75576ceb0d1b2781b6",
+    "skills/flowpilot/assets/runtime_kit/cards/phases/pm_child_skill_gate_manifest.md": "b9ecfdde8a53958b75492f9a9b317c7213d5bd0772642178a1617d09dc93c66b",
+    "skills/flowpilot/assets/runtime_kit/cards/phases/pm_child_skill_selection.md": "e302d693245e780ba2fdde6db0675cb8f605445f1ed78eec7f50429c5291341a",
+    "skills/flowpilot/assets/runtime_kit/cards/phases/pm_closure.md": "0542d71a79b3a9dc6df4e67adac06607caaa27d32100dfe9d1e31b95e41dacbe",
+    "skills/flowpilot/assets/runtime_kit/cards/phases/pm_continuation_capability_binding.md": "c5fe212c43eb440bf6c77fd87b67045ee4e9fcdedc83fac25ae0088bee9cbf66",
+    "skills/flowpilot/assets/runtime_kit/cards/phases/pm_controller_reset_duty.md": "92d63e469fd606c16ad88bb5391a8f00c18a84550292dee4f34869cda6afa5cc",
+    "skills/flowpilot/assets/runtime_kit/cards/phases/pm_current_node_loop.md": "a22428ea6fa631826ed08729adafddf9ba440bbdf5a88eb4e66deba410028484",
+    "skills/flowpilot/assets/runtime_kit/cards/phases/pm_dependency_policy.md": "1ae4218fca56cbdfff91a7f89265ffa649675fdc770b041b7fbc25982348d6b6",
+    "skills/flowpilot/assets/runtime_kit/cards/phases/pm_evidence_quality_package.md": "0647c0b15a7e849c2124546fe7d18090e6f4b3ec3275e68396edfbfa1b33a355",
+    "skills/flowpilot/assets/runtime_kit/cards/phases/pm_final_ledger.md": "c7f2240150c3f665cfda48652951206b2b23b6391ef3a9da7f5e258713d131d3",
+    "skills/flowpilot/assets/runtime_kit/cards/phases/pm_flowguard_operator_request_report_loop.md": "7d4cf38c0d380026ffebace3653b509d074dd61a9a506ed0a06f7bcd63b3bdfb",
+    "skills/flowpilot/assets/runtime_kit/cards/phases/pm_implementation_intent.md": "7730b73692d471bcc766322eb252f5db1ed61d5e0f8ee410ab2de0bef5374fa2",
+    "skills/flowpilot/assets/runtime_kit/cards/phases/pm_material_absorb_or_research.md": "815401e4dcf6f2098eaaec166a8792cad3f75087516504ef87555f2ca093a39d",
+    "skills/flowpilot/assets/runtime_kit/cards/phases/pm_material_scan.md": "200e20d4316f2f5f57c72dc5348b5dee54280a41a1f98c5955a2e1c3aa948753",
+    "skills/flowpilot/assets/runtime_kit/cards/phases/pm_material_understanding.md": "62c0c1e0a7e6bedc9b2e06213c597dd8bae8300d29cdebda60373a81a3030de7",
+    "skills/flowpilot/assets/runtime_kit/cards/phases/pm_model_miss_triage.md": "dc1f03b043863d07efe2265781c8888d055c9f8341bf35f129cf0051dc2eb7f2",
+    "skills/flowpilot/assets/runtime_kit/cards/phases/pm_node_acceptance_plan.md": "c2302a325d661de4a2a05587190ed28c5d2ab561bf8e44374c286ae1947029da",
+    "skills/flowpilot/assets/runtime_kit/cards/phases/pm_output_contract_catalog.md": "75fe3c470e1581da51a60853f2a2c78e6541eb3086cec44ae32fc20aee71f91d",
+    "skills/flowpilot/assets/runtime_kit/cards/phases/pm_parent_backward_targets.md": "8e7b5e7dea1b23377cef7a9584cf67ac75743a8d9c7d0658e8c5b1e0c4b904cf",
+    "skills/flowpilot/assets/runtime_kit/cards/phases/pm_parent_segment_decision.md": "be56b832550b28d0848cb799c6562de9de49bb3771da7eb82f00b875c8e9c89c",
+    "skills/flowpilot/assets/runtime_kit/cards/phases/pm_phase_map.md": "a0a262f4868b5754003d3cc14c1e9b98183ca83161e4f1ab091ed7c009940607",
+    "skills/flowpilot/assets/runtime_kit/cards/phases/pm_prior_path_context.md": "834d6bddd200befbadfb4f22224014bdb1beaf53c1d296d134f6728e0e12b8b5",
+    "skills/flowpilot/assets/runtime_kit/cards/phases/pm_process_route_model_decision.md": "18284eef89ad7f7265b0232ec2517f1f4896613615962f3c9c633dc3869e9697",
+    "skills/flowpilot/assets/runtime_kit/cards/phases/pm_product_architecture.md": "364b0d36c8f12505bb5f93c532ef578ff46432bdbdc31ee9b80025cfb9a8a9ed",
+    "skills/flowpilot/assets/runtime_kit/cards/phases/pm_product_behavior_model_decision.md": "7309895aa13189070f2a36d5ee79650868d0a716023efdb6cbde0faf03c2f9b3",
+    "skills/flowpilot/assets/runtime_kit/cards/phases/pm_research_absorb_or_mutate.md": "59e98bdaedc28522d289481c97289bb268dc2a920371c16a0d9211a0e6b72212",
+    "skills/flowpilot/assets/runtime_kit/cards/phases/pm_research_package.md": "748cafb51b066ea0aa3bd2157c1e73725d4c3210fac163802c4269f4972853c5",
+    "skills/flowpilot/assets/runtime_kit/cards/phases/pm_resume_decision.md": "8c3824b671067c111579a236ef42c13144a6ffa9258962566472df0020a47249",
+    "skills/flowpilot/assets/runtime_kit/cards/phases/pm_review_repair.md": "d8a5194d09f57a9e4e93c8dd76771b7bd6547345c79601e875e8b73a5d546d05",
+    "skills/flowpilot/assets/runtime_kit/cards/phases/pm_role_binding_recovery_freshness.md": "8c16e1e19a73772afb4d3eaa6b844bc3e227db864408cbc143c2759c2a3a786b",
+    "skills/flowpilot/assets/runtime_kit/cards/phases/pm_role_work_request.md": "f8ed8e612df485df799d3fd7f17d8ded6f792bc8e004a2dc2d1eb2a993914ade",
+    "skills/flowpilot/assets/runtime_kit/cards/phases/pm_root_contract.md": "e08fa6063aba88f60831e7584a80c2ac65cb34527546a9394994bbe598e048a9",
+    "skills/flowpilot/assets/runtime_kit/cards/phases/pm_route_skeleton.md": "106c5ef112a6185bd0507c6979830e80b2a3cfa8e28dd2c125824bb8c0e8ccc5",
+    "skills/flowpilot/assets/runtime_kit/cards/phases/pm_startup_intake.md": "c3d8aee1f8bf9b38d4009959957a7891df8ec1369deaf76af513833bc190fb68",
+    "skills/flowpilot/assets/runtime_kit/cards/phases/pm_target_realization_model_decision.md": "a15afa7cde0728f0fa656b07af1f502bb52b315d5e5a6ee17b87fe1e0537c67f",
+    "skills/flowpilot/assets/runtime_kit/cards/reviewer/child_skill_gate_manifest_review.md": "432aa1b68b73b8d7fb4f50142ec1d0ccd43cdd37af3aabbefdbbd9403c077c15",
+    "skills/flowpilot/assets/runtime_kit/cards/reviewer/discovery_review.md": "04f203c6ae2ed7abd1e487bfad2ba325b3384a79ab5f59429242310b9dc1c2ed",
+    "skills/flowpilot/assets/runtime_kit/cards/reviewer/evidence_quality_review.md": "bbca249d69e95f59087c70f5d1004a839f5c306132894b8441dfed44bfe985f4",
+    "skills/flowpilot/assets/runtime_kit/cards/reviewer/final_backward_replay.md": "d633ad648c1cbfa7ad958a65535db31de18d5ef5ae674dcc194bd27dc08947cd",
+    "skills/flowpilot/assets/runtime_kit/cards/reviewer/high_standard_contract_review.md": "0aa739fc9cf767e9d0f02cb0f4eb3c9f91005d200d956914bbf44de2b30bebc6",
+    "skills/flowpilot/assets/runtime_kit/cards/reviewer/implementation_intent_challenge.md": "faac59c15d9b1c7e156f2793ca37c87ee25148b9e697b25b612744e0059bd2c2",
+    "skills/flowpilot/assets/runtime_kit/cards/reviewer/material_sufficiency.md": "726869bfa7caacd4d025636ff9cd54fba144408f905992ca305cde17279bf405",
+    "skills/flowpilot/assets/runtime_kit/cards/reviewer/node_acceptance_plan_review.md": "81dae0e33bf6d9dba97ef8912fe4cd363dc100367150d02c9a78ce20b901b719",
+    "skills/flowpilot/assets/runtime_kit/cards/reviewer/parent_backward_replay.md": "59a591fdd685c05533c4fd41b594c07f48ef8ffd88922aab384af077d36dfe2c",
+    "skills/flowpilot/assets/runtime_kit/cards/reviewer/pm_flowguard_acceptance_review.md": "c095da4b62c772c60c9c53bfc72532d6fdeb18573e9a3292c87425173b202204",
+    "skills/flowpilot/assets/runtime_kit/cards/reviewer/product_architecture_challenge.md": "52b67f8bce712f88081ace76a88e15f7305a607df5ea28434a682b2361f22afd",
+    "skills/flowpilot/assets/runtime_kit/cards/reviewer/research_direct_source_check.md": "e739df575e8d2ae562e69ce9b1824777683b05ce7a7bc04dc65dcc7ca71414c1",
+    "skills/flowpilot/assets/runtime_kit/cards/reviewer/root_contract_challenge.md": "a42d468ddc2ca58d190d546e12362012242c5e4723c6d0c9ea2b05c4c1697e33",
+    "skills/flowpilot/assets/runtime_kit/cards/reviewer/route_challenge.md": "2d6657a24097481d9fed99fc5be57f5b382eac4c3c58687563b4d4eef159735e",
+    "skills/flowpilot/assets/runtime_kit/cards/reviewer/skill_standard_review.md": "7e44c16fc0e132e4add1964ce54752387e3b95c9a71ed9507f4bb59c8ff85633",
+    "skills/flowpilot/assets/runtime_kit/cards/reviewer/strict_gate_obligation_review.md": "a656357085a6852bf7312b8358987fbc8734b492db565b8c66e0bb3f8438f43a",
+    "skills/flowpilot/assets/runtime_kit/cards/reviewer/worker_result_review.md": "0ab5af50e226c2e7854a983e24416d90f9cc35cf995466c46f921a69e1750e62",
+    "skills/flowpilot/assets/runtime_kit/cards/roles/controller.md": "ec2b4ba7b5bf1044661358516f0148beb8bb78d58b10c6819e977ae1bc4e718a",
+    "skills/flowpilot/assets/runtime_kit/cards/roles/flowguard_operator.md": "10a38d4bc88851161bcb445bbc430c476d90ced153bb01d09d2ee6623fc85c12",
+    "skills/flowpilot/assets/runtime_kit/cards/roles/human_like_reviewer.md": "8d0abbaa9fea3bb8295fd978a1c3512f64f746bd5b9e295a6ad709b51c77ec21",
+    "skills/flowpilot/assets/runtime_kit/cards/roles/project_manager.md": "d2c566ee138c74bad4e101e37033fc0ed6d2f0a9582085921eec52aa1fe7882f",
+    "skills/flowpilot/assets/runtime_kit/cards/roles/worker.md": "9effaf7c7177222c114bf030e27dba33eb0c1017c6d713a57a1262f9bc2b20bd",
+    "skills/flowpilot/assets/runtime_kit/cards/roles/worker_research_report.md": "a9f56ba41a0f03da8368031b8deb69ee39a9fb9adc5d309929069090ef207440",
+    "skills/flowpilot/assets/runtime_kit/cards/system/controller_break_glass_repair.md": "f37acf5e9abace9a33d6f2020467d8f9e9dd8679fd3375a6105b3c0e753c85a3",
+    "skills/flowpilot/assets/runtime_kit/cards/system/controller_resume_reentry.md": "c7ad8057fa501f079c55ab2fafa3b523318cc3ad89f8a1cef2c4e2698b0f144e",
+    "skills/flowpilot/assets/runtime_kit/cards/system/startup_banner.md": "cdab3fd91c1a66ee3f9d6e7ef42af3bbf1eff4db883c601071388f29d8e9d334",
+    "tests/test_flowpilot_ai_contract_projection.py": "a57773cd029d823a3e6450944e92d5af1f31bdd3246ef80b41f721e270f2389e",
+    "tests/test_flowpilot_card_instruction_coverage.py": "ff162d8a373d8825443d73da309bbd60f961cb5a90b142d7df84b82070ea670d",
+    "tests/test_flowpilot_contract_exhaustion_mesh.py": "d8cb15d0aa440600ecf4322121200519a2375dc07bdda5b6fe521e327846fe7c",
+    "tests/test_flowpilot_fake_ai_runtime_replay.py": "21feebe3bb3941349a47ac05d58164349718ef753b8fc3cf20292f3494d92817",
+    "tests/test_flowpilot_planning_quality.py": "d64afb48529b2e6cc9b3120953268ed3e4f3af0a9e8ff8a5a89f06da808d318a"
+  },
+  "issues": [],
+  "checks": [
+    {
+      "id": "check.prompts.card-instruction-coverage",
+      "kind": "command",
+      "required": true,
+      "covers": [
+        "req.prompt.global-standard-references",
+        "req.roles.full-standard-in-scope"
+      ],
+      "status": "passed",
+      "command": "python",
+      "args": [
+        "-m",
+        "pytest",
+        "tests/test_flowpilot_card_instruction_coverage.py",
+        "-q"
+      ],
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "durationMs": 4143,
+      "stdout": "......................................... [100%]\r\n41 passed, 248 subtests passed in 3.19s\r\n",
+      "stderr": ""
+    },
+    {
+      "id": "check.tests.planning-quality",
+      "kind": "command",
+      "required": true,
+      "covers": [
+        "req.prompt.global-standard-references",
+        "req.reviewer.blocks-missing-global-standard"
+      ],
+      "status": "passed",
+      "command": "python",
+      "args": [
+        "-m",
+        "pytest",
+        "tests/test_flowpilot_planning_quality.py",
+        "-q"
+      ],
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "durationMs": 1761,
+      "stdout": "..                                                                       [100%]\r\n2 passed in 0.94s\r\n",
+      "stderr": ""
+    },
+    {
+      "id": "check.tests.ai-contract-projection",
+      "kind": "command",
+      "required": true,
+      "covers": [
+        "req.synthetic.contract-projection-existing-fields"
+      ],
+      "status": "passed",
+      "command": "python",
+      "args": [
+        "-m",
+        "pytest",
+        "tests/test_flowpilot_ai_contract_projection.py",
+        "-q"
+      ],
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "durationMs": 2219,
+      "stdout": "....................                                                              [100%]\r\n20 passed, 63 subtests passed in 1.44s\r\n",
+      "stderr": ""
+    },
+    {
+      "id": "check.tests.contract-exhaustion",
+      "kind": "command",
+      "required": true,
+      "covers": [
+        "req.synthetic.contract-projection-existing-fields"
+      ],
+      "status": "passed",
+      "command": "python",
+      "args": [
+        "-m",
+        "pytest",
+        "tests/test_flowpilot_contract_exhaustion_mesh.py",
+        "-q"
+      ],
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "durationMs": 37850,
+      "stdout": "...................                                               [100%]\r\n19 passed, 871 subtests passed in 36.03s\r\n",
+      "stderr": ""
+    },
+    {
+      "id": "check.tests.fake-ai-runtime-replay",
+      "kind": "command",
+      "required": true,
+      "covers": [
+        "req.replay.global-context-failure-repair"
+      ],
+      "status": "passed",
+      "command": "python",
+      "args": [
+        "-m",
+        "pytest",
+        "tests/test_flowpilot_fake_ai_runtime_replay.py",
+        "-q"
+      ],
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "durationMs": 147759,
+      "stdout": "........                                [100%]\r\n8 passed, 979953 subtests passed in 138.07s (0:02:18)\r\n",
+      "stderr": ""
+    },
+    {
+      "id": "check.models.planning-quality",
+      "kind": "command",
+      "required": true,
+      "covers": [
+        "req.roles.full-standard-in-scope",
+        "req.reviewer.blocks-missing-global-standard"
+      ],
+      "status": "passed",
+      "command": "python",
+      "args": [
+        "simulations/run_flowpilot_planning_quality_checks.py",
+        "--json-out",
+        "simulations/flowpilot_planning_quality_results.json"
+      ],
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "durationMs": 1400,
+      "stdout": "{\r\n  \"flowguard_explorer\": {\r\n    \"dead_branch_count\": 0,\r\n    \"exception_branch_count\": 0,\r\n    \"ok\": true,\r\n    \"reachability_failure_count\": 0,\r\n    \"reachability_failures\": [],\r\n    \"summary\": \"sequences=3 initial_states=1 traces=474\",\r\n    \"violation_count\": 0\r\n  },\r\n  \"hazard_checks\": {\r\n    \"failures\": [],\r\n    \"hazards\": {\r\n      \"acceptance_item_no_route_owner\": {\r\n        \"detected\": true,\r\n        \"expected_failure\": \"active acceptance item lacks a route node owner\",\r\n        \"failures\": [\r\n          \"active acceptance item lacks a route node owner\"\r\n        ]\r\n      },\r\n      \"acceptance_item_registry_missing\": {\r\n        \"detected\": true,\r\n        \"expected_failure\": \"PM high-standard contract lacks acceptance item registry with user and PM high-standard items\",\r\n        \"failures\": [\r\n          \"PM high-standard contract lacks acceptance item registry with user and PM high-standard items\"\r\n        ]\r\n      },\r\n      \"artifactless_major_node\": {\r\n        \"detected\": true,\r\n        \"expected_failure\": \"major route node lacks a concrete acceptance artifact\",\r\n        \"failures\": [\r\n          \"major route node lacks a concrete acceptance artifact\"\r\n        ]\r\n      },\r\n      \"child_skill_theme_only_standard\": {\r\n        \"detected\": true,\r\n        \"expected_failure\": \"selected child skill is theme-only and lacks a concrete standards-lens projection\",\r\n        \"failures\": [\r\n          \"selected child skill is theme-only and lacks a concrete standards-lens projection\"\r\n        ]\r\n      },\r\n      \"evidence_packet_repairs_target_artifact\": {\r\n        \"detected\": true,\r\n        \"expected_failure\": \"research or material-scan packet grants target artifact repair instead of report self-correction\",\r\n        \"failures\": [\r\n          \"research or material-scan packet grants target artifact repair instead of report self-correction\"\r\n        ]\r\n      },\r\n      \"final_ledger_acceptance_item_unresolved\": {\r\n        \"detected\": true,\r\n        \"expected_failure\": \"final ledger or closure leaves acceptance items unresolved\",\r\n        \"failures\": [\r\n          \"final ledger or closure leaves acceptance items unresolved\",\r\n          \"PM closure lacks final-user outcome replay\"\r\n        ]\r\n      },\r\n      \"final_ledger_passes_node_level_only_composition\": {\r\n        \"detected\": true,\r\n        \"expected_failure\": \"final ledger passed node-level completion without whole-output composition closure\",\r\n        \"failures\": [\r\n          \"final ledger passed node-level completion without whole-output composition closure\",\r\n          \"PM closure lacks final-user outcome replay\"\r\n        ]\r\n      },\r\n      \"final_ledger_realization_obligations_unresolved\": {\r\n        \"detected\": true,\r\n        \"expected_failure\": \"final ledger or closure leaves target-realization obligations unresolved\",\r\n        \"failures\": [\r\n          \"final ledger or closure leaves target-realization obligations unresolved\",\r\n          \"PM closure lacks final-user outcome replay\"\r\n        ]\r\n      },\r\n      \"final_ledger_structure_debt_unresolved\": {\r\n        \"detected\": true,\r\n        \"expected_failure\": \"final ledger leaves structural debt unresolved\",\r\n        \"failures\": [\r\n          \"PM closure lacks final-user outcome replay\",\r\n          \"final ledger leaves structural debt unresolved\"\r\n        ]\r\n      },\r\n      \"flowguard_operator_packet_repairs_target_artifact\": {\r\n        \"detected\": true,\r\n        \"expected_failure\": \"FlowGuard operator packet grants target artifact repair instead of model/report self-correction\",\r\n        \"failures\": [\r\n          \"FlowGuard operator packet grants target artifact repair instead of model/report self-correction\"\r\n        ]\r\n      },\r\n      \"flowguard_operator_route_scope_route_viability_missing\": {\r\n        \"detected\": true,\r\n        \"expected_failure\": \"FlowGuard operator route-scope did not validate route viability against the product model\",\r\n        \"failures\": [\r\n          \"FlowGuard operator route-scope did not validate route via\n...[truncated]",
+      "stderr": "[flowguard] start phase=explore work_total=3 progress_steps=10\r\n[flowguard] progress 30% work=1/3 traces=79 violations=0\r\n[flowguard] progress 60% work=2/3 traces=237 violations=0\r\n[flowguard] progress 100% work=3/3 traces=474 violations=0\r\n"
+    },
+    {
+      "id": "check.models.contract-exhaustion",
+      "kind": "command",
+      "required": true,
+      "covers": [
+        "req.synthetic.contract-projection-existing-fields"
+      ],
+      "status": "passed",
+      "command": "python",
+      "args": [
+        "simulations/run_flowpilot_contract_exhaustion_mesh_checks.py"
+      ],
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "durationMs": 15878,
+      "stdout": "FlowPilot contract exhaustion mesh ok=True\r\n",
+      "stderr": "[flowguard] start phase=explore work_total=2 progress_steps=10\r\n[flowguard] progress 50% work=1/2 traces=18 violations=0\r\n[flowguard] progress 100% work=2/2 traces=54 violations=0\r\n"
+    },
+    {
+      "id": "check.models.fake-ai-runtime-replay",
+      "kind": "command",
+      "required": true,
+      "covers": [
+        "req.replay.global-context-failure-repair"
+      ],
+      "status": "passed",
+      "command": "python",
+      "args": [
+        "simulations/run_flowpilot_fake_ai_runtime_replay_checks.py"
+      ],
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "durationMs": 15807,
+      "stdout": "FlowPilot fake-AI runtime replay ok=True\r\n",
+      "stderr": "[flowguard] start phase=explore work_total=2 progress_steps=10\r\n[flowguard] progress 50% work=1/2 traces=8 violations=0\r\n[flowguard] progress 100% work=2/2 traces=24 violations=0\r\n"
+    },
+    {
+      "id": "check.topology.build",
+      "kind": "command",
+      "required": true,
+      "covers": [
+        "req.project.install-and-topology-fresh"
+      ],
+      "status": "passed",
+      "command": "python",
+      "args": [
+        "scripts/flowguard_project_topology.py",
+        "build"
+      ],
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "durationMs": 6684,
+      "stdout": "{\r\n  \"json_path\": \"docs/flowguard_project_topology.json\",\r\n  \"layer_counts\": {\r\n    \"alignment_families\": 16,\r\n    \"code_surfaces\": 1077,\r\n    \"evidence_summaries\": 5,\r\n    \"known_bad_signals\": 2637,\r\n    \"models\": 159,\r\n    \"test_commands\": 452\r\n  },\r\n  \"markdown_path\": \"docs/flowguard_project_topology.md\",\r\n  \"ok\": true\r\n}\r\n",
+      "stderr": ""
+    },
+    {
+      "id": "check.topology.check",
+      "kind": "command",
+      "required": true,
+      "covers": [
+        "req.project.install-and-topology-fresh"
+      ],
+      "status": "passed",
+      "command": "python",
+      "args": [
+        "scripts/flowguard_project_topology.py",
+        "check"
+      ],
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "durationMs": 502,
+      "stdout": "{\r\n  \"findings\": [],\r\n  \"json_path\": \"docs/flowguard_project_topology.json\",\r\n  \"layer_counts\": {\r\n    \"alignment_families\": 16,\r\n    \"code_surfaces\": 1077,\r\n    \"evidence_summaries\": 5,\r\n    \"known_bad_signals\": 2637,\r\n    \"models\": 159,\r\n    \"test_commands\": 452\r\n  },\r\n  \"markdown_path\": \"docs/flowguard_project_topology.md\",\r\n  \"ok\": true,\r\n  \"source_count\": 1064\r\n}\r\n",
+      "stderr": ""
+    },
+    {
+      "id": "check.install.sync",
+      "kind": "command",
+      "required": true,
+      "covers": [
+        "req.project.install-and-topology-fresh"
+      ],
+      "status": "passed",
+      "command": "python",
+      "args": [
+        "scripts/install_flowpilot.py",
+        "--sync-repo-owned",
+        "--json"
+      ],
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "durationMs": 3896,
+      "stdout": "{\r\n  \"dependencies\": [\r\n    {\r\n      \"companion\": false,\r\n      \"installed\": true,\r\n      \"installed_digest\": \"ab11d61b09476a6fed16c31317bd2bc2caa5dcf0e623282f827fde185868de09\",\r\n      \"name\": \"flowpilot\",\r\n      \"ok\": true,\r\n      \"path\": \"C:\\\\Users\\\\liu_y\\\\.codex\\\\skills\\\\flowpilot\",\r\n      \"required\": true,\r\n      \"source_digest\": \"ab11d61b09476a6fed16c31317bd2bc2caa5dcf0e623282f827fde185868de09\",\r\n      \"source_fresh\": true,\r\n      \"source_path\": \"C:\\\\Users\\\\liu_y\\\\Documents\\\\FlowGuardProjectAutopilot_20260430\\\\skills\\\\flowpilot\",\r\n      \"type\": \"codex_skill\"\r\n    },\r\n    {\r\n      \"SCHEMA_VERSION\": \"1.0\",\r\n      \"companion\": false,\r\n      \"module\": \"flowguard\",\r\n      \"name\": \"flowguard\",\r\n      \"ok\": true,\r\n      \"path\": \"C:\\\\Users\\\\liu_y\\\\Documents\\\\FlowGuard\\\\flowguard\\\\__init__.py\",\r\n      \"required\": true,\r\n      \"type\": \"python_package\"\r\n    },\r\n    {\r\n      \"companion\": false,\r\n      \"installed\": true,\r\n      \"name\": \"model-first-function-flow\",\r\n      \"ok\": true,\r\n      \"path\": \"C:\\\\Users\\\\liu_y\\\\.codex\\\\skills\\\\model-first-function-flow\",\r\n      \"required\": true,\r\n      \"type\": \"codex_skill\"\r\n    },\r\n    {\r\n      \"companion\": true,\r\n      \"installed\": true,\r\n      \"name\": \"autonomous-concept-ui-redesign\",\r\n      \"ok\": true,\r\n      \"path\": \"C:\\\\Users\\\\liu_y\\\\.codex\\\\skills\\\\autonomous-concept-ui-redesign\",\r\n      \"required\": false,\r\n      \"type\": \"codex_skill\"\r\n    }\r\n  ],\r\n  \"dependency_policy\": {\r\n    \"optional\": [\r\n      \"autonomous-concept-ui-redesign\"\r\n    ],\r\n    \"optional_codex_skills\": [\r\n      \"autonomous-concept-ui-redesign\"\r\n    ],\r\n    \"policy\": \"Missing required Codex skills are installed with --install-missing. Missing FlowGuard is installed only when --install-flowguard explicitly authorizes Python environment changes. Optional UI companions are skipped unless --include-optional is used.\",\r\n    \"required\": [\r\n      \"flowpilot\",\r\n      \"flowguard\",\r\n      \"model-first-function-flow\"\r\n    ],\r\n    \"required_codex_skills\": [\r\n      \"flowpilot\",\r\n      \"model-first-function-flow\"\r\n    ],\r\n    \"required_python_packages\": [\r\n      \"flowguard\"\r\n    ]\r\n  },\r\n  \"host_capabilities\": [\r\n    {\r\n      \"available\": true,\r\n      \"detail\": \"Codex default provider found\",\r\n      \"id\": \"raster_image_generation\",\r\n      \"ok\": true,\r\n      \"path\": \"C:\\\\Users\\\\liu_y\\\\.codex\\\\skills\\\\.system\\\\imagegen\",\r\n      \"provider\": \"imagegen\",\r\n      \"provider_kind\": \"codex_skill\",\r\n      \"severity\": \"warning\",\r\n      \"type\": \"host_capability\"\r\n    }\r\n  ],\r\n  \"install_actions\": [\r\n    {\r\n      \"action\": \"already_fresh\",\r\n      \"name\": \"flowpilot\",\r\n      \"ok\": true,\r\n      \"path\": \"C:\\\\Users\\\\liu_y\\\\.codex\\\\skills\\\\flowpilot\"\r\n    }\r\n  ],\r\n  \"manifest\": \"C:\\\\Users\\\\liu_y\\\\Documents\\\\FlowGuardProjectAutopilot_20260430\\\\flowpilot.dependencies.json\",\r\n  \"ok\": true,\r\n  \"self_check\": {\r\n    \"ok\": true,\r\n    \"returncode\": 0,\r\n    \"stderr\": \"\",\r\n    \"stdout\": \"{\\n  \\\"checks\\\": [\\n    {\\n      \\\"name\\\": \\\"flowguard_import\\\",\\n      \\\"ok\\\": true,\\n      \\\"schema_version\\\": \\\"1.0\\\"\\n    },\\n    {\\n      \\\"name\\\": \\\"file:README.md\\\",\\n      \\\"ok\\\": true\\n    },\\n    {\\n      \\\"name\\\": \\\"file:CHANGELOG.md\\\",\\n      \\\"ok\\\": true\\n    },\\n    {\\n      \\\"name\\\": \\\"file:VERSION\\\",\\n      \\\"ok\\\": true\\n    },\\n    {\\n      \\\"name\\\": \\\"file:AGENTS.md\\\",\\n      \\\"ok\\\": true\\n    },\\n    {\\n      \\\"name\\\": \\\"file:HANDOFF.md\\\",\\n      \\\"ok\\\": true\\n    },\\n    {\\n      \\\"name\\\": \\\"file:pytest.ini\\\",\\n      \\\"ok\\\": true\\n    },\\n    {\\n      \\\"name\\\": \\\"file:openspec/changes/complete-black-box-flowpilot-system/proposal.md\\\",\\n      \\\"ok\\\": true\\n    },\\n    {\\n      \\\"name\\\": \\\"file:openspec/changes/complete-black-box-flowpilot-system/design.md\\\",\\n      \\\"ok\\\": true\\n    },\\n    {\\n      \\\"name\\\": \\\"file:openspec/changes/complete-black-box-flowpilot-system/tasks.md\\\",\\n      \\\"ok\\\": true\\n    },\\n    {\\n      \\\"name\\\": \\\"file:openspec/changes/complete-black-box-flowpilot-system/specs/complete-black-box-flowpilot-system/spec.md\\\",\\n      \\\"ok\\\": true\\n  \n...[truncated]",
+      "stderr": ""
+    },
+    {
+      "id": "check.install.audit",
+      "kind": "command",
+      "required": true,
+      "covers": [
+        "req.project.install-and-topology-fresh"
+      ],
+      "status": "passed",
+      "command": "python",
+      "args": [
+        "scripts/audit_local_install_sync.py",
+        "--json"
+      ],
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "durationMs": 2002,
+      "stdout": "{\r\n  \"checks\": [\r\n    {\r\n      \"name\": \"repo_owned_skill_fresh:flowpilot\",\r\n      \"ok\": true,\r\n      \"path\": \"C:\\\\Users\\\\liu_y\\\\.codex\\\\skills\\\\flowpilot\",\r\n      \"severity\": \"error\",\r\n      \"source_path\": \"C:\\\\Users\\\\liu_y\\\\Documents\\\\FlowGuardProjectAutopilot_20260430\\\\skills\\\\flowpilot\"\r\n    },\r\n    {\r\n      \"duplicates\": {},\r\n      \"name\": \"installed_skill_names_unique\",\r\n      \"ok\": true,\r\n      \"severity\": \"error\"\r\n    },\r\n    {\r\n      \"count\": 3881,\r\n      \"name\": \"git_tracked_files_available\",\r\n      \"ok\": true,\r\n      \"severity\": \"error\"\r\n    },\r\n    {\r\n      \"expected_absent\": [\r\n        \"flowpilot_cockpit\",\r\n        \"tests/test_flowpilot_cockpit_i18n.py\",\r\n        \"tests/test_flowpilot_cockpit_state_reader.py\"\r\n      ],\r\n      \"name\": \"unsupported_cockpit_source_not_tracked\",\r\n      \"ok\": true,\r\n      \"present\": [],\r\n      \"severity\": \"error\"\r\n    },\r\n    {\r\n      \"name\": \"unsupported_cockpit_source_absent_from_main_tree\",\r\n      \"ok\": true,\r\n      \"present\": [],\r\n      \"severity\": \"error\"\r\n    },\r\n    {\r\n      \"expected_absent\": [\r\n        \"docs/external_watchdog_loop_findings.md\",\r\n        \"scripts/flowpilot_busy_lease.py\",\r\n        \"scripts/flowpilot_global_supervisor.py\",\r\n        \"scripts/flowpilot_run_with_busy_lease.py\",\r\n        \"scripts/flowpilot_watchdog.py\",\r\n        \"scripts/register_windows_watchdog_task.ps1\",\r\n        \"templates/flowpilot/watchdog/watchdog.template.json\"\r\n      ],\r\n      \"name\": \"unsupported_watchdog_supervisor_sources_absent_from_main_tree\",\r\n      \"ok\": true,\r\n      \"present\": [],\r\n      \"severity\": \"error\"\r\n    }\r\n  ],\r\n  \"dependencies\": [\r\n    {\r\n      \"companion\": false,\r\n      \"installed\": true,\r\n      \"installed_digest\": \"ab11d61b09476a6fed16c31317bd2bc2caa5dcf0e623282f827fde185868de09\",\r\n      \"name\": \"flowpilot\",\r\n      \"ok\": true,\r\n      \"path\": \"C:\\\\Users\\\\liu_y\\\\.codex\\\\skills\\\\flowpilot\",\r\n      \"required\": true,\r\n      \"source_digest\": \"ab11d61b09476a6fed16c31317bd2bc2caa5dcf0e623282f827fde185868de09\",\r\n      \"source_fresh\": true,\r\n      \"source_path\": \"C:\\\\Users\\\\liu_y\\\\Documents\\\\FlowGuardProjectAutopilot_20260430\\\\skills\\\\flowpilot\",\r\n      \"type\": \"codex_skill\"\r\n    },\r\n    {\r\n      \"SCHEMA_VERSION\": \"1.0\",\r\n      \"companion\": false,\r\n      \"module\": \"flowguard\",\r\n      \"name\": \"flowguard\",\r\n      \"ok\": true,\r\n      \"path\": \"C:\\\\Users\\\\liu_y\\\\Documents\\\\FlowGuard\\\\flowguard\\\\__init__.py\",\r\n      \"required\": true,\r\n      \"type\": \"python_package\"\r\n    },\r\n    {\r\n      \"companion\": false,\r\n      \"installed\": true,\r\n      \"name\": \"model-first-function-flow\",\r\n      \"ok\": true,\r\n      \"path\": \"C:\\\\Users\\\\liu_y\\\\.codex\\\\skills\\\\model-first-function-flow\",\r\n      \"required\": true,\r\n      \"type\": \"codex_skill\"\r\n    },\r\n    {\r\n      \"companion\": true,\r\n      \"installed\": true,\r\n      \"name\": \"autonomous-concept-ui-redesign\",\r\n      \"ok\": true,\r\n      \"path\": \"C:\\\\Users\\\\liu_y\\\\.codex\\\\skills\\\\autonomous-concept-ui-redesign\",\r\n      \"required\": false,\r\n      \"type\": \"codex_skill\"\r\n    }\r\n  ],\r\n  \"ok\": true,\r\n  \"repo_root\": \"C:\\\\Users\\\\liu_y\\\\Documents\\\\FlowGuardProjectAutopilot_20260430\",\r\n  \"skills_root\": \"C:\\\\Users\\\\liu_y\\\\.codex\\\\skills\"\r\n}\r\n",
+      "stderr": ""
+    }
+  ]
+}

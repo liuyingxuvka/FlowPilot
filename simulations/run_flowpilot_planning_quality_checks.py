@@ -95,6 +95,7 @@ HAZARD_EXPECTED_FAILURES = {
     model.PRODUCT_ARCHITECTURE_MISSING_SYSTEM_INTEGRATION_INTENT: "PM product architecture lacks system integration intent for the whole output",
     model.ROUTE_CONVERGENCE_MISSING_COMPOSITION_REVIEW: "route structure convergence lacks parent child sibling composition review",
     model.NODE_PLAN_MISSING_INTEGRATION_TOUCHPOINT: "node acceptance plan lacks plan-level integration touchpoint",
+    model.NODE_PLAN_MISSING_GLOBAL_STANDARD_REFERENCES: "node acceptance plan lacks current global standard references for backstage roles",
     model.PM_ABSORBS_LOCAL_RESULT_WITH_BROKEN_INTEGRATION: "PM absorbed current-node result without checking upstream downstream sibling and parent integration",
     model.PARENT_REPLAY_PASSES_SCATTERED_CHILD_OUTPUTS: "parent backward replay passed scattered local child outputs that do not compose into the parent goal",
     model.FINAL_LEDGER_PASSES_NODE_LEVEL_ONLY_COMPOSITION: "final ledger passed node-level completion without whole-output composition closure",

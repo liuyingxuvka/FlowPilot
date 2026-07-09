@@ -5,7 +5,7 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=3 initial_states=1 traces=468",
+    "summary": "sequences=3 initial_states=1 traces=474",
     "violation_count": 0
   },
   "hazard_checks": {
@@ -132,6 +132,16 @@
         "expected_failure": "node acceptance plan lacks current executable check surface, status vocabulary, expected failure shape, or bounded worker outcome",
         "failures": [
           "node acceptance plan lacks current executable check surface, status vocabulary, expected failure shape, or bounded worker outcome"
+        ]
+      },
+      "node_plan_missing_global_standard_references": {
+        "detected": true,
+        "expected_failure": "node acceptance plan lacks current global standard references for backstage roles",
+        "failures": [
+          "node acceptance plan lacks current global standard references for backstage roles",
+          "worker prompt does not require current user/PM global standard references",
+          "reviewer gate does not block local-only node context that hides the user/PM standard",
+          "FlowGuard prompt does not model against current user/PM global standard references"
         ]
       },
       "node_plan_missing_integration_touchpoint": {
@@ -587,11 +597,11 @@
     "accepted_scenarios": [
       "valid_ui_route"
     ],
-    "edge_count": 156,
+    "edge_count": 158,
     "invariant_failures": [],
     "missing_labels": [],
     "ok": true,
-    "rejected_state_count": 77,
-    "state_count": 157
+    "rejected_state_count": 78,
+    "state_count": 159
   }
 }

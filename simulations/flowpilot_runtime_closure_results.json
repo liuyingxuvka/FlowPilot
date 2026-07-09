@@ -68,6 +68,46 @@
         "failures": [
           "display projection refreshed with stale route frontier version"
         ]
+      },
+      "terminal_dirty_accepted_pointer_ignored": {
+        "detected": true,
+        "expected": "terminal closure ignored dirty accepted-result pointers",
+        "failures": [
+          "final user report written before clean terminal closure",
+          "terminal closure ignored dirty accepted-result pointers"
+        ]
+      },
+      "terminal_final_reviewer_auth_missing": {
+        "detected": true,
+        "expected": "terminal closure ran without complete final Reviewer authorized reads",
+        "failures": [
+          "final user report written before clean terminal closure",
+          "terminal closure ran without complete final Reviewer authorized reads"
+        ]
+      },
+      "terminal_open_break_glass_ignored": {
+        "detected": true,
+        "expected": "terminal closure ignored open break-glass incidents",
+        "failures": [
+          "final user report written before clean terminal closure",
+          "terminal closure ignored open break-glass incidents"
+        ]
+      },
+      "terminal_pending_patch_ignored": {
+        "detected": true,
+        "expected": "terminal closure ignored pending break-glass patch validation",
+        "failures": [
+          "final user report written before clean terminal closure",
+          "terminal closure ignored pending break-glass patch validation"
+        ]
+      },
+      "terminal_stale_active_blocker_ignored": {
+        "detected": true,
+        "expected": "terminal closure ignored stale active blockers",
+        "failures": [
+          "final user report written before clean terminal closure",
+          "terminal closure ignored stale active blockers"
+        ]
       }
     },
     "ok": true
@@ -81,12 +121,12 @@
     "stuck_state_count": 0
   },
   "safe_graph": {
-    "edge_count": 23,
+    "edge_count": 25,
     "invariant_failure_count": 0,
     "invariant_failures": [],
     "missing_labels": [],
     "ok": true,
-    "state_count": 24,
+    "state_count": 26,
     "terminal_state_count": 4
   }
 }

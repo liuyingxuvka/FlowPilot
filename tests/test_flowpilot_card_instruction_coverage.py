@@ -118,6 +118,57 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
     def test_current_reference_surfaces_reject_obsolete_startup_and_role_paths(self) -> None:
         self.assertFalse(model.forbidden_current_reference_surface_errors(ROOT))
 
+    def test_current_global_standard_references_reach_backstage_roles(self) -> None:
+        pm_product = _normalized_path(_card_path_by_id("pm.product_architecture"))
+        pm_root = _normalized_path(_card_path_by_id("pm.root_contract"))
+        pm_route = _normalized_path(_card_path_by_id("pm.route_skeleton"))
+        pm_node = _normalized_path(_card_path_by_id("pm.node_acceptance_plan"))
+        worker_core = _normalized_path(_card_path_by_id("worker.core"))
+        reviewer_core = _normalized_path(_card_path_by_id("reviewer.core"))
+        flowguard_core = _normalized_path(_card_path_by_id("flowguard_operator.core"))
+        reviewer_node = _normalized_path(_card_path_by_id("reviewer.node_acceptance_plan_review"))
+        worker_review = _normalized_path(_card_path_by_id("reviewer.worker_result_review"))
+
+        self.assertIn("richest reasonable version", pm_product)
+        self.assertIn("highest reasonable product target", pm_root)
+        self.assertIn("high-standard execution design", pm_route)
+        self.assertIn("current global standard handoff", pm_node)
+        for term in (
+            "original user standard",
+            "pm's execution intent",
+            "root/user acceptance contract",
+            "product architecture or highest-product target",
+            "acceptance item registry",
+            "selected skill-standard material",
+            "verification or evidence surfaces",
+        ):
+            with self.subTest(term=term):
+                self.assertIn(term, pm_node)
+
+        for label, text in (
+            ("worker", worker_core),
+            ("reviewer", reviewer_core),
+            ("flowguard", flowguard_core),
+            ("reviewer_node", reviewer_node),
+            ("worker_review", worker_review),
+        ):
+            with self.subTest(label=label):
+                self.assertIn("current user/pm standard", text)
+                self.assertIn("root", text)
+                self.assertIn("product architecture", text)
+                self.assertIn("acceptance item registry", text)
+                self.assertIn("skill", text)
+                self.assertIn("flowguard", text)
+
+        self.assertIn("the worker target is not", worker_core)
+        self.assertIn("in-scope quality improvements", worker_core)
+        self.assertIn("block local-only or generic references", reviewer_node)
+        self.assertIn("locally tidy while still below the current global standard", worker_review)
+        self.assertIn("the package is not the modeling boundary", flowguard_core)
+        self.assertNotIn("evidence targets", worker_core)
+        self.assertNotIn("inspection targets", worker_core)
+        self.assertNotIn("model targets", flowguard_core)
+
     def test_current_packet_rows_use_lease_ack_result_authority(self) -> None:
         action_table = (RUNTIME_KIT / "prompts" / "controller" / "action_ledger_table.md").read_text(encoding="utf-8").lower()
         controller_card = _card_path_by_id("controller.core").read_text(encoding="utf-8").lower()

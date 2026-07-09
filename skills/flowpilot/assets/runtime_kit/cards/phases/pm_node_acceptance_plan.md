@@ -78,6 +78,17 @@ stale evidence close this node. If `decision: "pass"`, the result body must incl
   this route node, with `acceptance_item_id`, `status_for_this_node`, and
   `future_evidence_rule`.
 
+`relevant_references` is the current global standard handoff, not a local
+reading list. It must let Worker, Reviewer, and FlowGuard recover the original
+user standard and PM's execution intent without chat memory. Include the
+current root/user acceptance contract, product architecture or highest-product
+target, acceptance item registry, current route node or route plan, selected
+skill-standard material, FlowGuard work/model references when applicable,
+material/source artifacts, known risk or low-quality-success records, and the
+verification or evidence surfaces that define this node. If a reference does
+not exist yet, name the missing source as a blocker, repair need, research
+need, or route redesign reason instead of silently lowering the node standard.
+
 For user-sourced acceptance items, preserve the source-intent acceptance force
 in the projection. Do not shorten a concrete user requirement into a generic
 "do the work" or "finish quality" note. The current node may own only a slice

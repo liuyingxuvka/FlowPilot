@@ -1,5 +1,48 @@
 # Changelog
 
+## v0.11.5 - 2026-07-09
+
+### Fixed
+
+- Hardened FlowPilot control-plane ledger hygiene so review-blocked or rejected
+  results cannot remain attached as accepted packet results, accepted-packet
+  assignment repair cannot resurrect dirty accepted pointers, and terminal
+  closure checks whole-ledger blockers before return.
+- Repaired PM FlowGuard acceptance handling so PM `decision=accept` waits for
+  Reviewer/System acceptance before final packet acceptance is written.
+- Preserved repair blocker identity across gate-derived PM FlowGuard
+  acceptance packets and downstream review/recheck paths.
+- Made final closure and terminal return block on stale active blockers, open
+  break-glass incidents, pending permanent-fix patches, dirty accepted-result
+  pointers, and missing final Reviewer evidence authorization.
+- Expanded final Reviewer and terminal backward replay packets with authorized
+  evidence bundles through existing `authorized_result_reads`.
+
+### Changed
+
+- Strengthened PM, Worker, Reviewer, and FlowGuard prompt cards so current
+  user/PM high-standard context travels through existing reference, acceptance,
+  risk, and verification fields instead of hidden chat memory.
+- Tightened existing packet/result contract projection for required non-empty
+  arrays without adding new runtime fields, UI, fallback compatibility,
+  semantic runtime scoring, or old-field aliases.
+
+### Validation
+
+- Verified the OpenSpec changes
+  `harden-flowpilot-control-plane-ledger-hygiene` and
+  `harden-flowpilot-high-standard-context-coverage` with all required checks
+  passing.
+- Verified focused runtime regressions, historical/synthetic DataBank replay
+  fixtures, ContractExhaustionMesh, fake-AI runtime replay, synthetic-agent
+  coverage, model-test alignment, FlowGuard control-surface/blocker-repair/
+  break-glass/runtime-closure/recursive-closure models, topology build/check,
+  local installed-skill sync, install audit, meta checks, and capability
+  checks.
+- Added a compact fake-AI runtime replay summary artifact while preserving
+  full in-memory Cartesian coverage for the 972000-cell control-plane ledger
+  hygiene matrix.
+
 ## v0.11.4 - 2026-07-08
 
 ### Fixed

@@ -28,7 +28,7 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=3 initial_states=1 traces=174",
+    "summary": "sequences=3 initial_states=1 traces=180",
     "violation_count": 0
   },
   "hazard_detection": {
@@ -88,6 +88,15 @@
           "reviewer received repair package before Runtime mechanical blocker identity gate passed",
           "blocker identity appeared only in prose instead of formal repair fields",
           "formal blocker identity missing reached Reviewer instead of Runtime reissue"
+        ]
+      },
+      "gate_derived_pm_flowguard_acceptance_identity_dropped": {
+        "detected": true,
+        "expected_failure": "PM FlowGuard acceptance lost gate-derived repair blocker identity",
+        "failures": [
+          "PM FlowGuard acceptance lost gate-derived repair blocker identity",
+          "reviewer received repair package before Runtime mechanical blocker identity gate passed",
+          "reviewer recheck packet did not inherit repair blocker identity"
         ]
       },
       "no_success_evidence_contract": {
@@ -216,7 +225,7 @@
     "ok": true,
     "samples": [],
     "stuck_state_count": 0,
-    "terminal_state_count": 29
+    "terminal_state_count": 30
   },
   "result_type": "flowpilot_blocker_repair_information_flow_checks",
   "safe_graph": {
@@ -228,7 +237,7 @@
       "valid_threshold_break_glass_loop_escape",
       "valid_worker_blocker_reissue"
     ],
-    "edge_count": 58,
+    "edge_count": 60,
     "invariant_failures": [],
     "missing_labels": [],
     "ok": true,
@@ -240,6 +249,7 @@
       "flowguard_recheck_evidence_not_delivered_to_reviewer",
       "followup_blocker_lost",
       "formal_blocker_id_only_in_prose_reaches_reviewer",
+      "gate_derived_pm_flowguard_acceptance_identity_dropped",
       "no_success_evidence_contract",
       "pm_closes_blocker_without_recheck",
       "pm_repair_package_omits_new_blocker_content",
@@ -257,6 +267,6 @@
       "worker_packet_has_no_semantic_delta",
       "worker_packet_omits_repair_direction"
     ],
-    "state_count": 59
+    "state_count": 61
   }
 }

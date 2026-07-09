@@ -245,6 +245,167 @@ def _break_glass_incident_has_closed_evidence(fixture: dict[str, Any]) -> dict[s
     return {"covered": not reasons, "reasons": reasons}
 
 
+def _write_databank_control_plane_miss_break_glass(run_root: Path) -> None:
+    break_glass_root = run_root / "controller_break_glass"
+    incidents = break_glass_root / "incidents"
+    patches = break_glass_root / "patches"
+    incidents.mkdir(parents=True, exist_ok=True)
+    patches.mkdir(parents=True, exist_ok=True)
+    (incidents / "incident-blocker-0006.json").write_text(
+        json.dumps(
+            {
+                "incident_id": "incident-blocker-0006",
+                "status": "open",
+                "final_disposition": None,
+                "closed_at": None,
+                "related_patch_ids": [
+                    "patch-blocker-0006-accepted-review-sync",
+                    "patch-active-breakglass-reattach",
+                    "patch-repair-blocked-packet-command",
+                ],
+            },
+            indent=2,
+            sort_keys=True,
+        ),
+        encoding="utf-8",
+    )
+    for patch_id in [
+        "patch-blocker-0006-accepted-review-sync",
+        "patch-active-breakglass-reattach",
+        "patch-repair-blocked-packet-command",
+    ]:
+        (patches / f"{patch_id}.json").write_text(
+            json.dumps(
+                {
+                    "patch_id": patch_id,
+                    "temporary": True,
+                    "permanent_fix_needed": True,
+                    "validation_status": "pending",
+                },
+                indent=2,
+                sort_keys=True,
+            ),
+            encoding="utf-8",
+        )
+
+
+def _databank_control_plane_miss_ledger(run_root: Path) -> dict[str, Any]:
+    ledger = core_runtime.new_ledger(
+        "DataBank replay fixture",
+        "Final closure requires clean control-plane ledger hygiene.",
+    )
+    ledger["run_root"] = str(run_root)
+    ledger["startup_intake"] = {
+        "status": "confirmed",
+        "current_run_authority": True,
+        "controller_may_read_body": False,
+        "body_text_included": False,
+        "startup_answers": {"background_collaboration_authorized": True},
+    }
+    core_runtime.create_route(ledger, "DataBank replay route", ["Final replay"])
+    packet_id = core_runtime.issue_task_packet(
+        ledger,
+        "pm",
+        "Absorb FlowGuard report for structural decision pm_decision_gate-0005",
+        json.dumps({"decision": "accept", "accepted_flowguard_result_id": "result-0208"}),
+        packet_kind="pm_flowguard_acceptance",
+        subject_id="pm_decision_gate-0005",
+        target_result_id="result-0208",
+        route_node_id="node-61-test-suite-update-repair-v3",
+        route_scope="pm_flowguard_acceptance",
+    )
+    packet = ledger["packets"][packet_id]
+    packet["packet_id"] = "packet-0205"
+    ledger["packets"]["packet-0205"] = packet
+    del ledger["packets"][packet_id]
+    packet_id = "packet-0205"
+    body = json.dumps({"decision": "accept", "accepted_flowguard_result_id": "result-0208"})
+    ledger["results"]["result-0209"] = {
+        "result_id": "result-0209",
+        "packet_id": packet_id,
+        "producer_lease_id": "lease-0206",
+        "status": "review_blocked",
+        "accepted": False,
+        "body": body,
+        "review_id": "review-0064",
+        "envelope": {
+            "body_hash": core_runtime.hash_text(body),
+            "evidence_generation": ledger["source_generation"],
+        },
+    }
+    ledger["reviews"]["review-0064"] = {
+        "review_id": "review-0064",
+        "result_id": "result-0209",
+        "accepted": False,
+        "blockers": ["result_not_mechanically_valid"],
+    }
+    packet["status"] = "accepted"
+    packet["accepted_result_id"] = "result-0209"
+    packet["assigned_lease_id"] = "lease-0206"
+    packet["repair_blocker_id"] = ""
+    packet["envelope"]["repair_blocker_id"] = ""
+    packet["envelope"]["current_handoff_contract"]["input_material_manifest"]["blocker_id"] = ""
+    ledger["active_blockers"]["blocker-0007"] = {
+        "blocker_id": "blocker-0007",
+        "status": "active",
+        "blocker_class": "system_validation_failure",
+        "route_node_id": "node-61-test-suite-update-repair-v3",
+        "packet_id": "packet-0207",
+        "subject_packet_id": "packet-0205",
+        "repair_target_packet_id": "packet-0205",
+        "target_result_id": "result-0209",
+    }
+    final_packet_id = core_runtime.issue_task_packet(
+        ledger,
+        "reviewer",
+        "Execute route node node-65-final-review-and-replay: Final review and backward replay",
+        json.dumps({"schema_version": "black_box_flowpilot.node_task_packet.v1"}),
+        packet_kind="task",
+        route_node_id="node-65-final-review-and-replay",
+        route_scope="node",
+        authorized_result_reads=[],
+    )
+    final_packet = ledger["packets"][final_packet_id]
+    final_packet["packet_id"] = "packet-0238"
+    final_packet["envelope"]["responsibility"] = "reviewer"
+    final_packet["envelope"]["authorized_result_reads"] = []
+    ledger["packets"]["packet-0238"] = final_packet
+    del ledger["packets"][final_packet_id]
+    ledger["closure"] = {"decision": "complete", "blockers": []}
+    _write_databank_control_plane_miss_break_glass(run_root)
+    return ledger
+
+
+def _databank_control_plane_miss_reasons(ledger: dict[str, Any]) -> list[str]:
+    reasons: list[str] = []
+    if core_runtime._accepted_result_pointer_violation(ledger, ledger["packets"]["packet-0205"]):
+        reasons.append("accepted_result_pointer_targets_review_blocked_result")
+    packet = ledger["packets"]["packet-0205"]
+    envelope = packet["envelope"]
+    handoff = envelope["current_handoff_contract"]["input_material_manifest"]
+    if not packet.get("repair_blocker_id") or not envelope.get("repair_blocker_id") or not handoff.get("blocker_id"):
+        reasons.append("pm_flowguard_acceptance_repair_identity_missing")
+    final_packet = ledger["packets"]["packet-0238"]
+    if (
+        final_packet["envelope"].get("responsibility") == "reviewer"
+        and "final-review" in str(final_packet["envelope"].get("route_node_id") or "")
+        and not final_packet["envelope"].get("authorized_result_reads")
+    ):
+        reasons.append("final_reviewer_packet_authorized_result_reads_empty")
+    closure_blockers = core_runtime._closure_blockers(
+        ledger,
+        validation_evidence_id="validation-result-0211",
+        required_flowguard_target="development_process",
+    )
+    if any("active_blocker:blocker-0007" in item for item in closure_blockers):
+        reasons.append("stale_active_blocker_survived_final_closure")
+    if any("break_glass_incident_open" in item for item in closure_blockers):
+        reasons.append("break_glass_incident_open_at_final_closure")
+    if any("break_glass_patch_pending" in item for item in closure_blockers):
+        reasons.append("break_glass_patch_validation_pending_at_final_closure")
+    return reasons
+
+
 class FlowPilotHistoricalLiveRunReplayTests(FlowPilotRouterRuntimeTestBase):
     def test_run_20260527_metadata_fixture_contains_no_sealed_bodies(self) -> None:
         fixture = json.loads(HISTORICAL_METADATA_FIXTURE.read_text(encoding="utf-8"))
@@ -278,6 +439,31 @@ class FlowPilotHistoricalLiveRunReplayTests(FlowPilotRouterRuntimeTestBase):
         self.assertIn("break_glass_incident_still_open", gate["reasons"])
         self.assertIn("break_glass_recovery_transaction_missing", gate["reasons"])
         self.assertIn("break_glass_patch_validation_not_run", gate["reasons"])
+
+    def test_run_20260707_databank_control_plane_miss_fixture_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_root:
+            ledger = _databank_control_plane_miss_ledger(Path(temp_root))
+
+            with self.assertRaises(core_runtime.BlackBoxRuntimeError):
+                core_runtime.repair_accepted_packet_assignment(ledger, "packet-0205")
+
+            preflight = core_runtime.final_return_preflight(
+                ledger,
+                guard={
+                    "controller_stop_allowed": True,
+                    "decision": "terminal_return",
+                    "next_action": {"action_type": "terminal_complete"},
+                },
+            )
+            reasons = _databank_control_plane_miss_reasons(ledger)
+
+        self.assertFalse(preflight["allowed"], preflight)
+        self.assertIn("accepted_result_pointer_targets_review_blocked_result", reasons)
+        self.assertIn("pm_flowguard_acceptance_repair_identity_missing", reasons)
+        self.assertIn("final_reviewer_packet_authorized_result_reads_empty", reasons)
+        self.assertIn("stale_active_blocker_survived_final_closure", reasons)
+        self.assertIn("break_glass_incident_open_at_final_closure", reasons)
+        self.assertIn("break_glass_patch_validation_pending_at_final_closure", reasons)
 
     def test_contract_surface_reduction_baseline_keeps_success_mainline_and_rejects_first_packet_terminal_evidence(
         self,

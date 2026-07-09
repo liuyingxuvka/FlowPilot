@@ -19,6 +19,7 @@ REQUIRED_LABELS = tuple(
     [f"select_{name}" for name in model.SCENARIOS]
     + [f"open_incident_{name}" for name in model.VALID_SCENARIOS]
     + [f"return_to_normal_{name}" for name in model.VALID_SCENARIOS]
+    + [f"record_incident_disposition_{name}" for name in model.VALID_SCENARIOS]
     + [f"disclose_break_glass_{name}" for name in model.VALID_SCENARIOS]
     + [f"accept_{name}" for name in model.VALID_SCENARIOS]
     + [f"reject_{name}" for name in model.NEGATIVE_SCENARIOS]
@@ -37,6 +38,8 @@ HAZARD_EXPECTED_FAILURES = {
     "missing_patch_validation": "without closed validation",
     "patch_validation_not_run": "validation stayed not_run",
     "missing_return_to_normal": "did not return to normal Controller flow",
+    "missing_incident_final_disposition": "lacked final disposition",
+    "missing_incident_closed_at": "lacked closed_at",
     "missing_final_disclosure": "not disclosed in final reporting",
     "controller_reads_sealed_body": "read a sealed packet or result body",
     "controller_does_project_work": "performed target-project work",
@@ -58,6 +61,8 @@ def _state_id(state: model.State) -> str:
         f"playbook={state.playbook_read}|"
         f"incident={state.incident_recorded}|patch_used={state.patch_used}|"
         f"patch={state.patch_recorded}|returned={state.returned_to_normal_flow}|"
+        f"incident_disposition={state.incident_terminal_disposition_recorded}|"
+        f"closed_at={state.incident_closed_at_recorded}|"
         f"disclosed={state.final_disclosed}"
     )
 

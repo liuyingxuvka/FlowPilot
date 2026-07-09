@@ -1726,6 +1726,60 @@ def materialize_route_from_planning_result(
     return materialized_ids
 
 
+def _result_body_is_authorizable(ledger: Mapping[str, Any], result_id: str) -> bool:
+    result = ledger.get("results", {}).get(result_id)
+    if not isinstance(result, Mapping):
+        return False
+    envelope = result.get("envelope", {}) if isinstance(result.get("envelope"), Mapping) else {}
+    body_hash = str(envelope.get("body_hash") or "")
+    return bool(body_hash and hash_text(str(result.get("body", ""))) == body_hash)
+
+
+def _reviewer_evidence_authorized_result_reads(
+    ledger: Mapping[str, Any],
+    *,
+    purpose: str,
+) -> list[dict[str, Any]]:
+    reads: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for result_id in sorted(str(item) for item in ledger.get("results", {}).keys()):
+        if result_id in seen or not _result_body_is_authorizable(ledger, result_id):
+            continue
+        seen.add(result_id)
+        reads.append(
+            _authorized_read_for_result(
+                ledger,
+                result_id,
+                allowed_roles=["reviewer"],
+                purpose=purpose,
+                required_before_submit=True,
+            )
+        )
+    return reads
+
+
+def _route_node_is_final_reviewer_node(node: Mapping[str, Any]) -> bool:
+    if str(node.get("responsibility") or "") != "reviewer":
+        return False
+    text = " ".join(
+        [
+            str(node.get("title") or ""),
+            str(node.get("modeled_target") or ""),
+            " ".join(str(item) for item in node.get("acceptance_criteria") or []),
+        ]
+    ).lower()
+    return any(
+        token in text
+        for token in (
+            "final review",
+            "backward replay",
+            "closure audit",
+            "final validation",
+            "terminal replay",
+        )
+    )
+
+
 def ensure_next_node_task_packet(ledger: dict[str, Any]) -> str:
     frontier = ledger.get("execution_frontier") or {}
     node_id = str(frontier.get("active_node_id") or "")
@@ -1742,6 +1796,20 @@ def ensure_next_node_task_packet(ledger: dict[str, Any]) -> str:
     existing = _open_or_live_node_task_packet(ledger, node_id)
     if existing:
         return str(existing["packet_id"])
+    final_reviewer_reads = (
+        _reviewer_evidence_authorized_result_reads(ledger, purpose="final_reviewer_node_evidence_bundle")
+        if _route_node_is_final_reviewer_node(node)
+        else []
+    )
+    instruction = (
+        "Complete this bounded route node from node_context_package and return concrete current-run evidence. "
+        "The context package is the minimum baseline; preserve the listed evidence and inspection targets."
+    )
+    if final_reviewer_reads:
+        instruction += (
+            " This Reviewer final/backward node includes authorized_result_reads for sealed result bodies; "
+            "open and inspect them before submitting, and block if required current material is missing."
+        )
     packet_id = issue_task_packet(
         ledger,
         str(node["responsibility"]),
@@ -1759,10 +1827,7 @@ def ensure_next_node_task_packet(ledger: dict[str, Any]) -> str:
                 "acceptance_item_ids": _node_acceptance_item_ids(node),
                 "skill_standard_obligation_ids": list(node.get("skill_standard_obligation_ids") or []),
                 **_optional_node_context_reference(ledger, node_id),
-                "instruction": (
-                    "Complete this bounded route node from node_context_package and return concrete current-run evidence. "
-                    "The context package is the minimum baseline; preserve the listed evidence and inspection targets."
-                ),
+                "instruction": instruction,
             },
             indent=2,
             sort_keys=True,
@@ -1774,6 +1839,7 @@ def ensure_next_node_task_packet(ledger: dict[str, Any]) -> str:
         acceptance_criteria=list(node["acceptance_criteria"]),
         node_context_package_id=str(node.get("node_context_package_id") or ""),
         repair_blocker_id=str(node.get("repair_blocker_id") or ""),
+        authorized_result_reads=final_reviewer_reads or None,
     )
     node["packet_ids"].append(packet_id)
     node["status"] = "running"
@@ -2009,6 +2075,8 @@ def _accepted_result_ids_for_route_node(ledger: Mapping[str, Any], node_id: str)
         if str(envelope.get("route_node_id") or "") != node_id:
             continue
         result_id = str(packet.get("accepted_result_id") or "")
+        if result_id and _accepted_result_pointer_violation(ledger, packet):
+            continue
         if result_id and result_id not in seen:
             accepted.append(result_id)
             seen.add(result_id)
@@ -3108,6 +3176,10 @@ def ensure_terminal_backward_replay_packet(ledger: dict[str, Any], validation_ev
     if not _final_gate_ledgers_clean_for_terminal_replay(ledger):
         raise BlackBoxRuntimeError("terminal backward replay requires clean final route-wide and requirement ledgers")
     family_id = "review.terminal_backward_replay"
+    authorized_reads = _reviewer_evidence_authorized_result_reads(
+        ledger,
+        purpose="terminal_backward_replay_evidence_bundle",
+    )
     return issue_task_packet(
         ledger,
         "reviewer",
@@ -3129,6 +3201,7 @@ def ensure_terminal_backward_replay_packet(ledger: dict[str, Any], validation_ev
                 "minimal_valid_shape": packet_result_contracts.minimal_valid_shape_for_family(family_id),
                 "instruction": (
                     "Start from the delivered product, then replay root acceptance and every effective route node. "
+                    "Open and inspect every required authorized_result_reads entry before submitting. "
                     "Submit exactly the current terminal backward replay fields: final_artifact_refs, "
                     "acceptance_item_closure, route_segment_replay, waiver_records, and final_blockers. "
                     "Do not pass from reports alone, accepted node ids alone, old UI evidence, or a completion summary."
@@ -3147,6 +3220,7 @@ def ensure_terminal_backward_replay_packet(ledger: dict[str, Any], validation_ev
             "Every runtime-issued segment target appears exactly once in route_segment_replay.",
             "Any final blocker prevents terminal closure until PM chooses the matching current repair path.",
         ],
+        authorized_result_reads=authorized_reads or None,
     )
 
 
@@ -4862,7 +4936,7 @@ def _accepted_packets_for_closure_evidence(ledger: Mapping[str, Any]) -> list[Ma
     return [
         packet
         for packet in _accepted_result_packets_for_active_route(ledger)
-        if packet.get("status") == "accepted"
+        if packet.get("status") == "accepted" and not _accepted_result_pointer_violation(ledger, packet)
     ]
 
 
@@ -6577,6 +6651,7 @@ def _ensure_pm_flowguard_acceptance_packet_for_gate(
         "instruction": (
             "Read the current staged structural decision and the current FlowGuard report. "
             "Return one strict JSON result. Use decision=accept only after absorbing the FlowGuard findings; "
+            "this submits the PM absorption to Reviewer and is not final packet acceptance. "
             "use decision=redesign_route with a strict route_plan when the report changes the route; "
             "do not replace a hierarchical route with a complex flat all-leaf route_plan, and keep node-entry "
             "splits under a replacement parent/module scope; "
@@ -6602,6 +6677,7 @@ def _ensure_pm_flowguard_acceptance_packet_for_gate(
             "PM did not treat FlowGuard as route authority or worker release.",
             "Any rewritten route plan uses the strict current route_plan shape.",
         ],
+        repair_blocker_id=str(gate.get("blocker_id") or ""),
         authorized_result_reads=reads,
     )
 
@@ -12790,7 +12866,10 @@ def _apply_valid_packet_result(
         result["semantic_decision"] = outcome["decision"]
         result["packet_outcome_id"] = outcome_id
         result["flowguard_absorption"] = absorption
-        _accept_packet_result(ledger, packet, result, lease, reason="pm_flowguard_acceptance_submitted")
+        if decision in {"accept", "redesign_route"}:
+            close_lease(ledger, lease["lease_id"], "pm_flowguard_acceptance_submitted")
+        else:
+            _accept_packet_result(ledger, packet, result, lease, reason="pm_flowguard_acceptance_submitted")
         if decision == "accept":
             _mark_pm_decision_gate_pm_absorbed(ledger, gate, packet["packet_id"], result["result_id"])
             _ensure_review_packet_for_task_result(ledger, packet["packet_id"])
@@ -14555,6 +14634,10 @@ def review_result(
         checks_evidence=checks_evidence,
     )
     accepted = decision == "accept" and not blockers
+    if not accepted and str(packet.get("accepted_result_id") or "") == result_id:
+        raise BlackBoxRuntimeError(
+            "review_result refused to block a result already named by packet.accepted_result_id"
+        )
     ledger["reviews"][review_id] = {
         "review_id": review_id,
         "result_id": result_id,
@@ -15587,9 +15670,52 @@ def _guard_config_int(ledger: Mapping[str, Any], key: str, default: int) -> int:
     return max(0, value)
 
 
+def _accepted_result_pointer_violation(ledger: Mapping[str, Any], packet: Mapping[str, Any]) -> str:
+    packet_id = str(packet.get("packet_id") or "")
+    accepted_result_id = str(packet.get("accepted_result_id") or "")
+    if not accepted_result_id:
+        return ""
+    result = ledger.get("results", {}).get(accepted_result_id)
+    if not isinstance(result, Mapping):
+        return f"accepted_result_missing:{accepted_result_id}"
+    if str(result.get("packet_id") or "") != packet_id:
+        return f"accepted_result_wrong_packet:{accepted_result_id}:{result.get('packet_id', '')}"
+    if result.get("status") != "accepted":
+        return f"accepted_result_not_accepted:{accepted_result_id}:{result.get('status', '')}"
+    if result.get("accepted") is not True:
+        return f"accepted_result_flag_false:{accepted_result_id}"
+    review_id = str(result.get("review_id") or "")
+    if review_id:
+        review = ledger.get("reviews", {}).get(review_id)
+        if not isinstance(review, Mapping):
+            return f"accepted_result_review_missing:{accepted_result_id}:{review_id}"
+        if review.get("decision") != "accept" or review.get("blockers"):
+            return f"accepted_result_review_not_accepted:{accepted_result_id}:{review_id}"
+    for evidence in ledger.get("validation_evidence", {}).values():
+        if not isinstance(evidence, Mapping):
+            continue
+        if str(evidence.get("source_result_id") or "") != accepted_result_id:
+            continue
+        if evidence.get("status") != "passed" or evidence.get("blockers") or evidence.get("proof_stale"):
+            return f"accepted_result_validation_not_passing:{accepted_result_id}:{evidence.get('evidence_id', '')}"
+    return ""
+
+
+def _accepted_result_pointer_blockers(ledger: Mapping[str, Any]) -> list[str]:
+    blockers: list[str] = []
+    for packet in ledger.get("packets", {}).values():
+        if not isinstance(packet, Mapping) or not packet.get("accepted_result_id"):
+            continue
+        violation = _accepted_result_pointer_violation(ledger, packet)
+        if violation:
+            blockers.append(f"accepted_result_pointer:{packet.get('packet_id', '')}:{violation}")
+    return blockers
+
+
 def _accepted_packet_repair_details(ledger: Mapping[str, Any], packet: Mapping[str, Any]) -> dict[str, Any]:
     packet_id = str(packet.get("packet_id", ""))
     accepted_result_id = str(packet.get("accepted_result_id") or "")
+    pointer_violation = _accepted_result_pointer_violation(ledger, packet)
     result = ledger.get("results", {}).get(accepted_result_id)
     result_map = result if isinstance(result, Mapping) else {}
     original_lease_id = str(result_map.get("producer_lease_id") or "")
@@ -15608,9 +15734,12 @@ def _accepted_packet_repair_details(ledger: Mapping[str, Any], packet: Mapping[s
         "original_lease_id": original_lease_id,
         "assigned_lease_id": assigned_lease_id,
         "active_replacement_lease_ids": active_replacement_lease_ids,
+        "pointer_violation": pointer_violation,
         "needs_repair": bool(
             accepted_result_id
             and (
+                pointer_violation
+                or
                 packet.get("status") != "accepted"
                 or bool(active_replacement_lease_ids)
                 or bool(original_lease_id and assigned_lease_id and assigned_lease_id != original_lease_id)
@@ -15644,6 +15773,16 @@ def accepted_packet_lease_health(ledger: Mapping[str, Any]) -> dict[str, Any]:
                     "packet_status": str(packet.get("status") or ""),
                 }
             )
+        pointer_violation = str(details.get("pointer_violation") or "")
+        if pointer_violation:
+            findings.append(
+                {
+                    "packet_id": str(packet.get("packet_id") or ""),
+                    "accepted_result_id": str(packet.get("accepted_result_id") or ""),
+                    "pointer_violation": pointer_violation,
+                    "packet_status": str(packet.get("status") or ""),
+                }
+            )
     return {
         "schema_version": "black_box_flowpilot.accepted_packet_lease_health.v1",
         "ok": not findings,
@@ -15664,6 +15803,9 @@ def repair_accepted_packet_assignment(
     accepted_result_id = str(details.get("accepted_result_id") or "")
     if not accepted_result_id:
         raise BlackBoxRuntimeError("accepted packet repair requires accepted_result_id")
+    pointer_violation = str(details.get("pointer_violation") or "")
+    if pointer_violation:
+        raise BlackBoxRuntimeError(f"accepted packet repair refused dirty accepted_result_id: {pointer_violation}")
     original_lease_id = str(details.get("original_lease_id") or "")
     closed_replacement_lease_ids: list[str] = []
     for lease_id in list(details.get("active_replacement_lease_ids") or []):
@@ -16019,6 +16161,7 @@ def final_return_preflight(
     if next_reason.startswith("control_plane_hard_gate_escape:"):
         blockers.append(next_reason)
     blockers.extend(_current_target_preflight_blockers(ledger, next_action))
+    blockers.extend(_terminal_ledger_hygiene_blockers(ledger))
     if guard_map.get("controller_stop_allowed") is not True:
         blockers.append("lifecycle_guard_disallows_stop")
     if guard_map.get("decision") != "terminal_return":
@@ -16384,6 +16527,73 @@ def assert_controller_stop_allowed(ledger: Mapping[str, Any]) -> None:
         raise BlackBoxRuntimeError(f"Controller cannot stop before final-return preflight passes: {blockers}")
 
 
+def _break_glass_closure_blockers(ledger: Mapping[str, Any]) -> list[str]:
+    run_root = str(ledger.get("run_root") or "")
+    if not run_root:
+        return []
+    root = Path(run_root) / "controller_break_glass"
+    if not root.exists():
+        return []
+    blockers: list[str] = []
+    incident_terminal_statuses = {"closed", "quarantined", "blocked", "resolved"}
+    patch_valid_statuses = {"passed", "validated", "closed", "quarantined", "blocked"}
+    incidents_dir = root / "incidents"
+    if incidents_dir.exists():
+        for path in sorted(incidents_dir.glob("*.json")):
+            try:
+                incident = json.loads(path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                blockers.append(f"break_glass_incident_unreadable:{path.name}")
+                continue
+            if not isinstance(incident, Mapping):
+                blockers.append(f"break_glass_incident_invalid:{path.name}")
+                continue
+            incident_id = str(incident.get("incident_id") or path.stem)
+            status = str(incident.get("status") or "").lower()
+            if status not in incident_terminal_statuses:
+                blockers.append(f"break_glass_incident_open:{incident_id}:{status or 'missing_status'}")
+                continue
+            if status == "closed" and (not incident.get("final_disposition") or not incident.get("closed_at")):
+                blockers.append(f"break_glass_incident_incomplete_close:{incident_id}")
+    patches_dir = root / "patches"
+    if patches_dir.exists():
+        for path in sorted(patches_dir.glob("*.json")):
+            try:
+                patch = json.loads(path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                blockers.append(f"break_glass_patch_unreadable:{path.name}")
+                continue
+            if not isinstance(patch, Mapping):
+                blockers.append(f"break_glass_patch_invalid:{path.name}")
+                continue
+            patch_id = str(patch.get("patch_id") or path.stem)
+            validation_status = str(patch.get("validation_status") or "").lower()
+            if (
+                patch.get("temporary") is True
+                and patch.get("permanent_fix_needed") is True
+                and validation_status not in patch_valid_statuses
+            ):
+                blockers.append(f"break_glass_patch_pending:{patch_id}:{validation_status or 'missing_validation'}")
+    return blockers
+
+
+def _terminal_ledger_hygiene_blockers(ledger: Mapping[str, Any]) -> list[str]:
+    blockers: list[str] = []
+    blockers.extend(_accepted_result_pointer_blockers(ledger))
+    for blocker in ledger.get("active_blockers", {}).values():
+        if not isinstance(blocker, Mapping):
+            continue
+        status = str(blocker.get("status") or "")
+        if status not in (_ACTIVE_SEMANTIC_BLOCKER_STATUSES | {"awaiting_pm_decision_gate"}):
+            continue
+        if blocker.get("cleared_by_outcome_id"):
+            continue
+        blocker_id = str(blocker.get("blocker_id") or "unknown")
+        blockers.append(f"active_blocker:{blocker_id}:{status}")
+    blockers.extend(_break_glass_closure_blockers(ledger))
+    return sorted(set(blockers))
+
+
 def _closure_blockers(
     ledger: Mapping[str, Any],
     *,
@@ -16410,6 +16620,7 @@ def _closure_blockers(
     blockers.extend(supplemental_unresolved)
     _hygiene_rows, hygiene_unresolved = _final_artifact_hygiene_closure_rows(ledger)
     blockers.extend(hygiene_unresolved)
+    blockers.extend(_terminal_ledger_hygiene_blockers(ledger))
     for blocker in _active_semantic_blockers(ledger):
         blockers.append(f"active_semantic_blocker:{blocker.get('blocker_id', '')}")
     if recursive_route_required(ledger):
@@ -16508,6 +16719,8 @@ def _backward_chain(ledger: Mapping[str, Any]) -> list[dict[str, Any]]:
         if packet["envelope"]["route_version"] != ledger.get("active_route_version"):
             continue
         if not packet.get("accepted_result_id"):
+            continue
+        if _accepted_result_pointer_violation(ledger, packet):
             continue
         result = ledger["results"][packet["accepted_result_id"]]
         chain.append({"kind": "packet", "id": packet["packet_id"], "packet_kind": packet["envelope"].get("packet_kind", "task")})

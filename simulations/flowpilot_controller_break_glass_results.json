@@ -67,6 +67,20 @@
           "break-glass use was not disclosed in final reporting"
         ]
       },
+      "missing_incident_closed_at": {
+        "detected": true,
+        "expected_failure": "lacked closed_at",
+        "failures": [
+          "break-glass incident lacked closed_at before terminal completion"
+        ]
+      },
+      "missing_incident_final_disposition": {
+        "detected": true,
+        "expected_failure": "lacked final disposition",
+        "failures": [
+          "break-glass incident lacked final disposition before terminal completion"
+        ]
+      },
       "missing_incident_record": {
         "detected": true,
         "expected_failure": "without an incident record",
@@ -158,7 +172,7 @@
       "repair_loop_threshold_control_fault",
       "repair_loop_threshold_false_alarm"
     ],
-    "edge_count": 40,
+    "edge_count": 46,
     "invariant_failures": [],
     "missing_labels": [],
     "ok": true,
@@ -167,6 +181,6 @@
       "normal_pm_repair_available",
       "ordinary_project_bug"
     ],
-    "state_count": 41
+    "state_count": 47
   }
 }

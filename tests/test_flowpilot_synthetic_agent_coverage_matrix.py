@@ -389,6 +389,55 @@ class FlowPilotSyntheticAgentCoverageMatrixTests(unittest.TestCase):
                     self.assertEqual(row["coverage_boundary"], "ordinary_runtime_contract")
                     self.assertFalse(row["synthetic_replay_required"])
 
+    def test_control_plane_ledger_hygiene_cells_have_runtime_owners(self) -> None:
+        report = coverage_matrix.build_report()
+        summary = report["control_plane_ledger_hygiene"]
+        cells = list(coverage_matrix.control_plane_ledger_hygiene_cells())
+        cell_ids = {cell["cell_id"] for cell in cells}
+        required_cells = [
+            cell
+            for cell in report["required_cells"]
+            if cell["model_id"] == coverage_matrix.FAKE_AI_RUNTIME_REPLAY_MODEL_ID
+            and str(cell["obligation_id"]).startswith("fake_ai_runtime_replay.control_plane_ledger_hygiene:")
+        ]
+        rows = [
+            row
+            for row in report["rows"]
+            if row.get("source") == coverage_matrix.CONTROL_PLANE_LEDGER_HYGIENE_SOURCE
+        ]
+        row_ids = {
+            str(row["obligation_id"]).removeprefix("fake_ai_runtime_replay.")
+            for row in rows
+        }
+        required_ids = {
+            str(cell["obligation_id"]).removeprefix("fake_ai_runtime_replay.")
+            for cell in required_cells
+        }
+        reactions = {row["branch_kind"] for row in rows}
+
+        self.assertEqual(summary["expected_cell_count"], coverage_matrix.CONTROL_PLANE_LEDGER_HYGIENE_EXPECTED_CELL_COUNT)
+        self.assertEqual(summary["row_count"], coverage_matrix.CONTROL_PLANE_LEDGER_HYGIENE_EXPECTED_CELL_COUNT)
+        self.assertEqual(len(cells), coverage_matrix.CONTROL_PLANE_LEDGER_HYGIENE_EXPECTED_CELL_COUNT)
+        self.assertEqual(len(required_cells), coverage_matrix.CONTROL_PLANE_LEDGER_HYGIENE_EXPECTED_CELL_COUNT)
+        self.assertEqual(len(rows), coverage_matrix.CONTROL_PLANE_LEDGER_HYGIENE_EXPECTED_CELL_COUNT)
+        self.assertEqual(required_ids, cell_ids)
+        self.assertEqual(row_ids, cell_ids)
+        self.assertLessEqual(
+            {
+                "reject_dirty_accepted_result_pointer",
+                "reject_repair_identity_discontinuity",
+                "block_terminal_break_glass_not_closed",
+                "block_terminal_active_or_stopped_blocker",
+                "block_final_reviewer_authorization_gap",
+                "allow_terminal_ledger_hygiene",
+            },
+            reactions,
+        )
+        self.assertFalse([row["evidence_id"] for row in rows if row["evidence_owner"] != coverage_matrix.CONTROL_PLANE_LEDGER_HYGIENE_OWNER])
+        self.assertFalse([row["evidence_id"] for row in rows if row["coverage_kind"] != "synthetic_trace"])
+        self.assertFalse([row["evidence_id"] for row in rows if row["live_completion_allowed"]])
+        self.assertFalse([row["evidence_id"] for row in rows if not row["synthetic_replay_required"]])
+
     def test_current_contract_cartesian_summary_is_wired_without_live_ai_claim(self) -> None:
         report = coverage_matrix.build_report()
         rows = [

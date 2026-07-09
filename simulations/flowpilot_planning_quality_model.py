@@ -122,6 +122,7 @@ CHILD_SKILL_THEME_ONLY_STANDARD = "child_skill_theme_only_standard"
 PRODUCT_ARCHITECTURE_MISSING_SYSTEM_INTEGRATION_INTENT = "product_architecture_missing_system_integration_intent"
 ROUTE_CONVERGENCE_MISSING_COMPOSITION_REVIEW = "route_convergence_missing_composition_review"
 NODE_PLAN_MISSING_INTEGRATION_TOUCHPOINT = "node_plan_missing_integration_touchpoint"
+NODE_PLAN_MISSING_GLOBAL_STANDARD_REFERENCES = "node_plan_missing_global_standard_references"
 PM_ABSORBS_LOCAL_RESULT_WITH_BROKEN_INTEGRATION = "pm_absorbs_local_result_with_broken_integration"
 PARENT_REPLAY_PASSES_SCATTERED_CHILD_OUTPUTS = "parent_replay_passes_scattered_child_outputs"
 FINAL_LEDGER_PASSES_NODE_LEVEL_ONLY_COMPOSITION = "final_ledger_passes_node_level_only_composition"
@@ -202,6 +203,7 @@ NEGATIVE_SCENARIOS = (
     PRODUCT_ARCHITECTURE_MISSING_SYSTEM_INTEGRATION_INTENT,
     ROUTE_CONVERGENCE_MISSING_COMPOSITION_REVIEW,
     NODE_PLAN_MISSING_INTEGRATION_TOUCHPOINT,
+    NODE_PLAN_MISSING_GLOBAL_STANDARD_REFERENCES,
     PM_ABSORBS_LOCAL_RESULT_WITH_BROKEN_INTEGRATION,
     PARENT_REPLAY_PASSES_SCATTERED_CHILD_OUTPUTS,
     FINAL_LEDGER_PASSES_NODE_LEVEL_ONLY_COMPOSITION,
@@ -247,6 +249,10 @@ class State:
     product_architecture_system_integration_intent_written: bool = False
     route_structure_composition_review_written: bool = False
     node_plan_integration_touchpoint_written: bool = False
+    node_plan_global_standard_references_written: bool = False
+    worker_prompt_uses_global_standard_references: bool = False
+    reviewer_blocks_local_only_global_context: bool = False
+    flowguard_prompt_uses_global_standard_references: bool = False
     pm_result_absorption_integration_check_done: bool = False
     parent_replay_rejects_scattered_child_outputs: bool = False
     parent_child_outputs_scattered: bool = False
@@ -421,6 +427,10 @@ def _valid_ui_state() -> State:
         product_architecture_system_integration_intent_written=True,
         route_structure_composition_review_written=True,
         node_plan_integration_touchpoint_written=True,
+        node_plan_global_standard_references_written=True,
+        worker_prompt_uses_global_standard_references=True,
+        reviewer_blocks_local_only_global_context=True,
+        flowguard_prompt_uses_global_standard_references=True,
         pm_result_absorption_integration_check_done=True,
         parent_replay_rejects_scattered_child_outputs=True,
         final_whole_output_composition_review_done=True,
@@ -664,6 +674,14 @@ def _scenario_state(scenario: str) -> State:
         return replace(state, route_structure_composition_review_written=False)
     if scenario == NODE_PLAN_MISSING_INTEGRATION_TOUCHPOINT:
         return replace(state, node_plan_integration_touchpoint_written=False)
+    if scenario == NODE_PLAN_MISSING_GLOBAL_STANDARD_REFERENCES:
+        return replace(
+            state,
+            node_plan_global_standard_references_written=False,
+            worker_prompt_uses_global_standard_references=False,
+            reviewer_blocks_local_only_global_context=False,
+            flowguard_prompt_uses_global_standard_references=False,
+        )
     if scenario == PM_ABSORBS_LOCAL_RESULT_WITH_BROKEN_INTEGRATION:
         return replace(
             state,
@@ -850,6 +868,14 @@ def planning_failures(state: State) -> list[str]:
         failures.append("route structure convergence lacks parent child sibling composition review")
     if complex_task and not state.node_plan_integration_touchpoint_written:
         failures.append("node acceptance plan lacks plan-level integration touchpoint")
+    if complex_task and not state.node_plan_global_standard_references_written:
+        failures.append("node acceptance plan lacks current global standard references for backstage roles")
+    if complex_task and not state.worker_prompt_uses_global_standard_references:
+        failures.append("worker prompt does not require current user/PM global standard references")
+    if complex_task and not state.reviewer_blocks_local_only_global_context:
+        failures.append("reviewer gate does not block local-only node context that hides the user/PM standard")
+    if complex_task and not state.flowguard_prompt_uses_global_standard_references:
+        failures.append("FlowGuard prompt does not model against current user/PM global standard references")
     if complex_task and not state.pm_result_absorption_integration_check_done:
         failures.append("PM absorbed current-node result without checking upstream downstream sibling and parent integration")
     if (

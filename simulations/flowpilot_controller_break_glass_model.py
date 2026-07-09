@@ -60,6 +60,8 @@ class State:
     patch_recorded: bool = False
     patch_validation_status: str = "none"  # none | pending | passed | blocked | quarantined | not_run
     returned_to_normal_flow: bool = False
+    incident_terminal_disposition_recorded: bool = False
+    incident_closed_at_recorded: bool = False
     final_disclosed: bool = False
 
     controller_read_sealed_body: bool = False
@@ -195,6 +197,17 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
             ),
         )
     if state.status == "returned":
+        if not state.incident_terminal_disposition_recorded or not state.incident_closed_at_recorded:
+            return (
+                Transition(
+                    f"record_incident_disposition_{state.scenario}",
+                    replace(
+                        state,
+                        incident_terminal_disposition_recorded=True,
+                        incident_closed_at_recorded=True,
+                    ),
+                ),
+            )
         return (
             Transition(
                 f"disclose_break_glass_{state.scenario}",
@@ -248,6 +261,10 @@ def policy_failures(state: State) -> list[str]:
             failures.append("break-glass patch validation stayed not_run")
     if state.status in {"disclosed", "accepted"} and not state.returned_to_normal_flow:
         failures.append("break-glass did not return to normal Controller flow")
+    if state.status in {"disclosed", "accepted"} and not state.incident_terminal_disposition_recorded:
+        failures.append("break-glass incident lacked final disposition before terminal completion")
+    if state.status in {"disclosed", "accepted"} and not state.incident_closed_at_recorded:
+        failures.append("break-glass incident lacked closed_at before terminal completion")
     if state.status == "accepted" and not state.final_disclosed:
         failures.append("break-glass use was not disclosed in final reporting")
     return failures
@@ -302,6 +319,8 @@ def _accepted_valid_state() -> State:
         patch_recorded=True,
         patch_validation_status="passed",
         returned_to_normal_flow=True,
+        incident_terminal_disposition_recorded=True,
+        incident_closed_at_recorded=True,
         final_disclosed=True,
     )
 
@@ -319,6 +338,8 @@ def hazard_states() -> dict[str, State]:
         "missing_patch_validation": replace(base, patch_validation_status="pending"),
         "patch_validation_not_run": replace(base, patch_validation_status="not_run"),
         "missing_return_to_normal": replace(base, returned_to_normal_flow=False),
+        "missing_incident_final_disposition": replace(base, incident_terminal_disposition_recorded=False),
+        "missing_incident_closed_at": replace(base, incident_closed_at_recorded=False),
         "missing_final_disclosure": replace(base, final_disclosed=False),
         "controller_reads_sealed_body": replace(base, controller_read_sealed_body=True),
         "controller_does_project_work": replace(base, controller_did_target_project_work=True),

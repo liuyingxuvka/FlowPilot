@@ -23,6 +23,9 @@ REQUIRED_LABELS = (
     "block_packet_contract_not_role_symmetric",
     "block_ack_result_acceptance_conflated",
     "block_accepted_packet_mutated",
+    "block_dirty_accepted_result_pointer",
+    "block_assignment_repair_trusts_dirty_accepted_pointer",
+    "block_pm_flowguard_acceptance_early_accepted",
     "block_old_generation_result_accepted",
     "block_unsupported_historical_current_fields",
 )
@@ -36,6 +39,9 @@ EXPECTED_HAZARD_FAILURES = {
     "accepted_result_reassigned_accepted": "risk scenario was accepted: accepted_result_reassigned",
     "old_generation_result_accepted_accepted": "risk scenario was accepted: old_generation_result_accepted",
     "unsupported_historical_pointer_accepted_accepted": "risk scenario was accepted: unsupported_historical_pointer_accepted",
+    "review_blocked_accepted_pointer_accepted": "risk scenario was accepted: review_blocked_accepted_pointer",
+    "assignment_repair_trusts_dirty_pointer_accepted": "risk scenario was accepted: assignment_repair_trusts_dirty_pointer",
+    "pm_flowguard_acceptance_early_accepted_accepted": "risk scenario was accepted: pm_flowguard_acceptance_early_accepted",
     "success_overblocked": "safe control surface was blocked",
 }
 
@@ -51,6 +57,10 @@ def _state_id(state: model.State) -> str:
         f"roles={','.join(state.packet_contract_roles)}|"
         f"separate={state.ack_result_accepted_separate}|"
         f"accepted_mutated={state.accepted_packet_reassigned},{state.accepted_packet_ack_regressed}|"
+        f"accepted_pointer={state.accepted_result_id_present},{state.accepted_result_status},"
+        f"{state.accepted_result_review_accepted},{state.accepted_result_validation_passed}|"
+        f"assignment_repair_pointer_gate={state.assignment_repair_validates_accepted_pointer}|"
+        f"pm_flowguard_waits={state.pm_flowguard_acceptance_waits_for_review}|"
         f"generation={state.result_generation}/{state.current_generation}|"
         f"quarantine={state.stale_generation_quarantined}"
     )

@@ -580,6 +580,19 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 allow_shared_implementation=True,
             ),
             _obligation(
+                "packet_result_family.control_plane_ledger_hygiene_cartesian_matrix",
+                obligation_type="runtime_control_plane_cartesian_contract",
+                description=(
+                    "Fake-AI replay must materialize the full control-plane ledger hygiene Cartesian "
+                    "product across result status, accepted pointer state, repair identity, packet "
+                    "family, blocker state, break-glass state, Reviewer authorization, and closure "
+                    "phase; every cell must name the mechanical runtime reaction and evidence owner."
+                ),
+                required_test_kinds=(NEGATIVE, REPLAY),
+                allow_shared_evidence=True,
+                allow_shared_implementation=True,
+            ),
+            _obligation(
                 "packet_result_family.real_issue_backfeed_registry_bridge",
                 obligation_type="real_issue_backfeed_contract",
                 description=(
@@ -983,8 +996,15 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 "packet_result_family.model.fake_ai_runtime_replay_matrix",
                 path="simulations/flowpilot_fake_ai_runtime_replay_model.py",
                 symbol="runtime_replay_cells",
-                implements=("packet_result_family.fake_ai_runtime_replay_matrix_closure",),
-                external_inputs=("contract_driven_fake_ai.coverage_cells", "review_window_fake_ai_cells"),
+                implements=(
+                    "packet_result_family.fake_ai_runtime_replay_matrix_closure",
+                    "packet_result_family.control_plane_ledger_hygiene_cartesian_matrix",
+                ),
+                external_inputs=(
+                    "contract_driven_fake_ai.coverage_cells",
+                    "review_window_fake_ai_cells",
+                    "control_plane_ledger_hygiene_axes",
+                ),
                 external_outputs=("runtime_replay_cells",),
                 state_reads=("packet_result_contracts", "review_window_contracts"),
             ),
@@ -992,7 +1012,10 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 "packet_result_family.runner.fake_ai_runtime_replay_checks",
                 path="simulations/run_flowpilot_fake_ai_runtime_replay_checks.py",
                 symbol="run_checks",
-                implements=("packet_result_family.fake_ai_runtime_replay_matrix_closure",),
+                implements=(
+                    "packet_result_family.fake_ai_runtime_replay_matrix_closure",
+                    "packet_result_family.control_plane_ledger_hygiene_cartesian_matrix",
+                ),
                 external_inputs=("runtime_replay_cells",),
                 external_outputs=("flowguard_report", "hazard_report", "matrix_report"),
                 state_reads=("flowguard_model",),
@@ -1799,6 +1822,35 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                     "packet_result_family.runner.fake_ai_runtime_replay_checks",
                     "packet_result_family.simulation.contract_driven_fake_ai_responder",
                 ),
+            ),
+            _evidence(
+                "packet_result_family.replay.control_plane_ledger_hygiene_cartesian_matrix",
+                test_name="test_control_plane_ledger_hygiene_fake_ai_matrix_is_cartesian",
+                path="tests/test_flowpilot_fake_ai_runtime_replay.py",
+                command=(
+                    "python -m unittest tests.test_flowpilot_fake_ai_runtime_replay."
+                    "FlowPilotFakeAIRuntimeReplayTests."
+                    "test_control_plane_ledger_hygiene_fake_ai_matrix_is_cartesian"
+                ),
+                test_kind=REPLAY,
+                covers=("packet_result_family.control_plane_ledger_hygiene_cartesian_matrix",),
+                code_contracts=(
+                    "packet_result_family.model.fake_ai_runtime_replay_matrix",
+                    "packet_result_family.runner.fake_ai_runtime_replay_checks",
+                ),
+            ),
+            _evidence(
+                "packet_result_family.negative.control_plane_ledger_hygiene_coverage_matrix",
+                test_name="test_control_plane_ledger_hygiene_cells_have_runtime_owners",
+                path="tests/test_flowpilot_synthetic_agent_coverage_matrix.py",
+                command=(
+                    "python -m unittest tests.test_flowpilot_synthetic_agent_coverage_matrix."
+                    "FlowPilotSyntheticAgentCoverageMatrixTests."
+                    "test_control_plane_ledger_hygiene_cells_have_runtime_owners"
+                ),
+                test_kind=NEGATIVE,
+                covers=("packet_result_family.control_plane_ledger_hygiene_cartesian_matrix",),
+                code_contracts=("packet_result_family.model.fake_ai_runtime_replay_matrix",),
             ),
             _evidence(
                 "packet_result_family.negative.fake_ai_runtime_replay_hazards",
@@ -4564,7 +4616,7 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
             packet_result_family,
             model_checks=(
                 "python simulations/run_flowpilot_packet_result_family_parity_checks.py",
-                "python simulations/run_flowpilot_fake_ai_runtime_replay_checks.py --json-out simulations/flowpilot_fake_ai_runtime_replay_results.json",
+                "python simulations/run_flowpilot_fake_ai_runtime_replay_checks.py --json-out simulations/flowpilot_fake_ai_runtime_replay_summary.json",
                 "python simulations/run_flowpilot_real_issue_backfeed_checks.py --json-out simulations/flowpilot_real_issue_backfeed_results.json",
             ),
             coverage_boundary="Packet-result family alignment covers durable-envelope reconciliation, AI-facing result contracts, fake-AI runtime replay, and real-issue backfeed ownership. It does not inspect sealed result bodies or replace PM semantic review.",

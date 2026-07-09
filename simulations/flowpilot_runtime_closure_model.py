@@ -58,6 +58,12 @@ class State:
     imported_state_used_as_current_authority: bool = False
 
     final_ledger_clean: bool = False
+    terminal_ledger_hygiene_clean: bool = False
+    dirty_accepted_pointers_absent: bool = False
+    stale_active_blockers_absent: bool = False
+    break_glass_incidents_closed: bool = False
+    temporary_patch_validation_closed: bool = False
+    final_reviewer_authorized_reads_complete: bool = False
     terminal_backward_replay_passed: bool = False
     pm_closure_approved: bool = False
     final_user_report_written: bool = False
@@ -148,8 +154,29 @@ def next_states(state: State) -> tuple[tuple[str, State], ...]:
         return (("continuation_quarantine_complete", replace(state, status="complete")),)
 
     if state.scenario == "closure_user_report":
+        if not state.terminal_ledger_hygiene_clean:
+            return (
+                (
+                    "terminal_ledger_hygiene_passed",
+                    replace(
+                        state,
+                        terminal_ledger_hygiene_clean=True,
+                        dirty_accepted_pointers_absent=True,
+                        stale_active_blockers_absent=True,
+                        break_glass_incidents_closed=True,
+                        temporary_patch_validation_closed=True,
+                    ),
+                ),
+            )
         if not state.final_ledger_clean:
             return (("pm_final_ledger_clean", replace(state, final_ledger_clean=True)),)
+        if not state.final_reviewer_authorized_reads_complete:
+            return (
+                (
+                    "final_reviewer_authorized_reads_complete",
+                    replace(state, final_reviewer_authorized_reads_complete=True),
+                ),
+            )
         if not state.terminal_backward_replay_passed:
             return (("reviewer_terminal_backward_replay_passed", replace(state, terminal_backward_replay_passed=True)),)
         if not state.pm_closure_approved:
@@ -192,12 +219,32 @@ def invariant_failures(state: State) -> list[str]:
     if state.imported_state_used_as_current_authority and not state.old_assets_dispositioned:
         failures.append("old asset became current evidence without disposition")
 
+    closure_hygiene_clean = (
+        state.terminal_ledger_hygiene_clean
+        and state.dirty_accepted_pointers_absent
+        and state.stale_active_blockers_absent
+        and state.break_glass_incidents_closed
+        and state.temporary_patch_validation_closed
+        and state.final_reviewer_authorized_reads_complete
+    )
     if state.final_user_report_written and not (
         state.final_ledger_clean
+        and closure_hygiene_clean
         and state.terminal_backward_replay_passed
         and state.pm_closure_approved
     ):
         failures.append("final user report written before clean terminal closure")
+    if state.scenario == "closure_user_report" and state.final_user_report_written:
+        if not state.dirty_accepted_pointers_absent:
+            failures.append("terminal closure ignored dirty accepted-result pointers")
+        if not state.stale_active_blockers_absent:
+            failures.append("terminal closure ignored stale active blockers")
+        if not state.break_glass_incidents_closed:
+            failures.append("terminal closure ignored open break-glass incidents")
+        if not state.temporary_patch_validation_closed:
+            failures.append("terminal closure ignored pending break-glass patch validation")
+        if not state.final_reviewer_authorized_reads_complete:
+            failures.append("terminal closure ran without complete final Reviewer authorized reads")
     if state.final_user_report_used_as_closure_input:
         failures.append("final user report was used as closure authority")
 
@@ -229,6 +276,11 @@ INVARIANTS = (
     _invariant("old_agent_ids_are_audit_only", "old agent id became current authority"),
     _invariant("old_assets_need_disposition", "old asset became current evidence without disposition"),
     _invariant("user_report_after_closure_only", "final user report written before clean terminal closure"),
+    _invariant("closure_blocks_dirty_accepted_pointers", "terminal closure ignored dirty accepted-result pointers"),
+    _invariant("closure_blocks_stale_active_blockers", "terminal closure ignored stale active blockers"),
+    _invariant("closure_blocks_open_break_glass_incidents", "terminal closure ignored open break-glass incidents"),
+    _invariant("closure_blocks_pending_break_glass_patch_validation", "terminal closure ignored pending break-glass patch validation"),
+    _invariant("closure_requires_final_reviewer_authorized_reads", "terminal closure ran without complete final Reviewer authorized reads"),
     _invariant("user_report_not_closure_authority", "final user report was used as closure authority"),
     _invariant("display_not_route_authority", "display projection used as route authority"),
     _invariant("display_refresh_matches_frontier", "display projection refreshed with stale route frontier version"),
@@ -272,6 +324,12 @@ HAZARD_STATES = {
     "final_report_before_pm_closure": replace(
         initial_state(),
         scenario="closure_user_report",
+        terminal_ledger_hygiene_clean=True,
+        dirty_accepted_pointers_absent=True,
+        stale_active_blockers_absent=True,
+        break_glass_incidents_closed=True,
+        temporary_patch_validation_closed=True,
+        final_reviewer_authorized_reads_complete=True,
         final_ledger_clean=True,
         terminal_backward_replay_passed=True,
         final_user_report_written=True,
@@ -279,11 +337,87 @@ HAZARD_STATES = {
     "final_report_used_as_closure_input": replace(
         initial_state(),
         scenario="closure_user_report",
+        terminal_ledger_hygiene_clean=True,
+        dirty_accepted_pointers_absent=True,
+        stale_active_blockers_absent=True,
+        break_glass_incidents_closed=True,
+        temporary_patch_validation_closed=True,
+        final_reviewer_authorized_reads_complete=True,
         final_ledger_clean=True,
         terminal_backward_replay_passed=True,
         pm_closure_approved=True,
         final_user_report_written=True,
         final_user_report_used_as_closure_input=True,
+    ),
+    "terminal_dirty_accepted_pointer_ignored": replace(
+        initial_state(),
+        scenario="closure_user_report",
+        terminal_ledger_hygiene_clean=True,
+        dirty_accepted_pointers_absent=False,
+        stale_active_blockers_absent=True,
+        break_glass_incidents_closed=True,
+        temporary_patch_validation_closed=True,
+        final_reviewer_authorized_reads_complete=True,
+        final_ledger_clean=True,
+        terminal_backward_replay_passed=True,
+        pm_closure_approved=True,
+        final_user_report_written=True,
+    ),
+    "terminal_stale_active_blocker_ignored": replace(
+        initial_state(),
+        scenario="closure_user_report",
+        terminal_ledger_hygiene_clean=True,
+        dirty_accepted_pointers_absent=True,
+        stale_active_blockers_absent=False,
+        break_glass_incidents_closed=True,
+        temporary_patch_validation_closed=True,
+        final_reviewer_authorized_reads_complete=True,
+        final_ledger_clean=True,
+        terminal_backward_replay_passed=True,
+        pm_closure_approved=True,
+        final_user_report_written=True,
+    ),
+    "terminal_open_break_glass_ignored": replace(
+        initial_state(),
+        scenario="closure_user_report",
+        terminal_ledger_hygiene_clean=True,
+        dirty_accepted_pointers_absent=True,
+        stale_active_blockers_absent=True,
+        break_glass_incidents_closed=False,
+        temporary_patch_validation_closed=True,
+        final_reviewer_authorized_reads_complete=True,
+        final_ledger_clean=True,
+        terminal_backward_replay_passed=True,
+        pm_closure_approved=True,
+        final_user_report_written=True,
+    ),
+    "terminal_pending_patch_ignored": replace(
+        initial_state(),
+        scenario="closure_user_report",
+        terminal_ledger_hygiene_clean=True,
+        dirty_accepted_pointers_absent=True,
+        stale_active_blockers_absent=True,
+        break_glass_incidents_closed=True,
+        temporary_patch_validation_closed=False,
+        final_reviewer_authorized_reads_complete=True,
+        final_ledger_clean=True,
+        terminal_backward_replay_passed=True,
+        pm_closure_approved=True,
+        final_user_report_written=True,
+    ),
+    "terminal_final_reviewer_auth_missing": replace(
+        initial_state(),
+        scenario="closure_user_report",
+        terminal_ledger_hygiene_clean=True,
+        dirty_accepted_pointers_absent=True,
+        stale_active_blockers_absent=True,
+        break_glass_incidents_closed=True,
+        temporary_patch_validation_closed=True,
+        final_reviewer_authorized_reads_complete=False,
+        final_ledger_clean=True,
+        terminal_backward_replay_passed=True,
+        pm_closure_approved=True,
+        final_user_report_written=True,
     ),
     "stale_display_refresh": replace(
         initial_state(),
@@ -309,6 +443,11 @@ HAZARD_EXPECTED_FAILURES = {
     "old_agent_id_reused_as_current": "old agent id became current authority",
     "final_report_before_pm_closure": "final user report written before clean terminal closure",
     "final_report_used_as_closure_input": "final user report was used as closure authority",
+    "terminal_dirty_accepted_pointer_ignored": "terminal closure ignored dirty accepted-result pointers",
+    "terminal_stale_active_blocker_ignored": "terminal closure ignored stale active blockers",
+    "terminal_open_break_glass_ignored": "terminal closure ignored open break-glass incidents",
+    "terminal_pending_patch_ignored": "terminal closure ignored pending break-glass patch validation",
+    "terminal_final_reviewer_auth_missing": "terminal closure ran without complete final Reviewer authorized reads",
     "stale_display_refresh": "display projection refreshed with stale route frontier version",
     "display_overrides_route_state": "display projection used as route authority",
 }
@@ -329,7 +468,9 @@ REQUIRED_LABELS = (
     "old_assets_dispositioned_before_reuse",
     "continuation_quarantine_complete",
     "select_closure_user_report",
+    "terminal_ledger_hygiene_passed",
     "pm_final_ledger_clean",
+    "final_reviewer_authorized_reads_complete",
     "reviewer_terminal_backward_replay_passed",
     "pm_approves_terminal_closure",
     "controller_writes_final_user_report",

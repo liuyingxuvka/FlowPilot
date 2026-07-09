@@ -1,5 +1,5 @@
 {
-  "created_at": "2026-07-08T06:51:43.629309+00:00",
+  "created_at": "2026-07-09T06:41:44.375403+00:00",
   "graph": {
     "edge_count": 14,
     "invariant_failure_count": 0,
@@ -8,18 +8,18 @@
     "state_count": 8
   },
   "layered_full_regression": {
-    "current": false,
+    "current": true,
     "required_for_release": true,
     "status": {
-      "created_at": "2026-07-07T13:38:16.647313+00:00",
+      "created_at": "2026-07-09T06:15:47.468482+00:00",
       "edge_count": 16,
       "kind": "layered_full_parent",
       "proof_file": "simulations/capability_layered_full_results.proof.json",
-      "reason": "input fingerprint changed",
+      "reason": "valid proof",
       "release_confidence": "current_with_layered_full_parent",
       "result_file": "simulations/capability_layered_full_results.json",
       "state_count": 10,
-      "valid": false
+      "valid": true
     }
   },
   "loop": {
@@ -35,7 +35,7 @@
     "ok": true,
     "success_state_count": 1
   },
-  "release_confidence": "requires_full_regression",
+  "release_confidence": "current_with_layered_full_parent",
   "result_type": "thin_parent",
   "routine_confidence": "current",
   "schema_version": "flowpilot.thin_parent_result.v1",
@@ -122,17 +122,17 @@
       {
         "evidence": [
           {
-            "edge_count": 156,
+            "edge_count": 158,
             "failures": [],
             "missing": false,
             "model_id": "flowpilot_planning_quality",
             "ok": true,
             "proof_status": "not_present",
             "result_file": "simulations/flowpilot_planning_quality_results.json",
-            "result_fingerprint": "a90e09d36e8be2044497c15b08975e923cc8979fb4c75ce677adb53baf022c9f",
+            "result_fingerprint": "c57e25030590ca084b7e88640745fb7223fd8edb4953479abf0de8b987d76c12",
             "skipped_required_checks": [],
             "skipped_required_checks_visible": true,
-            "state_count": 157
+            "state_count": 159
           },
           {
             "edge_count": 40,

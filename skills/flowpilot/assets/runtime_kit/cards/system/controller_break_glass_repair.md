@@ -299,6 +299,13 @@ Exit break-glass as soon as the control channel can produce a legal normal next
 action. Return to `flowpilot_new.py` lifecycle guard and foreground-duty
 processing.
 Do not mark any route gate complete from break-glass evidence alone.
+Temporary compensation may restore ordinary routing, but it does not close the
+incident and it does not authorize clean terminal completion. Before final
+closure or terminal return, every related incident and patch must have a
+terminal disposition: incidents must be closed, quarantined, or explicitly
+blocked; closed incidents must name `final_disposition` and `closed_at`; and
+temporary patches with `permanent_fix_needed=true` must have completed
+validation evidence rather than `pending` or `not_run` status.
 
 When break-glass or user repair fixes the cause of a PM-stopped semantic
 blocker, return through `flowpilot_new.py resolve-stopped-blocker --resolution

@@ -29,6 +29,13 @@ Before drafting, read the latest
 `route_history_index.json`. If this is a fresh route, cite that the context
 contains no completed or superseded nodes yet. Do not draft from chat history,
 old route files, or Controller summaries.
+The first route draft must be a high-standard execution design, not a low-cost
+task list. It must show how the strongest feasible product target, root
+contract, acceptance item registry, child-skill standards, FlowGuard
+obligations, low-quality-success traps, and final evidence expectations become
+ordered work. Keep the structure as simple as possible, but do not omit
+necessary discovery, implementation, integration, verification, or cleanup work
+just because the user phrased the request briefly.
 
 Also read the accepted implementation-intent bridge:
 
@@ -134,6 +141,12 @@ Route requirements:
   `acceptance_item_ids`. Do not leave user-sourced items or PM high-standard
   items only in prose, and do not reference unknown item ids. Route redesigns
   must reassign all still-active items before activation;
+- every route node should be written so downstream roles can recover why the
+  node exists, what high-standard acceptance slice it owns, which current
+  references define that slice, what hard part or thin-success trap it must
+  avoid, and which evidence will let Reviewer judge it. Use existing route
+  fields and later `node_context_package` fields; do not add a second route
+  schema for this explanation;
 - for terminal supplemental repair route plans, every repair node that owns a
   supplemental item must include `supplemental_repair_contract_ids` and
   `supplemental_repair_item_ids`. These fields are projections from the PM

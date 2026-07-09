@@ -89,6 +89,14 @@ Check:
 - the plan matches the active route id, route version, and active node id;
 - root requirements and product-function architecture are represented when
   relevant;
+- `node_context_package.relevant_references` lets Worker, Reviewer, and
+  FlowGuard recover the current user/PM standard and global standard without
+  chat memory: original user/root contract, product architecture or highest-product target,
+  acceptance item registry, route node or route plan, skill-standard material,
+  FlowGuard work/model references when applicable, material/source artifacts,
+  known risks, and verification surfaces. Block local-only or generic
+  references that would let a worker execute the node at a lower standard than
+  the user/PM contract;
 - every `acceptance_item_id` assigned to this route node appears in
   `acceptance_item_projection`, with required evidence, quality floor,
   low-quality failure patterns, review gate, and final replay requirement

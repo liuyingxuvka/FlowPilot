@@ -109,6 +109,8 @@ PACKET_RESULT_CONTRACTS: tuple[dict[str, Any], ...] = (
             "acceptance_item_registry.items[].future_evidence_rule",
             "acceptance_item_registry.items[].status",
         ),
+        "explicit_array_fields": ("requirements", "acceptance_item_registry.items"),
+        "non_empty_array_fields": ("requirements", "acceptance_item_registry.items"),
         "forbidden_fields": (
             "decision",
             "pm_visible_summary",
@@ -139,6 +141,8 @@ PACKET_RESULT_CONTRACTS: tuple[dict[str, Any], ...] = (
             "candidate_skill_inventory",
         ),
         "required_child_fields": (),
+        "explicit_array_fields": ("material_sources", "candidate_skill_inventory"),
+        "non_empty_array_fields": ("material_sources",),
         "forbidden_fields": ("local_skill_inventory", "candidate_only_skill_policy"),
         "fake_ai_success_fields": (
             "decision",
@@ -164,6 +168,8 @@ PACKET_RESULT_CONTRACTS: tuple[dict[str, Any], ...] = (
             "obligations[].use_context",
             "obligations[].evidence_rule",
         ),
+        "explicit_array_fields": ("obligations",),
+        "non_empty_array_fields": ("obligations",),
         "forbidden_fields": (
             "selected_skills",
             "default_required_obligation",
@@ -181,6 +187,8 @@ PACKET_RESULT_CONTRACTS: tuple[dict[str, Any], ...] = (
         "validator": "_parse_strict_route_plan",
         "required_fields": ("schema_version", "decision", "nodes"),
         "required_child_fields": ("nodes[].node_id", "nodes[].title"),
+        "explicit_array_fields": ("nodes",),
+        "non_empty_array_fields": ("nodes",),
         "forbidden_fields": ("route_nodes",),
         "fake_ai_success_fields": ("schema_version", "decision", "nodes"),
         "unlocks": "route_materialization_after_review",
@@ -1166,7 +1174,19 @@ def minimal_valid_shape_for_family(family_id: str) -> dict[str, Any]:
             ],
         }
     if family_id == "task.planning":
-        return {"schema_version": ROUTE_PLAN_SCHEMA_VERSION, "decision": "pass", "nodes": []}
+        return {
+            "schema_version": ROUTE_PLAN_SCHEMA_VERSION,
+            "decision": "pass",
+            "nodes": [
+                {
+                    "node_id": "node-001",
+                    "title": "Execute current high-standard scope",
+                    "node_kind": "leaf",
+                    "responsibility": "worker",
+                    "acceptance_criteria": ["Current route node has a concrete acceptance boundary."],
+                }
+            ],
+        }
     if family_id == "task.node_acceptance_plan":
         return {
             "decision": "pass",

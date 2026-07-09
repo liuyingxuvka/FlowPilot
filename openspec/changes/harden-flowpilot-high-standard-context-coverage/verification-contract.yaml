@@ -1,0 +1,232 @@
+contract_version: 1
+change: harden-flowpilot-high-standard-context-coverage
+obligations:
+  - id: req.prompt.global-standard-references
+    source: "specs/flowpilot-prompt-boundary-policy/spec.md#Requirement: Prompt Context Uses Current Global Standard References"
+    claim: "PM planning and node-context cards carry the user/PM standard through existing current-contract fields, and runtime remains mechanical."
+    required: true
+    evidence:
+      - check.prompts.card-instruction-coverage
+      - check.tests.planning-quality
+
+  - id: req.roles.full-standard-in-scope
+    source: "specs/role-scoped-quality-repair-prompts/spec.md#Requirement: Backstage Roles Use The Full User PM Standard In Scope"
+    claim: "Worker, Reviewer, and FlowGuard cards require use of the same current user/PM standard while preserving role authority."
+    required: true
+    evidence:
+      - check.prompts.card-instruction-coverage
+      - check.models.planning-quality
+
+  - id: req.reviewer.blocks-missing-global-standard
+    source: "specs/formal-gate-review-standards/spec.md#Requirement: Reviewer Blocks Missing Global Standard Context"
+    claim: "Reviewer gates block local-only, low-detail, or source-intent-diluted packages through existing blocker fields."
+    required: true
+    evidence:
+      - check.tests.planning-quality
+      - check.models.planning-quality
+
+  - id: req.synthetic.contract-projection-existing-fields
+    source: "specs/synthetic-agent-coverage-matrix/spec.md#Requirement: Contract Projection Covers High-Standard Existing Fields"
+    claim: "Fake-AI and contract-exhaustion coverage enumerates current required existing field families and separates runtime mechanics from semantic review."
+    required: true
+    evidence:
+      - check.tests.ai-contract-projection
+      - check.tests.contract-exhaustion
+      - check.models.contract-exhaustion
+
+  - id: req.replay.global-context-failure-repair
+    source: "specs/end-to-end-synthetic-agent-chaos-replay/spec.md#Requirement: Fake AI Replays Exercise Global Context Failure And Repair"
+    claim: "Fake-AI replay/model coverage exercises missing global context, empty existing fields, and legal corrected retries."
+    required: true
+    evidence:
+      - check.tests.fake-ai-runtime-replay
+      - check.models.fake-ai-runtime-replay
+
+  - id: req.project.install-and-topology-fresh
+    source: "proposal.md#Impact"
+    claim: "Prompt, runtime, model, and test changes leave topology and installed local FlowPilot state fresh."
+    required: true
+    evidence:
+      - check.topology.build
+      - check.topology.check
+      - check.install.sync
+      - check.install.audit
+
+checks:
+  - id: check.prompts.card-instruction-coverage
+    kind: command
+    command: python
+    args:
+      - -m
+      - pytest
+      - tests/test_flowpilot_card_instruction_coverage.py
+      - -q
+    required: true
+    covers:
+      - req.prompt.global-standard-references
+      - req.roles.full-standard-in-scope
+    expected:
+      exit_code: 0
+
+  - id: check.tests.planning-quality
+    kind: command
+    command: python
+    args:
+      - -m
+      - pytest
+      - tests/test_flowpilot_planning_quality.py
+      - -q
+    required: true
+    covers:
+      - req.prompt.global-standard-references
+      - req.reviewer.blocks-missing-global-standard
+    expected:
+      exit_code: 0
+
+  - id: check.tests.ai-contract-projection
+    kind: command
+    command: python
+    args:
+      - -m
+      - pytest
+      - tests/test_flowpilot_ai_contract_projection.py
+      - -q
+    required: true
+    covers:
+      - req.synthetic.contract-projection-existing-fields
+    expected:
+      exit_code: 0
+
+  - id: check.tests.contract-exhaustion
+    kind: command
+    command: python
+    args:
+      - -m
+      - pytest
+      - tests/test_flowpilot_contract_exhaustion_mesh.py
+      - -q
+    required: true
+    covers:
+      - req.synthetic.contract-projection-existing-fields
+    expected:
+      exit_code: 0
+
+  - id: check.tests.fake-ai-runtime-replay
+    kind: command
+    command: python
+    args:
+      - -m
+      - pytest
+      - tests/test_flowpilot_fake_ai_runtime_replay.py
+      - -q
+    required: true
+    covers:
+      - req.replay.global-context-failure-repair
+    expected:
+      exit_code: 0
+
+  - id: check.models.planning-quality
+    kind: command
+    command: python
+    args:
+      - simulations/run_flowpilot_planning_quality_checks.py
+      - --json-out
+      - simulations/flowpilot_planning_quality_results.json
+    required: true
+    covers:
+      - req.roles.full-standard-in-scope
+      - req.reviewer.blocks-missing-global-standard
+    expected:
+      exit_code: 0
+
+  - id: check.models.contract-exhaustion
+    kind: command
+    command: python
+    args:
+      - simulations/run_flowpilot_contract_exhaustion_mesh_checks.py
+    required: true
+    covers:
+      - req.synthetic.contract-projection-existing-fields
+    expected:
+      exit_code: 0
+
+  - id: check.models.fake-ai-runtime-replay
+    kind: command
+    command: python
+    args:
+      - simulations/run_flowpilot_fake_ai_runtime_replay_checks.py
+    required: true
+    covers:
+      - req.replay.global-context-failure-repair
+    expected:
+      exit_code: 0
+
+  - id: check.topology.build
+    kind: command
+    command: python
+    args:
+      - scripts/flowguard_project_topology.py
+      - build
+    required: true
+    covers:
+      - req.project.install-and-topology-fresh
+    expected:
+      exit_code: 0
+
+  - id: check.topology.check
+    kind: command
+    command: python
+    args:
+      - scripts/flowguard_project_topology.py
+      - check
+    required: true
+    covers:
+      - req.project.install-and-topology-fresh
+    expected:
+      exit_code: 0
+
+  - id: check.install.sync
+    kind: command
+    command: python
+    args:
+      - scripts/install_flowpilot.py
+      - --sync-repo-owned
+      - --json
+    required: true
+    covers:
+      - req.project.install-and-topology-fresh
+    expected:
+      exit_code: 0
+
+  - id: check.install.audit
+    kind: command
+    command: python
+    args:
+      - scripts/audit_local_install_sync.py
+      - --json
+    required: true
+    covers:
+      - req.project.install-and-topology-fresh
+    expected:
+      exit_code: 0
+
+freshness:
+  watch:
+    - openspec/changes/harden-flowpilot-high-standard-context-coverage/proposal.md
+    - openspec/changes/harden-flowpilot-high-standard-context-coverage/design.md
+    - openspec/changes/harden-flowpilot-high-standard-context-coverage/tasks.md
+    - openspec/changes/harden-flowpilot-high-standard-context-coverage/specs/**/*.md
+    - openspec/changes/harden-flowpilot-high-standard-context-coverage/verification-contract.yaml
+    - skills/flowpilot/assets/runtime_kit/cards/**/*.md
+    - skills/flowpilot/assets/flowpilot_core_runtime/packet_result_contracts.py
+    - skills/flowpilot/assets/flowpilot_core_runtime/runtime.py
+    - tests/test_flowpilot_card_instruction_coverage.py
+    - tests/test_flowpilot_planning_quality.py
+    - tests/test_flowpilot_ai_contract_projection.py
+    - tests/test_flowpilot_contract_exhaustion_mesh.py
+    - tests/test_flowpilot_fake_ai_runtime_replay.py
+    - simulations/flowpilot_planning_quality_model.py
+    - simulations/flowpilot_contract_exhaustion_mesh_model.py
+    - simulations/flowpilot_fake_ai_runtime_replay_model.py
+    - docs/flowguard_project_topology.md
+    - docs/flowguard_project_topology.json

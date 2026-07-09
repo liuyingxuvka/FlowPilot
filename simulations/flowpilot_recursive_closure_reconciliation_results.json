@@ -5,16 +5,44 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=8 initial_states=1 traces=72",
+    "summary": "sequences=9 initial_states=1 traces=90",
     "violation_count": 0
   },
   "hazards": {
     "hazards": {
+      "closure_with_dirty_accepted_pointer": {
+        "detected": true,
+        "expected": "terminal closure approved with dirty accepted pointers unreconciled",
+        "failures": [
+          "terminal closure approved with dirty accepted pointers unreconciled"
+        ]
+      },
       "closure_with_imported_artifact_authority": {
         "detected": true,
         "expected": "terminal closure approved with imported artifact authority",
         "failures": [
           "terminal closure approved with imported artifact authority"
+        ]
+      },
+      "closure_with_open_breakglass": {
+        "detected": true,
+        "expected": "terminal closure approved with open break-glass incidents unreconciled",
+        "failures": [
+          "terminal closure approved with open break-glass incidents unreconciled"
+        ]
+      },
+      "closure_with_pending_patch_validation": {
+        "detected": true,
+        "expected": "terminal closure approved with pending break-glass patch validation unreconciled",
+        "failures": [
+          "terminal closure approved with pending break-glass patch validation unreconciled"
+        ]
+      },
+      "closure_with_stale_active_blocker": {
+        "detected": true,
+        "expected": "terminal closure approved with stale active blockers unreconciled",
+        "failures": [
+          "terminal closure approved with stale active blockers unreconciled"
         ]
       },
       "closure_with_stale_role_memory": {
@@ -36,6 +64,13 @@
         "expected": "terminal closure approved without clean defect ledger reconciliation",
         "failures": [
           "terminal closure approved without clean defect ledger reconciliation"
+        ]
+      },
+      "closure_without_final_replay_authorization": {
+        "detected": true,
+        "expected": "terminal closure approved without final replay authorization reconciliation",
+        "failures": [
+          "terminal closure approved without final replay authorization reconciliation"
         ]
       },
       "parent_done_before_children": {
@@ -86,11 +121,11 @@
     "stuck_state_count": 0
   },
   "safe_graph": {
-    "edge_count": 15,
+    "edge_count": 16,
     "invariant_failures": [],
     "missing_labels": [],
     "ok": true,
-    "state_count": 16,
+    "state_count": 17,
     "terminal_state_count": 2
   }
 }

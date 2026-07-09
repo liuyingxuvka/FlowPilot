@@ -83,6 +83,9 @@ class FlowPilotFakeAIRuntimeReplayTests(unittest.TestCase):
             "review_packet.result_ids_tail_after_accepted_result",
             "reviewer.semantic_keyword_gate_attempt",
             "reviewer.prompt_omits_active_verification",
+            "global_standard_context.node_plan_local_only_references",
+            "global_standard_context.worker_local_only_completion",
+            "global_standard_context.flowguard_local_only_model",
         ):
             with self.subTest(mutation=mutation):
                 self.assertIn(mutation, mutations)
@@ -129,6 +132,9 @@ class FlowPilotFakeAIRuntimeReplayTests(unittest.TestCase):
             "accepted_result_id_authority_preserved",
             "runtime_mechanical_only_reviewer_boundary",
             "reviewer_prompt_requires_active_verification_without_new_fields",
+            "reviewer_blocks_local_only_global_context",
+            "reviewer_blocks_worker_result_below_user_pm_standard",
+            "flowguard_models_against_user_pm_standard_or_reports_gap",
         ):
             with self.subTest(reaction=reaction):
                 self.assertIn(reaction, reactions)
@@ -138,13 +144,90 @@ class FlowPilotFakeAIRuntimeReplayTests(unittest.TestCase):
         )
         for cell in cells:
             with self.subTest(cell_id=cell["cell_id"]):
-                self.assertEqual(cell["required_evidence_owner"], runtime_replay.REQUIRED_EVIDENCE_OWNER)
+                expected_owner = (
+                    runtime_replay.CONTROL_PLANE_LEDGER_HYGIENE_OWNER
+                    if cell["source_matrix"] == runtime_replay.CONTROL_PLANE_LEDGER_HYGIENE_SOURCE
+                    else runtime_replay.REQUIRED_EVIDENCE_OWNER
+                )
+                self.assertEqual(cell["required_evidence_owner"], expected_owner)
                 self.assertFalse(cell["live_completion_allowed"])
                 if cell["expected_runtime_reaction"] == "breakglass_after_fifth_same_failure":
                     self.assertEqual(cell["attempt_class"], "same_failure_attempt_5")
                     self.assertTrue(cell["glass_break_allowed"])
                 else:
                     self.assertFalse(cell["glass_break_allowed"])
+
+    def test_control_plane_ledger_hygiene_fake_ai_matrix_is_cartesian(self) -> None:
+        cells = list(runtime_replay.control_plane_ledger_hygiene_cells())
+        axis_names = tuple(runtime_replay.CONTROL_PLANE_LEDGER_HYGIENE_AXES)
+        keys = {
+            tuple(cell[name] for name in axis_names)
+            for cell in cells
+        }
+        reactions = {cell["expected_runtime_reaction"] for cell in cells}
+        dirty_pointer_cells = [
+            cell
+            for cell in cells
+            if cell["accepted_pointer"] in runtime_replay.DIRTY_ACCEPTED_POINTERS
+        ]
+        final_auth_gap_cells = [
+            cell
+            for cell in cells
+            if cell["closure_phase"] in runtime_replay.FINAL_REVIEW_PHASES
+            and cell["reviewer_authorization"] in runtime_replay.REVIEWER_AUTH_FAILURES
+            and cell["accepted_pointer"] not in runtime_replay.DIRTY_ACCEPTED_POINTERS
+            and not (
+                cell["accepted_pointer"] == "clean"
+                and cell["result_status"] != "accepted"
+            )
+            and not (
+                cell["repair_identity"] != "all_present"
+                and cell["packet_family"] in runtime_replay.REPAIR_CHAIN_PACKET_FAMILIES
+            )
+        ]
+
+        self.assertEqual(len(cells), runtime_replay.CONTROL_PLANE_LEDGER_HYGIENE_EXPECTED_CELL_COUNT)
+        self.assertEqual(len(keys), runtime_replay.CONTROL_PLANE_LEDGER_HYGIENE_EXPECTED_CELL_COUNT)
+        self.assertEqual(
+            runtime_replay.CONTROL_PLANE_LEDGER_HYGIENE_EXPECTED_CELL_COUNT,
+            5 * 5 * 6 * 6 * 6 * 6 * 5 * 6,
+        )
+        self.assertLessEqual(reactions, runtime_replay.CONTROL_PLANE_LEDGER_HYGIENE_REACTIONS)
+        self.assertLessEqual(
+            {
+                "reject_dirty_accepted_result_pointer",
+                "reject_repair_identity_discontinuity",
+                "block_terminal_break_glass_not_closed",
+                "block_terminal_active_or_stopped_blocker",
+                "block_final_reviewer_authorization_gap",
+                "allow_terminal_ledger_hygiene",
+            },
+            reactions,
+        )
+        self.assertTrue(dirty_pointer_cells)
+        self.assertTrue(final_auth_gap_cells)
+        self.assertTrue(
+            all(
+                cell["expected_runtime_reaction"] == "reject_dirty_accepted_result_pointer"
+                for cell in dirty_pointer_cells
+            )
+        )
+        self.assertTrue(
+            any(
+                cell["expected_runtime_reaction"] == "block_final_reviewer_authorization_gap"
+                for cell in final_auth_gap_cells
+            )
+        )
+        self.assertFalse(
+            [
+                cell["cell_id"]
+                for cell in final_auth_gap_cells
+                if cell["expected_runtime_reaction"] == "allow_terminal_ledger_hygiene"
+            ]
+        )
+        self.assertFalse([cell["cell_id"] for cell in cells if cell["fallback_allowed"]])
+        self.assertFalse([cell["cell_id"] for cell in cells if cell["live_completion_allowed"]])
+        self.assertFalse([cell["cell_id"] for cell in cells if not cell["hygiene_reasons"]])
 
     def test_fake_ai_runtime_replay_includes_system_integration_cases(self) -> None:
         integration_cells = [

@@ -33,6 +33,7 @@ REQUIRED_LABELS = (
     "sibling_parent_entry_complete",
     "select_terminal_closure_reconciliation",
     "final_ledger_marked_clean",
+    "whole_ledger_hygiene_reconciled",
     "terminal_backward_replay_passed",
     "defect_ledger_reconciled_clean",
     "role_memory_reconciled_current",
@@ -40,7 +41,7 @@ REQUIRED_LABELS = (
     "pm_approves_terminal_closure",
     "terminal_closure_reconciliation_complete",
 )
-MAX_SEQUENCE_LENGTH = 8
+MAX_SEQUENCE_LENGTH = 9
 
 
 @dataclass(frozen=True)
@@ -66,6 +67,12 @@ class State:
     route_root_selected_as_worker: bool = False
 
     final_ledger_clean: bool = False
+    whole_ledger_hygiene_clean: bool = False
+    stale_active_blockers_reconciled: bool = False
+    dirty_accepted_pointers_reconciled: bool = False
+    open_breakglass_reconciled: bool = False
+    pending_patch_validation_reconciled: bool = False
+    final_replay_authorization_reconciled: bool = False
     terminal_backward_replay_passed: bool = False
     defect_ledger_clean: bool = False
     role_memory_current: bool = False
@@ -149,6 +156,21 @@ def next_states(state: State) -> tuple[tuple[str, State], ...]:
     if state.scenario == TERMINAL_CLOSURE_RECONCILIATION:
         if not state.final_ledger_clean:
             return (("final_ledger_marked_clean", replace(state, final_ledger_clean=True)),)
+        if not state.whole_ledger_hygiene_clean:
+            return (
+                (
+                    "whole_ledger_hygiene_reconciled",
+                    replace(
+                        state,
+                        whole_ledger_hygiene_clean=True,
+                        stale_active_blockers_reconciled=True,
+                        dirty_accepted_pointers_reconciled=True,
+                        open_breakglass_reconciled=True,
+                        pending_patch_validation_reconciled=True,
+                        final_replay_authorization_reconciled=True,
+                    ),
+                ),
+            )
         if not state.terminal_backward_replay_passed:
             return (("terminal_backward_replay_passed", replace(state, terminal_backward_replay_passed=True)),)
         if not state.defect_ledger_clean:
@@ -185,6 +207,18 @@ def invariant_failures(state: State) -> list[str]:
 
     if state.pm_closure_approved and not state.final_ledger_clean:
         failures.append("terminal closure approved without clean final ledger")
+    if state.pm_closure_approved and not state.whole_ledger_hygiene_clean:
+        failures.append("terminal closure approved without whole-ledger hygiene reconciliation")
+    if state.pm_closure_approved and not state.stale_active_blockers_reconciled:
+        failures.append("terminal closure approved with stale active blockers unreconciled")
+    if state.pm_closure_approved and not state.dirty_accepted_pointers_reconciled:
+        failures.append("terminal closure approved with dirty accepted pointers unreconciled")
+    if state.pm_closure_approved and not state.open_breakglass_reconciled:
+        failures.append("terminal closure approved with open break-glass incidents unreconciled")
+    if state.pm_closure_approved and not state.pending_patch_validation_reconciled:
+        failures.append("terminal closure approved with pending break-glass patch validation unreconciled")
+    if state.pm_closure_approved and not state.final_replay_authorization_reconciled:
+        failures.append("terminal closure approved without final replay authorization reconciliation")
     if state.pm_closure_approved and not state.terminal_backward_replay_passed:
         failures.append("terminal closure approved without terminal backward replay")
     if state.pm_closure_approved and not state.defect_ledger_clean:
@@ -221,6 +255,12 @@ INVARIANTS = (
     _invariant("sibling_parent_entry_gate_before_leaf", "sibling leaf entered before sibling parent plan/context entry gate"),
     _invariant("sibling_parent_entry_gate_after_parent_entry", "sibling parent entry gate accepted before parent/module was entered"),
     _invariant("closure_requires_clean_final_ledger", "terminal closure approved without clean final ledger"),
+    _invariant("closure_requires_whole_ledger_hygiene", "terminal closure approved without whole-ledger hygiene reconciliation"),
+    _invariant("closure_blocks_stale_active_blockers", "terminal closure approved with stale active blockers unreconciled"),
+    _invariant("closure_blocks_dirty_accepted_pointers", "terminal closure approved with dirty accepted pointers unreconciled"),
+    _invariant("closure_blocks_open_breakglass", "terminal closure approved with open break-glass incidents unreconciled"),
+    _invariant("closure_blocks_pending_patch_validation", "terminal closure approved with pending break-glass patch validation unreconciled"),
+    _invariant("closure_requires_final_replay_authorization", "terminal closure approved without final replay authorization reconciliation"),
     _invariant("closure_requires_terminal_replay", "terminal closure approved without terminal backward replay"),
     _invariant("closure_requires_defect_reconciliation", "terminal closure approved without clean defect ledger reconciliation"),
     _invariant("closure_requires_role_memory_reconciliation", "terminal closure approved without current role memory reconciliation"),
@@ -269,7 +309,98 @@ HAZARD_STATES = {
         status="complete",
         scenario=TERMINAL_CLOSURE_RECONCILIATION,
         final_ledger_clean=True,
+        whole_ledger_hygiene_clean=True,
+        stale_active_blockers_reconciled=True,
+        dirty_accepted_pointers_reconciled=True,
+        open_breakglass_reconciled=True,
+        pending_patch_validation_reconciled=True,
+        final_replay_authorization_reconciled=True,
         terminal_backward_replay_passed=True,
+        role_memory_current=True,
+        continuation_quarantine_clean=True,
+        pm_closure_approved=True,
+    ),
+    "closure_with_stale_active_blocker": replace(
+        initial_state(),
+        status="complete",
+        scenario=TERMINAL_CLOSURE_RECONCILIATION,
+        final_ledger_clean=True,
+        whole_ledger_hygiene_clean=True,
+        stale_active_blockers_reconciled=False,
+        dirty_accepted_pointers_reconciled=True,
+        open_breakglass_reconciled=True,
+        pending_patch_validation_reconciled=True,
+        final_replay_authorization_reconciled=True,
+        terminal_backward_replay_passed=True,
+        defect_ledger_clean=True,
+        role_memory_current=True,
+        continuation_quarantine_clean=True,
+        pm_closure_approved=True,
+    ),
+    "closure_with_dirty_accepted_pointer": replace(
+        initial_state(),
+        status="complete",
+        scenario=TERMINAL_CLOSURE_RECONCILIATION,
+        final_ledger_clean=True,
+        whole_ledger_hygiene_clean=True,
+        stale_active_blockers_reconciled=True,
+        dirty_accepted_pointers_reconciled=False,
+        open_breakglass_reconciled=True,
+        pending_patch_validation_reconciled=True,
+        final_replay_authorization_reconciled=True,
+        terminal_backward_replay_passed=True,
+        defect_ledger_clean=True,
+        role_memory_current=True,
+        continuation_quarantine_clean=True,
+        pm_closure_approved=True,
+    ),
+    "closure_with_open_breakglass": replace(
+        initial_state(),
+        status="complete",
+        scenario=TERMINAL_CLOSURE_RECONCILIATION,
+        final_ledger_clean=True,
+        whole_ledger_hygiene_clean=True,
+        stale_active_blockers_reconciled=True,
+        dirty_accepted_pointers_reconciled=True,
+        open_breakglass_reconciled=False,
+        pending_patch_validation_reconciled=True,
+        final_replay_authorization_reconciled=True,
+        terminal_backward_replay_passed=True,
+        defect_ledger_clean=True,
+        role_memory_current=True,
+        continuation_quarantine_clean=True,
+        pm_closure_approved=True,
+    ),
+    "closure_with_pending_patch_validation": replace(
+        initial_state(),
+        status="complete",
+        scenario=TERMINAL_CLOSURE_RECONCILIATION,
+        final_ledger_clean=True,
+        whole_ledger_hygiene_clean=True,
+        stale_active_blockers_reconciled=True,
+        dirty_accepted_pointers_reconciled=True,
+        open_breakglass_reconciled=True,
+        pending_patch_validation_reconciled=False,
+        final_replay_authorization_reconciled=True,
+        terminal_backward_replay_passed=True,
+        defect_ledger_clean=True,
+        role_memory_current=True,
+        continuation_quarantine_clean=True,
+        pm_closure_approved=True,
+    ),
+    "closure_without_final_replay_authorization": replace(
+        initial_state(),
+        status="complete",
+        scenario=TERMINAL_CLOSURE_RECONCILIATION,
+        final_ledger_clean=True,
+        whole_ledger_hygiene_clean=True,
+        stale_active_blockers_reconciled=True,
+        dirty_accepted_pointers_reconciled=True,
+        open_breakglass_reconciled=True,
+        pending_patch_validation_reconciled=True,
+        final_replay_authorization_reconciled=False,
+        terminal_backward_replay_passed=True,
+        defect_ledger_clean=True,
         role_memory_current=True,
         continuation_quarantine_clean=True,
         pm_closure_approved=True,
@@ -279,6 +410,12 @@ HAZARD_STATES = {
         status="complete",
         scenario=TERMINAL_CLOSURE_RECONCILIATION,
         final_ledger_clean=True,
+        whole_ledger_hygiene_clean=True,
+        stale_active_blockers_reconciled=True,
+        dirty_accepted_pointers_reconciled=True,
+        open_breakglass_reconciled=True,
+        pending_patch_validation_reconciled=True,
+        final_replay_authorization_reconciled=True,
         terminal_backward_replay_passed=True,
         defect_ledger_clean=True,
         role_memory_current=True,
@@ -291,6 +428,12 @@ HAZARD_STATES = {
         status="complete",
         scenario=TERMINAL_CLOSURE_RECONCILIATION,
         final_ledger_clean=True,
+        whole_ledger_hygiene_clean=True,
+        stale_active_blockers_reconciled=True,
+        dirty_accepted_pointers_reconciled=True,
+        open_breakglass_reconciled=True,
+        pending_patch_validation_reconciled=True,
+        final_replay_authorization_reconciled=True,
         terminal_backward_replay_passed=True,
         defect_ledger_clean=True,
         role_memory_current=True,
@@ -303,6 +446,12 @@ HAZARD_STATES = {
         status="complete",
         scenario=TERMINAL_CLOSURE_RECONCILIATION,
         final_ledger_clean=True,
+        whole_ledger_hygiene_clean=True,
+        stale_active_blockers_reconciled=True,
+        dirty_accepted_pointers_reconciled=True,
+        open_breakglass_reconciled=True,
+        pending_patch_validation_reconciled=True,
+        final_replay_authorization_reconciled=True,
         terminal_backward_replay_passed=True,
         defect_ledger_clean=True,
         role_memory_current=True,
@@ -319,6 +468,11 @@ HAZARD_EXPECTED_FAILURES = {
     "sibling_leaf_before_parent_entry_gate": "sibling leaf entered before sibling parent plan/context entry gate",
     "sibling_parent_entry_gate_without_parent_entry": "sibling parent entry gate accepted before parent/module was entered",
     "closure_without_defect_reconciliation": "terminal closure approved without clean defect ledger reconciliation",
+    "closure_with_stale_active_blocker": "terminal closure approved with stale active blockers unreconciled",
+    "closure_with_dirty_accepted_pointer": "terminal closure approved with dirty accepted pointers unreconciled",
+    "closure_with_open_breakglass": "terminal closure approved with open break-glass incidents unreconciled",
+    "closure_with_pending_patch_validation": "terminal closure approved with pending break-glass patch validation unreconciled",
+    "closure_without_final_replay_authorization": "terminal closure approved without final replay authorization reconciliation",
     "closure_with_unresolved_defect": "terminal closure approved with unresolved defect",
     "closure_with_stale_role_memory": "terminal closure approved with stale role memory authority",
     "closure_with_imported_artifact_authority": "terminal closure approved with imported artifact authority",

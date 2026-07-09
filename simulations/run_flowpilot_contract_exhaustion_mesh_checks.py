@@ -66,6 +66,12 @@ TEST_MESH_CHILD_SUITE_DEFINITIONS = {
         "evidence_current": True,
         "coverage_boundary": "synthetic_non_live_runtime_replay",
     },
+    "control_plane_ledger_hygiene_fake_ai_matrix": {
+        "layer": "synthetic_non_live_runtime_replay",
+        "result_status": "passed",
+        "evidence_current": True,
+        "coverage_boundary": "control_plane_ledger_hygiene_cartesian",
+    },
     "real_issue_backfeed_matrix": {
         "layer": "historical_failure_backfeed",
         "result_status": "passed",
@@ -377,14 +383,22 @@ def _fake_ai_responder_report(cells: dict[str, Any]) -> dict[str, Any]:
 
 def _summary_report(report: dict[str, Any]) -> dict[str, Any]:
     fake_ai = report.get("fake_ai_responder") or {}
+    required_cells = report.get("required_cells") or {}
+    test_mesh = report.get("test_mesh") or {}
     return {
         "model_id": report.get("model_id"),
         "ok": report.get("ok"),
         "flowguard_ok": (report.get("flowguard") or {}).get("ok"),
         "walk_ok": (report.get("walk") or {}).get("ok"),
         "hazards_ok": (report.get("hazards") or {}).get("ok"),
-        "required_cells_ok": (report.get("required_cells") or {}).get("ok"),
-        "test_mesh_ok": (report.get("test_mesh") or {}).get("ok"),
+        "required_cells_ok": required_cells.get("ok"),
+        "required_cell_count": required_cells.get("cell_count"),
+        "required_family_count": required_cells.get("family_count"),
+        "required_mutation_count": required_cells.get("mutation_count"),
+        "test_mesh_ok": test_mesh.get("ok"),
+        "required_child_suite_owners": test_mesh.get("required_child_suite_owners", []),
+        "unregistered_required_child_suites": test_mesh.get("unregistered_required_child_suites", []),
+        "missing_or_stale_child_suites": test_mesh.get("missing_or_stale_child_suites", []),
         "fake_ai_responder": fake_ai.get("summary", {}),
     }
 
@@ -417,15 +431,15 @@ def main() -> int:
     parser.add_argument("--json-out", type=Path, default=None)
     args = parser.parse_args()
     report = run_checks()
-    payload = json.dumps(report, indent=2, sort_keys=True)
+    summary = _summary_report(report)
     output_path = args.json_out or (RESULTS_PATH if args.write_results else None)
     if output_path is not None:
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        output_path.write_text(payload + "\n", encoding="utf-8")
+        output_path.write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     if args.summary_json:
-        print(json.dumps(_summary_report(report), indent=2, sort_keys=True))
+        print(json.dumps(summary, indent=2, sort_keys=True))
     else:
-        print(payload if args.json else f"FlowPilot contract exhaustion mesh ok={report['ok']}")
+        print(json.dumps(report, indent=2, sort_keys=True) if args.json else f"FlowPilot contract exhaustion mesh ok={report['ok']}")
     return 0 if report["ok"] else 1
 
 

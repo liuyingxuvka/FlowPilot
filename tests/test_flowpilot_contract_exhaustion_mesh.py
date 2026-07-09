@@ -116,6 +116,7 @@ class FlowPilotContractExhaustionMeshTests(unittest.TestCase):
         self.assertIn("review_window_completeness_matrix", owners)
         self.assertIn("review_window_fake_ai_matrix", owners)
         self.assertIn("fake_ai_runtime_replay_matrix", owners)
+        self.assertIn("control_plane_ledger_hygiene_fake_ai_matrix", owners)
         self.assertIn("real_issue_backfeed_matrix", owners)
         self.assertIn("integration_cartesian_coverage_matrix", owners)
         self.assertLessEqual(model.SYNTHETIC_MUTATION_KINDS, mutation_kinds)
@@ -351,9 +352,23 @@ class FlowPilotContractExhaustionMeshTests(unittest.TestCase):
             0,
         )
         self.assertGreater(
+            child_suites["control_plane_ledger_hygiene_fake_ai_matrix"]["owned_cell_count"],
+            0,
+        )
+        self.assertGreater(
             child_suites["real_issue_backfeed_matrix"]["owned_cell_count"],
             0,
         )
+
+    def test_contract_exhaustion_summary_keeps_large_cell_matrix_out_of_file_artifact(self) -> None:
+        report = runner.run_checks()
+        summary = runner._summary_report(report)
+
+        self.assertTrue(summary["ok"], summary)
+        self.assertEqual(summary["required_cell_count"], report["required_cells"]["cell_count"])
+        self.assertIn("control_plane_ledger_hygiene_fake_ai_matrix", summary["required_child_suite_owners"])
+        self.assertNotIn("required_cells", summary)
+        self.assertNotIn("child_suites", summary)
 
     def test_contract_exhaustion_registers_runtime_replay_and_backfeed_cells(self) -> None:
         cells = list(model.REQUIRED_CONTRACT_EXHAUSTION_CELLS)

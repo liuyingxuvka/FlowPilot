@@ -16,17 +16,17 @@ It is orientation only; it is not validation evidence.
 
 | Area | Models | Alignment families | Code surfaces | Test commands | Known-bad labels |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| `closure` | 8 | 1 | 18 | 7 | 101 |
-| `controller` | 7 | 0 | 90 | 28 | 104 |
+| `closure` | 8 | 1 | 18 | 7 | 106 |
+| `controller` | 7 | 0 | 90 | 28 | 106 |
 | `install-validation` | 1 | 0 | 17 | 16 | 15 |
 | `material` | 1 | 0 | 26 | 30 | 11 |
 | `model-mesh` | 3 | 0 | 7 | 2 | 86 |
 | `model-test-alignment` | 5 | 0 | 14 | 12 | 74 |
-| `other` | 90 | 8 | 253 | 40 | 1423 |
+| `other` | 90 | 8 | 253 | 40 | 1411 |
 | `packet` | 10 | 2 | 210 | 165 | 169 |
 | `prompt-card` | 3 | 0 | 4 | 0 | 80 |
 | `review` | 4 | 0 | 4 | 0 | 78 |
-| `route` | 17 | 3 | 353 | 104 | 322 |
+| `route` | 17 | 3 | 353 | 104 | 327 |
 | `startup` | 6 | 1 | 73 | 44 | 129 |
 | `structure` | 4 | 1 | 8 | 4 | 45 |
 
@@ -67,7 +67,7 @@ Completion and readiness claims still need the owning FlowGuard checks, tests, r
 - `flowpilot_complete_system_structure` (structure, coverage_strong): `simulations/run_flowpilot_complete_system_structure_checks.py` -> `simulations/flowpilot_complete_system_structure_results.json`; known-bad: missing_dynamic_host_owner, missing_module_rationale
 - `flowpilot_complete_system_testmesh` (other, coverage_strong): `simulations/run_flowpilot_complete_system_testmesh_checks.py` -> `simulations/flowpilot_complete_system_testmesh_results.json`
 - `flowpilot_complete_system_ui` (other, coverage_strong): `simulations/run_flowpilot_complete_system_ui_checks.py` -> `simulations/flowpilot_complete_system_ui_results.json`
-- `flowpilot_contract_exhaustion_mesh` (other, coverage_strong): `simulations/run_flowpilot_contract_exhaustion_mesh_checks.py` -> `simulations/flowpilot_contract_exhaustion_mesh_results.json`; known-bad: expected, hazards, missing_expected_failures
+- `flowpilot_contract_exhaustion_mesh` (other, coverage_strong): `simulations/run_flowpilot_contract_exhaustion_mesh_checks.py` -> `simulations/flowpilot_contract_exhaustion_mesh_results.json`; known-bad: hazards_ok
 - `flowpilot_control_plane_friction` (other, coverage_strong): `simulations/run_flowpilot_control_plane_friction_checks.py` -> `simulations/flowpilot_control_plane_friction_results.json`; known-bad: hazards, ok, ack_consumed_semantic_wait_lost
 - `flowpilot_control_plane_ledger_consolidation` (closure, supporting_model_owned): `simulations/run_flowpilot_control_plane_ledger_consolidation_checks.py` -> `simulations/flowpilot_control_plane_ledger_consolidation_results.json`; known-bad: failures, hazards, ok
 - `flowpilot_control_plane_state_consistency` (other, supporting_model_owned): `simulations/run_flowpilot_control_plane_state_consistency_checks.py` -> `simulations/flowpilot_control_plane_state_consistency_results.json`; known-bad: failures, hazards, ok
@@ -79,7 +79,7 @@ Completion and readiness claims still need the owning FlowGuard checks, tests, r
 
 - `startup` (startup): 2 obligations, 4 test evidence rows
 - `packet/card/ack` (packet): 4 obligations, 7 test evidence rows
-- `packet result family` (packet): 40 obligations, 70 test evidence rows
+- `packet result family` (packet): 41 obligations, 72 test evidence rows
 - `route mutation` (route): 3 obligations, 6 test evidence rows
 - `field lifecycle currentness` (other): 12 obligations, 16 test evidence rows
 - `current-node trunk invariant` (other): 2 obligations, 4 test evidence rows

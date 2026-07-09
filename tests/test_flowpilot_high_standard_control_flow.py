@@ -1891,6 +1891,49 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         self.assertIn("node-redesign-accepted-001", ledger["route_nodes"]["redesign-module-001"]["child_node_ids"])
         self.assertTrue(_open_packets(ledger, scope="node_acceptance_plan"))
 
+    def test_pm_flowguard_acceptance_accept_decision_reaches_reviewer_without_early_acceptance(self) -> None:
+        ledger = _ledger()
+        _complete_preplanning(ledger)
+        _complete_planning(ledger)
+
+        _complete_open_packet(
+            ledger,
+            _open_packets(ledger, scope="node_acceptance_plan")[0],
+            json.dumps(
+                {
+                    "decision": "redesign_route",
+                    "reason": "PM split the active node into a fresh route slice.",
+                    "route_plan": _route_plan_obj(
+                        [
+                            {
+                                "node_id": "node-redesign-no-early-accept-001",
+                                "title": "No early accepted redesign node",
+                                "responsibility": "worker",
+                                "modeled_target": "development_process",
+                                "acceptance_criteria": ["PM absorption reaches Reviewer before acceptance."],
+                            }
+                        ]
+                    ),
+                }
+            ),
+        )
+        gate = _latest_pm_decision_gate(ledger)
+        _complete_open_packet(
+            ledger,
+            _open_packets(ledger, kind="flowguard_check")[0],
+            _flowguard_pass_body("FlowGuard passed the route redesign."),
+        )
+        pm_acceptance_packet = _open_packets(ledger, kind="pm_flowguard_acceptance")[0]
+        pm_result_id = _complete_pm_flowguard_acceptance(ledger)
+        packet = ledger["packets"][pm_acceptance_packet]
+        result = ledger["results"][pm_result_id]
+
+        self.assertEqual(gate["status"], "awaiting_review")
+        self.assertNotEqual(packet["status"], "accepted")
+        self.assertFalse(packet.get("accepted_result_id"))
+        self.assertNotEqual(result["status"], "accepted")
+        self.assertTrue(_open_packets(ledger, kind="review"))
+
     def test_pm_flowguard_acceptance_break_glass_routes_control_plane_without_review(self) -> None:
         ledger = _ledger()
         _complete_preplanning(ledger)

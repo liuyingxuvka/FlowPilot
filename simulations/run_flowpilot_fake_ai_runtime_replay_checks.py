@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 from collections import deque
 import json
+import os
 from pathlib import Path
 from typing import Any
 
@@ -17,7 +18,7 @@ except ImportError:  # pragma: no cover
 
 
 ROOT = Path(__file__).resolve().parent
-RESULTS_PATH = ROOT / "flowpilot_fake_ai_runtime_replay_results.json"
+RESULTS_PATH = ROOT / "flowpilot_fake_ai_runtime_replay_summary.json"
 
 REQUIRED_LABELS = {
     *(f"select_{name}" for name in model.VALID_SCENARIOS),
@@ -102,7 +103,7 @@ def run_checks() -> dict[str, Any]:
     flowguard = _flowguard_report()
     walk = _walk_report()
     hazards = _hazard_report()
-    matrix = model.build_report()
+    matrix = model.build_report(include_cells=False)
     ok = all(section["ok"] for section in (flowguard, walk, hazards, matrix))
     return {
         "ok": ok,
@@ -114,6 +115,13 @@ def run_checks() -> dict[str, Any]:
     }
 
 
+def _write_json_report(path: Path, report: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp_path = path.with_name(f".{path.name}.{os.getpid()}.tmp")
+    tmp_path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    tmp_path.replace(path)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--json", action="store_true")
@@ -121,8 +129,7 @@ def main() -> int:
     args = parser.parse_args()
 
     report = run_checks()
-    args.json_out.parent.mkdir(parents=True, exist_ok=True)
-    args.json_out.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    _write_json_report(args.json_out, report)
     print(json.dumps(report, indent=2, sort_keys=True) if args.json else f"FlowPilot fake-AI runtime replay ok={report['ok']}")
     return 0 if report["ok"] else 1
 

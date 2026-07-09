@@ -38,6 +38,11 @@ Write:
 The root contract is the completion floor. It records project-level hard
 requirements, high-risk requirements, proof obligations, scenario coverage, and
 what cannot be closed by a report alone.
+It must preserve PM's highest reasonable product target from the product
+architecture, not only the literal minimum wording from the user. The contract
+should turn that target into concrete acceptance rows, evidence rules,
+quality floors, and non-downgrade prohibitions that downstream Worker,
+Reviewer, and FlowGuard packets can recover through current artifacts.
 It must also block generic user-goal wording. A root contract is not frozen
 when source-intent acceptance has been diluted into phrases such as "complete
 the user request", "make it good", or "satisfy the goal" without the concrete

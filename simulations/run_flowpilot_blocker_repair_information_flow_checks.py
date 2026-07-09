@@ -47,6 +47,9 @@ HAZARD_EXPECTED_FAILURES = {
     model.FORMAL_BLOCKER_ID_ONLY_IN_PROSE_REACHES_REVIEWER: (
         "formal blocker identity missing reached Reviewer instead of Runtime reissue"
     ),
+    model.GATE_DERIVED_PM_FLOWGUARD_ACCEPTANCE_IDENTITY_DROPPED: (
+        "PM FlowGuard acceptance lost gate-derived repair blocker identity"
+    ),
     model.FLOWGUARD_EVIDENCE_HAS_BLOCKER_BUT_STAGED_EFFECT_EMPTY: (
         "FlowGuard evidence contains blocker identity but staged_effect.blocker_id is empty"
     ),
@@ -84,8 +87,10 @@ def _state_id(state: model.State) -> str:
         f"flowguard=recheck:{state.flowguard_recheck_requested},"
         f"repair_ref:{state.flowguard_recheck_references_repair_result},"
         f"passed:{state.flowguard_recheck_passed},manifest:{state.flowguard_evidence_manifest_attached},"
-        f"formal_blocker:{state.flowguard_evidence_formal_blocker_id_bound}|"
+        f"formal_blocker:{state.flowguard_evidence_formal_blocker_id_bound},"
+        f"pm_flowguard_identity:{state.pm_flowguard_acceptance_identity_bound}|"
         f"review=recheck:{state.reviewer_recheck_requested},bound:{state.reviewer_recheck_references_current_blocker},"
+        f"repair_identity:{state.reviewer_packet_inherits_repair_identity},"
         f"evidence:{state.reviewer_recheck_uses_worker_evidence},passed:{state.reviewer_recheck_passed},"
         f"flowguard_evidence:{state.reviewer_recheck_uses_flowguard_evidence},"
         f"closed:{state.blocker_closed},stage_current:{state.blocker_stage_current}|"

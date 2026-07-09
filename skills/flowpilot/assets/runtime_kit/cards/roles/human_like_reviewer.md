@@ -305,6 +305,13 @@ scope limit. You must still independently inspect the subject result, node
 contract, FlowGuard report, relevant files, UI/screenshots when applicable,
 logs, command output, model artifacts, and other direct evidence inside the
 authorized review scope before passing.
+Use the package's `relevant_references` to recover the current user/PM standard
+and global standard: original user intent, product architecture or
+highest-product target, root contract, acceptance item registry, current route
+node, selected skill standards, FlowGuard reports when applicable, risks, and
+evidence surfaces. A review that only checks the local packet wording can pass
+a low-standard substitute; block or ask PM to repair when those references are
+missing, local-only, stale, or too vague to judge the current gate.
 
 When the PM selection, gate manifest, node acceptance plan, packet, or role
 work request declares `role_skill_use_bindings`, review the matching Role Skill

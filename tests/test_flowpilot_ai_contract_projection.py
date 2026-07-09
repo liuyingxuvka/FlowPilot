@@ -461,6 +461,30 @@ class FlowPilotAIContractProjectionTests(unittest.TestCase):
             self.assertIn(profile_id, mutation_kinds)
         self.assertIn("finite_option_mistake", mutation_kinds)
 
+    def test_existing_required_arrays_project_to_empty_array_fake_ai_cells(self) -> None:
+        expected_non_empty_arrays = {
+            "task.high_standard_contract": {"requirements", "acceptance_item_registry.items"},
+            "task.discovery": {"material_sources"},
+            "task.skill_standard": {"obligations"},
+            "task.planning": {"nodes"},
+        }
+
+        for family_id, expected_fields in expected_non_empty_arrays.items():
+            with self.subTest(family_id=family_id):
+                contract = runtime.packet_result_contracts.effective_result_contract_for_family(family_id)
+                responder = contract_fake_ai.ContractDrivenFakeAIResponder(contract)
+                cells = {
+                    (cell["contract_path"], cell["mutation_kind"])
+                    for cell in responder.coverage_cells()
+                }
+
+                self.assertEqual(responder.projection_findings(), [])
+                self.assertLessEqual(expected_fields, set(responder.non_empty_array_fields))
+                for field_path in expected_fields:
+                    self.assertIn((field_path, "empty_required_array"), cells)
+                    payload = responder.empty_required_array_payload(field_path)
+                    self.assertIsInstance(payload, dict)
+
     def test_node_acceptance_projection_owner_set_matrix_rejects_bad_rows_and_accepts_complete_rows(self) -> None:
         ledger = runtime.new_ledger("Goal", "Contract")
         node = {
@@ -546,6 +570,18 @@ class FlowPilotAIContractProjectionTests(unittest.TestCase):
             with self.subTest(name=name):
                 result_id = self.node_context_package_result_id(ledger, package)
                 with self.assertRaisesRegex(runtime.BlackBoxRuntimeError, expected_messages[name]):
+                    runtime._node_context_package_from_pm_result(
+                        ledger,
+                        node,
+                        subject_packet,
+                        result_id,
+                    )
+
+        for field_name in ("acceptance_criteria", "relevant_references", "known_risks"):
+            with self.subTest(empty_context_list=field_name):
+                package = {**complete_package, field_name: []}
+                result_id = self.node_context_package_result_id(ledger, package)
+                with self.assertRaisesRegex(runtime.BlackBoxRuntimeError, f"missing required list field: {field_name}"):
                     runtime._node_context_package_from_pm_result(
                         ledger,
                         node,

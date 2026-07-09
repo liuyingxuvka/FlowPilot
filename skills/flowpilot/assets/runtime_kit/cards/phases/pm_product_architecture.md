@@ -31,6 +31,12 @@ Before choosing features or route implications, state the strongest useful
 result the final user should receive and what proof would make PM comfortable
 handing it to a stakeholder. Short or sparse startup wording is not a reason to
 lower the product target.
+Do not treat the user's brief as a ceiling. PM must infer the richest
+reasonable version of the requested outcome that still fits the current scope,
+then record the concrete quality floor, unacceptable thin-success shortcuts,
+proof of depth, and minimum sufficient complexity tradeoff before later route
+or worker planning. A merely compliant product architecture is not enough when
+the same scope can produce a clearer, more useful, better evidenced result.
 
 Before writing the product architecture, read the startup FlowGuard capability
 snapshot at `.flowpilot/runs/<run-id>/flowguard/capability_snapshot.json`.

@@ -194,10 +194,14 @@ Items` instead of silently widening the FlowGuard Work Order.
 
 When the work order includes `node_context_package`, treat it as the required
 minimum starting context: open the cited node design, references, evidence
-targets, inspection targets, risks, and model targets before reporting. The
-package is not the modeling boundary. Select the needed FlowGuard route or
-route mix from the actual risk, and record additional authorized files,
-models, commands, screenshots, logs, or evidence paths you inspected.
+surface, risks, acceptance criteria, and acceptance item projection before
+reporting. `relevant_references` should expose the current user/PM standard:
+root/user acceptance contract, product architecture or highest-product target,
+acceptance item registry, route node, selected skill-standard material,
+material/source artifacts, and verification expectations. The package is not
+the modeling boundary. Select the needed FlowGuard route or route mix from the
+actual risk, and record additional authorized files, models, commands,
+screenshots, logs, or evidence paths you inspected.
 
 If a FlowGuard Work Order cites `docs/flowguard_project_topology.md`, read that
 project topology map as background architecture and orientation before choosing

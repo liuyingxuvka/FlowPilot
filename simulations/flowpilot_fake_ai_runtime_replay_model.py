@@ -10,6 +10,8 @@ from __future__ import annotations
 
 from collections import Counter
 from dataclasses import dataclass, replace
+from functools import lru_cache
+from itertools import product
 import json
 from pathlib import Path
 import sys
@@ -38,7 +40,7 @@ from flowpilot_integration_cartesian_coverage_model import iter_required_cells a
 
 
 MODEL_ID = "flowpilot_fake_ai_runtime_replay"
-RESULT_PATH = "simulations/flowpilot_fake_ai_runtime_replay_results.json"
+RESULT_PATH = "simulations/flowpilot_fake_ai_runtime_replay_summary.json"
 REQUIRED_EVIDENCE_OWNER = "fake_ai_runtime_replay_matrix"
 MAX_SEQUENCE_LENGTH = 2
 
@@ -127,6 +129,14 @@ CONCRETE_RUNTIME_TESTS: dict[str, str] = {
         "tests.test_flowpilot_reviewer_active_challenge."
         "FlowPilotReviewerActiveChallengeTests.test_runtime_cards_templates_and_contracts_keep_reviewer_challenge_compact"
     ),
+    "global_standard_context_prompt": (
+        "tests.test_flowpilot_card_instruction_coverage."
+        "FlowPilotCardInstructionCoverageTests.test_current_global_standard_references_reach_backstage_roles"
+    ),
+    "planning_global_standard_model": (
+        "tests.test_flowpilot_planning_quality."
+        "FlowPilotPlanningQualityTests.test_planning_quality_model_rejects_hazards"
+    ),
 }
 
 RUNTIME_OWNED_BAD_AI_REPLAY_CELLS: tuple[dict[str, str], ...] = (
@@ -203,6 +213,226 @@ RUNTIME_OWNED_BAD_AI_REPLAY_CELLS: tuple[dict[str, str], ...] = (
         "expected_test_key": "runtime_accepted_result_authority",
     },
 )
+
+GLOBAL_STANDARD_CONTEXT_REPLAY_CELLS: tuple[dict[str, str], ...] = (
+    {
+        "cell_id": "node_plan_missing_global_standard_references",
+        "family": "node_acceptance_plan",
+        "contract_family_id": "flowpilot_global_standard_context",
+        "contract_path": "node_context_package.relevant_references",
+        "mutation_kind": "global_standard_context.node_plan_local_only_references",
+        "expected_runtime_reaction": "reviewer_blocks_local_only_global_context",
+        "expected_test_key": "planning_global_standard_model",
+    },
+    {
+        "cell_id": "worker_result_ignores_user_pm_standard",
+        "family": "worker_result_review",
+        "contract_family_id": "flowpilot_global_standard_context",
+        "contract_path": "worker_result.acceptance_slice",
+        "mutation_kind": "global_standard_context.worker_local_only_completion",
+        "expected_runtime_reaction": "reviewer_blocks_worker_result_below_user_pm_standard",
+        "expected_test_key": "global_standard_context_prompt",
+    },
+    {
+        "cell_id": "flowguard_models_process_without_user_pm_standard",
+        "family": "flowguard_work_order",
+        "contract_family_id": "flowpilot_global_standard_context",
+        "contract_path": "flowguard_work_order.node_context_package.relevant_references",
+        "mutation_kind": "global_standard_context.flowguard_local_only_model",
+        "expected_runtime_reaction": "flowguard_models_against_user_pm_standard_or_reports_gap",
+        "expected_test_key": "global_standard_context_prompt",
+    },
+)
+
+CONTROL_PLANE_LEDGER_HYGIENE_OWNER = "control_plane_ledger_hygiene_fake_ai_matrix"
+CONTROL_PLANE_LEDGER_HYGIENE_SOURCE = "control_plane_ledger_hygiene_cartesian"
+CONTROL_PLANE_LEDGER_HYGIENE_AXES: dict[str, tuple[str, ...]] = {
+    "result_status": (
+        "accepted",
+        "review_blocked",
+        "rejected",
+        "mechanically_valid",
+        "validation_failed",
+    ),
+    "accepted_pointer": (
+        "empty",
+        "clean",
+        "points_to_review_blocked",
+        "points_to_missing",
+        "stale",
+    ),
+    "repair_identity": (
+        "all_present",
+        "packet_missing",
+        "envelope_missing",
+        "body_missing",
+        "mismatch",
+        "gate_derived_missing",
+    ),
+    "packet_family": (
+        "task",
+        "pm_repair_decision",
+        "flowguard_check",
+        "pm_flowguard_acceptance",
+        "review",
+        "terminal_backward_replay",
+    ),
+    "blocker": (
+        "none",
+        "active_current",
+        "active_stale",
+        "cleared",
+        "stopped",
+        "awaiting_pm_decision_gate",
+    ),
+    "break_glass": (
+        "none",
+        "incident_open",
+        "pending_patch",
+        "permanent_fix_needed",
+        "quarantined",
+        "closed",
+    ),
+    "reviewer_authorization": (
+        "none",
+        "partial",
+        "full",
+        "stale_hash",
+        "wrong_role",
+    ),
+    "closure_phase": (
+        "node",
+        "pm_gate",
+        "system_validation",
+        "final_replay",
+        "final_closure",
+        "terminal_return",
+    ),
+}
+CONTROL_PLANE_LEDGER_HYGIENE_EXPECTED_CELL_COUNT = 1
+for _axis_values in CONTROL_PLANE_LEDGER_HYGIENE_AXES.values():
+    CONTROL_PLANE_LEDGER_HYGIENE_EXPECTED_CELL_COUNT *= len(_axis_values)
+
+TERMINAL_LEDGER_PHASES = {"final_closure", "terminal_return"}
+FINAL_REVIEW_PHASES = {"final_replay", "final_closure", "terminal_return"}
+REPAIR_CHAIN_PACKET_FAMILIES = {
+    "pm_repair_decision",
+    "flowguard_check",
+    "pm_flowguard_acceptance",
+    "review",
+    "terminal_backward_replay",
+}
+DIRTY_ACCEPTED_POINTERS = {"points_to_review_blocked", "points_to_missing", "stale"}
+OPEN_BREAK_GLASS_STATES = {"incident_open", "pending_patch", "permanent_fix_needed"}
+BLOCKING_BLOCKER_STATES = {"active_current", "active_stale", "awaiting_pm_decision_gate", "stopped"}
+REVIEWER_AUTH_FAILURES = {"none", "partial", "stale_hash", "wrong_role"}
+CONTROL_PLANE_LEDGER_HYGIENE_REACTIONS = {
+    "reject_dirty_accepted_result_pointer",
+    "reject_inconsistent_clean_accepted_pointer",
+    "reject_repair_identity_discontinuity",
+    "block_terminal_break_glass_not_closed",
+    "block_terminal_active_or_stopped_blocker",
+    "block_final_reviewer_authorization_gap",
+    "block_terminal_failed_or_unreviewed_result",
+    "require_review_or_validation_before_acceptance",
+    "continue_current_runtime_path",
+    "allow_terminal_ledger_hygiene",
+}
+
+
+def _control_plane_hygiene_reaction(axis: Mapping[str, str]) -> tuple[str, tuple[str, ...]]:
+    result_status = axis["result_status"]
+    accepted_pointer = axis["accepted_pointer"]
+    repair_identity = axis["repair_identity"]
+    packet_family = axis["packet_family"]
+    blocker = axis["blocker"]
+    break_glass = axis["break_glass"]
+    reviewer_authorization = axis["reviewer_authorization"]
+    closure_phase = axis["closure_phase"]
+    reasons: list[str] = []
+
+    if accepted_pointer in DIRTY_ACCEPTED_POINTERS:
+        reasons.append("accepted_result_id_points_to_nonaccepted_or_missing_result")
+        return "reject_dirty_accepted_result_pointer", tuple(reasons)
+    if accepted_pointer == "clean" and result_status != "accepted":
+        reasons.append("clean_accepted_pointer_conflicts_with_result_status")
+        return "reject_inconsistent_clean_accepted_pointer", tuple(reasons)
+    if repair_identity != "all_present" and packet_family in REPAIR_CHAIN_PACKET_FAMILIES:
+        reasons.append("repair_blocker_id_not_consistent_across_packet_envelope_body")
+        return "reject_repair_identity_discontinuity", tuple(reasons)
+    if closure_phase in TERMINAL_LEDGER_PHASES and break_glass in OPEN_BREAK_GLASS_STATES:
+        reasons.append("break_glass_incident_or_patch_has_no_terminal_disposition")
+        return "block_terminal_break_glass_not_closed", tuple(reasons)
+    if closure_phase in TERMINAL_LEDGER_PHASES and blocker in BLOCKING_BLOCKER_STATES:
+        reasons.append("active_or_stopped_blocker_survives_terminal_hygiene")
+        return "block_terminal_active_or_stopped_blocker", tuple(reasons)
+    if (
+        (closure_phase in FINAL_REVIEW_PHASES or packet_family in {"review", "terminal_backward_replay"})
+        and reviewer_authorization in REVIEWER_AUTH_FAILURES
+    ):
+        reasons.append("reviewer_final_or_review_packet_lacks_current_authorized_reads")
+        return "block_final_reviewer_authorization_gap", tuple(reasons)
+    if closure_phase in TERMINAL_LEDGER_PHASES and result_status in {
+        "review_blocked",
+        "rejected",
+        "validation_failed",
+    }:
+        reasons.append("terminal_hygiene_found_failed_result_state")
+        return "block_terminal_failed_or_unreviewed_result", tuple(reasons)
+    if closure_phase in TERMINAL_LEDGER_PHASES and result_status != "accepted":
+        reasons.append("terminal_hygiene_found_unaccepted_result_state")
+        return "require_review_or_validation_before_acceptance", tuple(reasons)
+    if closure_phase in TERMINAL_LEDGER_PHASES:
+        reasons.append("all_terminal_ledger_hygiene_conditions_clean")
+        return "allow_terminal_ledger_hygiene", tuple(reasons)
+    reasons.append("nonterminal_phase_uses_current_runtime_owner_path")
+    return "continue_current_runtime_path", tuple(reasons)
+
+
+def control_plane_ledger_hygiene_cell_id(axis: Mapping[str, str]) -> str:
+    return "control_plane_ledger_hygiene:" + "|".join(
+        f"{axis_name}={axis[axis_name]}" for axis_name in CONTROL_PLANE_LEDGER_HYGIENE_AXES
+    )
+
+
+@lru_cache(maxsize=1)
+def control_plane_ledger_hygiene_cells() -> tuple[dict[str, Any], ...]:
+    cells: list[dict[str, Any]] = []
+    axis_names = tuple(CONTROL_PLANE_LEDGER_HYGIENE_AXES)
+    for values in product(*(CONTROL_PLANE_LEDGER_HYGIENE_AXES[name] for name in axis_names)):
+        axis = dict(zip(axis_names, values, strict=True))
+        reaction, reasons = _control_plane_hygiene_reaction(axis)
+        cell_id = control_plane_ledger_hygiene_cell_id(axis)
+        cells.append(
+            {
+                "cell_id": cell_id,
+                "source_cell_id": cell_id,
+                "source_matrix": CONTROL_PLANE_LEDGER_HYGIENE_SOURCE,
+                "family": "control_plane_ledger_hygiene",
+                "contract_family_id": "runtime.control_plane_ledger_hygiene",
+                "contract_path": ".".join(f"{name}:{axis[name]}" for name in axis_names),
+                "mutation_kind": f"control_plane_ledger_hygiene.{reaction}",
+                "branch_kind": reaction,
+                "confidence_boundary": "synthetic_non_live_runtime_replay",
+                "required_evidence_owner": CONTROL_PLANE_LEDGER_HYGIENE_OWNER,
+                "attempt_class": "cartesian_control_plane_ledger_hygiene",
+                "expected_runtime_reaction": reaction,
+                "expected_test_name": (
+                    "tests.test_flowpilot_fake_ai_runtime_replay."
+                    "FlowPilotFakeAIRuntimeReplayTests."
+                    "test_control_plane_ledger_hygiene_fake_ai_matrix_is_cartesian"
+                ),
+                "glass_break_allowed": False,
+                "normal_path_required": True,
+                "live_completion_allowed": False,
+                "semantic_runtime_blocker_allowed": False,
+                "fallback_allowed": False,
+                "runtime_mechanical_only": True,
+                "hygiene_reasons": reasons,
+                **axis,
+            }
+        )
+    return tuple(cells)
 
 
 EXPECTED_REACTION_BY_MUTATION = {
@@ -514,6 +744,33 @@ def _runtime_owned_bad_ai_replay_cells() -> tuple[dict[str, Any], ...]:
     )
 
 
+def _global_standard_context_replay_cells() -> tuple[dict[str, Any], ...]:
+    return tuple(
+        {
+            "cell_id": f"runtime_replay.global_standard_context.{cell['cell_id']}",
+            "source_cell_id": cell["cell_id"],
+            "source_matrix": "global_standard_context_fake_ai_matrix",
+            "family": cell["family"],
+            "contract_family_id": cell["contract_family_id"],
+            "contract_path": cell["contract_path"],
+            "mutation_kind": cell["mutation_kind"],
+            "branch_kind": "runtime_replay",
+            "confidence_boundary": "synthetic_non_live_runtime_replay",
+            "required_evidence_owner": REQUIRED_EVIDENCE_OWNER,
+            "attempt_class": "semantic_review_or_process_block",
+            "expected_runtime_reaction": cell["expected_runtime_reaction"],
+            "expected_test_name": CONCRETE_RUNTIME_TESTS[cell["expected_test_key"]],
+            "glass_break_allowed": False,
+            "normal_path_required": True,
+            "live_completion_allowed": False,
+            "semantic_runtime_blocker_allowed": False,
+            "fallback_allowed": False,
+            "runtime_mechanical_only": True,
+        }
+        for cell in GLOBAL_STANDARD_CONTEXT_REPLAY_CELLS
+    )
+
+
 def runtime_replay_cells() -> tuple[dict[str, Any], ...]:
     cells: list[dict[str, Any]] = []
     for contract_id, contract in _responder_contracts().items():
@@ -540,6 +797,8 @@ def runtime_replay_cells() -> tuple[dict[str, Any], ...]:
     cells.extend(_integration_runtime_replay_cells())
     cells.extend(_parent_entry_return_path_replay_cells())
     cells.extend(_runtime_owned_bad_ai_replay_cells())
+    cells.extend(_global_standard_context_replay_cells())
+    cells.extend(control_plane_ledger_hygiene_cells())
     return tuple(cells)
 
 
@@ -857,10 +1116,31 @@ def cell_findings(cells: Iterable[Mapping[str, Any]] | None = None) -> list[dict
         "wrong_type",
         *(f"hard_gate_escape.{gate_type}" for gate_type in PARENT_ENTRY_GATE_TYPES),
         *(cell["mutation_kind"] for cell in RUNTIME_OWNED_BAD_AI_REPLAY_CELLS),
+        *(cell["mutation_kind"] for cell in GLOBAL_STANDARD_CONTEXT_REPLAY_CELLS),
     }
     mutations = {str(row.get("mutation_kind") or "") for row in rows}
     for mutation in sorted(required_mutations - mutations):
         findings.append({"code": "missing_runtime_replay_mutation", "mutation_kind": mutation})
+    hygiene_cells = [
+        row for row in rows if row.get("source_matrix") == CONTROL_PLANE_LEDGER_HYGIENE_SOURCE
+    ]
+    hygiene_cell_ids = {str(row.get("cell_id") or "") for row in hygiene_cells}
+    if len(hygiene_cells) != CONTROL_PLANE_LEDGER_HYGIENE_EXPECTED_CELL_COUNT:
+        findings.append(
+            {
+                "code": "control_plane_ledger_hygiene_cartesian_count_mismatch",
+                "expected_count": str(CONTROL_PLANE_LEDGER_HYGIENE_EXPECTED_CELL_COUNT),
+                "actual_count": str(len(hygiene_cells)),
+            }
+        )
+    if len(hygiene_cell_ids) != len(hygiene_cells):
+        findings.append(
+            {
+                "code": "control_plane_ledger_hygiene_duplicate_cell",
+                "expected_unique_count": str(len(hygiene_cells)),
+                "actual_unique_count": str(len(hygiene_cell_ids)),
+            }
+        )
     for row in rows:
         for field in (
             "cell_id",
@@ -881,7 +1161,12 @@ def cell_findings(cells: Iterable[Mapping[str, Any]] | None = None) -> list[dict
                         "field": field,
                     }
                 )
-        if row.get("required_evidence_owner") != REQUIRED_EVIDENCE_OWNER:
+        expected_owner = (
+            CONTROL_PLANE_LEDGER_HYGIENE_OWNER
+            if row.get("source_matrix") == CONTROL_PLANE_LEDGER_HYGIENE_SOURCE
+            else REQUIRED_EVIDENCE_OWNER
+        )
+        if row.get("required_evidence_owner") != expected_owner:
             findings.append(
                 {
                     "code": "wrong_runtime_replay_owner",
@@ -903,17 +1188,34 @@ def cell_findings(cells: Iterable[Mapping[str, Any]] | None = None) -> list[dict
                     "cell_id": str(row.get("cell_id") or ""),
                 }
             )
+        if row.get("source_matrix") == CONTROL_PLANE_LEDGER_HYGIENE_SOURCE:
+            if row.get("required_evidence_owner") != CONTROL_PLANE_LEDGER_HYGIENE_OWNER:
+                findings.append(
+                    {
+                        "code": "control_plane_ledger_hygiene_wrong_owner",
+                        "cell_id": str(row.get("cell_id") or ""),
+                    }
+                )
+            if row.get("expected_runtime_reaction") not in CONTROL_PLANE_LEDGER_HYGIENE_REACTIONS:
+                findings.append(
+                    {
+                        "code": "control_plane_ledger_hygiene_unknown_reaction",
+                        "cell_id": str(row.get("cell_id") or ""),
+                        "expected_runtime_reaction": str(row.get("expected_runtime_reaction") or ""),
+                    }
+                )
     return findings
 
 
-def build_report() -> dict[str, Any]:
+def build_report(*, include_cells: bool = True) -> dict[str, Any]:
     cells = list(runtime_replay_cells())
     findings = cell_findings(cells)
     by_mutation = Counter(str(cell["mutation_kind"]) for cell in cells)
     by_reaction = Counter(str(cell["expected_runtime_reaction"]) for cell in cells)
     by_attempt = Counter(str(cell["attempt_class"]) for cell in cells)
     by_source = Counter(str(cell["source_matrix"]) for cell in cells)
-    return {
+    hygiene_cells = [cell for cell in cells if cell["source_matrix"] == CONTROL_PLANE_LEDGER_HYGIENE_SOURCE]
+    report = {
         "ok": not findings,
         "model_id": MODEL_ID,
         "result_path": RESULT_PATH,
@@ -925,14 +1227,27 @@ def build_report() -> dict[str, Any]:
         "by_expected_runtime_reaction": dict(sorted(by_reaction.items())),
         "by_attempt_class": dict(sorted(by_attempt.items())),
         "by_source_matrix": dict(sorted(by_source.items())),
+        "control_plane_ledger_hygiene": {
+            "owner": CONTROL_PLANE_LEDGER_HYGIENE_OWNER,
+            "axis_names": list(CONTROL_PLANE_LEDGER_HYGIENE_AXES),
+            "axis_sizes": {name: len(values) for name, values in CONTROL_PLANE_LEDGER_HYGIENE_AXES.items()},
+            "expected_cell_count": CONTROL_PLANE_LEDGER_HYGIENE_EXPECTED_CELL_COUNT,
+            "actual_cell_count": len(hygiene_cells),
+            "by_reaction": dict(
+                sorted(Counter(str(cell["expected_runtime_reaction"]) for cell in hygiene_cells).items())
+            ),
+        },
         "expected_test_names": sorted({str(cell["expected_test_name"]) for cell in cells}),
         "findings": findings,
-        "cells": cells,
+        "cell_sample": cells[:25],
     }
+    if include_cells:
+        report["cells"] = cells
+    return report
 
 
-def write_report(path: Path | str = RESULT_PATH) -> dict[str, Any]:
-    report = build_report()
+def write_report(path: Path | str = RESULT_PATH, *, include_cells: bool = False) -> dict[str, Any]:
+    report = build_report(include_cells=include_cells)
     output_path = Path(path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")

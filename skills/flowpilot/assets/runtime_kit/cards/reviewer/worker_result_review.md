@@ -77,6 +77,15 @@ absorption, and Controller no-body-read signatures. Do not use Router proof as
 node acceptance, result quality, product usefulness, freshness, or final-user
 fit evidence.
 
+When the source packet or PM package cites a `node_context_package`, use its
+purpose, acceptance criteria, relevant references, known risks, and acceptance
+item projection to recover the same current user/PM standard the Worker was
+expected to use. A worker result can be locally tidy while still below the
+current global standard; block when the result ignores cited
+root contract, product architecture or highest-product target, acceptance item
+registry, skill, FlowGuard, risk, source, or verification references that are
+necessary to judge the node.
+
 When the PM package, node acceptance plan, source packet, or result cites a
 FlowGuard Work Order or FlowGuard Report, review those references as hard
 evidence surfaces. Check `flowguard_work_order_id`, `flowguard_report_id`,

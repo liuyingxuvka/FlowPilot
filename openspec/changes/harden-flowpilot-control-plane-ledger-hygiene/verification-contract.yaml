@@ -1,0 +1,367 @@
+contract_version: 1
+change: harden-flowpilot-control-plane-ledger-hygiene
+obligations:
+  - id: req.control.accepted_pointer
+    source: "specs/flowpilot-control-plane-contract-kernel/spec.md#Requirement: Accepted result pointers only reference formally accepted results"
+    claim: Dirty accepted_result_id pointers are mechanically rejected by runtime consumers.
+    required: true
+    evidence:
+      - check.runtime.accepted_pointer_regressions
+      - check.flowguard.control_surface
+  - id: req.control.assignment_repair
+    source: "specs/flowpilot-control-plane-contract-kernel/spec.md#Requirement: Assignment repair cannot resurrect dirty accepted packets"
+    claim: Assignment repair refuses review-blocked accepted-result targets.
+    required: true
+    evidence:
+      - check.runtime.accepted_pointer_regressions
+      - check.synthetic.databank_trace
+  - id: req.control.pm_flowguard_acceptance
+    source: "specs/flowpilot-control-plane-contract-kernel/spec.md#Requirement: PM FlowGuard absorption waits for review before acceptance"
+    claim: PM FlowGuard acceptance does not write accepted_result_id before formal review/system acceptance.
+    required: true
+    evidence:
+      - check.runtime.pm_flowguard_acceptance
+      - check.high_standard.pm_flowguard_acceptance
+  - id: req.review.final_authorization
+    source: "specs/flowpilot-packet-review-flow/spec.md#Requirement: Final Reviewer packets receive sealed result authorization"
+    claim: Final/backward Reviewer packets are issued with required authorized_result_reads.
+    required: true
+    evidence:
+      - check.runtime.final_reviewer_auth
+      - check.synthetic.databank_trace
+  - id: req.repair.identity
+    source: "specs/blocker-repair-policy/spec.md#Requirement: Repair-chain derived packets preserve blocker identity"
+    claim: Repair blocker identity is preserved from gate to PM FlowGuard acceptance and review packets.
+    required: true
+    evidence:
+      - check.runtime.repair_identity
+      - check.flowguard.blocker_repair
+  - id: req.breakglass.closure
+    source: "specs/controller-break-glass-repair/spec.md#Requirement: Open break-glass artifacts block clean completion"
+    claim: Open incidents and pending permanent-fix patches block closure and terminal return.
+    required: true
+    evidence:
+      - check.runtime.breakglass_closure
+      - check.flowguard.breakglass
+      - check.flowguard.runtime_closure
+  - id: req.terminal.whole_ledger
+    source: "specs/terminal-ledger/spec.md#Requirement: Terminal return consumes whole-ledger hygiene"
+    claim: Final closure/terminal return scans stale active blockers and dirty pointers across the ledger.
+    required: true
+    evidence:
+      - check.runtime.terminal_hygiene
+      - check.flowguard.recursive_closure
+  - id: req.synthetic.cartesian
+    source: "specs/synthetic-agent-coverage-matrix/spec.md#Requirement: Fake-AI coverage includes control-plane ledger hygiene axes"
+    claim: Fake-AI/D-card matrix covers all finite control-plane ledger hygiene axes with expected runtime reactions.
+    required: true
+    evidence:
+      - check.fake_ai.cartesian_matrix
+      - check.flowguard.cartesian_exhaustion
+      - check.synthetic.coverage_matrix
+  - id: req.synthetic.databank_replay
+    source: "specs/end-to-end-synthetic-agent-chaos-replay/spec.md#Requirement: Synthetic replay covers observed DataBank control-plane miss"
+    claim: The observed DataBank failure chain is replayed without needing private run files.
+    required: true
+    evidence:
+      - check.historical.databank_fixture
+      - check.synthetic.databank_trace
+checks:
+  - id: check.runtime.accepted_pointer_regressions
+    kind: command
+    command: python
+    args:
+      - -m
+      - unittest
+      - tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_dirty_accepted_result_pointer_blocks_assignment_repair_and_terminal_hygiene
+    required: true
+    covers:
+      - req.control.accepted_pointer
+      - req.control.assignment_repair
+    expected:
+      exit_code: 0
+  - id: check.runtime.pm_flowguard_acceptance
+    kind: command
+    command: python
+    args:
+      - -m
+      - unittest
+      - tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_pm_flowguard_acceptance_waits_for_review_before_accepted_pointer
+    required: true
+    covers:
+      - req.control.pm_flowguard_acceptance
+    expected:
+      exit_code: 0
+  - id: check.high_standard.pm_flowguard_acceptance
+    kind: command
+    command: python
+    args:
+      - -m
+      - unittest
+      - tests.test_flowpilot_high_standard_control_flow.FlowPilotHighStandardControlFlowTests.test_pm_flowguard_acceptance_accept_decision_reaches_reviewer_without_early_acceptance
+    required: true
+    covers:
+      - req.control.pm_flowguard_acceptance
+    expected:
+      exit_code: 0
+  - id: check.runtime.repair_identity
+    kind: command
+    command: python
+    args:
+      - -m
+      - unittest
+      - tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_pm_flowguard_acceptance_packet_inherits_gate_repair_blocker_identity
+    required: true
+    covers:
+      - req.repair.identity
+    expected:
+      exit_code: 0
+  - id: check.runtime.breakglass_closure
+    kind: command
+    command: python
+    args:
+      - -m
+      - unittest
+      - tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_final_closure_blocks_open_break_glass_incident_and_pending_patch
+    required: true
+    covers:
+      - req.breakglass.closure
+      - req.terminal.whole_ledger
+    expected:
+      exit_code: 0
+  - id: check.runtime.terminal_hygiene
+    kind: command
+    command: python
+    args:
+      - -m
+      - unittest
+      - tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_stale_active_blocker_blocks_terminal_hygiene_even_when_not_current_effective
+    required: true
+    covers:
+      - req.terminal.whole_ledger
+    expected:
+      exit_code: 0
+  - id: check.runtime.final_reviewer_auth
+    kind: command
+    command: python
+    args:
+      - -m
+      - unittest
+      - tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_final_reviewer_node_task_receives_authorized_evidence_bundle
+    required: true
+    covers:
+      - req.review.final_authorization
+    expected:
+      exit_code: 0
+  - id: check.historical.databank_fixture
+    kind: command
+    command: python
+    args:
+      - -m
+      - unittest
+      - tests.test_flowpilot_historical_live_run_replay.FlowPilotHistoricalLiveRunReplayTests.test_run_20260707_databank_control_plane_miss_fixture_is_rejected
+    required: true
+    covers:
+      - req.synthetic.databank_replay
+    expected:
+      exit_code: 0
+  - id: check.synthetic.databank_trace
+    kind: command
+    command: python
+    args:
+      - -m
+      - unittest
+      - tests.test_flowpilot_synthetic_agent_trace_replay.FlowPilotSyntheticExceptionTraceReplayTests.test_databank_control_plane_miss_trace_rejects_dirty_acceptance_and_empty_final_review_auth
+    required: true
+    covers:
+      - req.control.assignment_repair
+      - req.review.final_authorization
+      - req.synthetic.databank_replay
+    expected:
+      exit_code: 0
+  - id: check.fake_ai.cartesian_matrix
+    kind: command
+    command: python
+    args:
+      - -m
+      - unittest
+      - tests.test_flowpilot_fake_ai_runtime_replay.FlowPilotFakeAIRuntimeReplayTests.test_control_plane_ledger_hygiene_fake_ai_matrix_is_cartesian
+    required: true
+    covers:
+      - req.synthetic.cartesian
+    expected:
+      exit_code: 0
+  - id: check.synthetic.coverage_matrix
+    kind: command
+    command: python
+    args:
+      - -m
+      - unittest
+      - tests.test_flowpilot_synthetic_agent_coverage_matrix.FlowPilotSyntheticAgentCoverageMatrixTests.test_control_plane_ledger_hygiene_cells_have_runtime_owners
+    required: true
+    covers:
+      - req.synthetic.cartesian
+    expected:
+      exit_code: 0
+  - id: check.flowguard.control_surface
+    kind: command
+    command: python
+    args:
+      - simulations/run_flowpilot_control_surface_contract_checks.py
+      - --json-out
+      - simulations/flowpilot_control_surface_contract_results.json
+    required: true
+    covers:
+      - req.control.accepted_pointer
+    expected:
+      exit_code: 0
+  - id: check.flowguard.blocker_repair
+    kind: command
+    command: python
+    args:
+      - simulations/run_flowpilot_blocker_repair_information_flow_checks.py
+      - --json-out
+      - simulations/flowpilot_blocker_repair_information_flow_results.json
+    required: true
+    covers:
+      - req.repair.identity
+    expected:
+      exit_code: 0
+  - id: check.flowguard.breakglass
+    kind: command
+    command: python
+    args:
+      - simulations/run_flowpilot_controller_break_glass_checks.py
+      - --json-out
+      - simulations/flowpilot_controller_break_glass_results.json
+    required: true
+    covers:
+      - req.breakglass.closure
+    expected:
+      exit_code: 0
+  - id: check.flowguard.runtime_closure
+    kind: command
+    command: python
+    args:
+      - simulations/run_flowpilot_runtime_closure_checks.py
+      - --json-out
+      - simulations/flowpilot_runtime_closure_results.json
+    required: true
+    covers:
+      - req.breakglass.closure
+      - req.terminal.whole_ledger
+    expected:
+      exit_code: 0
+  - id: check.flowguard.recursive_closure
+    kind: command
+    command: python
+    args:
+      - simulations/run_flowpilot_recursive_closure_reconciliation_checks.py
+      - --json-out
+      - simulations/flowpilot_recursive_closure_reconciliation_results.json
+    required: true
+    covers:
+      - req.terminal.whole_ledger
+    expected:
+      exit_code: 0
+  - id: check.flowguard.cartesian_exhaustion
+    kind: command
+    command: python
+    args:
+      - simulations/run_flowpilot_cartesian_control_plane_exhaustion_checks.py
+      - --json-out
+      - simulations/flowpilot_cartesian_control_plane_exhaustion_results.json
+    required: true
+    covers:
+      - req.synthetic.cartesian
+    expected:
+      exit_code: 0
+  - id: check.flowguard.fake_ai_replay
+    kind: command
+    command: python
+    args:
+      - simulations/run_flowpilot_fake_ai_runtime_replay_checks.py
+      - --json-out
+      - simulations/flowpilot_fake_ai_runtime_replay_summary.json
+    required: true
+    covers:
+      - req.synthetic.cartesian
+      - req.synthetic.databank_replay
+    expected:
+      exit_code: 0
+  - id: check.flowguard.model_test_alignment
+    kind: command
+    command: python
+    args:
+      - simulations/run_flowpilot_model_test_alignment_checks.py
+      - --json-out
+      - simulations/flowpilot_model_test_alignment_results.json
+    required: true
+    covers:
+      - req.control.accepted_pointer
+      - req.repair.identity
+      - req.breakglass.closure
+      - req.terminal.whole_ledger
+      - req.review.final_authorization
+      - req.synthetic.cartesian
+    expected:
+      exit_code: 0
+  - id: check.topology.build
+    kind: command
+    command: python
+    args:
+      - scripts/flowguard_project_topology.py
+      - build
+    required: true
+    covers:
+      - req.synthetic.cartesian
+    expected:
+      exit_code: 0
+  - id: check.topology
+    kind: command
+    command: python
+    args:
+      - scripts/flowguard_project_topology.py
+      - check
+    required: true
+    covers:
+      - req.synthetic.cartesian
+    expected:
+      exit_code: 0
+  - id: check.install.audit
+    kind: command
+    command: python
+    args:
+      - scripts/check_install.py
+      - --json
+    required: true
+    covers:
+      - req.control.accepted_pointer
+      - req.repair.identity
+      - req.review.final_authorization
+    expected:
+      exit_code: 0
+freshness:
+  watch:
+    - openspec/changes/harden-flowpilot-control-plane-ledger-hygiene/proposal.md
+    - openspec/changes/harden-flowpilot-control-plane-ledger-hygiene/design.md
+    - openspec/changes/harden-flowpilot-control-plane-ledger-hygiene/tasks.md
+    - openspec/changes/harden-flowpilot-control-plane-ledger-hygiene/specs/**/*.md
+    - openspec/changes/harden-flowpilot-control-plane-ledger-hygiene/verification-contract.yaml
+    - skills/flowpilot/assets/flowpilot_core_runtime/runtime.py
+    - skills/flowpilot/assets/flowpilot_core_runtime/packet_result_contracts.py
+    - skills/flowpilot/assets/runtime_kit/cards/**/*.md
+    - tests/test_flowpilot_core_runtime.py
+    - tests/test_flowpilot_high_standard_control_flow.py
+    - tests/test_flowpilot_historical_live_run_replay.py
+    - tests/test_flowpilot_fake_ai_runtime_replay.py
+    - tests/test_flowpilot_synthetic_agent_trace_replay.py
+    - tests/test_flowpilot_synthetic_agent_coverage_matrix.py
+    - simulations/flowpilot_control_surface_contract_model.py
+    - simulations/flowpilot_blocker_repair_information_flow_model.py
+    - simulations/flowpilot_controller_break_glass_model.py
+    - simulations/flowpilot_runtime_closure_model.py
+    - simulations/flowpilot_recursive_closure_reconciliation_model.py
+    - simulations/flowpilot_cartesian_control_plane_exhaustion_model.py
+    - simulations/flowpilot_fake_ai_runtime_replay_model.py
+    - simulations/flowpilot_model_test_alignment_family_plans.py

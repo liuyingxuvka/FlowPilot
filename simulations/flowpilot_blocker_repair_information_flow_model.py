@@ -52,6 +52,9 @@ BLOCKER_ROUTED_WITHOUT_PM_DECISION = "blocker_routed_without_pm_decision"
 FLOWGUARD_RECHECK_EVIDENCE_NOT_DELIVERED_TO_REVIEWER = "flowguard_recheck_evidence_not_delivered_to_reviewer"
 REPAIR_STAGE_NOT_UPDATED_AFTER_FLOWGUARD_PASS = "repair_stage_not_updated_after_flowguard_pass"
 FORMAL_BLOCKER_ID_ONLY_IN_PROSE_REACHES_REVIEWER = "formal_blocker_id_only_in_prose_reaches_reviewer"
+GATE_DERIVED_PM_FLOWGUARD_ACCEPTANCE_IDENTITY_DROPPED = (
+    "gate_derived_pm_flowguard_acceptance_identity_dropped"
+)
 FLOWGUARD_EVIDENCE_HAS_BLOCKER_BUT_STAGED_EFFECT_EMPTY = (
     "flowguard_evidence_has_blocker_but_staged_effect_empty"
 )
@@ -90,6 +93,7 @@ NEGATIVE_SCENARIOS = (
     FLOWGUARD_RECHECK_EVIDENCE_NOT_DELIVERED_TO_REVIEWER,
     REPAIR_STAGE_NOT_UPDATED_AFTER_FLOWGUARD_PASS,
     FORMAL_BLOCKER_ID_ONLY_IN_PROSE_REACHES_REVIEWER,
+    GATE_DERIVED_PM_FLOWGUARD_ACCEPTANCE_IDENTITY_DROPPED,
     FLOWGUARD_EVIDENCE_HAS_BLOCKER_BUT_STAGED_EFFECT_EMPTY,
     SUPERSEDED_REPAIR_BLOCKER_LEFT_OPEN,
     ACCEPTED_NONCURRENT_REPAIR_PACKET_BLOCKS_FINAL_PREFLIGHT,
@@ -157,9 +161,11 @@ class State:
     flowguard_recheck_passed: bool = False
     flowguard_evidence_manifest_attached: bool = False
     flowguard_evidence_formal_blocker_id_bound: bool = False
+    pm_flowguard_acceptance_identity_bound: bool = False
 
     reviewer_recheck_requested: bool = False
     reviewer_recheck_references_current_blocker: bool = False
+    reviewer_packet_inherits_repair_identity: bool = False
     reviewer_recheck_uses_worker_evidence: bool = False
     reviewer_recheck_uses_flowguard_evidence: bool = False
     reviewer_recheck_passed: bool = False
@@ -242,8 +248,10 @@ def _safe_reviewer_base(**changes: object) -> State:
             flowguard_recheck_passed=True,
             flowguard_evidence_manifest_attached=True,
             flowguard_evidence_formal_blocker_id_bound=True,
+            pm_flowguard_acceptance_identity_bound=True,
             reviewer_recheck_requested=True,
             reviewer_recheck_references_current_blocker=True,
+            reviewer_packet_inherits_repair_identity=True,
             reviewer_recheck_uses_worker_evidence=True,
             reviewer_recheck_uses_flowguard_evidence=True,
             reviewer_recheck_passed=True,
@@ -302,6 +310,7 @@ def _scenario_state(scenario: str) -> State:
             pm_decision_integrates_reviewer_advice=True,
             pm_decision_names_new_work=True,
             pm_package_formal_blocker_id_bound=True,
+            pm_flowguard_acceptance_identity_bound=True,
             same_blocker_repeat_count=2,
             same_work_packet_hash_repeated=True,
             loop_escape_recorded=True,
@@ -469,6 +478,14 @@ def _scenario_state(scenario: str) -> State:
             blocker_identity_in_prose_only=True,
             formal_identity_missing_reached_reviewer=True,
         )
+    if scenario == GATE_DERIVED_PM_FLOWGUARD_ACCEPTANCE_IDENTITY_DROPPED:
+        return replace(
+            _safe_reviewer_base(),
+            scenario=scenario,
+            pm_flowguard_acceptance_identity_bound=False,
+            reviewer_packet_inherits_repair_identity=False,
+            runtime_mechanical_identity_gate_passed=False,
+        )
     if scenario == FLOWGUARD_EVIDENCE_HAS_BLOCKER_BUT_STAGED_EFFECT_EMPTY:
         return replace(
             _safe_reviewer_base(),
@@ -596,9 +613,14 @@ def information_flow_failures(state: State) -> list[str]:
     if state.flowguard_evidence_formal_blocker_id_bound and not state.staged_effect_blocker_id_bound:
         failures.append("FlowGuard evidence contains blocker identity but staged_effect.blocker_id is empty")
 
+    if state.pm_repair_decision_recorded and not state.pm_flowguard_acceptance_identity_bound:
+        failures.append("PM FlowGuard acceptance lost gate-derived repair blocker identity")
+
     if state.reviewer_recheck_requested:
         if not state.runtime_mechanical_identity_gate_passed:
             failures.append("reviewer received repair package before Runtime mechanical blocker identity gate passed")
+        if not state.reviewer_packet_inherits_repair_identity:
+            failures.append("reviewer recheck packet did not inherit repair blocker identity")
         if not (
             state.reviewer_recheck_references_current_blocker
             and state.reviewer_recheck_uses_worker_evidence
