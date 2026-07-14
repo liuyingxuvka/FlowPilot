@@ -24,27 +24,37 @@ no-producer follow-up wait.
 - **AND** the corrected repair MUST demonstrate current producer evidence before the route continues.
 
 ### Requirement: Executable plan kinds have plan-specific fields
-FlowPilot SHALL support explicit repair transaction plan kinds for
-`operation_replay`, `controller_repair_work_packet`, `packet_reissue`,
-`role_reissue`, `router_internal_reconcile`, `await_existing_event`,
-`route_mutation`, and `terminal_stop`.
+FlowPilot SHALL support explicit current repair transaction plan kinds for
+operation_replay, controller_repair_work_packet, role_reissue,
+router_internal_reconcile, await_existing_event, route_mutation, and
+terminal_stop. packet_reissue and replacement-packet fields are retired and
+MUST be rejected rather than translated into a current plan kind.
 
 #### Scenario: Operation replay names a replayable operation
-- **WHEN** PM selects `operation_replay`
+- **WHEN** PM selects operation_replay
 - **THEN** the repair transaction names the recorded operation to replay and Router queues that operation only if it is replayable in the current blocker context.
 
 #### Scenario: Controller repair work packet is bounded
-- **WHEN** PM selects `controller_repair_work_packet`
+- **WHEN** PM selects controller_repair_work_packet
 - **THEN** the repair transaction includes allowed reads, allowed writes, forbidden actions, expected success evidence, and blocker output rules before Router creates the Controller work packet.
 - **AND** the repair packet guidance requires fixing and rechecking only defects inside those bounded reads, writes, forbidden actions, and success evidence.
 
 #### Scenario: Await existing event names a producer
-- **WHEN** PM selects `await_existing_event`
+- **WHEN** PM selects await_existing_event
 - **THEN** Router verifies that a current pending action, role packet, or Router wait target can produce the awaited success event before committing the repair transaction.
 
+#### Scenario: Role reissue and route mutation name current PM producers
+- **WHEN** PM selects role_reissue or route_mutation and the transaction will wait for a follow-up event
+- **THEN** Router verifies that the current PM-owned output or accepted route mutation creates a concrete producer for that event.
+
 #### Scenario: Terminal stop is explicit
-- **WHEN** PM selects `terminal_stop`
+- **WHEN** PM selects terminal_stop
 - **THEN** Router records the terminal stop reason and does not wait for a follow-up repair event.
+
+#### Scenario: Retired replacement-packet repair is rejected
+- **WHEN** PM submits packet_reissue, replacement_packets, or a replacement-packet spec path or hash
+- **THEN** Router rejects the decision before transaction commit
+- **AND** Router leaves the current blocker active for a corrected current-contract decision.
 
 ### Requirement: Unsupported event replay cannot create dead waits
 FlowPilot SHALL reject unsupported `event_replay` repair transactions instead of
@@ -60,81 +70,41 @@ treating them as aliases for current repair transactions.
 - **THEN** Router rejects the repair decision before writing a committed repair transaction.
 
 ### Requirement: Role reissue waits require concrete producers
-FlowPilot SHALL NOT commit a `role_reissue` repair transaction that waits for a role-produced event unless the transaction can prove that a concrete producer exists or will be created for that awaited event.
+FlowPilot SHALL NOT commit a role_reissue repair transaction that waits for a role-produced event unless the transaction proves that a concrete current PM producer exists for that awaited event. Worker, Reviewer, FlowGuard Operator, research, and ordinary evidence rework SHALL use the existing current-node, research-package, or PM role-work packet/result/review path rather than a replacement-packet repair branch.
 
 #### Scenario: Role reissue without producer is rejected
-- **WHEN** PM submits a control-blocker repair decision with `repair_transaction.plan_kind=role_reissue`
-- **AND** the selected `rerun_target` is a role-produced event
-- **AND** the repair transaction does not create replacement packets, replay a current operation, reference an existing producer, or provide a bounded work packet that can emit the event
+- **WHEN** PM submits a control-blocker repair decision with repair_transaction.plan_kind=role_reissue
+- **AND** the selected rerun_target is a role-produced event
+- **AND** the repair transaction does not bind a current PM producer for that event
 - **THEN** Router MUST reject the repair decision before writing a committed repair transaction
 - **AND** Router MUST leave the original control blocker active for a corrected PM decision.
 
-#### Scenario: Material self-check rework uses packet reissue or replay
-- **WHEN** worker material-scan results are returned but their result envelopes show failed contract self-checks
-- **AND** PM selects same-gate repair so workers must produce corrected `worker_scan_results_returned` evidence
-- **THEN** Router MUST require a concrete `packet_reissue`, a current-generation `operation_replay`, a bounded `controller_repair_work_packet`, or an explicit blocker/terminal outcome
-- **AND** Router MUST NOT expose a bare wait for `worker_scan_results_returned`.
-
-#### Scenario: Valid packet reissue remains executable
-- **WHEN** PM submits a material-scan `packet_reissue` repair transaction with replacement packet specs
-- **THEN** Router MUST commit the new packet generation and expose the material packet relay path before waiting for worker results.
+#### Scenario: Ordinary role rework uses the existing package path
+- **WHEN** Worker, Reviewer, FlowGuard Operator, research, or evidence work must be performed again
+- **THEN** PM MUST create or activate that work through the existing current-node, research-package, or PM role-work path
+- **AND** Router MUST NOT synthesize a replacement-packet repair transaction or expose a wait before the current producer exists.
 
 ### Requirement: PM repair commit exposes only post-decision executable waits
-FlowPilot SHALL commit PM control-blocker repair decisions so active blocker
-allowed events, repair transaction records, indexes, and daemon-visible
-run-state flags describe the same post-decision state.
+FlowPilot SHALL commit PM control-blocker repair decisions so the PM decision flag, repair transaction, current outcome table, active blocker allowed events, indexes, and daemon-visible run state describe the same post-decision state.
 
-#### Scenario: PM repair decision enables material recheck events
-- **WHEN** PM submits a valid `packet_reissue` repair decision that records
-  material recheck events requiring `pm_control_blocker_repair_decision_recorded`
-- **THEN** Router MUST persist the PM decision flag before those events are
-  exposed as active blocker waits or daemon-computed next actions.
+#### Scenario: PM repair decision enables a current follow-up wait
+- **WHEN** PM submits a valid current repair decision whose executable plan has a current producer, queued action, Router handler, or terminal stop
+- **THEN** Router MUST persist the PM decision flag and transaction before exposing any allowed follow-up event or daemon-computed next action.
 
 #### Scenario: Half-committed repair state is detected
-- **WHEN** active blocker records contain allowed events whose required flags
-  are not satisfied in the current daemon-visible run state
-- **THEN** Router MUST treat the projection as invalid and repair or block it
-  without claiming the wait is executable.
-
-### Requirement: Packet reissue continues material repair work
-FlowPilot SHALL continue material repair work after a valid `packet_reissue`
-instead of projecting a stale pre-decision wait for PM repair.
-
-#### Scenario: Packet reissue registers fresh producer
-- **WHEN** PM commits a valid `packet_reissue` repair transaction with a fresh
-  material repair generation
-- **THEN** Router MUST expose a next action that either relays or waits on the
-  fresh producer evidence for that generation, not an unresolved PM decision.
-
-#### Scenario: Packet reissue producer is missing
-- **WHEN** a committed `packet_reissue` lacks the packet, batch, generation, or
-  producer evidence required to continue
-- **THEN** Router MUST keep or create a control blocker that names the missing
-  producer evidence instead of advertising a non-executable wait.
-
-### Requirement: Material packet reissue commits one current generation
-FlowPilot SHALL commit material-scan `packet_reissue` repair transactions through the existing repair transaction path as one current material generation across material index, active packet batch, packet ledger projection, and repair transaction metadata.
-
-#### Scenario: Packet reissue supersedes old generation
-- **WHEN** PM commits a `packet_reissue` repair transaction for material scan dispatch
-- **THEN** Router MUST write a current `packet_generation_id` on the material index and every new material packet record
-- **AND** Router MUST supersede prior material-scan packet records so they cannot satisfy current material-scan waits
-- **AND** Router MUST update the active material-scan packet batch to reference only current-generation packet ids
-
-#### Scenario: Recheck success belongs to current generation
-- **WHEN** Router finalizes a successful material-scan repair recheck
-- **THEN** the repair transaction outcome MUST reference the current `packet_generation_id`
-- **AND** Router MUST NOT complete the repair transaction from an event or artifact that references a superseded material generation
+- **WHEN** active blocker records contain allowed events whose required flags or executable producer evidence are absent from current daemon-visible run state
+- **THEN** Router MUST treat the projection as invalid and repair or block it without claiming the wait is executable.
 
 ### Requirement: Operation replay synthesizes fresh Controller work
-FlowPilot SHALL use `operation_replay` only to synthesize a fresh Controller action from replay intent and current run state.
+FlowPilot SHALL use operation_replay only to synthesize a fresh Controller action from replay intent, the recorded safe operation, and current run state.
 
 #### Scenario: Replayed operation has fresh identity
-- **WHEN** Router queues an `operation_replay` action from a recorded Controller action
+- **WHEN** Router queues an operation_replay action from a recorded Controller action
 - **THEN** the new Controller action MUST have its own action id and scheduler idempotency key
-- **AND** the old action id may appear only as audit metadata such as `replay_of_controller_action_id`
+- **AND** the old action id may appear only as audit metadata such as replay_of_controller_action_id.
 
-#### Scenario: Material operation replay uses current generation
-- **WHEN** the replayed operation touches material-scan packet or result relay state
-- **THEN** Router MUST derive allowed reads, allowed writes, packet ids, and batch identity from the current material generation
-- **AND** Router MUST reject the replay if it cannot prove the operation targets the current generation.
+#### Scenario: Replayed operation uses current packet and route identity
+- **WHEN** a replayed operation touches current-node, research, or PM role-work packet/result relay state
+- **THEN** Router MUST derive allowed reads, allowed writes, packet ids, lease identity, batch identity where applicable, and route generation from current run state
+- **AND** Router MUST reject the replay if it cannot prove that those identities are current.
+

@@ -109,7 +109,7 @@
 - [x] 12.2 Audit every user-agreed requirement and every proposal/spec scenario against implementation paths, tests, models, evidence, install state, and explicit claim boundaries.
 - [x] 12.3 Run DevelopmentProcessFlow post-change scan and route all stale evidence, skipped routes, open obligations, split/reduction pressure, and peer-write findings to their owning specialist.
 - [x] 12.4 Inspect the complete diff and working tree, preserve unrelated/user/concurrent files, and stage only this change plus deliberately integrated predecessor work.
-- [ ] 12.5 Create a scoped local Git commit on the current `codex/` branch and verify commit/status evidence; do not publish, push, or create a PR without separate authority.
-- [ ] 12.6 Archive the OpenSpec change only after all required checks pass and the archived specs preserve the single current contract.
-- [ ] 12.7 Run predictive-KB postflight; record mistake-first and reusable FlowGuard/OpenSpec/fake-AI/coverage/material-contraction/install-sync/peer-coordination lessons.
-- [ ] 12.8 Mark the active user goal complete only when every in-scope task has authoritative current evidence and no obvious safe local continuation remains.
+- [x] 12.5 Create a scoped local Git commit on the current `codex/` branch and verify commit/status evidence; do not publish, push, or create a PR without separate authority.
+- [x] 12.6 Archive the OpenSpec change only after all required checks pass and the archived specs preserve the single current contract.
+- [x] 12.7 Run predictive-KB postflight; record mistake-first and reusable FlowGuard/OpenSpec/fake-AI/coverage/material-contraction/install-sync/peer-coordination lessons.
+- [x] 12.8 Mark the active user goal complete only when every in-scope task has authoritative current evidence and no obvious safe local continuation remains.

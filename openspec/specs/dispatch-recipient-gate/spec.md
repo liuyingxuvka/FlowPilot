@@ -28,15 +28,14 @@ pre-dispatch recipient gate before exposing them as Controller work.
 - **GIVEN** the packet ledger shows `project_manager` holds the active
   `user_intake` packet
 - **AND** no prior card ACK or passive wait for `project_manager` is unresolved
-- **WHEN** Router is about to expose `pm.material_scan`
+- **WHEN** Router is about to expose `pm.product_architecture`
 - **THEN** the active `user_intake` holder record alone does not block that
   same-obligation instruction card.
 
 #### Scenario: User intake blocks independent PM dispatch until first output
 
 - **GIVEN** Controller has relayed `user_intake` to `project_manager`
-- **AND** PM has not yet returned
-  `pm_issues_material_and_capability_scan_packets`
+- **AND** PM has not yet returned `pm_writes_product_function_architecture`
 - **WHEN** Router is about to expose another independent dispatch to
   `project_manager`
 - **THEN** Router exposes or preserves a wait for the `user_intake` first
@@ -44,7 +43,7 @@ pre-dispatch recipient gate before exposing them as Controller work.
 
 #### Scenario: User intake first output frees PM for later dispatch
 
-- **GIVEN** PM returned `pm_issues_material_and_capability_scan_packets`
+- **GIVEN** PM returned `pm_writes_product_function_architecture`
 - **WHEN** Router evaluates later independent PM dispatches
 - **THEN** the old `user_intake` holder record does not by itself keep PM busy.
 
@@ -57,13 +56,13 @@ pre-dispatch recipient gate before exposing them as Controller work.
 - **THEN** Router exposes or preserves the active wait instead of the new
   dispatch.
 
-#### Scenario: ACK-only card is prompt material, not a work package
+#### Scenario: ACK-only card is prompt context, not a work package
 
 - **GIVEN** Router is about to expose a system card that requires only runtime
   open/read receipt/ACK
 - **WHEN** the card has no decision, report, packet, result, blocker, or next
   instruction output obligation
-- **THEN** the gate classifies it as an ACK-only prompt/material package
+- **THEN** the gate classifies it as an ACK-only prompt package
 - **AND** it does not count as a new output-bearing work package.
 
 #### Scenario: Output-bearing event card is work context
@@ -175,3 +174,4 @@ Router SHALL use direct-dispatch validation as the active pre-worker gate for ne
 - **WHEN** a PM-authored work packet fails Router direct-dispatch validation
 - **THEN** Router SHALL block or repair the packet before worker relay
 - **AND** Reviewer approval SHALL NOT be used to override the failed mechanical gate.
+

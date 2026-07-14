@@ -20,17 +20,6 @@ from the owner modules exported through a unsupported historical facade.
 - **THEN** the expected-event audit SHALL use that table instead of reporting
   it as missing from the facade.
 
-### Requirement: Material Scan Phase Writes Stay Synchronized
-
-Recording PM material-scan packets SHALL update both the pre-route frontier and
-the run state's phase to `material_scan`.
-
-#### Scenario: PM issues material scan packets
-
-- **WHEN** FlowPilot records `pm_issues_material_and_capability_scan_packets`
-- **THEN** the run state's phase SHALL be `material_scan`
-- **AND** the execution frontier SHALL be `material_scan`.
-
 ### Requirement: Metadata-Only Startup Intake Projection Recognizes Controller Relay
 
 The daemon reconciliation live projection SHALL recognize startup user intake as
@@ -59,3 +48,4 @@ result-file output path.
 - **AND** the only skipped check is `default_results_file`
 - **THEN** the inventory SHALL not classify that runner as
   `skipped_or_scoped_evidence`.
+

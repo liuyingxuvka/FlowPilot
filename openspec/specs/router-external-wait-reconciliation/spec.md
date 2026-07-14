@@ -39,30 +39,17 @@ Router SHALL expose a post-repair `await_role_decision` row only when the awaite
 
 #### Scenario: Follow-up wait records producer evidence
 - **WHEN** Router commits a repair transaction that legitimately waits for a follow-up external event
-- **THEN** the exposed wait row MUST include the allowed external events and the producer evidence source, such as current packet generation, queued Controller action, existing event producer, or bounded repair work packet.
+- **THEN** the exposed wait row MUST include the allowed external events and the producer evidence source, such as a current ordinary work packet/result identity, queued Controller action, existing event producer, or bounded repair work packet.
 
 #### Scenario: Empty follow-up wait becomes PM correction
 - **WHEN** a committed repair transaction would otherwise expose a follow-up wait with no producer evidence
 - **THEN** Router MUST refuse to expose that wait
 - **AND** Router MUST require PM to submit a corrected executable repair decision or a supported blocker/terminal outcome.
 
-#### Scenario: Producer evidence is generation-scoped
-- **WHEN** the awaited event is a material-scan worker result after repair
-- **THEN** Router MUST bind producer evidence to the current material packet generation
-- **AND** Router MUST NOT accept superseded packet results or stale global flags as producer evidence.
-
-### Requirement: PM material disposition closes waits only for the current generation
-FlowPilot SHALL close material-scan PM disposition waits only when the accepted disposition belongs to the active current material generation.
-
-#### Scenario: Current-generation disposition closes wait
-- **WHEN** PM submits `pm_records_material_scan_result_disposition` through the role-output runtime
-- **AND** the disposition batch id, packet ids, result envelope paths, and body hash match the active current material generation
-- **THEN** Router MAY complete the registered `result_absorption` control transaction and close the PM disposition wait
-
-#### Scenario: Stale disposition is quarantined
-- **WHEN** PM disposition artifacts exist for a superseded material generation
-- **THEN** Router MUST NOT mark the current PM disposition wait complete from those artifacts
-- **AND** Router MUST quarantine or block the stale artifacts instead of restoring them as current success.
+#### Scenario: Producer evidence is current-packet scoped
+- **WHEN** the awaited event is an ordinary research or PM role-work result after repair
+- **THEN** Router MUST bind producer evidence to the current run, packet, lease, and required result contract
+- **AND** Router MUST NOT accept superseded results, stale global flags, or a retired material generation as producer evidence.
 
 ### Requirement: Wait replay distinguishes idempotent package replay from package conflict
 Router external-event wait reconciliation SHALL close waits for idempotent PM package-result replays only when the replay matches the already-recorded semantic package identity and conflict evidence.
@@ -131,3 +118,4 @@ that repeated manual replay SHALL NOT make the postcondition a role-owned wait.
 - **THEN** Router MAY reuse the same capability sync writer
 - **AND** repeated recording MUST remain idempotent
 - **AND** the event MUST remain excluded from future passive role waits
+
