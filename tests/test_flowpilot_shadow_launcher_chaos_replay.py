@@ -59,15 +59,25 @@ class FlowPilotShadowLauncherChaosReplayTests(FlowPilotRouterRuntimeTestBase):
             result = item.get("result") if isinstance(item, dict) else {}
             if isinstance(result, dict) and isinstance(result.get("spawn_info"), dict):
                 spawn_info = result["spawn_info"]
-        stopped = self.run_installed_cli(router_script, root, ["daemon-stop", "--reason", "shadow_launcher_test_cleanup"])
         child_pid = spawn_info.get("pid")
         if not isinstance(child_pid, int) or child_pid <= 0:
+            try:
+                state = self.run_installed_cli(router_script, root, ["state"])
+                run_root = root / str(state.get("run_root") or "")
+                lock = read_json(run_root / "runtime" / "router_daemon.lock")
+                child_pid = (lock.get("owner") or {}).get("pid")
+            except (AssertionError, OSError, ValueError, json.JSONDecodeError):
+                child_pid = None
+        stopped = self.run_installed_cli(router_script, root, ["daemon-stop", "--reason", "shadow_launcher_test_cleanup"])
+        if not isinstance(child_pid, int) or child_pid <= 0:
             return stopped
-        time.sleep(0.2)
-        try:
-            os.kill(child_pid, 0)
-        except OSError:
-            return stopped
+        deadline = time.monotonic() + 3.0
+        while time.monotonic() < deadline:
+            try:
+                os.kill(child_pid, 0)
+            except OSError:
+                return stopped
+            time.sleep(0.1)
         try:
             os.kill(child_pid, signal.SIGTERM)
         except OSError:

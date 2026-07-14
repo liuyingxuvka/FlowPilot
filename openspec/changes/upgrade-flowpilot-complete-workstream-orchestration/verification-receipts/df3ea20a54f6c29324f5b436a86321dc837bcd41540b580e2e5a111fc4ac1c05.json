@@ -1,0 +1,27 @@
+{
+  "schema_version": 2,
+  "report_protocol_version": 3,
+  "execution_key": "sha256:a43e50f75f2df82883407c8cfccf21646705102d7e0e2009fd223debce5d30da",
+  "result_hash": "sha256:3f329655f25774c711610229276833587dc59fae13d9e333aa0919db7ff44699",
+  "receipt_id": "sha256:df3ea20a54f6c29324f5b436a86321dc837bcd41540b580e2e5a111fc4ac1c05",
+  "result": {
+    "status": "passed",
+    "command": "python",
+    "args": [
+      "scripts/run_test_tier.py",
+      "--tier",
+      "final-confidence",
+      "--verify-background",
+      "--background-dir",
+      "tmp/test_background/complete-workstream-final18",
+      "--json"
+    ],
+    "expected_exit_code": 0,
+    "exit_code": 0,
+    "timeout_seconds": 1800,
+    "stdout": "{\r\n  \"children\": [\r\n    {\r\n      \"artifacts\": {\r\n        \"combined\": \"tmp\\\\test_background\\\\complete-workstream-final18\\\\flowpilot_final_confidence_gate.combined.txt\",\r\n        \"err\": \"tmp\\\\test_background\\\\complete-workstream-final18\\\\flowpilot_final_confidence_gate.err.txt\",\r\n        \"exit\": \"tmp\\\\test_background\\\\complete-workstream-final18\\\\flowpilot_final_confidence_gate.exit.txt\",\r\n        \"meta\": \"tmp\\\\test_background\\\\complete-workstream-final18\\\\flowpilot_final_confidence_gate.meta.json\",\r\n        \"out\": \"tmp\\\\test_background\\\\complete-workstream-final18\\\\flowpilot_final_confidence_gate.out.txt\"\r\n      },\r\n      \"failures\": [],\r\n      \"name\": \"flowpilot_final_confidence_gate\",\r\n      \"ok\": true,\r\n      \"status\": \"passed\"\r\n    }\r\n  ],\r\n  \"failures\": [],\r\n  \"log_root\": \"tmp\\\\test_background\\\\complete-workstream-final18\",\r\n  \"ok\": true,\r\n  \"selected_count\": 1,\r\n  \"source_fingerprint\": \"10f38ac754a614ed5508ad30bc16b270a6942087db79b156094f65184c7b4389\",\r\n  \"supervisor_present\": false,\r\n  \"tier\": \"final-confidence\",\r\n  \"verified_count\": 1\r\n}\r\n",
+    "stderr": "",
+    "stdout_preview": "{\r\n  \"children\": [\r\n    {\r\n      \"artifacts\": {\r\n        \"combined\": \"tmp\\\\test_background\\\\complete-workstream-final18\\\\flowpilot_final_confidence_gate.combined.txt\",\r\n        \"err\": \"tmp\\\\test_background\\\\complete-workstream-final18\\\\flowpilot_final_confidence_gate.err.txt\",\r\n        \"exit\": \"tmp\\\\test_background\\\\complete-workstream-final18\\\\flowpilot_final_confidence_gate.exit.txt\",\r\n        \"meta\": \"tmp\\\\test_background\\\\complete-workstream-final18\\\\flowpilot_final_confidence_gate.meta.json\",\r\n        \"out\": \"tmp\\\\test_background\\\\complete-workstream-final18\\\\flowpilot_final_confidence_gate.out.txt\"\r\n      },\r\n      \"failures\": [],\r\n      \"name\": \"flowpilot_final_confidence_gate\",\r\n      \"ok\": true,\r\n      \"status\": \"passed\"\r\n    }\r\n  ],\r\n  \"failures\": [],\r\n  \"log_root\": \"tmp\\\\test_background\\\\complete-workstream-final18\",\r\n  \"ok\": true,\r\n  \"selected_count\": 1,\r\n  \"source_fingerprint\": \"10f38ac754a614ed5508ad30bc16b270a6942087db79b156094f65184c7b4389\",\r\n  \"supervisor_present\": false,\r\n  \"tier\": \"final-confidence\",\r\n  \"verified_count\": 1\r\n}\r\n",
+    "stderr_preview": ""
+  }
+}

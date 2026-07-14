@@ -49,6 +49,10 @@ run_slow_contract_checks = load_module(
     "flowpilot_test_run_slow_contract_checks",
     ROOT / "simulations" / "run_flowpilot_slow_test_contract_checks.py",
 )
+source_fingerprint_module = load_module(
+    "flowpilot_test_tier_source_fingerprint",
+    ROOT / "scripts" / "test_tier" / "source_fingerprint.py",
+)
 
 
 def iter_test_cases(suite: unittest.TestSuite):
@@ -74,6 +78,29 @@ class FlowPilotTestTierTests(unittest.TestCase):
             background_dir=ROOT / "tmp" / "test_background",
         )
         return "\n".join(" ".join(command["command"]) for command in plan["commands"])
+
+    def test_covered_source_fingerprint_ignores_generated_results_but_tracks_source(self) -> None:
+        original_root = source_fingerprint_module.ROOT
+        try:
+            with tempfile.TemporaryDirectory(prefix="flowpilot-source-fingerprint-") as tmp_name:
+                root = Path(tmp_name)
+                source_path = root / "skills" / "flowpilot" / "source.py"
+                summary_path = root / "simulations" / "generated_summary.json"
+                source_path.parent.mkdir(parents=True)
+                summary_path.parent.mkdir(parents=True)
+                source_path.write_text("VALUE = 1\n", encoding="utf-8")
+                summary_path.write_text('{"status":"old"}\n', encoding="utf-8")
+                source_fingerprint_module.ROOT = root
+                first = source_fingerprint_module.source_fingerprint()
+                summary_path.write_text('{"status":"new"}\n', encoding="utf-8")
+                after_result_change = source_fingerprint_module.source_fingerprint()
+                source_path.write_text("VALUE = 2\n", encoding="utf-8")
+                after_source_change = source_fingerprint_module.source_fingerprint()
+
+            self.assertEqual(first, after_result_change)
+            self.assertNotEqual(first, after_source_change)
+        finally:
+            source_fingerprint_module.ROOT = original_root
 
     def test_tier_command_names_are_unique_within_background_artifact_scope(self) -> None:
         for tier in run_test_tier.tier_names():
@@ -151,6 +178,42 @@ class FlowPilotTestTierTests(unittest.TestCase):
             command.name: command
             for command in run_test_tier.commands_for_tier("integration")
         }
+        integration_order = [
+            command.name for command in run_test_tier.commands_for_tier("integration")
+        ]
+        self.assertIn("refresh_flowguard_project_topology", integration_commands)
+        self.assertLess(
+            integration_order.index("refresh_flowguard_project_topology"),
+            integration_order.index("check_install"),
+        )
+        self.assertLess(
+            integration_commands["refresh_flowguard_project_topology"].background_stage,
+            integration_commands["check_install"].background_stage,
+        )
+        all_commands_by_name = {
+            command.name: command for command in run_test_tier.commands_for_tier("all")
+        }
+        all_topology_writers = [
+            command
+            for command in all_commands_by_name.values()
+            if Path(command.command[-2]).name == "flowguard_project_topology.py"
+            and command.command[-1] == "build"
+        ]
+        self.assertEqual(
+            [command.name for command in all_topology_writers],
+            ["flowguard_project_topology_build"],
+        )
+        self.assertLess(
+            all_commands_by_name["flowguard_project_topology_build"].background_stage,
+            all_commands_by_name["check_install"].background_stage,
+        )
+        cli_entrypoints = all_commands_by_name["cli_entrypoint_tests"]
+        self.assertTrue(cli_entrypoints.long_running)
+        self.assertTrue(cli_entrypoints.background_recommended)
+        self.assertGreater(
+            cli_entrypoints.background_stage,
+            all_commands_by_name["check_install"].background_stage,
+        )
         self.assertIn("smoke_flowpilot_fast", integration_commands)
         self.assertIn("flowguard_coverage_sweep", integration_commands)
         self.assertTrue(integration_commands["smoke_flowpilot_fast"].background_recommended)
@@ -164,9 +227,60 @@ class FlowPilotTestTierTests(unittest.TestCase):
             command.name: command
             for command in run_test_tier.commands_for_tier("release")
         }
+        self.assertIn("acceptance_testmesh_contract_tests", release_commands)
+        self.assertTrue(release_commands["acceptance_testmesh_contract_tests"].release_only)
+        self.assertTrue(
+            release_commands["acceptance_testmesh_contract_tests"].background_recommended
+        )
+        self.assertIn(
+            "tests/test_flowpilot_acceptance_testmesh.py",
+            release_commands["acceptance_testmesh_contract_tests"].command,
+        )
         self.assertIn("public_release_check", release_commands)
         self.assertTrue(release_commands["public_release_check"].release_only)
         self.assertTrue(release_commands["public_release_check"].background_recommended)
+        self.assertNotIn("router_testmesh_parent", release_commands)
+        self.assertNotIn("smoke_flowpilot_fast", release_commands)
+        self.assertNotIn("formal_ai_submit_fast_runner", release_commands)
+        self.assertNotIn("formal_ai_submit_adversarial_runner", release_commands)
+        self.assertNotIn("flowpilot_final_confidence_gate", release_commands)
+
+        adversarial_commands = {
+            command.name: command
+            for command in run_test_tier.commands_for_tier("formal-submit-adversarial")
+        }
+        all_commands = {
+            command.name: command
+            for command in run_test_tier.commands_for_tier("all")
+        }
+        self.assertIn("formal_ai_submit_adversarial_runner", adversarial_commands)
+        self.assertIn("fake_ai_runtime_replay_full", adversarial_commands)
+        self.assertIn("current_contract_cartesian_declaration", adversarial_commands)
+        declaration_command = list(
+            adversarial_commands["current_contract_cartesian_declaration"].command
+        )
+        self.assertIn("--declaration-only", declaration_command)
+        self.assertIn(
+            "tmp/test_results/current_contract_cartesian_declaration.json",
+            declaration_command,
+        )
+        self.assertNotIn(
+            "simulations/flowpilot_current_contract_cartesian_matrix_results.json",
+            declaration_command,
+        )
+        synthetic_declaration_command = list(
+            all_commands["synthetic_agent_coverage_matrix"].command
+        )
+        self.assertIn("--declaration-only", synthetic_declaration_command)
+        self.assertIn(
+            "tmp/test_results/flowpilot_synthetic_agent_coverage_matrix_declaration.json",
+            synthetic_declaration_command,
+        )
+        self.assertNotIn(
+            "simulations/flowpilot_synthetic_agent_coverage_matrix_results.json",
+            synthetic_declaration_command,
+        )
+        self.assertIn("flowpilot_skillguard_deep_contract", release_commands)
 
         final_confidence_commands = {
             command.name: command
@@ -177,14 +291,65 @@ class FlowPilotTestTierTests(unittest.TestCase):
             "run_flowpilot_final_confidence_gate_checks.py",
             " ".join(final_confidence_commands["flowpilot_final_confidence_gate"].command),
         )
-        self.assertNotIn(
+        self.assertIn(
             "--repository-confidence-only",
             final_confidence_commands["flowpilot_final_confidence_gate"].command,
         )
         self.assertIn(
-            "terminal-return",
+            "Per-run terminal-return",
             final_confidence_commands["flowpilot_final_confidence_gate"].description,
         )
+        self.assertEqual(
+            final_confidence_commands["flowpilot_final_confidence_gate"].evidence_dependency,
+            "terminal_consumer",
+        )
+
+    def test_complete_workstream_and_resource_checks_participate_in_parent_tiers(self) -> None:
+        fast_names = {
+            command.name for command in run_test_tier.commands_for_tier("fast")
+        }
+        all_names = {
+            command.name for command in run_test_tier.commands_for_tier("all")
+        }
+        adversarial_names = {
+            command.name
+            for command in run_test_tier.commands_for_tier("formal-submit-adversarial")
+        }
+        release_names = {
+            command.name for command in run_test_tier.commands_for_tier("release")
+        }
+
+        focused_owners = {
+            "flowguard_complete_workstream_orchestration",
+            "flowguard_ordinary_resource_discovery",
+            "flowguard_skillguard_current_contract",
+            "complete_workstream_contract_tests",
+        }
+        self.assertTrue(focused_owners.issubset(fast_names))
+        self.assertTrue(focused_owners.issubset(all_names))
+        self.assertIn("complete_workstream_fake_ai_execution_receipts", adversarial_names)
+        self.assertIn("acceptance_testmesh_contract_tests", release_names)
+
+    def test_release_and_final_confidence_have_acyclic_single_owner_order(self) -> None:
+        release_names = {
+            command.name for command in run_test_tier.commands_for_tier("release")
+        }
+        adversarial_names = {
+            command.name
+            for command in run_test_tier.commands_for_tier("formal-submit-adversarial")
+        }
+        final_commands = run_test_tier.commands_for_tier("final-confidence")
+
+        self.assertNotIn("flowpilot_final_confidence_gate", release_names)
+        self.assertNotIn("flowpilot_final_confidence_gate", adversarial_names)
+        self.assertEqual(
+            [command.name for command in final_commands],
+            ["flowpilot_final_confidence_gate"],
+        )
+        self.assertTrue(
+            all(command.evidence_dependency == "upstream" for command in run_test_tier.commands_for_tier("release"))
+        )
+        self.assertEqual(final_commands[0].evidence_dependency, "terminal_consumer")
 
     def test_background_artifact_classifier_distinguishes_final_evidence_states(self) -> None:
         with tempfile.TemporaryDirectory(prefix="flowpilot-bg-classifier-") as tmp_name:
@@ -234,6 +399,109 @@ class FlowPilotTestTierTests(unittest.TestCase):
             self.assertEqual(local["status"], "release_local_only")
             self.assertEqual(local["proof_scope"], "local_only")
 
+    def test_verify_background_tier_accepts_current_single_command_artifacts(self) -> None:
+        command = run_test_tier.TierCommand(
+            name="single_current",
+            command=(sys.executable, "-c", "pass"),
+            description="single current background command",
+        )
+        with tempfile.TemporaryDirectory(prefix="flowpilot-tier-verify-single-") as tmp_name:
+            root = Path(tmp_name)
+            paths = run_test_tier.artifact_paths(root, command.name)
+            for key in ("out", "err", "combined"):
+                paths[key].write_text("verified\n", encoding="utf-8")
+            paths["exit"].write_text("0\n", encoding="utf-8")
+            paths["meta"].write_text(
+                json.dumps(
+                    {
+                        "name": command.name,
+                        "command": list(command.command),
+                        "status": "passed",
+                        "exit_code": 0,
+                        "covered_source_fingerprint": "source-current",
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            report = run_test_tier.verify_background_tier(
+                "single",
+                (command,),
+                log_root=root,
+                expected_source_fingerprint="source-current",
+            )
+
+        self.assertTrue(report["ok"], report)
+        self.assertFalse(report["supervisor_present"])
+        self.assertEqual(report["verified_count"], 1)
+
+    def test_verify_background_tier_rejects_stale_or_incomplete_supervisor_evidence(self) -> None:
+        commands = tuple(
+            run_test_tier.TierCommand(
+                name=f"child_{index}",
+                command=(sys.executable, "-c", "pass"),
+                description="current child",
+            )
+            for index in range(2)
+        )
+        with tempfile.TemporaryDirectory(prefix="flowpilot-tier-verify-supervisor-") as tmp_name:
+            root = Path(tmp_name)
+            for command in commands:
+                paths = run_test_tier.artifact_paths(root, command.name)
+                for key in ("out", "err", "combined"):
+                    paths[key].write_text("verified\n", encoding="utf-8")
+                paths["exit"].write_text("0\n", encoding="utf-8")
+                paths["meta"].write_text(
+                    json.dumps(
+                        {
+                            "name": command.name,
+                            "command": list(command.command),
+                            "status": "passed",
+                            "exit_code": 0,
+                            "covered_source_fingerprint": "source-old",
+                        }
+                    ),
+                    encoding="utf-8",
+                )
+            supervisor_paths = run_test_tier.artifact_paths(
+                root,
+                run_test_tier.background_supervisor_name("multi"),
+            )
+            for key in ("out", "err", "combined"):
+                supervisor_paths[key].write_text("verified\n", encoding="utf-8")
+            supervisor_paths["exit"].write_text("0\n", encoding="utf-8")
+            supervisor_paths["meta"].write_text(
+                json.dumps(
+                    {
+                        "status": "passed",
+                        "command_count": 2,
+                        "running": [],
+                        "completed": [
+                            {"name": command.name, "ok": True} for command in commands
+                        ],
+                        "covered_source_fingerprint_start": "source-old",
+                        "covered_source_fingerprint_end": "source-old",
+                        "source_fingerprint_current": True,
+                    }
+                ),
+                encoding="utf-8",
+            )
+            run_test_tier.artifact_paths(root, commands[1].name)["combined"].unlink()
+
+            report = run_test_tier.verify_background_tier(
+                "multi",
+                commands,
+                log_root=root,
+                expected_source_fingerprint="source-current",
+            )
+
+        self.assertFalse(report["ok"])
+        self.assertIn("supervisor_source_fingerprint_stale", report["failures"])
+        self.assertTrue(
+            any("covered_source_fingerprint_stale" in failure for failure in report["failures"])
+        )
+        self.assertTrue(any("missing_artifacts:combined" in failure for failure in report["failures"]))
+
     def test_fast_tier_excludes_release_coverage_and_full_regression(self) -> None:
         command_names = [command.name for command in run_test_tier.commands_for_tier("fast")]
         text = self.command_text("fast")
@@ -253,6 +521,7 @@ class FlowPilotTestTierTests(unittest.TestCase):
         self.assertIn("flowpilot_shadow_launcher_chaos_matrix.py", text)
         self.assertIn("flowpilot_historical_live_run_replay_matrix.py", text)
         self.assertIn("flowpilot_known_friction_regression_matrix.py", text)
+        self.assertIn("run_flowpilot_current_status_projection_checks.py", text)
         self.assertIn("tests/test_flowpilot_model_test_alignment.py", text)
         self.assertIn("tests/test_flowpilot_hard_gate_red_team_matrix.py", text)
         self.assertIn("tests/test_flowpilot_hard_gate_red_team_replay.py", text)
@@ -272,17 +541,22 @@ class FlowPilotTestTierTests(unittest.TestCase):
         self.assertNotIn("run_flowguard_coverage_sweep.py", text)
         self.assertNotIn("--full", text)
 
+        names = [command.name for command in run_test_tier.commands_for_tier("fast")]
+        self.assertLess(
+            names.index("flowguard_current_status_projection"),
+            names.index("known_friction_regression_matrix"),
+        )
+
     def test_fast_tier_descriptions_name_multiround_repair_rehearsals(self) -> None:
         descriptions = {
             command.name: command.description
             for command in run_test_tier.commands_for_tier("fast")
         }
 
-        self.assertIn("no-producer PM repair recovery", descriptions["e2e_synthetic_chaos_matrix"])
-        self.assertIn("producer-proof repair waits", descriptions["real_router_dry_run_rehearsal_matrix"])
+        self.assertIn("lifecycle, repair, proof", descriptions["e2e_synthetic_chaos_matrix"])
+        self.assertIn("prepared fake AI packages", descriptions["real_router_dry_run_rehearsal_matrix"])
         self.assertIn("PM repair atomicity", descriptions["known_friction_regression_matrix"])
-        self.assertIn("no-producer repair gate", descriptions["e2e_synthetic_chaos_no_producer_tests"])
-        self.assertIn("repair producer proof", descriptions["real_router_dry_run_rehearsal_tests"])
+        self.assertNotIn("material", descriptions["real_router_dry_run_rehearsal_tests"].lower())
 
     def test_fast_tier_splits_long_replay_tests_into_named_shards(self) -> None:
         commands = {
@@ -308,18 +582,15 @@ class FlowPilotTestTierTests(unittest.TestCase):
             "synthetic_agent_trace_stale_sibling_tests",
             "synthetic_agent_trace_envelope_authority_tests",
             "synthetic_agent_trace_controller_budget_tests",
-            "synthetic_agent_trace_material_repair_tests",
             "synthetic_agent_trace_dirty_terminal_tests",
             "synthetic_agent_trace_bad_repair_envelope_tests",
             "synthetic_agent_trace_stacked_blockers_tests",
-            "synthetic_agent_trace_failed_repair_loop_tests",
             "synthetic_agent_trace_stale_run_state_tests",
             "synthetic_agent_trace_parallel_stop_tests",
             "synthetic_agent_trace_terminal_total_gate_tests",
             "e2e_synthetic_chaos_golden_lifecycle_tests",
             "e2e_synthetic_chaos_worker_repair_tests",
             "e2e_synthetic_chaos_pm_repair_tests",
-            "e2e_synthetic_chaos_no_producer_tests",
             "e2e_synthetic_chaos_background_proof_tests",
             "e2e_synthetic_chaos_parallel_stop_tests",
             "e2e_synthetic_chaos_terminal_retry_tests",
@@ -363,7 +634,6 @@ class FlowPilotTestTierTests(unittest.TestCase):
         self.assertIn("router_foreground_controller_boundary", command_names)
         self.assertIn("router_foreground_controller_repair", command_names)
         self.assertIn("router_packet_runtime", command_names)
-        self.assertIn("router_packets_material", command_names)
         self.assertIn("router_packets_current_node_direct", command_names)
         self.assertIn("router_packets_current_node_dispatch_relay", command_names)
         self.assertIn("router_packets_current_node_dispatch_worker_binding", command_names)
@@ -374,12 +644,9 @@ class FlowPilotTestTierTests(unittest.TestCase):
         self.assertIn("router_packets_result_decision_review_card", command_names)
         self.assertIn("router_packets_result_decision_relay", command_names)
         self.assertIn("router_packets_result_decision_pm_repair", command_names)
-        self.assertIn("router_packets_batch_existing_results", command_names)
-        self.assertIn("router_packets_batch_duplicate_worker", command_names)
-        self.assertIn("router_packets_batch_full_wait_missing_roles", command_names)
         self.assertIn("router_packets_grant_result_requires_write", command_names)
         self.assertIn("router_packets_grant_unresolved_node_entry", command_names)
-        self.assertIn("router_packet_result_family", command_names)
+        self.assertIn("router_packets_generic_ack_mail", command_names)
         self.assertIn("router_cards", command_names)
         self.assertIn("router_ack_return", command_names)
         self.assertIn("router_boundaries", command_names)
@@ -435,9 +702,9 @@ class FlowPilotTestTierTests(unittest.TestCase):
         self.assertIn("router_quality_gates_root_contract", command_names)
         self.assertIn("router_quality_gates_route_draft_product_model", command_names)
         self.assertIn("router_quality_gates_node_contracts", command_names)
-        self.assertIn("router_material_modeling_intake", command_names)
-        self.assertIn("router_material_modeling_scan_relay", command_names)
-        self.assertIn("router_material_modeling_modelability", command_names)
+        self.assertNotIn("router_material_modeling_intake", command_names)
+        self.assertNotIn("router_material_modeling_scan_relay", command_names)
+        self.assertNotIn("router_material_modeling_modelability", command_names)
         self.assertNotIn("router_packets_cards_ack", command_names)
         self.assertNotIn("router_startup_runtime", command_names)
         self.assertNotIn("router_startup_bootstrap_review", command_names)
@@ -492,7 +759,7 @@ class FlowPilotTestTierTests(unittest.TestCase):
             [command.name for command in commands],
             [
                 "router_packet_runtime",
-                "router_packets_material",
+                "router_packets_generic_ack_mail",
                 "router_packets_current_node_direct",
                 "router_packets_current_node_dispatch_relay",
                 "router_packets_current_node_dispatch_worker_binding",
@@ -503,12 +770,8 @@ class FlowPilotTestTierTests(unittest.TestCase):
                 "router_packets_result_decision_review_card",
                 "router_packets_result_decision_relay",
                 "router_packets_result_decision_pm_repair",
-                "router_packets_batch_existing_results",
-                "router_packets_batch_duplicate_worker",
-                "router_packets_batch_full_wait_missing_roles",
                 "router_packets_grant_result_requires_write",
                 "router_packets_grant_unresolved_node_entry",
-                "router_packet_result_family",
                 "router_cards",
                 "router_ack_return",
             ],
@@ -544,9 +807,6 @@ class FlowPilotTestTierTests(unittest.TestCase):
                 "router_quality_gates_root_contract",
                 "router_quality_gates_route_draft_product_model",
                 "router_quality_gates_node_contracts",
-                "router_material_modeling_intake",
-                "router_material_modeling_scan_relay",
-                "router_material_modeling_modelability",
                 "router_terminal_final_ledger",
                 "router_terminal_replay_summary",
                 "router_terminal_node_stop",
@@ -577,7 +837,7 @@ class FlowPilotTestTierTests(unittest.TestCase):
         self.assertIn("-k test_pm_repair_decision_accepts_registered_rerun_target_and_waits_for_it", command_text)
         self.assertIn("-k test_pm_role_work_request_requires_valid_recipient_and_contract", command_text)
         self.assertIn("-k test_gate_decision_event_records_ledger_and_state", command_text)
-        self.assertIn("-k test_material_scan_direct_relay_blocks_body_hash_mismatch", command_text)
+        self.assertNotIn("test_material_scan_direct_relay_blocks_body_hash_mismatch", command_text)
 
     def test_router_k_pattern_child_suites_cover_their_modules(self) -> None:
         covered: dict[str, set[str]] = {}
@@ -634,7 +894,6 @@ class FlowPilotTestTierTests(unittest.TestCase):
             "tests.router_runtime.control_blockers",
             "tests.router_runtime.pm_role_work",
             "tests.router_runtime.quality_gates",
-            "tests.router_runtime.material_modeling",
         ):
             missing = ids_for_module(module_name) - covered.get(module_name, set())
             self.assertFalse(missing, f"{module_name} missing from k-shards: {sorted(missing)}")
@@ -691,7 +950,6 @@ class FlowPilotTestTierTests(unittest.TestCase):
             "router-route",
             "router-pm-role-work",
             "router-quality-gates",
-            "router-material-modeling",
             "router-terminal",
         ):
             with self.subTest(tier=tier):
@@ -754,6 +1012,7 @@ class FlowPilotTestTierTests(unittest.TestCase):
         self.assertEqual(Path(args[1]).resolve(), ROOT / "scripts" / "run_test_tier.py")
         self.assertIn("--background-child", args)
         self.assertIn("--background-child-timeout-seconds", args)
+        self.assertIn("--covered-source-fingerprint", args)
 
     def test_unittest_shard_runner_uses_or_semantics_and_rejects_stale_patterns(self) -> None:
         good = subprocess.run(
@@ -806,6 +1065,7 @@ class FlowPilotTestTierTests(unittest.TestCase):
             self.assertEqual(exit_code, run_test_tier.BACKGROUND_CHILD_TIMEOUT_EXIT_CODE)
             self.assertEqual(meta["status"], "failed")
             self.assertTrue(meta["timed_out"])
+            self.assertTrue(meta["covered_source_fingerprint"])
             self.assertEqual(meta["failure_reason"], "background_child_timeout")
             self.assertEqual(
                 paths["exit"].read_text(encoding="utf-8").strip(),
@@ -816,7 +1076,13 @@ class FlowPilotTestTierTests(unittest.TestCase):
         original_launch = run_test_tier._launch_background
         try:
             with tempfile.TemporaryDirectory(prefix="flowpilot-tier-supervisor-") as tmp_name:
-                def fail_launch(command, *, log_root, timeout_seconds=None):  # type: ignore[no-untyped-def]
+                def fail_launch(  # type: ignore[no-untyped-def]
+                    command,
+                    *,
+                    log_root,
+                    timeout_seconds=None,
+                    source_fingerprint_value=None,
+                ):
                     raise RuntimeError(f"artifact locked for {command.name}")
 
                 run_test_tier._launch_background = fail_launch
@@ -847,6 +1113,48 @@ class FlowPilotTestTierTests(unittest.TestCase):
         finally:
             run_test_tier._launch_background = original_launch
 
+    def test_background_supervisor_fails_when_covered_source_changes(self) -> None:
+        original_fingerprint = run_test_tier.source_fingerprint
+        values = iter(("source-at-start", "source-at-end"))
+        try:
+            run_test_tier.source_fingerprint = lambda: next(values)
+            with tempfile.TemporaryDirectory(prefix="flowpilot-tier-source-change-") as tmp_name:
+                exit_code = run_test_tier.run_background_supervisor(
+                    "collect",
+                    [],
+                    log_root=Path(tmp_name),
+                    max_parallel=1,
+                )
+
+                paths = run_test_tier.artifact_paths(
+                    Path(tmp_name),
+                    run_test_tier.background_supervisor_name("collect"),
+                )
+                meta = json.loads(paths["meta"].read_text(encoding="utf-8"))
+
+            self.assertEqual(exit_code, 1)
+            self.assertFalse(meta["source_fingerprint_current"])
+            self.assertEqual(meta["failure_reason"], "covered_source_changed_during_tier")
+        finally:
+            run_test_tier.source_fingerprint = original_fingerprint
+
+    def test_dedicated_material_modeling_tier_is_not_a_current_public_tier(self) -> None:
+        self.assertFalse((ROOT / "tests" / "router_runtime" / "material_modeling.py").exists())
+        self.assertFalse((ROOT / "tests" / "test_flowpilot_router_runtime_material_modeling.py").exists())
+        self.assertNotIn("router-material-modeling", run_test_tier.tier_names())
+        for tier in ("router", "router-terminal", "all", "release"):
+            command_names = {
+                command.name for command in run_test_tier.commands_for_tier(tier)
+            }
+            self.assertFalse(
+                command_names
+                & {
+                    "router_material_modeling_intake",
+                    "router_material_modeling_scan_relay",
+                    "router_material_modeling_modelability",
+                }
+            )
+
     def test_large_background_tiers_use_bounded_supervisor(self) -> None:
         router_count = len(run_test_tier.commands_for_tier("router"))
         self.assertGreater(router_count, run_test_tier.DEFAULT_BACKGROUND_MAX_PARALLEL)
@@ -872,6 +1180,7 @@ class FlowPilotTestTierTests(unittest.TestCase):
 
     def test_release_tier_marks_long_background_recommended_commands(self) -> None:
         release_commands = run_test_tier.commands_for_tier("release")
+        release_by_name = {command.name: command for command in release_commands}
         release_long = [
             command.name
             for command in release_commands
@@ -880,11 +1189,35 @@ class FlowPilotTestTierTests(unittest.TestCase):
         self.assertIn("public_release_check", release_long)
         self.assertIn("meta_full", release_long)
         self.assertIn("capability_full", release_long)
+        self.assertIn("acceptance_testmesh_contract_tests", release_long)
         release_stages = {command.name: command.background_stage for command in release_commands}
         self.assertEqual(release_stages["release_tooling"], 0)
         self.assertEqual(release_stages["meta_full"], 0)
         self.assertEqual(release_stages["capability_full"], 0)
+        self.assertNotIn("flowpilot_final_confidence_gate", release_stages)
         self.assertGreater(release_stages["public_release_check"], release_stages["meta_full"])
+        for command_name, receipt_name in (
+            ("meta_full", "run_meta_checks"),
+            ("capability_full", "run_capability_checks"),
+        ):
+            command = list(release_by_name[command_name].command)
+            self.assertIn("scripts/run_flowguard_background.py", command)
+            self.assertIn(receipt_name, command)
+            self.assertIn("--force", command)
+            self.assertNotIn("--verify", command)
+            self.assertIn("Sole layered-full", release_by_name[command_name].description)
+        verification_contract = (
+            ROOT
+            / "openspec"
+            / "changes"
+            / "upgrade-flowpilot-complete-workstream-orchestration"
+            / "verification-contract.yaml"
+        ).read_text(encoding="utf-8")
+        for receipt_name in ("run_meta_checks", "run_capability_checks"):
+            self.assertIn(
+                f"--name, {receipt_name}, --verify",
+                verification_contract,
+            )
 
     def test_background_supervisor_respects_stage_barriers(self) -> None:
         pending = [
@@ -916,6 +1249,9 @@ class FlowPilotTestTierTests(unittest.TestCase):
         self.assertIn("router_child_tier_duplicates_k_shards", rejected)
         self.assertIn("router_child_tier_stale_k_pattern", rejected)
         self.assertIn("release_public_check_races_model_proofs", rejected)
+        self.assertIn("release_embeds_final_confidence_consumer", rejected)
+        self.assertIn("testmesh_mta_final_confidence_dependency_cycle", rejected)
+        self.assertIn("install_check_races_topology_writers", rejected)
         self.assertEqual(report["background_artifact_contract"], ["out", "err", "combined", "exit", "meta"])
 
     def test_slow_test_contract_flowguard_model_rejects_parent_child_hazards(self) -> None:

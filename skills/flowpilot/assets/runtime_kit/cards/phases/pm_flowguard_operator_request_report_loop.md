@@ -30,9 +30,11 @@ separate phase prose replace the work-order id, report id, report freshness,
 route used, skipped-check reasoning, background completion evidence, or PM
 acceptance record.
 
-Each FlowGuard operator request packet must include the registry `output_contract`
-`flowpilot.output_contract.flowguard_operator_model_report.v1` in both the packet envelope
-and packet body's `Output Contract` section.
+Each FlowGuard operator request packet must select registry `output_contract`
+`flowpilot.output_contract.flowguard_operator_model_report.v1`; runtime
+projects it through `current_handoff_contract.v2` into the addressed role's
+`submission_checklist.v2`. The packet body is semantic modeling context, not a
+second mechanical result contract.
 For terminal route-wide coverage after all effective nodes, parent/module
 replays, repairs, PM suggestions, and lifecycle ledgers are settled, use
 `task_family: flowguard_operator.terminal_flowguard_coverage_report` and
@@ -44,8 +46,9 @@ for the current route version, list required FlowGuard items and evidence
 found, and return explicit empty arrays for missing/stale evidence,
 model-test alignment gaps, blockers, PM suggestion items, and supplemental
 repair recommendations before PM can accept terminal coverage closure.
-The packet body must also include the generated `Report Contract For This Task`
-block so the FlowGuard operator sees the exact report fields before modeling.
+The FlowGuard operator must ACK and open the packet, then read the returned
+`submission_checklist.v2` for exact report fields before modeling. Do not
+generate the report from packet-body required-field or shape mirrors.
 When the packet body includes `subject_stage_evidence_matrix`, the FlowGuard
 operator must use it as the current contract authority for this packet:
 `current_required_fields` are due now, and `allowed_blocker_classes` /

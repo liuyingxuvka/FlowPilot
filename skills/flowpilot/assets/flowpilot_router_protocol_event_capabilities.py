@@ -78,11 +78,6 @@ CURRENT_NODE_CYCLE_FLAGS = (
     "node_completion_ledger_updated",
 )
 
-MATERIAL_REPAIR_RECHECK_FLAGS = (
-    "material_scan_dispatch_recheck_blocked",
-    "material_scan_dispatch_recheck_protocol_blocked",
-)
-
 MODEL_MISS_REVIEW_BLOCK_FLAGS = (
     "node_acceptance_plan_review_blocked",
     "node_review_blocked",
@@ -97,15 +92,6 @@ MODEL_MISS_ROUTE_MUTATION_BLOCK_FLAGS = (
     "node_acceptance_plan_review_blocked",
     "node_review_blocked",
 )
-
-MODEL_MISS_MATERIAL_DISPATCH_REPAIR_FLAGS: tuple[str, ...] = ()
-
-MATERIAL_REPAIR_OUTCOME_EVENTS = {
-    "router_direct_material_scan_dispatch_recheck_passed",
-    "worker_scan_results_returned",
-    "router_direct_material_scan_dispatch_recheck_blocked",
-    "router_protocol_blocker_material_scan_dispatch_recheck",
-}
 
 CONTROL_BLOCKER_REPAIR_NON_SUCCESS_EVENTS = {
     PM_CONTROL_BLOCKER_FOLLOWUP_BLOCKER_EVENT,

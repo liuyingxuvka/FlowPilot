@@ -40,30 +40,6 @@ REQUIRED_LABELS = (
     "startup_display_status_written_by_runtime",
     "startup_user_intake_released_to_pm_after_runtime_entry",
     "controller_relays_user_intake_to_pm",
-    "pm_material_scan_phase_card_delivered",
-    "pm_issues_material_and_capability_scan_packets",
-    "router_direct_material_scan_dispatch_preflight_passed",
-    "worker_scan_packet_bodies_delivered_after_dispatch",
-    "worker_scan_results_returned",
-    "reviewer_material_sufficiency_card_delivered",
-    "reviewer_reports_material_sufficient",
-    "reviewer_reports_research_required",
-    "pm_material_absorb_or_research_card_delivered",
-    "pm_absorbs_reviewed_material",
-    "pm_research_package_phase_card_delivered",
-    "pm_writes_bounded_research_package",
-    "pm_records_research_capability_decision",
-    "worker_research_report_card_delivered",
-    "router_direct_research_dispatch_preflight_passed",
-    "research_worker_packet_body_delivered_after_dispatch",
-    "research_worker_report_returned",
-    "reviewer_research_direct_source_check_card_delivered",
-    "reviewer_direct_source_research_check_done",
-    "reviewer_passes_research_result",
-    "pm_research_absorb_or_mutate_card_delivered",
-    "pm_absorbs_reviewed_research",
-    "pm_material_understanding_card_delivered",
-    "pm_writes_material_understanding_from_reviewed_sources",
     "pm_product_architecture_phase_card_delivered",
     "pm_writes_product_architecture_draft",
     "flowguard_operator_product_architecture_modelability_card_delivered",
@@ -137,6 +113,33 @@ REQUIRED_LABELS = (
     "completed",
 )
 
+RETIRED_SPECIAL_RESOURCE_LABELS = (
+    "pm_material_scan_phase_card_delivered",
+    "pm_issues_material_and_capability_scan_packets",
+    "router_direct_material_scan_dispatch_preflight_passed",
+    "worker_scan_packet_bodies_delivered_after_dispatch",
+    "worker_scan_results_returned",
+    "reviewer_material_sufficiency_card_delivered",
+    "reviewer_reports_material_sufficient",
+    "reviewer_reports_research_required",
+    "pm_material_absorb_or_research_card_delivered",
+    "pm_absorbs_reviewed_material",
+    "pm_research_package_phase_card_delivered",
+    "pm_writes_bounded_research_package",
+    "pm_records_research_capability_decision",
+    "worker_research_report_card_delivered",
+    "router_direct_research_dispatch_preflight_passed",
+    "research_worker_packet_body_delivered_after_dispatch",
+    "research_worker_report_returned",
+    "reviewer_research_direct_source_check_card_delivered",
+    "reviewer_direct_source_research_check_done",
+    "reviewer_passes_research_result",
+    "pm_research_absorb_or_mutate_card_delivered",
+    "pm_absorbs_reviewed_research",
+    "pm_material_understanding_card_delivered",
+    "pm_writes_material_understanding_from_reviewed_sources",
+)
+
 
 def _state_id(state: model.State) -> str:
     return (
@@ -163,13 +166,7 @@ def _state_id(state: model.State) -> str:
         f"{state.startup_user_intake_released_to_pm}|"
         f"user_intake={state.user_intake_delivered_to_pm},"
         f"relay={state.user_intake_controller_relayed}|"
-        f"ctrl={state.controller_role_confirmed}|material={state.material_review},"
-        f"{state.material_accepted_by_pm},{state.research_absorbed_by_pm},"
-        f"{state.material_understanding_written}|research={state.pm_research_package_written},"
-        f"{state.research_capability_decision_recorded},"
-        f"{state.research_dispatch_allowed},"
-        f"{state.research_worker_packet_delivered},"
-        f"{state.research_reviewer_passed}|"
+        f"ctrl={state.controller_role_confirmed}|"
         f"architecture={state.product_architecture_draft_written},"
         f"{state.product_architecture_modelability_passed},"
         f"{state.product_architecture_reviewer_challenged}|"
@@ -214,6 +211,8 @@ def explore_safe_graph() -> dict[str, object]:
     initial = model.initial_state()
     queue: deque[model.State] = deque([initial])
     seen = {initial}
+    traces: dict[model.State, tuple[str, ...]] = {initial: ()}
+    reverse_edges: dict[model.State, set[model.State]] = {}
     labels: set[str] = set()
     edges = 0
     invariant_failures: list[dict[str, object]] = []
@@ -229,21 +228,88 @@ def explore_safe_graph() -> dict[str, object]:
         for transition in model.next_safe_states(state):
             labels.add(transition.label)
             edges += 1
+            reverse_edges.setdefault(transition.state, set()).add(state)
             if transition.state not in seen:
                 seen.add(transition.state)
+                traces[transition.state] = traces[state] + (transition.label,)
                 queue.append(transition.state)
 
     missing_labels = sorted(set(REQUIRED_LABELS) - labels)
-    complete_states = sum(1 for state in seen if state.status == "complete")
+    retired_labels = sorted(set(RETIRED_SPECIAL_RESOURCE_LABELS) & labels)
+    complete_states = {state for state in seen if state.status == "complete"}
+    can_reach_complete = set(complete_states)
+    frontier = deque(complete_states)
+    while frontier:
+        target = frontier.popleft()
+        for source in reverse_edges.get(target, set()):
+            if source not in can_reach_complete:
+                can_reach_complete.add(source)
+                frontier.append(source)
+    nonterminal_without_completion_path = sorted(
+        _state_id(state)
+        for state in seen
+        if state.status not in {"blocked", "complete"} and state not in can_reach_complete
+    )
+    shortest_complete_trace = min(
+        (traces[state] for state in complete_states),
+        key=lambda trace: (len(trace), trace),
+        default=(),
+    )
     return {
-        "ok": not invariant_failures and not missing_labels and complete_states > 0,
+        "ok": (
+            not invariant_failures
+            and not missing_labels
+            and not retired_labels
+            and bool(complete_states)
+        ),
         "state_count": len(seen),
         "edge_count": edges,
         "labels": sorted(labels),
         "missing_labels": missing_labels,
-        "complete_state_count": complete_states,
+        "retired_special_resource_labels": retired_labels,
+        "complete_state_count": len(complete_states),
+        "shortest_complete_trace": list(shortest_complete_trace),
+        "nonterminal_without_completion_path": nonterminal_without_completion_path,
         "terminal_counts": terminals,
         "invariant_failures": invariant_failures,
+    }
+
+
+def check_scenarios(safe_graph: dict[str, object]) -> dict[str, object]:
+    trace = [str(label) for label in safe_graph["shortest_complete_trace"]]
+    expected_direct_architecture_chain = (
+        "startup_user_intake_released_to_pm_after_runtime_entry",
+        "controller_relays_user_intake_to_pm",
+        "pm_product_architecture_phase_card_delivered",
+        "pm_writes_product_architecture_draft",
+    )
+    positions: list[int] = []
+    cursor = -1
+    for label in expected_direct_architecture_chain:
+        try:
+            cursor = trace.index(label, cursor + 1)
+        except ValueError:
+            positions = []
+            break
+        positions.append(cursor)
+    direct_chain_present = len(positions) == len(expected_direct_architecture_chain)
+    retired_labels = sorted(set(trace) & set(RETIRED_SPECIAL_RESOURCE_LABELS))
+    return {
+        "ok": direct_chain_present and not retired_labels,
+        "scenario": "user_intake_released_to_pm_product_architecture",
+        "expected_chain": list(expected_direct_architecture_chain),
+        "observed_positions": positions,
+        "retired_special_resource_labels": retired_labels,
+    }
+
+
+def check_progress(safe_graph: dict[str, object]) -> dict[str, object]:
+    stuck_states = list(safe_graph["nonterminal_without_completion_path"])
+    return {
+        "ok": not stuck_states and int(safe_graph["complete_state_count"]) > 0,
+        "required_terminal": "complete",
+        "reachable_complete_state_count": int(safe_graph["complete_state_count"]),
+        "nonterminal_without_completion_path": stuck_states,
     }
 
 
@@ -264,10 +330,19 @@ def check_hazards() -> dict[str, object]:
 
 def main() -> int:
     safe = explore_safe_graph()
+    scenarios = check_scenarios(safe)
+    progress = check_progress(safe)
     hazards = check_hazards()
     result = {
-        "ok": bool(safe["ok"]) and bool(hazards["ok"]),
+        "ok": (
+            bool(safe["ok"])
+            and bool(scenarios["ok"])
+            and bool(progress["ok"])
+            and bool(hazards["ok"])
+        ),
         "safe_graph": safe,
+        "scenario_checks": scenarios,
+        "progress_checks": progress,
         "hazard_checks": hazards,
     }
     RESULTS_PATH.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")

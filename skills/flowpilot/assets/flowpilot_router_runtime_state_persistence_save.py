@@ -36,14 +36,6 @@ def _merge_stale_run_state_save(existing: dict[str, Any], current: dict[str, Any
     merged = _public_run_state_snapshot(current)
     if existing.get("schema_version") != merged.get("schema_version") or existing.get("run_id") != merged.get("run_id"):
         return merged
-    existing_material_generation_key = _material_generation_key(existing)
-    current_material_generation_key = _material_generation_key(current)
-    existing_has_newer_material_generation = bool(
-        existing_material_generation_key
-        and existing_material_generation_key != current_material_generation_key
-    )
-    if existing_has_newer_material_generation:
-        merged["active_material_generation"] = _json_clone(existing.get("active_material_generation"))
     for field in _RUN_STATE_APPEND_ONLY_LIST_FIELDS:
         existing_items = existing.get(field)
         current_items = merged.get(field)
@@ -63,9 +55,6 @@ def _merge_stale_run_state_save(existing: dict[str, Any], current: dict[str, Any
     merged_flags = merged.setdefault("flags", {})
     if isinstance(merged_flags, dict):
         for flag, existing_value in existing_flags.items():
-            if existing_has_newer_material_generation and flag in _MATERIAL_GENERATION_PROGRESS_FLAGS:
-                merged_flags[flag] = bool(existing_value)
-                continue
             loaded_value = loaded_flags.get(flag)
             current_value = merged_flags.get(flag)
             if existing_value is True and loaded_value is not True and current_value is not True:

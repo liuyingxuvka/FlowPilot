@@ -1,0 +1,179 @@
+"""StructureMesh catalog for retained FlowPilot resource facades."""
+
+from flowguard import (
+    EVIDENCE_CONFORMANCE_GREEN,
+    ModuleStructureEvidence,
+    PublicEntrypointEvidence,
+    StructurePartitionItem,
+)
+
+
+RESOURCE_FACADE_MODULES = (
+    ModuleStructureEvidence(
+        module_id="discovery_family_facade",
+        path="skills/flowpilot/assets/flowpilot_core_runtime/packet_result_contracts.py",
+        layer="facade",
+        extracted_from="flowpilot_current_preplanning_discovery",
+        owns_functions=("task.discovery contract registration",),
+        behavior_contracts=("resource_discovery.current_result_contract",),
+        dependencies=("discovery_runtime_owner",),
+        facade_retained=True,
+        behavior_parity_current=True,
+        behavior_parity_tier=EVIDENCE_CONFORMANCE_GREEN,
+        release_required=True,
+    ),
+    ModuleStructureEvidence(
+        module_id="discovery_runtime_owner",
+        path="skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+        layer="runtime_owner",
+        extracted_from="flowpilot_current_preplanning_discovery",
+        owns_functions=(
+            "runtime_projects_shallow_local_skill_inventory",
+            "pm_selects_relevant_skill_candidates",
+            "_discovery_result_violation",
+        ),
+        owns_state=("preplanning_discovery.candidate_skill_inventory",),
+        owns_side_effects=("issue_current_task.discovery_packet",),
+        behavior_contracts=("resource_discovery.current_result_contract",),
+        dependencies=("ordinary_material_role_path",),
+        behavior_parity_current=True,
+        behavior_parity_tier=EVIDENCE_CONFORMANCE_GREEN,
+        release_required=True,
+    ),
+    ModuleStructureEvidence(
+        module_id="ordinary_material_role_path",
+        path="skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+        layer="existing_role_path",
+        extracted_from="flowpilot_current_preplanning_discovery",
+        owns_functions=(
+            "pm_issues_ordinary_role_work_packet",
+            "evidence_role_submits_ordinary_work_result",
+            "ordinary_material_work_receives_risk_appropriate_review",
+        ),
+        owns_state=("ordinary_role_work_result",),
+        owns_side_effects=("issue_current_task.node_packet",),
+        behavior_contracts=("task.node.ordinary_material_or_research_work",),
+        behavior_parity_current=True,
+        behavior_parity_tier=EVIDENCE_CONFORMANCE_GREEN,
+        release_required=True,
+    ),
+    ModuleStructureEvidence(
+        module_id="material_map_navigation_owner",
+        path="skills/flowpilot/assets/flowpilot_material_artifact_map.py",
+        layer="optional_navigation_owner",
+        extracted_from="flowpilot_optional_material_artifact_map",
+        owns_functions=("optional_material_map_is_navigation_only",),
+        owns_state=("derived_material_map_navigation_status",),
+        behavior_contracts=("material_artifact_map.navigation_status",),
+        facade_retained=True,
+        behavior_parity_current=True,
+        behavior_parity_tier=EVIDENCE_CONFORMANCE_GREEN,
+        release_required=True,
+    ),
+)
+
+
+RESOURCE_FACADE_PARTITIONS = (
+    StructurePartitionItem(
+        "task.discovery contract registration",
+        item_type="public_entrypoint",
+        owner_module_id="discovery_family_facade",
+        public_surface=True,
+        old_path="task.discovery",
+        new_path="task.discovery",
+    ),
+    StructurePartitionItem(
+        "runtime_projects_shallow_local_skill_inventory",
+        owner_module_id="discovery_runtime_owner",
+    ),
+    StructurePartitionItem(
+        "pm_selects_relevant_skill_candidates",
+        owner_module_id="discovery_runtime_owner",
+    ),
+    StructurePartitionItem(
+        "_discovery_result_violation",
+        owner_module_id="discovery_runtime_owner",
+    ),
+    StructurePartitionItem(
+        "preplanning_discovery.candidate_skill_inventory",
+        item_type="state",
+        owner_module_id="discovery_runtime_owner",
+    ),
+    StructurePartitionItem(
+        "issue_current_task.discovery_packet",
+        item_type="side_effect",
+        owner_module_id="discovery_runtime_owner",
+    ),
+    StructurePartitionItem(
+        "pm_issues_ordinary_role_work_packet",
+        owner_module_id="ordinary_material_role_path",
+    ),
+    StructurePartitionItem(
+        "evidence_role_submits_ordinary_work_result",
+        owner_module_id="ordinary_material_role_path",
+    ),
+    StructurePartitionItem(
+        "ordinary_material_work_receives_risk_appropriate_review",
+        owner_module_id="ordinary_material_role_path",
+    ),
+    StructurePartitionItem(
+        "ordinary_role_work_result",
+        item_type="state",
+        owner_module_id="ordinary_material_role_path",
+    ),
+    StructurePartitionItem(
+        "issue_current_task.node_packet",
+        item_type="side_effect",
+        owner_module_id="ordinary_material_role_path",
+    ),
+    StructurePartitionItem(
+        "optional_material_map_is_navigation_only",
+        item_type="public_entrypoint",
+        owner_module_id="material_map_navigation_owner",
+        public_surface=True,
+        old_path="flowpilot_material_artifact_map.material_artifact_map_navigation_status",
+        new_path="flowpilot_material_artifact_map.material_artifact_map_navigation_status",
+    ),
+    StructurePartitionItem(
+        "derived_material_map_navigation_status",
+        item_type="state",
+        owner_module_id="material_map_navigation_owner",
+    ),
+)
+
+
+RESOURCE_PUBLIC_ENTRYPOINTS = (
+    PublicEntrypointEvidence(
+        entrypoint_id="task.discovery",
+        entrypoint_type="packet_result_family",
+        old_path="task.discovery",
+        new_path="skills/flowpilot/assets/flowpilot_core_runtime/packet_result_contracts.py::task.discovery",
+        compatibility_preserved=True,
+        facade_available=True,
+        parity_evidence_current=True,
+        parity_evidence_tier=EVIDENCE_CONFORMANCE_GREEN,
+        release_required=True,
+        evidence_path="tests/test_flowpilot_ordinary_resource_discovery.py::test_narrowed_discovery_contract_keeps_one_existing_family",
+    ),
+    PublicEntrypointEvidence(
+        entrypoint_id="material_artifact_map_navigation_status",
+        entrypoint_type="function",
+        old_path="flowpilot_material_artifact_map.material_artifact_map_navigation_status",
+        new_path="skills/flowpilot/assets/flowpilot_material_artifact_map.py::material_artifact_map_navigation_status",
+        compatibility_preserved=True,
+        facade_available=True,
+        parity_evidence_current=True,
+        parity_evidence_tier=EVIDENCE_CONFORMANCE_GREEN,
+        release_required=True,
+        evidence_path="tests/test_flowpilot_material_access_mesh.py",
+    ),
+)
+
+
+RESOURCE_STRUCTURE_HAZARDS = (
+    "missing_resource_facade",
+    "removed_resource_entrypoint",
+    "duplicate_resource_state_owner",
+    "stale_resource_parity",
+    "insufficient_resource_release_evidence",
+)

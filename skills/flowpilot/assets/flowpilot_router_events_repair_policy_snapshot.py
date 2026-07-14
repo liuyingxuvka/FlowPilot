@@ -122,8 +122,6 @@ def _default_pm_recovery_option(router: ModuleType, active: dict[str, Any], requ
         return 'record_disposition'
     if requested_plan_kind == 'route_mutation':
         return 'route_mutation'
-    if requested_plan_kind == 'packet_reissue':
-        return 'same_gate_repair'
     return 'same_gate_repair'
 
 def _project_relative_if_possible(router: ModuleType, project_root: Path, path: Path) -> str:

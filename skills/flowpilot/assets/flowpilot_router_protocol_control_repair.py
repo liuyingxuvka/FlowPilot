@@ -96,7 +96,6 @@ PM_BLOCKER_RECOVERY_OPTIONS = (
 REPAIR_TRANSACTION_EXECUTABLE_PLAN_KINDS = {
     "operation_replay",
     "controller_repair_work_packet",
-    "packet_reissue",
     "role_reissue",
     "router_internal_reconcile",
     "await_existing_event",
@@ -108,10 +107,8 @@ REPAIR_TRANSACTION_SAFE_REPLAY_ACTION_TYPES = {
     "deliver_mail",
     "deliver_system_card",
     "deliver_system_card_bundle",
-    "relay_material_scan_packets",
     "relay_research_packets",
     "relay_current_node_packet",
-    "relay_material_scan_results_to_pm",
     "relay_current_node_result_to_pm",
     "relay_research_results_to_pm",
 }

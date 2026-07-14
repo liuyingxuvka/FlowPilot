@@ -11,29 +11,22 @@ import flowpilot_router_role_output_bridge_events_replay as role_output_bridge_e
 
 
 class RoleOutputReconciliationTests(FlowPilotRouterRuntimeTestBase):
-    def _seed_material_sources(self, root: Path, run_root: Path) -> list[str]:
-        package_path = run_root / "material" / "pm_material_scan_formal_gate_package.json"
-        artifact_map_path = run_root / "material" / "material_artifact_map.json"
-        router.write_json(package_path, {"schema_version": "test.material_package.v1", "ok": True})
-        router.write_json(artifact_map_path, {"schema_version": "test.material_artifact_map.v1", "ok": True})
-        return [self.rel(root, package_path), self.rel(root, artifact_map_path)]
-
-    def _seed_resolved_material_review_wait(self, root: Path, run_root: Path) -> tuple[dict, dict]:
+    def _seed_resolved_current_node_review_wait(self, root: Path, run_root: Path) -> tuple[dict, dict]:
         state = read_json(router.run_state_path(run_root))
-        state.setdefault("flags", {})["reviewer_material_sufficiency_card_delivered"] = True
+        state.setdefault("flags", {})["reviewer_worker_result_card_delivered"] = True
         wait_action = router.make_action(
             action_type="await_role_decision",
             actor="controller",
-            label="controller_waits_for_material_sufficiency",
-            summary="Wait for material sufficiency review.",
+            label="controller_waits_for_current_node_review",
+            summary="Wait for current-node result review.",
             to_role="human_like_reviewer",
             extra={
-                "allowed_external_events": ["reviewer_reports_material_insufficient"],
+                "allowed_external_events": ["current_node_reviewer_blocks_result"],
                 "payload_contract": {
                     "required_object": "role_output_body",
                     "expected_return_envelope": "role_output_envelope",
-                    "expected_output_type": "material_sufficiency_report",
-                    "expected_output_contract_id": "flowpilot.output_contract.material_sufficiency_report.v1",
+                    "expected_output_type": "reviewer_review_report",
+                    "expected_output_contract_id": "flowpilot.output_contract.reviewer_review_report.v1",
                 },
                 "started_at": "2026-05-20T00:00:00Z",
             },
@@ -53,7 +46,7 @@ class RoleOutputReconciliationTests(FlowPilotRouterRuntimeTestBase):
         action_record["router_reconciled_at"] = router.utc_now()
         action_record["router_reconciliation"] = {
             "source": "test_resolved_wait_before_router_event",
-            "event": "reviewer_reports_material_insufficient",
+            "event": "current_node_reviewer_blocks_result",
         }
         router.write_json(action_path, action_record)
         router._update_router_scheduler_row(  # type: ignore[attr-defined]
@@ -68,39 +61,12 @@ class RoleOutputReconciliationTests(FlowPilotRouterRuntimeTestBase):
         router.save_run_state(run_root, state)
         return wait_action, entry
 
-    def _submit_material_insufficient_role_output(self, root: Path, run_root: Path) -> dict:
-        return role_output_runtime.submit_output(
-            root,
-            output_type="material_sufficiency_report",
-            role="human_like_reviewer",
-            agent_id="agent-human_like_reviewer",
-            run_id=run_root.name,
-            event_name="reviewer_reports_material_insufficient",
-            output_path=run_root / "test_role_outputs" / "material" / "reviewer_material_insufficient.json",
-            body={
-                "pm_visible_summary": ["Material is insufficient for PM execution without more source context."],
-                "reviewed_by_role": "human_like_reviewer",
-                "passed": False,
-                "direct_material_sources_checked": True,
-                "packet_matches_checked_sources": True,
-                "pm_ready": False,
-                "checked_source_paths": self._seed_material_sources(root, run_root),
-                "runtime_open_receipt_refs": [],
-                "findings": [{"finding_id": "missing-context", "summary": "Material is insufficient for execution."}],
-                "blockers": [{"blocker_id": "missing-context", "summary": "More source material is required."}],
-                "pm_suggestion_items": [
-                    "PM decision-support: request the missing context before PM absorbs material understanding."
-                ],
-                "contract_self_check": {"status": "pass"},
-            },
-        )
-
     def _seed_package_disposition_conflict_replay(
         self,
         root: Path,
         run_root: Path,
         *,
-        event: str = "pm_records_material_scan_result_disposition",
+        event: str = "pm_records_current_node_result_disposition",
         owner: str,
     ) -> dict:
         event_slug = event.replace("pm_records_", "").replace("_result_disposition", "")
@@ -125,6 +91,13 @@ class RoleOutputReconciliationTests(FlowPilotRouterRuntimeTestBase):
             if "pm_package_result_disposition_first" in str(record)
         )
 
+        if owner == "pm_repair":
+            binding_state = read_json(router.run_state_path(run_root))
+            binding_state.setdefault("startup_answers", {})[
+                "background_collaboration_authorized"
+            ] = True
+            router.save_run_state(run_root, binding_state)
+            self.ensure_current_role_agent_for_role(root, "project_manager")
         state = read_json(router.run_state_path(run_root))
         payload = role_output_bridge_events._role_output_body_payload_from_record(
             router,
@@ -143,11 +116,8 @@ class RoleOutputReconciliationTests(FlowPilotRouterRuntimeTestBase):
             allowed_events = [router.PM_CONTROL_BLOCKER_REPAIR_DECISION_EVENT]
         elif owner == "pm_repair":
             flags["pm_control_blocker_repair_decision_recorded"] = True
-            allowed_events = [
-                "router_direct_material_scan_dispatch_recheck_passed",
-                "router_direct_material_scan_dispatch_recheck_blocked",
-                "router_protocol_blocker_material_scan_dispatch_recheck",
-            ]
+            flags["pm_route_skeleton_card_delivered"] = True
+            allowed_events = ["pm_writes_route_draft"]
         else:
             raise AssertionError(f"unknown owner: {owner}")
         state.setdefault("events", []).append(
@@ -190,14 +160,11 @@ class RoleOutputReconciliationTests(FlowPilotRouterRuntimeTestBase):
 
     def _package_batch_kind_for_event(self, event: str) -> str:
         return {
-            "pm_records_material_scan_result_disposition": "material_scan",
             "pm_records_research_result_disposition": "research",
             "pm_records_current_node_result_disposition": "current_node",
         }[event]
 
     def _canonical_disposition_path_for_event(self, run_root: Path, event: str) -> Path:
-        if event == "pm_records_material_scan_result_disposition":
-            return run_root / "material" / "pm_material_scan_result_disposition.json"
         if event == "pm_records_research_result_disposition":
             return run_root / "research" / "pm_research_result_disposition.json"
         frontier = read_json(run_root / "execution_frontier.json")
@@ -207,6 +174,20 @@ class RoleOutputReconciliationTests(FlowPilotRouterRuntimeTestBase):
 
     def _seed_parallel_batch_without_pm_disposition(self, root: Path, run_root: Path, event: str, state: dict) -> dict:
         batch_kind = self._package_batch_kind_for_event(event)
+        if batch_kind == "current_node":
+            router.write_json(
+                run_root / "execution_frontier.json",
+                {
+                    "schema_version": "flowpilot.execution_frontier.v1",
+                    "run_id": run_root.name,
+                    "status": "current_node_loop",
+                    "active_route_id": "route-001",
+                    "active_node_id": "node-001",
+                    "route_version": 1,
+                    "updated_at": router.utc_now(),
+                    "source": "test_current_node_package_disposition",
+                },
+            )
         batch = router._write_parallel_packet_batch(  # type: ignore[attr-defined]
             root,
             run_root,
@@ -237,12 +218,12 @@ class RoleOutputReconciliationTests(FlowPilotRouterRuntimeTestBase):
         router._write_parallel_packet_batch_state(run_root, batch)  # type: ignore[attr-defined]
         return batch
 
-    def _seed_commit_capable_material_disposition_candidate(
+    def _seed_commit_capable_package_disposition_candidate(
         self,
         root: Path,
         run_root: Path,
         *,
-        event: str = "pm_records_material_scan_result_disposition",
+        event: str = "pm_records_current_node_result_disposition",
         result_self_check_passes: bool,
     ) -> tuple[dict, dict, dict]:
         state = read_json(router.run_state_path(run_root))
@@ -331,23 +312,6 @@ class RoleOutputReconciliationTests(FlowPilotRouterRuntimeTestBase):
         )
         batch["status"] = "results_relayed_to_pm"
         router._write_parallel_packet_batch_state(run_root, batch)  # type: ignore[attr-defined]
-        if event == "pm_records_material_scan_result_disposition":
-            router.write_json(
-                run_root / "material" / "material_scan_packets.json",
-                {
-                    "schema_version": "flowpilot.material_scan_packets.v2",
-                    "run_id": state["run_id"],
-                    "written_by_role": "project_manager",
-                    "batch_id": f"{batch_kind}-ledger-batch",
-                    "batch_kind": batch_kind,
-                    "current_generation_id": generation_id,
-                    "controller_may_read_packet_body": False,
-                    "router_direct_dispatch_required_before_worker": True,
-                    "reviewer_dispatch_required_before_worker": False,
-                    "packets": records,
-                    "written_at": router.utc_now(),
-                },
-            )
         required_flag = router.EXTERNAL_EVENTS[event].get("requires_flag")
         if required_flag:
             state.setdefault("flags", {})[required_flag] = True
@@ -435,7 +399,7 @@ class RoleOutputReconciliationTests(FlowPilotRouterRuntimeTestBase):
         root: Path,
         run_root: Path,
         *,
-        event: str = "pm_records_material_scan_result_disposition",
+        event: str = "pm_records_current_node_result_disposition",
     ) -> tuple[dict, dict]:
         state = read_json(router.run_state_path(run_root))
         self._seed_parallel_batch_without_pm_disposition(root, run_root, event, state)
@@ -474,10 +438,10 @@ class RoleOutputReconciliationTests(FlowPilotRouterRuntimeTestBase):
         root: Path,
         run_root: Path,
         *,
-        event: str = "pm_records_material_scan_result_disposition",
+        event: str = "pm_records_current_node_result_disposition",
     ) -> tuple[dict, dict, dict]:
-        self.assertEqual(event, "pm_records_material_scan_result_disposition")
-        state, payload, wait_action = self._seed_commit_capable_material_disposition_candidate(
+        self.assertEqual(event, "pm_records_current_node_result_disposition")
+        state, payload, wait_action = self._seed_commit_capable_package_disposition_candidate(
             root,
             run_root,
             result_self_check_passes=True,
@@ -512,46 +476,21 @@ class RoleOutputReconciliationTests(FlowPilotRouterRuntimeTestBase):
         router.save_run_state(run_root, state)
         return read_json(router.run_state_path(run_root)), payload, wait_action
 
-    def test_material_role_output_event_reconciles_router_state_and_clears_stale_pending(self) -> None:
+    def test_retired_material_sufficiency_role_output_type_is_rejected(self) -> None:
         root = self.make_project()
-        run_root = self.write_minimal_run(root, "run-material-role-output-reconcile")
-        self.write_current_focus(root, run_root)
-        wait_action, _entry = self._seed_resolved_material_review_wait(root, run_root)
-        self._submit_material_insufficient_role_output(root, run_root)
-        before = read_json(router.run_state_path(run_root))
-        self.assertFalse(before["flags"].get("material_review_insufficient"))
-        self.assertEqual((before.get("pending_action") or {}).get("controller_action_id"), wait_action["controller_action_id"])
-
-        result = router._reconcile_durable_wait_evidence(root, run_root, before)  # type: ignore[attr-defined]
-        router.save_run_state(run_root, before)
-
-        self.assertTrue(result["direct_role_output_reconciliation"]["changed"])
-        after = read_json(router.run_state_path(run_root))
-        self.assertTrue(after["flags"]["material_review_insufficient"])
-        self.assertEqual(after["material_review"], "insufficient")
-        self.assertIsNone(after.get("pending_action"))
-        if (run_root / "material" / "material_sufficiency_report.json").exists():
-            report = read_json(run_root / "material" / "material_sufficiency_report.json")
-            self.assertFalse(report["sufficient"])
-        events = [
-            item
-            for item in after["events"]
-            if isinstance(item, dict) and item.get("event") == "reviewer_reports_material_insufficient"
-        ]
-        self.assertEqual(len(events), 1)
-
-        replay = router._reconcile_durable_wait_evidence(root, run_root, after)  # type: ignore[attr-defined]
-        self.assertFalse(replay["direct_role_output_reconciliation"]["changed"])
-        replay_events = [
-            item
-            for item in after["events"]
-            if isinstance(item, dict) and item.get("event") == "reviewer_reports_material_insufficient"
-        ]
-        self.assertEqual(len(replay_events), 1)
+        with self.assertRaisesRegex(
+            role_output_runtime.RoleOutputRuntimeError,
+            "unsupported output_type 'material_sufficiency_report'",
+        ):
+            role_output_runtime.prepare_output_session(
+                root,
+                output_type="material_sufficiency_report",
+                role="human_like_reviewer",
+                agent_id="agent-human_like_reviewer",
+            )
 
     def test_repair_owned_package_disposition_conflict_replay_is_quarantined_without_daemon_error(self) -> None:
         events = (
-            "pm_records_material_scan_result_disposition",
             "pm_records_research_result_disposition",
             "pm_records_current_node_result_disposition",
         )
@@ -625,13 +564,13 @@ class RoleOutputReconciliationTests(FlowPilotRouterRuntimeTestBase):
         package_events = [
             item
             for item in after["events"]
-            if isinstance(item, dict) and item.get("event") == "pm_records_material_scan_result_disposition"
+            if isinstance(item, dict) and item.get("event") == "pm_records_current_node_result_disposition"
         ]
         self.assertEqual(len(package_events), 1)
-        canonical_disposition = read_json(run_root / "material" / "pm_material_scan_result_disposition.json")
+        canonical_disposition = read_json(self._canonical_disposition_path_for_event(run_root, "pm_records_current_node_result_disposition"))
         self.assertEqual(canonical_disposition["decision"], "rework_requested")
         self.assertNotEqual(canonical_disposition["source_body_hash"], old_body_hash)
-        processed = after["external_event_idempotency"]["processed"]["pm_records_material_scan_result_disposition"]
+        processed = after["external_event_idempotency"]["processed"]["pm_records_current_node_result_disposition"]
         processed_hashes = {
             item["scope"]["body_hash"]
             for item in processed.values()
@@ -662,13 +601,13 @@ class RoleOutputReconciliationTests(FlowPilotRouterRuntimeTestBase):
         status = read_json(run_root / "runtime" / "router_daemon_status.json")
         self.assertNotEqual(status["lifecycle_status"], "daemon_error")
         after = read_json(router.run_state_path(run_root))
-        canonical_disposition = read_json(run_root / "material" / "pm_material_scan_result_disposition.json")
+        canonical_disposition = read_json(self._canonical_disposition_path_for_event(run_root, "pm_records_current_node_result_disposition"))
         self.assertEqual(canonical_disposition["decision"], "rework_requested")
         self.assertEqual(len(after.get("role_output_replay_quarantine", [])), 1)
         package_events = [
             item
             for item in after["events"]
-            if isinstance(item, dict) and item.get("event") == "pm_records_material_scan_result_disposition"
+            if isinstance(item, dict) and item.get("event") == "pm_records_current_node_result_disposition"
         ]
         self.assertEqual(len(package_events), 1)
 
@@ -685,13 +624,13 @@ class RoleOutputReconciliationTests(FlowPilotRouterRuntimeTestBase):
         )
         old_body_hash = router._payload_body_hash(old_payload)  # type: ignore[attr-defined]
         before = read_json(router.run_state_path(run_root))
-        canonical_path = run_root / "material" / "pm_material_scan_result_disposition.json"
+        canonical_path = self._canonical_disposition_path_for_event(run_root, "pm_records_current_node_result_disposition")
         canonical_hash = read_json(canonical_path)["source_body_hash"]
         self.assertNotEqual(canonical_hash, old_body_hash)
 
         result = router.record_external_event(
             root,
-            "pm_records_material_scan_result_disposition",
+            "pm_records_current_node_result_disposition",
             old_payload,
         )
 
@@ -720,7 +659,7 @@ class RoleOutputReconciliationTests(FlowPilotRouterRuntimeTestBase):
         self.assertEqual(direct_reconcile["reconciled"], 1)
         after = read_json(router.run_state_path(run_root))
         self.assertIsNone(after.get("pending_action"))
-        canonical_path = run_root / "material" / "pm_material_scan_result_disposition.json"
+        canonical_path = self._canonical_disposition_path_for_event(run_root, "pm_records_current_node_result_disposition")
         self.assertTrue(canonical_path.exists())
         canonical = read_json(canonical_path)
         self.assertEqual(canonical["decision"], "absorbed")
@@ -728,7 +667,7 @@ class RoleOutputReconciliationTests(FlowPilotRouterRuntimeTestBase):
         package_events = [
             item
             for item in after["events"]
-            if isinstance(item, dict) and item.get("event") == "pm_records_material_scan_result_disposition"
+            if isinstance(item, dict) and item.get("event") == "pm_records_current_node_result_disposition"
         ]
         self.assertEqual(len(package_events), 1)
         self.assertTrue(
@@ -758,7 +697,7 @@ class RoleOutputReconciliationTests(FlowPilotRouterRuntimeTestBase):
         self.assertEqual(result["package_authority_splits"], 0)
         after = read_json(router.run_state_path(run_root))
         self.assertIsNone(after.get("pending_action"))
-        canonical_path = run_root / "material" / "pm_material_scan_result_disposition.json"
+        canonical_path = self._canonical_disposition_path_for_event(run_root, "pm_records_current_node_result_disposition")
         self.assertTrue(canonical_path.exists())
         self.assertEqual(read_json(canonical_path)["decision"], "absorbed")
 
@@ -773,7 +712,7 @@ class RoleOutputReconciliationTests(FlowPilotRouterRuntimeTestBase):
             root,
             run_root,
             state,
-            "pm_records_material_scan_result_disposition",
+            "pm_records_current_node_result_disposition",
             payload,
         )
         router.save_run_state(run_root, state)
@@ -781,7 +720,7 @@ class RoleOutputReconciliationTests(FlowPilotRouterRuntimeTestBase):
         self.assertTrue(result)
         after = read_json(router.run_state_path(run_root))
         self.assertIsNone(after.get("pending_action"))
-        canonical_path = run_root / "material" / "pm_material_scan_result_disposition.json"
+        canonical_path = self._canonical_disposition_path_for_event(run_root, "pm_records_current_node_result_disposition")
         self.assertTrue(canonical_path.exists())
         self.assertEqual(read_json(canonical_path)["decision"], "absorbed")
 
@@ -791,14 +730,14 @@ class RoleOutputReconciliationTests(FlowPilotRouterRuntimeTestBase):
         self.write_current_focus(root, run_root)
         _state, payload, _wait_action = self._seed_recorded_package_disposition_without_canonical_authority(root, run_root)
 
-        result = router.record_external_event(root, "pm_records_material_scan_result_disposition", payload)
+        result = router.record_external_event(root, "pm_records_current_node_result_disposition", payload)
 
         self.assertTrue(result["ok"])
         self.assertTrue(result["domain_commit_repaired"])
         self.assertTrue(result["authority_split"])
         after = read_json(router.run_state_path(run_root))
         self.assertIsNone(after.get("pending_action"))
-        canonical_path = run_root / "material" / "pm_material_scan_result_disposition.json"
+        canonical_path = self._canonical_disposition_path_for_event(run_root, "pm_records_current_node_result_disposition")
         self.assertTrue(canonical_path.exists())
         self.assertEqual(read_json(canonical_path)["decision"], "absorbed")
         self.assertEqual(len(after.get("package_disposition_authority_splits", [])), 0)
@@ -808,7 +747,7 @@ class RoleOutputReconciliationTests(FlowPilotRouterRuntimeTestBase):
         run_root = self.write_minimal_run(root, "run-direct-package-authority-contract")
         self.write_current_focus(root, run_root)
         state, payload, _wait_action = self._seed_recorded_package_disposition_without_canonical_authority(root, run_root)
-        event = "pm_records_material_scan_result_disposition"
+        event = "pm_records_current_node_result_disposition"
         scoped_identity = router._scoped_event_identity(root, run_root, state, event, payload)  # type: ignore[attr-defined]
 
         result = event_dispatcher._repair_direct_package_disposition_authority_split(
@@ -828,7 +767,7 @@ class RoleOutputReconciliationTests(FlowPilotRouterRuntimeTestBase):
         self.assertTrue(result["domain_commit_repaired"])
         after = read_json(router.run_state_path(run_root))
         self.assertIsNone(after.get("pending_action"))
-        canonical_path = run_root / "material" / "pm_material_scan_result_disposition.json"
+        canonical_path = self._canonical_disposition_path_for_event(run_root, "pm_records_current_node_result_disposition")
         self.assertTrue(canonical_path.exists())
         self.assertEqual(read_json(canonical_path)["decision"], "absorbed")
 
@@ -847,7 +786,7 @@ class RoleOutputReconciliationTests(FlowPilotRouterRuntimeTestBase):
         after = read_json(router.run_state_path(run_root))
         pending = after.get("pending_action") or {}
         self.assertNotEqual(pending.get("controller_action_id"), wait_action["controller_action_id"])
-        canonical_path = run_root / "material" / "pm_material_scan_result_disposition.json"
+        canonical_path = self._canonical_disposition_path_for_event(run_root, "pm_records_current_node_result_disposition")
         self.assertTrue(canonical_path.exists())
         self.assertEqual(read_json(canonical_path)["decision"], "absorbed")
         self.assertEqual(len(after.get("package_disposition_authority_splits", [])), 0)
@@ -856,7 +795,7 @@ class RoleOutputReconciliationTests(FlowPilotRouterRuntimeTestBase):
         root = self.make_project()
         run_root = self.write_minimal_run(root, "run-ledger-package-bad-source-self-check")
         self.write_current_focus(root, run_root)
-        state, _payload, wait_action = self._seed_commit_capable_material_disposition_candidate(
+        state, _payload, wait_action = self._seed_commit_capable_package_disposition_candidate(
             root,
             run_root,
             result_self_check_passes=False,
@@ -870,21 +809,20 @@ class RoleOutputReconciliationTests(FlowPilotRouterRuntimeTestBase):
         self.assertEqual(direct_reconcile["reconciled"], 0)
         self.assertEqual(direct_reconcile["skipped_invalid"], 1)
         after = read_json(router.run_state_path(run_root))
-        self.assertFalse(after["flags"].get("material_scan_result_disposition_recorded"))
+        self.assertFalse(after["flags"].get("current_node_result_disposition_recorded"))
         self.assertEqual((after.get("pending_action") or {}).get("controller_action_id"), wait_action["controller_action_id"])
-        self.assertFalse((run_root / "material" / "pm_material_scan_result_disposition.json").exists())
+        self.assertFalse((self._canonical_disposition_path_for_event(run_root, "pm_records_current_node_result_disposition")).exists())
         package_events = [
             item
             for item in after["events"]
-            if isinstance(item, dict) and item.get("event") == "pm_records_material_scan_result_disposition"
+            if isinstance(item, dict) and item.get("event") == "pm_records_current_node_result_disposition"
         ]
         self.assertEqual(package_events, [])
         processed = (after.get("external_event_idempotency") or {}).get("processed") or {}
-        self.assertNotIn("pm_records_material_scan_result_disposition", processed)
+        self.assertNotIn("pm_records_current_node_result_disposition", processed)
 
     def test_role_output_ledger_package_disposition_commits_domain_artifact_before_event_record(self) -> None:
         events = (
-            "pm_records_material_scan_result_disposition",
             "pm_records_research_result_disposition",
             "pm_records_current_node_result_disposition",
         )
@@ -894,7 +832,7 @@ class RoleOutputReconciliationTests(FlowPilotRouterRuntimeTestBase):
                 root = self.make_project()
                 run_root = self.write_minimal_run(root, f"run-ledger-package-domain-first-{event_slug}")
                 self.write_current_focus(root, run_root)
-                state, _payload, _wait_action = self._seed_commit_capable_material_disposition_candidate(
+                state, _payload, _wait_action = self._seed_commit_capable_package_disposition_candidate(
                     root,
                     run_root,
                     event=event,
@@ -936,7 +874,7 @@ class RoleOutputReconciliationTests(FlowPilotRouterRuntimeTestBase):
                 run_root = self.write_minimal_run(root, f"run-package-conflict-replay-missing-required-flag-{owner}")
                 self.write_current_focus(root, run_root)
                 state = self._seed_package_disposition_conflict_replay(root, run_root, owner=owner)
-                required_flag = router.EXTERNAL_EVENTS["pm_records_material_scan_result_disposition"]["requires_flag"]
+                required_flag = router.EXTERNAL_EVENTS["pm_records_current_node_result_disposition"]["requires_flag"]
                 state["flags"].pop(required_flag, None)
                 router.save_run_state(run_root, state)
 
@@ -951,12 +889,12 @@ class RoleOutputReconciliationTests(FlowPilotRouterRuntimeTestBase):
                 package_events = [
                     item
                     for item in after["events"]
-                    if isinstance(item, dict) and item.get("event") == "pm_records_material_scan_result_disposition"
+                    if isinstance(item, dict) and item.get("event") == "pm_records_current_node_result_disposition"
                 ]
                 self.assertEqual(len(package_events), 1)
                 self.assertEqual(
                     (after.get("pending_action") or {}).get("label"),
-                    f"controller_waits_for_material_scan_{owner}_resolution",
+                    f"controller_waits_for_current_node_{owner}_resolution",
                 )
                 self.assertTrue(
                     any(
@@ -988,13 +926,13 @@ class RoleOutputReconciliationTests(FlowPilotRouterRuntimeTestBase):
                 after = read_json(router.run_state_path(run_root))
                 self.assertEqual(
                     (after.get("pending_action") or {}).get("label"),
-                    f"controller_waits_for_material_scan_{owner}_resolution",
+                    f"controller_waits_for_current_node_{owner}_resolution",
                 )
                 self.assertEqual(len(after.get("role_output_replay_quarantine", [])), 1)
                 package_events = [
                     item
                     for item in after["events"]
-                    if isinstance(item, dict) and item.get("event") == "pm_records_material_scan_result_disposition"
+                    if isinstance(item, dict) and item.get("event") == "pm_records_current_node_result_disposition"
                 ]
                 self.assertEqual(len(package_events), 1)
 
@@ -1002,7 +940,7 @@ class RoleOutputReconciliationTests(FlowPilotRouterRuntimeTestBase):
         root = self.make_project()
         run_root = self.write_minimal_run(root, "run-resolved-wait-current-work")
         self.write_current_focus(root, run_root)
-        wait_action, entry = self._seed_resolved_material_review_wait(root, run_root)
+        wait_action, entry = self._seed_resolved_current_node_review_wait(root, run_root)
         state = read_json(router.run_state_path(run_root))
         self.assertEqual((state.get("pending_action") or {}).get("controller_action_id"), entry["action_id"])
 

@@ -1,4 +1,4 @@
-"""Focused child helpers for FlowPilot router work-packet next actions."""
+"""Ordinary research result reconciliation for FlowPilot work packets."""
 
 from __future__ import annotations
 
@@ -43,12 +43,6 @@ def _bind_router(router: ModuleType) -> None:
         current[name] = value
 
 _PACKET_FAMILY_RESULT_RECONCILIATION = {
-    'material_scan': {
-        'event': 'worker_scan_results_returned',
-        'index_label': 'material scan',
-        'relayed_flag': 'material_scan_packets_relayed',
-        'next_recipient': 'project_manager',
-    },
     'research': {
         'event': 'worker_research_report_returned',
         'index_label': 'research',
@@ -59,21 +53,8 @@ _PACKET_FAMILY_RESULT_RECONCILIATION = {
 }
 
 
-def _try_reconcile_material_scan_body_delivery(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any]) -> bool:
-    _bind_router(router)
-    flags = run_state.get('flags') if isinstance(run_state.get('flags'), dict) else {}
-    if flags.get('worker_packets_delivered') or not flags.get('material_scan_packets_relayed'):
-        return False
-    try:
-        material_index = router._load_packet_index(router._material_scan_index_path(run_root), label='material scan')
-        router._validate_packet_bodies_opened_by_targets(project_root, run_state, material_index['packets'])
-    except (RouterError, packet_runtime.PacketRuntimeError, OSError, json.JSONDecodeError):
-        return False
-    return _record_router_reconciled_external_event(project_root, run_root, run_state, 'worker_scan_packet_bodies_delivered_after_dispatch', {'packet_ids': [record.get('packet_id') for record in material_index['packets'] if isinstance(record, dict)], 'reconciled_from_packet_receipts': True})
 def _packet_family_index_path(router: ModuleType, run_root: Path, batch_kind: str) -> Path:
     _bind_router(router)
-    if batch_kind == 'material_scan':
-        return router._material_scan_index_path(run_root)
     if batch_kind == 'research':
         return router._research_packet_index_path(run_root)
     raise RouterError(f'unsupported packet family result reconciliation kind: {batch_kind}')
@@ -115,10 +96,6 @@ def _try_reconcile_packet_family_results(
     summary = router._refresh_parallel_packet_batch_from_durable_results(project_root, run_root, run_state, batch_kind)
     if not summary.get('all_results_returned'):
         return bool(summary.get('changed'))
-    if batch_kind == 'material_scan':
-        router._try_reconcile_material_scan_body_delivery(project_root, run_root, run_state)
-        if not run_state['flags'].get('worker_packets_delivered'):
-            return bool(summary.get('changed'))
     try:
         router._validate_results_exist_for_packets(project_root, run_state, index['packets'], next_recipient=str(config['next_recipient']))
     except (RouterError, packet_runtime.PacketRuntimeError):
@@ -130,14 +107,10 @@ def _try_reconcile_packet_family_results(
         except (RouterError, packet_runtime.PacketRuntimeError):
             return bool(summary.get('changed'))
     return _record_router_reconciled_external_event(project_root, run_root, run_state, event, payload) or bool(summary.get('changed'))
-def _try_reconcile_material_scan_results(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any]) -> bool:
-    return _try_reconcile_packet_family_results(router, project_root, run_root, run_state, 'material_scan')
 def _try_reconcile_research_results(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any]) -> bool:
     return _try_reconcile_packet_family_results(router, project_root, run_root, run_state, 'research')
 
 __all__ = (
-    '_try_reconcile_material_scan_body_delivery',
-    '_try_reconcile_material_scan_results',
     '_try_reconcile_research_results',
 )
 

@@ -13,7 +13,7 @@ def _safe_base(**changes: object) -> State:
             status="complete",
             step=10,
             controller_boundary_preserved=True,
-            material_scan_packets_observed=True,
+            current_prework_contract_observed=True,
             terminal_closure_observed=True,
             completed_nodes_observed=True,
             route_snapshot_visible=True,
@@ -40,14 +40,17 @@ def hazard_states() -> dict[str, State]:
         "controller_reads_sealed_body_during_audit": _safe_base(
             sealed_body_files_opened_by_controller=True,
         ),
-        "material_dispatch_output_contract_role_drift": _safe_base(
-            material_output_contract_role_scoped=False,
+        "retired_material_protocol_reintroduced": _safe_base(
+            retired_material_protocol_absent=False,
         ),
-        "material_dispatch_write_target_missing": _safe_base(
-            material_dispatch_write_target_explicit=False,
+        "mandatory_shallow_skill_inventory_removed": _safe_base(
+            shallow_skill_inventory_preserved=False,
         ),
-        "unsupported_material_packets_left_unrejected": _safe_base(
-            unsupported_material_packets_rejected=False,
+        "ordinary_resource_work_forced_as_gate": _safe_base(
+            ordinary_resource_work_optional=False,
+        ),
+        "complete_workstream_report_contract_dropped": _safe_base(
+            complete_workstream_report_contract_preserved=False,
         ),
         "terminal_closure_missing_run_lifecycle": _safe_base(
             run_lifecycle_record_written=False,

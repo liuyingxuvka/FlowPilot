@@ -59,15 +59,16 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         )
         return
 
-    if not state.material_scan_packets_observed:
+    if not state.current_prework_contract_observed:
         yield Transition(
-            "material_scan_envelopes_have_role_contracts_and_write_targets",
+            "current_prework_contract_excludes_retired_material_protocol",
             _inc(
                 state,
-                material_scan_packets_observed=True,
-                material_output_contract_role_scoped=True,
-                material_dispatch_write_target_explicit=True,
-                unsupported_material_packets_rejected=True,
+                current_prework_contract_observed=True,
+                retired_material_protocol_absent=True,
+                shallow_skill_inventory_preserved=True,
+                ordinary_resource_work_optional=True,
+                complete_workstream_report_contract_preserved=True,
             ),
         )
         return

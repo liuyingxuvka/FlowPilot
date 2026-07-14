@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import sys
 import unittest
+import json
+from dataclasses import replace
 from pathlib import Path
 
 
@@ -68,6 +70,67 @@ class FlowPilotFieldMeshModelTests(unittest.TestCase):
         unbound = [binding for binding in result["critical_bindings"] if not binding["bound"]]
 
         self.assertFalse(unbound, unbound)
+
+    def test_skillguard_native_bindings_have_one_current_field_lifecycle(self) -> None:
+        contracts = {
+            row["field"]: row
+            for row in model.MAINTENANCE_AUTHORITY_FIELD_CONTRACTS
+        }
+        self.assertEqual(
+            {
+                "skillguard.contract_source.native_route_bindings[]",
+                "skillguard.contract_source.native_check_bindings[]",
+            },
+            set(contracts),
+        )
+        for row in contracts.values():
+            self.assertEqual(row["owner"], "flowpilot_skillguard_contract_source")
+            self.assertEqual(row["writers"], ("flowpilot_contract_maintainer",))
+            self.assertIn("skillguard_global_router", row["readers"])
+            self.assertTrue(row["projections"])
+            self.assertEqual(row["lifecycle"], "current")
+            self.assertEqual(row["missing_disposition"], "global_skill_selection_blocked")
+            self.assertFalse(row["default_allowed"])
+            self.assertFalse(row["fallback_allowed"])
+
+        report = self.field_mesh_result()["maintenance_authority_report"]
+        self.assertTrue(report["ok"], report)
+        self.assertEqual(report["contract_count"], 2)
+        self.assertEqual(report["current_contract_count"], 2)
+        self.assertFalse(report["findings"])
+
+    def test_missing_skillguard_native_binding_blocks_field_mesh_without_fallback(self) -> None:
+        source = json.loads(runner.SKILLGUARD_CONTRACT_SOURCE_PATH.read_text(encoding="utf-8"))
+        source["native_route_bindings"] = []
+        authority = runner._maintenance_authority_report(source)
+        self.assertFalse(authority["ok"])
+        self.assertIn("native_route_bindings_stale_or_incomplete", authority["findings"])
+
+        state = replace(
+            model.State(
+                observed_field_count=1,
+                classified_field_count=1,
+                child_model_count=len(model.FIELD_CHILD_MODELS),
+                importance_tier_count=len(model.IMPORTANCE_TIERS),
+                lifecycle_status_count=len(model.FIELD_LIFECYCLE_STATES),
+                critical_contract_count=1,
+                critical_contracts_bound_to_code=1,
+                maintenance_authority_contract_count=(
+                    model.REQUIRED_MAINTENANCE_AUTHORITY_FIELD_CONTRACT_COUNT
+                ),
+                maintenance_authority_contracts_current=(
+                    model.REQUIRED_MAINTENANCE_AUTHORITY_FIELD_CONTRACT_COUNT
+                ),
+                full_inventory_written=True,
+                child_partition_summary_written=True,
+            ),
+            maintenance_authority_contract_count=authority["contract_count"],
+            maintenance_authority_contracts_current=authority["current_contract_count"],
+            maintenance_authority_finding_count=len(authority["findings"]),
+        )
+        transition = list(model.next_safe_states(state))[0]
+        self.assertEqual(transition.label, "block_stale_maintenance_authority_field_projection")
+        self.assertEqual(transition.state.status, "blocked")
 
     def test_router_runtime_tests_do_not_synthesize_default_agent_ids(self) -> None:
         offenders: list[str] = []

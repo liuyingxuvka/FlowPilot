@@ -1,69 +1,58 @@
-# Parallel Packet Batch Upgrade Plan
+# Current Parallel Packet Work Contract
 
-## Goal
+## Status
 
-Upgrade PM-authored work from single active packet/request channels to a
-router-owned parallel packet batch. PM may issue one batch containing multiple
-bounded packets for roles that can start now. Router records the full batch,
-relays packets to the addressed roles, waits for every packet result, then
-performs one batch-level review or PM absorption step before the route advances.
+This document describes the current single FlowPilot path. It is not a plan to
+add a universal `parallel_packet_batch` ledger or a second batch runtime.
+Parallel work reuses the packet, result, review, PM-disposition, blocker, and
+route-node records that already own the relevant work family.
 
-## Implementation Checklist
+## Current owners
 
-| Step | Area | Concrete Change | Done Signal |
-| --- | --- | --- | --- |
-| 1 | FlowGuard model | Add a dedicated parallel packet batch model covering batch registration, relay, result join, batch review, PM absorption, repair, and stage advance. | Model safe graph passes and known-bad hazards are detected. |
-| 2 | Shared batch runtime | Add router helpers for a `parallel_packet_batch` index with `batch_id`, `batch_kind`, `join_policy`, `review_policy`, packet records, counts, and per-packet status. | One helper can register, load, relay, validate all results, and mark review/absorption for material, research, current-node, and PM role-work. |
-| 3 | Material scan | Move the existing material `packets[]` path onto the shared batch index while keeping material-specific review rules. | Material scan records one batch, relays all packets, and relays all results to reviewer only after every result exists. |
-| 4 | Research package | Replace single `worker_owner`/single packet behavior with `packets[]`. Allow worker and FlowGuard operator packets when the PM package needs parallel research/modeling. | Research relay can address multiple packet recipients and waits for all research/FlowGuard operator results before reviewer direct-source/model review. |
-| 5 | Current node work | Replace the single current-node packet/write grant with a current-node batch and one grant per packet. | PM can register multiple current-node packets, Router tracks all grants, all results, and one batch review before PM node completion. |
-| 6 | PM role-work requests | Replace single `active_request_id` with an active request batch containing multiple role-work packets. | PM may ask multiple roles for bounded advice; Router waits for all returned results before PM records one batch decision. |
-| 7 | Reviewer flow | Add batch-level review contract fields: `batch_id`, `reviewed_packet_ids`, `packet_count`, `per_packet_findings`, and `overall_passed`. | Reviewer cannot pass a batch unless every required packet is opened and reviewed. |
-| 8 | Prompt cards | Update PM, worker, FlowGuard operator, and reviewer cards to describe batch registration, direct-to-router returns, role busy/idle, and one batch join before stage advance. | No active prompt tells roles to return result envelopes through Controller or to advance after a single packet in a batch. |
-| 9 | Tests | Add targeted runtime tests for material, research, current-node, PM role-work, FlowGuard operator packets, partial-result blocking, batch review blocking, and all-pass advance. | New targeted tests pass; existing router/model checks still pass. |
-| 10 | Local sync | Refresh the locally installed FlowPilot skill from the repo and run local install audits. | `install_flowpilot.py --sync-repo-owned --json`, audit, and check commands pass; local git commit records the change. |
-
-## Prompt Files To Update
-
-| File | Required Update |
-| --- | --- |
-| `skills/flowpilot/assets/runtime_kit/cards/phases/pm_material_scan.md` | Describe material scan as a batch. PM may include multiple worker packets; Router joins every result before material sufficiency review. |
-| `skills/flowpilot/assets/runtime_kit/cards/phases/pm_research_package.md` | Replace single `worker_owner` guidance with `packets[]`. PM may include worker research and FlowGuard operator model packets in the same research batch. |
-| `skills/flowpilot/assets/runtime_kit/cards/phases/pm_current_node_loop.md` | Replace single current-node packet guidance with current-node batch guidance. All packet results must join and pass one batch result review before PM completes the node. |
-| `skills/flowpilot/assets/runtime_kit/cards/phases/pm_role_work_request.md` | Replace one active request with one active request batch. PM records one disposition after all role-work results return. |
-| `skills/flowpilot/assets/runtime_kit/cards/roles/project_manager.md` | Add PM-wide rule: issue only work that can start now; simultaneous packet registration means PM asserts the packets can run in parallel inside the current router-authorized scope. |
-| `skills/flowpilot/assets/runtime_kit/cards/roles/worker.md` and `worker.md` | Clarify workers complete only their addressed packet and do not infer batch completion or route advancement. |
-| `skills/flowpilot/assets/runtime_kit/cards/roles/flowguard_operator.md` and `flowguard_operator.md` | Clarify FlowGuard operators may receive PM batch packets for bounded FlowGuard/modeling work, but cannot make PM decisions or reviewer approvals. |
-| `skills/flowpilot/assets/runtime_kit/cards/reviewer/worker_result_review.md` | Add batch-review rule: review every packet result in the Router-supplied batch list and return one overall pass/block report. |
-
-## Failure Modes FlowGuard Must Catch
-
-| ID | Failure Mode | Required Detection |
+| Work kind | Current owner and path | Join and advance rule |
 | --- | --- | --- |
-| F1 | Router advances after the first packet result instead of waiting for all results. | Invariant failure: stage advanced before batch joined. |
-| F2 | Reviewer passes a batch after reviewing only part of the packet list. | Invariant failure: review passed without all packet ids reviewed. |
-| F3 | Router gives a role a second packet while that role still has an open packet. | Invariant failure: busy role assigned another open packet. |
-| F4 | PM emits duplicate packet ids or a duplicate active batch for the same stage. | Invariant failure: duplicate batch/packet registration accepted. |
-| F5 | Old single-packet path bypasses the batch index. | Invariant failure: packet relayed or result accepted without batch membership. |
-| F6 | FlowGuard operator packet result is not counted in the batch join. | Invariant failure: batch joined while any FlowGuard operator packet is missing. |
-| F7 | Controller reads or relays sealed body content instead of envelope metadata. | Invariant failure: sealed body boundary broken. |
-| F8 | One packet blocks or fails, but the whole batch is still marked passed. | Invariant failure: batch passed with blocking packet. |
-| F9 | Batch repair/reissue loses lineage from the original batch and packets. | Invariant failure: replacement batch lacks parent batch/packet lineage. |
-| F10 | Prompt says batch parallelism exists while runtime remains single active request/packet. | Conformance failure: prompt/runtime capability mismatch. |
-| F11 | Generic wait events still use one fixed producer role and reject the remaining batch member, for example waiting for worker B with an event formerly classified as worker A. | Invariant failure: dynamic batch wait rejected a valid remaining event producer role. |
+| Research or source verification | Existing PM research package and research packet/result reconciliation | PM absorbs every required current result; risk-appropriate Reviewer or FlowGuard checks use the ordinary review path before any dependent route decision. |
+| Current-node implementation | Existing current-node packet/result family and write-grant boundary | Every packet remains bounded by the accepted node contract; PM integrates accepted results before node completion. |
+| PM role work | Existing PM role-work request/batch, result, and disposition records | PM records a disposition for every required returned result before the request closes. |
+| FlowGuard modeling | Existing FlowGuard Operator packet/result and formal gate surfaces | Role-local modeling is advisory; formal independent FlowGuard and Reviewer authority remains unchanged. |
+| Available project material | Ordinary PM reading or an ordinary research/source-verification work package | No dedicated material phase, result family, sufficiency gate, or mandatory artifact map exists. |
 
-## FlowGuard Risk Intent Brief
+The PM may issue work in parallel only when every packet can start inside the
+current Router-authorized scope. Each substantive role writes its numbered
+local workstream plan, executes and integrates its bounded delegation, verifies
+the result, repairs in-scope defects, and reports per-step completion through
+the existing result body. Router enforces mechanical packet identity and
+currentness; Reviewer audits substantive completeness against actual artifacts
+and evidence.
 
-- Protected harm: route stages advancing from partial work, PM decisions from
-  incomplete evidence, reviewer approval over only a subset of a parallel batch,
-  Controller body access, role overload, and prompt/runtime drift.
-- State to model: active batch, packet membership, role busy state, relay
-  records, result records, reviewer coverage, PM absorption, repair lineage,
-  dynamic wait producer binding, and route stage advancement.
-- Side effects to model: packet relay, result receipt, reviewer batch report,
-  PM batch disposition, and route advance.
-- Hard invariant: every work path that may affect the route must be a member of
-  exactly one active batch, and route advancement requires every packet in that
-  batch to have returned, been reviewed when required, and not be blocked.
-- Blindspot: the model is an abstract preflight. Runtime tests and prompt
-  coverage checks remain required after implementation.
+## Current invariants
+
+- A role cannot infer route advancement, product acceptance, or batch
+  completion from its own packet.
+- Partial results cannot be projected as completed PM integration.
+- Reviewer and formal FlowGuard decisions remain independent of role-local
+  self-checks.
+- Controller handles envelopes and Runtime-derived foreground actions; it does
+  not read sealed bodies or invent a substantive plan.
+- Missing material reading, research, experiment, or source verification is an
+  ordinary PM-selected work package, not a mandatory startup gate.
+- An optional material artifact map is navigation only and cannot satisfy an
+  acceptance or evidence gate.
+
+## Retired positive surfaces
+
+The former `pm.material_scan`, `worker.material_scan`,
+`worker_material_scan_result`, `reviewer.material_sufficiency`, dedicated
+material repair/reconciliation actions, and material-intake templates are
+retired current-contract names. They may appear only in negative tests,
+forbidden/deleted lists, or explicitly historical diagnostics. Runtime must
+reject them rather than translate, default, or route them through an alternate
+success path.
+
+## Validation ownership
+
+FlowGuard models partial-result, stale-evidence, duplicate-authority,
+self-approval, and route-advance hazards. Ordinary tests exercise the real
+packet/result/review APIs. Acceptance TestMesh compiles current frozen-source
+all, adversarial, and release artifacts; strict parent checks consume that
+proof before repository final confidence runs as the terminal consumer.

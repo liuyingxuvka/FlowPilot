@@ -19,7 +19,10 @@ runtime_context: Treat the runtime delivery envelope as the live source for the 
 - Treat the router's current `allowed_external_events` as the active authority for what this card may return.
 
 
-Use this card only after the reviewer reports material insufficient.
+Use this card when PM decides an ordinary bounded reading, research,
+experiment, or source-verification work package is needed. It is not a
+mandatory startup phase and does not depend on a special material-sufficiency
+result.
 
 Write a bounded research package that names:
 
@@ -28,8 +31,8 @@ Write a bounded research package that names:
 - host capability or approval constraints;
 - worker owner and stop conditions;
 - direct-source or experiment-output checks the reviewer must perform;
-- how the result can affect material understanding, route mutation, user
-  questions, or blocking.
+- how the result can affect PM understanding, route mutation, user questions,
+  or blocking.
 
 The research package must preserve the original core deliverable boundary.
 When the unresolved fact concerns required material, external access, source
@@ -62,13 +65,12 @@ bodies must tell target roles to use the Router-issued current packet lease when
 present and to submit result envelope/status metadata through the authorized
 runtime path and current `allowed_external_events`.
 
-Any research worker packet created from the package must include the registry
-`output_contract` `flowpilot.output_contract.worker_research_result.v1` in both
-the packet envelope and packet body's `Output Contract` section.
-The packet body must also include the generated `Report Contract For This Task`
-block, including the required research result sections and the blocked/needs-PM
-return path. Do not rely on the worker to infer the research report format from
-this phase card alone.
+Any research worker packet created from the package must select registry
+`output_contract` `flowpilot.output_contract.worker_research_result.v1`;
+runtime projects it through `current_handoff_contract.v2` into the addressed
+role's `submission_checklist.v2`. The packet body carries semantic research
+context only. The worker must ACK and open the packet, then use the checklist
+for required research-result sections and the blocked return path.
 The packet body must also ask the worker to include a soft `PM Note` in the
 sealed result body with exactly these labels: `In-scope quality choice` and
 `PM consideration`. This note is PM decision-support, not a reviewer hard gate:
@@ -87,6 +89,8 @@ The packet body must also require a `PM Suggestion Items` section. Worker
 suggestions are candidate `flowpilot.pm_suggestion_item.v1` items for PM's
 ledger disposition and never authorize current-gate blocking by themselves.
 
-Do not proceed to product architecture until PM has dispositioned the research
-result and the formal reviewer source-check gate has either passed or driven a
-PM route change, rework request, user question, or blocker.
+Do not use an undispositioned result as decision evidence. When this ordinary
+work is a real dependency for a current product/route decision, PM must
+disposition it and complete the risk-appropriate existing Reviewer/FlowGuard
+check before that dependent decision advances. Unrelated project work need not
+wait on a blanket material gate.

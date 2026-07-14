@@ -498,7 +498,7 @@ class FlowPilotSyntheticExceptionTraceReplayTests(FlowPilotRouterRuntimeTestBase
             state,
             source="synthetic_trace",
             error_message="fake PM package repairs route draft handoff",
-            event="reviewer_reports_material_sufficient",
+            event="current_node_reviewer_blocks_result",
             payload={"report_path": ".flowpilot/runs/test/reviews/synthetic-route-draft.json"},
         )
         self.assertTrue(self.handle_pending_control_blocker(root))
@@ -536,7 +536,7 @@ class FlowPilotSyntheticExceptionTraceReplayTests(FlowPilotRouterRuntimeTestBase
             state,
             source="synthetic_trace",
             error_message="fake PM package tries invalid repair target",
-            event="reviewer_reports_material_sufficient",
+            event="current_node_reviewer_blocks_result",
             payload={"report_path": ".flowpilot/runs/test/reviews/synthetic-invalid-target.json"},
         )
         self.assertTrue(self.handle_pending_control_blocker(root))
@@ -566,7 +566,7 @@ class FlowPilotSyntheticExceptionTraceReplayTests(FlowPilotRouterRuntimeTestBase
             stale_state,
             source="synthetic_trace",
             error_message="fake PM package points to a registered target that is not receivable yet",
-            event="reviewer_reports_material_sufficient",
+            event="current_node_reviewer_blocks_result",
             payload={"report_path": ".flowpilot/runs/test/reviews/synthetic-not-receivable.json"},
         )
         self.assertTrue(self.handle_pending_control_blocker(stale_root))
@@ -881,40 +881,6 @@ class FlowPilotSyntheticExceptionTraceReplayTests(FlowPilotRouterRuntimeTestBase
         self.assertEqual(original["status"], "blocked")
         self.assertEqual(original["deliverable_repair_failed_receipts"], 2)
 
-    def test_material_repair_generation_blocks_stale_flags_fake_package(self) -> None:
-        root = self.make_project()
-        run_root = self.boot_to_controller(root)
-        self.complete_startup_runtime_entry(root)
-
-        self.deliver_expected_card(root, "pm.material_scan")
-        router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
-        state = read_json(router.run_state_path(run_root))
-        generation = router._commit_material_scan_repair_generation(  # type: ignore[attr-defined]
-            root,
-            run_root,
-            state,
-            transaction_id="synthetic-repair-tx-active-generation",
-            packet_generation_id="synthetic-repair-tx-active-generation-gen-001",
-            packet_specs=[
-                {"packet_id": "synthetic-material-repair-worker", "to_role": "worker", "body_text": "Repair generation packet"},
-            ],
-        )
-        state["flags"]["material_scan_packets_relayed"] = True
-        state["flags"]["worker_packets_delivered"] = True
-        state["flags"]["worker_scan_results_returned"] = True
-        state["flags"]["material_scan_results_relayed_to_pm"] = True
-        state["flags"]["material_scan_result_disposition_recorded"] = True
-        router.save_run_state(run_root, state)
-        self.ensure_current_role_agent_for_role(root, "worker")
-
-        action = self.next_after_display_sync(root)
-
-        self.assertEqual(action["action_type"], "relay_material_scan_packets")
-        self.assertEqual(set(action["packet_ids"]), {packet["packet_id"] for packet in generation["packets"]})
-        batch = router._active_parallel_packet_batch(run_root, "material_scan")  # type: ignore[attr-defined]
-        self.assertEqual(batch["counts"]["relayed"], 0)
-        self.assertEqual(batch["counts"]["results_returned"], 0)
-
     def test_dirty_terminal_ledgers_block_completion_fake_package(self) -> None:
         root = self.make_project()
         self.boot_to_controller(root)
@@ -940,7 +906,7 @@ class FlowPilotSyntheticExceptionTraceReplayTests(FlowPilotRouterRuntimeTestBase
             state,
             source="systemic_synthetic_trace",
             error_message="valid envelope carries a PM repair decision missing self-check content",
-            event="reviewer_reports_material_sufficient",
+            event="current_node_reviewer_blocks_result",
             payload={"report_path": ".flowpilot/runs/test/reviews/systemic-valid-envelope-bad-content.json"},
         )
         self.assertTrue(self.handle_pending_control_blocker(root))
@@ -978,66 +944,6 @@ class FlowPilotSyntheticExceptionTraceReplayTests(FlowPilotRouterRuntimeTestBase
         router.apply_action(root, "handle_control_blocker")
         ledger_text = (run_root / "pm_suggestion_ledger.jsonl").read_text(encoding="utf-8")
         self.assertIn('"closure": {"blocks_current_gate_until_closed": true', ledger_text)
-
-    def test_system_story_failed_pm_repair_loop_registers_followup_blocker(self) -> None:
-        root = self.make_project()
-        run_root = self.boot_to_controller(root)
-        self.complete_startup_runtime_entry(root)
-        self.deliver_expected_card(root, "pm.material_scan")
-        router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
-        state = read_json(router.run_state_path(run_root))
-        blocker = router._write_control_blocker(  # type: ignore[attr-defined]
-            root,
-            run_root,
-            state,
-            source="systemic_synthetic_trace",
-            error_message="PM repair loop still has invalid material dispatch evidence",
-            action_type="controller_no_legal_next_action",
-            payload={"path": self.rel(root, router.run_state_path(run_root)), "role": "controller"},
-        )
-        self.assertTrue(self.handle_pending_control_blocker(root))
-        decision = self.pm_control_blocker_decision_body(
-            blocker["blocker_id"],
-            decision="repair_completed",
-            rerun_target="router_direct_material_scan_dispatch_recheck_passed",
-        )
-        decision["repair_transaction"] = {
-            "plan_kind": "packet_reissue",
-            "replacement_packets": [
-                {
-                    "packet_id": "systemic-material-scan-r1",
-                    "replacement_for": "material-scan-001",
-                    "to_role": "worker",
-                    "body_text": "Systemic replay replacement packet with still-blocked dispatch evidence.",
-                }
-            ],
-        }
-        router.record_external_event(
-            root,
-            "pm_records_control_blocker_repair_decision",
-            self.role_decision_envelope(root, "systemic/pm_repair_loop_decision", decision),
-        )
-
-        router.record_external_event(
-            root,
-            "router_direct_material_scan_dispatch_recheck_blocked",
-            self.role_report_envelope(
-                root,
-                "systemic/pm_repair_loop_recheck_blocked",
-                {
-                    "checked_by_role": "controller",
-                    "dispatch_allowed": False,
-                    "blockers": ["replacement packet still lacks valid dispatch evidence"],
-                },
-            ),
-        )
-
-        state = read_json(router.run_state_path(run_root))
-        active = state["active_control_blocker"]
-        self.assertNotEqual(active["blocker_id"], blocker["blocker_id"])
-        self.assertEqual(active["handling_lane"], "pm_repair_decision_required")
-        tx_index = read_json(run_root / "control_blocks" / "repair_transactions" / "repair_transaction_index.json")
-        self.assertIsNone(tx_index["active_transaction"])
 
     def test_system_story_stale_run_state_save_cannot_clear_active_blocker(self) -> None:
         root = self.make_project()

@@ -6,9 +6,25 @@ import argparse
 from collections import Counter, defaultdict, deque
 import json
 from pathlib import Path
+import sys
 from typing import Any
 
 from flowguard.explorer import Explorer
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from scripts.compile_flowpilot_acceptance_testmesh_evidence import source_fingerprint
+
+try:  # pragma: no cover
+    from .flowpilot_evidence_truth import (
+        derived_owner_proof,
+        load_manifest,
+        proof_bundle_report,
+    )
+except ImportError:  # pragma: no cover
+    from flowpilot_evidence_truth import derived_owner_proof, load_manifest, proof_bundle_report
 
 try:  # pragma: no cover
     from . import flowpilot_current_contract_cartesian_matrix as model
@@ -17,7 +33,6 @@ except ImportError:  # pragma: no cover
 
 
 ROOT = Path(__file__).resolve().parent
-REPO_ROOT = ROOT.parent
 RESULTS_PATH = ROOT / "flowpilot_current_contract_cartesian_matrix_results.json"
 
 REQUIRED_LABELS = {
@@ -145,7 +160,7 @@ def _is_old_evidence_risk(cell: dict[str, Any]) -> bool:
     return (
         cell["object_state"] in {"stale_run", "stale_route", "stale_packet"}
         or cell["timing"] == "old_result_after_reissue"
-        or cell["execution_source"] == "stale_workspace"
+        or cell["execution_source"] in model.HISTORICAL_NEGATIVE_EXECUTION_SOURCES
     )
 
 
@@ -156,6 +171,7 @@ def _matrix_report() -> dict[str, Any]:
     by_owner: Counter[str] = Counter()
     by_existing_link: Counter[str] = Counter()
     by_shard: Counter[str] = Counter()
+    shards_by_owner: dict[str, set[str]] = defaultdict(set)
     by_axis: dict[str, Counter[str]] = {
         "action": Counter(),
         "object_state": Counter(),
@@ -174,8 +190,18 @@ def _matrix_report() -> dict[str, Any]:
     future_claim_accepted: list[str] = []
     progress_accepted_as_evidence: list[str] = []
     legacy_positive_acceptance: list[str] = []
+    source_purity_positive_acceptance: list[str] = []
+    source_purity_shape_failures: list[str] = []
+    source_purity_by_entrypoint: Counter[str] = Counter()
+    source_purity_by_failure_class: Counter[str] = Counter()
+    source_purity_historical_negative_count = 0
     sample_cells: list[dict[str, Any]] = []
     link_ids = {str(link["link_id"]) for link in model.EXISTING_TEST_LINKS}
+    noncurrent_sources_in_positive_profiles = {
+        group: sorted(set(profile["sources"]) & set(model.HISTORICAL_NEGATIVE_EXECUTION_SOURCES))
+        for group, profile in model.PROFILE_BY_STAGE_GROUP.items()
+        if set(profile["sources"]) & set(model.HISTORICAL_NEGATIVE_EXECUTION_SOURCES)
+    }
 
     for index, cell in enumerate(model.REQUIRED_FULL_CARTESIAN_CELLS):
         reaction = str(cell["expected_reaction"])
@@ -184,6 +210,7 @@ def _matrix_report() -> dict[str, Any]:
         by_stage_group[str(cell["stage_group"])] += 1
         by_owner[owner] += 1
         by_shard[str(cell["coverage_shard_id"])] += 1
+        shards_by_owner[owner].add(str(cell["coverage_shard_id"]))
         for axis in by_axis:
             by_axis[axis][str(cell[axis])] += 1
         if len(sample_cells) < 20:
@@ -215,12 +242,27 @@ def _matrix_report() -> dict[str, Any]:
         if (
             cell["object_state"] == "unsupported_legacy_shape"
             or cell["ai_return_profile"] == "old_protocol"
+            or cell["ai_return_profile"] in model.ROLE_SOURCE_NEGATIVE_AI_PROFILES
+            or cell["execution_source"] in model.HISTORICAL_NEGATIVE_EXECUTION_SOURCES
         ) and reaction != "mechanical_reject":
             legacy_positive_acceptance.append(str(cell["cell_id"]))
+        if cell.get("source_purity_negative_only"):
+            entrypoint = str(cell["source_purity_entrypoint"])
+            failure_class = str(cell["source_purity_failure_class"])
+            source_purity_by_entrypoint[entrypoint] += 1
+            source_purity_by_failure_class[failure_class] += 1
+            if cell.get("historical_negative"):
+                source_purity_historical_negative_count += 1
+            if reaction != "mechanical_reject":
+                source_purity_positive_acceptance.append(str(cell["cell_id"]))
+            if cell.get("current_stage_profile") is not False:
+                source_purity_shape_failures.append(str(cell["cell_id"]))
 
     observed_count = sum(by_reaction.values())
+    observed_source_purity_count = sum(source_purity_by_entrypoint.values())
     ok = (
         observed_count == counts["required_cell_count"]
+        and observed_source_purity_count == counts["source_purity_required_cell_count"]
         and not missing_oracle
         and not missing_absorbing_next_action
         and not unregistered_reuse_links
@@ -229,6 +271,9 @@ def _matrix_report() -> dict[str, Any]:
         and not future_claim_accepted
         and not progress_accepted_as_evidence
         and not legacy_positive_acceptance
+        and not source_purity_positive_acceptance
+        and not source_purity_shape_failures
+        and not noncurrent_sources_in_positive_profiles
     )
     return {
         "ok": ok,
@@ -239,6 +284,10 @@ def _matrix_report() -> dict[str, Any]:
         "by_required_evidence_owner": dict(sorted(by_owner.items())),
         "by_existing_test_link": dict(sorted(by_existing_link.items())),
         "coverage_shard_count": len(by_shard),
+        "coverage_shard_ids_by_owner": {
+            owner: sorted(shard_ids)
+            for owner, shard_ids in sorted(shards_by_owner.items())
+        },
         "by_axis": {axis: dict(sorted(counter.items())) for axis, counter in by_axis.items()},
         "missing_oracle": missing_oracle[:50],
         "missing_absorbing_next_action": missing_absorbing_next_action[:50],
@@ -248,6 +297,13 @@ def _matrix_report() -> dict[str, Any]:
         "future_claim_accepted": future_claim_accepted[:50],
         "progress_accepted_as_evidence": progress_accepted_as_evidence[:50],
         "legacy_positive_acceptance": legacy_positive_acceptance[:50],
+        "source_purity_observed_cell_count": observed_source_purity_count,
+        "source_purity_historical_negative_count": source_purity_historical_negative_count,
+        "source_purity_by_entrypoint": dict(sorted(source_purity_by_entrypoint.items())),
+        "source_purity_by_failure_class": dict(sorted(source_purity_by_failure_class.items())),
+        "source_purity_positive_acceptance": source_purity_positive_acceptance[:50],
+        "source_purity_shape_failures": source_purity_shape_failures[:50],
+        "noncurrent_sources_in_positive_profiles": noncurrent_sources_in_positive_profiles,
         "sample_cells": sample_cells,
     }
 
@@ -289,16 +345,79 @@ def _existing_test_audit(matrix: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _test_mesh_report(matrix: dict[str, Any]) -> dict[str, Any]:
+def _test_mesh_report(
+    matrix: dict[str, Any],
+    *,
+    evidence_manifest: dict[str, Any] | None,
+    declaration_only: bool,
+    evidence_scope: str,
+) -> dict[str, Any]:
     required_owners = sorted(matrix["by_required_evidence_owner"])
+    if declaration_only:
+        return {
+            "ok": True,
+            "evidence_status": "not_run",
+            "claim_scope": "declaration_only",
+            "execution_evidence": {
+                "ok": False,
+                "selected_count": 0,
+                "executed_count": 0,
+                "test_count": 0,
+                "failures": ["declaration_only_execution_not_run"],
+            },
+            "child_suites": {
+                owner: {
+                    "layer": "current_contract_cartesian_matrix",
+                    "result_status": "not_run",
+                    "evidence_current": False,
+                    "coverage_boundary": owner,
+                    "owned_cell_count": int(matrix["by_required_evidence_owner"][owner]),
+                    "owned_shard_ids": list(matrix["coverage_shard_ids_by_owner"].get(owner, ())),
+                    "selected_count": 0,
+                    "executed_count": 0,
+                    "test_count": 0,
+                    "proof_artifact": None,
+                    "result_reused": False,
+                    "reuse_ticket": None,
+                }
+                for owner in required_owners
+            },
+            "required_child_suite_owners": required_owners,
+            "missing_or_stale_child_suites": required_owners,
+        }
+
+    bundle = proof_bundle_report(
+        evidence_manifest,
+        expected_source_fingerprint=source_fingerprint(),
+        required_scope=evidence_scope,
+    )
     child_suites = {}
     for owner in required_owners:
+        obligations = (
+            f"current-contract-owner:{owner}",
+            *(f"current-contract-shard:{shard_id}" for shard_id in matrix["coverage_shard_ids_by_owner"].get(owner, ())),
+        )
+        proof, reuse_ticket, reuse_gaps = derived_owner_proof(
+            bundle,
+            owner_id=owner,
+            covered_obligation_ids=obligations,
+        )
+        passed = proof is not None and reuse_ticket is not None and not reuse_gaps
         child_suites[owner] = {
             "layer": "current_contract_cartesian_matrix",
-            "result_status": "passed",
-            "evidence_current": True,
+            "result_status": "passed" if passed else "not_run",
+            "evidence_current": passed,
             "coverage_boundary": owner,
             "owned_cell_count": int(matrix["by_required_evidence_owner"][owner]),
+            "owned_shard_ids": list(matrix["coverage_shard_ids_by_owner"].get(owner, ())),
+            "selected_count": int(bundle.get("selected_count") or 0) if passed else 0,
+            "executed_count": int(bundle.get("executed_count") or 0) if passed else 0,
+            "test_count": int(bundle.get("test_count") or 0) if passed else 0,
+            "count_unit": str(bundle.get("count_unit") or "background_child_commands"),
+            "proof_artifact": proof.to_dict() if proof else None,
+            "result_reused": proof is not None,
+            "reuse_ticket": reuse_ticket.to_dict() if reuse_ticket else None,
+            "reuse_gap_codes": list(reuse_gaps),
         }
     missing = [
         name
@@ -308,25 +427,42 @@ def _test_mesh_report(matrix: dict[str, Any]) -> dict[str, Any]:
         or suite["evidence_current"] is not True
     ]
     return {
-        "ok": not missing,
+        "ok": bool(bundle.get("ok")) and not missing,
+        "evidence_status": "passed" if bundle.get("ok") and not missing else "not_run",
+        "claim_scope": evidence_scope,
+        "execution_evidence": bundle,
         "child_suites": child_suites,
         "required_child_suite_owners": required_owners,
         "missing_or_stale_child_suites": missing,
     }
 
 
-def run_checks() -> dict[str, Any]:
+def run_checks(
+    *,
+    evidence_manifest: dict[str, Any] | None = None,
+    declaration_only: bool = False,
+    evidence_scope: str = "routine",
+) -> dict[str, Any]:
     flowguard = _flowguard_report()
     walk = _walk_report()
     hazards = _hazard_report()
     axes = _axis_report()
     matrix = _matrix_report()
     existing_tests = _existing_test_audit(matrix)
-    test_mesh = _test_mesh_report(matrix)
-    ok = all(section["ok"] for section in (flowguard, walk, hazards, axes, matrix, existing_tests, test_mesh))
+    test_mesh = _test_mesh_report(
+        matrix,
+        evidence_manifest=evidence_manifest,
+        declaration_only=declaration_only,
+        evidence_scope=evidence_scope,
+    )
+    declaration_ok = all(section["ok"] for section in (flowguard, walk, hazards, axes, matrix, existing_tests))
+    ok = declaration_ok if declaration_only else declaration_ok and test_mesh["ok"]
     return {
         "model_id": model.MODEL_ID,
         "ok": ok,
+        "declaration_ok": declaration_ok,
+        "evidence_status": "not_run" if declaration_only else test_mesh["evidence_status"],
+        "claim_scope": "declaration_only" if declaration_only else evidence_scope,
         "flowguard": flowguard,
         "walk": walk,
         "hazards": hazards,
@@ -343,10 +479,22 @@ def main() -> int:
     parser.add_argument("--json", action="store_true")
     parser.add_argument("--write-results", action="store_true")
     parser.add_argument("--json-out", type=Path, default=None)
+    parser.add_argument("--evidence-manifest", type=Path, default=None)
+    parser.add_argument("--evidence-scope", choices=("routine", "release", "done", "publish"), default="routine")
+    parser.add_argument("--declaration-only", action="store_true")
     args = parser.parse_args()
-    report = run_checks()
+    evidence_manifest, manifest_error = load_manifest(args.evidence_manifest)
+    report = run_checks(
+        evidence_manifest=evidence_manifest,
+        declaration_only=args.declaration_only,
+        evidence_scope=args.evidence_scope,
+    )
+    report["evidence_manifest_path"] = str(args.evidence_manifest or "")
+    report["evidence_manifest_error"] = manifest_error
     payload = json.dumps(report, indent=2, sort_keys=True)
     output_path = args.json_out or (RESULTS_PATH if args.write_results else None)
+    if args.declaration_only and output_path is not None and output_path.resolve() == RESULTS_PATH.resolve():
+        raise SystemExit("declaration-only evidence cannot overwrite the canonical strict result")
     if output_path is not None:
         output_path.parent.mkdir(parents=True, exist_ok=True)
         output_path.write_text(payload + "\n", encoding="utf-8")

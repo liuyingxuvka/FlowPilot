@@ -6,9 +6,25 @@ import argparse
 from collections import Counter, deque
 import json
 from pathlib import Path
+import sys
 from typing import Any
 
 from flowguard.explorer import Explorer
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from scripts.compile_flowpilot_acceptance_testmesh_evidence import source_fingerprint
+
+try:  # pragma: no cover
+    from .flowpilot_evidence_truth import (
+        derived_owner_proof,
+        load_manifest,
+        proof_bundle_report,
+    )
+except ImportError:  # pragma: no cover
+    from flowpilot_evidence_truth import derived_owner_proof, load_manifest, proof_bundle_report
 
 try:  # pragma: no cover
     from . import flowpilot_contract_exhaustion_mesh_model as model
@@ -32,57 +48,47 @@ EXPECTED_HAZARD_FAILURES = model.expected_failures_by_hazard()
 TEST_MESH_CHILD_SUITE_DEFINITIONS = {
     "contract_exhaustion_runtime_matrix": {
         "layer": "runtime_regression",
-        "result_status": "passed",
-        "evidence_current": True,
         "coverage_boundary": "current_runtime_contract",
     },
     "contract_exhaustion_fake_ai_matrix": {
         "layer": "synthetic_non_live_control_flow",
-        "result_status": "passed",
-        "evidence_current": True,
         "coverage_boundary": "synthetic_non_live_control_flow",
     },
     "contract_exhaustion_historical_failure_matrix": {
         "layer": "historical_failure_replay",
-        "result_status": "passed",
-        "evidence_current": True,
         "coverage_boundary": "historical_same_class_non_live_control_flow",
     },
     "review_window_completeness_matrix": {
         "layer": "runtime_regression",
-        "result_status": "passed",
-        "evidence_current": True,
         "coverage_boundary": "current_runtime_contract",
     },
     "review_window_fake_ai_matrix": {
         "layer": "synthetic_non_live_control_flow",
-        "result_status": "passed",
-        "evidence_current": True,
         "coverage_boundary": "synthetic_non_live_control_flow",
     },
     "fake_ai_runtime_replay_matrix": {
         "layer": "synthetic_non_live_runtime_replay",
-        "result_status": "passed",
-        "evidence_current": True,
         "coverage_boundary": "synthetic_non_live_runtime_replay",
     },
     "control_plane_ledger_hygiene_fake_ai_matrix": {
         "layer": "synthetic_non_live_runtime_replay",
-        "result_status": "passed",
-        "evidence_current": True,
         "coverage_boundary": "control_plane_ledger_hygiene_cartesian",
     },
     "real_issue_backfeed_matrix": {
         "layer": "historical_failure_backfeed",
-        "result_status": "passed",
-        "evidence_current": True,
         "coverage_boundary": "historical_same_class_non_live_control_flow",
     },
     "integration_cartesian_coverage_matrix": {
         "layer": "executable_flowguard_cartesian",
-        "result_status": "passed",
-        "evidence_current": True,
         "coverage_boundary": "prompt_workflow_integration_coverage",
+    },
+    "complete_workstream_fake_ai_matrix": {
+        "layer": "external_current_runtime_replay",
+        "coverage_boundary": "finite_declared_semantic_profile_execution",
+    },
+    "complete_workstream_cartesian_matrix": {
+        "layer": "executable_full_finite_cartesian_oracle",
+        "coverage_boundary": "declared_finite_axes_not_arbitrary_language",
     },
 }
 
@@ -211,17 +217,75 @@ def _required_cell_report() -> dict[str, Any]:
     }
 
 
-def _test_mesh_report(cells: dict[str, Any]) -> dict[str, Any]:
+def _test_mesh_report(
+    cells: dict[str, Any],
+    *,
+    evidence_manifest: dict[str, Any] | None,
+    declaration_only: bool,
+    evidence_scope: str,
+) -> dict[str, Any]:
     required_owners = sorted({str(cell["required_evidence_owner"]) for cell in cells["required_cells"]})
+    bundle = proof_bundle_report(
+        evidence_manifest,
+        expected_source_fingerprint=source_fingerprint(),
+        required_scope=evidence_scope,
+    ) if not declaration_only else {
+        "ok": False,
+        "selected_count": 0,
+        "executed_count": 0,
+        "test_count": 0,
+        "count_unit": "background_child_commands",
+        "failures": ["declaration_only_execution_not_run"],
+    }
     child_suites = {}
     for owner, definition in TEST_MESH_CHILD_SUITE_DEFINITIONS.items():
+        owned_cells = tuple(
+            cell
+            for cell in cells["required_cells"]
+            if cell["required_evidence_owner"] == owner
+        )
+        owned_case_ids = tuple(str(cell["cell_id"]) for cell in owned_cells)
+        owned_declared_cell_count = sum(
+            int(cell.get("child_declared_cell_count") or 1)
+            for cell in owned_cells
+        )
+        child_receipts = [
+            {
+                "cell_id": str(cell["cell_id"]),
+                "child_model_id": str(cell.get("child_model_id") or ""),
+                "declared_cell_count": int(cell.get("child_declared_cell_count") or 1),
+                "receipt_sha256": str(cell.get("child_receipt_sha256") or ""),
+            }
+            for cell in owned_cells
+            if cell.get("child_receipt_sha256")
+        ]
+        obligations = (
+            f"contract-exhaustion-owner:{owner}",
+            *(f"contract-exhaustion-case:{case_id}" for case_id in owned_case_ids),
+        )
+        proof, reuse_ticket, reuse_gaps = (None, None, ()) if declaration_only else derived_owner_proof(
+            bundle,
+            owner_id=owner,
+            covered_obligation_ids=obligations,
+        )
+        passed = proof is not None and reuse_ticket is not None and not reuse_gaps
         child_suites[owner] = {
             **definition,
-            "owned_cell_count": sum(
-                1
-                for cell in cells["required_cells"]
-                if cell["required_evidence_owner"] == owner
-            ),
+            "result_status": "passed" if passed else "not_run",
+            "evidence_current": passed,
+            "test_count": int(bundle.get("test_count") or 0) if passed else 0,
+            "selected_count": int(bundle.get("selected_count") or 0) if passed else 0,
+            "executed_count": int(bundle.get("executed_count") or 0) if passed else 0,
+            "count_unit": str(bundle.get("count_unit") or "background_child_commands"),
+            "proof_artifact": proof.to_dict() if proof else None,
+            "result_reused": proof is not None,
+            "reuse_ticket": reuse_ticket.to_dict() if reuse_ticket else None,
+            "reuse_gap_codes": list(reuse_gaps),
+            "observed_from": "current_testmesh_proof_bundle" if passed else "missing_current_execution_proof",
+            "owned_cell_count": len(owned_case_ids),
+            "owned_declared_cell_count": owned_declared_cell_count,
+            "child_declaration_receipts": child_receipts,
+            "owned_case_ids": list(owned_case_ids),
         }
     unregistered = sorted(set(required_owners) - set(child_suites))
     missing = [
@@ -233,7 +297,10 @@ def _test_mesh_report(cells: dict[str, Any]) -> dict[str, Any]:
         or suite["evidence_current"] is not True)
     ]
     return {
-        "ok": not missing and not unregistered,
+        "ok": (declaration_only or bool(bundle.get("ok"))) and not unregistered and (declaration_only or not missing),
+        "evidence_status": "not_run" if declaration_only else ("passed" if bundle.get("ok") and not missing else "not_run"),
+        "claim_scope": "declaration_only" if declaration_only else evidence_scope,
+        "execution_evidence": bundle,
         "child_suites": child_suites,
         "required_child_suite_owners": required_owners,
         "unregistered_required_child_suites": unregistered,
@@ -385,6 +452,14 @@ def _summary_report(report: dict[str, Any]) -> dict[str, Any]:
     fake_ai = report.get("fake_ai_responder") or {}
     required_cells = report.get("required_cells") or {}
     test_mesh = report.get("test_mesh") or {}
+    compact_children = {
+        suite_id: {
+            key: value
+            for key, value in suite.items()
+            if key != "owned_case_ids"
+        }
+        for suite_id, suite in (test_mesh.get("child_suites") or {}).items()
+    }
     return {
         "model_id": report.get("model_id"),
         "ok": report.get("ok"),
@@ -399,21 +474,39 @@ def _summary_report(report: dict[str, Any]) -> dict[str, Any]:
         "required_child_suite_owners": test_mesh.get("required_child_suite_owners", []),
         "unregistered_required_child_suites": test_mesh.get("unregistered_required_child_suites", []),
         "missing_or_stale_child_suites": test_mesh.get("missing_or_stale_child_suites", []),
+        "execution_evidence": test_mesh.get("execution_evidence", {}),
+        "child_suites": compact_children,
         "fake_ai_responder": fake_ai.get("summary", {}),
+        "evidence_status": report.get("evidence_status"),
+        "claim_scope": report.get("claim_scope"),
     }
 
 
-def run_checks() -> dict[str, Any]:
+def run_checks(
+    *,
+    evidence_manifest: dict[str, Any] | None = None,
+    declaration_only: bool = False,
+    evidence_scope: str = "routine",
+) -> dict[str, Any]:
     flowguard = _flowguard_report()
     walk = _walk_report()
     hazards = _hazard_report()
     cells = _required_cell_report()
-    test_mesh = _test_mesh_report(cells)
     fake_ai_responder = _fake_ai_responder_report(cells)
-    ok = all(section["ok"] for section in (flowguard, walk, hazards, cells, test_mesh, fake_ai_responder))
+    test_mesh = _test_mesh_report(
+        cells,
+        evidence_manifest=evidence_manifest,
+        declaration_only=declaration_only,
+        evidence_scope=evidence_scope,
+    )
+    declaration_ok = all(section["ok"] for section in (flowguard, walk, hazards, cells, fake_ai_responder))
+    ok = declaration_ok if declaration_only else declaration_ok and test_mesh["ok"]
     return {
         "model_id": model.MODEL_ID,
         "ok": ok,
+        "declaration_ok": declaration_ok,
+        "evidence_status": "not_run" if declaration_only else test_mesh["evidence_status"],
+        "claim_scope": "declaration_only" if declaration_only else evidence_scope,
         "flowguard": flowguard,
         "walk": walk,
         "hazards": hazards,
@@ -429,10 +522,22 @@ def main() -> int:
     parser.add_argument("--summary-json", action="store_true")
     parser.add_argument("--write-results", action="store_true")
     parser.add_argument("--json-out", type=Path, default=None)
+    parser.add_argument("--evidence-manifest", type=Path, default=None)
+    parser.add_argument("--evidence-scope", choices=("routine", "release", "done", "publish"), default="routine")
+    parser.add_argument("--declaration-only", action="store_true")
     args = parser.parse_args()
-    report = run_checks()
+    evidence_manifest, manifest_error = load_manifest(args.evidence_manifest)
+    report = run_checks(
+        evidence_manifest=evidence_manifest,
+        declaration_only=args.declaration_only,
+        evidence_scope=args.evidence_scope,
+    )
+    report["evidence_manifest_path"] = str(args.evidence_manifest or "")
+    report["evidence_manifest_error"] = manifest_error
     summary = _summary_report(report)
     output_path = args.json_out or (RESULTS_PATH if args.write_results else None)
+    if args.declaration_only and output_path is not None and output_path.resolve() == RESULTS_PATH.resolve():
+        raise SystemExit("declaration-only evidence cannot overwrite the canonical strict result")
     if output_path is not None:
         output_path.parent.mkdir(parents=True, exist_ok=True)
         output_path.write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n", encoding="utf-8")

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import inspect
 import json
 import os
 import sys
@@ -242,6 +243,17 @@ class FlowPilotRouterBoundaryTests(unittest.TestCase):
             system_catalog["card_count"],
         )
         self.assertEqual(planning_catalog["card_ids"][0], "pm.core")
+        self.assertIn("pm.product_architecture", planning_catalog["card_ids"])
+        self.assertNotIn("pm.material_scan", planning_catalog["card_ids"])
+        self.assertNotIn("reviewer.material_sufficiency", planning_catalog["card_ids"])
+        self.assertNotIn("pm.material_absorb_or_research", planning_catalog["card_ids"])
+        self.assertNotIn("pm.material_understanding", planning_catalog["card_ids"])
+        product_architecture_entry = next(
+            entry
+            for entry in planning_cards.PLANNING_SYSTEM_CARD_SEQUENCE
+            if entry["card_id"] == "pm.product_architecture"
+        )
+        self.assertEqual(product_architecture_entry["requires_flag"], "user_intake_delivered_to_pm")
         self.assertEqual(runtime_catalog["card_ids"][-1], "pm.closure")
         self.assertIn("pm.route_skeleton", metadata_catalog["phase_card_ids"])
         self.assertIn("pm.startup_intake", planning_catalog["card_ids"])
@@ -281,7 +293,17 @@ class FlowPilotRouterBoundaryTests(unittest.TestCase):
             dispatch_gate._dispatch_gate_wait_events_for_packet_record(
                 {"active_packet_holder": "project_manager", "packet_id": "user_intake"}
             ),
-            ["pm_issues_material_and_capability_scan_packets"],
+            ["pm_writes_product_function_architecture"],
+        )
+        self.assertEqual(
+            dispatch_gate._dispatch_gate_wait_events_for_packet_record(
+                {
+                    "active_packet_holder": "worker",
+                    "packet_family": "material_scan",
+                    "packet_id": "material-scan-retired",
+                }
+            ),
+            ["worker_current_node_result_returned", "role_work_result_returned"],
         )
 
     def test_event_boundary_registry_covers_first_migrated_events(self) -> None:
@@ -412,7 +434,6 @@ class FlowPilotRouterBoundaryTests(unittest.TestCase):
                 "system_card",
                 "resume_wait",
                 "mail",
-                "material_packet",
                 "research_packet",
                 "parent_child_entry",
                 "current_node_packet",
@@ -422,6 +443,12 @@ class FlowPilotRouterBoundaryTests(unittest.TestCase):
                 "expected_role_decision_wait",
                 "no_legal_next_action_blocker",
             ),
+        )
+
+    def test_fresh_provider_does_not_schedule_retired_material_packet_actions(self) -> None:
+        self.assertNotIn(
+            "_next_material_packet_action",
+            inspect.getsource(action_providers.fresh_action_provider),
         )
 
     def test_controller_action_handler_registry_covers_first_migrated_actions(self) -> None:
@@ -443,6 +470,12 @@ class FlowPilotRouterBoundaryTests(unittest.TestCase):
             *action_handlers.PASSIVE_WAIT_HANDLER_ACTION_TYPES,
         ):
             self.assertIn(action_type, action_handlers.ACTION_HANDLERS)
+        for retired_action_type in (
+            "relay_material_scan_packets",
+            "relay_material_scan_results_to_pm",
+            "relay_material_scan_results_to_reviewer",
+        ):
+            self.assertNotIn(retired_action_type, action_handlers.ACTION_HANDLERS)
 
     def test_system_card_auto_commit_helpers_are_thin_router_delegates(self) -> None:
         self.assertTrue(callable(action_handlers.auto_commit_system_card_delivery_action))

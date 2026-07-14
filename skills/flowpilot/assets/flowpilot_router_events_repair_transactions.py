@@ -7,12 +7,10 @@ from types import ModuleType
 import flowpilot_router_events_repair_transaction_resolution as _owner_child_0
 import flowpilot_router_events_repair_transaction_paths as _owner_child_1
 import flowpilot_router_events_repair_transaction_outcomes as _owner_child_2
-import flowpilot_router_events_repair_transaction_material as _owner_child_3
-import flowpilot_router_events_repair_transaction_finalize as _owner_child_4
+import flowpilot_router_events_repair_transaction_finalize as _owner_child_3
 from flowpilot_router_events_repair_transaction_resolution import *
 from flowpilot_router_events_repair_transaction_paths import *
 from flowpilot_router_events_repair_transaction_outcomes import *
-from flowpilot_router_events_repair_transaction_material import *
 from flowpilot_router_events_repair_transaction_finalize import *
 
 _OWNER_CHILD_MODULES = (
@@ -20,7 +18,6 @@ _OWNER_CHILD_MODULES = (
     _owner_child_1,
     _owner_child_2,
     _owner_child_3,
-    _owner_child_4,
 )
 
 
@@ -58,9 +55,7 @@ __all__ = (
     '_repair_outcome_table',
     '_validate_repair_outcome_table',
     '_repair_outcome_events',
-    '_repair_packet_specs_from_decision',
     '_write_repair_transaction_index',
-    '_commit_material_scan_repair_generation',
     '_active_repair_transaction_for_event',
     '_repair_transaction_outcome_kind',
     '_clear_successful_repair_lane_state',

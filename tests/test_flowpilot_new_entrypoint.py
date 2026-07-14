@@ -149,42 +149,57 @@ _PM_REPAIR_OBLIGATION_RETURN_GATE_BY_DECISION = {
 }
 
 
-def pm_repair_body_from_packet(
-    packet: dict[str, object],
+def pm_repair_body_from_open_packet(
+    opened_packet: dict[str, object],
     *,
     decision: str,
     reason: str,
 ) -> str:
-    packet_body = json.loads(str(packet.get("body") or "{}"))
-    payload = dict(packet_body.get("minimal_valid_shape") or {})
+    checklist = opened_packet["submission_checklist"]
+    self_check = checklist.get("schema_version") == "black_box_flowpilot.submission_checklist.v2"
+    if not self_check or checklist.get("source") != "current_handoff_contract":
+        raise AssertionError("PM repair positive path requires current submission_checklist.v2")
+    payload = json.loads(json.dumps(checklist["result_skeleton"]))
+    branch_shapes = checklist.get("branch_valid_shapes")
+    selected = branch_shapes.get(f"decision={decision}") if isinstance(branch_shapes, dict) else None
+    if isinstance(selected, dict):
+        payload = json.loads(json.dumps(selected))
     payload["decision"] = decision
     payload["next_action"] = decision
     payload["reason"] = reason
-    obligations = packet_body.get("repair_evidence_obligations")
-    if isinstance(obligations, list) and obligations:
-        payload["repair_obligation_disposition"] = [
-            {
-                "obligation_id": str(row.get("obligation_id") or ""),
-                "disposition": _PM_REPAIR_OBLIGATION_DISPOSITION_BY_DECISION[decision],
-                "return_gate": _PM_REPAIR_OBLIGATION_RETURN_GATE_BY_DECISION[decision],
-                "evidence_kind": "fresh_current_evidence",
-            }
-            for row in obligations
-            if isinstance(row, dict)
-        ]
+    for row in payload.get("repair_obligation_disposition", []):
+        if isinstance(row, dict):
+            row["disposition"] = _PM_REPAIR_OBLIGATION_DISPOSITION_BY_DECISION[decision]
+            row["return_gate"] = _PM_REPAIR_OBLIGATION_RETURN_GATE_BY_DECISION[decision]
     return json.dumps(payload)
+
+
+def fake_opened_packet_fixture(packet: dict[str, object]) -> dict[str, object]:
+    opened = json.loads(json.dumps(packet))
+    envelope = opened["envelope"]
+    family_id = packet_result_contracts.packet_result_family_id(envelope)
+    effective = packet_result_contracts.effective_result_contract_for_family(family_id)
+    opened["submission_checklist"] = {
+        "schema_version": "black_box_flowpilot.submission_checklist.v2",
+        "source": "current_handoff_contract",
+        "contract_family_id": family_id,
+        "result_skeleton": effective["minimal_valid_shape"],
+        "branch_valid_shapes": effective["branch_valid_shapes"],
+    }
+    return opened
 
 
 class FlowPilotNewEntrypointTests(unittest.TestCase):
     def test_fake_e2e_high_standard_contract_matches_packet_contract(self) -> None:
         body = json.loads(
             fake_e2e._body_for_packet(
-                {
+                fake_opened_packet_fixture({
+                    "packet_id": "packet-high-standard",
                     "envelope": {
                         "packet_kind": "task",
                         "route_scope": "high_standard_contract",
                     }
-                }
+                })
             )
         )
 
@@ -227,13 +242,17 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
                 },
             },
         ]
-        covered_families = {runtime._packet_result_family_id(packet) for packet in packets}
+        covered_families = {
+            packet_result_contracts.packet_result_family_id(packet["envelope"])
+            for packet in packets
+        }
         contract_families = {str(row["family_id"]) for row in packet_result_contracts.PACKET_RESULT_CONTRACTS}
         self.assertEqual(contract_families, covered_families)
 
         for packet in packets:
             with self.subTest(packet=packet["packet_id"]):
-                family_id = runtime._packet_result_family_id(packet)
+                packet = fake_opened_packet_fixture(packet)
+                family_id = packet_result_contracts.packet_result_family_id(packet["envelope"])
                 body = json.loads(fake_e2e._body_for_packet(packet))
                 self.assertFalse(
                     packet_result_contracts.undeclared_success_fields_for_family(family_id, body),
@@ -334,7 +353,7 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
             "\n".join(receipt["required_runtime_assets"]),
         )
 
-    def test_open_packet_returns_submission_checklist_from_packet_body(self) -> None:
+    def test_open_packet_submission_checklist_rejects_packet_body_as_contract_authority(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             flowpilot_new.start_run(
@@ -386,14 +405,36 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
             opened = flowpilot_new.open_packet(root, lease_id=lease_id, packet_id=packet_id)
 
             checklist = opened["submission_checklist"]
-            self.assertEqual(checklist["schema_version"], "black_box_flowpilot.submission_checklist.v1")
+            report_contract = opened["packet"]["current_handoff_contract"]["required_report_contract"]
+            self.assertEqual(checklist["schema_version"], "black_box_flowpilot.submission_checklist.v2")
+            self.assertEqual(checklist["source"], "current_handoff_contract")
             self.assertEqual(
+                checklist["required_result_body_fields"],
+                report_contract["required_result_body_fields"],
+            )
+            self.assertEqual(checklist["result_skeleton"], report_contract["minimal_valid_shape"])
+            self.assertEqual(checklist["forbidden_fields"], report_contract["forbidden_fields"])
+            self.assertEqual(checklist["forbidden_aliases"], report_contract["forbidden_aliases"])
+            self.assertNotEqual(
                 checklist["required_result_body_fields"],
                 ["decision", "reason", "repair_obligation_disposition"],
             )
-            self.assertEqual(checklist["result_skeleton"]["decision"], "repair_current_scope")
-            self.assertIn("repair_obligation_disposition", checklist["result_skeleton"])
-            self.assertNotIn("forbidden_fields", checklist)
+            self.assertNotEqual(
+                checklist["result_skeleton"],
+                {
+                    "decision": "repair_current_scope",
+                    "reason": "Concrete PM repair reason.",
+                    "repair_obligation_disposition": [
+                        {
+                            "obligation_id": "obligation-001",
+                            "disposition": "fresh_repair_packet_required",
+                            "return_gate": "flowguard_then_reviewer",
+                            "evidence_kind": "fresh_current_evidence",
+                        }
+                    ],
+                },
+            )
+            self.assertTrue(checklist["contract_fingerprint"])
             self.assertFalse(opened["controller_may_read_submission_checklist"])
 
     def test_open_packet_submission_checklist_projects_current_handoff_contract(self) -> None:
@@ -454,20 +495,34 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
             self.assertEqual(checklist["required_child_fields"], list(report_contract["required_child_fields"]))
             self.assertEqual(checklist["explicit_array_fields"], list(report_contract["explicit_array_fields"]))
             self.assertEqual(checklist["non_empty_array_fields"], list(report_contract["non_empty_array_fields"]))
-            self.assertNotIn("forbidden_fields", checklist)
+            self.assertEqual(checklist["source"], "current_handoff_contract")
+            self.assertEqual(checklist["forbidden_fields"], list(report_contract["forbidden_fields"]))
+            self.assertEqual(checklist["forbidden_aliases"], dict(report_contract["forbidden_aliases"]))
             self.assertNotIn("forbidden_result_body_fields", checklist)
             self.assertNotIn("forbidden_result_body_fields", report_contract)
-            self.assertEqual(
-                report_contract["output_contract"]["forbidden_fields"],
-                list(packet_result_contracts.forbidden_fields_for_family("flowguard_check.post_result")),
-            )
+            self.assertNotIn("forbidden_fields", report_contract["output_contract"])
+            self.assertNotIn("allowed_value_options", report_contract["output_contract"])
+            self.assertNotIn("field_type_requirements", report_contract["output_contract"])
             self.assertEqual(checklist["result_skeleton"], report_contract["minimal_valid_shape"])
             self.assertEqual(checklist["branch_valid_shapes"], report_contract["branch_valid_shapes"])
-            self.assertEqual(
-                report_contract["allowed_value_options"],
-                packet_result_contracts.allowed_value_options_json_for_family("flowguard_check.post_result"),
+            base_allowed_options = packet_result_contracts.allowed_value_options_json_for_family(
+                "flowguard_check.post_result"
             )
-            self.assertEqual(output_contract["allowed_value_options"], report_contract["allowed_value_options"])
+            for field_path, values in base_allowed_options.items():
+                self.assertEqual(report_contract["allowed_value_options"][field_path], values)
+            self.assertEqual(checklist["allowed_value_options"], report_contract["allowed_value_options"])
+            for mechanical_field in (
+                "contract_family_id",
+                "result_contract_profile_ids",
+                "result_contract_profile_bindings",
+                "allowed_value_options",
+                "field_type_requirements",
+                "forbidden_fields",
+                "pm_visible_summary_required",
+                "pm_visible_summary_shape",
+                "runner_may_synthesize_pm_visible_summary",
+            ):
+                self.assertNotIn(mechanical_field, output_contract)
             self.assertEqual(
                 report_contract["allowed_value_options"]["reviewed_by_role"],
                 ["flowguard_operator"],
@@ -480,7 +535,41 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
             self.assertEqual(checklist["required_authorized_read_count"], 1)
             self.assertTrue(checklist["all_required_authorized_result_bodies_must_be_opened_before_submit"])
             self.assertIn(source_result_id, checklist["input_material_manifest"]["required_authorized_reads_before_submit"])
+            self.assertEqual(checklist["run_id"], "run-open-packet-handoff-checklist")
+            self.assertEqual(checklist["packet_id"], packet_id)
+            self.assertEqual(checklist["lease_id"], lease_id)
+            self.assertEqual(checklist["route_version"], opened["packet"]["route_version"])
+            self.assertTrue(checklist["contract_fingerprint"])
             self.assertFalse(opened["controller_may_read_submission_checklist"])
+
+    def test_current_prompt_cards_forbid_packet_body_mechanical_authority(self) -> None:
+        prompt_root = ASSETS / "runtime_kit"
+        forbidden_positive_phrases = (
+            "submission_checklist` or packet `minimal_valid_shape",
+            "submission_checklist.result_skeleton` or the packet body",
+            "in both the packet envelope and packet body's `Output Contract` section",
+            "The packet body must also include the generated `Report Contract For This Task`",
+            "black_box_flowpilot.current_handoff_contract.v1",
+            "black_box_flowpilot.submission_checklist.v1",
+        )
+        inspected = [
+            prompt_root / "prompts" / "packets" / "packet_identity_boundary.md",
+            prompt_root / "prompts" / "packets" / "output_contract_section.md",
+            prompt_root / "cards" / "roles" / "project_manager.md",
+            prompt_root / "cards" / "roles" / "flowguard_operator.md",
+            prompt_root / "cards" / "roles" / "human_like_reviewer.md",
+            prompt_root / "cards" / "phases" / "pm_review_repair.md",
+            prompt_root / "cards" / "phases" / "pm_output_contract_catalog.md",
+            prompt_root / "cards" / "phases" / "pm_current_node_loop.md",
+            prompt_root / "cards" / "phases" / "pm_research_package.md",
+            prompt_root / "cards" / "phases" / "pm_flowguard_operator_request_report_loop.md",
+            prompt_root / "cards" / "events" / "pm_node_started.md",
+        ]
+        combined = "\n".join(path.read_text(encoding="utf-8") for path in inspected)
+        for phrase in forbidden_positive_phrases:
+            with self.subTest(phrase=phrase):
+                self.assertNotIn(phrase, combined)
+        self.assertIn("use only the returned `submission_checklist.v2`", combined)
 
     def test_resolve_stopped_blocker_cli_exposes_reattach_required_recheck(self) -> None:
         completed = subprocess.run(
@@ -589,8 +678,8 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
         self.assertTrue(dispatch["ok"], dispatch)
         return str(dispatch["lease_id"])
 
-    def _open_authorized_result_reads(self, root: Path, *, packet_id: str, lease_id: str) -> None:
-        flowpilot_new.open_packet(root, lease_id=lease_id, packet_id=packet_id)
+    def _open_authorized_result_reads(self, root: Path, *, packet_id: str, lease_id: str) -> dict[str, object]:
+        return flowpilot_new.open_packet(root, lease_id=lease_id, packet_id=packet_id)
 
     def _open_packet_by_kind(self, ledger: dict[str, object], packet_kind: str) -> str:
         packets = ledger["packets"]
@@ -1325,14 +1414,17 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
                 agent_id="pm-repair",
             )
             flowpilot_new.ack(root, lease_id=repair_lease, packet_id=repair_packet)
-            self._open_authorized_result_reads(root, packet_id=repair_packet, lease_id=repair_lease)
-            ledger = run_shell.load_run_ledger(shell)
+            opened_repair = self._open_authorized_result_reads(
+                root,
+                packet_id=repair_packet,
+                lease_id=repair_lease,
+            )
             flowpilot_new.submit_result(
                 root,
                 lease_id=repair_lease,
                 packet_id=repair_packet,
-                body=pm_repair_body_from_packet(
-                    ledger["packets"][repair_packet],
+                body=pm_repair_body_from_open_packet(
+                    opened_repair,
                     decision="stop_for_user",
                     reason="Need explicit user decision.",
                 ),

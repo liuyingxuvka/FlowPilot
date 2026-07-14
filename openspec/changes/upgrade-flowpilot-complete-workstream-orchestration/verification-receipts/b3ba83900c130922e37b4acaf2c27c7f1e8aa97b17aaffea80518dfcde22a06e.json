@@ -1,0 +1,23 @@
+{
+  "schema_version": 2,
+  "report_protocol_version": 3,
+  "execution_key": "sha256:6e023058d3848f9fbc1be7b0bd4ec390981b3e530be96296d63d2663376f172e",
+  "result_hash": "sha256:4f0c0609deafe48dc5783d42e47ced4f4994df5c51b2211cc72045a453455f11",
+  "receipt_id": "sha256:b3ba83900c130922e37b4acaf2c27c7f1e8aa97b17aaffea80518dfcde22a06e",
+  "result": {
+    "status": "passed",
+    "command": "python",
+    "args": [
+      "simulations/run_flowpilot_dispatch_recipient_gate_checks.py",
+      "--json-out",
+      "simulations/flowpilot_dispatch_recipient_gate_results.json"
+    ],
+    "expected_exit_code": 0,
+    "exit_code": 0,
+    "timeout_seconds": 1800,
+    "stdout": "flowpilot dispatch recipient gate checks: ok states=19 edges=18\r\n",
+    "stderr": "[flowguard] start phase=explore work_total=2 progress_steps=10\r\n[flowguard] progress 50% work=1/2 traces=18 violations=0\r\n[flowguard] progress 100% work=2/2 traces=54 violations=0\r\n",
+    "stdout_preview": "flowpilot dispatch recipient gate checks: ok states=19 edges=18\r\n",
+    "stderr_preview": "[flowguard] start phase=explore work_total=2 progress_steps=10\r\n[flowguard] progress 50% work=1/2 traces=18 violations=0\r\n[flowguard] progress 100% work=2/2 traces=54 violations=0\r\n"
+  }
+}

@@ -46,9 +46,6 @@ _ACTION_ENVELOPE_KEYS = {
     'created_at',
     'controller_action_id',
 }
-_MATERIAL_REPLAY_ACTION_TYPES = {'relay_material_scan_packets', 'relay_material_scan_results_to_pm'}
-
-
 def _bind_router(router: ModuleType) -> None:
     global _BOUND_ROUTER
     if _BOUND_ROUTER is router:
@@ -126,21 +123,6 @@ def _make_operation_replay_action(router: ModuleType, project_root: Path, run_ro
     action_type = str(execution_plan.get('queued_action_type') or replay_source.get('action_type') or record.get('originating_action_type') or '')
     if action_type not in REPAIR_TRANSACTION_SAFE_REPLAY_ACTION_TYPES:
         raise RouterError(f"operation_replay repair transaction cannot queue action_type={action_type or 'missing'}")
-    if action_type in _MATERIAL_REPLAY_ACTION_TYPES:
-        current_action = router._next_material_packet_action(project_root, run_state, run_root)
-        if (
-            isinstance(current_action, dict)
-            and current_action.get('action_type') == 'open_current_role_agent'
-            and current_action.get('required_before_action_type') == action_type
-        ):
-            extra = {key: value for key, value in current_action.items() if key not in _ACTION_ENVELOPE_KEYS}
-            extra.update({'repair_transaction_id': transaction.get('transaction_id'), 'control_blocker_id': record.get('blocker_id'), 'replay_of_controller_action_id': replay_source.get('controller_action_id'), 'idempotency_key': f"repair-transaction:{transaction.get('transaction_id')}:operation-replay-role-binding", 'repair_execution_plan': execution_plan, 'operation_replay_source': 'current_material_generation_role_binding_precondition'})
-            return make_action(action_type='open_current_role_agent', actor=str(current_action.get('actor') or 'host'), label=f"host_opens_role_before_replaying_{action_type}_for_{record.get('blocker_id')}", summary=f"Open the required current-run role binding before replaying {action_type} for repair transaction {transaction.get('transaction_id')}.", allowed_reads=list(current_action.get('allowed_reads') or [project_relative(project_root, router.run_state_path(run_root))]), allowed_writes=list(current_action.get('allowed_writes') or [project_relative(project_root, router.run_state_path(run_root))]), to_role=current_action.get('to_role'), extra=extra)
-        if not isinstance(current_action, dict) or current_action.get('action_type') != action_type:
-            raise RouterError(f'operation_replay repair transaction for {action_type} requires the current material generation to expose that exact next action')
-        extra = {key: value for key, value in current_action.items() if key not in _ACTION_ENVELOPE_KEYS}
-        extra.update({'repair_transaction_id': transaction.get('transaction_id'), 'control_blocker_id': record.get('blocker_id'), 'replay_of_controller_action_id': replay_source.get('controller_action_id'), 'idempotency_key': f"repair-transaction:{transaction.get('transaction_id')}:operation-replay", 'repair_execution_plan': execution_plan, 'operation_replay_source': 'current_material_generation_next_action'})
-        return make_action(action_type=action_type, actor=str(current_action.get('actor') or 'controller'), label=f"controller_replays_current_{action_type}_for_{record.get('blocker_id')}", summary=f"Replay current material generation operation {action_type} for repair transaction {transaction.get('transaction_id')}.", allowed_reads=list(current_action.get('allowed_reads') or [project_relative(project_root, router.run_state_path(run_root))]), allowed_writes=list(current_action.get('allowed_writes') or [project_relative(project_root, router.run_state_path(run_root))]), card_id=current_action.get('card_id'), mail_id=current_action.get('mail_id'), to_role=current_action.get('to_role'), extra=extra)
     extra = {key: value for key, value in source_action.items() if key not in _ACTION_ENVELOPE_KEYS}
     extra.update({'repair_transaction_id': transaction.get('transaction_id'), 'control_blocker_id': record.get('blocker_id'), 'replay_of_controller_action_id': replay_source.get('controller_action_id'), 'idempotency_key': f"repair-transaction:{transaction.get('transaction_id')}:operation-replay", 'repair_execution_plan': execution_plan})
     action = make_action(action_type=action_type, actor=str(source_action.get('actor') or 'controller'), label=f"controller_replays_{action_type}_for_{record.get('blocker_id')}", summary=f"Replay recorded operation {action_type} for repair transaction {transaction.get('transaction_id')}.", allowed_reads=list(source_action.get('allowed_reads') or [project_relative(project_root, router.run_state_path(run_root))]), allowed_writes=list(source_action.get('allowed_writes') or [project_relative(project_root, router.run_state_path(run_root))]), card_id=source_action.get('card_id'), mail_id=source_action.get('mail_id'), to_role=source_action.get('to_role'), extra=extra)
@@ -194,10 +176,8 @@ def _next_control_blocker_action(router: ModuleType, project_root: Path, run_sta
         execution_plan = transaction.get('execution_plan')
         if isinstance(execution_plan, dict) and isinstance(execution_plan.get('existing_event_producer'), dict):
             wait_extra['repair_event_producer_evidence'] = execution_plan.get('existing_event_producer')
-        elif isinstance(transaction.get('generation_commit'), dict):
-            wait_extra['repair_event_producer_evidence'] = {'source': 'repair_packet_generation', 'packet_generation_id': transaction.get('packet_generation_id'), 'packet_count': transaction.get('generation_commit', {}).get('packet_count'), 'transaction_id': transaction.get('transaction_id')}
         mode = str((execution_plan or {}).get('mode') or transaction.get('plan_kind') or '')
-        if transaction.get('status') == 'committed' and mode in {'await_existing_event', 'role_reissue', 'route_mutation', 'packet_reissue'} and 'repair_event_producer_evidence' not in wait_extra:
+        if transaction.get('status') == 'committed' and mode in {'await_existing_event', 'role_reissue', 'route_mutation'} and 'repair_event_producer_evidence' not in wait_extra:
             wait_target_role = 'project_manager'
             wait_extra['allowed_external_events'] = [PM_CONTROL_BLOCKER_REPAIR_DECISION_EVENT]
             wait_extra['target_role'] = wait_target_role

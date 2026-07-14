@@ -125,7 +125,8 @@ model:
   final closure: parent/module entry, child node sequence, child skill
   projection, parent backward replay, PM parent disposition, and terminal
   closure gate. Block if the route can only pass by dispatching a parent/module
-  or by letting a Worker replan a broad leaf. When a child was superseded by a
+  or by letting a Worker change PM-owned route scope, order, dependencies, or
+  acceptance. A Worker may and should plan the bounded leaf internally. When a child was superseded by a
   repair node, the traversal must use the active child id and current accepted
   child result, not the superseded child id or old accepted result;
 - for material or report handoff routes, simulate the producer packet, accepted
@@ -134,9 +135,10 @@ model:
   stale paths, or chat memory instead of current runtime authorized reads, or
   if accepted/stale repair packets can remain current blockers after a route
   mutation;
-- explicitly check worker-decision leakage. If the route only works because a
-  Worker must invent subtasks, choose child order, define dependency
-  boundaries, or decide acceptance boundaries, return repair-required process
+- explicitly check worker-decision leakage. Local numbered substeps and bounded
+  delegation are normal role work. If the route only works because a Worker
+  must create or reorder route nodes, define cross-node dependency boundaries,
+  or decide acceptance boundaries, return repair-required process
   evidence and recommend PM route deepening before any Worker dispatch;
 - explicitly check dependency-order inversion. If a consumer node is scheduled
   before the unfinished producer whose output, evidence, or validation it needs,

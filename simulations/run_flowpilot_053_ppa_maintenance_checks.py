@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
+import sys
 from typing import Any, Callable
 
 from flowguard import (
@@ -16,15 +17,107 @@ from flowguard import (
 
 try:  # pragma: no cover
     from . import flowpilot_053_ppa_maintenance_model as model
+    from . import flowpilot_ai_response_execution_closure_model as formal_ai_model
     from . import run_flowpilot_pm_visible_summary_checks
 except ImportError:  # pragma: no cover
     import flowpilot_053_ppa_maintenance_model as model
+    import flowpilot_ai_response_execution_closure_model as formal_ai_model
     import run_flowpilot_pm_visible_summary_checks
-
 
 ROOT = Path(__file__).resolve().parent
 REPO_ROOT = ROOT.parent
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from scripts.test_tier.source_fingerprint import source_fingerprint
+
+
 RESULTS_PATH = ROOT / "flowpilot_053_ppa_maintenance_results.json"
+FORMAL_AI_RESULTS_PATH = ROOT / "flowpilot_ai_response_execution_closure_results.json"
+MODEL_TEST_ALIGNMENT_RESULTS_PATH = ROOT / "flowpilot_model_test_alignment_results.json"
+
+
+def _portable_repo_path(path: Path) -> str:
+    candidate = path if path.is_absolute() else REPO_ROOT / path
+    try:
+        return candidate.resolve().relative_to(REPO_ROOT.resolve()).as_posix()
+    except ValueError:
+        return f"<external>/{path.name}"
+
+
+def _json_object(path: Path) -> dict[str, Any]:
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    return value if isinstance(value, dict) else {}
+
+
+def _formal_ai_execution_evidence_report(
+    path: Path = FORMAL_AI_RESULTS_PATH,
+) -> dict[str, Any]:
+    payload = _json_object(path)
+    closure = payload.get("execution_closure")
+    closure = closure if isinstance(closure, dict) else {}
+    aggregate = closure.get("coverage_summary", {}).get("aggregate", {})
+    aggregate = aggregate if isinstance(aggregate, dict) else {}
+    proof = payload.get("proof_artifact_ref")
+    proof = proof if isinstance(proof, dict) else {}
+    current_fingerprint = formal_ai_model.source_fingerprint()
+    checks = {
+        "result_ok": payload.get("ok") is True,
+        "adversarial_mode": payload.get("mode") == "adversarial",
+        "source_current": closure.get("source_fingerprint") == current_fingerprint,
+        "proof_current": proof.get("source_fingerprint") == current_fingerprint,
+        "proof_final_passed": proof.get("final_status") == "passed",
+        "executed_nonzero": int(aggregate.get("executed") or 0) > 0,
+        "executed_equals_passed": aggregate.get("executed") == aggregate.get("passed"),
+        "failed_zero": aggregate.get("failed") == 0,
+        "stale_zero": aggregate.get("stale") == 0,
+        "proof_backed_equals_passed": aggregate.get("proof_backed") == aggregate.get("passed"),
+    }
+    ok = all(checks.values())
+    return {
+        "ok": ok,
+        "path": _portable_repo_path(path),
+        "checks": checks,
+        "summary": (
+            f"Formal adversarial AI execution is current and proof-backed "
+            f"({int(aggregate.get('passed') or 0)} passed)."
+            if ok
+            else "Formal adversarial AI execution result is missing, stale, or non-passing."
+        ),
+    }
+
+
+def _model_test_alignment_evidence_report(
+    path: Path = MODEL_TEST_ALIGNMENT_RESULTS_PATH,
+) -> dict[str, Any]:
+    payload = _json_object(path)
+    execution = payload.get("execution_evidence")
+    execution = execution if isinstance(execution, dict) else {}
+    current_fingerprint = source_fingerprint()
+    checks = {
+        "result_ok": payload.get("ok") is True,
+        "done_or_stronger_scope": payload.get("claim_scope") in {"done", "release", "publish"},
+        "evidence_passed": payload.get("evidence_status") == "passed",
+        "execution_bundle_ok": execution.get("ok") is True,
+        "source_current": execution.get("source_fingerprint_current") is True,
+        "manifest_matches_current": execution.get("manifest_source_fingerprint") == current_fingerprint,
+        "expected_matches_current": execution.get("expected_source_fingerprint") == current_fingerprint,
+        "no_execution_failures": not execution.get("failures"),
+    }
+    ok = all(checks.values())
+    return {
+        "ok": ok,
+        "path": _portable_repo_path(path),
+        "checks": checks,
+        "summary": (
+            "Strict model-test alignment consumes a current done-scope execution manifest."
+            if ok
+            else "Strict model-test alignment result is missing, stale, declaration-only, or non-passing."
+        ),
+    }
 
 
 def _report_dict(report: Any) -> dict[str, Any]:
@@ -98,14 +191,28 @@ def _source_guard_report() -> dict[str, Any]:
     }
 
 
-def build_report() -> dict[str, Any]:
+def build_report(
+    *,
+    formal_ai_evidence: dict[str, Any] | None = None,
+    model_test_alignment_evidence: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     ppa_plan = model.build_primary_path_plan()
     ppa_report = review_primary_path_authority(ppa_plan)
     bcl_ledger = model.build_behavior_commitment_ledger(ppa_report)
     bcl_report = review_behavior_commitment_ledger(bcl_ledger)
     field_plan = model.build_field_lifecycle_plan()
     field_report = review_field_lifecycle(field_plan)
-    risk_plan = model.build_risk_evidence_ledger_plan(ppa_report, bcl_report, field_report)
+    formal_ai_evidence = formal_ai_evidence or _formal_ai_execution_evidence_report()
+    model_test_alignment_evidence = (
+        model_test_alignment_evidence or _model_test_alignment_evidence_report()
+    )
+    risk_plan = model.build_risk_evidence_ledger_plan(
+        ppa_report,
+        bcl_report,
+        field_report,
+        formal_ai_evidence=formal_ai_evidence,
+        model_test_alignment_evidence=model_test_alignment_evidence,
+    )
     risk_report = review_risk_evidence_ledger(risk_plan)
     pm_visible_summary = run_flowpilot_pm_visible_summary_checks.run_checks()
     source_guard = _source_guard_report()
@@ -140,10 +247,10 @@ def build_report() -> dict[str, Any]:
             expected_codes={"commitment_missing_primary_path_authority"},
         ),
         _negative_case(
-            name="ppa_binding_missing_primary_path_ids",
+            name="ppa_binding_missing_primary_path_id",
             reviewer=review_behavior_commitment_ledger,
             payload=model.build_broken_ppa_missing_primary_path_ids_ledger(),
-            expected_codes={"commitment_primary_path_ids_missing"},
+            expected_codes={"commitment_primary_path_id_missing"},
         ),
         _negative_case(
             name="commitment_stale_evidence",
@@ -166,6 +273,8 @@ def build_report() -> dict[str, Any]:
         "risk_evidence": risk_report.ok,
         "pm_visible_summary_existing_runner": pm_visible_summary["ok"],
         "source_guard": source_guard["ok"],
+        "formal_ai_execution_evidence": formal_ai_evidence["ok"],
+        "model_test_alignment_evidence": model_test_alignment_evidence["ok"],
         "negative_cases": all(case["ok"] for case in negative_cases),
     }
     return {
@@ -191,6 +300,8 @@ def build_report() -> dict[str, Any]:
         },
         "pm_visible_summary": pm_visible_summary,
         "source_guard": source_guard,
+        "formal_ai_execution_evidence": formal_ai_evidence,
+        "model_test_alignment_evidence": model_test_alignment_evidence,
         "negative_cases": negative_cases,
         "coverage": {
             "primary_path_intents": list(model.PRIMARY_PATH_INTENTS),

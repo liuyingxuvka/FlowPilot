@@ -775,7 +775,7 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
         state = read_json(router.run_state_path(run_root))
         state.setdefault("events", []).append(
             {
-                "event": "worker_scan_results_returned",
+                "event": "worker_current_node_result_returned",
                 "summary": "Worker output already reached Router before manual resume replay.",
                 "payload": {"result_envelope_path": self.rel(root, run_root / "test_role_outputs" / "resume-existing.json")},
                 "recorded_at": router.utc_now(),
@@ -835,7 +835,7 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
         state = read_json(router.run_state_path(run_root))
         state.setdefault("events", []).append(
             {
-                "event": "worker_scan_results_returned",
+                "event": "worker_current_node_result_returned",
                 "summary": "Worker output already reached Router before recovery replay.",
                 "payload": {"result_envelope_path": self.rel(root, run_root / "test_role_outputs" / "existing.json")},
                 "recorded_at": router.utc_now(),

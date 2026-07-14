@@ -36,9 +36,7 @@ def _valid_live_evidence_payload(relative_path: str, run_id: str = "run-1") -> d
     if relative_path == "packet_ledger.json":
         return {"active_packet_id": "packet-1", "active_packet_status": "active-holder-lease-issued", "packets": []}
     if relative_path == "execution_frontier.json":
-        return {"status": "material_scan", "phase": "material_scan"}
-    if relative_path == "router_state.json":
-        return {"flags": {}}
+        return {"status": "current_node", "phase": "current_node"}
     raise AssertionError(f"unknown live evidence path: {relative_path}")
 
 
@@ -47,6 +45,30 @@ def _write_live_evidence(run_root: Path, relative_path: str, *, run_id: str = "r
 
 
 class FlowPilotSingletonIdentityTests(unittest.TestCase):
+    def test_live_audit_projects_absolute_current_run_root_as_repository_relative(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp).resolve()
+            run_root = root / ".flowpilot" / "runs" / "run-1"
+            _write_json(
+                root / ".flowpilot" / "current.json",
+                {
+                    "run_id": "run-1",
+                    "run_root": str(run_root),
+                    "status": "running",
+                },
+            )
+
+            report = model.build_live_singleton_audit(root)
+            serialized = json.dumps(report, sort_keys=True)
+
+            self.assertNotIn(str(root), serialized)
+            pointer = next(
+                surface
+                for surface in report["surfaces"]
+                if surface["surface"] == "current_run_pointer"
+            )
+            self.assertEqual(pointer["evidence"]["run_root"], ".flowpilot/runs/run-1")
+
     def test_authority_matrix_has_required_singleton_rows(self) -> None:
         rows = {row.object_family: row for row in model.authority_matrix()}
 
@@ -57,7 +79,7 @@ class FlowPilotSingletonIdentityTests(unittest.TestCase):
                 "packet_active_holder",
                 "pm_package_disposition",
                 "route_replacement_current_authority",
-                "material_progress_generation",
+                "ordinary_packet_batch_generation",
                 "ack_vs_output_completion",
                 "final_closure_evidence",
             },
@@ -80,7 +102,8 @@ class FlowPilotSingletonIdentityTests(unittest.TestCase):
                 "duplicate_daemon_writer_marked_safe",
                 "package_conflict_marked_replay",
                 "replacement_without_disposition_marked_safe",
-                "stale_material_flag_marked_current",
+                "stale_packet_batch_ref_marked_current",
+                "retired_material_authority_marked_safe",
                 "ack_only_output_marked_complete",
                 "progress_only_final_marked_complete",
                 "missing_ledger_marked_safe",
@@ -139,8 +162,7 @@ class FlowPilotSingletonIdentityTests(unittest.TestCase):
                     ],
                 },
             )
-            _write_json(run_root / "execution_frontier.json", {"status": "material_scan"})
-            _write_json(run_root / "router_state.json", {"flags": {}})
+            _write_json(run_root / "execution_frontier.json", {"status": "current_node"})
 
             audit = model.build_live_singleton_audit(tmp_path)
 
@@ -154,7 +176,7 @@ class FlowPilotSingletonIdentityTests(unittest.TestCase):
             row["relative_path"]
             for row in model.live_singleton_required_evidence_files()
         ]
-        self.assertEqual(len(required_paths), 5)
+        self.assertEqual(len(required_paths), 4)
 
         for size in range(len(required_paths) + 1):
             for selected in combinations(required_paths, size):
@@ -186,7 +208,6 @@ class FlowPilotSingletonIdentityTests(unittest.TestCase):
             ),
             "packet_ledger.json": "[not an object]",
             "execution_frontier.json": "{not strict json}",
-            "router_state.json": "{not strict json}",
         }
 
         for invalid_path, invalid_text in invalid_cases.items():
@@ -213,6 +234,55 @@ class FlowPilotSingletonIdentityTests(unittest.TestCase):
                 ]
                 self.assertEqual(len(matching), 1, audit)
                 self.assertNotEqual(matching[0]["status"], "safe", audit)
+
+    def test_live_audit_accepts_ordinary_batch_identity_and_rejects_retired_material_ref(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            run_root = _write_current_pointer(tmp_path)
+            for row in model.live_singleton_required_evidence_files():
+                _write_live_evidence(run_root, row["relative_path"])
+            batch_path = run_root / "packet_batches" / "research-001.json"
+            _write_json(
+                batch_path,
+                {
+                    "batch_id": "research-001",
+                    "batch_kind": "research",
+                    "packet_ids": ["research-worker-001"],
+                },
+            )
+            _write_json(
+                run_root / "packet_batches" / "active_research.json",
+                {
+                    "batch_kind": "research",
+                    "active_batch_id": "research-001",
+                    "batch_path": ".flowpilot/runs/run-1/packet_batches/research-001.json",
+                },
+            )
+
+            clean = model.build_live_singleton_audit(tmp_path)
+            _write_json(
+                run_root / "packet_batches" / "active_material_scan.json",
+                {
+                    "batch_kind": "material_scan",
+                    "active_batch_id": "retired-material-001",
+                    "batch_path": ".flowpilot/runs/run-1/packet_batches/retired-material-001.json",
+                },
+            )
+            retired = model.build_live_singleton_audit(tmp_path)
+
+        clean_surface = next(
+            row
+            for row in clean["surfaces"]
+            if row["surface"] == "ordinary_packet_batch_generation"
+        )
+        self.assertEqual(clean_surface["status"], "safe", clean_surface)
+        retired_surface = next(
+            row
+            for row in retired["surfaces"]
+            if row["surface"] == "ordinary_packet_batch_generation"
+        )
+        self.assertEqual(retired_surface["status"], "risk", retired_surface)
+        self.assertTrue(retired_surface["evidence"]["retired_material_refs"])
 
     def test_singleton_check_report_shape(self) -> None:
         report = checks.run_checks()

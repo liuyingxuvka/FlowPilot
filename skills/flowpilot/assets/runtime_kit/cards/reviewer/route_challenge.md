@@ -85,8 +85,8 @@ Check:
   existing route shape, acceptance criteria, outputs, checks, and requirement
   or skill ids make the scope reviewable;
 - the route is not artificially capped at two levels. Complex parent/module
-  nodes must be recursively decomposed until every executable leaf is
-  worker-ready without replanning, and the route must still provide a shallow
+  nodes must be recursively decomposed until every executable leaf is one
+  independently accountable bounded workstream, and the route must still provide a shallow
   user-visible projection for display;
 - a complex flat all-leaf route plan is under-decomposed even if it has many
   named nodes. If related leaves share a broad stage, dependency order, or
@@ -96,7 +96,7 @@ Check:
   plus a second PM-maintained display plan. Treat `display_plan.json` and chat
   route signs as Router-derived projection/cache only;
 - Reviewer is the semantic decomposition quality gate for route planning.
-  Every executable leaf must have one small outcome, no `child_node_ids`,
+  Every executable leaf must have one bounded accountable outcome, no `child_node_ids`,
   clear proof, clear dependency boundary, clear failure boundary, and no hidden
   child-ordering decision. Every parent/module must have children,
   parent/module acceptance intent, and a parent backward review path. Block if
@@ -118,10 +118,12 @@ Check:
   Reviewer inspection of the PM absorption package. Also block if the promoted
   active scope is implemented as peer-appended split leaves rather than a
   replacement parent/module with children;
-- worker replanning is not an acceptable substitute for route depth. If the
-  Worker packet would need to split the work, invent subtasks, or decide child
-  ordering, block the route and require PM to deepen the canonical route tree
-  first;
+- Worker-local planning is required inside every bounded leaf. It may contain
+  numbered substeps, bounded delegation, integration, verification, and repair.
+  Block only when successful execution would require the Worker to create or
+  reorder route nodes, define cross-node dependency boundaries, or change
+  acceptance boundaries; those changes require PM to deepen the canonical route
+  tree first;
 - when blocking for under-decomposition, include one concrete PM-actionable
   split recommendation in `recommended_resolution`: name the broad leaf, the
   child leaves or parent/module shape you expect, and why the old leaf could

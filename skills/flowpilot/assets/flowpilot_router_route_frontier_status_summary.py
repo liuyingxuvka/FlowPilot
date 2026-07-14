@@ -130,7 +130,7 @@ def _status_summary_waiting_for(router: ModuleType, pending_action: dict[str, An
 def _current_status_active_batch_summary(router: ModuleType, run_root: Path) -> dict[str, Any] | None:
     _bind_router(router)
     summaries: list[dict[str, Any]] = []
-    for batch_kind in ('material_scan', 'research', 'current_node', 'pm_role_work'):
+    for batch_kind in ('research', 'current_node', 'pm_role_work'):
         try:
             batch = router._active_parallel_packet_batch(run_root, batch_kind)
         except (RouterError, OSError, json.JSONDecodeError):

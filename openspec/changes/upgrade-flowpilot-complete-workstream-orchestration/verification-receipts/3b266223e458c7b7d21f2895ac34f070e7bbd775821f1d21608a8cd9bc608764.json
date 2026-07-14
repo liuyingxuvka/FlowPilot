@@ -1,0 +1,27 @@
+{
+  "schema_version": 2,
+  "report_protocol_version": 3,
+  "execution_key": "sha256:41306f8307eb095bf420f668a77a18a83a4dec49d08271b0e879fa8c3a026c13",
+  "result_hash": "sha256:b2a083abf958b176a466deb863b4d5535dbad8aff7fdd455bbc9dadfe6e67c78",
+  "receipt_id": "sha256:3b266223e458c7b7d21f2895ac34f070e7bbd775821f1d21608a8cd9bc608764",
+  "result": {
+    "status": "passed",
+    "command": "python",
+    "args": [
+      "simulations/run_flowpilot_current_contract_cartesian_matrix_checks.py",
+      "--evidence-manifest",
+      "simulations/flowpilot_acceptance_testmesh_evidence_manifest.json",
+      "--evidence-scope",
+      "done",
+      "--json-out",
+      "simulations/flowpilot_current_contract_cartesian_matrix_results.json"
+    ],
+    "expected_exit_code": 0,
+    "exit_code": 0,
+    "timeout_seconds": 1800,
+    "stdout": "FlowPilot current-contract Cartesian matrix ok=True\r\n",
+    "stderr": "[flowguard] start phase=explore work_total=2 progress_steps=10\r\n[flowguard] progress 50% work=1/2 traces=10 violations=0\r\n[flowguard] progress 100% work=2/2 traces=30 violations=0\r\n",
+    "stdout_preview": "FlowPilot current-contract Cartesian matrix ok=True\r\n",
+    "stderr_preview": "[flowguard] start phase=explore work_total=2 progress_steps=10\r\n[flowguard] progress 50% work=1/2 traces=10 violations=0\r\n[flowguard] progress 100% work=2/2 traces=30 violations=0\r\n"
+  }
+}

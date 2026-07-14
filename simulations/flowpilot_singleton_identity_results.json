@@ -105,24 +105,24 @@
       ]
     },
     {
-      "canonical_owner": "material work-packet lifecycle",
+      "canonical_owner": "parallel packet-batch lifecycle",
       "code_surfaces": [
-        "flowpilot_router_work_packets_material.py",
-        "flowpilot_material_artifact_map.py"
+        "flowpilot_router_work_packets_parallel.py",
+        "flowpilot_router_work_packets_parallel_reconciliation.py"
       ],
-      "conflict_behavior": "old run-wide flags cannot close new generation work",
-      "generation_key": "current_generation_id",
-      "identity_key": "material_batch_id + packet_ids",
-      "legal_plurality": "one progress authority per material generation",
-      "legal_replay": "same generation progress replay is idempotent",
+      "conflict_behavior": "a stale active-batch reference cannot authorize current work",
+      "generation_key": "batch_id + packet_generation_id",
+      "identity_key": "batch_kind + active_batch_id + packet_ids",
+      "legal_plurality": "one active batch reference per ordinary packet family",
+      "legal_replay": "same batch identity and member set replay is idempotent",
       "model_surfaces": [
-        "material-progress-generation-projection"
+        "parallel-packet-batch-reconciliation"
       ],
-      "object_family": "material_progress_generation",
-      "old_object_disposition": "old generation progress is historical, superseded, or stale",
-      "singleton_scope": "run_id + active material batch + current generation",
+      "object_family": "ordinary_packet_batch_generation",
+      "old_object_disposition": "replaced batch reference is superseded, terminal, or removed",
+      "singleton_scope": "run_id + batch_kind (research/current_node/pm_role_work)",
       "test_surfaces": [
-        "tests/test_flowpilot_router_runtime.py"
+        "tests/test_flowpilot_high_standard_control_flow.py"
       ]
     },
     {
@@ -179,7 +179,7 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=3 initial_states=1 traces=72",
+    "summary": "sequences=3 initial_states=1 traces=78",
     "violation_count": 0
   },
   "full_closure_ok": false,
@@ -191,7 +191,7 @@
         "failures": [
           "ACK settlement completed semantic output"
         ],
-        "state": "scenario=ack_only_output_closure|status=safe|family=ack_vs_output_completion|plural=False|target=False|dupes=1|replay=False|body=True|repair=False|disposed=True|stale=False|progress_only=False|ack=True|output=True|ledger=True|classification="
+        "state": "scenario=ack_only_output_closure|status=safe|family=ack_vs_output_completion|plural=False|target=False|dupes=1|replay=False|body=True|repair=False|disposed=True|stale=False|retired_material=False|progress_only=False|ack=True|output=True|ledger=True|classification="
       },
       "duplicate_daemon_writer_marked_safe": {
         "detected": true,
@@ -199,7 +199,7 @@
         "failures": [
           "duplicate singleton authority was marked safe"
         ],
-        "state": "scenario=duplicate_daemon_writer|status=safe|family=router_daemon_writer|plural=False|target=False|dupes=2|replay=False|body=True|repair=False|disposed=True|stale=False|progress_only=False|ack=False|output=False|ledger=True|classification="
+        "state": "scenario=duplicate_daemon_writer|status=safe|family=router_daemon_writer|plural=False|target=False|dupes=2|replay=False|body=True|repair=False|disposed=True|stale=False|retired_material=False|progress_only=False|ack=False|output=False|ledger=True|classification="
       },
       "idempotent_replay_overblocked": {
         "detected": true,
@@ -207,7 +207,7 @@
         "failures": [
           "idempotent singleton replay was overblocked as risk"
         ],
-        "state": "scenario=pm_package_same_body_replay|status=risk|family=pm_package_disposition|plural=False|target=False|dupes=1|replay=True|body=True|repair=False|disposed=True|stale=False|progress_only=False|ack=False|output=False|ledger=True|classification="
+        "state": "scenario=pm_package_same_body_replay|status=risk|family=pm_package_disposition|plural=False|target=False|dupes=1|replay=True|body=True|repair=False|disposed=True|stale=False|retired_material=False|progress_only=False|ack=False|output=False|ledger=True|classification="
       },
       "missing_ledger_marked_safe": {
         "detected": true,
@@ -215,7 +215,7 @@
         "failures": [
           "missing singleton ledger evidence was treated as safe"
         ],
-        "state": "scenario=missing_ledger_evidence|status=safe|family=live_singleton_audit|plural=False|target=False|dupes=0|replay=False|body=True|repair=False|disposed=True|stale=False|progress_only=False|ack=False|output=False|ledger=False|classification="
+        "state": "scenario=missing_ledger_evidence|status=safe|family=live_singleton_audit|plural=False|target=False|dupes=0|replay=False|body=True|repair=False|disposed=True|stale=False|retired_material=False|progress_only=False|ack=False|output=False|ledger=False|classification="
       },
       "package_conflict_marked_replay": {
         "detected": true,
@@ -224,7 +224,7 @@
           "duplicate singleton authority was marked safe",
           "same singleton identity with different body hash was treated as replay"
         ],
-        "state": "scenario=pm_package_different_body_conflict|status=safe|family=pm_package_disposition|plural=False|target=False|dupes=2|replay=True|body=False|repair=False|disposed=True|stale=False|progress_only=False|ack=False|output=False|ledger=True|classification="
+        "state": "scenario=pm_package_different_body_conflict|status=safe|family=pm_package_disposition|plural=False|target=False|dupes=2|replay=True|body=False|repair=False|disposed=True|stale=False|retired_material=False|progress_only=False|ack=False|output=False|ledger=True|classification="
       },
       "plurality_without_target_marked_safe": {
         "detected": true,
@@ -232,7 +232,7 @@
         "failures": [
           "intended plurality was marked safe without explicit operation target"
         ],
-        "state": "scenario=legal_parallel_runs|status=safe|family=parallel_flowpilot_runs|plural=True|target=False|dupes=3|replay=False|body=True|repair=False|disposed=True|stale=False|progress_only=False|ack=False|output=False|ledger=True|classification="
+        "state": "scenario=legal_parallel_runs|status=safe|family=parallel_flowpilot_runs|plural=True|target=False|dupes=3|replay=False|body=True|repair=False|disposed=True|stale=False|retired_material=False|progress_only=False|ack=False|output=False|ledger=True|classification="
       },
       "progress_only_final_marked_complete": {
         "detected": true,
@@ -240,7 +240,7 @@
         "failures": [
           "progress-only singleton evidence was consumed as completion"
         ],
-        "state": "scenario=final_progress_only_closure|status=safe|family=final_closure_evidence|plural=False|target=False|dupes=1|replay=False|body=True|repair=False|disposed=True|stale=False|progress_only=True|ack=False|output=False|ledger=True|classification="
+        "state": "scenario=final_progress_only_closure|status=safe|family=final_closure_evidence|plural=False|target=False|dupes=1|replay=False|body=True|repair=False|disposed=True|stale=False|retired_material=False|progress_only=True|ack=False|output=False|ledger=True|classification="
       },
       "replacement_without_disposition_marked_safe": {
         "detected": true,
@@ -249,9 +249,17 @@
           "duplicate singleton authority was marked safe",
           "replacement or reissue was safe without old-object disposition"
         ],
-        "state": "scenario=route_replacement_old_packet_undisposed|status=safe|family=route_replacement_current_authority|plural=False|target=False|dupes=2|replay=False|body=True|repair=True|disposed=False|stale=False|progress_only=False|ack=False|output=False|ledger=True|classification="
+        "state": "scenario=route_replacement_old_packet_undisposed|status=safe|family=route_replacement_current_authority|plural=False|target=False|dupes=2|replay=False|body=True|repair=True|disposed=False|stale=False|retired_material=False|progress_only=False|ack=False|output=False|ledger=True|classification="
       },
-      "stale_material_flag_marked_current": {
+      "retired_material_authority_marked_safe": {
+        "detected": true,
+        "expected_failure": "retired material_scan/material_sufficiency/material_understanding authority was marked safe",
+        "failures": [
+          "retired material_scan/material_sufficiency/material_understanding authority was marked safe"
+        ],
+        "state": "scenario=retired_material_singleton_authority_present|status=safe|family=retired_material_protocol|plural=False|target=False|dupes=1|replay=False|body=True|repair=False|disposed=True|stale=False|retired_material=True|progress_only=False|ack=False|output=False|ledger=True|classification="
+      },
+      "stale_packet_batch_ref_marked_current": {
         "detected": true,
         "expected_failure": "replacement or reissue was safe without old-object disposition",
         "failures": [
@@ -259,20 +267,20 @@
           "replacement or reissue was safe without old-object disposition",
           "stale singleton evidence was consumed as current"
         ],
-        "state": "scenario=material_reissue_stale_global_flag|status=safe|family=material_progress_generation|plural=False|target=False|dupes=2|replay=False|body=True|repair=True|disposed=False|stale=True|progress_only=False|ack=False|output=False|ledger=True|classification="
+        "state": "scenario=packet_batch_replacement_stale_active_ref|status=safe|family=ordinary_packet_batch_generation|plural=False|target=False|dupes=2|replay=False|body=True|repair=True|disposed=False|stale=True|retired_material=False|progress_only=False|ack=False|output=False|ledger=True|classification="
       }
     },
     "ok": true
   },
   "live_audit": {
-    "evidence_insufficient_count": 5,
+    "evidence_insufficient_count": 4,
     "mutation_performed": false,
     "ok": true,
     "result_type": "flowpilot_live_singleton_audit",
     "risk_count": 0,
     "status_counts": {
-      "evidence_insufficient": 5,
-      "safe": 1
+      "evidence_insufficient": 4,
+      "safe": 2
     },
     "surface_count": 6,
     "surfaces": [
@@ -280,7 +288,7 @@
         "detail": "current pointer is present and treated as UI focus/default target",
         "evidence": {
           "run_id": "run-20260614-184920",
-          "run_root": "<repo-root>\\.flowpilot\\runs\\run-20260614-184920"
+          "run_root": ".flowpilot/runs/run-20260614-184920"
         },
         "status": "safe",
         "surface": "current_run_pointer"
@@ -318,12 +326,13 @@
         "surface": "route_frontier_current_authority"
       },
       {
-        "detail": "missing",
+        "detail": "no ordinary packet batch currently claims active generation authority",
         "evidence": {
-          "path": ".flowpilot/runs/run-20260614-184920/router_state.json"
+          "active_ref_count": 0,
+          "path": ".flowpilot/runs/run-20260614-184920/packet_batches"
         },
-        "status": "evidence_insufficient",
-        "surface": "material_progress_generation"
+        "status": "safe",
+        "surface": "ordinary_packet_batch_generation"
       }
     ]
   },
@@ -342,7 +351,7 @@
   ],
   "result_type": "flowpilot_singleton_identity",
   "safe_graph": {
-    "edge_count": 24,
+    "edge_count": 26,
     "evidence_insufficient": [
       "missing_ledger_evidence"
     ],
@@ -355,8 +364,9 @@
       "active_packet_conflicting_holder",
       "duplicate_daemon_writer",
       "final_progress_only_closure",
-      "material_reissue_stale_global_flag",
+      "packet_batch_replacement_stale_active_ref",
       "pm_package_different_body_conflict",
+      "retired_material_singleton_authority_present",
       "route_replacement_old_packet_undisposed"
     ],
     "safe": [
@@ -365,7 +375,7 @@
       "pm_package_same_body_replay",
       "route_replacement_old_packet_disposed"
     ],
-    "state_count": 25,
-    "terminal_state_count": 12
+    "state_count": 27,
+    "terminal_state_count": 13
   }
 }

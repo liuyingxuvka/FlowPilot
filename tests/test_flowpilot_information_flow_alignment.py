@@ -26,11 +26,13 @@ import run_flowpilot_information_flow_alignment_checks as information_flow_align
 
 
 def test_information_flow_alignment_has_no_unbound_obligations() -> None:
-    report = information_flow_alignment.build_report()
+    report = information_flow_alignment.build_report(declaration_only=True)
 
     assert report["ok"], report["findings"]
     assert report["obligation_count"] == 14
-    assert report["alignment_ok"]
+    assert report["declaration_ok"]
+    assert report["evidence_status"] == "not_run"
+    assert not report["alignment_ok"]
     assert report["marker_ok"]
     assert report["code_symbol_ok"]
     assert report["underlying_model_ok"]

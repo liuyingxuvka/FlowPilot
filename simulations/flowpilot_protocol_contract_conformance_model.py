@@ -29,9 +29,9 @@ COCKPIT_MISSING_HOST_RECEIPT = "cockpit_missing_host_receipt"
 DISPLAY_MANUAL_RECEIPT_AFTER_PM_STARTUP_INTAKE = "display_manual_receipt_after_pm_startup_intake"
 STARTUP_REPAIR_DEDUPES_CURRENT_BLOCKER = "startup_repair_dedupes_current_blocker"
 ROLE_OUTPUT_ENVELOPE_AMBIGUITY = "role_output_envelope_ambiguity"
-MATERIAL_SCAN_INLINE_BODY_ONLY = "material_scan_inline_body_only"
-MATERIAL_DISPATCH_UNKNOWN_BLOCK_EVENT = "material_dispatch_unknown_block_event"
-MATERIAL_DISPATCH_FRONTIER_PHASE_MISMATCH = "material_dispatch_frontier_phase_mismatch"
+RETIRED_MATERIAL_AUTHORITY_REINTRODUCED = "retired_material_authority_reintroduced"
+SHALLOW_SKILL_INVENTORY_CONTRACT_MISSING = "shallow_skill_inventory_contract_missing"
+COMPLETE_WORKSTREAM_REPORT_CONTRACT_MISSING = "complete_workstream_report_contract_missing"
 REVIEW_BLOCK_EVENTS_WITHOUT_PM_LANE = "review_block_events_without_pm_lane"
 REVIEW_BLOCK_REPAIR_EVENT_HARDCODED = "review_block_repair_event_hardcoded"
 PROCESS_CONTRACT_FAMILY_MISMATCH = "process_contract_family_mismatch"
@@ -48,9 +48,9 @@ NEGATIVE_SCENARIOS = (
     DISPLAY_MANUAL_RECEIPT_AFTER_PM_STARTUP_INTAKE,
     STARTUP_REPAIR_DEDUPES_CURRENT_BLOCKER,
     ROLE_OUTPUT_ENVELOPE_AMBIGUITY,
-    MATERIAL_SCAN_INLINE_BODY_ONLY,
-    MATERIAL_DISPATCH_UNKNOWN_BLOCK_EVENT,
-    MATERIAL_DISPATCH_FRONTIER_PHASE_MISMATCH,
+    RETIRED_MATERIAL_AUTHORITY_REINTRODUCED,
+    SHALLOW_SKILL_INVENTORY_CONTRACT_MISSING,
+    COMPLETE_WORKSTREAM_REPORT_CONTRACT_MISSING,
     REVIEW_BLOCK_EVENTS_WITHOUT_PM_LANE,
     REVIEW_BLOCK_REPAIR_EVENT_HARDCODED,
     PROCESS_CONTRACT_FAMILY_MISMATCH,
@@ -65,8 +65,70 @@ STARTUP_MECHANICAL_REQUIRED_PATH = "startup_intake_receipt_envelope_hash_current
 UNSUPPORTED_LEGACY_STARTUP_GATE_FIELD = "unsupported_legacy_startup_gate_ids"
 PM_CONTROL_BLOCKER_EVENT = "pm_records_control_blocker_repair_decision"
 PM_STARTUP_REPAIR_EVENT = "pm_requests_startup_repair"
-MATERIAL_DISPATCH_BLOCK_EVENT = "router_direct_material_scan_dispatch_recheck_blocked"
-MATERIAL_DISPATCH_BLOCK_FLAG = "material_scan_dispatch_recheck_blocked"
+RETIRED_MATERIAL_EVENTS = frozenset(
+    {
+        "pm_issues_material_and_capability_scan_packets",
+        "router_direct_material_scan_dispatch_recheck_passed",
+        "router_direct_material_scan_dispatch_recheck_blocked",
+        "router_protocol_blocker_material_scan_dispatch_recheck",
+        "worker_scan_packet_bodies_delivered_after_dispatch",
+        "worker_scan_results_returned",
+        "pm_records_material_scan_result_disposition",
+        "reviewer_reports_material_sufficient",
+        "reviewer_reports_material_insufficient",
+        "pm_accepts_reviewed_material",
+        "pm_requests_research_after_material_insufficient",
+        "pm_writes_material_understanding",
+    }
+)
+RETIRED_MATERIAL_CARD_IDS = frozenset(
+    {
+        "pm.material_scan",
+        "reviewer.material_sufficiency",
+        "pm.event.reviewer_report",
+        "pm.material_absorb_or_research",
+        "pm.material_understanding",
+    }
+)
+RETIRED_MATERIAL_FIELDS = frozenset(
+    {
+        "pm_material_packets_issued",
+        "pm_material_scan_card_delivered",
+        "material_scan_packets_relayed",
+        "material_scan_results_relayed_to_reviewer",
+        "material_scan_results_relayed_to_pm",
+        "material_scan_result_disposition_recorded",
+        "material_scan_results_absorbed_by_pm",
+        "reviewer_material_sufficiency_card_delivered",
+        "material_review_sufficient",
+        "material_review_insufficient",
+        "pm_material_understanding_card_delivered",
+        "material_understanding_written_by_pm",
+    }
+)
+RETIRED_MATERIAL_FUNCTIONS = frozenset(
+    {
+        "_active_material_generation_progress",
+        "_apply_relay_material_scan_packets",
+        "_apply_relay_material_scan_results",
+        "_commit_material_scan_repair_generation",
+        "_material_generation_context_for_pm_disposition",
+        "_material_generation_key",
+        "_material_packet_body_text_from_spec",
+        "_material_scan_index_path",
+        "_try_reconcile_material_scan_body_delivery",
+        "_try_reconcile_material_scan_results",
+        "_write_material_dispatch_block_report",
+        "_write_material_dispatch_recheck_protocol_blocker",
+        "_write_material_scan_packets",
+        "_next_material_packet_action",
+        "_write_material_dispatch_repair",
+        "_write_material_sufficiency_report",
+        "_write_material_understanding",
+        "_sync_material_review_from_role_output_payload",
+        "quarantine_material_progress_for_terminal_lifecycle",
+    }
+)
 MODEL_MISS_REVIEW_BLOCK_FLAGS = frozenset(
     {
         "node_acceptance_plan_review_blocked",
@@ -77,13 +139,7 @@ MODEL_MISS_REVIEW_BLOCK_EVENTS_BY_FLAG = {
     "node_acceptance_plan_review_blocked": "reviewer_blocks_node_acceptance_plan",
     "node_review_blocked": "current_node_reviewer_blocks_result",
 }
-CONTROL_RECHECK_REVIEW_BLOCK_FLAGS = frozenset(
-    {
-        "material_scan_dispatch_recheck_blocked",
-        "material_scan_dispatch_recheck_protocol_blocked",
-    }
-)
-DECLARED_REVIEW_BLOCK_FLAGS = MODEL_MISS_REVIEW_BLOCK_FLAGS | CONTROL_RECHECK_REVIEW_BLOCK_FLAGS
+DECLARED_REVIEW_BLOCK_FLAGS = MODEL_MISS_REVIEW_BLOCK_FLAGS
 MODEL_MISS_REVIEW_BLOCK_CARD_IDS = frozenset(
     {"pm.model_miss_triage", "pm.review_repair", "pm.event.reviewer_blocked"}
 )
@@ -103,7 +159,6 @@ PROCESS_CONTRACT_BINDING_REQUIRED = frozenset(
         "flowguard_operator_model_report|flowguard_operator.model_report|project_manager|project_manager",
         "flowguard_operator_model_miss_report|flowguard_operator.model_miss_report|project_manager|project_manager",
         "reviewer_result_review|reviewer.review|project_manager|project_manager",
-        "material_scan|worker.material_scan|project_manager|project_manager",
         "research|worker.research|project_manager|project_manager",
         "control_blocker_repair|pm.control_blocker_repair_decision|project_manager|project_manager",
         "resume_decision|pm.resume_decision|project_manager|project_manager",
@@ -209,16 +264,9 @@ class State:
     role_output_router_rejects_sha256_aliases: bool = True
     role_output_router_rejects_nested_envelope: bool = True
 
-    material_scan_card_requires_file_backed_packet_bodies: bool = True
-    material_scan_router_accepts_file_backed_packet_specs: bool = True
-    material_scan_router_requires_inline_body_text_only: bool = False
-    material_scan_index_forbids_controller_body_reads: bool = True
-
-    material_dispatch_block_event_registered: bool = True
-    material_dispatch_block_report_writer: bool = True
-    material_dispatch_pm_block_cards_reachable: bool = True
-    material_dispatch_route_memory_tracks_block: bool = True
-    material_dispatch_direct_preflight_required: bool = True
+    retired_material_authority_absent: bool = True
+    mandatory_shallow_skill_inventory_contract_present: bool = True
+    complete_workstream_report_contract_present: bool = True
 
     declared_reviewer_block_flags: frozenset[str] = field(default_factory=lambda: DECLARED_REVIEW_BLOCK_FLAGS)
     reviewer_block_lane_flags: frozenset[str] = field(default_factory=lambda: DECLARED_REVIEW_BLOCK_FLAGS)
@@ -228,10 +276,6 @@ class State:
     model_miss_triage_accepts_review_block_flags: frozenset[str] = field(default_factory=lambda: MODEL_MISS_REVIEW_BLOCK_FLAGS)
     pm_review_block_repair_event_accepts_flags: frozenset[str] = field(default_factory=lambda: MODEL_MISS_REVIEW_BLOCK_FLAGS)
     pm_review_block_repair_event_routes_flags: frozenset[str] = field(default_factory=lambda: MODEL_MISS_REVIEW_BLOCK_FLAGS)
-
-    material_dispatch_frontier_phase_synchronized: bool = True
-    material_dispatch_card_has_pre_route_material_exception: bool = True
-    material_scan_packets_mark_pre_route_not_current_node: bool = True
 
     process_contract_bindings: frozenset[str] = field(default_factory=lambda: PROCESS_CONTRACT_BINDING_REQUIRED)
     pm_role_work_router_rejects_foreign_contracts: bool = True
@@ -335,18 +379,9 @@ def _valid_state() -> State:
         role_output_cards_forbid_sha256_aliases=True,
         role_output_router_rejects_sha256_aliases=True,
         role_output_router_rejects_nested_envelope=True,
-        material_scan_card_requires_file_backed_packet_bodies=True,
-        material_scan_router_accepts_file_backed_packet_specs=True,
-        material_scan_router_requires_inline_body_text_only=False,
-        material_scan_index_forbids_controller_body_reads=True,
-        material_dispatch_block_event_registered=True,
-        material_dispatch_block_report_writer=True,
-        material_dispatch_pm_block_cards_reachable=True,
-        material_dispatch_route_memory_tracks_block=True,
-        material_dispatch_direct_preflight_required=True,
-        material_dispatch_frontier_phase_synchronized=True,
-        material_dispatch_card_has_pre_route_material_exception=True,
-        material_scan_packets_mark_pre_route_not_current_node=True,
+        retired_material_authority_absent=True,
+        mandatory_shallow_skill_inventory_contract_present=True,
+        complete_workstream_report_contract_present=True,
         process_contract_bindings=PROCESS_CONTRACT_BINDING_REQUIRED,
         pm_role_work_router_rejects_foreign_contracts=True,
         strict_role_work_results_reject_recipient_drift=True,
@@ -424,26 +459,20 @@ def _scenario_state(scenario: str) -> State:
             role_output_cards_require_compact_refs=False,
             role_output_cards_forbid_sha256_aliases=False,
         )
-    if scenario == MATERIAL_SCAN_INLINE_BODY_ONLY:
+    if scenario == RETIRED_MATERIAL_AUTHORITY_REINTRODUCED:
         return replace(
             state,
-            material_scan_card_requires_file_backed_packet_bodies=False,
-            material_scan_router_accepts_file_backed_packet_specs=False,
-            material_scan_router_requires_inline_body_text_only=True,
+            retired_material_authority_absent=False,
         )
-    if scenario == MATERIAL_DISPATCH_UNKNOWN_BLOCK_EVENT:
+    if scenario == SHALLOW_SKILL_INVENTORY_CONTRACT_MISSING:
         return replace(
             state,
-            material_dispatch_block_event_registered=False,
-            material_dispatch_block_report_writer=False,
-            material_dispatch_pm_block_cards_reachable=False,
-            material_dispatch_route_memory_tracks_block=False,
+            mandatory_shallow_skill_inventory_contract_present=False,
         )
-    if scenario == MATERIAL_DISPATCH_FRONTIER_PHASE_MISMATCH:
+    if scenario == COMPLETE_WORKSTREAM_REPORT_CONTRACT_MISSING:
         return replace(
             state,
-            material_dispatch_frontier_phase_synchronized=False,
-            material_dispatch_card_has_pre_route_material_exception=False,
+            complete_workstream_report_contract_present=False,
         )
     if scenario == REVIEW_BLOCK_EVENTS_WITHOUT_PM_LANE:
         old_lane_flags = frozenset({"node_review_blocked"})
@@ -609,31 +638,14 @@ def _role_output_envelope_failures(state: State) -> list[str]:
     return failures
 
 
-def _material_scan_packet_failures(state: State) -> list[str]:
+def _current_workstream_contract_failures(state: State) -> list[str]:
     failures: list[str] = []
-    if not state.material_scan_card_requires_file_backed_packet_bodies:
-        failures.append("PM material scan guidance does not require file-backed packet body paths and hashes")
-    if not state.material_scan_router_accepts_file_backed_packet_specs:
-        failures.append("router material scan writer does not accept file-backed packet body specs")
-    if state.material_scan_router_requires_inline_body_text_only:
-        failures.append("router material scan writer requires inline body_text in Controller-visible payload")
-    if not state.material_scan_index_forbids_controller_body_reads:
-        failures.append("material scan index does not state controller_may_read_packet_body=false")
-    return failures
-
-
-def _material_dispatch_block_failures(state: State) -> list[str]:
-    failures: list[str] = []
-    if not state.material_dispatch_block_event_registered:
-        failures.append("material dispatch reviewer block event is not registered")
-    if not state.material_dispatch_block_report_writer:
-        failures.append("material dispatch reviewer block event has no file-backed report writer")
-    if not state.material_dispatch_pm_block_cards_reachable:
-        failures.append("material dispatch router block cannot route to PM control-blocker repair")
-    if not state.material_dispatch_route_memory_tracks_block:
-        failures.append("material dispatch reviewer block is missing from route-memory reviewer block markers")
-    if not state.material_dispatch_direct_preflight_required:
-        failures.append("material scan packet relay does not require router direct-dispatch preflight")
+    if not state.retired_material_authority_absent:
+        failures.append("retired material_scan/material_sufficiency/material_understanding authority is active")
+    if not state.mandatory_shallow_skill_inventory_contract_present:
+        failures.append("mandatory shallow local skill inventory contract is missing")
+    if not state.complete_workstream_report_contract_present:
+        failures.append("substantive role contract is missing numbered complete-workstream report rows")
     return failures
 
 
@@ -687,17 +699,6 @@ def _review_block_lane_failures(state: State) -> list[str]:
     return failures
 
 
-def _material_dispatch_frontier_failures(state: State) -> list[str]:
-    failures: list[str] = []
-    if not state.material_dispatch_frontier_phase_synchronized:
-        failures.append("material dispatch review can run while execution_frontier still reports startup_intake")
-    if not state.material_dispatch_card_has_pre_route_material_exception:
-        failures.append("material dispatch reviewer card treats pre-route material_scan as a current-node dispatch")
-    if not state.material_scan_packets_mark_pre_route_not_current_node:
-        failures.append("material scan packets are not marked as pre-route non-current-node work")
-    return failures
-
-
 def _process_contract_binding_failures(state: State) -> list[str]:
     failures: list[str] = []
     if not state.pm_role_work_router_rejects_foreign_contracts:
@@ -731,10 +732,8 @@ def protocol_failures(state: State) -> list[str]:
     failures.extend(_display_receipt_failures(state))
     failures.extend(_startup_repair_cycle_failures(state))
     failures.extend(_role_output_envelope_failures(state))
-    failures.extend(_material_scan_packet_failures(state))
-    failures.extend(_material_dispatch_block_failures(state))
+    failures.extend(_current_workstream_contract_failures(state))
     failures.extend(_review_block_lane_failures(state))
-    failures.extend(_material_dispatch_frontier_failures(state))
     failures.extend(_process_contract_binding_failures(state))
     return failures
 
@@ -969,77 +968,6 @@ def _router_rejects_nested_role_output_envelope(router_source: str) -> bool:
     return "role_output_envelope" not in _tuple_assignment_values(segment, "path_keys")
 
 
-def _material_scan_card_requires_file_backed_packet_bodies(text: str) -> bool:
-    lower = text.lower()
-    return "body_path" in lower and "body_hash" in lower and (
-        "body_text" not in lower or "do not put `body_text`" in lower
-    )
-
-
-def _material_scan_router_accepts_file_backed_packet_specs(router_source: str) -> bool:
-    segment = _function_segment(router_source, "_write_material_scan_packets") + _function_segment(
-        router_source,
-        "_material_packet_body_text_from_spec",
-    )
-    return (
-        ("body_path" in segment or "packet_body_path" in segment)
-        and ("body_hash" in segment or "packet_body_hash" in segment)
-    )
-
-
-def _material_scan_router_requires_inline_body_text_only(router_source: str) -> bool:
-    segment = _function_segment(router_source, "_write_material_scan_packets")
-    return 'body_text = spec.get("body_text")' in segment and not _material_scan_router_accepts_file_backed_packet_specs(router_source)
-
-
-def _material_scan_index_forbids_controller_body_reads(router_source: str) -> bool:
-    segment = _function_segment(router_source, "_write_material_scan_packets")
-    return '"controller_may_read_packet_body": False' in segment or "'controller_may_read_packet_body': False" in segment
-
-
-def _material_dispatch_block_event_registered(router: Any) -> bool:
-    return MATERIAL_DISPATCH_BLOCK_EVENT in router.EXTERNAL_EVENTS
-
-
-def _material_dispatch_block_report_writer(router_source: str) -> bool:
-    segment = _function_segment(router_source, "_record_external_event_unchecked")
-    return MATERIAL_DISPATCH_BLOCK_EVENT in segment and (
-        "_write_material_dispatch_block" in segment or "_write_role_gate_report" in segment
-    )
-
-
-def _material_dispatch_pm_block_cards_reachable(router_source: str) -> bool:
-    control_blocker_segment = (
-        _function_segment(router_source, "_control_blocker_allowed_resolution_events")
-        + "\n"
-        + _function_segment(router_source, "_repair_outcome_table")
-        + "\n"
-        + _function_segment(router_source, "_write_control_blocker_repair_decision")
-    )
-    return (
-        PM_CONTROL_BLOCKER_EVENT in router_source
-        and "PM_CONTROL_BLOCKER_REPAIR_DECISION_EVENT" in control_blocker_segment
-        and "router_direct_material_scan_dispatch_recheck_passed" in control_blocker_segment
-        and "router_direct_material_scan_dispatch_recheck_blocked" in control_blocker_segment
-        and "router_protocol_blocker_material_scan_dispatch_recheck" in control_blocker_segment
-    )
-
-
-def _material_dispatch_route_memory_tracks_block(router_source: str) -> bool:
-    segment = _function_segment(router_source, "_refresh_route_memory")
-    return MATERIAL_DISPATCH_BLOCK_EVENT in segment
-
-
-def _material_dispatch_direct_preflight_required(router_source: str) -> bool:
-    next_segment = _function_segment(router_source, "_next_material_packet_action")
-    relay_segment = _function_segment(router_source, "_relay_packet_records")
-    return (
-        "validate_packet_ready_for_direct_relay" in relay_segment
-        and "reviewer_dispatch_allowed" not in next_segment
-        and MATERIAL_DISPATCH_BLOCK_FLAG not in next_segment
-    )
-
-
 def _declared_reviewer_block_flags(router: Any) -> frozenset[str]:
     flags: set[str] = set()
     for event_name, meta in router.EXTERNAL_EVENTS.items():
@@ -1128,24 +1056,7 @@ def _pm_review_block_repair_event_routes_flags(router: Any, router_source: str) 
     routed: set[str] = set()
     if "_write_route_mutation" in segment:
         routed.update(str(flag) for flag in getattr(router, "MODEL_MISS_ROUTE_MUTATION_BLOCK_FLAGS", ("node_review_blocked",)))
-    if "_write_material_dispatch_repair" in segment:
-        routed.update(str(flag) for flag in getattr(router, "MODEL_MISS_MATERIAL_DISPATCH_REPAIR_FLAGS", (MATERIAL_DISPATCH_BLOCK_FLAG,)))
     return frozenset(routed) & MODEL_MISS_REVIEW_BLOCK_FLAGS
-
-
-def _material_dispatch_frontier_phase_synchronized(router_source: str) -> bool:
-    segment = _function_segment(router_source, "_write_material_scan_packets")
-    return "execution_frontier.json" in segment or "_set_pre_route_frontier_phase" in segment
-
-
-def _material_dispatch_card_has_pre_route_material_exception(text: str) -> bool:
-    lower = text.lower()
-    return "material_scan" in lower and "pre-route" in lower and "is_current_node=false" in lower
-
-
-def _material_scan_packets_mark_pre_route_not_current_node(router_source: str) -> bool:
-    segment = _function_segment(router_source, "_write_material_scan_packets")
-    return "is_current_node=False" in segment
 
 
 def _flatten_json_paths(value: Any, prefix: str = "") -> set[str]:
@@ -1385,13 +1296,82 @@ def _startup_role_may_alias_runtime_audit_path(card_text: str) -> bool:
     return asks_for_startup_mechanical_audit_file and not separates_submission
 
 
-def _router_process_contract_bindings(router_source: str) -> frozenset[str]:
-    if "PROCESS_CONTRACT_BINDINGS" not in router_source:
-        return frozenset()
-    bindings = set(PROCESS_CONTRACT_BINDING_REQUIRED)
-    if "worker.current_node" in _function_segment(router_source, "_validate_pm_role_work_process_contract_binding"):
-        return frozenset(bindings)
-    return frozenset()
+def _retired_material_authority_absent(router: Any, router_source: str) -> bool:
+    events = set(getattr(router, "EXTERNAL_EVENTS", {}))
+    cards = {
+        str(entry.get("card_id") or "")
+        for entry in getattr(router, "SYSTEM_CARD_SEQUENCE", ())
+        if isinstance(entry, dict)
+    }
+    runtime_flags = set(getattr(router, "RUNTIME_FLAG_DEFAULTS", {}))
+    process_kinds = set(getattr(router, "PROCESS_CONTRACT_BINDINGS", {}))
+    retired_functions = {
+        function_name
+        for function_name in RETIRED_MATERIAL_FUNCTIONS
+        if hasattr(router, function_name) or f"def {function_name}(" in router_source
+    }
+    return not (
+        events.intersection(RETIRED_MATERIAL_EVENTS)
+        or cards.intersection(RETIRED_MATERIAL_CARD_IDS)
+        or runtime_flags.intersection(RETIRED_MATERIAL_FIELDS)
+        or "material_scan" in process_kinds
+        or retired_functions
+    )
+
+
+def _mandatory_shallow_skill_inventory_contract_present(project_root: Path) -> bool:
+    path = (
+        project_root
+        / "skills"
+        / "flowpilot"
+        / "assets"
+        / "flowpilot_core_runtime"
+        / "packet_result_contracts.py"
+    )
+    source = path.read_text(encoding="utf-8")
+    match = re.search(
+        r'"family_id"\s*:\s*"task\.discovery"(.*?)(?=\n\s*\},\n\s*\{)',
+        source,
+        re.DOTALL,
+    )
+    if not match:
+        return False
+    segment = match.group(1)
+    return (
+        re.search(r'"required_fields"\s*:\s*\([^)]*"candidate_skill_inventory"', segment)
+        is not None
+        and re.search(
+            r'"explicit_array_fields"\s*:\s*\([^)]*"candidate_skill_inventory"',
+            segment,
+        )
+        is not None
+    )
+
+
+def _complete_workstream_report_contract_present(*texts: str) -> bool:
+    return all(
+        "numbered plan" in text.lower()
+        and "workstream_plan_and_completion" in text
+        for text in texts
+    )
+
+
+def _router_process_contract_bindings(router: Any) -> frozenset[str]:
+    bindings: set[str] = set()
+    for process_kind, row in getattr(router, "PROCESS_CONTRACT_BINDINGS", {}).items():
+        if not isinstance(row, dict):
+            continue
+        bindings.add(
+            "|".join(
+                (
+                    str(process_kind),
+                    str(row.get("task_family") or ""),
+                    str(row.get("required_result_next_recipient") or ""),
+                    str(row.get("absorbing_role") or ""),
+                )
+            )
+        )
+    return frozenset(bindings)
 
 
 def _router_rejects_pm_role_work_foreign_contracts(router_source: str) -> bool:
@@ -1443,18 +1423,24 @@ def collect_source_state(project_root: Path) -> State:
     runtime_root = project_root / "skills" / "flowpilot" / "assets" / "runtime_kit"
     pm_core_text = (runtime_root / "cards" / "roles" / "project_manager.md").read_text(encoding="utf-8")
     reviewer_core_text = (runtime_root / "cards" / "roles" / "human_like_reviewer.md").read_text(encoding="utf-8")
+    flowguard_core_text = (runtime_root / "cards" / "roles" / "flowguard_operator.md").read_text(encoding="utf-8")
     worker_core_text = (runtime_root / "cards" / "roles" / "worker.md").read_text(encoding="utf-8")
+    research_worker_text = (runtime_root / "cards" / "roles" / "worker_research_report.md").read_text(encoding="utf-8")
     pm_startup_text = (runtime_root / "cards" / "phases" / "pm_startup_intake.md").read_text(encoding="utf-8")
     startup_card_text = pm_startup_text
     pm_repair_text = (runtime_root / "cards" / "phases" / "pm_review_repair.md").read_text(encoding="utf-8")
     pm_resume_text = (runtime_root / "cards" / "phases" / "pm_resume_decision.md").read_text(encoding="utf-8")
-    pm_material_scan_text = (runtime_root / "cards" / "phases" / "pm_material_scan.md").read_text(encoding="utf-8")
+    shared_output_contract_text = (
+        runtime_root / "prompts" / "packets" / "output_contract_section.md"
+    ).read_text(encoding="utf-8")
     role_output_guidance_texts = (
+        shared_output_contract_text,
         startup_card_text,
         pm_core_text,
         reviewer_core_text,
+        flowguard_core_text,
         worker_core_text,
-        worker_core_text,
+        research_worker_text,
         pm_repair_text,
     )
 
@@ -1517,29 +1503,23 @@ def collect_source_state(project_root: Path) -> State:
         role_output_router_rejects_nested_envelope=_router_rejects_nested_role_output_envelope(
             router_source
         ),
-        material_scan_card_requires_file_backed_packet_bodies=_material_scan_card_requires_file_backed_packet_bodies(
-            pm_material_scan_text
+        retired_material_authority_absent=_retired_material_authority_absent(
+            router,
+            router_source,
         ),
-        material_scan_router_accepts_file_backed_packet_specs=_material_scan_router_accepts_file_backed_packet_specs(
-            router_source
+        mandatory_shallow_skill_inventory_contract_present=_mandatory_shallow_skill_inventory_contract_present(
+            project_root
         ),
-        material_scan_router_requires_inline_body_text_only=_material_scan_router_requires_inline_body_text_only(
-            router_source
-        ),
-        material_scan_index_forbids_controller_body_reads=_material_scan_index_forbids_controller_body_reads(
-            router_source
-        ),
-        material_dispatch_block_event_registered=_material_dispatch_block_event_registered(router),
-        material_dispatch_block_report_writer=_material_dispatch_block_report_writer(router_source),
-        material_dispatch_pm_block_cards_reachable=_material_dispatch_pm_block_cards_reachable(router_source),
-        material_dispatch_route_memory_tracks_block=_material_dispatch_route_memory_tracks_block(router_source),
-        material_dispatch_direct_preflight_required=_material_dispatch_direct_preflight_required(
-            router_source
+        complete_workstream_report_contract_present=_complete_workstream_report_contract_present(
+            pm_core_text,
+            reviewer_core_text,
+            flowguard_core_text,
+            worker_core_text,
+            research_worker_text,
         ),
         declared_reviewer_block_flags=_declared_reviewer_block_flags(router),
         reviewer_block_lane_flags=(
             declared_model_miss_flags
-            | CONTROL_RECHECK_REVIEW_BLOCK_FLAGS
             | gate_outcome_block_flags
         ),
         model_miss_review_block_event_flags=_model_miss_review_block_event_flags(router),
@@ -1557,16 +1537,7 @@ def collect_source_state(project_root: Path) -> State:
             router,
             router_source,
         ),
-        material_dispatch_frontier_phase_synchronized=_material_dispatch_frontier_phase_synchronized(
-            router_source
-        ),
-        material_dispatch_card_has_pre_route_material_exception=_material_dispatch_card_has_pre_route_material_exception(
-            pm_material_scan_text
-        ),
-        material_scan_packets_mark_pre_route_not_current_node=_material_scan_packets_mark_pre_route_not_current_node(
-            router_source
-        ),
-        process_contract_bindings=_router_process_contract_bindings(router_source),
+        process_contract_bindings=_router_process_contract_bindings(router),
         pm_role_work_router_rejects_foreign_contracts=_router_rejects_pm_role_work_foreign_contracts(
             router_source
         ),

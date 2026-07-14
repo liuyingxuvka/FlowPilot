@@ -19,13 +19,131 @@ ASSETS_PATH = ROOT / "skills" / "flowpilot" / "assets"
 if str(ASSETS_PATH) not in sys.path:
     sys.path.insert(0, str(ASSETS_PATH))
 
-from flowpilot_runtime_path_evidence import attach_runtime_path_evidence_to_plan
+from flowpilot_runtime_path_evidence import (
+    RuntimePathAuthority,
+    attach_runtime_path_evidence_to_plan,
+)
+try:
+    from .flowpilot_behavior_authority import (
+        resolve_behavior_authority,
+        selected_commitment_id,
+    )
+except ImportError:  # direct script execution
+    from flowpilot_behavior_authority import (
+        resolve_behavior_authority,
+        selected_commitment_id,
+    )
+
+
+def _canonical_runtime_path_authority() -> RuntimePathAuthority:
+    authority = resolve_behavior_authority(
+        selected_commitment_id(
+            "model_test_alignment_runtime_path_commitment_id"
+        )
+    )
+    return RuntimePathAuthority(
+        business_intent=authority.business_intent,
+        business_intent_id=authority.business_intent_id,
+        behavior_commitment_id=authority.commitment_id,
+        primary_path_id=authority.primary_path_id,
+        expected_terminal=authority.expected_terminal,
+        surface_id=next(iter(authority.source_surface_ids), ""),
+        inventory_revision=authority.inventory_revision,
+    )
+
+
+MTA_RUNTIME_PATH_AUTHORITY = _canonical_runtime_path_authority()
+
+
+CURRENT_CARTESIAN_RISK_SHARD_OWNERS = (
+    "current_contract_runtime_matrix",
+    "current_contract_blocker_repair_matrix",
+    "current_contract_reissue_matrix",
+    "current_contract_evidence_freshness_matrix",
+    "current_contract_stage_timing_matrix",
+    "current_contract_overclaim_matrix",
+    "current_contract_route_mutation_matrix",
+    "current_contract_no_delta_repair_matrix",
+    "current_contract_terminal_matrix",
+)
+
+
+def _cartesian_risk_shard_obligations() -> tuple[ModelObligation, ...]:
+    return tuple(
+        _obligation(
+            f"packet_result_family.current_cartesian_risk_shard.{owner}",
+            obligation_type="current_cartesian_execution_shard",
+            description=(
+                f"Current Cartesian owner {owner} binds its declared cells and shard ids to "
+                "current external TestMesh execution proof; owned model-cell count is not test_count."
+            ),
+            required_test_kinds=(HAPPY, NEGATIVE),
+            allow_shared_evidence=True,
+            allow_shared_implementation=True,
+        )
+        for owner in CURRENT_CARTESIAN_RISK_SHARD_OWNERS
+    )
+
+
+def _cartesian_risk_shard_contracts() -> tuple[CodeContract, ...]:
+    return tuple(
+        _contract(
+            f"packet_result_family.runner.current_cartesian_risk_shard.{owner}",
+            path="simulations/run_flowpilot_current_contract_cartesian_matrix_checks.py",
+            symbol="_test_mesh_report",
+            implements=(f"packet_result_family.current_cartesian_risk_shard.{owner}",),
+            external_inputs=("current_execution_evidence_manifest", owner),
+            external_outputs=("ProofArtifactRef", "TestResultReuseTicket", "selected_and_executed_counts"),
+            state_reads=("coverage_shard_ids_by_owner", "source_fingerprint"),
+            error_paths=("missing_proof", "stale_proof", "progress_only", "reused_without_ticket"),
+        )
+        for owner in CURRENT_CARTESIAN_RISK_SHARD_OWNERS
+    )
+
+
+def _cartesian_risk_shard_evidence() -> tuple[TestEvidence, ...]:
+    rows: list[TestEvidence] = []
+    for owner in CURRENT_CARTESIAN_RISK_SHARD_OWNERS:
+        obligation_id = f"packet_result_family.current_cartesian_risk_shard.{owner}"
+        contract_id = f"packet_result_family.runner.current_cartesian_risk_shard.{owner}"
+        rows.extend(
+            (
+                _evidence(
+                    f"packet_result_family.happy.current_cartesian_risk_shard.{owner}",
+                    test_name="test_strict_testmesh_consumes_current_proof_counts_not_model_cells",
+                    path="tests/test_flowpilot_current_contract_cartesian_matrix.py",
+                    command=(
+                        "python -m unittest tests.test_flowpilot_current_contract_cartesian_matrix."
+                        "FlowPilotCurrentContractCartesianMatrixTests."
+                        "test_strict_testmesh_consumes_current_proof_counts_not_model_cells"
+                    ),
+                    test_kind=HAPPY,
+                    covers=(obligation_id,),
+                    code_contracts=(contract_id,),
+                ),
+                _evidence(
+                    f"packet_result_family.negative.current_cartesian_risk_shard.{owner}",
+                    test_name="test_strict_testmesh_rejects_reused_proof_without_ticket",
+                    path="tests/test_flowpilot_current_contract_cartesian_matrix.py",
+                    command=(
+                        "python -m unittest tests.test_flowpilot_current_contract_cartesian_matrix."
+                        "FlowPilotCurrentContractCartesianMatrixTests."
+                        "test_strict_testmesh_rejects_reused_proof_without_ticket"
+                    ),
+                    test_kind=NEGATIVE,
+                    covers=(obligation_id,),
+                    code_contracts=(contract_id,),
+                ),
+            )
+        )
+    return tuple(rows)
 
 
 def _with_runtime_path(plan: ModelTestAlignmentPlan, family: str) -> ModelTestAlignmentPlan:
     return attach_runtime_path_evidence_to_plan(
         plan,
         family=family,
+        authority=MTA_RUNTIME_PATH_AUTHORITY,
         code_contract_prefix=f"runtime_path.{plan.model_id}",
     )
 
@@ -398,24 +516,6 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
     packet_result_family = ModelTestAlignmentPlan(
         model_id="packet_result_family",
         obligations=(
-            _obligation(
-                "packet_result_family.material_scan.durable_event_fold",
-                obligation_type="transition",
-                description="Material-scan batches fold durable result envelopes into worker_scan_results_returned before stale waits.",
-                required_test_kinds=(HAPPY,),
-            ),
-            _obligation(
-                "packet_result_family.material_scan.partial_member_wait",
-                obligation_type="scenario",
-                description="Partial material-scan batches name only missing worker roles and keep completed members out of reminders.",
-                required_test_kinds=(EDGE,),
-            ),
-            _obligation(
-                "packet_result_family.material_scan.recipient_and_sealed_boundary",
-                obligation_type="hazard",
-                description="Material-scan result relay reconciliation keeps sealed result bodies unread by Router/Controller.",
-                required_test_kinds=(NEGATIVE,),
-            ),
             _obligation(
                 "packet_result_family.research.durable_event_fold",
                 obligation_type="transition",
@@ -798,10 +898,73 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 obligation_type="stage_evidence_contract",
                 description=(
                     "Every current packet/result family has exactly one stage-evidence matrix row, "
-                    "and every generated packet handoff exposes that row in both envelope and body "
-                    "so roles know which evidence is due now and which evidence is future-stage only."
+                    "and every generated packet handoff exposes that row through the single envelope "
+                    "handoff authority and its open-packet checklist projection so roles know which "
+                    "evidence is due now and which evidence is future-stage only."
                 ),
                 required_test_kinds=(HAPPY, NEGATIVE, REPLAY),
+                allow_shared_evidence=True,
+                allow_shared_implementation=True,
+            ),
+            _obligation(
+                "packet_result_family.current_handoff_checklist_single_authority",
+                obligation_type="single_authority_contract",
+                description=(
+                    "Mechanical result requirements live only in current_handoff_contract.v2 and the "
+                    "fingerprinted submission_checklist.v2 projection; sealed packet bodies, reissue "
+                    "diagnostics, remembered registries, and private minimal-shape helpers cannot act "
+                    "as an alternate result authority."
+                ),
+                required_test_kinds=(HAPPY, NEGATIVE),
+                allow_shared_evidence=True,
+                allow_shared_implementation=True,
+            ),
+            _obligation(
+                "packet_result_family.strict_fake_ai_open_packet_identity",
+                obligation_type="fake_ai_identity_contract",
+                description=(
+                    "Canonical fake AI consumes only a current open-packet result and rejects missing "
+                    "ACK/material delivery, stale run/packet/lease/route/source identities, tampered "
+                    "fingerprints, unknown families, wrong roles, and body/checklist conflicts."
+                ),
+                required_test_kinds=(HAPPY, NEGATIVE),
+                allow_shared_evidence=True,
+                allow_shared_implementation=True,
+            ),
+            _obligation(
+                "packet_result_family.formal_execution_covering_array_receipts",
+                obligation_type="execution_coverage_contract",
+                description=(
+                    "The finite AI response universe enumerates every registered family minimum, "
+                    "top-level required omission, and forbidden path, then executes deterministic "
+                    "pairwise and critical three-way public submit rows with passed/failed/not-run "
+                    "receipts kept distinct."
+                ),
+                required_test_kinds=(NEGATIVE, REPLAY),
+                allow_shared_evidence=True,
+                allow_shared_implementation=True,
+            ),
+            _obligation(
+                "packet_result_family.testmesh_requires_fingerprinted_proof",
+                obligation_type="testmesh_evidence_truth_contract",
+                description=(
+                    "Acceptance TestMesh children cannot declare hand-written passed/current rows; "
+                    "each passing child supplies command, result path, exit code, selected/executed "
+                    "count, covered obligations, and a current SHA-256 ProofArtifactRef."
+                ),
+                required_test_kinds=(HAPPY, NEGATIVE),
+                allow_shared_evidence=True,
+                allow_shared_implementation=True,
+            ),
+            _obligation(
+                "packet_result_family.dynamic_pm_repair_owner_projection",
+                obligation_type="dynamic_contract_projection",
+                description=(
+                    "Terminal PM repair checklist branches project every current active acceptance "
+                    "item onto a route owner and supplemental repair item before fake or real PM "
+                    "submission, so adding an acceptance item cannot create an endless mechanical loop."
+                ),
+                required_test_kinds=(NEGATIVE, REPLAY),
                 allow_shared_evidence=True,
                 allow_shared_implementation=True,
             ),
@@ -817,6 +980,7 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 allow_shared_evidence=True,
                 allow_shared_implementation=True,
             ),
+            *_cartesian_risk_shard_obligations(),
         ),
         code_contracts=(
             _contract(
@@ -836,7 +1000,52 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 external_inputs=("ledger", "packet_envelope", "authorized_result_reads"),
                 external_outputs=("current_handoff_contract.stage_evidence_matrix",),
                 state_reads=("packet_result_contract_family_id", "packet_stage_evidence_matrix"),
-                state_writes=("packet.envelope.current_handoff_contract", "packet.body.current_handoff_contract"),
+                state_writes=("packet.envelope.current_handoff_contract",),
+            ),
+            _contract(
+                "packet_result_family.runtime.current_handoff_checklist_projection",
+                path="skills/flowpilot/assets/flowpilot_new_role_commands.py",
+                symbol="_submission_checklist_from_current_handoff_contract",
+                implements=("packet_result_family.current_handoff_checklist_single_authority",),
+                external_inputs=("current_handoff_contract.v2", "opened_materials", "current_identity"),
+                external_outputs=("submission_checklist.v2",),
+                state_reads=("current_handoff_contract.required_report_contract", "review_window"),
+            ),
+            _contract(
+                "packet_result_family.fake_ai.from_open_packet_result",
+                path="simulations/flowpilot_contract_driven_fake_ai.py",
+                symbol="ContractDrivenFakeAI.from_open_packet_result",
+                implements=("packet_result_family.strict_fake_ai_open_packet_identity",),
+                external_inputs=("open_packet_result.v1",),
+                external_outputs=("strict_current_result_payload",),
+                state_reads=("submission_checklist.v2", "current_handoff_contract.v2", "review_window"),
+            ),
+            _contract(
+                "packet_result_family.formal_ai_execution_closure",
+                path="simulations/flowpilot_ai_response_execution_closure_model.py",
+                symbol="run_execution_closure",
+                implements=("packet_result_family.formal_execution_covering_array_receipts",),
+                external_inputs=("finite_contract_universe", "covering_array_mode"),
+                external_outputs=("execution_receipts", "test_mesh_receipt"),
+                state_reads=("packet_result_contract_registry",),
+            ),
+            _contract(
+                "packet_result_family.acceptance_testmesh_proof_binding",
+                path="simulations/flowpilot_acceptance_testmesh_model.py",
+                symbol="build_testmesh_plan",
+                implements=("packet_result_family.testmesh_requires_fingerprinted_proof",),
+                external_inputs=("current_proof_manifest",),
+                external_outputs=("proof_required_testmesh_plan",),
+                state_reads=("ProofArtifactRef", "selected_and_executed_counts"),
+            ),
+            _contract(
+                "packet_result_family.runtime.dynamic_pm_repair_contract",
+                path="skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+                symbol="_project_current_pm_repair_contract",
+                implements=("packet_result_family.dynamic_pm_repair_owner_projection",),
+                external_inputs=("current_blocker", "active_acceptance_items"),
+                external_outputs=("current_pm_repair_branch_shapes",),
+                state_reads=("active_blockers", "acceptance_item_registry", "terminal_supplemental_repair"),
             ),
             _contract(
                 "packet_result_family.runtime.flowguard_stage_matrix",
@@ -1317,8 +1526,139 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 external_inputs=("submit-result", "--body", "--body-file"),
                 external_outputs=("json_error_or_submission_result",),
             ),
+            *_cartesian_risk_shard_contracts(),
         ),
         test_evidence=(
+            _evidence(
+                "packet_result_family.happy.current_checklist_projection",
+                test_name="test_open_packet_submission_checklist_projects_current_handoff_contract",
+                path="tests/test_flowpilot_new_entrypoint.py",
+                command=(
+                    "python -m unittest tests.test_flowpilot_new_entrypoint."
+                    "FlowPilotNewEntrypointTests."
+                    "test_open_packet_submission_checklist_projects_current_handoff_contract"
+                ),
+                test_kind=HAPPY,
+                covers=("packet_result_family.current_handoff_checklist_single_authority",),
+                code_contracts=("packet_result_family.runtime.current_handoff_checklist_projection",),
+            ),
+            _evidence(
+                "packet_result_family.negative.body_authority_rejected",
+                test_name="test_open_packet_submission_checklist_rejects_packet_body_as_contract_authority",
+                path="tests/test_flowpilot_new_entrypoint.py",
+                command=(
+                    "python -m unittest tests.test_flowpilot_new_entrypoint."
+                    "FlowPilotNewEntrypointTests."
+                    "test_open_packet_submission_checklist_rejects_packet_body_as_contract_authority"
+                ),
+                test_kind=NEGATIVE,
+                covers=("packet_result_family.current_handoff_checklist_single_authority",),
+                code_contracts=("packet_result_family.runtime.current_handoff_checklist_projection",),
+            ),
+            _evidence(
+                "packet_result_family.happy.strict_fake_ai_open_result",
+                test_name="test_real_public_open_packet_result_passes_strict_consumer",
+                path="tests/test_flowpilot_contract_driven_fake_ai_open_packet.py",
+                command=(
+                    "python -m unittest tests.test_flowpilot_contract_driven_fake_ai_open_packet."
+                    "FlowPilotContractDrivenFakeAIOpenPacketTests."
+                    "test_real_public_open_packet_result_passes_strict_consumer"
+                ),
+                test_kind=HAPPY,
+                covers=("packet_result_family.strict_fake_ai_open_packet_identity",),
+                code_contracts=("packet_result_family.fake_ai.from_open_packet_result",),
+            ),
+            _evidence(
+                "packet_result_family.negative.strict_fake_ai_identity_mismatch",
+                test_name="test_identity_route_generation_and_projection_mismatches_fail_closed",
+                path="tests/test_flowpilot_contract_driven_fake_ai_open_packet.py",
+                command=(
+                    "python -m unittest tests.test_flowpilot_contract_driven_fake_ai_open_packet."
+                    "FlowPilotContractDrivenFakeAIOpenPacketTests."
+                    "test_identity_route_generation_and_projection_mismatches_fail_closed"
+                ),
+                test_kind=NEGATIVE,
+                covers=("packet_result_family.strict_fake_ai_open_packet_identity",),
+                code_contracts=("packet_result_family.fake_ai.from_open_packet_result",),
+            ),
+            _evidence(
+                "packet_result_family.negative.formal_static_fault_universe",
+                test_name="test_static_universe_exhausts_registered_families_and_declared_faults",
+                path="tests/test_flowpilot_formal_ai_contract_execution.py",
+                command=(
+                    "python -m unittest tests.test_flowpilot_formal_ai_contract_execution."
+                    "FlowPilotFormalAIContractExecutionTests."
+                    "test_static_universe_exhausts_registered_families_and_declared_faults"
+                ),
+                test_kind=NEGATIVE,
+                covers=("packet_result_family.formal_execution_covering_array_receipts",),
+                code_contracts=("packet_result_family.formal_ai_execution_closure",),
+            ),
+            _evidence(
+                "packet_result_family.replay.formal_submit_receipts",
+                test_name="test_fast_formal_submit_cases_have_real_assertion_receipts",
+                path="tests/test_flowpilot_formal_ai_contract_execution.py",
+                command=(
+                    "python -m unittest tests.test_flowpilot_formal_ai_contract_execution."
+                    "FlowPilotFormalAIContractExecutionTests."
+                    "test_fast_formal_submit_cases_have_real_assertion_receipts"
+                ),
+                test_kind=REPLAY,
+                covers=("packet_result_family.formal_execution_covering_array_receipts",),
+                code_contracts=("packet_result_family.formal_ai_execution_closure",),
+            ),
+            _evidence(
+                "packet_result_family.happy.testmesh_fingerprinted_proof",
+                test_name="test_background_evidence_compiler_emits_current_fingerprinted_proofs",
+                path="tests/test_flowpilot_acceptance_testmesh.py",
+                command=(
+                    "python -m unittest tests.test_flowpilot_acceptance_testmesh."
+                    "FlowPilotAcceptanceTestMeshTests."
+                    "test_background_evidence_compiler_emits_current_fingerprinted_proofs"
+                ),
+                test_kind=HAPPY,
+                covers=("packet_result_family.testmesh_requires_fingerprinted_proof",),
+                code_contracts=("packet_result_family.acceptance_testmesh_proof_binding",),
+            ),
+            _evidence(
+                "packet_result_family.negative.testmesh_missing_proof",
+                test_name="test_missing_router_background_artifacts_block_broad_routine_gate",
+                path="tests/test_flowpilot_acceptance_testmesh.py",
+                command=(
+                    "python -m unittest tests.test_flowpilot_acceptance_testmesh."
+                    "FlowPilotAcceptanceTestMeshTests."
+                    "test_missing_router_background_artifacts_block_broad_routine_gate"
+                ),
+                test_kind=NEGATIVE,
+                covers=("packet_result_family.testmesh_requires_fingerprinted_proof",),
+                code_contracts=("packet_result_family.acceptance_testmesh_proof_binding",),
+            ),
+            _evidence(
+                "packet_result_family.negative.terminal_pm_repair_blocker",
+                test_name="test_fake_end_to_end_terminal_replay_blocker_records_semantic_blocker",
+                path="tests/test_flowpilot_new_entrypoint.py",
+                command=(
+                    "python -m unittest tests.test_flowpilot_new_entrypoint."
+                    "FlowPilotNewEntrypointTests."
+                    "test_fake_end_to_end_terminal_replay_blocker_records_semantic_blocker"
+                ),
+                test_kind=NEGATIVE,
+                covers=("packet_result_family.dynamic_pm_repair_owner_projection",),
+                code_contracts=("packet_result_family.runtime.dynamic_pm_repair_contract",),
+            ),
+            _evidence(
+                "packet_result_family.replay.terminal_pm_repair_converges",
+                test_name="test_fake_end_to_end_terminal_replay_blocker_repairs_to_completion",
+                path="tests/test_flowpilot_new_entrypoint.py",
+                command=(
+                    "python -m unittest tests.test_flowpilot_new_entrypoint."
+                    "FlowPilotNewEntrypointTests."
+                    "test_fake_end_to_end_terminal_replay_blocker_repairs_to_completion"
+                ),
+                test_kind=REPLAY,
+                covers=("packet_result_family.dynamic_pm_repair_owner_projection",),
+                code_contracts=("packet_result_family.runtime.dynamic_pm_repair_contract",),
+            ),
             _evidence(
                 "packet_result_family.happy.stage_matrix_family_coverage",
                 test_name="test_stage_evidence_matrix_covers_every_packet_result_family",
@@ -1390,30 +1730,6 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 test_kind=NEGATIVE,
                 covers=("packet_result_family.portable_runtime_self_check_receipt",),
                 code_contracts=("packet_result_family.runtime.portable_self_check",),
-            ),
-            _evidence(
-                "packet_result_family.happy.material_scan_full",
-                test_name="test_material_scan_existing_results_reconcile_before_stale_wait",
-                path="tests/router_runtime/packets.py",
-                command="python -m unittest tests.router_runtime.packets.PacketsRuntimeTests.test_material_scan_existing_results_reconcile_before_stale_wait",
-                test_kind=HAPPY,
-                covers=("packet_result_family.material_scan.durable_event_fold",),
-            ),
-            _evidence(
-                "packet_result_family.edge.material_scan_partial",
-                test_name="test_material_scan_full_batch_wait_current_work_names_all_missing_roles",
-                path="tests/router_runtime/packets.py",
-                command="python -m unittest tests.router_runtime.packets.PacketsRuntimeTests.test_material_scan_full_batch_wait_current_work_names_all_missing_roles",
-                test_kind=EDGE,
-                covers=("packet_result_family.material_scan.partial_member_wait",),
-            ),
-            _evidence(
-                "packet_result_family.negative.material_scan_wrong_recipient",
-                test_name="test_material_scan_wrong_recipient_envelope_is_not_counted_as_family_result",
-                path="tests/router_runtime/packet_result_family.py",
-                command="python -m unittest tests.router_runtime.packet_result_family",
-                test_kind=NEGATIVE,
-                covers=("packet_result_family.material_scan.recipient_and_sealed_boundary",),
             ),
             _evidence(
                 "packet_result_family.happy.research_full",
@@ -2215,6 +2531,7 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 covers=("packet_result_family.submit_result_body_entry_hardening",),
                 code_contracts=("packet_result_family.runtime.submit_result_body_entry",),
             ),
+            *_cartesian_risk_shard_evidence(),
         ),
     )
 
@@ -3341,8 +3658,8 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 covers=("output_contract.packet_binding",),
             ),
             _evidence(
-                "output_contract.negative.live_worker_missing_fields",
-                test_name="test_contract_self_check_metadata_reports_live_worker_missing_fields",
+                "output_contract.negative.current_node_worker_missing_fields",
+                test_name="test_contract_self_check_metadata_reports_current_node_worker_missing_fields",
                 path="tests/test_flowpilot_output_contracts.py",
                 command="python -m unittest tests.test_flowpilot_output_contracts",
                 test_kind=NEGATIVE,
@@ -3700,13 +4017,13 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
             _obligation(
                 "repair_transactions.executable_plan_required",
                 obligation_type="invariant",
-                description="A committed PM repair transaction has a concrete queued action, existing producer, Router handler, fresh packet generation, or terminal stop.",
+                description="A committed PM repair transaction has a concrete queued action, existing producer, Router handler, or terminal stop.",
                 required_test_kinds=(HAPPY, NEGATIVE),
             ),
             _obligation(
-                "repair_transactions.material_rework_requires_fresh_producer",
+                "repair_transactions.current_repair_requires_concrete_producer",
                 obligation_type="hazard",
-                description="Material-dispatch repair cannot commit a role reissue or existing-event wait that only observes stale worker result flags instead of producing fresh repair work.",
+                description="Current repair cannot commit a role reissue or existing-event wait without a concrete producer, and retired replacement-packet authority is not accepted.",
                 required_test_kinds=(NEGATIVE,),
             ),
             _obligation(
@@ -3728,9 +4045,9 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 required_test_kinds=(EDGE,),
             ),
             _obligation(
-                "repair_transactions.multiround_fake_ai_no_producer_recovery",
+                "repair_transactions.no_producer_rejection_then_current_recovery",
                 obligation_type="scenario",
-                description="Prepared fake AI replay rejects a no-producer PM repair and then accepts a corrected packet reissue with current producer evidence.",
+                description="Runtime rejects a producerless repair and converges after correction through a registered rerun target or safe operation replay.",
                 required_test_kinds=(HAPPY, NEGATIVE),
             ),
             _obligation(
@@ -3804,20 +4121,15 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
         ),
         test_evidence=(
             _evidence(
-                "repair_transactions.happy.material_packet_reissue",
-                test_name="test_pm_repair_transaction_commits_material_reissue_generation",
-                path="tests/router_runtime/material_modeling.py",
-                command="python -m unittest tests.test_flowpilot_router_runtime_material_modeling",
+                "repair_transactions.happy.current_operation_replay",
+                test_name="test_operation_replay_repair_transaction_queues_replay_action",
+                path="tests/router_runtime/control_blockers.py",
+                command="python -m unittest tests.test_flowpilot_router_runtime_control_blockers",
                 test_kind=HAPPY,
-                covers=("repair_transactions.executable_plan_required",),
-            ),
-            _evidence(
-                "repair_transactions.negative.material_role_reissue_no_producer",
-                test_name="test_pm_material_repair_rejects_role_reissue_without_fresh_packet_producer",
-                path="tests/router_runtime/material_modeling.py",
-                command="python -m unittest tests.test_flowpilot_router_runtime_material_modeling",
-                test_kind=NEGATIVE,
-                covers=("repair_transactions.material_rework_requires_fresh_producer",),
+                covers=(
+                    "repair_transactions.executable_plan_required",
+                    "repair_transactions.no_producer_rejection_then_current_recovery",
+                ),
             ),
             _evidence(
                 "repair_transactions.negative.unsupported_event_replay_plan_kind",
@@ -3836,31 +4148,17 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 covers=(
                     "repair_transactions.executable_plan_required",
                     "repair_transactions.empty_transaction_returns_to_pm_repair",
+                    "repair_transactions.current_repair_requires_concrete_producer",
+                    "repair_transactions.no_producer_rejection_then_current_recovery",
                 ),
             ),
             _evidence(
                 "repair_transactions.edge.pm_decision_side_effect_atomicity",
-                test_name="test_pm_repair_decision_side_effect_exposes_flag_before_wait_events",
-                path="tests/router_runtime/material_modeling.py",
-                command="python -m unittest tests.test_flowpilot_router_runtime_material_modeling",
+                test_name="test_pm_repair_decision_state_persists_before_followup_wait_is_exposed",
+                path="tests/router_runtime/control_blockers.py",
+                command="python -m unittest tests.test_flowpilot_router_runtime_control_blockers",
                 test_kind=EDGE,
                 covers=("repair_transactions.pm_decision_flag_atomicity",),
-            ),
-            _evidence(
-                "repair_transactions.e2e.no_producer_then_packet_reissue",
-                test_name="test_e2e_no_producer_pm_repair_then_packet_reissue_exposes_producer_evidence",
-                path="tests/test_flowpilot_e2e_synthetic_chaos_replay.py",
-                command="python -m unittest tests.test_flowpilot_e2e_synthetic_chaos_replay.FlowPilotEndToEndSyntheticChaosReplayTests.test_e2e_no_producer_pm_repair_then_packet_reissue_exposes_producer_evidence",
-                test_kind=HAPPY,
-                covers=("repair_transactions.multiround_fake_ai_no_producer_recovery",),
-            ),
-            _evidence(
-                "repair_transactions.real_router.producer_proof_recovery",
-                test_name="test_real_router_repair_rehearsal_rejects_no_producer_then_accepts_packet_reissue",
-                path="tests/test_flowpilot_real_router_dry_run_rehearsal.py",
-                command="python -m unittest tests.test_flowpilot_real_router_dry_run_rehearsal.FlowPilotRealRouterDryRunRehearsalTests.test_real_router_repair_rehearsal_rejects_no_producer_then_accepts_packet_reissue",
-                test_kind=NEGATIVE,
-                covers=("repair_transactions.multiround_fake_ai_no_producer_recovery",),
             ),
             _evidence(
                 "repair_transactions.edge.route_mutation_supersedes_repair_open_blocker",
@@ -3955,6 +4253,12 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 description="Slow-test parents declare child owners and I/O contracts and do not replay child internals as parent proof.",
                 required_test_kinds=(HAPPY, NEGATIVE),
             ),
+            _obligation(
+                "test_tiering.final_confidence_acyclic_terminal_consumer",
+                obligation_type="invariant",
+                description="All, formal-submit-adversarial, and release proof compile before strict MTA/TestMesh parents; repository final-confidence is a downstream terminal consumer and per-run terminal return remains run-local.",
+                required_test_kinds=(HAPPY, NEGATIVE),
+            ),
         ),
         test_evidence=(
             _evidence(
@@ -3996,6 +4300,22 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 command="python -m unittest tests.test_flowpilot_test_tiers.FlowPilotTestTierTests.test_slow_test_contract_flowguard_model_rejects_parent_child_hazards",
                 test_kind=NEGATIVE,
                 covers=("slow_test.parent_child_contracts",),
+            ),
+            _evidence(
+                "tiering.happy.acyclic_final_confidence_dependency",
+                test_name="test_release_and_final_confidence_have_acyclic_single_owner_order",
+                path="tests/test_flowpilot_test_tiers.py",
+                command="python -m unittest tests.test_flowpilot_test_tiers.FlowPilotTestTierTests.test_release_and_final_confidence_have_acyclic_single_owner_order",
+                test_kind=HAPPY,
+                covers=("test_tiering.final_confidence_acyclic_terminal_consumer",),
+            ),
+            _evidence(
+                "tiering.negative.acyclic_final_confidence_dependency",
+                test_name="test_tiering_flowguard_model_rejects_known_bad_hazards",
+                path="tests/test_flowpilot_test_tiers.py",
+                command="python -m unittest tests.test_flowpilot_test_tiers.FlowPilotTestTierTests.test_tiering_flowguard_model_rejects_known_bad_hazards",
+                test_kind=NEGATIVE,
+                covers=("test_tiering.final_confidence_acyclic_terminal_consumer",),
             ),
         ),
     )
@@ -4557,14 +4877,446 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 code_contracts=("flowpilot_053.model.field_lifecycle_plan",),
             ),
             _evidence(
-                "flowpilot_053.replay.synthetic_agent_global_matrix",
-                test_name="flowpilot_synthetic_agent_coverage_matrix",
-                path="simulations/flowpilot_synthetic_agent_coverage_matrix.py",
-                command="python simulations/flowpilot_synthetic_agent_coverage_matrix.py",
+                "flowpilot_053.replay.formal_ai_execution_closure",
+                test_name="run_flowpilot_ai_response_execution_closure_checks",
+                path="simulations/run_flowpilot_ai_response_execution_closure_checks.py",
+                command=(
+                    "python simulations/run_flowpilot_ai_response_execution_closure_checks.py "
+                    "--mode adversarial --json-out "
+                    "simulations/flowpilot_ai_response_execution_closure_results.json"
+                ),
                 test_kind=REPLAY,
                 covers=(
                     "flowpilot_053.primary_path_authority_no_fallback",
                     "flowpilot_053.release_evidence_consumes_upgrade_and_ppa",
+                ),
+            ),
+        ),
+    )
+
+    complete_workstream_resource_discovery = ModelTestAlignmentPlan(
+        model_id="flowpilot_complete_workstream_resource_discovery",
+        obligations=(
+            _obligation(
+                "complete_workstream.substantive_roles_plan_execute_verify_report",
+                obligation_type="workflow",
+                description=(
+                    "PM, Worker, Reviewer, and FlowGuard Operator treat each assigned packet as a complete bounded workstream, "
+                    "report numbered plan-step completion, integrate delegation, verify current evidence, and repair in-scope defects."
+                ),
+                required_test_kinds=(HAPPY, NEGATIVE, REPLAY),
+                allow_shared_evidence=True,
+                allow_shared_implementation=True,
+            ),
+            _obligation(
+                "complete_workstream.controller_foreground_only",
+                obligation_type="authority",
+                description="Controller follows the Runtime-derived foreground action ledger and never authors a substantive role plan.",
+                required_test_kinds=(HAPPY, NEGATIVE),
+                allow_shared_evidence=True,
+                allow_shared_implementation=True,
+            ),
+            _obligation(
+                "complete_workstream.reviewer_audit_pm_sub9_disposition",
+                obligation_type="review",
+                description=(
+                    "Reviewer compares plan rows with actual artifacts, evidence, delegation, integration, verification, repair, and blockers; "
+                    "PM explicitly dispositions every score below nine without Runtime auto-blocking it."
+                ),
+                required_test_kinds=(HAPPY, NEGATIVE, REPLAY),
+                allow_shared_evidence=True,
+                allow_shared_implementation=True,
+            ),
+            _obligation(
+                "resource_discovery.shallow_inventory_then_pm_selection",
+                obligation_type="workflow",
+                description=(
+                    "Runtime performs one mandatory shallow local skill inventory, PM selects relevant candidates, and only selected skills are deep-read."
+                ),
+                required_test_kinds=(HAPPY, NEGATIVE),
+                allow_shared_evidence=True,
+                allow_shared_implementation=True,
+            ),
+            _obligation(
+                "resource_discovery.material_work_ordinary_special_path_removed",
+                obligation_type="architecture_reduction",
+                description=(
+                    "Reading, research, experiment, source verification, and evidence synthesis use ordinary PM role work; old material fields, cards, "
+                    "contracts, and sufficiency gates are deleted or rejected and an optional material map never blocks."
+                ),
+                required_test_kinds=(HAPPY, NEGATIVE, REPLAY),
+                allow_shared_evidence=True,
+                allow_shared_implementation=True,
+            ),
+            _obligation(
+                "complete_workstream.finite_fake_ai_execution_profiles",
+                obligation_type="test_mesh",
+                description=(
+                    "Every declared complete-workstream and resource-discovery profile is generated from the current public checklist and executed through "
+                    "the real submit/review/repair chain with declared, selected, executed, passed, failed, stale, and not-run accounting kept separate."
+                ),
+                required_test_kinds=(NEGATIVE, REPLAY),
+                allow_shared_evidence=True,
+                allow_shared_implementation=True,
+            ),
+        ),
+        code_contracts=(
+            _contract(
+                "complete_workstream.role_handoff_instructions",
+                path="skills/flowpilot/assets/flowpilot_core_runtime/role_handoff.py",
+                symbol="SUBSTANTIVE_WORKSTREAM_INSTRUCTIONS",
+                implements=(
+                    "complete_workstream.substantive_roles_plan_execute_verify_report",
+                    "complete_workstream.controller_foreground_only",
+                ),
+                external_inputs=("current packet and responsibility",),
+                external_outputs=("role-specific current handoff instructions",),
+                error_paths=("controller authority leakage", "substantive role quick-reply shortcut"),
+            ),
+            _contract(
+                "complete_workstream.semantic_report_projection",
+                path="skills/flowpilot/assets/flowpilot_core_runtime/packet_result_contracts.py",
+                symbol="workstream_plan_and_completion_example",
+                implements=("complete_workstream.substantive_roles_plan_execute_verify_report",),
+                external_outputs=("contract_self_check.workstream_plan_and_completion",),
+                error_paths=("missing, vague, incomplete, stale, or contradictory plan report",),
+            ),
+            _contract(
+                "complete_workstream.reviewer_window",
+                path="skills/flowpilot/assets/flowpilot_core_runtime/review_window_contracts.py",
+                symbol="review_window_contract_for_context",
+                implements=("complete_workstream.reviewer_audit_pm_sub9_disposition",),
+                external_inputs=("current subject result and review stage",),
+                external_outputs=("Reviewer challenge and PM repair/disposition path",),
+                error_paths=("self-report accepted without evidence", "sub9 score silently ignored"),
+            ),
+            _contract(
+                "resource_discovery.runtime_local_inventory",
+                path="skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+                symbol="_runtime_local_capability_inventory",
+                implements=("resource_discovery.shallow_inventory_then_pm_selection",),
+                external_inputs=("current project and installed skill roots",),
+                external_outputs=("packet-only shallow capability inventory",),
+                error_paths=("missing inventory", "Runtime deep-reads or selects semantic relevance"),
+            ),
+            _contract(
+                "resource_discovery.current_result_contract",
+                path="skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+                symbol="_discovery_result_violation",
+                implements=(
+                    "resource_discovery.shallow_inventory_then_pm_selection",
+                    "resource_discovery.material_work_ordinary_special_path_removed",
+                ),
+                external_inputs=("current task.discovery result",),
+                external_outputs=("candidate skill selection or current-contract rejection",),
+                error_paths=("material_sources", "material_sufficiency", "material_current"),
+            ),
+            _contract(
+                "complete_workstream.canonical_fake_ai",
+                path="simulations/flowpilot_contract_driven_fake_ai.py",
+                symbol="ContractDrivenFakeAIResponder",
+                implements=("complete_workstream.finite_fake_ai_execution_profiles",),
+                external_inputs=("public open-packet current checklist",),
+                external_outputs=("profile payload and real submit/review receipts",),
+                error_paths=("private constructor authority", "generated-but-not-executed overclaim"),
+            ),
+        ),
+        test_evidence=(
+            _evidence(
+                "complete_workstream.happy.shared_role_contract",
+                test_name="test_runtime_handoff_projects_one_shared_workstream_contract_to_every_role",
+                path="tests/test_flowpilot_complete_workstream_orchestration.py",
+                command="python -m unittest tests.test_flowpilot_complete_workstream_orchestration",
+                test_kind=HAPPY,
+                covers=(
+                    "complete_workstream.substantive_roles_plan_execute_verify_report",
+                    "complete_workstream.controller_foreground_only",
+                    "complete_workstream.reviewer_audit_pm_sub9_disposition",
+                ),
+                code_contracts=(
+                    "complete_workstream.role_handoff_instructions",
+                    "complete_workstream.semantic_report_projection",
+                    "complete_workstream.reviewer_window",
+                ),
+            ),
+            _evidence(
+                "complete_workstream.negative.boundary_and_report",
+                test_name="test_controller_has_no_substantive_plan_authority",
+                path="tests/test_flowpilot_complete_workstream_orchestration.py",
+                command="python -m unittest tests.test_flowpilot_complete_workstream_orchestration",
+                test_kind=NEGATIVE,
+                covers=(
+                    "complete_workstream.substantive_roles_plan_execute_verify_report",
+                    "complete_workstream.controller_foreground_only",
+                    "complete_workstream.reviewer_audit_pm_sub9_disposition",
+                ),
+                code_contracts=(
+                    "complete_workstream.role_handoff_instructions",
+                    "complete_workstream.semantic_report_projection",
+                    "complete_workstream.reviewer_window",
+                ),
+            ),
+            _evidence(
+                "resource_discovery.happy.current_inventory_and_ordinary_work",
+                test_name="test_runtime_projects_current_shallow_local_inventory_before_pm_selection",
+                path="tests/test_flowpilot_ordinary_resource_discovery.py",
+                command="python -m unittest tests.test_flowpilot_ordinary_resource_discovery",
+                test_kind=HAPPY,
+                covers=(
+                    "resource_discovery.shallow_inventory_then_pm_selection",
+                    "resource_discovery.material_work_ordinary_special_path_removed",
+                ),
+                code_contracts=(
+                    "resource_discovery.runtime_local_inventory",
+                    "resource_discovery.current_result_contract",
+                ),
+            ),
+            _evidence(
+                "resource_discovery.negative.removed_material_surfaces",
+                test_name="test_removed_material_discovery_fields_have_only_negative_or_historical_hits",
+                path="tests/test_flowpilot_ordinary_resource_discovery.py",
+                command="python -m unittest tests.test_flowpilot_ordinary_resource_discovery",
+                test_kind=NEGATIVE,
+                covers=(
+                    "resource_discovery.shallow_inventory_then_pm_selection",
+                    "resource_discovery.material_work_ordinary_special_path_removed",
+                ),
+                code_contracts=("resource_discovery.current_result_contract",),
+            ),
+            _evidence(
+                "complete_workstream.replay.real_fake_ai_chain",
+                test_name="test_every_workstream_profile_traverses_real_ack_open_submit_flowguard_reviewer_and_repair_routing",
+                path="tests/test_flowpilot_complete_workstream_fake_ai.py",
+                command="python -m unittest tests.test_flowpilot_complete_workstream_fake_ai",
+                test_kind=REPLAY,
+                covers=(
+                    "complete_workstream.substantive_roles_plan_execute_verify_report",
+                    "complete_workstream.reviewer_audit_pm_sub9_disposition",
+                    "resource_discovery.material_work_ordinary_special_path_removed",
+                    "complete_workstream.finite_fake_ai_execution_profiles",
+                ),
+                code_contracts=(
+                    "complete_workstream.semantic_report_projection",
+                    "complete_workstream.reviewer_window",
+                    "resource_discovery.current_result_contract",
+                    "complete_workstream.canonical_fake_ai",
+                ),
+            ),
+            _evidence(
+                "complete_workstream.negative.fake_ai_bad_profiles",
+                test_name="test_resource_profiles_use_real_current_family_checklists_and_submit_paths",
+                path="tests/test_flowpilot_complete_workstream_fake_ai.py",
+                command="python -m unittest tests.test_flowpilot_complete_workstream_fake_ai",
+                test_kind=NEGATIVE,
+                covers=(
+                    "complete_workstream.finite_fake_ai_execution_profiles",
+                    "resource_discovery.material_work_ordinary_special_path_removed",
+                ),
+                code_contracts=("complete_workstream.canonical_fake_ai",),
+            ),
+        ),
+    )
+
+    skillguard_current_contract = ModelTestAlignmentPlan(
+        model_id="skillguard_deep_contract_maintenance",
+        obligations=(
+            _obligation(
+                "skillguard.current_v2_authority_is_singular",
+                obligation_type="authority",
+                description=(
+                    "FlowPilot uses only the current SkillGuard V2 contract-source, compiled-contract, and check-manifest trio; "
+                    "former V1 files and parallel SkillGuard runtime ownership are rejected."
+                ),
+                required_test_kinds=(HAPPY, NEGATIVE),
+                allow_shared_evidence=True,
+                allow_shared_implementation=True,
+            ),
+            _obligation(
+                "skillguard.current_model_refines_existing_flowpilot_stages",
+                obligation_type="workflow",
+                description=(
+                    "The FlowGuard contract projection refines the existing opt-in, PM route-plan, complete-workstream, and "
+                    "independent-closure stages without creating a second domain workflow."
+                ),
+                required_test_kinds=(HAPPY, REPLAY),
+                allow_shared_evidence=True,
+                allow_shared_implementation=True,
+            ),
+            _obligation(
+                "skillguard.native_handoff_bindings_are_complete",
+                obligation_type="authority",
+                description=(
+                    "Every existing FlowPilot route and declared check is explicitly bound to its native owner source; "
+                    "missing route or check bindings block global selection instead of falling back."
+                ),
+                required_test_kinds=(HAPPY, NEGATIVE, REPLAY),
+                allow_shared_evidence=True,
+                allow_shared_implementation=True,
+            ),
+            _obligation(
+                "skillguard.final_receipt_is_read_only_current_consumer",
+                obligation_type="evidence",
+                description=(
+                    "SkillGuard consumes the unique current final-confidence receipt without --background, --resume, "
+                    "Scheduled Task, or any second execution owner."
+                ),
+                required_test_kinds=(HAPPY, NEGATIVE),
+                allow_shared_evidence=True,
+                allow_shared_implementation=True,
+            ),
+        ),
+        code_contracts=(
+            _contract(
+                "skillguard.current_contract_source",
+                path="skills/flowpilot/.skillguard/contract-source.json",
+                symbol="schema_version",
+                implements=(
+                    "skillguard.current_v2_authority_is_singular",
+                    "skillguard.current_model_refines_existing_flowpilot_stages",
+                    "skillguard.native_handoff_bindings_are_complete",
+                    "skillguard.final_receipt_is_read_only_current_consumer",
+                ),
+                external_inputs=("current FlowPilot stage owners and final17 receipt identity",),
+                external_outputs=("one SkillGuard V2 declarative contract source",),
+                error_paths=(
+                    "former authority",
+                    "parallel runtime route",
+                    "missing native route binding",
+                    "missing native check binding",
+                    "stale or executable final consumer",
+                ),
+            ),
+            _contract(
+                "skillguard.flowguard_contract_projection",
+                path="simulations/flowpilot_skillguard_contract_model.py",
+                symbol="export_contract_model",
+                implements=(
+                    "skillguard.current_v2_authority_is_singular",
+                    "skillguard.current_model_refines_existing_flowpilot_stages",
+                    "skillguard.native_handoff_bindings_are_complete",
+                ),
+                external_inputs=("current FlowPilot activation, planning, workstream, and closure facts",),
+                external_outputs=("four-route FlowGuard contract projection and ten obligations",),
+                error_paths=(
+                    "ordinary small task",
+                    "missing native route binding",
+                    "missing native check binding",
+                    "missing role plan",
+                    "unintegrated delegation",
+                    "stale closure evidence",
+                ),
+            ),
+            _contract(
+                "skillguard.public_v2_contract_compiler",
+                path="scripts/refresh_flowpilot_skillguard_contract.py",
+                symbol="main",
+                implements=("skillguard.current_v2_authority_is_singular",),
+                external_inputs=("contract-source.json", "public SkillGuard V2 compiler and checkers"),
+                external_outputs=("compiled-contract.json and check-manifest.json parity",),
+                error_paths=("private API dependency", "generated authority drift", "former V1 regeneration"),
+            ),
+            _contract(
+                "skillguard.focused_contract_runner",
+                path="simulations/run_flowpilot_skillguard_contract_checks.py",
+                symbol="run_checks",
+                implements=(
+                    "skillguard.current_v2_authority_is_singular",
+                    "skillguard.current_model_refines_existing_flowpilot_stages",
+                    "skillguard.native_handoff_bindings_are_complete",
+                    "skillguard.final_receipt_is_read_only_current_consumer",
+                ),
+                external_inputs=("current contract source and FlowGuard model export",),
+                external_outputs=("scenario, progress, conformance, and refinement report",),
+                error_paths=("missing blocker", "non-monotonic closure", "route mismatch", "final receipt owner duplication"),
+            ),
+        ),
+        test_evidence=(
+            _evidence(
+                "skillguard.happy.focused_contract_runner",
+                test_name="test_focused_flowguard_runner_closes_scenarios_progress_and_refinement",
+                path="tests/test_flowpilot_skillguard_deep_contract.py",
+                command=(
+                    "python -m unittest tests.test_flowpilot_skillguard_deep_contract."
+                    "FlowPilotSkillGuardDeepContractTests."
+                    "test_focused_flowguard_runner_closes_scenarios_progress_and_refinement"
+                ),
+                test_kind=HAPPY,
+                covers=(
+                    "skillguard.current_v2_authority_is_singular",
+                    "skillguard.current_model_refines_existing_flowpilot_stages",
+                    "skillguard.native_handoff_bindings_are_complete",
+                    "skillguard.final_receipt_is_read_only_current_consumer",
+                ),
+                code_contracts=(
+                    "skillguard.current_contract_source",
+                    "skillguard.flowguard_contract_projection",
+                    "skillguard.public_v2_contract_compiler",
+                    "skillguard.focused_contract_runner",
+                ),
+            ),
+            _evidence(
+                "skillguard.negative.native_handoff_bindings",
+                test_name="test_native_handoff_bindings_cover_every_existing_route_and_check",
+                path="tests/test_flowpilot_skillguard_deep_contract.py",
+                command=(
+                    "python -m unittest tests.test_flowpilot_skillguard_deep_contract."
+                    "FlowPilotSkillGuardDeepContractTests."
+                    "test_native_handoff_bindings_cover_every_existing_route_and_check"
+                ),
+                test_kind=NEGATIVE,
+                covers=("skillguard.native_handoff_bindings_are_complete",),
+                code_contracts=(
+                    "skillguard.current_contract_source",
+                    "skillguard.flowguard_contract_projection",
+                    "skillguard.focused_contract_runner",
+                ),
+            ),
+            _evidence(
+                "skillguard.negative.former_authority_removed",
+                test_name="test_one_current_contract_trio_replaces_every_former_authority",
+                path="tests/test_flowpilot_skillguard_deep_contract.py",
+                command=(
+                    "python -m unittest tests.test_flowpilot_skillguard_deep_contract."
+                    "FlowPilotSkillGuardDeepContractTests."
+                    "test_one_current_contract_trio_replaces_every_former_authority"
+                ),
+                test_kind=NEGATIVE,
+                covers=("skillguard.current_v2_authority_is_singular",),
+                code_contracts=(
+                    "skillguard.current_contract_source",
+                    "skillguard.public_v2_contract_compiler",
+                ),
+            ),
+            _evidence(
+                "skillguard.replay.four_existing_stage_owners",
+                test_name="test_exported_flowguard_model_covers_the_four_existing_stage_owners",
+                path="tests/test_flowpilot_skillguard_deep_contract.py",
+                command=(
+                    "python -m unittest tests.test_flowpilot_skillguard_deep_contract."
+                    "FlowPilotSkillGuardDeepContractTests."
+                    "test_exported_flowguard_model_covers_the_four_existing_stage_owners"
+                ),
+                test_kind=REPLAY,
+                covers=(
+                    "skillguard.current_model_refines_existing_flowpilot_stages",
+                    "skillguard.native_handoff_bindings_are_complete",
+                ),
+                code_contracts=("skillguard.flowguard_contract_projection",),
+            ),
+            _evidence(
+                "skillguard.negative.final_receipt_consumer",
+                test_name="test_final_receipt_check_is_a_read_only_consumer_not_a_second_owner",
+                path="tests/test_flowpilot_skillguard_deep_contract.py",
+                command=(
+                    "python -m unittest tests.test_flowpilot_skillguard_deep_contract."
+                    "FlowPilotSkillGuardDeepContractTests."
+                    "test_final_receipt_check_is_a_read_only_consumer_not_a_second_owner"
+                ),
+                test_kind=NEGATIVE,
+                covers=("skillguard.final_receipt_is_read_only_current_consumer",),
+                code_contracts=(
+                    "skillguard.current_contract_source",
+                    "skillguard.focused_contract_runner",
                 ),
             ),
         ),
@@ -4587,6 +5339,14 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
     flowguard_053_ppa_maintenance = _with_runtime_path(
         flowguard_053_ppa_maintenance,
         "flowguard 0.53 ppa maintenance",
+    )
+    complete_workstream_resource_discovery = _with_runtime_path(
+        complete_workstream_resource_discovery,
+        "complete workstream and ordinary resource discovery",
+    )
+    skillguard_current_contract = _with_runtime_path(
+        skillguard_current_contract,
+        "skillguard current contract maintenance",
     )
     meta_capability = _with_runtime_path(meta_capability, "meta/capability parents")
 
@@ -4705,7 +5465,7 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
             rejection_liveness,
             model_checks=(
                 "python simulations/run_flowpilot_rejection_liveness_matrix_checks.py --json-out simulations/flowpilot_rejection_liveness_matrix_results.json",
-                "python simulations/flowpilot_synthetic_agent_coverage_matrix.py --json-out simulations/flowpilot_synthetic_agent_coverage_matrix_results.json",
+                "python simulations/flowpilot_synthetic_agent_coverage_matrix.py --declaration-only --json-out tmp/test_results/flowpilot_synthetic_agent_coverage_matrix_declaration.json",
             ),
             coverage_boundary=(
                 "Rejection/liveness alignment covers malformed current-contract packets, "
@@ -4735,7 +5495,7 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
             model_checks=(
                 "python -m unittest tests.test_flowpilot_card_instruction_coverage.FlowPilotCardInstructionCoverageTests.test_prompt_first_quality_chain_preserves_source_intent_without_runtime_semantic_gate",
                 "python -m unittest tests.test_flowpilot_synthetic_agent_trace_replay.FlowPilotSyntheticAgentTraceReplayTests.test_core_deliverable_downgrade_chain_blocks_completion",
-                "python simulations/flowpilot_synthetic_agent_coverage_matrix.py --json-out simulations/flowpilot_synthetic_agent_coverage_matrix_results.json",
+                "python simulations/flowpilot_synthetic_agent_coverage_matrix.py --declaration-only --json-out tmp/test_results/flowpilot_synthetic_agent_coverage_matrix_declaration.json",
             ),
             coverage_boundary=(
                 "Core-deliverable non-downgrade alignment covers prompt-card standards "
@@ -4755,6 +5515,34 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 "no-fallback commitments, field lifecycle ownership, risk gates, "
                 "and release-evidence freshness. It does not add runtime fields, "
                 "compatibility aliases, or semantic runtime review."
+            ),
+        ),
+        _plan_entry(
+            "complete workstream and ordinary resource discovery",
+            complete_workstream_resource_discovery,
+            model_checks=(
+                "python simulations/run_flowpilot_complete_workstream_orchestration_checks.py",
+                "python simulations/run_flowpilot_ordinary_resource_discovery_checks.py",
+                "python -m unittest tests.test_flowpilot_complete_workstream_orchestration tests.test_flowpilot_ordinary_resource_discovery tests.test_flowpilot_complete_workstream_fake_ai",
+            ),
+            coverage_boundary=(
+                "This family aligns the shared role plan/report contract, Controller exclusion, Reviewer/PM semantic audit, "
+                "mandatory shallow skill inventory, ordinary material work, deleted material-special surfaces, and real canonical fake-AI replay. "
+                "It does not turn semantic quality into a Runtime mechanical score or create a second material workflow."
+            ),
+        ),
+        _plan_entry(
+            "skillguard deep contract maintenance",
+            skillguard_current_contract,
+            model_checks=(
+                "python simulations/run_flowpilot_skillguard_contract_checks.py --json-out simulations/flowpilot_skillguard_current_contract_results.json",
+                "python scripts/refresh_flowpilot_skillguard_contract.py --check",
+                "python -m unittest tests.test_flowpilot_skillguard_deep_contract",
+            ),
+            coverage_boundary=(
+                "This family aligns the current declarative SkillGuard V2 target, its four existing FlowPilot stage owners, "
+                "public compiler parity, known-bad rejection, and the read-only final17 receipt consumer. It does not add a "
+                "SkillGuard runtime route or prove arbitrary AI execution depth."
             ),
         ),
         _plan_entry(

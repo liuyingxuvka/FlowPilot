@@ -28,9 +28,10 @@ HAZARD_EXPECTED_FAILURES = {
     model.FORMAL_EVIDENCE_FROM_UNDISPOSITIONED_RESULT: "formal evidence used a worker result without PM absorbed disposition",
     model.REVIEWER_STARTED_WITHOUT_PM_GATE_PACKAGE: "reviewer gate started without a PM-built formal gate package",
     model.NODE_COMPLETION_WITHOUT_REVIEWER_GATE: "PM completed a node without PM disposition and reviewer node-completion gate",
-    model.CRITICAL_REVIEWER_GATE_REMOVED: "critical PM route/node/material/research decision bypassed reviewer gate",
+    model.CRITICAL_REVIEWER_GATE_REMOVED: "critical PM route/node/evidence/closure decision bypassed reviewer gate",
     model.RESUME_RESULT_DIRECT_TO_REVIEWER: "raw PM-issued worker result reached reviewer before PM gate package",
-    model.MATERIAL_RESEARCH_DECISION_WITHOUT_GATE: "critical PM route/node/material/research decision bypassed reviewer gate",
+    model.ORDINARY_EVIDENCE_DECISION_WITHOUT_GATE: "critical PM route/node/evidence/closure decision bypassed reviewer gate",
+    model.RETIRED_MATERIAL_AUTHORITY_USED_AS_CURRENT: "retired material-specific package or gate used as current authority",
     model.CONTROLLER_READS_SEALED_BODY: "Controller read sealed packet/result body",
     model.RETIRED_REVIEWER_RELAY_USED_AS_CURRENT_ACCEPTANCE: "PM-issued worker result did not return to project_manager",
     model.PM_FORWARDED_RAW_PACKAGE_TO_REVIEWER: "raw PM-issued worker result reached reviewer before PM gate package",
@@ -189,20 +190,85 @@ def _hazard_report() -> dict[str, object]:
     return {"ok": not failures, "hazards": hazards, "failures": failures}
 
 
+def _retired_material_surface_absence_report(
+    graph: dict[str, Any],
+) -> dict[str, object]:
+    states: list[model.State] = graph["states"]
+    accepted = [state for state in states if state.status == "accepted"]
+    expected_positive_package_kinds = {
+        model.PACKAGE_CURRENT_NODE,
+        model.PACKAGE_RESEARCH,
+        model.PACKAGE_PM_ROLE_WORK,
+    }
+    observed_positive_package_kinds = {
+        state.package_kind
+        for state in accepted
+        if state.package_kind != model.PACKAGE_NONE
+    }
+    retired_package_acceptances = sorted(
+        state.scenario
+        for state in accepted
+        if state.package_kind == model.RETIRED_PACKAGE_MATERIAL_SCAN
+    )
+    retired_gate_acceptances = sorted(
+        state.scenario
+        for state in accepted
+        if state.gate_kind == model.RETIRED_GATE_MATERIAL_SUFFICIENCY
+    )
+    retired_named_valid_scenarios = sorted(
+        scenario for scenario in model.VALID_SCENARIOS if "material" in scenario
+    )
+    negative_probe_present = (
+        model.RETIRED_MATERIAL_AUTHORITY_USED_AS_CURRENT in model.NEGATIVE_SCENARIOS
+    )
+    ok = (
+        observed_positive_package_kinds == expected_positive_package_kinds
+        and not retired_package_acceptances
+        and not retired_gate_acceptances
+        and not retired_named_valid_scenarios
+        and negative_probe_present
+    )
+    return {
+        "ok": ok,
+        "expected_positive_package_kinds": sorted(expected_positive_package_kinds),
+        "observed_positive_package_kinds": sorted(observed_positive_package_kinds),
+        "retired_package_acceptances": retired_package_acceptances,
+        "retired_gate_acceptances": retired_gate_acceptances,
+        "retired_named_valid_scenarios": retired_named_valid_scenarios,
+        "negative_probe_present": negative_probe_present,
+        "claim_boundary": (
+            "This proves the PM package-absorption model accepts only research, "
+            "current-node, or PM role-work package owners and exercises retired "
+            "material authority only as a rejected hazard."
+        ),
+    }
+
+
 def run_checks() -> dict[str, object]:
     graph = _build_graph()
     safe_graph = _safe_graph_report(graph)
     progress = _progress_report(graph)
     explorer = _flowguard_report()
     hazards = _hazard_report()
+    retired_material_surface_absence = _retired_material_surface_absence_report(
+        graph
+    )
     result = {
         "safe_graph": safe_graph,
         "progress": progress,
         "flowguard_explorer": explorer,
         "hazard_checks": hazards,
+        "retired_material_surface_absence": retired_material_surface_absence,
     }
     result["ok"] = all(
-        section.get("ok", False) for section in (safe_graph, progress, explorer, hazards)
+        section.get("ok", False)
+        for section in (
+            safe_graph,
+            progress,
+            explorer,
+            hazards,
+            retired_material_surface_absence,
+        )
     )
     return result
 

@@ -110,10 +110,10 @@
       "install_name": "autonomous-concept-ui-redesign",
       "source": {
         "kind": "github",
-        "repo": "liuyingxuvka/autonomous-concept-ui-redesign-skill",
+        "repo": "liuyingxuvka/FlowPilot",
         "ref": "main",
-        "path": "autonomous-concept-ui-redesign",
-        "url": "https://github.com/liuyingxuvka/autonomous-concept-ui-redesign-skill/tree/main/autonomous-concept-ui-redesign"
+        "path": "skills/autonomous-concept-ui-redesign",
+        "url": "https://github.com/liuyingxuvka/FlowPilot/tree/main/skills/autonomous-concept-ui-redesign"
       },
       "install": {
         "mode": "github_skill",

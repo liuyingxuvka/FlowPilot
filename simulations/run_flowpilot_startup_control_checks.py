@@ -21,7 +21,7 @@ EXPECTED_HAZARD_FAILURES = {
     "fixed_role_slots_started": "fixed startup role slots were started",
     "reviewer_mechanical_fact_reproof": "reviewer was asked to re-prove runtime/router mechanical facts",
     "work_without_background_agent": "role work started without current background agent opening",
-    "material_card_before_user_intake": "material scan started before current PM entry and on-demand background agent opening",
+    "product_architecture_before_user_intake": "product architecture started before current PM entry and on-demand background agent opening",
     "route_activation_before_current_entry": "route was activated before first PM work entry",
     "next_action_before_active_route": "next action was issued before active route",
     "completion_before_pm_closure": "startup control completed before route work, PM closure, and lifecycle close",
@@ -40,7 +40,7 @@ def _state_id(state: model.State) -> str:
         f"boundary={state.controller_boundary_evidence_written}|audit={state.startup_mechanical_audit_written}|"
         f"display={state.startup_display_status_written}|mail={state.user_intake_delivered_to_pm}|"
         f"pm_ack={state.pm_startup_intake_ack_clean}|agent={state.current_role_agent_opened_on_demand}|"
-        f"material={state.material_scan_card_delivered}|route={state.active_route_exists}|"
+        f"architecture={state.product_architecture_card_delivered}|route={state.active_route_exists}|"
         f"next={state.next_action_issued}|work={state.route_work_completed}|closure={state.pm_closure_approved}|"
         f"lifecycle={state.lifecycle_continuation_closed}|signal={state.formal_lifecycle_signal}|"
         f"legacy={state.reviewer_startup_fact_gate_used},{state.pm_startup_activation_gate_used},"

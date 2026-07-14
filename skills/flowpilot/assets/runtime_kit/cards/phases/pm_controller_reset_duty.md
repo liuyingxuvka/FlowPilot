@@ -44,6 +44,6 @@ When recovery is required, tell Controller:
 - do not read sealed bodies;
 - do not implement, approve, mutate, or close gates.
 
-If this recovery reset is required but not sent, no material scan, worker
+If this recovery reset is required but not sent, no ordinary role work, worker
 dispatch, route design, or implementation may begin until Router records a
 trusted Controller boundary again.

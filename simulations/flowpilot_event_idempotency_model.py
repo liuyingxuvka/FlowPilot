@@ -31,6 +31,25 @@ from typing import Iterable, NamedTuple
 from flowguard import FunctionResult, Invariant, InvariantResult, Workflow
 
 
+PACKAGE_DISPOSITION_EVENT = "pm_records_research_result_disposition"
+RETIRED_MATERIAL_EXTERNAL_EVENTS = frozenset(
+    {
+        "pm_issues_material_and_capability_scan_packets",
+        "router_direct_material_scan_dispatch_recheck_passed",
+        "router_direct_material_scan_dispatch_recheck_blocked",
+        "router_protocol_blocker_material_scan_dispatch_recheck",
+        "worker_scan_packet_bodies_delivered_after_dispatch",
+        "worker_scan_results_returned",
+        "pm_records_material_scan_result_disposition",
+        "reviewer_reports_material_sufficient",
+        "reviewer_reports_material_insufficient",
+        "pm_accepts_reviewed_material",
+        "pm_requests_research_after_material_insufficient",
+        "pm_writes_material_understanding",
+    }
+)
+
+
 ONE_SHOT_REPLAY = "one_shot_same_key_replay"
 ONE_SHOT_NEW_CONTEXT = "one_shot_new_context_rejected"
 ROUTE_MUTATION_SAME_TX_REPLAY = "route_mutation_same_transaction_replay"
@@ -336,11 +355,11 @@ def _selected_state(scenario: str) -> State:
         return State(
             status="running",
             scenario=scenario,
-            event_name="pm_records_material_scan_result_disposition",
+            event_name=PACKAGE_DISPOSITION_EVENT,
             family="package",
             flag_already_true=True,
-            prior_keys=("material-batch-1:gen-1:packet-a,packet-b",),
-            incoming_key="material-batch-1:gen-1:packet-a,packet-b",
+            prior_keys=("research-batch-1:gen-1:packet-a,packet-b",),
+            incoming_key="research-batch-1:gen-1:packet-a,packet-b",
             key_matches_prior=True,
             conflict_matches_prior=True,
         )
@@ -348,11 +367,11 @@ def _selected_state(scenario: str) -> State:
         return State(
             status="running",
             scenario=scenario,
-            event_name="pm_records_material_scan_result_disposition",
+            event_name=PACKAGE_DISPOSITION_EVENT,
             family="package",
             flag_already_true=True,
-            prior_keys=("material-batch-1:gen-1:packet-a,packet-b",),
-            incoming_key="material-batch-1:gen-1:packet-a,packet-b",
+            prior_keys=("research-batch-1:gen-1:packet-a,packet-b",),
+            incoming_key="research-batch-1:gen-1:packet-a,packet-b",
             key_matches_prior=True,
             conflict_fields_present=True,
             conflict_matches_prior=False,
@@ -362,11 +381,11 @@ def _selected_state(scenario: str) -> State:
         return State(
             status="running",
             scenario=scenario,
-            event_name="pm_records_material_scan_result_disposition",
+            event_name=PACKAGE_DISPOSITION_EVENT,
             family="package",
             flag_already_true=True,
-            prior_keys=("material-batch-1:gen-1:packet-a,packet-b",),
-            incoming_key="material-batch-1:gen-1:packet-a,packet-b",
+            prior_keys=("research-batch-1:gen-1:packet-a,packet-b",),
+            incoming_key="research-batch-1:gen-1:packet-a,packet-b",
             key_matches_prior=True,
             conflict_fields_present=True,
             conflict_matches_prior=False,
@@ -377,11 +396,11 @@ def _selected_state(scenario: str) -> State:
         return State(
             status="running",
             scenario=scenario,
-            event_name="pm_records_material_scan_result_disposition",
+            event_name=PACKAGE_DISPOSITION_EVENT,
             family="package",
             flag_already_true=True,
-            prior_keys=("material-batch-1:gen-1:packet-a,packet-b",),
-            incoming_key="material-batch-1:gen-1:packet-a,packet-b",
+            prior_keys=("research-batch-1:gen-1:packet-a,packet-b",),
+            incoming_key="research-batch-1:gen-1:packet-a,packet-b",
             key_matches_prior=True,
             conflict_fields_present=True,
             conflict_matches_prior=False,
@@ -392,11 +411,11 @@ def _selected_state(scenario: str) -> State:
         return State(
             status="running",
             scenario=scenario,
-            event_name="pm_records_material_scan_result_disposition",
+            event_name=PACKAGE_DISPOSITION_EVENT,
             family="package",
             flag_already_true=False,
-            prior_keys=("material-batch-1:gen-1:packet-a,packet-b",),
-            incoming_key="material-batch-1:gen-1:packet-a,packet-b",
+            prior_keys=("research-batch-1:gen-1:packet-a,packet-b",),
+            incoming_key="research-batch-1:gen-1:packet-a,packet-b",
             key_matches_prior=True,
             conflict_fields_present=True,
             conflict_matches_prior=False,
@@ -408,11 +427,11 @@ def _selected_state(scenario: str) -> State:
         return State(
             status="running",
             scenario=scenario,
-            event_name="pm_records_material_scan_result_disposition",
+            event_name=PACKAGE_DISPOSITION_EVENT,
             family="package",
             flag_already_true=True,
-            prior_keys=("material-batch-1:gen-1:packet-a,packet-b",),
-            incoming_key="material-batch-2:gen-2:packet-c,packet-d",
+            prior_keys=("research-batch-1:gen-1:packet-a,packet-b",),
+            incoming_key="research-batch-2:gen-2:packet-c,packet-d",
             cycle_reset_recorded=True,
             route_version_advances=True,
         )

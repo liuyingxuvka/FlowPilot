@@ -98,8 +98,6 @@ def fresh_action_provider(
     if action is None:
         action = router._next_mail_action(project_root, run_state, run_root)
     if action is None:
-        action = router._next_material_packet_action(project_root, run_state, run_root)
-    if action is None:
         action = router._next_research_packet_action(project_root, run_state, run_root)
     if action is None:
         action = router._next_parent_child_entry_action(project_root, run_state, run_root)

@@ -29860,3 +29860,225 @@ Evidence supports the local repository and installed FlowPilot skill for the mat
 
 ### Next Actions
 - Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
+
+
+## flowguard-project-upgrade - FlowGuard project upgrade record update
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: target project uses FlowGuard and needs durable AGENTS/version records
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-07-10T03:36:54+00:00
+- Ended: 2026-07-10T03:36:54+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- none recorded
+
+### Commands
+- none recorded
+
+### Findings
+- FlowGuard repository recorded: https://github.com/liuyingxuvka/FlowGuard
+- FlowGuard check-engine version recorded: 0.53.1
+- FlowGuard schema version recorded: 1.0
+- Artifact upgrade scan: apply: scanned=4 upgraded=1 blocked=0 changed=1
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- Project adoption record does not replace executable model checks, tests, replay, or closure evidence.
+
+### Risk Evidence Summary
+- none recorded
+
+### Next Actions
+- Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
+
+
+## flowguard-project-upgrade - FlowGuard project upgrade record update
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: target project requires current semantic adoption and version records
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-07-10T09:59:17+00:00
+- Ended: 2026-07-10T09:59:17+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- none recorded
+
+### Commands
+- OK (0.000s): `managed adoption rule-set preflight` - generated block contains every required stable rule
+- OK (0.000s): `canonical FlowGuard skill-suite validation` - pass
+- OK (0.000s): `post-write project adoption audit` - semantic and version parity after write
+
+### Findings
+- adoption_record_written: FlowGuard project AGENTS block and manifest were written or refreshed.
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- Project adoption does not replace executable model checks, tests, replay, or closure evidence.
+
+### Risk Evidence Summary
+- none recorded
+
+### Next Actions
+- python -m flowguard project-audit --root . --json
+- python scripts/verify_skill_suite_markers.py --root . --json
+- Rerun affected FlowGuard model checks and focused tests before broad confidence.
+
+
+## flowguard-project-upgrade - FlowGuard project upgrade record update
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: target project requires current semantic adoption and version records
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-07-12T10:23:40+00:00
+- Ended: 2026-07-12T10:23:40+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- none recorded
+
+### Commands
+- OK (0.000s): `managed adoption rule-set preflight` - generated block contains every required stable rule
+- OK (0.000s): `canonical FlowGuard skill-suite validation` - pass
+- OK (0.000s): `post-write project adoption audit` - semantic and version parity after write
+
+### Findings
+- adoption_record_written: FlowGuard project AGENTS block and manifest were written or refreshed.
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- Project adoption does not replace executable model checks, tests, replay, or closure evidence.
+
+### Risk Evidence Summary
+- none recorded
+
+### Next Actions
+- python -m flowguard project-audit --root . --json
+- python scripts/verify_skill_suite_markers.py --root . --json
+- Rerun affected FlowGuard model checks and focused tests before broad confidence.
+
+
+## flowguard-project-adopt - FlowGuard project adopt record update
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: target project requires current semantic adoption and version records
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-07-13T22:45:41+00:00
+- Ended: 2026-07-13T22:45:41+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- none recorded
+
+### Commands
+- OK (0.000s): `managed adoption rule-set preflight` - generated block contains every required stable rule
+- OK (0.000s): `canonical FlowGuard skill-suite validation` - blocked
+- OK (0.000s): `post-write project adoption audit` - semantic and version parity after write
+
+### Findings
+- suite_inventory_unresolved: Canonical FlowGuard skill-suite validation is unresolved.
+- adoption_record_written: FlowGuard project AGENTS block and manifest were written or refreshed.
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- Project adoption does not replace executable model checks, tests, replay, or closure evidence.
+
+### Risk Evidence Summary
+- none recorded
+
+### Next Actions
+- python -m flowguard project-audit --root . --json
+- Rerun affected FlowGuard model checks and focused tests before broad confidence.
+
+
+## flowpilot-complete-workstream-focused-fixpoint - Current-contract FlowPilot orchestration upgrade focused fixpoint
+
+> Historical pre-global-route-smoke milestone. The later native-binding
+> model-miss entry supersedes its bad-case count and generated contract hashes;
+> this entry remains an immutable account of what had passed at that point.
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger: complete-workstream prompts, finite fake-AI Cartesian coverage, current SkillGuard V2 projection, and single-owner final validation required model-backed closure before the one frozen full run.
+- Status: focused current; final verification pending
+- FlowGuard: 0.55.0 / schema 1.0
+
+### Current Evidence
+
+- The focused SkillGuard model passed four stage-owner routes, ten obligations, nine canonical bad cases, monotonic progress, and read-only final receipt consumption.
+- Thirteen directly affected regression tests passed.
+- Meta and Capability affected thin-parent checks passed once each; the hierarchy now reports routine confidence as current and release confidence as explicitly pending.
+- Public SkillGuard V2 compile parity is current at contract `05B9EA4D06AEB069565F73A2A752609D2ECF248D9E0A27F239F0C733E2D8A23E` and manifest `B35D086017934DABE71C6EFD2F77E9AEFCC01CA114351EDCE3C6ADD3AF81EFE4`.
+- Project topology, FlowGuard project audit, and strict OpenSpec validation passed.
+- OpenSpec protocol-v3 no-run preview listed 47 checks, executed zero, and left all 47 visibly not-run.
+
+### Findings and Counterexamples
+
+- FlowPilot remains the sole runtime owner; SkillGuard declares and checks the current contract but does not form a parallel workflow.
+- Contract-depth mapping is not execution-depth evidence.
+- A mismatched generated result filename made a registered child appear missing. The filename now shares the exact model identity and the wrong generated filename was removed.
+- The repaired external compiler changed deterministic output after an earlier generation. Only repository-local generated files were refreshed, and deterministic parity was rechecked.
+- V2 obligations must be read from the union of closure-profile obligation IDs rather than a legacy top-level field.
+
+### Skipped or Pending
+
+- No UI behavior was changed or claimed.
+- No external FlowGuard, OpenSpec, or SkillGuard repository was modified.
+- Full validation was intentionally not run before source/install freeze.
+- Remaining work is source/install freeze, one serial final17 sequence, full OpenSpec verification, archive, scoped local commit, and KB postflight.
+
+## flowpilot-skillguard-native-binding-model-miss - Global selection boundary repair
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger: the production-facing global router correctly blocked FlowPilot after install sync because a `native-integrated` contract declared no native route or check bindings.
+- Status: focused current; final17 verification pending
+- Plane/owner: `development_process`; existing commitment `commit.release_claims_require_current_evidence`; primary model `flowpilot_skillguard_current_contract`.
+
+### Findings and repair
+
+- This was a `boundary_missing` model miss, not a SkillGuard runtime defect and not a reason to add another FlowPilot path.
+- The current source now binds exactly four existing FlowPilot routes and all seven declared checks. Missing, extra, duplicate, non-required, source-less, defaulted, or fallback bindings fail closed.
+- FieldLifecycleMesh records both maintenance fields with one source writer, compiler/router/model readers, generated/global projections, exact-set rules, and blocked terminal disposition.
+- Two pre-existing complete-workstream field rows also referenced conceptual validator names. They now point to the real `_ensure_skill_standard_packet` and `REVIEW_FLOW_STAGE_CHALLENGE_BINDINGS` owners.
+
+### Current focused evidence
+
+- SkillGuard contract model: four routes, ten obligations, eleven bad cases, exact 4/7 native bindings, zero findings.
+- Public V2 parity: contract `46B14F9741CD6B7FAF8D06503AE4A03B59CF67885FCD2AEEC6D8E8DECA45A2B5`; manifest `8C1801D2FFF737EF44091B9E63D2845C4E5C933BBBB5C827E5D067347D8EF95D`.
+- Field mesh: 2/2 maintenance authority fields current, 158/158 critical code bindings, six focused tests passed, and the missing-binding negative reaches the precise fail-closed state.
+- Global registry/prompt checks and explicit FlowPilot route resolution passed after the source/install projection was refreshed.
+
+### Claim boundary
+
+- No external FlowGuard, OpenSpec, or SkillGuard repository was modified.
+- Other installed skills remain under their own migration owners and are not claimed current by this repair.
+- No final17, full OpenSpec verification, archive, release, or execution-depth claim is made here.

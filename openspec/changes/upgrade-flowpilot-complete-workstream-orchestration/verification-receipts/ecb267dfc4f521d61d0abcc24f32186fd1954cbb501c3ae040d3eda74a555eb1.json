@@ -1,0 +1,26 @@
+{
+  "schema_version": 2,
+  "report_protocol_version": 3,
+  "execution_key": "sha256:09dcf2a438d1d322d8985c1a4034f063d925d7225f4daca27e9b32ff769da042",
+  "result_hash": "sha256:04a0562f07988fd153a60253b358f0dd68fd1f7d37436440a0e7bacb6b4af170",
+  "receipt_id": "sha256:ecb267dfc4f521d61d0abcc24f32186fd1954cbb501c3ae040d3eda74a555eb1",
+  "result": {
+    "status": "passed",
+    "command": "python",
+    "args": [
+      "-m",
+      "unittest",
+      "-v",
+      "tests.test_flowpilot_test_tiers.FlowPilotTestTierTests.test_complete_workstream_and_resource_checks_participate_in_parent_tiers",
+      "tests.test_flowpilot_test_tiers.FlowPilotTestTierTests.test_covered_source_fingerprint_ignores_generated_results_but_tracks_source",
+      "tests.test_flowpilot_test_tiers.FlowPilotTestTierTests.test_release_and_final_confidence_have_acyclic_single_owner_order"
+    ],
+    "expected_exit_code": 0,
+    "exit_code": 0,
+    "timeout_seconds": 1800,
+    "stdout": "",
+    "stderr": "test_complete_workstream_and_resource_checks_participate_in_parent_tiers (tests.test_flowpilot_test_tiers.FlowPilotTestTierTests.test_complete_workstream_and_resource_checks_participate_in_parent_tiers) ... ok\r\ntest_covered_source_fingerprint_ignores_generated_results_but_tracks_source (tests.test_flowpilot_test_tiers.FlowPilotTestTierTests.test_covered_source_fingerprint_ignores_generated_results_but_tracks_source) ... ok\r\ntest_release_and_final_confidence_have_acyclic_single_owner_order (tests.test_flowpilot_test_tiers.FlowPilotTestTierTests.test_release_and_final_confidence_have_acyclic_single_owner_order) ... ok\r\n\r\n----------------------------------------------------------------------\r\nRan 3 tests in 0.040s\r\n\r\nOK\r\n",
+    "stdout_preview": "",
+    "stderr_preview": "test_complete_workstream_and_resource_checks_participate_in_parent_tiers (tests.test_flowpilot_test_tiers.FlowPilotTestTierTests.test_complete_workstream_and_resource_checks_participate_in_parent_tiers) ... ok\r\ntest_covered_source_fingerprint_ignores_generated_results_but_tracks_source (tests.test_flowpilot_test_tiers.FlowPilotTestTierTests.test_covered_source_fingerprint_ignores_generated_results_but_tracks_source) ... ok\r\ntest_release_and_final_confidence_have_acyclic_single_owner_order (tests.test_flowpilot_test_tiers.FlowPilotTestTierTests.test_release_and_final_confidence_have_acyclic_single_owner_order) ... ok\r\n\r\n----------------------------------------------------------------------\r\nRan 3 tests in 0.040s\r\n\r\nOK\r\n"
+  }
+}

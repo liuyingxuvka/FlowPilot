@@ -152,8 +152,9 @@ def build_check_groups(*, fast: bool = False) -> dict[str, list[list[str]]]:
     model_test_alignment_check = [
         sys.executable,
         "simulations/run_flowpilot_model_test_alignment_checks.py",
+        "--declaration-only",
         "--json-out",
-        "simulations/flowpilot_model_test_alignment_results.json",
+        "tmp/test_results/flowpilot_model_test_alignment_declaration_only.json",
     ]
     project_topology_orientation_check = [
         sys.executable,

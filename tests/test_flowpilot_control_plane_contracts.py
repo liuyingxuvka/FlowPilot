@@ -3,7 +3,6 @@ from __future__ import annotations
 import sys
 import unittest
 from pathlib import Path
-from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "skills" / "flowpilot" / "assets"))
@@ -11,7 +10,7 @@ sys.path.insert(0, str(ROOT / "skills" / "flowpilot" / "assets"))
 import flowpilot_router as router  # noqa: E402
 import flowpilot_router_role_output_bridge_events as role_output_bridge_events  # noqa: E402
 import flowpilot_router_work_packets_pm_role_writes_decisions as pm_decisions  # noqa: E402
-import flowpilot_router_work_packets_material as material_packets  # noqa: E402
+import flowpilot_router_work_packets_material as research_packets  # noqa: E402
 import flowpilot_closure_kernel as closure_kernel  # noqa: E402
 import packet_runtime  # noqa: E402
 import role_output_runtime  # noqa: E402
@@ -24,10 +23,10 @@ from tests.router_runtime.common import FlowPilotRouterRuntimeTestBase, read_jso
 
 
 class FlowPilotControlPlaneContractUnitTests(unittest.TestCase):
-    def test_material_disposition_role_output_does_not_short_circuit_on_global_flag(self) -> None:
+    def test_current_package_disposition_role_output_does_not_short_circuit_on_global_flag(self) -> None:
         scoped_identity = {
-            "event": "pm_records_material_scan_result_disposition",
-            "dedupe_key": "pm_records_material_scan_result_disposition:test",
+            "event": "pm_records_current_node_result_disposition",
+            "dedupe_key": "pm_records_current_node_result_disposition:test",
             "family": "pm_package_disposition",
             "conflict_fields": ["body_hash"],
             "scope": {
@@ -38,7 +37,6 @@ class FlowPilotControlPlaneContractUnitTests(unittest.TestCase):
         }
 
         for event in (
-            "pm_records_material_scan_result_disposition",
             "pm_records_research_result_disposition",
             "pm_records_current_node_result_disposition",
         ):
@@ -53,14 +51,13 @@ class FlowPilotControlPlaneContractUnitTests(unittest.TestCase):
     def test_non_package_role_output_can_still_short_circuit_on_global_flag(self) -> None:
         self.assertTrue(
             role_output_bridge_events._event_allows_run_wide_flag_short_circuit(
-                "reviewer_reports_material_sufficient",
+                "current_node_reviewer_blocks_result",
                 None,
             )
         )
 
     def test_pm_package_disposition_identity_conflicts_on_body_hash(self) -> None:
         for event in (
-            "pm_records_material_scan_result_disposition",
             "pm_records_research_result_disposition",
             "pm_records_current_node_result_disposition",
         ):
@@ -97,7 +94,6 @@ class FlowPilotControlPlaneContractUnitTests(unittest.TestCase):
 
     def test_pm_package_disposition_conflict_classifier_marks_repair_owned_replay(self) -> None:
         for event in (
-            "pm_records_material_scan_result_disposition",
             "pm_records_research_result_disposition",
             "pm_records_current_node_result_disposition",
         ):
@@ -164,7 +160,6 @@ class FlowPilotControlPlaneContractUnitTests(unittest.TestCase):
 
     def test_pm_package_disposition_policies_use_body_hash_as_conflict_evidence(self) -> None:
         for event in (
-            "pm_records_material_scan_result_disposition",
             "pm_records_research_result_disposition",
             "pm_records_current_node_result_disposition",
         ):
@@ -373,7 +368,7 @@ class FlowPilotControlPlaneContractUnitTests(unittest.TestCase):
 
 
 class FlowPilotControlPlaneContractRuntimeTests(FlowPilotRouterRuntimeTestBase):
-    def _prepare_material_scan_pm_disposition(
+    def _prepare_current_node_pm_disposition(
         self,
         root: Path,
         run_id: str,
@@ -382,6 +377,19 @@ class FlowPilotControlPlaneContractRuntimeTests(FlowPilotRouterRuntimeTestBase):
     ) -> tuple[Path, dict, dict, Path]:
         run_root = self.write_minimal_run(root, run_id)
         run_state = read_json(router.run_state_path(run_root))
+        router.write_json(
+            run_root / "execution_frontier.json",
+            {
+                "schema_version": "flowpilot.execution_frontier.v1",
+                "run_id": run_id,
+                "status": "current_node_loop",
+                "active_route_id": "route-001",
+                "active_node_id": "node-001",
+                "route_version": 1,
+                "updated_at": router.utc_now(),
+                "source": "test_current_node_disposition",
+            },
+        )
         records: list[dict[str, object]] = []
         for index in range(packet_count):
             suffix = "" if packet_count == 1 else f"-{chr(ord('a') + index)}"
@@ -394,7 +402,8 @@ class FlowPilotControlPlaneContractRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 from_role="project_manager",
                 to_role=role,
                 node_id="node-001",
-                body_text=f"material scan {packet_id}",
+                body_text=f"current-node work {packet_id}",
+                packet_type="work_packet",
             )
             packet_path = root / packet["body_path"].replace("packet_body.md", "packet_envelope.json")
             packet = packet_runtime.deliver_envelope_metadata(
@@ -411,7 +420,7 @@ class FlowPilotControlPlaneContractRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 packet_envelope=packet,
                 completed_by_role=role,
                 completed_by_agent_id=f"agent-{role}",
-                result_body_text=f"scan result {packet_id}\n\nContract Self-Check\n\nstatus: pass\n",
+                result_body_text=f"current-node result {packet_id}\n\nContract Self-Check\n\nstatus: pass\n",
                 next_recipient="project_manager",
             )
             result_path = root / result["result_body_path"].replace("result_body.md", "result_envelope.json")
@@ -428,7 +437,7 @@ class FlowPilotControlPlaneContractRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 {
                     "packet_id": packet_id,
                     "to_role": role,
-                    "packet_generation_id": "material-generation-release",
+                    "packet_generation_id": "current-node-generation-release",
                     "packet_envelope_path": router.project_relative(root, packet_path),
                     "result_envelope_path": router.project_relative(root, result_path),
                     "status": "result_relayed_to_pm",
@@ -439,40 +448,32 @@ class FlowPilotControlPlaneContractRuntimeTests(FlowPilotRouterRuntimeTestBase):
             run_root,
             run_state,
             batch_id="batch-release",
-            batch_kind="material_scan",
-            phase="material_scan",
+            batch_kind="current_node",
+            phase="current_node_loop",
             records=records,
-            node_id="material-intake",
+            node_id="node-001",
             join_policy="all_results_before_pm_absorption",
-            review_policy="pm_absorbs_batch_before_material_sufficiency_review",
+            review_policy="pm_absorbs_batch_before_current_node_review",
             pm_absorption_required=True,
         )
         batch["status"] = "results_relayed_to_pm"
         router._write_parallel_packet_batch_state(run_root, batch)  # type: ignore[attr-defined]
-        router.write_json(
-            run_root / "material" / "material_scan_packets.json",
-            {
-                "schema_version": "flowpilot.material_scan_packets.v2",
-                "run_id": run_state["run_id"],
-                "written_by_role": "project_manager",
-                "batch_id": "batch-release",
-                "batch_kind": "material_scan",
-                "current_generation_id": "material-generation-release",
-                "controller_may_read_packet_body": False,
-                "router_direct_dispatch_required_before_worker": True,
-                "reviewer_dispatch_required_before_worker": False,
-                "packets": records,
-                "written_at": router.utc_now(),
-            },
+        output_path = (
+            run_root
+            / "routes"
+            / "route-001"
+            / "nodes"
+            / "node-001"
+            / "reviews"
+            / "pm_current_node_result_disposition.json"
         )
-        output_path = run_root / "material" / "pm_material_scan_result_disposition.json"
         payload = role_output_runtime.submit_output(
             root,
             output_type="pm_package_result_disposition",
             role="project_manager",
             agent_id="agent-project_manager",
             run_id=run_root.name,
-            event_name="pm_records_material_scan_result_disposition",
+            event_name="pm_records_current_node_result_disposition",
             body={
                 "decided_by_role": "project_manager",
                 "decision": "absorbed",
@@ -482,36 +483,16 @@ class FlowPilotControlPlaneContractRuntimeTests(FlowPilotRouterRuntimeTestBase):
         )
         return run_root, run_state, payload, output_path
 
-    def test_pm_package_disposition_rejects_handwritten_body(self) -> None:
+    def test_retired_material_scan_card_is_not_in_current_prompt_manifest(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
-        self.complete_startup_runtime_entry(root)
-        self.deliver_expected_card(root, "pm.material_scan")
-        router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
-        self.apply_next_packet_action(root, "relay_material_scan_packets")
-        material_index_path = run_root / "material" / "material_scan_packets.json"
-        self.open_packets_and_write_results(root, material_index_path, result_text="material scan result")
-        router.record_external_event(root, "worker_scan_packet_bodies_delivered_after_dispatch")
-        router.record_external_event(root, "worker_scan_results_returned")
-        self.apply_next_packet_action(root, "relay_material_scan_results_to_pm")
-        self.open_results_for_pm(root, material_index_path)
-
-        with self.assertRaises(router.RouterError) as raised:
-            router.record_external_event(
-                root,
-                "pm_records_material_scan_result_disposition",
-                {
-                    "decided_by_role": "project_manager",
-                    "decision": "absorbed",
-                    "decision_reason": "handwritten body should not pass",
-                },
-            )
-
-        self.assertIn("role-output runtime envelope", str(raised.exception))
+        manifest = read_json(run_root / "runtime_kit" / "manifest.json")
+        card_ids = {row["id"] for row in manifest["cards"]}
+        self.assertNotIn("pm.material_scan", card_ids)
 
     def test_pm_package_disposition_rejects_reason_alias_for_decision_reason(self) -> None:
         root = self.make_project()
-        run_root, run_state, _payload, output_path = self._prepare_material_scan_pm_disposition(
+        run_root, run_state, _payload, output_path = self._prepare_current_node_pm_disposition(
             root,
             "run-disposition-reason-alias",
         )
@@ -534,17 +515,17 @@ class FlowPilotControlPlaneContractRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 run_root,
                 run_state,
                 payload,
-                batch_kind="material_scan",
-                package_label="material_scan",
-                gate_kind="material_sufficiency",
+                batch_kind="current_node",
+                package_label="current_node",
+                gate_kind="current_node_result_review",
                 output_path=output_path,
-                router_event="pm_records_material_scan_result_disposition",
+                router_event="pm_records_current_node_result_disposition",
             )
 
     def test_pm_formal_gate_package_rejects_reason_alias_for_decision_reason(self) -> None:
         root = self.make_project()
         run_root = self.write_minimal_run(root, "run-formal-package-reason-alias")
-        output_path = run_root / "material" / "pm_material_scan_result_disposition.json"
+        output_path = run_root / "routes" / "route-001" / "nodes" / "node-001" / "reviews" / "pm_current_node_result_disposition.json"
 
         with self.assertRaisesRegex(router.RouterError, "decision_reason; reason is not a current alias"):  # type: ignore[attr-defined]
             pm_decisions._write_pm_formal_gate_package(
@@ -554,99 +535,12 @@ class FlowPilotControlPlaneContractRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 run_state={"run_id": run_root.name, "run_root": router.project_relative(root, run_root)},
                 batch={"batch_id": "batch-1"},
                 records=[],
-                batch_kind="material_scan",
-                package_label="material_scan",
-                gate_kind="material_sufficiency",
+                batch_kind="current_node",
+                package_label="current_node",
+                gate_kind="current_node_result_review",
                 decision="absorbed",
                 payload={"reason": "Old reason alias must not pass."},
             )
-
-    def test_material_sufficiency_rejects_runtime_open_receipts_alias(self) -> None:
-        root = self.make_project()
-        run_root = self.write_minimal_run(root, "run-material-open-receipts-alias")
-        run_state = read_json(router.run_state_path(run_root))
-        run_state.setdefault("flags", {})["material_scan_results_absorbed_by_pm"] = True
-        router.write_json(
-            router._material_scan_index_path(run_root),  # type: ignore[attr-defined]
-            {
-                "schema_version": "flowpilot.material_scan_packets.v1",
-                "run_id": run_root.name,
-                "packets": [],
-            },
-        )
-        payload = {
-            "pm_visible_summary": ["Reviewed material is insufficient for PM execution."],
-            "reviewed_by_role": "human_like_reviewer",
-            "passed": False,
-            "direct_material_sources_checked": True,
-            "packet_matches_checked_sources": True,
-            "pm_ready": False,
-            "checked_source_paths": [],
-            "runtime_open_receipts": ["old-open-receipt"],
-            "findings": [],
-            "blockers": [{"blocker_id": "missing-material"}],
-            "pm_suggestion_items": [
-                "PM decision-support: material review is insufficient; PM should route targeted research before continuing."
-            ],
-            "contract_self_check": {"status": "pass"},
-            "_role_output_envelope": {
-                "role_output_runtime_validated": True,
-                "output_type": "material_sufficiency_report",
-                "output_contract_id": "flowpilot.output_contract.material_sufficiency_report.v1",
-            },
-        }
-
-        material_packets._bind_router(router)  # type: ignore[attr-defined]
-        with mock.patch.object(router, "_load_packet_index", return_value={"packets": [{"packet_id": "packet-alias"}]}):
-            with mock.patch.object(router, "_validate_packet_group_for_reviewer", return_value=None):
-                with mock.patch.object(material_packets, "_load_file_backed_role_payload", return_value=payload):
-                    with self.assertRaisesRegex(router.RouterError, "runtime_open_receipt_refs; runtime_open_receipts is not a current alias"):  # type: ignore[attr-defined]
-                        material_packets._write_material_sufficiency_report(  # type: ignore[attr-defined]
-                            router,
-                            root,
-                            run_root,
-                            run_state,
-                            {"report_path": "unused.json", "report_hash": "unused"},
-                            sufficient=False,
-                        )
-
-    def test_material_sufficiency_rejects_checked_by_role_alias(self) -> None:
-        root = self.make_project()
-        run_root = self.write_minimal_run(root, "run-material-checked-by-role-alias")
-        run_state = read_json(router.run_state_path(run_root))
-        payload = {
-            "pm_visible_summary": ["Reviewed material is insufficient for PM execution."],
-            "checked_by_role": "human_like_reviewer",
-            "passed": False,
-            "direct_material_sources_checked": True,
-            "packet_matches_checked_sources": True,
-            "pm_ready": False,
-            "checked_source_paths": ["materials/source.md"],
-            "runtime_open_receipt_refs": [],
-            "findings": [],
-            "blockers": [],
-            "pm_suggestion_items": [
-                "PM decision-support: material review is insufficient; PM should route targeted research before continuing."
-            ],
-            "contract_self_check": {"status": "pass"},
-            "_role_output_envelope": {
-                "role_output_runtime_validated": True,
-                "output_type": "material_sufficiency_report",
-                "output_contract_id": "flowpilot.output_contract.material_sufficiency_report.v1",
-            },
-        }
-
-        material_packets._bind_router(router)  # type: ignore[attr-defined]
-        with mock.patch.object(material_packets, "_load_file_backed_role_payload", return_value=payload):
-            with self.assertRaisesRegex(router.RouterError, "reviewed_by_role; checked_by_role is not a current alias"):  # type: ignore[attr-defined]
-                material_packets._write_material_sufficiency_report(  # type: ignore[attr-defined]
-                    router,
-                    root,
-                    run_root,
-                    run_state,
-                    {"report_path": "unused.json", "report_hash": "unused"},
-                    sufficient=False,
-                )
 
     def test_pm_role_work_request_rejects_old_alias_fields(self) -> None:
         root = self.make_project()
@@ -715,7 +609,7 @@ class FlowPilotControlPlaneContractRuntimeTests(FlowPilotRouterRuntimeTestBase):
         )
 
         with self.assertRaisesRegex(router.RouterError, "to_role; recipient_role is not a current alias"):  # type: ignore[attr-defined]
-            material_packets._write_research_capability_decision(  # type: ignore[attr-defined]
+            research_packets._write_research_capability_decision(  # type: ignore[attr-defined]
                 router,
                 root,
                 run_root,
@@ -760,7 +654,7 @@ class FlowPilotControlPlaneContractRuntimeTests(FlowPilotRouterRuntimeTestBase):
     def test_pm_formal_gate_package_has_path_hash_and_scope(self) -> None:
         root = self.make_project()
         run_root = self.write_minimal_run(root, "run-formal-package")
-        output_path = run_root / "material" / "pm_material_scan_result_disposition.json"
+        output_path = run_root / "routes" / "route-001" / "nodes" / "node-001" / "reviews" / "pm_current_node_result_disposition.json"
         packet_envelope = run_root / "packets" / "packet-1" / "packet_envelope.json"
         result_envelope = run_root / "packets" / "packet-1" / "result_envelope.json"
         result_envelope.parent.mkdir(parents=True, exist_ok=True)
@@ -769,15 +663,15 @@ class FlowPilotControlPlaneContractRuntimeTests(FlowPilotRouterRuntimeTestBase):
             {
                 "schema_version": packet_runtime.PACKET_ENVELOPE_SCHEMA,
                 "packet_id": "packet-1",
-                "packet_type": "material_scan",
+                "packet_type": "current_node",
                 "from_role": "project_manager",
                 "to_role": "worker",
                 "body_path": router.project_relative(root, result_envelope.parent / "packet_body.md"),
                 "body_hash": "hash",
-                "output_contract_id": "flowpilot.output_contract.worker_material_scan_result.v1",
+                "output_contract_id": "flowpilot.output_contract.worker_current_node_result.v1",
                 "output_contract": {
                     "schema_version": "flowpilot.output_contract.v1",
-                    "contract_id": "flowpilot.output_contract.worker_material_scan_result.v1",
+                    "contract_id": "flowpilot.output_contract.worker_current_node_result.v1",
                     "recipient_role": "worker",
                     "selected_by_role": "project_manager",
                 },
@@ -789,14 +683,14 @@ class FlowPilotControlPlaneContractRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 "schema_version": packet_runtime.RESULT_ENVELOPE_SCHEMA,
                 "packet_id": "packet-1",
                 "source_packet_envelope_path": router.project_relative(root, packet_envelope),
-                "source_output_contract_id": "flowpilot.output_contract.worker_material_scan_result.v1",
+                "source_output_contract_id": "flowpilot.output_contract.worker_current_node_result.v1",
                 "contract_self_check": {
                     "required": True,
                     "completed": True,
                     "passed": True,
                     "decision": "pass",
-                    "source_output_contract_id": "flowpilot.output_contract.worker_material_scan_result.v1",
-                    "declared_source_output_contract_id": "flowpilot.output_contract.worker_material_scan_result.v1",
+                    "source_output_contract_id": "flowpilot.output_contract.worker_current_node_result.v1",
+                    "declared_source_output_contract_id": "flowpilot.output_contract.worker_current_node_result.v1",
                     "source_output_contract_id_matches": True,
                 },
             },
@@ -815,9 +709,9 @@ class FlowPilotControlPlaneContractRuntimeTests(FlowPilotRouterRuntimeTestBase):
                     "result_envelope_path": router.project_relative(root, result_envelope),
                 }
             ],
-            batch_kind="material_scan",
-            package_label="material_scan",
-            gate_kind="material_sufficiency",
+            batch_kind="current_node",
+            package_label="current_node",
+            gate_kind="current_node_result_review",
             decision="absorbed",
             payload={"decision_reason": "ready"},
         )
@@ -835,7 +729,7 @@ class FlowPilotControlPlaneContractRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertEqual(result_entry["result_envelope_hash"], packet_runtime.sha256_file(result_envelope))
         self.assertEqual(
             result_entry["source_output_contract_id"],
-            "flowpilot.output_contract.worker_material_scan_result.v1",
+            "flowpilot.output_contract.worker_current_node_result.v1",
         )
         self.assertTrue(result_entry["contract_self_check"]["ok"])
         self.assertTrue(package["all_source_result_contract_self_checks_passed"])
@@ -843,7 +737,7 @@ class FlowPilotControlPlaneContractRuntimeTests(FlowPilotRouterRuntimeTestBase):
     def test_pm_formal_gate_package_blocks_failed_source_self_check(self) -> None:
         root = self.make_project()
         run_root = self.write_minimal_run(root, "run-formal-package-bad-self-check")
-        output_path = run_root / "material" / "pm_material_scan_result_disposition.json"
+        output_path = run_root / "routes" / "route-001" / "nodes" / "node-001" / "reviews" / "pm_current_node_result_disposition.json"
         packet_envelope = run_root / "packets" / "packet-1" / "packet_envelope.json"
         result_envelope = run_root / "packets" / "packet-1" / "result_envelope.json"
         result_envelope.parent.mkdir(parents=True, exist_ok=True)
@@ -852,12 +746,12 @@ class FlowPilotControlPlaneContractRuntimeTests(FlowPilotRouterRuntimeTestBase):
             {
                 "schema_version": packet_runtime.PACKET_ENVELOPE_SCHEMA,
                 "packet_id": "packet-1",
-                "packet_type": "material_scan",
+                "packet_type": "current_node",
                 "from_role": "project_manager",
                 "to_role": "worker",
                 "body_path": router.project_relative(root, result_envelope.parent / "packet_body.md"),
                 "body_hash": "hash",
-                "output_contract_id": "flowpilot.output_contract.worker_material_scan_result.v1",
+                "output_contract_id": "flowpilot.output_contract.worker_current_node_result.v1",
             },
         )
         router.write_json(
@@ -866,7 +760,7 @@ class FlowPilotControlPlaneContractRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 "schema_version": packet_runtime.RESULT_ENVELOPE_SCHEMA,
                 "packet_id": "packet-1",
                 "source_packet_envelope_path": router.project_relative(root, packet_envelope),
-                "source_output_contract_id": "flowpilot.output_contract.worker_material_scan_result.v1",
+                "source_output_contract_id": "flowpilot.output_contract.worker_current_node_result.v1",
                 "contract_self_check": {
                     "required": True,
                     "completed": False,
@@ -891,16 +785,16 @@ class FlowPilotControlPlaneContractRuntimeTests(FlowPilotRouterRuntimeTestBase):
                         "result_envelope_path": router.project_relative(root, result_envelope),
                     }
                 ],
-                batch_kind="material_scan",
-                package_label="material_scan",
-                gate_kind="material_sufficiency",
+                batch_kind="current_node",
+                package_label="current_node",
+                gate_kind="current_node_result_review",
                 decision="absorbed",
                 payload={"decision_reason": "ready"},
             )
 
     def test_absorbed_pm_disposition_records_reviewer_release_evidence(self) -> None:
         root = self.make_project()
-        run_root, run_state, payload, output_path = self._prepare_material_scan_pm_disposition(
+        run_root, run_state, payload, output_path = self._prepare_current_node_pm_disposition(
             root,
             "run-disposition-release",
         )
@@ -911,11 +805,11 @@ class FlowPilotControlPlaneContractRuntimeTests(FlowPilotRouterRuntimeTestBase):
             run_root,
             run_state,
             payload,
-            batch_kind="material_scan",
-            package_label="material_scan",
-            gate_kind="material_sufficiency",
+            batch_kind="current_node",
+            package_label="current_node",
+            gate_kind="current_node_result_review",
             output_path=output_path,
-            router_event="pm_records_material_scan_result_disposition",
+            router_event="pm_records_current_node_result_disposition",
         )
 
         disposition = read_json(output_path)
@@ -934,7 +828,7 @@ class FlowPilotControlPlaneContractRuntimeTests(FlowPilotRouterRuntimeTestBase):
 
     def test_pm_disposition_records_packet_outcomes_and_blocks_mixed_absorption(self) -> None:
         root = self.make_project()
-        run_root, run_state, _payload, output_path = self._prepare_material_scan_pm_disposition(
+        run_root, run_state, _payload, output_path = self._prepare_current_node_pm_disposition(
             root,
             "run-disposition-packet-outcomes",
             packet_count=2,
@@ -945,7 +839,7 @@ class FlowPilotControlPlaneContractRuntimeTests(FlowPilotRouterRuntimeTestBase):
             role="project_manager",
             agent_id="agent-project_manager",
             run_id=run_root.name,
-            event_name="pm_records_material_scan_result_disposition",
+            event_name="pm_records_current_node_result_disposition",
             body={
                 "decided_by_role": "project_manager",
                 "decision": "rework_requested",
@@ -972,18 +866,18 @@ class FlowPilotControlPlaneContractRuntimeTests(FlowPilotRouterRuntimeTestBase):
             run_root,
             run_state,
             mixed_payload,
-            batch_kind="material_scan",
-            package_label="material_scan",
-            gate_kind="material_sufficiency",
+            batch_kind="current_node",
+            package_label="current_node",
+            gate_kind="current_node_result_review",
             output_path=output_path,
-            router_event="pm_records_material_scan_result_disposition",
+            router_event="pm_records_current_node_result_disposition",
         )
 
         disposition = read_json(output_path)
         self.assertFalse(disposition["formal_gate_package_released"])
         self.assertEqual(disposition["packet_outcome_summary"]["accepted"], 1)
         self.assertEqual(disposition["packet_outcome_summary"]["rework_requested"], 1)
-        batch = router._active_parallel_packet_batch(run_root, "material_scan")  # type: ignore[attr-defined]
+        batch = router._active_parallel_packet_batch(run_root, "current_node")  # type: ignore[attr-defined]
         self.assertEqual(batch["status"], "rework_requested")
         outcomes = {record["packet_id"]: record["pm_result_outcome"]["outcome"] for record in batch["packets"]}
         self.assertEqual(outcomes["packet-release-a"], "accepted")
@@ -991,7 +885,7 @@ class FlowPilotControlPlaneContractRuntimeTests(FlowPilotRouterRuntimeTestBase):
 
     def test_pm_disposition_rejects_absorbed_with_rework_packet_outcome(self) -> None:
         root = self.make_project()
-        run_root, run_state, _payload, output_path = self._prepare_material_scan_pm_disposition(
+        run_root, run_state, _payload, output_path = self._prepare_current_node_pm_disposition(
             root,
             "run-disposition-contradictory-outcomes",
         )
@@ -1001,7 +895,7 @@ class FlowPilotControlPlaneContractRuntimeTests(FlowPilotRouterRuntimeTestBase):
             role="project_manager",
             agent_id="agent-project_manager",
             run_id=run_root.name,
-            event_name="pm_records_material_scan_result_disposition",
+            event_name="pm_records_current_node_result_disposition",
             body={
                 "decided_by_role": "project_manager",
                 "decision": "absorbed",
@@ -1024,16 +918,16 @@ class FlowPilotControlPlaneContractRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 run_root,
                 run_state,
                 contradictory_payload,
-                batch_kind="material_scan",
-                package_label="material_scan",
-                gate_kind="material_sufficiency",
+                batch_kind="current_node",
+                package_label="current_node",
+                gate_kind="current_node_result_review",
                 output_path=output_path,
-                router_event="pm_records_material_scan_result_disposition",
+                router_event="pm_records_current_node_result_disposition",
             )
 
     def test_pm_disposition_rejects_second_body_for_same_batch_generation(self) -> None:
         root = self.make_project()
-        run_root, run_state, payload, output_path = self._prepare_material_scan_pm_disposition(
+        run_root, run_state, payload, output_path = self._prepare_current_node_pm_disposition(
             root,
             "run-disposition-duplicate-conflict",
         )
@@ -1043,11 +937,11 @@ class FlowPilotControlPlaneContractRuntimeTests(FlowPilotRouterRuntimeTestBase):
             run_root,
             run_state,
             payload,
-            batch_kind="material_scan",
-            package_label="material_scan",
-            gate_kind="material_sufficiency",
+            batch_kind="current_node",
+            package_label="current_node",
+            gate_kind="current_node_result_review",
             output_path=output_path,
-            router_event="pm_records_material_scan_result_disposition",
+            router_event="pm_records_current_node_result_disposition",
         )
         second_payload = role_output_runtime.submit_output(
             root,
@@ -1055,7 +949,7 @@ class FlowPilotControlPlaneContractRuntimeTests(FlowPilotRouterRuntimeTestBase):
             role="project_manager",
             agent_id="agent-project_manager",
             run_id=run_root.name,
-            event_name="pm_records_material_scan_result_disposition",
+            event_name="pm_records_current_node_result_disposition",
             body={
                 "decided_by_role": "project_manager",
                 "decision": "rework_requested",
@@ -1071,55 +965,16 @@ class FlowPilotControlPlaneContractRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 run_root,
                 run_state,
                 second_payload,
-                batch_kind="material_scan",
-                package_label="material_scan",
-                gate_kind="material_sufficiency",
+                batch_kind="current_node",
+                package_label="current_node",
+                gate_kind="current_node_result_review",
                 output_path=output_path,
-                router_event="pm_records_material_scan_result_disposition",
-            )
-
-    def test_material_disposition_rejects_stale_active_batch(self) -> None:
-        root = self.make_project()
-        run_root, run_state, payload, output_path = self._prepare_material_scan_pm_disposition(
-            root,
-            "run-disposition-stale-generation",
-        )
-        stale_batch = router._active_parallel_packet_batch(run_root, "material_scan")  # type: ignore[attr-defined]
-        stale_batch["batch_id"] = "batch-release-stale"
-        stale_batch["status"] = "results_relayed_to_pm"
-        for record in stale_batch["packets"]:
-            record["batch_id"] = "batch-release-stale"
-            record["packet_generation_id"] = "material-generation-stale"
-        router.write_json(router._parallel_packet_batch_path(run_root, "batch-release-stale"), stale_batch)  # type: ignore[attr-defined]
-        router.write_json(
-            router._parallel_packet_batch_ref_path(run_root, "material_scan"),  # type: ignore[attr-defined]
-            {
-                "schema_version": router.PARALLEL_PACKET_BATCH_REF_SCHEMA,  # type: ignore[attr-defined]
-                "run_id": run_state["run_id"],
-                "batch_kind": "material_scan",
-                "active_batch_id": "batch-release-stale",
-                "batch_path": router.project_relative(root, router._parallel_packet_batch_path(run_root, "batch-release-stale")),  # type: ignore[attr-defined]
-                "updated_at": router.utc_now(),
-            },
-        )
-
-        with self.assertRaisesRegex(router.RouterError, "batch does not match current material generation"):  # type: ignore[attr-defined]
-            pm_decisions._write_pm_package_result_disposition(
-                router,
-                root,
-                run_root,
-                run_state,
-                payload,
-                batch_kind="material_scan",
-                package_label="material_scan",
-                gate_kind="material_sufficiency",
-                output_path=output_path,
-                router_event="pm_records_material_scan_result_disposition",
+                router_event="pm_records_current_node_result_disposition",
             )
 
     def test_pm_disposition_requires_registered_commit_targets(self) -> None:
         root = self.make_project()
-        run_root, run_state, payload, output_path = self._prepare_material_scan_pm_disposition(
+        run_root, run_state, payload, output_path = self._prepare_current_node_pm_disposition(
             root,
             "run-disposition-registry-mismatch",
         )
@@ -1139,11 +994,11 @@ class FlowPilotControlPlaneContractRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 run_root,
                 run_state,
                 payload,
-                batch_kind="material_scan",
-                package_label="material_scan",
-                gate_kind="material_sufficiency",
+                batch_kind="current_node",
+                package_label="current_node",
+                gate_kind="current_node_result_review",
                 output_path=output_path,
-                router_event="pm_records_material_scan_result_disposition",
+                router_event="pm_records_current_node_result_disposition",
             )
 
         self.assertIn("commit target pm_package_disposition is not declared", str(raised.exception))

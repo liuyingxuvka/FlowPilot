@@ -14,6 +14,7 @@ class TierCommand:
     release_only: bool = False
     background_recommended: bool = False
     background_stage: int = 0
+    evidence_dependency: str = "upstream"
 
 
 def _py(*args: str) -> tuple[str, ...]:

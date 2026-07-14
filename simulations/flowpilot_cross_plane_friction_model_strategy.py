@@ -20,21 +20,23 @@ REPAIR_ACTIONS = {
             "route_state_snapshot all agree on terminal status."
         ),
     },
-    "material_packet_contract_and_lineage": {
-        "title": "Material packet envelope contract and lineage normalization",
+    "current_prework_contract_contraction": {
+        "title": "Current prework contract contraction",
         "fixes": [
-            "material_dispatch_output_contract_mismatch",
-            "material_dispatch_write_target_missing",
-            "unsupported_material_packet_lineage_split",
+            "retired_material_protocol_authority_present",
+            "retired_material_protocol_still_active",
+            "shallow_skill_inventory_contract_missing",
+            "ordinary_resource_work_became_mandatory_gate",
+            "complete_workstream_role_contract_missing",
         ],
         "scope": (
-            "Material-scan packet creation and unsupported_historical migration/quarantine only; "
-            "do not let Controller read sealed bodies."
+            "Existing prework cards, event/flag catalogs, discovery contract, and role cards only; "
+            "keep ordinary PM/research work on the existing packet/result/review path."
         ),
         "proof_obligation": (
-            "Every material-scan packet envelope has to_role-matched output_contract, "
-            "an explicit expected result write target, and canonical replacement_for "
-            "or supersedes lineage."
+            "Current authority exposes no retired material-scan/sufficiency/understanding event, "
+            "card, flag, or packet family; shallow inventory remains mandatory, resource work "
+            "remains optional, and every substantive role report retains its numbered workstream plan."
         ),
     },
     "frontier_based_route_projection": {
@@ -144,6 +146,9 @@ def minimal_repair_strategy(findings: list[dict[str, object]]) -> dict[str, obje
         "actions": actions,
         "overfix_guards": [
             "Do not replace FlowPilot's route model with a UI-only state model.",
+            "Do not remove the mandatory shallow local skill inventory.",
+            "Do not remove ordinary PM/research packets; keep them optional and PM-selected.",
+            "Do not weaken numbered complete-workstream report contracts.",
             "Do not mark human-review final report notes as unfinished route nodes.",
             "Do not open sealed bodies in runtime Controller logic.",
             "Do not hide history by deleting it; hide it from active task catalogs.",

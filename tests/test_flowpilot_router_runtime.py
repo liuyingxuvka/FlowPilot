@@ -12,7 +12,6 @@ from tests.router_runtime.controller import ControllerRuntimeTests
 from tests.router_runtime.dispatch_gate import DispatchGateRuntimeTests
 from tests.router_runtime.foreground import ForegroundRuntimeTests
 from tests.router_runtime.foreground_controller import ForegroundControllerRuntimeTests
-from tests.router_runtime.material_modeling import MaterialModelingRuntimeTests
 from tests.router_runtime.packets import PacketsRuntimeTests
 from tests.router_runtime.pm_role_work import PmRoleWorkRuntimeTests
 from tests.router_runtime.quality_gates import QualityGatesRuntimeTests
@@ -48,7 +47,6 @@ _DOMAIN_TEST_CASES = (
     DispatchGateRuntimeTests,
     ForegroundRuntimeTests,
     ForegroundControllerRuntimeTests,
-    MaterialModelingRuntimeTests,
     PacketsRuntimeTests,
     PmRoleWorkRuntimeTests,
     QualityGatesRuntimeTests,

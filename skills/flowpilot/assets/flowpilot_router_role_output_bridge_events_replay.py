@@ -228,14 +228,6 @@ def _try_reconcile_direct_role_output_event_ledger(
         if _pending_card_return_blocker_for_event(run_root, str(run_state["run_id"]), event, run_state) is not None:
             skipped_not_ready += 1
             continue
-        side_effect_changed = _sync_material_review_from_role_output_payload(
-            router,
-            project_root,
-            run_root,
-            run_state,
-            event,
-            payload,
-        )
         authority_split = _package_disposition_authority_split(
             router,
             project_root,
@@ -258,7 +250,7 @@ def _try_reconcile_direct_role_output_event_ledger(
                     payload=payload,
                     source="role_output_ledger_event_already_recorded",
                 )
-                if wait_closure.get("changed") or side_effect_changed:
+                if wait_closure.get("changed"):
                     changed = True
                     already_recorded += 1
                     events.append(event)
@@ -292,10 +284,6 @@ def _try_reconcile_direct_role_output_event_ledger(
         if recorded:
             changed = True
             reconciled += 1
-            events.append(event)
-        elif side_effect_changed:
-            changed = True
-            already_recorded += 1
             events.append(event)
     if changed:
         append_history(

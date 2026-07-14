@@ -1,89 +1,15 @@
-"""FlowGuard model for FlowPilot control-plane friction fixes.
+"""FlowGuard model for current FlowPilot control-plane friction.
 
-Risk intent brief:
-- Prevent prompt-isolation shortcuts from becoming handoff dead ends.
-- Preserve Controller's envelope-only boundary while reducing purely
-  mechanical handoff steps.
-- Model-critical durable state: research package fields, worker packet
-  materialization, material-scan dispatch integrity, packet/result open
-  receipts, control-blocker routing, stop lifecycle reconciliation,
-  active-task authority, display snapshot freshness, required phase-source
-  context, and live-run artifact registration.
-- Adversarial branches include dropped research scope fields, reviewer reports
-  accepted without a result-body receipt, missing-receipt blockers escalated to
-  PM instead of same-role reissue, material-scan packet dispatch with phase,
-  contract, write-target, or canonical-body drift, PM repair reissue specs that
-  never enter the packet runtime, success-only repair gates that cannot accept
-  reviewer recheck blockers, stopped runs with live manual resume binding/runtime roles/packet
-  state, stale snapshots treated as active UI state, ambiguous multi-active
-  runs under current-json-only authority, product architecture delivery without
-  PM material-understanding source paths, protocol blockers written outside
-  router-visible state, stage-advance views left stale, stale role-decision
-  waits that expose external events before their requires_flag is true, and
-  optimized transactions that skip hash, role, or Controller-boundary checks.
-  Status summaries, ack auto-consumption, stale wait reconciliation, role-work
-  recipient normalization, model-miss report completeness, and role-memory
-  deltas are included because these are the planned speed improvements.
-  Long-running role-work waits are included: Controller can see only a
-  metadata-only controller_status_packet progress surface, never sealed packet
-  or result bodies. Reviewer-block repair routing is included: PM can repair
-  node-local defects by revising or reissuing fresh same-node artifacts, while
-  route mutation is reserved for defects the current node cannot semantically
-  contain.
-- Hard invariants: package-to-packet fields are preserved; material-scan
-  dispatch requires phase, contract, write-target, and canonical-body
-  consistency; repair reissues must materialize into packet files, ledger, and
-  dispatch index; reviewer recheck failures must remain routable; reviewer
-  decisions require legal open receipts; missing receipt repair is same-role
-  reissue; stopped runs reconcile all visible lifecycle authorities; active
-  snapshots are fresh; phase cards carry required source context; protocol
-  blockers are router-visible; stage-advance views refresh; multi-active
-  visibility has explicit authority; await_role_decision exposes only currently
-  receivable external events; optimized transactions keep hash, role, and
-  envelope-only guarantees; long-running waits expose exactly one status
-  packet, progress is runtime-written numeric metadata, and status messages do
-  not carry findings, evidence, recommendations, or body summaries; node-local
-  reviewer blocks remain routable without a route mutation, use fresh repair
-  evidence, and require the same review class to recheck before continuation;
-  route mutations record why the current node cannot contain the repair and
-  reopen route checks; optimized ack consumption validates exact ack, role, and
-  hash; a valid direct ACK file that already exists is consumed before a later
-  role event is blocked as an unresolved card return; pending waits reconcile
-  only from durable packet/status evidence;
-  user-facing status summaries remain metadata-only and blocker-consistent;
-  PM role-work and current-node worker results return to PM before formal
-  reviewer gates; role memory is an index, never an approval authority; and a
-  complete model-miss FlowGuard operator report can reach a PM decision without a second
-  FlowGuard operator loop; child-skill gate reviewer passes clear only the matching
-  current gate blocker; direct Router ACK consumption preserves the semantic
-  reviewer pass/block wait; PM repair authority cannot impersonate reviewer
-  event authority; no-legal-next blockers wait for currently receivable role
-  output; duplicate PM repair decisions are idempotent for the same blocker;
-  Controller user reports do not expose internal action, packet, ledger, hash,
-  contract, or diagnostic-path metadata by default; Router actions carry a
-  Controller-facing plain-language reminder that is not itself user-visible;
-  compact progress summaries include bounded route-level progress facts;
-  display/status Controller work remains nonblocking; external keepalive work
-  still requires lightweight confirmation; Controller delivery receipts only
-  close Controller-owned delivery work and must become target-role waits rather
-  than role completion; stateful Controller receipts cannot clear or advance a
-  hard pending action until the Router can verify or reclaim the declared
-  postcondition evidence; daemon ticks cannot escalate a half-complete
-  Controller receipt when valid Router-owned artifacts already exist; and
-  role-output events cannot be accepted from a prepared/progress status surface
-  without a file-backed body path plus replayable body hash; PM role-work
-  obligations are keyed by batch/request/packet/role, host delivery success and
-  active-holder liveness are separate gates, packet-ledger IO is atomic and
-  corruption-recoverable, result self-checks are machine-parseable, runtime
-  authority backs every advertised reader; Router-owned internal postconditions
-  with ready inputs materialize evidence or emit a router-visible blocker
-  instead of becoming passive Controller/role waits; resolved obligations clear
-  passive wait and reminder projections; stale daemon/run-state saves cannot
-  resurrect a live wait after the authoritative Router obligation state has
-  cleared it; and material repair progress is derived from the active
-  generation/batch rather than stale run-wide flags.
-- Blindspot: this is still a focused control-plane model. The live-run audit
-  checks file-level consistency, but it does not prove product content quality.
+The positive route uses ordinary research, PM role-work, and current-node
+packets.  It preserves dispatch, packet/result receipts, PM join/disposition,
+independent review, repair, ledger replay, status visibility, and terminal
+closure while keeping Controller envelope-only.  Specialized material intake,
+scan, sufficiency, understanding, index, and generation protocols are retired;
+the only remaining reference to the old family is a known-bad dispatch hazard
+that proves Router rejects it as a current ordinary-work family.
+
+This focused model checks control-plane structure and file-level consistency;
+it does not prove product-content quality.
 """
 
 from __future__ import annotations
@@ -181,10 +107,6 @@ class State:
     stale_run_state_resurrected_closed_wait: bool = False
     self_check_template_status_pass_allowed: bool = False
     self_check_parser_status_pass_accepted: bool = False
-    material_gate_depends_on_result_body: bool = False
-    result_self_check_machine_parseable: bool = True
-    result_reader_authority_matches_runtime: bool = True
-
     pm_research_package_written: bool = False
     research_package_has_decision_question: bool = False
     research_package_has_allowed_sources: bool = False
@@ -192,13 +114,13 @@ class State:
     research_capability_decision_recorded: bool = False
     worker_packet_written: bool = False
     worker_packet_preserves_research_fields: bool = False
-    material_dispatch_requested: bool = False
-    material_dispatch_reviewed: bool = False
-    material_dispatch_allowed: bool = False
-    material_dispatch_phase_context_consistent: bool = True
-    material_dispatch_output_contract_consistent: bool = True
-    material_dispatch_write_target_explicit: bool = True
-    material_dispatch_single_canonical_body: bool = True
+    ordinary_work_dispatch_requested: bool = False
+    ordinary_work_dispatch_reviewed: bool = False
+    ordinary_work_dispatch_allowed: bool = False
+    ordinary_work_dispatch_family: str = "pm_role_work"
+    ordinary_work_dispatch_current_scope: bool = True
+    ordinary_work_dispatch_output_contract_valid: bool = True
+    ordinary_work_dispatch_write_target_explicit: bool = True
     pm_repair_reissue_spec_written: bool = False
     pm_repair_reissue_packet_files_materialized: bool = True
     pm_repair_reissue_packets_registered_in_ledger: bool = True
@@ -242,10 +164,7 @@ class State:
     reviewer_report_written: bool = False
     reviewer_report_accepted: bool = False
 
-    pm_material_understanding_written: bool = False
-    pm_material_understanding_source_available: bool = False
     product_architecture_card_delivered: bool = False
-    product_architecture_delivery_has_material_context: bool = False
     protocol_blocker_file_written: bool = False
     protocol_blocker_registered_in_router_state: bool = False
     control_blocker_artifact_status_written: bool = False
@@ -272,7 +191,7 @@ class State:
     terminal_lifecycle_cleanup_proven: bool = True
     role_output_envelopes_recorded: bool = False
     role_output_hashes_replayable: bool = True
-    stage_advanced_after_material_scan: bool = False
+    stage_advanced_after_product_architecture_delivery: bool = False
     frontier_fresh_after_stage_advance: bool = False
     product_stage_view_published: bool = False
     product_stage_view_fresh: bool = False
@@ -427,23 +346,14 @@ class State:
     role_output_file_backed_body_path_present: bool = True
     role_output_body_hash_verified: bool = True
 
-    material_repair_generation_protocol_checked: bool = False
+    ordinary_repair_replay_protocol_checked: bool = False
     operation_replay_fresh_controller_action_id: bool = True
-    operation_replay_targets_current_generation: bool = True
+    operation_replay_targets_current_work_unit: bool = True
     operation_replay_ledger_io_authorized: bool = True
     controller_repair_work_packet_receipt_folded: bool = True
     controller_repair_work_packet_facade_exported: bool = True
-    pm_material_disposition_generation_scoped: bool = True
-    pm_material_disposition_matches_current_generation: bool = True
-    stale_pm_material_disposition_restored: bool = False
-    material_progress_projection_generation_scoped: bool = True
-    material_global_progress_flags_match_active_generation: bool = True
-    material_next_action_derived_from_active_batch: bool = True
-    material_reissue_clears_or_quarantines_stale_progress_flags: bool = True
-    stale_run_state_save_preserves_material_generation_flag_clear: bool = True
-    material_dispatch_block_matches_active_generation: bool = True
     role_output_event_deduped_by_body_ref: bool = True
-    role_output_current_generation_not_short_circuited_by_global_flag: bool = True
+    role_output_current_work_unit_not_short_circuited_by_global_flag: bool = True
     role_output_package_disposition_domain_first_commit: bool = True
     pm_package_authority_split_preserves_wait: bool = True
     pm_package_authority_split_repairs_domain_commit: bool = True

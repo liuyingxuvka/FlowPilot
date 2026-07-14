@@ -71,6 +71,12 @@ def _stable_evidence_id(label: str, payload: Any) -> str:
     return f"{label}:{hashlib.sha256(encoded).hexdigest()[:16]}"
 
 
+def _value_fingerprint(values: Iterable[str]) -> str:
+    normalized = tuple(sorted(str(value) for value in values))
+    encoded = json.dumps(normalized, separators=(",", ":")).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
 def _report_dict(report: Any) -> dict[str, Any]:
     return report.to_dict() if hasattr(report, "to_dict") else dict(report)
 
@@ -150,17 +156,24 @@ def _gap_class_cells(inventory: dict[str, Any]) -> tuple[LeafBoundaryMatrixCell,
         else:
             count = counts.get(gap_class, 0)
             state = "present" if count else "absent"
+        expected_state = "present" if gap_class == CURRENTLY_CONSUMABLE else "absent"
+        matches = state == expected_state
         cells.append(
             LeafBoundaryMatrixCell(
                 cell_id=f"gap_class:{gap_class}",
                 input_case=f"gap_class={gap_class}",
                 state_case="current_inventory",
-                expected_outputs=(f"strategy:{strategy}", f"presence:{state}"),
-                observed_outputs=(f"strategy:{strategy}", f"presence:{state}"),
+                expected_outputs=(f"presence:{expected_state}",),
+                observed_outputs=(f"presence:{state}",),
                 expected_next_states=("classified",),
-                observed_next_states=("classified",),
+                observed_next_states=("classified" if matches else "open_gap",),
                 evidence_ids=("tests/test_flowpilot_full_model_test_gap_closure.py",),
-                metadata={"count": count, "strategy": strategy},
+                evidence_status="passed" if matches else "failed",
+                metadata={
+                    "count": count,
+                    "strategy": strategy,
+                    "observation_source": "flowpilot_full_model_coverage_inventory_results.gap_class_counts_or_records",
+                },
             )
         )
     return tuple(cells)
@@ -183,13 +196,16 @@ def _alignment_cells(alignment: dict[str, Any]) -> tuple[LeafBoundaryMatrixCell,
                 cell_id=f"alignment:{name}",
                 input_case=f"alignment_check={name}",
                 state_case="current_alignment_result",
-                expected_outputs=(state,),
+                expected_outputs=("passed",),
                 observed_outputs=(state,),
                 expected_next_states=("consumable",),
-                observed_next_states=("consumable",),
+                observed_next_states=("consumable" if passed else "blocked",),
                 evidence_ids=("simulations/flowpilot_model_test_alignment_results.json",),
                 evidence_status="passed" if passed else "failed",
-                metadata={"check": name},
+                metadata={
+                    "check": name,
+                    "observation_source": f"flowpilot_model_test_alignment_results.{name}",
+                },
             )
         )
     return tuple(cells)
@@ -201,43 +217,99 @@ def _contract_exhaustion_result() -> dict[str, Any]:
     return contract_exhaustion_runner.run_checks()
 
 
+def _contract_exhaustion_expected_owners() -> tuple[str, ...]:
+    return tuple(
+        sorted(
+            {
+                str(cell.get("required_evidence_owner") or "")
+                for cell in contract_exhaustion_model.REQUIRED_CONTRACT_EXHAUSTION_CELLS
+                if str(cell.get("required_evidence_owner") or "")
+            }
+        )
+    )
+
+
+def _contract_exhaustion_expected_cell_ids() -> tuple[str, ...]:
+    return (
+        "contract_exhaustion:declared_inventory",
+        *(f"contract_exhaustion:child_suite:{owner}" for owner in _contract_exhaustion_expected_owners()),
+    )
+
+
 def _contract_exhaustion_cells(report: dict[str, Any]) -> tuple[LeafBoundaryMatrixCell, ...]:
-    passed = bool(report.get("ok"))
-    required = report.get("required_cells") if isinstance(report.get("required_cells"), dict) else {}
-    cells_payload = required.get("required_cells") if isinstance(required, dict) else []
-    cells: list[LeafBoundaryMatrixCell] = []
-    seen_cell_ids: set[str] = set()
-    for cell in cells_payload:
-        if not isinstance(cell, dict):
-            continue
-        cell_id = str(cell.get("cell_id") or "")
-        matrix_cell_id = f"contract_exhaustion:{cell_id}"
-        if matrix_cell_id in seen_cell_ids:
-            continue
-        seen_cell_ids.add(matrix_cell_id)
-        family = str(cell.get("family") or "")
-        mutation = str(cell.get("mutation_kind") or "")
-        owner = str(cell.get("required_evidence_owner") or "")
-        boundary = str(cell.get("confidence_boundary") or "")
+    expected_owners = _contract_exhaustion_expected_owners()
+    observed_owners = tuple(sorted(str(item) for item in report.get("required_child_suite_owners") or ()))
+    expected_count = len(contract_exhaustion_model.REQUIRED_CONTRACT_EXHAUSTION_CELLS)
+    observed_count = int(report.get("required_cell_count") or 0)
+    inventory_matches = expected_count == observed_count and expected_owners == observed_owners
+    cells: list[LeafBoundaryMatrixCell] = [
+        LeafBoundaryMatrixCell(
+            cell_id="contract_exhaustion:declared_inventory",
+            input_case="contract_exhaustion_declared_inventory",
+            state_case="current_contract_exhaustion_result",
+            expected_outputs=(
+                f"required_cell_count:{expected_count}",
+                f"owner_fingerprint:{_value_fingerprint(expected_owners)}",
+            ),
+            observed_outputs=(
+                f"required_cell_count:{observed_count}",
+                f"owner_fingerprint:{_value_fingerprint(observed_owners)}",
+            ),
+            expected_next_states=("child_proof_review",),
+            observed_next_states=("child_proof_review" if inventory_matches else "inventory_mismatch",),
+            evidence_ids=("simulations/flowpilot_contract_exhaustion_mesh_results.json",),
+            evidence_status="passed" if inventory_matches else "failed",
+            metadata={
+                "observation_source": "flowpilot_contract_exhaustion_mesh_results.required_cell_count+required_child_suite_owners",
+            },
+        )
+    ]
+    child_suites = report.get("child_suites") if isinstance(report.get("child_suites"), dict) else {}
+    for owner in expected_owners:
+        suite = child_suites.get(owner) if isinstance(child_suites.get(owner), dict) else {}
+        status = str(suite.get("result_status") or "missing")
+        current = suite.get("evidence_current") is True
+        proof_present = isinstance(suite.get("proof_artifact"), dict)
+        executed_positive = int(suite.get("executed_count") or 0) > 0
+        consumable = status == "passed" and current and proof_present and executed_positive
         cells.append(
             LeafBoundaryMatrixCell(
-                cell_id=matrix_cell_id,
-                input_case=f"family={family};mutation={mutation}",
-                state_case=str(cell.get("contract_path") or family),
-                expected_outputs=(f"owner:{owner}", f"boundary:{boundary}"),
-                observed_outputs=(f"owner:{owner}", f"boundary:{boundary}"),
-                expected_next_states=("owned",),
-                observed_next_states=("owned",),
+                cell_id=f"contract_exhaustion:child_suite:{owner}",
+                input_case=f"child_suite_owner={owner}",
+                state_case="current_execution_proof",
+                expected_outputs=(
+                    "result_status:passed",
+                    "evidence_current:true",
+                    "proof_artifact:present",
+                    "executed_count:positive",
+                ),
+                observed_outputs=(
+                    f"result_status:{status}",
+                    f"evidence_current:{str(current).lower()}",
+                    f"proof_artifact:{'present' if proof_present else 'missing'}",
+                    f"executed_count:{'positive' if executed_positive else 'zero'}",
+                ),
+                expected_next_states=("parent_consumable",),
+                observed_next_states=("parent_consumable" if consumable else "blocked",),
                 evidence_ids=("simulations/flowpilot_contract_exhaustion_mesh_results.json",),
-                evidence_status="passed" if passed else "failed",
+                evidence_status="passed" if consumable else "failed",
                 metadata={
-                    "contract_family_id": str(cell.get("contract_family_id") or ""),
-                    "contract_path": str(cell.get("contract_path") or ""),
-                    "branch_kind": str(cell.get("branch_kind") or ""),
+                    "owner": owner,
+                    "observation_source": f"flowpilot_contract_exhaustion_mesh_results.child_suites.{owner}",
                 },
             )
         )
     return tuple(cells)
+
+
+def _contract_exhaustion_artifact_passes(report: dict[str, Any]) -> bool:
+    cells = _contract_exhaustion_cells(report)
+    return bool(report.get("ok")) and all(
+        cell.expected_outputs == cell.observed_outputs
+        and cell.expected_next_states == cell.observed_next_states
+        and cell.evidence_status == "passed"
+        for cell in cells
+    )
 
 
 def _cartesian_exhaustion_result() -> dict[str, Any]:
@@ -247,39 +319,69 @@ def _cartesian_exhaustion_result() -> dict[str, Any]:
 
 
 def _cartesian_exhaustion_cells(report: dict[str, Any]) -> tuple[LeafBoundaryMatrixCell, ...]:
-    passed = bool(report.get("ok"))
     matrix = report.get("matrix") if isinstance(report.get("matrix"), dict) else {}
     cells_payload = matrix.get("required_cells") if isinstance(matrix, dict) else []
-    cells: list[LeafBoundaryMatrixCell] = []
-    for cell in cells_payload:
-        if not isinstance(cell, dict):
-            continue
-        cell_id = str(cell.get("cell_id") or "")
-        boundary = str(cell.get("boundary_id") or "")
-        mutation = str(cell.get("mutation_kind") or "")
-        context = str(cell.get("context") or "")
-        consumer = str(cell.get("consumer") or "")
-        reaction = str(cell.get("expected_reaction") or "")
-        owner = str(cell.get("required_evidence_owner") or "")
-        cells.append(
-            LeafBoundaryMatrixCell(
-                cell_id=f"cartesian_exhaustion:{cell_id}",
-                input_case=f"boundary={boundary};mutation={mutation};context={context};consumer={consumer}",
-                state_case=reaction,
-                expected_outputs=(f"owner:{owner}", f"reaction:{reaction}"),
-                observed_outputs=(f"owner:{owner}", f"reaction:{reaction}"),
-                expected_next_states=("owned",),
-                observed_next_states=("owned",),
-                evidence_ids=("simulations/flowpilot_cartesian_control_plane_exhaustion_results.json",),
-                evidence_status="passed" if passed else "failed",
-                metadata={
-                    "normal_repair_context": bool(cell.get("normal_repair_context")),
-                    "glass_break_allowed": bool(cell.get("glass_break_allowed")),
-                    "required_repair_command": str(cell.get("required_repair_command") or ""),
-                },
-            )
-        )
-    return tuple(cells)
+    declared_cells = cartesian_exhaustion_model.REQUIRED_CARTESIAN_CELLS
+    expected_ids = tuple(str(cell.get("cell_id") or "") for cell in declared_cells)
+    observed_ids = tuple(
+        str(cell.get("cell_id") or "") for cell in cells_payload if isinstance(cell, dict)
+    )
+    expected_shards = tuple(str(cell.get("coverage_shard_id") or "") for cell in declared_cells)
+    observed_shards = tuple(
+        str(cell.get("coverage_shard_id") or "") for cell in cells_payload if isinstance(cell, dict)
+    )
+    matrix_ok = matrix.get("ok") is True
+    hazards_ok = isinstance(report.get("hazards"), dict) and report["hazards"].get("ok") is True
+    flowguard_ok = isinstance(report.get("flowguard"), dict) and report["flowguard"].get("ok") is True
+    structural_match = (
+        int(matrix.get("applicable_count") or 0) == len(declared_cells)
+        and _value_fingerprint(expected_ids) == _value_fingerprint(observed_ids)
+        and _value_fingerprint(expected_shards) == _value_fingerprint(observed_shards)
+        and matrix_ok
+        and hazards_ok
+        and flowguard_ok
+    )
+    return (
+        LeafBoundaryMatrixCell(
+            cell_id="cartesian_exhaustion:declared_inventory",
+            input_case="cartesian_declared_inventory",
+            state_case="declaration_only_not_runtime_execution",
+            expected_outputs=(
+                f"applicable_count:{len(declared_cells)}",
+                f"cell_id_fingerprint:{_value_fingerprint(expected_ids)}",
+                f"coverage_shard_fingerprint:{_value_fingerprint(expected_shards)}",
+                "matrix_ok:true",
+                "hazards_ok:true",
+                "flowguard_ok:true",
+            ),
+            observed_outputs=(
+                f"applicable_count:{int(matrix.get('applicable_count') or 0)}",
+                f"cell_id_fingerprint:{_value_fingerprint(observed_ids)}",
+                f"coverage_shard_fingerprint:{_value_fingerprint(observed_shards)}",
+                f"matrix_ok:{str(matrix_ok).lower()}",
+                f"hazards_ok:{str(hazards_ok).lower()}",
+                f"flowguard_ok:{str(flowguard_ok).lower()}",
+            ),
+            expected_next_states=("declared_not_executed",),
+            observed_next_states=("declared_not_executed" if structural_match else "declaration_mismatch",),
+            evidence_ids=("simulations/flowpilot_cartesian_control_plane_exhaustion_results.json",),
+            evidence_status="passed" if structural_match else "failed",
+            metadata={
+                "claim_boundary": "structural_declaration_only",
+                "observation_source": "flowpilot_cartesian_control_plane_exhaustion_results.matrix+hazards+flowguard",
+            },
+        ),
+    )
+
+
+def _cartesian_exhaustion_artifact_passes(report: dict[str, Any]) -> bool:
+    cell = _cartesian_exhaustion_cells(report)[0]
+    return (
+        bool(report.get("ok"))
+        and cell.expected_outputs == cell.observed_outputs
+        and cell.expected_next_states == cell.observed_next_states
+        and cell.evidence_status == "passed"
+    )
 
 
 def build_accounting_plan(inventory: dict[str, Any], alignment: dict[str, Any]) -> LayeredBoundaryProofPlan:
@@ -313,12 +415,10 @@ def build_accounting_plan(inventory: dict[str, Any], alignment: dict[str, Any]) 
         "contract-exhaustion",
         {
             "ok": contract_exhaustion.get("ok"),
-            "cell_count": (contract_exhaustion.get("required_cells") or {}).get("cell_count")
-            if isinstance(contract_exhaustion.get("required_cells"), dict)
-            else None,
-            "mutation_count": (contract_exhaustion.get("required_cells") or {}).get("mutation_count")
-            if isinstance(contract_exhaustion.get("required_cells"), dict)
-            else None,
+            "evidence_status": contract_exhaustion.get("evidence_status"),
+            "required_cell_count": contract_exhaustion.get("required_cell_count"),
+            "required_child_suite_owners": contract_exhaustion.get("required_child_suite_owners"),
+            "child_suites": contract_exhaustion.get("child_suites"),
         },
     )
     cartesian_exhaustion_evidence = _stable_evidence_id(
@@ -406,7 +506,7 @@ def build_accounting_plan(inventory: dict[str, Any], alignment: dict[str, Any]) 
             ChildProofContract(
                 "contract_exhaustion_mesh",
                 evidence_id=contract_exhaustion_evidence,
-                evidence_status="passed" if contract_exhaustion.get("ok") else "failed",
+                evidence_status="passed" if _contract_exhaustion_artifact_passes(contract_exhaustion) else "failed",
                 responsibilities=("consume_contract_exhaustion_mesh", "prove_contract_exhaustion_leaf_matrix"),
                 functions_owned=("run_flowpilot_contract_exhaustion_mesh_checks.run_checks",),
                 inputs_accepted=(
@@ -429,7 +529,7 @@ def build_accounting_plan(inventory: dict[str, Any], alignment: dict[str, Any]) 
             ChildProofContract(
                 "cartesian_control_plane_exhaustion",
                 evidence_id=cartesian_exhaustion_evidence,
-                evidence_status="passed" if cartesian_exhaustion.get("ok") else "failed",
+                evidence_status="passed" if _cartesian_exhaustion_artifact_passes(cartesian_exhaustion) else "failed",
                 responsibilities=(
                     "consume_cartesian_control_plane_exhaustion",
                     "prove_cartesian_control_plane_leaf_matrix",
@@ -447,8 +547,7 @@ def build_accounting_plan(inventory: dict[str, Any], alignment: dict[str, Any]) 
                     "full_product_count",
                     "required_cartesian_cells",
                     "skipped_cartesian_cells",
-                    "required_child_suite_owners",
-                    "test_mesh_owner_status",
+                    "structural_cell_and_shard_fingerprints",
                 ),
                 state_owned=("flowpilot_cartesian_control_plane_exhaustion_results",),
                 contracts_out=("cartesian_control_plane_exhaustion",),
@@ -461,7 +560,7 @@ def build_accounting_plan(inventory: dict[str, Any], alignment: dict[str, Any]) 
                 responsibilities=("prove_inventory_boundary_matrix",),
                 functions_owned=("flowpilot_layered_boundary_proof.build_accounting_plan",),
                 inputs_accepted=("gap_class", "alignment_check"),
-                outputs_emitted=("strategy", "presence", "consumable"),
+                outputs_emitted=("presence", "consumable"),
                 state_owned=("current_inventory", "current_alignment_result"),
                 contracts_out=("layered_boundary_accounting",),
                 is_leaf=True,
@@ -524,8 +623,7 @@ def build_accounting_plan(inventory: dict[str, Any], alignment: dict[str, Any]) 
                     "full_product_count",
                     "required_cartesian_cells",
                     "skipped_cartesian_cells",
-                    "required_child_suite_owners",
-                    "test_mesh_owner_status",
+                    "structural_cell_and_shard_fingerprints",
                 ),
                 expected_state_owned=("flowpilot_cartesian_control_plane_exhaustion_results",),
                 expected_contracts_out=("cartesian_control_plane_exhaustion",),
@@ -534,7 +632,7 @@ def build_accounting_plan(inventory: dict[str, Any], alignment: dict[str, Any]) 
                 "leaf_boundary_accounting",
                 consumed_evidence_id=leaf_evidence,
                 expected_inputs=("gap_class", "alignment_check"),
-                expected_outputs=("strategy", "presence", "consumable"),
+                expected_outputs=("presence", "consumable"),
                 expected_state_owned=("current_inventory", "current_alignment_result"),
                 expected_contracts_out=("layered_boundary_accounting",),
             ),
@@ -562,29 +660,24 @@ def build_accounting_plan(inventory: dict[str, Any], alignment: dict[str, Any]) 
             LeafBoundaryMatrix(
                 "contract_exhaustion_mesh",
                 matrix_id="flowpilot-contract-exhaustion-matrix",
-                expected_cell_ids=tuple(
-                    f"contract_exhaustion:{cell['cell_id']}"
-                    for cell in contract_exhaustion_model.REQUIRED_CONTRACT_EXHAUSTION_CELLS
-                ),
+                expected_cell_ids=_contract_exhaustion_expected_cell_ids(),
                 cells=_contract_exhaustion_cells(contract_exhaustion),
                 rationale=(
-                    "Every current packet/result/control-plane contract-exhaustion cell "
-                    "generated from the live contract tables must have an explicit owner, "
-                    "boundary, and current evidence path."
+                    "The declared contract-exhaustion inventory must match the current "
+                    "result count and owner fingerprint, and every owner must expose a "
+                    "current proof-backed child execution receipt."
                 ),
             ),
             LeafBoundaryMatrix(
                 "cartesian_control_plane_exhaustion",
                 matrix_id="flowpilot-cartesian-control-plane-matrix",
-                expected_cell_ids=tuple(
-                    f"cartesian_exhaustion:{cell['cell_id']}"
-                    for cell in cartesian_exhaustion_model.REQUIRED_CARTESIAN_CELLS
-                ),
+                expected_cell_ids=("cartesian_exhaustion:declared_inventory",),
                 cells=_cartesian_exhaustion_cells(cartesian_exhaustion),
                 rationale=(
-                    "Every applicable declared control-plane boundary, mutation, "
-                    "context, and consumer cell must have an explicit owner, "
-                    "repair oracle, and current evidence path."
+                    "The legacy control-plane Cartesian artifact is consumed only as a "
+                    "structural declaration: count and cell/shard fingerprints must match. "
+                    "Runtime execution confidence belongs to the proof-backed "
+                    "contract-exhaustion child suites above."
                 ),
             ),
         ),

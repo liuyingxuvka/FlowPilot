@@ -33,7 +33,7 @@ REQUIRED_LABELS = (
     "router_delivers_user_intake_to_pm",
     "pm_acknowledges_startup_intake",
     "router_opens_current_role_agent_on_demand",
-    "pm_material_scan_card_delivered_after_user_intake",
+    "pm_product_architecture_card_delivered_after_user_intake",
     "pm_activates_route_after_current_entry",
     "router_issues_next_action_after_current_entry",
     "next_action_completes_without_router_error",
@@ -74,7 +74,7 @@ class State:
     user_intake_delivered_to_pm: bool = False
     pm_startup_intake_ack_clean: bool = False
     current_role_agent_opened_on_demand: bool = False
-    material_scan_card_delivered: bool = False
+    product_architecture_card_delivered: bool = False
     active_route_exists: bool = False
     next_action_issued: bool = False
     route_work_completed: bool = False
@@ -222,12 +222,12 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
             ),
         )
 
-    if not state.material_scan_card_delivered:
+    if not state.product_architecture_card_delivered:
         return lifecycle + (
             Transition(
-                "pm_material_scan_card_delivered_after_user_intake",
+                "pm_product_architecture_card_delivered_after_user_intake",
                 "project_manager",
-                replace(state, holder="project_manager", material_scan_card_delivered=True),
+                replace(state, holder="project_manager", product_architecture_card_delivered=True),
             ),
         )
 
@@ -354,13 +354,13 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("user_intake was delivered before runtime mechanical audit and display status")
     if state.pm_startup_intake_ack_clean and not state.user_intake_delivered_to_pm:
         failures.append("PM startup intake was acknowledged before user_intake delivery")
-    if state.material_scan_card_delivered and not (
+    if state.product_architecture_card_delivered and not (
         state.user_intake_delivered_to_pm
         and state.pm_startup_intake_ack_clean
         and state.current_role_agent_opened_on_demand
     ):
-        failures.append("material scan started before current PM entry and on-demand background agent opening")
-    if state.active_route_exists and not state.material_scan_card_delivered:
+        failures.append("product architecture started before current PM entry and on-demand background agent opening")
+    if state.active_route_exists and not state.product_architecture_card_delivered:
         failures.append("route was activated before first PM work entry")
     if state.next_action_issued and not state.active_route_exists:
         failures.append("next action was issued before active route")
@@ -483,10 +483,10 @@ def hazard_states() -> dict[str, State]:
         "work_without_background_agent": replace(
             ready,
             current_role_agent_opened_on_demand=False,
-            material_scan_card_delivered=True,
+            product_architecture_card_delivered=True,
             work_started_without_background_agent=True,
         ),
-        "material_card_before_user_intake": replace(
+        "product_architecture_before_user_intake": replace(
             State(
                 status="running",
                 startup_intake_ui_completed=True,
@@ -497,13 +497,13 @@ def hazard_states() -> dict[str, State]:
                 startup_mechanical_audit_written=True,
                 startup_display_status_written=True,
             ),
-            material_scan_card_delivered=True,
+            product_architecture_card_delivered=True,
         ),
-        "route_activation_before_current_entry": replace(ready, material_scan_card_delivered=False, active_route_exists=True),
-        "next_action_before_active_route": replace(ready, material_scan_card_delivered=True, next_action_issued=True),
+        "route_activation_before_current_entry": replace(ready, product_architecture_card_delivered=False, active_route_exists=True),
+        "next_action_before_active_route": replace(ready, product_architecture_card_delivered=True, next_action_issued=True),
         "completion_before_pm_closure": replace(
             ready,
-            material_scan_card_delivered=True,
+            product_architecture_card_delivered=True,
             active_route_exists=True,
             next_action_issued=True,
             route_work_completed=True,

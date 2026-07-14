@@ -64,7 +64,6 @@ import flowpilot_router_events_repair_policy_classification as repair_policy_cla
 import flowpilot_router_events_repair_policy_snapshot as repair_policy_snapshot  # noqa: E402
 import flowpilot_router_events_repair_repair_decisions as repair_decisions  # noqa: E402
 import flowpilot_router_events_repair_transaction_finalize as repair_transaction_finalize  # noqa: E402
-import flowpilot_router_events_repair_transaction_material as repair_transaction_material  # noqa: E402
 import flowpilot_router_events_repair_transaction_outcomes as repair_transaction_outcomes  # noqa: E402
 import flowpilot_router_events_repair_transaction_paths as repair_transaction_paths  # noqa: E402
 import flowpilot_router_events_repair_transaction_resolution as repair_transaction_resolution  # noqa: E402
@@ -244,8 +243,8 @@ import flowpilot_router_work_packets_current_node as work_packets_current_node  
 import flowpilot_router_work_packets_current_node_paths as work_packets_current_node_paths  # noqa: E402
 import flowpilot_router_work_packets_current_node_relay as work_packets_current_node_relay  # noqa: E402
 import flowpilot_router_work_packets_current_node_validation as work_packets_current_node_validation  # noqa: E402
+import flowpilot_router_work_packets_material as work_packets_material  # noqa: E402
 import flowpilot_router_work_packets_next_actions as work_packets_next_actions  # noqa: E402
-import flowpilot_router_work_packets_material_next as work_packets_material_next  # noqa: E402
 import flowpilot_router_work_packets_pm_role_actions as work_packets_pm_role_actions  # noqa: E402
 import flowpilot_router_work_packets_pm_role_lifecycle as work_packets_pm_role_lifecycle  # noqa: E402
 import flowpilot_router_work_packets_pm_role_lifecycle_contracts as work_packets_pm_role_lifecycle_contracts  # noqa: E402
@@ -256,6 +255,7 @@ import flowpilot_router_work_packets_pm_role_writes_decisions as work_packets_pm
 import flowpilot_router_work_packets_pm_role_writes_request as work_packets_pm_role_writes_request  # noqa: E402
 import flowpilot_router_work_packets_pm_role_writes_results as work_packets_pm_role_writes_results  # noqa: E402
 import flowpilot_router_work_packets_research_next as work_packets_research_next  # noqa: E402
+import flowpilot_router_work_packets_result_reconciliation as work_packets_result_reconciliation  # noqa: E402
 import flowpilot_router_work_packets_role_agents as work_packets_role_agents  # noqa: E402
 from flowpilot_user_flow_markdown import build_chat_markdown  # noqa: E402
 from flowpilot_user_flow_mermaid import build_mermaid  # noqa: E402
@@ -398,10 +398,7 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
             work_packets_next_actions._open_current_role_agent_for_packet_plan,
             work_packets_role_agents._open_current_role_agent_for_packet_plan,
         )
-        self.assertIs(
-            work_packets_next_actions._next_material_packet_action,
-            work_packets_material_next._next_material_packet_action,
-        )
+        self.assertFalse(hasattr(work_packets_next_actions, "_next_material_packet_action"))
         self.assertIs(
             work_packets_next_actions._next_research_packet_action,
             work_packets_research_next._next_research_packet_action,
@@ -535,13 +532,17 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
                 status="done",
             )
 
-        self.assertIn(
+        self.assertNotIn(
             "relay_material_scan_packets",
             receipts_packet_folds.CONTROLLER_RECEIPT_EVIDENCE_FOLD_REGISTRY,
         )
-        self.assertIn(
+        self.assertNotIn(
             "relay_material_scan_results_to_pm",
             receipts_packet_folds._registered_controller_receipt_evidence_fold_actions(),
+        )
+        self.assertIn(
+            "relay_research_packet",
+            receipts_packet_folds.CONTROLLER_RECEIPT_EVIDENCE_FOLD_REGISTRY,
         )
         self.assertEqual(repair["reason"], "no_declared_missing_deliverables")
         self.assertIs(scheduler_waits._pending_wait_summary, scheduler_wait_targets._pending_wait_summary)
@@ -627,11 +628,11 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
             receipts_packet_folds._registered_controller_receipt_evidence_fold_actions,
             receipt_fold_registry._registered_controller_receipt_evidence_fold_actions,
         )
-        self.assertIn(
+        self.assertNotIn(
             "relay_material_scan_packets",
             receipt_fold_registry.CONTROLLER_RECEIPT_EVIDENCE_FOLD_REGISTRY,
         )
-        self.assertIn(
+        self.assertNotIn(
             "relay_material_scan_results_to_pm",
             receipt_fold_registry._registered_controller_receipt_evidence_fold_actions(),
         )
@@ -798,7 +799,7 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
     def test_receipt_lifecycle_policy_centralizes_packet_and_result_targets(self) -> None:
         self.assertIs(receipts_packet_folds._receipt_lifecycle_policy, receipt_fold_lifecycle._receipt_lifecycle_policy)
         packet_policy = receipt_fold_lifecycle._receipt_lifecycle_policy(
-            receipt_fold_registry.CONTROLLER_RECEIPT_EVIDENCE_FOLD_REGISTRY["relay_material_scan_packets"],
+            receipt_fold_registry.CONTROLLER_RECEIPT_EVIDENCE_FOLD_REGISTRY["relay_research_packet"],
         )
         self.assertEqual(
             packet_policy,
@@ -815,7 +816,7 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
 
         reviewer_result_policy = receipt_fold_lifecycle._receipt_lifecycle_policy(
             receipt_fold_registry.CONTROLLER_RECEIPT_EVIDENCE_FOLD_REGISTRY[
-                "relay_material_scan_results_to_reviewer"
+                "relay_research_result_to_reviewer"
             ],
         )
         self.assertEqual(reviewer_result_policy["record_status"], "result_relayed_to_reviewer")
@@ -884,7 +885,7 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
                 fake_router,
                 Path(".flowpilot/runs/run-test"),
                 receipt_fold_registry.CONTROLLER_RECEIPT_EVIDENCE_FOLD_REGISTRY[
-                    "relay_material_scan_packets"
+                    "relay_research_packet"
                 ],
                 [{"packet_id": "packet-1"}],
             )
@@ -1110,8 +1111,8 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
 
         self.assertIn(("flowpilot_router_cli", True, False), action_exports)
         self.assertIs(
-            action_packets._apply_relay_material_scan_packets,
-            action_packets_material._apply_relay_material_scan_packets,
+            action_packets._apply_relay_research_packet,
+            action_packets_material._apply_relay_research_packet,
         )
         self.assertIs(
             action_packets._apply_relay_pm_role_work_request_packet,
@@ -1191,6 +1192,13 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
         self.assertTrue(any(key[0] == "flowpilot_router_pm_role_followup" for key in terminal_exports))
         self.assertEqual(proxy.__name__, "parse_args")
         self.assertEqual(proxy.__module__, router.__name__)
+        for retired_export in (
+            "_commit_material_scan_repair_generation",
+            "_repair_packet_specs_from_decision",
+            "_try_reconcile_material_scan_body_delivery",
+            "_try_reconcile_material_scan_results",
+        ):
+            self.assertNotIn(retired_export, manifest.PUBLIC_EXPORT_NAMES)
 
     def test_lifecycle_startup_system_card_external_contracts(self) -> None:
         with tempfile.TemporaryDirectory(prefix="flowpilot-lifecycle-startup-contracts-") as tmp:
@@ -1255,15 +1263,6 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
                 mode="stopped_by_user",
                 event="user_requests_run_stop",
                 cleared_at=now,
-            )
-            material_quarantine = lifecycle_request_terminal_quarantine.quarantine_material_progress_for_terminal_lifecycle(
-                router,
-                project_root,
-                run_root,
-                run_state,
-                mode="stopped_by_user",
-                event="user_requests_run_stop",
-                reconciled_at=now,
             )
             duplicate_quarantine = lifecycle_request_terminal_quarantine.quarantine_duplicate_role_events_for_terminal_lifecycle(
                 run_state,
@@ -1338,7 +1337,6 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
         self.assertEqual(dead_end_state["status"], "protocol_dead_end")
         self.assertIsNone(exception_blocker)
         self.assertIsNone(repair_clear)
-        self.assertIsNone(material_quarantine)
         self.assertIsNone(duplicate_quarantine)
         self.assertIsNone(packet_quarantine)
         self.assertEqual(lifecycle_support._lifecycle_record_path(run_root).name, "run_lifecycle.json")
@@ -1477,17 +1475,30 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
                 {"run_id": "run-test", "flags": {}},
             )
             closure_closed = terminal_closure._terminal_closure_suite_is_closed(router, run_root)
-            material_reconciled = work_packets_next_actions._try_reconcile_material_scan_body_delivery(
-                router,
-                project_root,
-                run_root,
-                {"run_id": "run-test", "flags": {}},
-            )
             pm_role_reconciled = work_packets_pm_role_actions._try_reconcile_pm_role_work_results(
                 router,
                 project_root,
                 run_root,
                 {"run_id": "run-test", "flags": {}},
+            )
+            with self.assertRaisesRegex(RouterError, "decision_question"):
+                work_packets_material._write_research_package(
+                    router,
+                    project_root,
+                    run_root,
+                    {"run_id": "run-test", "flags": {}},
+                    {},
+                )
+            work_packets_next_actions._bind_router(router)
+            reconciled_research_payload = (
+                work_packets_result_reconciliation._reconciled_packet_family_result_payload(
+                    "research",
+                    {
+                        "batch_id": "research-batch-001",
+                        "packets": [{"packet_id": "research-packet-001", "to_role": "worker"}],
+                    },
+                    {"results_returned": 1},
+                )
             )
 
             with self.assertRaisesRegex(RouterError, "router-owned proof"):
@@ -1542,8 +1553,11 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
         self.assertFalse(startup_closure_status["role_memory"]["present"])
         self.assertFalse(startup_closure_status["continuation_quarantine"]["present"])
         self.assertFalse(closure_closed)
-        self.assertFalse(material_reconciled)
         self.assertFalse(pm_role_reconciled)
+        self.assertIs(work_packets_next_actions._BOUND_ROUTER, router)
+        self.assertEqual(reconciled_research_payload["packet_ids"], ["research-packet-001"])
+        self.assertEqual(reconciled_research_payload["completed_by_roles"], ["worker"])
+        self.assertTrue(reconciled_research_payload["reconciled_from_result_envelopes"])
         self.assertIs(card_returns._pending_return_records, card_returns_records._pending_return_records)
         self.assertIs(
             card_returns._current_node_pre_review_reconciliation_blockers,

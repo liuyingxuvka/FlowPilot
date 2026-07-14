@@ -20,24 +20,17 @@
       "status": "planned"
     },
     {
-      "evidence_path": ".flowpilot/runs/run-001/material_intake_packet.json",
-      "id": "material_intake_handoff",
-      "required": "before PM product-function architecture, contract freeze, route generation, or capability routing",
+      "evidence_path": ".flowpilot/runs/run-001/local_skill_inventory.json",
+      "id": "local_capability_inventory",
+      "required": "as a shallow startup inventory before PM capability and child-skill selection",
       "source_skill": "flowpilot",
       "evidence_required": [
-        "material_inventory",
-        "source_summaries",
-        "source_quality_classification",
         "local_skill_inventory_path",
+        "skill_names_paths_and_header_descriptions",
         "local_skills_marked_candidate_only",
         "host_capability_inventory",
-        "coverage_map",
-        "unread_or_deferred_materials",
-        "human_like_reviewer_sufficiency_approval",
-        "pm_material_understanding_path",
-        "source_claim_matrix",
-        "material_complexity_classification",
-        "discovery_cleanup_modeling_validation_decision"
+        "raw_availability_not_used_as_route_authority",
+        "pm_selection_required_before_deep_read_or_use"
       ],
       "status": "planned"
     },

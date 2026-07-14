@@ -435,7 +435,7 @@ class FlowPilotCartesianControlPlaneExhaustionTests(unittest.TestCase):
             ROOT / "tests" / "test_flowpilot_core_runtime.py",
             ROOT / "tests" / "test_flowpilot_high_standard_control_flow.py",
             ROOT / "tests" / "router_runtime" / "startup_bootstrap.py",
-            ROOT / "tests" / "router_runtime" / "material_modeling.py",
+            ROOT / "tests" / "test_flowpilot_control_plane_contracts.py",
             ROOT / "tests" / "router_runtime" / "route_mutation_parent_backward.py",
             ROOT / "tests" / "router_runtime" / "route_mutation_model_miss_triage.py",
             ROOT / "tests" / "router_runtime" / "resume.py",
@@ -445,7 +445,7 @@ class FlowPilotCartesianControlPlaneExhaustionTests(unittest.TestCase):
         corpus = "\n".join(path.read_text(encoding="utf-8") for path in corpus_paths)
         canaries = {
             "body_hash_mismatch": "test_startup_intake_rejects_body_hash_mismatch",
-            "material_body_hash_mismatch": "test_material_scan_direct_relay_blocks_body_hash_mismatch",
+            "package_disposition_body_hash_conflict": "test_pm_package_disposition_identity_conflicts_on_body_hash",
             "missing_evidence_policy": "test_flowguard_packet_rejects_missing_evidence_output_policy",
             "fallback_rejected": "test_fallback_route_action_payload_is_rejected_without_translation",
             "legacy_alias_rejected": "test_unsupported_route_action_alias_is_rejected_without_translation",

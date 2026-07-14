@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 from typing import Any, Mapping
@@ -37,14 +38,6 @@ def _quote_cli(value: str | Path) -> str:
     return "'" + text.replace("'", "''") + "'"
 
 
-def _json_object_from_body(body: str) -> dict[str, Any]:
-    try:
-        parsed = json.loads(body)
-    except json.JSONDecodeError:
-        return {}
-    return dict(parsed) if isinstance(parsed, Mapping) else {}
-
-
 def _mapping_or_empty(value: Any) -> dict[str, Any]:
     return dict(value) if isinstance(value, Mapping) else {}
 
@@ -57,34 +50,51 @@ def _string_list(value: Any) -> list[str]:
     return []
 
 
-def _mapping_or_none(value: Any) -> dict[str, Any] | None:
-    return dict(value) if isinstance(value, Mapping) else None
-
-
-def _submission_checklist_from_packet_body(
-    body: str,
+def _submission_checklist_from_current_handoff_contract(
+    current_handoff_contract: Mapping[str, Any],
     authorized_input_materials: list[dict[str, Any]],
-    current_handoff_contract: Mapping[str, Any] | None = None,
+    *,
+    run_id: str,
+    packet_id: str,
+    lease_id: str,
 ) -> dict[str, Any]:
-    packet_body = _json_object_from_body(body)
     handoff_contract = _mapping_or_empty(current_handoff_contract)
-    if not handoff_contract:
-        handoff_contract = _mapping_or_empty(packet_body.get("current_handoff_contract"))
+    if handoff_contract.get("schema_version") != "black_box_flowpilot.current_handoff_contract.v2":
+        raise runtime.BlackBoxRuntimeError(
+            "open_packet requires current_handoff_contract.v2 as the single submission authority"
+        )
+    if str(handoff_contract.get("packet_id") or "") != packet_id:
+        raise runtime.BlackBoxRuntimeError(
+            "current_handoff_contract packet_id does not match the opened packet"
+        )
     report_contract = _mapping_or_empty(handoff_contract.get("required_report_contract"))
+    required_contract_keys = {
+        "required_result_body_fields",
+        "required_child_fields",
+        "explicit_array_fields",
+        "non_empty_array_fields",
+        "allowed_value_options",
+        "field_type_requirements",
+        "forbidden_fields",
+        "forbidden_aliases",
+        "minimal_valid_shape",
+        "branch_valid_shapes",
+    }
+    missing_contract_keys = sorted(required_contract_keys - set(report_contract))
+    if missing_contract_keys:
+        raise runtime.BlackBoxRuntimeError(
+            "current_handoff_contract.required_report_contract is incomplete: "
+            + ", ".join(missing_contract_keys)
+        )
     input_material_manifest = _mapping_or_empty(handoff_contract.get("input_material_manifest"))
     required_materials = [
         material
         for material in authorized_input_materials
         if isinstance(material, Mapping) and material.get("required_before_submit") is True
     ]
-    required_result_body_fields = _string_list(
-        packet_body.get("required_result_body_fields") or report_contract.get("required_result_body_fields")
-    )
-    conditional_required_fields = _mapping_or_empty(packet_body.get("conditional_required_fields"))
-    result_skeleton = _mapping_or_none(packet_body.get("minimal_valid_shape")) or _mapping_or_empty(
-        report_contract.get("minimal_valid_shape")
-    )
-    branch_valid_shapes = _mapping_or_empty(packet_body.get("branch_valid_shapes") or report_contract.get("branch_valid_shapes"))
+    required_result_body_fields = _string_list(report_contract.get("required_result_body_fields"))
+    result_skeleton = _mapping_or_empty(report_contract.get("minimal_valid_shape"))
+    branch_valid_shapes = _mapping_or_empty(report_contract.get("branch_valid_shapes"))
     required_read_ids = _string_list(input_material_manifest.get("required_authorized_reads_before_submit")) or [
         str(material.get("result_id") or "") for material in required_materials if str(material.get("result_id") or "")
     ]
@@ -97,19 +107,50 @@ def _submission_checklist_from_packet_body(
     )
     if not isinstance(all_required_reads_must_be_opened, bool):
         all_required_reads_must_be_opened = bool(required_read_ids)
+    route_version = handoff_contract.get("route_version")
+    contract_family_id = str(handoff_contract.get("contract_family_id") or "")
+    source_generation = handoff_contract.get("source_generation")
+    if route_version in (None, "") or not contract_family_id or not isinstance(source_generation, int):
+        raise runtime.BlackBoxRuntimeError(
+            "current_handoff_contract lacks route_version, contract_family_id, or source_generation"
+        )
+    fingerprint_payload = {
+        "run_id": run_id,
+        "packet_id": packet_id,
+        "lease_id": lease_id,
+        "route_version": route_version,
+        "source_generation": source_generation,
+        "contract_family_id": contract_family_id,
+        "required_report_contract": report_contract,
+        "review_window": _mapping_or_empty(handoff_contract.get("review_window")),
+    }
+    contract_fingerprint = hashlib.sha256(
+        json.dumps(
+            fingerprint_payload,
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("utf-8")
+    ).hexdigest()
     return {
-        "schema_version": "black_box_flowpilot.submission_checklist.v1",
-        "source": "current_handoff_contract_and_sealed_packet_body",
-        "contract_family_id": str(handoff_contract.get("contract_family_id") or ""),
-        "current_packet_body_inspected": bool(packet_body),
-        "current_handoff_contract_inspected": bool(handoff_contract),
+        "schema_version": "black_box_flowpilot.submission_checklist.v2",
+        "source": "current_handoff_contract",
+        "run_id": run_id,
+        "packet_id": packet_id,
+        "lease_id": lease_id,
+        "route_version": route_version,
+        "source_generation": source_generation,
+        "contract_family_id": contract_family_id,
+        "current_packet_body_inspected": False,
+        "current_handoff_contract_inspected": True,
         "required_result_body_fields": required_result_body_fields,
         "required_child_fields": _string_list(report_contract.get("required_child_fields")),
         "explicit_array_fields": _string_list(report_contract.get("explicit_array_fields")),
         "non_empty_array_fields": _string_list(report_contract.get("non_empty_array_fields")),
-        "conditional_required_fields": conditional_required_fields,
         "allowed_value_options": _mapping_or_empty(report_contract.get("allowed_value_options")),
         "field_type_requirements": _mapping_or_empty(report_contract.get("field_type_requirements")),
+        "forbidden_fields": _string_list(report_contract.get("forbidden_fields")),
+        "forbidden_aliases": _mapping_or_empty(report_contract.get("forbidden_aliases")),
         "result_skeleton": result_skeleton,
         "has_result_skeleton": bool(result_skeleton),
         "branch_valid_shapes": branch_valid_shapes,
@@ -122,6 +163,7 @@ def _submission_checklist_from_packet_body(
         "required_authorized_result_read_ids": required_read_ids,
         "required_authorized_read_count": required_read_count,
         "all_required_authorized_result_bodies_must_be_opened_before_submit": all_required_reads_must_be_opened,
+        "contract_fingerprint": contract_fingerprint,
         "pre_submit_checks": [
             "Read every required authorized input material delivered by open-packet.",
             "Open every required authorized result body before submit when the checklist requires it.",
@@ -129,7 +171,6 @@ def _submission_checklist_from_packet_body(
             "Fill every required_child_fields path for this packet.",
             "Keep explicit_array_fields present as arrays, even when empty.",
             "Keep non_empty_array_fields present as non-empty arrays.",
-            "Apply the conditional_required_fields branch for the chosen decision.",
             "Use only allowed_value_options for finite fields and match field_type_requirements exactly.",
             "Apply branch_valid_shapes for the chosen branch when present.",
             "Use result_skeleton as the current mechanical example when present.",
@@ -293,10 +334,12 @@ def open_packet(root: Path, *, lease_id: str, packet_id: str) -> dict[str, Any]:
     packet = ledger["packets"][packet_id]
     lease = ledger["leases"][lease_id]
     envelope = packet["envelope"]
-    submission_checklist = _submission_checklist_from_packet_body(
-        body,
-        authorized_input_materials,
+    submission_checklist = _submission_checklist_from_current_handoff_contract(
         envelope.get("current_handoff_contract", {}),
+        authorized_input_materials,
+        run_id=shell.run_id,
+        packet_id=packet_id,
+        lease_id=lease_id,
     )
     run_shell.save_run_ledger(shell, ledger, guard_trigger="open_packet")
     return {

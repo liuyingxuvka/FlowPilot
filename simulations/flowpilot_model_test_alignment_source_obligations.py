@@ -41,6 +41,17 @@ def source_obligations() -> tuple[ModelObligation, ...]:
             required_test_kinds=(FAILURE,),
         ),
         _source_obligation(
+            "startup.runtime_writer_settlement",
+            obligation_type="invariant",
+            description=(
+                "Foreground startup begins its bounded writer-settlement budget at first contention, "
+                "treats transient daemon-readiness sharing violations as not-ready, and still fails "
+                "closed for a persistent current writer."
+            ),
+            required_test_kinds=(HAPPY, NEGATIVE, EDGE),
+            allow_shared_evidence=True,
+        ),
+        _source_obligation(
             "new_entrypoint.startup_ui_to_new_ledger",
             obligation_type="contract",
             description="Source-audited fresh FlowPilot entrypoint boundary from native startup UI output into the new current-run ledger.",
@@ -94,6 +105,16 @@ def source_obligations() -> tuple[ModelObligation, ...]:
             obligation_type="install_portability_contract",
             description="Source-audited installed FlowPilot start boundary records a run-local runtime self-check receipt and proves target projects are not required to contain FlowPilot development-repository simulation scripts.",
             required_test_kinds=(HAPPY, NEGATIVE),
+            allow_shared_evidence=True,
+        ),
+        _source_obligation(
+            "new_entrypoint.blackbox_fake_project_result_portability",
+            obligation_type="evidence_projection",
+            description=(
+                "Tracked fake-project rehearsal results project repository and temporary work roots "
+                "to portable identifiers without weakening the black-box scenario evidence."
+            ),
+            required_test_kinds=(EDGE,),
             allow_shared_evidence=True,
         ),
         _source_obligation(
@@ -207,8 +228,9 @@ def source_obligations() -> tuple[ModelObligation, ...]:
         _source_obligation(
             "material_artifact_map.index_only_boundary",
             obligation_type="contract",
-            description="Source-audited material artifact map boundary indexes existing material evidence without reading sealed packet or result body text or changing authority.",
-            required_test_kinds=(NEGATIVE,),
+            description="Source-audited optional material artifact map stays absent without blocking when not explicitly created, and indexes existing ordinary evidence without reading sealed packet or result body text or changing authority when present.",
+            required_test_kinds=(HAPPY, NEGATIVE, EDGE, REPLAY),
+            allow_shared_evidence=True,
         ),
         _source_obligation(
             "branch_pruning.result_case_classifier",

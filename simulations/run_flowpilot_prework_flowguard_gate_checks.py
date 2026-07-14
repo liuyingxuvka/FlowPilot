@@ -64,7 +64,7 @@ HAZARD_EXPECTED_FAILURES = {
     "route_commit_before_reviewer": "route mutation committed before Reviewer pass",
     "worker_before_node_plan_reviewer": "worker packet issued before ordinary node plan Reviewer pass",
     "worker_context_missing": "worker packet missing PM node context package",
-    "worker_replans_broad_leaf": "Worker replanned a broad leaf instead of PM route deepening",
+    "worker_changes_pm_route_boundary": "Worker changed PM-owned route scope, order, dependencies, or acceptance boundary",
     "node_plan_reviewer_demands_worker_artifacts": "Node plan Reviewer required Worker artifacts before Worker dispatch",
     "node_plan_reviewer_missing_producer_consumer_order": "node plan Reviewer passed without checking future-node dependencies",
     "node_plan_reviewer_accepts_future_node_dependency": "node plan Reviewer passed a plan that requires future-node output",

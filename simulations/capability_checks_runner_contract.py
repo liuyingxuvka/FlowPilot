@@ -42,30 +42,9 @@ REQUIRED_LABELS = (
     "generated_resource_ledger_initialized",
     "activity_stream_initialized",
     "self_interrogation_pm_ratified",
-    "material_sources_scanned",
-    "material_source_summaries_written",
-    "material_source_quality_classified",
-    "local_skill_inventory_written",
-    "local_skill_inventory_candidate_classified",
-    "material_intake_packet_written",
-    "material_reviewer_direct_source_probe_done",
-    "material_reviewer_sufficiency_checked",
-    "material_reviewer_sufficiency_approved",
-    "pm_material_understanding_memo_written",
-    "pm_material_complexity_classified",
-    "pm_material_discovery_decision_recorded",
-    "pm_material_research_decision_not_required",
-    "pm_material_research_decision_requires_package",
-    "pm_research_package_written",
-    "research_tool_capability_decision_recorded",
-    "research_worker_report_returned",
-    "research_reviewer_direct_source_check_done",
-    "research_reviewer_rework_required",
-    "research_worker_rework_completed",
-    "research_reviewer_recheck_done",
-    "research_reviewer_sufficiency_passed",
-    "pm_research_result_absorbed_or_route_mutated",
-    "material_research_gap_closed",
+    "ordinary_resource_discovery_child_registered",
+    "ordinary_resource_discovery_child_passed",
+    "ordinary_resource_discovery_evidence_current",
     "product_function_architecture_pm_synthesized",
     "product_function_high_standard_posture_written",
     "product_function_target_and_failure_bar_written",
@@ -336,27 +315,9 @@ def _state_id(state: model.State) -> str:
         f"{state.self_interrogation_findings_dispositioned}|"
         f"quality_seed={state.quality_candidate_pool_seeded},"
         f"{state.validation_strategy_seeded}|"
-        f"material={state.material_sources_scanned},"
-        f"{state.material_source_summaries_written},"
-        f"{state.material_source_quality_classified},"
-        f"{state.material_intake_packet_written},"
-        f"{state.material_reviewer_direct_source_probe_done},"
-        f"{state.material_reviewer_sufficiency_checked},"
-        f"{state.material_reviewer_sufficiency_approved},"
-        f"{state.pm_material_understanding_memo_written},"
-        f"{state.pm_material_complexity_classified},"
-        f"{state.pm_material_discovery_decision_recorded},"
-        f"{state.pm_material_research_decision_recorded},"
-        f"{state.material_research_need},"
-        f"{state.pm_research_package_written},"
-        f"{state.research_tool_capability_decision_recorded},"
-        f"{state.research_worker_report_returned},"
-        f"{state.research_reviewer_direct_source_check_done},"
-        f"{state.research_reviewer_rework_required},"
-        f"{state.research_worker_rework_completed},"
-        f"{state.research_reviewer_recheck_done},"
-        f"{state.research_reviewer_sufficiency_passed},"
-        f"{state.pm_research_result_absorbed_or_route_mutated}|"
+        f"ordinary_resource_discovery={state.ordinary_resource_discovery_child_registered},"
+        f"{state.ordinary_resource_discovery_child_passed},"
+        f"{state.ordinary_resource_discovery_evidence_current}|"
         f"product_function_architecture="
         f"{state.product_function_architecture_pm_synthesized},"
         f"{state.product_function_high_standard_posture_written},"

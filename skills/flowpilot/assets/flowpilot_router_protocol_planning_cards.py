@@ -67,34 +67,6 @@ PLANNING_SYSTEM_CARD_SEQUENCE: tuple[dict[str, Any], ...] = (
         "to_role": "project_manager",
     },
     {
-        "flag": "pm_material_scan_card_delivered",
-        "label": "pm_material_scan_card_delivered",
-        "card_id": "pm.material_scan",
-        "requires_flag": "user_intake_delivered_to_pm",
-        "to_role": "project_manager",
-    },
-    {
-        "flag": "reviewer_material_sufficiency_card_delivered",
-        "label": "reviewer_material_sufficiency_card_delivered",
-        "card_id": "reviewer.material_sufficiency",
-        "requires_flag": "material_scan_results_absorbed_by_pm",
-        "to_role": "human_like_reviewer",
-    },
-    {
-        "flag": "pm_reviewer_report_event_delivered",
-        "label": "pm_reviewer_report_event_card_delivered",
-        "card_id": "pm.event.reviewer_report",
-        "requires_any_flag": ["material_review_sufficient", "material_review_insufficient"],
-        "to_role": "project_manager",
-    },
-    {
-        "flag": "pm_material_absorb_or_research_card_delivered",
-        "label": "pm_material_absorb_or_research_card_delivered",
-        "card_id": "pm.material_absorb_or_research",
-        "requires_flag": "pm_reviewer_report_event_delivered",
-        "to_role": "project_manager",
-    },
-    {
         "flag": "pm_research_package_card_delivered",
         "label": "pm_research_package_phase_card_delivered",
         "card_id": "pm.research_package",
@@ -123,13 +95,6 @@ PLANNING_SYSTEM_CARD_SEQUENCE: tuple[dict[str, Any], ...] = (
         "to_role": "project_manager",
     },
     {
-        "flag": "pm_material_understanding_card_delivered",
-        "label": "pm_material_understanding_phase_card_delivered",
-        "card_id": "pm.material_understanding",
-        "requires_flag": "material_accepted_by_pm",
-        "to_role": "project_manager",
-    },
-    {
         "flag": "reviewer_worker_result_card_delivered",
         "label": "reviewer_worker_result_review_card_delivered",
         "card_id": "reviewer.worker_result_review",
@@ -140,7 +105,7 @@ PLANNING_SYSTEM_CARD_SEQUENCE: tuple[dict[str, Any], ...] = (
         "flag": "pm_product_architecture_card_delivered",
         "label": "pm_product_architecture_phase_card_delivered",
         "card_id": "pm.product_architecture",
-        "requires_flag": "material_understanding_written_by_pm",
+        "requires_flag": "user_intake_delivered_to_pm",
         "to_role": "project_manager",
     },
     {

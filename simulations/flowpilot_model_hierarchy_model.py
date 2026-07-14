@@ -21,7 +21,7 @@ PARENT_MODELS = ("meta", "capability")
 
 PARTITION_ITEMS = (
     "startup",
-    "material_intake",
+    "ordinary_resource_discovery",
     "product_architecture",
     "runtime_roles_and_liveness",
     "router_daemon_resume",

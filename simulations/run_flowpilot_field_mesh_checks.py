@@ -14,10 +14,14 @@ from flowguard.explorer import Explorer
 
 import flowpilot_field_contract_model as parent_contracts
 import flowpilot_field_mesh_model as model
+import flowpilot_skillguard_contract_model as skillguard_contracts
 
 
 ROOT = Path(__file__).resolve().parents[1]
 RESULTS_PATH = ROOT / "simulations" / "flowpilot_field_mesh_results.json"
+SKILLGUARD_CONTRACT_SOURCE_PATH = (
+    ROOT / "skills" / "flowpilot" / ".skillguard" / "contract-source.json"
+)
 
 SOURCE_ROOTS = (
     ROOT / "skills" / "flowpilot" / "assets",
@@ -373,7 +377,121 @@ def build_inventory() -> dict[str, Any]:
     }
 
 
-def state_from_inventory(inventory: dict[str, Any]) -> model.State:
+def _maintenance_authority_report(
+    source: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    if source is None:
+        source = json.loads(SKILLGUARD_CONTRACT_SOURCE_PATH.read_text(encoding="utf-8"))
+
+    exported_route_ids = [
+        str(row.get("route_id") or "")
+        for row in skillguard_contracts.export_contract_model().get("routes", [])
+        if isinstance(row, dict)
+    ]
+    declared_check_ids = [
+        str(row.get("check_id") or "")
+        for row in source.get("checks", [])
+        if isinstance(row, dict)
+    ]
+    specifications = {
+        str(row["field"]): row
+        for row in model.MAINTENANCE_AUTHORITY_FIELD_CONTRACTS
+    }
+    rows: list[dict[str, Any]] = []
+    findings: list[str] = []
+
+    def inspect_binding_family(
+        *,
+        field: str,
+        source_key: str,
+        identity_key: str,
+        expected_ids: list[str],
+        required_key: str,
+        evidence_path_key: str,
+    ) -> None:
+        raw_rows = source.get(source_key)
+        bindings = [row for row in raw_rows if isinstance(row, dict)] if isinstance(raw_rows, list) else []
+        actual_ids = [str(row.get(identity_key) or "") for row in bindings]
+        binding_ids = [str(row.get("binding_id") or "") for row in bindings]
+        exact_set = sorted(actual_ids) == sorted(expected_ids)
+        unique_identities = len(actual_ids) == len(set(actual_ids))
+        unique_binding_ids = len(binding_ids) == len(set(binding_ids)) and all(binding_ids)
+        all_required = bool(bindings) and all(row.get(required_key) is True for row in bindings)
+        sources_current = bool(bindings) and all(
+            (ROOT / str(row.get(evidence_path_key) or "")).is_file()
+            for row in bindings
+        )
+        specification = specifications[field]
+        metadata_current = (
+            specification.get("owner") == "flowpilot_skillguard_contract_source"
+            and specification.get("writers") == ("flowpilot_contract_maintainer",)
+            and specification.get("lifecycle") == "current"
+            and specification.get("missing_disposition") == "global_skill_selection_blocked"
+            and specification.get("default_allowed") is False
+            and specification.get("fallback_allowed") is False
+            and bool(specification.get("readers"))
+            and bool(specification.get("projections"))
+        )
+        current = (
+            isinstance(raw_rows, list)
+            and bool(bindings)
+            and len(bindings) == len(raw_rows)
+            and exact_set
+            and unique_identities
+            and unique_binding_ids
+            and all_required
+            and sources_current
+            and metadata_current
+        )
+        if not current:
+            findings.append(f"{source_key}_stale_or_incomplete")
+        rows.append(
+            {
+                "field": field,
+                "source_key": source_key,
+                "expected_ids": sorted(expected_ids),
+                "actual_ids": sorted(actual_ids),
+                "exact_set": exact_set,
+                "unique_identities": unique_identities,
+                "unique_binding_ids": unique_binding_ids,
+                "all_required": all_required,
+                "sources_current": sources_current,
+                "metadata_current": metadata_current,
+                "current": current,
+            }
+        )
+
+    inspect_binding_family(
+        field="skillguard.contract_source.native_route_bindings[]",
+        source_key="native_route_bindings",
+        identity_key="native_route_id",
+        expected_ids=exported_route_ids,
+        required_key="required_before_closure",
+        evidence_path_key="source",
+    )
+    inspect_binding_family(
+        field="skillguard.contract_source.native_check_bindings[]",
+        source_key="native_check_bindings",
+        identity_key="native_check_id",
+        expected_ids=declared_check_ids,
+        required_key="required",
+        evidence_path_key="evidence_source",
+    )
+    return {
+        "ok": not findings and len(rows) == model.REQUIRED_MAINTENANCE_AUTHORITY_FIELD_CONTRACT_COUNT,
+        "contract_count": len(rows),
+        "current_contract_count": sum(1 for row in rows if row["current"]),
+        "findings": findings,
+        "rows": rows,
+    }
+
+
+def state_from_inventory(
+    inventory: dict[str, Any],
+    maintenance_authority: dict[str, Any] | None = None,
+) -> model.State:
+    if maintenance_authority is None:
+        maintenance_authority = _maintenance_authority_report()
     records = inventory["records"]
     family_counts = inventory["family_counts"]
     importance_counts = inventory["importance_counts"]
@@ -394,6 +512,11 @@ def state_from_inventory(inventory: dict[str, Any]) -> model.State:
         production_legacy_reference_count=len(inventory["production_legacy_references"]),
         prompt_legacy_reference_count=len(inventory["prompt_legacy_references"]),
         stale_fixed_role_gate_reference_count=len(inventory["stale_fixed_role_gate_references"]),
+        maintenance_authority_contract_count=int(maintenance_authority["contract_count"]),
+        maintenance_authority_contracts_current=int(
+            maintenance_authority["current_contract_count"]
+        ),
+        maintenance_authority_finding_count=len(maintenance_authority["findings"]),
         full_inventory_written=True,
         child_partition_summary_written=bool(family_counts),
     )
@@ -423,7 +546,8 @@ def _flowguard_report(state: model.State) -> dict[str, Any]:
 
 def run_checks() -> dict[str, Any]:
     inventory = build_inventory()
-    state = state_from_inventory(inventory)
+    maintenance_authority = _maintenance_authority_report()
+    state = state_from_inventory(inventory, maintenance_authority)
     transitions = list(model.next_safe_states(state))
     failures = model.hard_check_failures(transitions[0].state if transitions else state)
     flowguard = _flowguard_report(state)
@@ -438,6 +562,8 @@ def run_checks() -> dict[str, Any]:
         "field_child_models": model.FIELD_CHILD_MODELS,
         "importance_tiers": model.IMPORTANCE_TIERS,
         "field_lifecycle_states": model.FIELD_LIFECYCLE_STATES,
+        "maintenance_authority_field_contracts": model.MAINTENANCE_AUTHORITY_FIELD_CONTRACTS,
+        "maintenance_authority_report": maintenance_authority,
         "family_counts": inventory["family_counts"],
         "importance_counts": inventory["importance_counts"],
         "critical_bindings": inventory["critical_bindings"],

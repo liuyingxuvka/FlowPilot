@@ -26,7 +26,8 @@ if str(ASSETS_PATH) not in sys.path:
     sys.path.insert(0, str(ASSETS_PATH))
 
 from flowpilot_core_runtime import formal_artifact_contracts, packet_result_contracts, review_window_contracts  # noqa: E402
-from flowpilot_fake_ai_runtime_replay_model import runtime_replay_cells  # noqa: E402
+from flowpilot_contract_driven_fake_ai import COMPLETE_WORKSTREAM_PROFILE_IDS, RESOURCE_DISCOVERY_PROFILE_IDS  # noqa: E402
+from flowpilot_fake_ai_runtime_replay_model import runtime_replay_declaration_summary  # noqa: E402
 from flowpilot_integration_cartesian_coverage_model import iter_required_cells as integration_cartesian_cells  # noqa: E402
 from flowpilot_real_issue_backfeed import backfeed_cells  # noqa: E402
 
@@ -34,6 +35,38 @@ from flowpilot_real_issue_backfeed import backfeed_cells  # noqa: E402
 MODEL_ID = "flowpilot_contract_exhaustion_mesh"
 MAX_SEQUENCE_LENGTH = 2
 FORMAL_ARTIFACT_MUTATION_KIND_SET = set(formal_artifact_contracts.FORMAL_ARTIFACT_FAULT_MODES)
+
+COMPLETE_WORKSTREAM_CARTESIAN_AXES = {
+    "role": ("pm", "worker", "research_worker", "human_like_reviewer", "flowguard_operator"),
+    "plan_state": ("complete", "missing", "vague", "required_step_incomplete", "completion_contradiction"),
+    "evidence_state": ("current", "mismatch", "stale"),
+    "delegation_state": ("none", "integrated", "unintegrated"),
+    "role_local_flowguard_state": ("not_used", "advisory", "self_approved"),
+    "reviewer_score_state": ("nine_or_above", "sub9_disposed", "sub9_pending"),
+    "repair_state": ("first_pass", "corrected_retry", "repeated_no_delta"),
+}
+
+RESOURCE_DISCOVERY_CARTESIAN_AXES = {
+    "inventory_state": ("current_shallow", "missing", "runtime_deep_read_all"),
+    "pm_selection_state": ("selected", "explicit_none", "missing"),
+    "selected_skill_read_state": ("selected_only", "none", "deep_all"),
+    "material_need_state": ("needed", "not_needed"),
+    "material_work_path": ("ordinary_role_work", "none", "special_material_gate"),
+    "material_map_state": ("present", "absent"),
+    "ordinary_review_state": ("completed", "not_applicable", "missing"),
+}
+
+COMPLETE_WORKSTREAM_HIGH_RISK_INTERACTION_GROUPS = (
+    ("plan_state", "evidence_state", "repair_state"),
+    ("delegation_state", "role_local_flowguard_state", "reviewer_score_state"),
+    ("role", "plan_state", "evidence_state", "repair_state"),
+)
+
+RESOURCE_DISCOVERY_HIGH_RISK_INTERACTION_GROUPS = (
+    ("inventory_state", "pm_selection_state", "selected_skill_read_state"),
+    ("material_need_state", "material_work_path", "ordinary_review_state"),
+    ("inventory_state", "material_work_path", "material_map_state", "ordinary_review_state"),
+)
 
 CONTRACT_FAMILIES = (
     "task_packet_body",
@@ -140,7 +173,7 @@ HISTORICAL_FAILURE_FAMILIES = (
         "source_class": "mail_chain_or_packet_body_loss",
         "historical_source": "capability_packet_mail_chain_audit + synthetic_agent_trace_replay",
         "mutation_kinds": ("missing_body", "stale_id", "wrong_owner"),
-        "normal_repair_route": "same_holder_retry_or_packet_reissue_with_current_packet_id",
+        "normal_repair_route": "same_holder_retry_or_safe_operation_replay_with_current_packet_id",
         "glass_break_allowed_in_acceptance": False,
     },
     {
@@ -214,7 +247,7 @@ HISTORICAL_FAILURE_FAMILIES = (
         "source_class": "pm_repair_target_or_producer_loss",
         "historical_source": "e2e.pm_repair.no_producer_then_packet_reissue + control_blocker.pm_repair_decision",
         "mutation_kinds": ("missing_repair_guidance", "wrong_current_path", "missing_required_child_field"),
-        "normal_repair_route": "pm_records_corrected_packet_reissue_with_current_generation_producer",
+        "normal_repair_route": "pm_records_corrected_current_plan_with_registered_producer_or_safe_operation_replay",
         "glass_break_allowed_in_acceptance": False,
     },
     {
@@ -1027,6 +1060,172 @@ def _integration_cartesian_coverage_cells() -> tuple[dict[str, str], ...]:
     )
 
 
+def _runtime_replay_child_receipt_cells() -> tuple[dict[str, object], ...]:
+    summary = runtime_replay_declaration_summary()
+    hygiene = summary["control_plane_ledger_hygiene"]
+    return (
+        {
+            "cell_id": "fake_ai_runtime_replay.child_declaration_receipt",
+            "family": "contract_exhaustion_bridge",
+            "contract_family_id": "flowpilot_fake_ai_runtime_replay",
+            "contract_path": "child_declaration_receipt.non_hygiene",
+            "mutation_kind": "child_runtime_replay_declaration_receipt",
+            "branch_kind": "synthetic_replay_receipt",
+            "confidence_boundary": "synthetic_non_live_runtime_replay",
+            "required_evidence_owner": "fake_ai_runtime_replay_matrix",
+            "child_model_id": "flowpilot_fake_ai_runtime_replay",
+            "child_declared_cell_count": summary["non_hygiene_declared_cell_count"],
+            "child_receipt_sha256": summary["non_hygiene_receipt_sha256"],
+            "child_reaction_ids": tuple(summary["non_hygiene_by_reaction"]),
+        },
+        {
+            "cell_id": "control_plane_ledger_hygiene.child_declaration_receipt",
+            "family": "contract_exhaustion_bridge",
+            "contract_family_id": "flowpilot_control_plane_ledger_hygiene",
+            "contract_path": "child_declaration_receipt.control_plane_ledger_hygiene",
+            "mutation_kind": "child_control_plane_ledger_hygiene_declaration_receipt",
+            "branch_kind": "synthetic_replay_receipt",
+            "confidence_boundary": "control_plane_ledger_hygiene_cartesian",
+            "required_evidence_owner": "control_plane_ledger_hygiene_fake_ai_matrix",
+            "child_model_id": "flowpilot_fake_ai_runtime_replay",
+            "child_declared_cell_count": hygiene["declared_cell_count"],
+            "child_receipt_sha256": hygiene["cell_receipt_sha256"],
+            "child_reaction_ids": tuple(hygiene["by_reaction"]),
+        },
+    )
+
+
+def _complete_workstream_profile_cells() -> tuple[dict[str, object], ...]:
+    rows: list[dict[str, object]] = []
+    for profile_family, profile_ids in (
+        ("complete_workstream", COMPLETE_WORKSTREAM_PROFILE_IDS),
+        ("resource_discovery", RESOURCE_DISCOVERY_PROFILE_IDS),
+    ):
+        for profile_id in profile_ids:
+            rows.append(
+                {
+                    "cell_id": f"{profile_family}.profile.{profile_id}",
+                    "family": "complete_workstream_fake_ai_profiles",
+                    "contract_family_id": "flowpilot_complete_workstream_fake_ai_execution",
+                    "contract_path": f"profile.{profile_id}",
+                    "mutation_kind": str(profile_id),
+                    "branch_kind": "public_ack_open_submit_review_repair_replay",
+                    "confidence_boundary": "finite_declared_semantic_profile_execution",
+                    "required_evidence_owner": "complete_workstream_fake_ai_matrix",
+                    "profile_family": profile_family,
+                    "selection_policy": "full_finite_profile_enumeration",
+                    "required_accounting_states": (
+                        "declared",
+                        "applicable",
+                        "excluded",
+                        "generated",
+                        "selected",
+                        "executed",
+                        "passed",
+                        "failed",
+                        "stale",
+                        "not_run",
+                        "proof_backed",
+                    ),
+                }
+            )
+    return tuple(rows)
+
+
+def _cartesian_outcome_for_workstream(cell: dict[str, str]) -> tuple[str, tuple[str, ...]]:
+    blockers: list[str] = []
+    if cell["plan_state"] != "complete":
+        blockers.append(f"plan:{cell['plan_state']}")
+    if cell["evidence_state"] != "current":
+        blockers.append(f"evidence:{cell['evidence_state']}")
+    if cell["delegation_state"] == "unintegrated":
+        blockers.append("delegation:unintegrated")
+    if cell["role_local_flowguard_state"] == "self_approved":
+        blockers.append("flowguard:self_approved")
+    if cell["repair_state"] == "repeated_no_delta":
+        blockers.append("repair:repeated_no_delta")
+    if blockers:
+        return "reviewer_block_and_pm_repair", tuple(blockers)
+    if cell["reviewer_score_state"] == "sub9_pending":
+        return "pm_disposition_required_without_runtime_autoblock", ("reviewer_score:sub9_pending",)
+    return "pass_current_independent_gates", ()
+
+
+def _cartesian_outcome_for_resource(cell: dict[str, str]) -> tuple[str, tuple[str, ...]]:
+    blockers: list[str] = []
+    repairs: list[str] = []
+    if cell["inventory_state"] != "current_shallow":
+        blockers.append(f"inventory:{cell['inventory_state']}")
+    if cell["pm_selection_state"] == "missing":
+        blockers.append("pm_selection:missing")
+    if cell["selected_skill_read_state"] == "deep_all":
+        blockers.append("selected_skill_read:deep_all")
+    if cell["pm_selection_state"] == "selected" and cell["selected_skill_read_state"] != "selected_only":
+        blockers.append("selected_skill_read:selection_not_deep_read")
+    if cell["pm_selection_state"] == "explicit_none" and cell["selected_skill_read_state"] != "none":
+        blockers.append("selected_skill_read:unexpected_without_selection")
+    if cell["material_work_path"] == "special_material_gate":
+        blockers.append("material_path:special_material_gate")
+    ordinary_work_used = cell["material_work_path"] == "ordinary_role_work"
+    if cell["material_need_state"] == "needed" and not ordinary_work_used:
+        repairs.append("material_work:needed_but_not_issued")
+    if ordinary_work_used and cell["ordinary_review_state"] != "completed":
+        repairs.append("ordinary_review:missing")
+    if not ordinary_work_used and cell["ordinary_review_state"] == "completed":
+        repairs.append("ordinary_review:claims_review_without_work")
+    if blockers:
+        return "block_current_contract", tuple(blockers + repairs)
+    if repairs:
+        return "pm_repair_required", tuple(repairs)
+    return "planning_may_continue", ()
+
+
+def _full_cartesian_cells(
+    *,
+    universe_id: str,
+    axes: dict[str, tuple[str, ...]],
+    oracle,
+) -> tuple[dict[str, object], ...]:
+    axis_names = tuple(axes)
+    rows: list[dict[str, object]] = []
+    for values in product(*(axes[name] for name in axis_names)):
+        assignment = dict(zip(axis_names, values, strict=True))
+        outcome, reasons = oracle(assignment)
+        value_id = ".".join(f"{name}-{assignment[name]}" for name in axis_names)
+        rows.append(
+            {
+                "cell_id": f"{universe_id}.{value_id}",
+                "family": "complete_workstream_cartesian",
+                "contract_family_id": universe_id,
+                "contract_path": value_id,
+                "mutation_kind": f"{universe_id}.full_cartesian_cell",
+                "branch_kind": "full_finite_cartesian_oracle",
+                "confidence_boundary": "declared_finite_axes_not_arbitrary_language",
+                "required_evidence_owner": "complete_workstream_cartesian_matrix",
+                "axis_assignment": assignment,
+                "expected_outcome": outcome,
+                "oracle_reasons": reasons,
+            }
+        )
+    return tuple(rows)
+
+
+def complete_workstream_cartesian_cells() -> tuple[dict[str, object], ...]:
+    return _full_cartesian_cells(
+        universe_id="complete_workstream_cartesian",
+        axes=COMPLETE_WORKSTREAM_CARTESIAN_AXES,
+        oracle=_cartesian_outcome_for_workstream,
+    )
+
+
+def resource_discovery_cartesian_cells() -> tuple[dict[str, object], ...]:
+    return _full_cartesian_cells(
+        universe_id="resource_discovery_cartesian",
+        axes=RESOURCE_DISCOVERY_CARTESIAN_AXES,
+        oracle=_cartesian_outcome_for_resource,
+    )
+
+
 STATIC_CONTRACT_EXHAUSTION_CELLS = REQUIRED_CONTRACT_EXHAUSTION_CELLS
 REQUIRED_CONTRACT_EXHAUSTION_CELLS = (
     *STATIC_CONTRACT_EXHAUSTION_CELLS,
@@ -1037,7 +1236,10 @@ REQUIRED_CONTRACT_EXHAUSTION_CELLS = (
     *_historical_failure_family_cells(),
     *_integration_cartesian_coverage_cells(),
     *review_window_contracts.review_window_completeness_cells(),
-    *runtime_replay_cells(),
+    *_runtime_replay_child_receipt_cells(),
+    *_complete_workstream_profile_cells(),
+    *complete_workstream_cartesian_cells(),
+    *resource_discovery_cartesian_cells(),
     *backfeed_cells(),
 )
 

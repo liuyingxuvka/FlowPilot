@@ -1,0 +1,28 @@
+{
+  "schema_version": 2,
+  "report_protocol_version": 3,
+  "execution_key": "sha256:a7aa2dc91dc0966b86a019dfcb27eedecd197cfd283f4dfb466d573d51fceaaf",
+  "result_hash": "sha256:bdd18577d56728ad7a23f660cf340a6250fb812bd524cd0c2620ea884a37e63c",
+  "receipt_id": "sha256:0068fca0a62f2562e8c1edfced98fb618c8f0ac6e980329988e2fe439cb71845",
+  "result": {
+    "status": "passed",
+    "command": "python",
+    "args": [
+      "-m",
+      "pytest",
+      "tests/test_flowpilot_complete_system_runtime.py",
+      "tests/test_flowpilot_complete_workstream_orchestration.py",
+      "tests/test_flowpilot_new_entrypoint.py::FlowPilotNewEntrypointTests::test_role_handoff_uses_public_entrypoint_after_split",
+      "tests/test_flowpilot_new_entrypoint.py::FlowPilotNewEntrypointTests::test_open_packet_submission_checklist_rejects_packet_body_as_contract_authority",
+      "tests/test_flowpilot_new_entrypoint.py::FlowPilotNewEntrypointTests::test_formal_public_surface_omits_unsupported_side_command_paths",
+      "-q"
+    ],
+    "expected_exit_code": 0,
+    "exit_code": 0,
+    "timeout_seconds": 1800,
+    "stdout": "................................ [ 86%]\r\n.....                                                              [100%]\r\n37 passed, 46 subtests passed in 11.90s\r\n",
+    "stderr": "",
+    "stdout_preview": "................................ [ 86%]\r\n.....                                                              [100%]\r\n37 passed, 46 subtests passed in 11.90s\r\n",
+    "stderr_preview": ""
+  }
+}

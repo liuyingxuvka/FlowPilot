@@ -153,7 +153,6 @@ OUTPUT_CONTRACT_FORBIDDEN_ENVELOPE_BODY_FIELDS = [
 ]
 
 DEFAULT_OUTPUT_CONTRACT_BY_PACKET_TYPE = {
-    "material_scan": "flowpilot.output_contract.worker_material_scan_result.v1",
     "research": "flowpilot.output_contract.worker_research_result.v1",
     "work_packet": "flowpilot.output_contract.worker_current_node_result.v1",
     "review_request": "flowpilot.output_contract.reviewer_review_report.v1",
@@ -162,7 +161,6 @@ DEFAULT_OUTPUT_CONTRACT_BY_PACKET_TYPE = {
 }
 
 DEFAULT_OUTPUT_CONTRACT_TASK_FAMILY_BY_PACKET_TYPE = {
-    "material_scan": "worker.material_scan",
     "research": "worker.research",
     "work_packet": "worker.current_node",
     "review_request": "reviewer.review",
@@ -171,9 +169,6 @@ DEFAULT_OUTPUT_CONTRACT_TASK_FAMILY_BY_PACKET_TYPE = {
 }
 
 DEFAULT_OUTPUT_CONTRACT_CONDITIONAL_RESULT_SECTIONS_BY_PACKET_TYPE = {
-    "material_scan": {
-        "source_packet_declares_inherited_skill_standard_ids": ["Skill Standard Result Matrix"],
-    },
     "research": {
         "source_packet_declares_inherited_skill_standard_ids": ["Skill Standard Result Matrix"],
     },

@@ -7,14 +7,12 @@ from pathlib import Path
 from types import ModuleType
 from typing import Any
 
-import role_output_runtime
 from flowpilot_runtime_gateway import GATEWAY_ROUTER_JSON, assert_runtime_gateway_write
 from flowpilot_router_errors import RouterError
 from flowpilot_router_protocol_catalog import *
 
 
 _PACKAGE_DISPOSITION_BATCH_KIND_BY_EVENT = {
-    "pm_records_material_scan_result_disposition": "material_scan",
     "pm_records_research_result_disposition": "research",
     "pm_records_current_node_result_disposition": "current_node",
 }
@@ -135,67 +133,6 @@ def _event_allows_run_wide_flag_short_circuit(event: str, scoped_identity: dict[
     return True
 
 
-def _sync_material_review_from_role_output_payload(
-    router: ModuleType,
-    project_root: Path,
-    run_root: Path,
-    run_state: dict[str, Any],
-    event: str,
-    payload: dict[str, Any],
-) -> bool:
-    _bind_router(router)
-    if event not in {"reviewer_reports_material_sufficient", "reviewer_reports_material_insufficient"}:
-        return False
-    sufficient = event == "reviewer_reports_material_sufficient"
-    review_value = "sufficient" if sufficient else "insufficient"
-    report = read_json_if_exists(run_root / "material" / "material_sufficiency_report.json")
-    report_already_synced = (
-        report.get("schema_version") == "flowpilot.material_sufficiency_report.v1"
-        and report.get("run_id") == run_state.get("run_id")
-        and report.get("reviewed_by_role") == "human_like_reviewer"
-        and report.get("sufficient") is sufficient
-    )
-    if report_already_synced and run_state.get("material_review") == review_value:
-        return False
-    changed = run_state.get("material_review") != review_value
-    try:
-        _write_material_sufficiency_report(project_root, run_root, run_state, payload, sufficient=sufficient)
-        changed = True
-    except (RouterError, role_output_runtime.RoleOutputRuntimeError, OSError, json.JSONDecodeError, TypeError, ValueError) as exc:
-        if run_state.get("material_review") == review_value:
-            return False
-        run_state["material_review"] = review_value
-        append_history(
-            run_state,
-            "router_synced_material_review_projection_from_role_output_ledger",
-            {
-                "event": event,
-                "material_review": review_value,
-                "canonical_report_written": False,
-                "canonical_report_error": str(exc),
-            },
-        )
-        return True
-    run_state["material_review"] = review_value
-    material_batch = _active_parallel_packet_batch(run_root, "material_scan")
-    if material_batch:
-        try:
-            _mark_parallel_batch_reviewed(
-                run_root,
-                "material_scan",
-                passed=sufficient,
-                reviewed_packet_ids=[
-                    str(item.get("packet_id"))
-                    for item in material_batch.get("packets", [])
-                    if isinstance(item, dict) and item.get("packet_id")
-                ],
-            )
-            changed = True
-        except (RouterError, OSError, json.JSONDecodeError, TypeError, ValueError):
-            pass
-    return changed
-
-
 def _record_role_output_replay_quarantine(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any], *, event: str, record: dict[str, Any], classification: dict[str, Any]) -> dict[str, Any]:
     _bind_router(router)
     output_id = str(record.get("output_id") or "")
@@ -270,11 +207,7 @@ def _canonical_pm_package_disposition_authority(
         "batch_kind": batch_kind,
         "batch_id": str(batch.get("batch_id") or ""),
         "packet_ids": sorted(str(item.get("packet_id") or "") for item in records if item.get("packet_id")),
-        "packet_generation_id": (
-            str((artifact.get("material_generation") or {}).get("current_generation_id") or "")
-            if isinstance(artifact.get("material_generation"), dict)
-            else ""
-        ) or str(artifact.get("packet_generation_id") or "") or (",".join(generation_ids) if generation_ids else ""),
+        "packet_generation_id": str(artifact.get("packet_generation_id") or "") or (",".join(generation_ids) if generation_ids else ""),
         "decision": disposition.get("decision") or artifact.get("decision"),
         "decision_path": decision_path or None,
         "source_body_hash": source_body_hash,

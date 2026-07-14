@@ -4,9 +4,9 @@ Risk purpose:
 - Catch Controller actions whose direct apply path updates a Router-owned
   postcondition flag, while the asynchronous Controller receipt path cannot
   reconstruct the same flag from Router-visible evidence.
-- Generalize the material scan miss: packets and leases proved dispatch, but
+- Generalize the packet relay miss: packets and leases proved dispatch, but
   the receipt reconciler returned ``unsupported_stateful_controller_receipt``
-  and left ``material_scan_packets_relayed`` false.
+  and left ``research_packet_relayed`` false.
 - Keep the intended repair small: one registered evidence-fold contract per
   evidence-backed postcondition action family, not ad hoc retries or PM repair
   packets for evidence that Router can already verify.
@@ -164,8 +164,8 @@ def scenario_state(scenario: str) -> State:
         return _accepted(
             scenario,
             action_family="packet_relay",
-            action_type="relay_material_scan_packets",
-            postcondition_name="material_scan_packets_relayed",
+            action_type="relay_research_packet",
+            postcondition_name="research_packet_relayed",
             controller_receipt_possible=True,
             controller_receipt_done=True,
             direct_apply_sets_flag=True,
@@ -184,8 +184,8 @@ def scenario_state(scenario: str) -> State:
         return _accepted(
             scenario,
             action_family="packet_relay",
-            action_type="relay_material_scan_packets",
-            postcondition_name="material_scan_packets_relayed",
+            action_type="relay_research_packet",
+            postcondition_name="research_packet_relayed",
             controller_receipt_possible=True,
             controller_receipt_done=True,
             direct_apply_sets_flag=True,
@@ -205,8 +205,8 @@ def scenario_state(scenario: str) -> State:
         return _accepted(
             scenario,
             action_family="packet_relay",
-            action_type="relay_material_scan_packets",
-            postcondition_name="material_scan_packets_relayed",
+            action_type="relay_research_packet",
+            postcondition_name="research_packet_relayed",
             controller_receipt_possible=True,
             controller_receipt_done=True,
             direct_apply_sets_flag=True,
@@ -219,8 +219,8 @@ def scenario_state(scenario: str) -> State:
         return _accepted(
             scenario,
             action_family="packet_relay",
-            action_type="relay_material_scan_packets",
-            postcondition_name="material_scan_packets_relayed",
+            action_type="relay_research_packet",
+            postcondition_name="research_packet_relayed",
             controller_receipt_possible=True,
             controller_receipt_done=True,
             direct_apply_sets_flag=True,
@@ -264,8 +264,8 @@ def scenario_state(scenario: str) -> State:
         return _rejected(
             scenario,
             action_family="packet_relay",
-            action_type="relay_material_scan_packets",
-            postcondition_name="material_scan_packets_relayed",
+            action_type="relay_research_packet",
+            postcondition_name="research_packet_relayed",
             controller_receipt_possible=True,
             controller_receipt_done=True,
             direct_apply_sets_flag=True,
@@ -282,8 +282,8 @@ def scenario_state(scenario: str) -> State:
         return _rejected(
             scenario,
             action_family="packet_relay",
-            action_type="relay_material_scan_packets",
-            postcondition_name="material_scan_packets_relayed",
+            action_type="relay_research_packet",
+            postcondition_name="research_packet_relayed",
             controller_receipt_possible=True,
             controller_receipt_done=False,
             direct_apply_sets_flag=True,
@@ -298,8 +298,8 @@ def scenario_state(scenario: str) -> State:
         return _rejected(
             scenario,
             action_family="packet_relay",
-            action_type="relay_material_scan_packets",
-            postcondition_name="material_scan_packets_relayed",
+            action_type="relay_research_packet",
+            postcondition_name="research_packet_relayed",
             controller_receipt_possible=True,
             controller_receipt_done=True,
             direct_apply_sets_flag=True,
@@ -328,8 +328,8 @@ def scenario_state(scenario: str) -> State:
         return _rejected(
             scenario,
             action_family="packet_relay",
-            action_type="relay_material_scan_packets",
-            postcondition_name="material_scan_packets_relayed",
+            action_type="relay_research_packet",
+            postcondition_name="research_packet_relayed",
             controller_receipt_possible=True,
             controller_receipt_done=True,
             direct_apply_sets_flag=True,
@@ -346,8 +346,8 @@ def scenario_state(scenario: str) -> State:
         return _rejected(
             scenario,
             action_family="packet_relay",
-            action_type="relay_material_scan_packets",
-            postcondition_name="material_scan_packets_relayed",
+            action_type="relay_research_packet",
+            postcondition_name="research_packet_relayed",
             controller_receipt_possible=True,
             controller_receipt_done=True,
             direct_apply_sets_flag=True,
@@ -363,8 +363,8 @@ def scenario_state(scenario: str) -> State:
         return _rejected(
             scenario,
             action_family="packet_relay",
-            action_type="relay_material_scan_packets",
-            postcondition_name="material_scan_packets_relayed",
+            action_type="relay_research_packet",
+            postcondition_name="research_packet_relayed",
             controller_receipt_possible=True,
             controller_receipt_done=True,
             direct_apply_sets_flag=True,
@@ -383,8 +383,8 @@ def scenario_state(scenario: str) -> State:
         return _rejected(
             scenario,
             action_family="packet_relay",
-            action_type="relay_material_scan_packets",
-            postcondition_name="material_scan_packets_relayed",
+            action_type="relay_research_packet",
+            postcondition_name="research_packet_relayed",
             controller_receipt_possible=True,
             controller_receipt_done=True,
             direct_apply_sets_flag=True,

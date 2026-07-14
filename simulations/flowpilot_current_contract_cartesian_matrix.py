@@ -49,7 +49,9 @@ ACTION_IDS = (
     "define_contract",
     "project_future_evidence",
     "issue_packet",
+    "dispatch_current_role",
     "ack_packet",
+    "open_packet",
     "submit_result",
     "review_current_subject",
     "flowguard_check",
@@ -101,6 +103,7 @@ AI_RETURN_PROFILES = (
     "summary_only",
     "old_protocol",
     "wrong_role",
+    "retired_role_alias",
     "hallucinated_artifact",
     "overclaims_completion",
     "rejects_valid_task",
@@ -144,14 +147,91 @@ ROUTE_SHAPES = (
     "manual_resume",
 )
 
-EXECUTION_SOURCES = (
+CURRENT_EXECUTION_SOURCES = (
     "foreground_runtime",
     "background_role",
-    "daemon_replay",
     "manual_resume",
     "installed_skill_self_check",
-    "stale_workspace",
 )
+
+HISTORICAL_NEGATIVE_EXECUTION_SOURCES = (
+    "daemon_replay",
+    "stale_workspace",
+    "old_router",
+    "body_only_contract",
+    "private_helper_source",
+)
+
+EXECUTION_SOURCES = CURRENT_EXECUTION_SOURCES + HISTORICAL_NEGATIVE_EXECUTION_SOURCES
+
+ROLE_SOURCE_NEGATIVE_AI_PROFILES = (
+    "wrong_role",
+    "retired_role_alias",
+)
+
+SOURCE_PURITY_ENTRYPOINTS = (
+    {
+        "entrypoint_id": "route_planning",
+        "family_id": "task.planning",
+        "action": "redesign_route",
+        "route_shape": "multi_node",
+        "default_ai_profile": "runtime_no_ai",
+    },
+    {
+        "entrypoint_id": "dispatch",
+        "family_id": "task.node",
+        "action": "dispatch_current_role",
+        "route_shape": "single_node",
+        "default_ai_profile": "runtime_no_ai",
+    },
+    {
+        "entrypoint_id": "open",
+        "family_id": "task.node",
+        "action": "open_packet",
+        "route_shape": "single_node",
+        "default_ai_profile": "runtime_no_ai",
+    },
+    {
+        "entrypoint_id": "submit",
+        "family_id": "task.node",
+        "action": "submit_result",
+        "route_shape": "single_node",
+        "default_ai_profile": "well_formed_pass",
+    },
+    {
+        "entrypoint_id": "replay",
+        "family_id": "review.terminal_backward_replay",
+        "action": "terminal_backward_replay",
+        "route_shape": "terminal_replay",
+        "default_ai_profile": "well_formed_pass",
+    },
+)
+
+SOURCE_PURITY_FAILURE_PROFILES = (
+    {
+        "failure_class": "wrong_role",
+        "ai_profile": "wrong_role",
+        "source": "foreground_runtime",
+        "historical_negative": False,
+    },
+    {
+        "failure_class": "retired_role_alias",
+        "ai_profile": "retired_role_alias",
+        "source": "foreground_runtime",
+        "historical_negative": True,
+    },
+    *(
+        {
+            "failure_class": source,
+            "ai_profile": "",
+            "source": source,
+            "historical_negative": True,
+        }
+        for source in HISTORICAL_NEGATIVE_EXECUTION_SOURCES
+    ),
+)
+
+SOURCE_PURITY_REQUIRED_CELL_COUNT = len(SOURCE_PURITY_ENTRYPOINTS) * len(SOURCE_PURITY_FAILURE_PROFILES)
 
 FINAL_CLAIM_TYPES = (
     "no_claim",
@@ -212,7 +292,6 @@ PROFILE_BY_STAGE_GROUP: dict[str, dict[str, tuple[str, ...]]] = {
             "malformed_json_markdown_wrapped",
             "summary_only",
             "old_protocol",
-            "wrong_role",
             "overclaims_completion",
         ),
         "timing": ("on_time", "one_step_early", "one_step_late", "background_progress_late"),
@@ -238,7 +317,6 @@ PROFILE_BY_STAGE_GROUP: dict[str, dict[str, tuple[str, ...]]] = {
             "malformed_json_prose_plus_json",
             "summary_only",
             "old_protocol",
-            "wrong_role",
             "hallucinated_artifact",
         ),
         "timing": ("on_time", "one_step_early", "one_step_late", "route_mutation_after_packet"),
@@ -278,7 +356,6 @@ PROFILE_BY_STAGE_GROUP: dict[str, dict[str, tuple[str, ...]]] = {
             "ack_only",
             "summary_only",
             "old_protocol",
-            "wrong_role",
             "hallucinated_artifact",
             "overclaims_completion",
             "repeated_bad_fix",
@@ -310,7 +387,7 @@ PROFILE_BY_STAGE_GROUP: dict[str, dict[str, tuple[str, ...]]] = {
             "superseded_node",
             "parallel_background",
         ),
-        "sources": ("foreground_runtime", "background_role", "daemon_replay", "manual_resume", "stale_workspace"),
+        "sources": ("foreground_runtime", "background_role", "manual_resume"),
         "claims": ("no_claim", "node_complete", "future_evidence_claim", "live_ai_quality_claim"),
     },
     "review": {
@@ -334,7 +411,6 @@ PROFILE_BY_STAGE_GROUP: dict[str, dict[str, tuple[str, ...]]] = {
             "malformed_json_empty_body",
             "malformed_json_trailing_comma",
             "summary_only",
-            "wrong_role",
             "overclaims_completion",
         ),
         "timing": ("on_time", "one_step_early", "one_step_late", "background_progress_late"),
@@ -364,13 +440,12 @@ PROFILE_BY_STAGE_GROUP: dict[str, dict[str, tuple[str, ...]]] = {
             "malformed_json_trailing_comma",
             "summary_only",
             "old_protocol",
-            "wrong_role",
             "overclaims_completion",
         ),
         "timing": ("on_time", "one_step_early", "one_step_late", "background_progress_late"),
         "blockers": ("no_blocker", "new_current_blocker", "same_blocker_before_threshold", "same_blocker_at_threshold"),
         "routes": ("single_node", "parent_child", "route_mutation_replacement", "terminal_replay"),
-        "sources": ("foreground_runtime", "background_role", "daemon_replay", "manual_resume"),
+        "sources": ("foreground_runtime", "background_role", "manual_resume"),
         "claims": ("no_claim", "node_complete", "future_evidence_claim", "live_ai_quality_claim"),
     },
     "repair": {
@@ -388,7 +463,6 @@ PROFILE_BY_STAGE_GROUP: dict[str, dict[str, tuple[str, ...]]] = {
             "malformed_json_unquoted_keys",
             "malformed_json_markdown_wrapped",
             "summary_only",
-            "wrong_role",
             "overclaims_completion",
             "repeated_bad_fix",
             "contradictory_result",
@@ -403,7 +477,7 @@ PROFILE_BY_STAGE_GROUP: dict[str, dict[str, tuple[str, ...]]] = {
             "repair_after_failed_recheck",
         ),
         "routes": ("single_node", "parent_child", "route_mutation_replacement", "sibling_branch_replacement"),
-        "sources": ("foreground_runtime", "background_role", "daemon_replay", "manual_resume"),
+        "sources": ("foreground_runtime", "background_role", "manual_resume"),
         "claims": ("no_claim", "node_complete", "route_complete"),
     },
     "route_mutation": {
@@ -421,14 +495,13 @@ PROFILE_BY_STAGE_GROUP: dict[str, dict[str, tuple[str, ...]]] = {
             "malformed_json_unquoted_keys",
             "malformed_json_prose_plus_json",
             "summary_only",
-            "wrong_role",
             "hallucinated_artifact",
             "overclaims_completion",
         ),
         "timing": ("on_time", "one_step_early", "route_mutation_after_packet", "old_result_after_reissue"),
         "blockers": ("no_blocker", "new_current_blocker", "stale_blocker", "unsolved_skipped"),
         "routes": ("route_mutation_replacement", "sibling_branch_replacement", "superseded_node", "parent_child"),
-        "sources": ("foreground_runtime", "background_role", "daemon_replay", "manual_resume"),
+        "sources": ("foreground_runtime", "background_role", "manual_resume"),
         "claims": ("no_claim", "route_complete", "future_evidence_claim"),
     },
     "disposition": {
@@ -445,13 +518,12 @@ PROFILE_BY_STAGE_GROUP: dict[str, dict[str, tuple[str, ...]]] = {
             "well_formed_pass",
             "malformed_json_unquoted_keys",
             "summary_only",
-            "wrong_role",
             "overclaims_completion",
         ),
         "timing": ("on_time", "one_step_late", "old_result_after_reissue", "background_progress_late"),
         "blockers": ("no_blocker", "new_current_blocker", "stale_blocker", "solved_still_blocks", "unsolved_skipped"),
         "routes": ("single_node", "parent_child", "route_mutation_replacement"),
-        "sources": ("foreground_runtime", "background_role", "daemon_replay"),
+        "sources": ("foreground_runtime", "background_role"),
         "claims": ("no_claim", "node_complete", "future_evidence_claim"),
     },
     "replay": {
@@ -488,14 +560,13 @@ PROFILE_BY_STAGE_GROUP: dict[str, dict[str, tuple[str, ...]]] = {
             "malformed_json_markdown_wrapped",
             "malformed_json_empty_body",
             "summary_only",
-            "wrong_role",
             "overclaims_completion",
             "contradictory_result",
         ),
         "timing": ("on_time", "one_step_early", "one_step_late", "background_progress_late"),
         "blockers": ("no_blocker", "new_current_blocker", "stale_blocker", "solved_still_blocks", "unsolved_skipped"),
         "routes": ("multi_node", "parent_child", "terminal_replay", "manual_resume"),
-        "sources": ("foreground_runtime", "background_role", "daemon_replay", "manual_resume", "stale_workspace"),
+        "sources": ("foreground_runtime", "background_role", "manual_resume"),
         "claims": ("node_complete", "route_complete", "task_complete", "routine_evidence_claim", "release_evidence_claim", "future_evidence_claim", "live_ai_quality_claim"),
     },
 }
@@ -509,6 +580,10 @@ NOT_APPLICABLE_CLASSES = (
     {
         "class_id": "legacy_protocol_positive_path_forbidden",
         "reason": "Legacy aliases, heartbeat recovery, old role recovery, fallback prose, and old-router surfaces are negative or historical-only cells.",
+    },
+    {
+        "class_id": "noncurrent_execution_source_positive_path_forbidden",
+        "reason": "Daemon replay, stale workspace, old router, body-only contract, and private-helper sources are historical negative inputs only; every current entrypoint must reject them mechanically.",
     },
     {
         "class_id": "terminal_claim_not_applicable_before_terminal_or_result_stage",
@@ -594,6 +669,26 @@ EXISTING_TEST_LINKS = (
             "test_cli_submit_result_reports_body_type_as_json_error",
         ),
     },
+    {
+        "link_id": "current_contract_source_purity_negatives",
+        "path": "tests/test_flowpilot_current_contract_cartesian_matrix.py",
+        "test_name": "test_source_purity_cartesian_rejects_every_failure_at_every_entrypoint",
+        "covers": (
+            "wrong_role",
+            "retired_role_alias",
+            "daemon_replay",
+            "stale_workspace",
+            "old_router",
+            "body_only_contract",
+            "private_helper_source",
+        ),
+        "required_markers": (
+            "SOURCE_PURITY_FAILURE_PROFILES",
+            "SOURCE_PURITY_ENTRYPOINTS",
+            "mechanical_reject",
+            "historical_negative",
+        ),
+    },
 )
 
 
@@ -628,14 +723,17 @@ def expected_reaction(
     group = STAGE_GROUP_BY_FAMILY[family_id]
     if ai_profile.startswith("malformed_json_"):
         return "mechanical_reject"
-    if object_state == "unsupported_legacy_shape" or ai_profile == "old_protocol":
+    if (
+        object_state == "unsupported_legacy_shape"
+        or ai_profile == "old_protocol"
+        or ai_profile in ROLE_SOURCE_NEGATIVE_AI_PROFILES
+        or source in HISTORICAL_NEGATIVE_EXECUTION_SOURCES
+    ):
         return "mechanical_reject"
     if object_state in {"current_pointer_corrupt_unambiguous", "index_pointer_corrupt"}:
         return "recover_pointer"
     if object_state in {"current_pointer_corrupt_ambiguous", "pointer_write_in_progress"}:
         return "structured_blocker"
-    if source == "stale_workspace":
-        return "reject_stale_authority"
     if object_state in {"stale_run", "stale_route", "stale_packet"} or timing == "old_result_after_reissue":
         return "ignore_stale_late_material"
     if ai_profile == "rejects_valid_task":
@@ -677,7 +775,6 @@ def expected_reaction(
 REACTION_OWNER = {
     "continue_current_stage": "current_contract_runtime_matrix",
     "mechanical_reject": "current_contract_runtime_matrix",
-    "reject_stale_authority": "current_contract_runtime_matrix",
     "ignore_stale_late_material": "current_contract_runtime_matrix",
     "not_due_structured_wait": "current_contract_stage_timing_matrix",
     "structured_blocker": "current_contract_blocker_repair_matrix",
@@ -693,7 +790,6 @@ REACTION_OWNER = {
 ABSORBING_NEXT_ACTION_BY_REACTION = {
     "continue_current_stage": "advance_current_stage_with_current_artifact",
     "mechanical_reject": "reject_current_submission_with_contract_feedback_and_reissue",
-    "reject_stale_authority": "quarantine_stale_workspace_material_and_keep_current_run_pointer",
     "ignore_stale_late_material": "ignore_late_or_stale_material_and_wait_for_current_packet",
     "not_due_structured_wait": "record_not_due_wait_with_current_stage_pointer",
     "structured_blocker": "issue_owner_named_repair_or_reissue_packet",
@@ -715,6 +811,8 @@ def _existing_test_link_for_cell(
     source: str,
     reaction: str,
 ) -> str:
+    if ai_profile in ROLE_SOURCE_NEGATIVE_AI_PROFILES or source in HISTORICAL_NEGATIVE_EXECUTION_SOURCES:
+        return "current_contract_source_purity_negatives"
     if object_state == "unsupported_legacy_shape" or ai_profile == "old_protocol":
         return "cartesian_control_plane_existing_matrix"
     if (
@@ -735,8 +833,6 @@ def _existing_test_link_for_cell(
         return "synthetic_non_live_boundary"
     if object_state in {"stale_run", "stale_route", "stale_packet"} or timing == "old_result_after_reissue":
         return "route_mutation_stale_old_evidence"
-    if source == "stale_workspace":
-        return "current_run_no_project_root_fallback"
     return ""
 
 
@@ -812,6 +908,31 @@ def _cell(
     }
 
 
+def iter_source_purity_negative_cells() -> Iterable[dict[str, Any]]:
+    for entrypoint, failure in product(SOURCE_PURITY_ENTRYPOINTS, SOURCE_PURITY_FAILURE_PROFILES):
+        ai_profile = str(failure["ai_profile"] or entrypoint["default_ai_profile"])
+        source = str(failure["source"])
+        cell = _cell(
+            family_id=str(entrypoint["family_id"]),
+            action=str(entrypoint["action"]),
+            object_state="current_valid",
+            ai_profile=ai_profile,
+            timing="on_time",
+            blocker_state="no_blocker",
+            route_shape=str(entrypoint["route_shape"]),
+            source=source,
+            claim_type="no_claim",
+        )
+        yield {
+            **cell,
+            "source_purity_entrypoint": str(entrypoint["entrypoint_id"]),
+            "source_purity_failure_class": str(failure["failure_class"]),
+            "source_purity_negative_only": True,
+            "historical_negative": bool(failure["historical_negative"]),
+            "current_stage_profile": False,
+        }
+
+
 def iter_required_cells() -> Iterable[dict[str, Any]]:
     for row in FLOW_STAGE_ROWS:
         family_id = row["family_id"]
@@ -837,9 +958,10 @@ def iter_required_cells() -> Iterable[dict[str, Any]]:
                 source=source,
                 claim_type=claim,
             )
+    yield from iter_source_purity_negative_cells()
 
 
-def required_cell_count() -> int:
+def positive_stage_profile_cell_count() -> int:
     declared_full_count = 0
     for row in FLOW_STAGE_ROWS:
         profile = _profile_for_family(row["family_id"])
@@ -848,6 +970,10 @@ def required_cell_count() -> int:
             count *= len(profile[key])
         declared_full_count += count
     return declared_full_count
+
+
+def required_cell_count() -> int:
+    return positive_stage_profile_cell_count() + SOURCE_PURITY_REQUIRED_CELL_COUNT
 
 
 def build_required_cells(limit: int | None = None) -> tuple[dict[str, Any], ...]:
@@ -894,6 +1020,15 @@ def axis_value_coverage() -> dict[str, dict[str, list[str]]]:
         present["route_shape"].update(profile["routes"])
         present["execution_source"].update(profile["sources"])
         present["final_claim_type"].update(profile["claims"])
+    for cell in iter_source_purity_negative_cells():
+        present["action"].add(str(cell["action"]))
+        present["object_state"].add(str(cell["object_state"]))
+        present["ai_return_profile"].add(str(cell["ai_return_profile"]))
+        present["timing"].add(str(cell["timing"]))
+        present["blocker_state"].add(str(cell["blocker_state"]))
+        present["route_shape"].add(str(cell["route_shape"]))
+        present["execution_source"].add(str(cell["execution_source"]))
+        present["final_claim_type"].add(str(cell["final_claim_type"]))
     return {
         axis: {
             "present": sorted(present[axis]),
@@ -904,7 +1039,8 @@ def axis_value_coverage() -> dict[str, dict[str, list[str]]]:
 
 
 def matrix_counts() -> dict[str, int]:
-    declared_full_count = required_cell_count()
+    declared_profile_full_count = positive_stage_profile_cell_count()
+    required_count = declared_profile_full_count + SOURCE_PURITY_REQUIRED_CELL_COUNT
     unrestricted_symbolic_count = (
         len(FLOW_STAGE_IDS)
         * len(ACTION_IDS)
@@ -918,8 +1054,9 @@ def matrix_counts() -> dict[str, int]:
         * len(FINAL_CLAIM_TYPES)
     )
     return {
-        "declared_profile_full_count": declared_full_count,
-        "required_cell_count": declared_full_count,
+        "declared_profile_full_count": declared_profile_full_count,
+        "source_purity_required_cell_count": SOURCE_PURITY_REQUIRED_CELL_COUNT,
+        "required_cell_count": required_count,
         "unrestricted_symbolic_product_count": unrestricted_symbolic_count,
         "not_applicable_class_count": len(NOT_APPLICABLE_CLASSES),
     }

@@ -370,8 +370,8 @@ def hazard_states() -> dict[str, State]:
             active_holder_contact_attempted=True,
             active_holder_contact_action_allowed=False,
         ),
-        "material_active_holder_lease_without_packet_registration": _generalized_active_holder_leased(
-            "material_scan",
+        "research_active_holder_lease_without_packet_registration": _generalized_active_holder_leased(
+            "research",
             generalized_packet_registered=False,
         ),
         "research_active_holder_contact_by_wrong_role": _generalized_active_holder_leased(
@@ -384,7 +384,7 @@ def hazard_states() -> dict[str, State]:
             generalized_packet_live_holder_known=False,
         ),
         "generalized_active_holder_result_not_to_pm": _generalized_active_holder_leased(
-            "material_scan",
+            "research",
             generalized_result_target_is_pm=False,
         ),
         "active_holder_unknown_packet_family": _generalized_active_holder_leased(

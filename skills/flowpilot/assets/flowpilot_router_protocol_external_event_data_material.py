@@ -4,48 +4,14 @@ from __future__ import annotations
 
 from typing import Any
 
-MATERIAL_EXTERNAL_EVENT_DATA: dict[str, dict[str, Any]] = {'pm_issues_material_and_capability_scan_packets': {'flag': 'pm_material_packets_issued',
-                                                    'requires_flag': 'pm_material_scan_card_delivered',
-                                                    'summary': 'PM issued bounded '
-                                                               'material/capability scan packets.'},
- 'pm_registers_current_node_packet': {'flag': 'current_node_packet_registered',
-                                      'requires_flag': 'node_acceptance_plan_reviewer_passed',
-                                      'forbids_active_node_children': True,
-                                      'summary': 'PM registered a current-node packet envelope for '
-                                                 'router direct dispatch.'},
- 'router_direct_material_scan_dispatch_recheck_passed': {'flag': 'material_scan_direct_dispatch_recheck_passed',
-                                                         'requires_flag': 'pm_control_blocker_repair_decision_recorded',
-                                                         'summary': 'Router direct-dispatch repair '
-                                                                    'recheck passed for material '
-                                                                    'scan packets.'},
- 'router_direct_material_scan_dispatch_recheck_blocked': {'flag': 'material_scan_dispatch_recheck_blocked',
-                                                          'requires_flag': 'pm_control_blocker_repair_decision_recorded',
-                                                          'summary': 'Router direct-dispatch '
-                                                                     'repair recheck blocked '
-                                                                     'material scan packets.'},
- 'router_protocol_blocker_material_scan_dispatch_recheck': {'flag': 'material_scan_dispatch_recheck_protocol_blocked',
-                                                            'requires_flag': 'pm_control_blocker_repair_decision_recorded',
-                                                            'summary': 'Router direct-dispatch '
-                                                                       'repair recheck found a '
-                                                                       'protocol blocker.'},
- 'worker_scan_packet_bodies_delivered_after_dispatch': {'flag': 'worker_packets_delivered',
-                                                        'requires_flag': 'material_scan_packets_relayed',
-                                                        'summary': 'Worker packet bodies were '
-                                                                   'delivered after router direct '
-                                                                   'dispatch.'},
- 'worker_scan_results_returned': {'flag': 'worker_scan_results_returned',
-                                  'requires_flag': 'worker_packets_delivered',
-                                  'summary': 'Worker scan results returned to the PM-first result '
-                                             'path.'},
- 'pm_records_material_scan_result_disposition': {'flag': 'material_scan_result_disposition_recorded',
-                                                 'requires_flag': 'material_scan_results_relayed_to_pm',
-                                                 'summary': 'PM recorded material scan result '
-                                                            'disposition and released a formal '
-                                                            'material sufficiency package when '
-                                                            'absorbed.'},
+MATERIAL_EXTERNAL_EVENT_DATA: dict[str, dict[str, Any]] = {'pm_registers_current_node_packet': {'flag': 'current_node_packet_registered',
+                                       'requires_flag': 'node_acceptance_plan_reviewer_passed',
+                                       'forbids_active_node_children': True,
+                                       'summary': 'PM registered a current-node packet envelope for '
+                                                  'router direct dispatch.'},
  'worker_current_node_result_returned': {'flag': 'current_node_worker_result_returned',
-                                         'requires_flag': 'current_node_packet_relayed',
-                                         'summary': 'Worker returned a current-node result '
+                                          'requires_flag': 'current_node_packet_relayed',
+                                          'summary': 'Worker returned a current-node result '
                                                     'envelope.'},
  'pm_records_current_node_result_disposition': {'flag': 'current_node_result_disposition_recorded',
                                                 'requires_flag': 'current_node_result_relayed_to_pm',
@@ -53,24 +19,10 @@ MATERIAL_EXTERNAL_EVENT_DATA: dict[str, dict[str, Any]] = {'pm_issues_material_a
                                                            'disposition and released the formal '
                                                            'node-completion review package when '
                                                            'absorbed.'},
- 'reviewer_reports_material_sufficient': {'flag': 'material_review_sufficient',
-                                          'requires_flag': 'reviewer_material_sufficiency_card_delivered',
-                                          'summary': 'Reviewer reported material sufficient.'},
- 'reviewer_reports_material_insufficient': {'flag': 'material_review_insufficient',
-                                            'requires_flag': 'reviewer_material_sufficiency_card_delivered',
-                                            'summary': 'Reviewer reported material insufficient.'},
- 'pm_accepts_reviewed_material': {'flag': 'material_accepted_by_pm',
-                                  'requires_flag': 'pm_material_absorb_or_research_card_delivered',
-                                  'summary': 'PM accepted reviewer-approved material.'},
- 'pm_requests_research_after_material_insufficient': {'flag': 'pm_research_requested',
-                                                      'requires_flag': 'pm_material_absorb_or_research_card_delivered',
-                                                      'summary': 'PM requested bounded research '
-                                                                 'instead of accepting '
-                                                                 'insufficient material.'},
  'pm_writes_research_package': {'flag': 'research_package_written_by_pm',
                                 'requires_flag': 'pm_research_package_card_delivered',
-                                'summary': 'PM wrote a bounded research package after insufficient '
-                                           'material.'},
+                                'summary': 'PM wrote a bounded research package for an ordinary '
+                                           'evidence workstream.'},
  'research_capability_decision_recorded': {'flag': 'research_capability_decision_recorded',
                                            'requires_flag': 'research_package_written_by_pm',
                                            'summary': 'PM recorded research source/tool capability '
@@ -93,16 +45,12 @@ MATERIAL_EXTERNAL_EVENT_DATA: dict[str, dict[str, Any]] = {'pm_issues_material_a
                                                              'experiment-output research check.'},
  'pm_absorbs_reviewed_research': {'flag': 'research_result_absorbed_by_pm',
                                   'requires_flag': 'pm_research_absorb_or_mutate_card_delivered',
-                                  'summary': 'PM absorbed reviewer-approved research into material '
-                                             'understanding.'},
- 'pm_writes_material_understanding': {'flag': 'material_understanding_written_by_pm',
-                                      'requires_flag': 'pm_material_understanding_card_delivered',
-                                      'summary': 'PM wrote material understanding from reviewed '
-                                                 'material and approved research if required.'},
+                                  'summary': 'PM absorbed reviewer-approved research into the '
+                                             'current workstream evidence basis.'},
  'pm_writes_product_function_architecture': {'flag': 'product_architecture_written_by_pm',
-                                             'requires_flag': 'pm_product_architecture_card_delivered',
-                                             'summary': 'PM wrote the product-function '
-                                                        'architecture from reviewed material.'},
+                                              'requires_flag': 'pm_product_architecture_card_delivered',
+                                              'summary': 'PM wrote the product-function '
+                                                         'architecture from current evidence.'},
  'reviewer_passes_product_architecture': {'flag': 'product_architecture_reviewer_passed',
                                           'requires_flag': 'reviewer_product_architecture_card_delivered',
                                           'summary': 'Reviewer passed the PM product-function '

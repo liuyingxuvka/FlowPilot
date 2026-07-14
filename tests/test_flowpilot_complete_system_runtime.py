@@ -280,7 +280,7 @@ class FlowPilotCompleteSystemRuntimeTests(unittest.TestCase):
             ledger = run_shell.load_run_ledger(shell)
             authorize_background_collaboration(ledger)
             initial_events = shell.events_path.read_text(encoding="utf-8").splitlines()
-            lease_id = host.lease_responsibility(ledger, "project_manager", host_kind="fake", scope="startup")
+            lease_id = host.lease_responsibility(ledger, "pm", host_kind="fake", scope="startup")
             host.record_role_memory_seed(ledger, lease_id, memory_packet_id="memory-001", prior_agent_id="old-pm")
             run_shell.save_run_ledger(shell, ledger)
             after_first_save = shell.events_path.read_text(encoding="utf-8").splitlines()
@@ -296,7 +296,7 @@ class FlowPilotCompleteSystemRuntimeTests(unittest.TestCase):
     def test_dynamic_host_lease_is_scoped_until_real_live_evidence_exists(self) -> None:
         ledger = runtime.new_ledger("Goal", "Contract")
         authorize_background_collaboration(ledger)
-        lease_id = host.lease_responsibility(ledger, "project_manager", host_kind="fake", scope="startup")
+        lease_id = host.lease_responsibility(ledger, "pm", host_kind="fake", scope="startup")
         boundary = host.host_confidence_boundary(ledger)
         self.assertFalse(boundary["has_live_host_evidence"])
         self.assertEqual(boundary["confidence"], "scoped")
@@ -310,7 +310,7 @@ class FlowPilotCompleteSystemRuntimeTests(unittest.TestCase):
         authorize_background_collaboration(ledger)
         runtime.create_route(ledger, "Route", ["Do work"])
 
-        for role in ("pm", "reviewer", "flowguard_operator", "worker", "research_worker", "ui_qa", "planner"):
+        for role in sorted(host.CURRENT_RESPONSIBILITIES):
             with self.subTest(role=role):
                 first = host.lease_responsibility(ledger, role, agent_id=f"{role}-agent-1", host_kind="fake")
                 runtime.close_lease(ledger, first, "test_role_available")

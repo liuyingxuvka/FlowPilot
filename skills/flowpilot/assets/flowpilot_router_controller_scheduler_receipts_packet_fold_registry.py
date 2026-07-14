@@ -4,12 +4,6 @@ from __future__ import annotations
 
 
 CONTROLLER_RECEIPT_EVIDENCE_FOLD_REGISTRY: dict[str, dict[str, str]] = {
-    "relay_material_scan_packets": {
-        "kind": "packet_dispatch",
-        "family": "material_scan",
-        "record_source": "material_scan_index",
-        "postcondition": "material_scan_packets_relayed",
-    },
     "relay_research_packet": {
         "kind": "packet_dispatch",
         "family": "research",
@@ -27,20 +21,6 @@ CONTROLLER_RECEIPT_EVIDENCE_FOLD_REGISTRY: dict[str, dict[str, str]] = {
         "family": "pm_role_work",
         "record_source": "pm_role_work_request_index",
         "postcondition": "pm_role_work_request_packet_relayed",
-    },
-    "relay_material_scan_results_to_pm": {
-        "kind": "result_relay",
-        "family": "material_scan",
-        "record_source": "material_scan_index",
-        "postcondition": "material_scan_results_relayed_to_pm",
-        "to_role": "project_manager",
-    },
-    "relay_material_scan_results_to_reviewer": {
-        "kind": "result_relay",
-        "family": "material_scan",
-        "record_source": "material_scan_index",
-        "postcondition": "material_scan_results_relayed_to_reviewer",
-        "to_role": "human_like_reviewer",
     },
     "relay_research_result_to_pm": {
         "kind": "result_relay",

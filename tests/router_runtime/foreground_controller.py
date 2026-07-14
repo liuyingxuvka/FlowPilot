@@ -4,6 +4,7 @@ import time
 
 from tests.router_runtime.common import *  # noqa: F403
 from tests.router_runtime.common import FlowPilotRouterRuntimeTestBase
+import flowpilot_router_io_locks as router_io_locks
 
 
 class ForegroundControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
@@ -24,7 +25,6 @@ class ForegroundControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertFalse(context["controller_decision_authority"])
 
         self.complete_startup_runtime_entry(root)
-        self.complete_material_flow(root)
         self.complete_root_contract_before_child_skill_gates(root)
         self.complete_child_skill_gates(root)
         self.complete_implementation_intent_bridge(root)
@@ -196,6 +196,10 @@ class ForegroundControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertTrue(result["runtime_write_settlement"]["waited"])
         self.assertEqual(result["runtime_write_settlement"]["command"], "next")
         self.assertGreaterEqual(result["runtime_write_settlement"]["wait_count"], 1)
+        self.assertLess(
+            result["runtime_write_settlement"]["waits"][0]["waited_seconds"],
+            router.RUNTIME_JSON_WRITE_LOCK_TIMEOUT_SECONDS,
+        )
         self.assertEqual(read_json(action_path)["schema_version"], router.CONTROLLER_ACTION_SCHEMA)
     def test_foreground_next_waits_on_stale_lock_when_owner_process_is_live(self) -> None:
         root = self.make_project()
@@ -240,7 +244,101 @@ class ForegroundControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
         result = json.loads(stdout.getvalue())
         self.assertTrue(result["runtime_write_settlement"]["waited"])
         self.assertTrue(result["runtime_write_settlement"]["waits"][0]["initial_liveness"]["owner_process_live"])
+        self.assertLess(
+            result["runtime_write_settlement"]["waits"][0]["waited_seconds"],
+            router.RUNTIME_JSON_WRITE_LOCK_TIMEOUT_SECONDS,
+        )
         self.assertEqual(read_json(action_path)["schema_version"], router.CONTROLLER_ACTION_SCHEMA)
+
+    def test_foreground_writer_settlement_budget_starts_at_first_contention(self) -> None:
+        target = self.make_project() / "slow-start-writer.json"
+        exc = router.RouterLedgerWriteInProgress(
+            target,
+            {"active": True, "classification": "active_writer"},
+            "test writer starts after slow command setup",
+        )
+        calls = 0
+
+        def operation() -> dict:
+            nonlocal calls
+            calls += 1
+            if calls == 1:
+                time.sleep(0.03)
+                raise exc
+            return {"ok": True}
+
+        wait_receipt = {
+            "path": str(target),
+            "lock_path": str(router_io_locks._json_write_lock_path(target)),
+            "waited_seconds": 0.001,
+            "poll_count": 1,
+            "progress_count": 1,
+            "initial_liveness": dict(exc.write_lock),
+            "final_liveness": {"active": False},
+        }
+        with mock.patch.object(
+            router_io_locks,
+            "RUNTIME_JSON_WRITE_LOCK_TIMEOUT_SECONDS",
+            0.01,
+        ), mock.patch.object(
+            router_io_locks,
+            "_wait_for_runtime_json_writer_to_settle",
+            return_value=wait_receipt,
+        ) as wait_for_settlement:
+            result = router_io_locks._run_foreground_with_runtime_writer_settlement(
+                operation,
+                command_name="start",
+            )
+
+        self.assertTrue(result["ok"])
+        self.assertEqual(calls, 2)
+        self.assertTrue(result["runtime_write_settlement"]["waited"])
+        self.assertGreater(wait_for_settlement.call_args.kwargs["timeout_seconds"], 0)
+
+    def test_runtime_writer_settlement_fails_closed_when_live_lock_never_clears(self) -> None:
+        root = self.make_project()
+        target = root / "persistent-writer.json"
+        target.write_text('{"status":"current"}\n', encoding="utf-8")
+        write_lock = router_io_locks._json_write_lock_path(target)
+        write_lock.write_text(
+            json.dumps(
+                {
+                    "schema_version": "flowpilot.runtime_json_write_lock.v1",
+                    "path": str(target),
+                    "pid": os.getpid(),
+                    "created_at": router.utc_now(),
+                },
+                sort_keys=True,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        liveness = router_io_locks._json_write_lock_liveness(target)
+        exc = router.RouterLedgerWriteInProgress(
+            target,
+            liveness,
+            "test active runtime JSON write lock",
+        )
+
+        def operation() -> dict:
+            raise exc
+
+        started = time.monotonic()
+        with mock.patch.object(
+            router_io_locks,
+            "RUNTIME_JSON_WRITE_LOCK_TIMEOUT_SECONDS",
+            0.05,
+        ), mock.patch.object(
+            router_io_locks,
+            "RUNTIME_JSON_WRITE_LOCK_POLL_SECONDS",
+            0.005,
+        ):
+            with self.assertRaises(router.RouterLedgerWriteInProgress):
+                router_io_locks._run_foreground_with_runtime_writer_settlement(
+                    operation,
+                    command_name="next",
+                )
+        self.assertLess(time.monotonic() - started, 0.5)
     def test_controller_boundary_done_receipt_reclaims_router_postcondition(self) -> None:
         root = self.make_project()
         self.boot_to_controller(root)
@@ -1303,7 +1401,6 @@ class ForegroundControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
         root = self.make_project()
         run_root = self.boot_to_controller(root)
         self.complete_startup_runtime_entry(root)
-        self.complete_material_flow(root)
         self.complete_root_contract_before_child_skill_gates(root)
 
         self.apply_next_non_card_action(root)

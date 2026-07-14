@@ -14,6 +14,11 @@ from flowguard import (
     TestEvidence,
 )
 
+try:  # pragma: no cover
+    from .flowpilot_evidence_truth import derived_owner_proof
+except ImportError:  # pragma: no cover
+    from flowpilot_evidence_truth import derived_owner_proof
+
 ROOT = Path(__file__).resolve().parents[1]
 
 HAPPY = "happy_path"
@@ -23,6 +28,32 @@ NEGATIVE = "negative_path"
 REPLAY = "replay"
 PASSED = "passed"
 RUNNING = "running"
+
+_EXECUTION_EVIDENCE_BUNDLE: dict[str, Any] | None = None
+_DECLARATION_ONLY = True
+_EXECUTION_EVIDENCE_SCOPE = "routine"
+
+
+def configure_execution_evidence(
+    bundle: dict[str, Any] | None,
+    *,
+    declaration_only: bool,
+    evidence_scope: str = "routine",
+) -> None:
+    """Set the current proof bundle used while constructing alignment rows."""
+
+    global _EXECUTION_EVIDENCE_BUNDLE, _DECLARATION_ONLY, _EXECUTION_EVIDENCE_SCOPE
+    _EXECUTION_EVIDENCE_BUNDLE = bundle
+    _DECLARATION_ONLY = declaration_only
+    _EXECUTION_EVIDENCE_SCOPE = evidence_scope
+
+
+def current_execution_evidence_bundle() -> dict[str, Any] | None:
+    return _EXECUTION_EVIDENCE_BUNDLE
+
+
+def current_execution_evidence_scope() -> str:
+    return _EXECUTION_EVIDENCE_SCOPE
 
 SOURCE_AUDIT_BOUNDARY = (
     "Source-contract alignment is a conservative AST-supported subset of "
@@ -159,7 +190,6 @@ FACADE_PARITY_EXTERNAL_CONTRACT_SURFACE_IDS = {
     "asset:flowpilot_router_events_repair_policy_snapshot",
     "asset:flowpilot_router_events_repair_repair_decisions",
     "asset:flowpilot_router_events_repair_transaction_finalize",
-    "asset:flowpilot_router_events_repair_transaction_material",
     "asset:flowpilot_router_events_repair_transaction_outcomes",
     "asset:flowpilot_router_events_repair_transaction_paths",
     "asset:flowpilot_router_events_repair_transaction_resolution",
@@ -247,7 +277,6 @@ FACADE_PARITY_EXTERNAL_CONTRACT_SURFACE_IDS = {
     "asset:flowpilot_router_work_packets_current_node_relay_leases",
     "asset:flowpilot_router_work_packets_current_node_relay_runtime_ops",
     "asset:flowpilot_router_work_packets_current_node_validation",
-    "asset:flowpilot_router_work_packets_material_next",
     "asset:flowpilot_router_work_packets_pm_role_lifecycle_contracts",
     "asset:flowpilot_router_work_packets_pm_role_lifecycle_index",
     "asset:flowpilot_router_work_packets_pm_role_lifecycle_flowguard_operator",
@@ -332,6 +361,8 @@ SCRIPT_MODEL_BINDING_STEMS = {
     "flowpilot_paths": "runtime_path_cli",
     "flowpilot_runtime_retention": "runtime_retention_cli",
     "install_flowpilot": "local_install_sync",
+    "refresh_flowpilot_skillguard_contract": "skillguard_deep_contract_maintenance",
+    "run_flowguard_background": "flowpilot_test_tiering.background_artifact_contract",
     "run_flowguard_coverage_sweep": "coverage_sweep_runner",
     "run_test_tier": "test_tier_runner",
     "smoke_flowpilot": "smoke_fast_validation",
@@ -630,12 +661,11 @@ STRUCTURE_SPLIT_REPAIR_PLAN = {
     },
     "flowpilot_router_events_repair_transactions": {
         "split_status": "completed_split",
-        "split_reason": "repair_transaction_resolution_paths_outcomes_material_and_finalize_helpers_extracted",
+        "split_reason": "repair_transaction_resolution_paths_outcomes_and_finalize_helpers_extracted",
         "completed_split_paths": (
             "skills/flowpilot/assets/flowpilot_router_events_repair_transaction_resolution.py",
             "skills/flowpilot/assets/flowpilot_router_events_repair_transaction_paths.py",
             "skills/flowpilot/assets/flowpilot_router_events_repair_transaction_outcomes.py",
-            "skills/flowpilot/assets/flowpilot_router_events_repair_transaction_material.py",
             "skills/flowpilot/assets/flowpilot_router_events_repair_transaction_finalize.py",
         ),
         "peer_safety_status": "claimed_by_finish_flowpilot_structure_debt",
@@ -842,10 +872,9 @@ STRUCTURE_SPLIT_REPAIR_PLAN = {
     },
     "flowpilot_router_work_packets_next_actions": {
         "split_status": "completed_split",
-        "split_reason": "role_agent_material_research_and_result_reconciliation_helpers_extracted",
+        "split_reason": "role_agent_research_and_result_reconciliation_helpers_extracted",
         "completed_split_paths": (
             "skills/flowpilot/assets/flowpilot_router_work_packets_role_agents.py",
-            "skills/flowpilot/assets/flowpilot_router_work_packets_material_next.py",
             "skills/flowpilot/assets/flowpilot_router_work_packets_research_next.py",
             "skills/flowpilot/assets/flowpilot_router_work_packets_result_reconciliation.py",
         ),
@@ -1127,25 +1156,48 @@ def _evidence(
     evidence_current: bool = True,
     stale_reasons: Sequence[str] = (),
     overclaims_model_confidence: bool = False,
+    evidence_role: str = "primary",
+    evidence_target_id: str = "",
 ) -> TestEvidence:
     repo_path = _repo_path(path)
     resolved = ROOT / repo_path
-    current = evidence_current and resolved.exists()
     reasons = tuple(stale_reasons)
     if evidence_current and not resolved.exists():
         reasons = reasons + (f"referenced path does not exist: {repo_path}",)
+    proof = None
+    reuse_ticket = None
+    proof_gaps: tuple[str, ...] = ()
+    requested_pass = result_status == PASSED and evidence_current
+    if requested_pass and resolved.exists() and not _DECLARATION_ONLY:
+        proof, reuse_ticket, proof_gaps = derived_owner_proof(
+            _EXECUTION_EVIDENCE_BUNDLE or {},
+            owner_id=evidence_id,
+            covered_obligation_ids=tuple(covers),
+        )
+    current = requested_pass and resolved.exists() and proof is not None and reuse_ticket is not None and not proof_gaps
+    effective_status = PASSED if current else (result_status if result_status != PASSED else "not_run")
+    if requested_pass and not current:
+        if _DECLARATION_ONLY:
+            reasons = reasons + ("declaration-only row has no current execution proof",)
+        else:
+            reasons = reasons + tuple(f"execution proof gap: {code}" for code in proof_gaps or ("proof_bundle_missing",))
     return TestEvidence(
         evidence_id=evidence_id,
         test_name=test_name,
         path=repo_path,
         command=command,
-        result_status=result_status,
+        result_status=effective_status,
         evidence_current=current,
         test_kind=test_kind,
         covered_obligations=tuple(covers),
         covered_code_contracts=tuple(code_contracts),
+        proof_artifact=proof,
+        result_reused=proof is not None,
+        reuse_ticket=reuse_ticket,
         stale_reasons=reasons,
         overclaims_model_confidence=overclaims_model_confidence,
+        evidence_role=evidence_role,
+        evidence_target_id=evidence_target_id,
     )
 
 
@@ -1198,6 +1250,11 @@ def _contract(
     state_writes: Sequence[str] = (),
     side_effects: Sequence[str] = (),
     error_paths: Sequence[str] = (),
+    role: str = "owner",
+    behavior_plane: str = "",
+    business_intent_id: str = "",
+    behavior_commitment_id: str = "",
+    primary_path_id: str = "",
 ) -> CodeContract:
     return CodeContract(
         code_contract_id=code_contract_id,
@@ -1210,6 +1267,11 @@ def _contract(
         state_writes=tuple(state_writes),
         side_effects=tuple(side_effects),
         error_paths=tuple(error_paths),
+        role=role,
+        behavior_plane=behavior_plane,
+        business_intent_id=business_intent_id,
+        behavior_commitment_id=behavior_commitment_id,
+        primary_path_id=primary_path_id,
     )
 
 

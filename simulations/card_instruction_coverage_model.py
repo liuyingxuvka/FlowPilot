@@ -163,7 +163,6 @@ OUTPUT_CONTRACT_REQUIRED_CARD_IDS = frozenset(
     {
         "pm.core",
         "pm.output_contract_catalog",
-        "pm.material_scan",
         "pm.research_package",
         "pm.current_node_loop",
         "pm.flowguard_operator_request_report_loop",
@@ -180,7 +179,6 @@ OUTPUT_CONTRACT_REQUIRED_CARD_IDS = frozenset(
 )
 PM_NOTE_GUIDANCE_REQUIRED_CARD_IDS = frozenset(
     {
-        "pm.material_scan",
         "pm.research_package",
         "pm.current_node_loop",
         "pm.flowguard_operator_request_report_loop",
@@ -697,8 +695,16 @@ def collect_router_facts(project_root: Path) -> RouterFacts:
         if card_id:
             active_roles[str(card_id)] = str(manifest_by_id.get(str(card_id), {}).get("audience", boot_action.get("actor", "")))
 
+    retired_historical_card_ids = {
+        "pm.material_scan",
+        "reviewer.material_sufficiency",
+        "pm.material_absorb_or_research",
+        "pm.material_understanding",
+    }
     for item in router.SYSTEM_CARD_SEQUENCE:
         card_id = str(item["card_id"])
+        if card_id in retired_historical_card_ids:
+            continue
         active_roles[card_id] = str(item["to_role"])
 
     for card in manifest_by_id.values():

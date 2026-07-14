@@ -1,4 +1,4 @@
-"""Run checks for the FlowPilot repair transaction model."""
+"""Run checks for the current-contract FlowPilot repair transaction model."""
 
 from __future__ import annotations
 
@@ -16,203 +16,160 @@ REQUIRED_LABELS = (
     "reviewer_blocker_detected_node_acceptance_plan",
     "reviewer_blocker_detected_current_node_dispatch",
     "reviewer_blocker_detected_node_result",
-    "reviewer_blocker_detected_material_dispatch",
     "router_registers_blocker_with_origin_and_failure_events",
     "pm_records_model_miss_triage_for_modelable_blocker",
-    "pm_records_flowguard_out_of_scope_reason",
-    "pm_issues_model_miss_flowguard_operator_request",
-    "flowguard_operator_reports_same_class_findings_and_minimal_repair",
-    "pm_selects_model_backed_repair_candidate",
-    "pm_selects_out_of_scope_repair_candidate",
-    "pm_records_repair_decision_without_resolving_blocker",
-    "router_opens_repair_transaction",
-    "router_opens_await_existing_event_repair_transaction",
-    "router_queues_operation_replay_repair_transaction",
-    "router_queues_controller_repair_work_packet",
-    "router_records_terminal_repair_stop",
-    "existing_event_producer_completes_repair_success",
-    "existing_event_producer_returns_followup_blocker",
-    "queued_repair_action_completes_success",
-    "queued_repair_action_reports_followup_blocker",
-    "pm_writes_reissue_spec_inside_transaction",
-    "router_atomically_commits_reissue_generation_and_outcome_table",
-    "post_repair_model_check_passed_after_committed_generation",
-    "reviewer_recheck_requested_after_committed_generation",
+    "pm_requests_flowguard_operator_same_class_model",
+    "flowguard_operator_reports_same_class_findings",
+    "flowguard_operator_compares_minimal_repair_candidates",
+    "pm_selects_repair_after_model_miss_review",
+    "pm_records_repair_decision_without_self_resolution",
+    "router_opens_current_contract_repair_transaction",
+    "router_validates_and_queues_safe_operation_replay",
+    "router_atomically_commits_current_repair_and_outcome_table",
+    "flowguard_operator_checks_current_repair_effect",
+    "reviewer_recheck_requested_after_current_commit",
     "reviewer_recheck_allows_dispatch",
     "reviewer_recheck_returns_followup_blocker",
     "reviewer_recheck_returns_protocol_blocker",
-    "router_refreshes_visible_authorities_after_recheck",
+    "router_refreshes_current_authorities_after_repair_outcome",
 )
 
 
 HAZARD_EXPECTED_FAILURES = {
-    "blocker_registered_without_nonterminal_events": "router blocker registration lacked origin or nonterminal repair events",
-    "node_acceptance_plan_without_pm_lane": "reviewer block kind node_acceptance_plan has no matching PM repair lane",
+    "router_blocker_missing_origin": "router blocker registration lacks origin or nonterminal repair events",
+    "node_acceptance_plan_without_pm_lane": "reviewer block kind node_acceptance_plan is not accepted end-to-end by PM model-miss repair",
     "current_node_dispatch_missing_model_miss_card_support": "reviewer block kind current_node_dispatch is not accepted end-to-end by PM model-miss repair",
-    "material_dispatch_repair_event_not_accepted": "reviewer block kind material_dispatch is not accepted end-to-end by PM model-miss repair",
-    "material_dispatch_repair_event_not_routed": "reviewer block kind material_dispatch is not accepted end-to-end by PM model-miss repair",
+    "retired_material_dispatch_repair_lane_reintroduced": "reviewer block kind material_dispatch is not accepted end-to-end by PM model-miss repair",
     "pm_decision_self_resolves_blocker": "PM repair decision resolved the blocker by itself",
     "post_decision_wait_exposed_before_pm_flag_visible": "post-decision repair wait events were exposed before the PM repair decision flag was visible",
-    "repair_decision_before_model_miss_triage": "PM repair decision started before closing model-miss triage obligation",
-    "repair_decision_before_model_miss_path_selected": "PM repair decision started before selecting a model-miss repair path",
-    "model_backed_repair_without_flowguard_operator_report": "PM selected a model-backed repair before FlowGuard operator same-class findings and minimal repair recommendation",
-    "out_of_scope_repair_without_reason": "PM out-of-scope repair decision lacked FlowGuard incapability reason",
-    "reissue_spec_outside_transaction": "PM repair wrote replacement artifacts outside a repair transaction",
-    "await_existing_event_without_producer": "await_existing_event repair transaction lacked an existing producer",
-    "unsupported_event_replay_plan_kind": "repair transaction used unsupported executable plan kind",
-    "operation_replay_without_safe_recorded_operation": "operation_replay repair transaction did not queue a safe recorded operation replay",
-    "controller_repair_packet_without_boundaries": "controller_repair_work_packet transaction lacked bounded work packet and queued action",
-    "role_reissue_without_event_producer": "role_reissue repair transaction lacked a concrete event producer",
-    "transaction_commits_packet_files_without_ledger": "repair transaction committed without packet files, ledger, dispatch index, router table, or atomic publication",
-    "transaction_commits_ledger_without_dispatch_index": "repair transaction committed without packet files, ledger, dispatch index, router table, or atomic publication",
-    "transaction_commits_without_router_outcome_table": "repair transaction committed without packet files, ledger, dispatch index, router table, or atomic publication",
-    "partial_generation_published_before_commit": "repair transaction committed without packet files, ledger, dispatch index, router table, or atomic publication",
-    "replacement_generation_keeps_old_generation_current": "replacement packet generation lacked supersession, canonical identity, replayable hashes, or explicit result targets",
-    "replacement_generation_has_duplicate_identity": "replacement packet generation lacked supersession, canonical identity, replayable hashes, or explicit result targets",
-    "success_only_outcome_table": "repair transaction router outcome table did not route success, blocker, and protocol outcomes",
+    "repair_decision_without_model_miss_triage": "PM selected repair before recording model-miss triage",
+    "modelable_repair_without_flowguard_report": "modelable repair was selected without FlowGuard operator findings and candidate comparison",
+    "repair_commits_without_transaction_identity": "PM repair decision advanced without a durable repair transaction",
+    "retired_packet_reissue_accepted": "repair transaction committed with unsupported executable plan kind",
+    "operation_replay_without_safe_recorded_action": "repair transaction committed without concrete producer, queued action, Router handler, or terminal stop",
+    "controller_repair_packet_unbounded": "repair transaction committed without concrete producer, queued action, Router handler, or terminal stop",
+    "role_reissue_without_current_producer": "repair transaction committed without concrete producer, queued action, Router handler, or terminal stop",
+    "await_existing_event_without_producer": "repair transaction committed without concrete producer, queued action, Router handler, or terminal stop",
+    "router_reconcile_without_handler": "repair transaction committed without concrete producer, queued action, Router handler, or terminal stop",
+    "terminal_stop_without_terminal_record": "repair transaction committed without concrete producer, queued action, Router handler, or terminal stop",
+    "transaction_commits_without_plan_validation": "repair transaction committed without executable plan validation",
+    "transaction_commits_without_outcome_table": "repair transaction committed without a complete current outcome table",
+    "success_only_outcome_table": "repair transaction committed without a complete current outcome table",
     "parent_repair_rerun_targets_current_node_packet": "repair rerun target event incompatible with active node kind",
-    "parent_repair_outcome_targets_current_node_packet": "repair outcome event incompatible with active node kind",
-    "collapsed_repair_outcomes_on_business_event": "repair outcome table collapsed success blocker and protocol-blocker onto one business-validated event",
-    "routable_outcome_missing_event_identity": "repair success outcome was routable without event identity",
-    "reviewer_recheck_before_commit": "reviewer recheck was requested before a committed generation and complete outcome table",
-    "reviewer_recheck_before_post_repair_model_check": "reviewer recheck was requested before the repaired FlowGuard model checked the candidate fix",
+    "collapsed_repair_outcomes_on_business_event": "repair outcome table collapsed success blocker and protocol-blocker events",
+    "routable_outcome_missing_event_identity": "repair outcome table lacks explicit event identity",
+    "reviewer_recheck_before_current_commit": "reviewer recheck was requested before current repair commit, outcome table, and required model check",
+    "reviewer_recheck_before_post_repair_model_check": "reviewer recheck was requested before current repair commit, outcome table, and required model check",
     "reviewer_blocker_unroutable": "reviewer recheck outcome was not accepted by router",
-    "reviewer_protocol_blocker_unroutable": "reviewer recheck outcome was not accepted by router",
-    "blocked_terminal_without_followup_blocker": "repair transaction blocked without registering a follow-up blocker",
-    "complete_terminal_without_authority_refresh": "terminal repair transaction state did not refresh ledger, frontier, and display authorities",
-    "complete_terminal_keeps_stale_repair_lane": "terminal repair transaction left stale active repair transaction or recheck pending action",
-    "controller_no_legal_next_after_recheck": "repair transaction reached no legal next action",
+    "successful_terminal_without_authority_refresh": "terminal repair state did not refresh transaction index, frontier, and display",
+    "controller_no_next_action_without_followup_blocker": "controller reached no legal next action without a current follow-up blocker or terminal stop",
 }
 
 
-def _state_id(state: model.State) -> str:
-    return (
-        f"status={state.status}|holder={state.holder}|steps={state.steps}|"
-        f"node={state.active_node_kind},origin={state.control_repair_origin},"
-        f"rerun={state.rerun_target_event}|"
-        f"blocker={state.blocker_detected},{state.blocker_registered_in_router},"
-        f"{state.blocker_has_origin_event},{state.blocker_has_allowed_nonterminal_events},"
-        f"kind={state.blocker_kind},lane={state.blocker_pm_repair_lane},"
-        f"cards={state.pm_model_miss_cards_accept_blocker_kind},"
-        f"triage={state.pm_model_miss_triage_accepts_blocker_kind},"
-        f"repair_accepts={state.pm_review_repair_event_accepts_blocker_kind},"
-        f"repair_routes={state.pm_review_repair_event_routes_blocker_kind}|"
-        f"model_miss={state.model_miss_triage_recorded},modelable={state.flowguard_bug_class_modelable},"
-        f"out_of_scope={state.flowguard_out_of_scope_reason_recorded},"
-        f"request={state.model_miss_flowguard_operator_request_issued},"
-        f"report={state.model_miss_flowguard_operator_report_returned},"
-        f"same_class={state.same_class_findings_recorded},"
-        f"candidates={state.repair_candidates_compared},"
-        f"minimal={state.minimal_sufficient_repair_recommended},"
-        f"pm_selected={state.pm_selected_repair_after_model_miss}|"
-        f"pm={state.pm_repair_decision_recorded},self_resolve={state.pm_decision_resolves_blocker}|"
-        f"pm_flag_visible={state.pm_repair_decision_flag_visible}|"
-        f"tx={state.repair_transaction_opened},{state.transaction_id_recorded},{state.transaction_plan_kind}|"
-        f"exec={state.repair_plan_validation_passed},{state.replay_operation_recorded},"
-        f"{state.replay_operation_safe},{state.concrete_repair_action_queued},"
-        f"role_producer={state.role_reissue_event_producer_bound},"
-        f"{state.existing_event_producer_found},{state.controller_repair_packet_bounded},"
-        f"{state.router_internal_handler_found},{state.terminal_stop_recorded}|"
-        f"stage={state.replacement_spec_written},{state.packet_files_staged},"
-        f"{state.ledger_entries_staged},{state.dispatch_index_staged},"
-        f"{state.router_resolution_table_staged},commit={state.transaction_committed_atomically},"
-        f"partial={state.partial_generation_published},post_wait={state.post_decision_wait_events_exposed}|"
-        f"gen={state.replacement_generation_published},{state.old_generation_superseded},"
-        f"{state.canonical_packet_identity_unique},{state.packet_hashes_replayable},"
-        f"{state.result_write_targets_explicit},post_model={state.post_repair_model_check_passed}|"
-        f"outcomes={state.success_outcome_routable},{state.blocker_outcome_routable},"
-        f"{state.protocol_outcome_routable},events={state.success_outcome_event},"
-        f"{state.blocker_outcome_event},{state.protocol_outcome_event}|"
-        f"review={state.reviewer_recheck_requested},{state.reviewer_outcome},"
-        f"accepted={state.router_accepted_reviewer_outcome}|"
-        f"terminal={state.original_blocker_resolved},{state.followup_blocker_registered},"
-        f"{state.packet_ledger_refreshed},{state.frontier_refreshed},"
-        f"{state.display_refreshed},active_tx={state.active_repair_transaction},"
-        f"repair_pending={state.repair_recheck_pending_action},"
-        f"main={state.main_flow_resumed_after_success},dead={state.no_legal_next_action}"
-    )
-
-
-def _build_graph() -> dict[str, object]:
-    initial = model.initial_state()
-    queue: deque[model.State] = deque([initial])
-    states: list[model.State] = [initial]
-    index = {initial: 0}
-    edges: list[list[tuple[str, int]]] = []
+def _build_reachable_graph() -> dict[str, object]:
+    start = model.initial_state()
+    queue: deque[model.State] = deque([start])
+    seen: set[model.State] = {start}
+    edges: list[tuple[model.State, str, model.State]] = []
     labels: set[str] = set()
     invariant_failures: list[dict[str, object]] = []
 
     while queue:
         state = queue.popleft()
-        source = index[state]
-        while len(edges) <= source:
-            edges.append([])
         failures = model.invariant_failures(state)
         if failures:
-            invariant_failures.append({"state": _state_id(state), "failures": failures})
-        for label, new_state in model.next_states(state):
+            invariant_failures.append(
+                {"state": state.__dict__, "failures": failures}
+            )
+            continue
+        for label, nxt in model.next_states(state):
             labels.add(label)
-            if new_state not in index:
-                index[new_state] = len(states)
-                states.append(new_state)
-                queue.append(new_state)
-            edges[source].append((label, index[new_state]))
+            edges.append((state, label, nxt))
+            if nxt not in seen:
+                seen.add(nxt)
+                queue.append(nxt)
+
+    terminals = {state for state in seen if model.is_terminal(state)}
     return {
-        "states": states,
+        "states": seen,
         "edges": edges,
         "labels": labels,
-        "edge_count": sum(len(outgoing) for outgoing in edges),
+        "terminals": terminals,
+        "invariant_failures": invariant_failures,
+    }
+
+
+def _safe_graph_report(graph: dict[str, object]) -> dict[str, object]:
+    states = graph["states"]
+    edges = graph["edges"]
+    labels = graph["labels"]
+    terminals = graph["terminals"]
+    invariant_failures = graph["invariant_failures"]
+    missing = sorted(set(REQUIRED_LABELS) - set(labels))
+    success_count = sum(1 for state in terminals if model.is_success(state))
+    blocked_count = len(terminals) - success_count
+    return {
+        "ok": not invariant_failures and not missing and success_count > 0 and blocked_count > 0,
+        "state_count": len(states),
+        "edge_count": len(edges),
+        "success_state_count": success_count,
+        "blocked_state_count": blocked_count,
+        "labels": sorted(labels),
+        "missing_labels": missing,
         "invariant_failures": invariant_failures,
     }
 
 
 def _progress_report(graph: dict[str, object]) -> dict[str, object]:
-    states: list[model.State] = graph["states"]
-    edges: list[list[tuple[str, int]]] = graph["edges"]
-    terminal = {idx for idx, state in enumerate(states) if model.is_terminal(state)}
-    can_reach_terminal = set(terminal)
-    changed = True
-    while changed:
-        changed = False
-        for idx, outgoing in enumerate(edges):
-            if idx not in can_reach_terminal and any(target in can_reach_terminal for _label, target in outgoing):
-                can_reach_terminal.add(idx)
-                changed = True
+    states: set[model.State] = graph["states"]
+    edges: list[tuple[model.State, str, model.State]] = graph["edges"]
+    terminals: set[model.State] = graph["terminals"]
+    reverse: dict[model.State, set[model.State]] = {state: set() for state in states}
+    outgoing: dict[model.State, int] = {state: 0 for state in states}
+    for source, _label, target in edges:
+        reverse.setdefault(target, set()).add(source)
+        outgoing[source] = outgoing.get(source, 0) + 1
+
+    can_reach_terminal = set(terminals)
+    queue: deque[model.State] = deque(terminals)
+    while queue:
+        target = queue.popleft()
+        for source in reverse.get(target, set()):
+            if source not in can_reach_terminal:
+                can_reach_terminal.add(source)
+                queue.append(source)
+
+    cannot_reach = [state for state in states if state not in can_reach_terminal]
     stuck = [
-        _state_id(state)
-        for idx, state in enumerate(states)
-        if idx not in terminal and not edges[idx]
-    ]
-    cannot_reach_terminal = [
-        _state_id(state)
-        for idx, state in enumerate(states)
-        if idx not in can_reach_terminal
+        state
+        for state in states
+        if state not in terminals and outgoing.get(state, 0) == 0
     ]
     return {
-        "ok": not stuck and not cannot_reach_terminal and 0 in can_reach_terminal,
-        "terminal_state_count": len(terminal),
+        "ok": not cannot_reach and not stuck,
+        "initial_can_reach_success": any(model.is_success(state) for state in terminals),
+        "cannot_reach_terminal_count": len(cannot_reach),
+        "cannot_reach_terminal_samples": [state.__dict__ for state in cannot_reach[:5]],
         "stuck_state_count": len(stuck),
-        "stuck_state_samples": stuck[:10],
-        "cannot_reach_terminal_count": len(cannot_reach_terminal),
-        "cannot_reach_terminal_samples": cannot_reach_terminal[:10],
+        "stuck_state_samples": [state.__dict__ for state in stuck[:5]],
     }
 
 
-def _check_hazards() -> dict[str, object]:
-    hazards: dict[str, object] = {}
-    ok = True
-    for name, state in model.hazard_states().items():
-        failures = model.invariant_failures(state)
-        expected = HAZARD_EXPECTED_FAILURES[name]
-        detected = any(expected in failure for failure in failures)
-        hazards[name] = {
-            "detected": detected,
-            "expected_failure": expected,
-            "failures": failures,
-            "state": state.__dict__,
+def _loop_report(graph: dict[str, object]) -> dict[str, object]:
+    nonprogress = [
+        {
+            "label": label,
+            "source_steps": source.steps,
+            "target_steps": target.steps,
         }
-        ok = ok and detected
-    return {"ok": ok, "hazards": hazards}
+        for source, label, target in graph["edges"]
+        if target.steps <= source.steps and not model.is_terminal(target)
+    ]
+    return {
+        "ok": not nonprogress,
+        "nonprogress_edge_count": len(nonprogress),
+        "nonprogress_edge_samples": nonprogress[:10],
+    }
 
 
 def _flowguard_report() -> dict[str, object]:
@@ -233,68 +190,83 @@ def _flowguard_report() -> dict[str, object]:
         "dead_branch_count": len(report.dead_branches),
         "exception_branch_count": len(report.exception_branches),
         "reachability_failure_count": len(report.reachability_failures),
-        "reachability_failures": [failure.message for failure in report.reachability_failures],
+        "reachability_failures": [
+            failure.message for failure in report.reachability_failures
+        ],
+    }
+
+
+def _check_hazards() -> dict[str, object]:
+    hazards: dict[str, object] = {}
+    ok = True
+    states = model.hazard_states()
+    missing_expectations = sorted(set(states) - set(HAZARD_EXPECTED_FAILURES))
+    stale_expectations = sorted(set(HAZARD_EXPECTED_FAILURES) - set(states))
+    for name, state in states.items():
+        failures = model.invariant_failures(state)
+        expected = HAZARD_EXPECTED_FAILURES.get(name, "")
+        detected = bool(expected) and any(expected in failure for failure in failures)
+        hazards[name] = {
+            "detected": detected,
+            "expected_failure": expected,
+            "failures": failures,
+            "state": state.__dict__,
+        }
+        ok = ok and detected
+    return {
+        "ok": ok and not missing_expectations and not stale_expectations,
+        "hazards": hazards,
+        "missing_expectations": missing_expectations,
+        "stale_expectations": stale_expectations,
     }
 
 
 def _architecture_candidate() -> dict[str, object]:
     return {
-        "name": "repair_transaction_generation_commit",
+        "name": "current_contract_repair_transaction",
         "principles": [
-            "PM repair decisions first close the model-miss obligation: FlowGuard-modelable blockers get FlowGuard operator same-class findings and a minimal repair recommendation, while out-of-scope blockers need an explicit incapability reason.",
-            "PM repair decisions open a transaction; they never resolve blockers directly.",
-            "Post-decision repair waits are not exposed until the PM repair decision flag is visible to daemon-readable state.",
-            "The repair transaction plan kind is the executable authority; PM explanation fields do not create Router work by themselves.",
-            "Every committed repair transaction has a concrete queued action, existing event producer, Router handler, or explicit terminal stop.",
-            "Replacement packets are committed as one generation across physical files, packet ledger, dispatch index, and router resolution table.",
-            "Committed repair generations pass the repaired FlowGuard model check before reviewer recheck starts.",
-            "The router publishes success, blocker, and protocol-blocker outcomes as distinct event identities before reviewer recheck starts.",
-            "Every repair target event is checked against the active node kind; parent/backward-replay repairs only use parent-safe events.",
-            "A reviewer failure is a legal terminal blocked state with a router-visible follow-up blocker, not controller no-legal-next-action.",
-            "Terminal success or blocked states refresh packet ledger, frontier, and display authorities together.",
+            "PM explanation fields never create Router work by themselves.",
+            "One supported repair_transaction.plan_kind owns execution authority.",
+            "Every commit carries a concrete producer, queued action, Router handler, or terminal stop.",
+            "The PM decision flag, transaction, outcome table, and follow-up wait share one ordered current-state boundary.",
+            "Independent FlowGuard and Reviewer checks consume the current repair effect before success resumes the main flow.",
+            "Retired replacement-packet authority is rejected rather than translated.",
         ],
-        "minimal_runtime_change_set": [
-            "Add a PM model-miss triage gate before PM repair decision and transaction opening.",
-            "Require FlowGuard operator model-miss reports to include same-class findings, candidate comparison, and a minimal sufficient repair recommendation for modelable blockers.",
-            "Add a run-scoped repair_transaction record and transaction_id.",
-            "Validate repair_transaction.plan_kind with plan-specific executable fields before commit.",
-            "Make PM repair decision flag, active blocker wait events, repair transaction, and projection indexes one post-decision state boundary.",
-            "Move packet reissue materialization behind one commit function.",
-            "Run the repaired FlowGuard model against the candidate fix before reviewer recheck.",
-            "Replace allowed_resolution_events success-only lists with an outcome table containing distinct success and non-success event identities.",
-            "Add one event-capability preflight used by both allowed_external_events and repair outcome-table construction.",
-            "Require reviewer recheck to consume only committed generation ids.",
-            "Refresh router_state, packet_ledger, execution_frontier, and display surfaces in the same commit/finalize path.",
+        "implementation_map": [
+            "Validate plan_kind and plan-specific execution evidence before commit.",
+            "Reject packet_reissue and all replacement-packet fields at the current runtime boundary.",
+            "Publish distinct success, blocker, and protocol-blocker event identities.",
+            "Refresh repair transaction index, frontier, and display from the accepted current outcome.",
         ],
     }
 
 
 def run_checks(*, json_out_requested: bool = False) -> dict[str, object]:
-    graph = _build_graph()
-    labels = set(graph["labels"])
-    missing_labels = sorted(set(REQUIRED_LABELS) - labels)
-    safe_graph = {
-        "ok": not graph["invariant_failures"] and not missing_labels,
-        "state_count": len(graph["states"]),
-        "edge_count": graph["edge_count"],
-        "missing_labels": missing_labels,
-        "invariant_failures": graph["invariant_failures"],
-    }
+    graph = _build_reachable_graph()
+    safe_graph = _safe_graph_report(graph)
     progress = _progress_report(graph)
+    loop = _loop_report(graph)
     explorer = _flowguard_report()
     hazards = _check_hazards()
     skipped_checks = {
         "production_mutation": (
             "covered_elsewhere: this runner validates the model contract; "
-            "runtime conformance is exercised by router unit tests"
-        ),
+            "runtime conformance is exercised by current router unit tests"
+        )
     }
     if not json_out_requested:
-        skipped_checks["default_results_file"] = "skipped_with_reason: no --json-out path was provided"
+        skipped_checks["default_results_file"] = (
+            "skipped_with_reason: no --json-out path was provided"
+        )
     return {
-        "ok": bool(safe_graph["ok"]) and bool(progress["ok"]) and bool(explorer["ok"]) and bool(hazards["ok"]),
+        "ok": bool(safe_graph["ok"])
+        and bool(progress["ok"])
+        and bool(loop["ok"])
+        and bool(explorer["ok"])
+        and bool(hazards["ok"]),
         "safe_graph": safe_graph,
         "progress": progress,
+        "loop": loop,
         "flowguard_explorer": explorer,
         "hazard_checks": hazards,
         "architecture_candidate": _architecture_candidate(),
@@ -304,9 +276,8 @@ def run_checks(*, json_out_requested: bool = False) -> dict[str, object]:
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--json-out", type=Path, help="Optional path for writing JSON result payload.")
+    parser.add_argument("--json-out", type=Path)
     args = parser.parse_args()
-
     result = run_checks(json_out_requested=bool(args.json_out))
     payload = json.dumps(result, indent=2, sort_keys=True) + "\n"
     if args.json_out:

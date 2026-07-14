@@ -1,0 +1,16 @@
+{
+  "schema_version": 2,
+  "report_protocol_version": 3,
+  "execution_key": "sha256:21a68112f4dca84d2be7b8611bf97de97687d187c26e15d3d7d44d2acb455fe9",
+  "result_hash": "sha256:5b78febdbcc18ad055795077b5696767a36ce0ba97be49e8c6f93d6172b7607e",
+  "receipt_id": "sha256:c56a36afb8a04a0fb0275bc671f4ad9768f25e14de0a72d167e5678247393418",
+  "result": {
+    "status": "passed",
+    "args": [],
+    "message": "Aggregated from execution owner \"check.tier.release.background\" receipt sha256:37f615f66b6ed1f7780e7e83a56a93824db55a2fd04af774272dbe26bc8bb90a.",
+    "stdout": "",
+    "stderr": "",
+    "stdout_preview": "",
+    "stderr_preview": ""
+  }
+}

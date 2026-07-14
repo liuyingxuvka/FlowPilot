@@ -8,7 +8,7 @@ import json
 import sys
 from dataclasses import replace
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterable
 
 from flowpilot_cross_plane_friction_model_hazards import _safe_base
 from flowpilot_cross_plane_friction_model_invariants import invariant_failures
@@ -18,6 +18,64 @@ from flowpilot_cross_plane_friction_model_state import (
     CURRENT_ROLE_ARCHETYPES,
     TERMINAL_STATUSES,
     State,
+)
+
+
+RETIRED_MATERIAL_EVENTS = frozenset(
+    {
+        "pm_issues_material_and_capability_scan_packets",
+        "router_direct_material_scan_dispatch_recheck_passed",
+        "router_direct_material_scan_dispatch_recheck_blocked",
+        "router_protocol_blocker_material_scan_dispatch_recheck",
+        "worker_scan_packet_bodies_delivered_after_dispatch",
+        "worker_scan_results_returned",
+        "pm_records_material_scan_result_disposition",
+        "reviewer_reports_material_sufficient",
+        "reviewer_reports_material_insufficient",
+        "pm_accepts_reviewed_material",
+        "pm_requests_research_after_material_insufficient",
+        "pm_writes_material_understanding",
+    }
+)
+RETIRED_MATERIAL_CARD_IDS = frozenset(
+    {
+        "pm.material_scan",
+        "reviewer.material_sufficiency",
+        "pm.event.reviewer_report",
+        "pm.material_absorb_or_research",
+        "pm.material_understanding",
+    }
+)
+RETIRED_MATERIAL_FIELDS = frozenset(
+    {
+        "pm_material_packets_issued",
+        "pm_material_scan_card_delivered",
+        "material_scan_direct_dispatch_recheck_passed",
+        "material_scan_dispatch_recheck_blocked",
+        "material_scan_dispatch_recheck_protocol_blocked",
+        "material_scan_packets_relayed",
+        "worker_scan_results_returned",
+        "material_scan_results_relayed_to_reviewer",
+        "material_scan_results_relayed_to_pm",
+        "material_scan_result_disposition_recorded",
+        "material_scan_results_absorbed_by_pm",
+        "reviewer_material_sufficiency_card_delivered",
+        "material_review_sufficient",
+        "material_review_insufficient",
+        "pm_reviewer_report_event_delivered",
+        "pm_material_absorb_or_research_card_delivered",
+        "material_accepted_by_pm",
+        "pm_material_understanding_card_delivered",
+        "material_understanding_written_by_pm",
+    }
+)
+RETIRED_MATERIAL_PACKET_FAMILIES = frozenset({"material_scan"})
+CURRENT_ROLE_CARD_PATHS = (
+    "skills/flowpilot/assets/runtime_kit/cards/roles/project_manager.md",
+    "skills/flowpilot/assets/runtime_kit/cards/roles/human_like_reviewer.md",
+    "skills/flowpilot/assets/runtime_kit/cards/roles/flowguard_operator.md",
+    "skills/flowpilot/assets/runtime_kit/cards/roles/worker.md",
+    "skills/flowpilot/assets/runtime_kit/cards/roles/worker_research_report.md",
 )
 
 
@@ -147,38 +205,79 @@ def _done_status(value: Any) -> bool:
     return _status(value) in DONE_ITEM_STATUSES
 
 
-def _load_router_external_events(router_path: Path) -> dict[str, dict[str, Any]]:
+def _literal_assignment(path: Path, assignment_names: set[str]) -> Any:
     try:
-        tree = ast.parse(router_path.read_text(encoding="utf-8"))
+        tree = ast.parse(path.read_text(encoding="utf-8"))
     except (FileNotFoundError, SyntaxError, OSError):
-        return {}
+        return None
     for node in ast.walk(tree):
-        target_is_external_events = False
+        target_name = ""
         value: ast.AST | None = None
         if isinstance(node, ast.AnnAssign):
-            target_is_external_events = (
-                isinstance(node.target, ast.Name)
-                and node.target.id == "EXTERNAL_EVENTS"
-            )
+            if isinstance(node.target, ast.Name):
+                target_name = node.target.id
             value = node.value
         elif isinstance(node, ast.Assign):
-            target_is_external_events = any(
-                isinstance(target, ast.Name) and target.id == "EXTERNAL_EVENTS"
-                for target in node.targets
+            target_name = next(
+                (
+                    target.id
+                    for target in node.targets
+                    if isinstance(target, ast.Name) and target.id in assignment_names
+                ),
+                "",
             )
             value = node.value
-        if not target_is_external_events or not isinstance(value, ast.Dict):
+        if target_name not in assignment_names or value is None:
             continue
-        events: dict[str, dict[str, Any]] = {}
-        for key, item in zip(value.keys, value.values):
-            if isinstance(key, ast.Constant) and isinstance(key.value, str):
-                try:
-                    meta = ast.literal_eval(item)
-                except (ValueError, SyntaxError):
-                    meta = {}
-                events[key.value] = meta if isinstance(meta, dict) else {}
-        return events
-    return {}
+        try:
+            return ast.literal_eval(value)
+        except (ValueError, SyntaxError):
+            return None
+    return None
+
+
+def _load_router_external_events(router_path: Path) -> dict[str, dict[str, Any]]:
+    direct = _literal_assignment(router_path, {"EXTERNAL_EVENTS"})
+    if isinstance(direct, dict):
+        return {
+            str(event): meta if isinstance(meta, dict) else {}
+            for event, meta in direct.items()
+        }
+
+    events: dict[str, dict[str, Any]] = {}
+    for path in sorted(router_path.parent.glob("flowpilot_router_protocol_external_event_data_*.py")):
+        if path.name == "flowpilot_router_protocol_external_event_data.py":
+            continue
+        try:
+            tree = ast.parse(path.read_text(encoding="utf-8"))
+        except (FileNotFoundError, SyntaxError, OSError):
+            continue
+        assignment_names = {
+            node.target.id
+            for node in ast.walk(tree)
+            if isinstance(node, ast.AnnAssign)
+            and isinstance(node.target, ast.Name)
+            and node.target.id.endswith("_EXTERNAL_EVENT_DATA")
+        }
+        assignment_names.update(
+            target.id
+            for node in ast.walk(tree)
+            if isinstance(node, ast.Assign)
+            for target in node.targets
+            if isinstance(target, ast.Name)
+            and target.id.endswith("_EXTERNAL_EVENT_DATA")
+        )
+        for assignment_name in assignment_names:
+            payload = _literal_assignment(path, {assignment_name})
+            if not isinstance(payload, dict):
+                continue
+            events.update(
+                {
+                    str(event): meta if isinstance(meta, dict) else {}
+                    for event, meta in payload.items()
+                }
+            )
+    return events
 
 
 def _load_router_event_names(router_path: Path) -> set[str]:
@@ -198,6 +297,8 @@ def _collect_events(value: Any) -> set[str]:
                     "originating_event",
                     "resolved_by_event",
                     "pm_repair_rerun_target",
+                    "expected_external_event",
+                    "next_external_event",
                 } and isinstance(child, str):
                     events.add(child)
                 elif normalized in {
@@ -215,135 +316,311 @@ def _collect_events(value: Any) -> set[str]:
     return events
 
 
-def _material_packets(packet_ledger: Any, run_root: Path) -> list[dict[str, Any]]:
-    packets: list[dict[str, Any]] = []
-    if isinstance(packet_ledger, dict):
-        for packet in _iter_dicts(packet_ledger.get("packets")):
-            packet_id = str(packet.get("packet_id") or "")
-            packet_type = str(packet.get("packet_type") or packet.get("packet_envelope", {}).get("packet_type") or "")
-            if packet_type == "material_scan" or packet_id.startswith("material-scan"):
-                packets.append(packet)
-    packet_root = run_root / "packets"
-    for envelope_path in packet_root.glob("material-scan*/packet_envelope.json"):
-        envelope, _error = _read_json(envelope_path)
-        if not isinstance(envelope, dict):
-            continue
-        packet_id = str(envelope.get("packet_id") or envelope_path.parent.name)
-        if any(str(packet.get("packet_id") or "") == packet_id for packet in packets):
-            continue
-        packets.append(
-            {
-                "packet_id": packet_id,
-                "packet_type": envelope.get("packet_type"),
-                "packet_envelope": envelope,
-                "packet_envelope_path": _rel(run_root.parent.parent.parent, envelope_path),
-            }
-        )
-    return packets
+def _collect_protocol_authority(value: Any) -> dict[str, set[str]]:
+    authority = {
+        "events": set(),
+        "fields": set(),
+        "card_ids": set(),
+        "packet_families": set(),
+        "packet_ids": set(),
+    }
+
+    def walk(item: Any) -> None:
+        if isinstance(item, dict):
+            for key, child in item.items():
+                normalized = str(key)
+                if normalized in RETIRED_MATERIAL_FIELDS:
+                    authority["fields"].add(normalized)
+                if normalized in {
+                    "event",
+                    "event_name",
+                    "originating_event",
+                    "resolved_by_event",
+                    "pm_repair_rerun_target",
+                    "expected_external_event",
+                    "next_external_event",
+                } and isinstance(child, str):
+                    authority["events"].add(child)
+                elif normalized in {"allowed_resolution_events", "allowed_external_events"}:
+                    if isinstance(child, list):
+                        authority["events"].update(
+                            str(event) for event in child if isinstance(event, str)
+                        )
+                elif normalized in {"card_id", "system_card_id", "current_card_id"}:
+                    if isinstance(child, str):
+                        authority["card_ids"].add(child)
+                elif normalized in {"packet_type", "packet_family"}:
+                    if isinstance(child, str):
+                        authority["packet_families"].add(child)
+                elif normalized == "packet_id" and isinstance(child, str):
+                    authority["packet_ids"].add(child)
+                walk(child)
+        elif isinstance(item, list):
+            for child in item:
+                walk(child)
+
+    walk(value)
+    return authority
 
 
-def _has_explicit_result_write_target(packet: dict[str, Any], envelope: dict[str, Any]) -> bool:
-    metadata = envelope.get("metadata") if isinstance(envelope.get("metadata"), dict) else {}
-    output_contract = envelope.get("output_contract")
-    if not isinstance(output_contract, dict):
-        output_contract = packet.get("output_contract") if isinstance(packet.get("output_contract"), dict) else {}
-    candidates = (
-        envelope.get("expected_result_body_path"),
-        envelope.get("result_body_path"),
-        metadata.get("expected_result_body_path") if isinstance(metadata, dict) else None,
-        metadata.get("write_target_path") if isinstance(metadata, dict) else None,
-        output_contract.get("expected_result_body_path") if isinstance(output_contract, dict) else None,
-        output_contract.get("write_target_path") if isinstance(output_contract, dict) else None,
-    )
-    return any(isinstance(value, str) and value.strip() for value in candidates)
+def _merge_protocol_authority(
+    target: dict[str, set[str]],
+    source: dict[str, set[str]],
+) -> None:
+    for key in target:
+        target[key].update(source.get(key, set()))
 
 
-def _material_packet_findings(
+def _retired_material_protocol_findings(
     *,
     project_root: Path,
     run_root: Path,
+    router_state: Any,
+    frontier: Any,
     packet_ledger: Any,
 ) -> list[dict[str, object]]:
-    findings: list[dict[str, object]] = []
-    packets = _material_packets(packet_ledger, run_root)
-    role_drift: list[dict[str, object]] = []
-    missing_write_targets: list[str] = []
-    lineage_split: list[str] = []
-    for packet in packets:
-        envelope = packet.get("packet_envelope") if isinstance(packet.get("packet_envelope"), dict) else {}
-        packet_id = str(packet.get("packet_id") or envelope.get("packet_id") or "")
-        to_role = str(envelope.get("to_role") or packet.get("assigned_worker_role") or "")
-        output_contract = envelope.get("output_contract")
-        if not isinstance(output_contract, dict):
-            output_contract = packet.get("output_contract") if isinstance(packet.get("output_contract"), dict) else {}
-        recipient_role = str(output_contract.get("recipient_role") or "")
-        contract_id = str(output_contract.get("contract_id") or packet.get("output_contract_id") or "")
-        if not to_role or recipient_role != to_role or "worker_material_scan" not in contract_id:
-            role_drift.append(
-                {
-                    "packet_id": packet_id,
-                    "to_role": to_role,
-                    "recipient_role": recipient_role,
-                    "contract_id": contract_id,
-                }
-            )
-        if not _has_explicit_result_write_target(packet, envelope):
-            missing_write_targets.append(packet_id)
-        metadata = envelope.get("metadata") if isinstance(envelope.get("metadata"), dict) else {}
-        metadata_replacement = metadata.get("replacement_for") if isinstance(metadata, dict) else None
-        top_replacement = envelope.get("replacement_for") or packet.get("replacement_for")
-        if metadata_replacement and not top_replacement:
-            lineage_split.append(packet_id)
+    authority = _collect_protocol_authority(
+        {
+            "router_state": router_state,
+            "execution_frontier": frontier,
+            "packet_ledger": packet_ledger,
+        }
+    )
+    artifact_roots = (
+        run_root / "control_blocks",
+        run_root / "mailbox" / "outbox" / "events",
+        run_root / "role_output_status",
+    )
+    for root in artifact_roots:
+        for path in root.glob("*.json"):
+            payload, _error = _read_json(path)
+            _merge_protocol_authority(authority, _collect_protocol_authority(payload))
 
-    if role_drift:
+    retired_events = sorted(authority["events"].intersection(RETIRED_MATERIAL_EVENTS))
+    retired_fields = sorted(authority["fields"].intersection(RETIRED_MATERIAL_FIELDS))
+    retired_cards = sorted(authority["card_ids"].intersection(RETIRED_MATERIAL_CARD_IDS))
+    retired_packet_families = sorted(
+        authority["packet_families"].intersection(RETIRED_MATERIAL_PACKET_FAMILIES)
+    )
+    retired_packet_ids = sorted(
+        packet_id
+        for packet_id in authority["packet_ids"]
+        if packet_id.startswith("material-scan")
+    )
+    if not any(
+        (
+            retired_events,
+            retired_fields,
+            retired_cards,
+            retired_packet_families,
+            retired_packet_ids,
+        )
+    ):
+        return []
+    return [
+        _finding(
+            code="retired_material_protocol_authority_present",
+            severity="error",
+            summary=(
+                "The current run still exposes retired mandatory material-scan, "
+                "sufficiency, or understanding authority."
+            ),
+            matched_invariant="current_prework_contract_has_single_authority",
+            evidence={
+                "events": retired_events,
+                "fields": retired_fields,
+                "card_ids": retired_cards,
+                "packet_families": retired_packet_families,
+                "packet_ids": retired_packet_ids[:20],
+                "body_files_opened": False,
+            },
+            minimal_fix=(
+                "Reject the retired event, field, card, or packet family and issue fresh ordinary "
+                "PM/research work through the current packet/result/review path. Do not translate "
+                "legacy material state into current completion evidence."
+            ),
+        )
+    ]
+
+
+def _packet_contract_row(path: Path, family_id: str) -> dict[str, Any]:
+    try:
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+    except (FileNotFoundError, SyntaxError, OSError):
+        return {}
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Dict):
+            continue
+        row: dict[str, Any] = {}
+        for key_node, value_node in zip(node.keys, node.values):
+            if not isinstance(key_node, ast.Constant) or not isinstance(key_node.value, str):
+                continue
+            try:
+                row[key_node.value] = ast.literal_eval(value_node)
+            except (ValueError, SyntaxError):
+                continue
+        if row.get("family_id") == family_id:
+            return row
+    return {}
+
+
+def audit_current_prework_sources(project_root: str | Path = ".") -> dict[str, object]:
+    """Reconcile current prework authorities without re-owning child semantics."""
+
+    root = Path(project_root).resolve()
+    assets = root / "skills" / "flowpilot" / "assets"
+    router_path = assets / "flowpilot_router.py"
+    planning_path = assets / "flowpilot_router_protocol_planning_cards.py"
+    flags_path = assets / "flowpilot_router_protocol_runtime_flags.py"
+    packet_contract_path = assets / "flowpilot_core_runtime" / "packet_result_contracts.py"
+
+    events = _load_router_external_events(router_path)
+    planning_payload = _literal_assignment(planning_path, {"PLANNING_SYSTEM_CARD_SEQUENCE"})
+    planning_cards = [
+        card for card in planning_payload if isinstance(card, dict)
+    ] if isinstance(planning_payload, (list, tuple)) else []
+    runtime_flags = _literal_assignment(flags_path, {"RUNTIME_FLAG_DEFAULTS"})
+    runtime_flag_names = set(runtime_flags) if isinstance(runtime_flags, dict) else set()
+    event_flag_names = {
+        str(value)
+        for meta in events.values()
+        if isinstance(meta, dict)
+        for value in (meta.get("flag"), meta.get("requires_flag"))
+        if isinstance(value, str)
+    }
+    card_ids = {str(card.get("card_id") or "") for card in planning_cards}
+    active_retired = {
+        "events": sorted(set(events).intersection(RETIRED_MATERIAL_EVENTS)),
+        "card_ids": sorted(card_ids.intersection(RETIRED_MATERIAL_CARD_IDS)),
+        "fields": sorted(
+            (runtime_flag_names | event_flag_names).intersection(RETIRED_MATERIAL_FIELDS)
+        ),
+    }
+
+    findings: list[dict[str, object]] = []
+    if any(active_retired.values()):
         findings.append(
             _finding(
-                code="material_dispatch_output_contract_mismatch",
+                code="retired_material_protocol_still_active",
                 severity="error",
-                summary="Material-scan packet contract is not explicitly scoped to the packet recipient role.",
-                matched_invariant="material_dispatch_contract_is_explicit",
-                evidence={"packets": role_drift[:8], "count": len(role_drift)},
+                summary="Current source catalogs still expose retired mandatory material authority.",
+                matched_invariant="current_prework_contract_has_single_authority",
+                evidence=active_retired,
                 minimal_fix=(
-                    "Write packet_envelope.output_contract with contract_id "
-                    "flowpilot.output_contract.worker_material_scan_result.v1 "
-                    "and recipient_role equal to to_role for every material-scan packet."
+                    "Delete the retired event, card, and runtime flag from current authority. "
+                    "Keep old names only in forbidden/deleted lists, negative tests, or history."
                 ),
             )
         )
-    if missing_write_targets:
+
+    discovery_contract = _packet_contract_row(packet_contract_path, "task.discovery")
+    required_fields = tuple(discovery_contract.get("required_fields") or ())
+    explicit_arrays = tuple(discovery_contract.get("explicit_array_fields") or ())
+    if (
+        "candidate_skill_inventory" not in required_fields
+        or "candidate_skill_inventory" not in explicit_arrays
+    ):
         findings.append(
             _finding(
-                code="material_dispatch_write_target_missing",
+                code="shallow_skill_inventory_contract_missing",
                 severity="error",
-                summary="Material-scan dispatch lacks an explicit envelope-level result write target.",
-                matched_invariant="material_dispatch_contract_is_explicit",
+                summary="The discovery packet no longer preserves mandatory shallow skill inventory.",
+                matched_invariant="current_prework_contract_has_single_authority",
                 evidence={
-                    "packet_ids": missing_write_targets[:12],
-                    "count": len(missing_write_targets),
-                    "body_files_opened": False,
+                    "path": _rel(root, packet_contract_path),
+                    "required_fields": list(required_fields),
+                    "explicit_array_fields": list(explicit_arrays),
                 },
                 minimal_fix=(
-                    "Add an envelope-level expected_result_body_path or write_target_path "
-                    "when PM creates each material-scan packet, and keep result_envelope."
-                    "result_body_path as the completion receipt."
+                    "Restore candidate_skill_inventory as a required explicit array in the existing "
+                    "task.discovery result contract; PM remains the relevance-selection owner."
                 ),
             )
         )
-    if lineage_split:
+
+    cards_by_id = {
+        str(card.get("card_id") or ""): card
+        for card in planning_cards
+        if card.get("card_id")
+    }
+    product_architecture = cards_by_id.get("pm.product_architecture", {})
+    research_package = cards_by_id.get("pm.research_package", {})
+    product_requires = str(product_architecture.get("requires_flag") or "")
+    research_present = bool(research_package)
+    if product_requires != "user_intake_delivered_to_pm" or not research_present:
         findings.append(
             _finding(
-                code="unsupported_material_packet_lineage_split",
-                severity="warning",
-                summary="Repair material packets record replacement lineage only in metadata, not in the canonical field.",
-                matched_invariant="material_dispatch_contract_is_explicit",
-                evidence={"packet_ids": lineage_split[:12], "count": len(lineage_split)},
+                code="ordinary_resource_work_became_mandatory_gate",
+                severity="error",
+                summary=(
+                    "The current planning cards no longer keep ordinary PM/research work optional "
+                    "beside the direct product-architecture path."
+                ),
+                matched_invariant="current_prework_contract_has_single_authority",
+                evidence={
+                    "path": _rel(root, planning_path),
+                    "product_architecture_requires_flag": product_requires,
+                    "research_package_card_present": research_present,
+                },
                 minimal_fix=(
-                    "Normalize repair packet creation so top-level replacement_for/supersedes "
-                    "matches metadata.replacement_for, then quarantine superseded packet ids."
+                    "Keep pm.product_architecture directly after user intake and retain "
+                    "pm.research_package only as an ordinary PM-selected evidence workstream."
                 ),
             )
         )
-    return findings
+
+    incomplete_role_cards: list[dict[str, object]] = []
+    for relative_path in CURRENT_ROLE_CARD_PATHS:
+        path = root / relative_path
+        try:
+            text = path.read_text(encoding="utf-8")
+        except OSError:
+            text = ""
+        missing_markers = [
+            marker
+            for marker in ("numbered plan", "workstream_plan_and_completion")
+            if marker not in text
+        ]
+        if missing_markers:
+            incomplete_role_cards.append(
+                {
+                    "path": relative_path,
+                    "missing_markers": missing_markers,
+                }
+            )
+    if incomplete_role_cards:
+        findings.append(
+            _finding(
+                code="complete_workstream_role_contract_missing",
+                severity="error",
+                summary="A substantive role card lost its numbered complete-workstream report contract.",
+                matched_invariant="current_prework_contract_has_single_authority",
+                evidence={"role_cards": incomplete_role_cards},
+                minimal_fix=(
+                    "Restore the numbered local plan and contract_self_check."
+                    "workstream_plan_and_completion requirements in the existing role card."
+                ),
+            )
+        )
+
+    projected_state = state_from_findings(findings)
+    return {
+        "ok": not findings,
+        "findings": findings,
+        "finding_count": len(findings),
+        "projected_invariant_failures": invariant_failures(projected_state),
+        "evidence": {
+            "event_catalog_path": _rel(root, assets / "flowpilot_router_protocol_external_event_data.py"),
+            "planning_cards_path": _rel(root, planning_path),
+            "runtime_flags_path": _rel(root, flags_path),
+            "discovery_contract_path": _rel(root, packet_contract_path),
+            "role_card_paths": list(CURRENT_ROLE_CARD_PATHS),
+        },
+        "claim_boundary": (
+            "This source reconciliation checks current catalog and role-contract projection only; "
+            "the ordinary-resource and complete-workstream child models retain semantic ownership."
+        ),
+    }
 
 
 def _audit_terminal(
@@ -959,9 +1236,11 @@ def audit_live_run(project_root: str | Path = ".", run_id: str | None = None) ->
     lifecycle, _lifecycle_error = _read_json(run_root / "lifecycle" / "run_lifecycle.json")
 
     findings.extend(
-        _material_packet_findings(
+        _retired_material_protocol_findings(
             project_root=root,
             run_root=run_root,
+            router_state=router_state,
+            frontier=frontier,
             packet_ledger=packet_ledger,
         )
     )
@@ -1012,12 +1291,19 @@ def audit_live_run(project_root: str | Path = ".", run_id: str | None = None) ->
 def state_from_findings(findings: list[dict[str, object]]) -> State:
     state = _safe_base()
     codes = {str(finding.get("code") or "") for finding in findings}
-    if "material_dispatch_output_contract_mismatch" in codes:
-        state = replace(state, material_output_contract_role_scoped=False)
-    if "material_dispatch_write_target_missing" in codes:
-        state = replace(state, material_dispatch_write_target_explicit=False)
-    if "unsupported_material_packet_lineage_split" in codes:
-        state = replace(state, unsupported_material_packets_rejected=False)
+    if codes.intersection(
+        {
+            "retired_material_protocol_authority_present",
+            "retired_material_protocol_still_active",
+        }
+    ):
+        state = replace(state, retired_material_protocol_absent=False)
+    if "shallow_skill_inventory_contract_missing" in codes:
+        state = replace(state, shallow_skill_inventory_preserved=False)
+    if "ordinary_resource_work_became_mandatory_gate" in codes:
+        state = replace(state, ordinary_resource_work_optional=False)
+    if "complete_workstream_role_contract_missing" in codes:
+        state = replace(state, complete_workstream_report_contract_preserved=False)
     if "terminal_authority_mismatch" in codes:
         state = replace(
             state,
@@ -1058,10 +1344,16 @@ def state_from_findings(findings: list[dict[str, object]]) -> State:
 
 
 __all__ = [
+    "CURRENT_ROLE_CARD_PATHS",
     "ROLE_GATE_EVENT_PREFIXES",
     "ROLE_GATE_NON_PASS_MARKERS",
     "ROLE_GATE_PASS_MARKERS",
+    "RETIRED_MATERIAL_CARD_IDS",
+    "RETIRED_MATERIAL_EVENTS",
+    "RETIRED_MATERIAL_FIELDS",
+    "RETIRED_MATERIAL_PACKET_FAMILIES",
     "STRUCTURED_REPORT_GATES",
+    "audit_current_prework_sources",
     "audit_live_run",
     "state_from_findings",
 ]

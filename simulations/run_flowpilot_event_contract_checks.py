@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from collections import deque
 from pathlib import Path
 from typing import Any
@@ -14,6 +15,10 @@ import flowpilot_event_contract_model as model
 
 
 RESULTS_PATH = Path(__file__).resolve().with_name("flowpilot_event_contract_results.json")
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+ASSETS_PATH = PROJECT_ROOT / "skills" / "flowpilot" / "assets"
+if str(ASSETS_PATH) not in sys.path:
+    sys.path.insert(0, str(ASSETS_PATH))
 
 REQUIRED_LABELS = tuple(
     [f"select_{scenario}" for scenario in model.SCENARIOS]
@@ -29,7 +34,7 @@ HAZARD_EXPECTED_FAILURES = {
     model.ACK_EVENT_IN_ALLOWED_EXTERNAL_EVENTS: "persisted role wait contains direct ACK/check-in event",
     model.ACK_CONSUMED_SEMANTIC_WAIT_LOST: "direct ACK consumption erased the required semantic role wait",
     model.GENERIC_REPAIR_COLLAPSED_OUTCOMES: "repair outcome table collapsed success, blocker, and protocol-blocker events",
-    model.MATERIAL_REPAIR_SUCCESS_ONLY: "material repair outcome table did not route success, blocker, and protocol outcomes",
+    model.CURRENT_NODE_REPAIR_SUCCESS_ONLY: "current-node repair outcome table did not route success, blocker, and protocol outcomes",
     model.DUPLICATE_PM_REPAIR_CREATED_NEW_BLOCKER: "duplicate PM repair decision created new blocker or transaction",
     model.POSTWRITE_CLEANUP_ONLY_FOR_INVALID_WAIT: "invalid wait was persisted and only repaired by post-write cleanup",
     model.INCOMING_EVENT_OUTSIDE_ALLOWED_WAIT: "incoming role event was accepted outside current allowed_external_events",
@@ -37,6 +42,12 @@ HAZARD_EXPECTED_FAILURES = {
         "explicit event envelope bypassed current wait validation"
     ),
 }
+HAZARD_EXPECTED_FAILURES.update(
+    {
+        scenario: "persisted role wait contains unregistered external event"
+        for scenario in model.RETIRED_MATERIAL_EVENT_WAIT_SCENARIOS
+    }
+)
 
 
 def _state_id(state: model.State) -> str:
@@ -175,19 +186,66 @@ def _hazard_report() -> dict[str, object]:
     return {"ok": not failures, "hazards": hazards, "failures": failures}
 
 
+def _source_audit_report() -> dict[str, object]:
+    from flowpilot_router_protocol_external_events import EXTERNAL_EVENTS
+
+    runtime_events = set(EXTERNAL_EVENTS)
+    positive_events: set[str] = set()
+    for scenario in model.VALID_SCENARIOS:
+        state = model._scenario_state(scenario)  # type: ignore[attr-defined]
+        positive_events.update(state.allowed_external_events)
+        positive_events.update(
+            event
+            for event in (
+                state.rerun_target,
+                state.repair_success_event,
+                state.repair_blocker_event,
+                state.repair_protocol_event,
+                state.incoming_event if state.incoming_event_accepted else "none",
+            )
+            if event != "none"
+        )
+
+    missing_positive_events = sorted(positive_events - runtime_events)
+    retired_runtime_residue = sorted(model.RETIRED_MATERIAL_EXTERNAL_EVENTS & runtime_events)
+    retired_model_positive_residue = sorted(
+        model.RETIRED_MATERIAL_EXTERNAL_EVENTS & model.REGISTERED_EXTERNAL_EVENTS
+    )
+    return {
+        "ok": not missing_positive_events
+        and not retired_runtime_residue
+        and not retired_model_positive_residue,
+        "positive_event_count": len(positive_events),
+        "positive_events": sorted(positive_events),
+        "missing_positive_events": missing_positive_events,
+        "retired_material_event_count": len(model.RETIRED_MATERIAL_EXTERNAL_EVENTS),
+        "retired_material_runtime_catalog_residue": retired_runtime_residue,
+        "retired_material_model_positive_residue": retired_model_positive_residue,
+        "known_bad_contract": (
+            "Every retired material external event is absent from the current runtime catalog and model "
+            "positive registry, and each attempted wait is rejected as unregistered."
+        ),
+    }
+
+
 def run_checks() -> dict[str, object]:
     graph = _build_graph()
     safe_graph = _safe_graph_report(graph)
     progress = _progress_report(graph)
     explorer = _flowguard_report()
     hazards = _hazard_report()
+    source_audit = _source_audit_report()
     result = {
         "safe_graph": safe_graph,
         "progress": progress,
         "flowguard_explorer": explorer,
         "hazard_checks": hazards,
+        "source_audit": source_audit,
     }
-    result["ok"] = all(section.get("ok", False) for section in (safe_graph, progress, explorer, hazards))
+    result["ok"] = all(
+        section.get("ok", False)
+        for section in (safe_graph, progress, explorer, hazards, source_audit)
+    )
     return result
 
 

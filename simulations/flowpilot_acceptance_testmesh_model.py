@@ -21,8 +21,39 @@ from flowguard import (
     TestTargetSplitDerivation,
 )
 
+try:  # pragma: no cover
+    from .flowpilot_evidence_truth import testmesh_final_receipt_fields
+except ImportError:  # pragma: no cover
+    from flowpilot_evidence_truth import testmesh_final_receipt_fields
+
 
 TESTMESH_ID = "flowpilot_acceptance_registry_testmesh"
+
+COMPLETE_WORKSTREAM_PROFILE_CELLS = (
+    "complete_workstream_pass",
+    "missing_numbered_plan",
+    "vague_numbered_plan",
+    "incomplete_required_plan_step",
+    "completion_claim_contradiction",
+    "truthful_disclosed_blocker",
+    "plan_evidence_mismatch",
+    "stale_plan_evidence",
+    "unintegrated_delegation",
+    "role_local_flowguard_self_approval",
+    "formal_flowguard_independence_preserved",
+    "reviewer_sub9_pm_disposition_required",
+    "pm_sub9_disposition_recorded",
+    "corrected_workstream_retry",
+    "repeated_incomplete_plan_repair",
+)
+
+RESOURCE_DISCOVERY_PROFILE_CELLS = (
+    "mandatory_local_skill_inventory",
+    "selected_skill_deep_read",
+    "ordinary_material_evidence_work",
+    "optional_material_map_absent",
+    "forbidden_old_discovery_fields",
+)
 
 PAYLOAD_CELLS = (
     "registry_missing",
@@ -39,7 +70,7 @@ PAYLOAD_CELLS = (
     "terminal_replay_reject_repair_rerun_closure",
     "terminal_supplemental_contract_missing",
     "terminal_supplemental_contract_corrected_recovery",
-    "terminal_supplemental_fake_ai_current_body_recovery",
+    "terminal_supplemental_fake_ai_current_checklist_recovery",
     "terminal_supplemental_final_ledger_projection",
     "terminal_supplemental_round_cap_exhaustion",
     "terminal_hygiene_review_required",
@@ -64,17 +95,21 @@ PAYLOAD_CELLS = (
     "integration_cartesian_worker_boundary",
     "integration_cartesian_runtime_no_hard_blocker",
     "integration_cartesian_model_miss",
+    *COMPLETE_WORKSTREAM_PROFILE_CELLS,
+    *RESOURCE_DISCOVERY_PROFILE_CELLS,
 )
 
-FORMAL_EXIT_RELEASE_CELLS = (
-    "formal_exit_terminal_return_missing",
-    "formal_exit_startup_intake_blocks",
+RELEASE_EVIDENCE_CELLS = (
+    "all_tier_complete",
+    "formal_submit_adversarial_tier_complete",
+    "release_tier_complete",
 )
 
 CHILD_SUITE_IDS = (
     "acceptance_contract_runtime_tests",
     "acceptance_planning_quality_model",
     "acceptance_fake_ai_payload_chaos",
+    "acceptance_complete_workstream_profiles",
     "acceptance_route_mutation_recovery",
     "acceptance_terminal_replay_payloads",
     "acceptance_terminal_supplemental_repair",
@@ -123,7 +158,7 @@ ROUTER_TIER_MAPPINGS = (
     },
     {
         "tier": "integration",
-        "risk": "public CLI and fake AI package route through current packet bodies",
+        "risk": "public CLI and fake AI package route through current open-packet submission checklists",
         "scope": "release",
         "evidence_mode": "release-child",
         "background_recommended": True,
@@ -132,14 +167,6 @@ ROUTER_TIER_MAPPINGS = (
     {
         "tier": "release",
         "risk": "install/sync and broad regression evidence for acceptance-registry release confidence",
-        "scope": "release",
-        "evidence_mode": "release-child",
-        "background_recommended": True,
-        "deferred_in_routine": True,
-    },
-    {
-        "tier": "final-confidence",
-        "risk": "final done claim consumes current release evidence and formal terminal-return authority rather than progress-only output",
         "scope": "release",
         "evidence_mode": "release-child",
         "background_recommended": True,
@@ -191,6 +218,18 @@ def _partition_items() -> tuple[TestPartitionItem, ...]:
             (
                 "tests/test_flowpilot_ai_contract_projection.py",
                 "tests/test_flowpilot_contract_exhaustion_mesh.py",
+            ),
+        ),
+        TestPartitionItem(
+            "complete_workstream_and_resource_profiles",
+            "workflow",
+            "acceptance_complete_workstream_profiles",
+            "child",
+            "Every substantive role, Controller exception, Reviewer/PM disposition, local skill inventory, and ordinary material-work profile executes through the current public packet path.",
+            (
+                "simulations/flowpilot_complete_workstream_orchestration_model.py",
+                "simulations/flowpilot_ordinary_resource_discovery_model.py",
+                "tests/test_flowpilot_complete_workstream_fake_ai.py",
             ),
         ),
         TestPartitionItem(
@@ -269,16 +308,8 @@ def _partition_items() -> tuple[TestPartitionItem, ...]:
             "release",
             "acceptance_router_release_tiers",
             "child",
-            "Router packet, route, terminal, integration, release, final-confidence, and formal terminal-return evidence remain visible.",
+            "Current all, formal-submit-adversarial, and release evidence remain visible as upstream proof for strict parent checks.",
             ("scripts/run_test_tier.py",),
-        ),
-        TestPartitionItem(
-            "formal_exit_authority",
-            "release",
-            "acceptance_router_release_tiers",
-            "child",
-            "Formal FlowPilot exit claims require final-preflight terminal_return with controller_stop_allowed=true.",
-            ("simulations/flowpilot_final_confidence_gate.py", "skills/flowpilot/assets/flowpilot_new.py"),
         ),
     )
 
@@ -293,7 +324,11 @@ def _tier_child(
     evidence_current: bool = False,
     evidence_tier: str = "candidate_only",
     test_count: int = 0,
+    selected_count: int = 0,
+    skipped_count: int = 0,
+    skipped_visible: bool = True,
     exit_code: int | None = None,
+    log_root: str = "",
     background: bool = False,
     has_exit_artifact: bool = False,
     has_result_artifact: bool = False,
@@ -301,6 +336,14 @@ def _tier_child(
     duration_seconds: float | None = None,
     timeout_seconds: float | None = None,
     stale_reasons: tuple[str, ...] = (),
+    proof_artifact: Mapping[str, Any] | None = None,
+    result_reused: bool = False,
+    run_id: str = "",
+    terminal_status: str = "",
+    result_fingerprint: str = "",
+    covered_obligation_ids: tuple[str, ...] = (),
+    artifact_version: str = "",
+    verifier_version: str = "",
     release_required: bool = False,
     owns_state: tuple[str, ...] = (),
     owns_side_effects: tuple[str, ...] = (),
@@ -312,9 +355,12 @@ def _tier_child(
         evidence_tier=evidence_tier,
         evidence_current=evidence_current,
         test_count=test_count if result_status == "passed" else 0,
+        selected_count=selected_count if result_status == "passed" else 0,
+        skipped_count=skipped_count,
+        skipped_visible=skipped_visible,
         exit_code=exit_code,
         result_path=result_path,
-        log_root=result_path,
+        log_root=log_root or result_path,
         background=background,
         has_exit_artifact=has_exit_artifact,
         has_result_artifact=has_result_artifact,
@@ -324,6 +370,14 @@ def _tier_child(
         release_required=release_required,
         not_run_reason="" if result_status == "passed" else not_run_reason,
         stale_reasons=stale_reasons,
+        proof_artifact=proof_artifact,
+        result_reused=result_reused,
+        run_id=run_id,
+        terminal_status=terminal_status,
+        result_fingerprint=result_fingerprint,
+        covered_obligation_ids=covered_obligation_ids,
+        artifact_version=artifact_version,
+        verifier_version=verifier_version,
         owns_state=owns_state,
         owns_side_effects=owns_side_effects,
     )
@@ -334,6 +388,36 @@ def _with_override(defaults: dict[str, Any], overrides: Mapping[str, Any] | None
     if overrides:
         merged.update(dict(overrides))
     return merged
+
+
+def _routine_child(
+    suite_id: str,
+    *,
+    evidence_override: Mapping[str, Any] | None,
+    **declared: Any,
+) -> TestSuiteEvidence:
+    """Bind declared ownership to current proof instead of a hand-written green row."""
+
+    values = dict(declared)
+    if evidence_override:
+        values.update(dict(evidence_override))
+    else:
+        values.update(
+            {
+                "result_status": "not_run",
+                "evidence_tier": "candidate_only",
+                "evidence_current": False,
+                "test_count": 0,
+                "selected_count": 0,
+                "exit_code": None,
+                "result_path": "",
+                "has_exit_artifact": False,
+                "has_result_artifact": False,
+                "proof_artifact": None,
+                "not_run_reason": "current proof artifact was not supplied for this child suite",
+            }
+        )
+    return TestSuiteEvidence(suite_id, **values)
 
 
 def _release_child(
@@ -354,11 +438,21 @@ def _release_child(
     stale_reasons: tuple[str, ...] = (),
     not_run_reason: str,
     test_count: int,
+    selected_count: int,
     owned_leaf_cell_ids: tuple[str, ...] = (),
+    proof_artifact: Mapping[str, Any] | None = None,
 ) -> TestSuiteEvidence:
     status = result_status or ("passed" if release_evidence else "not_run")
     current = evidence_current if evidence_current is not None else release_evidence
     effective_exit_code = exit_code if exit_code is not None else (0 if release_evidence else None)
+    receipt_fields = (
+        testmesh_final_receipt_fields(
+            proof_artifact,
+            covered_obligation_ids=owned_leaf_cell_ids,
+        )
+        if proof_artifact is not None
+        else {}
+    )
     return TestSuiteEvidence(
         suite_id,
         command=command,
@@ -366,6 +460,7 @@ def _release_child(
         evidence_tier="external_contract" if release_evidence else "candidate_only",
         evidence_current=current,
         test_count=test_count if status == "passed" else 0,
+        selected_count=selected_count if status == "passed" else 0,
         exit_code=effective_exit_code,
         result_path=result_path if status == "passed" or has_result_artifact else "",
         background=background,
@@ -378,6 +473,8 @@ def _release_child(
         not_run_reason="" if status == "passed" else not_run_reason,
         stale_reasons=stale_reasons,
         owned_leaf_cell_ids=owned_leaf_cell_ids,
+        proof_artifact=proof_artifact,
+        **receipt_fields,
     )
 
 
@@ -395,11 +492,17 @@ def build_testmesh_plan(
     release_stale_reasons: tuple[str, ...] = (),
     release_result_path: str = "tmp/test_background acceptance tier artifacts",
     router_tier_overrides: Mapping[str, Mapping[str, Any]] | None = None,
+    routine_evidence_overrides: Mapping[str, Mapping[str, Any]] | None = None,
+    release_proof_artifact: Mapping[str, Any] | None = None,
+    release_test_count: int | None = None,
+    release_selected_count: int | None = None,
 ) -> TestMeshPlan:
     tier_overrides = router_tier_overrides or {}
+    evidence_overrides = routine_evidence_overrides or {}
     child_suites = (
-        TestSuiteEvidence(
+        _routine_child(
             "acceptance_contract_runtime_tests",
+            evidence_override=evidence_overrides.get("acceptance_contract_runtime_tests"),
             command=(
                 "python -m unittest -v tests.test_flowpilot_high_standard_control_flow "
                 "tests.test_flowpilot_core_runtime tests.test_flowpilot_ai_contract_projection"
@@ -430,8 +533,9 @@ def build_testmesh_plan(
                 "parent_review_final_gate_gap_hard_block",
             ),
         ),
-        TestSuiteEvidence(
+        _routine_child(
             "acceptance_planning_quality_model",
+            evidence_override=evidence_overrides.get("acceptance_planning_quality_model"),
             command="python simulations/run_flowpilot_planning_quality_checks.py --json-out simulations/flowpilot_planning_quality_results.json",
             result_status="passed",
             evidence_tier="executable_flowguard",
@@ -448,8 +552,9 @@ def build_testmesh_plan(
                 "pm_disposition_missing_item_closure",
             ),
         ),
-        TestSuiteEvidence(
+        _routine_child(
             "acceptance_fake_ai_payload_chaos",
+            evidence_override=evidence_overrides.get("acceptance_fake_ai_payload_chaos"),
             command=(
                 "python -m unittest -v tests.test_flowpilot_fake_project_rehearsal "
                 "tests.test_flowpilot_new_entrypoint tests.test_flowpilot_ai_contract_projection"
@@ -462,7 +567,7 @@ def build_testmesh_plan(
                 "tests/test_flowpilot_fake_project_rehearsal.py; "
                 "tests/test_flowpilot_new_entrypoint.py; tests/test_flowpilot_ai_contract_projection.py"
             ),
-            owns_state=("fake_ai_payloads", "opened_packet_body_projection"),
+            owns_state=("fake_ai_payloads", "opened_packet_checklist_projection"),
             owns_side_effects=("fake_ai_result_submission",),
             owned_leaf_cell_ids=(
                 "pm_disposition_missing_item_closure",
@@ -473,15 +578,41 @@ def build_testmesh_plan(
                 "terminal_segment_unexpected",
                 "terminal_segment_corrected_recovery",
                 "terminal_replay_reject_repair_rerun_closure",
-                "terminal_supplemental_fake_ai_current_body_recovery",
+                "terminal_supplemental_fake_ai_current_checklist_recovery",
                 "ai_contract_semantic_recheck_forbidden_alias_feedback",
                 "ai_contract_semantic_recheck_wrong_value_corrected_retry",
                 "ai_contract_all_result_allowed_options_wrong_value",
                 "ai_contract_profile_forbidden_alias_feedback",
             ),
         ),
-        TestSuiteEvidence(
+        _routine_child(
+            "acceptance_complete_workstream_profiles",
+            evidence_override=evidence_overrides.get("acceptance_complete_workstream_profiles"),
+            command=(
+                "python simulations/run_flowpilot_complete_workstream_orchestration_checks.py; "
+                "python simulations/run_flowpilot_ordinary_resource_discovery_checks.py; "
+                "python -m unittest -v tests.test_flowpilot_complete_workstream_orchestration "
+                "tests.test_flowpilot_ordinary_resource_discovery tests.test_flowpilot_complete_workstream_fake_ai"
+            ),
+            result_status="passed",
+            evidence_tier="executable_flowguard",
+            test_count=18,
+            exit_code=0,
+            result_path=(
+                "simulations/flowpilot_complete_workstream_orchestration_results.json; "
+                "simulations/flowpilot_ordinary_resource_discovery_results.json; "
+                "tests/test_flowpilot_complete_workstream_fake_ai.py"
+            ),
+            owns_state=("role_workstream_semantic_report", "preplanning_capability_discovery"),
+            owns_side_effects=("reviewer_block_or_pm_disposition", "ordinary_role_work_routing"),
+            owned_leaf_cell_ids=(
+                *COMPLETE_WORKSTREAM_PROFILE_CELLS,
+                *RESOURCE_DISCOVERY_PROFILE_CELLS,
+            ),
+        ),
+        _routine_child(
             "acceptance_route_mutation_recovery",
+            evidence_override=evidence_overrides.get("acceptance_route_mutation_recovery"),
             command="python simulations/run_flowpilot_fake_project_rehearsal_checks.py --scenario route_mutation_recovery",
             result_status="passed",
             evidence_tier="external_contract",
@@ -495,8 +626,9 @@ def build_testmesh_plan(
                 "route_mutation_item_disposition_recovery",
             ),
         ),
-        TestSuiteEvidence(
+        _routine_child(
             "acceptance_terminal_replay_payloads",
+            evidence_override=evidence_overrides.get("acceptance_terminal_replay_payloads"),
             command="python -m unittest -v tests.test_flowpilot_core_runtime terminal replay payload cases",
             result_status="passed",
             evidence_tier="external_contract",
@@ -515,8 +647,9 @@ def build_testmesh_plan(
                 "terminal_supplemental_final_ledger_projection",
             ),
         ),
-        TestSuiteEvidence(
+        _routine_child(
             "acceptance_terminal_supplemental_repair",
+            evidence_override=evidence_overrides.get("acceptance_terminal_supplemental_repair"),
             command=(
                 "python simulations/run_flowpilot_terminal_supplemental_repair_checks.py; "
                 "python -m unittest -v tests.test_flowpilot_core_runtime terminal supplemental repair and hygiene cases; "
@@ -539,7 +672,7 @@ def build_testmesh_plan(
             owned_leaf_cell_ids=(
                 "terminal_supplemental_contract_missing",
                 "terminal_supplemental_contract_corrected_recovery",
-                "terminal_supplemental_fake_ai_current_body_recovery",
+                "terminal_supplemental_fake_ai_current_checklist_recovery",
                 "terminal_supplemental_final_ledger_projection",
                 "terminal_supplemental_round_cap_exhaustion",
                 "terminal_hygiene_review_required",
@@ -548,8 +681,9 @@ def build_testmesh_plan(
                 "terminal_hygiene_final_ledger_projection",
             ),
         ),
-        TestSuiteEvidence(
+        _routine_child(
             "acceptance_field_contract_mesh",
+            evidence_override=evidence_overrides.get("acceptance_field_contract_mesh"),
             command="python simulations/run_flowpilot_field_contract_checks.py; python simulations/run_flowpilot_field_mesh_checks.py",
             result_status="passed",
             evidence_tier="field_lifecycle_mesh",
@@ -559,8 +693,9 @@ def build_testmesh_plan(
             owns_state=("field_contract_catalog", "field_mesh"),
             owns_side_effects=("field_contract_result",),
         ),
-        TestSuiteEvidence(
+        _routine_child(
             "acceptance_model_test_alignment",
+            evidence_override=evidence_overrides.get("acceptance_model_test_alignment"),
             command="python simulations/run_flowpilot_model_test_alignment_checks.py --json-out simulations/flowpilot_model_test_alignment_results.json",
             result_status="passed",
             evidence_tier="model_test_alignment",
@@ -570,8 +705,9 @@ def build_testmesh_plan(
             owns_state=("model_test_alignment",),
             owns_side_effects=("coverage_accounting",),
         ),
-        TestSuiteEvidence(
+        _routine_child(
             "acceptance_integration_cartesian_coverage",
+            evidence_override=evidence_overrides.get("acceptance_integration_cartesian_coverage"),
             command="python simulations/run_flowpilot_integration_cartesian_coverage_checks.py --json-out simulations/flowpilot_integration_cartesian_coverage_results.json",
             result_status="passed",
             evidence_tier="executable_flowguard",
@@ -638,7 +774,7 @@ def build_testmesh_plan(
         ),
         _release_child(
             "acceptance_router_release_tiers",
-            command="python scripts/run_test_tier.py --tier router-packets/router-route/router-terminal/integration/release/final-confidence",
+            command="python scripts/run_test_tier.py --tier all/formal-submit-adversarial/release",
             result_path=release_result_path,
             release_evidence=release_evidence,
             result_status=release_result_status,
@@ -651,11 +787,13 @@ def build_testmesh_plan(
             duration_seconds=release_duration_seconds,
             stale_reasons=release_stale_reasons,
             not_run_reason="full release tier evidence is visible but not required for routine confidence",
-            test_count=45,
-            owned_leaf_cell_ids=(
-                "formal_exit_terminal_return_missing",
-                "formal_exit_startup_intake_blocks",
-            ),
+            test_count=max(1, int(release_test_count or 0)) if release_evidence else 0,
+            selected_count=max(
+                max(1, int(release_test_count or 0)),
+                int(release_selected_count or 0),
+            ) if release_evidence else 0,
+            owned_leaf_cell_ids=RELEASE_EVIDENCE_CELLS,
+            proof_artifact=release_proof_artifact,
         ),
     )
     return TestMeshPlan(
@@ -681,7 +819,7 @@ def build_testmesh_plan(
                 "integration_cartesian_coverage.expected_outcome",
             ),
             side_effect_owner_fields=(
-                "packet_reissue",
+                "repair_transaction",
                 "route_mutation",
                 "final_route_wide_ledger",
                 "fake_ai_result_submission",
@@ -697,6 +835,7 @@ def build_testmesh_plan(
         ),
         required_leaf_cell_ids=PAYLOAD_CELLS,
         required_evidence_tier="external_contract",
+        require_proof_artifacts=True,
         decision_scope="routine",
         release_deferred_allowed=True,
     )
@@ -711,8 +850,8 @@ def payload_cell_owners(plan: TestMeshPlan) -> dict[str, tuple[str, ...]]:
     return {cell_id: tuple(suites) for cell_id, suites in owners.items()}
 
 
-def formal_exit_release_cell_owners(plan: TestMeshPlan) -> dict[str, tuple[str, ...]]:
-    owners: dict[str, list[str]] = {cell_id: [] for cell_id in FORMAL_EXIT_RELEASE_CELLS}
+def release_evidence_cell_owners(plan: TestMeshPlan) -> dict[str, tuple[str, ...]]:
+    owners: dict[str, list[str]] = {cell_id: [] for cell_id in RELEASE_EVIDENCE_CELLS}
     for suite in plan.child_suites:
         for cell_id in suite.owned_leaf_cell_ids:
             if cell_id in owners:

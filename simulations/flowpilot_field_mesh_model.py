@@ -52,6 +52,61 @@ FIELD_LIFECYCLE_STATES = {
 }
 
 
+# These fields govern the maintenance-time projection from FlowPilot's source
+# contract into SkillGuard and the global router.  They are deliberately kept
+# out of the product-runtime field catalog: the repository contract maintainer
+# writes them, the public compiler and router consume them, and missing or
+# guessed values must block selection instead of creating another runtime path.
+MAINTENANCE_AUTHORITY_FIELD_CONTRACTS = (
+    {
+        "field": "skillguard.contract_source.native_route_bindings[]",
+        "child_model": "model_evidence_fields",
+        "importance": "critical_transition",
+        "owner": "flowpilot_skillguard_contract_source",
+        "writers": ("flowpilot_contract_maintainer",),
+        "readers": (
+            "skillguard_v2_public_compiler",
+            "skillguard_global_router",
+            "flowpilot_skillguard_contract_model",
+        ),
+        "projections": (
+            "skills/flowpilot/.skillguard/compiled-contract.json",
+            ".codex/.skillguard/global-router/global_registry.json",
+        ),
+        "lifecycle": "current",
+        "exact_set_source": "flowpilot_skillguard_contract_model.export_contract.routes",
+        "missing_disposition": "global_skill_selection_blocked",
+        "default_allowed": False,
+        "fallback_allowed": False,
+    },
+    {
+        "field": "skillguard.contract_source.native_check_bindings[]",
+        "child_model": "model_evidence_fields",
+        "importance": "critical_transition",
+        "owner": "flowpilot_skillguard_contract_source",
+        "writers": ("flowpilot_contract_maintainer",),
+        "readers": (
+            "skillguard_v2_public_compiler",
+            "skillguard_global_router",
+            "flowpilot_skillguard_contract_model",
+        ),
+        "projections": (
+            "skills/flowpilot/.skillguard/compiled-contract.json",
+            "skills/flowpilot/.skillguard/check-manifest.json",
+            ".codex/.skillguard/global-router/global_registry.json",
+        ),
+        "lifecycle": "current",
+        "exact_set_source": "skills/flowpilot/.skillguard/contract-source.json.checks",
+        "missing_disposition": "global_skill_selection_blocked",
+        "default_allowed": False,
+        "fallback_allowed": False,
+    },
+)
+REQUIRED_MAINTENANCE_AUTHORITY_FIELD_CONTRACT_COUNT = len(
+    MAINTENANCE_AUTHORITY_FIELD_CONTRACTS
+)
+
+
 @dataclass(frozen=True)
 class Tick:
     pass
@@ -77,6 +132,9 @@ class State:
     production_legacy_reference_count: int = 0
     prompt_legacy_reference_count: int = 0
     stale_fixed_role_gate_reference_count: int = 0
+    maintenance_authority_contract_count: int = 0
+    maintenance_authority_contracts_current: int = 0
+    maintenance_authority_finding_count: int = 0
     full_inventory_written: bool = False
     child_partition_summary_written: bool = False
     classification: str = ""
@@ -102,6 +160,11 @@ def mesh_ready(state: State) -> bool:
         and state.production_legacy_reference_count == 0
         and state.prompt_legacy_reference_count == 0
         and state.stale_fixed_role_gate_reference_count == 0
+        and state.maintenance_authority_contract_count
+        == REQUIRED_MAINTENANCE_AUTHORITY_FIELD_CONTRACT_COUNT
+        and state.maintenance_authority_contracts_current
+        == state.maintenance_authority_contract_count
+        and state.maintenance_authority_finding_count == 0
         and state.full_inventory_written
         and state.child_partition_summary_written
     )
@@ -126,6 +189,17 @@ def _block_label(state: State) -> str:
         return "block_prompt_legacy_field_references"
     if state.stale_fixed_role_gate_reference_count:
         return "block_stale_fixed_role_field_gates"
+    if (
+        state.maintenance_authority_contract_count
+        != REQUIRED_MAINTENANCE_AUTHORITY_FIELD_CONTRACT_COUNT
+    ):
+        return "block_missing_maintenance_authority_field_contracts"
+    if (
+        state.maintenance_authority_contracts_current
+        != state.maintenance_authority_contract_count
+        or state.maintenance_authority_finding_count
+    ):
+        return "block_stale_maintenance_authority_field_projection"
     if not state.full_inventory_written:
         return "block_missing_full_field_inventory"
     if not state.child_partition_summary_written:
@@ -187,6 +261,7 @@ class FlowPilotFieldMeshStep:
         "field_child_partitions",
         "field_lifecycle_statuses",
         "critical_code_bindings",
+        "maintenance_authority_field_contracts",
     )
     writes = ("field_mesh_acceptance_or_block",)
     input_description = "generated field mesh metrics"

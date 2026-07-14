@@ -24,8 +24,8 @@ It calls FlowGuard `review_model_maturation_loop()` and records:
   progress-only background evidence;
 - singleton-vs-plural authority gaps, including duplicate daemon writers,
   duplicate active packet authorities, conflicting PM package dispositions,
-  route replacement without old-object disposition, stale material generation
-  flags, ACK-only semantic completion, and final progress-only closure.
+  route replacement without old-object disposition, producerless repair waits,
+  ACK-only semantic completion, and final progress-only closure.
 
 The gate supports routine FlowPilot maintenance and local install confidence.
 It does not replace release-level full Meta or Capability regressions when

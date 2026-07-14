@@ -45,7 +45,7 @@ contract_fake_ai = load_module(
     "flowpilot_contract_driven_fake_ai",
     ROOT / "simulations" / "flowpilot_contract_driven_fake_ai.py",
 )
-from flowpilot_core_runtime import formal_artifact_contracts  # noqa: E402
+from flowpilot_core_runtime import formal_artifact_contracts, packet_result_contracts  # noqa: E402
 
 
 def flowguard_result_payload(summary: str) -> dict[str, object]:
@@ -105,6 +105,37 @@ def write_flowguard_evidence_artifact(
 
 
 class FlowPilotAIContractProjectionTests(unittest.TestCase):
+    def test_forbidden_child_path_is_detected_when_only_one_array_item_contains_it(self) -> None:
+        fields = (
+            "owner_node_ids",
+            "review_gate_ids",
+            "final_replay_required",
+            "low_quality_failure_patterns",
+            "required_evidence",
+        )
+        registered = set(
+            packet_result_contracts.forbidden_fields_for_family("task.high_standard_contract")
+        )
+        for field in fields:
+            path = f"acceptance_item_registry.items[].{field}"
+            with self.subTest(field=field):
+                self.assertIn(path, registered)
+                payload = {
+                    "acceptance_item_registry": {
+                        "items": [
+                            {field: ["forbidden"]},
+                            {"acceptance_item_id": "acc-without-forbidden-field"},
+                        ]
+                    }
+                }
+                exists, values = runtime._payload_path_values(payload, path)
+                self.assertTrue(exists)
+                self.assertEqual(values, [["forbidden"]])
+                self.assertEqual(
+                    runtime._top_level_forbidden_fields(payload, (path,)),
+                    (path,),
+                )
+
     def issue_semantic_recheck_packet(
         self,
         *,
@@ -218,8 +249,137 @@ class FlowPilotAIContractProjectionTests(unittest.TestCase):
                 return str(event["payload"]["fresh_packet_id"])
         self.fail(f"no reissue packet found for {blocked_packet_id}")
 
+    def report_contract_for_packet(
+        self,
+        ledger: dict[str, object],
+        packet_id: str,
+    ) -> dict[str, object]:
+        return ledger["packets"][packet_id]["envelope"]["current_handoff_contract"][
+            "required_report_contract"
+        ]
+
     def contract_driven_responder(self, packet: dict[str, object]):
-        return contract_fake_ai.ContractDrivenFakeAIResponder.from_packet(packet)
+        return contract_fake_ai.ContractDrivenFakeAIResponder.from_open_packet_result(
+            self.open_packet_result_for_responder(packet)
+        )
+
+    def open_packet_result_for_responder(self, packet: dict[str, object]) -> dict[str, object]:
+        envelope = packet["envelope"]
+        handoff = json.loads(json.dumps(envelope["current_handoff_contract"]))
+        report_contract = handoff["required_report_contract"]
+        packet_id = str(envelope["packet_id"])
+        lease_id = f"lease-open-{packet_id}"
+        run_id = "run-ai-contract-projection"
+        checklist = {
+            "schema_version": contract_fake_ai.SUBMISSION_CHECKLIST_SCHEMA_VERSION,
+            "source": "current_handoff_contract",
+            "run_id": run_id,
+            "packet_id": packet_id,
+            "lease_id": lease_id,
+            "route_version": handoff["route_version"],
+            "source_generation": handoff["source_generation"],
+            "contract_family_id": handoff["contract_family_id"],
+            "current_packet_body_inspected": False,
+            "current_handoff_contract_inspected": True,
+            "required_result_body_fields": report_contract["required_result_body_fields"],
+            "required_child_fields": report_contract["required_child_fields"],
+            "explicit_array_fields": report_contract["explicit_array_fields"],
+            "non_empty_array_fields": report_contract["non_empty_array_fields"],
+            "allowed_value_options": report_contract["allowed_value_options"],
+            "field_type_requirements": report_contract["field_type_requirements"],
+            "forbidden_fields": report_contract["forbidden_fields"],
+            "forbidden_aliases": report_contract["forbidden_aliases"],
+            "result_skeleton": report_contract["minimal_valid_shape"],
+            "branch_valid_shapes": report_contract["branch_valid_shapes"],
+        }
+        review_window = handoff.get("review_window")
+        checklist["contract_fingerprint"] = contract_fake_ai._fingerprint_for_payload(
+            contract_fake_ai._fingerprint_payload(
+                run_id=run_id,
+                packet_id=packet_id,
+                lease_id=lease_id,
+                route_version=handoff["route_version"],
+                source_generation=handoff["source_generation"],
+                contract_family_id=handoff["contract_family_id"],
+                required_report_contract=report_contract,
+                review_window=review_window,
+            )
+        )
+        return {
+            "ok": True,
+            "schema_version": contract_fake_ai.OPEN_PACKET_RESULT_SCHEMA_VERSION,
+            "run_id": run_id,
+            "packet": {
+                "packet_id": packet_id,
+                "packet_kind": envelope["packet_kind"],
+                "responsibility": envelope["responsibility"],
+                "route_version": envelope["route_version"],
+                "body_hash": envelope["body_hash"],
+                "current_handoff_contract": handoff,
+            },
+            "lease": {
+                "lease_id": lease_id,
+                "responsibility": envelope["responsibility"],
+                "ack_received": True,
+            },
+            "sealed_packet_body": packet.get("body", ""),
+            "authorized_input_materials": [],
+            "authorized_input_materials_delivered": True,
+            "submission_checklist": checklist,
+            "open_receipt": {
+                "event_type": "sealed_packet_body_opened",
+                "packet_id": packet_id,
+                "lease_id": lease_id,
+                "body_hash": envelope["body_hash"],
+            },
+        }
+
+    def review_window_responder(self, review_window: dict[str, object]):
+        family_id = "review.any_current_subject"
+        effective = runtime.packet_result_contracts.effective_result_contract_for_family(family_id)
+        report_contract = {
+            "output_contract": {"contract_family_id": family_id},
+            "result_contract_profile_ids": list(effective["result_contract_profile_ids"]),
+            "result_contract_profile_bindings": dict(effective["result_contract_profile_bindings"]),
+            "required_result_body_fields": list(effective["required_fields"]),
+            "required_child_fields": list(effective["required_child_fields"]),
+            "explicit_array_fields": list(effective["explicit_array_fields"]),
+            "non_empty_array_fields": list(effective["non_empty_array_fields"]),
+            "allowed_value_options": dict(effective["allowed_value_options"]),
+            "field_type_requirements": dict(effective["field_type_requirements"]),
+            "forbidden_fields": list(effective["forbidden_fields"]),
+            "forbidden_aliases": dict(effective["forbidden_aliases"]),
+            "minimal_valid_shape": dict(effective["minimal_valid_shape"]),
+            "branch_valid_shapes": dict(effective["branch_valid_shapes"]),
+            "stage_evidence_matrix": {},
+            "validator": str(effective["validator"]),
+        }
+        packet = {
+            "packet_id": "packet-review-window-projection",
+            "body": "{}",
+            "envelope": {
+                "packet_id": "packet-review-window-projection",
+                "packet_kind": "review",
+                "responsibility": "reviewer",
+                "route_version": 1,
+                "body_hash": "review-window-body-hash",
+                "current_handoff_contract": {
+                    "schema_version": contract_fake_ai.CURRENT_HANDOFF_CONTRACT_SCHEMA_VERSION,
+                    "contract_id": contract_fake_ai.CURRENT_HANDOFF_CONTRACT_SCHEMA_VERSION,
+                    "packet_id": "packet-review-window-projection",
+                    "packet_kind": "review",
+                    "route_scope": "node_result_review",
+                    "recipient_responsibility": "reviewer",
+                    "contract_family_id": family_id,
+                    "current_run_only": True,
+                    "route_version": 1,
+                    "source_generation": 1,
+                    "required_report_contract": report_contract,
+                    "review_window": review_window,
+                },
+            },
+        }
+        return self.contract_driven_responder(packet)
 
     def node_context_package_result_id(
         self,
@@ -237,8 +397,7 @@ class FlowPilotAIContractProjectionTests(unittest.TestCase):
     def test_semantic_recheck_contract_projects_ai_facing_fields_and_options(self) -> None:
         ledger, packet_id = self.issue_semantic_recheck_packet()
         packet = ledger["packets"][packet_id]
-        packet_body = json.loads(packet["body"])
-        report_contract = packet_body["current_handoff_contract"]["required_report_contract"]
+        report_contract = packet["envelope"]["current_handoff_contract"]["required_report_contract"]
         options = report_contract["allowed_value_options"]
         minimal_shape = report_contract["minimal_valid_shape"]
         semantic_profile_binding = report_contract["result_contract_profile_bindings"][
@@ -273,14 +432,22 @@ class FlowPilotAIContractProjectionTests(unittest.TestCase):
                 "consumed_repair_obligation_ids": ["repair-obligation-001"],
             },
         )
-        self.assertNotIn("forbidden_aliases", report_contract)
-        self.assertNotIn("forbidden_result_body_fields", report_contract)
         self.assertEqual(
-            report_contract["output_contract"]["forbidden_fields"],
+            report_contract["forbidden_aliases"],
+            runtime.packet_result_contracts.effective_result_contract_from_envelope(
+                packet["envelope"]
+            )["forbidden_aliases"],
+        )
+        self.assertEqual(
+            report_contract["forbidden_fields"],
             runtime.packet_result_contracts.effective_result_contract_from_envelope(
                 packet["envelope"]
             )["forbidden_fields"],
         )
+        self.assertNotIn("forbidden_result_body_fields", report_contract)
+        self.assertNotIn("forbidden_fields", report_contract["output_contract"])
+        self.assertNotIn("allowed_value_options", report_contract["output_contract"])
+        self.assertNotIn("field_type_requirements", report_contract["output_contract"])
 
     def test_contract_driven_fake_ai_uses_projected_minimal_shape_for_legal_path(self) -> None:
         ledger, packet_id = self.issue_semantic_recheck_packet()
@@ -316,11 +483,9 @@ class FlowPilotAIContractProjectionTests(unittest.TestCase):
     def test_contract_driven_fake_ai_refuses_to_guess_when_finite_options_are_missing(self) -> None:
         ledger, packet_id = self.issue_semantic_recheck_packet()
         packet = json.loads(json.dumps(ledger["packets"][packet_id]))
-        packet_body = json.loads(packet["body"])
-        options = packet_body["current_handoff_contract"]["required_report_contract"]["allowed_value_options"]
+        options = packet["envelope"]["current_handoff_contract"]["required_report_contract"]["allowed_value_options"]
         del options["semantic_recheck.subject_bound_semantic_coverage"]
         options["semantic_recheck.coverage_boundary"] = []
-        packet["body"] = json.dumps(packet_body, sort_keys=True)
 
         responder = self.contract_driven_responder(packet)
         findings = responder.projection_findings()
@@ -337,7 +502,15 @@ class FlowPilotAIContractProjectionTests(unittest.TestCase):
     def test_contract_driven_fake_ai_wrong_value_rows_repair_each_finite_option(self) -> None:
         ledger, packet_id = self.issue_semantic_recheck_packet()
         responder = self.contract_driven_responder(ledger["packets"][packet_id])
-        fields = sorted(responder.allowed_value_options)
+        self.assertIn(
+            "flowguard_evidence.json.model_test_alignment_report.decision",
+            responder.allowed_value_options,
+        )
+        fields = sorted(
+            field
+            for field in responder.allowed_value_options
+            if not field.startswith("flowguard_evidence.")
+        )
         self.assertGreaterEqual(len(fields), 5)
 
         for field_path in fields:
@@ -380,8 +553,12 @@ class FlowPilotAIContractProjectionTests(unittest.TestCase):
                     field_path in diagnostic_text or field_path.replace("[]", "") in diagnostic_text,
                     diagnostic_text,
                 )
-                self.assertIn(field_path, reissue_body["allowed_value_options"])
-                corrected_payload = responder.repaired_payload_from_reissue(reissue_body)
+                reissue_contract = self.report_contract_for_packet(ledger, reissue_packet_id)
+                self.assertIn(field_path, reissue_contract["allowed_value_options"])
+                self.assertNotIn("allowed_value_options", reissue_body)
+                corrected_payload = responder.repaired_payload_from_open_packet_result(
+                    self.open_packet_result_for_responder(ledger["packets"][reissue_packet_id])
+                )
 
                 corrected_lease_id = self.assign_flowguard(ledger, reissue_packet_id)
                 write_flowguard_evidence_artifact(ledger, reissue_packet_id)
@@ -423,13 +600,16 @@ class FlowPilotAIContractProjectionTests(unittest.TestCase):
                 result = ledger["results"][result_id]
                 reissue_packet_id = self.latest_reissue_packet_id(ledger, packet_id)
                 reissue_body = json.loads(ledger["packets"][reissue_packet_id]["body"])
-                corrected_payload = responder.repaired_payload_from_reissue(reissue_body)
+                corrected_payload = responder.repaired_payload_from_open_packet_result(
+                    self.open_packet_result_for_responder(ledger["packets"][reissue_packet_id])
+                )
 
                 self.assertEqual(result["status"], "mechanical_contract_blocked")
                 self.assertIn("strict JSON object", result["blocked_reason"])
                 self.assertEqual(result["accepted"], False)
-                self.assertIn("minimal_valid_shape", reissue_body)
-                self.assertIn("semantic_recheck", reissue_body["minimal_valid_shape"])
+                reissue_contract = self.report_contract_for_packet(ledger, reissue_packet_id)
+                self.assertNotIn("minimal_valid_shape", reissue_body)
+                self.assertIn("semantic_recheck", reissue_contract["minimal_valid_shape"])
 
                 corrected_lease_id = self.assign_flowguard(ledger, reissue_packet_id)
                 write_flowguard_evidence_artifact(ledger, reissue_packet_id)
@@ -464,7 +644,6 @@ class FlowPilotAIContractProjectionTests(unittest.TestCase):
     def test_existing_required_arrays_project_to_empty_array_fake_ai_cells(self) -> None:
         expected_non_empty_arrays = {
             "task.high_standard_contract": {"requirements", "acceptance_item_registry.items"},
-            "task.discovery": {"material_sources"},
             "task.skill_standard": {"obligations"},
             "task.planning": {"nodes"},
         }
@@ -798,19 +977,22 @@ class FlowPilotAIContractProjectionTests(unittest.TestCase):
                 self.assertIn("evidence_output_policy.run_local_evidence_root", feedback_text)
                 self.assertIn("model_test_alignment_report.decision", feedback_text)
                 self.assertIn("result body alone cannot satisfy", feedback_text)
+                reissue_contract = self.report_contract_for_packet(ledger, reissue_packet_id)
                 self.assertIn(
                     "flowguard_evidence.json.model_test_alignment_report.decision",
-                    reissue_body["allowed_value_options"],
+                    reissue_contract["allowed_value_options"],
                 )
                 self.assertEqual(
-                    reissue_body["allowed_value_options"][
+                    reissue_contract["allowed_value_options"][
                         "flowguard_evidence.json.model_test_alignment_report.decision"
                     ],
                     ["pass"],
                 )
 
                 corrected_lease_id = self.assign_flowguard(ledger, reissue_packet_id)
-                corrected_payload = responder.repaired_payload_from_reissue(reissue_body)
+                corrected_payload = responder.repaired_payload_from_open_packet_result(
+                    self.open_packet_result_for_responder(ledger["packets"][reissue_packet_id])
+                )
                 write_flowguard_evidence_artifact(ledger, reissue_packet_id)
                 corrected_result_id = runtime.submit_result(
                     ledger,
@@ -962,19 +1144,23 @@ class FlowPilotAIContractProjectionTests(unittest.TestCase):
                             cell_keys,
                         )
 
-        ledger, packet_id = self.issue_semantic_recheck_packet()
-        responder = self.contract_driven_responder(ledger["packets"][packet_id])
         sample_window = {
             "review_flow_id": "node_acceptance_plan_review",
+            "review_window_coverage_status": "declared",
             "subject_lifecycle_stage": "node_plan_definition",
             "required_authorized_result_read_ids_before_submit": ["result-node-plan"],
+            "review_depth_rule": (
+                "Fixed Reviewer stage card: reviewer.node_acceptance_plan_review. "
+                "Stage focus: node plan definition. Independently challenge the weakest evidence and a "
+                "current-stage failure hypothesis. Also challenge core deliverable non-downgrade."
+            ),
         }
+        responder = self.review_window_responder(sample_window)
         for profile_id in contract_fake_ai.REVIEW_WINDOW_FAKE_AI_PROFILE_IDS:
             for material_state in contract_fake_ai.review_window_contracts.REVIEW_WINDOW_MATERIAL_STATE_CLASSES:
                 for retry_class in contract_fake_ai.review_window_contracts.RETRY_COUNT_CLASSES:
                     payload = responder.review_window_behavior_payload(
                         profile_id,
-                        sample_window,
                         material_state_class=material_state,
                         retry_count_class=retry_class,
                     )
@@ -984,11 +1170,10 @@ class FlowPilotAIContractProjectionTests(unittest.TestCase):
                     if retry_class == "same_failure_attempt_5":
                         self.assertEqual(trace["same_failure_retry_class"], "break_glass_threshold")
 
-        skipped = responder.review_window_behavior_payload("reviewer_skips_required_read", sample_window)
-        future = responder.review_window_behavior_payload("reviewer_future_stage_demand", sample_window)
+        skipped = responder.review_window_behavior_payload("reviewer_skips_required_read")
+        future = responder.review_window_behavior_payload("reviewer_future_stage_demand")
         threshold = responder.review_window_behavior_payload(
             "reviewer_shallow_pass",
-            sample_window,
             retry_count_class="same_failure_attempt_5",
         )
 
@@ -1024,23 +1209,18 @@ class FlowPilotAIContractProjectionTests(unittest.TestCase):
         self.assertLessEqual(expected_core_downgrade_profiles, set(contract_fake_ai.REVIEW_WINDOW_FAKE_AI_PROFILE_IDS))
         score_10 = responder.review_window_behavior_payload(
             "reviewer_quality_score_10_exceeds_standard",
-            sample_window,
         )
         soft_6 = responder.review_window_behavior_payload(
             "reviewer_quality_score_6_soft_pm_optimization",
-            sample_window,
         )
         quantitative = responder.review_window_behavior_payload(
             "reviewer_quantitative_gap_blocks",
-            sample_window,
         )
         overblock = responder.review_window_behavior_payload(
             "reviewer_overblocks_sub9_soft_score",
-            sample_window,
         )
         recheck = responder.review_window_behavior_payload(
             "reviewer_recheck_consumes_score_context",
-            sample_window,
         )
 
         self.assertIn("Quality score: 10/10", score_10["pm_visible_summary"][0])
@@ -1058,19 +1238,21 @@ class FlowPilotAIContractProjectionTests(unittest.TestCase):
 
         stage_specific = responder.review_window_behavior_payload(
             "reviewer_stage_specific_challenge_pass",
-            sample_window,
         )
         generic_only = responder.review_window_behavior_payload(
             "reviewer_generic_optimization_only",
-            sample_window,
         )
         self.assertTrue(stage_specific["review_window_trace"]["stage_specific_challenge_projected"])
         self.assertTrue(stage_specific["review_window_trace"]["stage_specific_challenge_performed"])
         self.assertEqual(
-            stage_specific["review_window_trace"]["stage_challenge_binding_card_id"],
-            "reviewer.node_acceptance_plan_review",
+            stage_specific["review_window_trace"]["review_flow_id"],
+            "node_acceptance_plan_review",
         )
-        self.assertIn("node acceptance plan", stage_specific["pm_visible_summary"][0])
+        self.assertEqual(
+            stage_specific["review_window_trace"]["review_depth_rule_consumed"],
+            sample_window["review_depth_rule"],
+        )
+        self.assertIn("node_acceptance_plan_review", stage_specific["pm_visible_summary"][0])
         self.assertIn("weakest evidence", stage_specific["pm_suggestion_items"][0])
         self.assertTrue(generic_only["review_window_trace"]["generic_optimization_only"])
         self.assertFalse(generic_only["review_window_trace"]["stage_specific_challenge_projected"])
@@ -1079,7 +1261,7 @@ class FlowPilotAIContractProjectionTests(unittest.TestCase):
 
         for profile_id in expected_core_downgrade_profiles:
             with self.subTest(profile_id=profile_id):
-                payload = responder.review_window_behavior_payload(profile_id, sample_window)
+                payload = responder.review_window_behavior_payload(profile_id)
                 trace = payload["review_window_trace"]
                 self.assertEqual(payload["passed"], False)
                 self.assertEqual(trace["minimum_hard_gate_passed"], False)
@@ -1090,8 +1272,7 @@ class FlowPilotAIContractProjectionTests(unittest.TestCase):
     def test_body_semantic_recheck_context_without_profile_does_not_create_hidden_fields(self) -> None:
         ledger, packet_id = self.issue_semantic_recheck_packet(include_profile=False)
         packet = ledger["packets"][packet_id]
-        packet_body = json.loads(packet["body"])
-        report_contract = packet_body["current_handoff_contract"]["required_report_contract"]
+        report_contract = packet["envelope"]["current_handoff_contract"]["required_report_contract"]
 
         self.assertEqual(packet["envelope"].get("result_contract_profile_ids"), None)
         self.assertNotIn("semantic_recheck", report_contract["required_result_body_fields"])
@@ -1125,11 +1306,15 @@ class FlowPilotAIContractProjectionTests(unittest.TestCase):
         )
         self.assertIn(
             "subject_bound_semantic_coverage",
-            reissue_body["minimal_valid_shape"]["semantic_recheck"],
+            self.report_contract_for_packet(ledger, reissue_packet_id)["minimal_valid_shape"][
+                "semantic_recheck"
+            ],
         )
         self.assertNotIn("forbidden_aliases", reissue_body)
         self.assertEqual(
-            reissue_body["minimal_valid_shape"]["semantic_recheck"]["consumed_repair_obligation_ids"],
+            self.report_contract_for_packet(ledger, reissue_packet_id)["minimal_valid_shape"][
+                "semantic_recheck"
+            ]["consumed_repair_obligation_ids"],
             ["repair-obligation-001"],
         )
 
@@ -1159,7 +1344,9 @@ class FlowPilotAIContractProjectionTests(unittest.TestCase):
             result["missing_required_fields"],
         )
         self.assertEqual(
-            reissue_body["minimal_valid_shape"]["semantic_recheck"]["consumed_authorized_result_read_ids"],
+            self.report_contract_for_packet(ledger, reissue_packet_id)["minimal_valid_shape"][
+                "semantic_recheck"
+            ]["consumed_authorized_result_read_ids"],
             packet["envelope"]["result_contract_profile_bindings"][
                 "flowguard.semantic_recheck_required"
             ]["authorized_result_read_ids"],
@@ -1196,7 +1383,7 @@ class FlowPilotAIContractProjectionTests(unittest.TestCase):
         )
         corrected_lease_id = self.assign_flowguard(ledger, reissue_packet_id)
         write_flowguard_evidence_artifact(ledger, reissue_packet_id)
-        corrected_payload = reissue_body["minimal_valid_shape"]
+        corrected_payload = self.report_contract_for_packet(ledger, reissue_packet_id)["minimal_valid_shape"]
         corrected_result_id = runtime.submit_result(
             ledger,
             corrected_lease_id,

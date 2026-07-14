@@ -68,11 +68,12 @@ def _mail_role_obligation_contract(entry: dict[str, str]) -> dict[str, Any] | No
         "target_role": "project_manager",
         "mail_is_formal_work_material": True,
         "not_prompt_or_instruction_card": True,
-        "first_output_instruction_card_id": "pm.material_scan",
-        "first_expected_output_event": "pm_issues_material_and_capability_scan_packets",
+        "first_output_instruction_card_id": "pm.product_architecture",
+        "first_expected_output_event": "pm_writes_product_function_architecture",
         "first_expected_output_summary": (
             "PM opens user_intake, reads the full user request through the runtime, "
-            "then produces material/capability scan packet specs for Router."
+            "then writes the product-function architecture or routes any missing "
+            "decision evidence through ordinary PM role work."
         ),
         "blocks_independent_pm_dispatch_until_first_output": True,
         "controller_visibility": "metadata_only",

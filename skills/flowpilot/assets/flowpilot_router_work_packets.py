@@ -55,7 +55,12 @@ import flowpilot_router_work_packets_pm_role as _owner_child_1
 import flowpilot_router_work_packets_current_node as _owner_child_2
 import flowpilot_router_work_packets_parallel as _owner_child_3
 import flowpilot_router_work_packets_next_actions as _owner_child_4
-from flowpilot_router_work_packets_material import *
+from flowpilot_router_work_packets_material import (
+    _write_pm_research_absorption,
+    _write_research_capability_decision,
+    _write_research_package,
+    _write_worker_research_report,
+)
 from flowpilot_router_work_packets_pm_role import *
 from flowpilot_router_work_packets_current_node import *
 from flowpilot_router_work_packets_parallel import *

@@ -10,9 +10,12 @@ ROUTER_TERMINAL_CORE_COMMANDS = (
         "tests.router_runtime.terminal",
         patterns=(
             "test_final_ledger_records_frozen_contract_replay_source_paths",
+            "test_final_ledger_links_explicit_existing_optional_map_without_using_it_as_acceptance_evidence",
+            "test_final_ledger_rejects_progress_only_terminal_flowguard_report",
             "test_final_ledger_rejects_dirty_pm_suggestion_ledger",
             "test_final_ledger_rejects_dirty_self_interrogation_index",
             "test_final_ledger_rejects_missing_source_of_truth_entries_and_contract_replay",
+            "test_final_ledger_requires_pm_accepted_terminal_flowguard_coverage",
         ),
         description="Terminal final-ledger validation slice.",
     ),
@@ -65,6 +68,7 @@ ROUTER_TERMINAL_CORE_COMMANDS = (
         patterns=(
             "test_manual_resume_alive_status_enters_router_resume_path",
             "test_load_resume_state_controller_receipt_replays_router_state_handler",
+            "test_pm_resume_break_glass_routes_control_blocker_without_resume_success",
             "test_resume_reentry_attaches_to_live_owner_after_delayed_daemon_patrol",
             "test_resume_reentry_attaches_to_live_router_daemon_and_ledger",
             "test_resume_reentry_loads_state_before_resume_cards",
@@ -137,6 +141,7 @@ ROUTER_TERMINAL_CORE_COMMANDS = (
         patterns=(
             "test_distinct_pm_control_blocker_causes_create_distinct_families",
             "test_pm_repair_decision_accepts_registered_rerun_target_and_waits_for_it",
+            "test_pm_repair_decision_state_persists_before_followup_wait_is_exposed",
             "test_pm_repair_decision_can_repeat_for_new_control_blocker",
             "test_pm_repair_decision_rejects_unsupported_event_replay_plan_kind",
             "test_pm_repair_decision_rejects_registered_but_not_receivable_rerun_target",
@@ -151,11 +156,10 @@ ROUTER_TERMINAL_CORE_COMMANDS = (
         "router_control_blockers_protocol_transactions",
         "tests.router_runtime.control_blockers",
         patterns=(
-            "test_material_operation_replay_uses_current_generation_action",
             "test_delivered_control_blocker_with_empty_repair_transaction_requires_pm_repair_decision",
             "test_operation_replay_repair_transaction_queues_replay_action",
-            "test_repair_transaction_protocol_blocker_registers_followup_blocker",
             "test_repair_transaction_recheck_blocker_registers_followup_blocker",
+            "test_repair_transaction_protocol_blocker_registers_followup_blocker",
         ),
         description="Control-blocker repair transaction protocol slice.",
     ),
@@ -305,57 +309,9 @@ ROUTER_QUALITY_GATE_COMMANDS = (
     ),
 )
 
-ROUTER_MATERIAL_MODELING_COMMANDS = (
-    _unittest_k(
-        "router_material_modeling_intake",
-        "tests.router_runtime.material_modeling",
-        patterns=(
-            "test_pm_material_understanding_accepts_file_backed_memo_payload",
-            "test_material_artifact_map_indexes_material_flow_without_body_text",
-            "test_pm_formal_material_package_includes_material_map_review_refs",
-            "test_material_sufficiency_report_requires_checked_source_refs",
-            "test_material_acceptance_requires_reviewer_sufficiency_and_pm_absorb_card",
-            "test_material_insufficient_event_records_insufficient_state",
-            "test_material_scan_results_event_requires_result_ledger_absorption",
-        ),
-        description="Material understanding, acceptance, and ledger absorption slice.",
-    ),
-    _unittest_k(
-        "router_material_modeling_scan_relay",
-        "tests.router_runtime.material_modeling",
-        patterns=(
-            "test_material_scan_direct_relay_blocks_body_hash_mismatch",
-            "test_material_scan_direct_relay_blocks_missing_output_contract",
-            "test_material_scan_mechanical_agent_id_gap_reissues_to_worker",
-            "test_material_repair_active_batch_blocks_stale_result_relay_flag",
-            "test_material_repair_active_batch_overrides_stale_global_progress_flags",
-            "test_material_scan_path_only_done_receipt_keeps_current_assignment_relay_pending",
-            "test_material_scan_path_only_receipt_folds_after_current_assignment_relay_action",
-            "test_material_scan_relay_receipt_folds_existing_packet_evidence",
-            "test_material_scan_result_receipt_folds_batch_lifecycle",
-        ),
-        description="Material scan relay, identity, and contract slice.",
-    ),
-    _unittest_k(
-        "router_material_modeling_modelability",
-        "tests.router_runtime.material_modeling",
-        patterns=(
-            "test_research_required_blocks_product_architecture_until_absorbed",
-            "test_product_architecture_and_root_contract_gate_route_skeleton",
-            "test_process_route_model_canonical_event_writes_canonical_artifact_only",
-            "test_unknown_flowguard_operator_product_scope_model_report_is_rejected",
-            "test_pm_repair_transaction_commits_material_reissue_generation",
-            "test_pm_repair_decision_side_effect_exposes_flag_before_wait_events",
-            "test_pm_material_repair_rejects_role_reissue_without_fresh_packet_producer",
-        ),
-        description="Material modelability, architecture, and repair slice.",
-    ),
-)
-
 ROUTER_TERMINAL_COMMANDS = (
     *ROUTER_PM_ROLE_WORK_COMMANDS,
     *ROUTER_QUALITY_GATE_COMMANDS,
-    *ROUTER_MATERIAL_MODELING_COMMANDS,
     *ROUTER_TERMINAL_CORE_COMMANDS,
 )
 

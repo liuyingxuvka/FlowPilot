@@ -47,6 +47,19 @@ REGISTRY_BINDING_REQUIRED_FIELDS = {
 ROUTER_EVENT_MODES = {"fixed", "router_supplied"}
 
 
+RETIRED_MATERIAL_ROUTER_EVENTS = frozenset(
+    {
+        "pm_issues_material_and_capability_scan_packets",
+        "pm_records_material_scan_result_disposition",
+        "reviewer_reports_material_insufficient",
+        "reviewer_reports_material_sufficient",
+    }
+)
+
+
+RETIRED_MATERIAL_OUTPUT_TYPES = frozenset({"material_sufficiency_report"})
+
+
 ROLE_CARDS = (
     "skills/flowpilot/assets/runtime_kit/cards/roles/project_manager.md",
     "skills/flowpilot/assets/runtime_kit/cards/roles/human_like_reviewer.md",
@@ -176,12 +189,57 @@ def _binding_source_report(project_root: Path, runtime: Any) -> dict[str, object
         if output_type not in declared_output_types:
             failures.append(f"{output_type}: runtime output_type is not declared by registry")
 
+    fixed_registry_router_events = {
+        str(contract.get("router_event"))
+        for contract in bound_contracts
+        if contract.get("router_event_mode") == "fixed" and contract.get("router_event")
+    }
+    runtime_spec_router_events = {
+        str(getattr(spec, "event_name"))
+        for spec in specs.values()
+        if getattr(spec, "event_name", None)
+    }
+    retired_material_router_events_present = sorted(
+        (fixed_registry_router_events | runtime_spec_router_events)
+        & RETIRED_MATERIAL_ROUTER_EVENTS
+    )
+    retired_material_output_types_present = sorted(
+        (declared_output_types | {str(output_type) for output_type in specs})
+        & RETIRED_MATERIAL_OUTPUT_TYPES
+    )
+    if retired_material_router_events_present:
+        failures.append(
+            "role-output runtime binds retired material Router events: "
+            f"{retired_material_router_events_present}"
+        )
+    if retired_material_output_types_present:
+        failures.append(
+            "role-output runtime declares retired material output types: "
+            f"{retired_material_output_types_present}"
+        )
+
     return {
         "ok": not failures,
         "failures": failures,
         "facts": {
             "bound_contract_count": len(bound_contracts),
             "declared_output_types": sorted(declared_output_types),
+            "fixed_registry_router_events": sorted(fixed_registry_router_events),
+            "runtime_spec_router_events": sorted(runtime_spec_router_events),
+            "retired_material_router_events": sorted(
+                RETIRED_MATERIAL_ROUTER_EVENTS
+            ),
+            "retired_material_router_events_present": (
+                retired_material_router_events_present
+            ),
+            "retired_material_output_types": sorted(RETIRED_MATERIAL_OUTPUT_TYPES),
+            "retired_material_output_types_present": (
+                retired_material_output_types_present
+            ),
+            "retired_material_surface_absent": (
+                not retired_material_router_events_present
+                and not retired_material_output_types_present
+            ),
         },
     }
 

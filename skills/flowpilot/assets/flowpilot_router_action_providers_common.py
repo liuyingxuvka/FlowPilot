@@ -31,7 +31,6 @@ PROVIDER_ORDER = (
     "system_card",
     "resume_wait",
     "mail",
-    "material_packet",
     "research_packet",
     "parent_child_entry",
     "current_node_packet",

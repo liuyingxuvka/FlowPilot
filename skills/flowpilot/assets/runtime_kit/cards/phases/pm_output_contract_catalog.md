@@ -18,27 +18,30 @@ contracts lives at `runtime_kit/contracts/contract_index.json`.
 Selection rules:
 
 - current-node worker packet: `flowpilot.output_contract.worker_current_node_result.v1`;
-- material scan worker packet: `flowpilot.output_contract.worker_material_scan_result.v1`;
 - research worker packet: `flowpilot.output_contract.worker_research_result.v1`;
 - reviewer formal gate review request: `flowpilot.output_contract.reviewer_review_report.v1`;
 - FlowGuard operator request: `flowpilot.output_contract.flowguard_operator_model_report.v1`;
 - PM, reviewer, or FlowGuard operator gate decision: `flowpilot.output_contract.gate_decision.v1`;
-- PM package result disposition after worker/material/research/current-node results reach PM through current assignment: `flowpilot.output_contract.pm_package_result_disposition.v1`;
+- PM package result disposition after research, current-node, or PM role-work
+  results reach PM through current assignment:
+  `flowpilot.output_contract.pm_package_result_disposition.v1`;
 - PM startup, repair, resume, segment, route, or closure decision: the matching `flowpilot.output_contract.pm_*` contract from the registry.
 
-Every PM-authored dispatch packet must include `output_contract` copied from
-the registry. The contract must match packet type, recipient role, node
-acceptance, required result sections, evidence expectations, and reviewer block
-conditions. The packet body must repeat the same contract in its `Output
-Contract` section so the recipient sees the requirements before working.
+Every PM-authored dispatch packet must select the registry `output_contract`.
+Runtime owns its envelope projection into
+`current_handoff_contract.v2.required_report_contract` and the addressed
+role's `submission_checklist.v2`. The contract must match packet type,
+recipient role, node acceptance, required result sections, evidence
+expectations, and reviewer block conditions. The packet body may explain the
+semantic work, but it must not repeat mechanical result fields as an alternate
+contract.
 The recipient's sealed result, report, or decision body must include a
 `Contract Self-Check` section before it returns an envelope.
 
 When assigning any task that expects a result, report, review, model report,
 approval, repair decision, or PM decision, do not write only "submit a report".
-The packet body must include a `Report Contract For This Task` block that tells
-the final reporter exactly how this task's body and chat envelope must be
-written:
+The current `open-packet` response must include a `submission_checklist.v2`
+that tells the final reporter exactly how this task's body must be written:
 
 - the selected `output_contract.contract_id`;
 - the sealed body file or packet result body target;
@@ -49,15 +52,14 @@ written:
   or `null`;
 - the rule that field names must not be replaced with synonyms.
 
-If the packet runtime appends this block from the selected registry contract,
-use that generated block. If you are writing a manual PM request, copy the
-matching registry contract into the task packet and include the same
-task-specific report-writing rules before sending it.
+Use only the checklist projected by runtime from the selected registry
+contract. A manual PM request must select the matching registry contract and
+let runtime project it; it must not copy required-field, branch-shape, or
+`minimal_valid_shape` mirrors into the packet body.
 
 For formal file-backed role outputs that are not packet result envelopes, use `flowpilot_new.py open-packet` and `flowpilot_new.py submit-result --lease-id <lease-id> --packet-id <packet-id> --body-file <sealed_result_body_file>` with the current authorized lease id. Do not invent or pass a fresh agent id. Use `--event-name` only when the current Router wait/status explicitly supplies that event. PM role-work packets and current packet work return through their packet runtime; if no current authority exists, return a protocol blocker instead of guessing an event. The available role-output types come from the `role_output_runtime` bindings in `runtime_kit/contracts/contract_index.json`; the binding row owns the output type, body schema, allowed roles, path/hash keys, default file location, and fixed Router event when applicable. The runtime generates the contract skeleton, fills mechanical fixed fields, explicit empty arrays, and generic quality-pack checklist rows when route quality packs are declared, validates exact field names and allowed values, writes the body hash, records a receipt and role-output ledger entry, then submits the compact envelope with `body_ref` and `runtime_receipt_ref` directly to Router. It does not judge semantic sufficiency or pack-specific UI/desktop/localization quality.
 
-When Router waits for `pm_records_material_scan_result_disposition`,
-`pm_records_research_result_disposition`, or
+When Router waits for `pm_records_research_result_disposition` or
 `pm_records_current_node_result_disposition`, PM must submit
 `output_type=pm_package_result_disposition` through the role-output runtime.
 Do not hand-write the event body. The event envelope must contain only the
@@ -69,9 +71,10 @@ packet in that same disposition body with `packet_id`, `outcome`, and
 `reason`. Use outcome `accepted` only for packets PM is absorbing; use
 `rework_requested`, `blocked`, `canceled`, or
 `route_or_node_mutation_required` for packets that cannot be absorbed. Do not
-submit a second ordinary package disposition for the same batch/generation;
-correction requires the existing repair/reissue path to create a new package
-identity.
+submit a second ordinary package disposition for the same batch/generation.
+The current repair decision must authorize a concrete producer through the
+existing current-node, research-package, or role-work path and create a new
+ordinary package identity when new work is required.
 
 `progress_status`: every formal role-output work item has default
 Controller-visible metadata progress. Use `flowpilot_new.py progress
@@ -89,6 +92,7 @@ affect completion, require a file-backed `GateDecision` body using
 checks only field shape, enums, evidence path/hash mechanics, and routeable
 next action. Semantic sufficiency stays with PM, reviewer, and FlowGuard operators.
 
-Do not invent a custom contract in the packet body. If the registry has no
+Do not invent a custom contract in the packet body or use body mirrors as a
+positive result template. If the registry has no
 contract for the task family, return a PM blocker asking for registry update or
 user review; do not send an under-specified packet.

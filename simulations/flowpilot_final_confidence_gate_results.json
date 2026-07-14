@@ -2,6 +2,7 @@
   "blockers": [],
   "claim_scope": "repository_only",
   "decision": "repository_confidence_only",
+  "evidence_manifest_path": "simulations/flowpilot_acceptance_testmesh_evidence_manifest.json",
   "evidence_rows": [
     {
       "blockers": [],
@@ -11,13 +12,13 @@
         "live_run_audit_skipped": false,
         "live_run_id": "run-20260614-184920",
         "subcheck_exit_code": 0,
-        "subcheck_stderr_path": "tmp\\final_confidence_gate\\control_plane.err.txt",
-        "subcheck_stdout_path": "tmp\\final_confidence_gate\\control_plane.out.txt",
+        "subcheck_stderr_path": "tmp/final_confidence_gate/control_plane.err.txt",
+        "subcheck_stdout_path": "tmp/final_confidence_gate/control_plane.out.txt",
         "top_level_ok": true
       },
       "name": "control_plane",
       "ok": true,
-      "path": "tmp\\final_confidence_gate\\flowpilot_control_plane_friction_results.json",
+      "path": "tmp/final_confidence_gate/flowpilot_control_plane_friction_results.json",
       "status": "full_confidence"
     },
     {
@@ -28,36 +29,41 @@
         "progress_ok": true,
         "safe_graph_ok": true,
         "subcheck_exit_code": 0,
-        "subcheck_stderr_path": "tmp\\final_confidence_gate\\event_idempotency.err.txt",
-        "subcheck_stdout_path": "tmp\\final_confidence_gate\\event_idempotency.out.txt",
+        "subcheck_stderr_path": "tmp/final_confidence_gate/event_idempotency.err.txt",
+        "subcheck_stdout_path": "tmp/final_confidence_gate/event_idempotency.out.txt",
         "top_level_ok": true
       },
       "name": "event_idempotency",
       "ok": true,
-      "path": "tmp\\final_confidence_gate\\flowpilot_event_idempotency_results.json",
+      "path": "tmp/final_confidence_gate/flowpilot_event_idempotency_results.json",
       "status": "full_confidence"
     },
     {
       "blockers": [],
       "details": {
         "alignment_ok": true,
-        "coverage_claim": "full_coverage",
-        "deferred_structure_split_count": 0,
-        "full_coverage_ok": true,
+        "claim_scope": "done",
+        "coverage_claim": "release_convergence_deferred_structure_only",
+        "deferred_structure_split_count": 1,
+        "evidence_status": "passed",
+        "execution_evidence_ok": true,
+        "full_coverage_ok": false,
         "full_diagnostic_ok": true,
-        "gap_counts": {},
-        "gap_surface_count": 0,
+        "gap_counts": {
+          "needs_structure_split": 1
+        },
+        "gap_surface_count": 1,
         "release_convergence_ok": true,
         "subcheck_exit_code": 0,
-        "subcheck_stderr_path": "tmp\\final_confidence_gate\\model_test_alignment.err.txt",
-        "subcheck_stdout_path": "tmp\\final_confidence_gate\\model_test_alignment.out.txt",
+        "subcheck_stderr_path": "tmp/final_confidence_gate/model_test_alignment.err.txt",
+        "subcheck_stdout_path": "tmp/final_confidence_gate/model_test_alignment.out.txt",
         "top_level_ok": true,
         "unresolved_non_deferred_gap_count": 0
       },
       "name": "model_test_alignment",
       "ok": true,
-      "path": "tmp\\final_confidence_gate\\flowpilot_model_test_alignment_results.json",
-      "status": "full_confidence"
+      "path": "tmp/final_confidence_gate/flowpilot_model_test_alignment_results.json",
+      "status": "release_convergence_with_deferred_structure_splits"
     },
     {
       "blockers": [],
@@ -68,13 +74,13 @@
         "risk_ledger_confidence": "full",
         "risk_ledger_decision": "risk_evidence_full_confidence",
         "subcheck_exit_code": 0,
-        "subcheck_stderr_path": "tmp\\final_confidence_gate\\known_friction.err.txt",
-        "subcheck_stdout_path": "tmp\\final_confidence_gate\\known_friction.out.txt",
+        "subcheck_stderr_path": "tmp/final_confidence_gate/known_friction.err.txt",
+        "subcheck_stdout_path": "tmp/final_confidence_gate/known_friction.out.txt",
         "top_level_ok": true
       },
       "name": "known_friction",
       "ok": true,
-      "path": "tmp\\final_confidence_gate\\flowpilot_known_friction_regression_matrix_results.json",
+      "path": "tmp/final_confidence_gate/flowpilot_known_friction_regression_matrix_results.json",
       "status": "full_confidence"
     },
     {
@@ -86,18 +92,18 @@
       },
       "name": "terminal_return",
       "ok": true,
-      "path": "<repo-root>\\simulations\\flowpilot_terminal_return_preflight_results.json",
+      "path": "simulations/flowpilot_terminal_return_preflight_results.json",
       "status": "repository_confidence_only"
     }
   ],
   "formal_exit_authority": false,
   "ok": true,
   "result_paths": {
-    "control_plane": "tmp\\final_confidence_gate\\flowpilot_control_plane_friction_results.json",
-    "event_idempotency": "tmp\\final_confidence_gate\\flowpilot_event_idempotency_results.json",
-    "known_friction": "tmp\\final_confidence_gate\\flowpilot_known_friction_regression_matrix_results.json",
-    "model_test_alignment": "tmp\\final_confidence_gate\\flowpilot_model_test_alignment_results.json",
-    "terminal_return": "tmp\\final_confidence_gate\\flowpilot_terminal_return_preflight_results.json"
+    "control_plane": "tmp/final_confidence_gate/flowpilot_control_plane_friction_results.json",
+    "event_idempotency": "tmp/final_confidence_gate/flowpilot_event_idempotency_results.json",
+    "known_friction": "tmp/final_confidence_gate/flowpilot_known_friction_regression_matrix_results.json",
+    "model_test_alignment": "tmp/final_confidence_gate/flowpilot_model_test_alignment_results.json",
+    "terminal_return": "tmp/final_confidence_gate/flowpilot_terminal_return_preflight_results.json"
   },
   "result_type": "flowpilot_final_confidence_gate",
   "subcheck_runs": [
@@ -109,10 +115,10 @@
         "tmp\\final_confidence_gate\\flowpilot_control_plane_friction_results.json"
       ],
       "exit_code": 0,
-      "json_path": "tmp\\final_confidence_gate\\flowpilot_control_plane_friction_results.json",
+      "json_path": "tmp/final_confidence_gate/flowpilot_control_plane_friction_results.json",
       "name": "control_plane",
-      "stderr_path": "tmp\\final_confidence_gate\\control_plane.err.txt",
-      "stdout_path": "tmp\\final_confidence_gate\\control_plane.out.txt"
+      "stderr_path": "tmp/final_confidence_gate/control_plane.err.txt",
+      "stdout_path": "tmp/final_confidence_gate/control_plane.out.txt"
     },
     {
       "command": [
@@ -122,23 +128,27 @@
         "tmp\\final_confidence_gate\\flowpilot_event_idempotency_results.json"
       ],
       "exit_code": 0,
-      "json_path": "tmp\\final_confidence_gate\\flowpilot_event_idempotency_results.json",
+      "json_path": "tmp/final_confidence_gate/flowpilot_event_idempotency_results.json",
       "name": "event_idempotency",
-      "stderr_path": "tmp\\final_confidence_gate\\event_idempotency.err.txt",
-      "stdout_path": "tmp\\final_confidence_gate\\event_idempotency.out.txt"
+      "stderr_path": "tmp/final_confidence_gate/event_idempotency.err.txt",
+      "stdout_path": "tmp/final_confidence_gate/event_idempotency.out.txt"
     },
     {
       "command": [
         "<python>",
         "simulations/run_flowpilot_model_test_alignment_checks.py",
         "--json-out",
-        "tmp\\final_confidence_gate\\flowpilot_model_test_alignment_results.json"
+        "tmp\\final_confidence_gate\\flowpilot_model_test_alignment_results.json",
+        "--evidence-manifest",
+        "simulations\\flowpilot_acceptance_testmesh_evidence_manifest.json",
+        "--evidence-scope",
+        "done"
       ],
       "exit_code": 0,
-      "json_path": "tmp\\final_confidence_gate\\flowpilot_model_test_alignment_results.json",
+      "json_path": "tmp/final_confidence_gate/flowpilot_model_test_alignment_results.json",
       "name": "model_test_alignment",
-      "stderr_path": "tmp\\final_confidence_gate\\model_test_alignment.err.txt",
-      "stdout_path": "tmp\\final_confidence_gate\\model_test_alignment.out.txt"
+      "stderr_path": "tmp/final_confidence_gate/model_test_alignment.err.txt",
+      "stdout_path": "tmp/final_confidence_gate/model_test_alignment.out.txt"
     },
     {
       "command": [
@@ -148,10 +158,10 @@
         "tmp\\final_confidence_gate\\flowpilot_known_friction_regression_matrix_results.json"
       ],
       "exit_code": 0,
-      "json_path": "tmp\\final_confidence_gate\\flowpilot_known_friction_regression_matrix_results.json",
+      "json_path": "tmp/final_confidence_gate/flowpilot_known_friction_regression_matrix_results.json",
       "name": "known_friction",
-      "stderr_path": "tmp\\final_confidence_gate\\known_friction.err.txt",
-      "stdout_path": "tmp\\final_confidence_gate\\known_friction.out.txt"
+      "stderr_path": "tmp/final_confidence_gate/known_friction.err.txt",
+      "stdout_path": "tmp/final_confidence_gate/known_friction.out.txt"
     }
   ],
   "summary": "REPOSITORY_ONLY: repository evidence is current; terminal-return authority was scoped out",

@@ -3,6 +3,15 @@
 from __future__ import annotations
 
 from flowpilot_model_test_alignment_common import *
+try:
+    from .flowpilot_behavior_authority import resolve_behavior_authority
+except ImportError:  # direct script execution
+    from flowpilot_behavior_authority import resolve_behavior_authority
+
+
+MATERIAL_MAP_AUTHORITY = resolve_behavior_authority(
+    "commit.material_map_is_optional_navigation_only"
+)
 
 
 def source_code_contracts() -> tuple[CodeContract, ...]:
@@ -37,6 +46,22 @@ def source_code_contracts() -> tuple[CodeContract, ...]:
                 "router_loop.packet_result_review_loop",
             ),
             external_inputs=("project_root", "event", "payload"),
+        ),
+        _contract(
+            "router_io_locks.foreground_writer_settlement",
+            path="skills/flowpilot/assets/flowpilot_router_io_locks.py",
+            symbol="_run_foreground_with_runtime_writer_settlement",
+            implements=("startup.runtime_writer_settlement",),
+            external_inputs=("operation", "command_name"),
+            external_outputs=("result", "runtime_write_settlement"),
+        ),
+        _contract(
+            "router_daemon_runtime.formal_readiness",
+            path="skills/flowpilot/assets/flowpilot_router_daemon_runtime.py",
+            symbol="_formal_router_daemon_ready",
+            implements=("startup.runtime_writer_settlement",),
+            external_inputs=("project_root", "run_root"),
+            external_outputs=("ready",),
         ),
         _contract(
             "route_authority_rejection.infer_event",
@@ -266,7 +291,10 @@ def source_code_contracts() -> tuple[CodeContract, ...]:
             "flowpilot_fake_project_rehearsal.run_checks",
             path="simulations/run_flowpilot_fake_project_rehearsal_checks.py",
             symbol="run_checks",
-            implements=("new_entrypoint.blackbox_fake_project_rehearsal",),
+            implements=(
+                "new_entrypoint.blackbox_fake_project_rehearsal",
+                "new_entrypoint.blackbox_fake_project_result_portability",
+            ),
             external_inputs=("work_root",),
             external_outputs=("return",),
         ),
@@ -437,12 +465,33 @@ def source_code_contracts() -> tuple[CodeContract, ...]:
             external_inputs=("text", "from_role", "source", "to_role"),
         ),
         _contract(
+            "material_artifact_map.navigation_status",
+            path="skills/flowpilot/assets/flowpilot_material_artifact_map.py",
+            symbol="material_artifact_map_navigation_status",
+            implements=("material_artifact_map.index_only_boundary",),
+            external_inputs=("project_root", "run_root", "doc"),
+            external_outputs=(
+                "present",
+                "safe",
+                "current",
+                "usable",
+                "omit",
+                "acceptance_evidence_false",
+            ),
+            role="owner",
+            behavior_plane=MATERIAL_MAP_AUTHORITY.behavior_plane,
+            business_intent_id=MATERIAL_MAP_AUTHORITY.business_intent_id,
+            behavior_commitment_id=MATERIAL_MAP_AUTHORITY.commitment_id,
+            primary_path_id=MATERIAL_MAP_AUTHORITY.primary_path_id,
+        ),
+        _contract(
             "material_artifact_map.refresh",
             path="skills/flowpilot/assets/flowpilot_material_artifact_map.py",
             symbol="refresh_material_artifact_map",
             implements=("material_artifact_map.index_only_boundary",),
             external_inputs=("project_root", "run_root", "run_state"),
             side_effects=("write_json_atomic",),
+            role="helper",
         ),
         _contract(
             "material_artifact_map.summary",
@@ -450,6 +499,7 @@ def source_code_contracts() -> tuple[CodeContract, ...]:
             symbol="material_artifact_map_summary",
             implements=("material_artifact_map.index_only_boundary",),
             external_inputs=("doc",),
+            role="read_only",
         ),
         _contract(
             "material_artifact_map.source_ref",
@@ -457,6 +507,7 @@ def source_code_contracts() -> tuple[CodeContract, ...]:
             symbol="material_artifact_map_source_ref",
             implements=("material_artifact_map.index_only_boundary",),
             external_inputs=("project_root", "run_root"),
+            role="read_only",
         ),
         _contract(
             "material_artifact_map.review_ids",
@@ -464,6 +515,7 @@ def source_code_contracts() -> tuple[CodeContract, ...]:
             symbol="review_source_entry_ids",
             implements=("material_artifact_map.index_only_boundary",),
             external_inputs=("doc", "batch_kind"),
+            role="read_only",
         ),
         _contract(
             "material_artifact_map.review_paths",
@@ -471,6 +523,7 @@ def source_code_contracts() -> tuple[CodeContract, ...]:
             symbol="reviewable_source_paths",
             implements=("material_artifact_map.index_only_boundary",),
             external_inputs=("doc", "entry_ids"),
+            role="read_only",
         ),
         _contract(
             "material_artifact_map_packets.add_packet_index_entries",
@@ -479,6 +532,7 @@ def source_code_contracts() -> tuple[CodeContract, ...]:
             implements=("material_artifact_map.index_only_boundary",),
             external_inputs=("project_root", "entries", "index_path", "batch_kind"),
             external_outputs=(),
+            role="helper",
         ),
         _contract(
             "material_artifact_map_ordinary.add_ordinary_work_artifact_entries",
@@ -487,6 +541,7 @@ def source_code_contracts() -> tuple[CodeContract, ...]:
             implements=("material_artifact_map.index_only_boundary",),
             external_inputs=("project_root", "run_root", "entries", "material_artifact_map_filename"),
             external_outputs=(),
+            role="helper",
         ),
         _contract(
             "material_artifact_map_entries.make_entry",
@@ -494,6 +549,7 @@ def source_code_contracts() -> tuple[CodeContract, ...]:
             symbol="make_entry",
             implements=("material_artifact_map.index_only_boundary",),
             external_inputs=("entry_id", "kind", "source_refs", "envelope_refs", "body_refs"),
+            role="helper",
         ),
         _contract(
             "material_artifact_map_entries.safe_source_ref",
@@ -501,6 +557,7 @@ def source_code_contracts() -> tuple[CodeContract, ...]:
             symbol="safe_source_ref",
             implements=("material_artifact_map.index_only_boundary",),
             external_inputs=("project_root", "path"),
+            role="helper",
         ),
         _contract(
             "material_artifact_map_entries.sealed_body_ref",
@@ -508,6 +565,7 @@ def source_code_contracts() -> tuple[CodeContract, ...]:
             symbol="sealed_body_ref",
             implements=("material_artifact_map.index_only_boundary",),
             external_inputs=("path", "body_hash", "visibility"),
+            role="helper",
         ),
         _contract(
             "material_artifact_map_entries.static_artifact_entries",
@@ -515,6 +573,7 @@ def source_code_contracts() -> tuple[CodeContract, ...]:
             symbol="static_artifact_entries",
             implements=("material_artifact_map.index_only_boundary",),
             external_inputs=("project_root", "run_root"),
+            role="helper",
         ),
         _contract(
             "branch_pruning.next_states",
@@ -1244,14 +1303,6 @@ def source_code_contracts() -> tuple[CodeContract, ...]:
             side_effects=("write_json",),
         ),
         _contract(
-            "lifecycle_terminal_quarantine.material_progress_flags",
-            path="skills/flowpilot/assets/flowpilot_router_lifecycle_requests_terminal_quarantine.py",
-            symbol="quarantine_material_progress_for_terminal_lifecycle",
-            implements=("runtime_owner.router_owner_external_contracts",),
-            external_inputs=("router", "project_root", "run_root", "run_state", "mode", "event", "reconciled_at"),
-            side_effects=("write_json",),
-        ),
-        _contract(
             "lifecycle_terminal_quarantine.duplicate_role_events",
             path="skills/flowpilot/assets/flowpilot_router_lifecycle_requests_terminal_quarantine.py",
             symbol="quarantine_duplicate_role_events_for_terminal_lifecycle",
@@ -1501,18 +1552,37 @@ def source_code_contracts() -> tuple[CodeContract, ...]:
             external_inputs=("router", "project_root", "run_state", "run_root", "mode"),
         ),
         _contract(
-            "work_packets_next_actions.try_reconcile_material_scan",
-            path="skills/flowpilot/assets/flowpilot_router_work_packets_result_reconciliation.py",
-            symbol="_try_reconcile_material_scan_body_delivery",
-            implements=("runtime_owner.router_owner_external_contracts",),
-            external_inputs=("router", "project_root", "run_root", "run_state"),
-        ),
-        _contract(
             "work_packets_pm_role_actions.try_reconcile_pm_role_work",
             path="skills/flowpilot/assets/flowpilot_router_work_packets_pm_role_actions.py",
             symbol="_try_reconcile_pm_role_work_results",
             implements=("runtime_owner.router_owner_external_contracts",),
             external_inputs=("router", "project_root", "run_root", "run_state"),
+        ),
+        _contract(
+            "work_packets_material.write_research_package",
+            path="skills/flowpilot/assets/flowpilot_router_work_packets_material.py",
+            symbol="_write_research_package",
+            implements=("runtime_owner.router_owner_external_contracts",),
+            external_inputs=("router", "project_root", "run_root", "run_state", "payload"),
+            external_outputs=(),
+            side_effects=("write_json", "refresh_material_artifact_map"),
+        ),
+        _contract(
+            "work_packets_next_actions.bind_router",
+            path="skills/flowpilot/assets/flowpilot_router_work_packets_next_actions.py",
+            symbol="_bind_router",
+            implements=("runtime_owner.router_owner_external_contracts",),
+            external_inputs=("router",),
+            external_outputs=(),
+        ),
+        _contract(
+            "work_packets_result_reconciliation.reconciled_payload",
+            path="skills/flowpilot/assets/flowpilot_router_work_packets_result_reconciliation.py",
+            symbol="_reconciled_packet_family_result_payload",
+            implements=("runtime_owner.router_owner_external_contracts",),
+            external_inputs=("batch_kind", "index", "summary"),
+            external_outputs=("packet_ids", "batch_id", "results_returned", "completed_by_roles"),
+            side_effects=("update",),
         ),
         _contract(
             "user_flow_source.route_source_summary",

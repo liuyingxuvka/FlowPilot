@@ -29,7 +29,8 @@ REQUIRED_LABELS = (
     "select_pm_package_different_body_conflict",
     "select_route_replacement_old_packet_disposed",
     "select_route_replacement_old_packet_undisposed",
-    "select_material_reissue_stale_global_flag",
+    "select_packet_batch_replacement_stale_active_ref",
+    "select_retired_material_singleton_authority_present",
     "select_ack_only_output_closure",
     "select_final_progress_only_closure",
     "select_missing_ledger_evidence",
@@ -37,6 +38,7 @@ REQUIRED_LABELS = (
     "classify_same_identity_replay_idempotent",
     "classify_duplicate_authority_without_disposition",
     "classify_same_identity_different_body_conflict",
+    "classify_retired_material_authority_risk",
     "classify_stale_evidence_current_authority_risk",
     "classify_ack_only_output_completion_risk",
     "classify_progress_only_completion_risk",
@@ -48,7 +50,8 @@ HAZARD_EXPECTED_FAILURES = {
     "duplicate_daemon_writer_marked_safe": "duplicate singleton authority was marked safe",
     "package_conflict_marked_replay": "same singleton identity with different body hash was treated as replay",
     "replacement_without_disposition_marked_safe": "replacement or reissue was safe without old-object disposition",
-    "stale_material_flag_marked_current": "replacement or reissue was safe without old-object disposition",
+    "stale_packet_batch_ref_marked_current": "replacement or reissue was safe without old-object disposition",
+    "retired_material_authority_marked_safe": "retired material_scan/material_sufficiency/material_understanding authority was marked safe",
     "ack_only_output_marked_complete": "ACK settlement completed semantic output",
     "progress_only_final_marked_complete": "progress-only singleton evidence was consumed as completion",
     "missing_ledger_marked_safe": "missing singleton ledger evidence was treated as safe",
@@ -63,6 +66,7 @@ def _state_id(state: model.State) -> str:
         f"dupes={state.duplicate_authority_count}|replay={state.same_identity_replay}|"
         f"body={state.same_body_hash}|repair={state.authorized_reissue_or_repair}|"
         f"disposed={state.old_object_disposed}|stale={state.stale_evidence_consumed_as_current}|"
+        f"retired_material={state.retired_material_authority_present}|"
         f"progress_only={state.progress_only_evidence_consumed_as_completion}|"
         f"ack={state.ack_settled}|output={state.output_completed}|ledger={state.required_ledger_present}|"
         f"classification={state.classification}"

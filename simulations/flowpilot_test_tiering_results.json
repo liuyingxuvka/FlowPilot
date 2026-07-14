@@ -29,6 +29,9 @@
     "hidden_skipped_tests": [
       "hidden_skipped_tests"
     ],
+    "install_check_races_topology_writers": [
+      "install_check_races_topology_writers"
+    ],
     "install_sync_skipped_after_tool_change": [
       "install_sync_not_planned"
     ],
@@ -43,6 +46,9 @@
     ],
     "release_claim_without_release_suite": [
       "release_scope_missing_release_suite"
+    ],
+    "release_embeds_final_confidence_consumer": [
+      "release_tier_embeds_terminal_consumer"
     ],
     "release_obligation_hidden": [
       "release_obligation_hidden"
@@ -67,6 +73,9 @@
     ],
     "stale_child_evidence_used": [
       "child_evidence_stale"
+    ],
+    "testmesh_mta_final_confidence_dependency_cycle": [
+      "testmesh_mta_final_confidence_dependency_cycle"
     ]
   },
   "flowguard_explorer": {
@@ -75,12 +84,12 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=2 initial_states=1 traces=72",
+    "summary": "sequences=2 initial_states=1 traces=81",
     "violation_count": 0
   },
   "graph": {
     "accepted_state_count": 4,
-    "edge_count": 48,
+    "edge_count": 54,
     "labels_seen": [
       "accept_valid_background_integration_tier",
       "accept_valid_fast_tier",
@@ -93,11 +102,13 @@
       "reject_duplicate_child_owner",
       "reject_foreground_full_regression",
       "reject_hidden_skipped_tests",
+      "reject_install_check_races_topology_writers",
       "reject_install_sync_skipped_after_tool_change",
       "reject_json_write_readback_can_hang_control_gate",
       "reject_missing_child_owner",
       "reject_public_release_in_fast_tier",
       "reject_release_claim_without_release_suite",
+      "reject_release_embeds_final_confidence_consumer",
       "reject_release_obligation_hidden",
       "reject_release_public_check_races_model_proofs",
       "reject_root_pytest_scans_backup_tests",
@@ -106,6 +117,7 @@
       "reject_router_child_tier_stale_k_pattern",
       "reject_router_slice_import_broken_counted_green",
       "reject_stale_child_evidence_used",
+      "reject_testmesh_mta_final_confidence_dependency_cycle",
       "select_background_missing_artifact_set",
       "select_background_progress_only_claimed_pass",
       "select_background_running_without_timeout_guard",
@@ -113,11 +125,13 @@
       "select_duplicate_child_owner",
       "select_foreground_full_regression",
       "select_hidden_skipped_tests",
+      "select_install_check_races_topology_writers",
       "select_install_sync_skipped_after_tool_change",
       "select_json_write_readback_can_hang_control_gate",
       "select_missing_child_owner",
       "select_public_release_in_fast_tier",
       "select_release_claim_without_release_suite",
+      "select_release_embeds_final_confidence_consumer",
       "select_release_obligation_hidden",
       "select_release_public_check_races_model_proofs",
       "select_root_pytest_scans_backup_tests",
@@ -126,6 +140,7 @@
       "select_router_child_tier_stale_k_pattern",
       "select_router_slice_import_broken_counted_green",
       "select_stale_child_evidence_used",
+      "select_testmesh_mta_final_confidence_dependency_cycle",
       "select_valid_background_integration_tier",
       "select_valid_fast_tier",
       "select_valid_release_background_tier",
@@ -133,9 +148,9 @@
     ],
     "missing_labels": [],
     "ok": true,
-    "rejected_state_count": 20,
-    "state_count": 49,
-    "terminal_state_count": 24,
+    "rejected_state_count": 23,
+    "state_count": 55,
+    "terminal_state_count": 27,
     "violations": []
   },
   "model": "flowpilot_test_tiering",
@@ -159,11 +174,13 @@
       "duplicate_child_owner",
       "foreground_full_regression",
       "hidden_skipped_tests",
+      "install_check_races_topology_writers",
       "install_sync_skipped_after_tool_change",
       "json_write_readback_can_hang_control_gate",
       "missing_child_owner",
       "public_release_in_fast_tier",
       "release_claim_without_release_suite",
+      "release_embeds_final_confidence_consumer",
       "release_obligation_hidden",
       "release_public_check_races_model_proofs",
       "root_pytest_scans_backup_tests",
@@ -171,7 +188,8 @@
       "router_child_tier_keeps_slow_aggregate",
       "router_child_tier_stale_k_pattern",
       "router_slice_import_broken_counted_green",
-      "stale_child_evidence_used"
+      "stale_child_evidence_used",
+      "testmesh_mta_final_confidence_dependency_cycle"
     ],
     "ok": true,
     "valid_scenarios_accepted": [

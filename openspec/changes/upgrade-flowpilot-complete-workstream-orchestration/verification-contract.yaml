@@ -1,0 +1,634 @@
+contract_version: 1
+change: upgrade-flowpilot-complete-workstream-orchestration
+
+obligations:
+  - id: req.workstream.lifecycle
+    source: "specs/complete-ai-workstream-orchestration/spec.md#Requirement: Every substantive AI role executes a complete bounded workstream"
+    claim: Every substantive role receives and follows the common understand/plan/risk/execute-integrate/verify/repair/submit lifecycle while preserving role authority.
+    required: true
+    evidence: [check.workstream.model, check.workstream.prompts, check.workstream.fake_ai]
+  - id: req.workstream.report
+    source: "specs/complete-ai-workstream-orchestration/spec.md#Requirement: Substantive reports expose numbered plan completion"
+    claim: Existing role reports expose numbered plan steps, status, evidence, deviation, integration, verification, unresolved items, and claim consistency without a new Runtime hard gate.
+    required: true
+    evidence: [check.workstream.prompts, check.workstream.fake_ai, check.review.flow]
+  - id: req.workstream.controller_boundary
+    source: "specs/complete-ai-workstream-orchestration/spec.md#Requirement: Controller remains a mechanical coordinator"
+    claim: Controller keeps the Runtime-derived foreground action ledger and cannot create a parallel substantive plan.
+    required: true
+    evidence: [check.workstream.model, check.controller.boundary]
+  - id: req.workstream.leaf
+    source: "specs/complete-ai-workstream-orchestration/spec.md#Requirement: Route leaves are independently accountable complete workstreams"
+    claim: Route guidance and review allow multi-step local role plans but reject product/route/acceptance authority leakage.
+    required: true
+    evidence: [check.workstream.model, check.route.quality, check.workstream.fake_ai]
+  - id: req.workstream.pm
+    source: "specs/complete-ai-workstream-orchestration/spec.md#Requirement: PM operates FlowPilot as a high-standard long project"
+    claim: PM owns ambition, architecture, integration, sub-9 Reviewer disposition, and final closure across the whole project.
+    required: true
+    evidence: [check.workstream.prompts, check.review.flow, check.fake_project]
+  - id: req.workstream.flowguard
+    source: "specs/complete-ai-workstream-orchestration/spec.md#Requirement: Role-local FlowGuard cannot self-approve"
+    claim: Role-local FlowGuard is risk-triggered support and cannot replace formal independent FlowGuard or Reviewer boundaries.
+    required: true
+    evidence: [check.workstream.model, check.workstream.fake_ai, check.prework.flowguard]
+  - id: req.discovery.skill_inventory
+    source: "specs/ordinary-resource-discovery/spec.md#Requirement: Local capability and skill discovery remains mandatory"
+    claim: Runtime projects a current lightweight local capability/skill inventory and PM selects before deep skill loading.
+    required: true
+    evidence: [check.resource.model, check.resource.runtime, check.child_skill]
+  - id: req.discovery.contract_contraction
+    source: "specs/ordinary-resource-discovery/spec.md#Requirement: Discovery no longer requires material sufficiency fields"
+    claim: task.discovery keeps its family identity but removes material_sources/material_sufficiency from every positive current authority and rejects unsupported old shapes without fallback.
+    required: true
+    evidence: [check.resource.model, check.resource.runtime, check.field.lifecycle, check.deleted.material]
+  - id: req.discovery.ordinary_material_work
+    source: "specs/ordinary-resource-discovery/spec.md#Requirement: Additional material work uses ordinary role-work packets"
+    claim: PM reads available material normally and issues extra evidence/research through the existing ordinary role-work/batch and disposition path.
+    required: true
+    evidence: [check.resource.model, check.resource.runtime, check.workstream.fake_ai]
+  - id: req.discovery.optional_map
+    source: "specs/ordinary-resource-discovery/spec.md#Requirement: Material navigation remains optional and non-authoritative"
+    claim: Material artifact map is optional navigation and its absence cannot block project stages or closure.
+    required: true
+    evidence: [check.resource.model, check.material.map]
+  - id: req.repair.current_contract
+    source: "specs/executable-repair-transactions/spec.md#Requirement: Executable plan kinds have plan-specific fields"
+    claim: Repair uses only supported current executable plan kinds with concrete producer/action evidence; packet_reissue and replacement-packet fields remain negative-only and cannot create a second workflow.
+    required: true
+    evidence: [check.repair.model, check.resource.runtime, check.model_test_alignment]
+  - id: req.fake.canonical
+    source: "specs/finite-ai-contract-exhaustion/spec.md#Requirement: One canonical fake responder owns semantic profiles"
+    claim: All new semantic profiles originate from ContractDrivenFakeAIResponder.from_open_packet_result and traverse real current packet/review APIs.
+    required: true
+    evidence: [check.workstream.fake_ai, check.fake_ai.replay, check.fake_project]
+  - id: req.coverage.accounting
+    source: "specs/finite-ai-contract-exhaustion/spec.md#Requirement: Coverage accounting separates every evidence state"
+    claim: Declared/applicable/excluded/generated/selected/executed/passed/failed/stale/proof-backed sets and ids reconcile without inflation.
+    required: true
+    evidence: [check.contract.exhaustion, check.cartesian, check.acceptance.testmesh, check.model.mesh]
+  - id: req.coverage.interactions
+    source: "specs/finite-ai-contract-exhaustion/spec.md#Requirement: Finite universes use layered interaction strength"
+    claim: Full static enumeration, every single mutation, public pairwise, named high-risk triples/selected four-way interactions, history, fuzz, fake projects, and live samples remain distinct.
+    required: true
+    evidence: [check.contract.exhaustion, check.cartesian, check.workstream.fake_ai]
+  - id: req.coverage.boundary
+    source: "specs/finite-ai-contract-exhaustion/spec.md#Requirement: Coverage claims remain bounded"
+    claim: Passing finite cases never becomes a claim of arbitrary natural-language or future AI correctness.
+    required: true
+    evidence: [check.contract.exhaustion, check.docs.release]
+  - id: req.review.plan_audit
+    source: "specs/flowpilot-packet-review-flow/spec.md#Requirement: Reviewer audits plan execution with the actual artifact"
+    claim: Reviewer compares plan rows with actual artifacts/evidence/delegation and uses the existing PM repair/recheck path.
+    required: true
+    evidence: [check.review.flow, check.workstream.fake_ai]
+  - id: req.fields.lifecycle
+    source: "specs/flowguard-boundary-test-alignment/spec.md#Requirement: Material contraction aligns positive and negative evidence"
+    claim: Every removed material field and special surface has one delete/negative/historical disposition and no positive compatibility read.
+    required: true
+    evidence: [check.field.lifecycle, check.deleted.material, check.model_test_alignment]
+  - id: req.flowguard.boundaries
+    source: "specs/flowguard-test-obligation-ownership/spec.md#Requirement: Formal FlowGuard remains independent at named boundaries"
+    claim: Formal FlowGuard remains independent at product, route/mutation, applicable post-result, model-miss, parent, and terminal boundaries without a universal leaf precheck.
+    required: true
+    evidence: [check.workstream.model, check.skillguard.model, check.prework.flowguard, check.model_test_alignment]
+  - id: req.tiers.freshness
+    source: "specs/tiered-flowpilot-test-validation/spec.md#Requirement: Background parents bind a frozen covered-source fingerprint"
+    claim: Focused/parent/background evidence is tier-owned, final-artifact backed, source-fingerprint current, and invalidated by covered source changes.
+    required: true
+    evidence: [check.tier.all.background, check.tier.adversarial.background, check.tier.release.background, check.testmesh.compile, check.tier.final.background, check.meta.background, check.capability.background]
+  - id: req.daemon.projection
+    source: "specs/daemon-projection-reconciliation/spec.md#Requirement: Daemon reconciles direct role-output events before work selection"
+    claim: Daemon reconciliation folds current ordinary research and generic direct-role events before selecting work, while invalid or unauthorized events fail closed.
+    required: true
+    evidence: [check.daemon.projection]
+  - id: req.dispatch.recipient_gate
+    source: "specs/dispatch-recipient-gate/spec.md#Requirement: Router uses one pre-dispatch recipient gate"
+    claim: One recipient gate protects formal packets, grouped system cards, first-user-intake output, active waits, and output-bearing event context without treating ACK-only cards as work.
+    required: true
+    evidence: [check.dispatch.model, check.dispatch.runtime]
+  - id: req.repair.producer_waits
+    source: "specs/executable-repair-transactions/spec.md#Requirement: Role reissue waits require concrete producers"
+    claim: Role-produced follow-up waits are committed only after a concrete current PM producer exists, and ordinary rework stays on the existing package path.
+    required: true
+    evidence: [check.repair.model, check.repair.runtime]
+  - id: req.repair.atomic_commit
+    source: "specs/executable-repair-transactions/spec.md#Requirement: PM repair commit exposes only post-decision executable waits"
+    claim: PM decision, repair transaction, outcome table, blocker events, indexes, and daemon projection become visible as one consistent post-decision state.
+    required: true
+    evidence: [check.repair.model, check.repair.runtime]
+  - id: req.repair.operation_replay
+    source: "specs/executable-repair-transactions/spec.md#Requirement: Operation replay synthesizes fresh Controller work"
+    claim: Operation replay creates a fresh Controller action bound to current packet, lease, batch, route, and scheduler identity and rejects stale or unprovable replay state.
+    required: true
+    evidence: [check.repair.model, check.repair.runtime]
+  - id: req.alignment.complete_workstream
+    source: "specs/flowguard-boundary-test-alignment/spec.md#Requirement: Complete-workstream obligations align model, source, and tests"
+    claim: Every complete-workstream obligation has one primary model owner, executable source contract, ordinary positive and negative tests, and current evidence status.
+    required: true
+    evidence: [check.model_test_alignment, check.workstream.prompts]
+  - id: req.flowguard.pm_test_disposition
+    source: "specs/flowguard-test-obligation-ownership/spec.md#Requirement: PM owns FlowGuard test-obligation disposition"
+    claim: PM chooses the smallest sufficient evidence route, consumes FlowGuard findings as disposition input, and refreshes affected obligations after role results without pre-owning specialist work.
+    required: true
+    evidence: [check.flowguard.obligation, check.review.flow]
+  - id: req.packet.pm_return
+    source: "specs/flowpilot-packet-review-flow/spec.md#Requirement: PM-issued packet results return to PM before Reviewer gates"
+    claim: Substantive role results return to PM for disposition before Reviewer release, and raw mechanically valid role output cannot bypass that semantic owner.
+    required: true
+    evidence: [check.packet.review, check.review.flow]
+  - id: req.material.map_linkage
+    source: "specs/material-artifact-map/spec.md#Requirement: Route memory and final ledger link the map"
+    claim: Route memory and final ledger link the optional map only when it exists and never treat a missing map or its index rows as acceptance evidence.
+    required: true
+    evidence: [check.material.map]
+  - id: req.material.map_optional
+    source: "specs/material-artifact-map/spec.md#Requirement: Run-scoped material artifact map"
+    claim: The run-scoped material map remains an optional safe-metadata navigation index whose public facade has one owner and whose absence cannot block work or closure.
+    required: true
+    evidence: [check.material.map, check.resource.model]
+  - id: req.packet.pm_exits
+    source: "specs/packet-open-authority-exits/spec.md#Requirement: PM inability uses existing PM exits"
+    claim: PM inability follows existing startup repair, control-blocker repair, protocol-dead-end, or stop paths and does not invent a packet-open escape route.
+    required: true
+    evidence: [check.packet.authority]
+  - id: req.packet.author_identity
+    source: "specs/packet-open-authority-exits/spec.md#Requirement: Packet result author evidence remains replayable"
+    claim: Result author evidence binds the current role lease while role-name agent ids are repaired only through the current result path.
+    required: true
+    evidence: [check.packet.authority]
+  - id: req.packet.pm_disposition
+    source: "specs/packet-open-authority-exits/spec.md#Requirement: PM package disposition is formal packet-release evidence"
+    claim: Reviewer release requires the formal current PM package disposition and cannot be satisfied by packet evidence, summaries, or raw role output alone.
+    required: true
+    evidence: [check.packet.authority, check.packet.review]
+  - id: req.role.child_skill
+    source: "specs/role-child-skill-use/spec.md#Requirement: PM considers process-support child skills"
+    claim: PM considers candidate process-support skills and records a bounded skip when no child skill is needed, without Runtime selecting semantic relevance.
+    required: true
+    evidence: [check.child_skill]
+  - id: req.role.inventory_depth
+    source: "specs/role-child-skill-use/spec.md#Requirement: Skill inventory is shallow until PM selection"
+    claim: A large local inventory remains metadata-only until PM selects a relevant skill for deep reading.
+    required: true
+    evidence: [check.resource.runtime, check.child_skill]
+  - id: req.role.worker_repair
+    source: "specs/role-scoped-quality-repair-prompts/spec.md#Requirement: Executable worker packets require in-scope repair"
+    claim: Worker packets require in-scope self-repair and verification while out-of-scope defects are escalated without expanding Worker authority.
+    required: true
+    evidence: [check.role.prompts, check.workstream.prompts]
+  - id: req.role.evidence_repair
+    source: "specs/role-scoped-quality-repair-prompts/spec.md#Requirement: Evidence and model packets self-correct only their own outputs"
+    claim: Evidence Workers and FlowGuard Operators correct only their own evidence/model outputs and report target defects through existing PM paths.
+    required: true
+    evidence: [check.role.prompts, check.prework.flowguard]
+  - id: req.role.plan_status
+    source: "specs/role-scoped-quality-repair-prompts/spec.md#Requirement: Every substantive role reports plan status in the shared self-check"
+    claim: Generic PM role-work for every substantive role uses the existing shared workstream plan/completion section rather than a role-specific report family.
+    required: true
+    evidence: [check.workstream.prompts, check.role.prompts]
+  - id: req.router.wait_producer
+    source: "specs/router-external-wait-reconciliation/spec.md#Requirement: Repair follow-up waits carry producer evidence"
+    claim: Every follow-up wait names a current-packet producer; empty, stale, or mismatched producer evidence returns to PM correction rather than becoming an executable wait.
+    required: true
+    evidence: [check.repair.model, check.repair.runtime]
+  - id: req.shared.maintenance_row
+    source: "specs/shared-skill-maintenance-log/spec.md#Requirement: PM records each formal run in the shared skill maintenance log"
+    claim: Current-run planning appends one shared FlowPilot maintenance row with work summary, workspace, run id, and run folder, reusing an existing shared log or the canonical workspace path.
+    required: true
+    evidence: [check.shared.maintenance, check.workstream.prompts]
+  - id: req.shared.maintenance_nongate
+    source: "specs/shared-skill-maintenance-log/spec.md#Requirement: PM reports the maintenance entry without creating a gate"
+    claim: PM cites the maintenance row through the existing planning/self-check report surface and Runtime never creates a field, packet, route, review, FlowGuard, or acceptance gate for it.
+    required: true
+    evidence: [check.shared.maintenance, check.workstream.prompts]
+  - id: req.synthetic.canonical
+    source: "specs/synthetic-agent-coverage-matrix/spec.md#Requirement: Synthetic coverage uses the canonical opened-packet responder"
+    claim: Synthetic semantic profiles use the same canonical opened-packet responder and cannot bypass current packet identity or the real submit path.
+    required: true
+    evidence: [check.synthetic.matrix, check.workstream.fake_ai]
+  - id: req.synthetic.accounting
+    source: "specs/synthetic-agent-coverage-matrix/spec.md#Requirement: Coverage matrix reconciles finite universe states"
+    claim: Synthetic parent receipts reconcile finite declared, selected, executed, passed, failed, stale, and not-run child states without overstating proof.
+    required: true
+    evidence: [check.synthetic.matrix, check.contract.exhaustion]
+  - id: req.synthetic.repair
+    source: "specs/synthetic-agent-coverage-matrix/spec.md#Requirement: Synthetic workstream branches include semantic negatives and repair"
+    claim: Synthetic workstream coverage includes shallow/incomplete results, independent review, PM repair, corrected retry, and terminal outcome branches.
+    required: true
+    evidence: [check.synthetic.matrix, check.workstream.fake_ai]
+  - id: req.tiers.participation
+    source: "specs/tiered-flowpilot-test-validation/spec.md#Requirement: Workstream and resource-discovery tests participate in parent tiers"
+    claim: Focused workstream/resource checks are owned by fast/all parents, semantic execution receipts by adversarial parents, and release evidence by the release parent.
+    required: true
+    evidence: [check.tier.structure, check.tier.all.background, check.tier.adversarial.background, check.tier.release.background]
+  - id: req.tiers.acyclic
+    source: "specs/tiered-flowpilot-test-validation/spec.md#Requirement: Final confidence is an acyclic terminal consumer"
+    claim: Final confidence consumes frozen upstream all/adversarial/release evidence exactly once and is not embedded inside a parent it depends on.
+    required: true
+    evidence: [check.tier.structure, check.tier.final.background]
+  - id: req.removed.material_phase
+    source: "specs/flowguard-full-coverage-findings/spec.md#Requirement: Material Scan Phase Writes Stay Synchronized"
+    claim: The retired dedicated material phase/event/packet/frontier path is rejected or historical-only and cannot remain a second successful workflow.
+    required: true
+    evidence: [check.deleted.material, check.resource.runtime]
+  - id: req.removed.material_sufficiency
+    source: "specs/material-artifact-map/spec.md#Requirement: Reviewer material sufficiency uses concrete source refs"
+    claim: No mandatory material-sufficiency gate remains; source quality is reviewed through ordinary authorized artifacts and role-work evidence.
+    required: true
+    evidence: [check.deleted.material, check.material.map]
+  - id: req.removed.material_wait
+    source: "specs/router-external-wait-reconciliation/spec.md#Requirement: PM material disposition closes waits only for the current generation"
+    claim: Retired material-generation waits cannot close current work; ordinary current producers and package dispositions own any required wait.
+    required: true
+    evidence: [check.deleted.material, check.repair.runtime]
+  - id: req.removed.packet_reissue
+    source: "specs/executable-repair-transactions/spec.md#Requirement: Packet reissue continues material repair work"
+    claim: Retired packet-reissue and replacement-packet repair surfaces are rejected before commit and cannot be translated into a current repair transaction.
+    required: true
+    evidence: [check.deleted.material, check.repair.runtime]
+  - id: req.removed.material_generation
+    source: "specs/executable-repair-transactions/spec.md#Requirement: Material packet reissue commits one current generation"
+    claim: No material-scan generation or packet index can satisfy a current repair wait, disposition, or completion claim.
+    required: true
+    evidence: [check.deleted.material, check.repair.runtime]
+  - id: req.release.local_sync
+    source: "proposal.md#Impact"
+    claim: FlowGuard adoption, topology, SkillGuard, docs/version, local install digest parity, OpenSpec, and scoped local Git are current after source freeze.
+    required: true
+    evidence: [check.skillguard.model, check.flowguard.project, check.topology, check.skillguard, check.docs.release, check.install, check.public.boundary, check.openspec]
+
+checks:
+  - id: check.workstream.model
+    kind: receipt
+    execution_owner: check.tier.all.background
+    consumer: flowpilot-all-parent-projection
+    required: true
+    covers: [req.workstream.lifecycle, req.workstream.controller_boundary, req.workstream.leaf, req.workstream.flowguard, req.flowguard.boundaries]
+  - id: check.resource.model
+    kind: receipt
+    execution_owner: check.tier.all.background
+    consumer: flowpilot-all-parent-projection
+    required: true
+    covers: [req.discovery.skill_inventory, req.discovery.contract_contraction, req.discovery.ordinary_material_work, req.discovery.optional_map, req.material.map_optional]
+  - id: check.skillguard.model
+    kind: receipt
+    execution_owner: check.tier.all.background
+    consumer: flowpilot-all-parent-projection
+    required: true
+    covers: [req.flowguard.boundaries, req.release.local_sync]
+  - id: check.workstream.prompts
+    kind: receipt
+    execution_owner: check.tier.all.background
+    consumer: flowpilot-all-parent-projection
+    required: true
+    covers: [req.workstream.lifecycle, req.workstream.report, req.workstream.pm, req.alignment.complete_workstream, req.role.worker_repair, req.role.plan_status, req.shared.maintenance_row, req.shared.maintenance_nongate]
+  - id: check.resource.runtime
+    kind: receipt
+    execution_owner: check.tier.all.background
+    consumer: flowpilot-all-parent-projection
+    required: true
+    covers: [req.discovery.skill_inventory, req.discovery.contract_contraction, req.discovery.ordinary_material_work, req.repair.current_contract, req.role.inventory_depth, req.removed.material_phase]
+  - id: check.repair.model
+    kind: receipt
+    execution_owner: check.tier.release.background
+    consumer: flowpilot-release-parent-projection
+    required: true
+    covers: [req.repair.current_contract, req.repair.producer_waits, req.repair.atomic_commit, req.repair.operation_replay, req.router.wait_producer]
+  - id: check.workstream.fake_ai
+    kind: receipt
+    execution_owner: check.tier.all.background
+    consumer: flowpilot-all-parent-projection
+    required: true
+    covers: [req.workstream.lifecycle, req.workstream.report, req.workstream.leaf, req.workstream.flowguard, req.discovery.ordinary_material_work, req.fake.canonical, req.coverage.interactions, req.review.plan_audit, req.synthetic.canonical, req.synthetic.repair]
+  - id: check.review.flow
+    kind: receipt
+    execution_owner: check.tier.all.background
+    consumer: flowpilot-all-parent-projection
+    required: true
+    covers: [req.workstream.report, req.workstream.pm, req.review.plan_audit, req.flowguard.pm_test_disposition, req.packet.pm_return]
+  - id: check.route.quality
+    kind: receipt
+    execution_owner: check.tier.release.background
+    consumer: flowpilot-release-parent-projection
+    required: true
+    covers: [req.workstream.leaf]
+  - id: check.controller.boundary
+    kind: receipt
+    execution_owner: check.tier.all.background
+    consumer: flowpilot-all-parent-projection
+    required: true
+    covers: [req.workstream.controller_boundary]
+  - id: check.prework.flowguard
+    kind: receipt
+    execution_owner: check.tier.release.background
+    consumer: flowpilot-release-parent-projection
+    required: true
+    covers: [req.workstream.flowguard, req.flowguard.boundaries, req.role.evidence_repair]
+  - id: check.child_skill
+    kind: receipt
+    execution_owner: check.tier.all.background
+    consumer: flowpilot-all-parent-projection
+    required: true
+    covers: [req.discovery.skill_inventory, req.role.child_skill, req.role.inventory_depth]
+  - id: check.material.map
+    kind: receipt
+    execution_owner: check.tier.all.background
+    consumer: flowpilot-all-parent-projection
+    required: true
+    covers: [req.discovery.optional_map, req.material.map_linkage, req.material.map_optional, req.removed.material_sufficiency]
+  - id: check.field.lifecycle
+    kind: receipt
+    execution_owner: check.tier.release.background
+    consumer: flowpilot-release-parent-projection
+    required: true
+    covers: [req.discovery.contract_contraction, req.fields.lifecycle]
+  - id: check.deleted.material
+    kind: receipt
+    execution_owner: check.tier.all.background
+    consumer: flowpilot-all-parent-projection
+    required: true
+    covers: [req.discovery.contract_contraction, req.fields.lifecycle, req.repair.current_contract, req.removed.material_phase, req.removed.material_sufficiency, req.removed.material_wait, req.removed.packet_reissue, req.removed.material_generation]
+  - id: check.fake_ai.replay
+    kind: receipt
+    execution_owner: check.tier.adversarial.background
+    consumer: flowpilot-adversarial-parent-projection
+    required: true
+    covers: [req.fake.canonical]
+  - id: check.fake_project
+    kind: receipt
+    execution_owner: check.tier.release.background
+    consumer: flowpilot-release-parent-projection
+    required: true
+    covers: [req.workstream.pm, req.fake.canonical]
+  - id: check.daemon.projection
+    kind: receipt
+    execution_owner: check.tier.release.background
+    consumer: flowpilot-release-parent-projection
+    required: true
+    covers: [req.daemon.projection]
+  - id: check.dispatch.model
+    kind: receipt
+    execution_owner: check.tier.release.background
+    consumer: flowpilot-release-parent-projection
+    required: true
+    covers: [req.dispatch.recipient_gate]
+  - id: check.dispatch.runtime
+    kind: receipt
+    execution_owner: check.tier.all.background
+    consumer: flowpilot-all-parent-projection
+    required: true
+    covers: [req.dispatch.recipient_gate]
+  - id: check.repair.runtime
+    kind: receipt
+    execution_owner: check.tier.all.background
+    consumer: flowpilot-all-parent-projection
+    required: true
+    covers: [req.repair.current_contract, req.repair.producer_waits, req.repair.atomic_commit, req.repair.operation_replay, req.router.wait_producer, req.removed.material_wait, req.removed.packet_reissue, req.removed.material_generation]
+  - id: check.flowguard.obligation
+    kind: receipt
+    execution_owner: check.tier.release.background
+    consumer: flowpilot-release-parent-projection
+    required: true
+    covers: [req.flowguard.pm_test_disposition, req.flowguard.boundaries]
+  - id: check.packet.review
+    kind: receipt
+    execution_owner: check.tier.all.background
+    consumer: flowpilot-all-parent-projection
+    required: true
+    covers: [req.packet.pm_return, req.packet.pm_disposition]
+  - id: check.packet.authority
+    kind: receipt
+    execution_owner: check.tier.release.background
+    consumer: flowpilot-release-parent-projection
+    required: true
+    covers: [req.packet.pm_exits, req.packet.author_identity, req.packet.pm_disposition]
+  - id: check.role.prompts
+    kind: receipt
+    execution_owner: check.tier.all.background
+    consumer: flowpilot-all-parent-projection
+    required: true
+    covers: [req.role.worker_repair, req.role.evidence_repair, req.role.plan_status]
+  - id: check.shared.maintenance
+    kind: receipt
+    execution_owner: check.tier.release.background
+    consumer: flowpilot-release-parent-projection
+    required: true
+    covers: [req.shared.maintenance_row, req.shared.maintenance_nongate]
+  - id: check.synthetic.matrix
+    kind: receipt
+    execution_owner: check.tier.all.background
+    consumer: flowpilot-all-parent-projection
+    required: true
+    covers: [req.synthetic.canonical, req.synthetic.accounting, req.synthetic.repair]
+  - id: check.tier.structure
+    kind: receipt
+    execution_owner: check.tier.all.background
+    consumer: flowpilot-all-parent-projection
+    required: true
+    covers: [req.tiers.participation, req.tiers.freshness, req.tiers.acyclic]
+  - id: check.tier.all.background
+    kind: command
+    command: python
+    args: [scripts/run_test_tier.py, --tier, all, --verify-background, --background-dir, tmp/test_background/complete-workstream-all-final18, --json]
+    required: true
+    covers: [req.tiers.freshness, req.tiers.participation]
+    expected: {exit_code: 0}
+  - id: check.tier.adversarial.background
+    kind: command
+    command: python
+    args: [scripts/run_test_tier.py, --tier, formal-submit-adversarial, --verify-background, --background-dir, tmp/test_background/complete-workstream-adversarial-final18, --json]
+    required: true
+    covers: [req.tiers.freshness, req.coverage.accounting, req.tiers.participation]
+    expected: {exit_code: 0}
+  - id: check.tier.release.background
+    kind: command
+    command: python
+    args: [scripts/run_test_tier.py, --tier, release, --verify-background, --background-dir, tmp/test_background/complete-workstream-release-final18, --json]
+    required: true
+    covers: [req.tiers.freshness, req.tiers.participation]
+    expected: {exit_code: 0}
+  - id: check.testmesh.compile
+    kind: command
+    command: python
+    args: [scripts/compile_flowpilot_acceptance_testmesh_evidence.py, --phase, final, --all-root, tmp/test_background/complete-workstream-all-final18, --adversarial-root, tmp/test_background/complete-workstream-adversarial-final18, --release-root, tmp/test_background/complete-workstream-release-final18, --json-out, simulations/flowpilot_acceptance_testmesh_evidence_manifest.json]
+    depends_on_receipts: [check.flowguard.project, check.topology, check.tier.all.background, check.tier.adversarial.background, check.tier.release.background]
+    required: true
+    covers: [req.tiers.freshness, req.coverage.accounting]
+    expected: {exit_code: 0}
+  - id: check.contract.exhaustion
+    kind: command
+    command: python
+    args: [simulations/run_flowpilot_contract_exhaustion_mesh_checks.py, --evidence-manifest, simulations/flowpilot_acceptance_testmesh_evidence_manifest.json, --evidence-scope, done, --json-out, simulations/flowpilot_contract_exhaustion_mesh_results.json]
+    depends_on_receipts: [check.testmesh.compile]
+    required: true
+    covers: [req.coverage.accounting, req.coverage.interactions, req.coverage.boundary, req.synthetic.accounting]
+    expected: {exit_code: 0}
+  - id: check.cartesian
+    kind: command
+    command: python
+    args: [simulations/run_flowpilot_current_contract_cartesian_matrix_checks.py, --evidence-manifest, simulations/flowpilot_acceptance_testmesh_evidence_manifest.json, --evidence-scope, done, --json-out, simulations/flowpilot_current_contract_cartesian_matrix_results.json]
+    depends_on_receipts: [check.testmesh.compile]
+    required: true
+    covers: [req.coverage.accounting, req.coverage.interactions]
+    expected: {exit_code: 0}
+  - id: check.model_test_alignment
+    kind: command
+    command: python
+    args: [simulations/run_flowpilot_model_test_alignment_checks.py, --evidence-manifest, simulations/flowpilot_acceptance_testmesh_evidence_manifest.json, --evidence-scope, done, --json-out, simulations/flowpilot_model_test_alignment_results.json]
+    depends_on_receipts: [check.testmesh.compile]
+    required: true
+    covers: [req.repair.current_contract, req.fields.lifecycle, req.flowguard.boundaries, req.alignment.complete_workstream]
+    expected: {exit_code: 0}
+  - id: check.acceptance.testmesh
+    kind: command
+    command: python
+    args: [simulations/run_flowpilot_acceptance_testmesh_checks.py, --evidence-manifest, simulations/flowpilot_acceptance_testmesh_evidence_manifest.json, --release-evidence, --release-background, --json-out, simulations/flowpilot_acceptance_testmesh_results.json]
+    depends_on_receipts: [check.testmesh.compile]
+    required: true
+    covers: [req.coverage.accounting]
+    expected: {exit_code: 0}
+  - id: check.model.mesh
+    kind: command
+    command: python
+    args: [simulations/run_flowpilot_model_mesh_checks.py, --evidence-manifest, simulations/flowpilot_acceptance_testmesh_evidence_manifest.json, --claim-scope, done, --json-out, simulations/flowpilot_model_mesh_results.json]
+    depends_on_receipts: [check.testmesh.compile]
+    required: true
+    covers: [req.coverage.accounting]
+    expected: {exit_code: 0}
+  - id: check.tier.final.background
+    kind: command
+    command: python
+    args: [scripts/run_test_tier.py, --tier, final-confidence, --verify-background, --background-dir, tmp/test_background/complete-workstream-final18, --json]
+    depends_on_receipts: [check.contract.exhaustion, check.cartesian, check.model_test_alignment, check.acceptance.testmesh, check.model.mesh]
+    required: true
+    covers: [req.tiers.freshness, req.tiers.acyclic]
+    expected: {exit_code: 0}
+  - id: check.meta.background
+    kind: command
+    command: python
+    args: [scripts/run_flowguard_background.py, --name, run_meta_checks, --verify, --, python, simulations/run_meta_checks.py, --full, --force]
+    depends_on_receipts: [check.tier.release.background]
+    required: true
+    covers: [req.tiers.freshness]
+    expected: {exit_code: 0}
+  - id: check.capability.background
+    kind: command
+    command: python
+    args: [scripts/run_flowguard_background.py, --name, run_capability_checks, --verify, --, python, simulations/run_capability_checks.py, --full, --force]
+    depends_on_receipts: [check.tier.release.background]
+    required: true
+    covers: [req.tiers.freshness]
+    expected: {exit_code: 0}
+  - id: check.flowguard.project
+    kind: command
+    command: python
+    args: [-m, flowguard, project-audit, --root, ., --json]
+    required: true
+    covers: [req.release.local_sync]
+    expected: {exit_code: 0}
+  - id: check.topology
+    kind: command
+    command: python
+    args: [scripts/flowguard_project_topology.py, check]
+    required: true
+    covers: [req.release.local_sync]
+    expected: {exit_code: 0}
+  - id: check.skillguard
+    kind: receipt
+    execution_owner: check.tier.release.background
+    consumer: flowpilot-release-parent-projection
+    required: true
+    covers: [req.release.local_sync]
+  - id: check.docs.release
+    kind: receipt
+    execution_owner: check.tier.release.background
+    consumer: flowpilot-release-parent-projection
+    required: true
+    covers: [req.coverage.boundary, req.release.local_sync]
+  - id: check.install
+    kind: receipt
+    execution_owner: check.tier.all.background
+    consumer: flowpilot-all-parent-projection
+    required: true
+    covers: [req.release.local_sync]
+  - id: check.public.boundary
+    kind: receipt
+    execution_owner: check.tier.release.background
+    consumer: flowpilot-release-parent-projection
+    required: true
+    covers: [req.release.local_sync]
+  - id: check.openspec
+    kind: command
+    command: openspec
+    args: [validate, upgrade-flowpilot-complete-workstream-orchestration, --strict, --no-interactive]
+    depends_on_receipts: [check.tier.final.background, check.meta.background, check.capability.background]
+    required: true
+    covers: [req.release.local_sync]
+    expected: {exit_code: 0}
+
+freshness:
+  watch:
+    - openspec/changes/upgrade-flowpilot-complete-workstream-orchestration/behavior-commitment-ledger.md
+    - openspec/changes/upgrade-flowpilot-complete-workstream-orchestration/proposal.md
+    - openspec/changes/upgrade-flowpilot-complete-workstream-orchestration/design.md
+    - openspec/changes/upgrade-flowpilot-complete-workstream-orchestration/requirement-audit.md
+    - openspec/changes/upgrade-flowpilot-complete-workstream-orchestration/tasks.md
+    - openspec/changes/upgrade-flowpilot-complete-workstream-orchestration/flowguard-existing-model-preflight.md
+    - openspec/changes/upgrade-flowpilot-complete-workstream-orchestration/architecture-reduction.md
+    - openspec/changes/upgrade-flowpilot-complete-workstream-orchestration/development-process-record.md
+    - openspec/changes/upgrade-flowpilot-complete-workstream-orchestration/specs/**/*.md
+    - openspec/changes/upgrade-flowpilot-complete-workstream-orchestration/verification-contract.yaml
+    - openspec/changes/restore-flowpilot-test-evidence-closure/**/*
+    - skills/flowpilot/SKILL.md
+    - skills/flowpilot/.skillguard/contract-source.json
+    - skills/flowpilot/.skillguard/compiled-contract.json
+    - skills/flowpilot/.skillguard/check-manifest.json
+    - skills/flowpilot/assets/flowpilot_new.py
+    - skills/flowpilot/assets/flowpilot_new_role_commands.py
+    - skills/flowpilot/assets/flowpilot_core_runtime/*.py
+    - skills/flowpilot/assets/runtime_kit/cards/**/*.md
+    - skills/flowpilot/assets/runtime_kit/prompts/**/*.md
+    - skills/flowpilot/assets/runtime_kit/contracts/contract_index.json
+    - simulations/flowpilot_complete_workstream_orchestration_model.py
+    - simulations/flowpilot_ordinary_resource_discovery_model.py
+    - simulations/flowpilot_skillguard_contract_model.py
+    - simulations/run_flowpilot_skillguard_contract_checks.py
+    - simulations/flowpilot_contract_driven_fake_ai.py
+    - simulations/flowpilot_current_contract_cartesian_matrix.py
+    - simulations/flowpilot_contract_exhaustion_mesh_model.py
+    - simulations/flowpilot_model_test_alignment_*.py
+    - simulations/flowpilot_acceptance_testmesh_model.py
+    - simulations/run_flowpilot_acceptance_testmesh_checks.py
+    - simulations/flowpilot_evidence_truth.py
+    - simulations/flowpilot_model_mesh_model.py
+    - simulations/run_flowpilot_model_mesh_checks.py
+    - simulations/flowpilot_parent_responsibility_ledger.json
+    - simulations/meta_model*.py
+    - simulations/capability_model*.py
+    - scripts/test_tier/**/*.py
+    - scripts/compile_flowpilot_acceptance_testmesh_evidence.py
+    - scripts/run_flowguard_background.py
+    - scripts/refresh_flowpilot_skillguard_contract.py
+    - scripts/install_checks/common.py
+    - templates/flowpilot/**/*.json
+    - templates/flowpilot/README.md
+    - tests/test_flowpilot_complete_workstream_orchestration.py
+    - tests/test_flowpilot_ordinary_resource_discovery.py
+    - tests/test_flowpilot_complete_workstream_fake_ai.py
+    - tests/test_flowpilot_high_standard_control_flow.py
+    - tests/test_flowpilot_current_contract_cartesian_matrix.py
+    - tests/test_flowpilot_contract_exhaustion_mesh.py
+    - tests/test_flowpilot_model_test_alignment.py
+    - tests/test_flowpilot_acceptance_testmesh.py
+    - tests/test_flowpilot_model_mesh_coverage_receipts.py
+    - tests/test_flowpilot_skillguard_deep_contract.py
+    - tests/test_flowguard_background_helper.py
+    - VERSION
+    - CHANGELOG.md
+    - README.md
+    - HANDOFF.md
+    - AGENTS.md
+    - .flowguard/project.toml
+    - .flowguard/behavior_commitment_ledger/**/*
+    - docs/flowguard_project_topology.json

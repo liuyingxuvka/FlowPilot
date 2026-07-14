@@ -21,21 +21,23 @@ def controller_keeps_envelope_only_boundary(state: State, _trace: object) -> Inv
     return _ok()
 
 
-def material_dispatch_contract_is_explicit(state: State, _trace: object) -> InvariantResult:
-    if not state.material_scan_packets_observed:
+def current_prework_contract_has_single_authority(
+    state: State,
+    _trace: object,
+) -> InvariantResult:
+    if not state.current_prework_contract_observed:
         return _ok()
     missing: list[str] = []
-    if not state.material_output_contract_role_scoped:
-        missing.append("role-scoped output contract")
-    if not state.material_dispatch_write_target_explicit:
-        missing.append("explicit result write target")
-    if not state.unsupported_material_packets_rejected:
-        missing.append("unsupported packet rejection")
+    if not state.retired_material_protocol_absent:
+        missing.append("retired mandatory material protocol is still active")
+    if not state.shallow_skill_inventory_preserved:
+        missing.append("mandatory shallow local skill inventory is missing")
+    if not state.ordinary_resource_work_optional:
+        missing.append("ordinary PM/research work was turned into a mandatory gate")
+    if not state.complete_workstream_report_contract_preserved:
+        missing.append("complete-workstream role report semantics are missing")
     if missing:
-        return _fail(
-            "material-scan dispatch lacks "
-            + ", ".join(missing)
-        )
+        return _fail("current prework contract violation: " + ", ".join(missing))
     return _ok()
 
 
@@ -144,9 +146,12 @@ INVARIANTS = (
         predicate=controller_keeps_envelope_only_boundary,
     ),
     Invariant(
-        name="material_dispatch_contract_is_explicit",
-        description="Material-scan dispatch carries role contract, write target, and unsupported_historical policy.",
-        predicate=material_dispatch_contract_is_explicit,
+        name="current_prework_contract_has_single_authority",
+        description=(
+            "The current prework path keeps shallow skill inventory, optional ordinary "
+            "resource work, and complete-workstream reports without a retired material gate."
+        ),
+        predicate=current_prework_contract_has_single_authority,
     ),
     Invariant(
         name="terminal_closure_has_single_authority",
@@ -213,7 +218,7 @@ __all__ = [
     "gate_outcome_contracts_have_non_pass_paths",
     "install_policy_matches_first_class_sources",
     "invariant_failures",
-    "material_dispatch_contract_is_explicit",
+    "current_prework_contract_has_single_authority",
     "node_completion_is_idempotent_per_active_node",
     "reviewer_block_events_are_known",
     "route_snapshot_uses_frontier_completion",

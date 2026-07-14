@@ -201,7 +201,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
 
     if not state.signed_envelope_migration_sidecar_written:
         yield Transition(
-            "signed_material_migration_preserves_relayed_envelope",
+            "signed_envelope_migration_preserves_relayed_envelope",
             _inc(
                 state,
                 signed_envelope_relayed=True,
@@ -267,40 +267,19 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         )
         return
 
-    if not state.material_gate_depends_on_result_body:
+    if not state.ordinary_repair_replay_protocol_checked:
         yield Transition(
-            "material_gate_result_evidence_machine_and_authority_backed",
+            "ordinary_repair_and_result_replay_protocol_checked",
             _inc(
                 state,
-                material_gate_depends_on_result_body=True,
-                result_self_check_machine_parseable=True,
-                result_reader_authority_matches_runtime=True,
-            ),
-        )
-        return
-
-    if not state.material_repair_generation_protocol_checked:
-        yield Transition(
-            "material_repair_generation_protocol_checked",
-            _inc(
-                state,
-                material_repair_generation_protocol_checked=True,
+                ordinary_repair_replay_protocol_checked=True,
                 operation_replay_fresh_controller_action_id=True,
-                operation_replay_targets_current_generation=True,
+                operation_replay_targets_current_work_unit=True,
                 operation_replay_ledger_io_authorized=True,
                 controller_repair_work_packet_receipt_folded=True,
                 controller_repair_work_packet_facade_exported=True,
-                pm_material_disposition_generation_scoped=True,
-                pm_material_disposition_matches_current_generation=True,
-                stale_pm_material_disposition_restored=False,
-                material_progress_projection_generation_scoped=True,
-                material_global_progress_flags_match_active_generation=True,
-                material_next_action_derived_from_active_batch=True,
-                material_reissue_clears_or_quarantines_stale_progress_flags=True,
-                stale_run_state_save_preserves_material_generation_flag_clear=True,
-                material_dispatch_block_matches_active_generation=True,
                 role_output_event_deduped_by_body_ref=True,
-                role_output_current_generation_not_short_circuited_by_global_flag=True,
+                role_output_current_work_unit_not_short_circuited_by_global_flag=True,
                 role_output_package_disposition_domain_first_commit=True,
                 pm_package_authority_split_preserves_wait=True,
                 pm_package_authority_split_repairs_domain_commit=True,
@@ -384,19 +363,19 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         )
         return
 
-    if not state.material_dispatch_reviewed:
+    if not state.ordinary_work_dispatch_reviewed:
         yield Transition(
-            "router_direct_material_scan_dispatch_after_packet_integrity_check",
+            "router_dispatches_current_ordinary_work_packet_after_contract_check",
             _inc(
                 state,
-                holder="controller",
-                material_dispatch_requested=True,
-                material_dispatch_reviewed=True,
-                material_dispatch_allowed=True,
-                material_dispatch_phase_context_consistent=True,
-                material_dispatch_output_contract_consistent=True,
-                material_dispatch_write_target_explicit=True,
-                material_dispatch_single_canonical_body=True,
+                holder="router",
+                ordinary_work_dispatch_requested=True,
+                ordinary_work_dispatch_reviewed=True,
+                ordinary_work_dispatch_allowed=True,
+                ordinary_work_dispatch_family="pm_role_work",
+                ordinary_work_dispatch_current_scope=True,
+                ordinary_work_dispatch_output_contract_valid=True,
+                ordinary_work_dispatch_write_target_explicit=True,
             ),
         )
         return
@@ -569,30 +548,17 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         )
         return
 
-    if not state.pm_material_understanding_written:
-        yield Transition(
-            "pm_material_understanding_written_to_canonical_files",
-            _inc(
-                state,
-                holder="pm",
-                pm_material_understanding_written=True,
-                pm_material_understanding_source_available=True,
-            ),
-        )
-        return
-
     if not state.product_architecture_card_delivered:
         yield Transition(
-            "product_architecture_card_delivered_with_material_context_and_fresh_views",
+            "product_architecture_card_delivered_with_required_context_and_fresh_views",
             _inc(
                 state,
                 holder="pm",
                 product_architecture_card_delivered=True,
-                product_architecture_delivery_has_material_context=True,
                 phase_dependency_cards_delivered=True,
                 phase_required_sources_complete=True,
                 delivered_card_phase_context_fresh=True,
-                stage_advanced_after_material_scan=True,
+                stage_advanced_after_product_architecture_delivery=True,
                 frontier_fresh_after_stage_advance=True,
                 product_stage_view_published=True,
                 product_stage_view_fresh=True,

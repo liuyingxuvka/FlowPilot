@@ -133,22 +133,6 @@ def _role_output_event_has_durable_authority(run_root: Path, run_state: dict[str
         event,
     )
 
-def _sync_material_review_from_role_output_payload(
-    project_root: Path,
-    run_root: Path,
-    run_state: dict[str, Any],
-    event: str,
-    payload: dict[str, Any],
-) -> bool:
-    return role_output_bridge_events._sync_material_review_from_role_output_payload(
-        _bound_router(),
-        project_root,
-        run_root,
-        run_state,
-        event,
-        payload,
-    )
-
 def _try_reconcile_direct_role_output_event_ledger(
     project_root: Path,
     run_root: Path,

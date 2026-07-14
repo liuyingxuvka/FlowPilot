@@ -18,6 +18,8 @@ from flowpilot_model_test_alignment_common import (
 MODEL_ID = "flowpilot_information_flow_alignment"
 CHECK_COMMAND = (
     "python simulations/run_flowpilot_information_flow_alignment_checks.py "
+    "--evidence-manifest simulations/flowpilot_acceptance_testmesh_evidence_manifest.json "
+    "--evidence-scope done "
     "--json-out simulations/flowpilot_information_flow_alignment_results.json"
 )
 

@@ -3,8 +3,10 @@
   "schema_version": 1,
   "created_at": "<iso-8601-timestamp>",
   "run_id": "<run-id>",
-  "owner": "<worker>",
-  "purpose": "Inventory locally available skills and host capabilities as candidate resources before PM product and route decisions.",
+  "owner": "runtime",
+  "purpose": "Perform the mandatory shallow inventory of locally available skills and host capabilities before PM product and route decisions.",
+  "scan_depth": "names_paths_and_header_descriptions_only",
+  "deep_read_before_pm_selection_forbidden": true,
   "candidate_only_until_pm_selected": true,
   "raw_availability_is_not_authority_to_invoke": true,
   "inventory_sources": [

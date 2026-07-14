@@ -39,12 +39,14 @@ model = runner.model
 class FlowPilotCurrentContractCartesianMatrixTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        cls.report = runner.run_checks()
+        cls.report = runner.run_checks(declaration_only=True)
 
     def test_current_contract_cartesian_runner_accepts_full_matrix(self) -> None:
         report = self.report
 
         self.assertTrue(report["ok"], report)
+        self.assertEqual(report["claim_scope"], "declaration_only")
+        self.assertEqual(report["evidence_status"], "not_run")
         self.assertEqual(report["model_id"], model.MODEL_ID)
         self.assertGreater(report["matrix"]["declared_counts"]["required_cell_count"], 3_000_000)
         self.assertEqual(
@@ -114,9 +116,83 @@ class FlowPilotCurrentContractCartesianMatrixTests(unittest.TestCase):
         self.assertEqual(matrix["future_claim_accepted"], [])
         self.assertEqual(matrix["progress_accepted_as_evidence"], [])
         self.assertEqual(matrix["legacy_positive_acceptance"], [])
+        self.assertEqual(matrix["source_purity_positive_acceptance"], [])
+        self.assertEqual(matrix["source_purity_shape_failures"], [])
+        self.assertEqual(matrix["noncurrent_sources_in_positive_profiles"], {})
         self.assertGreater(matrix["by_reaction"]["mechanical_reject"], 0)
         self.assertGreater(matrix["by_reaction"]["reject_overclaim"], 0)
         self.assertGreater(matrix["by_reaction"]["progress_only_not_evidence"], 0)
+
+    def test_source_purity_cartesian_rejects_every_failure_at_every_entrypoint(self) -> None:
+        cells = list(model.iter_source_purity_negative_cells())
+        expected_pairs = {
+            (str(entrypoint["entrypoint_id"]), str(failure["failure_class"]))
+            for entrypoint in model.SOURCE_PURITY_ENTRYPOINTS
+            for failure in model.SOURCE_PURITY_FAILURE_PROFILES
+        }
+
+        self.assertEqual(len(cells), model.SOURCE_PURITY_REQUIRED_CELL_COUNT)
+        self.assertEqual(len(cells), 35)
+        self.assertEqual(
+            {
+                (str(cell["source_purity_entrypoint"]), str(cell["source_purity_failure_class"]))
+                for cell in cells
+            },
+            expected_pairs,
+        )
+        self.assertEqual(len({str(cell["cell_id"]) for cell in cells}), len(cells))
+        self.assertFalse([
+            cell["cell_id"]
+            for cell in cells
+            if cell["expected_reaction"] != "mechanical_reject"
+            or cell["required_evidence_owner"] != "current_contract_runtime_matrix"
+            or cell["existing_test_link_id"] != "current_contract_source_purity_negatives"
+            or cell["source_purity_negative_only"] is not True
+            or cell["current_stage_profile"] is not False
+        ])
+        historical_negative = [cell for cell in cells if cell["historical_negative"]]
+        self.assertEqual(len(historical_negative), 30)
+        self.assertEqual(
+            {str(cell["source_purity_failure_class"]) for cell in cells if not cell["historical_negative"]},
+            {"wrong_role"},
+        )
+
+    def test_daemon_replay_is_historical_negative_only(self) -> None:
+        self.assertIn("daemon_replay", model.HISTORICAL_NEGATIVE_EXECUTION_SOURCES)
+        self.assertNotIn("daemon_replay", model.CURRENT_EXECUTION_SOURCES)
+        for group, profile in model.PROFILE_BY_STAGE_GROUP.items():
+            with self.subTest(group=group):
+                self.assertNotIn("daemon_replay", profile["sources"])
+                self.assertTrue(
+                    set(profile["sources"]).isdisjoint(model.HISTORICAL_NEGATIVE_EXECUTION_SOURCES)
+                )
+        daemon_cells = [
+            cell
+            for cell in model.iter_source_purity_negative_cells()
+            if cell["source_purity_failure_class"] == "daemon_replay"
+        ]
+        self.assertEqual(len(daemon_cells), len(model.SOURCE_PURITY_ENTRYPOINTS))
+        self.assertFalse([
+            cell["cell_id"]
+            for cell in daemon_cells
+            if cell["expected_reaction"] != "mechanical_reject"
+            or cell["historical_negative"] is not True
+        ])
+
+    def test_source_purity_runner_reports_exact_counts(self) -> None:
+        matrix = self.report["matrix"]
+
+        self.assertEqual(matrix["declared_counts"]["source_purity_required_cell_count"], 35)
+        self.assertEqual(matrix["source_purity_observed_cell_count"], 35)
+        self.assertEqual(matrix["source_purity_historical_negative_count"], 30)
+        self.assertEqual(
+            matrix["source_purity_by_entrypoint"],
+            {str(entrypoint["entrypoint_id"]): 7 for entrypoint in model.SOURCE_PURITY_ENTRYPOINTS},
+        )
+        self.assertEqual(
+            matrix["source_purity_by_failure_class"],
+            {str(failure["failure_class"]): 5 for failure in model.SOURCE_PURITY_FAILURE_PROFILES},
+        )
 
     def test_malformed_json_ai_profiles_are_mechanical_reject_cells(self) -> None:
         malformed_profiles = {
@@ -202,11 +278,90 @@ class FlowPilotCurrentContractCartesianMatrixTests(unittest.TestCase):
                     self.assertEqual(link_audit["missing_markers"], [])
                     self.assertEqual(link_audit["forbidden_legacy_positive_markers"], [])
 
+    def test_strict_testmesh_consumes_current_proof_counts_not_model_cells(self) -> None:
+        proof = {
+            "artifact_id": "proof.current-cartesian-tests",
+            "producer_route": "flowguard-test-mesh",
+            "command": "python scripts/run_test_tier.py --tier all --background",
+            "result_path": "tmp/test_background/current-all",
+            "result_status": "passed",
+            "exit_code": 0,
+            "artifact_fingerprints": {"all.meta.json": "a" * 64, "all.exit.txt": "b" * 64},
+            "covered_obligation_ids": ["all-current-tests"],
+            "assertion_scope": "external_contract",
+            "current": True,
+            "route_evidence_current": True,
+            "progress_only": False,
+            "metadata": {"selected_child_command_count": 17, "executed_child_command_count": 17},
+        }
+        manifest = {
+            "source_fingerprint": runner.source_fingerprint(),
+            "routine": {
+                "all": {
+                    "result_status": "passed",
+                    "selected_count": 17,
+                    "test_count": 17,
+                    "proof_artifact": proof,
+                }
+            },
+        }
+        strict = runner._test_mesh_report(
+            self.report["matrix"],
+            evidence_manifest=manifest,
+            declaration_only=False,
+            evidence_scope="routine",
+        )
+
+        self.assertTrue(strict["ok"], strict)
+        for suite in strict["child_suites"].values():
+            self.assertEqual(suite["test_count"], 17)
+            self.assertNotEqual(suite["test_count"], suite["owned_cell_count"])
+            self.assertTrue(suite["proof_artifact"])
+            self.assertTrue(suite["reuse_ticket"])
+            self.assertTrue(suite["owned_shard_ids"])
+
+    def test_strict_testmesh_rejects_reused_proof_without_ticket(self) -> None:
+        proof = {
+            "artifact_id": "proof.reused-without-ticket",
+            "producer_route": "flowguard-test-mesh",
+            "command": "python scripts/run_test_tier.py --tier all --background",
+            "result_path": "tmp/test_background/current-all",
+            "result_status": "passed",
+            "exit_code": 0,
+            "artifact_fingerprints": {"all.meta.json": "a" * 64},
+            "covered_obligation_ids": ["all-current-tests"],
+            "assertion_scope": "external_contract",
+            "current": True,
+            "metadata": {"selected_child_command_count": 1, "executed_child_command_count": 1},
+        }
+        manifest = {
+            "source_fingerprint": runner.source_fingerprint(),
+            "routine": {
+                "all": {
+                    "result_status": "passed",
+                    "selected_count": 1,
+                    "test_count": 1,
+                    "result_reused": True,
+                    "proof_artifact": proof,
+                }
+            },
+        }
+        strict = runner._test_mesh_report(
+            self.report["matrix"],
+            evidence_manifest=manifest,
+            declaration_only=False,
+            evidence_scope="routine",
+        )
+
+        self.assertFalse(strict["ok"])
+        self.assertIn("all:missing_test_reuse_ticket", strict["execution_evidence"]["failures"])
+
     def test_non_materialized_product_classes_are_explicit(self) -> None:
         class_ids = {entry["class_id"] for entry in self.report["not_applicable_classes"]}
 
         self.assertIn("global_cross_stage_product_not_materialized", class_ids)
         self.assertIn("legacy_protocol_positive_path_forbidden", class_ids)
+        self.assertIn("noncurrent_execution_source_positive_path_forbidden", class_ids)
         self.assertIn("glassbreak_not_current_contract_success_path", class_ids)
 
 

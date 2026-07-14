@@ -337,7 +337,7 @@ def _accept_high_standard_gates_for_scenario(ledger: dict[str, Any]) -> None:
     }
     ledger["preplanning_discovery"] = {
         "status": "accepted",
-        "material_sources": ["sealed_startup_intake"],
+        "candidate_skill_inventory": ["flowguard-development-process-flow"],
     }
     ledger["skill_standard_contract"] = {
         "status": "accepted",
@@ -375,6 +375,7 @@ def _mark_node_ready_for_final_closure(ledger: dict[str, Any], node_id: str) -> 
         "packet_id": packet_id,
         "review_id": review_id,
         "status": "accepted",
+        "accepted": True,
         "envelope": {
             "route_version": ledger.get("active_route_version"),
             "evidence_generation": ledger.get("source_generation"),
@@ -550,6 +551,7 @@ def route_deliverable_blocks_terminal_closure() -> dict[str, Any]:
                     {
                         "node_id": "node-001",
                         "title": "Implementation",
+                        "responsibility": "worker",
                         "acceptance_criteria": ["Implementation accepted."],
                         "required_outputs": [{"path": "data/product.json", "kind": "json"}],
                         "deliverable_checks": [
@@ -596,6 +598,7 @@ def terminal_backward_replay_block_does_not_replan() -> dict[str, Any]:
                 {
                     "node_id": "node-001",
                     "title": "Implementation",
+                    "responsibility": "worker",
                     "acceptance_criteria": ["Implementation accepted."],
                     "high_standard_requirement_ids": ["hsr-001"],
                     "skill_standard_obligation_ids": ["skill-std-001"],
@@ -603,6 +606,7 @@ def terminal_backward_replay_block_does_not_replan() -> dict[str, Any]:
                 {
                     "node_id": "node-002",
                     "title": "Validation",
+                    "responsibility": "worker",
                     "acceptance_criteria": ["Validation accepted."],
                     "high_standard_requirement_ids": ["hsr-001"],
                     "skill_standard_obligation_ids": ["skill-std-001"],
@@ -610,6 +614,7 @@ def terminal_backward_replay_block_does_not_replan() -> dict[str, Any]:
                 {
                     "node_id": "node-003",
                     "title": "Closure",
+                    "responsibility": "worker",
                     "acceptance_criteria": ["Closure evidence accepted."],
                     "high_standard_requirement_ids": ["hsr-001"],
                     "skill_standard_obligation_ids": ["skill-std-001"],

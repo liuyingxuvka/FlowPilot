@@ -44,24 +44,17 @@ for review.
    `agent_id` values are audit history only. If authorization is missing,
    startup fails, or required same-task continuation cannot be opened, record a
    structured stop or blocker.
-10. PM issues a material-intake packet envelope/body pair; after router
-   direct-dispatch, an authorized non-controller worker reads the body and
-   writes the material scan result back to PM. PM records a package-result
-   disposition, then releases a formal material sufficiency package for the
-   human-like reviewer before PM planning uses it.
-11. Project manager writes `pm_material_understanding.json`, classifies material
-   complexity, records the shared Spark-style skill maintenance log entry for
-   this FlowPilot run, and records whether messy/raw materials require
-   discovery, cleanup, modeling, research, validation, or reconciliation nodes.
-   When a material, mechanism, source, or validation gap affects route/product
-   decisions, PM writes a formal research package under `research/`, assigns a
-   worker to search, inspect, experiment, or reconcile evidence, then releases
-   the human-like reviewer to check original sources or outputs directly.
-   Worker reports are PM intake material only. PM opens and dispositions the
-   returned result first, then releases a formal reviewer source-check package.
-   Reviewer failure returns to PM for worker rework or route mutation; PM may
-   use the result only after the formal reviewer gate passes and PM absorbs the
-   result into material understanding or mutates the route.
+10. Runtime writes the mandatory shallow `local_skill_inventory.json` from
+   local skill names, paths, header descriptions, and host capabilities. Every
+   entry is candidate-only. PM selects the skills needed by the product and
+   process, and only selected skills may be read deeply or invoked.
+11. Source reading, material checking, evidence discovery, cleanup, modeling,
+   research, validation, and reconciliation are ordinary PM-authored work
+   packages when the current product or route decision needs them. They use the
+   same packet, result, risk-appropriate Reviewer/FlowGuard checks, rework, and
+   PM integration path as other work. There is no mandatory material scan,
+   material-understanding memo, separate material-sufficiency form, or startup
+   material gate.
 12. Ask the project manager to synthesize `product_function_architecture.json`
    before contract freeze, including user tasks, capabilities, feature
    decisions, high-standard posture, strongest feasible product target,
@@ -238,18 +231,12 @@ for review.
   proving every currently required requested responsibility was resumed for the
   same task, freshly replaced, or blocked from current-run ledger and role
   memory before PM runway work.
-- `material_intake_packet.template.json`: authorized-worker material inventory,
-  local skill and host capability inventory, and source-quality packet
-  reviewed before PM planning.
-- `local_skill_inventory.template.json`: optional standalone local skill and
-  host capability inventory consumed by the material packet and PM selection.
-- `pm_material_understanding.template.json`: PM interpretation, source-claim
-  matrix, open questions, shared Spark-style skill maintenance log entry
-  reference, material complexity, discovery decision, and whether formal
-  research packages are required before product architecture.
-- `research_package.template.json`: PM-owned package that turns a material,
-  mechanism, source, validation, or experiment gap into bounded worker research
-  with explicit tool/source boundaries and reviewer checks.
+- `local_skill_inventory.template.json`: mandatory shallow local skill and host
+  capability inventory used by PM selection; it never grants invocation
+  authority and does not deeply read unselected skills.
+- `research_package.template.json`: optional PM-owned specialization of an
+  ordinary work package for a mechanism, source, validation, evidence, or
+  experiment gap, with explicit tool/source boundaries and reviewer checks.
 - `research_worker_report.template.json`: worker output for a research package,
   including raw source pointers, negative findings, contradictions, and
   confidence boundaries. It returns to PM for disposition.

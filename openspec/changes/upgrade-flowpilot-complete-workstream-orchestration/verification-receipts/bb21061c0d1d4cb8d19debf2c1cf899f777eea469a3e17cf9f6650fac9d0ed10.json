@@ -1,0 +1,25 @@
+{
+  "schema_version": 2,
+  "report_protocol_version": 3,
+  "execution_key": "sha256:5589b2eb2c71a1835a6d651a4c77e3ce28d5f35bc7d1f572eb75bf16a7e257b3",
+  "result_hash": "sha256:b44d6feaec2320a5bfff354e9f902b57a0db41668dc296da5861c610d74bf717",
+  "receipt_id": "sha256:bb21061c0d1d4cb8d19debf2c1cf899f777eea469a3e17cf9f6650fac9d0ed10",
+  "result": {
+    "status": "passed",
+    "command": "python",
+    "args": [
+      "-m",
+      "unittest",
+      "-v",
+      "tests.test_flowpilot_card_instruction_coverage.FlowPilotCardInstructionCoverageTests.test_role_scoped_quality_repair_prompt_boundaries",
+      "tests.test_flowpilot_card_instruction_coverage.FlowPilotCardInstructionCoverageTests.test_flowguard_test_obligation_ownership_guidance_is_role_scoped"
+    ],
+    "expected_exit_code": 0,
+    "exit_code": 0,
+    "timeout_seconds": 1800,
+    "stdout": "",
+    "stderr": "test_role_scoped_quality_repair_prompt_boundaries (tests.test_flowpilot_card_instruction_coverage.FlowPilotCardInstructionCoverageTests.test_role_scoped_quality_repair_prompt_boundaries) ... ok\r\ntest_flowguard_test_obligation_ownership_guidance_is_role_scoped (tests.test_flowpilot_card_instruction_coverage.FlowPilotCardInstructionCoverageTests.test_flowguard_test_obligation_ownership_guidance_is_role_scoped) ... ok\r\n\r\n----------------------------------------------------------------------\r\nRan 2 tests in 0.131s\r\n\r\nOK\r\n",
+    "stdout_preview": "",
+    "stderr_preview": "test_role_scoped_quality_repair_prompt_boundaries (tests.test_flowpilot_card_instruction_coverage.FlowPilotCardInstructionCoverageTests.test_role_scoped_quality_repair_prompt_boundaries) ... ok\r\ntest_flowguard_test_obligation_ownership_guidance_is_role_scoped (tests.test_flowpilot_card_instruction_coverage.FlowPilotCardInstructionCoverageTests.test_flowguard_test_obligation_ownership_guidance_is_role_scoped) ... ok\r\n\r\n----------------------------------------------------------------------\r\nRan 2 tests in 0.131s\r\n\r\nOK\r\n"
+  }
+}

@@ -159,17 +159,17 @@ class FlowPilotOutputContractTests(unittest.TestCase):
         self.assertFalse(wrong_contract["passed"])
         self.assertFalse(wrong_contract["source_output_contract_id_matches"])
 
-    def test_contract_self_check_metadata_reports_live_worker_missing_fields(self) -> None:
+    def test_contract_self_check_metadata_reports_current_node_worker_missing_fields(self) -> None:
         contract = {
             "schema_version": "flowpilot.output_contract.v1",
-            "contract_id": "flowpilot.output_contract.worker_material_scan_result.v1",
+            "contract_id": "flowpilot.output_contract.worker_current_node_result.v1",
             "contract_self_check_required": True,
         }
 
         live_worker_shape = (
-            "Material scan result\n\n"
+            "Current-node result\n\n"
             "## Contract Self-Check\n\n"
-            "- output_contract_id: flowpilot.output_contract.worker_material_scan_result.v1\n"
+            "- output_contract_id: flowpilot.output_contract.worker_current_node_result.v1\n"
         )
 
         result = packet_runtime.contract_self_check_metadata(live_worker_shape, contract)

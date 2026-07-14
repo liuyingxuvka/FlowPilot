@@ -25,19 +25,18 @@ REQUIRED_LABELS = (
     "router_materializes_ready_internal_postcondition_evidence",
     "controller_display_work_soft_recorded_without_hard_gate",
     "external_keepalive_action_confirmed_with_light_marker",
-    "signed_material_migration_preserves_relayed_envelope",
+    "signed_envelope_migration_preserves_relayed_envelope",
     "control_blocker_action_identity_bound_to_artifact",
     "control_blocker_done_receipt_applies_delivery_postcondition",
     "stale_run_state_save_preserves_cleared_wait_projection",
     "self_check_status_pass_parser_aligned",
-    "material_gate_result_evidence_machine_and_authority_backed",
-    "material_repair_generation_protocol_checked",
+    "ordinary_repair_and_result_replay_protocol_checked",
     "current_repair_target_gate_retires_old_packets",
     "new_only_result_contract_blocks_old_shapes_and_retires_old_blockers",
     "pm_writes_research_package_with_scope_fields",
     "pm_records_research_capability_decision_preserving_package_scope",
     "worker_packet_materialized_with_research_scope",
-    "router_direct_material_scan_dispatch_after_packet_integrity_check",
+    "router_dispatches_current_ordinary_work_packet_after_contract_check",
     "packet_delivered_by_controller",
     "target_records_packet_body_open_receipt",
     "worker_result_returned_to_ledger",
@@ -53,8 +52,7 @@ REQUIRED_LABELS = (
     "role_memory_delta_written_as_non_authority_index",
     "reviewer_writes_report_after_receipts",
     "router_accepts_reviewer_report",
-    "pm_material_understanding_written_to_canonical_files",
-    "product_architecture_card_delivered_with_material_context_and_fresh_views",
+    "product_architecture_card_delivered_with_required_context_and_fresh_views",
     "status_summary_published_from_public_state",
     "pm_writes_route_draft_with_nonempty_nodes",
     "route_process_check_card_delivered_with_route_draft_context",
@@ -90,14 +88,14 @@ REQUIRED_LABELS = (
 
 
 HAZARD_EXPECTED_FAILURES = {
-    "research_package_scope_dropped": "worker research packet was materialized after PM package scope fields were dropped",
-    "material_dispatch_phase_mismatch": "material scan dispatch request had inconsistent phase, output contract, write-target, or canonical-body state",
-    "material_dispatch_output_contract_mismatch": "material scan dispatch request had inconsistent phase, output contract, write-target, or canonical-body state",
-    "material_dispatch_write_target_missing": "material scan dispatch request had inconsistent phase, output contract, write-target, or canonical-body state",
-    "material_dispatch_duplicate_canonical_body": "material scan dispatch request had inconsistent phase, output contract, write-target, or canonical-body state",
-    "material_dispatch_allowed_without_preflight": "material scan dispatch was allowed before router direct-dispatch preflight",
-    "signed_material_envelope_rewritten_after_relay": "signed packet or result envelope was rewritten after Controller relay hash binding",
-    "signed_material_migration_sidecar_missing": "signed envelope migration backfilled mutable projections without a sidecar record",
+    "research_package_scope_dropped": "worker research packet was issued after PM package scope fields were dropped",
+    "ordinary_work_dispatch_retired_family": "ordinary work dispatch used a retired family or lacked current scope, output contract, or write target",
+    "ordinary_work_dispatch_wrong_scope": "ordinary work dispatch used a retired family or lacked current scope, output contract, or write target",
+    "ordinary_work_dispatch_output_contract_missing": "ordinary work dispatch used a retired family or lacked current scope, output contract, or write target",
+    "ordinary_work_dispatch_write_target_missing": "ordinary work dispatch used a retired family or lacked current scope, output contract, or write target",
+    "ordinary_work_dispatch_allowed_without_review": "ordinary work dispatch was allowed before Router mechanical contract review",
+    "signed_envelope_rewritten_after_relay": "signed packet or result envelope was rewritten after Controller relay hash binding",
+    "signed_envelope_migration_sidecar_missing": "signed envelope migration backfilled mutable projections without a sidecar record",
     "control_blocker_identity_missing_blocker_id": "control blocker Controller action identity omitted blocker artifact identity",
     "closed_controller_action_reused_for_different_identity": "closed Controller action row was reused for a different Router obligation identity",
     "pm_role_work_closed_identity_reused_for_distinct_batch": "PM role-work action identity omitted batch, request, packet, or target role",
@@ -106,8 +104,6 @@ HAZARD_EXPECTED_FAILURES = {
     "control_blocker_done_receipt_without_delivery_postcondition": "control blocker done receipt did not apply the Router-visible delivery postcondition",
     "stale_run_state_resurrects_closed_wait_projection": "stale run-state save resurrected a closed Controller wait projection",
     "self_check_status_pass_rejected": "Contract Self-Check parser rejected status: pass even though templates allow it",
-    "material_gate_result_self_check_unparseable": "material gate depended on a result body whose Contract Self-Check was not machine-parseable",
-    "material_gate_result_reader_not_runtime_backed": "artifact map advertised result-body reader access that runtime relay authority did not grant",
     "pm_formal_gate_package_missing_artifact": "PM formal gate package release lacked reviewer-readable artifact path, hash, or scope",
     "reviewer_report_without_result_open_receipt": "reviewer report was accepted before delivery, packet-open, result-return, PM relay, PM disposition, formal gate package, and result-open receipts existed",
     "missing_receipt_blocker_escalated_to_pm": "missing receipt blocker was not routed as same-role reviewer control-plane reissue",
@@ -115,7 +111,6 @@ HAZARD_EXPECTED_FAILURES = {
     "stopped_run_with_active_packet_loop": "stopped run left manual resume binding, runtime roles, packet loop, or frontier authority active",
     "stopped_run_without_terminal_frontier": "stopped run left manual resume binding, runtime roles, packet loop, or frontier authority active",
     "stale_snapshot_published_as_active": "active route_state_snapshot is stale against frontier or packet ledger",
-    "product_architecture_delivery_missing_material_context": "product architecture card was delivered without PM material-understanding source paths",
     "protocol_blocker_file_unregistered": "protocol blocker file existed without router-visible blocker registration",
     "control_blocker_index_stale_after_artifact_update": "router control blocker index disagreed with control blocker artifact status",
     "display_work_hard_postcondition_gate": "display/status controller work was treated as a hard postcondition gate",
@@ -166,7 +161,7 @@ HAZARD_EXPECTED_FAILURES = {
     "duplicate_pm_repair_created_new_blocker": "duplicate PM repair decision created a new control blocker",
     "terminal_manual_resume_binding_cleanup_unproven": "terminal continuation cleanup lacked foreground-patrol or manual-resume lifecycle proof",
     "role_output_hash_replay_mismatch": "persisted role-output envelope hashes were not replayable against body paths",
-    "frontier_stale_after_product_architecture_delivery": "execution frontier remained at material_scan after product architecture delivery",
+    "frontier_stale_after_product_architecture_delivery": "execution frontier remained stale after product architecture delivery",
     "display_view_stale_after_product_architecture_delivery": "route snapshot or display plan remained stale after product architecture delivery",
     "status_summary_stale": "status summary was published stale against frontier or packet state",
     "status_summary_leaks_sealed_or_source_fields": "status summary exposed sealed body, evidence table, source, or hash details",
@@ -241,19 +236,12 @@ HAZARD_EXPECTED_FAILURES = {
     "pm_decides_from_incomplete_model_miss_report": "PM model-miss decision used an incomplete FlowGuard operator report",
     "role_memory_used_as_completion_authority": "role memory was used as approval or completion authority",
     "operation_replay_reuses_controller_action_id": "operation replay reused a closed Controller action identity",
-    "operation_replay_targets_superseded_generation": "operation replay targeted a superseded material packet generation",
-    "material_result_relay_replay_without_ledger_authority": "material result relay replay lacked current packet-ledger and material-index authority",
+    "operation_replay_targets_superseded_work_unit": "operation replay targeted a superseded ordinary work unit",
+    "ordinary_result_relay_replay_without_ledger_authority": "ordinary result relay replay lacked current packet-ledger authority",
     "controller_repair_work_packet_receipt_not_folded": "controller_repair_work_packet receipt did not fold the repair transaction",
     "controller_repair_work_packet_facade_export_missing": "controller_repair_work_packet receipt helper was not exported through the Router facade",
-    "pm_material_disposition_generation_blind": "PM material result disposition was not scoped to the current packet generation",
-    "stale_pm_material_disposition_restored": "stale PM material disposition was restored as current-generation success",
-    "material_progress_flags_not_generation_scoped": "material progress flags were not scoped to the active material generation",
-    "material_next_action_uses_stale_global_flags": "material next action was derived from stale run-wide material flags instead of active batch state",
-    "material_reissue_keeps_stale_progress_flags": "material packet reissue left superseded progress flags visible for the current generation",
-    "stale_material_progress_flags_resurrected_by_save": "stale run-state save restored superseded material progress flags after current generation reset",
-    "material_dispatch_block_stale_generation": "material dispatch protocol block referenced a superseded repair generation",
     "role_output_duplicate_not_deduped": "role-output events were not deduped by event type and body reference",
-    "role_output_current_generation_short_circuited_by_global_flag": "role-output reconciliation short-circuited current-generation material event on a run-wide flag",
+    "role_output_current_work_unit_short_circuited_by_global_flag": "role-output reconciliation short-circuited a current ordinary work-unit event on a run-wide flag",
     "pm_package_disposition_reconciled_without_domain_commit": "role-output package disposition reconciliation recorded event progress before domain artifact commit",
     "pm_package_disposition_not_semantic_deduped": "PM package dispositions were not deduped by semantic batch identity",
     "pm_package_disposition_conflict_unchecked": "PM package disposition body_hash was not checked as conflict evidence",
@@ -398,6 +386,46 @@ def _scenario_metrics(graph: dict[str, object]) -> dict[str, object]:
     }
 
 
+def _conformance_replay(graph: dict[str, object]) -> dict[str, object]:
+    states: list[model.State] = graph["states"]
+    complete = [state for state in states if model.is_success(state)]
+    terminal_modes = sorted({state.mode for state in complete})
+    retired_dispatch_states = [
+        _state_id(state)
+        for state in states
+        if state.ordinary_work_dispatch_family
+        not in {"research", "pm_role_work", "current_node"}
+    ]
+    current_dispatch_contract_failures = [
+        _state_id(state)
+        for state in states
+        if state.ordinary_work_dispatch_allowed
+        and not (
+            state.ordinary_work_dispatch_reviewed
+            and state.ordinary_work_dispatch_current_scope
+            and state.ordinary_work_dispatch_output_contract_valid
+            and state.ordinary_work_dispatch_write_target_explicit
+        )
+    ]
+    return {
+        "ok": (
+            terminal_modes == ["expanded", "optimized"]
+            and not retired_dispatch_states
+            and not current_dispatch_contract_failures
+        ),
+        "terminal_modes": terminal_modes,
+        "complete_state_count": len(complete),
+        "retired_dispatch_state_count": len(retired_dispatch_states),
+        "retired_dispatch_state_samples": retired_dispatch_states[:5],
+        "current_dispatch_contract_failure_count": len(current_dispatch_contract_failures),
+        "current_dispatch_contract_failure_samples": current_dispatch_contract_failures[:5],
+        "claim_boundary": (
+            "Replays both safe modeled modes and proves the positive graph uses only current "
+            "ordinary work families; live runtime behavior remains owned by the live/source audit."
+        ),
+    }
+
+
 def run_checks(
     *,
     json_out_requested: bool = False,
@@ -418,6 +446,10 @@ def run_checks(
     explorer = _flowguard_report()
     hazards = _check_hazards()
     metrics = _scenario_metrics(graph)
+    conformance = _conformance_replay(graph)
+    retired_material_surface_absence = model.audit_retired_material_surfaces(
+        source_root or Path(".")
+    )
     live_run_audit = (
         model.audit_live_run(live_root, source_root=source_root)
         if live_root is not None
@@ -445,12 +477,16 @@ def run_checks(
         and bool(explorer["ok"])
         and bool(hazards["ok"])
         and bool(metrics["optimization_passes_same_invariants"])
+        and bool(conformance["ok"])
+        and bool(retired_material_surface_absence["ok"])
         and bool(live_run_audit["ok"]),
         "safe_graph": safe_graph,
         "progress": progress,
         "flowguard_explorer": explorer,
         "hazard_checks": hazards,
         "scenario_metrics": metrics,
+        "conformance_replay": conformance,
+        "retired_material_surface_absence": retired_material_surface_absence,
         "live_run_audit": live_run_audit,
         "skipped_checks": skipped_checks,
     }

@@ -15,7 +15,7 @@ try:  # pragma: no cover
         assert_public_projection_is_sealed,
         complete_full_packet_chain,
         complete_planning_chain_only,
-        current_contract_body_for_packet,
+        current_contract_body_from_open_result,
         close_cli_worker,
         ensure,
         open_current_packet_inputs,
@@ -35,7 +35,7 @@ except ImportError:  # pragma: no cover
         assert_public_projection_is_sealed,
         complete_full_packet_chain,
         complete_planning_chain_only,
-        current_contract_body_for_packet,
+        current_contract_body_from_open_result,
         close_cli_worker,
         ensure,
         open_current_packet_inputs,
@@ -47,53 +47,6 @@ except ImportError:  # pragma: no cover
         start_rehearsal,
         status_projection,
         write_flowguard_evidence_artifact_for_packet,
-    )
-
-
-ROUTE_PLAN_SCHEMA_VERSION = "flowpilot.route_plan.v1"
-
-
-def _route_plan_body() -> str:
-    return json.dumps(
-        {
-            "schema_version": ROUTE_PLAN_SCHEMA_VERSION,
-            "nodes": [
-                {
-                    "node_id": "node-001",
-                    "title": "Implement fake calculator CLI behavior",
-                    "responsibility": "worker",
-                    "modeled_target": "development_process",
-                    "acceptance_criteria": [
-                        "The fake calculator behavior is implemented in the bounded scenario.",
-                        "Worker evidence names current files and command results.",
-                    ],
-                    "acceptance_item_ids": ["acc-001"],
-                },
-                {
-                    "node_id": "node-002",
-                    "title": "Validate fake project evidence",
-                    "responsibility": "worker",
-                    "modeled_target": "model_test_alignment",
-                    "acceptance_criteria": [
-                        "FlowGuard and ordinary validation evidence are current.",
-                        "Evidence can be challenged by an independent reviewer.",
-                    ],
-                    "acceptance_item_ids": ["acc-002"],
-                },
-                {
-                    "node_id": "node-003",
-                    "title": "Assemble final closure package",
-                    "responsibility": "worker",
-                    "modeled_target": "development_process",
-                    "acceptance_criteria": [
-                        "The final route-wide ledger accounts for all effective nodes.",
-                        "The public status remains body-free at terminal completion.",
-                    ],
-                    "acceptance_item_ids": [],
-                },
-            ],
-        },
-        sort_keys=True,
     )
 
 
@@ -210,6 +163,23 @@ def scenario_route_mutation_recovery(work_root: Path) -> dict[str, Any]:
     }
 
 
+def scenario_complete_workstream_ordinary_evidence(work_root: Path) -> dict[str, Any]:
+    command_log: list[dict[str, Any]] = []
+    root = reset_scenario_root(work_root, "complete_workstream_ordinary_evidence")
+    start_payload = start_rehearsal(root, command_log, "run-fake-complete-workstream")
+    chain = complete_full_packet_chain(root, command_log, start_payload)
+    ensure(chain["workstream_report_count"] > 0, "no substantive result reported its numbered workstream")
+    ensure(chain["integrated_delegation_count"] >= 1, "bounded delegated work was not integrated")
+    ensure(chain["ordinary_evidence_work_count"] >= 1, "ordinary evidence work did not traverse a normal node packet")
+    return {
+        "name": "complete_workstream_ordinary_evidence",
+        "ok": True,
+        "root": str(root),
+        "observations": chain,
+        "commands": command_log,
+    }
+
+
 def scenario_terminal_supplemental_repair(work_root: Path) -> dict[str, Any]:
     command_log: list[dict[str, Any]] = []
     root = reset_scenario_root(work_root, "terminal_supplemental_repair")
@@ -259,6 +229,51 @@ def scenario_missing_ack_block(work_root: Path) -> dict[str, Any]:
         agent_id="fake-pm-no-ack",
     )
     lease_id = str(lease_payload["lease_id"])
+    projection = status_projection(root, command_log)
+    pm_packet_row = packet_row(projection, pm_packet)
+
+    reference_command_log: list[dict[str, Any]] = []
+    reference_root = reset_scenario_root(work_root, "missing_ack_contract_reference")
+    reference_start = start_rehearsal(
+        reference_root,
+        reference_command_log,
+        "run-fake-missing-ack-reference",
+    )
+    reference_packet = str(reference_start["next_action"]["subject_id"])
+    reference_projection = status_projection(reference_root, reference_command_log)
+    reference_packet_row = packet_row(reference_projection, reference_packet)
+    reference_lease = resolve_and_lease_packet(
+        reference_root,
+        reference_command_log,
+        packet_id=reference_packet,
+        responsibility="pm",
+        agent_id="fake-pm-missing-ack-reference",
+    )
+    reference_lease_id = str(reference_lease["lease_id"])
+    run_cli(
+        reference_root,
+        reference_command_log,
+        "ack",
+        "--lease-id",
+        reference_lease_id,
+        "--packet-id",
+        reference_packet,
+    )
+    opened_reference = open_current_packet_inputs(
+        reference_root,
+        reference_command_log,
+        lease_id=reference_lease_id,
+        packet=reference_packet_row,
+    )
+    ensure(
+        pm_packet_row.get("packet_kind") == opened_reference.get("packet", {}).get("packet_kind"),
+        "missing-ACK reference packet does not share the target packet kind",
+    )
+    # The target lease remains unacknowledged and therefore cannot open its
+    # sealed packet. Generate an otherwise-valid payload from one independently
+    # ACKed public packet in the same current contract family; no schema or
+    # semantic response shape is guessed by this negative scenario.
+    current_body = current_contract_body_from_open_result(opened_reference)
     result_payload = run_cli(
         root,
         command_log,
@@ -268,7 +283,7 @@ def scenario_missing_ack_block(work_root: Path) -> dict[str, Any]:
         "--packet-id",
         pm_packet,
         "--body",
-        "SEALED_RESULT_BODY: fake PM tried to submit without ACK.",
+        current_body,
     )
     ensure(result_payload.get("next_action", {}).get("action_type") == "repair_packet", "missing ACK did not expose repair boundary")
     projection = status_projection(root, command_log)
@@ -289,8 +304,12 @@ def scenario_missing_ack_block(work_root: Path) -> dict[str, Any]:
             "result_status": packet.get("status"),
             "next_action": projection.get("next_action", {}).get("action_type"),
             "blockers": blockers,
+            "submitted_body_type": "object" if isinstance(json.loads(current_body), dict) else "invalid",
+            "runtime_ack_received_before_submit": False,
+            "reference_contract_source": "current_public_open_packet",
         },
         "commands": command_log,
+        "reference_contract_commands": reference_command_log,
     }
 
 
@@ -405,17 +424,6 @@ def scenario_lifecycle_guard_resume_and_patrol(work_root: Path) -> dict[str, Any
     }
 
 
-def _planning_body_for(packet_kind: str, route_scope: str, route_node_id: str = "") -> str:
-    return current_contract_body_for_packet(
-        {
-            "packet_id": "planning-helper-packet",
-            "packet_kind": packet_kind,
-            "route_scope": route_scope,
-            "route_node_id": route_node_id,
-        }
-    )
-
-
 def scenario_missing_current_result_fields_reissue(work_root: Path) -> dict[str, Any]:
     command_log: list[dict[str, Any]] = []
     root = reset_scenario_root(work_root, "missing_current_result_fields_reissue")
@@ -432,7 +440,7 @@ def scenario_missing_current_result_fields_reissue(work_root: Path) -> dict[str,
     )
     pm_lease_id = str(pm_lease["lease_id"])
     run_cli(root, command_log, "ack", "--lease-id", pm_lease_id, "--packet-id", pm_packet)
-    open_current_packet_inputs(root, command_log, lease_id=pm_lease_id, packet=pm_packet_row)
+    opened_pm = open_current_packet_inputs(root, command_log, lease_id=pm_lease_id, packet=pm_packet_row)
     first_flowguard = run_cli(
         root,
         command_log,
@@ -442,7 +450,7 @@ def scenario_missing_current_result_fields_reissue(work_root: Path) -> dict[str,
         "--packet-id",
         pm_packet,
         "--body",
-        current_contract_body_for_packet(pm_packet_row),
+        current_contract_body_from_open_result(opened_pm),
     )
     flowguard_packet = str(first_flowguard["next_action"]["subject_id"])
     projection = status_projection(root, command_log)
@@ -456,7 +464,13 @@ def scenario_missing_current_result_fields_reissue(work_root: Path) -> dict[str,
     )
     fg_lease_id = str(fg_lease["lease_id"])
     run_cli(root, command_log, "ack", "--lease-id", fg_lease_id, "--packet-id", flowguard_packet)
-    open_current_packet_inputs(root, command_log, lease_id=fg_lease_id, packet=flowguard_packet_row)
+    opened_flowguard = open_current_packet_inputs(
+        root,
+        command_log,
+        lease_id=fg_lease_id,
+        packet=flowguard_packet_row,
+    )
+    stale_legal_body = current_contract_body_from_open_result(opened_flowguard)
     blocked = run_cli(
         root,
         command_log,
@@ -492,15 +506,14 @@ def scenario_missing_current_result_fields_reissue(work_root: Path) -> dict[str,
     sealed_body = str(opened_repair.get("sealed_packet_body") or "")
     ensure(sealed_body, "repair packet did not expose sealed instructions to the authorized fake AI")
     opened_repair_packet = opened_repair.get("packet")
-    if isinstance(opened_repair_packet, dict):
-        opened_repair_packet["body"] = sealed_body
-        write_flowguard_evidence_artifact_for_packet(opened_repair_packet)
+    write_flowguard_evidence_artifact_for_packet(opened_repair)
     repair_body = json.loads(sealed_body)
-    required_fields = repair_body.get("required_result_body_fields")
-    handoff_contract = repair_body.get("current_handoff_contract") or {}
+    checklist = opened_repair.get("submission_checklist") or {}
+    required_fields = checklist.get("required_result_body_fields")
+    handoff_contract = (opened_repair.get("packet") or {}).get("current_handoff_contract") or {}
     mechanical_failure = repair_body.get("mechanical_contract_failure") or {}
     expected_required_fields = (
-        handoff_contract.get("required_result_body_fields")
+        (handoff_contract.get("required_report_contract") or {}).get("required_result_body_fields")
         or mechanical_failure.get("required_result_body_fields")
     )
     ensure(
@@ -521,6 +534,32 @@ def scenario_missing_current_result_fields_reissue(work_root: Path) -> dict[str,
         "runtime cannot synthesize" in str(repair_body.get("instruction") or ""),
         f"repair packet instruction did not forbid synthesized compatibility: {repair_body}",
     )
+    stale_checklist_rejected = False
+    mixed_open = json.loads(json.dumps(opened_repair))
+    mixed_open["submission_checklist"] = json.loads(
+        json.dumps(opened_flowguard["submission_checklist"])
+    )
+    try:
+        current_contract_body_from_open_result(mixed_open)
+    except RehearsalFailure:
+        stale_checklist_rejected = True
+    ensure(stale_checklist_rejected, "old checklist remained usable after packet reissue")
+    stale_public_submit = run_cli(
+        root,
+        command_log,
+        "submit-result",
+        "--lease-id",
+        fg_lease_id,
+        "--packet-id",
+        flowguard_packet,
+        "--body",
+        stale_legal_body,
+        expect_ok=False,
+    )
+    ensure(
+        stale_public_submit.get("ok") is False,
+        f"superseded packet accepted stale public submit after reissue: {stale_public_submit}",
+    )
     corrected = run_cli(
         root,
         command_log,
@@ -530,7 +569,7 @@ def scenario_missing_current_result_fields_reissue(work_root: Path) -> dict[str,
         "--packet-id",
         repair_packet,
         "--body",
-        current_contract_body_for_packet(opened_repair_packet if isinstance(opened_repair_packet, dict) else repair_packet_row),
+        current_contract_body_from_open_result(opened_repair),
     )
     next_action = corrected.get("next_action", {})
     ensure(next_action.get("responsibility") == "reviewer", f"corrected fake AI result did not resume reviewer path: {corrected}")
@@ -546,6 +585,8 @@ def scenario_missing_current_result_fields_reissue(work_root: Path) -> dict[str,
             "blocked_packet_id": flowguard_packet,
             "repair_packet_id": repair_packet,
             "required_fields": required_fields,
+            "stale_checklist_rejected": stale_checklist_rejected,
+            "stale_public_submit_rejected": stale_public_submit.get("ok") is False,
             "next_responsibility_after_fix": next_action.get("responsibility"),
         },
         "commands": command_log,
@@ -633,7 +674,7 @@ def scenario_slow_reviewer_progress_preserved(work_root: Path) -> dict[str, Any]
                 "--packet-id",
                 packet_id,
                 "--body",
-            current_contract_body_for_packet(opened_packet),
+            current_contract_body_from_open_result(opened_packet),
         )
 
     raise RehearsalFailure("slow reviewer scenario never reached a reviewer packet")
@@ -675,7 +716,7 @@ def scenario_accepted_packet_reassignment_rejected(work_root: Path) -> dict[str,
             "--packet-id",
             packet_id,
             "--body",
-            current_contract_body_for_packet(opened_packet),
+            current_contract_body_from_open_result(opened_packet),
         )
         projection = status_projection(root, command_log)
         packet = packet_row(projection, pm_packet)
@@ -866,8 +907,89 @@ def scenario_unsupported_side_command(work_root: Path) -> dict[str, Any]:
     }
 
 
+def scenario_cross_run_public_open_isolation(work_root: Path) -> dict[str, Any]:
+    command_log: list[dict[str, Any]] = []
+    scenario_root = reset_scenario_root(work_root, "cross_run_public_open_isolation")
+    root_a = scenario_root / "run-a"
+    root_b = scenario_root / "run-b"
+    root_a.mkdir()
+    root_b.mkdir()
+    try:
+        start_a = start_rehearsal(root_a, command_log, "run-cross-public-a")
+        start_b = start_rehearsal(root_b, command_log, "run-cross-public-b")
+        opens: list[dict[str, Any]] = []
+        identities: list[tuple[str, str]] = []
+        for index, (root, start) in enumerate(((root_a, start_a), (root_b, start_b)), start=1):
+            action = start["next_action"]
+            packet_id = str(action["subject_id"])
+            responsibility = str(action["responsibility"])
+            dispatched = resolve_and_lease_packet(
+                root,
+                command_log,
+                packet_id=packet_id,
+                responsibility=responsibility,
+                agent_id=f"fake-cross-run-{index}",
+            )
+            lease_id = str(dispatched["lease_id"])
+            run_cli(root, command_log, "ack", "--lease-id", lease_id, "--packet-id", packet_id)
+            opened = open_current_packet_inputs(
+                root,
+                command_log,
+                lease_id=lease_id,
+                packet={"packet_id": packet_id},
+            )
+            opens.append(opened)
+            identities.append((packet_id, lease_id))
+
+        opened_a, opened_b = opens
+        ensure(opened_a["run_id"] == "run-cross-public-a", f"run A public open leaked identity: {opened_a}")
+        ensure(opened_b["run_id"] == "run-cross-public-b", f"run B public open leaked identity: {opened_b}")
+        cross_generation_rejected = False
+        try:
+            current_contract_body_from_open_result(
+                opened_a,
+                expected_run_id="run-cross-public-b",
+            )
+        except RehearsalFailure:
+            cross_generation_rejected = True
+        ensure(cross_generation_rejected, "run A open result generated a payload for run B")
+
+        packet_a, lease_a = identities[0]
+        cross_root_open = run_cli(
+            root_b,
+            command_log,
+            "open-packet",
+            "--lease-id",
+            lease_a,
+            "--packet-id",
+            packet_a,
+            expect_ok=False,
+        )
+        if cross_root_open.get("ok") is True:
+            ensure(
+                cross_root_open.get("run_id") == "run-cross-public-b",
+                f"root B returned run A data for colliding packet/lease ids: {cross_root_open}",
+            )
+        return {
+            "name": "cross_run_public_open_isolation",
+            "ok": True,
+            "root": str(scenario_root),
+            "observations": {
+                "run_a": opened_a["run_id"],
+                "run_b": opened_b["run_id"],
+                "cross_generation_rejected": cross_generation_rejected,
+                "cross_root_open_leaked_run_a": cross_root_open.get("run_id") == "run-cross-public-a",
+            },
+            "commands": command_log,
+        }
+    finally:
+        close_cli_worker(root_a)
+        close_cli_worker(root_b)
+
+
 SCENARIOS: tuple[tuple[str, Callable[[Path], dict[str, Any]]], ...] = (
     ("normal_full_path", scenario_normal),
+    ("complete_workstream_ordinary_evidence", scenario_complete_workstream_ordinary_evidence),
     ("wrong_role_recovery", scenario_wrong_role_recovery),
     ("planning_chain_does_not_terminal", scenario_planning_chain_does_not_terminal),
     ("route_mutation_recovery", scenario_route_mutation_recovery),
@@ -876,6 +998,7 @@ SCENARIOS: tuple[tuple[str, Callable[[Path], dict[str, Any]]], ...] = (
     ("ack_only_wait", scenario_ack_only_wait),
     ("lifecycle_guard_resume_and_patrol", scenario_lifecycle_guard_resume_and_patrol),
     ("missing_current_result_fields_reissue", scenario_missing_current_result_fields_reissue),
+    ("cross_run_public_open_isolation", scenario_cross_run_public_open_isolation),
     ("slow_reviewer_progress_preserved", scenario_slow_reviewer_progress_preserved),
     ("accepted_packet_reassignment_rejected", scenario_accepted_packet_reassignment_rejected),
     ("stop_terminal_fence", scenario_stop_terminal_fence),

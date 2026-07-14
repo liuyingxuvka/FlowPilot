@@ -47,9 +47,10 @@ OBSERVED_UNRELAYED_OLD_REQUEST_BLOCKS_REPLACEMENT = "observed_unrelayed_old_requ
 DAEMON_STALE_SNAPSHOT_ERASES_FOREGROUND_EVENT = "daemon_stale_snapshot_erases_foreground_event"
 REMINDER_RECREATED_AFTER_PENDING_WAIT_LOSS = "reminder_recreated_after_pending_wait_loss"
 RESULT_BODY_SELF_CHECK_NOT_PROJECTED = "result_body_self_check_not_projected"
-MATERIAL_REVIEW_EVENT_LEFT_ONLY_IN_ROLE_OUTPUT_LEDGER = (
-    "material_review_event_left_only_in_role_output_ledger"
+REVIEW_BLOCK_EVENT_LEFT_ONLY_IN_ROLE_OUTPUT_LEDGER = (
+    "review_block_event_left_only_in_role_output_ledger"
 )
+RETIRED_MATERIAL_PROJECTION_REINTRODUCED = "retired_material_projection_reintroduced"
 DONE_WAIT_ROW_STILL_AUTHORIZES_PENDING_ACTION = "done_wait_row_still_authorizes_pending_action"
 RECONCILED_WAIT_STILL_GENERATES_REMINDER = "reconciled_wait_still_generates_reminder"
 RECEIPT_ONLY_FIX_LEAVES_ROLE_WORK_DEADLOCK = "receipt_only_fix_leaves_role_work_deadlock"
@@ -86,7 +87,8 @@ NEGATIVE_SCENARIOS = (
     DAEMON_STALE_SNAPSHOT_ERASES_FOREGROUND_EVENT,
     REMINDER_RECREATED_AFTER_PENDING_WAIT_LOSS,
     RESULT_BODY_SELF_CHECK_NOT_PROJECTED,
-    MATERIAL_REVIEW_EVENT_LEFT_ONLY_IN_ROLE_OUTPUT_LEDGER,
+    REVIEW_BLOCK_EVENT_LEFT_ONLY_IN_ROLE_OUTPUT_LEDGER,
+    RETIRED_MATERIAL_PROJECTION_REINTRODUCED,
     DONE_WAIT_ROW_STILL_AUTHORIZES_PENDING_ACTION,
     RECONCILED_WAIT_STILL_GENERATES_REMINDER,
     RECEIPT_ONLY_FIX_LEAVES_ROLE_WORK_DEADLOCK,
@@ -121,7 +123,7 @@ class State:
     status: str = "new"  # new | accepted | rejected
     scenario: str = "unset"
 
-    material_results_joined: bool = False
+    packet_results_joined: bool = False
     controller_receipt_done: bool = False
     receipt_postcondition_flag: bool = False
     durable_batch_status: str = "none"
@@ -155,13 +157,14 @@ class State:
     envelope_self_check_passed: bool = False
 
     direct_role_output_event_submitted: bool = False
-    role_output_event_type: str = "none"  # none | material_review_insufficient | generic
+    role_output_event_type: str = "none"  # none | review_blocked | generic
     generic_role_output_event_reconciler: bool = False
     role_output_event_folded_to_router_state: bool = False
     router_event_flag_synced: bool = False
-    material_review_projection_synced: bool = False
-    material_insufficient_pm_repair_branch_exposed: bool = False
-    packet_batch_family: str = "none"  # none | material_scan | research | current_node | pm_role_work
+    review_block_projection_synced: bool = False
+    review_block_pm_repair_branch_exposed: bool = False
+    retired_material_projection_absent: bool = True
+    packet_batch_family: str = "none"  # none | research | current_node | pm_role_work
     packet_batch_results_joined: bool = False
     packet_batch_all_results_returned: bool = False
     packet_batch_missing_roles: int = 0
@@ -215,7 +218,7 @@ def _rejected(scenario: str, **changes: object) -> State:
 
 def _receipt_good() -> dict[str, object]:
     return {
-        "material_results_joined": True,
+        "packet_results_joined": True,
         "controller_receipt_done": True,
         "receipt_postcondition_flag": True,
         "durable_batch_status": "results_relayed_to_pm",
@@ -274,12 +277,12 @@ def _self_check_good() -> dict[str, object]:
 def _role_output_event_good() -> dict[str, object]:
     return {
         "direct_role_output_event_submitted": True,
-        "role_output_event_type": "material_review_insufficient",
+        "role_output_event_type": "review_blocked",
         "generic_role_output_event_reconciler": True,
         "role_output_event_folded_to_router_state": True,
         "router_event_flag_synced": True,
-        "material_review_projection_synced": True,
-        "material_insufficient_pm_repair_branch_exposed": True,
+        "review_block_projection_synced": True,
+        "review_block_pm_repair_branch_exposed": True,
         "controller_wait_row_status": "done",
         "scheduler_wait_row_status": "reconciled",
         "pending_action_references_wait": True,
@@ -398,7 +401,7 @@ def scenario_state(scenario: str) -> State:
     if scenario == OBSERVED_RECEIPT_FLAG_WITHOUT_BATCH_LIFECYCLE:
         return _rejected(
             scenario,
-            material_results_joined=True,
+            packet_results_joined=True,
             controller_receipt_done=True,
             receipt_postcondition_flag=True,
             durable_batch_status="results_joined",
@@ -448,16 +451,16 @@ def scenario_state(scenario: str) -> State:
             envelope_self_check_completed=False,
             envelope_self_check_passed=False,
         )
-    if scenario == MATERIAL_REVIEW_EVENT_LEFT_ONLY_IN_ROLE_OUTPUT_LEDGER:
+    if scenario == REVIEW_BLOCK_EVENT_LEFT_ONLY_IN_ROLE_OUTPUT_LEDGER:
         return _rejected(
             scenario,
             direct_role_output_event_submitted=True,
-            role_output_event_type="material_review_insufficient",
+            role_output_event_type="review_blocked",
             generic_role_output_event_reconciler=False,
             role_output_event_folded_to_router_state=False,
             router_event_flag_synced=False,
-            material_review_projection_synced=False,
-            material_insufficient_pm_repair_branch_exposed=False,
+            review_block_projection_synced=False,
+            review_block_pm_repair_branch_exposed=False,
             controller_wait_row_status="done",
             scheduler_wait_row_status="reconciled",
             pending_action_references_wait=True,
@@ -466,13 +469,18 @@ def scenario_state(scenario: str) -> State:
             current_work_from_pending_action=True,
             stale_wait_reminder_created=True,
         )
+    if scenario == RETIRED_MATERIAL_PROJECTION_REINTRODUCED:
+        return _rejected(
+            scenario,
+            retired_material_projection_absent=False,
+        )
     if scenario == DONE_WAIT_ROW_STILL_AUTHORIZES_PENDING_ACTION:
         return _rejected(
             scenario,
             role_output_event_folded_to_router_state=True,
             router_event_flag_synced=True,
-            material_review_projection_synced=True,
-            material_insufficient_pm_repair_branch_exposed=True,
+            review_block_projection_synced=True,
+            review_block_pm_repair_branch_exposed=True,
             controller_wait_row_status="done",
             scheduler_wait_row_status="reconciled",
             pending_action_references_wait=True,
@@ -509,7 +517,7 @@ def scenario_state(scenario: str) -> State:
         return _rejected(
             scenario,
             **_supersede_good(),
-            material_results_joined=True,
+            packet_results_joined=True,
             controller_receipt_done=True,
             receipt_postcondition_flag=True,
             durable_batch_status="results_joined",
@@ -542,12 +550,12 @@ def scenario_state(scenario: str) -> State:
         changes.update(
             {
                 "direct_role_output_event_submitted": True,
-                "role_output_event_type": "material_review_insufficient",
+                "role_output_event_type": "review_blocked",
                 "generic_role_output_event_reconciler": False,
                 "role_output_event_folded_to_router_state": False,
                 "router_event_flag_synced": False,
-                "material_review_projection_synced": False,
-                "material_insufficient_pm_repair_branch_exposed": False,
+                "review_block_projection_synced": False,
+                "review_block_pm_repair_branch_exposed": False,
                 "controller_wait_row_status": "done",
                 "scheduler_wait_row_status": "reconciled",
                 "pending_action_references_wait": True,
@@ -693,10 +701,10 @@ def consistency_failures(state: State) -> list[str]:
     if (
         state.controller_receipt_done
         and state.receipt_postcondition_flag
-        and state.material_results_joined
+        and state.packet_results_joined
         and not _batch_relayed_or_absorbed(state.durable_batch_status)
     ):
-        failures.append("receipt flag says material results relayed but durable batch lifecycle was not advanced")
+        failures.append("receipt flag says packet results relayed but durable batch lifecycle was not advanced")
 
     if (
         _batch_relayed_or_absorbed(state.durable_batch_status)
@@ -708,7 +716,7 @@ def consistency_failures(state: State) -> list[str]:
     if (
         state.pm_disposition_attempted
         and state.receipt_postcondition_flag
-        and state.material_results_joined
+        and state.packet_results_joined
         and not _batch_relayed_or_absorbed(state.durable_batch_status)
     ):
         failures.append("PM disposition was blocked by stale batch lifecycle after receipt relay evidence")
@@ -766,19 +774,22 @@ def consistency_failures(state: State) -> list[str]:
         failures.append("Router event was recorded without syncing its state flag")
 
     if (
-        state.role_output_event_type == "material_review_insufficient"
+        state.role_output_event_type == "review_blocked"
         and state.role_output_event_folded_to_router_state
-        and not state.material_review_projection_synced
+        and not state.review_block_projection_synced
     ):
-        failures.append("material review role-output event did not update Router material_review projection")
+        failures.append("review-block role-output event did not update the canonical Router projection")
 
     if (
-        state.role_output_event_type == "material_review_insufficient"
+        state.role_output_event_type == "review_blocked"
         and state.role_output_event_folded_to_router_state
-        and state.material_review_projection_synced
-        and not state.material_insufficient_pm_repair_branch_exposed
+        and state.review_block_projection_synced
+        and not state.review_block_pm_repair_branch_exposed
     ):
-        failures.append("material-insufficient review did not expose the PM repair or research branch")
+        failures.append("review block did not expose the PM repair branch")
+
+    if not state.retired_material_projection_absent:
+        failures.append("retired material_scan/material_sufficiency/material_understanding projection is active")
 
     if _wait_row_is_resolved(state) and state.pending_action_references_wait:
         if not state.pending_action_validated_against_wait_ledgers:
@@ -923,12 +934,12 @@ def repair_candidate_states() -> dict[str, State]:
     pending_clear_only = _rejected(
         "candidate_pending_clear_only",
         direct_role_output_event_submitted=True,
-        role_output_event_type="material_review_insufficient",
+        role_output_event_type="review_blocked",
         generic_role_output_event_reconciler=False,
         role_output_event_folded_to_router_state=False,
         router_event_flag_synced=False,
-        material_review_projection_synced=False,
-        material_insufficient_pm_repair_branch_exposed=False,
+        review_block_projection_synced=False,
+        review_block_pm_repair_branch_exposed=False,
         controller_wait_row_status="done",
         scheduler_wait_row_status="reconciled",
         pending_action_references_wait=True,

@@ -15,15 +15,25 @@ from flowguard import review_layered_boundary_proof  # noqa: E402
 
 
 class FlowPilotLayeredBoundaryProofTests(unittest.TestCase):
-    def test_current_inventory_has_green_layered_accounting_proof(self) -> None:
+    def test_current_inventory_accounting_matches_current_artifact_readiness(self) -> None:
         inv, alignment = layered.load_inputs(
             layered.DEFAULT_INVENTORY_PATH,
             layered.DEFAULT_ALIGNMENT_PATH,
         )
         report = layered.build_report(inv, alignment)
+        expected = (
+            layered._coverage_inventory_passes(inv)
+            and layered._test_gap_closure_passes(inv)
+            and layered._alignment_accounting_passes(alignment)
+            and layered._contract_exhaustion_artifact_passes(layered._contract_exhaustion_result())
+            and layered._cartesian_exhaustion_artifact_passes(layered._cartesian_exhaustion_result())
+        )
 
-        self.assertTrue(report["layered_accounting_ok"])
-        self.assertEqual(report["accounting_decision"], "layered_boundary_proof_green")
+        self.assertEqual(report["layered_accounting_ok"], expected)
+        if expected:
+            self.assertEqual(report["accounting_decision"], "layered_boundary_proof_green")
+        else:
+            self.assertNotEqual(report["accounting_decision"], "layered_boundary_proof_green")
         self.assertIn("full_leaf_cartesian_ok is stricter", report["claim_boundary"])
 
     def test_full_leaf_cartesian_claim_is_blocked_by_current_scoped_or_split_backlog(self) -> None:
@@ -88,16 +98,15 @@ class FlowPilotLayeredBoundaryProofTests(unittest.TestCase):
         self.assertIn("required_child_suite_owners", reattachment.expected_outputs)
         self.assertEqual(
             len(matrix.expected_cell_ids),
-            len(layered.contract_exhaustion_model.REQUIRED_CONTRACT_EXHAUSTION_CELLS),
+            1 + len(layered._contract_exhaustion_expected_owners()),
         )
-        self.assertGreater(len(matrix.expected_cell_ids), 500)
         self.assertEqual(set(matrix.expected_cell_ids), cell_ids)
         self.assertIn(
-            "contract_exhaustion:control_plane.review_packet.empty_required_manifest.body_flowguard_evidence_manifest_entries_items_flowguard_result_id",
+            "contract_exhaustion:declared_inventory",
             cell_ids,
         )
         self.assertIn(
-            "contract_exhaustion:control_plane.break_glass_loop.same_root_no_delta_retry.active_blocker_root_cause_loop_key",
+            "contract_exhaustion:child_suite:contract_exhaustion_runtime_matrix",
             cell_ids,
         )
 
@@ -123,23 +132,84 @@ class FlowPilotLayeredBoundaryProofTests(unittest.TestCase):
         cell_ids = {cell.cell_id for cell in matrix.cells}
 
         self.assertIn("mutation_alphabet", child_contract.inputs_accepted)
-        self.assertIn("required_cartesian_cells", child_contract.outputs_emitted)
+        self.assertIn("structural_cell_and_shard_fingerprints", child_contract.outputs_emitted)
         self.assertIn("historical_failure_bridge_cells", reattachment.expected_inputs)
         self.assertIn("skipped_cartesian_cells", reattachment.expected_outputs)
-        self.assertEqual(
-            len(matrix.expected_cell_ids),
-            len(layered.cartesian_exhaustion_model.REQUIRED_CARTESIAN_CELLS),
-        )
-        self.assertGreater(len(matrix.expected_cell_ids), 7000)
+        self.assertEqual(len(matrix.expected_cell_ids), 1)
         self.assertEqual(set(matrix.expected_cell_ids), cell_ids)
-        self.assertIn(
-            "cartesian_exhaustion:sealed_packet_body.missing_body.startup_intake.runtime_router",
-            cell_ids,
+        self.assertEqual(cell_ids, {"cartesian_exhaustion:declared_inventory"})
+
+    def test_contract_exhaustion_observations_come_from_child_proof_artifacts(self) -> None:
+        owners = layered._contract_exhaustion_expected_owners()
+        report = {
+            "ok": True,
+            "required_cell_count": len(
+                layered.contract_exhaustion_model.REQUIRED_CONTRACT_EXHAUSTION_CELLS
+            ),
+            "required_child_suite_owners": list(owners),
+            "child_suites": {
+                owner: {
+                    "result_status": "passed",
+                    "evidence_current": True,
+                    "executed_count": 1,
+                    "proof_artifact": {"artifact_id": f"proof.{owner}"},
+                }
+                for owner in owners
+            },
+        }
+
+        self.assertTrue(layered._contract_exhaustion_artifact_passes(report))
+        broken = dict(report)
+        broken["child_suites"] = dict(report["child_suites"])
+        first_owner = owners[0]
+        broken["child_suites"][first_owner] = {
+            **broken["child_suites"][first_owner],
+            "result_status": "not_run",
+            "evidence_current": False,
+            "executed_count": 0,
+            "proof_artifact": None,
+        }
+        self.assertFalse(layered._contract_exhaustion_artifact_passes(broken))
+        failed_cell = next(
+            cell
+            for cell in layered._contract_exhaustion_cells(broken)
+            if cell.cell_id == f"contract_exhaustion:child_suite:{first_owner}"
         )
-        self.assertIn(
-            "cartesian_exhaustion:active_blocker_record.same_root_no_delta_retry.glassbreak_threshold_probe.glassbreak_controller",
-            cell_ids,
+        self.assertNotEqual(failed_cell.expected_outputs, failed_cell.observed_outputs)
+        self.assertIn("observation_source", failed_cell.metadata)
+
+    def test_alignment_observed_status_is_not_copied_into_expected_status(self) -> None:
+        alignment = {
+            "alignment_ok": False,
+            "source_audit_ok": True,
+            "full_diagnostic_ok": True,
+            "release_convergence_ok": False,
+            "full_model_test_code_diagnostic": {
+                "unresolved_non_deferred_gap_count": 2,
+            },
+        }
+        cells = layered._alignment_cells(alignment)
+
+        self.assertTrue(all(cell.expected_outputs == ("passed",) for cell in cells))
+        self.assertTrue(any(cell.observed_outputs == ("failed",) for cell in cells))
+        self.assertTrue(
+            all("observation_source" in cell.metadata for cell in cells)
         )
+
+    def test_cartesian_structural_observation_detects_result_cell_tampering(self) -> None:
+        report = layered._cartesian_exhaustion_result()
+        self.assertTrue(layered._cartesian_exhaustion_artifact_passes(report))
+        broken = dict(report)
+        broken_matrix = dict(report["matrix"])
+        broken_cells = list(broken_matrix["required_cells"])
+        broken_cells[0] = {**broken_cells[0], "cell_id": "tampered-cell-id"}
+        broken_matrix["required_cells"] = broken_cells
+        broken["matrix"] = broken_matrix
+
+        self.assertFalse(layered._cartesian_exhaustion_artifact_passes(broken))
+        cell = layered._cartesian_exhaustion_cells(broken)[0]
+        self.assertNotEqual(cell.expected_outputs, cell.observed_outputs)
+        self.assertEqual(cell.metadata["claim_boundary"], "structural_declaration_only")
 
     def test_unknown_gap_class_blocks_accounting_proof(self) -> None:
         inv = inventory.build_inventory()

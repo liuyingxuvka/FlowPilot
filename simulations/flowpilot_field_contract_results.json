@@ -926,13 +926,13 @@
       "validator": "_build_current_handoff_contract"
     },
     {
-      "field": "current_handoff_contract.required_report_contract.output_contract.forbidden_fields",
+      "field": "current_handoff_contract.required_report_contract.forbidden_fields",
       "layer": "middle",
-      "logical_field": "output_contract_forbidden_fields",
+      "logical_field": "required_report_contract_forbidden_fields",
       "owner": "flowpilot_router",
       "required_value": "same_forbidden_fields_as_effective_packet_result_contract",
       "status": "mechanical_runtime_owned",
-      "unlocks": "role_avoids_unsupported_old_fields_without_duplicate_forbidden_field_alias",
+      "unlocks": "role_avoids_unsupported_old_fields_from_the_single_handoff_authority",
       "validator": "_build_current_handoff_contract"
     },
     {
@@ -953,7 +953,7 @@
       "required_value": "projection_of_current_handoff_contract.required_report_contract.required_result_body_fields",
       "status": "mechanical_runtime_owned",
       "unlocks": "assigned_role_sees_current_required_result_fields",
-      "validator": "_submission_checklist_from_packet_body"
+      "validator": "_submission_checklist_from_current_handoff_contract"
     },
     {
       "field": "submission_checklist.required_child_fields",
@@ -963,7 +963,7 @@
       "required_value": "projection_of_current_handoff_contract.required_report_contract.required_child_fields",
       "status": "mechanical_runtime_owned",
       "unlocks": "assigned_role_sees_current_nested_result_fields",
-      "validator": "_submission_checklist_from_packet_body"
+      "validator": "_submission_checklist_from_current_handoff_contract"
     },
     {
       "field": "submission_checklist.branch_valid_shapes",
@@ -973,7 +973,7 @@
       "required_value": "projection_of_current_handoff_contract.required_report_contract.branch_valid_shapes",
       "status": "mechanical_runtime_owned",
       "unlocks": "assigned_role_sees_current_branch_shape_examples",
-      "validator": "_submission_checklist_from_packet_body"
+      "validator": "_submission_checklist_from_current_handoff_contract"
     },
     {
       "field": "submission_checklist.non_empty_array_fields",
@@ -983,7 +983,7 @@
       "required_value": "projection_of_current_handoff_contract.required_report_contract.non_empty_array_fields",
       "status": "mechanical_runtime_owned",
       "unlocks": "assigned_role_sees_current_non_empty_array_obligations",
-      "validator": "_submission_checklist_from_packet_body"
+      "validator": "_submission_checklist_from_current_handoff_contract"
     },
     {
       "field": "submission_checklist.input_material_manifest.required_authorized_reads_before_submit",
@@ -993,7 +993,7 @@
       "required_value": "projection_of_current_handoff_contract.input_material_manifest.required_authorized_reads_before_submit",
       "status": "mechanical_runtime_owned",
       "unlocks": "assigned_role_sees_current_required_result_body_reads",
-      "validator": "_submission_checklist_from_packet_body"
+      "validator": "_submission_checklist_from_current_handoff_contract"
     },
     {
       "field": "current_handoff_contract.missing_information_response",
@@ -1286,34 +1286,37 @@
       "validator": "_parse_acceptance_item_registry"
     },
     {
-      "field": "preplanning.discovery.material_sources",
-      "layer": "leaf",
-      "logical_field": "preplanning_material_sources",
+      "field": "task.discovery.packet.body.runtime_local_capability_inventory",
+      "layer": "middle",
+      "lifecycle": "packet_only_shallow_snapshot",
+      "logical_field": "runtime_local_capability_inventory",
       "owner": "flowpilot_core_runtime",
-      "required_value": "non_empty_list",
+      "required_value": "current_local_skill_paths_and_availability_without_deep_instruction_read",
       "status": "mechanical_runtime_owned",
-      "unlocks": "preplanning_discovery_acceptance",
-      "validator": "_parse_discovery_result"
-    },
-    {
-      "field": "preplanning.discovery.material_sufficiency",
-      "layer": "leaf",
-      "logical_field": "preplanning_material_sufficiency",
-      "owner": "flowpilot_core_runtime",
-      "required_value": "non_empty_string",
-      "status": "mechanical_runtime_owned",
-      "unlocks": "preplanning_discovery_acceptance",
-      "validator": "_parse_discovery_result"
+      "unlocks": "pm_candidate_skill_selection",
+      "validator": "_runtime_local_capability_inventory"
     },
     {
       "field": "preplanning.discovery.candidate_skill_inventory",
       "layer": "leaf",
+      "lifecycle": "accepted_current_selection",
       "logical_field": "preplanning_candidate_skill_inventory",
-      "owner": "flowpilot_core_runtime",
-      "required_value": "list",
-      "status": "mechanical_runtime_owned",
-      "unlocks": "preplanning_discovery_acceptance",
-      "validator": "_parse_discovery_result"
+      "owner": "project_manager",
+      "required_value": "explicit_list_selected_from_current_runtime_inventory",
+      "status": "pm_decision_owned",
+      "unlocks": "selected_skill_deep_read_and_skill_standard_contract",
+      "validator": "_ensure_skill_standard_packet"
+    },
+    {
+      "field": "packet_result.contract_self_check.workstream_plan_and_completion",
+      "layer": "middle",
+      "lifecycle": "role_authored_semantic_report",
+      "logical_field": "role_workstream_plan_and_completion",
+      "owner": "assigned_substantive_role_agent",
+      "required_value": "numbered_plan_rows_with_status_evidence_deviation_integration_verification_and_remaining_blockers",
+      "status": "reviewer_quality_owned",
+      "unlocks": "reviewer_quality_disposition_or_pm_repair",
+      "validator": "REVIEW_FLOW_STAGE_CHALLENGE_BINDINGS"
     },
     {
       "field": "preplanning.skill_standard.obligations[]",
@@ -1963,6 +1966,21 @@
       "disposition": "replaced_by_progress_replace_seconds",
       "field": "lifecycle_guard_config.progress_grace_seconds",
       "status": "forbidden_legacy"
+    },
+    {
+      "disposition": "reject_material_discovery_field_use_ordinary_role_work_and_current_evidence_refs",
+      "field": "preplanning.discovery.material_sources",
+      "status": "forbidden_legacy"
+    },
+    {
+      "disposition": "reject_special_material_sufficiency_gate_use_existing_reviewer_quality_gate",
+      "field": "preplanning.discovery.material_sufficiency",
+      "status": "forbidden_legacy"
+    },
+    {
+      "disposition": "reject_material_specific_currency_flag_use_evidence_owned_freshness_checks",
+      "field": "preplanning.discovery.material_current",
+      "status": "forbidden_legacy"
     }
   ],
   "hazard_checks": {
@@ -2522,6 +2540,10 @@
   "ok": true,
   "packet_result_contracts": [
     {
+      "explicit_array_fields": [
+        "requirements",
+        "acceptance_item_registry.items"
+      ],
       "fake_ai_success_fields": [
         "requirements",
         "acceptance_item_registry"
@@ -2540,6 +2562,10 @@
         "acceptance_item_registry.items[].final_replay_required",
         "acceptance_item_registry.items[].low_quality_failure_patterns",
         "acceptance_item_registry.items[].required_evidence"
+      ],
+      "non_empty_array_fields": [
+        "requirements",
+        "acceptance_item_registry.items"
       ],
       "owner": "flowpilot_core_runtime",
       "packet_kind": "task",
@@ -2566,25 +2592,28 @@
       "validator": "_high_standard_contract_result_violation"
     },
     {
+      "explicit_array_fields": [
+        "candidate_skill_inventory"
+      ],
       "fake_ai_success_fields": [
         "decision",
         "pm_visible_summary",
-        "material_sources",
-        "material_sufficiency",
         "candidate_skill_inventory"
       ],
       "family_id": "task.discovery",
       "forbidden_fields": [
+        "material_sources",
+        "material_sufficiency",
+        "material_current",
         "local_skill_inventory",
         "candidate_only_skill_policy"
       ],
+      "non_empty_array_fields": [],
       "owner": "flowpilot_core_runtime",
       "packet_kind": "task",
       "required_child_fields": [],
       "required_fields": [
         "decision",
-        "material_sources",
-        "material_sufficiency",
         "candidate_skill_inventory"
       ],
       "route_scope": "discovery",
@@ -2592,6 +2621,9 @@
       "validator": "_discovery_result_violation"
     },
     {
+      "explicit_array_fields": [
+        "obligations"
+      ],
       "fake_ai_success_fields": [
         "decision",
         "pm_visible_summary",
@@ -2603,6 +2635,9 @@
         "default_required_obligation",
         "obligations[].evidence_required",
         "obligations[].closure_blocking"
+      ],
+      "non_empty_array_fields": [
+        "obligations"
       ],
       "owner": "flowpilot_core_runtime",
       "packet_kind": "task",
@@ -2623,6 +2658,9 @@
       "validator": "_skill_standard_result_violation"
     },
     {
+      "explicit_array_fields": [
+        "nodes"
+      ],
       "fake_ai_success_fields": [
         "schema_version",
         "decision",
@@ -2631,6 +2669,9 @@
       "family_id": "task.planning",
       "forbidden_fields": [
         "route_nodes"
+      ],
+      "non_empty_array_fields": [
+        "nodes"
       ],
       "owner": "flowpilot_core_runtime",
       "packet_kind": "task",
@@ -2902,10 +2943,6 @@
     },
     {
       "explicit_array_fields": [
-        "pm_visible_summary",
-        "findings",
-        "blockers",
-        "pm_suggestion_items",
         "final_artifact_refs",
         "acceptance_item_closure",
         "route_segment_replay",
@@ -2913,21 +2950,20 @@
         "final_blockers"
       ],
       "fake_ai_success_fields": [
+        "final_artifact_refs",
+        "acceptance_item_closure",
+        "route_segment_replay",
+        "waiver_records",
+        "final_blockers"
+      ],
+      "family_id": "review.terminal_backward_replay",
+      "forbidden_fields": [
         "pm_visible_summary",
         "reviewed_by_role",
         "passed",
         "findings",
         "blockers",
         "pm_suggestion_items",
-        "final_artifact_refs",
-        "acceptance_item_closure",
-        "route_segment_replay",
-        "waiver_records",
-        "final_blockers",
-        "contract_self_check"
-      ],
-      "family_id": "review.terminal_backward_replay",
-      "forbidden_fields": [
         "decision",
         "outcome",
         "status",
@@ -2941,8 +2977,6 @@
         "recommended_resolution"
       ],
       "non_empty_array_fields": [
-        "pm_visible_summary",
-        "pm_suggestion_items",
         "final_artifact_refs",
         "acceptance_item_closure"
       ],
@@ -2950,18 +2984,11 @@
       "packet_kind": "review",
       "required_child_fields": [],
       "required_fields": [
-        "pm_visible_summary",
-        "reviewed_by_role",
-        "passed",
-        "findings",
-        "blockers",
-        "pm_suggestion_items",
         "final_artifact_refs",
         "acceptance_item_closure",
         "route_segment_replay",
         "waiver_records",
-        "final_blockers",
-        "contract_self_check"
+        "final_blockers"
       ],
       "route_scope": "terminal_backward_replay",
       "unlocks": "terminal_backward_replay_closure_confirmation",
@@ -3136,6 +3163,26 @@
       "disposition": "removed_from_current_runtime_manifest",
       "field": "cards/phases/pm_startup_activation.md",
       "status": "retired"
+    },
+    {
+      "disposition": "deleted_from_current_runtime_material_work_uses_ordinary_role_packages",
+      "field": "cards/phases/pm_material_scan.md",
+      "status": "retired"
+    },
+    {
+      "disposition": "deleted_from_current_runtime_material_work_uses_existing_review_windows",
+      "field": "cards/reviewer/material_sufficiency.md",
+      "status": "retired"
+    },
+    {
+      "disposition": "deleted_from_current_runtime_pm_routes_reading_or_research_as_ordinary_work",
+      "field": "cards/phases/pm_material_absorb_or_research.md",
+      "status": "retired"
+    },
+    {
+      "disposition": "deleted_from_current_runtime_no_special_material_form_or_gate",
+      "field": "cards/phases/pm_material_understanding.md",
+      "status": "retired"
     }
   ],
   "scenario_matrix": {
@@ -3204,6 +3251,9 @@
     "payload.current_background_role_bindings",
     "pm_disposition.summary",
     "pm_repair_decision.authority",
+    "preplanning.discovery.material_current",
+    "preplanning.discovery.material_sources",
+    "preplanning.discovery.material_sufficiency",
     "preplanning.high_standard_contract.contract_rows",
     "preplanning.high_standard_contract.decision",
     "preplanning.skill_standard.default_required_obligation",

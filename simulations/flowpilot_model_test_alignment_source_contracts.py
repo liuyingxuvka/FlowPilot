@@ -48,14 +48,25 @@ def source_boundary_contracts() -> tuple[CodeBoundaryContract, ...]:
         ),
         CodeBoundaryContract(
             boundary_id="material_artifact_map.index_only_runtime_boundary",
-            code_contract_id="material_artifact_map.refresh",
+            code_contract_id="material_artifact_map.navigation_status",
             model_obligation_id="material_artifact_map.index_only_boundary",
-            allowed_inputs=("material_scan_packet_and_result_envelopes",),
-            allowed_outputs=("index_only_material_artifact_map",),
-            allowed_side_effects=("write_json_atomic",),
+            allowed_inputs=(
+                "ordinary_project_artifacts_with_existing_map",
+                "no_existing_map",
+                "existing_noncurrent_or_unsafe_map",
+            ),
+            allowed_outputs=(
+                "index_only_material_artifact_map",
+                "map_absent_nonblocking",
+                "map_noncurrent_or_unsafe_omitted",
+            ),
             exact=True,
             input_gate_required=False,
-            required_observation_ids=("boundary.material_artifact_map.index_only",),
+            required_observation_ids=(
+                "boundary.material_artifact_map.index_only",
+                "boundary.material_artifact_map.absent_nonblocking",
+                "boundary.material_artifact_map.noncurrent_omitted",
+            ),
         ),
     )
 
@@ -99,11 +110,26 @@ def source_boundary_observations() -> tuple[CodeBoundaryObservation, ...]:
         CodeBoundaryObservation(
             observation_id="boundary.material_artifact_map.index_only",
             boundary_id="material_artifact_map.index_only_runtime_boundary",
-            input_case="material_scan_packet_and_result_envelopes",
+            input_case="ordinary_project_artifacts_with_existing_map",
             accepted=True,
             observed_output="index_only_material_artifact_map",
-            observed_side_effects=("write_json_atomic",),
             evidence_id="source.material_artifact_map.boundary",
+        ),
+        CodeBoundaryObservation(
+            observation_id="boundary.material_artifact_map.absent_nonblocking",
+            boundary_id="material_artifact_map.index_only_runtime_boundary",
+            input_case="no_existing_map",
+            accepted=True,
+            observed_output="map_absent_nonblocking",
+            evidence_id="source.material_artifact_map.absence",
+        ),
+        CodeBoundaryObservation(
+            observation_id="boundary.material_artifact_map.noncurrent_omitted",
+            boundary_id="material_artifact_map.index_only_runtime_boundary",
+            input_case="existing_noncurrent_or_unsafe_map",
+            accepted=True,
+            observed_output="map_noncurrent_or_unsafe_omitted",
+            evidence_id="source.material_artifact_map.noncurrent_navigation_omitted",
         ),
     )
 

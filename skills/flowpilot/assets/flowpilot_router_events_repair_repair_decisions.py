@@ -37,6 +37,8 @@ def _bind_router(router: ModuleType) -> None:
 def _repair_transaction_normalized_plan_kind(router: ModuleType, raw_plan_kind: str) -> str:
     _bind_router(router)
     requested = raw_plan_kind.strip()
+    if requested == 'packet_reissue':
+        raise RouterError('packet_reissue is not supported by the current repair contract; use the ordinary PM role-work repair path')
     if requested in REPAIR_TRANSACTION_EXECUTABLE_PLAN_KINDS:
         return requested
     allowed = sorted(REPAIR_TRANSACTION_EXECUTABLE_PLAN_KINDS)
@@ -82,13 +84,12 @@ def _existing_event_producer_evidence(router: ModuleType, run_root: Path, run_st
 
 def _pm_owned_followup_producer_evidence(router: ModuleType, *, plan_kind: str, rerun_target: str, target_role: str, repair_origin: str) -> dict[str, Any]:
     _bind_router(router)
-    if repair_origin == 'material_dispatch':
-        raise RouterError(f'material dispatch repair transaction cannot use {plan_kind}; use packet_reissue, operation_replay, controller_repair_work_packet, or terminal_stop')
+    del repair_origin
     producer_roles = router._event_producer_roles([rerun_target])
     target_roles = router._role_set(target_role)
     if producer_roles and producer_roles.issubset({'project_manager'}) and target_roles.issubset({'project_manager'}):
         return {'source': 'pm_repair_decision_producer', 'event': rerun_target, 'producer_roles': sorted(producer_roles), 'target_role': target_role}
-    raise RouterError(f'{plan_kind} repair transaction requires a concrete producer for rerun_target; use await_existing_event with an existing producer, packet_reissue, operation_replay, controller_repair_work_packet, or terminal_stop')
+    raise RouterError(f'{plan_kind} repair transaction requires a concrete producer for rerun_target; use await_existing_event with an existing producer, ordinary PM role-work repair, operation_replay, controller_repair_work_packet, or terminal_stop')
 
 def _list_field(router: ModuleType, value: Any, *, field: str, required: bool=True) -> list[str]:
     _bind_router(router)
@@ -98,17 +99,9 @@ def _list_field(router: ModuleType, value: Any, *, field: str, required: bool=Tr
         raise RouterError(f'{field} must be a non-empty list')
     return [str(item) for item in value if str(item or '').strip()]
 
-def _repair_transaction_execution_plan(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any], active: dict[str, Any], request: dict[str, Any], *, requested_plan_kind: str, rerun_target: str, repair_origin: str, packet_specs: list[dict[str, Any]]) -> dict[str, Any]:
+def _repair_transaction_execution_plan(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any], active: dict[str, Any], request: dict[str, Any], *, requested_plan_kind: str, rerun_target: str, repair_origin: str) -> dict[str, Any]:
     _bind_router(router)
-    if requested_plan_kind == 'packet_reissue':
-        if not packet_specs:
-            raise RouterError('packet_reissue repair transaction requires replacement packets or a packet spec path')
-        return {'mode': 'packet_reissue', 'validated': True, 'queued_action': False, 'existing_event_producer': None}
-    if packet_specs:
-        raise RouterError('repair transaction with replacement packets requires plan_kind=packet_reissue')
     if requested_plan_kind == 'await_existing_event':
-        if repair_origin == 'material_dispatch':
-            raise RouterError('material dispatch repair transaction cannot use await_existing_event; use packet_reissue, operation_replay, controller_repair_work_packet, or terminal_stop')
         evidence = router._existing_event_producer_evidence(run_root, run_state, rerun_target)
         if evidence is None:
             raise RouterError('await_existing_event repair transaction requires an existing producer for rerun_target')
@@ -180,6 +173,16 @@ def _write_control_blocker_repair_decision(router: ModuleType, project_root: Pat
         raise RouterError('control blocker repair decision requires repair_transaction')
     raw_requested_plan_kind = str(repair_transaction_request.get('plan_kind') or '').strip()
     requested_plan_kind = router._repair_transaction_normalized_plan_kind(raw_requested_plan_kind)
+    retired_replacement_fields = (
+        'replacement_packets',
+        'packets',
+        'replacement_packet_specs_path',
+        'packet_reissue_spec_path',
+        'replacement_packet_specs_hash',
+        'packet_reissue_spec_hash',
+    )
+    if any(field in repair_transaction_request or field in decision for field in retired_replacement_fields):
+        raise RouterError('replacement packets are not supported by the current repair contract; use the ordinary PM role-work repair path')
     raw_rerun_target = decision.get('rerun_target')
     rerun_target = router._control_resolution_event_name(raw_rerun_target)
     if requested_plan_kind != 'terminal_stop':
@@ -228,22 +231,13 @@ def _write_control_blocker_repair_decision(router: ModuleType, project_root: Pat
         router._validate_repair_outcome_table(outcome_table, context='control blocker repair outcome table', run_root=run_root, run_state=post_decision_state, repair_origin=repair_origin)
         allowed_resolution_events = router._validated_event_capability_names(router._repair_outcome_events(outcome_table), context='control blocker repair outcome table', run_root=run_root, run_state=post_decision_state, usage='wait', repair_origin=repair_origin, allow_pm_repair_event=False)
     transaction_id = router._repair_transaction_id(blocker_id)
-    packet_generation_id = f'{transaction_id}-gen-001'
-    packet_specs, packet_spec_source = router._repair_packet_specs_from_decision(project_root, run_root, decision, rerun_target=rerun_target)
-    execution_plan = router._repair_transaction_execution_plan(project_root, run_root, post_decision_state, active, repair_transaction_request, requested_plan_kind=requested_plan_kind, rerun_target=rerun_target, repair_origin=repair_origin, packet_specs=packet_specs)
+    execution_plan = router._repair_transaction_execution_plan(project_root, run_root, post_decision_state, active, repair_transaction_request, requested_plan_kind=requested_plan_kind, rerun_target=rerun_target, repair_origin=repair_origin)
     plan_kind = requested_plan_kind
-    if packet_specs and rerun_target != 'router_direct_material_scan_dispatch_recheck_passed':
-        raise RouterError('repair transaction packet reissue is currently supported only for material scan dispatch')
     run_state.setdefault('flags', {})['pm_control_blocker_repair_decision_recorded'] = True
     output = {'schema_version': 'flowpilot.control_blocker_repair_decision.v1', 'run_id': run_state['run_id'], 'blocker_id': blocker_id, 'decided_by_role': 'project_manager', 'decision': decision['decision'], 'repair_transaction_id': transaction_id, 'prior_path_context_review': prior_path_context_review, 'repair_action': repair_action, 'recovery_option': recovery_option, 'return_gate': return_gate, 'policy_row_id': active_record.get('policy_row_id'), 'blocker_family': active_record.get('blocker_family'), 'repair_origin': repair_origin, 'rerun_target': rerun_target, 'outcome_table': outcome_table, 'execution_plan': execution_plan, 'control_transaction': control_transaction, 'blockers': blockers, 'contract_self_check': contract_self_check, 'recorded_at': utc_now(), **_role_output_envelope_record(decision)}
     decision_path = run_root / 'control_blocks' / f'{blocker_id}.pm_repair_decision.json'
     write_json(decision_path, output)
-    generation_commit: dict[str, Any] | None = None
-    if packet_specs:
-        generation_commit = router._commit_material_scan_repair_generation(project_root, run_root, run_state, transaction_id=transaction_id, packet_generation_id=packet_generation_id, packet_specs=packet_specs)
-        router._set_pre_route_frontier_phase(run_root, str(run_state['run_id']), 'material_scan')
-        run_state['phase'] = 'material_scan'
-    transaction = {'schema_version': REPAIR_TRANSACTION_SCHEMA, 'transaction_id': transaction_id, 'run_id': run_state['run_id'], 'blocker_id': blocker_id, 'originating_event': active.get('originating_event'), 'originating_action_type': active.get('originating_action_type'), 'status': 'blocked' if requested_plan_kind == 'terminal_stop' else 'committed', 'plan_kind': plan_kind, 'execution_plan': execution_plan, 'packet_generation_id': packet_generation_id if generation_commit else None, 'packet_spec_source': packet_spec_source, 'generation_commit': generation_commit, 'pm_repair_decision_path': project_relative(project_root, decision_path), 'repair_origin': repair_origin, 'recovery_option': recovery_option, 'return_gate': return_gate, 'policy_row_id': active_record.get('policy_row_id'), 'rerun_target': rerun_target, 'outcome_table': outcome_table, 'control_transaction': control_transaction, 'allowed_resolution_events': allowed_resolution_events, 'opened_at': output['recorded_at'], 'committed_at': utc_now()}
+    transaction = {'schema_version': REPAIR_TRANSACTION_SCHEMA, 'transaction_id': transaction_id, 'run_id': run_state['run_id'], 'blocker_id': blocker_id, 'originating_event': active.get('originating_event'), 'originating_action_type': active.get('originating_action_type'), 'status': 'blocked' if requested_plan_kind == 'terminal_stop' else 'committed', 'plan_kind': plan_kind, 'execution_plan': execution_plan, 'pm_repair_decision_path': project_relative(project_root, decision_path), 'repair_origin': repair_origin, 'recovery_option': recovery_option, 'return_gate': return_gate, 'policy_row_id': active_record.get('policy_row_id'), 'rerun_target': rerun_target, 'outcome_table': outcome_table, 'control_transaction': control_transaction, 'allowed_resolution_events': allowed_resolution_events, 'opened_at': output['recorded_at'], 'committed_at': utc_now()}
     write_json(router._repair_transaction_path(run_root, transaction_id), transaction)
     active_path = resolve_project_path(project_root, str(active.get('blocker_artifact_path') or ''))
     decision_rel = project_relative(project_root, decision_path)

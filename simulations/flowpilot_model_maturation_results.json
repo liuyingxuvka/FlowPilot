@@ -1,23 +1,408 @@
 {
   "claim_scope": "routine FlowPilot maintenance and local install confidence",
   "current": {
-    "confidence": "full",
-    "decision": "model_maturation_current",
-    "findings": [],
-    "full_closure_ok": true,
-    "maintenance_obligations": [],
+    "confidence": "scoped",
+    "decision": "model_maturation_scoped_claim",
+    "findings": [
+      {
+        "action": "refresh_evidence",
+        "code": "model_maturation_signal_stale",
+        "message": "maturation signal is stale and cannot support a current model claim",
+        "metadata": {
+          "current": false,
+          "description": "Prompt assets and manifests must be model-visible contract inputs.",
+          "evidence_id": "simulations/flowpilot_prompt_boundary_results.json",
+          "in_scope": true,
+          "metadata": {
+            "freshness": {
+              "max_source_mtime": 1783699251.4197772,
+              "missing_sources": [],
+              "result": "simulations/flowpilot_prompt_boundary_results.json",
+              "result_missing": false,
+              "result_mtime": 1782397498.287079,
+              "sources": [
+                "simulations\\flowpilot_prompt_boundary_model.py",
+                "simulations\\run_flowpilot_prompt_boundary_checks.py",
+                "skills\\flowpilot\\assets\\runtime_kit\\prompts\\manifest.json",
+                "openspec\\changes\\adopt-flowguard-model-maturation\\specs\\flowpilot-prompt-boundary-policy\\spec.md"
+              ]
+            },
+            "json": {
+              "confidence": "",
+              "decision": "",
+              "ok": true,
+              "result": "simulations/flowpilot_prompt_boundary_results.json",
+              "result_type": ""
+            }
+          },
+          "model_id": "flowpilot_prompt_boundary",
+          "required": true,
+          "resolved": false,
+          "risk_id": "prompt_asset_drift_not_seen_by_code_scan",
+          "signal_id": "prompt_assets_are_contract_inputs",
+          "signal_type": "missing_code_boundary_observation",
+          "source_route": "flowpilot_prompt_boundary_policy",
+          "suggested_actions": [
+            "add_code_boundary_observation",
+            "add_model_obligation"
+          ]
+        },
+        "model_id": "flowpilot_prompt_boundary",
+        "risk_id": "prompt_asset_drift_not_seen_by_code_scan",
+        "severity": "blocker",
+        "signal_id": "prompt_assets_are_contract_inputs"
+      },
+      {
+        "action": "add_code_boundary_observation",
+        "code": "model_upgrade_required",
+        "message": "unresolved in-scope maturation signal requires model upgrade action",
+        "metadata": {
+          "current": false,
+          "description": "Prompt assets and manifests must be model-visible contract inputs.",
+          "evidence_id": "simulations/flowpilot_prompt_boundary_results.json",
+          "in_scope": true,
+          "metadata": {
+            "freshness": {
+              "max_source_mtime": 1783699251.4197772,
+              "missing_sources": [],
+              "result": "simulations/flowpilot_prompt_boundary_results.json",
+              "result_missing": false,
+              "result_mtime": 1782397498.287079,
+              "sources": [
+                "simulations\\flowpilot_prompt_boundary_model.py",
+                "simulations\\run_flowpilot_prompt_boundary_checks.py",
+                "skills\\flowpilot\\assets\\runtime_kit\\prompts\\manifest.json",
+                "openspec\\changes\\adopt-flowguard-model-maturation\\specs\\flowpilot-prompt-boundary-policy\\spec.md"
+              ]
+            },
+            "json": {
+              "confidence": "",
+              "decision": "",
+              "ok": true,
+              "result": "simulations/flowpilot_prompt_boundary_results.json",
+              "result_type": ""
+            }
+          },
+          "model_id": "flowpilot_prompt_boundary",
+          "required": true,
+          "resolved": false,
+          "risk_id": "prompt_asset_drift_not_seen_by_code_scan",
+          "signal_id": "prompt_assets_are_contract_inputs",
+          "signal_type": "missing_code_boundary_observation",
+          "source_route": "flowpilot_prompt_boundary_policy",
+          "suggested_actions": [
+            "add_code_boundary_observation",
+            "add_model_obligation"
+          ]
+        },
+        "model_id": "flowpilot_prompt_boundary",
+        "risk_id": "prompt_asset_drift_not_seen_by_code_scan",
+        "severity": "blocker",
+        "signal_id": "prompt_assets_are_contract_inputs"
+      },
+      {
+        "action": "add_model_obligation",
+        "code": "model_upgrade_required",
+        "message": "unresolved in-scope maturation signal requires model upgrade action",
+        "metadata": {
+          "current": false,
+          "description": "Prompt assets and manifests must be model-visible contract inputs.",
+          "evidence_id": "simulations/flowpilot_prompt_boundary_results.json",
+          "in_scope": true,
+          "metadata": {
+            "freshness": {
+              "max_source_mtime": 1783699251.4197772,
+              "missing_sources": [],
+              "result": "simulations/flowpilot_prompt_boundary_results.json",
+              "result_missing": false,
+              "result_mtime": 1782397498.287079,
+              "sources": [
+                "simulations\\flowpilot_prompt_boundary_model.py",
+                "simulations\\run_flowpilot_prompt_boundary_checks.py",
+                "skills\\flowpilot\\assets\\runtime_kit\\prompts\\manifest.json",
+                "openspec\\changes\\adopt-flowguard-model-maturation\\specs\\flowpilot-prompt-boundary-policy\\spec.md"
+              ]
+            },
+            "json": {
+              "confidence": "",
+              "decision": "",
+              "ok": true,
+              "result": "simulations/flowpilot_prompt_boundary_results.json",
+              "result_type": ""
+            }
+          },
+          "model_id": "flowpilot_prompt_boundary",
+          "required": true,
+          "resolved": false,
+          "risk_id": "prompt_asset_drift_not_seen_by_code_scan",
+          "signal_id": "prompt_assets_are_contract_inputs",
+          "signal_type": "missing_code_boundary_observation",
+          "source_route": "flowpilot_prompt_boundary_policy",
+          "suggested_actions": [
+            "add_code_boundary_observation",
+            "add_model_obligation"
+          ]
+        },
+        "model_id": "flowpilot_prompt_boundary",
+        "risk_id": "prompt_asset_drift_not_seen_by_code_scan",
+        "severity": "blocker",
+        "signal_id": "prompt_assets_are_contract_inputs"
+      }
+    ],
+    "full_closure_ok": false,
+    "maintenance_obligations": [
+      {
+        "anchor_paths": [],
+        "anchor_symbols": [],
+        "artifact_ids": [],
+        "claim_effect": "",
+        "code_contract_ids": [],
+        "current": true,
+        "evidence_ids": [],
+        "message": "maturation signal is stale and cannot support a current model claim",
+        "metadata": {
+          "maturation_finding": {
+            "action": "refresh_evidence",
+            "code": "model_maturation_signal_stale",
+            "message": "maturation signal is stale and cannot support a current model claim",
+            "metadata": {
+              "current": false,
+              "description": "Prompt assets and manifests must be model-visible contract inputs.",
+              "evidence_id": "simulations/flowpilot_prompt_boundary_results.json",
+              "in_scope": true,
+              "metadata": {
+                "freshness": {
+                  "max_source_mtime": 1783699251.4197772,
+                  "missing_sources": [],
+                  "result": "simulations/flowpilot_prompt_boundary_results.json",
+                  "result_missing": false,
+                  "result_mtime": 1782397498.287079,
+                  "sources": [
+                    "simulations\\flowpilot_prompt_boundary_model.py",
+                    "simulations\\run_flowpilot_prompt_boundary_checks.py",
+                    "skills\\flowpilot\\assets\\runtime_kit\\prompts\\manifest.json",
+                    "openspec\\changes\\adopt-flowguard-model-maturation\\specs\\flowpilot-prompt-boundary-policy\\spec.md"
+                  ]
+                },
+                "json": {
+                  "confidence": "",
+                  "decision": "",
+                  "ok": true,
+                  "result": "simulations/flowpilot_prompt_boundary_results.json",
+                  "result_type": ""
+                }
+              },
+              "model_id": "flowpilot_prompt_boundary",
+              "required": true,
+              "resolved": false,
+              "risk_id": "prompt_asset_drift_not_seen_by_code_scan",
+              "signal_id": "prompt_assets_are_contract_inputs",
+              "signal_type": "missing_code_boundary_observation",
+              "source_route": "flowpilot_prompt_boundary_policy",
+              "suggested_actions": [
+                "add_code_boundary_observation",
+                "add_model_obligation"
+              ]
+            },
+            "model_id": "flowpilot_prompt_boundary",
+            "risk_id": "prompt_asset_drift_not_seen_by_code_scan",
+            "severity": "blocker",
+            "signal_id": "prompt_assets_are_contract_inputs"
+          },
+          "recommended_action": "refresh_evidence"
+        },
+        "model_ids": [
+          "flowpilot_prompt_boundary"
+        ],
+        "obligation_id": "model-maturation:prompt-assets-are-contract-inputs",
+        "owner_route": "model_maturation_loop",
+        "proof_gap_codes": [],
+        "public_entrypoint_ids": [],
+        "reason_code": "model_maturation_signal_stale",
+        "required_input_kinds": [],
+        "risk_ids": [
+          "prompt_asset_drift_not_seen_by_code_scan"
+        ],
+        "scope_reason": "",
+        "source_route": "model_maturation_loop",
+        "status": "open",
+        "strength": "required",
+        "suggested_commands": []
+      },
+      {
+        "anchor_paths": [],
+        "anchor_symbols": [],
+        "artifact_ids": [],
+        "claim_effect": "",
+        "code_contract_ids": [],
+        "current": true,
+        "evidence_ids": [],
+        "message": "unresolved in-scope maturation signal requires model upgrade action",
+        "metadata": {
+          "maturation_finding": {
+            "action": "add_code_boundary_observation",
+            "code": "model_upgrade_required",
+            "message": "unresolved in-scope maturation signal requires model upgrade action",
+            "metadata": {
+              "current": false,
+              "description": "Prompt assets and manifests must be model-visible contract inputs.",
+              "evidence_id": "simulations/flowpilot_prompt_boundary_results.json",
+              "in_scope": true,
+              "metadata": {
+                "freshness": {
+                  "max_source_mtime": 1783699251.4197772,
+                  "missing_sources": [],
+                  "result": "simulations/flowpilot_prompt_boundary_results.json",
+                  "result_missing": false,
+                  "result_mtime": 1782397498.287079,
+                  "sources": [
+                    "simulations\\flowpilot_prompt_boundary_model.py",
+                    "simulations\\run_flowpilot_prompt_boundary_checks.py",
+                    "skills\\flowpilot\\assets\\runtime_kit\\prompts\\manifest.json",
+                    "openspec\\changes\\adopt-flowguard-model-maturation\\specs\\flowpilot-prompt-boundary-policy\\spec.md"
+                  ]
+                },
+                "json": {
+                  "confidence": "",
+                  "decision": "",
+                  "ok": true,
+                  "result": "simulations/flowpilot_prompt_boundary_results.json",
+                  "result_type": ""
+                }
+              },
+              "model_id": "flowpilot_prompt_boundary",
+              "required": true,
+              "resolved": false,
+              "risk_id": "prompt_asset_drift_not_seen_by_code_scan",
+              "signal_id": "prompt_assets_are_contract_inputs",
+              "signal_type": "missing_code_boundary_observation",
+              "source_route": "flowpilot_prompt_boundary_policy",
+              "suggested_actions": [
+                "add_code_boundary_observation",
+                "add_model_obligation"
+              ]
+            },
+            "model_id": "flowpilot_prompt_boundary",
+            "risk_id": "prompt_asset_drift_not_seen_by_code_scan",
+            "severity": "blocker",
+            "signal_id": "prompt_assets_are_contract_inputs"
+          },
+          "recommended_action": "add_code_boundary_observation"
+        },
+        "model_ids": [
+          "flowpilot_prompt_boundary"
+        ],
+        "obligation_id": "model-maturation:prompt-assets-are-contract-inputs",
+        "owner_route": "model_maturation_loop",
+        "proof_gap_codes": [],
+        "public_entrypoint_ids": [],
+        "reason_code": "model_upgrade_required",
+        "required_input_kinds": [],
+        "risk_ids": [
+          "prompt_asset_drift_not_seen_by_code_scan"
+        ],
+        "scope_reason": "",
+        "source_route": "model_maturation_loop",
+        "status": "open",
+        "strength": "required",
+        "suggested_commands": []
+      },
+      {
+        "anchor_paths": [],
+        "anchor_symbols": [],
+        "artifact_ids": [],
+        "claim_effect": "",
+        "code_contract_ids": [],
+        "current": true,
+        "evidence_ids": [],
+        "message": "unresolved in-scope maturation signal requires model upgrade action",
+        "metadata": {
+          "maturation_finding": {
+            "action": "add_model_obligation",
+            "code": "model_upgrade_required",
+            "message": "unresolved in-scope maturation signal requires model upgrade action",
+            "metadata": {
+              "current": false,
+              "description": "Prompt assets and manifests must be model-visible contract inputs.",
+              "evidence_id": "simulations/flowpilot_prompt_boundary_results.json",
+              "in_scope": true,
+              "metadata": {
+                "freshness": {
+                  "max_source_mtime": 1783699251.4197772,
+                  "missing_sources": [],
+                  "result": "simulations/flowpilot_prompt_boundary_results.json",
+                  "result_missing": false,
+                  "result_mtime": 1782397498.287079,
+                  "sources": [
+                    "simulations\\flowpilot_prompt_boundary_model.py",
+                    "simulations\\run_flowpilot_prompt_boundary_checks.py",
+                    "skills\\flowpilot\\assets\\runtime_kit\\prompts\\manifest.json",
+                    "openspec\\changes\\adopt-flowguard-model-maturation\\specs\\flowpilot-prompt-boundary-policy\\spec.md"
+                  ]
+                },
+                "json": {
+                  "confidence": "",
+                  "decision": "",
+                  "ok": true,
+                  "result": "simulations/flowpilot_prompt_boundary_results.json",
+                  "result_type": ""
+                }
+              },
+              "model_id": "flowpilot_prompt_boundary",
+              "required": true,
+              "resolved": false,
+              "risk_id": "prompt_asset_drift_not_seen_by_code_scan",
+              "signal_id": "prompt_assets_are_contract_inputs",
+              "signal_type": "missing_code_boundary_observation",
+              "source_route": "flowpilot_prompt_boundary_policy",
+              "suggested_actions": [
+                "add_code_boundary_observation",
+                "add_model_obligation"
+              ]
+            },
+            "model_id": "flowpilot_prompt_boundary",
+            "risk_id": "prompt_asset_drift_not_seen_by_code_scan",
+            "severity": "blocker",
+            "signal_id": "prompt_assets_are_contract_inputs"
+          },
+          "recommended_action": "add_model_obligation"
+        },
+        "model_ids": [
+          "flowpilot_prompt_boundary"
+        ],
+        "obligation_id": "model-maturation:prompt-assets-are-contract-inputs",
+        "owner_route": "model_maturation_loop",
+        "proof_gap_codes": [],
+        "public_entrypoint_ids": [],
+        "reason_code": "model_upgrade_required",
+        "required_input_kinds": [],
+        "risk_ids": [
+          "prompt_asset_drift_not_seen_by_code_scan"
+        ],
+        "scope_reason": "",
+        "source_route": "model_maturation_loop",
+        "status": "open",
+        "strength": "required",
+        "suggested_commands": []
+      }
+    ],
     "model_id": "flowpilot_model_maturation_closure",
     "ok": true,
     "plan_id": "flowpilot-model-maturation-routine-closure",
     "recommended_actions": [
-      "no_model_change_needed"
+      "refresh_evidence",
+      "add_code_boundary_observation",
+      "add_model_obligation",
+      "downgrade_claim"
     ],
     "risk_id": "coarse_or_stale_flowpilot_model_confidence",
-    "scoped_signal_ids": [],
+    "scoped_signal_ids": [
+      "prompt_assets_are_contract_inputs"
+    ],
     "signal_count": 10,
-    "summary": "No current route signal requires model maturation."
+    "summary": "Only a scoped FlowGuard claim is supported until maturation signals are resolved."
   },
-  "full_closure_ok": true,
+  "full_closure_ok": false,
   "known_bad_ok": true,
   "known_bad_sanity_checks": [
     {

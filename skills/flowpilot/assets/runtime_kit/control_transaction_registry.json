@@ -68,7 +68,6 @@
         "flowpilot.output_contract.worker_current_node_result.v1"
       ],
       "router_events": [
-        "pm_records_material_scan_result_disposition",
         "pm_records_research_result_disposition",
         "pm_records_current_node_result_disposition",
         "worker_current_node_result_returned"

@@ -10,10 +10,10 @@
   "pm_owned": true,
   "status": "<draft|assigned|worker_reported|reviewing|rework_required|accepted|route_mutated|blocked|superseded>",
   "decision_context": {
-    "source_pm_material_understanding": ".flowpilot/runs/<run-id>/pm_material_understanding.json",
+    "source_pm_decision_artifact": "<product-function-architecture-node-plan-route-plan-or-other-current-artifact-path>",
     "source_node_acceptance_plan": "<path-or-null>",
     "source_modeling_request": "<path-or-null>",
-    "gap_type": "<material_gap|mechanism_gap|source_gap|experiment_gap|protocol_gap|validation_gap|reconciliation_gap>",
+    "gap_type": "<evidence_gap|mechanism_gap|source_gap|experiment_gap|protocol_gap|validation_gap|reconciliation_gap>",
     "route_impact": "<blocking|changes-route|changes-product-architecture|changes-node-acceptance|can-defer|nonblocking>",
     "decision_needed": "<what-the-PM-needs-to-decide-after-this-package>",
     "known_evidence_paths": [],
@@ -74,7 +74,7 @@
   },
   "pm_acceptance_gate": {
     "accepted_by_pm": false,
-    "pm_decision": "<pending|absorb_into_material_understanding|mutate_route|insert_followup_research|ask_user|block|supersede>",
+    "pm_decision": "<pending|integrate_into_current_artifact|mutate_route|insert_followup_research|ask_user|block|supersede>",
     "absorbed_into_paths": [],
     "route_mutation_path": "<path-or-null>",
     "decision_reason": "<why-the-approved-research-is-sufficient-or-what-changes-next>"

@@ -1,0 +1,25 @@
+{
+  "schema_version": 2,
+  "report_protocol_version": 3,
+  "execution_key": "sha256:84962148550c7b9a343adfbfed671780fbe2b6b3a9d36dc3b1bbef8a65bf49bd",
+  "result_hash": "sha256:9a7e8bf09dda10fcb3932b57fddaf9a0a9d688a4c34bce0bb671801b93f3177f",
+  "receipt_id": "sha256:b1257e09d6e89df555de717e9004390ca74d1d38beca6d2c8665c7780f7ab710",
+  "result": {
+    "status": "passed",
+    "command": "python",
+    "args": [
+      "-m",
+      "unittest",
+      "-v",
+      "tests.test_flowpilot_ordinary_resource_discovery.FlowPilotOrdinaryResourceDiscoveryTests.test_removed_material_discovery_fields_have_only_negative_or_historical_hits",
+      "tests.test_flowpilot_ordinary_resource_discovery.FlowPilotOrdinaryResourceDiscoveryTests.test_retired_material_router_path_has_no_positive_dispatch_or_repair_surface"
+    ],
+    "expected_exit_code": 0,
+    "exit_code": 0,
+    "timeout_seconds": 1800,
+    "stdout": "",
+    "stderr": "test_removed_material_discovery_fields_have_only_negative_or_historical_hits (tests.test_flowpilot_ordinary_resource_discovery.FlowPilotOrdinaryResourceDiscoveryTests.test_removed_material_discovery_fields_have_only_negative_or_historical_hits) ... ok\r\ntest_retired_material_router_path_has_no_positive_dispatch_or_repair_surface (tests.test_flowpilot_ordinary_resource_discovery.FlowPilotOrdinaryResourceDiscoveryTests.test_retired_material_router_path_has_no_positive_dispatch_or_repair_surface) ... ok\r\n\r\n----------------------------------------------------------------------\r\nRan 2 tests in 0.019s\r\n\r\nOK\r\n",
+    "stdout_preview": "",
+    "stderr_preview": "test_removed_material_discovery_fields_have_only_negative_or_historical_hits (tests.test_flowpilot_ordinary_resource_discovery.FlowPilotOrdinaryResourceDiscoveryTests.test_removed_material_discovery_fields_have_only_negative_or_historical_hits) ... ok\r\ntest_retired_material_router_path_has_no_positive_dispatch_or_repair_surface (tests.test_flowpilot_ordinary_resource_discovery.FlowPilotOrdinaryResourceDiscoveryTests.test_retired_material_router_path_has_no_positive_dispatch_or_repair_surface) ... ok\r\n\r\n----------------------------------------------------------------------\r\nRan 2 tests in 0.019s\r\n\r\nOK\r\n"
+  }
+}

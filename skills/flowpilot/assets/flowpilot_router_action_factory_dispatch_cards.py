@@ -102,7 +102,7 @@ def _dispatch_gate_same_obligation_instruction_context(
                 "packet_id": record.get("packet_id"),
                 "active_packet_holder": holder,
                 "instruction_card_id": action.get("card_id"),
-                "expected_first_output_event": "pm_issues_material_and_capability_scan_packets",
+                "expected_first_output_event": "pm_writes_product_function_architecture",
             }
     return None
 

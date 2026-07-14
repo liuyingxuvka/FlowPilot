@@ -3,7 +3,7 @@
   "heavyweight_state_threshold": 10000,
   "parents": {
     "meta": {
-      "description": "Process-control parent for FlowPilot startup, material intake, route execution, packet control, terminal closure, and evidence obligations.",
+      "description": "Process-control parent for FlowPilot startup, ordinary resource discovery, route execution, packet control, terminal closure, and evidence obligations.",
       "partitions": [
         {
           "id": "startup",
@@ -22,16 +22,15 @@
           "release_obligation": "thin_parent_ok"
         },
         {
-          "id": "material_intake",
+          "id": "ordinary_resource_discovery",
           "owner_type": "child",
           "evidence_ids": [
-            "flowpilot_pm_package_absorption",
-            "flowpilot_handoff_artifact_protocol"
+            "flowpilot_ordinary_resource_discovery"
           ],
           "invariant_families": [
-            "material_scan_before_architecture",
-            "pm_package_absorption",
-            "handoff_artifact_integrity"
+            "mandatory_shallow_local_skill_inventory",
+            "pm_candidate_skill_selection",
+            "ordinary_resource_work_and_optional_map"
           ],
           "release_obligation": "thin_parent_ok"
         },
@@ -90,11 +89,11 @@
             "flowpilot_packet_lifecycle",
             "flowpilot_packet_open_authority",
             "flowpilot_card_envelope",
-            "flowpilot_role_output_runtime"
+            "flowpilot_complete_workstream_orchestration"
           ],
           "invariant_families": [
             "packet_envelope_authority",
-            "role_output_runtime",
+            "complete_workstream_semantic_result",
             "controller_body_boundary"
           ],
           "release_obligation": "thin_parent_ok"
@@ -140,11 +139,13 @@
             "flowpilot_control_transaction_registry",
             "flowpilot_legal_next_action",
             "proof_carrying",
+            "flowpilot_skillguard_current_contract",
             "release_tooling"
           ],
           "invariant_families": [
             "model_mesh_authority",
             "control_transaction_registry",
+            "skillguard_current_contract_projection",
             "install_sync_boundary"
           ],
           "release_obligation": "full_regression_required_for_release"
@@ -175,7 +176,8 @@
           "owner_type": "shared_kernel",
           "evidence_ids": [
             "flowpilot_planning_quality",
-            "flowpilot_model_driven_recursive_route"
+            "flowpilot_model_driven_recursive_route",
+            "flowpilot_ordinary_resource_discovery"
           ],
           "invariant_families": [
             "planning_profile",
@@ -191,7 +193,8 @@
             "card_instruction_coverage",
             "flowpilot_reviewer_active_challenge",
             "flowpilot_requirement_traceability",
-            "flowpilot_output_contract"
+            "flowpilot_output_contract",
+            "flowpilot_complete_workstream_orchestration"
           ],
           "invariant_families": [
             "child_skill_selection",
@@ -208,11 +211,11 @@
             "flowpilot_packet_lifecycle",
             "flowpilot_packet_open_authority",
             "flowpilot_card_envelope",
-            "flowpilot_role_output_runtime"
+            "flowpilot_complete_workstream_orchestration"
           ],
           "invariant_families": [
             "active_child_skill_bindings",
-            "role_output_runtime",
+            "complete_workstream_semantic_result",
             "packet_open_authority"
           ],
           "release_obligation": "thin_parent_ok"
@@ -258,11 +261,13 @@
             "flowpilot_control_transaction_registry",
             "flowpilot_legal_next_action",
             "proof_carrying",
+            "flowpilot_skillguard_current_contract",
             "release_tooling"
           ],
           "invariant_families": [
             "capability_evidence_sync",
             "model_mesh_authority",
+            "skillguard_current_contract_projection",
             "install_sync_boundary"
           ],
           "release_obligation": "full_regression_required_for_release"
@@ -276,8 +281,8 @@
       "owner": "startup"
     },
     {
-      "field": "material_understanding",
-      "owner": "material_intake"
+      "field": "ordinary_resource_discovery_evidence",
+      "owner": "ordinary_resource_discovery"
     },
     {
       "field": "route_plan",

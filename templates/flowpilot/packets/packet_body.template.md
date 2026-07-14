@@ -239,7 +239,7 @@ requires broader scope, changed acceptance, new dependency, route mutation,
 forbidden writes, or another role's authority, do not silently repair it; return
 `blocked`, `needs_pm`, or a PM Suggestion Item.
 
-For material-scan, research, or FlowGuard operator packets, correct defects in
+For research/evidence Worker or FlowGuard Operator packets, correct defects in
 your own report, model, check command, counterexample interpretation, or
 evidence before returning. Target implementation, product, process, route, or
 authority defects must be reported as findings, blockers, or PM Suggestion Items

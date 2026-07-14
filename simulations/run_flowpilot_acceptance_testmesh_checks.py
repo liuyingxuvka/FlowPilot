@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import dataclasses
+import hashlib
 import json
 from pathlib import Path
 from typing import Any
@@ -12,11 +13,29 @@ from flowguard import review_test_mesh
 
 try:  # pragma: no cover
     from . import flowpilot_acceptance_testmesh_model as model
+    from .flowpilot_evidence_truth import (
+        testmesh_final_receipt_fields,
+        testmesh_receipt_obligation_ids,
+    )
 except ImportError:  # pragma: no cover
     import flowpilot_acceptance_testmesh_model as model
+    from flowpilot_evidence_truth import (
+        testmesh_final_receipt_fields,
+        testmesh_receipt_obligation_ids,
+    )
 
 
 RESULTS_PATH = Path(__file__).resolve().with_name("flowpilot_acceptance_testmesh_results.json")
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def _portable_path(path: Path) -> str:
+    candidate = path if path.is_absolute() else ROOT / path
+    resolved = candidate.resolve()
+    try:
+        return resolved.relative_to(ROOT.resolve()).as_posix()
+    except ValueError:
+        return f"<external>/{resolved.parent.name}/{resolved.name}"
 
 BACKGROUND_CHILD_SUITES = {
     "acceptance_router_quality_gate_children": {
@@ -41,7 +60,7 @@ BACKGROUND_CHILD_SUITES = {
         "tier": "router-packets",
         "expected": (
             "router_packet_runtime",
-            "router_packets_material",
+            "router_packets_generic_ack_mail",
             "router_packets_current_node_direct",
             "router_packets_current_node_dispatch_relay",
             "router_packets_current_node_dispatch_worker_binding",
@@ -52,12 +71,8 @@ BACKGROUND_CHILD_SUITES = {
             "router_packets_result_decision_review_card",
             "router_packets_result_decision_relay",
             "router_packets_result_decision_pm_repair",
-            "router_packets_batch_existing_results",
-            "router_packets_batch_duplicate_worker",
-            "router_packets_batch_full_wait_missing_roles",
             "router_packets_grant_result_requires_write",
             "router_packets_grant_unresolved_node_entry",
-            "router_packet_result_family",
             "router_cards",
             "router_ack_return",
         ),
@@ -111,6 +126,35 @@ BACKGROUND_CHILD_SUITES = {
     },
 }
 
+TIER_OVERRIDE_FIELDS = {
+    "result_status",
+    "evidence_tier",
+    "evidence_current",
+    "test_count",
+    "selected_count",
+    "skipped_count",
+    "skipped_visible",
+    "exit_code",
+    "result_path",
+    "log_root",
+    "background",
+    "has_exit_artifact",
+    "has_result_artifact",
+    "progress_only",
+    "duration_seconds",
+    "timeout_seconds",
+    "stale_reasons",
+    "proof_artifact",
+    "result_reused",
+    "run_id",
+    "terminal_status",
+    "result_fingerprint",
+    "covered_obligation_ids",
+    "artifact_version",
+    "verifier_version",
+    "not_run_reason",
+}
+
 
 def _to_jsonable(value: Any) -> Any:
     if dataclasses.is_dataclass(value):
@@ -152,9 +196,19 @@ def _read_text(path: Path) -> str:
         return ""
 
 
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
 def _background_suite_override(
     suite_id: str,
     background_dir: Path | None,
+    *,
+    covered_obligation_ids: tuple[str, ...] = (),
 ) -> tuple[dict[str, Any] | None, dict[str, Any] | None]:
     if background_dir is None:
         return None, None
@@ -175,9 +229,9 @@ def _background_suite_override(
         has_any_artifact = exit_path.exists() or meta_path.exists() or combined_path.exists()
         row: dict[str, Any] = {
             "name": name,
-            "exit_artifact": str(exit_path),
-            "meta_artifact": str(meta_path),
-            "combined_artifact": str(combined_path),
+            "exit_artifact": _portable_path(exit_path),
+            "meta_artifact": _portable_path(meta_path),
+            "combined_artifact": _portable_path(combined_path),
             "has_exit_artifact": exit_path.exists(),
             "has_result_artifact": combined_path.exists(),
         }
@@ -233,13 +287,14 @@ def _background_suite_override(
         exit_code = 0
         reason = ""
 
+    portable_root = _portable_path(root)
     override = {
         "result_status": status,
         "evidence_tier": "external_contract" if status == "passed" else "candidate_only",
         "evidence_current": evidence_current,
         "test_count": len(passed),
         "exit_code": exit_code,
-        "result_path": str(root),
+        "result_path": portable_root,
         "background": True,
         "has_exit_artifact": not (running or missing),
         "has_result_artifact": root.exists(),
@@ -247,10 +302,43 @@ def _background_suite_override(
         "duration_seconds": sum(durations) if durations else None,
         "not_run_reason": reason or f"{config['tier']} artifacts passed",
     }
+    proof_paths = [
+        root / f"{name}.{suffix}"
+        for name in expected
+        for suffix in ("meta.json", "exit.txt", "combined.txt")
+        if (root / f"{name}.{suffix}").is_file()
+    ]
+    override["proof_artifact"] = {
+        "artifact_id": f"proof.{suite_id}",
+        "producer_route": "flowguard-test-mesh",
+        "command": f"python scripts/run_test_tier.py --tier {config['tier']} --background",
+        "result_path": portable_root,
+        "result_status": status,
+        "exit_code": exit_code,
+        "artifact_fingerprints": {_portable_path(path): _sha256(path) for path in proof_paths},
+        "covered_obligation_ids": list(covered_obligation_ids),
+        "assertion_scope": "external_contract",
+        "current": evidence_current,
+        "route_evidence_current": evidence_current,
+        "progress_only": bool(running),
+        "stale_reasons": [] if evidence_current else [reason],
+        "metadata": {
+            "selected_child_count": len(expected),
+            "executed_child_count": len(passed) + len(failed),
+            "passed_child_count": len(passed),
+            "failed_child_count": len(failed),
+        },
+    }
+    override.update(
+        testmesh_final_receipt_fields(
+            override["proof_artifact"],
+            covered_obligation_ids=covered_obligation_ids,
+        )
+    )
     tier_detail = {
         "suite_id": suite_id,
         "tier": config["tier"],
-        "background_dir": str(root),
+        "background_dir": portable_root,
         "status": status,
         "passed_children": passed,
         "failed_children": failed,
@@ -264,8 +352,18 @@ def _background_suite_override(
 def _collect_router_tier_overrides(background_dirs: dict[str, Path | None]) -> tuple[dict[str, dict[str, Any]], list[dict[str, Any]]]:
     overrides: dict[str, dict[str, Any]] = {}
     details: list[dict[str, Any]] = []
+    declared_plan = model.build_testmesh_plan()
+    declared_suites = {suite.suite_id: suite for suite in declared_plan.child_suites}
     for suite_id, background_dir in background_dirs.items():
-        override, detail = _background_suite_override(suite_id, background_dir)
+        declared_suite = declared_suites[suite_id]
+        override, detail = _background_suite_override(
+            suite_id,
+            background_dir,
+            covered_obligation_ids=testmesh_receipt_obligation_ids(
+                declared_plan,
+                declared_suite,
+            ),
+        )
         if override is not None:
             overrides[suite_id] = override
         if detail is not None:
@@ -290,6 +388,10 @@ def run_checks(
     router_packets_background_dir: Path | None = None,
     router_route_background_dir: Path | None = None,
     router_terminal_background_dir: Path | None = None,
+    routine_evidence_overrides: dict[str, dict[str, Any]] | None = None,
+    release_proof_artifact: dict[str, Any] | None = None,
+    release_test_count: int | None = None,
+    release_selected_count: int | None = None,
 ) -> dict[str, Any]:
     router_tier_overrides, router_tier_background_details = _collect_router_tier_overrides(
         {
@@ -299,6 +401,15 @@ def run_checks(
             "acceptance_router_terminal_tier": router_terminal_background_dir,
         }
     )
+    evidence_overrides = dict(routine_evidence_overrides or {})
+    for suite_id in BACKGROUND_CHILD_SUITES:
+        manifest_override = evidence_overrides.get(suite_id)
+        if manifest_override is not None and suite_id not in router_tier_overrides:
+            router_tier_overrides[suite_id] = {
+                key: value
+                for key, value in manifest_override.items()
+                if key in TIER_OVERRIDE_FIELDS
+            }
     plan = model.build_testmesh_plan(
         release_evidence=release_evidence,
         release_result_status=release_result_status,
@@ -312,6 +423,10 @@ def run_checks(
         release_stale_reasons=release_stale_reasons,
         release_result_path=release_result_path,
         router_tier_overrides=router_tier_overrides,
+        routine_evidence_overrides=evidence_overrides,
+        release_proof_artifact=release_proof_artifact,
+        release_test_count=release_test_count,
+        release_selected_count=release_selected_count,
     )
     report = review_test_mesh(plan)
     release_rows = [suite for suite in plan.child_suites if suite.release_required]
@@ -345,7 +460,7 @@ def run_checks(
         for suite in routine_router_rows
     )
     owners = model.payload_cell_owners(plan)
-    formal_exit_owners = model.formal_exit_release_cell_owners(plan)
+    release_evidence_owners = model.release_evidence_cell_owners(plan)
     missing_cells = [cell_id for cell_id, suite_ids in owners.items() if not suite_ids]
     rows = [
         {
@@ -363,6 +478,9 @@ def run_checks(
             "duration_seconds": suite.duration_seconds,
             "stale_reasons": list(suite.stale_reasons),
             "nonpass_reasons": _suite_nonpass_reasons(suite),
+            "test_count": suite.test_count,
+            "selected_count": suite.selected_count,
+            "proof_artifact": suite.proof_artifact.to_dict() if suite.proof_artifact else None,
         }
         for suite in plan.child_suites
     ]
@@ -374,9 +492,9 @@ def run_checks(
         "report": _to_jsonable(report),
         "required_payload_cells": list(model.PAYLOAD_CELLS),
         "payload_cell_owners": {cell_id: list(suite_ids) for cell_id, suite_ids in owners.items()},
-        "formal_exit_release_cells": list(model.FORMAL_EXIT_RELEASE_CELLS),
-        "formal_exit_release_cell_owners": {
-            cell_id: list(suite_ids) for cell_id, suite_ids in formal_exit_owners.items()
+        "release_evidence_cells": list(model.RELEASE_EVIDENCE_CELLS),
+        "release_evidence_cell_owners": {
+            cell_id: list(suite_ids) for cell_id, suite_ids in release_evidence_owners.items()
         },
         "missing_payload_cells": missing_cells,
         "router_tier_mappings": list(model.ROUTER_TIER_MAPPINGS),
@@ -452,8 +570,14 @@ def main() -> int:
     parser.add_argument("--router-packets-background-dir", type=Path)
     parser.add_argument("--router-route-background-dir", type=Path)
     parser.add_argument("--router-terminal-background-dir", type=Path)
+    parser.add_argument("--evidence-manifest", type=Path)
     args = parser.parse_args()
 
+    evidence_manifest: dict[str, Any] = {}
+    if args.evidence_manifest:
+        evidence_manifest = json.loads(args.evidence_manifest.read_text(encoding="utf-8"))
+
+    release_manifest_row = evidence_manifest.get("release") or {}
     result = run_checks(
         release_evidence=args.release_evidence,
         release_result_status=args.release_result_status,
@@ -469,6 +593,10 @@ def main() -> int:
         router_packets_background_dir=args.router_packets_background_dir,
         router_route_background_dir=args.router_route_background_dir,
         router_terminal_background_dir=args.router_terminal_background_dir,
+        routine_evidence_overrides=dict(evidence_manifest.get("routine") or {}),
+        release_proof_artifact=release_manifest_row.get("proof_artifact"),
+        release_test_count=release_manifest_row.get("test_count"),
+        release_selected_count=release_manifest_row.get("selected_count"),
     )
     output = json.dumps(result, indent=2, sort_keys=True) + "\n"
     print(output, end="")

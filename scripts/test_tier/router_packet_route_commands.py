@@ -11,20 +11,10 @@ ROUTER_PACKET_COMMANDS = (
         description="Packet runtime contract tests.",
     ),
     _unittest_k(
-        "router_packets_material",
+        "router_packets_generic_ack_mail",
         "tests.router_runtime.packets",
-        patterns=(
-            "material_work_packet",
-            "material_scan_accepts",
-            "reconcile_current_run_recovers_material_scan_phase",
-            "record_event_accepts_material",
-            "record_event_rejects_manual_material",
-            "material_scan_packet_and_result_relays",
-            "material_scan_packet_body_event",
-            "formal_work_packet_ack",
-            "mail_delivery_receipt",
-        ),
-        description="Router material packet, scan, and ACK preflight slice.",
+        patterns=("formal_work_packet_ack", "mail_delivery_receipt"),
+        description="Current generic packet ACK and mail-delivery receipt guards.",
     ),
     _unittest_k(
         "router_packets_current_node_direct",
@@ -90,24 +80,6 @@ ROUTER_PACKET_COMMANDS = (
         description="Current-node result PM repair target guard slice.",
     ),
     _unittest_k(
-        "router_packets_batch_existing_results",
-        "tests.router_runtime.packets",
-        patterns=("test_material_scan_existing_results_reconcile_before_stale_wait",),
-        description="Packet batch existing-results reconciliation slice.",
-    ),
-    _unittest_k(
-        "router_packets_batch_duplicate_worker",
-        "tests.router_runtime.packets",
-        patterns=("test_material_scan_duplicate_worker_batch_is_rejected",),
-        description="Packet batch duplicate-worker guard slice.",
-    ),
-    _unittest_k(
-        "router_packets_batch_full_wait_missing_roles",
-        "tests.router_runtime.packets",
-        patterns=("test_material_scan_full_batch_wait_current_work_names_all_missing_roles",),
-        description="Packet batch full-wait missing-role slice.",
-    ),
-    _unittest_k(
         "router_packets_grant_result_requires_write",
         "tests.router_runtime.packets",
         patterns=("test_current_node_result_requires_write_grant",),
@@ -118,13 +90,6 @@ ROUTER_PACKET_COMMANDS = (
         "tests.router_runtime.packets",
         patterns=("test_current_node_packet_rejects_unresolved_node_entry_self_interrogation",),
         description="Current-node unresolved node-entry packet guard slice.",
-    ),
-    TierCommand(
-        name="router_packet_result_family",
-        command=_py("-m", "unittest", "-v", "tests.router_runtime.packet_result_family"),
-        description="Packet-result family durable-envelope reconciliation slice.",
-        long_running=True,
-        background_recommended=True,
     ),
     _unittest(
         "router_cards",

@@ -63,8 +63,6 @@ def _reconcile_durable_wait_evidence(
     changed = bool(batch_reconciliation.get("changed"))
     direct_role_output_reconciliation = _try_reconcile_direct_role_output_event_ledger(project_root, run_root, run_state)
     changed = bool(direct_role_output_reconciliation.get("changed")) or changed
-    changed = _try_reconcile_material_scan_body_delivery(project_root, run_root, run_state) or changed
-    changed = _try_reconcile_material_scan_results(project_root, run_root, run_state) or changed
     changed = _try_reconcile_research_results(project_root, run_root, run_state) or changed
     changed = _try_reconcile_current_node_results(project_root, run_root, run_state) or changed
     changed = _try_reconcile_pm_role_work_results(project_root, run_root, run_state) or changed

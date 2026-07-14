@@ -21,6 +21,16 @@ DECISION_BLOCKED = "blocked"
 
 ROOT = Path(__file__).resolve().parents[1]
 
+
+def portable_evidence_path(path: Path) -> str:
+    if not path.is_absolute():
+        return path.as_posix()
+    try:
+        return path.resolve().relative_to(ROOT.resolve()).as_posix()
+    except ValueError:
+        return f"<external>/{path.name}"
+
+
 DEFAULT_RESULT_PATHS = {
     "control_plane": ROOT / "simulations" / "flowpilot_control_plane_friction_results.json",
     "event_idempotency": ROOT / "simulations" / "flowpilot_event_idempotency_results.json",
@@ -28,6 +38,9 @@ DEFAULT_RESULT_PATHS = {
     "known_friction": ROOT / "simulations" / "flowpilot_known_friction_regression_matrix_results.json",
     "terminal_return": ROOT / "simulations" / "flowpilot_terminal_return_preflight_results.json",
 }
+DEFAULT_EVIDENCE_MANIFEST_PATH = (
+    ROOT / "simulations" / "flowpilot_acceptance_testmesh_evidence_manifest.json"
+)
 
 SUBCHECK_COMMANDS = {
     "control_plane": (
@@ -77,7 +90,7 @@ def _finding_codes(findings: object) -> list[str]:
 def _row(name: str, path: Path) -> dict[str, Any]:
     return {
         "name": name,
-        "path": str(path),
+        "path": portable_evidence_path(path),
         "ok": False,
         "status": DECISION_BLOCKED,
         "blockers": [],
@@ -166,6 +179,12 @@ def evaluate_model_test_alignment(path: Path, payload: Mapping[str, Any] | None,
         and gap_surface_count == deferred_structure_split_count
         and set(gap_counts) <= {"needs_structure_split"}
     )
+    claim_scope = str(payload.get("claim_scope") or "")
+    evidence_status = str(payload.get("evidence_status") or "")
+    execution_evidence = payload.get("execution_evidence")
+    execution_evidence_ok = bool(
+        isinstance(execution_evidence, Mapping) and execution_evidence.get("ok") is True
+    )
 
     row["details"]["top_level_ok"] = bool(payload.get("ok"))
     row["details"]["alignment_ok"] = bool(payload.get("alignment_ok"))
@@ -176,6 +195,9 @@ def evaluate_model_test_alignment(path: Path, payload: Mapping[str, Any] | None,
     row["details"]["gap_surface_count"] = gap_surface_count
     row["details"]["unresolved_non_deferred_gap_count"] = unresolved_non_deferred_gap_count
     row["details"]["deferred_structure_split_count"] = deferred_structure_split_count
+    row["details"]["claim_scope"] = claim_scope
+    row["details"]["evidence_status"] = evidence_status
+    row["details"]["execution_evidence_ok"] = execution_evidence_ok
     row["details"]["coverage_claim"] = (
         "full_coverage" if full_coverage_ok else "release_convergence_deferred_structure_only"
         if deferred_structure_only
@@ -185,6 +207,12 @@ def evaluate_model_test_alignment(path: Path, payload: Mapping[str, Any] | None,
     for field in ("ok", "alignment_ok", "full_diagnostic_ok"):
         if not payload.get(field):
             row["blockers"].append(f"{field}_false")
+    if claim_scope not in {"done", "publish"}:
+        row["blockers"].append("model_test_alignment_scope_not_done")
+    if evidence_status != "passed":
+        row["blockers"].append("model_test_alignment_evidence_not_passed")
+    if not execution_evidence_ok:
+        row["blockers"].append("model_test_alignment_execution_evidence_not_current")
     if not full_coverage_ok and not deferred_structure_only:
         row["blockers"].append("full_coverage_ok_false")
     if not full_coverage_ok and not release_convergence_ok:
@@ -425,6 +453,8 @@ def _display_command(
             display.append("<external-live-root>")
         elif source_root_text is not None and arg == source_root_text:
             display.append("<flowpilot-source-root>")
+        elif Path(arg).is_absolute():
+            display.append(portable_evidence_path(Path(arg)))
         else:
             display.append(arg)
     return display
@@ -436,6 +466,7 @@ def run_required_subchecks(
     live_root: Path | None = None,
     source_root: Path | None = None,
     terminal_return_required: bool = True,
+    evidence_manifest: Path = DEFAULT_EVIDENCE_MANIFEST_PATH,
 ) -> list[dict[str, Any]]:
     results_dir.mkdir(parents=True, exist_ok=True)
     run_rows: list[dict[str, Any]] = []
@@ -450,6 +481,15 @@ def run_required_subchecks(
                 command.extend(["--live-root", str(live_root)])
             if source_root is not None:
                 command.extend(["--source-root", str(source_root)])
+        elif name == "model_test_alignment":
+            command.extend(
+                [
+                    "--evidence-manifest",
+                    str(evidence_manifest),
+                    "--evidence-scope",
+                    "done",
+                ]
+            )
         with out_path.open("w", encoding="utf-8", errors="replace") as out_file, err_path.open(
             "w", encoding="utf-8", errors="replace"
         ) as err_file:
@@ -463,9 +503,9 @@ def run_required_subchecks(
                     source_root=source_root,
                 ),
                 "exit_code": completed.returncode,
-                "json_path": str(json_path),
-                "stdout_path": str(out_path),
-                "stderr_path": str(err_path),
+                "json_path": portable_evidence_path(json_path),
+                "stdout_path": portable_evidence_path(out_path),
+                "stderr_path": portable_evidence_path(err_path),
             }
         )
     if terminal_return_required:
@@ -532,9 +572,9 @@ def run_terminal_return_preflight(
         "name": "terminal_return",
         "command": _display_command(command, live_root=live_root),
         "exit_code": completed.returncode,
-        "json_path": str(json_path),
-        "stdout_path": str(out_path),
-        "stderr_path": str(err_path),
+        "json_path": portable_evidence_path(json_path),
+        "stdout_path": portable_evidence_path(out_path),
+        "stderr_path": portable_evidence_path(err_path),
         "parse_error": parse_error,
     }
 
@@ -549,6 +589,7 @@ __all__ = [
     "DECISION_FULL",
     "DECISION_RELEASE_CONVERGED",
     "DECISION_REPOSITORY_ONLY",
+    "DEFAULT_EVIDENCE_MANIFEST_PATH",
     "DEFAULT_RESULT_PATHS",
     "evaluate_final_confidence",
     "result_paths_for_dir",

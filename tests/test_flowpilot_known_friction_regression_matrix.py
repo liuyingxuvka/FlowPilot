@@ -30,6 +30,20 @@ matrix = load_matrix_module()
 
 
 class FlowPilotKnownFrictionRegressionMatrixTests(unittest.TestCase):
+    def test_status_projection_friction_consumes_direct_owner_before_final_alignment(self) -> None:
+        rows = {row["friction_id"]: row for row in matrix.build_rows()}
+        row = rows["known_friction.status_projection_stale"]
+
+        self.assertEqual(
+            row["model_check"],
+            "python simulations/run_flowpilot_current_status_projection_checks.py",
+        )
+        self.assertEqual(
+            matrix.SCRIPT_RESULT_PATHS["run_flowpilot_current_status_projection_checks.py"],
+            "simulations/flowpilot_current_status_projection_results.json",
+        )
+        self.assertNotIn("run_flowpilot_model_test_alignment_checks.py", row["model_check"])
+
     def test_known_friction_rows_cover_required_historical_failures(self) -> None:
         report = matrix.build_report()
 
@@ -65,6 +79,26 @@ class FlowPilotKnownFrictionRegressionMatrixTests(unittest.TestCase):
                 self.assertGreaterEqual(len(row["forbidden_shortcuts"]), 2)
                 self.assertFalse(row["live_ai_semantic_quality_proven"])
                 self.assertIn("does not", row["full_confidence_boundary"].lower())
+
+    def test_fixed_router_event_friction_keeps_role_output_runtime_as_unique_model_owner(self) -> None:
+        rows = {row["friction_id"]: row for row in matrix.build_rows()}
+        row = rows["known_friction.local_fixed_router_event_receipt_only"]
+
+        self.assertEqual(
+            row["model_obligation"],
+            "role_output_runtime.accepted_outputs_submit_directly_to_router",
+        )
+        self.assertEqual(
+            row["model_check"],
+            "python simulations/run_flowpilot_role_output_runtime_checks.py",
+        )
+        self.assertNotIn("run_flowpilot_event_contract_checks.py", row["model_check"])
+        self.assertEqual(
+            row["runtime_test"],
+            "tests.test_flowpilot_role_output_runtime."
+            "FlowPilotRoleOutputRuntimeTests."
+            "test_fixed_router_event_output_requires_router_directed_submission",
+        )
 
     def test_global_gate_set_requires_install_runtime_and_background_boundaries(self) -> None:
         report = matrix.build_report()

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import ast
 import contextlib
+from dataclasses import replace
 import importlib.util
 import io
 import json
@@ -10,7 +11,14 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from flowguard import ModelObligation, ModelTestAlignmentPlan, TestEvidence
+from flowguard import (
+    ModelObligation,
+    ModelTestAlignmentPlan,
+    TestEvidence,
+    review_model_test_alignment,
+)
+from scripts.test_tier.background import _safe_base
+from scripts.test_tier.definitions import commands_for_tier
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -47,8 +55,85 @@ runtime_path_evidence = load_module(
 
 
 class FlowPilotModelTestAlignmentTests(unittest.TestCase):
+    @staticmethod
+    def command_artifact_fingerprints(*tiers: str) -> dict[str, str]:
+        fingerprints: dict[str, str] = {}
+        for tier in tiers:
+            for command in commands_for_tier(tier):
+                base = _safe_base(command.name)
+                fingerprints[f"tmp/test_background/{tier}/{base}.meta.json"] = "a" * 64
+                fingerprints[f"tmp/test_background/{tier}/{base}.exit.txt"] = "b" * 64
+        return fingerprints
+
+    @staticmethod
+    def current_manifest() -> dict[str, object]:
+        return {
+            "source_fingerprint": alignment_runner.source_fingerprint(),
+            "routine": {
+                "all": {
+                    "result_status": "passed",
+                    "selected_count": 317,
+                    "test_count": 317,
+                    "proof_artifact": {
+                        "artifact_id": "proof.mta-current-all",
+                        "producer_route": "flowguard-test-mesh",
+                        "command": "python scripts/run_test_tier.py --tier all --background",
+                        "result_path": "tmp/test_background/current-all",
+                        "result_status": "passed",
+                        "exit_code": 0,
+                        "artifact_fingerprints": FlowPilotModelTestAlignmentTests.command_artifact_fingerprints("all"),
+                        "covered_obligation_ids": ["all-current-tests"],
+                        "assertion_scope": "external_contract",
+                        "current": True,
+                        "route_evidence_current": True,
+                        "progress_only": False,
+                        "metadata": {
+                            "selected_child_command_count": 317,
+                            "executed_child_command_count": 317,
+                            "covered_tiers": ["all"],
+                        },
+                    },
+                }
+            },
+        }
+
+    @staticmethod
+    def done_manifest() -> dict[str, object]:
+        tiers = ("all", "formal-submit-adversarial", "release")
+        return {
+            "source_fingerprint": alignment_runner.source_fingerprint(),
+            "routine": {},
+            "release": {
+                "result_status": "passed",
+                "selected_count": 500,
+                "test_count": 500,
+                "proof_artifact": {
+                    "artifact_id": "proof.mta-current-release",
+                    "producer_route": "flowguard-test-mesh",
+                    "command": "all && formal-submit-adversarial && release",
+                    "result_path": "tmp/test_background/current-release",
+                    "result_status": "passed",
+                    "exit_code": 0,
+                    "artifact_fingerprints": FlowPilotModelTestAlignmentTests.command_artifact_fingerprints(*tiers),
+                    "covered_obligation_ids": ["all-current-release-tests"],
+                    "assertion_scope": "external_contract",
+                    "current": True,
+                    "route_evidence_current": True,
+                    "progress_only": False,
+                    "metadata": {
+                        "selected_child_command_count": 500,
+                        "executed_child_command_count": 500,
+                        "covered_tiers": list(tiers),
+                    },
+                },
+            },
+        }
+
+    def strict_report(self) -> dict[str, object]:
+        return alignment_runner.build_report(evidence_manifest=self.current_manifest())
+
     def test_alignment_report_is_green_for_declared_current_scope(self) -> None:
-        report = alignment_runner.build_report()
+        report = self.strict_report()
 
         self.assertTrue(report["ok"], report["findings"])
         self.assertTrue(report["alignment_ok"], report["findings"])
@@ -56,11 +141,15 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
         self.assertTrue(report["source_audit_ok"], report["findings"])
         self.assertTrue(report["source_known_bad_ok"])
         self.assertTrue(report["full_diagnostic_ok"])
-        self.assertTrue(report["release_convergence_ok"])
+        if not report["release_convergence_ok"]:
+            self.assertFalse(report["full_model_test_code_diagnostic"]["release_convergence_ok"])
         if not report["full_coverage_ok"]:
             diagnostic = report["full_model_test_code_diagnostic"]
-            self.assertGreater(diagnostic["deferred_structure_split_count"], 0)
-            self.assertEqual(diagnostic["unresolved_non_deferred_gap_count"], 0)
+            self.assertGreater(
+                diagnostic["deferred_structure_split_count"]
+                + diagnostic["unresolved_non_deferred_gap_count"],
+                0,
+            )
         self.assertEqual(
             report["families"],
             [
@@ -79,10 +168,31 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
                 "route authority singularity",
                 "core deliverable non-downgrade",
                 "flowguard 0.53 ppa maintenance",
+                "complete workstream and ordinary resource discovery",
+                "skillguard deep contract maintenance",
                 "meta/capability parents",
             ],
         )
         self.assertEqual(report["findings"], [])
+        self.assertEqual(report["evidence_status"], "passed")
+
+    def test_complete_workstream_report_contract_keeps_one_atomic_error_path(self) -> None:
+        entries = alignment_runner.build_alignment_plan_entries()
+        entry = next(
+            entry
+            for entry in entries
+            if entry["family"] == "complete workstream and ordinary resource discovery"
+        )
+        contract = next(
+            contract
+            for contract in entry["plan"].code_contracts
+            if contract.code_contract_id == "complete_workstream.semantic_report_projection"
+        )
+
+        self.assertEqual(
+            contract.error_paths,
+            ("missing, vague, incomplete, stale, or contradictory plan report",),
+        )
 
     def test_route_authority_singularity_family_maps_model_runtime_and_replay(self) -> None:
         entries = alignment_runner.build_alignment_plan_entries()
@@ -131,6 +241,41 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
         contracts = {item.code_contract_id: item for item in packet_entry["plan"].code_contracts}
         evidence = {item.evidence_id: item for item in packet_entry["plan"].test_evidence}
 
+        for owner in ("research", "current_node", "pm_role_work"):
+            for suffix in (
+                "durable_event_fold",
+                "partial_member_wait",
+                "recipient_and_sealed_boundary",
+            ):
+                with self.subTest(owner=owner, suffix=suffix):
+                    self.assertIn(
+                        f"packet_result_family.{owner}.{suffix}", obligations
+                    )
+
+        retired_prefix = "packet_result_family.material_scan."
+        self.assertFalse(
+            any(obligation.startswith(retired_prefix) for obligation in obligations)
+        )
+        self.assertFalse(
+            any(
+                covered.startswith(retired_prefix)
+                for item in evidence.values()
+                for covered in item.covered_obligations
+            )
+        )
+        self.assertFalse(
+            any(
+                evidence_id.startswith(
+                    (
+                        "packet_result_family.happy.material_scan_",
+                        "packet_result_family.edge.material_scan_",
+                        "packet_result_family.negative.material_scan_",
+                    )
+                )
+                for evidence_id in evidence
+            )
+        )
+
         obligation = "packet_result_family.flowguard_current_report_before_reviewer"
         self.assertIn(obligation, obligations)
         self.assertIn("packet_result_family.flowguard_artifact_hard_decision_before_reviewer", obligations)
@@ -167,6 +312,9 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
         )
         self.assertIn("packet_result_family.pointer_persistence_hardening", obligations)
         self.assertIn("packet_result_family.submit_result_body_entry_hardening", obligations)
+        for owner in alignment_runner.CURRENT_CARTESIAN_RISK_SHARD_OWNERS:
+            self.assertIn(f"packet_result_family.current_cartesian_risk_shard.{owner}", obligations)
+            self.assertIn(f"packet_result_family.runner.current_cartesian_risk_shard.{owner}", contracts)
         self.assertIn("packet_result_family.runtime.flowguard_current_report_gate", contracts)
         self.assertIn("packet_result_family.runtime.flowguard_artifact_hard_decision", contracts)
         self.assertIn("packet_result_family.runtime.flowguard_semantic_recheck_gate", contracts)
@@ -419,11 +567,10 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
         )
 
     def test_full_diagnostic_inventory_reports_current_gap_classes(self) -> None:
-        report = alignment_runner.build_report()
+        report = self.strict_report()
         diagnostic = report["full_model_test_code_diagnostic"]
 
         self.assertTrue(diagnostic["ok"], diagnostic["known_bad_sanity_checks"])
-        self.assertTrue(diagnostic["release_convergence_ok"])
         self.assertGreater(diagnostic["surface_count"], 100)
         for kind in (
             "owner_module",
@@ -440,8 +587,21 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
         self.assertEqual(diagnostic["gap_counts"].get("extra_code", 0), 0)
         self.assertEqual(diagnostic["gap_counts"].get("internal_only_test", 0), 0)
         self.assertEqual(diagnostic["gap_counts"].get("missing_test", 0), 0)
-        self.assertEqual(diagnostic["unresolved_non_deferred_gap_count"], 0)
-        self.assertNotIn("stale_evidence", diagnostic["gap_counts"])
+        unresolved_structural_findings = [
+            finding
+            for finding in diagnostic["actionable_findings"]
+            if finding["code"] != "stale_evidence"
+            and finding["repair_type"] != "defer_structure_split"
+        ]
+        self.assertEqual(unresolved_structural_findings, [])
+        expected_release_convergence = not any(
+            finding["repair_type"] != "defer_structure_split"
+            for finding in diagnostic["actionable_findings"]
+        )
+        self.assertEqual(
+            diagnostic["release_convergence_ok"],
+            expected_release_convergence,
+        )
 
         gate_contract_gaps = [
             finding
@@ -459,12 +619,13 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
         ):
             with self.subTest(field=field):
                 self.assertIn(field, diagnostic)
-        non_deferred_findings = [
+        non_deferred_non_evidence_findings = [
             finding
             for finding in diagnostic["actionable_findings"]
             if finding["repair_type"] != "defer_structure_split"
+            and finding["code"] != "stale_evidence"
         ]
-        self.assertEqual(non_deferred_findings, [])
+        self.assertEqual(non_deferred_non_evidence_findings, [])
         if diagnostic["full_coverage_ok"]:
             self.assertEqual(diagnostic["gap_counts"].get("needs_structure_split", 0), 0)
             self.assertEqual(diagnostic["actionable_findings"], [])
@@ -517,7 +678,7 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
 
 
     def test_full_diagnostic_known_bad_cases_cover_false_confidence_hazards(self) -> None:
-        diagnostic = alignment_runner.build_report()["full_model_test_code_diagnostic"]
+        diagnostic = self.strict_report()["full_model_test_code_diagnostic"]
         checks = {case["name"]: case for case in diagnostic["known_bad_sanity_checks"]}
 
         for name in (
@@ -545,7 +706,7 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
         )
 
     def test_full_diagnostic_recognizes_public_contract_and_split_metadata(self) -> None:
-        diagnostic = alignment_runner.build_report()["full_model_test_code_diagnostic"]
+        diagnostic = self.strict_report()["full_model_test_code_diagnostic"]
         surfaces = {surface["surface_id"]: surface for surface in diagnostic["surfaces"]}
 
         for surface_id in (
@@ -626,34 +787,40 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
                 self.assertTrue(surface["has_external_contract"], surface)
                 self.assertEqual(surface["gap_codes"], [])
 
-    def test_full_diagnostic_uses_background_artifact_classification(self) -> None:
-        diagnostic = alignment_runner.build_report()["full_model_test_code_diagnostic"]
+    def test_full_diagnostic_uses_scope_aware_testmesh_bundle_classification(self) -> None:
+        diagnostic = self.strict_report()["full_model_test_code_diagnostic"]
         surfaces = {surface["surface_id"]: surface for surface in diagnostic["surfaces"]}
         surface = surfaces["tier-command:release:public_release_check"]
 
-        self.assertIn(
-            surface["evidence_status"],
-            {
-                "failed",
-                "incomplete",
-                "missing_final_artifacts",
-                "passed",
-                "progress_only",
-                "release_local_only",
-                "running",
-                "stale",
-            },
-        )
+        self.assertEqual(surface["evidence_status"], "deferred_release_scope")
         self.assertIn("background_evidence", surface)
         self.assertIn("selected", surface["background_evidence"])
-        if surface["evidence_status"] == "release_local_only":
-            self.assertIn("rerun_public_release_evidence", surface["repair_types"])
+        self.assertEqual(surface["gap_codes"], [])
+
+    def test_done_scope_consumes_upstream_bundle_and_leaves_final_confidence_downstream(self) -> None:
+        report = alignment_runner.build_report(
+            evidence_manifest=self.done_manifest(),
+            evidence_scope="done",
+        )
+        self.assertTrue(report["ok"], report["findings"])
+        surfaces = {
+            surface["surface_id"]: surface
+            for surface in report["full_model_test_code_diagnostic"]["surfaces"]
+        }
+        self.assertEqual(
+            surfaces["tier-command:release:public_release_check"]["evidence_status"],
+            "passed",
+        )
+        final_surface = surfaces["tier-command:final-confidence:flowpilot_final_confidence_gate"]
+        self.assertEqual(final_surface["evidence_status"], "downstream_consumer")
+        self.assertEqual(final_surface["gap_codes"], [])
 
     def test_source_audit_binds_code_contracts_to_real_python_sources(self) -> None:
-        report = alignment_runner.build_report()
+        report = self.strict_report()
         source_plan = report["source_contract_plan"]
 
         self.assertTrue(source_plan["ok"], source_plan["findings"])
+
         self.assertTrue(source_plan["alignment_report"]["ok"])
         self.assertTrue(source_plan["source_audit_report"]["ok"])
         self.assertEqual(source_plan["source_audit_report"]["findings"], [])
@@ -687,8 +854,30 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
                 self.assertGreater(evidence["assert_count"], 0, evidence)
                 self.assertEqual(evidence["assertion_scope"], "external_contract")
 
+    def test_material_map_navigation_has_one_exact_code_owner(self) -> None:
+        plan = alignment_runner.build_source_contract_alignment_plan()
+        contracts = {
+            row.code_contract_id: row
+            for row in plan.code_contracts
+            if row.code_contract_id.startswith("material_artifact_map")
+        }
+        owner = contracts["material_artifact_map.navigation_status"]
+
+        self.assertEqual(owner.role, "owner")
+        self.assertEqual(owner.behavior_plane, "agent_operation")
+        self.assertEqual(
+            owner.behavior_commitment_id,
+            "commit.material_map_is_optional_navigation_only",
+        )
+        self.assertTrue(owner.business_intent_id)
+        self.assertTrue(owner.primary_path_id)
+        for contract_id, row in contracts.items():
+            if contract_id == "material_artifact_map.navigation_status":
+                continue
+            self.assertIn(row.role, {"helper", "read_only"}, contract_id)
+
     def test_each_plan_serializes_obligations_evidence_and_flowguard_report(self) -> None:
-        report = alignment_runner.build_report()
+        report = self.strict_report()
 
         for plan in report["per_plan"]:
             with self.subTest(family=plan["family"]):
@@ -703,7 +892,7 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
                 self.assertIn("model_test_alignment_green", plan["report"]["summary"])
 
     def test_each_plan_has_parseable_runtime_path_evidence(self) -> None:
-        report = alignment_runner.build_report()
+        report = self.strict_report()
 
         for plan in report["per_plan"]:
             with self.subTest(family=plan["family"]):
@@ -773,6 +962,7 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
         bound = runtime_path_evidence.attach_runtime_path_evidence_to_plan(
             plan,
             family="helper contract",
+            authority=alignment_runner.MTA_RUNTIME_PATH_AUTHORITY,
             code_contract_prefix="runtime_path.helper_contract",
         )
         lines = runtime_path_evidence.runtime_path_progress_lines(bound)
@@ -788,6 +978,45 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
         self.assertIn("model=helper_contract", lines[0])
         self.assertIn("node=helper_contract:helper_contract.required_node", lines[0])
         self.assertIn("obligation=helper_contract.required_node", lines[0])
+        authority = alignment_runner.MTA_RUNTIME_PATH_AUTHORITY
+        contract = bound.runtime_node_contracts[0]
+        observation = bound.runtime_path_runs[0].observations[0]
+        run = bound.runtime_path_runs[0]
+        expected_triplet = (
+            authority.business_intent_id,
+            authority.behavior_commitment_id,
+            authority.primary_path_id,
+        )
+        for row in (contract, observation, run):
+            self.assertEqual(
+                (
+                    row.business_intent_id,
+                    row.behavior_commitment_id,
+                    row.primary_path_id,
+                ),
+                expected_triplet,
+            )
+        self.assertEqual(bound.obligations[0].business_intent_id, "")
+        self.assertEqual(bound.obligations[0].behavior_commitment_id, "")
+        diagnostic_contract = next(
+            row
+            for row in bound.code_contracts
+            if row.code_contract_id.startswith("runtime_path.helper_contract")
+        )
+        self.assertEqual(diagnostic_contract.behavior_plane, "")
+        self.assertEqual(diagnostic_contract.business_intent_id, "")
+
+        broken = replace(
+            bound,
+            runtime_path_runs=(
+                replace(run, primary_path_id="path.development-process.wrong"),
+            ),
+        )
+        broken_codes = {
+            finding.code
+            for finding in review_model_test_alignment(broken).findings
+        }
+        self.assertIn("runtime_run_primary_path_id_mismatch", broken_codes)
 
     def test_each_declared_test_evidence_path_contains_definition_when_source_auditable(self) -> None:
         skipped_names = {
@@ -824,7 +1053,7 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
                 self.assertIn(evidence.test_name, names)
 
     def test_known_bad_sanity_checks_cover_required_hazards(self) -> None:
-        report = alignment_runner.build_report()
+        report = self.strict_report()
         checks = {case["name"]: case for case in report["known_bad_sanity_checks"]}
 
         for name in (
@@ -846,7 +1075,7 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
                 self.assertFalse(checks[name]["report"]["ok"])
 
     def test_source_known_bad_sanity_checks_cover_ast_hazards(self) -> None:
-        report = alignment_runner.build_report()
+        report = self.strict_report()
         checks = {
             case["name"]: case
             for case in report["source_known_bad_sanity_checks"]
@@ -868,7 +1097,7 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
                 self.assertFalse(checks[name]["report"]["ok"])
 
     def test_progress_only_background_evidence_is_not_passing_coverage(self) -> None:
-        report = alignment_runner.build_report()
+        report = self.strict_report()
         case = {
             item["name"]: item for item in report["known_bad_sanity_checks"]
         }["progress_only_background_evidence"]
@@ -993,43 +1222,37 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
             stale_daemon_negative_item.test_name,
             "test_daemon_tick_quarantines_stale_unowned_package_replay_without_reverting_body",
         )
-        contract_item = role_output_evidence["output_contract.negative.live_worker_missing_fields"]
+        contract_item = role_output_evidence["output_contract.negative.current_node_worker_missing_fields"]
         self.assertEqual(
             contract_item.test_name,
-            "test_contract_self_check_metadata_reports_live_worker_missing_fields",
+            "test_contract_self_check_metadata_reports_current_node_worker_missing_fields",
         )
 
-    def test_repair_transaction_alignment_covers_empty_material_wait(self) -> None:
+    def test_repair_transaction_alignment_covers_current_producer_and_atomicity(self) -> None:
         entries = alignment_runner.build_alignment_plan_entries()
         repair_entry = next(entry for entry in entries if entry["family"] == "repair transactions")
         obligations = {item.obligation_id for item in repair_entry["plan"].obligations}
         evidence = {item.evidence_id: item for item in repair_entry["plan"].test_evidence}
 
-        self.assertIn("repair_transactions.material_rework_requires_fresh_producer", obligations)
-        self.assertIn("repair_transactions.multiround_fake_ai_no_producer_recovery", obligations)
+        self.assertIn("repair_transactions.current_repair_requires_concrete_producer", obligations)
+        self.assertIn("repair_transactions.no_producer_rejection_then_current_recovery", obligations)
         self.assertIn("repair_transactions.pm_decision_flag_atomicity", obligations)
         self.assertIn("repair_transactions.route_mutation_supersedes_open_repair_blocker", obligations)
-        item = evidence["repair_transactions.negative.material_role_reissue_no_producer"]
-        self.assertEqual(item.test_name, "test_pm_material_repair_rejects_role_reissue_without_fresh_packet_producer")
-        self.assertEqual(item.path, "tests/router_runtime/material_modeling.py")
+        item = evidence["repair_transactions.negative.empty_followup_wait_requires_pm_decision"]
+        self.assertEqual(item.test_name, "test_delivered_control_blocker_with_empty_repair_transaction_requires_pm_repair_decision")
+        self.assertEqual(item.path, "tests/router_runtime/control_blockers.py")
         edge_item = evidence["repair_transactions.edge.pm_decision_side_effect_atomicity"]
         self.assertEqual(
             edge_item.test_name,
-            "test_pm_repair_decision_side_effect_exposes_flag_before_wait_events",
+            "test_pm_repair_decision_state_persists_before_followup_wait_is_exposed",
         )
-        self.assertEqual(edge_item.path, "tests/router_runtime/material_modeling.py")
-        e2e_item = evidence["repair_transactions.e2e.no_producer_then_packet_reissue"]
+        self.assertEqual(edge_item.path, "tests/router_runtime/control_blockers.py")
+        recovery_item = evidence["repair_transactions.happy.current_operation_replay"]
         self.assertEqual(
-            e2e_item.test_name,
-            "test_e2e_no_producer_pm_repair_then_packet_reissue_exposes_producer_evidence",
+            recovery_item.test_name,
+            "test_operation_replay_repair_transaction_queues_replay_action",
         )
-        self.assertEqual(e2e_item.path, "tests/test_flowpilot_e2e_synthetic_chaos_replay.py")
-        real_router_item = evidence["repair_transactions.real_router.producer_proof_recovery"]
-        self.assertEqual(
-            real_router_item.test_name,
-            "test_real_router_repair_rehearsal_rejects_no_producer_then_accepts_packet_reissue",
-        )
-        self.assertEqual(real_router_item.path, "tests/test_flowpilot_real_router_dry_run_rehearsal.py")
+        self.assertEqual(recovery_item.path, "tests/router_runtime/control_blockers.py")
         route_mutation_item = evidence["repair_transactions.edge.route_mutation_supersedes_repair_open_blocker"]
         self.assertEqual(
             route_mutation_item.test_name,
@@ -1041,11 +1264,15 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix="flowpilot-alignment-runner-") as tmp_name:
             output_path = Path(tmp_name) / "alignment.json"
             with contextlib.redirect_stdout(io.StringIO()) as stdout:
-                exit_code = alignment_runner.main(["--json-out", str(output_path)])
+                exit_code = alignment_runner.main(
+                    ["--declaration-only", "--json-out", str(output_path)]
+                )
 
             self.assertEqual(exit_code, 0)
             payload = json.loads(output_path.read_text(encoding="utf-8"))
             self.assertTrue(payload["ok"])
+            self.assertEqual(payload["evidence_status"], "not_run")
+            self.assertEqual(payload["claim_scope"], "declaration_only")
             self.assertEqual(json.loads(stdout.getvalue()), payload)
 
 

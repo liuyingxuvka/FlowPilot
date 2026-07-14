@@ -210,7 +210,7 @@ def _check_scoped_event_conflict(router: ModuleType, run_state: dict[str, Any], 
         fields = ', '.join(str(field) for field in classification.get('mismatches') or ())
         raise router.RouterError(
             f"event {classification.get('event')} conflicts with an already recorded package disposition for this batch/generation; "
-            f"different {fields} requires an authorized repair/reissue path"
+            f"different {fields} requires an authorized current repair path"
         )
 
 

@@ -56,7 +56,11 @@ class FlowPilotFakeAIRuntimeReplayTests(unittest.TestCase):
         self.assertEqual(report["matrix"]["findings"], [])
 
     def test_runtime_replay_cells_bind_fake_ai_errors_to_runtime_reactions(self) -> None:
-        cells = list(runtime_replay.runtime_replay_cells())
+        cells = list(
+            runtime_replay.iter_runtime_replay_cells(
+                include_control_plane_hygiene=False
+            )
+        )
         mutations = {str(cell["mutation_kind"]) for cell in cells}
         reactions = {str(cell["expected_runtime_reaction"]) for cell in cells}
         attempt_classes = {str(cell["attempt_class"]) for cell in cells}
@@ -158,36 +162,14 @@ class FlowPilotFakeAIRuntimeReplayTests(unittest.TestCase):
                     self.assertFalse(cell["glass_break_allowed"])
 
     def test_control_plane_ledger_hygiene_fake_ai_matrix_is_cartesian(self) -> None:
-        cells = list(runtime_replay.control_plane_ledger_hygiene_cells())
-        axis_names = tuple(runtime_replay.CONTROL_PLANE_LEDGER_HYGIENE_AXES)
-        keys = {
-            tuple(cell[name] for name in axis_names)
-            for cell in cells
-        }
-        reactions = {cell["expected_runtime_reaction"] for cell in cells}
-        dirty_pointer_cells = [
-            cell
-            for cell in cells
-            if cell["accepted_pointer"] in runtime_replay.DIRTY_ACCEPTED_POINTERS
-        ]
-        final_auth_gap_cells = [
-            cell
-            for cell in cells
-            if cell["closure_phase"] in runtime_replay.FINAL_REVIEW_PHASES
-            and cell["reviewer_authorization"] in runtime_replay.REVIEWER_AUTH_FAILURES
-            and cell["accepted_pointer"] not in runtime_replay.DIRTY_ACCEPTED_POINTERS
-            and not (
-                cell["accepted_pointer"] == "clean"
-                and cell["result_status"] != "accepted"
-            )
-            and not (
-                cell["repair_identity"] != "all_present"
-                and cell["packet_family"] in runtime_replay.REPAIR_CHAIN_PACKET_FAMILIES
-            )
-        ]
+        summary = runtime_replay.control_plane_ledger_hygiene_declaration_summary()
+        reactions = set(summary["by_reaction"])
 
-        self.assertEqual(len(cells), runtime_replay.CONTROL_PLANE_LEDGER_HYGIENE_EXPECTED_CELL_COUNT)
-        self.assertEqual(len(keys), runtime_replay.CONTROL_PLANE_LEDGER_HYGIENE_EXPECTED_CELL_COUNT)
+        self.assertTrue(summary["ok"], summary)
+        self.assertEqual(
+            summary["declared_cell_count"],
+            runtime_replay.CONTROL_PLANE_LEDGER_HYGIENE_EXPECTED_CELL_COUNT,
+        )
         self.assertEqual(
             runtime_replay.CONTROL_PLANE_LEDGER_HYGIENE_EXPECTED_CELL_COUNT,
             5 * 5 * 6 * 6 * 6 * 6 * 5 * 6,
@@ -204,35 +186,17 @@ class FlowPilotFakeAIRuntimeReplayTests(unittest.TestCase):
             },
             reactions,
         )
-        self.assertTrue(dirty_pointer_cells)
-        self.assertTrue(final_auth_gap_cells)
-        self.assertTrue(
-            all(
-                cell["expected_runtime_reaction"] == "reject_dirty_accepted_result_pointer"
-                for cell in dirty_pointer_cells
-            )
-        )
-        self.assertTrue(
-            any(
-                cell["expected_runtime_reaction"] == "block_final_reviewer_authorization_gap"
-                for cell in final_auth_gap_cells
-            )
-        )
-        self.assertFalse(
-            [
-                cell["cell_id"]
-                for cell in final_auth_gap_cells
-                if cell["expected_runtime_reaction"] == "allow_terminal_ledger_hygiene"
-            ]
-        )
-        self.assertFalse([cell["cell_id"] for cell in cells if cell["fallback_allowed"]])
-        self.assertFalse([cell["cell_id"] for cell in cells if cell["live_completion_allowed"]])
-        self.assertFalse([cell["cell_id"] for cell in cells if not cell["hygiene_reasons"]])
+        self.assertGreater(summary["dirty_pointer_cell_count"], 0)
+        self.assertGreater(summary["final_authorization_gap_cell_count"], 0)
+        self.assertEqual(summary["finding_counts"], {})
+        self.assertRegex(summary["cell_receipt_sha256"], r"^[0-9a-f]{64}$")
 
     def test_fake_ai_runtime_replay_includes_system_integration_cases(self) -> None:
         integration_cells = [
             cell
-            for cell in runtime_replay.runtime_replay_cells()
+            for cell in runtime_replay.iter_runtime_replay_cells(
+                include_control_plane_hygiene=False
+            )
             if cell["source_matrix"] == "integration_cartesian_coverage"
         ]
         reactions = {cell["expected_runtime_reaction"] for cell in integration_cells}
@@ -299,7 +263,9 @@ class FlowPilotFakeAIRuntimeReplayTests(unittest.TestCase):
     def test_parent_entry_return_path_replay_is_cartesian(self) -> None:
         cells = [
             cell
-            for cell in runtime_replay.runtime_replay_cells()
+            for cell in runtime_replay.iter_runtime_replay_cells(
+                include_control_plane_hygiene=False
+            )
             if cell["source_matrix"] == "parent_entry_return_path_cartesian"
         ]
         keys = {
@@ -333,7 +299,11 @@ class FlowPilotFakeAIRuntimeReplayTests(unittest.TestCase):
         )
 
     def test_pm_break_glass_branches_are_in_fake_ai_runtime_replay_matrix(self) -> None:
-        cells = list(runtime_replay.runtime_replay_cells())
+        cells = list(
+            runtime_replay.iter_runtime_replay_cells(
+                include_control_plane_hygiene=False
+            )
+        )
         branch_cells = [
             cell
             for cell in cells
@@ -367,7 +337,9 @@ class FlowPilotFakeAIRuntimeReplayTests(unittest.TestCase):
     def test_review_window_fake_ai_runtime_replay_is_cartesian(self) -> None:
         cells = [
             cell
-            for cell in runtime_replay.runtime_replay_cells()
+            for cell in runtime_replay.iter_runtime_replay_cells(
+                include_control_plane_hygiene=False
+            )
             if cell["source_matrix"] == "review_window_fake_ai_responder"
         ]
         keys = {

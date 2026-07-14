@@ -256,19 +256,6 @@ def _reconciliation_signature(
 def build_model_signatures() -> tuple[ModelSignature, ...]:
     return (
         _packet_result_signature(
-            "material_scan",
-            state_id="material_scan_result_wait",
-            output_event="worker_scan_results_returned",
-            code_paths=(
-                "skills/flowpilot/assets/flowpilot_router_work_packets_material.py",
-                "skills/flowpilot/assets/packet_runtime_results.py",
-            ),
-            test_paths=(
-                "tests/router_runtime/packets.py",
-                "tests/router_runtime/material_modeling.py",
-            ),
-        ),
-        _packet_result_signature(
             "research",
             state_id="research_result_wait",
             output_event="worker_research_report_returned",
@@ -443,7 +430,6 @@ def build_model_signatures() -> tuple[ModelSignature, ...]:
 
 
 COMPARISON_PAIRS: tuple[tuple[str, str], ...] = (
-    ("packet_result_material_scan", "packet_result_research"),
     ("packet_result_research", "packet_result_current_node"),
     ("packet_result_research", "packet_result_pm_role_work"),
     ("ack_single_card_return", "ack_bundle_card_return"),
@@ -1195,11 +1181,11 @@ def build_architecture_reduction_plan(
             ),
             ArchitectureReductionCandidate(
                 candidate_id="route_display_false_friend_quarantine",
-                candidate_type="keep_public_facade",
+                candidate_type="manual_review",
                 code_node_id="route_display_refresh",
                 source_model_element="route_display_refresh:false_friend",
-                target_action="keep_facade",
-                proof_status="safe_by_public_facade",
+                target_action="manual_review",
+                proof_status="risky_keep",
                 required_next_route="model_mesh",
                 rationale=(
                     "Route display and route mutation mention sibling replacement, "

@@ -7,16 +7,17 @@ Risk intent brief:
   path, and repair outcome-table path as one event-class contract.
 - Protected harms: internal Router action labels or arbitrary strings becoming
   external role events, ACK/check-in receipts replacing semantic role outcomes,
-  material repair losing blocker/protocol outcomes, and duplicate PM repair
-  decisions creating extra blocker state.
+  retired material workflow events retaining positive authority, current-node
+  repair losing blocker/protocol outcomes, and duplicate PM repair decisions
+  creating extra blocker state.
 - Hard invariants: every persisted `allowed_external_events` item is registered
   and currently receivable; invalid PM rerun targets are rejected before wait
   state is persisted; PM repair cannot rerun itself; explicit event envelopes
   are validated against the current wait before reconciliation waits can be
   returned; ACK/check-in events stay outside role-event waits; direct ACK
-  consumption preserves the next semantic wait; material repair exposes success,
-  blocker, and protocol-blocker events; duplicate PM repair decisions are
-  idempotent.
+  consumption preserves the next semantic wait; current-node repair exposes
+  success, blocker, and protocol-blocker events; retired material workflow
+  events are rejected; duplicate PM repair decisions are idempotent.
 - Blindspot: this is a control-plane protocol model. Runtime tests must still
   verify concrete JSON files, helper functions, and installed skill sync.
 """
@@ -35,52 +36,62 @@ UNKNOWN_EVENT = "pm_writes_route_darft"
 ACK_EVENT = "pm_route_skeleton_card_returned"
 
 PM_ROUTE_DRAFT_EVENT = "pm_writes_route_draft"
-REVIEWER_MATERIAL_EVENT = "reviewer_reports_material_sufficient"
+REVIEWER_RESEARCH_EVENT = "reviewer_passes_research_direct_source_check"
 GENERIC_BLOCKER_EVENT = "pm_records_control_blocker_followup_blocker"
 GENERIC_PROTOCOL_EVENT = "pm_records_control_blocker_protocol_blocker"
-MATERIAL_SUCCESS_EVENT = "router_direct_material_scan_dispatch_recheck_passed"
-MATERIAL_BLOCKER_EVENT = "router_direct_material_scan_dispatch_recheck_blocked"
-MATERIAL_PROTOCOL_EVENT = "router_protocol_blocker_material_scan_dispatch_recheck"
-MATERIAL_PARTIAL_RESULT_EVENT = "worker_scan_results_returned"
+CURRENT_NODE_RESULT_EVENT = "worker_current_node_result_returned"
+RESEARCH_RESULT_EVENT = "worker_research_report_returned"
 ROLE_WORK_RESULT_EVENT = "role_work_result_returned"
-REVIEWER_STARTUP_FACT_EVENT = "reviewer_reports_startup_facts"
+CURRENT_NODE_REVIEW_PASS_EVENT = "current_node_reviewer_passes_result"
+
+RETIRED_MATERIAL_EXTERNAL_EVENTS = frozenset(
+    {
+        "pm_issues_material_and_capability_scan_packets",
+        "router_direct_material_scan_dispatch_recheck_passed",
+        "router_direct_material_scan_dispatch_recheck_blocked",
+        "router_protocol_blocker_material_scan_dispatch_recheck",
+        "worker_scan_packet_bodies_delivered_after_dispatch",
+        "worker_scan_results_returned",
+        "pm_records_material_scan_result_disposition",
+        "reviewer_reports_material_sufficient",
+        "reviewer_reports_material_insufficient",
+        "pm_accepts_reviewed_material",
+        "pm_requests_research_after_material_insufficient",
+        "pm_writes_material_understanding",
+    }
+)
 
 REGISTERED_EXTERNAL_EVENTS = frozenset(
     {
         PM_REPAIR_EVENT,
         PM_ROUTE_DRAFT_EVENT,
-        REVIEWER_MATERIAL_EVENT,
+        REVIEWER_RESEARCH_EVENT,
         GENERIC_BLOCKER_EVENT,
         GENERIC_PROTOCOL_EVENT,
-        MATERIAL_SUCCESS_EVENT,
-        MATERIAL_BLOCKER_EVENT,
-        MATERIAL_PROTOCOL_EVENT,
-        MATERIAL_PARTIAL_RESULT_EVENT,
+        CURRENT_NODE_RESULT_EVENT,
+        RESEARCH_RESULT_EVENT,
         ROLE_WORK_RESULT_EVENT,
-        REVIEWER_STARTUP_FACT_EVENT,
+        CURRENT_NODE_REVIEW_PASS_EVENT,
     }
 )
 CURRENTLY_RECEIVABLE_EVENTS = frozenset(
     {
         PM_ROUTE_DRAFT_EVENT,
-        REVIEWER_MATERIAL_EVENT,
+        REVIEWER_RESEARCH_EVENT,
         GENERIC_BLOCKER_EVENT,
         GENERIC_PROTOCOL_EVENT,
-        MATERIAL_SUCCESS_EVENT,
-        MATERIAL_BLOCKER_EVENT,
-        MATERIAL_PROTOCOL_EVENT,
-        MATERIAL_PARTIAL_RESULT_EVENT,
+        CURRENT_NODE_RESULT_EVENT,
+        RESEARCH_RESULT_EVENT,
         ROLE_WORK_RESULT_EVENT,
     }
 )
 INTERNAL_ROUTER_ACTIONS = frozenset({INTERNAL_ROUTER_ACTION})
 DIRECT_ACK_EVENTS = frozenset({ACK_EVENT})
-MATERIAL_REPAIR_TARGETS = frozenset({MATERIAL_SUCCESS_EVENT, "reviewer_allows_material_scan_dispatch"})
 
 
 VALID_ROUTE_DRAFT_RERUN = "valid_route_draft_rerun"
-VALID_REVIEWER_MATERIAL_RERUN = "valid_reviewer_material_rerun"
-VALID_MATERIAL_REPAIR_OUTCOME_TABLE = "valid_material_repair_outcome_table"
+VALID_REVIEWER_RESEARCH_RERUN = "valid_reviewer_research_rerun"
+VALID_CURRENT_NODE_REPAIR_OUTCOME_TABLE = "valid_current_node_repair_outcome_table"
 VALID_DIRECT_ACK_PRESERVES_SEMANTIC_WAIT = "valid_direct_ack_preserves_semantic_wait"
 VALID_DUPLICATE_PM_REPAIR_IDEMPOTENT = "valid_duplicate_pm_repair_idempotent"
 VALID_DYNAMIC_PARTIAL_BATCH_RESULT_EVENT = "valid_dynamic_partial_batch_result_event"
@@ -92,18 +103,23 @@ WAIT_REQUIRES_FALSE_FLAG = "wait_requires_false_flag"
 ACK_EVENT_IN_ALLOWED_EXTERNAL_EVENTS = "ack_event_in_allowed_external_events"
 ACK_CONSUMED_SEMANTIC_WAIT_LOST = "ack_consumed_semantic_wait_lost"
 GENERIC_REPAIR_COLLAPSED_OUTCOMES = "generic_repair_collapsed_outcomes"
-MATERIAL_REPAIR_SUCCESS_ONLY = "material_repair_success_only"
+CURRENT_NODE_REPAIR_SUCCESS_ONLY = "current_node_repair_success_only"
 DUPLICATE_PM_REPAIR_CREATED_NEW_BLOCKER = "duplicate_pm_repair_created_new_blocker"
 POSTWRITE_CLEANUP_ONLY_FOR_INVALID_WAIT = "postwrite_cleanup_only_for_invalid_wait"
 INCOMING_EVENT_OUTSIDE_ALLOWED_WAIT = "incoming_event_outside_allowed_wait"
 EXPLICIT_ENVELOPE_OUTSIDE_WAIT_RETURNS_RECONCILIATION_WAIT = (
     "explicit_envelope_outside_wait_returns_reconciliation_wait"
 )
+RETIRED_MATERIAL_EVENT_WAIT_PREFIX = "retired_material_event_wait_"
+RETIRED_MATERIAL_EVENT_WAIT_SCENARIOS = tuple(
+    f"{RETIRED_MATERIAL_EVENT_WAIT_PREFIX}{event_name}"
+    for event_name in sorted(RETIRED_MATERIAL_EXTERNAL_EVENTS)
+)
 
 VALID_SCENARIOS = (
     VALID_ROUTE_DRAFT_RERUN,
-    VALID_REVIEWER_MATERIAL_RERUN,
-    VALID_MATERIAL_REPAIR_OUTCOME_TABLE,
+    VALID_REVIEWER_RESEARCH_RERUN,
+    VALID_CURRENT_NODE_REPAIR_OUTCOME_TABLE,
     VALID_DIRECT_ACK_PRESERVES_SEMANTIC_WAIT,
     VALID_DUPLICATE_PM_REPAIR_IDEMPOTENT,
     VALID_DYNAMIC_PARTIAL_BATCH_RESULT_EVENT,
@@ -116,12 +132,12 @@ NEGATIVE_SCENARIOS = (
     ACK_EVENT_IN_ALLOWED_EXTERNAL_EVENTS,
     ACK_CONSUMED_SEMANTIC_WAIT_LOST,
     GENERIC_REPAIR_COLLAPSED_OUTCOMES,
-    MATERIAL_REPAIR_SUCCESS_ONLY,
+    CURRENT_NODE_REPAIR_SUCCESS_ONLY,
     DUPLICATE_PM_REPAIR_CREATED_NEW_BLOCKER,
     POSTWRITE_CLEANUP_ONLY_FOR_INVALID_WAIT,
     INCOMING_EVENT_OUTSIDE_ALLOWED_WAIT,
     EXPLICIT_ENVELOPE_OUTSIDE_WAIT_RETURNS_RECONCILIATION_WAIT,
-)
+) + RETIRED_MATERIAL_EVENT_WAIT_SCENARIOS
 SCENARIOS = VALID_SCENARIOS + NEGATIVE_SCENARIOS
 
 
@@ -166,7 +182,7 @@ class State:
     repair_success_event: str = "none"
     repair_blocker_event: str = "none"
     repair_protocol_event: str = "none"
-    material_repair_target: bool = False
+    current_node_repair_target: bool = False
 
     duplicate_pm_repair_decision_seen: bool = False
     duplicate_repair_created_new_blocker: bool = False
@@ -207,40 +223,40 @@ def _scenario_state(scenario: str) -> State:
             repair_blocker_event=GENERIC_BLOCKER_EVENT,
             repair_protocol_event=GENERIC_PROTOCOL_EVENT,
         )
-    if scenario == VALID_REVIEWER_MATERIAL_RERUN:
+    if scenario == VALID_REVIEWER_RESEARCH_RERUN:
         return State(
             status="running",
             scenario=scenario,
             pm_repair_decision_received=True,
-            rerun_target=REVIEWER_MATERIAL_EVENT,
+            rerun_target=REVIEWER_RESEARCH_EVENT,
             rerun_target_registered_external=True,
             rerun_target_currently_receivable=True,
             pending_wait_written=True,
-            allowed_external_events=(REVIEWER_MATERIAL_EVENT, GENERIC_BLOCKER_EVENT, GENERIC_PROTOCOL_EVENT),
+            allowed_external_events=(REVIEWER_RESEARCH_EVENT, GENERIC_BLOCKER_EVENT, GENERIC_PROTOCOL_EVENT),
             allowed_events_registered=True,
             allowed_events_currently_receivable=True,
             repair_outcome_table_written=True,
-            repair_success_event=REVIEWER_MATERIAL_EVENT,
+            repair_success_event=REVIEWER_RESEARCH_EVENT,
             repair_blocker_event=GENERIC_BLOCKER_EVENT,
             repair_protocol_event=GENERIC_PROTOCOL_EVENT,
         )
-    if scenario == VALID_MATERIAL_REPAIR_OUTCOME_TABLE:
+    if scenario == VALID_CURRENT_NODE_REPAIR_OUTCOME_TABLE:
         return State(
             status="running",
             scenario=scenario,
             pm_repair_decision_received=True,
-            rerun_target=MATERIAL_SUCCESS_EVENT,
+            rerun_target=CURRENT_NODE_RESULT_EVENT,
             rerun_target_registered_external=True,
             rerun_target_currently_receivable=True,
             pending_wait_written=True,
-            allowed_external_events=(MATERIAL_SUCCESS_EVENT, MATERIAL_BLOCKER_EVENT, MATERIAL_PROTOCOL_EVENT),
+            allowed_external_events=(CURRENT_NODE_RESULT_EVENT, GENERIC_BLOCKER_EVENT, GENERIC_PROTOCOL_EVENT),
             allowed_events_registered=True,
             allowed_events_currently_receivable=True,
             repair_outcome_table_written=True,
-            material_repair_target=True,
-            repair_success_event=MATERIAL_SUCCESS_EVENT,
-            repair_blocker_event=MATERIAL_BLOCKER_EVENT,
-            repair_protocol_event=MATERIAL_PROTOCOL_EVENT,
+            current_node_repair_target=True,
+            repair_success_event=CURRENT_NODE_RESULT_EVENT,
+            repair_blocker_event=GENERIC_BLOCKER_EVENT,
+            repair_protocol_event=GENERIC_PROTOCOL_EVENT,
         )
     if scenario == VALID_DIRECT_ACK_PRESERVES_SEMANTIC_WAIT:
         return State(
@@ -280,10 +296,10 @@ def _scenario_state(scenario: str) -> State:
             status="running",
             scenario=scenario,
             pending_wait_written=True,
-            allowed_external_events=(MATERIAL_PARTIAL_RESULT_EVENT,),
+            allowed_external_events=(RESEARCH_RESULT_EVENT,),
             allowed_events_registered=True,
             allowed_events_currently_receivable=True,
-            incoming_event=MATERIAL_PARTIAL_RESULT_EVENT,
+            incoming_event=RESEARCH_RESULT_EVENT,
             incoming_event_allowed_by_current_wait=True,
             incoming_event_accepted=True,
         )
@@ -380,19 +396,19 @@ def _scenario_state(scenario: str) -> State:
             repair_blocker_event=PM_ROUTE_DRAFT_EVENT,
             repair_protocol_event=PM_ROUTE_DRAFT_EVENT,
         )
-    if scenario == MATERIAL_REPAIR_SUCCESS_ONLY:
+    if scenario == CURRENT_NODE_REPAIR_SUCCESS_ONLY:
         return State(
             status="running",
             scenario=scenario,
             pm_repair_decision_received=True,
-            rerun_target=MATERIAL_SUCCESS_EVENT,
+            rerun_target=CURRENT_NODE_RESULT_EVENT,
             rerun_target_registered_external=True,
             rerun_target_currently_receivable=True,
-            material_repair_target=True,
+            current_node_repair_target=True,
             repair_outcome_table_written=True,
-            repair_success_event=MATERIAL_SUCCESS_EVENT,
-            repair_blocker_event=MATERIAL_SUCCESS_EVENT,
-            repair_protocol_event=MATERIAL_SUCCESS_EVENT,
+            repair_success_event=CURRENT_NODE_RESULT_EVENT,
+            repair_blocker_event=CURRENT_NODE_RESULT_EVENT,
+            repair_protocol_event=CURRENT_NODE_RESULT_EVENT,
         )
     if scenario == DUPLICATE_PM_REPAIR_CREATED_NEW_BLOCKER:
         return State(
@@ -421,7 +437,7 @@ def _scenario_state(scenario: str) -> State:
             status="running",
             scenario=scenario,
             pending_wait_written=True,
-            allowed_external_events=(MATERIAL_PARTIAL_RESULT_EVENT,),
+            allowed_external_events=(RESEARCH_RESULT_EVENT,),
             allowed_events_registered=True,
             allowed_events_currently_receivable=True,
             incoming_event=ROLE_WORK_RESULT_EVENT,
@@ -434,11 +450,24 @@ def _scenario_state(scenario: str) -> State:
             scenario=scenario,
             pending_wait_written=False,
             allowed_external_events=(),
-            incoming_event=REVIEWER_STARTUP_FACT_EVENT,
+            incoming_event=CURRENT_NODE_REVIEW_PASS_EVENT,
             incoming_event_allowed_by_current_wait=False,
             incoming_event_accepted=False,
             incoming_event_has_explicit_envelope=True,
             incoming_event_returned_reconciliation_wait=True,
+        )
+    if scenario.startswith(RETIRED_MATERIAL_EVENT_WAIT_PREFIX):
+        retired_event = scenario.removeprefix(RETIRED_MATERIAL_EVENT_WAIT_PREFIX)
+        if retired_event not in RETIRED_MATERIAL_EXTERNAL_EVENTS:
+            raise ValueError(f"unknown retired material event scenario: {scenario}")
+        return State(
+            status="running",
+            scenario=scenario,
+            pending_wait_written=True,
+            allowed_external_events=(retired_event,),
+            allowed_events_registered=False,
+            allowed_events_currently_receivable=False,
+            invalid_wait_ever_persisted=True,
         )
     raise ValueError(f"unknown scenario: {scenario}")
 
@@ -500,11 +529,11 @@ def event_contract_failures(state: State) -> list[str]:
         if len(set(outcome_events)) != 3:
             failures.append("repair outcome table collapsed success, blocker, and protocol-blocker events")
 
-    if state.material_repair_target and state.repair_outcome_table_written:
-        expected = (MATERIAL_SUCCESS_EVENT, MATERIAL_BLOCKER_EVENT, MATERIAL_PROTOCOL_EVENT)
+    if state.current_node_repair_target and state.repair_outcome_table_written:
+        expected = (CURRENT_NODE_RESULT_EVENT, GENERIC_BLOCKER_EVENT, GENERIC_PROTOCOL_EVENT)
         actual = (state.repair_success_event, state.repair_blocker_event, state.repair_protocol_event)
         if actual != expected:
-            failures.append("material repair outcome table did not route success, blocker, and protocol outcomes")
+            failures.append("current-node repair outcome table did not route success, blocker, and protocol outcomes")
 
     if state.duplicate_pm_repair_decision_seen and (
         state.duplicate_repair_created_new_blocker or state.duplicate_repair_created_new_transaction
@@ -650,7 +679,7 @@ def repair_transactions_remain_routable(state: State, trace) -> InvariantResult:
     if state.status != "accepted":
         return InvariantResult.pass_()
     for failure in event_contract_failures(state):
-        if "material repair outcome table" in failure or "duplicate PM repair" in failure:
+        if "current-node repair outcome table" in failure or "duplicate PM repair" in failure:
             return InvariantResult.fail(failure)
     return InvariantResult.pass_()
 

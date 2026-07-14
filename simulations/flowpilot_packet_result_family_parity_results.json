@@ -3,22 +3,6 @@
   "analogous_scan_report": {
     "candidates": [
       {
-        "candidate_id": "research_joined_without_return_event:material_scan:full_durable_envelope_event_fold:scan",
-        "description": "material_scan sibling scan for durable-envelope event fold.",
-        "disposition": "covered_current",
-        "disposition_reason": "Covered by the packet-result family runtime suite and parity evidence.",
-        "evidence_ids": [
-          "flowpilot.packet_result_return_reconciliation.material_scan.full_durable_envelope_event_fold"
-        ],
-        "failure_mode": "durable_result_joined_but_router_event_absent",
-        "family_id": "flowpilot.packet_result_return_reconciliation",
-        "mechanism_id": "full_durable_envelope_event_fold",
-        "member_id": "material_scan",
-        "metadata": {},
-        "radius": "must_scan",
-        "source": "explicit_sibling_review"
-      },
-      {
         "candidate_id": "research_joined_without_return_event:current_node:full_durable_envelope_event_fold:scan",
         "description": "current_node sibling scan for durable-envelope event fold.",
         "disposition": "covered_current",
@@ -55,47 +39,44 @@
     "decision": "analogous_defect_scan_complete",
     "derived_bad_cases": [
       {
-        "case_id": "research_joined_without_return_event:material_scan:full_durable_envelope_event_fold",
-        "description": "A research packet batch had durable joined results, but Router did not fold them into worker_research_report_returned before waiting/reminding.",
-        "expected_status": "must_fail_before_repair",
-        "failure_mode": "durable_result_joined_but_router_event_absent",
-        "family_id": "flowpilot.packet_result_return_reconciliation",
-        "mechanism_id": "full_durable_envelope_event_fold",
-        "member_id": "material_scan",
-        "metadata": {
-          "observed_date": "2026-05-28",
-          "seed_id": "research_joined_without_return_event"
-        },
-        "source_case_id": "openspec.reconcile-research-batch-results",
-        "source_member_id": "research"
-      },
-      {
+        "affected_model_ids": [],
         "case_id": "research_joined_without_return_event:current_node:full_durable_envelope_event_fold",
+        "coverage_receipt_ids": [],
         "description": "A research packet batch had durable joined results, but Router did not fold them into worker_research_report_returned before waiting/reminding.",
         "expected_status": "must_fail_before_repair",
         "failure_mode": "durable_result_joined_but_router_event_absent",
         "family_id": "flowpilot.packet_result_return_reconciliation",
+        "generated_combination_case_ids": [],
+        "interaction_group_ids": [],
         "mechanism_id": "full_durable_envelope_event_fold",
         "member_id": "current_node",
         "metadata": {
           "observed_date": "2026-05-28",
           "seed_id": "research_joined_without_return_event"
         },
+        "observed_combination_case_id": "",
+        "root_cause_dimension_ids": [],
         "source_case_id": "openspec.reconcile-research-batch-results",
         "source_member_id": "research"
       },
       {
+        "affected_model_ids": [],
         "case_id": "research_joined_without_return_event:pm_role_work:full_durable_envelope_event_fold",
+        "coverage_receipt_ids": [],
         "description": "A research packet batch had durable joined results, but Router did not fold them into worker_research_report_returned before waiting/reminding.",
         "expected_status": "must_fail_before_repair",
         "failure_mode": "durable_result_joined_but_router_event_absent",
         "family_id": "flowpilot.packet_result_return_reconciliation",
+        "generated_combination_case_ids": [],
+        "interaction_group_ids": [],
         "mechanism_id": "full_durable_envelope_event_fold",
         "member_id": "pm_role_work",
         "metadata": {
           "observed_date": "2026-05-28",
           "seed_id": "research_joined_without_return_event"
         },
+        "observed_combination_case_id": "",
+        "root_cause_dimension_ids": [],
         "source_case_id": "openspec.reconcile-research-batch-results",
         "source_member_id": "research"
       }
@@ -103,121 +84,27 @@
     "findings": [],
     "ok": true,
     "seed": {
+      "affected_model_ids": [],
+      "coverage_receipt_ids": [],
       "description": "A research packet batch had durable joined results, but Router did not fold them into worker_research_report_returned before waiting/reminding.",
       "exclude_member_ids": [],
       "failure_mode": "durable_result_joined_but_router_event_absent",
       "family_id": "flowpilot.packet_result_return_reconciliation",
+      "generated_combination_case_ids": [],
+      "interaction_group_ids": [],
       "mechanism_id": "full_durable_envelope_event_fold",
       "metadata": {
         "observed_date": "2026-05-28"
       },
+      "observed_combination_case_id": "",
+      "root_cause_dimension_ids": [],
       "seed_id": "research_joined_without_return_event",
       "source_case_id": "openspec.reconcile-research-batch-results",
       "source_member_id": "research"
     },
-    "summary": "OK: decision=analogous_defect_scan_complete findings=0 candidates=3"
+    "summary": "OK: decision=analogous_defect_scan_complete findings=0 candidates=2"
   },
   "evidence": [
-    {
-      "assertion_scope": "external_contract",
-      "command": "python -m unittest tests.router_runtime.packets.PacketsRuntimeTests.test_material_scan_existing_results_reconcile_before_stale_wait",
-      "covered_obligations": [
-        "packet_result_family.material_scan.durable_event_fold",
-        "packet_result_family.material_scan.partial_wait",
-        "packet_result_family.material_scan.recipient_and_sealed_boundary"
-      ],
-      "current": true,
-      "evidence_id": "flowpilot.packet_result_return_reconciliation.material_scan.full_durable_envelope_event_fold",
-      "family_id": "flowpilot.packet_result_return_reconciliation",
-      "mechanism_id": "full_durable_envelope_event_fold",
-      "member_id": "material_scan",
-      "metadata": {},
-      "proof_artifact": null,
-      "provenance": "runtime_test",
-      "result_status": "passed",
-      "stale_reasons": [],
-      "summary": "material_scan covers full_durable_envelope_event_fold through packet-result family tests."
-    },
-    {
-      "assertion_scope": "external_contract",
-      "command": "python -m unittest tests.router_runtime.packets.PacketsRuntimeTests.test_material_scan_full_batch_wait_current_work_names_all_missing_roles",
-      "covered_obligations": [
-        "packet_result_family.material_scan.durable_event_fold",
-        "packet_result_family.material_scan.partial_wait",
-        "packet_result_family.material_scan.recipient_and_sealed_boundary"
-      ],
-      "current": true,
-      "evidence_id": "flowpilot.packet_result_return_reconciliation.material_scan.partial_member_wait_projection",
-      "family_id": "flowpilot.packet_result_return_reconciliation",
-      "mechanism_id": "partial_member_wait_projection",
-      "member_id": "material_scan",
-      "metadata": {},
-      "proof_artifact": null,
-      "provenance": "runtime_test",
-      "result_status": "passed",
-      "stale_reasons": [],
-      "summary": "material_scan covers partial_member_wait_projection through packet-result family tests."
-    },
-    {
-      "assertion_scope": "external_contract",
-      "command": "python -m unittest tests.router_runtime.packets.PacketsRuntimeTests.test_material_scan_full_batch_wait_current_work_names_all_missing_roles",
-      "covered_obligations": [
-        "packet_result_family.material_scan.durable_event_fold",
-        "packet_result_family.material_scan.partial_wait",
-        "packet_result_family.material_scan.recipient_and_sealed_boundary"
-      ],
-      "current": true,
-      "evidence_id": "flowpilot.packet_result_return_reconciliation.material_scan.stale_reminder_suppression",
-      "family_id": "flowpilot.packet_result_return_reconciliation",
-      "mechanism_id": "stale_reminder_suppression",
-      "member_id": "material_scan",
-      "metadata": {},
-      "proof_artifact": null,
-      "provenance": "runtime_test",
-      "result_status": "passed",
-      "stale_reasons": [],
-      "summary": "material_scan covers stale_reminder_suppression through packet-result family tests."
-    },
-    {
-      "assertion_scope": "external_contract",
-      "command": "python -m unittest tests.router_runtime.packet_result_family",
-      "covered_obligations": [
-        "packet_result_family.material_scan.durable_event_fold",
-        "packet_result_family.material_scan.partial_wait",
-        "packet_result_family.material_scan.recipient_and_sealed_boundary"
-      ],
-      "current": true,
-      "evidence_id": "flowpilot.packet_result_return_reconciliation.material_scan.wrong_recipient_rejection",
-      "family_id": "flowpilot.packet_result_return_reconciliation",
-      "mechanism_id": "wrong_recipient_rejection",
-      "member_id": "material_scan",
-      "metadata": {},
-      "proof_artifact": null,
-      "provenance": "runtime_test",
-      "result_status": "passed",
-      "stale_reasons": [],
-      "summary": "material_scan covers wrong_recipient_rejection through packet-result family tests."
-    },
-    {
-      "assertion_scope": "external_contract",
-      "command": "python -m unittest tests.router_runtime.material_modeling.MaterialModelingRuntimeTests.test_material_scan_result_receipt_folds_batch_lifecycle",
-      "covered_obligations": [
-        "packet_result_family.material_scan.durable_event_fold",
-        "packet_result_family.material_scan.partial_wait",
-        "packet_result_family.material_scan.recipient_and_sealed_boundary"
-      ],
-      "current": true,
-      "evidence_id": "flowpilot.packet_result_return_reconciliation.material_scan.sealed_body_provenance",
-      "family_id": "flowpilot.packet_result_return_reconciliation",
-      "mechanism_id": "sealed_body_provenance",
-      "member_id": "material_scan",
-      "metadata": {},
-      "proof_artifact": null,
-      "provenance": "runtime_test",
-      "result_status": "passed",
-      "stale_reasons": [],
-      "summary": "material_scan covers sealed_body_provenance through packet-result family tests."
-    },
     {
       "assertion_scope": "external_contract",
       "command": "python -m unittest tests.router_runtime.packet_result_family",
@@ -546,21 +433,11 @@
       "flowguard_model"
     ],
     "description": "Every Router-owned packet-result family must reconcile durable result envelopes into existing result-return control-plane events before waits/reminders or broad confidence claims.",
+    "expected_member_ids": [],
     "family_id": "flowpilot.packet_result_return_reconciliation",
+    "inventory_revision": "",
+    "inventory_source_ref": "",
     "members": [
-      {
-        "allowed_provenance": [],
-        "description": "FlowPilot packet-result reconciliation member: material_scan",
-        "exception_reason": "",
-        "member_id": "material_scan",
-        "obligation_ids": [
-          "packet_result_family.material_scan.durable_event_fold",
-          "packet_result_family.material_scan.partial_wait",
-          "packet_result_family.material_scan.recipient_and_sealed_boundary"
-        ],
-        "required": true,
-        "required_mechanisms": []
-      },
       {
         "allowed_provenance": [],
         "description": "FlowPilot packet-result reconciliation member: research",
@@ -605,6 +482,7 @@
       "controller_visibility": "metadata_only",
       "owner_boundary": "Router durable wait reconciliation"
     },
+    "require_complete_inventory": false,
     "require_external_evidence": true,
     "require_proof_artifacts": false,
     "required": true,
@@ -614,7 +492,13 @@
       "stale_reminder_suppression",
       "wrong_recipient_rejection",
       "sealed_body_provenance"
-    ]
+    ],
+    "scoped_member_reasons": {},
+    "scoped_similarity_reasons": {},
+    "similarity_impacted_member_ids": [],
+    "similarity_impacted_obligation_ids": [],
+    "similarity_provenance_current": true,
+    "similarity_relation_ids": []
   },
   "family_id": "flowpilot.packet_result_return_reconciliation",
   "known_bad_cases": [
@@ -630,71 +514,6 @@
       "report": {
         "confidence": "blocked",
         "coverage_matrix": [
-          {
-            "accepted_provenance": [
-              "runtime_test"
-            ],
-            "evidence_ids": [
-              "flowpilot.packet_result_return_reconciliation.material_scan.full_durable_envelope_event_fold"
-            ],
-            "family_id": "flowpilot.packet_result_return_reconciliation",
-            "mechanism_id": "full_durable_envelope_event_fold",
-            "member_id": "material_scan",
-            "scoped_reasons": [],
-            "status": "covered"
-          },
-          {
-            "accepted_provenance": [
-              "runtime_test"
-            ],
-            "evidence_ids": [
-              "flowpilot.packet_result_return_reconciliation.material_scan.partial_member_wait_projection"
-            ],
-            "family_id": "flowpilot.packet_result_return_reconciliation",
-            "mechanism_id": "partial_member_wait_projection",
-            "member_id": "material_scan",
-            "scoped_reasons": [],
-            "status": "covered"
-          },
-          {
-            "accepted_provenance": [
-              "runtime_test"
-            ],
-            "evidence_ids": [
-              "flowpilot.packet_result_return_reconciliation.material_scan.stale_reminder_suppression"
-            ],
-            "family_id": "flowpilot.packet_result_return_reconciliation",
-            "mechanism_id": "stale_reminder_suppression",
-            "member_id": "material_scan",
-            "scoped_reasons": [],
-            "status": "covered"
-          },
-          {
-            "accepted_provenance": [
-              "runtime_test"
-            ],
-            "evidence_ids": [
-              "flowpilot.packet_result_return_reconciliation.material_scan.wrong_recipient_rejection"
-            ],
-            "family_id": "flowpilot.packet_result_return_reconciliation",
-            "mechanism_id": "wrong_recipient_rejection",
-            "member_id": "material_scan",
-            "scoped_reasons": [],
-            "status": "covered"
-          },
-          {
-            "accepted_provenance": [
-              "runtime_test"
-            ],
-            "evidence_ids": [
-              "flowpilot.packet_result_return_reconciliation.material_scan.sealed_body_provenance"
-            ],
-            "family_id": "flowpilot.packet_result_return_reconciliation",
-            "mechanism_id": "sealed_body_provenance",
-            "member_id": "material_scan",
-            "scoped_reasons": [],
-            "status": "covered"
-          },
           {
             "accepted_provenance": [
               "runtime_test"
@@ -890,6 +709,7 @@
             "status": "covered"
           }
         ],
+        "covered_member_ids": [],
         "decision": "obligation_family_parity_blocked",
         "derived_bad_cases": [],
         "findings": [
@@ -904,8 +724,12 @@
             "severity": "blocker"
           }
         ],
+        "inventory_revisions": {},
+        "missing_member_ids": [],
         "ok": false,
-        "summary": "BLOCKED: decision=obligation_family_parity_blocked findings=1 cells=20"
+        "scoped_member_ids": [],
+        "summary": "BLOCKED: decision=obligation_family_parity_blocked findings=1 cells=15",
+        "unexpected_member_ids": []
       }
     },
     {
@@ -920,71 +744,6 @@
       "report": {
         "confidence": "blocked",
         "coverage_matrix": [
-          {
-            "accepted_provenance": [
-              "runtime_test"
-            ],
-            "evidence_ids": [
-              "flowpilot.packet_result_return_reconciliation.material_scan.full_durable_envelope_event_fold"
-            ],
-            "family_id": "flowpilot.packet_result_return_reconciliation",
-            "mechanism_id": "full_durable_envelope_event_fold",
-            "member_id": "material_scan",
-            "scoped_reasons": [],
-            "status": "covered"
-          },
-          {
-            "accepted_provenance": [
-              "runtime_test"
-            ],
-            "evidence_ids": [
-              "flowpilot.packet_result_return_reconciliation.material_scan.partial_member_wait_projection"
-            ],
-            "family_id": "flowpilot.packet_result_return_reconciliation",
-            "mechanism_id": "partial_member_wait_projection",
-            "member_id": "material_scan",
-            "scoped_reasons": [],
-            "status": "covered"
-          },
-          {
-            "accepted_provenance": [
-              "runtime_test"
-            ],
-            "evidence_ids": [
-              "flowpilot.packet_result_return_reconciliation.material_scan.stale_reminder_suppression"
-            ],
-            "family_id": "flowpilot.packet_result_return_reconciliation",
-            "mechanism_id": "stale_reminder_suppression",
-            "member_id": "material_scan",
-            "scoped_reasons": [],
-            "status": "covered"
-          },
-          {
-            "accepted_provenance": [
-              "runtime_test"
-            ],
-            "evidence_ids": [
-              "flowpilot.packet_result_return_reconciliation.material_scan.wrong_recipient_rejection"
-            ],
-            "family_id": "flowpilot.packet_result_return_reconciliation",
-            "mechanism_id": "wrong_recipient_rejection",
-            "member_id": "material_scan",
-            "scoped_reasons": [],
-            "status": "covered"
-          },
-          {
-            "accepted_provenance": [
-              "runtime_test"
-            ],
-            "evidence_ids": [
-              "flowpilot.packet_result_return_reconciliation.material_scan.sealed_body_provenance"
-            ],
-            "family_id": "flowpilot.packet_result_return_reconciliation",
-            "mechanism_id": "sealed_body_provenance",
-            "member_id": "material_scan",
-            "scoped_reasons": [],
-            "status": "covered"
-          },
           {
             "accepted_provenance": [],
             "evidence_ids": [
@@ -1182,6 +941,7 @@
             "status": "covered"
           }
         ],
+        "covered_member_ids": [],
         "decision": "obligation_family_parity_blocked",
         "derived_bad_cases": [],
         "findings": [
@@ -1210,8 +970,12 @@
             "severity": "blocker"
           }
         ],
+        "inventory_revisions": {},
+        "missing_member_ids": [],
         "ok": false,
-        "summary": "BLOCKED: decision=obligation_family_parity_blocked findings=2 cells=20"
+        "scoped_member_ids": [],
+        "summary": "BLOCKED: decision=obligation_family_parity_blocked findings=2 cells=15",
+        "unexpected_member_ids": []
       }
     },
     {
@@ -1226,71 +990,6 @@
       "report": {
         "confidence": "blocked",
         "coverage_matrix": [
-          {
-            "accepted_provenance": [
-              "runtime_test"
-            ],
-            "evidence_ids": [
-              "flowpilot.packet_result_return_reconciliation.material_scan.full_durable_envelope_event_fold"
-            ],
-            "family_id": "flowpilot.packet_result_return_reconciliation",
-            "mechanism_id": "full_durable_envelope_event_fold",
-            "member_id": "material_scan",
-            "scoped_reasons": [],
-            "status": "covered"
-          },
-          {
-            "accepted_provenance": [
-              "runtime_test"
-            ],
-            "evidence_ids": [
-              "flowpilot.packet_result_return_reconciliation.material_scan.partial_member_wait_projection"
-            ],
-            "family_id": "flowpilot.packet_result_return_reconciliation",
-            "mechanism_id": "partial_member_wait_projection",
-            "member_id": "material_scan",
-            "scoped_reasons": [],
-            "status": "covered"
-          },
-          {
-            "accepted_provenance": [
-              "runtime_test"
-            ],
-            "evidence_ids": [
-              "flowpilot.packet_result_return_reconciliation.material_scan.stale_reminder_suppression"
-            ],
-            "family_id": "flowpilot.packet_result_return_reconciliation",
-            "mechanism_id": "stale_reminder_suppression",
-            "member_id": "material_scan",
-            "scoped_reasons": [],
-            "status": "covered"
-          },
-          {
-            "accepted_provenance": [
-              "runtime_test"
-            ],
-            "evidence_ids": [
-              "flowpilot.packet_result_return_reconciliation.material_scan.wrong_recipient_rejection"
-            ],
-            "family_id": "flowpilot.packet_result_return_reconciliation",
-            "mechanism_id": "wrong_recipient_rejection",
-            "member_id": "material_scan",
-            "scoped_reasons": [],
-            "status": "covered"
-          },
-          {
-            "accepted_provenance": [
-              "runtime_test"
-            ],
-            "evidence_ids": [
-              "flowpilot.packet_result_return_reconciliation.material_scan.sealed_body_provenance"
-            ],
-            "family_id": "flowpilot.packet_result_return_reconciliation",
-            "mechanism_id": "sealed_body_provenance",
-            "member_id": "material_scan",
-            "scoped_reasons": [],
-            "status": "covered"
-          },
           {
             "accepted_provenance": [
               "runtime_test"
@@ -1488,6 +1187,7 @@
             "status": "covered"
           }
         ],
+        "covered_member_ids": [],
         "decision": "obligation_family_parity_blocked",
         "derived_bad_cases": [],
         "findings": [
@@ -1508,8 +1208,12 @@
             "severity": "blocker"
           }
         ],
+        "inventory_revisions": {},
+        "missing_member_ids": [],
         "ok": false,
-        "summary": "BLOCKED: decision=obligation_family_parity_blocked findings=1 cells=20"
+        "scoped_member_ids": [],
+        "summary": "BLOCKED: decision=obligation_family_parity_blocked findings=1 cells=15",
+        "unexpected_member_ids": []
       }
     },
     {
@@ -1523,24 +1227,6 @@
       "ok": true,
       "report": {
         "candidates": [
-          {
-            "candidate_id": "research_joined_without_return_event:material_scan:full_durable_envelope_event_fold:scan",
-            "description": "A research packet batch had durable joined results, but Router did not fold them into worker_research_report_returned before waiting/reminding.",
-            "disposition": "unreviewed",
-            "disposition_reason": "",
-            "evidence_ids": [],
-            "failure_mode": "durable_result_joined_but_router_event_absent",
-            "family_id": "flowpilot.packet_result_return_reconciliation",
-            "mechanism_id": "full_durable_envelope_event_fold",
-            "member_id": "material_scan",
-            "metadata": {
-              "observed_date": "2026-05-28",
-              "seed_id": "research_joined_without_return_event",
-              "source_case_id": "openspec.reconcile-research-batch-results"
-            },
-            "radius": "must_scan",
-            "source": "derived_same_class_bad_case"
-          },
           {
             "candidate_id": "research_joined_without_return_event:current_node:full_durable_envelope_event_fold:scan",
             "description": "A research packet batch had durable joined results, but Router did not fold them into worker_research_report_returned before waiting/reminding.",
@@ -1582,62 +1268,49 @@
         "decision": "analogous_defect_scan_blocked",
         "derived_bad_cases": [
           {
-            "case_id": "research_joined_without_return_event:material_scan:full_durable_envelope_event_fold",
-            "description": "A research packet batch had durable joined results, but Router did not fold them into worker_research_report_returned before waiting/reminding.",
-            "expected_status": "must_fail_before_repair",
-            "failure_mode": "durable_result_joined_but_router_event_absent",
-            "family_id": "flowpilot.packet_result_return_reconciliation",
-            "mechanism_id": "full_durable_envelope_event_fold",
-            "member_id": "material_scan",
-            "metadata": {
-              "observed_date": "2026-05-28",
-              "seed_id": "research_joined_without_return_event"
-            },
-            "source_case_id": "openspec.reconcile-research-batch-results",
-            "source_member_id": "research"
-          },
-          {
+            "affected_model_ids": [],
             "case_id": "research_joined_without_return_event:current_node:full_durable_envelope_event_fold",
+            "coverage_receipt_ids": [],
             "description": "A research packet batch had durable joined results, but Router did not fold them into worker_research_report_returned before waiting/reminding.",
             "expected_status": "must_fail_before_repair",
             "failure_mode": "durable_result_joined_but_router_event_absent",
             "family_id": "flowpilot.packet_result_return_reconciliation",
+            "generated_combination_case_ids": [],
+            "interaction_group_ids": [],
             "mechanism_id": "full_durable_envelope_event_fold",
             "member_id": "current_node",
             "metadata": {
               "observed_date": "2026-05-28",
               "seed_id": "research_joined_without_return_event"
             },
+            "observed_combination_case_id": "",
+            "root_cause_dimension_ids": [],
             "source_case_id": "openspec.reconcile-research-batch-results",
             "source_member_id": "research"
           },
           {
+            "affected_model_ids": [],
             "case_id": "research_joined_without_return_event:pm_role_work:full_durable_envelope_event_fold",
+            "coverage_receipt_ids": [],
             "description": "A research packet batch had durable joined results, but Router did not fold them into worker_research_report_returned before waiting/reminding.",
             "expected_status": "must_fail_before_repair",
             "failure_mode": "durable_result_joined_but_router_event_absent",
             "family_id": "flowpilot.packet_result_return_reconciliation",
+            "generated_combination_case_ids": [],
+            "interaction_group_ids": [],
             "mechanism_id": "full_durable_envelope_event_fold",
             "member_id": "pm_role_work",
             "metadata": {
               "observed_date": "2026-05-28",
               "seed_id": "research_joined_without_return_event"
             },
+            "observed_combination_case_id": "",
+            "root_cause_dimension_ids": [],
             "source_case_id": "openspec.reconcile-research-batch-results",
             "source_member_id": "research"
           }
         ],
         "findings": [
-          {
-            "candidate_id": "research_joined_without_return_event:material_scan:full_durable_envelope_event_fold:scan",
-            "code": "unreviewed_analogous_defect_candidate",
-            "family_id": "flowpilot.packet_result_return_reconciliation",
-            "mechanism_id": "full_durable_envelope_event_fold",
-            "member_id": "material_scan",
-            "message": "analogous defect candidate has not been reviewed or dispositioned",
-            "metadata": {},
-            "severity": "blocker"
-          },
           {
             "candidate_id": "research_joined_without_return_event:current_node:full_durable_envelope_event_fold:scan",
             "code": "unreviewed_analogous_defect_candidate",
@@ -1661,25 +1334,30 @@
         ],
         "ok": false,
         "seed": {
+          "affected_model_ids": [],
+          "coverage_receipt_ids": [],
           "description": "A research packet batch had durable joined results, but Router did not fold them into worker_research_report_returned before waiting/reminding.",
           "exclude_member_ids": [],
           "failure_mode": "durable_result_joined_but_router_event_absent",
           "family_id": "flowpilot.packet_result_return_reconciliation",
+          "generated_combination_case_ids": [],
+          "interaction_group_ids": [],
           "mechanism_id": "full_durable_envelope_event_fold",
           "metadata": {
             "observed_date": "2026-05-28"
           },
+          "observed_combination_case_id": "",
+          "root_cause_dimension_ids": [],
           "seed_id": "research_joined_without_return_event",
           "source_case_id": "openspec.reconcile-research-batch-results",
           "source_member_id": "research"
         },
-        "summary": "BLOCKED: decision=analogous_defect_scan_blocked findings=3 candidates=3"
+        "summary": "BLOCKED: decision=analogous_defect_scan_blocked findings=2 candidates=2"
       }
     }
   ],
   "known_bad_ok": true,
   "members": [
-    "material_scan",
     "research",
     "current_node",
     "pm_role_work"
@@ -1690,71 +1368,6 @@
   "parity_report": {
     "confidence": "full",
     "coverage_matrix": [
-      {
-        "accepted_provenance": [
-          "runtime_test"
-        ],
-        "evidence_ids": [
-          "flowpilot.packet_result_return_reconciliation.material_scan.full_durable_envelope_event_fold"
-        ],
-        "family_id": "flowpilot.packet_result_return_reconciliation",
-        "mechanism_id": "full_durable_envelope_event_fold",
-        "member_id": "material_scan",
-        "scoped_reasons": [],
-        "status": "covered"
-      },
-      {
-        "accepted_provenance": [
-          "runtime_test"
-        ],
-        "evidence_ids": [
-          "flowpilot.packet_result_return_reconciliation.material_scan.partial_member_wait_projection"
-        ],
-        "family_id": "flowpilot.packet_result_return_reconciliation",
-        "mechanism_id": "partial_member_wait_projection",
-        "member_id": "material_scan",
-        "scoped_reasons": [],
-        "status": "covered"
-      },
-      {
-        "accepted_provenance": [
-          "runtime_test"
-        ],
-        "evidence_ids": [
-          "flowpilot.packet_result_return_reconciliation.material_scan.stale_reminder_suppression"
-        ],
-        "family_id": "flowpilot.packet_result_return_reconciliation",
-        "mechanism_id": "stale_reminder_suppression",
-        "member_id": "material_scan",
-        "scoped_reasons": [],
-        "status": "covered"
-      },
-      {
-        "accepted_provenance": [
-          "runtime_test"
-        ],
-        "evidence_ids": [
-          "flowpilot.packet_result_return_reconciliation.material_scan.wrong_recipient_rejection"
-        ],
-        "family_id": "flowpilot.packet_result_return_reconciliation",
-        "mechanism_id": "wrong_recipient_rejection",
-        "member_id": "material_scan",
-        "scoped_reasons": [],
-        "status": "covered"
-      },
-      {
-        "accepted_provenance": [
-          "runtime_test"
-        ],
-        "evidence_ids": [
-          "flowpilot.packet_result_return_reconciliation.material_scan.sealed_body_provenance"
-        ],
-        "family_id": "flowpilot.packet_result_return_reconciliation",
-        "mechanism_id": "sealed_body_provenance",
-        "member_id": "material_scan",
-        "scoped_reasons": [],
-        "status": "covered"
-      },
       {
         "accepted_provenance": [
           "runtime_test"
@@ -1952,57 +1565,59 @@
         "status": "covered"
       }
     ],
+    "covered_member_ids": [],
     "decision": "obligation_family_parity_full_confidence",
     "derived_bad_cases": [
       {
-        "case_id": "research_joined_without_return_event:material_scan:full_durable_envelope_event_fold",
-        "description": "A research packet batch had durable joined results, but Router did not fold them into worker_research_report_returned before waiting/reminding.",
-        "expected_status": "must_fail_before_repair",
-        "failure_mode": "durable_result_joined_but_router_event_absent",
-        "family_id": "flowpilot.packet_result_return_reconciliation",
-        "mechanism_id": "full_durable_envelope_event_fold",
-        "member_id": "material_scan",
-        "metadata": {
-          "observed_date": "2026-05-28",
-          "seed_id": "research_joined_without_return_event"
-        },
-        "source_case_id": "openspec.reconcile-research-batch-results",
-        "source_member_id": "research"
-      },
-      {
+        "affected_model_ids": [],
         "case_id": "research_joined_without_return_event:current_node:full_durable_envelope_event_fold",
+        "coverage_receipt_ids": [],
         "description": "A research packet batch had durable joined results, but Router did not fold them into worker_research_report_returned before waiting/reminding.",
         "expected_status": "must_fail_before_repair",
         "failure_mode": "durable_result_joined_but_router_event_absent",
         "family_id": "flowpilot.packet_result_return_reconciliation",
+        "generated_combination_case_ids": [],
+        "interaction_group_ids": [],
         "mechanism_id": "full_durable_envelope_event_fold",
         "member_id": "current_node",
         "metadata": {
           "observed_date": "2026-05-28",
           "seed_id": "research_joined_without_return_event"
         },
+        "observed_combination_case_id": "",
+        "root_cause_dimension_ids": [],
         "source_case_id": "openspec.reconcile-research-batch-results",
         "source_member_id": "research"
       },
       {
+        "affected_model_ids": [],
         "case_id": "research_joined_without_return_event:pm_role_work:full_durable_envelope_event_fold",
+        "coverage_receipt_ids": [],
         "description": "A research packet batch had durable joined results, but Router did not fold them into worker_research_report_returned before waiting/reminding.",
         "expected_status": "must_fail_before_repair",
         "failure_mode": "durable_result_joined_but_router_event_absent",
         "family_id": "flowpilot.packet_result_return_reconciliation",
+        "generated_combination_case_ids": [],
+        "interaction_group_ids": [],
         "mechanism_id": "full_durable_envelope_event_fold",
         "member_id": "pm_role_work",
         "metadata": {
           "observed_date": "2026-05-28",
           "seed_id": "research_joined_without_return_event"
         },
+        "observed_combination_case_id": "",
+        "root_cause_dimension_ids": [],
         "source_case_id": "openspec.reconcile-research-batch-results",
         "source_member_id": "research"
       }
     ],
     "findings": [],
+    "inventory_revisions": {},
+    "missing_member_ids": [],
     "ok": true,
-    "summary": "OK: decision=obligation_family_parity_full_confidence findings=0 cells=20"
+    "scoped_member_ids": [],
+    "summary": "OK: decision=obligation_family_parity_full_confidence findings=0 cells=15",
+    "unexpected_member_ids": []
   },
   "required_mechanisms": [
     "full_durable_envelope_event_fold",
@@ -2012,5 +1627,17 @@
     "sealed_body_provenance"
   ],
   "result_type": "flowpilot_packet_result_family_parity",
+  "retired_material_surface_absence": {
+    "claim_boundary": "Parity authority covers research, current-node, and PM role-work only; retired material families remain absence checks, not members.",
+    "ok": true,
+    "retired_evidence_members": [],
+    "retired_family_members": [],
+    "retired_member_names": [
+      "material_scan",
+      "material_sufficiency",
+      "material_understanding"
+    ],
+    "retired_obligation_ids": []
+  },
   "runtime_command": "python -m unittest tests.router_runtime.packet_result_family"
 }

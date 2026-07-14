@@ -56,52 +56,8 @@ def _bound_router() -> ModuleType:
 
 OWNER_MODULE = "flowpilot_router_route_artifacts"
 
-def _write_material_dispatch_repair(
-    project_root: Path,
-    run_root: Path,
-    run_state: dict[str, Any],
-    payload: dict[str, Any],
-) -> None:
-    decision = _load_file_backed_role_payload(project_root, payload)
-    if decision.get("decided_by_role") != "project_manager":
-        raise RouterError("material dispatch repair requires decided_by_role=project_manager")
-    prior_review = _require_pm_prior_path_context(project_root, run_root, decision, purpose="material dispatch repair")
-    repair_action = str(decision.get("repair_action") or decision.get("selected_next_action") or "").strip()
-    if not repair_action:
-        raise RouterError("material dispatch repair requires repair_action or selected_next_action")
-    block = run_state.get("material_dispatch_block")
-    block_path = block.get("path") if isinstance(block, dict) else None
-    repair_path = run_root / "material" / "material_dispatch_repair.json"
-    write_json(
-        repair_path,
-        {
-            "schema_version": "flowpilot.material_dispatch_repair.v1",
-            "run_id": run_state["run_id"],
-            "decided_by_role": "project_manager",
-            "repair_action": repair_action,
-            "source_block_path": block_path,
-            "prior_path_context_review": prior_review,
-            "recorded_at": utc_now(),
-            **_role_output_envelope_record(decision),
-        },
-    )
-    run_state["material_dispatch_block"] = {
-        "path": block_path,
-        "repair_path": project_relative(project_root, repair_path),
-        "repair_recorded_at": utc_now(),
-        "status": "repair_ready_for_reviewer_recheck",
-    }
-    run_state["flags"]["material_scan_dispatch_blocked"] = False
-    run_state["flags"]["reviewer_dispatch_allowed"] = False
-    run_state["flags"]["reviewer_dispatch_card_delivered"] = False
-    for flag in MATERIAL_REPAIR_RECHECK_FLAGS:
-        run_state["flags"][flag] = False
-
 def _write_pm_review_block_repair(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
     active_block_flag = _require_single_active_model_miss_review_block(run_state, "review-block repair")
-    if active_block_flag in MODEL_MISS_MATERIAL_DISPATCH_REPAIR_FLAGS:
-        _write_material_dispatch_repair(project_root, run_root, run_state, payload)
-        return
     if active_block_flag in MODEL_MISS_ROUTE_MUTATION_BLOCK_FLAGS:
         _write_route_mutation(project_root, run_root, run_state, payload)
         return
@@ -216,7 +172,6 @@ def _write_evidence_quality_package(project_root: Path, run_root: Path, run_stat
     )
 
 __all__ = (
-    '_write_material_dispatch_repair',
     '_write_pm_review_block_repair',
     '_write_evidence_quality_package',
 )

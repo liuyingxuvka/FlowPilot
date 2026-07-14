@@ -20,10 +20,10 @@ RESULTS_PATH = ROOT / "flowpilot_event_envelope_transfer_results.json"
 REQUIRED_LABELS = (
     "select_valid_reviewer_full_payload",
     "select_valid_reviewer_envelope_ref",
-    "select_valid_material_full_payload",
-    "select_valid_material_envelope_ref",
+    "select_valid_current_node_full_payload",
+    "select_valid_current_node_envelope_ref",
     "select_manual_receipt_field_renamed",
-    "select_manual_packets_nested_or_dropped",
+    "select_manual_packet_ref_nested_or_dropped",
     "select_duplicate_same_envelope",
     "select_missing_envelope_file",
     "select_envelope_hash_mismatch",
@@ -45,7 +45,7 @@ HAZARD_EXPECTED_FAILURES = {
     "accepted_forbidden_body_field": "accepted envelope without all hard checks",
     "ref_controller_mutated_envelope": "envelope ref path let Controller mutate envelope fields",
     "manual_receipt_accepted": "manual reconstruction with renamed runtime receipt was accepted",
-    "manual_packets_accepted": "manual reconstruction with hidden material packets was accepted",
+    "manual_packet_ref_accepted": "manual reconstruction with a hidden current-node packet ref was accepted",
     "duplicate_side_effect": "duplicate same envelope wrote a duplicate side effect",
 }
 
@@ -59,7 +59,7 @@ def _state_id(state: model.State) -> str:
         f"event:{state.event_name_matches_cli},allowed:{state.event_currently_allowed},"
         f"role:{state.from_role_matches_contract},vis:{state.controller_visibility_allowed},"
         f"body:{state.forbidden_body_fields_absent}|"
-        f"runtime_ref={state.runtime_receipt_ref_preserved}|packets={state.material_packets_preserved_top_level}|"
+        f"runtime_ref={state.runtime_receipt_ref_preserved}|packet_ref={state.packet_ref_preserved_top_level}|"
         f"duplicate={state.duplicate_submission}:{state.duplicate_side_effect_written}|reason={state.terminal_reason}"
     )
 
@@ -195,10 +195,10 @@ def _scenario_report(graph: dict[str, Any]) -> dict[str, object]:
     }
     reviewer_full = terminal_by_scenario.get(model.VALID_REVIEWER_FULL)
     reviewer_ref = terminal_by_scenario.get(model.VALID_REVIEWER_REF)
-    material_full = terminal_by_scenario.get(model.VALID_MATERIAL_FULL)
-    material_ref = terminal_by_scenario.get(model.VALID_MATERIAL_REF)
+    current_node_full = terminal_by_scenario.get(model.VALID_CURRENT_NODE_FULL)
+    current_node_ref = terminal_by_scenario.get(model.VALID_CURRENT_NODE_REF)
     manual_receipt = terminal_by_scenario.get(model.MANUAL_RECEIPT_RENAMED)
-    manual_packets = terminal_by_scenario.get(model.MANUAL_PACKETS_NESTED)
+    manual_packet_ref = terminal_by_scenario.get(model.MANUAL_PACKET_REF_NESTED)
     duplicate = terminal_by_scenario.get(model.DUPLICATE_SAME_ENVELOPE)
     scenarios = {
         "reviewer_full_payload_and_ref_equivalent": {
@@ -210,22 +210,22 @@ def _scenario_report(graph: dict[str, Any]) -> dict[str, object]:
             "full": _state_id(reviewer_full) if reviewer_full else None,
             "ref": _state_id(reviewer_ref) if reviewer_ref else None,
         },
-        "material_full_payload_and_ref_equivalent": {
-            "ok": material_full is not None
-            and material_ref is not None
-            and material_full.status == "accepted"
-            and material_ref.status == "accepted"
-            and material_ref.material_packets_preserved_top_level,
-            "full": _state_id(material_full) if material_full else None,
-            "ref": _state_id(material_ref) if material_ref else None,
+        "current_node_full_payload_and_ref_equivalent": {
+            "ok": current_node_full is not None
+            and current_node_ref is not None
+            and current_node_full.status == "accepted"
+            and current_node_ref.status == "accepted"
+            and current_node_ref.packet_ref_preserved_top_level,
+            "full": _state_id(current_node_full) if current_node_full else None,
+            "ref": _state_id(current_node_ref) if current_node_ref else None,
         },
         "known_manual_reconstruction_failures_rejected": {
             "ok": manual_receipt is not None
-            and manual_packets is not None
+            and manual_packet_ref is not None
             and manual_receipt.status == "rejected"
-            and manual_packets.status == "rejected",
+            and manual_packet_ref.status == "rejected",
             "manual_receipt": _state_id(manual_receipt) if manual_receipt else None,
-            "manual_packets": _state_id(manual_packets) if manual_packets else None,
+            "manual_packet_ref": _state_id(manual_packet_ref) if manual_packet_ref else None,
         },
         "duplicate_same_envelope_idempotent": {
             "ok": duplicate is not None

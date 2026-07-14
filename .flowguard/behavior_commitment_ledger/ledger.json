@@ -1,0 +1,2485 @@
+{
+  "artifact_type": "flowguard_behavior_commitment_ledger",
+  "format_version": "1",
+  "ledger": {
+    "change_mode": "change_behavior",
+    "claim_scope": "release",
+    "commitments": [
+      {
+        "actor": "assigned role agent",
+        "actor_kind": "ai_agent",
+        "behavior_plane": "product_runtime",
+        "business_intent_id": "intent:flowpilot.submit-current-packet-result",
+        "child_model_ids": [],
+        "commitment_id": "commit.result_submission_current_contract_only",
+        "commitment_kind": "workflow",
+        "evidence": {
+          "code_contract_ids": [
+            "packet_result_family.runtime.submit_result_body_entry"
+          ],
+          "coverage_case_ids": [
+            "case:flowpilot.synthetic_agent_global_d_card_matrix",
+            "case:flowpilot.current_contract_cartesian_matrix",
+            "case:flowpilot.contract_exhaustion_mesh",
+            "case:flowpilot.ai_response_execution_closure"
+          ],
+          "coverage_receipt_ids": [
+            "contract_coverage:flowpilot_053_ppa_maintenance",
+            "contract_coverage:flowpilot_053_bcl_maintenance"
+          ],
+          "coverage_shard_ids": [
+            "contract_shard:flowpilot_053_ppa_maintenance:no_fallback_cartesian",
+            "contract_shard:flowpilot_053_bcl_maintenance:behavior_commitment_cartesian"
+          ],
+          "current": true,
+          "evidence_state": "current_pass",
+          "metadata": {},
+          "model_obligation_ids": [
+            "flowpilot_053.result_submission_current_contract_only"
+          ],
+          "proof_artifact_ids": [
+            "simulations/flowpilot_053_ppa_maintenance_results.json"
+          ],
+          "risk_gate_ids": [
+            "risk_gate:behavior_commitment_coverage:flowpilot_053_behavior_commitments",
+            "risk_gate:behavior_commitment_cartesian_coverage:flowpilot_053_behavior_commitments"
+          ],
+          "test_evidence_ids": [
+            "test:tests/test_flowpilot_core_runtime.py"
+          ],
+          "test_mesh_state": "shard_current"
+        },
+        "excluded_behavior_ids": [],
+        "expected_result": "runtime accepts only current structured result bodies or reissues the current packet",
+        "expected_terminal": "runtime accepts only current structured result bodies or reissues the current packet",
+        "external_differences": [],
+        "failure_boundary": "unsupported fields, prose, stale packets, and aliases are rejected",
+        "in_scope": true,
+        "label": "Current packet results use only current result contracts.",
+        "lookup_binding": {
+          "error_signatures": [],
+          "metadata": {},
+          "path_patterns": [],
+          "task_terms": [],
+          "tool_ids": [],
+          "workflow_families": []
+        },
+        "metadata": {},
+        "miss_origin_state": "no_miss",
+        "model_sync_state": "owner_model_current",
+        "owner": "FlowPilot runtime/router",
+        "path_authority": {
+          "behavior_commitment_id": "commit.result_submission_current_contract_only",
+          "business_intent": "Current packet results use only current result contracts.",
+          "business_intent_id": "intent:flowpilot.submit-current-packet-result",
+          "evidence_current": true,
+          "evidence_refs": [
+            "simulations/flowpilot_053_ppa_maintenance_results.json"
+          ],
+          "fallback_candidate_ids": [
+            "fallback.old-result-summary-field",
+            "fallback.alias-submit-result-body"
+          ],
+          "metadata": {},
+          "path_sensitive": true,
+          "ppa_confidence": "full",
+          "ppa_coverage_receipt_ids": [
+            "contract_coverage:flowpilot_053_ppa_maintenance",
+            "contract_coverage:flowpilot_053_bcl_maintenance"
+          ],
+          "ppa_coverage_shard_ids": [
+            "contract_shard:flowpilot_053_ppa_maintenance:no_fallback_cartesian",
+            "contract_shard:flowpilot_053_bcl_maintenance:behavior_commitment_cartesian"
+          ],
+          "ppa_decision": "primary_path_authority_green",
+          "ppa_ok": true,
+          "ppa_report_id": "flowpilot_055_primary_path_authority",
+          "ppa_risk_gate_ids": [
+            "risk_gate:primary_path_authority:flowpilot_053_ppa_maintenance",
+            "risk_gate:primary_path_authority_cartesian_coverage:flowpilot_053_ppa_maintenance"
+          ],
+          "primary_path_id": "path.runtime.submit-current-result",
+          "proof_artifact_ids": [
+            "proof:flowpilot:path_runtime_submit_current_result"
+          ],
+          "runtime_observation_ids": [
+            "runtime:path_runtime_submit_current_result"
+          ],
+          "scoped_out_reason": ""
+        },
+        "preconditions": [],
+        "primary_owner_model_id": "flowpilot_053_ppa_maintenance",
+        "rationale": "Runtime must fail closed on unsupported result shapes.",
+        "relations": [],
+        "replacement_state": "active",
+        "scoped_out_reason": "",
+        "side_effects": [],
+        "similarity_obligation_ids": [],
+        "similarity_relation_ids": [],
+        "source_refs": [
+          "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py"
+        ],
+        "source_surface_ids": [
+          "surface.runtime.submit_result"
+        ],
+        "state_writes": [],
+        "supporting_model_ids": [
+          "flowpilot_field_contracts",
+          "flowpilot_pm_visible_summary"
+        ],
+        "surface_delegation_only": false,
+        "trigger": "submit-result for a current packet",
+        "validation_boundary": "mechanical result contract validation",
+        "variant_of_business_intent_id": ""
+      },
+      {
+        "actor": "FlowPilot runtime/router",
+        "actor_kind": "ai_agent",
+        "behavior_plane": "product_runtime",
+        "business_intent_id": "intent:flowpilot.apply-current-control-blocker-repair",
+        "child_model_ids": [],
+        "commitment_id": "commit.repair_reissue_no_fallback",
+        "commitment_kind": "workflow",
+        "evidence": {
+          "code_contract_ids": [
+            "repair_transactions.current_repair_requires_concrete_producer"
+          ],
+          "coverage_case_ids": [
+            "case:flowpilot.synthetic_agent_global_d_card_matrix",
+            "case:flowpilot.current_contract_cartesian_matrix",
+            "case:flowpilot.contract_exhaustion_mesh",
+            "case:flowpilot.ai_response_execution_closure"
+          ],
+          "coverage_receipt_ids": [
+            "contract_coverage:flowpilot_053_ppa_maintenance",
+            "contract_coverage:flowpilot_053_bcl_maintenance"
+          ],
+          "coverage_shard_ids": [
+            "contract_shard:flowpilot_053_ppa_maintenance:no_fallback_cartesian",
+            "contract_shard:flowpilot_053_bcl_maintenance:behavior_commitment_cartesian"
+          ],
+          "current": true,
+          "evidence_state": "current_pass",
+          "metadata": {},
+          "model_obligation_ids": [
+            "flowpilot_053.repair_reissue_no_fallback"
+          ],
+          "proof_artifact_ids": [
+            "simulations/flowpilot_053_ppa_maintenance_results.json"
+          ],
+          "risk_gate_ids": [
+            "risk_gate:behavior_commitment_coverage:flowpilot_053_behavior_commitments",
+            "risk_gate:behavior_commitment_cartesian_coverage:flowpilot_053_behavior_commitments"
+          ],
+          "test_evidence_ids": [
+            "test:tests/router_runtime/control_blockers.py"
+          ],
+          "test_mesh_state": "shard_current"
+        },
+        "excluded_behavior_ids": [],
+        "expected_result": "runtime accepts only a supported executable repair plan with current producer/action evidence and rejects retired packet_reissue or replacement fields",
+        "expected_terminal": "runtime accepts only a supported executable repair plan with current producer/action evidence and rejects retired packet_reissue or replacement fields",
+        "external_differences": [],
+        "failure_boundary": "no old package, replacement-packet branch, fallback cache, alias, or prose result may become success",
+        "in_scope": true,
+        "label": "Repair stays on one current executable plan and package/result/blocker path.",
+        "lookup_binding": {
+          "error_signatures": [],
+          "metadata": {},
+          "path_patterns": [],
+          "task_terms": [],
+          "tool_ids": [],
+          "workflow_families": []
+        },
+        "metadata": {},
+        "miss_origin_state": "no_miss",
+        "model_sync_state": "owner_model_current",
+        "owner": "FlowPilot runtime/router",
+        "path_authority": {
+          "behavior_commitment_id": "commit.repair_reissue_no_fallback",
+          "business_intent": "Repair stays on one current executable plan and package/result/blocker path.",
+          "business_intent_id": "intent:flowpilot.apply-current-control-blocker-repair",
+          "evidence_current": true,
+          "evidence_refs": [
+            "simulations/flowpilot_053_ppa_maintenance_results.json"
+          ],
+          "fallback_candidate_ids": [
+            "fallback.retired-replacement-packet-repair"
+          ],
+          "metadata": {},
+          "path_sensitive": true,
+          "ppa_confidence": "full",
+          "ppa_coverage_receipt_ids": [
+            "contract_coverage:flowpilot_053_ppa_maintenance",
+            "contract_coverage:flowpilot_053_bcl_maintenance"
+          ],
+          "ppa_coverage_shard_ids": [
+            "contract_shard:flowpilot_053_ppa_maintenance:no_fallback_cartesian",
+            "contract_shard:flowpilot_053_bcl_maintenance:behavior_commitment_cartesian"
+          ],
+          "ppa_decision": "primary_path_authority_green",
+          "ppa_ok": true,
+          "ppa_report_id": "flowpilot_055_primary_path_authority",
+          "ppa_risk_gate_ids": [
+            "risk_gate:primary_path_authority:flowpilot_053_ppa_maintenance",
+            "risk_gate:primary_path_authority_cartesian_coverage:flowpilot_053_ppa_maintenance"
+          ],
+          "primary_path_id": "path.runtime.apply-current-control-blocker-repair",
+          "proof_artifact_ids": [
+            "proof:flowpilot:path_runtime_apply_current_control_blocker_repair"
+          ],
+          "runtime_observation_ids": [
+            "runtime:path_runtime_apply_current_control_blocker_repair"
+          ],
+          "scoped_out_reason": ""
+        },
+        "preconditions": [],
+        "primary_owner_model_id": "flowpilot_053_ppa_maintenance",
+        "rationale": "Repeated and stale submissions are audit records, not alternate success paths.",
+        "relations": [],
+        "replacement_state": "active",
+        "scoped_out_reason": "",
+        "side_effects": [],
+        "similarity_obligation_ids": [],
+        "similarity_relation_ids": [],
+        "source_refs": [
+          "skills/flowpilot/assets/flowpilot_router_events_repair_repair_decisions.py"
+        ],
+        "source_surface_ids": [
+          "surface.runtime.repair_reissue"
+        ],
+        "state_writes": [],
+        "supporting_model_ids": [
+          "flowpilot_repair_transaction",
+          "flowpilot_route_authority_singularity"
+        ],
+        "surface_delegation_only": false,
+        "trigger": "a current control blocker requires PM repair or a current packet result requires correction",
+        "validation_boundary": "current executable plan and packet/result/blocker repair state",
+        "variant_of_business_intent_id": ""
+      },
+      {
+        "actor": "worker, FlowGuard operator, or reviewer role",
+        "actor_kind": "ai_agent",
+        "behavior_plane": "product_runtime",
+        "business_intent_id": "intent:flowpilot.relay-role-authored-pm-visible-summary",
+        "child_model_ids": [],
+        "commitment_id": "commit.pm_visible_summary_is_role_authored",
+        "commitment_kind": "workflow",
+        "evidence": {
+          "code_contract_ids": [
+            "role_output.current_contract.pm_visible_summary"
+          ],
+          "coverage_case_ids": [
+            "case:flowpilot.synthetic_agent_global_d_card_matrix",
+            "case:flowpilot.current_contract_cartesian_matrix",
+            "case:flowpilot.contract_exhaustion_mesh",
+            "case:flowpilot.ai_response_execution_closure"
+          ],
+          "coverage_receipt_ids": [
+            "contract_coverage:flowpilot_053_ppa_maintenance",
+            "contract_coverage:flowpilot_053_bcl_maintenance"
+          ],
+          "coverage_shard_ids": [
+            "contract_shard:flowpilot_053_ppa_maintenance:no_fallback_cartesian",
+            "contract_shard:flowpilot_053_bcl_maintenance:behavior_commitment_cartesian"
+          ],
+          "current": true,
+          "evidence_state": "current_pass",
+          "metadata": {},
+          "model_obligation_ids": [
+            "flowpilot_053.pm_visible_summary_role_authored"
+          ],
+          "proof_artifact_ids": [
+            "simulations/flowpilot_053_ppa_maintenance_results.json"
+          ],
+          "risk_gate_ids": [
+            "risk_gate:behavior_commitment_coverage:flowpilot_053_behavior_commitments",
+            "risk_gate:behavior_commitment_cartesian_coverage:flowpilot_053_behavior_commitments"
+          ],
+          "test_evidence_ids": [
+            "test:tests/test_flowpilot_core_runtime.py::test_missing_pm_visible_summary_is_mechanically_reissued"
+          ],
+          "test_mesh_state": "shard_current"
+        },
+        "excluded_behavior_ids": [],
+        "expected_result": "runtime requires and relays pm_visible_summary but never synthesizes semantic content",
+        "expected_terminal": "runtime requires and relays pm_visible_summary but never synthesizes semantic content",
+        "external_differences": [],
+        "failure_boundary": "missing summary blocks mechanically; summary text never substitutes for sealed body review",
+        "in_scope": true,
+        "label": "PM-visible summaries are role-authored current fields.",
+        "lookup_binding": {
+          "error_signatures": [],
+          "metadata": {},
+          "path_patterns": [],
+          "task_terms": [],
+          "tool_ids": [],
+          "workflow_families": []
+        },
+        "metadata": {},
+        "miss_origin_state": "no_miss",
+        "model_sync_state": "owner_model_current",
+        "owner": "Role output runtime",
+        "path_authority": {
+          "behavior_commitment_id": "",
+          "business_intent": "",
+          "business_intent_id": "",
+          "evidence_current": false,
+          "evidence_refs": [],
+          "fallback_candidate_ids": [],
+          "metadata": {},
+          "path_sensitive": false,
+          "ppa_confidence": "",
+          "ppa_coverage_receipt_ids": [],
+          "ppa_coverage_shard_ids": [],
+          "ppa_decision": "",
+          "ppa_ok": null,
+          "ppa_report_id": "",
+          "ppa_risk_gate_ids": [],
+          "primary_path_id": "",
+          "proof_artifact_ids": [],
+          "runtime_observation_ids": [],
+          "scoped_out_reason": ""
+        },
+        "preconditions": [],
+        "primary_owner_model_id": "flowpilot_053_ppa_maintenance",
+        "rationale": "Runtime can require the field but cannot perform semantic reviewer quality checks.",
+        "relations": [],
+        "replacement_state": "active",
+        "scoped_out_reason": "",
+        "side_effects": [],
+        "similarity_obligation_ids": [],
+        "similarity_relation_ids": [],
+        "source_refs": [
+          "simulations/flowpilot_pm_visible_summary_model.py"
+        ],
+        "source_surface_ids": [
+          "surface.pm_visible_summary"
+        ],
+        "state_writes": [],
+        "supporting_model_ids": [
+          "flowpilot_pm_visible_summary"
+        ],
+        "surface_delegation_only": false,
+        "trigger": "formal non-PM role result body is submitted",
+        "validation_boundary": "mechanical required field validation only",
+        "variant_of_business_intent_id": ""
+      },
+      {
+        "actor": "assigned role agent",
+        "actor_kind": "ai_agent",
+        "behavior_plane": "agent_operation",
+        "business_intent_id": "intent:flowpilot.open-authorized-current-result-material",
+        "child_model_ids": [],
+        "commitment_id": "commit.authorized_result_reads_are_required_material",
+        "commitment_kind": "workflow",
+        "evidence": {
+          "code_contract_ids": [
+            "packet_result_family.runtime.authorized_result_reads"
+          ],
+          "coverage_case_ids": [
+            "case:flowpilot.synthetic_agent_global_d_card_matrix",
+            "case:flowpilot.current_contract_cartesian_matrix",
+            "case:flowpilot.contract_exhaustion_mesh",
+            "case:flowpilot.ai_response_execution_closure"
+          ],
+          "coverage_receipt_ids": [
+            "contract_coverage:flowpilot_053_ppa_maintenance",
+            "contract_coverage:flowpilot_053_bcl_maintenance"
+          ],
+          "coverage_shard_ids": [
+            "contract_shard:flowpilot_053_ppa_maintenance:no_fallback_cartesian",
+            "contract_shard:flowpilot_053_bcl_maintenance:behavior_commitment_cartesian"
+          ],
+          "current": true,
+          "evidence_state": "current_pass",
+          "metadata": {},
+          "model_obligation_ids": [
+            "flowpilot_053.authorized_result_reads_required_material"
+          ],
+          "proof_artifact_ids": [
+            "simulations/flowpilot_053_ppa_maintenance_results.json"
+          ],
+          "risk_gate_ids": [
+            "risk_gate:behavior_commitment_coverage:flowpilot_053_behavior_commitments",
+            "risk_gate:behavior_commitment_cartesian_coverage:flowpilot_053_behavior_commitments"
+          ],
+          "test_evidence_ids": [
+            "test:tests/test_flowpilot_new_entrypoint.py"
+          ],
+          "test_mesh_state": "shard_current"
+        },
+        "excluded_behavior_ids": [],
+        "expected_result": "assigned role receives and uses the authorized current material before submit-result",
+        "expected_terminal": "assigned role receives and uses the authorized current material before submit-result",
+        "external_differences": [],
+        "failure_boundary": "recent summaries and ordinary file access do not satisfy required sealed-body reads",
+        "in_scope": true,
+        "label": "Authorized result reads are required material, not optional summaries.",
+        "lookup_binding": {
+          "error_signatures": [],
+          "metadata": {},
+          "path_patterns": [],
+          "task_terms": [],
+          "tool_ids": [],
+          "workflow_families": []
+        },
+        "metadata": {},
+        "miss_origin_state": "no_miss",
+        "model_sync_state": "owner_model_current",
+        "owner": "FlowPilot runtime/router",
+        "path_authority": {
+          "behavior_commitment_id": "commit.authorized_result_reads_are_required_material",
+          "business_intent": "Authorized result reads are required material, not optional summaries.",
+          "business_intent_id": "intent:flowpilot.open-authorized-current-result-material",
+          "evidence_current": true,
+          "evidence_refs": [
+            "simulations/flowpilot_053_ppa_maintenance_results.json"
+          ],
+          "fallback_candidate_ids": [],
+          "metadata": {},
+          "path_sensitive": true,
+          "ppa_confidence": "full",
+          "ppa_coverage_receipt_ids": [
+            "contract_coverage:flowpilot_053_ppa_maintenance",
+            "contract_coverage:flowpilot_053_bcl_maintenance"
+          ],
+          "ppa_coverage_shard_ids": [
+            "contract_shard:flowpilot_053_ppa_maintenance:no_fallback_cartesian",
+            "contract_shard:flowpilot_053_bcl_maintenance:behavior_commitment_cartesian"
+          ],
+          "ppa_decision": "primary_path_authority_green",
+          "ppa_ok": true,
+          "ppa_report_id": "flowpilot_055_primary_path_authority",
+          "ppa_risk_gate_ids": [
+            "risk_gate:primary_path_authority:flowpilot_053_ppa_maintenance",
+            "risk_gate:primary_path_authority_cartesian_coverage:flowpilot_053_ppa_maintenance"
+          ],
+          "primary_path_id": "path.agent-operation.open-authorized-result-material",
+          "proof_artifact_ids": [
+            "proof:flowpilot:path_agent_operation_open_authorized_result_material"
+          ],
+          "runtime_observation_ids": [
+            "runtime:path_agent_operation_open_authorized_result_material"
+          ],
+          "scoped_out_reason": ""
+        },
+        "preconditions": [],
+        "primary_owner_model_id": "flowpilot_053_ppa_maintenance",
+        "rationale": "This keeps summary navigation separate from formal evidence consumption.",
+        "relations": [],
+        "replacement_state": "active",
+        "scoped_out_reason": "",
+        "side_effects": [],
+        "similarity_obligation_ids": [],
+        "similarity_relation_ids": [],
+        "source_refs": [
+          "skills/flowpilot/assets/flowpilot_core_runtime/packet_stage_evidence_matrix.py"
+        ],
+        "source_surface_ids": [
+          "surface.authorized_result_reads"
+        ],
+        "state_writes": [],
+        "supporting_model_ids": [
+          "flowpilot_field_contracts"
+        ],
+        "surface_delegation_only": false,
+        "trigger": "packet envelope includes authorized_result_reads",
+        "validation_boundary": "authorized material opening and receipt validation",
+        "variant_of_business_intent_id": ""
+      },
+      {
+        "actor": "maintaining agent",
+        "actor_kind": "developer",
+        "behavior_plane": "development_process",
+        "business_intent_id": "intent:flowpilot.admit-broad-claim-only-with-current-evidence",
+        "child_model_ids": [],
+        "commitment_id": "commit.release_claims_require_current_evidence",
+        "commitment_kind": "process",
+        "evidence": {
+          "code_contract_ids": [
+            "tiered_flowpilot_test_validation.release_claims"
+          ],
+          "coverage_case_ids": [
+            "case:flowpilot.synthetic_agent_global_d_card_matrix",
+            "case:flowpilot.current_contract_cartesian_matrix",
+            "case:flowpilot.contract_exhaustion_mesh",
+            "case:flowpilot.ai_response_execution_closure"
+          ],
+          "coverage_receipt_ids": [
+            "contract_coverage:flowpilot_053_ppa_maintenance",
+            "contract_coverage:flowpilot_053_bcl_maintenance"
+          ],
+          "coverage_shard_ids": [
+            "contract_shard:flowpilot_053_ppa_maintenance:no_fallback_cartesian",
+            "contract_shard:flowpilot_053_bcl_maintenance:behavior_commitment_cartesian"
+          ],
+          "current": true,
+          "evidence_state": "current_pass",
+          "metadata": {},
+          "model_obligation_ids": [
+            "flowpilot_053.release_claims_current_evidence"
+          ],
+          "proof_artifact_ids": [
+            "simulations/flowpilot_053_ppa_maintenance_results.json"
+          ],
+          "risk_gate_ids": [
+            "risk_gate:behavior_commitment_coverage:flowpilot_053_behavior_commitments",
+            "risk_gate:behavior_commitment_cartesian_coverage:flowpilot_053_behavior_commitments"
+          ],
+          "test_evidence_ids": [
+            "test:tests/test_flowpilot_test_tiers.py"
+          ],
+          "test_mesh_state": "shard_current"
+        },
+        "excluded_behavior_ids": [],
+        "expected_result": "all, adversarial, and release proof compiles before strict parents, with repository final confidence downstream",
+        "expected_terminal": "all, adversarial, and release proof compiles before strict parents, with repository final confidence downstream",
+        "external_differences": [],
+        "failure_boundary": "stale proof, deferred release suites, or a final-confidence/TestMesh/MTA cycle blocks broad claims",
+        "in_scope": true,
+        "label": "Release and done claims require current model/test/install evidence.",
+        "lookup_binding": {
+          "error_signatures": [],
+          "metadata": {},
+          "path_patterns": [
+            "simulations/flowpilot_final_confidence_gate.py",
+            "scripts/run_test_tier.py"
+          ],
+          "task_terms": [
+            "current release evidence",
+            "final confidence",
+            "release claim"
+          ],
+          "tool_ids": [],
+          "workflow_families": [
+            "release_evidence",
+            "final_confidence"
+          ]
+        },
+        "metadata": {},
+        "miss_origin_state": "no_miss",
+        "model_sync_state": "owner_model_current",
+        "owner": "DevelopmentProcessFlow",
+        "path_authority": {
+          "behavior_commitment_id": "",
+          "business_intent": "",
+          "business_intent_id": "",
+          "evidence_current": false,
+          "evidence_refs": [],
+          "fallback_candidate_ids": [],
+          "metadata": {},
+          "path_sensitive": false,
+          "ppa_confidence": "",
+          "ppa_coverage_receipt_ids": [],
+          "ppa_coverage_shard_ids": [],
+          "ppa_decision": "",
+          "ppa_ok": null,
+          "ppa_report_id": "",
+          "ppa_risk_gate_ids": [],
+          "primary_path_id": "",
+          "proof_artifact_ids": [],
+          "runtime_observation_ids": [],
+          "scoped_out_reason": ""
+        },
+        "preconditions": [],
+        "primary_owner_model_id": "flowpilot_053_ppa_maintenance",
+        "rationale": "A project upgrade record is not itself validation proof.",
+        "relations": [],
+        "replacement_state": "active",
+        "scoped_out_reason": "",
+        "side_effects": [],
+        "similarity_obligation_ids": [],
+        "similarity_relation_ids": [],
+        "source_refs": [
+          "scripts/compile_flowpilot_acceptance_testmesh_evidence.py",
+          "simulations/run_flowpilot_final_confidence_gate_checks.py"
+        ],
+        "source_surface_ids": [
+          "surface.release_evidence"
+        ],
+        "state_writes": [],
+        "supporting_model_ids": [
+          "flowpilot_complete_system_testmesh",
+          "flowpilot_model_test_alignment"
+        ],
+        "surface_delegation_only": false,
+        "trigger": "maintenance, done, release, or publish confidence is claimed",
+        "validation_boundary": "acyclic current release evidence gate",
+        "variant_of_business_intent_id": ""
+      },
+      {
+        "actor": "assigned role agent",
+        "actor_kind": "ai_agent",
+        "behavior_plane": "agent_operation",
+        "business_intent_id": "intent:flowpilot.open-current-submission-checklist",
+        "child_model_ids": [],
+        "commitment_id": "commit.current_handoff_checklist_single_authority",
+        "commitment_kind": "workflow",
+        "evidence": {
+          "code_contract_ids": [
+            "packet_result_family.runtime.current_handoff_checklist_projection"
+          ],
+          "coverage_case_ids": [
+            "case:flowpilot.synthetic_agent_global_d_card_matrix",
+            "case:flowpilot.current_contract_cartesian_matrix",
+            "case:flowpilot.contract_exhaustion_mesh",
+            "case:flowpilot.ai_response_execution_closure"
+          ],
+          "coverage_receipt_ids": [
+            "contract_coverage:flowpilot_053_ppa_maintenance",
+            "contract_coverage:flowpilot_053_bcl_maintenance"
+          ],
+          "coverage_shard_ids": [
+            "contract_shard:flowpilot_053_ppa_maintenance:no_fallback_cartesian",
+            "contract_shard:flowpilot_053_bcl_maintenance:behavior_commitment_cartesian"
+          ],
+          "current": true,
+          "evidence_state": "current_pass",
+          "metadata": {},
+          "model_obligation_ids": [
+            "packet_result_family.current_handoff_checklist_single_authority"
+          ],
+          "proof_artifact_ids": [
+            "simulations/flowpilot_053_ppa_maintenance_results.json"
+          ],
+          "risk_gate_ids": [
+            "risk_gate:behavior_commitment_coverage:flowpilot_053_behavior_commitments",
+            "risk_gate:behavior_commitment_cartesian_coverage:flowpilot_053_behavior_commitments"
+          ],
+          "test_evidence_ids": [
+            "test:tests/test_flowpilot_contract_driven_fake_ai_open_packet.py"
+          ],
+          "test_mesh_state": "shard_current"
+        },
+        "excluded_behavior_ids": [],
+        "expected_result": "submission_checklist.v2 is a fingerprinted projection of current_handoff_contract.v2",
+        "expected_terminal": "submission_checklist.v2 is a fingerprinted projection of current_handoff_contract.v2",
+        "external_differences": [],
+        "failure_boundary": "packet bodies, reissue diagnostics, old schemas, aliases, and remembered registry shapes cannot authorize a result",
+        "in_scope": true,
+        "label": "Open-packet checklist has one mechanical contract authority.",
+        "lookup_binding": {
+          "error_signatures": [],
+          "metadata": {},
+          "path_patterns": [],
+          "task_terms": [],
+          "tool_ids": [],
+          "workflow_families": []
+        },
+        "metadata": {},
+        "miss_origin_state": "no_miss",
+        "model_sync_state": "owner_model_current",
+        "owner": "FlowPilot runtime/router",
+        "path_authority": {
+          "behavior_commitment_id": "commit.current_handoff_checklist_single_authority",
+          "business_intent": "Open-packet checklist has one mechanical contract authority.",
+          "business_intent_id": "intent:flowpilot.open-current-submission-checklist",
+          "evidence_current": true,
+          "evidence_refs": [
+            "simulations/flowpilot_053_ppa_maintenance_results.json"
+          ],
+          "fallback_candidate_ids": [
+            "fallback.packet-body-mechanical-contract"
+          ],
+          "metadata": {},
+          "path_sensitive": true,
+          "ppa_confidence": "full",
+          "ppa_coverage_receipt_ids": [
+            "contract_coverage:flowpilot_053_ppa_maintenance",
+            "contract_coverage:flowpilot_053_bcl_maintenance"
+          ],
+          "ppa_coverage_shard_ids": [
+            "contract_shard:flowpilot_053_ppa_maintenance:no_fallback_cartesian",
+            "contract_shard:flowpilot_053_bcl_maintenance:behavior_commitment_cartesian"
+          ],
+          "ppa_decision": "primary_path_authority_green",
+          "ppa_ok": true,
+          "ppa_report_id": "flowpilot_055_primary_path_authority",
+          "ppa_risk_gate_ids": [
+            "risk_gate:primary_path_authority:flowpilot_053_ppa_maintenance",
+            "risk_gate:primary_path_authority_cartesian_coverage:flowpilot_053_ppa_maintenance"
+          ],
+          "primary_path_id": "path.agent-operation.open-current-submission-checklist",
+          "proof_artifact_ids": [
+            "proof:flowpilot:path_agent_operation_open_current_submission_checklist"
+          ],
+          "runtime_observation_ids": [
+            "runtime:path_agent_operation_open_current_submission_checklist"
+          ],
+          "scoped_out_reason": ""
+        },
+        "preconditions": [],
+        "primary_owner_model_id": "flowpilot_053_ppa_maintenance",
+        "rationale": "A role must never choose between body, envelope, registry, or remembered contract shapes.",
+        "relations": [],
+        "replacement_state": "active",
+        "scoped_out_reason": "",
+        "side_effects": [],
+        "similarity_obligation_ids": [],
+        "similarity_relation_ids": [],
+        "source_refs": [
+          "skills/flowpilot/assets/flowpilot_new_role_commands.py"
+        ],
+        "source_surface_ids": [
+          "surface.current_handoff_checklist"
+        ],
+        "state_writes": [],
+        "supporting_model_ids": [
+          "flowpilot_field_contracts",
+          "packet_result_family"
+        ],
+        "surface_delegation_only": false,
+        "trigger": "ACKed current packet is opened for submission",
+        "validation_boundary": "mechanical handoff and checklist projection",
+        "variant_of_business_intent_id": ""
+      },
+      {
+        "actor": "FlowPilot validation harness",
+        "actor_kind": "automation",
+        "behavior_plane": "development_process",
+        "business_intent_id": "intent:flowpilot.prove-fake-ai-coverage-by-execution",
+        "child_model_ids": [],
+        "commitment_id": "commit.fake_ai_coverage_is_execution_backed",
+        "commitment_kind": "process",
+        "evidence": {
+          "code_contract_ids": [
+            "packet_result_family.formal_ai_execution_closure"
+          ],
+          "coverage_case_ids": [
+            "case:flowpilot.synthetic_agent_global_d_card_matrix",
+            "case:flowpilot.current_contract_cartesian_matrix",
+            "case:flowpilot.contract_exhaustion_mesh",
+            "case:flowpilot.ai_response_execution_closure"
+          ],
+          "coverage_receipt_ids": [
+            "contract_coverage:flowpilot_053_ppa_maintenance",
+            "contract_coverage:flowpilot_053_bcl_maintenance"
+          ],
+          "coverage_shard_ids": [
+            "contract_shard:flowpilot_053_ppa_maintenance:no_fallback_cartesian",
+            "contract_shard:flowpilot_053_bcl_maintenance:behavior_commitment_cartesian"
+          ],
+          "current": true,
+          "evidence_state": "current_pass",
+          "metadata": {},
+          "model_obligation_ids": [
+            "packet_result_family.formal_execution_covering_array_receipts"
+          ],
+          "proof_artifact_ids": [
+            "simulations/flowpilot_053_ppa_maintenance_results.json"
+          ],
+          "risk_gate_ids": [
+            "risk_gate:behavior_commitment_coverage:flowpilot_053_behavior_commitments",
+            "risk_gate:behavior_commitment_cartesian_coverage:flowpilot_053_behavior_commitments"
+          ],
+          "test_evidence_ids": [
+            "test:tests/test_flowpilot_formal_ai_contract_execution.py"
+          ],
+          "test_mesh_state": "shard_current"
+        },
+        "excluded_behavior_ids": [],
+        "expected_result": "declared, selected, executed, passed, failed, and not-run cases remain separate and selected rows carry real submit_result assertions",
+        "expected_terminal": "declared, selected, executed, passed, failed, and not-run cases remain separate and selected rows carry real submit_result assertions",
+        "external_differences": [],
+        "failure_boundary": "generated payloads, model cells, progress output, or hard-coded statuses cannot count as executed passes",
+        "in_scope": true,
+        "label": "Fake-AI coverage uses finite universes and real submit receipts.",
+        "lookup_binding": {
+          "error_signatures": [],
+          "metadata": {},
+          "path_patterns": [],
+          "task_terms": [],
+          "tool_ids": [],
+          "workflow_families": []
+        },
+        "metadata": {},
+        "miss_origin_state": "no_miss",
+        "model_sync_state": "owner_model_current",
+        "owner": "FlowGuard TestMesh",
+        "path_authority": {
+          "behavior_commitment_id": "",
+          "business_intent": "",
+          "business_intent_id": "",
+          "evidence_current": false,
+          "evidence_refs": [],
+          "fallback_candidate_ids": [],
+          "metadata": {},
+          "path_sensitive": false,
+          "ppa_confidence": "",
+          "ppa_coverage_receipt_ids": [],
+          "ppa_coverage_shard_ids": [],
+          "ppa_decision": "",
+          "ppa_ok": null,
+          "ppa_report_id": "",
+          "ppa_risk_gate_ids": [],
+          "primary_path_id": "",
+          "proof_artifact_ids": [],
+          "runtime_observation_ids": [],
+          "scoped_out_reason": ""
+        },
+        "preconditions": [],
+        "primary_owner_model_id": "flowpilot_053_ppa_maintenance",
+        "rationale": "The coverage claim is bounded but every selected cell must be observed, not inferred.",
+        "relations": [],
+        "replacement_state": "active",
+        "scoped_out_reason": "",
+        "side_effects": [],
+        "similarity_obligation_ids": [],
+        "similarity_relation_ids": [],
+        "source_refs": [
+          "simulations/flowpilot_ai_response_execution_closure_model.py"
+        ],
+        "source_surface_ids": [
+          "surface.fake_ai_execution_closure"
+        ],
+        "state_writes": [],
+        "supporting_model_ids": [
+          "flowpilot_contract_exhaustion_mesh",
+          "flowpilot_current_contract_cartesian_matrix"
+        ],
+        "surface_delegation_only": false,
+        "trigger": "AI-response coverage or release confidence is reported",
+        "validation_boundary": "finite mechanical universe and selected public submit execution",
+        "variant_of_business_intent_id": ""
+      },
+      {
+        "actor": "FlowGuard TestMesh",
+        "actor_kind": "automation",
+        "behavior_plane": "development_process",
+        "business_intent_id": "intent:flowpilot.admit-testmesh-child-only-with-current-proof",
+        "child_model_ids": [],
+        "commitment_id": "commit.testmesh_pass_requires_current_proof",
+        "commitment_kind": "process",
+        "evidence": {
+          "code_contract_ids": [
+            "packet_result_family.acceptance_testmesh_proof_binding"
+          ],
+          "coverage_case_ids": [
+            "case:flowpilot.synthetic_agent_global_d_card_matrix",
+            "case:flowpilot.current_contract_cartesian_matrix",
+            "case:flowpilot.contract_exhaustion_mesh",
+            "case:flowpilot.ai_response_execution_closure"
+          ],
+          "coverage_receipt_ids": [
+            "contract_coverage:flowpilot_053_ppa_maintenance",
+            "contract_coverage:flowpilot_053_bcl_maintenance"
+          ],
+          "coverage_shard_ids": [
+            "contract_shard:flowpilot_053_ppa_maintenance:no_fallback_cartesian",
+            "contract_shard:flowpilot_053_bcl_maintenance:behavior_commitment_cartesian"
+          ],
+          "current": true,
+          "evidence_state": "current_pass",
+          "metadata": {},
+          "model_obligation_ids": [
+            "packet_result_family.testmesh_requires_fingerprinted_proof"
+          ],
+          "proof_artifact_ids": [
+            "simulations/flowpilot_053_ppa_maintenance_results.json"
+          ],
+          "risk_gate_ids": [
+            "risk_gate:behavior_commitment_coverage:flowpilot_053_behavior_commitments",
+            "risk_gate:behavior_commitment_cartesian_coverage:flowpilot_053_behavior_commitments"
+          ],
+          "test_evidence_ids": [
+            "test:tests/test_flowpilot_acceptance_testmesh.py"
+          ],
+          "test_mesh_state": "shard_current"
+        },
+        "excluded_behavior_ids": [],
+        "expected_result": "the child supplies final command, result path, exit code, selected/executed counts, covered ids, and artifact fingerprints",
+        "expected_terminal": "the child supplies final command, result path, exit code, selected/executed counts, covered ids, and artifact fingerprints",
+        "external_differences": [],
+        "failure_boundary": "not-run, stale, progress-only, failed, missing-exit, or proof-free rows remain blocking",
+        "in_scope": true,
+        "label": "TestMesh green requires current fingerprinted proof artifacts.",
+        "lookup_binding": {
+          "error_signatures": [],
+          "metadata": {},
+          "path_patterns": [],
+          "task_terms": [],
+          "tool_ids": [],
+          "workflow_families": []
+        },
+        "metadata": {},
+        "miss_origin_state": "no_miss",
+        "model_sync_state": "owner_model_current",
+        "owner": "FlowGuard TestMesh",
+        "path_authority": {
+          "behavior_commitment_id": "",
+          "business_intent": "",
+          "business_intent_id": "",
+          "evidence_current": false,
+          "evidence_refs": [],
+          "fallback_candidate_ids": [],
+          "metadata": {},
+          "path_sensitive": false,
+          "ppa_confidence": "",
+          "ppa_coverage_receipt_ids": [],
+          "ppa_coverage_shard_ids": [],
+          "ppa_decision": "",
+          "ppa_ok": null,
+          "ppa_report_id": "",
+          "ppa_risk_gate_ids": [],
+          "primary_path_id": "",
+          "proof_artifact_ids": [],
+          "runtime_observation_ids": [],
+          "scoped_out_reason": ""
+        },
+        "preconditions": [],
+        "primary_owner_model_id": "flowpilot_053_ppa_maintenance",
+        "rationale": "A model-authored green label cannot substitute for an executed child proof.",
+        "relations": [],
+        "replacement_state": "active",
+        "scoped_out_reason": "",
+        "side_effects": [],
+        "similarity_obligation_ids": [],
+        "similarity_relation_ids": [],
+        "source_refs": [
+          "simulations/flowpilot_acceptance_testmesh_model.py"
+        ],
+        "source_surface_ids": [
+          "surface.acceptance_testmesh_proofs"
+        ],
+        "state_writes": [],
+        "supporting_model_ids": [
+          "flowpilot_acceptance_registry_testmesh"
+        ],
+        "surface_delegation_only": false,
+        "trigger": "a child suite is consumed by routine, done, release, or publish confidence",
+        "validation_boundary": "parent/child proof freshness and truth",
+        "variant_of_business_intent_id": ""
+      },
+      {
+        "actor": "project manager",
+        "actor_kind": "ai_agent",
+        "behavior_plane": "product_runtime",
+        "business_intent_id": "intent:flowpilot.project-terminal-acceptance-items-into-current-pm-repair",
+        "child_model_ids": [],
+        "commitment_id": "commit.dynamic_pm_repair_owns_active_acceptance_items",
+        "commitment_kind": "workflow",
+        "evidence": {
+          "code_contract_ids": [
+            "packet_result_family.runtime.dynamic_pm_repair_contract"
+          ],
+          "coverage_case_ids": [
+            "case:flowpilot.synthetic_agent_global_d_card_matrix",
+            "case:flowpilot.current_contract_cartesian_matrix",
+            "case:flowpilot.contract_exhaustion_mesh",
+            "case:flowpilot.ai_response_execution_closure"
+          ],
+          "coverage_receipt_ids": [
+            "contract_coverage:flowpilot_053_ppa_maintenance",
+            "contract_coverage:flowpilot_053_bcl_maintenance"
+          ],
+          "coverage_shard_ids": [
+            "contract_shard:flowpilot_053_ppa_maintenance:no_fallback_cartesian",
+            "contract_shard:flowpilot_053_bcl_maintenance:behavior_commitment_cartesian"
+          ],
+          "current": true,
+          "evidence_state": "current_pass",
+          "metadata": {},
+          "model_obligation_ids": [
+            "packet_result_family.dynamic_pm_repair_owner_projection"
+          ],
+          "proof_artifact_ids": [
+            "simulations/flowpilot_053_ppa_maintenance_results.json"
+          ],
+          "risk_gate_ids": [
+            "risk_gate:behavior_commitment_coverage:flowpilot_053_behavior_commitments",
+            "risk_gate:behavior_commitment_cartesian_coverage:flowpilot_053_behavior_commitments"
+          ],
+          "test_evidence_ids": [
+            "test:tests/test_flowpilot_new_entrypoint.py::test_fake_end_to_end_terminal_replay_blocker_repairs_to_completion"
+          ],
+          "test_mesh_state": "shard_current"
+        },
+        "excluded_behavior_ids": [],
+        "expected_result": "the current checklist projects all active acceptance items onto a route owner and supplemental repair item",
+        "expected_terminal": "the current checklist projects all active acceptance items onto a route owner and supplemental repair item",
+        "external_differences": [],
+        "failure_boundary": "static example ids or missing owner projection mechanically block and cannot enter an endless reissue loop",
+        "in_scope": true,
+        "label": "Terminal PM repair owns every current acceptance item.",
+        "lookup_binding": {
+          "error_signatures": [],
+          "metadata": {},
+          "path_patterns": [],
+          "task_terms": [],
+          "tool_ids": [],
+          "workflow_families": []
+        },
+        "metadata": {},
+        "miss_origin_state": "no_miss",
+        "model_sync_state": "owner_model_current",
+        "owner": "FlowPilot runtime/router",
+        "path_authority": {
+          "behavior_commitment_id": "commit.dynamic_pm_repair_owns_active_acceptance_items",
+          "business_intent": "Terminal PM repair owns every current acceptance item.",
+          "business_intent_id": "intent:flowpilot.project-terminal-acceptance-items-into-current-pm-repair",
+          "evidence_current": true,
+          "evidence_refs": [
+            "simulations/flowpilot_053_ppa_maintenance_results.json"
+          ],
+          "fallback_candidate_ids": [],
+          "metadata": {},
+          "path_sensitive": true,
+          "ppa_confidence": "full",
+          "ppa_coverage_receipt_ids": [
+            "contract_coverage:flowpilot_053_ppa_maintenance",
+            "contract_coverage:flowpilot_053_bcl_maintenance"
+          ],
+          "ppa_coverage_shard_ids": [
+            "contract_shard:flowpilot_053_ppa_maintenance:no_fallback_cartesian",
+            "contract_shard:flowpilot_053_bcl_maintenance:behavior_commitment_cartesian"
+          ],
+          "ppa_decision": "primary_path_authority_green",
+          "ppa_ok": true,
+          "ppa_report_id": "flowpilot_055_primary_path_authority",
+          "ppa_risk_gate_ids": [
+            "risk_gate:primary_path_authority:flowpilot_053_ppa_maintenance",
+            "risk_gate:primary_path_authority_cartesian_coverage:flowpilot_053_ppa_maintenance"
+          ],
+          "primary_path_id": "path.runtime.dynamic-pm-repair-owner-projection",
+          "proof_artifact_ids": [
+            "proof:flowpilot:path_runtime_dynamic_pm_repair_owner_projection"
+          ],
+          "runtime_observation_ids": [
+            "runtime:path_runtime_dynamic_pm_repair_owner_projection"
+          ],
+          "scoped_out_reason": ""
+        },
+        "preconditions": [],
+        "primary_owner_model_id": "flowpilot_053_ppa_maintenance",
+        "rationale": "This closes the observed acc-003 model miss without accepting a compatibility fallback.",
+        "relations": [],
+        "replacement_state": "active",
+        "scoped_out_reason": "",
+        "side_effects": [],
+        "similarity_obligation_ids": [],
+        "similarity_relation_ids": [],
+        "source_refs": [
+          "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py"
+        ],
+        "source_surface_ids": [
+          "surface.dynamic_pm_repair_contract"
+        ],
+        "state_writes": [],
+        "supporting_model_ids": [
+          "flowpilot_model_miss_review"
+        ],
+        "surface_delegation_only": false,
+        "trigger": "terminal backward replay creates a repair decision packet",
+        "validation_boundary": "terminal PM repair checklist projection",
+        "variant_of_business_intent_id": ""
+      },
+      {
+        "actor": "project manager, worker, reviewer, or FlowGuard operator",
+        "actor_kind": "ai_agent",
+        "behavior_plane": "agent_operation",
+        "business_intent_id": "intent:flowpilot.complete-bounded-substantive-role-workstream",
+        "child_model_ids": [],
+        "commitment_id": "commit.substantive_roles_complete_bounded_workstreams",
+        "commitment_kind": "workflow",
+        "evidence": {
+          "code_contract_ids": [
+            "role_output.semantic.workstream_plan_and_completion"
+          ],
+          "coverage_case_ids": [
+            "case:flowpilot.synthetic_agent_global_d_card_matrix",
+            "case:flowpilot.current_contract_cartesian_matrix",
+            "case:flowpilot.contract_exhaustion_mesh",
+            "case:flowpilot.ai_response_execution_closure"
+          ],
+          "coverage_receipt_ids": [
+            "contract_coverage:flowpilot_053_ppa_maintenance",
+            "contract_coverage:flowpilot_053_bcl_maintenance"
+          ],
+          "coverage_shard_ids": [
+            "contract_shard:flowpilot_053_ppa_maintenance:no_fallback_cartesian",
+            "contract_shard:flowpilot_053_bcl_maintenance:behavior_commitment_cartesian"
+          ],
+          "current": true,
+          "evidence_state": "current_pass",
+          "metadata": {},
+          "model_obligation_ids": [
+            "flowpilot_complete_workstream.substantive_role_plan_execute_verify_report"
+          ],
+          "proof_artifact_ids": [
+            "simulations/flowpilot_053_ppa_maintenance_results.json"
+          ],
+          "risk_gate_ids": [
+            "risk_gate:behavior_commitment_coverage:flowpilot_053_behavior_commitments",
+            "risk_gate:behavior_commitment_cartesian_coverage:flowpilot_053_behavior_commitments"
+          ],
+          "test_evidence_ids": [
+            "test:tests/test_flowpilot_complete_workstream_fake_ai.py"
+          ],
+          "test_mesh_state": "shard_current"
+        },
+        "excluded_behavior_ids": [],
+        "expected_result": "the role understands the bounded assignment, writes a numbered local plan, executes it, integrates delegated work, verifies and repairs the artifact, and reports each step with current evidence",
+        "expected_terminal": "the role understands the bounded assignment, writes a numbered local plan, executes it, integrates delegated work, verifies and repairs the artifact, and reports each step with current evidence",
+        "external_differences": [],
+        "failure_boundary": "a quick isolated reply, vague plan, incomplete required step, unintegrated delegation, stale evidence, or contradicted completion remains Reviewer-visible failure and routes through the existing PM repair path",
+        "in_scope": true,
+        "label": "Every substantive AI role owns a complete bounded workstream.",
+        "lookup_binding": {
+          "error_signatures": [],
+          "metadata": {},
+          "path_patterns": [],
+          "task_terms": [],
+          "tool_ids": [],
+          "workflow_families": []
+        },
+        "metadata": {
+          "change_mode": "modified",
+          "controller_excluded": true
+        },
+        "miss_origin_state": "no_miss",
+        "model_sync_state": "owner_model_current",
+        "owner": "Assigned substantive role agent",
+        "path_authority": {
+          "behavior_commitment_id": "",
+          "business_intent": "",
+          "business_intent_id": "",
+          "evidence_current": false,
+          "evidence_refs": [],
+          "fallback_candidate_ids": [],
+          "metadata": {},
+          "path_sensitive": false,
+          "ppa_confidence": "",
+          "ppa_coverage_receipt_ids": [],
+          "ppa_coverage_shard_ids": [],
+          "ppa_decision": "",
+          "ppa_ok": null,
+          "ppa_report_id": "",
+          "ppa_risk_gate_ids": [],
+          "primary_path_id": "",
+          "proof_artifact_ids": [],
+          "runtime_observation_ids": [],
+          "scoped_out_reason": ""
+        },
+        "preconditions": [],
+        "primary_owner_model_id": "flowpilot_053_ppa_maintenance",
+        "rationale": "A FlowPilot node is a complete accountable AI workstream inside the PM-owned route boundary.",
+        "relations": [],
+        "replacement_state": "active",
+        "scoped_out_reason": "",
+        "side_effects": [],
+        "similarity_obligation_ids": [],
+        "similarity_relation_ids": [],
+        "source_refs": [
+          "skills/flowpilot/assets/flowpilot_core_runtime/role_handoff.py",
+          "skills/flowpilot/assets/flowpilot_core_runtime/packet_result_contracts.py"
+        ],
+        "source_surface_ids": [
+          "surface.complete_role_workstream"
+        ],
+        "state_writes": [],
+        "supporting_model_ids": [
+          "flowpilot_complete_workstream_orchestration"
+        ],
+        "surface_delegation_only": false,
+        "trigger": "a current substantive role packet is opened",
+        "validation_boundary": "bounded role workstream and semantic completion evidence",
+        "variant_of_business_intent_id": ""
+      },
+      {
+        "actor": "controller",
+        "actor_kind": "ai_agent",
+        "behavior_plane": "agent_operation",
+        "business_intent_id": "intent:flowpilot.execute-runtime-foreground-action-only",
+        "child_model_ids": [],
+        "commitment_id": "commit.controller_uses_runtime_foreground_ledger_only",
+        "commitment_kind": "workflow",
+        "evidence": {
+          "code_contract_ids": [
+            "controller.runtime_foreground_action_ledger"
+          ],
+          "coverage_case_ids": [
+            "case:flowpilot.synthetic_agent_global_d_card_matrix",
+            "case:flowpilot.current_contract_cartesian_matrix",
+            "case:flowpilot.contract_exhaustion_mesh",
+            "case:flowpilot.ai_response_execution_closure"
+          ],
+          "coverage_receipt_ids": [
+            "contract_coverage:flowpilot_053_ppa_maintenance",
+            "contract_coverage:flowpilot_053_bcl_maintenance"
+          ],
+          "coverage_shard_ids": [
+            "contract_shard:flowpilot_053_ppa_maintenance:no_fallback_cartesian",
+            "contract_shard:flowpilot_053_bcl_maintenance:behavior_commitment_cartesian"
+          ],
+          "current": true,
+          "evidence_state": "current_pass",
+          "metadata": {},
+          "model_obligation_ids": [
+            "flowpilot_complete_workstream.controller_foreground_only"
+          ],
+          "proof_artifact_ids": [
+            "simulations/flowpilot_053_ppa_maintenance_results.json"
+          ],
+          "risk_gate_ids": [
+            "risk_gate:behavior_commitment_coverage:flowpilot_053_behavior_commitments",
+            "risk_gate:behavior_commitment_cartesian_coverage:flowpilot_053_behavior_commitments"
+          ],
+          "test_evidence_ids": [
+            "test:tests/test_flowpilot_complete_workstream_orchestration.py"
+          ],
+          "test_mesh_state": "shard_current"
+        },
+        "excluded_behavior_ids": [],
+        "expected_result": "Controller executes the current mechanical action and never authors a substantive project or role plan",
+        "expected_terminal": "Controller executes the current mechanical action and never authors a substantive project or role plan",
+        "external_differences": [],
+        "failure_boundary": "Controller planning, reviewing, researching, or inventing route work is rejected as authority leakage",
+        "in_scope": true,
+        "label": "Controller follows only the Runtime-derived foreground action ledger.",
+        "lookup_binding": {
+          "error_signatures": [],
+          "metadata": {},
+          "path_patterns": [],
+          "task_terms": [],
+          "tool_ids": [],
+          "workflow_families": []
+        },
+        "metadata": {
+          "change_mode": "retained"
+        },
+        "miss_origin_state": "no_miss",
+        "model_sync_state": "owner_model_current",
+        "owner": "FlowPilot runtime/router",
+        "path_authority": {
+          "behavior_commitment_id": "commit.controller_uses_runtime_foreground_ledger_only",
+          "business_intent": "Controller follows only the Runtime-derived foreground action ledger.",
+          "business_intent_id": "intent:flowpilot.execute-runtime-foreground-action-only",
+          "evidence_current": true,
+          "evidence_refs": [
+            "simulations/flowpilot_053_ppa_maintenance_results.json"
+          ],
+          "fallback_candidate_ids": [],
+          "metadata": {},
+          "path_sensitive": true,
+          "ppa_confidence": "full",
+          "ppa_coverage_receipt_ids": [
+            "contract_coverage:flowpilot_053_ppa_maintenance",
+            "contract_coverage:flowpilot_053_bcl_maintenance"
+          ],
+          "ppa_coverage_shard_ids": [
+            "contract_shard:flowpilot_053_ppa_maintenance:no_fallback_cartesian",
+            "contract_shard:flowpilot_053_bcl_maintenance:behavior_commitment_cartesian"
+          ],
+          "ppa_decision": "primary_path_authority_green",
+          "ppa_ok": true,
+          "ppa_report_id": "flowpilot_055_primary_path_authority",
+          "ppa_risk_gate_ids": [
+            "risk_gate:primary_path_authority:flowpilot_053_ppa_maintenance",
+            "risk_gate:primary_path_authority_cartesian_coverage:flowpilot_053_ppa_maintenance"
+          ],
+          "primary_path_id": "path.agent-operation.controller-runtime-foreground-action",
+          "proof_artifact_ids": [
+            "proof:flowpilot:path_agent_operation_controller_runtime_foreground_action"
+          ],
+          "runtime_observation_ids": [
+            "runtime:path_agent_operation_controller_runtime_foreground_action"
+          ],
+          "scoped_out_reason": ""
+        },
+        "preconditions": [],
+        "primary_owner_model_id": "flowpilot_053_ppa_maintenance",
+        "rationale": "Controller remains an execution shell while substantive roles receive full workstream autonomy.",
+        "relations": [],
+        "replacement_state": "active",
+        "scoped_out_reason": "",
+        "side_effects": [],
+        "similarity_obligation_ids": [],
+        "similarity_relation_ids": [],
+        "source_refs": [
+          "skills/flowpilot/assets/flowpilot_core_runtime/role_handoff.py"
+        ],
+        "source_surface_ids": [
+          "surface.controller_foreground_ledger"
+        ],
+        "state_writes": [],
+        "supporting_model_ids": [
+          "flowpilot_complete_workstream_orchestration"
+        ],
+        "surface_delegation_only": false,
+        "trigger": "FlowPilot requests the next foreground action",
+        "validation_boundary": "controller mechanical foreground authority",
+        "variant_of_business_intent_id": ""
+      },
+      {
+        "actor": "FlowPilot runtime then project manager",
+        "actor_kind": "ai_agent",
+        "behavior_plane": "agent_operation",
+        "business_intent_id": "intent:flowpilot.inventory-local-capabilities-before-pm-selection",
+        "child_model_ids": [],
+        "commitment_id": "commit.local_capability_inventory_precedes_pm_selection",
+        "commitment_kind": "workflow",
+        "evidence": {
+          "code_contract_ids": [
+            "task.discovery.current_capability_inventory"
+          ],
+          "coverage_case_ids": [
+            "case:flowpilot.synthetic_agent_global_d_card_matrix",
+            "case:flowpilot.current_contract_cartesian_matrix",
+            "case:flowpilot.contract_exhaustion_mesh",
+            "case:flowpilot.ai_response_execution_closure"
+          ],
+          "coverage_receipt_ids": [
+            "contract_coverage:flowpilot_053_ppa_maintenance",
+            "contract_coverage:flowpilot_053_bcl_maintenance"
+          ],
+          "coverage_shard_ids": [
+            "contract_shard:flowpilot_053_ppa_maintenance:no_fallback_cartesian",
+            "contract_shard:flowpilot_053_bcl_maintenance:behavior_commitment_cartesian"
+          ],
+          "current": true,
+          "evidence_state": "current_pass",
+          "metadata": {},
+          "model_obligation_ids": [
+            "flowpilot_resource_discovery.shallow_inventory_then_pm_selection"
+          ],
+          "proof_artifact_ids": [
+            "simulations/flowpilot_053_ppa_maintenance_results.json"
+          ],
+          "risk_gate_ids": [
+            "risk_gate:behavior_commitment_coverage:flowpilot_053_behavior_commitments",
+            "risk_gate:behavior_commitment_cartesian_coverage:flowpilot_053_behavior_commitments"
+          ],
+          "test_evidence_ids": [
+            "test:tests/test_flowpilot_ordinary_resource_discovery.py"
+          ],
+          "test_mesh_state": "shard_current"
+        },
+        "excluded_behavior_ids": [],
+        "expected_result": "Runtime records current local skill paths and availability without deep reading; PM selects relevant candidates, and only selected skills enter the existing skill-standard obligation path",
+        "expected_terminal": "Runtime records current local skill paths and availability without deep reading; PM selects relevant candidates, and only selected skills enter the existing skill-standard obligation path",
+        "external_differences": [],
+        "failure_boundary": "missing inventory, Runtime semantic selection, or deep reading every skill violates the single discovery path",
+        "in_scope": true,
+        "label": "A mandatory shallow local capability inventory precedes PM skill selection.",
+        "lookup_binding": {
+          "error_signatures": [],
+          "metadata": {},
+          "path_patterns": [],
+          "task_terms": [],
+          "tool_ids": [],
+          "workflow_families": []
+        },
+        "metadata": {
+          "change_mode": "modified"
+        },
+        "miss_origin_state": "no_miss",
+        "model_sync_state": "owner_model_current",
+        "owner": "Runtime inventory / PM selection",
+        "path_authority": {
+          "behavior_commitment_id": "commit.local_capability_inventory_precedes_pm_selection",
+          "business_intent": "A mandatory shallow local capability inventory precedes PM skill selection.",
+          "business_intent_id": "intent:flowpilot.inventory-local-capabilities-before-pm-selection",
+          "evidence_current": true,
+          "evidence_refs": [
+            "simulations/flowpilot_053_ppa_maintenance_results.json"
+          ],
+          "fallback_candidate_ids": [],
+          "metadata": {},
+          "path_sensitive": true,
+          "ppa_confidence": "full",
+          "ppa_coverage_receipt_ids": [
+            "contract_coverage:flowpilot_053_ppa_maintenance",
+            "contract_coverage:flowpilot_053_bcl_maintenance"
+          ],
+          "ppa_coverage_shard_ids": [
+            "contract_shard:flowpilot_053_ppa_maintenance:no_fallback_cartesian",
+            "contract_shard:flowpilot_053_bcl_maintenance:behavior_commitment_cartesian"
+          ],
+          "ppa_decision": "primary_path_authority_green",
+          "ppa_ok": true,
+          "ppa_report_id": "flowpilot_055_primary_path_authority",
+          "ppa_risk_gate_ids": [
+            "risk_gate:primary_path_authority:flowpilot_053_ppa_maintenance",
+            "risk_gate:primary_path_authority_cartesian_coverage:flowpilot_053_ppa_maintenance"
+          ],
+          "primary_path_id": "path.agent-operation.task-discovery-current-result-contract",
+          "proof_artifact_ids": [
+            "proof:flowpilot:path_agent_operation_task_discovery_current_result_contract"
+          ],
+          "runtime_observation_ids": [
+            "runtime:path_agent_operation_task_discovery_current_result_contract"
+          ],
+          "scoped_out_reason": ""
+        },
+        "preconditions": [],
+        "primary_owner_model_id": "flowpilot_053_ppa_maintenance",
+        "rationale": "Local skill discovery remains mandatory but its semantic relevance decision stays with PM.",
+        "relations": [],
+        "replacement_state": "active",
+        "scoped_out_reason": "",
+        "side_effects": [],
+        "similarity_obligation_ids": [],
+        "similarity_relation_ids": [],
+        "source_refs": [
+          "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py"
+        ],
+        "source_surface_ids": [
+          "surface.local_capability_inventory"
+        ],
+        "state_writes": [],
+        "supporting_model_ids": [
+          "flowpilot_ordinary_resource_discovery",
+          "flowpilot_field_contracts"
+        ],
+        "surface_delegation_only": false,
+        "trigger": "the current run enters preplanning discovery",
+        "validation_boundary": "current packet-only capability inventory and selected-skill handoff",
+        "variant_of_business_intent_id": ""
+      },
+      {
+        "actor": "project manager and assigned worker",
+        "actor_kind": "ai_agent",
+        "behavior_plane": "agent_operation",
+        "business_intent_id": "intent:flowpilot.perform-material-work-through-ordinary-role-package",
+        "child_model_ids": [],
+        "commitment_id": "commit.material_work_uses_ordinary_role_packages",
+        "commitment_kind": "workflow",
+        "evidence": {
+          "code_contract_ids": [
+            "task.node.ordinary_material_or_research_work"
+          ],
+          "coverage_case_ids": [
+            "case:flowpilot.synthetic_agent_global_d_card_matrix",
+            "case:flowpilot.current_contract_cartesian_matrix",
+            "case:flowpilot.contract_exhaustion_mesh",
+            "case:flowpilot.ai_response_execution_closure"
+          ],
+          "coverage_receipt_ids": [
+            "contract_coverage:flowpilot_053_ppa_maintenance",
+            "contract_coverage:flowpilot_053_bcl_maintenance"
+          ],
+          "coverage_shard_ids": [
+            "contract_shard:flowpilot_053_ppa_maintenance:no_fallback_cartesian",
+            "contract_shard:flowpilot_053_bcl_maintenance:behavior_commitment_cartesian"
+          ],
+          "current": true,
+          "evidence_state": "current_pass",
+          "metadata": {},
+          "model_obligation_ids": [
+            "flowpilot_resource_discovery.material_work_is_ordinary_role_work"
+          ],
+          "proof_artifact_ids": [
+            "simulations/flowpilot_053_ppa_maintenance_results.json"
+          ],
+          "risk_gate_ids": [
+            "risk_gate:behavior_commitment_coverage:flowpilot_053_behavior_commitments",
+            "risk_gate:behavior_commitment_cartesian_coverage:flowpilot_053_behavior_commitments"
+          ],
+          "test_evidence_ids": [
+            "test:tests/test_flowpilot_ordinary_resource_discovery.py"
+          ],
+          "test_mesh_state": "shard_current"
+        },
+        "excluded_behavior_ids": [],
+        "expected_result": "PM issues ordinary bounded task.node work and existing FlowGuard/Reviewer gates assess its process and quality",
+        "expected_terminal": "PM issues ordinary bounded task.node work and existing FlowGuard/Reviewer gates assess its process and quality",
+        "external_differences": [],
+        "failure_boundary": "no dedicated material-scan form, material-sufficiency state, mandatory material card, or parallel review authority may advance the current path",
+        "in_scope": true,
+        "label": "Material reading and research use ordinary PM role packages.",
+        "lookup_binding": {
+          "error_signatures": [],
+          "metadata": {},
+          "path_patterns": [],
+          "task_terms": [],
+          "tool_ids": [],
+          "workflow_families": []
+        },
+        "metadata": {
+          "change_mode": "removed_special_gate"
+        },
+        "miss_origin_state": "no_miss",
+        "model_sync_state": "owner_model_current",
+        "owner": "Project manager route planning",
+        "path_authority": {
+          "behavior_commitment_id": "commit.material_work_uses_ordinary_role_packages",
+          "business_intent": "Material reading and research use ordinary PM role packages.",
+          "business_intent_id": "intent:flowpilot.perform-material-work-through-ordinary-role-package",
+          "evidence_current": true,
+          "evidence_refs": [
+            "simulations/flowpilot_053_ppa_maintenance_results.json"
+          ],
+          "fallback_candidate_ids": [],
+          "metadata": {},
+          "path_sensitive": true,
+          "ppa_confidence": "full",
+          "ppa_coverage_receipt_ids": [
+            "contract_coverage:flowpilot_053_ppa_maintenance",
+            "contract_coverage:flowpilot_053_bcl_maintenance"
+          ],
+          "ppa_coverage_shard_ids": [
+            "contract_shard:flowpilot_053_ppa_maintenance:no_fallback_cartesian",
+            "contract_shard:flowpilot_053_bcl_maintenance:behavior_commitment_cartesian"
+          ],
+          "ppa_decision": "primary_path_authority_green",
+          "ppa_ok": true,
+          "ppa_report_id": "flowpilot_055_primary_path_authority",
+          "ppa_risk_gate_ids": [
+            "risk_gate:primary_path_authority:flowpilot_053_ppa_maintenance",
+            "risk_gate:primary_path_authority_cartesian_coverage:flowpilot_053_ppa_maintenance"
+          ],
+          "primary_path_id": "path.agent-operation.ordinary-material-role-package",
+          "proof_artifact_ids": [
+            "proof:flowpilot:path_agent_operation_ordinary_material_role_package"
+          ],
+          "runtime_observation_ids": [
+            "runtime:path_agent_operation_ordinary_material_role_package"
+          ],
+          "scoped_out_reason": ""
+        },
+        "preconditions": [],
+        "primary_owner_model_id": "flowpilot_053_ppa_maintenance",
+        "rationale": "Material work varies by project and should not be a universal special stage.",
+        "relations": [],
+        "replacement_state": "active",
+        "scoped_out_reason": "",
+        "side_effects": [],
+        "similarity_obligation_ids": [],
+        "similarity_relation_ids": [],
+        "source_refs": [
+          "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+          "skills/flowpilot/assets/runtime_kit/cards/phases/pm_research_package.md"
+        ],
+        "source_surface_ids": [
+          "surface.ordinary_material_work"
+        ],
+        "state_writes": [],
+        "supporting_model_ids": [
+          "flowpilot_ordinary_resource_discovery",
+          "flowpilot_field_contracts"
+        ],
+        "surface_delegation_only": false,
+        "trigger": "the project needs reading, research, experiment, source verification, or material synthesis",
+        "validation_boundary": "ordinary role package plus existing process and quality gates",
+        "variant_of_business_intent_id": ""
+      },
+      {
+        "actor": "reviewer then project manager",
+        "actor_kind": "ai_agent",
+        "behavior_plane": "agent_operation",
+        "business_intent_id": "intent:flowpilot.audit-role-plan-completion-and-record-pm-disposition",
+        "child_model_ids": [],
+        "commitment_id": "commit.reviewer_audits_plan_completion_and_pm_disposition",
+        "commitment_kind": "workflow",
+        "evidence": {
+          "code_contract_ids": [
+            "review_window.semantic_plan_completion_audit"
+          ],
+          "coverage_case_ids": [
+            "case:flowpilot.synthetic_agent_global_d_card_matrix",
+            "case:flowpilot.current_contract_cartesian_matrix",
+            "case:flowpilot.contract_exhaustion_mesh",
+            "case:flowpilot.ai_response_execution_closure"
+          ],
+          "coverage_receipt_ids": [
+            "contract_coverage:flowpilot_053_ppa_maintenance",
+            "contract_coverage:flowpilot_053_bcl_maintenance"
+          ],
+          "coverage_shard_ids": [
+            "contract_shard:flowpilot_053_ppa_maintenance:no_fallback_cartesian",
+            "contract_shard:flowpilot_053_bcl_maintenance:behavior_commitment_cartesian"
+          ],
+          "current": true,
+          "evidence_state": "current_pass",
+          "metadata": {},
+          "model_obligation_ids": [
+            "flowpilot_complete_workstream.reviewer_audit_and_pm_disposition"
+          ],
+          "proof_artifact_ids": [
+            "simulations/flowpilot_053_ppa_maintenance_results.json"
+          ],
+          "risk_gate_ids": [
+            "risk_gate:behavior_commitment_coverage:flowpilot_053_behavior_commitments",
+            "risk_gate:behavior_commitment_cartesian_coverage:flowpilot_053_behavior_commitments"
+          ],
+          "test_evidence_ids": [
+            "test:tests/test_flowpilot_complete_workstream_fake_ai.py"
+          ],
+          "test_mesh_state": "shard_current"
+        },
+        "excluded_behavior_ids": [],
+        "expected_result": "Reviewer compares every numbered step, delegation, integration, verification, repair, and blocker claim with the actual artifact; every score below nine receives an explicit PM disposition without becoming an automatic Runtime blocker",
+        "expected_terminal": "Reviewer compares every numbered step, delegation, integration, verification, repair, and blocker claim with the actual artifact; every score below nine receives an explicit PM disposition without becoming an automatic Runtime blocker",
+        "external_differences": [],
+        "failure_boundary": "unchecked self-report, silent low score, or Runtime semantic scoring cannot authorize the next gate",
+        "in_scope": true,
+        "label": "Reviewer audits reported plan completion against actual evidence.",
+        "lookup_binding": {
+          "error_signatures": [],
+          "metadata": {},
+          "path_patterns": [],
+          "task_terms": [],
+          "tool_ids": [],
+          "workflow_families": []
+        },
+        "metadata": {
+          "change_mode": "modified",
+          "sub9_auto_block": false
+        },
+        "miss_origin_state": "no_miss",
+        "model_sync_state": "owner_model_current",
+        "owner": "Reviewer quality / PM disposition",
+        "path_authority": {
+          "behavior_commitment_id": "",
+          "business_intent": "",
+          "business_intent_id": "",
+          "evidence_current": false,
+          "evidence_refs": [],
+          "fallback_candidate_ids": [],
+          "metadata": {},
+          "path_sensitive": false,
+          "ppa_confidence": "",
+          "ppa_coverage_receipt_ids": [],
+          "ppa_coverage_shard_ids": [],
+          "ppa_decision": "",
+          "ppa_ok": null,
+          "ppa_report_id": "",
+          "ppa_risk_gate_ids": [],
+          "primary_path_id": "",
+          "proof_artifact_ids": [],
+          "runtime_observation_ids": [],
+          "scoped_out_reason": ""
+        },
+        "preconditions": [],
+        "primary_owner_model_id": "flowpilot_053_ppa_maintenance",
+        "rationale": "The report makes plan discipline auditable without turning prose quality into a brittle Runtime schema gate.",
+        "relations": [],
+        "replacement_state": "active",
+        "scoped_out_reason": "",
+        "side_effects": [],
+        "similarity_obligation_ids": [],
+        "similarity_relation_ids": [],
+        "source_refs": [
+          "skills/flowpilot/assets/flowpilot_core_runtime/review_window_contracts.py"
+        ],
+        "source_surface_ids": [
+          "surface.reviewer_plan_completion_audit"
+        ],
+        "state_writes": [],
+        "supporting_model_ids": [
+          "flowpilot_complete_workstream_orchestration"
+        ],
+        "surface_delegation_only": false,
+        "trigger": "a substantive role result enters its current review window",
+        "validation_boundary": "semantic quality review and current PM repair decision",
+        "variant_of_business_intent_id": ""
+      },
+      {
+        "actor": "any substantive role using role-local FlowGuard",
+        "actor_kind": "ai_agent",
+        "behavior_plane": "agent_operation",
+        "business_intent_id": "intent:flowpilot.keep-role-local-flowguard-advisory",
+        "child_model_ids": [],
+        "commitment_id": "commit.role_local_flowguard_cannot_self_approve",
+        "commitment_kind": "workflow",
+        "evidence": {
+          "code_contract_ids": [
+            "role_output.semantic.role_local_flowguard_boundary"
+          ],
+          "coverage_case_ids": [
+            "case:flowpilot.synthetic_agent_global_d_card_matrix",
+            "case:flowpilot.current_contract_cartesian_matrix",
+            "case:flowpilot.contract_exhaustion_mesh",
+            "case:flowpilot.ai_response_execution_closure"
+          ],
+          "coverage_receipt_ids": [
+            "contract_coverage:flowpilot_053_ppa_maintenance",
+            "contract_coverage:flowpilot_053_bcl_maintenance"
+          ],
+          "coverage_shard_ids": [
+            "contract_shard:flowpilot_053_ppa_maintenance:no_fallback_cartesian",
+            "contract_shard:flowpilot_053_bcl_maintenance:behavior_commitment_cartesian"
+          ],
+          "current": true,
+          "evidence_state": "current_pass",
+          "metadata": {},
+          "model_obligation_ids": [
+            "flowpilot_complete_workstream.role_local_flowguard_no_self_approval"
+          ],
+          "proof_artifact_ids": [
+            "simulations/flowpilot_053_ppa_maintenance_results.json"
+          ],
+          "risk_gate_ids": [
+            "risk_gate:behavior_commitment_coverage:flowpilot_053_behavior_commitments",
+            "risk_gate:behavior_commitment_cartesian_coverage:flowpilot_053_behavior_commitments"
+          ],
+          "test_evidence_ids": [
+            "test:tests/test_flowpilot_complete_workstream_fake_ai.py"
+          ],
+          "test_mesh_state": "shard_current"
+        },
+        "excluded_behavior_ids": [],
+        "expected_result": "role-local evidence is integrated into the report while the independent formal FlowGuard and Reviewer gates remain authoritative",
+        "expected_terminal": "role-local evidence is integrated into the report while the independent formal FlowGuard and Reviewer gates remain authoritative",
+        "external_differences": [],
+        "failure_boundary": "a role-local pass cannot replace, weaken, or pre-satisfy the formal independent gates",
+        "in_scope": true,
+        "label": "Role-local FlowGuard improves work but cannot self-approve it.",
+        "lookup_binding": {
+          "error_signatures": [],
+          "metadata": {},
+          "path_patterns": [],
+          "task_terms": [],
+          "tool_ids": [],
+          "workflow_families": []
+        },
+        "metadata": {
+          "change_mode": "retained_and_explicit"
+        },
+        "miss_origin_state": "no_miss",
+        "model_sync_state": "owner_model_current",
+        "owner": "Formal FlowGuard and Reviewer gates",
+        "path_authority": {
+          "behavior_commitment_id": "",
+          "business_intent": "",
+          "business_intent_id": "",
+          "evidence_current": false,
+          "evidence_refs": [],
+          "fallback_candidate_ids": [],
+          "metadata": {},
+          "path_sensitive": false,
+          "ppa_confidence": "",
+          "ppa_coverage_receipt_ids": [],
+          "ppa_coverage_shard_ids": [],
+          "ppa_decision": "",
+          "ppa_ok": null,
+          "ppa_report_id": "",
+          "ppa_risk_gate_ids": [],
+          "primary_path_id": "",
+          "proof_artifact_ids": [],
+          "runtime_observation_ids": [],
+          "scoped_out_reason": ""
+        },
+        "preconditions": [],
+        "primary_owner_model_id": "flowpilot_053_ppa_maintenance",
+        "rationale": "FlowGuard can be used by every role without collapsing independent oversight.",
+        "relations": [],
+        "replacement_state": "active",
+        "scoped_out_reason": "",
+        "side_effects": [],
+        "similarity_obligation_ids": [],
+        "similarity_relation_ids": [],
+        "source_refs": [
+          "skills/flowpilot/assets/flowpilot_core_runtime/role_handoff.py"
+        ],
+        "source_surface_ids": [
+          "surface.role_local_flowguard_boundary"
+        ],
+        "state_writes": [],
+        "supporting_model_ids": [
+          "flowpilot_complete_workstream_orchestration"
+        ],
+        "surface_delegation_only": false,
+        "trigger": "the role uses FlowGuard to plan, model, inspect, or repair its own workstream",
+        "validation_boundary": "independence of role-local assistance and formal approval",
+        "variant_of_business_intent_id": ""
+      },
+      {
+        "actor": "assigned role agent",
+        "actor_kind": "ai_agent",
+        "behavior_plane": "agent_operation",
+        "business_intent_id": "intent:flowpilot.navigate-current-material-artifact-map",
+        "child_model_ids": [],
+        "commitment_id": "commit.material_map_is_optional_navigation_only",
+        "commitment_kind": "workflow",
+        "evidence": {
+          "code_contract_ids": [
+            "material_artifact_map.navigation_status"
+          ],
+          "coverage_case_ids": [
+            "case:flowpilot.synthetic_agent_global_d_card_matrix",
+            "case:flowpilot.current_contract_cartesian_matrix",
+            "case:flowpilot.contract_exhaustion_mesh",
+            "case:flowpilot.ai_response_execution_closure"
+          ],
+          "coverage_receipt_ids": [
+            "contract_coverage:flowpilot_053_ppa_maintenance",
+            "contract_coverage:flowpilot_053_bcl_maintenance"
+          ],
+          "coverage_shard_ids": [
+            "contract_shard:flowpilot_053_ppa_maintenance:no_fallback_cartesian",
+            "contract_shard:flowpilot_053_bcl_maintenance:behavior_commitment_cartesian"
+          ],
+          "current": true,
+          "evidence_state": "current_pass",
+          "metadata": {},
+          "model_obligation_ids": [
+            "material_artifact_map.optional_navigation_nonblocking"
+          ],
+          "proof_artifact_ids": [
+            "simulations/flowpilot_material_artifact_map_results.json"
+          ],
+          "risk_gate_ids": [
+            "risk_gate:behavior_commitment_coverage:flowpilot_053_behavior_commitments",
+            "risk_gate:behavior_commitment_cartesian_coverage:flowpilot_053_behavior_commitments"
+          ],
+          "test_evidence_ids": [
+            "test:tests/test_flowpilot_material_access_mesh.py"
+          ],
+          "test_mesh_state": "shard_current"
+        },
+        "excluded_behavior_ids": [],
+        "expected_result": "current review paths are linked while absent, stale, or unsafe maps remain omitted and nonblocking",
+        "expected_terminal": "safe current navigation paths are linked or the optional map is visibly omitted without blocking",
+        "external_differences": [],
+        "failure_boundary": "the map never becomes acceptance evidence, a mandatory stage, or an alternate success authority",
+        "in_scope": true,
+        "label": "Material artifact map remains optional navigation only.",
+        "lookup_binding": {
+          "error_signatures": [],
+          "metadata": {},
+          "path_patterns": [],
+          "task_terms": [],
+          "tool_ids": [],
+          "workflow_families": []
+        },
+        "metadata": {},
+        "miss_origin_state": "no_miss",
+        "model_sync_state": "owner_model_current",
+        "owner": "OptionalMaterialArtifactMapStep",
+        "path_authority": {
+          "behavior_commitment_id": "commit.material_map_is_optional_navigation_only",
+          "business_intent": "Material artifact map remains optional navigation only.",
+          "business_intent_id": "intent:flowpilot.navigate-current-material-artifact-map",
+          "evidence_current": true,
+          "evidence_refs": [
+            "simulations/flowpilot_053_ppa_maintenance_results.json"
+          ],
+          "fallback_candidate_ids": [],
+          "metadata": {},
+          "path_sensitive": true,
+          "ppa_confidence": "full",
+          "ppa_coverage_receipt_ids": [
+            "contract_coverage:flowpilot_053_ppa_maintenance",
+            "contract_coverage:flowpilot_053_bcl_maintenance"
+          ],
+          "ppa_coverage_shard_ids": [
+            "contract_shard:flowpilot_053_ppa_maintenance:no_fallback_cartesian",
+            "contract_shard:flowpilot_053_bcl_maintenance:behavior_commitment_cartesian"
+          ],
+          "ppa_decision": "primary_path_authority_green",
+          "ppa_ok": true,
+          "ppa_report_id": "flowpilot_055_primary_path_authority",
+          "ppa_risk_gate_ids": [
+            "risk_gate:primary_path_authority:flowpilot_053_ppa_maintenance",
+            "risk_gate:primary_path_authority_cartesian_coverage:flowpilot_053_ppa_maintenance"
+          ],
+          "primary_path_id": "path.agent-operation.material-artifact-map-navigation",
+          "proof_artifact_ids": [
+            "proof:flowpilot:path_agent_operation_material_artifact_map_navigation"
+          ],
+          "runtime_observation_ids": [
+            "runtime:path_agent_operation_material_artifact_map_navigation"
+          ],
+          "scoped_out_reason": ""
+        },
+        "preconditions": [],
+        "primary_owner_model_id": "flowpilot_optional_material_artifact_map",
+        "rationale": "The optional map has a distinct agent-operation terminal and cannot borrow ordinary material-work authority.",
+        "relations": [],
+        "replacement_state": "active",
+        "scoped_out_reason": "",
+        "side_effects": [],
+        "similarity_obligation_ids": [],
+        "similarity_relation_ids": [],
+        "source_refs": [
+          "skills/flowpilot/assets/flowpilot_material_artifact_map.py"
+        ],
+        "source_surface_ids": [
+          "surface.optional_material_artifact_map"
+        ],
+        "state_writes": [],
+        "supporting_model_ids": [
+          "flowpilot_ordinary_resource_discovery"
+        ],
+        "surface_delegation_only": false,
+        "trigger": "a current safe material map exists and the role requests navigation",
+        "validation_boundary": "safe/current/usable navigation only; absence and unsafe state are nonblocking",
+        "variant_of_business_intent_id": ""
+      },
+      {
+        "actor": "FlowPilot model-test alignment runner",
+        "actor_kind": "automation",
+        "behavior_plane": "development_process",
+        "business_intent_id": "intent:flowpilot.validate-model-test-alignment-with-current-runtime-evidence",
+        "child_model_ids": [],
+        "commitment_id": "commit.model_test_alignment_uses_current_runtime_path_evidence",
+        "commitment_kind": "process",
+        "evidence": {
+          "code_contract_ids": [
+            "flowpilot_model_test_alignment.runtime_path_evidence"
+          ],
+          "coverage_case_ids": [
+            "case:flowpilot.current_contract_cartesian_matrix"
+          ],
+          "coverage_receipt_ids": [
+            "contract_coverage:flowpilot_053_bcl_maintenance"
+          ],
+          "coverage_shard_ids": [
+            "contract_shard:flowpilot_053_bcl_maintenance:behavior_commitment_cartesian"
+          ],
+          "current": true,
+          "evidence_state": "current_pass",
+          "metadata": {},
+          "model_obligation_ids": [
+            "flowpilot_model_test_alignment.current_runtime_path_evidence"
+          ],
+          "proof_artifact_ids": [
+            "simulations/flowpilot_model_test_alignment_results.json"
+          ],
+          "risk_gate_ids": [
+            "risk_gate:behavior_commitment_coverage:flowpilot_053_behavior_commitments",
+            "risk_gate:behavior_commitment_cartesian_coverage:flowpilot_053_behavior_commitments"
+          ],
+          "test_evidence_ids": [
+            "test:tests/test_flowpilot_model_test_alignment.py"
+          ],
+          "test_mesh_state": "shard_current"
+        },
+        "excluded_behavior_ids": [],
+        "expected_result": "diagnostic nodes compare current test proof with the declared model obligations under one stable development-process authority",
+        "expected_terminal": "all required diagnostic runtime nodes carry current proof and the same stable process authority or alignment remains blocked",
+        "external_differences": [],
+        "failure_boundary": "missing, stale, mismatched, or multi-authority diagnostic identity blocks alignment without rewriting product obligations",
+        "in_scope": true,
+        "label": "Model-test alignment consumes one current diagnostic runtime-path authority.",
+        "lookup_binding": {
+          "error_signatures": [],
+          "metadata": {},
+          "path_patterns": [
+            "skills/flowpilot/assets/flowpilot_runtime_path_evidence.py",
+            "simulations/flowpilot_model_test_alignment_family_plans.py"
+          ],
+          "task_terms": [
+            "model test alignment",
+            "runtime path evidence"
+          ],
+          "tool_ids": [],
+          "workflow_families": [
+            "model_test_alignment"
+          ]
+        },
+        "metadata": {},
+        "miss_origin_state": "no_miss",
+        "model_sync_state": "owner_model_current",
+        "owner": "FlowPilot model-test alignment",
+        "path_authority": {
+          "behavior_commitment_id": "commit.model_test_alignment_uses_current_runtime_path_evidence",
+          "business_intent": "validate model-test alignment with current diagnostic runtime-path evidence",
+          "business_intent_id": "intent:flowpilot.validate-model-test-alignment-with-current-runtime-evidence",
+          "evidence_current": true,
+          "evidence_refs": [
+            "simulations/flowpilot_model_test_alignment_results.json"
+          ],
+          "fallback_candidate_ids": [],
+          "metadata": {},
+          "path_sensitive": true,
+          "ppa_confidence": "full",
+          "ppa_coverage_receipt_ids": [
+            "contract_coverage:flowpilot_053_ppa_maintenance",
+            "contract_coverage:flowpilot_053_bcl_maintenance"
+          ],
+          "ppa_coverage_shard_ids": [
+            "contract_shard:flowpilot_053_ppa_maintenance:no_fallback_cartesian",
+            "contract_shard:flowpilot_053_bcl_maintenance:behavior_commitment_cartesian"
+          ],
+          "ppa_decision": "primary_path_authority_green",
+          "ppa_ok": true,
+          "ppa_report_id": "flowpilot_055_primary_path_authority",
+          "ppa_risk_gate_ids": [
+            "risk_gate:primary_path_authority:flowpilot_053_ppa_maintenance",
+            "risk_gate:primary_path_authority_cartesian_coverage:flowpilot_053_ppa_maintenance"
+          ],
+          "primary_path_id": "path.development-process.model-test-alignment-current-evidence",
+          "proof_artifact_ids": [
+            "proof:flowpilot:path_development_process_model_test_alignment_current_evidence"
+          ],
+          "runtime_observation_ids": [
+            "runtime:path_development_process_model_test_alignment_current_evidence"
+          ],
+          "scoped_out_reason": ""
+        },
+        "preconditions": [],
+        "primary_owner_model_id": "flowpilot_model_test_alignment",
+        "rationale": "FlowGuard 0.55 requires stable authority for diagnostic runtime evidence, which is distinct from the product behavior being compared.",
+        "relations": [],
+        "replacement_state": "active",
+        "scoped_out_reason": "",
+        "side_effects": [],
+        "similarity_obligation_ids": [],
+        "similarity_relation_ids": [],
+        "source_refs": [
+          "skills/flowpilot/assets/flowpilot_runtime_path_evidence.py"
+        ],
+        "source_surface_ids": [
+          "surface.model_test_alignment_runtime_path"
+        ],
+        "state_writes": [],
+        "supporting_model_ids": [
+          "flowpilot_acceptance_registry_testmesh"
+        ],
+        "surface_delegation_only": false,
+        "trigger": "a FlowPilot model-test alignment family is reviewed",
+        "validation_boundary": "diagnostic execution identity only; compared product obligations remain unchanged",
+        "variant_of_business_intent_id": ""
+      }
+    ],
+    "current_revision": "flowguard-0.55-exact-mta-runtime-path-authority",
+    "expected_business_intent_ids": [
+      "intent:flowpilot.submit-current-packet-result",
+      "intent:flowpilot.apply-current-control-blocker-repair",
+      "intent:flowpilot.relay-role-authored-pm-visible-summary",
+      "intent:flowpilot.open-authorized-current-result-material",
+      "intent:flowpilot.admit-broad-claim-only-with-current-evidence",
+      "intent:flowpilot.open-current-submission-checklist",
+      "intent:flowpilot.prove-fake-ai-coverage-by-execution",
+      "intent:flowpilot.admit-testmesh-child-only-with-current-proof",
+      "intent:flowpilot.project-terminal-acceptance-items-into-current-pm-repair",
+      "intent:flowpilot.complete-bounded-substantive-role-workstream",
+      "intent:flowpilot.execute-runtime-foreground-action-only",
+      "intent:flowpilot.inventory-local-capabilities-before-pm-selection",
+      "intent:flowpilot.perform-material-work-through-ordinary-role-package",
+      "intent:flowpilot.audit-role-plan-completion-and-record-pm-disposition",
+      "intent:flowpilot.keep-role-local-flowguard-advisory",
+      "intent:flowpilot.navigate-current-material-artifact-map",
+      "intent:flowpilot.validate-model-test-alignment-with-current-runtime-evidence"
+    ],
+    "expected_commitment_ids": [
+      "commit.result_submission_current_contract_only",
+      "commit.repair_reissue_no_fallback",
+      "commit.pm_visible_summary_is_role_authored",
+      "commit.authorized_result_reads_are_required_material",
+      "commit.release_claims_require_current_evidence",
+      "commit.current_handoff_checklist_single_authority",
+      "commit.fake_ai_coverage_is_execution_backed",
+      "commit.testmesh_pass_requires_current_proof",
+      "commit.dynamic_pm_repair_owns_active_acceptance_items",
+      "commit.substantive_roles_complete_bounded_workstreams",
+      "commit.controller_uses_runtime_foreground_ledger_only",
+      "commit.local_capability_inventory_precedes_pm_selection",
+      "commit.material_work_uses_ordinary_role_packages",
+      "commit.reviewer_audits_plan_completion_and_pm_disposition",
+      "commit.role_local_flowguard_cannot_self_approve",
+      "commit.material_map_is_optional_navigation_only",
+      "commit.model_test_alignment_uses_current_runtime_path_evidence"
+    ],
+    "ledger_id": "flowpilot_behavior_commitments",
+    "metadata": {
+      "canonical_authority": ".flowguard/behavior_commitment_ledger/ledger.json",
+      "model_test_alignment_runtime_path_commitment_id": "commit.model_test_alignment_uses_current_runtime_path_evidence",
+      "python_adapter_role": "thin_loader_only"
+    },
+    "owner": "FlowPilot maintenance",
+    "project_boundary": "FlowPilot current-contract runtime, prompts, models, tests, and install sync",
+    "rationale": "Registers the user-visible no-fallback and evidence freshness promises before broad confidence claims.",
+    "require_current_evidence": true,
+    "require_risk_gates_for_broad_claim": true,
+    "source_surfaces": [
+      {
+        "business_intent_ids": [
+          "intent:flowpilot.submit-current-packet-result"
+        ],
+        "commitment_ids": [
+          "commit.result_submission_current_contract_only"
+        ],
+        "delegates_to_primary_path": false,
+        "freshness_state": "current",
+        "in_scope": true,
+        "label": "surface.runtime.submit_result",
+        "metadata": {},
+        "owner": "FlowPilot maintenance model",
+        "primary_path_id": "path.runtime.submit-current-result",
+        "rationale": "Maps a current behavior surface to one behavior commitment.",
+        "scoped_out_reason": "",
+        "similarity_obligation_ids": [],
+        "similarity_relation_ids": [],
+        "source_ref": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+        "surface_id": "surface.runtime.submit_result",
+        "surface_kind": "code",
+        "validation_boundary": "current FlowPilot runtime contract"
+      },
+      {
+        "business_intent_ids": [
+          "intent:flowpilot.apply-current-control-blocker-repair"
+        ],
+        "commitment_ids": [
+          "commit.repair_reissue_no_fallback"
+        ],
+        "delegates_to_primary_path": false,
+        "freshness_state": "current",
+        "in_scope": true,
+        "label": "surface.runtime.repair_reissue",
+        "metadata": {},
+        "owner": "FlowPilot maintenance model",
+        "primary_path_id": "path.runtime.apply-current-control-blocker-repair",
+        "rationale": "Maps a current behavior surface to one behavior commitment.",
+        "scoped_out_reason": "",
+        "similarity_obligation_ids": [],
+        "similarity_relation_ids": [],
+        "source_ref": "skills/flowpilot/assets/flowpilot_router_events_repair_repair_decisions.py",
+        "surface_id": "surface.runtime.repair_reissue",
+        "surface_kind": "code",
+        "validation_boundary": "current FlowPilot runtime contract"
+      },
+      {
+        "business_intent_ids": [
+          "intent:flowpilot.relay-role-authored-pm-visible-summary"
+        ],
+        "commitment_ids": [
+          "commit.pm_visible_summary_is_role_authored"
+        ],
+        "delegates_to_primary_path": false,
+        "freshness_state": "current",
+        "in_scope": true,
+        "label": "surface.pm_visible_summary",
+        "metadata": {},
+        "owner": "FlowPilot maintenance model",
+        "primary_path_id": "",
+        "rationale": "Maps a current behavior surface to one behavior commitment.",
+        "scoped_out_reason": "",
+        "similarity_obligation_ids": [],
+        "similarity_relation_ids": [],
+        "source_ref": "simulations/flowpilot_pm_visible_summary_model.py",
+        "surface_id": "surface.pm_visible_summary",
+        "surface_kind": "code",
+        "validation_boundary": "current FlowPilot runtime contract"
+      },
+      {
+        "business_intent_ids": [
+          "intent:flowpilot.open-authorized-current-result-material"
+        ],
+        "commitment_ids": [
+          "commit.authorized_result_reads_are_required_material"
+        ],
+        "delegates_to_primary_path": false,
+        "freshness_state": "current",
+        "in_scope": true,
+        "label": "surface.authorized_result_reads",
+        "metadata": {},
+        "owner": "FlowPilot maintenance model",
+        "primary_path_id": "path.agent-operation.open-authorized-result-material",
+        "rationale": "Maps a current behavior surface to one behavior commitment.",
+        "scoped_out_reason": "",
+        "similarity_obligation_ids": [],
+        "similarity_relation_ids": [],
+        "source_ref": "skills/flowpilot/assets/flowpilot_core_runtime/packet_stage_evidence_matrix.py",
+        "surface_id": "surface.authorized_result_reads",
+        "surface_kind": "code",
+        "validation_boundary": "current FlowPilot runtime contract"
+      },
+      {
+        "business_intent_ids": [
+          "intent:flowpilot.admit-broad-claim-only-with-current-evidence"
+        ],
+        "commitment_ids": [
+          "commit.release_claims_require_current_evidence"
+        ],
+        "delegates_to_primary_path": false,
+        "freshness_state": "current",
+        "in_scope": true,
+        "label": "surface.release_evidence",
+        "metadata": {},
+        "owner": "FlowPilot maintenance model",
+        "primary_path_id": "path.development-process.current-release-evidence",
+        "rationale": "Maps a current behavior surface to one behavior commitment.",
+        "scoped_out_reason": "",
+        "similarity_obligation_ids": [],
+        "similarity_relation_ids": [],
+        "source_ref": "scripts/compile_flowpilot_acceptance_testmesh_evidence.py",
+        "surface_id": "surface.release_evidence",
+        "surface_kind": "process",
+        "validation_boundary": "current FlowPilot runtime contract"
+      },
+      {
+        "business_intent_ids": [
+          "intent:flowpilot.open-current-submission-checklist"
+        ],
+        "commitment_ids": [
+          "commit.current_handoff_checklist_single_authority"
+        ],
+        "delegates_to_primary_path": false,
+        "freshness_state": "current",
+        "in_scope": true,
+        "label": "surface.current_handoff_checklist",
+        "metadata": {},
+        "owner": "FlowPilot maintenance model",
+        "primary_path_id": "path.agent-operation.open-current-submission-checklist",
+        "rationale": "Maps a current behavior surface to one behavior commitment.",
+        "scoped_out_reason": "",
+        "similarity_obligation_ids": [],
+        "similarity_relation_ids": [],
+        "source_ref": "skills/flowpilot/assets/flowpilot_new_role_commands.py",
+        "surface_id": "surface.current_handoff_checklist",
+        "surface_kind": "code",
+        "validation_boundary": "current FlowPilot runtime contract"
+      },
+      {
+        "business_intent_ids": [
+          "intent:flowpilot.prove-fake-ai-coverage-by-execution"
+        ],
+        "commitment_ids": [
+          "commit.fake_ai_coverage_is_execution_backed"
+        ],
+        "delegates_to_primary_path": false,
+        "freshness_state": "current",
+        "in_scope": true,
+        "label": "surface.fake_ai_execution_closure",
+        "metadata": {},
+        "owner": "FlowPilot maintenance model",
+        "primary_path_id": "",
+        "rationale": "Maps a current behavior surface to one behavior commitment.",
+        "scoped_out_reason": "",
+        "similarity_obligation_ids": [],
+        "similarity_relation_ids": [],
+        "source_ref": "simulations/flowpilot_ai_response_execution_closure_model.py",
+        "surface_id": "surface.fake_ai_execution_closure",
+        "surface_kind": "code",
+        "validation_boundary": "current FlowPilot runtime contract"
+      },
+      {
+        "business_intent_ids": [
+          "intent:flowpilot.admit-testmesh-child-only-with-current-proof"
+        ],
+        "commitment_ids": [
+          "commit.testmesh_pass_requires_current_proof"
+        ],
+        "delegates_to_primary_path": false,
+        "freshness_state": "current",
+        "in_scope": true,
+        "label": "surface.acceptance_testmesh_proofs",
+        "metadata": {},
+        "owner": "FlowPilot maintenance model",
+        "primary_path_id": "",
+        "rationale": "Maps a current behavior surface to one behavior commitment.",
+        "scoped_out_reason": "",
+        "similarity_obligation_ids": [],
+        "similarity_relation_ids": [],
+        "source_ref": "simulations/flowpilot_acceptance_testmesh_model.py",
+        "surface_id": "surface.acceptance_testmesh_proofs",
+        "surface_kind": "process",
+        "validation_boundary": "current FlowPilot runtime contract"
+      },
+      {
+        "business_intent_ids": [
+          "intent:flowpilot.project-terminal-acceptance-items-into-current-pm-repair"
+        ],
+        "commitment_ids": [
+          "commit.dynamic_pm_repair_owns_active_acceptance_items"
+        ],
+        "delegates_to_primary_path": false,
+        "freshness_state": "current",
+        "in_scope": true,
+        "label": "surface.dynamic_pm_repair_contract",
+        "metadata": {},
+        "owner": "FlowPilot maintenance model",
+        "primary_path_id": "path.runtime.dynamic-pm-repair-owner-projection",
+        "rationale": "Maps a current behavior surface to one behavior commitment.",
+        "scoped_out_reason": "",
+        "similarity_obligation_ids": [],
+        "similarity_relation_ids": [],
+        "source_ref": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+        "surface_id": "surface.dynamic_pm_repair_contract",
+        "surface_kind": "code",
+        "validation_boundary": "current FlowPilot runtime contract"
+      },
+      {
+        "business_intent_ids": [
+          "intent:flowpilot.complete-bounded-substantive-role-workstream"
+        ],
+        "commitment_ids": [
+          "commit.substantive_roles_complete_bounded_workstreams"
+        ],
+        "delegates_to_primary_path": false,
+        "freshness_state": "current",
+        "in_scope": true,
+        "label": "surface.complete_role_workstream",
+        "metadata": {},
+        "owner": "FlowPilot maintenance model",
+        "primary_path_id": "",
+        "rationale": "Maps a current behavior surface to one behavior commitment.",
+        "scoped_out_reason": "",
+        "similarity_obligation_ids": [],
+        "similarity_relation_ids": [],
+        "source_ref": "skills/flowpilot/assets/flowpilot_core_runtime/role_handoff.py",
+        "surface_id": "surface.complete_role_workstream",
+        "surface_kind": "code",
+        "validation_boundary": "current FlowPilot runtime contract"
+      },
+      {
+        "business_intent_ids": [
+          "intent:flowpilot.execute-runtime-foreground-action-only"
+        ],
+        "commitment_ids": [
+          "commit.controller_uses_runtime_foreground_ledger_only"
+        ],
+        "delegates_to_primary_path": false,
+        "freshness_state": "current",
+        "in_scope": true,
+        "label": "surface.controller_foreground_ledger",
+        "metadata": {},
+        "owner": "FlowPilot maintenance model",
+        "primary_path_id": "path.agent-operation.controller-runtime-foreground-action",
+        "rationale": "Maps a current behavior surface to one behavior commitment.",
+        "scoped_out_reason": "",
+        "similarity_obligation_ids": [],
+        "similarity_relation_ids": [],
+        "source_ref": "skills/flowpilot/assets/runtime_kit/cards/roles/controller.md",
+        "surface_id": "surface.controller_foreground_ledger",
+        "surface_kind": "skill",
+        "validation_boundary": "current FlowPilot runtime contract"
+      },
+      {
+        "business_intent_ids": [
+          "intent:flowpilot.inventory-local-capabilities-before-pm-selection"
+        ],
+        "commitment_ids": [
+          "commit.local_capability_inventory_precedes_pm_selection"
+        ],
+        "delegates_to_primary_path": false,
+        "freshness_state": "current",
+        "in_scope": true,
+        "label": "surface.local_capability_inventory",
+        "metadata": {},
+        "owner": "FlowPilot maintenance model",
+        "primary_path_id": "path.agent-operation.task-discovery-current-result-contract",
+        "rationale": "Maps a current behavior surface to one behavior commitment.",
+        "scoped_out_reason": "",
+        "similarity_obligation_ids": [],
+        "similarity_relation_ids": [],
+        "source_ref": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+        "surface_id": "surface.local_capability_inventory",
+        "surface_kind": "code",
+        "validation_boundary": "current FlowPilot runtime contract"
+      },
+      {
+        "business_intent_ids": [
+          "intent:flowpilot.perform-material-work-through-ordinary-role-package"
+        ],
+        "commitment_ids": [
+          "commit.material_work_uses_ordinary_role_packages"
+        ],
+        "delegates_to_primary_path": false,
+        "freshness_state": "current",
+        "in_scope": true,
+        "label": "surface.ordinary_material_work",
+        "metadata": {},
+        "owner": "FlowPilot maintenance model",
+        "primary_path_id": "path.agent-operation.ordinary-material-role-package",
+        "rationale": "Maps a current behavior surface to one behavior commitment.",
+        "scoped_out_reason": "",
+        "similarity_obligation_ids": [],
+        "similarity_relation_ids": [],
+        "source_ref": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_research_package.md",
+        "surface_id": "surface.ordinary_material_work",
+        "surface_kind": "skill",
+        "validation_boundary": "current FlowPilot runtime contract"
+      },
+      {
+        "business_intent_ids": [
+          "intent:flowpilot.audit-role-plan-completion-and-record-pm-disposition"
+        ],
+        "commitment_ids": [
+          "commit.reviewer_audits_plan_completion_and_pm_disposition"
+        ],
+        "delegates_to_primary_path": false,
+        "freshness_state": "current",
+        "in_scope": true,
+        "label": "surface.reviewer_plan_completion_audit",
+        "metadata": {},
+        "owner": "FlowPilot maintenance model",
+        "primary_path_id": "",
+        "rationale": "Maps a current behavior surface to one behavior commitment.",
+        "scoped_out_reason": "",
+        "similarity_obligation_ids": [],
+        "similarity_relation_ids": [],
+        "source_ref": "skills/flowpilot/assets/flowpilot_core_runtime/review_window_contracts.py",
+        "surface_id": "surface.reviewer_plan_completion_audit",
+        "surface_kind": "code",
+        "validation_boundary": "current FlowPilot runtime contract"
+      },
+      {
+        "business_intent_ids": [
+          "intent:flowpilot.keep-role-local-flowguard-advisory"
+        ],
+        "commitment_ids": [
+          "commit.role_local_flowguard_cannot_self_approve"
+        ],
+        "delegates_to_primary_path": false,
+        "freshness_state": "current",
+        "in_scope": true,
+        "label": "surface.role_local_flowguard_boundary",
+        "metadata": {},
+        "owner": "FlowPilot maintenance model",
+        "primary_path_id": "",
+        "rationale": "Maps a current behavior surface to one behavior commitment.",
+        "scoped_out_reason": "",
+        "similarity_obligation_ids": [],
+        "similarity_relation_ids": [],
+        "source_ref": "skills/flowpilot/assets/flowpilot_core_runtime/role_handoff.py",
+        "surface_id": "surface.role_local_flowguard_boundary",
+        "surface_kind": "code",
+        "validation_boundary": "current FlowPilot runtime contract"
+      },
+      {
+        "business_intent_ids": [
+          "intent:flowpilot.navigate-current-material-artifact-map"
+        ],
+        "commitment_ids": [
+          "commit.material_map_is_optional_navigation_only"
+        ],
+        "delegates_to_primary_path": false,
+        "freshness_state": "current",
+        "in_scope": true,
+        "label": "optional material artifact map navigation",
+        "metadata": {},
+        "owner": "OptionalMaterialArtifactMapStep",
+        "primary_path_id": "path.agent-operation.material-artifact-map-navigation",
+        "rationale": "Optional derived navigation is not acceptance evidence and is nonblocking when absent or unsafe.",
+        "scoped_out_reason": "",
+        "similarity_obligation_ids": [],
+        "similarity_relation_ids": [],
+        "source_ref": "skills/flowpilot/assets/flowpilot_material_artifact_map.py",
+        "surface_id": "surface.optional_material_artifact_map",
+        "surface_kind": "skill",
+        "validation_boundary": "safe current navigation projection only"
+      },
+      {
+        "business_intent_ids": [
+          "intent:flowpilot.validate-model-test-alignment-with-current-runtime-evidence"
+        ],
+        "commitment_ids": [
+          "commit.model_test_alignment_uses_current_runtime_path_evidence"
+        ],
+        "delegates_to_primary_path": false,
+        "freshness_state": "current",
+        "in_scope": true,
+        "label": "model-test alignment diagnostic runtime path",
+        "metadata": {},
+        "owner": "FlowPilot model-test alignment",
+        "primary_path_id": "path.development-process.model-test-alignment-current-evidence",
+        "rationale": "Diagnostic runtime evidence validates product models but does not become product authority.",
+        "scoped_out_reason": "",
+        "similarity_obligation_ids": [],
+        "similarity_relation_ids": [],
+        "source_ref": "skills/flowpilot/assets/flowpilot_runtime_path_evidence.py",
+        "surface_id": "surface.model_test_alignment_runtime_path",
+        "surface_kind": "process",
+        "validation_boundary": "contract, observation, and run share one process authority"
+      }
+    ],
+    "validation_boundary": "FlowGuard 0.55 canonical behavior inventory plus executable PPA/MTA/TestMesh evidence"
+  },
+  "schema_version": "1.0"
+}

@@ -9,7 +9,6 @@ class ControlBlockersRuntimeTests(FlowPilotRouterRuntimeTestBase):
         root = self.make_project()
         run_root = self.boot_to_controller(root)
         self.complete_startup_runtime_entry(root)
-        self.complete_material_flow(root)
         self.complete_root_contract_before_child_skill_gates(root)
 
         selected_skills = [
@@ -309,144 +308,6 @@ class ControlBlockersRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 "pm_records_control_blocker_repair_decision",
                 self.role_decision_envelope(root, "control_blocks/fatal_pm_waiver_rejected", body),
             )
-    def test_repair_transaction_recheck_blocker_registers_followup_blocker(self) -> None:
-        root = self.make_project()
-        run_root = self.boot_to_controller(root)
-        self.complete_startup_runtime_entry(root)
-
-        self.deliver_expected_card(root, "pm.material_scan")
-        router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
-        state = read_json(router.run_state_path(run_root))
-        blocker = router._write_control_blocker(  # type: ignore[attr-defined]
-            root,
-            run_root,
-            state,
-            source="test",
-            error_message="Controller has no legal next action after material dispatch repair request",
-            action_type="controller_no_legal_next_action",
-            payload={"path": self.rel(root, router.run_state_path(run_root)), "role": "controller"},
-        )
-        self.assertTrue(self.handle_pending_control_blocker(root))
-        decision = self.pm_control_blocker_decision_body(
-            blocker["blocker_id"],
-            decision="repair_completed",
-            rerun_target="router_direct_material_scan_dispatch_recheck_passed",
-        )
-        decision["repair_transaction"] = {
-            "plan_kind": "packet_reissue",
-            "replacement_packets": [
-                {
-                    "packet_id": "material-scan-001-r1",
-                    "replacement_for": "material-scan-001",
-                    "to_role": "worker",
-                    "body_text": "Reissued material scan packet with a committed repair generation.",
-                }
-            ],
-        }
-        router.record_external_event(
-            root,
-            "pm_records_control_blocker_repair_decision",
-            self.role_decision_envelope(root, "control_blocks/material_reissue_pm_repair_decision_block", decision),
-        )
-
-        router.record_external_event(
-            root,
-            "router_direct_material_scan_dispatch_recheck_blocked",
-            self.role_report_envelope(
-                root,
-                "control_blocks/material_reissue_recheck_block",
-                {
-                    "checked_by_role": "controller",
-                    "dispatch_allowed": False,
-                    "blockers": ["replacement packet generation needs PM repair"],
-                },
-            ),
-        )
-
-        state = read_json(router.run_state_path(run_root))
-        active = state["active_control_blocker"]
-        self.assertNotEqual(active["blocker_id"], blocker["blocker_id"])
-        self.assertEqual(active["handling_lane"], "pm_repair_decision_required")
-        self.assertIsNone(state["active_repair_transaction"])
-        original = read_json(self.control_blocker_path(root, blocker))
-        self.assertEqual(original["resolution_status"], "repair_transaction_blocker")
-        tx_index = read_json(run_root / "control_blocks" / "repair_transactions" / "repair_transaction_index.json")
-        self.assertIsNone(tx_index["active_transaction"])
-        action = self.next_after_display_sync(root)
-        self.assertEqual(action["action_type"], "handle_control_blocker")
-    def test_repair_transaction_protocol_blocker_registers_followup_blocker(self) -> None:
-        root = self.make_project()
-        run_root = self.boot_to_controller(root)
-        self.complete_startup_runtime_entry(root)
-
-        self.deliver_expected_card(root, "pm.material_scan")
-        router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
-        state = read_json(router.run_state_path(run_root))
-        blocker = router._write_control_blocker(  # type: ignore[attr-defined]
-            root,
-            run_root,
-            state,
-            source="test",
-            error_message="Controller has no legal next action after material dispatch repair request",
-            action_type="controller_no_legal_next_action",
-            payload={"path": self.rel(root, router.run_state_path(run_root)), "role": "controller"},
-        )
-        self.assertTrue(self.handle_pending_control_blocker(root))
-        decision = self.pm_control_blocker_decision_body(
-            blocker["blocker_id"],
-            decision="repair_completed",
-            rerun_target="router_direct_material_scan_dispatch_recheck_passed",
-        )
-        decision["repair_transaction"] = {
-            "plan_kind": "packet_reissue",
-            "replacement_packets": [
-                {
-                    "packet_id": "material-scan-001-r1",
-                    "replacement_for": "material-scan-001",
-                    "to_role": "worker",
-                    "body_text": "Reissued material scan packet with a committed repair generation.",
-                }
-            ],
-        }
-        router.record_external_event(
-            root,
-            "pm_records_control_blocker_repair_decision",
-            self.role_decision_envelope(root, "control_blocks/material_reissue_pm_repair_decision_contract", decision),
-        )
-
-        router.record_external_event(
-            root,
-            "router_protocol_blocker_material_scan_dispatch_recheck",
-            self.role_report_envelope(
-                root,
-                "control_blocks/material_reissue_protocol_blocker",
-                {
-                    "checked_by_role": "controller",
-                    "blockers": ["replacement packet generation is not reviewable"],
-                    "source_paths": [],
-                    "contract_self_check": {
-                        "all_required_fields_present": True,
-                        "exact_field_names_used": True,
-                    },
-                },
-            ),
-        )
-
-        state = read_json(router.run_state_path(run_root))
-        active = state["active_control_blocker"]
-        self.assertNotEqual(active["blocker_id"], blocker["blocker_id"])
-        self.assertEqual(active["handling_lane"], "pm_repair_decision_required")
-        self.assertIsNone(state["active_repair_transaction"])
-        original = read_json(self.control_blocker_path(root, blocker))
-        self.assertEqual(original["resolution_status"], "repair_transaction_protocol_blocker")
-        tx_index = read_json(run_root / "control_blocks" / "repair_transactions" / "repair_transaction_index.json")
-        self.assertIsNone(tx_index["active_transaction"])
-        transaction_path = root / tx_index["transactions"][0]["path"]
-        transaction = read_json(transaction_path)
-        self.assertEqual(transaction["status"], "blocked")
-        self.assertEqual(transaction["followup_blocker_id"], active["blocker_id"])
-        action = self.next_after_display_sync(root)
-        self.assertEqual(action["action_type"], "handle_control_blocker")
     def test_pm_repair_decision_rejects_unregistered_rerun_target_before_wait_write(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
@@ -459,8 +320,8 @@ class ControlBlockersRuntimeTests(FlowPilotRouterRuntimeTestBase):
             state,
             source="test",
             error_message="packet group reviewer audit failed: PM must repair route draft handoff",
-            event="reviewer_reports_material_sufficient",
-            payload={"report_path": ".flowpilot/runs/test/reviews/material.json"},
+            event="current_node_reviewer_blocks_result",
+            payload={"report_path": ".flowpilot/runs/test/reviews/current-node.json"},
         )
         self.assertTrue(self.handle_pending_control_blocker(root))
 
@@ -494,7 +355,7 @@ class ControlBlockersRuntimeTests(FlowPilotRouterRuntimeTestBase):
             state,
             source="test",
             error_message="packet group reviewer audit failed: unsupported bad control wait",
-            event="reviewer_reports_material_sufficient",
+            event="current_node_reviewer_blocks_result",
             payload={"report_path": ".flowpilot/runs/test/reviews/unsupported.json"},
         )
         self.assertTrue(self.handle_pending_control_blocker(root))
@@ -520,7 +381,7 @@ class ControlBlockersRuntimeTests(FlowPilotRouterRuntimeTestBase):
         run_root = self.boot_to_controller(root)
         state_path = router.run_state_path(run_root)
         state = read_json(state_path)
-        state["flags"]["reviewer_material_sufficiency_card_delivered"] = True
+        state["flags"]["reviewer_worker_result_card_delivered"] = True
         router.save_run_state(run_root, state)
         blocker = router._write_control_blocker(  # type: ignore[attr-defined]
             root,
@@ -528,7 +389,7 @@ class ControlBlockersRuntimeTests(FlowPilotRouterRuntimeTestBase):
             state,
             source="test",
             error_message="unsupported empty repair transaction has no event producer",
-            event="reviewer_reports_material_sufficient",
+            event="current_node_reviewer_blocks_result",
             payload={"report_path": ".flowpilot/runs/test/reviews/empty-transaction.json"},
         )
         self.assertTrue(self.handle_pending_control_blocker(root))
@@ -546,15 +407,15 @@ class ControlBlockersRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 "execution_plan": {
                     "mode": "role_reissue",
                     "target_role": "human_like_reviewer",
-                    "allowed_external_events": ["reviewer_reports_material_sufficient"],
+                    "allowed_external_events": ["current_node_reviewer_blocks_result"],
                 },
             },
         )
         artifact_path = self.control_blocker_path(root, blocker)
         artifact = read_json(artifact_path)
         artifact["pm_repair_decision_status"] = "recorded"
-        artifact["pm_repair_rerun_target"] = "reviewer_reports_material_sufficient"
-        artifact["allowed_resolution_events"] = ["reviewer_reports_material_sufficient"]
+        artifact["pm_repair_rerun_target"] = "current_node_reviewer_blocks_result"
+        artifact["allowed_resolution_events"] = ["current_node_reviewer_blocks_result"]
         artifact["repair_transaction_id"] = "repair-tx-empty-role-reissue"
         artifact["repair_transaction_path"] = self.rel(root, transaction_path)
         router.write_json(artifact_path, artifact)
@@ -562,8 +423,8 @@ class ControlBlockersRuntimeTests(FlowPilotRouterRuntimeTestBase):
         state["active_control_blocker"].update(
             {
                 "pm_repair_decision_status": "recorded",
-                "pm_repair_rerun_target": "reviewer_reports_material_sufficient",
-                "allowed_resolution_events": ["reviewer_reports_material_sufficient"],
+                "pm_repair_rerun_target": "current_node_reviewer_blocks_result",
+                "allowed_resolution_events": ["current_node_reviewer_blocks_result"],
                 "repair_transaction_id": "repair-tx-empty-role-reissue",
                 "repair_transaction_path": self.rel(root, transaction_path),
             }
@@ -593,7 +454,7 @@ class ControlBlockersRuntimeTests(FlowPilotRouterRuntimeTestBase):
             state,
             source="test",
             error_message="packet group reviewer audit failed: route draft needs PM reissue",
-            event="reviewer_reports_material_sufficient",
+            event="current_node_reviewer_blocks_result",
             payload={"report_path": ".flowpilot/runs/test/reviews/route-draft.json"},
         )
         self.assertTrue(self.handle_pending_control_blocker(root))
@@ -617,6 +478,176 @@ class ControlBlockersRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 "pm_records_control_blocker_protocol_blocker",
             },
         )
+    def test_repair_transaction_recheck_blocker_registers_followup_blocker(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        state = read_json(router.run_state_path(run_root))
+        state["flags"]["pm_route_skeleton_card_delivered"] = True
+        router.save_run_state(run_root, state)
+        blocker = router._write_control_blocker(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            source="test",
+            error_message="current route draft repair requires an independently reviewed retry",
+            event="current_node_reviewer_blocks_result",
+            payload={"report_path": ".flowpilot/runs/test/reviews/current-route-draft.json"},
+        )
+        self.assertTrue(self.handle_pending_control_blocker(root))
+        router.record_external_event(
+            root,
+            "pm_records_control_blocker_repair_decision",
+            self.role_decision_envelope(
+                root,
+                "control_blocks/current_route_draft_repair_for_blocker_outcome",
+                self.pm_control_blocker_decision_body(
+                    blocker["blocker_id"],
+                    decision="repair_completed",
+                    rerun_target="pm_writes_route_draft",
+                ),
+            ),
+        )
+
+        router.record_external_event(
+            root,
+            "pm_records_control_blocker_followup_blocker",
+            self.role_report_envelope(
+                root,
+                "control_blocks/current_route_draft_followup_blocker",
+                {
+                    "from_role": "project_manager",
+                    "blockers": ["current route draft still fails the required review"],
+                },
+            ),
+        )
+
+        state = read_json(router.run_state_path(run_root))
+        active = state["active_control_blocker"]
+        self.assertNotEqual(active["blocker_id"], blocker["blocker_id"])
+        self.assertEqual(active["handling_lane"], "pm_repair_decision_required")
+        self.assertIsNone(state["active_repair_transaction"])
+        original = read_json(self.control_blocker_path(root, blocker))
+        self.assertEqual(original["resolution_status"], "repair_transaction_blocker")
+        tx_index = read_json(
+            run_root
+            / "control_blocks"
+            / "repair_transactions"
+            / "repair_transaction_index.json"
+        )
+        self.assertIsNone(tx_index["active_transaction"])
+        transaction = read_json(root / tx_index["transactions"][0]["path"])
+        self.assertEqual(transaction["status"], "blocked")
+        self.assertEqual(transaction["followup_blocker_id"], active["blocker_id"])
+        self.assertEqual(self.next_after_display_sync(root)["action_type"], "handle_control_blocker")
+    def test_repair_transaction_protocol_blocker_registers_followup_blocker(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        state = read_json(router.run_state_path(run_root))
+        state["flags"]["pm_route_skeleton_card_delivered"] = True
+        router.save_run_state(run_root, state)
+        blocker = router._write_control_blocker(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            source="test",
+            error_message="current route draft repair requires protocol-safe outcome handling",
+            event="current_node_reviewer_blocks_result",
+            payload={"report_path": ".flowpilot/runs/test/reviews/current-route-protocol.json"},
+        )
+        self.assertTrue(self.handle_pending_control_blocker(root))
+        router.record_external_event(
+            root,
+            "pm_records_control_blocker_repair_decision",
+            self.role_decision_envelope(
+                root,
+                "control_blocks/current_route_draft_repair_for_protocol_outcome",
+                self.pm_control_blocker_decision_body(
+                    blocker["blocker_id"],
+                    decision="repair_completed",
+                    rerun_target="pm_writes_route_draft",
+                ),
+            ),
+        )
+
+        router.record_external_event(
+            root,
+            "pm_records_control_blocker_protocol_blocker",
+            self.role_report_envelope(
+                root,
+                "control_blocks/current_route_draft_protocol_blocker",
+                {
+                    "from_role": "project_manager",
+                    "blockers": ["current route draft repair exposed a protocol blocker"],
+                },
+            ),
+        )
+
+        state = read_json(router.run_state_path(run_root))
+        active = state["active_control_blocker"]
+        self.assertNotEqual(active["blocker_id"], blocker["blocker_id"])
+        self.assertEqual(active["handling_lane"], "pm_repair_decision_required")
+        self.assertIsNone(state["active_repair_transaction"])
+        original = read_json(self.control_blocker_path(root, blocker))
+        self.assertEqual(
+            original["resolution_status"], "repair_transaction_protocol_blocker"
+        )
+        tx_index = read_json(
+            run_root
+            / "control_blocks"
+            / "repair_transactions"
+            / "repair_transaction_index.json"
+        )
+        self.assertIsNone(tx_index["active_transaction"])
+        transaction = read_json(root / tx_index["transactions"][0]["path"])
+        self.assertEqual(transaction["status"], "blocked")
+        self.assertEqual(transaction["followup_blocker_id"], active["blocker_id"])
+        self.assertEqual(self.next_after_display_sync(root)["action_type"], "handle_control_blocker")
+    def test_pm_repair_decision_state_persists_before_followup_wait_is_exposed(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        state_path = router.run_state_path(run_root)
+        state = read_json(state_path)
+        state["flags"]["pm_route_skeleton_card_delivered"] = True
+        router.save_run_state(run_root, state)
+        blocker = router._write_control_blocker(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            source="test",
+            error_message="current route draft handoff requires a PM repair decision",
+            event="current_node_reviewer_blocks_result",
+            payload={"report_path": ".flowpilot/runs/test/reviews/current-node-block.json"},
+        )
+        self.assertTrue(self.handle_pending_control_blocker(root))
+
+        router.record_external_event(
+            root,
+            "pm_records_control_blocker_repair_decision",
+            self.role_decision_envelope(
+                root,
+                "control_blocks/persisted_before_wait_pm_repair_decision",
+                self.pm_control_blocker_decision_body(
+                    blocker["blocker_id"],
+                    rerun_target="pm_writes_route_draft",
+                ),
+            ),
+        )
+
+        persisted = read_json(state_path)
+        self.assertTrue(persisted["flags"]["pm_control_blocker_repair_decision_recorded"])
+        self.assertEqual(
+            persisted["active_control_blocker"]["pm_repair_decision_status"],
+            "recorded",
+        )
+        self.assertEqual(
+            persisted["active_control_blocker"]["pm_repair_rerun_target"],
+            "pm_writes_route_draft",
+        )
+
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "await_role_decision")
+        self.assertIn("pm_writes_route_draft", action["allowed_external_events"])
+        self.assertTrue(read_json(state_path)["flags"]["pm_control_blocker_repair_decision_recorded"])
     def test_pm_repair_decision_rejects_unsupported_event_replay_plan_kind(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
@@ -678,53 +709,6 @@ class ControlBlockersRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertEqual(action["action_type"], "deliver_mail")
         self.assertEqual(action["repair_transaction_id"], read_json(router.run_state_path(run_root))["active_control_blocker"]["repair_transaction_id"])
         self.assertEqual(action["repair_execution_plan"]["mode"], "operation_replay")
-    def test_material_operation_replay_uses_current_generation_action(self) -> None:
-        root = self.make_project()
-        run_root = self.boot_to_controller(root)
-        self.complete_startup_runtime_entry(root)
-        self.deliver_expected_card(root, "pm.material_scan")
-        router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
-        material_index = read_json(run_root / "material" / "material_scan_packets.json")
-        self.ensure_current_role_agent_for_role(root, "worker")
-        state = read_json(router.run_state_path(run_root))
-        blocker = router._write_control_blocker(  # type: ignore[attr-defined]
-            root,
-            run_root,
-            state,
-            source="test",
-            error_message="Material packet relay operation needs safe replay",
-            action_type="relay_material_scan_packets",
-            payload={"path": self.rel(root, router.run_state_path(run_root)), "role": "controller"},
-        )
-        self.assertTrue(self.handle_pending_control_blocker(root))
-        decision = self.pm_control_blocker_decision_body(
-            blocker["blocker_id"],
-            rerun_target="host_records_manual_resume_binding",
-        )
-        decision["repair_transaction"] = {
-            "plan_kind": "operation_replay",
-            "operation_ref": {
-                "operation_kind": "controller_action",
-                "action_type": "relay_material_scan_packets",
-            },
-        }
-        router.record_external_event(
-            root,
-            "pm_records_control_blocker_repair_decision",
-            self.role_decision_envelope(root, "control_blocks/material_operation_replay_pm_repair_decision", decision),
-        )
-
-        action = self.next_after_display_sync(root)
-        if action["action_type"] == "open_current_role_agent":
-            self.assertEqual(action["required_before_action_type"], "relay_material_scan_packets")
-            self.assertEqual(action["operation_replay_source"], "current_material_generation_role_binding_precondition")
-            router.apply_action(root, "open_current_role_agent", self.payload_for_action(action))
-            action = self.next_after_display_sync(root)
-        self.assertEqual(action["action_type"], "relay_material_scan_packets")
-        self.assertEqual(action["operation_replay_source"], "current_material_generation_next_action")
-        self.assertEqual(action["packet_ids"], [record["packet_id"] for record in material_index["packets"]])
-        self.assertNotIn("controller_action_id", action)
-        self.assertEqual(action["repair_execution_plan"]["mode"], "operation_replay")
     def test_pm_repair_decision_rejects_registered_but_not_receivable_rerun_target(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
@@ -735,7 +719,7 @@ class ControlBlockersRuntimeTests(FlowPilotRouterRuntimeTestBase):
             state,
             source="test",
             error_message="packet group reviewer audit failed: route draft needs PM reissue",
-            event="reviewer_reports_material_sufficient",
+            event="current_node_reviewer_blocks_result",
             payload={"report_path": ".flowpilot/runs/test/reviews/route-draft-not-ready.json"},
         )
         self.assertTrue(self.handle_pending_control_blocker(root))
@@ -758,7 +742,7 @@ class ControlBlockersRuntimeTests(FlowPilotRouterRuntimeTestBase):
         run_root = self.boot_to_controller(root)
         state_path = router.run_state_path(run_root)
         state = read_json(state_path)
-        state["flags"]["reviewer_material_sufficiency_card_delivered"] = True
+        state["flags"]["reviewer_worker_result_card_delivered"] = True
         router.save_run_state(run_root, state)
         first = router._write_control_blocker(  # type: ignore[attr-defined]
             root,
@@ -766,14 +750,14 @@ class ControlBlockersRuntimeTests(FlowPilotRouterRuntimeTestBase):
             state,
             source="test",
             error_message="packet group reviewer audit failed: first reviewer audit issue",
-            event="reviewer_reports_material_sufficient",
+            event="current_node_reviewer_blocks_result",
             payload={"report_path": ".flowpilot/runs/test/reviews/first.json"},
         )
         self.assertEqual(first["handling_lane"], "pm_repair_decision_required")
         self.assertTrue(self.handle_pending_control_blocker(root))
         first_decision = self.pm_control_blocker_decision_body(
             first["blocker_id"],
-            rerun_target="reviewer_reports_material_sufficient",
+            rerun_target="current_node_reviewer_blocks_result",
         )
         first_decision["repair_transaction"] = {"plan_kind": "await_existing_event"}
         router.record_external_event(
@@ -795,14 +779,14 @@ class ControlBlockersRuntimeTests(FlowPilotRouterRuntimeTestBase):
             state,
             source="test",
             error_message="packet group reviewer audit failed: second reviewer audit issue",
-            event="reviewer_reports_material_sufficient",
+            event="current_node_reviewer_blocks_result",
             payload={"report_path": ".flowpilot/runs/test/reviews/second.json"},
         )
         self.assertEqual(second["handling_lane"], "pm_repair_decision_required")
         self.assertTrue(self.handle_pending_control_blocker(root))
         second_decision = self.pm_control_blocker_decision_body(
             second["blocker_id"],
-            rerun_target="reviewer_reports_material_sufficient",
+            rerun_target="current_node_reviewer_blocks_result",
         )
         second_decision["repair_transaction"] = {"plan_kind": "await_existing_event"}
         result = router.record_external_event(
@@ -902,7 +886,7 @@ class ControlBlockersRuntimeTests(FlowPilotRouterRuntimeTestBase):
             state,
             source="test",
             error_message="packet group reviewer audit failed: first reviewer audit issue",
-            event="reviewer_reports_material_sufficient",
+            event="current_node_reviewer_blocks_result",
             payload={"report_path": ".flowpilot/runs/test/reviews/first.json"},
         )
         second = router._write_control_blocker(  # type: ignore[attr-defined]
@@ -911,7 +895,7 @@ class ControlBlockersRuntimeTests(FlowPilotRouterRuntimeTestBase):
             read_json(state_path),
             source="test",
             error_message="packet group reviewer audit failed: second reviewer audit issue",
-            event="reviewer_reports_material_sufficient",
+            event="current_node_reviewer_blocks_result",
             payload={"report_path": ".flowpilot/runs/test/reviews/second.json"},
         )
 
@@ -990,8 +974,8 @@ class ControlBlockersRuntimeTests(FlowPilotRouterRuntimeTestBase):
             state,
             source="test",
             error_message="packet group reviewer audit failed: ['result_body_not_opened_by_reviewer_or_pm_after_relay_check']",
-            event="reviewer_reports_material_insufficient",
-            payload={"report_path": ".flowpilot/runs/test/material/reviewer.json"},
+            event="current_node_reviewer_blocks_result",
+            payload={"report_path": ".flowpilot/runs/test/reviews/current-node.json"},
         )
 
         self.assertEqual(blocker["handling_lane"], "control_plane_reissue")

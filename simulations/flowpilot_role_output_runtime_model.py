@@ -174,7 +174,7 @@ PM_PACKAGE_RESULT_DISPOSITION_CONTRACT = OutputContract(
     contract_id="flowpilot.output_contract.pm_package_result_disposition.v1",
     allowed_role="project_manager",
     requires_explicit_empty_arrays=True,
-    router_event="pm_records_material_scan_result_disposition",
+    router_event="pm_records_research_result_disposition",
 )
 
 CONTRACTS_BY_SCENARIO = {

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections import defaultdict
 import importlib.util
 import sys
 import unittest
@@ -36,15 +37,57 @@ coverage_matrix = load_module(
 
 
 class FlowPilotSyntheticAgentCoverageMatrixTests(unittest.TestCase):
-    def test_coverage_matrix_has_current_required_branch_owners(self) -> None:
-        report = coverage_matrix.build_report()
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.report = coverage_matrix.build_report(declaration_only=True)
+        cls.rows_by_model_id: dict[str, list[dict[str, object]]] = defaultdict(list)
+        cls.required_by_model_id: dict[str, list[dict[str, object]]] = defaultdict(list)
+        cls.rows_by_source: dict[str, list[dict[str, object]]] = defaultdict(list)
+        for row in cls.report["rows"]:
+            cls.rows_by_model_id[str(row["model_id"])].append(row)
+            cls.rows_by_source[str(row.get("source") or "")].append(row)
+        for cell in cls.report["required_cells"]:
+            cls.required_by_model_id[str(cell["model_id"])].append(cell)
+        cls.synthetic_rows = [
+            row
+            for row in cls.report["rows"]
+            if row["coverage_kind"] in coverage_matrix.SYNTHETIC_NON_LIVE_KINDS
+        ]
+        cls.row_identity_set = {
+            (
+                row["model_id"],
+                row["obligation_id"],
+                row["branch_kind"],
+                row["evidence_id"],
+            )
+            for row in cls.report["rows"]
+        }
+
+    def test_coverage_matrix_declares_required_branch_owners_without_execution_green(self) -> None:
+        report = self.report
 
         self.assertTrue(report["ok"], report["findings"])
+        self.assertEqual(report["claim_scope"], "declaration_only")
+        self.assertEqual(report["evidence_status"], "not_run")
+        self.assertEqual(report["coverage_summary"]["executed"], 0)
+        self.assertEqual(report["coverage_summary"]["passed"], 0)
+        self.assertEqual(report["coverage_summary"]["proof_backed"], 0)
         self.assertGreater(report["required_cell_count"], 20)
-        self.assertGreater(report["row_count"], report["required_cell_count"])
+        self.assertGreater(
+            report["materialized_row_count"],
+            report["materialized_required_cell_count"],
+        )
+        self.assertGreater(report["required_cell_count"], report["materialized_required_cell_count"])
         self.assertEqual(report["findings"], [])
-        self.assertTrue(report["full_diagnostic"]["release_convergence_ok"], report["full_diagnostic"])
         self.assertEqual(report["full_diagnostic"]["blocking_actionable_findings"], [])
+        self.assertTrue(report["full_diagnostic"]["deferred_execution_findings"])
+        self.assertEqual(
+            {
+                finding["repair_type"]
+                for finding in report["full_diagnostic"]["deferred_execution_findings"]
+            },
+            {"complete_background_evidence"},
+        )
         for finding in report["full_diagnostic"]["deferred_structure_split_findings"]:
             with self.subTest(surface_id=finding["surface_id"]):
                 self.assertEqual(finding["source_code"], "needs_structure_split")
@@ -65,45 +108,41 @@ class FlowPilotSyntheticAgentCoverageMatrixTests(unittest.TestCase):
                 self.assertGreater(report["rows_by_family"].get(family, 0), 0)
 
     def test_synthetic_rows_are_non_live_and_backed_by_trace_tests(self) -> None:
-        report = coverage_matrix.build_report()
-        synthetic_rows = [
-            row
-            for row in report["rows"]
-            if row["coverage_kind"] in coverage_matrix.SYNTHETIC_NON_LIVE_KINDS
-        ]
+        report = self.report
+        synthetic_rows = self.synthetic_rows
 
         self.assertGreaterEqual(len(synthetic_rows), 22)
         test_text_cache: dict[Path, str] = {}
-        for row in synthetic_rows:
-            with self.subTest(evidence_id=row["evidence_id"]):
-                self.assertFalse(row["live_completion_allowed"])
-                self.assertIn(row["coverage_boundary"], {
-                    "control_flow_only",
-                    "non_live_evidence_disclosure_only",
-                    "background_final_artifact_contract",
-                    "historical_same_class_non_live_control_flow",
-                    "glassbreak_threshold_only",
-                    "model_only_current_contract_cartesian_summary",
-                })
-                evidence_test_path = ROOT / row["path"]
-                self.assertTrue(evidence_test_path.exists())
-                test_text = test_text_cache.setdefault(
-                    evidence_test_path,
-                    evidence_test_path.read_text(encoding="utf-8"),
-                )
-                self.assertIn(row["test_name"], test_text)
-                self.assertEqual(row["evidence_status"], "passed")
-                self.assertTrue(row["evidence_current"])
-                self.assertIn(row["story_level"], {"local", "system"})
+        self.assertFalse([row["evidence_id"] for row in synthetic_rows if row["live_completion_allowed"]])
+        self.assertLessEqual(
+            {row["coverage_boundary"] for row in synthetic_rows},
+            {
+                "control_flow_only",
+                "non_live_evidence_disclosure_only",
+                "background_final_artifact_contract",
+                "historical_same_class_non_live_control_flow",
+                "glassbreak_threshold_only",
+                "model_only_current_contract_cartesian_summary",
+                "model_only_control_plane_ledger_hygiene_declaration",
+            },
+        )
+        self.assertEqual({row["evidence_status"] for row in synthetic_rows}, {"not_run"})
+        self.assertFalse([row["evidence_id"] for row in synthetic_rows if row["evidence_current"]])
+        self.assertLessEqual({row["story_level"] for row in synthetic_rows}, {"local", "system"})
+        unique_test_refs = {(str(row["path"]), str(row["test_name"])) for row in synthetic_rows}
+        for path_text, test_name in unique_test_refs:
+            evidence_test_path = ROOT / path_text
+            self.assertTrue(evidence_test_path.exists(), path_text)
+            test_text = test_text_cache.setdefault(
+                evidence_test_path,
+                evidence_test_path.read_text(encoding="utf-8"),
+            )
+            self.assertIn(test_name, test_text, f"{path_text}:{test_name}")
 
     def test_liveness_evidence_cartesian_summary_is_wired_to_synthetic_matrix(self) -> None:
-        report = coverage_matrix.build_report()
+        report = self.report
         summary = report["liveness_evidence_cartesian"]
-        rows = [
-            row
-            for row in report["rows"]
-            if row["model_id"] == coverage_matrix.LIVENESS_EVIDENCE_CARTESIAN_MODEL_ID
-        ]
+        rows = self.rows_by_model_id[coverage_matrix.LIVENESS_EVIDENCE_CARTESIAN_MODEL_ID]
 
         self.assertTrue(summary["ok"], summary)
         self.assertEqual(summary["row_count"], 35_280)
@@ -132,23 +171,21 @@ class FlowPilotSyntheticAgentCoverageMatrixTests(unittest.TestCase):
                 self.assertIn("liveness_evidence.", row["obligation_id"])
 
     def test_rejection_liveness_required_cells_have_owners(self) -> None:
-        report = coverage_matrix.build_report()
+        report = self.report
         matrix_cell_ids = {
             matrix_cell["cell_id"]
             for matrix_cell in coverage_matrix.REQUIRED_REJECTION_LIVENESS_CELLS
         }
         required_cells = [
             cell
-            for cell in report["required_cells"]
-            if cell["model_id"] == coverage_matrix.REJECTION_LIVENESS_MODEL_ID
-            and str(cell["obligation_id"]).startswith("rejection_liveness.")
+            for cell in self.required_by_model_id[coverage_matrix.REJECTION_LIVENESS_MODEL_ID]
+            if str(cell["obligation_id"]).startswith("rejection_liveness.")
             and str(cell["obligation_id"]).removeprefix("rejection_liveness.") in matrix_cell_ids
         ]
         rows = [
             row
-            for row in report["rows"]
-            if row["model_id"] == coverage_matrix.REJECTION_LIVENESS_MODEL_ID
-            and str(row["obligation_id"]).startswith("rejection_liveness.")
+            for row in self.rows_by_model_id[coverage_matrix.REJECTION_LIVENESS_MODEL_ID]
+            if str(row["obligation_id"]).startswith("rejection_liveness.")
             and str(row["obligation_id"]).removeprefix("rejection_liveness.") in matrix_cell_ids
         ]
 
@@ -168,8 +205,8 @@ class FlowPilotSyntheticAgentCoverageMatrixTests(unittest.TestCase):
                 self.assertIn(obligation_id, rows_by_obligation)
                 row = rows_by_obligation[obligation_id]
                 self.assertFalse(row["live_completion_allowed"])
-                self.assertTrue(row["evidence_current"])
-                self.assertEqual(row["evidence_status"], "passed")
+                self.assertFalse(row["evidence_current"])
+                self.assertEqual(row["evidence_status"], "not_run")
                 if cell["defect_class"] in coverage_matrix.RETRY_DEFECT_CLASSES:
                     self.assertEqual(row["coverage_kind"], "synthetic_trace")
                     self.assertTrue(row["synthetic_replay_required"])
@@ -180,23 +217,21 @@ class FlowPilotSyntheticAgentCoverageMatrixTests(unittest.TestCase):
                     self.assertEqual(row["coverage_boundary"], "ordinary_runtime_contract")
 
     def test_contract_exhaustion_required_cells_have_owners(self) -> None:
-        report = coverage_matrix.build_report()
+        report = self.report
         matrix_cell_ids = {
             matrix_cell["cell_id"]
             for matrix_cell in coverage_matrix.REQUIRED_CONTRACT_EXHAUSTION_CELLS
         }
         required_cells = [
             cell
-            for cell in report["required_cells"]
-            if cell["model_id"] == coverage_matrix.CONTRACT_EXHAUSTION_MODEL_ID
-            and str(cell["obligation_id"]).startswith("contract_exhaustion.")
+            for cell in self.required_by_model_id[coverage_matrix.CONTRACT_EXHAUSTION_MODEL_ID]
+            if str(cell["obligation_id"]).startswith("contract_exhaustion.")
             and str(cell["obligation_id"]).removeprefix("contract_exhaustion.") in matrix_cell_ids
         ]
         rows = [
             row
-            for row in report["rows"]
-            if row["model_id"] == coverage_matrix.CONTRACT_EXHAUSTION_MODEL_ID
-            and str(row["obligation_id"]).startswith("contract_exhaustion.")
+            for row in self.rows_by_model_id[coverage_matrix.CONTRACT_EXHAUSTION_MODEL_ID]
+            if str(row["obligation_id"]).startswith("contract_exhaustion.")
             and str(row["obligation_id"]).removeprefix("contract_exhaustion.") in matrix_cell_ids
         ]
 
@@ -216,8 +251,8 @@ class FlowPilotSyntheticAgentCoverageMatrixTests(unittest.TestCase):
                 self.assertIn(obligation_id, rows_by_obligation)
                 row = rows_by_obligation[obligation_id]
                 self.assertFalse(row["live_completion_allowed"])
-                self.assertTrue(row["evidence_current"])
-                self.assertEqual(row["evidence_status"], "passed")
+                self.assertFalse(row["evidence_current"])
+                self.assertEqual(row["evidence_status"], "not_run")
                 owner = cell.get("required_evidence_owner")
                 if owner == "contract_exhaustion_historical_failure_matrix":
                     self.assertEqual(row["coverage_kind"], "historical_failure_replay")
@@ -247,7 +282,7 @@ class FlowPilotSyntheticAgentCoverageMatrixTests(unittest.TestCase):
                     self.assertEqual(row["coverage_boundary"], "ordinary_runtime_contract")
 
     def test_review_window_completeness_and_fake_ai_cells_are_cartesian_rows(self) -> None:
-        report = coverage_matrix.build_report()
+        report = self.report
         review_cells = [
             cell
             for cell in coverage_matrix.REQUIRED_CONTRACT_EXHAUSTION_CELLS
@@ -258,8 +293,7 @@ class FlowPilotSyntheticAgentCoverageMatrixTests(unittest.TestCase):
         ]
         rows_by_obligation = {
             row["obligation_id"]: row
-            for row in report["rows"]
-            if row["model_id"] == coverage_matrix.CONTRACT_EXHAUSTION_MODEL_ID
+            for row in self.rows_by_model_id[coverage_matrix.CONTRACT_EXHAUSTION_MODEL_ID]
         }
 
         self.assertTrue(review_cells)
@@ -278,8 +312,8 @@ class FlowPilotSyntheticAgentCoverageMatrixTests(unittest.TestCase):
                 self.assertIn(obligation_id, rows_by_obligation)
                 row = rows_by_obligation[obligation_id]
                 self.assertFalse(row["live_completion_allowed"])
-                self.assertTrue(row["evidence_current"])
-                self.assertEqual(row["evidence_status"], "passed")
+                self.assertFalse(row["evidence_current"])
+                self.assertEqual(row["evidence_status"], "not_run")
                 if cell["required_evidence_owner"] == "review_window_completeness_matrix":
                     self.assertEqual(row["coverage_kind"], "ordinary_runtime")
                     self.assertFalse(row["synthetic_replay_required"])
@@ -336,23 +370,21 @@ class FlowPilotSyntheticAgentCoverageMatrixTests(unittest.TestCase):
         self.test_review_window_completeness_and_fake_ai_cells_are_cartesian_rows()
 
     def test_cartesian_exhaustion_required_cells_have_owners(self) -> None:
-        report = coverage_matrix.build_report()
+        report = self.report
         matrix_cell_ids = {
             matrix_cell["cell_id"]
             for matrix_cell in coverage_matrix.REQUIRED_CARTESIAN_CELLS
         }
         required_cells = [
             cell
-            for cell in report["required_cells"]
-            if cell["model_id"] == coverage_matrix.CARTESIAN_EXHAUSTION_MODEL_ID
-            and str(cell["obligation_id"]).startswith("cartesian_exhaustion.")
+            for cell in self.required_by_model_id[coverage_matrix.CARTESIAN_EXHAUSTION_MODEL_ID]
+            if str(cell["obligation_id"]).startswith("cartesian_exhaustion.")
             and str(cell["obligation_id"]).removeprefix("cartesian_exhaustion.") in matrix_cell_ids
         ]
         rows = [
             row
-            for row in report["rows"]
-            if row["model_id"] == coverage_matrix.CARTESIAN_EXHAUSTION_MODEL_ID
-            and str(row["obligation_id"]).startswith("cartesian_exhaustion.")
+            for row in self.rows_by_model_id[coverage_matrix.CARTESIAN_EXHAUSTION_MODEL_ID]
+            if str(row["obligation_id"]).startswith("cartesian_exhaustion.")
             and str(row["obligation_id"]).removeprefix("cartesian_exhaustion.") in matrix_cell_ids
         ]
 
@@ -366,8 +398,8 @@ class FlowPilotSyntheticAgentCoverageMatrixTests(unittest.TestCase):
                 self.assertIn(obligation_id, rows_by_obligation)
                 row = rows_by_obligation[obligation_id]
                 self.assertEqual(row["evidence_owner"], cell["required_evidence_owner"])
-                self.assertEqual(row["evidence_status"], "passed")
-                self.assertTrue(row["evidence_current"])
+                self.assertEqual(row["evidence_status"], "not_run")
+                self.assertFalse(row["evidence_current"])
                 self.assertFalse(row["live_completion_allowed"])
                 self.assertEqual(row["glass_break_allowed"], cell["glass_break_allowed"])
                 self.assertEqual(
@@ -390,38 +422,13 @@ class FlowPilotSyntheticAgentCoverageMatrixTests(unittest.TestCase):
                     self.assertFalse(row["synthetic_replay_required"])
 
     def test_control_plane_ledger_hygiene_cells_have_runtime_owners(self) -> None:
-        report = coverage_matrix.build_report()
+        report = self.report
         summary = report["control_plane_ledger_hygiene"]
-        cells = list(coverage_matrix.control_plane_ledger_hygiene_cells())
-        cell_ids = {cell["cell_id"] for cell in cells}
-        required_cells = [
-            cell
-            for cell in report["required_cells"]
-            if cell["model_id"] == coverage_matrix.FAKE_AI_RUNTIME_REPLAY_MODEL_ID
-            and str(cell["obligation_id"]).startswith("fake_ai_runtime_replay.control_plane_ledger_hygiene:")
-        ]
-        rows = [
-            row
-            for row in report["rows"]
-            if row.get("source") == coverage_matrix.CONTROL_PLANE_LEDGER_HYGIENE_SOURCE
-        ]
-        row_ids = {
-            str(row["obligation_id"]).removeprefix("fake_ai_runtime_replay.")
-            for row in rows
-        }
-        required_ids = {
-            str(cell["obligation_id"]).removeprefix("fake_ai_runtime_replay.")
-            for cell in required_cells
-        }
-        reactions = {row["branch_kind"] for row in rows}
-
         self.assertEqual(summary["expected_cell_count"], coverage_matrix.CONTROL_PLANE_LEDGER_HYGIENE_EXPECTED_CELL_COUNT)
-        self.assertEqual(summary["row_count"], coverage_matrix.CONTROL_PLANE_LEDGER_HYGIENE_EXPECTED_CELL_COUNT)
-        self.assertEqual(len(cells), coverage_matrix.CONTROL_PLANE_LEDGER_HYGIENE_EXPECTED_CELL_COUNT)
-        self.assertEqual(len(required_cells), coverage_matrix.CONTROL_PLANE_LEDGER_HYGIENE_EXPECTED_CELL_COUNT)
-        self.assertEqual(len(rows), coverage_matrix.CONTROL_PLANE_LEDGER_HYGIENE_EXPECTED_CELL_COUNT)
-        self.assertEqual(required_ids, cell_ids)
-        self.assertEqual(row_ids, cell_ids)
+        self.assertEqual(summary["declared_cell_count"], coverage_matrix.CONTROL_PLANE_LEDGER_HYGIENE_EXPECTED_CELL_COUNT)
+        self.assertEqual(summary["materialized_row_count"], 1)
+        self.assertEqual(len(summary["cell_receipt_sha256"]), 64)
+        self.assertEqual(summary["finding_counts"], {})
         self.assertLessEqual(
             {
                 "reject_dirty_accepted_result_pointer",
@@ -431,20 +438,12 @@ class FlowPilotSyntheticAgentCoverageMatrixTests(unittest.TestCase):
                 "block_final_reviewer_authorization_gap",
                 "allow_terminal_ledger_hygiene",
             },
-            reactions,
+            set(summary["by_reaction"]),
         )
-        self.assertFalse([row["evidence_id"] for row in rows if row["evidence_owner"] != coverage_matrix.CONTROL_PLANE_LEDGER_HYGIENE_OWNER])
-        self.assertFalse([row["evidence_id"] for row in rows if row["coverage_kind"] != "synthetic_trace"])
-        self.assertFalse([row["evidence_id"] for row in rows if row["live_completion_allowed"]])
-        self.assertFalse([row["evidence_id"] for row in rows if not row["synthetic_replay_required"]])
 
     def test_current_contract_cartesian_summary_is_wired_without_live_ai_claim(self) -> None:
-        report = coverage_matrix.build_report()
-        rows = [
-            row
-            for row in report["rows"]
-            if row["model_id"] == coverage_matrix.CURRENT_CONTRACT_CARTESIAN_MODEL_ID
-        ]
+        report = self.report
+        rows = self.rows_by_model_id[coverage_matrix.CURRENT_CONTRACT_CARTESIAN_MODEL_ID]
 
         self.assertEqual(len(rows), 1)
         row = rows[0]
@@ -459,7 +458,7 @@ class FlowPilotSyntheticAgentCoverageMatrixTests(unittest.TestCase):
         self.assertIn("model_only_not_runtime_replay", row["covered_failure_mode"])
 
     def test_executable_bridge_summary_is_wired_without_live_ai_claim(self) -> None:
-        report = coverage_matrix.build_report()
+        report = self.report
         bridge = report["executable_bridge"]
 
         self.assertTrue(bridge["ok"], bridge)
@@ -472,10 +471,10 @@ class FlowPilotSyntheticAgentCoverageMatrixTests(unittest.TestCase):
         self.assertEqual(bridge["missing_miss_families"], [])
 
     def test_p0_p1_required_branches_have_synthetic_replay_or_reason(self) -> None:
-        report = coverage_matrix.build_report()
+        report = self.report
         high_risk_rows = [
             row
-            for row in report["rows"]
+            for row in self.synthetic_rows
             if row["risk_tier"] in coverage_matrix.REPLAY_REQUIRED_RISK_TIERS
             and row["synthetic_replay_required"] is True
         ]
@@ -492,11 +491,10 @@ class FlowPilotSyntheticAgentCoverageMatrixTests(unittest.TestCase):
                 "synthetic.route_mutation.negative.stale_sibling_proof",
                 "synthetic.role_output.negative.pm_disposition_authority",
                 "synthetic.controller.failure.boundary_repair_budget_escalation",
-                "synthetic.material.negative.active_generation_blocks_stale_flags",
+                "ordinary_resource.existing_role_work_path",
                 "synthetic.terminal.negative.dirty_pm_suggestion_ledger",
                 "systemic.valid_envelope_bad_content.pm_repair_self_check",
                 "systemic.stacked_blockers.control_preempts_dirty_ledger",
-                "systemic.pm_repair_loop.followup_blocker",
                 "systemic.restart.stale_state_preserves_active_blocker",
                 "systemic.parallel.peer_run_stop_isolated",
                 "systemic.terminal.total_gate_dirty_sources",
@@ -513,21 +511,20 @@ class FlowPilotSyntheticAgentCoverageMatrixTests(unittest.TestCase):
                 self.assertTrue(row["covered_failure_mode"])
 
     def test_system_level_rows_name_recovery_loop_and_terminal_expectation(self) -> None:
-        report = coverage_matrix.build_report()
+        report = self.report
         system_rows = [
             row
-            for row in report["rows"]
+            for row in self.synthetic_rows
             if row["story_level"] == "system"
         ]
         evidence_ids = {row["evidence_id"] for row in system_rows}
 
-        self.assertEqual(len(system_rows), 7)
+        self.assertEqual(len(system_rows), 6)
         self.assertLessEqual(
             {
                 "synthetic.core_deliverable.negative.downgrade_chain",
                 "systemic.valid_envelope_bad_content.pm_repair_self_check",
                 "systemic.stacked_blockers.control_preempts_dirty_ledger",
-                "systemic.pm_repair_loop.followup_blocker",
                 "systemic.restart.stale_state_preserves_active_blocker",
                 "systemic.parallel.peer_run_stop_isolated",
                 "systemic.terminal.total_gate_dirty_sources",
@@ -543,15 +540,7 @@ class FlowPilotSyntheticAgentCoverageMatrixTests(unittest.TestCase):
                 self.assertFalse(row["live_completion_allowed"])
 
     def test_route_resume_and_role_authority_branches_are_explicit_rows(self) -> None:
-        rows = {
-            (
-                row["model_id"],
-                row["obligation_id"],
-                row["branch_kind"],
-                row["evidence_id"],
-            )
-            for row in coverage_matrix.build_report()["rows"]
-        }
+        rows = self.row_identity_set
 
         for expected in (
             (

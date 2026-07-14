@@ -141,7 +141,7 @@
       "live_completion_allowed": false,
       "notes": "A different agent id cannot submit work under an active-holder lease.",
       "protected_state_invariant": "packet_ledger_keeps_no_result_completion",
-      "recovery_route": "same_holder_retry_or_packet_reissue"
+      "recovery_route": "same_holder_retry_or_current_packet_runtime_retry"
     },
     {
       "background_final_artifact_required": true,

@@ -40,7 +40,6 @@ ACCEPTANCE_ITEM_REGISTRY_SCHEMA_VERSION = "flowpilot.acceptance_item_registry.v1
 DEFAULT_PROJECT_ID = "project-001"
 REQUIRED_FLOWGUARD_TARGET = "development_process"
 RESPONSIBILITIES = {
-    "planner",
     "pm",
     "worker",
     "research_worker",
@@ -63,7 +62,6 @@ PM_VISIBLE_SUMMARY_REQUIRED_PACKET_KINDS = {
 }
 PM_VISIBLE_SUMMARY_EXEMPT_RESPONSIBILITIES = {
     "pm",
-    "planner",
 }
 PM_VISIBLE_SUMMARY_MAX_ENTRIES = 8
 REPLAYABLE_ARTIFACT_ACCEPTANCE_CRITERION = (
@@ -86,10 +84,11 @@ TERMINAL_SUPPLEMENTAL_REPAIR_MAX_ROUNDS = 3
 ROUTE_NODE_KINDS = {"parent", "module", "leaf", "repair"}
 NON_WORKER_DISPATCH_NODE_KINDS = {"parent", "module"}
 ROUTE_DECOMPOSITION_REVIEW_CRITERIA = (
-    "Each executable leaf has one small outcome, clear proof, clear dependency boundary, and clear failure boundary.",
-    "Broad stage names such as research, design, implement, integrate, or validate are parent/module candidates when they hide multiple ordered work packages.",
-    "Sibling leaves do not overlap scope or depend on a Worker choosing missing child ordering.",
-    "Worker replanning, hidden subtasks, or worker-invented acceptance boundaries are route decomposition failures.",
+    "Each executable leaf is one independently accountable complete workstream with a bounded outcome, clear proof, dependency boundary, and failure boundary.",
+    "A leaf may contain a serious role-local numbered plan, bounded delegation, integration, verification, and self-repair; those internal steps do not require extra route nodes.",
+    "Broad stages such as research, design, implement, integrate, or validate are parent/module candidates only when they contain independently accountable outcomes with missing PM-owned order or ownership.",
+    "Sibling leaves do not overlap scope or depend on a Worker choosing missing cross-node ordering.",
+    "Worker invention of product scope, route nodes, cross-node dependencies, or acceptance boundaries is a route decomposition failure; Worker planning inside the assigned leaf is required.",
     "Reviewer is the semantic decomposition quality gate and may block planning before route materialization.",
 )
 NODE_CONTEXT_PACKAGE_REQUIRED_LIST_FIELDS = {
@@ -1095,6 +1094,7 @@ def _terminal_supplemental_repair_contract_current_shape(
             first_item["original_goal_link"] = "Current frozen acceptance contract."
             first_item["reviewer_gap"] = str(blocker.get("recommended_resolution") or "Terminal replay blocker.")
             first_item["required_repair"] = "Repair the delivered product and rerun terminal backward replay."
+            first_item["acceptance_item_ids"] = _active_acceptance_item_ids(ledger)
     return shape
 
 
@@ -1419,6 +1419,70 @@ def _accepted_task_packet_for_scope(
     return None
 
 
+def _runtime_local_capability_inventory(ledger: Mapping[str, Any]) -> dict[str, Any]:
+    """Return a shallow, current, packet-only inventory of local skills.
+
+    Runtime checks only path presence and availability. It does not read skill
+    instructions deeply or select relevant skills; PM owns relevance selection
+    and the existing skill-standard packet owns selected-skill obligations.
+    """
+
+    project_root = _route_deliverable_project_root(ledger)
+    codex_home = Path(os.environ.get("CODEX_HOME") or (Path.home() / ".codex")).resolve()
+    source_roots = (
+        ("project_skills", (project_root / "skills").resolve()),
+        ("project_agent_skills", (project_root / ".agents" / "skills").resolve()),
+        ("user_codex_skills", (codex_home / "skills").resolve()),
+    )
+    sources: list[dict[str, Any]] = []
+    skills: list[dict[str, Any]] = []
+    seen_paths: set[str] = set()
+    for source_id, source_root in source_roots:
+        exists = source_root.is_dir()
+        sources.append(
+            {
+                "source_id": source_id,
+                "root_path": source_root.as_posix(),
+                "available": exists,
+            }
+        )
+        if not exists:
+            continue
+        try:
+            skill_files = sorted(source_root.rglob("SKILL.md"), key=lambda path: path.as_posix().lower())
+        except OSError:
+            skill_files = []
+        for skill_file in skill_files:
+            try:
+                resolved = skill_file.resolve()
+                available = resolved.is_file()
+            except OSError:
+                continue
+            normalized_path = resolved.as_posix()
+            if normalized_path in seen_paths:
+                continue
+            seen_paths.add(normalized_path)
+            skills.append(
+                {
+                    "skill_id": resolved.parent.name,
+                    "skill_md_path": normalized_path,
+                    "source_id": source_id,
+                    "available": available,
+                    "inspection_depth": "path_and_availability_only",
+                }
+            )
+    return {
+        "schema_version": "flowpilot.runtime_local_capability_inventory.v1",
+        "generated_at": now_iso(),
+        "project_root": project_root.as_posix(),
+        "scan_policy": "shallow_path_and_availability_only",
+        "selection_owner": "pm",
+        "deep_read_policy": "selected_skills_only",
+        "sources": sources,
+        "skills": skills,
+    }
+
+
 def ensure_preplanning_gate_packet(ledger: dict[str, Any]) -> str:
     if not high_standard_flow_required(ledger):
         return ""
@@ -1514,18 +1578,22 @@ def _ensure_discovery_packet(ledger: dict[str, Any]) -> str:
     return issue_task_packet(
         ledger,
         "pm",
-        "Record current material and local skill discovery",
+        "Review current local skill inventory and select relevant candidates",
         json.dumps(
             {
                 "schema_version": "black_box_flowpilot.discovery_packet.v1",
                 "instruction": (
-                    "Record current-run material discovery and candidate skill inventory before route planning. "
-                    "Skill inventory is planning input; material summaries are navigation, not acceptance proof."
+                    "Runtime has performed the mandatory shallow current local skill/capability scan below. "
+                    "Review its paths and availability, select zero or more relevant candidate skills, and return "
+                    "only the current candidate selection. Deep-read only selected relevant skills; the next "
+                    "skill-standard packet converts selected instructions into reviewer-checkable obligations. "
+                    "Available project materials are normal PM inputs. If extra reading, research, experiment, or "
+                    "source verification is needed, issue it through the existing ordinary PM role-work path; "
+                    "there is no special material-scan or material-sufficiency gate."
                 ),
+                "runtime_local_capability_inventory": _runtime_local_capability_inventory(ledger),
                 "required_output": {
                     "decision": "pass",
-                    "material_sources": ["sealed_startup_intake"],
-                    "material_sufficiency": "sufficient_for_route_planning",
                     "candidate_skill_inventory": ["flowguard-development-process-flow"],
                 },
             },
@@ -1535,8 +1603,9 @@ def _ensure_discovery_packet(ledger: dict[str, Any]) -> str:
         required_flowguard_target="development_process",
         route_scope="discovery",
         acceptance_criteria=[
-            "Material sufficiency is stated from current-run sources.",
-            "Local skill inventory is candidate-only and not route authority.",
+            "Runtime-owned local skill paths and availability were reviewed before PM selection.",
+            "Candidate skill inventory is PM planning input and not route or acceptance authority.",
+            "Only selected relevant skills are deeply read and converted to later obligations.",
         ],
     )
 
@@ -1595,8 +1664,8 @@ def _ensure_planning_packet(ledger: dict[str, Any]) -> str:
                 "Open the sealed startup body through the current-run packet boundary and plan the project route. "
                 "Use one canonical executable route tree. Do not add broad per-node explanation fields just to satisfy the prompt; "
                 "use the existing strict route fields plus acceptance criteria, outputs, and checks. The route will not materialize "
-                "until FlowGuard Operator and Reviewer can see that every executable leaf is small, single-purpose, non-overlapping, "
-                "and worker-ready without Worker replanning."
+                "until FlowGuard Operator and Reviewer can see that every executable leaf is one independently accountable bounded "
+                "workstream, non-overlapping, and executable without changing PM-owned route scope, ordering, dependencies, or acceptance."
             ),
             "startup_intake_ref": _startup_body_ref_from_ledger(ledger),
             "high_standard_contract_id": (ledger.get("high_standard_contract") or {}).get("contract_id", ""),
@@ -1618,8 +1687,8 @@ def _ensure_planning_packet(ledger: dict[str, Any]) -> str:
         route_scope="planning",
         acceptance_criteria=[
             "PM route plan uses the accepted high-standard contract and discovery records.",
-            "PM route plan is decomposed into small worker-ready leaves or parent/module nodes with ordered children.",
-            "Reviewer may block planning before materialization if leaves are broad, overlapping, or require Worker replanning.",
+            "PM route plan is decomposed into bounded accountable workstream leaves or parent/module nodes with ordered children.",
+            "Reviewer may block planning before materialization if leaves are overlapping or require a Worker to change PM-owned route scope, ordering, dependencies, or acceptance.",
             "PM route plan is reviewed and then materialized into route nodes.",
             "Project closure is blocked until every effective route node is accepted.",
         ],
@@ -4497,12 +4566,11 @@ def _responsibility_for_title(title: str) -> str:
 
 
 def _normalize_node_responsibility(responsibility: str) -> str:
-    if responsibility in RESPONSIBILITIES and responsibility not in {
-        "planner",
-        "flowguard_operator",
-    }:
+    if responsibility in RESPONSIBILITIES:
         return responsibility
-    return "worker"
+    raise BlackBoxRuntimeError(
+        f"route node requires an explicit current responsibility; received: {responsibility or '<missing>'}"
+    )
 
 
 def _normalize_modeled_target(modeled_target: str, title: str) -> str:
@@ -4574,17 +4642,8 @@ def _ensure_pm_disposition_packet_for_node(ledger: dict[str, Any], node_id: str,
         )
     node = _require(ledger.setdefault("route_nodes", {}), node_id, "route node")
     family_id = "pm_disposition.node_pm_disposition"
-    minimal_valid_shape = packet_result_contracts.minimal_valid_shape_for_family(family_id)
     node_requirement_ids = [str(item) for item in node.get("high_standard_requirement_ids") or [] if str(item)]
     node_acceptance_item_ids = _node_acceptance_item_ids(node)
-    minimal_valid_shape["acceptance_item_disposition"] = [
-        {
-            "acceptance_item_id": item_id,
-            "disposition": "accepted",
-            "basis": "Current node result, FlowGuard evidence, Reviewer report, and validation evidence support this item.",
-        }
-        for item_id in node_acceptance_item_ids
-    ]
     node_validation_ids = [str(item) for item in node.get("validation_evidence_ids") or [] if str(item)]
     return issue_task_packet(
         ledger,
@@ -4602,7 +4661,6 @@ def _ensure_pm_disposition_packet_for_node(ledger: dict[str, Any], node_id: str,
                 "node_high_standard_requirement_ids": node_requirement_ids,
                 "node_acceptance_item_ids": node_acceptance_item_ids,
                 "node_validation_evidence_ids": node_validation_ids,
-                "minimal_valid_shape": minimal_valid_shape,
                 "instruction": (
                     "Return exactly one structured JSON object for the PM disposition. "
                     "Default valid decision is accept; other valid decisions are repair_current_scope, redesign_route, block, or stop. "
@@ -5792,7 +5850,7 @@ def _attach_repair_obligation_context_to_packet(
         _packet_authorized_result_reads(packet),
     )
     envelope["current_handoff_contract"] = handoff_contract
-    body = _packet_body_with_current_handoff_contract(body, handoff_contract, replace_existing=True)
+    body = _packet_body_without_current_handoff_contract(body)
     packet["body"] = body
     envelope["body_hash"] = hash_text(body)
 
@@ -6049,9 +6107,6 @@ def _ensure_pm_repair_decision_packet_for_blocker(ledger: dict[str, Any], blocke
     repair_target_route_node_id = str(
         repair_target_envelope.get("route_node_id") or blocker.get("route_node_id") or ""
     )
-    parent_repair_source_node_id = ""
-    if repair_target_route_node_id and repair_target_route_node_id in ledger.get("route_nodes", {}):
-        parent_repair_source_node_id = _nearest_parent_route_node_id(ledger, repair_target_route_node_id)
     repeat_context = _blocker_repeat_context(ledger, blocker)
     authorized_result_reads = _blocker_authorized_result_reads(
         ledger,
@@ -6079,78 +6134,6 @@ def _ensure_pm_repair_decision_packet_for_blocker(ledger: dict[str, Any], blocke
         ) + "FlowGuard formal evidence failed checks: " + "; ".join(
             str(item) for item in flowguard_context["failed_check_summaries"]
         )
-    required_result_fields = ["decision", "reason", "target_blocker_id", "next_action"]
-    minimal_valid_shape: dict[str, Any] = {
-        "decision": "repair_current_scope",
-        "reason": "Concrete PM repair reason.",
-        "target_blocker_id": blocker_id,
-        "next_action": "repair_current_scope",
-    }
-    conditional_required_fields: dict[str, list[str]] = {
-        "repair_parent_scope": ["repair_parent_scope_contract"],
-        "redesign_route": ["route_plan"],
-        "waive_with_authority": ["authority_ref"],
-    }
-    if repair_evidence_obligations:
-        required_result_fields.append("repair_obligation_disposition when repair_evidence_obligations exist")
-        for branch in (
-            "break_glass",
-            "repair_current_scope",
-            "repair_parent_scope",
-            "redesign_route",
-            "waive_with_authority",
-            "stop_for_user",
-        ):
-            conditional_required_fields.setdefault(branch, []).append("repair_obligation_disposition")
-        minimal_valid_shape["repair_obligation_disposition"] = _repair_obligation_disposition_minimal_shape(
-            repair_evidence_obligations,
-            "repair_current_scope",
-        )
-    if terminal_supplemental_required:
-        required_result_fields.append("supplemental_repair_contract when terminal repair continues")
-        conditional_required_fields["repair_current_scope"] = ["supplemental_repair_contract"]
-        conditional_required_fields["repair_parent_scope"] = [
-            "repair_parent_scope_contract",
-            "supplemental_repair_contract",
-        ]
-        conditional_required_fields["redesign_route"] = ["route_plan", "supplemental_repair_contract"]
-        supplemental_contract_shape = _terminal_supplemental_repair_contract_current_shape(
-            ledger,
-            blocker,
-            round_number=next_supplemental_round,
-        )
-        terminal_route_plan_shape = packet_result_contracts.strict_route_plan_minimal_shape()
-        terminal_route_plan_shape = _project_supplemental_repair_ids_onto_route_plan(
-            terminal_route_plan_shape,
-            supplemental_contract_shape,
-        )
-        minimal_valid_shape = {
-            "decision": "redesign_route",
-            "reason": "Concrete PM terminal supplemental repair reason.",
-            "target_blocker_id": blocker_id,
-            "next_action": "redesign_route",
-            "supplemental_repair_contract": supplemental_contract_shape,
-            "route_plan": terminal_route_plan_shape,
-        }
-        if repair_evidence_obligations:
-            minimal_valid_shape["repair_obligation_disposition"] = _repair_obligation_disposition_minimal_shape(
-                repair_evidence_obligations,
-                "redesign_route",
-            )
-            conditional_required_fields["repair_current_scope"] = [
-                "supplemental_repair_contract",
-                "repair_obligation_disposition",
-            ]
-            conditional_required_fields["repair_parent_scope"] = [
-                "repair_parent_scope_contract",
-                "supplemental_repair_contract",
-                "repair_obligation_disposition",
-            ]
-            conditional_required_fields["redesign_route"] = [
-                "route_plan",
-                "supplemental_repair_contract",
-                "repair_obligation_disposition",
-            ]
     packet_id = issue_task_packet(
         ledger,
         "pm",
@@ -6187,24 +6170,12 @@ def _ensure_pm_repair_decision_packet_for_blocker(ledger: dict[str, Any], blocke
                 "repeat_context": repeat_context,
                 "allowed_decisions": sorted(_PM_REPAIR_DECISIONS),
                 "contract_family_id": "pm_repair_decision.pm_repair_decision",
-                "required_result_body_fields": required_result_fields,
-                "forbidden_fields": [
-                    "authority",
-                    "summary",
-                    "repair_decision",
-                    "pm_repair_decision",
-                    "supplemental_contract",
-                    "repair_contract",
-                    "terminal_repair_contract",
-                ],
-                "conditional_required_fields": conditional_required_fields,
-                "minimal_valid_shape": minimal_valid_shape,
-                "repair_parent_scope_contract_shape": _parent_repair_scope_contract_minimal_shape(
-                    parent_repair_source_node_id or repair_target_route_node_id or "parent-node-id"
-                ),
                 "repair_decision_contract": {
                     "pm_must_choose_allowed_decision": True,
-                    "required_json_shape": "Use this packet's minimal_valid_shape as the current required JSON shape.",
+                    "required_json_shape": (
+                        "Use current_handoff_contract.required_report_contract.minimal_valid_shape as the "
+                        "current required JSON shape."
+                    ),
                     "top_level_decision_only": True,
                     "nested_repair_decision_wrappers_forbidden": True,
                     "nonterminal_repairs_require_runtime_fresh_packet": True,
@@ -6232,7 +6203,7 @@ def _ensure_pm_repair_decision_packet_for_blocker(ledger: dict[str, Any], blocke
                     "Return exactly one structured JSON object with top-level decision, reason, target_blocker_id, "
                     "and next_action. target_blocker_id must equal this packet's blocker_id; next_action must be "
                     "the selected current repair action. Use this "
-                    "packet's minimal_valid_shape as the authoritative current example for the selected branch; "
+                    "current handoff contract's minimal_valid_shape as the authoritative current example for the selected branch; "
                     "do not use a fixed decision/reason-only shape when the skeleton contains more fields. "
                     "Before deciding, use every required authorized input material delivered by open-packet as the "
                     "source of the concrete failure. "
@@ -9004,18 +8975,39 @@ def _packet_body_with_authorized_result_reads(body: str, reads: list[dict[str, A
     return body
 
 
-def _packet_body_with_current_handoff_contract(
-    body: str,
-    contract: Mapping[str, Any],
-    *,
-    replace_existing: bool = False,
-) -> str:
+_PACKET_BODY_MECHANICAL_MIRROR_FIELDS = {
+    "required_result_body_fields",
+    "required_child_fields",
+    "explicit_array_fields",
+    "non_empty_array_fields",
+    "conditional_required_fields",
+    "allowed_value_options",
+    "field_type_requirements",
+    "forbidden_fields",
+    "forbidden_aliases",
+    "minimal_valid_shape",
+    "branch_valid_shapes",
+    "branch_minimal_valid_shape",
+    "required_acceptance_item_ids",
+    "ownership_coverage_rule",
+    "required_node_acceptance_item_ids",
+    "node_acceptance_projection_rule",
+    "result_contract_profile_ids",
+    "result_contract_profile_bindings",
+}
+
+
+def _packet_body_without_current_handoff_contract(body: str) -> str:
     payload = _strict_json_object_from_body(body)
     if payload is None:
         return body
-    if not replace_existing and "current_handoff_contract" in payload:
+    if "current_handoff_contract" in payload:
         raise BlackBoxRuntimeError("current_handoff_contract must be issued by the runtime envelope")
-    payload["current_handoff_contract"] = _copy_jsonable(contract)
+    removed = _PACKET_BODY_MECHANICAL_MIRROR_FIELDS.intersection(payload)
+    if not removed:
+        return body
+    for field in removed:
+        payload.pop(field, None)
     return json.dumps(payload, indent=2, sort_keys=True)
 
 
@@ -9090,7 +9082,7 @@ def _attach_authorized_result_reads_to_packet(
     envelope["authorized_result_reads"] = merged
     handoff_contract = _build_current_handoff_contract(ledger, envelope, merged)
     envelope["current_handoff_contract"] = handoff_contract
-    body = _packet_body_with_current_handoff_contract(body, handoff_contract, replace_existing=True)
+    body = _packet_body_without_current_handoff_contract(body)
     repair_blocker_id = str(envelope.get("repair_blocker_id") or packet.get("repair_blocker_id") or "")
     repair_context = _repair_dossier_context_for_packet(ledger, repair_blocker_id)
     if repair_context:
@@ -9617,6 +9609,103 @@ def _project_current_pm_repair_blocker_id(value: Any, blocker_id: str) -> Any:
     return _copy_jsonable(value)
 
 
+def _project_current_pm_repair_contract(
+    ledger: Mapping[str, Any],
+    envelope: Mapping[str, Any],
+    contract: dict[str, Any],
+) -> dict[str, Any]:
+    blocker_id = str(envelope.get("repair_blocker_id") or envelope.get("subject_id") or "")
+    blocker = ledger.get("active_blockers", {}).get(blocker_id, {}) if blocker_id else {}
+    blocker = blocker if isinstance(blocker, Mapping) else {}
+    obligations = _repair_evidence_obligations_for_blocker(blocker) if blocker else []
+    branch_shapes = _project_current_pm_repair_blocker_id(
+        contract.get("branch_valid_shapes") or {},
+        blocker_id,
+    )
+    if not isinstance(branch_shapes, dict):
+        branch_shapes = {}
+
+    repair_target_route_node_id = str(blocker.get("route_node_id") or envelope.get("route_node_id") or "")
+    parent_source_node_id = (
+        _nearest_parent_route_node_id(ledger, repair_target_route_node_id)
+        if repair_target_route_node_id and repair_target_route_node_id in ledger.get("route_nodes", {})
+        else ""
+    )
+    terminal_supplemental_required = bool(blocker) and _is_terminal_backward_replay_blocker(blocker)
+    supplemental_shape: dict[str, Any] = {}
+    if terminal_supplemental_required:
+        next_round = int(_terminal_supplemental_state_view(ledger).get("current_round", 0) or 0) + 1
+        supplemental_shape = _terminal_supplemental_repair_contract_current_shape(
+            ledger,
+            blocker,
+            round_number=next_round,
+        )
+
+    for shape in branch_shapes.values():
+        if not isinstance(shape, dict):
+            continue
+        decision = str(shape.get("decision") or "")
+        if obligations:
+            shape["repair_obligation_disposition"] = _repair_obligation_disposition_minimal_shape(
+                obligations,
+                decision,
+            )
+        else:
+            shape.pop("repair_obligation_disposition", None)
+        if decision == "repair_parent_scope":
+            shape["repair_parent_scope_contract"] = _parent_repair_scope_contract_minimal_shape(
+                parent_source_node_id or repair_target_route_node_id or "parent-node-id"
+            )
+        if terminal_supplemental_required and decision in {
+            "repair_current_scope",
+            "repair_parent_scope",
+            "redesign_route",
+        }:
+            shape["supplemental_repair_contract"] = _copy_jsonable(supplemental_shape)
+            if decision == "redesign_route":
+                route_plan = packet_result_contracts.strict_route_plan_minimal_shape()
+                route_nodes = route_plan.get("nodes")
+                if isinstance(route_nodes, list):
+                    owner = next(
+                        (
+                            node
+                            for node in route_nodes
+                            if isinstance(node, dict) and not node.get("child_node_ids")
+                        ),
+                        None,
+                    )
+                    if isinstance(owner, dict):
+                        owner["acceptance_item_ids"] = _active_acceptance_item_ids(ledger)
+                shape["route_plan"] = _project_supplemental_repair_ids_onto_route_plan(
+                    route_plan,
+                    supplemental_shape,
+                )
+
+    if terminal_supplemental_required:
+        minimal_shape = branch_shapes.get("decision=redesign_route_terminal_supplemental")
+        if not isinstance(minimal_shape, Mapping):
+            minimal_shape = next(
+                (
+                    shape
+                    for shape in branch_shapes.values()
+                    if isinstance(shape, Mapping) and shape.get("decision") == "redesign_route"
+                ),
+                {},
+            )
+    else:
+        minimal_shape = branch_shapes.get("decision=repair_current_scope", {})
+    contract["minimal_valid_shape"] = _copy_jsonable(minimal_shape)
+    contract["branch_valid_shapes"] = _copy_jsonable(branch_shapes)
+
+    required_child_fields = list(contract.get("required_child_fields") or [])
+    if not obligations:
+        required_child_fields = [
+            field for field in required_child_fields if "repair_obligation_disposition" not in str(field)
+        ]
+    contract["required_child_fields"] = required_child_fields
+    return contract
+
+
 def _dynamic_effective_result_contract_for_envelope(
     ledger: Mapping[str, Any],
     envelope: Mapping[str, Any],
@@ -9687,17 +9776,35 @@ def _dynamic_effective_result_contract_for_envelope(
             )
             allowed_options["node_context_package.acceptance_item_projection[].acceptance_item_id"] = node_item_ids
 
+    if family_id == "flowguard_check.post_result":
+        allowed_options[_FLOWGUARD_FORMAL_ARTIFACT_DECISION_FIELD] = list(
+            _FLOWGUARD_FORMAL_ARTIFACT_ALLOWED_PASS_DECISIONS
+        )
+        field_types[_FLOWGUARD_FORMAL_ARTIFACT_DECISION_FIELD] = "string:pass"
+
     if family_id == "pm_repair_decision.pm_repair_decision":
-        blocker_id = str(envelope.get("repair_blocker_id") or envelope.get("subject_id") or "")
-        if blocker_id:
-            contract["minimal_valid_shape"] = _project_current_pm_repair_blocker_id(
-                contract.get("minimal_valid_shape") or {},
-                blocker_id,
-            )
-            contract["branch_valid_shapes"] = _project_current_pm_repair_blocker_id(
-                contract.get("branch_valid_shapes") or {},
-                blocker_id,
-            )
+        contract = _project_current_pm_repair_contract(ledger, envelope, contract)
+        required_child_fields = list(contract.get("required_child_fields") or [])
+
+    if family_id == "pm_disposition.node_pm_disposition":
+        node_id = str(envelope.get("route_node_id") or "")
+        node = ledger.get("route_nodes", {}).get(node_id, {}) if node_id else {}
+        acceptance_item_ids = _node_acceptance_item_ids(node) if isinstance(node, Mapping) else []
+        minimal_shape = _copy_jsonable(contract.get("minimal_valid_shape") or {})
+        minimal_shape["acceptance_item_disposition"] = [
+            {
+                "acceptance_item_id": item_id,
+                "disposition": "accepted",
+                "basis": (
+                    "Current node result, FlowGuard evidence, Reviewer report, and validation evidence "
+                    "support this item."
+                ),
+            }
+            for item_id in acceptance_item_ids
+        ]
+        contract["minimal_valid_shape"] = minimal_shape
+        contract["required_node_acceptance_item_ids"] = acceptance_item_ids
+        allowed_options["acceptance_item_disposition[].acceptance_item_id"] = acceptance_item_ids
 
     contract["required_child_fields"] = _dedupe_contract_fields(required_child_fields)
     contract["allowed_value_options"] = _copy_jsonable(allowed_options)
@@ -9811,8 +9918,8 @@ def _build_current_handoff_contract(
     stage_evidence_matrix = packet_result_contracts.role_visible_stage_evidence_row_json_for_family(family_id)
     required_fields = tuple(str(field) for field in effective_contract.get("required_fields") or ())
     handoff = {
-        "schema_version": "black_box_flowpilot.current_handoff_contract.v1",
-        "contract_id": "black_box_flowpilot.current_handoff_contract.v1",
+        "schema_version": "black_box_flowpilot.current_handoff_contract.v2",
+        "contract_id": "black_box_flowpilot.current_handoff_contract.v2",
         "packet_id": str(envelope.get("packet_id") or ""),
         "packet_kind": str(envelope.get("packet_kind") or "task"),
         "route_scope": str(envelope.get("route_scope") or ""),
@@ -9865,10 +9972,18 @@ def _build_current_handoff_contract(
             "non_empty_array_fields": list(effective_contract.get("non_empty_array_fields") or []),
             "allowed_value_options": _copy_jsonable(effective_contract.get("allowed_value_options") or {}),
             "field_type_requirements": _copy_jsonable(effective_contract.get("field_type_requirements") or {}),
+            "forbidden_fields": list(effective_contract.get("forbidden_fields") or []),
+            "forbidden_aliases": _copy_jsonable(effective_contract.get("forbidden_aliases") or {}),
             "minimal_valid_shape": _copy_jsonable(effective_contract.get("minimal_valid_shape") or {}),
             "branch_valid_shapes": _copy_jsonable(effective_contract.get("branch_valid_shapes") or {}),
             "stage_evidence_matrix": stage_evidence_matrix,
             "validator": str(effective_contract.get("validator") or ""),
+            "pm_visible_summary_required": _role_result_requires_pm_visible_summary(
+                responsibility=str(envelope.get("responsibility") or ""),
+                packet_kind=str(envelope.get("packet_kind") or "task"),
+            ),
+            "pm_visible_summary_shape": "non_empty_string_list",
+            "runner_may_synthesize_pm_visible_summary": False,
         },
         "missing_information_response": _packet_handoff_missing_information_response(
             family_id=family_id,
@@ -10096,31 +10211,11 @@ def issue_task_packet(
         route_version=int(ledger["active_route_version"]),
         source_generation=int(ledger["source_generation"]),
     )
-    family_id = packet_result_contracts.packet_result_family_id(envelope)
-    effective_contract = packet_result_contracts.effective_result_contract_from_envelope(envelope)
-    output_contract = dict(envelope["output_contract"])
-    output_contract["contract_family_id"] = family_id
-    output_contract["result_contract_profile_ids"] = list(effective_contract.get("result_contract_profile_ids") or [])
-    output_contract["result_contract_profile_bindings"] = _copy_jsonable(
-        effective_contract.get("result_contract_profile_bindings") or {}
-    )
-    output_contract["allowed_value_options"] = _copy_jsonable(effective_contract.get("allowed_value_options") or {})
-    output_contract["field_type_requirements"] = _copy_jsonable(
-        effective_contract.get("field_type_requirements") or {}
-    )
-    output_contract["forbidden_fields"] = list(effective_contract.get("forbidden_fields") or [])
-    envelope["output_contract"] = output_contract
-    if _role_result_requires_pm_visible_summary(responsibility=responsibility, packet_kind=packet_kind):
-        output_contract = dict(envelope["output_contract"])
-        output_contract["pm_visible_summary_required"] = True
-        output_contract["pm_visible_summary_shape"] = "non_empty_string_list"
-        output_contract["runner_may_synthesize_pm_visible_summary"] = False
-        envelope["output_contract"] = output_contract
     current_handoff_contract = _build_current_handoff_contract(ledger, envelope, normalized_result_reads)
     envelope["current_handoff_contract"] = current_handoff_contract
     if isinstance(current_handoff_contract.get("review_window"), Mapping):
         envelope["review_window"] = _copy_jsonable(current_handoff_contract["review_window"])
-    body = _packet_body_with_current_handoff_contract(body, current_handoff_contract)
+    body = _packet_body_without_current_handoff_contract(body)
     envelope["body_hash"] = hash_text(body)
     ledger["packets"][packet_id] = {
         "packet_id": packet_id,
@@ -10180,7 +10275,7 @@ def _bind_packet_repair_blocker_identity(
         envelope["repair_dossier_context"] = repair_context
     if isinstance(handoff_contract.get("review_window"), Mapping):
         envelope["review_window"] = _copy_jsonable(handoff_contract["review_window"])
-    body = _packet_body_with_current_handoff_contract(str(packet.get("body", "")), handoff_contract, replace_existing=True)
+    body = _packet_body_without_current_handoff_contract(str(packet.get("body", "")))
     body = _packet_body_with_repair_dossier_context(body, repair_context, replace_existing=True)
     packet["body"] = body
     envelope["body_hash"] = hash_text(body)
@@ -10815,16 +10910,15 @@ def _payload_path_values(payload: Mapping[str, Any], field_path: str) -> tuple[b
             values: list[Any] = []
             for item in value:
                 nested = visit(item, index + 1)
-                if nested is None:
-                    return None
-                values.extend(nested)
+                if nested is not None:
+                    values.extend(nested)
             return values
         if not isinstance(current, Mapping) or part not in current:
             return None
         return visit(current[part], index + 1)
 
     values = visit(payload, 0)
-    if values is None:
+    if not values:
         return False, []
     return True, values
 
@@ -10863,6 +10957,9 @@ def _missing_or_wrong_explicit_array_fields(
     wrong_type: list[str] = []
     for field in explicit_array_fields:
         if "[]" in field:
+            if _payload_path_missing(payload, field):
+                missing.append(field)
+                continue
             exists, values = _payload_path_values(payload, field)
             if not exists:
                 missing.append(field)
@@ -10887,6 +10984,9 @@ def _missing_or_wrong_non_empty_array_fields(
     wrong_type: list[str] = []
     for field in non_empty_array_fields:
         if "[]" in field:
+            if _payload_path_missing(payload, field):
+                missing_or_empty.append(field)
+                continue
             exists, values = _payload_path_values(payload, field)
             if not exists:
                 missing_or_empty.append(field)
@@ -11718,7 +11818,7 @@ def _terminal_backward_replay_result_violation(packet: Mapping[str, Any], result
             return _contract_block(packet, f"terminal backward replay final_blockers[{index}] must be an object")
         missing = [
             f"final_blockers[{index}].{field}"
-            for field in ("blocker_id", "blocker_class", "recommended_resolution")
+            for field in ("blocker_id", "blocker_class", "summary", "required_repair")
             if not str(blocker.get(field) or "").strip()
         ]
         if missing:
@@ -11872,10 +11972,17 @@ def _discovery_result_violation(packet: Mapping[str, Any], result: Mapping[str, 
     decision = _normalize_outcome_token(payload.get("decision"))
     if decision in _BLOCKING_OUTCOME_DECISIONS:
         return _contract_pass(packet)
-    if not isinstance(payload.get("material_sources"), list) or not payload.get("material_sources"):
-        return _contract_block(packet, "discovery result requires non-empty material_sources list", missing_required_fields=("material_sources",))
-    if not str(payload.get("material_sufficiency") or "").strip():
-        return _contract_block(packet, "discovery result requires material_sufficiency", missing_required_fields=("material_sufficiency",))
+    removed_fields = tuple(
+        field
+        for field in ("material_sources", "material_sufficiency", "material_current")
+        if field in payload
+    )
+    if removed_fields:
+        return _contract_block(
+            packet,
+            "discovery result uses removed material-specific field(s): " + ", ".join(removed_fields),
+            forbidden_fields_seen=removed_fields,
+        )
     if not isinstance(payload.get("candidate_skill_inventory"), list):
         return _contract_block(packet, "discovery result requires candidate_skill_inventory list", missing_required_fields=("candidate_skill_inventory",))
     return _contract_pass(packet)
@@ -12593,7 +12700,14 @@ def _block_result_and_reissue_current_packet_family(
         "blocked_result_id": str(result.get("result_id") or ""),
         "blocked_reason": contract_check.blocked_reason,
         "contract_family_id": contract_check.contract_family_id,
-        "mechanical_contract_failure": contract_check.to_json(),
+        "mechanical_contract_failure": {
+            "contract_family_id": contract_check.contract_family_id,
+            "blocked_reason": contract_check.blocked_reason,
+            "missing_required_fields": list(contract_check.missing_required_fields),
+            "forbidden_fields_seen": list(contract_check.forbidden_fields_seen),
+            "failed_branch": contract_check.failed_branch,
+            "failed_field_path": contract_check.failed_field_path,
+        },
         "missing_required_fields": list(contract_check.missing_required_fields),
         "forbidden_fields_seen": list(contract_check.forbidden_fields_seen),
         "failed_branch": contract_check.failed_branch,
@@ -12602,30 +12716,13 @@ def _block_result_and_reissue_current_packet_family(
         "route_scope": route_scope,
         "route_node_id": str(envelope.get("route_node_id") or ""),
         "acceptance_criteria": list(envelope.get("acceptance_criteria") or []),
-        "contract": _copy_jsonable(envelope.get("output_contract") or {}),
-        "required_result_body_fields": list(contract_check.required_result_body_fields),
-        "required_child_fields": list(effective_contract.get("required_child_fields") or []),
-        "explicit_array_fields": list(effective_contract.get("explicit_array_fields") or []),
-        "non_empty_array_fields": list(effective_contract.get("non_empty_array_fields") or []),
-        "minimal_valid_shape": _copy_jsonable(contract_check.minimal_valid_shape or {}),
-        "branch_minimal_valid_shape": _copy_jsonable(contract_check.branch_minimal_valid_shape or {}),
-        "allowed_value_options": _copy_jsonable(effective_contract.get("allowed_value_options") or {}),
-        "field_type_requirements": _copy_jsonable(effective_contract.get("field_type_requirements") or {}),
-        "required_acceptance_item_ids": list(effective_contract.get("required_acceptance_item_ids") or []),
-        "ownership_coverage_rule": _copy_jsonable(effective_contract.get("ownership_coverage_rule") or {}),
-        "required_node_acceptance_item_ids": list(effective_contract.get("required_node_acceptance_item_ids") or []),
-        "node_acceptance_projection_rule": _copy_jsonable(effective_contract.get("node_acceptance_projection_rule") or {}),
-        "result_contract_profile_ids": list(effective_contract.get("result_contract_profile_ids") or []),
-        "result_contract_profile_bindings": _copy_jsonable(
-            effective_contract.get("result_contract_profile_bindings") or {}
-        ),
         "instruction": (
             "Submit a fresh current-contract result for the same packet family. "
-            "Use the current minimal shape, exact field names, finite options, and type requirements. "
+            "Open this fresh packet and use only its submission_checklist for the current minimal shape, "
+            "exact field names, finite options, type requirements, and branch rules. "
             "When pm_visible_summary is required, the producing role must write it directly; runtime cannot synthesize it. "
-            "Use missing_required_fields, forbidden_fields_seen, allowed_value_options, field_type_requirements, "
-            "failed_branch, failed_field_path, and branch_minimal_valid_shape as the authoritative "
-            "mechanical correction list."
+            "Use this body's missing_required_fields, forbidden_fields_seen, failed_branch, and failed_field_path "
+            "only as failure diagnostics; they do not replace the fresh submission checklist."
         ),
     }
     if packet_kind == "review" and route_scope == TERMINAL_BACKWARD_REPLAY_SCOPE:
@@ -12683,43 +12780,13 @@ def _block_result_and_reissue_current_packet_family(
             node_requirement_ids = [str(item) for item in node.get("high_standard_requirement_ids") or [] if str(item)]
             node_acceptance_item_ids = _node_acceptance_item_ids(node)
             node_validation_ids = [str(item) for item in node.get("validation_evidence_ids") or [] if str(item)]
-            pm_minimal_valid_shape = _copy_jsonable(
-                packet_result_contracts.minimal_valid_shape_for_family("pm_disposition.node_pm_disposition")
-            )
-            if isinstance(pm_minimal_valid_shape, dict):
-                pm_minimal_valid_shape["acceptance_item_disposition"] = [
-                    {
-                        "acceptance_item_id": item_id,
-                        "disposition": "accepted",
-                        "basis": "Current node result, FlowGuard evidence, Reviewer report, and validation evidence support this item.",
-                    }
-                    for item_id in node_acceptance_item_ids
-                ]
             reissue_payload.update(
                 {
                     "schema_version": "black_box_flowpilot.pm_disposition_reissue_packet.v1",
                     "node_high_standard_requirement_ids": node_requirement_ids,
                     "node_acceptance_item_ids": node_acceptance_item_ids,
                     "node_validation_evidence_ids": node_validation_ids,
-                    "minimal_valid_shape": pm_minimal_valid_shape,
                 }
-            )
-    if packet_kind == "pm_repair_decision":
-        current_blocker_id = str(
-            packet.get("active_blocker_id")
-            or packet.get("repair_blocker_id")
-            or envelope.get("repair_blocker_id")
-            or envelope.get("subject_id")
-            or ""
-        )
-        if current_blocker_id:
-            reissue_payload["minimal_valid_shape"] = _project_current_pm_repair_blocker_id(
-                reissue_payload.get("minimal_valid_shape") or {},
-                current_blocker_id,
-            )
-            reissue_payload["branch_minimal_valid_shape"] = _project_current_pm_repair_blocker_id(
-                reissue_payload.get("branch_minimal_valid_shape") or {},
-                current_blocker_id,
             )
     preassigned_packet_id = ""
     reissue_authorized_result_reads: list[dict[str, Any]] = _normalize_authorized_result_reads(
@@ -13323,13 +13390,16 @@ def _record_preplanning_gate_closure(
             "status": "accepted",
             "source_packet_id": subject_packet.get("packet_id", ""),
             "source_result_id": result_id,
-            "material_sources": discovery["material_sources"],
-            "material_sufficiency": discovery["material_sufficiency"],
             "candidate_skill_inventory": discovery["candidate_skill_inventory"],
-            "material_current": discovery["material_current"],
+            "inventory_source_packet_id": subject_packet.get("packet_id", ""),
             "created_at": now_iso(),
         }
-        _event(ledger, "discovery_record_accepted", discovery_id=discovery_id)
+        _event(
+            ledger,
+            "discovery_record_accepted",
+            discovery_id=discovery_id,
+            candidate_skill_count=len(discovery["candidate_skill_inventory"]),
+        )
         return
     if route_scope == "skill_standard":
         obligations = _parse_skill_obligations(body)
@@ -13484,24 +13554,21 @@ def _parse_acceptance_item_registry(body: str, requirements: list[dict[str, Any]
 
 def _parse_discovery_result(body: str) -> dict[str, Any]:
     payload = _parse_json_object(body)
-    sources = payload.get("material_sources")
-    if not isinstance(sources, list) or not sources:
-        raise BlackBoxRuntimeError("discovery result requires non-empty material_sources list")
-    source_texts = [str(item).strip() for item in sources if str(item).strip()]
-    if not source_texts:
-        raise BlackBoxRuntimeError("discovery result requires non-empty material_sources list")
-    material_sufficiency = str(payload.get("material_sufficiency") or "").strip()
-    if not material_sufficiency:
-        raise BlackBoxRuntimeError("discovery result requires material_sufficiency")
+    removed_fields = [
+        field
+        for field in ("material_sources", "material_sufficiency", "material_current")
+        if field in payload
+    ]
+    if removed_fields:
+        raise BlackBoxRuntimeError(
+            "discovery result uses removed material-specific field(s): " + ", ".join(removed_fields)
+        )
     inventory = payload.get("candidate_skill_inventory")
     if not isinstance(inventory, list):
         raise BlackBoxRuntimeError("discovery result requires candidate_skill_inventory list")
     skill_texts = [str(item).strip() for item in inventory if str(item).strip()]
     return {
-        "material_sources": source_texts,
-        "material_sufficiency": material_sufficiency,
         "candidate_skill_inventory": skill_texts,
-        "material_current": True,
     }
 
 
@@ -13947,7 +14014,8 @@ def _ensure_flowguard_packet_for_task_result(
             "route_decomposition_review_criteria": list(ROUTE_DECOMPOSITION_REVIEW_CRITERIA),
             "instruction": (
                 "For this planning result, check whether the proposed route can traverse from first executable leaf "
-                "to closure without letting a Worker invent subtasks, child order, dependency boundaries, or acceptance boundaries."
+                "to closure while allowing each Worker a complete local numbered plan and bounded delegation, but without "
+                "letting a Worker change route nodes, cross-node order, dependency boundaries, or acceptance boundaries."
             ),
         }
     staged_effect = staged_effect_reference.get("staged_effect")

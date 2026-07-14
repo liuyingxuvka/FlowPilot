@@ -3,8 +3,6 @@
 from __future__ import annotations
 
 CARD_PHASE_BY_ID = {
-    "pm.material_scan": "material_scan",
-    "reviewer.material_sufficiency": "material_scan",
     "pm.product_architecture": "product_architecture",
     "flowguard_operator.product_architecture_modelability": "product_architecture",
     "pm.product_behavior_model_decision": "product_architecture",
@@ -32,8 +30,6 @@ CARD_PHASE_BY_ID = {
 
 CARD_REQUIRED_SOURCE_PATHS = {
     "pm.product_architecture": {
-        "pm_material_understanding": "pm_material_understanding.json",
-        "pm_material_understanding_payload": "material/pm_material_understanding_payload.json",
         "flowguard_capability_snapshot": "flowguard/capability_snapshot.json",
     },
     "flowguard_operator.product_architecture_modelability": {

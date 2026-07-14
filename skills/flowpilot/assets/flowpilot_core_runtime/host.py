@@ -7,16 +7,32 @@ from typing import Any
 from . import runtime
 
 
-HOST_KINDS = {"fake", "dry_run", "live"}
-RESPONSIBILITY_ALIASES = {
-    "project_manager": "pm",
-    "pm": "pm",
-    "reviewer": "reviewer",
-    "flowguard_operator": "flowguard_operator",
-    "worker": "worker",
-    "research_worker": "research_worker",
-    "ui_qa": "ui_qa",
+HOST_KINDS = frozenset({"fake", "dry_run", "live"})
+CURRENT_RESPONSIBILITY_LABELS = {
+    "pm": "PM",
+    "worker": "Worker",
+    "research_worker": "Research worker",
+    "reviewer": "Reviewer",
+    "flowguard_operator": "FlowGuard operator",
+    "ui_qa": "UI QA",
 }
+CURRENT_RESPONSIBILITIES = frozenset(CURRENT_RESPONSIBILITY_LABELS)
+
+
+def require_current_responsibility(responsibility: str) -> str:
+    if responsibility not in CURRENT_RESPONSIBILITIES:
+        raise runtime.BlackBoxRuntimeError(f"unknown current responsibility: {responsibility}")
+    return responsibility
+
+
+def require_current_host_kind(host_kind: str) -> str:
+    if host_kind not in HOST_KINDS:
+        raise runtime.BlackBoxRuntimeError(f"unknown current host kind: {host_kind}")
+    return host_kind
+
+
+def current_responsibility_label(responsibility: str) -> str:
+    return CURRENT_RESPONSIBILITY_LABELS[require_current_responsibility(responsibility)]
 
 
 def lease_responsibility(
@@ -29,13 +45,12 @@ def lease_responsibility(
     scope: str = "",
     assignment_id: str = "",
 ) -> str:
-    normalized = RESPONSIBILITY_ALIASES.get(responsibility, responsibility)
-    if host_kind not in HOST_KINDS:
-        raise runtime.BlackBoxRuntimeError(f"unknown host kind: {host_kind}")
+    responsibility = require_current_responsibility(responsibility)
+    host_kind = require_current_host_kind(host_kind)
     if not assignment_id:
         assignment = runtime.resolve_role_assignment(
             ledger,
-            normalized,
+            responsibility,
             packet_id=packet_id,
             host_kind=host_kind,
         )
@@ -44,6 +59,12 @@ def lease_responsibility(
         assignment = ledger.setdefault("role_assignments", {}).get(assignment_id)
         if not isinstance(assignment, dict):
             raise runtime.BlackBoxRuntimeError("role assignment record is invalid")
+        if str(assignment.get("responsibility") or "") != responsibility:
+            raise runtime.BlackBoxRuntimeError("role assignment responsibility mismatch")
+        if str(assignment.get("packet_id") or "") not in {"", packet_id}:
+            raise runtime.BlackBoxRuntimeError("role assignment packet mismatch")
+        if str(assignment.get("host_kind") or "") != host_kind:
+            raise runtime.BlackBoxRuntimeError("role assignment host kind mismatch")
     if str(assignment.get("disposition") or "") == "blocked":
         reason = str(assignment.get("blocker_reason") or "role assignment blocked")
         raise runtime.BlackBoxRuntimeError(reason)
@@ -52,7 +73,7 @@ def lease_responsibility(
         effective_agent_id = None
     lease_id = runtime.lease_agent(
         ledger,
-        normalized,
+        responsibility,
         agent_id=effective_agent_id,
         packet_id=packet_id,
         assignment_id=assignment_id,
@@ -64,7 +85,7 @@ def lease_responsibility(
     ledger.setdefault("host_driver_state", {})[lease_id] = {
         "lease_id": lease_id,
         "host_kind": host_kind,
-        "responsibility": normalized,
+        "responsibility": responsibility,
         "scope": scope,
         "role_assignment_id": assignment_id,
         "state": "leased",

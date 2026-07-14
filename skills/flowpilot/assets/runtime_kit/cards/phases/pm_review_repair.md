@@ -12,9 +12,10 @@ runtime_context: Treat the runtime delivery envelope as the live source for the 
 
 ## Current Repair Submission Checklist
 
-After ACK, open the assigned PM repair packet and use the returned
-`submission_checklist` or packet `minimal_valid_shape` as the current submit
-shape. If the packet declares `repair_evidence_obligations`, the PM decision
+After ACK, open the assigned PM repair packet and use only the returned
+`submission_checklist.v2` as the current submit shape. Packet-body mechanical
+mirrors and an earlier reissue body's shape are not current authority. If the
+current checklist declares repair-obligation rows, the PM decision
 body must include `repair_obligation_disposition` with one row for every
 obligation id before `submit-result`.
 
@@ -299,14 +300,11 @@ Choose the executable plan kind deliberately:
   actions, success evidence, packet acceptance slice, and role authority. Any
   broader defect returns to PM as `blocked`, `needs_pm`, or a PM Suggestion Item
   instead of silent repair.
-- Use `packet_reissue` when replacement packets must be generated. Include
-  `repair_transaction.replacement_packets` or
-  `repair_transaction.replacement_packet_specs_path` with its hash. Router will
-  commit one new packet generation across packet files, packet ledger, material
-  dispatch index, and reviewer outcome table before any recheck can pass.
 - Use `role_reissue` only when the PM itself is the concrete producer for a
   fresh bounded PM report, decision, or ACK. Do not use it to start worker,
-  reviewer, host, or material-scan work.
+  reviewer, host, or ordinary evidence/research work.
+- Use `router_internal_reconcile` only for a Router-owned current-contract
+  reconciliation handler that the runtime explicitly supports.
 - Use `await_existing_event` only when a real current producer already exists
   for the awaited event. Do not use it to mean "start over".
 - Use `route_mutation` only for structural route/node/acceptance changes.
@@ -367,19 +365,13 @@ Use these exact field names and one of the allowed `decision` values:
   "repair_action": "<action taken or why none was needed>",
   "recovery_option": "<same_gate_repair|rollback_to_prior_gate|supplemental_node|repair_node|route_mutation|evidence_quarantine|allowed_waiver|user_stop|protocol_dead_end|rerun_self_interrogation|record_disposition|convert_findings_to_repair>",
   "return_gate": "<gate/event/terminal-stop to retry or enter after this decision>",
-  "rerun_target": "<success event to recheck, such as router_direct_material_scan_dispatch_recheck_passed>",
+  "rerun_target": "<current success event to recheck from the Router wait/status>",
   "repair_transaction": {
-    "plan_kind": "<operation_replay|controller_repair_work_packet|packet_reissue|role_reissue|router_internal_reconcile|await_existing_event|route_mutation|terminal_stop>",
-    "operation_ref": {},
-    "work_packet": {
-      "allowed_reads": [],
-      "allowed_writes": [],
-      "forbidden_actions": [],
-      "success_evidence": []
-    },
-    "replacement_packet_specs_path": "<path-or-null>",
-    "replacement_packet_specs_hash": "<sha256-or-null>",
-    "replacement_packets": []
+    "plan_kind": "operation_replay",
+    "operation_ref": {
+      "action_type": "<safe recorded action type>",
+      "controller_action_id": "<recorded action id when available>"
+    }
   },
   "blockers": [],
   "contract_self_check": {
@@ -394,10 +386,13 @@ If the responsible role must reissue a malformed control-plane output, name
 that target and event in `rerun_target`. Use `await_existing_event` only when
 that role already has a current producer; use `operation_replay` for a recorded
 safe operation, `controller_repair_work_packet` for bounded Controller repair,
-or `packet_reissue` for replacement packets. For material-scan rework,
-`role_reissue` and stale existing-event waits are invalid because they do not
-produce a fresh packet generation. Do not write packet specs as loose side
-files without committing them through the router transaction.
+or `route_mutation` when the accepted route must gain or change ordinary work.
+For ordinary evidence/research rework, establish the required Worker or Reviewer
+producer through the existing current-node, research-package, and role-work
+path; only then may `await_existing_event` wait for its current result.
+`packet_reissue` and replacement-packet fields belong to the retired special
+repair path and are rejected by the current runtime. Do not write loose packet
+specs or use `role_reissue` to bypass the ordinary packet/result/review path.
 
 PM may recover by same-gate repair, rollback, supplemental node, repair node,
 route mutation, evidence quarantine, allowed waiver, user stop, or protocol

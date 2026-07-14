@@ -19,10 +19,47 @@ host = importlib.import_module("flowpilot_core_runtime.host")
 packet_result_contracts = importlib.import_module("flowpilot_core_runtime.packet_result_contracts")
 packet_stage_evidence_matrix = importlib.import_module("flowpilot_core_runtime.packet_stage_evidence_matrix")
 review_window_contracts = importlib.import_module("flowpilot_core_runtime.review_window_contracts")
+flowpilot_new_role_commands = importlib.import_module("flowpilot_new_role_commands")
 
 
 def _contract_child_fields(family_id: str) -> list[str]:
     return list(packet_result_contracts.PACKET_RESULT_CONTRACTS_BY_FAMILY[family_id].get("required_child_fields") or [])
+
+
+def _submission_checklist_for_packet(ledger: dict, packet_id: str) -> dict[str, object]:
+    packet = ledger["packets"][packet_id]
+    handoff = packet["envelope"]["current_handoff_contract"]
+    checklist = flowpilot_new_role_commands._submission_checklist_from_current_handoff_contract(
+        handoff,
+        [],
+        run_id="test-current-run",
+        packet_id=packet_id,
+        lease_id="test-current-lease",
+    )
+    if checklist.get("schema_version") != "black_box_flowpilot.submission_checklist.v2":
+        raise AssertionError("test packet did not project submission_checklist.v2")
+    return checklist
+
+
+def _checklist_payload(ledger: dict, packet_id: str, *, decision: str = "") -> dict[str, object]:
+    checklist = _submission_checklist_for_packet(ledger, packet_id)
+    skeleton = checklist.get("result_skeleton")
+    if not isinstance(skeleton, dict):
+        raise AssertionError("submission_checklist.v2 lacks result_skeleton")
+    payload = json.loads(json.dumps(skeleton))
+    if decision:
+        branch_shapes = checklist.get("branch_valid_shapes")
+        selected = (
+            branch_shapes.get(f"decision={decision}")
+            if isinstance(branch_shapes, dict)
+            else None
+        )
+        if isinstance(selected, dict):
+            payload = json.loads(json.dumps(selected))
+        payload["decision"] = decision
+        if "next_action" in payload:
+            payload["next_action"] = decision
+    return payload
 
 
 def _pass_body(summary: str = "Current packet evidence passed.", **fields: object) -> str:
@@ -42,34 +79,14 @@ def _flowguard_pass_body(summary: str = "FlowGuard accepted the current packet e
     return json.dumps(payload)
 
 
-def _flowguard_semantic_recheck_body_from_packet(
+def _flowguard_semantic_recheck_body_from_checklist(
     ledger: dict,
     packet_id: str,
     summary: str = "FlowGuard accepted the blocker-bound semantic recheck.",
     **fields: object,
 ) -> str:
-    payload = json.loads(_flowguard_pass_body(summary))
-    packet = ledger["packets"][packet_id]
-    profile_bindings = packet["envelope"].get("result_contract_profile_bindings", {})
-    semantic_binding = (
-        profile_bindings.get("flowguard.semantic_recheck_required", {})
-        if isinstance(profile_bindings, dict)
-        else {}
-    )
-    if isinstance(semantic_binding, dict) and semantic_binding:
-        authorized_read_ids = [
-            str(item)
-            for item in semantic_binding.get("authorized_result_read_ids", [])
-            if str(item)
-        ]
-        payload["semantic_recheck"] = {
-            "blocker_id": str(semantic_binding.get("blocker_id") or ""),
-            "subject_result_consumed": True,
-            "subject_bound_semantic_coverage": True,
-            "coverage_boundary": str(semantic_binding.get("coverage_boundary") or "subject_bound_semantic"),
-            "consumed_authorized_result_read_ids": authorized_read_ids,
-            "consumed_repair_obligation_ids": list(semantic_binding.get("repair_obligation_ids") or []),
-        }
+    payload = _checklist_payload(ledger, packet_id)
+    payload["pm_visible_summary"] = [summary]
     payload.update(fields)
     return json.dumps(payload)
 
@@ -199,7 +216,7 @@ _PM_REPAIR_OBLIGATION_RETURN_GATE_BY_DECISION = {
 }
 
 
-def _pm_repair_body_from_packet(
+def _pm_repair_body_from_checklist(
     ledger: dict,
     packet_id: str,
     summary: str,
@@ -208,8 +225,7 @@ def _pm_repair_body_from_packet(
     reason: str,
     **fields: object,
 ) -> str:
-    packet_body = json.loads(ledger["packets"][packet_id]["body"])
-    payload = dict(packet_body.get("minimal_valid_shape") or {})
+    payload = _checklist_payload(ledger, packet_id, decision=decision)
     payload.update(
         {
             "decision": decision,
@@ -218,18 +234,10 @@ def _pm_repair_body_from_packet(
             "pm_visible_summary": [summary],
         }
     )
-    obligations = packet_body.get("repair_evidence_obligations")
-    if isinstance(obligations, list) and obligations:
-        payload["repair_obligation_disposition"] = [
-            {
-                "obligation_id": str(row.get("obligation_id") or ""),
-                "disposition": _PM_REPAIR_OBLIGATION_DISPOSITION_BY_DECISION[decision],
-                "return_gate": _PM_REPAIR_OBLIGATION_RETURN_GATE_BY_DECISION[decision],
-                "evidence_kind": "fresh_current_evidence",
-            }
-            for row in obligations
-            if isinstance(row, dict)
-        ]
+    for row in payload.get("repair_obligation_disposition", []):
+        if isinstance(row, dict):
+            row["disposition"] = _PM_REPAIR_OBLIGATION_DISPOSITION_BY_DECISION[decision]
+            row["return_gate"] = _PM_REPAIR_OBLIGATION_RETURN_GATE_BY_DECISION[decision]
     payload.update(fields)
     return json.dumps(payload)
 
@@ -244,17 +252,14 @@ def _pm_disposition_body(
     return json.dumps(payload)
 
 
-def _pm_disposition_body_from_packet(
+def _pm_disposition_body_from_checklist(
     ledger: dict,
     packet_id: str,
     summary: str = "PM accepted the current node after absorbing role evidence.",
     **fields: object,
 ) -> str:
-    packet_body = json.loads(ledger["packets"][packet_id].get("body") or "{}")
-    if isinstance(packet_body.get("minimal_valid_shape"), dict):
-        payload = json.loads(json.dumps(packet_body["minimal_valid_shape"]))
-    else:
-        payload = json.loads(_pm_disposition_body(summary))
+    decision = str(fields.get("decision") or "accept")
+    payload = _checklist_payload(ledger, packet_id, decision=decision)
     payload["reason"] = summary
     payload.update(fields)
     return json.dumps(payload)
@@ -303,8 +308,6 @@ def _discovery_body() -> str:
     return json.dumps(
         {
             "decision": "pass",
-            "material_sources": ["startup"],
-            "material_sufficiency": "sufficient_for_route_planning",
             "candidate_skill_inventory": ["flowguard-development-process-flow"],
         }
     )
@@ -361,21 +364,6 @@ def _complete_open_packet(ledger: dict, packet_id: str, body: str | None = None)
     if body is None:
         body = _pass_body()
     packet = ledger["packets"][packet_id]
-    if packet["envelope"].get("packet_kind") == "pm_disposition":
-        try:
-            payload = json.loads(body)
-        except json.JSONDecodeError:
-            payload = {}
-        packet_body = json.loads(packet.get("body") or "{}")
-        if isinstance(payload, dict) and isinstance(packet_body.get("minimal_valid_shape"), dict):
-            if payload.get("acceptance_item_disposition") == packet_result_contracts.minimal_valid_shape_for_family(
-                "pm_disposition.node_pm_disposition"
-            ).get("acceptance_item_disposition"):
-                payload["acceptance_item_disposition"] = packet_body["minimal_valid_shape"].get(
-                    "acceptance_item_disposition",
-                    payload.get("acceptance_item_disposition"),
-                )
-                body = json.dumps(payload)
     blocker_id = str(packet.get("repair_blocker_id") or packet["envelope"].get("repair_blocker_id") or "")
     if packet["envelope"].get("packet_kind") == "flowguard_check" and blocker_id:
         try:
@@ -520,6 +508,10 @@ def _route_plan_body(nodes: list[dict] | None = None) -> str:
     normalized_nodes: list[dict] = []
     for node in route_nodes:
         normalized = dict(node)
+        normalized.setdefault(
+            "responsibility",
+            "pm" if str(normalized.get("node_kind") or "") in {"parent", "module"} else "worker",
+        )
         normalized.setdefault("acceptance_item_ids", ["acc-001", "acc-002"])
         normalized_nodes.append(normalized)
     return json.dumps(
@@ -676,13 +668,10 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         packet = ledger["packets"][review_packet_id]
         envelope = packet["envelope"]
         body = json.loads(packet["body"])
-        review_window = envelope["review_window"]
-        self.assertEqual(review_window, body["current_handoff_contract"]["review_window"])
+        review_window = envelope["current_handoff_contract"]["review_window"]
+        self.assertNotIn("current_handoff_contract", body)
         self.assertEqual(
-            review_window_contracts.review_window_pair_failures(
-                review_window,
-                body["current_handoff_contract"]["review_window"],
-            ),
+            review_window_contracts.review_window_completeness_failures(review_window),
             (),
         )
         self.assertEqual(review_window["schema_version"], review_window_contracts.REVIEW_WINDOW_SCHEMA_VERSION)
@@ -796,7 +785,7 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         _complete_open_packet(ledger, _open_packets(ledger, kind="review")[0], _review_pass_body())
 
         review_flow_ids = {
-            ledger["packets"][packet_id]["envelope"]["review_window"]["review_flow_id"]
+            ledger["packets"][packet_id]["envelope"]["current_handoff_contract"]["review_window"]["review_flow_id"]
             for packet_id, packet in ledger["packets"].items()
             if packet["envelope"].get("packet_kind") == "review"
         }
@@ -837,16 +826,21 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         runtime.ensure_node_acceptance_plan_packet(ledger, "node-001")
         _complete_node_acceptance_plan(ledger)
         _complete_active_node_packet_loop(ledger)
+        pm_packet_id = _open_packets(ledger, kind="pm_disposition")[0]
         _complete_open_packet(
             ledger,
-            _open_packets(ledger, kind="pm_disposition")[0],
-            _pm_disposition_body("PM accepted node after role evidence absorption."),
+            pm_packet_id,
+            _pm_disposition_body_from_checklist(
+                ledger,
+                pm_packet_id,
+                "PM accepted node after role evidence absorption.",
+            ),
         )
         boundary = runtime.run_until_wait(ledger)
         packet_id = boundary["next_action"]["subject_id"]
 
         self.assertReviewWindowComplete(ledger, packet_id)
-        review_window = ledger["packets"][packet_id]["envelope"]["review_window"]
+        review_window = ledger["packets"][packet_id]["envelope"]["current_handoff_contract"]["review_window"]
         self.assertEqual(review_window["review_flow_id"], "terminal_backward_replay_review")
 
     def test_stage_evidence_matrix_covers_every_packet_result_family(self) -> None:
@@ -894,20 +888,20 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         def assert_handoff(packet_id: str, family_id: str, expected_lifecycle_stage: str) -> None:
             packet = ledger["packets"][packet_id]
             envelope_contract = packet["envelope"]["current_handoff_contract"]
-            body_contract = json.loads(packet["body"])["current_handoff_contract"]
-            for source in (envelope_contract, body_contract):
-                with self.subTest(packet_id=packet_id, family_id=family_id, source=source["contract_id"]):
-                    self.assertEqual(family_id, source["contract_family_id"])
-                    self.assertEqual(expected_lifecycle_stage, source["stage_evidence_matrix"]["lifecycle_stage"])
-                    self.assertNotIn("moved_fields", source["stage_evidence_matrix"])
-                    self.assertNotIn("deleted_fields", source["stage_evidence_matrix"])
-                    self.assertEqual(
-                        expected_lifecycle_stage,
-                        source["required_report_contract"]["stage_evidence_matrix"]["lifecycle_stage"],
-                    )
-                    self.assertNotIn("moved_fields", source["required_report_contract"]["stage_evidence_matrix"])
-                    self.assertNotIn("deleted_fields", source["required_report_contract"]["stage_evidence_matrix"])
-                    self.assertTrue(source["required_report_contract"]["stage_evidence_matrix"]["current_required_fields"])
+            self.assertNotIn("current_handoff_contract", json.loads(packet["body"]))
+            source = envelope_contract
+            with self.subTest(packet_id=packet_id, family_id=family_id, source=source["contract_id"]):
+                self.assertEqual(family_id, source["contract_family_id"])
+                self.assertEqual(expected_lifecycle_stage, source["stage_evidence_matrix"]["lifecycle_stage"])
+                self.assertNotIn("moved_fields", source["stage_evidence_matrix"])
+                self.assertNotIn("deleted_fields", source["stage_evidence_matrix"])
+                self.assertEqual(
+                    expected_lifecycle_stage,
+                    source["required_report_contract"]["stage_evidence_matrix"]["lifecycle_stage"],
+                )
+                self.assertNotIn("moved_fields", source["required_report_contract"]["stage_evidence_matrix"])
+                self.assertNotIn("deleted_fields", source["required_report_contract"]["stage_evidence_matrix"])
+                self.assertTrue(source["required_report_contract"]["stage_evidence_matrix"]["current_required_fields"])
 
         hs_packet = _open_packets(ledger, scope="high_standard_contract")[0]
         assert_handoff(hs_packet, "task.high_standard_contract", "preplanning_contract_definition")
@@ -924,7 +918,7 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         _complete_open_packet(ledger, review_packet, _review_pass_body())
 
         for scope, family_id, stage, body in (
-            ("discovery", "task.discovery", "preplanning_material_discovery", _discovery_body()),
+            ("discovery", "task.discovery", "preplanning_capability_discovery", _discovery_body()),
             ("skill_standard", "task.skill_standard", "preplanning_skill_standard_contract", _skill_standard_body()),
             (
                 "planning",
@@ -982,7 +976,15 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         _complete_open_packet(ledger, review_packet, _review_pass_body())
         pm_packet = _open_packets(ledger, kind="pm_disposition")[0]
         assert_handoff(pm_packet, "pm_disposition.node_pm_disposition", "pm_node_result_disposition")
-        _complete_open_packet(ledger, pm_packet, _pm_disposition_body("PM accepted node after evidence absorption."))
+        _complete_open_packet(
+            ledger,
+            pm_packet,
+            _pm_disposition_body_from_checklist(
+                ledger,
+                pm_packet,
+                "PM accepted node after evidence absorption.",
+            ),
+        )
 
         self.assertEqual(ledger["route_nodes"][node_id]["status"], "accepted")
         boundary = runtime.run_until_wait(ledger)
@@ -1062,9 +1064,8 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         self.assertEqual("commit_node_acceptance_plan", review_body["staged_effect"]["effect_kind"])
 
         review_envelope = ledger["packets"][review_packet_id]["envelope"]
-        review_window = review_envelope["review_window"]
-        body_window = review_body["current_handoff_contract"]["review_window"]
-        self.assertEqual(review_window, body_window)
+        self.assertNotIn("current_handoff_contract", review_body)
+        review_window = review_envelope["current_handoff_contract"]["review_window"]
         self.assertEqual(review_window["schema_version"], "black_box_flowpilot.review_window.v1")
         self.assertEqual(review_window["subject_packet_id"], packet_id)
         self.assertEqual(review_window["subject_result_family_id"], "task.node_acceptance_plan")
@@ -1086,8 +1087,11 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         criteria = " ".join(packet["envelope"]["acceptance_criteria"]).lower()
 
         self.assertIn("route_decomposition_review_criteria", body)
-        self.assertIn("worker-ready without worker replanning", body["instruction"].lower())
-        self.assertIn("small worker-ready leaves", criteria)
+        instruction = body["instruction"].lower()
+        self.assertIn("independently accountable bounded workstream", instruction)
+        self.assertIn("without changing pm-owned route scope", instruction)
+        self.assertIn("bounded accountable workstream leaves", criteria)
+        self.assertIn("change pm-owned route scope", criteria)
         self.assertIn("reviewer may block planning before materialization", criteria)
         self.assertNotIn("why_this_node_exists", body["instruction"])
 
@@ -1097,7 +1101,7 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
 
         packet_id = _open_packets(ledger, scope="planning")[0]
         packet = ledger["packets"][packet_id]
-        contract = json.loads(packet["body"])["current_handoff_contract"]["required_report_contract"]
+        contract = packet["envelope"]["current_handoff_contract"]["required_report_contract"]
         active_ids = ["acc-001", "acc-002"]
 
         self.assertEqual(contract["required_acceptance_item_ids"], active_ids)
@@ -1116,7 +1120,7 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         _complete_planning(ledger)
 
         packet_id = _open_packets(ledger, scope="node_acceptance_plan")[0]
-        contract = json.loads(ledger["packets"][packet_id]["body"])["current_handoff_contract"]["required_report_contract"]
+        contract = ledger["packets"][packet_id]["envelope"]["current_handoff_contract"]["required_report_contract"]
         active_ids = ["acc-001", "acc-002"]
 
         self.assertEqual(contract["required_node_acceptance_item_ids"], active_ids)
@@ -1192,7 +1196,7 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         _complete_open_packet(
             ledger,
             pm_repair_packet,
-            _pm_repair_body_from_packet(
+            _pm_repair_body_from_checklist(
                 ledger,
                 pm_repair_packet,
                 "PM chose current-scope route replanning.",
@@ -1204,7 +1208,7 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         self.assertEqual(gate["decision"], "repair_current_scope")
         self.assertEqual(gate["status"], "awaiting_flowguard")
         flowguard_packet = _open_packets(ledger, kind="flowguard_check")[0]
-        _complete_open_packet(ledger, flowguard_packet, _flowguard_semantic_recheck_body_from_packet(ledger, flowguard_packet))
+        _complete_open_packet(ledger, flowguard_packet, _flowguard_semantic_recheck_body_from_checklist(ledger, flowguard_packet))
         _complete_pm_flowguard_acceptance(ledger)
         _complete_open_packet(ledger, _open_packets(ledger, kind="review")[0], _review_pass_body())
         self.assertEqual(gate["status"], "applied")
@@ -1251,7 +1255,7 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
             ),
         )
         flowguard_packet = _open_packets(ledger, kind="flowguard_check")[0]
-        _complete_open_packet(ledger, flowguard_packet, _flowguard_semantic_recheck_body_from_packet(ledger, flowguard_packet))
+        _complete_open_packet(ledger, flowguard_packet, _flowguard_semantic_recheck_body_from_checklist(ledger, flowguard_packet))
         _complete_open_packet(ledger, _open_packets(ledger, kind="review")[0], _review_pass_body())
 
         self.assertNotIn("node-plan", ledger["route_nodes"])
@@ -1380,7 +1384,11 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         self.assertIn("pm_visible_summary", result["forbidden_fields_seen"])
         reissue_id = _open_packets(ledger, scope="high_standard_contract")[0]
         reissue_body = json.loads(ledger["packets"][reissue_id]["body"])
-        self.assertEqual(reissue_body["required_result_body_fields"], ["requirements", "acceptance_item_registry"])
+        reissue_checklist = _submission_checklist_for_packet(ledger, reissue_id)
+        self.assertEqual(
+            reissue_checklist["required_result_body_fields"],
+            ["requirements", "acceptance_item_registry"],
+        )
         self.assertIn("decision", reissue_body["forbidden_fields_seen"])
 
     def test_high_standard_contract_reissue_names_missing_requirements(self) -> None:
@@ -1408,12 +1416,17 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
             "acceptance_item_registry.items[].quality_floor",
             "acceptance_item_registry.items[].future_evidence_rule",
             "acceptance_item_registry.items[].status",
+            "acceptance_item_registry.items",
         ]
         self.assertEqual(result["missing_required_fields"], expected_missing)
         self.assertEqual(result["forbidden_fields_seen"], ["overall_contract"])
         reissue_id = _open_packets(ledger, scope="high_standard_contract")[0]
         reissue_body = json.loads(ledger["packets"][reissue_id]["body"])
-        self.assertEqual(reissue_body["required_result_body_fields"], ["requirements", "acceptance_item_registry"])
+        reissue_checklist = _submission_checklist_for_packet(ledger, reissue_id)
+        self.assertEqual(
+            reissue_checklist["required_result_body_fields"],
+            ["requirements", "acceptance_item_registry"],
+        )
         self.assertEqual(reissue_body["missing_required_fields"], expected_missing)
         self.assertEqual(reissue_body["forbidden_fields_seen"], ["overall_contract"])
 
@@ -1457,21 +1470,19 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         )
         packet_id = _open_packets(ledger, scope="discovery")[0]
 
-        _complete_open_packet(ledger, packet_id, json.dumps({"decision": "pass", "material_sources": ["startup"]}))
+        _complete_open_packet(ledger, packet_id, json.dumps({"decision": "pass"}))
 
         packet = ledger["packets"][packet_id]
         self.assertEqual(packet["status"], "superseded_after_repair")
         result = ledger["results"][packet["superseded_by_result_id"]]
         self.assertEqual(result["status"], "mechanical_contract_blocked")
-        self.assertIn("material_sufficiency", result["quarantine_reason"])
+        self.assertIn("candidate_skill_inventory", result["quarantine_reason"])
         reissue_id = _open_packets(ledger, scope="discovery")[0]
-        reissue_body = json.loads(ledger["packets"][reissue_id]["body"])
+        reissue_checklist = _submission_checklist_for_packet(ledger, reissue_id)
         self.assertEqual(
-            reissue_body["required_result_body_fields"],
+            reissue_checklist["required_result_body_fields"],
             [
                 "decision",
-                "material_sources",
-                "material_sufficiency",
                 "candidate_skill_inventory",
             ],
         )
@@ -1496,7 +1507,8 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         self.assertEqual(result["missing_required_fields"], expected_missing)
         reissue_id = _open_packets(ledger, scope="skill_standard")[0]
         reissue_body = json.loads(ledger["packets"][reissue_id]["body"])
-        self.assertEqual(reissue_body["required_result_body_fields"], ["decision", "obligations"])
+        reissue_checklist = _submission_checklist_for_packet(ledger, reissue_id)
+        self.assertEqual(reissue_checklist["required_result_body_fields"], ["decision", "obligations"])
         self.assertEqual(reissue_body["missing_required_fields"], expected_missing)
 
         _complete_open_packet(
@@ -2095,10 +2107,13 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         _complete_planning(ledger)
         _complete_node_acceptance_plan(ledger)
         node_id = _complete_active_node_packet_loop(ledger)
+        pm_packet_id = _open_packets(ledger, kind="pm_disposition")[0]
         _complete_open_packet(
             ledger,
-            _open_packets(ledger, kind="pm_disposition")[0],
-            _pm_disposition_body(
+            pm_packet_id,
+            _pm_disposition_body_from_checklist(
+                ledger,
+                pm_packet_id,
                 "PM chose current-node repair.",
                 decision="repair_current_scope",
                 reason="needs deeper evidence",
@@ -2406,7 +2421,7 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         _complete_open_packet(
             ledger,
             pm_repair_packet,
-            _pm_repair_body_from_packet(
+            _pm_repair_body_from_checklist(
                 ledger,
                 pm_repair_packet,
                 "PM chose local current-scope repair.",
@@ -2419,7 +2434,7 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         self.assertEqual(gate["decision"], "repair_current_scope")
         self.assertEqual(gate["status"], "awaiting_flowguard")
         flowguard_packet = _open_packets(ledger, kind="flowguard_check")[0]
-        _complete_open_packet(ledger, flowguard_packet, _flowguard_semantic_recheck_body_from_packet(ledger, flowguard_packet))
+        _complete_open_packet(ledger, flowguard_packet, _flowguard_semantic_recheck_body_from_checklist(ledger, flowguard_packet))
         _complete_pm_flowguard_acceptance(ledger)
         _complete_open_packet(ledger, _open_packets(ledger, kind="review")[0], _review_pass_body())
         self.assertEqual(gate["status"], "applied")
@@ -2435,7 +2450,7 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
 
         _complete_open_packet(ledger, repair_packets[0], _high_standard_contract_body())
         flowguard_packet = _open_packets(ledger, kind="flowguard_check")[0]
-        _complete_open_packet(ledger, flowguard_packet, _flowguard_semantic_recheck_body_from_packet(ledger, flowguard_packet))
+        _complete_open_packet(ledger, flowguard_packet, _flowguard_semantic_recheck_body_from_checklist(ledger, flowguard_packet))
         _complete_open_packet(ledger, _open_packets(ledger, kind="review")[0], _review_pass_body())
 
         self.assertEqual(ledger["active_blockers"][active[0]["blocker_id"]]["status"], "cleared")
@@ -2489,7 +2504,7 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         _complete_open_packet(
             ledger,
             pm_repair_packet,
-            _pm_repair_body_from_packet(
+            _pm_repair_body_from_checklist(
                 ledger,
                 pm_repair_packet,
                 "PM chose plain current-scope repair.",
@@ -2516,7 +2531,7 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         )
 
         flowguard_packet = _open_packets(ledger, kind="flowguard_check")[0]
-        _complete_open_packet(ledger, flowguard_packet, _flowguard_semantic_recheck_body_from_packet(ledger, flowguard_packet))
+        _complete_open_packet(ledger, flowguard_packet, _flowguard_semantic_recheck_body_from_checklist(ledger, flowguard_packet))
         self.assertEqual(gate["status"], "awaiting_pm_flowguard_acceptance")
         self.assertTrue(_open_packets(ledger, kind="pm_flowguard_acceptance"))
         self.assertFalse(_open_packets(ledger, kind="review"))
@@ -2558,7 +2573,7 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         _complete_open_packet(
             ledger,
             pm_repair_packet,
-            _pm_repair_body_from_packet(
+            _pm_repair_body_from_checklist(
                 ledger,
                 pm_repair_packet,
                 "PM chose route redesign for the current blocker.",
@@ -2585,7 +2600,7 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         self.assertTrue(_open_packets(ledger, kind="flowguard_check"))
 
         flowguard_packet = _open_packets(ledger, kind="flowguard_check")[0]
-        _complete_open_packet(ledger, flowguard_packet, _flowguard_semantic_recheck_body_from_packet(ledger, flowguard_packet))
+        _complete_open_packet(ledger, flowguard_packet, _flowguard_semantic_recheck_body_from_checklist(ledger, flowguard_packet))
         self.assertEqual(gate["status"], "awaiting_pm_flowguard_acceptance")
         self.assertTrue(_open_packets(ledger, kind="pm_flowguard_acceptance"))
         self.assertFalse(_open_packets(ledger, kind="review"))
@@ -2621,7 +2636,7 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         _complete_open_packet(
             ledger,
             pm_repair_packet,
-            _pm_repair_body_from_packet(
+            _pm_repair_body_from_checklist(
                 ledger,
                 pm_repair_packet,
                 "PM chose route redesign for the current blocker.",
@@ -2644,7 +2659,7 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         source_result_id = gate["source_result_id"]
 
         flowguard_packet = _open_packets(ledger, kind="flowguard_check")[0]
-        _complete_open_packet(ledger, flowguard_packet, _flowguard_semantic_recheck_body_from_packet(ledger, flowguard_packet))
+        _complete_open_packet(ledger, flowguard_packet, _flowguard_semantic_recheck_body_from_checklist(ledger, flowguard_packet))
         self.assertEqual(gate["status"], "awaiting_pm_flowguard_acceptance")
         _complete_pm_flowguard_acceptance(ledger)
         _complete_open_packet(
@@ -2679,10 +2694,13 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         node_id = _complete_active_node_packet_loop(ledger)
         old_route_version = ledger["active_route_version"]
 
+        pm_packet_id = _open_packets(ledger, kind="pm_disposition")[0]
         _complete_open_packet(
             ledger,
-            _open_packets(ledger, kind="pm_disposition")[0],
-            _pm_disposition_body(
+            pm_packet_id,
+            _pm_disposition_body_from_checklist(
+                ledger,
+                pm_packet_id,
                 "PM chose route redesign for the completed node.",
                 decision="redesign_route",
                 reason="node needs a different route",
@@ -2734,9 +2752,12 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         active = [row for row in ledger["active_blockers"].values() if row["status"] == "active"]
         self.assertEqual(active, [])
         reissue_id = _open_packets(ledger, scope="high_standard_contract")[0]
-        reissue_body = json.loads(ledger["packets"][reissue_id]["body"])
-        self.assertEqual(reissue_body["contract_family_id"], "task.high_standard_contract")
-        self.assertEqual(reissue_body["required_result_body_fields"], ["requirements", "acceptance_item_registry"])
+        reissue_checklist = _submission_checklist_for_packet(ledger, reissue_id)
+        self.assertEqual(reissue_checklist["contract_family_id"], "task.high_standard_contract")
+        self.assertEqual(
+            reissue_checklist["required_result_body_fields"],
+            ["requirements", "acceptance_item_registry"],
+        )
 
     def test_final_matrix_blocks_missing_node_acceptance_plan(self) -> None:
         ledger = _ledger()
@@ -2935,10 +2956,15 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         runtime.ensure_node_acceptance_plan_packet(ledger, "node-001")
         _complete_node_acceptance_plan(ledger)
         node_id = _complete_active_node_packet_loop(ledger)
+        pm_packet_id = _open_packets(ledger, kind="pm_disposition")[0]
         _complete_open_packet(
             ledger,
-            _open_packets(ledger, kind="pm_disposition")[0],
-            _pm_disposition_body("PM accepted node after role evidence absorption."),
+            pm_packet_id,
+            _pm_disposition_body_from_checklist(
+                ledger,
+                pm_packet_id,
+                "PM accepted node after role evidence absorption.",
+            ),
         )
         self.assertEqual(ledger["execution_frontier"]["status"], "ready_for_final_closure")
 
@@ -2972,10 +2998,15 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
             self.assertEqual(ledger["execution_frontier"]["active_node_id"], expected_node_id)
             _complete_node_acceptance_plan(ledger)
             _complete_active_node_packet_loop(ledger)
+            pm_packet_id = _open_packets(ledger, kind="pm_disposition")[0]
             _complete_open_packet(
                 ledger,
-                _open_packets(ledger, kind="pm_disposition")[0],
-                _pm_disposition_body(f"PM accepted {expected_node_id} after absorbing role evidence."),
+                pm_packet_id,
+                _pm_disposition_body_from_checklist(
+                    ledger,
+                    pm_packet_id,
+                    f"PM accepted {expected_node_id} after absorbing role evidence.",
+                ),
             )
 
         self.assertEqual(ledger["execution_frontier"]["status"], "ready_for_final_closure")
@@ -3037,10 +3068,15 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         _complete_node_acceptance_plan(ledger)
         child_id = _complete_active_node_packet_loop(ledger)
         self.assertEqual(child_id, "node-001")
+        pm_packet_id = _open_packets(ledger, kind="pm_disposition")[0]
         _complete_open_packet(
             ledger,
-            _open_packets(ledger, kind="pm_disposition")[0],
-            _pm_disposition_body("PM accepted child evidence."),
+            pm_packet_id,
+            _pm_disposition_body_from_checklist(
+                ledger,
+                pm_packet_id,
+                "PM accepted child evidence.",
+            ),
         )
 
         self.assertEqual(ledger["execution_frontier"]["active_node_id"], "parent-001")
@@ -3057,10 +3093,15 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
 
         self.assertTrue(ledger["route_nodes"]["parent-001"]["parent_backward_replay_id"])
         self.assertTrue(_open_packets(ledger, kind="pm_disposition"))
+        pm_packet_id = _open_packets(ledger, kind="pm_disposition")[0]
         _complete_open_packet(
             ledger,
-            _open_packets(ledger, kind="pm_disposition")[0],
-            _pm_disposition_body("PM accepted parent composition."),
+            pm_packet_id,
+            _pm_disposition_body_from_checklist(
+                ledger,
+                pm_packet_id,
+                "PM accepted parent composition.",
+            ),
         )
         self.assertEqual(ledger["route_nodes"]["parent-001"]["status"], "accepted")
 

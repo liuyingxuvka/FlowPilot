@@ -62,9 +62,9 @@
           "route_reviewer_packet_issued": false,
           "route_reviewer_passed": false,
           "status": "complete",
+          "worker_changed_pm_route_boundary": false,
           "worker_context_attached": true,
           "worker_packet_issued": true,
-          "worker_replanned_broad_leaf": false,
           "worker_result_submitted": true,
           "worker_started_before_node_plan_review": false
         }
@@ -121,9 +121,9 @@
           "route_reviewer_packet_issued": false,
           "route_reviewer_passed": false,
           "status": "complete",
+          "worker_changed_pm_route_boundary": false,
           "worker_context_attached": true,
           "worker_packet_issued": true,
-          "worker_replanned_broad_leaf": false,
           "worker_result_submitted": true,
           "worker_started_before_node_plan_review": false
         }
@@ -182,9 +182,9 @@
           "route_reviewer_packet_issued": true,
           "route_reviewer_passed": true,
           "status": "complete",
+          "worker_changed_pm_route_boundary": false,
           "worker_context_attached": false,
           "worker_packet_issued": false,
-          "worker_replanned_broad_leaf": false,
           "worker_result_submitted": false,
           "worker_started_before_node_plan_review": false
         }
@@ -242,9 +242,9 @@
           "route_reviewer_packet_issued": true,
           "route_reviewer_passed": true,
           "status": "complete",
+          "worker_changed_pm_route_boundary": false,
           "worker_context_attached": false,
           "worker_packet_issued": false,
-          "worker_replanned_broad_leaf": false,
           "worker_result_submitted": false,
           "worker_started_before_node_plan_review": false
         }
@@ -301,9 +301,9 @@
           "route_reviewer_packet_issued": true,
           "route_reviewer_passed": true,
           "status": "complete",
+          "worker_changed_pm_route_boundary": false,
           "worker_context_attached": false,
           "worker_packet_issued": false,
-          "worker_replanned_broad_leaf": false,
           "worker_result_submitted": false,
           "worker_started_before_node_plan_review": false
         }
@@ -360,9 +360,9 @@
           "route_reviewer_packet_issued": true,
           "route_reviewer_passed": true,
           "status": "complete",
+          "worker_changed_pm_route_boundary": false,
           "worker_context_attached": false,
           "worker_packet_issued": false,
-          "worker_replanned_broad_leaf": false,
           "worker_result_submitted": false,
           "worker_started_before_node_plan_review": false
         }
@@ -419,9 +419,9 @@
           "route_reviewer_packet_issued": true,
           "route_reviewer_passed": true,
           "status": "complete",
+          "worker_changed_pm_route_boundary": false,
           "worker_context_attached": false,
           "worker_packet_issued": false,
-          "worker_replanned_broad_leaf": false,
           "worker_result_submitted": false,
           "worker_started_before_node_plan_review": false
         }
@@ -478,9 +478,9 @@
           "route_reviewer_packet_issued": false,
           "route_reviewer_passed": false,
           "status": "complete",
+          "worker_changed_pm_route_boundary": false,
           "worker_context_attached": true,
           "worker_packet_issued": true,
-          "worker_replanned_broad_leaf": false,
           "worker_result_submitted": true,
           "worker_started_before_node_plan_review": false
         }
@@ -537,9 +537,9 @@
           "route_reviewer_packet_issued": false,
           "route_reviewer_passed": false,
           "status": "complete",
+          "worker_changed_pm_route_boundary": false,
           "worker_context_attached": true,
           "worker_packet_issued": true,
-          "worker_replanned_broad_leaf": false,
           "worker_result_submitted": true,
           "worker_started_before_node_plan_review": false
         }
@@ -596,9 +596,9 @@
           "route_reviewer_packet_issued": false,
           "route_reviewer_passed": false,
           "status": "complete",
+          "worker_changed_pm_route_boundary": false,
           "worker_context_attached": true,
           "worker_packet_issued": true,
-          "worker_replanned_broad_leaf": false,
           "worker_result_submitted": true,
           "worker_started_before_node_plan_review": false
         }
@@ -655,9 +655,9 @@
           "route_reviewer_packet_issued": false,
           "route_reviewer_passed": false,
           "status": "complete",
+          "worker_changed_pm_route_boundary": false,
           "worker_context_attached": true,
           "worker_packet_issued": true,
-          "worker_replanned_broad_leaf": false,
           "worker_result_submitted": true,
           "worker_started_before_node_plan_review": false
         }
@@ -714,9 +714,9 @@
           "route_reviewer_packet_issued": true,
           "route_reviewer_passed": true,
           "status": "complete",
+          "worker_changed_pm_route_boundary": false,
           "worker_context_attached": false,
           "worker_packet_issued": false,
-          "worker_replanned_broad_leaf": false,
           "worker_result_submitted": false,
           "worker_started_before_node_plan_review": false
         }
@@ -773,9 +773,9 @@
           "route_reviewer_packet_issued": true,
           "route_reviewer_passed": true,
           "status": "complete",
+          "worker_changed_pm_route_boundary": false,
           "worker_context_attached": false,
           "worker_packet_issued": false,
-          "worker_replanned_broad_leaf": false,
           "worker_result_submitted": false,
           "worker_started_before_node_plan_review": false
         }
@@ -832,9 +832,9 @@
           "route_reviewer_packet_issued": false,
           "route_reviewer_passed": false,
           "status": "complete",
+          "worker_changed_pm_route_boundary": false,
           "worker_context_attached": true,
           "worker_packet_issued": true,
-          "worker_replanned_broad_leaf": false,
           "worker_result_submitted": true,
           "worker_started_before_node_plan_review": false
         }
@@ -891,9 +891,9 @@
           "route_reviewer_packet_issued": true,
           "route_reviewer_passed": true,
           "status": "complete",
+          "worker_changed_pm_route_boundary": false,
           "worker_context_attached": false,
           "worker_packet_issued": false,
-          "worker_replanned_broad_leaf": false,
           "worker_result_submitted": false,
           "worker_started_before_node_plan_review": false
         }
@@ -950,9 +950,9 @@
           "route_reviewer_packet_issued": false,
           "route_reviewer_passed": false,
           "status": "complete",
+          "worker_changed_pm_route_boundary": false,
           "worker_context_attached": true,
           "worker_packet_issued": true,
-          "worker_replanned_broad_leaf": false,
           "worker_result_submitted": true,
           "worker_started_before_node_plan_review": false
         }
@@ -1009,9 +1009,9 @@
           "route_reviewer_packet_issued": true,
           "route_reviewer_passed": false,
           "status": "complete",
+          "worker_changed_pm_route_boundary": false,
           "worker_context_attached": false,
           "worker_packet_issued": false,
-          "worker_replanned_broad_leaf": false,
           "worker_result_submitted": false,
           "worker_started_before_node_plan_review": false
         }
@@ -1068,9 +1068,9 @@
           "route_reviewer_packet_issued": true,
           "route_reviewer_passed": true,
           "status": "complete",
+          "worker_changed_pm_route_boundary": false,
           "worker_context_attached": false,
           "worker_packet_issued": false,
-          "worker_replanned_broad_leaf": false,
           "worker_result_submitted": false,
           "worker_started_before_node_plan_review": false
         }
@@ -1129,9 +1129,9 @@
           "route_reviewer_packet_issued": true,
           "route_reviewer_passed": true,
           "status": "complete",
+          "worker_changed_pm_route_boundary": false,
           "worker_context_attached": false,
           "worker_packet_issued": false,
-          "worker_replanned_broad_leaf": false,
           "worker_result_submitted": false,
           "worker_started_before_node_plan_review": false
         }
@@ -1189,9 +1189,9 @@
           "route_reviewer_packet_issued": true,
           "route_reviewer_passed": true,
           "status": "complete",
+          "worker_changed_pm_route_boundary": false,
           "worker_context_attached": false,
           "worker_packet_issued": false,
-          "worker_replanned_broad_leaf": false,
           "worker_result_submitted": false,
           "worker_started_before_node_plan_review": false
         }
@@ -1248,9 +1248,9 @@
           "route_reviewer_packet_issued": true,
           "route_reviewer_passed": true,
           "status": "complete",
+          "worker_changed_pm_route_boundary": false,
           "worker_context_attached": false,
           "worker_packet_issued": false,
-          "worker_replanned_broad_leaf": false,
           "worker_result_submitted": false,
           "worker_started_before_node_plan_review": false
         }
@@ -1308,9 +1308,9 @@
           "route_reviewer_packet_issued": true,
           "route_reviewer_passed": true,
           "status": "complete",
+          "worker_changed_pm_route_boundary": false,
           "worker_context_attached": false,
           "worker_packet_issued": false,
-          "worker_replanned_broad_leaf": false,
           "worker_result_submitted": false,
           "worker_started_before_node_plan_review": false
         }
@@ -1367,11 +1367,70 @@
           "route_reviewer_packet_issued": false,
           "route_reviewer_passed": false,
           "status": "complete",
+          "worker_changed_pm_route_boundary": false,
           "worker_context_attached": true,
           "worker_packet_issued": true,
-          "worker_replanned_broad_leaf": false,
           "worker_result_submitted": true,
           "worker_started_before_node_plan_review": true
+        }
+      },
+      "worker_changes_pm_route_boundary": {
+        "detected": true,
+        "expected_failure": "Worker changed PM-owned route scope, order, dependencies, or acceptance boundary",
+        "failures": [
+          "Worker changed PM-owned route scope, order, dependencies, or acceptance boundary"
+        ],
+        "state": {
+          "final_reviewer_accepted_without_worker_artifacts": false,
+          "final_reviewer_independent": true,
+          "final_reviewer_inspected_worker_artifacts": true,
+          "final_reviewer_packet_issued": true,
+          "final_reviewer_passed": true,
+          "final_reviewer_used_result_stage_standard": true,
+          "flowguard_blocked": false,
+          "flowguard_checked_producer_consumer_order": false,
+          "flowguard_current_subject_bound": false,
+          "flowguard_generation": -1,
+          "flowguard_operator_mutated_route": false,
+          "flowguard_passed": false,
+          "flowguard_scope_missing": false,
+          "flowguard_simulated_work_validation_failure_paths": false,
+          "flowguard_validation_path_missing": false,
+          "node_completed": true,
+          "node_context_package_accepted": true,
+          "node_plan_decision": "pass",
+          "node_plan_requires_future_node_output": false,
+          "node_plan_reviewer_checked_producer_consumer_order": true,
+          "node_plan_reviewer_packet_issued": true,
+          "node_plan_reviewer_passed": true,
+          "node_plan_reviewer_required_worker_artifacts": false,
+          "node_plan_reviewer_treated_plan_as_result_proof": false,
+          "node_plan_reviewer_used_plan_stage_standard": true,
+          "pm_absorbed_flowguard": false,
+          "pm_absorption_generation": -1,
+          "pm_accepts_blocked_flowguard": false,
+          "pm_flowguard_acceptance_packet_issued": false,
+          "pm_made_flowguard_optional": false,
+          "pm_route_repair_recorded": false,
+          "pm_self_checked_node": true,
+          "post_result_flowguard_issued": true,
+          "post_result_flowguard_passed": true,
+          "reviewer_before_pm_absorption": false,
+          "route_has_future_node_dependency": false,
+          "route_mutation_committed": false,
+          "route_mutation_without_pm_absorption": false,
+          "route_plan_generation": 0,
+          "route_plan_staged": false,
+          "route_redesign_flowguard_packet_issued": false,
+          "route_reviewer_checked_producer_consumer_order": false,
+          "route_reviewer_packet_issued": false,
+          "route_reviewer_passed": false,
+          "status": "complete",
+          "worker_changed_pm_route_boundary": true,
+          "worker_context_attached": true,
+          "worker_packet_issued": true,
+          "worker_result_submitted": true,
+          "worker_started_before_node_plan_review": false
         }
       },
       "worker_context_missing": {
@@ -1426,68 +1485,9 @@
           "route_reviewer_packet_issued": false,
           "route_reviewer_passed": false,
           "status": "complete",
+          "worker_changed_pm_route_boundary": false,
           "worker_context_attached": false,
           "worker_packet_issued": true,
-          "worker_replanned_broad_leaf": false,
-          "worker_result_submitted": true,
-          "worker_started_before_node_plan_review": false
-        }
-      },
-      "worker_replans_broad_leaf": {
-        "detected": true,
-        "expected_failure": "Worker replanned a broad leaf instead of PM route deepening",
-        "failures": [
-          "Worker replanned a broad leaf instead of PM route deepening"
-        ],
-        "state": {
-          "final_reviewer_accepted_without_worker_artifacts": false,
-          "final_reviewer_independent": true,
-          "final_reviewer_inspected_worker_artifacts": true,
-          "final_reviewer_packet_issued": true,
-          "final_reviewer_passed": true,
-          "final_reviewer_used_result_stage_standard": true,
-          "flowguard_blocked": false,
-          "flowguard_checked_producer_consumer_order": false,
-          "flowguard_current_subject_bound": false,
-          "flowguard_generation": -1,
-          "flowguard_operator_mutated_route": false,
-          "flowguard_passed": false,
-          "flowguard_scope_missing": false,
-          "flowguard_simulated_work_validation_failure_paths": false,
-          "flowguard_validation_path_missing": false,
-          "node_completed": true,
-          "node_context_package_accepted": true,
-          "node_plan_decision": "pass",
-          "node_plan_requires_future_node_output": false,
-          "node_plan_reviewer_checked_producer_consumer_order": true,
-          "node_plan_reviewer_packet_issued": true,
-          "node_plan_reviewer_passed": true,
-          "node_plan_reviewer_required_worker_artifacts": false,
-          "node_plan_reviewer_treated_plan_as_result_proof": false,
-          "node_plan_reviewer_used_plan_stage_standard": true,
-          "pm_absorbed_flowguard": false,
-          "pm_absorption_generation": -1,
-          "pm_accepts_blocked_flowguard": false,
-          "pm_flowguard_acceptance_packet_issued": false,
-          "pm_made_flowguard_optional": false,
-          "pm_route_repair_recorded": false,
-          "pm_self_checked_node": true,
-          "post_result_flowguard_issued": true,
-          "post_result_flowguard_passed": true,
-          "reviewer_before_pm_absorption": false,
-          "route_has_future_node_dependency": false,
-          "route_mutation_committed": false,
-          "route_mutation_without_pm_absorption": false,
-          "route_plan_generation": 0,
-          "route_plan_staged": false,
-          "route_redesign_flowguard_packet_issued": false,
-          "route_reviewer_checked_producer_consumer_order": false,
-          "route_reviewer_packet_issued": false,
-          "route_reviewer_passed": false,
-          "status": "complete",
-          "worker_context_attached": true,
-          "worker_packet_issued": true,
-          "worker_replanned_broad_leaf": true,
           "worker_result_submitted": true,
           "worker_started_before_node_plan_review": false
         }
@@ -1604,9 +1604,9 @@
       "route_reviewer_packet_issued": false,
       "route_reviewer_passed": false,
       "status": "complete",
+      "worker_changed_pm_route_boundary": false,
       "worker_context_attached": true,
       "worker_packet_issued": true,
-      "worker_replanned_broad_leaf": false,
       "worker_result_submitted": true,
       "worker_started_before_node_plan_review": false
     },
@@ -1657,9 +1657,9 @@
       "route_reviewer_packet_issued": true,
       "route_reviewer_passed": true,
       "status": "complete",
+      "worker_changed_pm_route_boundary": false,
       "worker_context_attached": false,
       "worker_packet_issued": false,
-      "worker_replanned_broad_leaf": false,
       "worker_result_submitted": false,
       "worker_started_before_node_plan_review": false
     }

@@ -82,7 +82,7 @@ RED_TEAM_ROWS: tuple[dict[str, Any], ...] = (
         "bad_package_class": "wrong_active_holder_agent",
         "expected_outcome": "PacketRuntimeError_before_result_envelope",
         "protected_state_invariant": "packet_ledger_keeps_no_result_completion",
-        "recovery_route": "same_holder_retry_or_packet_reissue",
+        "recovery_route": "same_holder_retry_or_current_packet_runtime_retry",
         "evidence_id": "hard_gate.packet.wrong_active_holder_identity",
         "evidence_test": (
             "FlowPilotHardGateRedTeamReplayTests."

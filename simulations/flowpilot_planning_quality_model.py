@@ -1016,7 +1016,7 @@ def planning_failures(state: State) -> list[str]:
     if complex_task and not state.worker_packet_escalates_out_of_scope_defects:
         failures.append("worker packet does not escalate out-of-scope defects to PM")
     if complex_task and not state.evidence_packet_self_corrects_only_own_output:
-        failures.append("research or material-scan packet grants target artifact repair instead of report self-correction")
+        failures.append("research or evidence-work packet grants target artifact repair instead of report self-correction")
     if complex_task and not state.flowguard_operator_packet_self_corrects_model_only:
         failures.append("FlowGuard operator packet grants target artifact repair instead of model/report self-correction")
     if complex_task and not state.reviewer_prompt_forbids_direct_artifact_repair:

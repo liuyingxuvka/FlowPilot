@@ -1,0 +1,24 @@
+{
+  "schema_version": 2,
+  "report_protocol_version": 3,
+  "execution_key": "sha256:84687e98cac94021154b03b68179f9adefe73642276edbb7208a414ec9a0f11a",
+  "result_hash": "sha256:907492c1373c4d90d2e47085194bd72376333eeebdcdc9a40bc80b384effb8ce",
+  "receipt_id": "sha256:d86aafa3dea98a6d0f64cbfd4022d5859ce54b1c43619c029f3f8c4d57ecc613",
+  "result": {
+    "status": "passed",
+    "command": "python",
+    "args": [
+      "-m",
+      "unittest",
+      "-v",
+      "tests.test_flowpilot_complete_workstream_fake_ai"
+    ],
+    "expected_exit_code": 0,
+    "exit_code": 0,
+    "timeout_seconds": 1800,
+    "stdout": "",
+    "stderr": "test_every_workstream_profile_traverses_real_ack_open_submit_flowguard_reviewer_and_repair_routing (tests.test_flowpilot_complete_workstream_fake_ai.FlowPilotCompleteWorkstreamFakeAITests.test_every_workstream_profile_traverses_real_ack_open_submit_flowguard_reviewer_and_repair_routing) ... ok\r\ntest_resource_profiles_use_real_current_family_checklists_and_submit_paths (tests.test_flowpilot_complete_workstream_fake_ai.FlowPilotCompleteWorkstreamFakeAITests.test_resource_profiles_use_real_current_family_checklists_and_submit_paths) ... ok\r\ntest_semantic_profiles_require_the_one_open_packet_constructor (tests.test_flowpilot_complete_workstream_fake_ai.FlowPilotCompleteWorkstreamFakeAITests.test_semantic_profiles_require_the_one_open_packet_constructor) ... ok\r\n\r\n----------------------------------------------------------------------\r\nRan 3 tests in 45.065s\r\n\r\nOK\r\n",
+    "stdout_preview": "",
+    "stderr_preview": "test_every_workstream_profile_traverses_real_ack_open_submit_flowguard_reviewer_and_repair_routing (tests.test_flowpilot_complete_workstream_fake_ai.FlowPilotCompleteWorkstreamFakeAITests.test_every_workstream_profile_traverses_real_ack_open_submit_flowguard_reviewer_and_repair_routing) ... ok\r\ntest_resource_profiles_use_real_current_family_checklists_and_submit_paths (tests.test_flowpilot_complete_workstream_fake_ai.FlowPilotCompleteWorkstreamFakeAITests.test_resource_profiles_use_real_current_family_checklists_and_submit_paths) ... ok\r\ntest_semantic_profiles_require_the_one_open_packet_constructor (tests.test_flowpilot_complete_workstream_fake_ai.FlowPilotCompleteWorkstreamFakeAITests.test_semantic_profiles_require_the_one_open_packet_constructor) ... ok\r\n\r\n----------------------------------------------------------------------\r\nRan 3 tests in 45.065s\r\n\r\nOK\r\n"
+  }
+}

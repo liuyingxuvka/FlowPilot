@@ -1,0 +1,23 @@
+{
+  "schema_version": 2,
+  "report_protocol_version": 3,
+  "execution_key": "sha256:da97064bf14cfcf9f8876c34266d1f623eae4dae60209f73f77a898fdd488752",
+  "result_hash": "sha256:2ad530ca08effdd78adfdd8d477301dcec0eced829e24297a5e059f7cb2de5f7",
+  "receipt_id": "sha256:614a6105aaa699f3a9514813c488442039712a8a906decb3118760f0c612f4b3",
+  "result": {
+    "status": "passed",
+    "command": "python",
+    "args": [
+      "simulations/run_flowpilot_fake_ai_runtime_replay_checks.py",
+      "--json-out",
+      "simulations/flowpilot_fake_ai_runtime_replay_summary.json"
+    ],
+    "expected_exit_code": 0,
+    "exit_code": 0,
+    "timeout_seconds": 1800,
+    "stdout": "FlowPilot fake-AI runtime replay ok=True\r\n",
+    "stderr": "[flowguard] start phase=explore work_total=2 progress_steps=10\r\n[flowguard] progress 50% work=1/2 traces=8 violations=0\r\n[flowguard] progress 100% work=2/2 traces=24 violations=0\r\n",
+    "stdout_preview": "FlowPilot fake-AI runtime replay ok=True\r\n",
+    "stderr_preview": "[flowguard] start phase=explore work_total=2 progress_steps=10\r\n[flowguard] progress 50% work=1/2 traces=8 violations=0\r\n[flowguard] progress 100% work=2/2 traces=24 violations=0\r\n"
+  }
+}

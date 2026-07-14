@@ -95,6 +95,23 @@ class FlowPilotInstallerDependencyTests(unittest.TestCase):
             "https://raw.githubusercontent.com/liuyingxuvka/FlowGuard/main/pyproject.toml",
         )
 
+    def test_autonomous_ui_companion_uses_current_flowpilot_public_source(self) -> None:
+        companion = self.dependency("autonomous-concept-ui-redesign")
+
+        self.assertFalse(companion["required"])
+        self.assertTrue(companion["companion"])
+        self.assertEqual(companion["source"]["repo"], "liuyingxuvka/FlowPilot")
+        self.assertEqual(companion["source"]["ref"], "main")
+        self.assertEqual(
+            companion["source"]["path"],
+            "skills/autonomous-concept-ui-redesign",
+        )
+        self.assertEqual(
+            check_public_release.github_skill_raw_url(companion["source"]),
+            "https://raw.githubusercontent.com/liuyingxuvka/FlowPilot/main/skills/"
+            "autonomous-concept-ui-redesign/SKILL.md",
+        )
+
     def test_public_release_secret_patterns_reject_escaped_local_paths(self) -> None:
         text = '{"root": "' + "C:" + "\\\\" + "Users" + "\\\\" + "liu_y" + "\\\\" + "Documents" + '"}'
 

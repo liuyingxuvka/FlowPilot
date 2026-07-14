@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 from typing import Any, Callable
 
-from . import cockpit, host, router, run_shell, runtime
+from . import cockpit, router, run_shell, runtime
 
 
 StartRun = Callable[..., dict[str, Any]]
@@ -19,9 +19,100 @@ CURRENT_REPORT_FAKE_SUCCESS_FIELD_MARKERS = (
 )
 
 
-def _route_plan_body(*, parent_route: bool = False) -> str:
+def _current_submission_checklist(packet: dict[str, Any]) -> dict[str, Any]:
+    checklist = packet.get("submission_checklist")
+    if not isinstance(checklist, dict):
+        raise runtime.BlackBoxRuntimeError(
+            "fake e2e requires the current public open-packet submission checklist"
+        )
+    if (
+        checklist.get("schema_version") != "black_box_flowpilot.submission_checklist.v2"
+        or checklist.get("source") != "current_handoff_contract"
+    ):
+        raise runtime.BlackBoxRuntimeError("fake e2e received a noncurrent submission checklist")
+    return checklist
+
+
+def _current_result_skeleton(packet: dict[str, Any]) -> dict[str, Any]:
+    skeleton = _current_submission_checklist(packet).get("result_skeleton")
+    if not isinstance(skeleton, dict) or not skeleton:
+        raise runtime.BlackBoxRuntimeError("current submission checklist lacks a result_skeleton")
+    return json.loads(json.dumps(skeleton))
+
+
+def _current_contract_family_id(packet: dict[str, Any]) -> str:
+    family_id = str(_current_submission_checklist(packet).get("contract_family_id") or "")
+    if not family_id:
+        raise runtime.BlackBoxRuntimeError("current submission checklist lacks contract_family_id")
+    return family_id
+
+
+def _packet_from_public_open_result(opened: dict[str, Any]) -> dict[str, Any]:
+    """Project the fake role input only from the public ``open-packet`` result."""
+
+    if opened.get("ok") is not True:
+        raise runtime.BlackBoxRuntimeError("fake e2e requires a successful public open-packet result")
+    if opened.get("schema_version") != "black_box_flowpilot.open_packet_result.v1":
+        raise runtime.BlackBoxRuntimeError("fake e2e received a noncurrent public open-packet result")
+    packet_projection = opened.get("packet")
+    lease_projection = opened.get("lease")
+    checklist = opened.get("submission_checklist")
+    receipt = opened.get("open_receipt")
+    if not isinstance(packet_projection, dict) or not isinstance(lease_projection, dict):
+        raise runtime.BlackBoxRuntimeError("public open-packet result lacks packet or lease identity")
+    if not isinstance(checklist, dict) or not isinstance(receipt, dict):
+        raise runtime.BlackBoxRuntimeError("public open-packet result lacks checklist or open receipt")
+    packet_id = str(packet_projection.get("packet_id") or "")
+    lease_id = str(lease_projection.get("lease_id") or "")
+    run_id = str(opened.get("run_id") or "")
+    handoff = packet_projection.get("current_handoff_contract")
+    if not run_id or not packet_id or not lease_id or not isinstance(handoff, dict):
+        raise runtime.BlackBoxRuntimeError("public open-packet identity is incomplete")
+    if lease_projection.get("ack_received") is not True:
+        raise runtime.BlackBoxRuntimeError("public open-packet lease is not ACKed")
+    if (
+        checklist.get("schema_version") != "black_box_flowpilot.submission_checklist.v2"
+        or checklist.get("source") != "current_handoff_contract"
+        or checklist.get("run_id") != run_id
+        or checklist.get("packet_id") != packet_id
+        or checklist.get("lease_id") != lease_id
+        or not str(checklist.get("contract_fingerprint") or "")
+    ):
+        raise runtime.BlackBoxRuntimeError("public open-packet checklist identity is stale or incomplete")
+    if (
+        receipt.get("event_type") != "sealed_packet_body_opened"
+        or receipt.get("packet_id") != packet_id
+        or receipt.get("lease_id") != lease_id
+        or receipt.get("body_hash") != packet_projection.get("body_hash")
+    ):
+        raise runtime.BlackBoxRuntimeError("public open-packet receipt does not bind the current packet and lease")
+
+    manifest = handoff.get("input_material_manifest")
+    manifest = manifest if isinstance(manifest, dict) else {}
+    envelope = dict(packet_projection)
+    envelope["route_scope"] = str(handoff.get("route_scope") or "")
+    envelope["route_node_id"] = str(manifest.get("route_node_id") or "")
+    envelope["target_result_id"] = str(manifest.get("target_result_id") or "")
+    envelope["result_contract_profile_ids"] = list(handoff.get("result_contract_profile_ids") or [])
+    envelope["result_contract_profile_bindings"] = dict(handoff.get("result_contract_profile_bindings") or {})
+    packet = {
+        "packet_id": packet_id,
+        "envelope": envelope,
+        "body": str(opened.get("sealed_packet_body") or ""),
+        "submission_checklist": json.loads(json.dumps(checklist)),
+        "authorized_input_materials": json.loads(json.dumps(opened.get("authorized_input_materials") or [])),
+        "public_open_result": json.loads(json.dumps(opened)),
+    }
+    return packet
+
+
+def _apply_route_plan_semantics(
+    payload: dict[str, Any],
+    *,
+    parent_route: bool = False,
+) -> dict[str, Any]:
     if parent_route:
-        return json.dumps(
+        payload.update(
             {
                 "schema_version": runtime.ROUTE_PLAN_SCHEMA_VERSION,
                 "decision": "pass",
@@ -67,9 +158,9 @@ def _route_plan_body(*, parent_route: bool = False) -> str:
                     },
                 ],
             },
-            sort_keys=True,
         )
-    return json.dumps(
+        return payload
+    payload.update(
         {
             "schema_version": runtime.ROUTE_PLAN_SCHEMA_VERSION,
             "decision": "pass",
@@ -109,70 +200,8 @@ def _route_plan_body(*, parent_route: bool = False) -> str:
                 },
             ],
         },
-        sort_keys=True,
     )
-
-
-def _terminal_supplemental_contract_for_packet(
-    packet: dict[str, Any],
-    ledger: dict[str, Any],
-    *,
-    route_plan: dict[str, Any] | None = None,
-) -> dict[str, Any]:
-    envelope = packet.get("envelope", {}) if isinstance(packet.get("envelope"), dict) else {}
-    blocker_id = str(envelope.get("subject_id") or "")
-    blocker = ledger.get("active_blockers", {}).get(blocker_id)
-    if not isinstance(blocker, dict):
-        return {}
-    supplemental_state = ledger.get("terminal_supplemental_repair", {})
-    current_round = int(supplemental_state.get("current_round", 0) or 0) if isinstance(supplemental_state, dict) else 0
-    contract = runtime._terminal_supplemental_repair_contract_minimal_shape(current_round + 1)
-    contract["original_contract_hash"] = str(ledger.get("contract_hash") or "")
-    contract["terminal_blocker_id"] = blocker_id
-    contract["terminal_gap_report_result_id"] = str(blocker.get("result_id") or "")
-    active_acceptance_ids = list(runtime._active_acceptance_item_ids(ledger))
-    active_node_id = ""
-    route_nodes = route_plan.get("nodes") if isinstance(route_plan, dict) else None
-    if isinstance(route_nodes, list) and route_nodes:
-        owner_node = next(
-            (
-                node
-                for node in route_nodes
-                if isinstance(node, dict) and not node.get("child_node_ids")
-            ),
-            route_nodes[-1] if isinstance(route_nodes[-1], dict) else {},
-        )
-        active_node_id = str(owner_node.get("node_id") or "")
-        if isinstance(owner_node, dict):
-            owner_node["acceptance_item_ids"] = active_acceptance_ids
-    if not active_node_id:
-        active_node_id = str(blocker.get("route_node_id") or "")
-    if not active_node_id:
-        active_node_id = next(
-            (
-                str(node_id)
-                for node_id, node in ledger.get("route_nodes", {}).items()
-                if isinstance(node, dict) and node.get("status") in {"active", "accepted"}
-            ),
-            "",
-        )
-    if contract.get("repair_items"):
-        first_item = contract["repair_items"][0]
-        first_item["owner_repair_node_id"] = active_node_id
-        first_item["acceptance_item_ids"] = active_acceptance_ids[:1]
-        first_item["original_goal_link"] = "Current high-standard terminal replay requirement."
-        first_item["reviewer_gap"] = str(blocker.get("recommended_resolution") or "Terminal replay blocker.")
-        first_item["required_repair"] = "Repair the delivered product and rerun terminal backward replay."
-        contract_id = str(contract.get("contract_id") or "")
-        repair_item_id = str(first_item.get("repair_item_id") or "")
-        if isinstance(route_nodes, list):
-            for node in route_nodes:
-                if not isinstance(node, dict):
-                    continue
-                node["supplemental_repair_contract_ids"] = [contract_id]
-                if str(node.get("node_id") or "") == active_node_id:
-                    node["supplemental_repair_item_ids"] = [repair_item_id]
-    return contract
+    return payload
 
 
 def _body_for_packet(
@@ -184,8 +213,9 @@ def _body_for_packet(
     envelope = packet["envelope"]
     kind = envelope.get("packet_kind", "task")
     scope = envelope.get("route_scope", "")
+    family_id = _current_contract_family_id(packet)
+    payload = _current_result_skeleton(packet)
     if kind == "task" and scope == "high_standard_contract":
-        payload = runtime._packet_result_minimal_valid_shape(packet)
         payload["requirements"][0]["summary"] = "Deliver the requested FlowPilot work to a high standard."
         payload["requirements"][0]["source_user_intent"] = "sealed_startup_intake"
         payload["requirements"].append(
@@ -213,16 +243,15 @@ def _body_for_packet(
         )
         return json.dumps(payload)
     if kind == "task" and scope == "discovery":
-        return json.dumps(
+        payload.update(
             {
                 "decision": "pass",
-                "material_sources": ["sealed_startup_intake", "current_repository"],
-                "material_sufficiency": "sufficient_for_route_planning",
                 "candidate_skill_inventory": ["flowguard-development-process-flow"],
             }
         )
+        return json.dumps(payload)
     if kind == "task" and scope == "skill_standard":
-        return json.dumps(
+        payload.update(
             {
                 "decision": "pass",
                 "obligations": [
@@ -237,8 +266,12 @@ def _body_for_packet(
                 ]
             }
         )
+        return json.dumps(payload)
     if kind == "task" and scope == "planning":
-        return _route_plan_body(parent_route=parent_route)
+        return json.dumps(
+            _apply_route_plan_semantics(payload, parent_route=parent_route),
+            sort_keys=True,
+        )
     if kind == "task" and scope == "node_acceptance_plan":
         node_id = envelope.get("route_node_id", "")
         try:
@@ -258,10 +291,8 @@ def _body_for_packet(
             }
             for item_id in acceptance_item_ids
         ]
-        return json.dumps(
-            {
-                "decision": "pass",
-                "node_context_package": {
+        payload["decision"] = "pass"
+        payload["node_context_package"] = {
                     "purpose": "Complete the current route node with bounded worker execution, FlowGuard checks, review, and validation.",
                     "acceptance_criteria": [
                         "worker result satisfies the node packet",
@@ -272,9 +303,8 @@ def _body_for_packet(
                     "relevant_references": ["route node contract", "high standard contract", "runtime ledger"],
                     "known_risks": ["existence-only evidence", "stale generation", "review without active inspection"],
                     "acceptance_item_projection": acceptance_item_projection,
-                },
-            }
-        )
+        }
+        return json.dumps(payload)
     if kind == "review" and scope == "parent_backward_replay":
         try:
             packet_body = json.loads(packet.get("body") or "{}")
@@ -290,7 +320,7 @@ def _body_for_packet(
             if isinstance(packet_body, dict) and isinstance(packet_body.get("current_repair_child_result_ids"), list)
             else []
         )
-        return json.dumps(
+        payload.update(
             {
                 "pm_visible_summary": ["Parent backward review composes current child results."],
                 "reviewed_by_role": "human_like_reviewer",
@@ -312,9 +342,8 @@ def _body_for_packet(
                 },
             }
         )
-    family_id = runtime._packet_result_family_id(packet)
+        return json.dumps(payload)
     if family_id == "review.terminal_backward_replay":
-        payload = runtime._packet_result_minimal_valid_shape(packet)
         try:
             packet_body = json.loads(packet.get("body") or "{}")
         except json.JSONDecodeError:
@@ -344,37 +373,15 @@ def _body_for_packet(
                 payload["acceptance_item_closure"] = acceptance_rows
         return json.dumps(payload, sort_keys=True)
     if family_id.startswith("flowguard_check."):
-        payload = runtime._packet_result_minimal_valid_shape(packet)
         payload.update(_semantic_recheck_payload_for_packet(packet))
         payload.update(_subject_artifact_consumption_payload_for_packet(packet))
         return json.dumps(payload, sort_keys=True)
     if family_id == "review.any_current_subject":
         return _review_body_for_packet(packet, ledger=ledger)
     if family_id == "pm_repair_decision.pm_repair_decision":
-        payload = runtime._packet_result_minimal_valid_shape(packet)
-        packet_body: dict[str, Any] = {}
-        if ledger is not None:
-            try:
-                packet_body = json.loads(packet.get("body") or "{}")
-            except json.JSONDecodeError:
-                packet_body = {}
-        if isinstance(packet_body, dict) and isinstance(packet_body.get("minimal_valid_shape"), dict):
-            payload = json.loads(json.dumps(packet_body["minimal_valid_shape"]))
         payload["reason"] = "fake PM repairs the current terminal blocker and requires a fresh replay"
-        if ledger is not None and runtime._terminal_supplemental_repair_required(
-            ledger,
-            packet,
-            str(payload.get("decision") or ""),
-        ):
-            route_plan = payload.get("route_plan") if isinstance(payload.get("route_plan"), dict) else None
-            payload["supplemental_repair_contract"] = _terminal_supplemental_contract_for_packet(
-                packet,
-                ledger,
-                route_plan=route_plan,
-            )
         return json.dumps(payload, sort_keys=True)
     if family_id == "pm_flowguard_acceptance.pm_flowguard_acceptance":
-        payload = runtime._packet_result_minimal_valid_shape(packet)
         try:
             packet_body = json.loads(packet.get("body") or "{}")
         except json.JSONDecodeError:
@@ -384,22 +391,16 @@ def _body_for_packet(
         payload["flowguard_absorption"] = "fake PM absorbed the current FlowGuard report before Reviewer review"
         return json.dumps(payload, sort_keys=True)
     if kind == "pm_disposition":
-        payload = runtime._packet_result_minimal_valid_shape(packet)
-        try:
-            packet_body = json.loads(packet.get("body") or "{}")
-        except json.JSONDecodeError:
-            packet_body = {}
-        if isinstance(packet_body, dict) and isinstance(packet_body.get("minimal_valid_shape"), dict):
-            payload = dict(packet_body["minimal_valid_shape"])
         payload["reason"] = "fake PM accepts current node after absorbing current evidence"
         return json.dumps(payload, sort_keys=True)
-    return json.dumps(
-        {
-            "decision": "pass",
-            "pm_visible_summary": [f"fake {kind} result for packet {packet['packet_id']}"],
-            "current_evidence_refs": [f"fake-current-evidence:{packet['packet_id']}"],
-        },
-        sort_keys=True,
+    if family_id == "task.node":
+        payload["pm_visible_summary"] = [
+            f"Fake worker submitted current node evidence for packet {packet['packet_id']}."
+        ]
+        payload["current_evidence_refs"] = [f"fake-current-evidence:{packet['packet_id']}"]
+        return json.dumps(payload, sort_keys=True)
+    raise runtime.BlackBoxRuntimeError(
+        f"fake e2e has no current-contract body builder for {family_id}"
     )
 
 
@@ -415,7 +416,7 @@ def _terminal_replay_block_body_for_packet(packet: dict[str, Any], ledger: dict[
     blocker = {
         "blocker_id": "terminal-blocker-delivered-product",
         "blocker_class": "terminal_closure",
-        "recommended_resolution": "Repair delivered-product signposting and restart terminal replay.",
+        "required_repair": "Repair delivered-product signposting and restart terminal replay.",
         "summary": blocker_text,
     }
     payload["final_blockers"] = [
@@ -427,7 +428,7 @@ def _terminal_replay_block_body_for_packet(packet: dict[str, Any], ledger: dict[
 
 
 def _fault_body_for_packet(packet: dict[str, Any], ledger: dict[str, Any] | None = None) -> str:
-    family_id = runtime._packet_result_family_id(packet)
+    family_id = _current_contract_family_id(packet)
     if family_id == "task.high_standard_contract":
         return json.dumps(
             {
@@ -475,9 +476,9 @@ def _fault_body_for_packet(packet: dict[str, Any], ledger: dict[str, Any] | None
 
 
 def _consistency_fault_body_for_packet(packet: dict[str, Any], ledger: dict[str, Any] | None = None) -> str:
-    family_id = runtime._packet_result_family_id(packet)
+    family_id = _current_contract_family_id(packet)
     if family_id.startswith("flowguard_check."):
-        payload = runtime._packet_result_minimal_valid_shape(packet)
+        payload = _current_result_skeleton(packet)
         payload.update(_semantic_recheck_payload_for_packet(packet))
         payload.update(_subject_artifact_consumption_payload_for_packet(packet))
         payload["pm_visible_summary"] = [
@@ -500,7 +501,7 @@ def _consistency_fault_body_for_packet(packet: dict[str, Any], ledger: dict[str,
 
 
 def _shallow_flowguard_body_for_packet(packet: dict[str, Any], ledger: dict[str, Any] | None = None) -> str:
-    payload = runtime._packet_result_minimal_valid_shape(packet)
+    payload = _current_result_skeleton(packet)
     payload.update(_subject_artifact_consumption_payload_for_packet(packet))
     payload["passed"] = True
     payload["modeled_boundary"] = "current_contract_shape_only"
@@ -548,7 +549,7 @@ def _payload_is_shallow_flowguard_report(payload: Any) -> bool:
 
 
 def _review_body_for_packet(packet: dict[str, Any], ledger: dict[str, Any] | None = None) -> str:
-    payload = runtime._packet_result_minimal_valid_shape(packet)
+    payload = _current_result_skeleton(packet)
     if ledger is None:
         return json.dumps(payload, sort_keys=True)
     shallow_result_ids: list[str] = []
@@ -604,7 +605,7 @@ def _semantic_recheck_required_read_ids_for_packet(packet: dict[str, Any]) -> li
 
 
 def _semantic_recheck_payload_for_packet(packet: dict[str, Any]) -> dict[str, Any]:
-    minimal_shape = runtime._packet_result_minimal_valid_shape(packet)
+    minimal_shape = _current_result_skeleton(packet)
     semantic_shape = minimal_shape.get("semantic_recheck") if isinstance(minimal_shape, dict) else None
     if isinstance(semantic_shape, dict):
         return {"semantic_recheck": semantic_shape}
@@ -630,45 +631,48 @@ def _semantic_recheck_payload_for_packet(packet: dict[str, Any]) -> dict[str, An
     }
 
 
-def _assert_required_authorized_input_materials_opened(
-    packet: dict[str, Any],
-    *,
-    lease_id: str,
-    opened_materials: list[dict[str, Any]],
-) -> dict[str, Any]:
-    envelope = packet.get("envelope", {}) if isinstance(packet.get("envelope"), dict) else {}
-    required_reads = [
-        row
-        for row in runtime._packet_authorized_result_reads(packet)
-        if row.get("required_before_submit") is True
+def _assert_required_authorized_input_materials_opened(opened: dict[str, Any]) -> dict[str, Any]:
+    packet = _packet_from_public_open_result(opened)
+    envelope = packet["envelope"]
+    checklist = packet["submission_checklist"]
+    opened_materials = packet["authorized_input_materials"]
+    lease_id = str(checklist.get("lease_id") or "")
+    required_ids = [
+        str(result_id)
+        for result_id in checklist.get("required_authorized_result_read_ids") or []
+        if str(result_id)
     ]
     opened_by_result = {
-        (str(material.get("result_id") or ""), str(material.get("body_hash") or "")): material
+        str(material.get("result_id") or ""): material
         for material in opened_materials
         if isinstance(material, dict)
     }
     missing: list[str] = []
-    for row in required_reads:
-        key = (str(row.get("result_id") or ""), str(row.get("body_hash") or ""))
-        material = opened_by_result.get(key)
+    for result_id in required_ids:
+        material = opened_by_result.get(result_id)
         receipt = material.get("open_receipt") if isinstance(material, dict) else None
         if not isinstance(receipt, dict) or receipt.get("lease_id") != lease_id:
-            missing.append(key[0])
+            missing.append(result_id)
             continue
-        if receipt.get("packet_id") != packet.get("packet_id") or receipt.get("body_hash") != key[1]:
-            missing.append(key[0])
+        if (
+            receipt.get("packet_id") != packet.get("packet_id")
+            or receipt.get("result_id") != result_id
+            or receipt.get("body_hash") != material.get("body_hash")
+        ):
+            missing.append(result_id)
     if missing:
         raise runtime.BlackBoxRuntimeError(
             "fake e2e did not open required authorized input material(s): " + ", ".join(sorted(set(missing)))
         )
-    required_ids = [str(row.get("result_id") or "") for row in required_reads if str(row.get("result_id") or "")]
     if str(envelope.get("packet_kind") or "") == "flowguard_check":
-        target_result_id = str(envelope.get("target_result_id") or "")
+        manifest = (envelope.get("current_handoff_contract") or {}).get("input_material_manifest") or {}
+        target_result_id = str(manifest.get("target_result_id") or "")
         if target_result_id and target_result_id not in set(required_ids):
             raise runtime.BlackBoxRuntimeError(
                 "flowguard_check target_result_id is not a required authorized input material"
             )
-        binding = runtime._packet_result_contract_profile_binding(packet, "flowguard.semantic_recheck_required")
+        bindings = (envelope.get("current_handoff_contract") or {}).get("result_contract_profile_bindings") or {}
+        binding = bindings.get("flowguard.semantic_recheck_required") or {}
         binding_ids = [
             str(item)
             for item in binding.get("authorized_result_read_ids", [])
@@ -684,14 +688,14 @@ def _assert_required_authorized_input_materials_opened(
         "packet_id": str(packet.get("packet_id") or ""),
         "packet_kind": str(envelope.get("packet_kind") or "task"),
         "responsibility": str(envelope.get("responsibility") or ""),
-        "required_read_count": len(required_reads),
+        "required_read_count": len(required_ids),
         "opened_material_count": len(opened_materials),
         "required_result_ids": required_ids,
     }
 
 
 def _subject_artifact_consumption_payload_for_packet(packet: dict[str, Any]) -> dict[str, Any]:
-    minimal_shape = runtime._packet_result_minimal_valid_shape(packet)
+    minimal_shape = _current_result_skeleton(packet)
     consumed_shape = minimal_shape.get("subject_artifacts_consumed") if isinstance(minimal_shape, dict) else None
     if isinstance(consumed_shape, list):
         return {"subject_artifacts_consumed": consumed_shape}
@@ -782,30 +786,6 @@ def run_fake_e2e(
 
     authorized_input_openings: list[dict[str, Any]] = []
 
-    def complete_leased_packet(packet_id: str, *, agent_id: str, body: str) -> tuple[str, str]:
-        packet = ledger["packets"][packet_id]
-        responsibility = packet["envelope"]["responsibility"]
-        lease_id = host.lease_responsibility(
-            ledger,
-            responsibility,
-            host_kind="fake",
-            agent_id=agent_id,
-            packet_id=packet_id,
-            scope="e2e",
-        )
-        runtime.assign_packet(ledger, packet_id, lease_id)
-        runtime.ack_lease(ledger, lease_id, packet_id)
-        opened_materials = runtime.open_authorized_input_materials_for_role(ledger, packet_id, lease_id)
-        authorized_input_openings.append(
-            _assert_required_authorized_input_materials_opened(
-                packet,
-                lease_id=lease_id,
-                opened_materials=opened_materials,
-            )
-        )
-        result_id = host.submit_host_result(ledger, lease_id, packet_id, body)
-        return lease_id, result_id
-
     completed_packets: list[dict[str, str]] = []
     folded_boundaries: list[dict[str, Any]] = []
     injected_fault_families: set[str] = set()
@@ -830,9 +810,29 @@ def run_fake_e2e(
         if packet_id not in ledger.get("packets", {}):
             run_shell.save_run_ledger(shell, ledger)
             raise runtime.BlackBoxRuntimeError(f"fake e2e cannot satisfy next action: {action_json}")
-        packet = ledger["packets"][packet_id]
+        ledger_packet = ledger["packets"][packet_id]
+        responsibility = str(ledger_packet["envelope"].get("responsibility") or "")
+        run_shell.save_run_ledger(shell, ledger, guard_trigger="fake_e2e_public_dispatch_preflight")
+        from flowpilot_new_role_commands import ack, dispatch_current_role, open_packet
+        from flowpilot_new_run_commands import submit_result
+
+        dispatched = dispatch_current_role(
+            root,
+            packet_id=packet_id,
+            responsibility=responsibility,
+            host_kind="fake",
+            agent_id=f"fake-{ledger_packet['envelope'].get('packet_kind', 'task')}-{index}",
+        )
+        if dispatched.get("ok") is not True:
+            raise runtime.BlackBoxRuntimeError(f"fake e2e public dispatch failed: {dispatched}")
+        lease_id = str(dispatched.get("lease_id") or "")
+        ack(root, lease_id=lease_id, packet_id=packet_id)
+        opened = open_packet(root, lease_id=lease_id, packet_id=packet_id)
+        packet = _packet_from_public_open_result(opened)
+        authorized_input_openings.append(_assert_required_authorized_input_materials_opened(opened))
+        ledger = run_shell.load_run_ledger(shell)
         kind = packet["envelope"].get("packet_kind", "task")
-        family_id = runtime._packet_result_family_id(packet)
+        family_id = _current_contract_family_id(packet)
         should_fault = inject_contract_faults and family_id in {
             "task.high_standard_contract",
             "task.skill_standard",
@@ -902,11 +902,14 @@ def run_fake_e2e(
                 decision=artifact_decision,
                 mode=mode,
             )
-        lease_id, result_id = complete_leased_packet(
-            packet_id,
-            agent_id=f"fake-{kind}-{index}",
+        submitted = submit_result(
+            root,
+            lease_id=lease_id,
+            packet_id=packet_id,
             body=body,
         )
+        result_id = str(submitted.get("result_id") or "")
+        ledger = run_shell.load_run_ledger(shell)
         result = ledger["results"][result_id]
         if result.get("status") == "mechanical_contract_blocked":
             mechanical_contract_blocks.append(
@@ -957,7 +960,11 @@ def run_fake_e2e(
             if not repair_terminal_replay_blocker:
                 break
     else:
-        raise runtime.BlackBoxRuntimeError("fake e2e exceeded packet completion budget")
+        raise runtime.BlackBoxRuntimeError(
+            "fake e2e exceeded packet completion budget; "
+            f"last_boundary={folded_boundaries[-1] if folded_boundaries else {}}; "
+            f"recent_mechanical_blocks={mechanical_contract_blocks[-3:]}"
+        )
 
     closure = ledger.get("closure") or {"decision": "not_attempted"}
     run_shell.save_run_ledger(shell, ledger)

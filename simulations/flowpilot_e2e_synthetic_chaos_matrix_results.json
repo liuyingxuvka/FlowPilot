@@ -260,9 +260,9 @@
     }
   ],
   "ok": true,
-  "required_flow_count": 7,
+  "required_flow_count": 6,
   "result_type": "flowpilot_e2e_synthetic_chaos_matrix",
-  "row_count": 7,
+  "row_count": 6,
   "rows": [
     {
       "evidence_current": true,
@@ -353,37 +353,6 @@
     },
     {
       "evidence_current": true,
-      "evidence_id": "e2e.pm_repair.no_producer_then_packet_reissue",
-      "evidence_role": "primary_full_flow",
-      "evidence_status": "passed",
-      "evidence_test": "FlowPilotEndToEndSyntheticChaosReplayTests.test_e2e_no_producer_pm_repair_then_packet_reissue_exposes_producer_evidence",
-      "expected_outcome": "no_producer_repair_rejected_then_packet_reissue_opens_producer_backed_wait",
-      "final_state": "awaiting_material_recheck_with_repair_packet_generation_evidence",
-      "flow_id": "e2e.pm_repair.no_producer_then_packet_reissue",
-      "injected_error_sequence": [
-        "stale_worker_result_flags",
-        "no_producer_pm_role_reissue",
-        "corrected_packet_reissue"
-      ],
-      "live_ai_semantic_quality_proven": false,
-      "phase_sequence": [
-        "startup",
-        "material_scan_dispatch",
-        "stale_worker_result_flags",
-        "control_blocker",
-        "pm_no_producer_repair",
-        "pm_corrected_packet_reissue",
-        "producer_backed_legal_wait"
-      ],
-      "protected_state_invariant": "active_blocker_remains_until_repair_transaction_has_current_producer",
-      "recovery_route": "packet_reissue_repair_transaction_with_current_generation",
-      "supporting_evidence": [
-        "repair_transactions.negative.material_role_reissue_no_producer",
-        "repair_transactions.happy.material_packet_reissue"
-      ]
-    },
-    {
-      "evidence_current": true,
       "evidence_id": "e2e.background.progress_only_then_final_proof",
       "evidence_role": "primary_full_flow",
       "evidence_status": "passed",
@@ -465,7 +434,6 @@
     }
   ],
   "rows_by_final_state": {
-    "awaiting_material_recheck_with_repair_packet_generation_evidence": 1,
     "awaiting_registered_return_gate_with_blocker_record": 1,
     "background_proof_passed": 1,
     "closed_with_terminal_lifecycle_record": 2,
@@ -475,26 +443,21 @@
   "rows_by_phase": {
     "background_regression": 1,
     "clean_terminal_retry": 1,
-    "control_blocker": 2,
+    "control_blocker": 1,
     "current_run_continues": 1,
     "daemon_takeover": 2,
     "daemon_terminal_lifecycle": 2,
     "dirty_terminal_overclaim": 1,
     "final_proof": 1,
     "legal_wait_restored": 1,
-    "material_scan_dispatch": 1,
     "parallel_run_setup": 1,
     "peer_stop": 1,
     "pm_bad_repair": 1,
-    "pm_corrected_packet_reissue": 1,
     "pm_corrected_repair": 1,
     "pm_dispatch": 2,
-    "pm_no_producer_repair": 1,
     "pm_review": 2,
-    "producer_backed_legal_wait": 1,
     "proof_gate": 1,
-    "stale_worker_result_flags": 1,
-    "startup": 5,
+    "startup": 4,
     "terminal_closure": 2,
     "terminal_ledger": 2,
     "worker_bad_package": 1,

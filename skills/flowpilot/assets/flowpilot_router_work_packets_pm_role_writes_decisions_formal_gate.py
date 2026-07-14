@@ -84,9 +84,22 @@ def _write_pm_formal_gate_package(
         raise RouterError(f"{package_label} formal gate package requires non-empty decision_reason")
     run_root = project_root / str(run_state['run_root'])
     map_doc = material_artifact_map.refresh_material_artifact_map(project_root, run_root, run_state)
-    map_ref = material_artifact_map.material_artifact_map_source_ref(project_root, run_root)
-    review_entry_ids = material_artifact_map.review_source_entry_ids(map_doc, batch_kind=batch_kind)
-    review_paths = material_artifact_map.reviewable_source_paths(map_doc, entry_ids=review_entry_ids)
+    map_status = material_artifact_map.material_artifact_map_navigation_status(
+        project_root,
+        run_root,
+        map_doc,
+    )
+    map_ref = map_status.get('source_ref') if map_status.get('navigation_usable') else None
+    review_entry_ids = (
+        material_artifact_map.review_source_entry_ids(map_doc, batch_kind=batch_kind)
+        if isinstance(map_ref, dict)
+        else []
+    )
+    review_paths = (
+        material_artifact_map.reviewable_source_paths(map_doc, entry_ids=review_entry_ids)
+        if isinstance(map_ref, dict)
+        else []
+    )
     package_path = output_path.with_name(f"pm_{router._safe_packet_id_component(package_label)}_formal_gate_package.json")
     result_envelopes: list[dict[str, Any]] = []
     source_contract_self_checks: list[dict[str, Any]] = []
@@ -157,6 +170,8 @@ def _write_pm_formal_gate_package(
         'raw_worker_result_bodies_included': False,
         'material_artifact_map_path': map_ref.get('path') if isinstance(map_ref, dict) else None,
         'material_artifact_map_hash': map_ref.get('hash') if isinstance(map_ref, dict) else None,
+        'material_artifact_map_navigation_usable': bool(map_status.get('navigation_usable')),
+        'material_artifact_map_acceptance_evidence': False,
         'review_source_entry_ids': review_entry_ids,
         'reviewable_source_paths': review_paths,
         'packet_ids': [str(record.get('packet_id')) for record in records],
@@ -167,8 +182,8 @@ def _write_pm_formal_gate_package(
         'content_boundary': {
             'includes_pm_disposition_summary': True,
             'includes_result_envelope_paths_and_hashes': True,
-            'includes_material_artifact_map_refs': True,
-            'includes_reviewable_source_paths': True,
+            'includes_material_artifact_map_refs': isinstance(map_ref, dict),
+            'includes_reviewable_source_paths': bool(review_paths),
             'excludes_worker_result_bodies': True,
             'sealed_body_boundary_preserved': True,
         },

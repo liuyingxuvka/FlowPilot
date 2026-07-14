@@ -1,5 +1,5 @@
 {
-  "checked_at": "2026-05-23T16:56:41.023707+00:00",
+  "checked_at": "2026-07-10T14:36:57.730620+00:00",
   "flowguard_explorer": {
     "dead_branch_count": 0,
     "exception_branch_count": 0,
@@ -20,7 +20,7 @@
         ],
         "state": {
           "action_family": "packet_relay",
-          "action_type": "relay_material_scan_packets",
+          "action_type": "relay_research_packet",
           "active_holder_leases_issued": true,
           "controller_receipt_done": false,
           "controller_receipt_possible": true,
@@ -31,7 +31,7 @@
           "packet_batch_relayed": true,
           "packet_ledger_relay_recorded": true,
           "path_only_handoff_reported": false,
-          "postcondition_name": "material_scan_packets_relayed",
+          "postcondition_name": "research_packet_relayed",
           "receipt_fold_registered": false,
           "repair_or_blocker_recorded": false,
           "router_marked_receipt_reconciled": false,
@@ -57,7 +57,7 @@
         ],
         "state": {
           "action_family": "packet_relay",
-          "action_type": "relay_material_scan_packets",
+          "action_type": "relay_research_packet",
           "active_holder_leases_issued": true,
           "controller_receipt_done": true,
           "controller_receipt_possible": true,
@@ -68,7 +68,7 @@
           "packet_batch_relayed": true,
           "packet_ledger_relay_recorded": true,
           "path_only_handoff_reported": false,
-          "postcondition_name": "material_scan_packets_relayed",
+          "postcondition_name": "research_packet_relayed",
           "receipt_fold_registered": false,
           "repair_or_blocker_recorded": false,
           "router_marked_receipt_reconciled": false,
@@ -94,7 +94,7 @@
         ],
         "state": {
           "action_family": "packet_relay",
-          "action_type": "relay_material_scan_packets",
+          "action_type": "relay_research_packet",
           "active_holder_leases_issued": true,
           "controller_receipt_done": true,
           "controller_receipt_possible": true,
@@ -105,7 +105,7 @@
           "packet_batch_relayed": true,
           "packet_ledger_relay_recorded": true,
           "path_only_handoff_reported": false,
-          "postcondition_name": "material_scan_packets_relayed",
+          "postcondition_name": "research_packet_relayed",
           "receipt_fold_registered": false,
           "repair_or_blocker_recorded": false,
           "router_marked_receipt_reconciled": false,
@@ -132,7 +132,7 @@
         ],
         "state": {
           "action_family": "packet_relay",
-          "action_type": "relay_material_scan_packets",
+          "action_type": "relay_research_packet",
           "active_holder_leases_issued": true,
           "controller_receipt_done": true,
           "controller_receipt_possible": true,
@@ -143,7 +143,7 @@
           "packet_batch_relayed": true,
           "packet_ledger_relay_recorded": true,
           "path_only_handoff_reported": false,
-          "postcondition_name": "material_scan_packets_relayed",
+          "postcondition_name": "research_packet_relayed",
           "receipt_fold_registered": false,
           "repair_or_blocker_recorded": false,
           "router_marked_receipt_reconciled": false,
@@ -168,7 +168,7 @@
         ],
         "state": {
           "action_family": "packet_relay",
-          "action_type": "relay_material_scan_packets",
+          "action_type": "relay_research_packet",
           "active_holder_leases_issued": false,
           "controller_receipt_done": true,
           "controller_receipt_possible": true,
@@ -179,7 +179,7 @@
           "packet_batch_relayed": false,
           "packet_ledger_relay_recorded": false,
           "path_only_handoff_reported": true,
-          "postcondition_name": "material_scan_packets_relayed",
+          "postcondition_name": "research_packet_relayed",
           "receipt_fold_registered": true,
           "repair_or_blocker_recorded": false,
           "router_marked_receipt_reconciled": true,
@@ -204,7 +204,7 @@
         ],
         "state": {
           "action_family": "packet_relay",
-          "action_type": "relay_material_scan_packets",
+          "action_type": "relay_research_packet",
           "active_holder_leases_issued": true,
           "controller_receipt_done": true,
           "controller_receipt_possible": true,
@@ -215,7 +215,7 @@
           "packet_batch_relayed": true,
           "packet_ledger_relay_recorded": true,
           "path_only_handoff_reported": false,
-          "postcondition_name": "material_scan_packets_relayed",
+          "postcondition_name": "research_packet_relayed",
           "receipt_fold_registered": true,
           "repair_or_blocker_recorded": false,
           "router_marked_receipt_reconciled": true,
@@ -277,7 +277,7 @@
         ],
         "state": {
           "action_family": "packet_relay",
-          "action_type": "relay_material_scan_packets",
+          "action_type": "relay_research_packet",
           "active_holder_leases_issued": true,
           "controller_receipt_done": true,
           "controller_receipt_possible": true,
@@ -288,7 +288,7 @@
           "packet_batch_relayed": true,
           "packet_ledger_relay_recorded": true,
           "path_only_handoff_reported": false,
-          "postcondition_name": "material_scan_packets_relayed",
+          "postcondition_name": "research_packet_relayed",
           "receipt_fold_registered": false,
           "repair_or_blocker_recorded": false,
           "router_marked_receipt_reconciled": false,
@@ -314,6 +314,25 @@
     "ok": true,
     "samples": [],
     "stuck_state_count": 0
+  },
+  "retired_material_surface_absence": {
+    "accepted_retired_actions": [],
+    "accepted_retired_postconditions": [],
+    "claim_boundary": "The model always proves retired material relay names absent from accepted Controller receipt paths. Source absence is proved only when source audit is enabled.",
+    "configured_retired_actions": [],
+    "ok": true,
+    "retired_action_names": [
+      "relay_material_scan_packets",
+      "relay_material_scan_results_to_pm",
+      "relay_material_scan_results_to_reviewer"
+    ],
+    "retired_postcondition_names": [
+      "material_scan_packets_relayed",
+      "material_scan_results_relayed_to_pm",
+      "material_scan_results_relayed_to_reviewer"
+    ],
+    "source_audit_skipped": false,
+    "source_retired_actions": []
   },
   "safe_graph": {
     "accepted_scenarios": [
@@ -352,12 +371,6 @@
         ],
         "handler": "_apply_confirm_controller_core_boundary"
       },
-      "create_heartbeat_automation": {
-        "flags": [
-          "continuation_binding_recorded"
-        ],
-        "handler": "_apply_create_heartbeat_automation"
-      },
       "load_resume_state": {
         "flags": [
           "resume_state_loaded",
@@ -382,24 +395,6 @@
           "current_node_result_relayed_to_pm"
         ],
         "handler": "_apply_relay_current_node_result"
-      },
-      "relay_material_scan_packets": {
-        "flags": [
-          "material_scan_packets_relayed"
-        ],
-        "handler": "_apply_relay_material_scan_packets"
-      },
-      "relay_material_scan_results_to_pm": {
-        "flags": [
-          "material_scan_results_relayed_to_pm"
-        ],
-        "handler": "_apply_relay_material_scan_results"
-      },
-      "relay_material_scan_results_to_reviewer": {
-        "flags": [
-          "material_scan_results_relayed_to_pm"
-        ],
-        "handler": "_apply_relay_material_scan_results"
       },
       "relay_pm_role_work_request_packet": {
         "flags": [
@@ -448,9 +443,6 @@
       "relay_current_node_packet",
       "relay_current_node_result_to_pm",
       "relay_current_node_result_to_reviewer",
-      "relay_material_scan_packets",
-      "relay_material_scan_results_to_pm",
-      "relay_material_scan_results_to_reviewer",
       "relay_pm_role_work_request_packet",
       "relay_pm_role_work_result_to_pm",
       "relay_research_packet",
@@ -475,24 +467,6 @@
           "current_node_result_relayed_to_pm"
         ],
         "handler": "_apply_relay_current_node_result"
-      },
-      "relay_material_scan_packets": {
-        "flags": [
-          "material_scan_packets_relayed"
-        ],
-        "handler": "_apply_relay_material_scan_packets"
-      },
-      "relay_material_scan_results_to_pm": {
-        "flags": [
-          "material_scan_results_relayed_to_pm"
-        ],
-        "handler": "_apply_relay_material_scan_results"
-      },
-      "relay_material_scan_results_to_reviewer": {
-        "flags": [
-          "material_scan_results_relayed_to_pm"
-        ],
-        "handler": "_apply_relay_material_scan_results"
       },
       "relay_pm_role_work_request_packet": {
         "flags": [
@@ -536,9 +510,6 @@
       "relay_current_node_packet",
       "relay_current_node_result_to_pm",
       "relay_current_node_result_to_reviewer",
-      "relay_material_scan_packets",
-      "relay_material_scan_results_to_pm",
-      "relay_material_scan_results_to_reviewer",
       "relay_pm_role_work_request_packet",
       "relay_pm_role_work_result_to_pm",
       "relay_research_packet",

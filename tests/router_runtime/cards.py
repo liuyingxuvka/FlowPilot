@@ -9,7 +9,6 @@ class CardsRuntimeTests(FlowPilotRouterRuntimeTestBase):
         root = self.make_project()
         run_root = self.boot_to_controller(root)
         self.complete_startup_runtime_entry(root)
-        self.complete_material_flow(root)
 
         self.apply_next_non_card_action(root)
         action = router.next_action(root)
@@ -18,8 +17,12 @@ class CardsRuntimeTests(FlowPilotRouterRuntimeTestBase):
         context = action["delivery_context"]
         self.assertEqual(context["current_stage"]["current_phase"], "product_architecture")
         source_values = set(context["source_paths"].values())
-        self.assertIn(f"{run_root.relative_to(root).as_posix()}/pm_material_understanding.json", source_values)
-        self.assertIn(f"{run_root.relative_to(root).as_posix()}/material/pm_material_understanding_payload.json", source_values)
+        self.assertIn(
+            f"{run_root.relative_to(root).as_posix()}/startup_intake/startup_intake_record.json",
+            source_values,
+        )
+        self.assertFalse(any("pm_material_understanding" in value for value in source_values))
+        self.assertFalse(any("material_sufficiency" in value for value in source_values))
 
         self.ack_system_card_action(root, action)
         router.record_external_event(

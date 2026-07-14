@@ -37,12 +37,6 @@ PROCESS_CONTRACT_POLICIES: dict[str, dict[str, str]] = {
         "required_result_next_recipient": "project_manager",
         "absorbing_role": "project_manager",
     },
-    "material_scan": {
-        "task_family": "worker.material_scan",
-        "packet_type": "material_scan",
-        "required_result_next_recipient": "project_manager",
-        "absorbing_role": "project_manager",
-    },
     "research": {
         "task_family": "worker.research",
         "packet_type": "research",
@@ -111,7 +105,6 @@ PM_ROLE_WORK_CONTRACT_PROCESS_KINDS = {
 
 PM_ROLE_WORK_FOREIGN_CONTRACT_IDS = {
     "flowpilot.output_contract.worker_current_node_result.v1",
-    "flowpilot.output_contract.worker_material_scan_result.v1",
     "flowpilot.output_contract.worker_research_result.v1",
 }
 

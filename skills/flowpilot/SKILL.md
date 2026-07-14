@@ -27,7 +27,7 @@ If only the skill directory is available, read `DEPENDENCIES.md` and ask before 
 
 ## Required Launcher Behavior
 
-The assistant is only the FlowPilot bootloader until a new flowpilot_new.py run has been created. A user request to start or use FlowPilot is always a fresh formal invocation, even if .flowpilot/current.json points at an old or still-running run.
+The assistant is only the FlowPilot bootloader until the public `assets/flowpilot_new.py` launcher has created a fresh run. A user request to start or use FlowPilot is always a fresh formal invocation, even if project-local active-run metadata points at an old or still-running run.
 
 Do not read FlowPilot reference files, prior run state, old screenshots, old UI assets, old prompt bodies, or runtime kit cards unless the Router action explicitly names them.
 
@@ -39,9 +39,9 @@ Fresh formal invocation:
 python assets\flowpilot_new.py --root <project-root> --json start
 ```
 
-The public formal-run control surface is `flowpilot_new.py` only. The startup path uses the native startup intake UI; There is no requirement for a non-startup monitoring UI. `.flowpilot/runs/<run-id>/ledger.json` is authority; `.flowpilot/current.json` is UI focus/default-target metadata.
+The public formal-run control surface is `assets/flowpilot_new.py` only. The startup path uses the native startup intake UI; there is no requirement for a non-startup monitoring UI. The runtime-provided current-run ledger is authority; project-local active-run metadata is only UI focus/default-target metadata.
 
-The internal router facade is retained for current tests and stateful runtime commands. Do not bypass flowpilot_new.py during a new formal run.
+The internal router facade is retained for current tests and stateful runtime commands. Do not bypass `assets/flowpilot_new.py` during a new formal run.
 
 Before the background driver is started or attached, the bootloader may only create the fresh run shell, write the active pointer/index, copy current runtime kit material, and start or attach the current background driver. It must not run startup packet work, role work, direct apply loops, or historical recovery.
 
@@ -55,11 +55,11 @@ The compact command list is not an argument schema. Execute the exact command st
 
 Follow the returned `foreground_duty` until terminal return. The five actions are `process_next_action`, `wait_patrol`, `recover_or_reissue`, `control_plane_blocker`, and `terminal_return`.
 
-If `foreground_duty.action=wait_patrol`, do not final-answer. Run the duty refresh command or `flowpilot_new.py patrol`, wait for output, and follow the returned foreground duty.
+If `foreground_duty.action=wait_patrol`, do not final-answer. Run the duty refresh command or invoke `assets/flowpilot_new.py` with `patrol`, wait for output, and follow the returned foreground duty.
 
-Runtime-ready state preempts foreground waits. Before waiting on role chat or a timer, refresh the current lifecycle guard through `flowpilot_new.py patrol` or the runtime-provided refresh command; if the guard exposes work, follow the returned foreground duty instead of continuing the wait.
+Runtime-ready state preempts foreground waits. Before waiting on role chat or a timer, refresh the current lifecycle guard with the runtime-returned command; its launcher action is `flowpilot_new.py patrol`. If the guard exposes work, follow the returned foreground duty instead of continuing the wait.
 
-Before any final answer, done claim, or Controller shutdown, run `flowpilot_new.py final-preflight`. Only a successful final-preflight with `foreground_duty.action=terminal_return` and `controller_stop_allowed=true` may end Controller work.
+Before any final answer, done claim, or Controller shutdown, invoke `assets/flowpilot_new.py` with `final-preflight`. Only a successful final-preflight with `foreground_duty.action=terminal_return` and `controller_stop_allowed=true` may end Controller work.
 
 If a user-facing status update is needed and public runtime output includes `progress_fraction.display`, Controller should normally relay that exact current expanded node fraction. A changed active node or changed runtime-owned expanded-node fraction can justify a short progress note, while quiet patrol, receipts, ACK bookkeeping, ledger cleanup, relay bookkeeping, and process-only asides remain silent by default. Do not calculate progress, convert it to a percent, read sealed bodies for progress, or treat the fraction as authority for completion, stop, gate, route advance, or final return. If absent, do not invent progress.
 
@@ -73,7 +73,7 @@ When the runtime returns `dispatch_current_role`, execute only the runtime's cur
 
 All formal role work follows the same current path: issued packet -> current role dispatch -> ACK -> sealed result -> ledger side effect -> next packet. PM, reviewer, worker, FlowGuard operator, and equivalent role ACK/open/submit commands run inside the addressed isolated AI execution surface, not in the Controller foreground. Missing payload fields return to the named role/user; Controller must not open role-only packets, read sealed bodies, guess, repair, or submit role results.
 
-On manual resume, run `flowpilot_new.py resume --reason manual_resume` and then follow the returned `foreground_duty`. Treat `work_chain_status` as diagnostic only; never use stale role bindings, prior run state, chat history, or wait timeouts as authority.
+On manual resume, invoke `assets/flowpilot_new.py` with `resume --reason manual_resume` and then follow the returned `foreground_duty`. Treat `work_chain_status` as diagnostic only; never use stale role bindings, prior run state, chat history, or wait timeouts as authority.
 
 ## Runtime Kit
 
@@ -96,17 +96,17 @@ Covers flowpilot plus explicitly routed local materials; no unrelated repos, pri
 ## Local Material Routing
 Use workspace, skill directory, user files, or configured project paths; keep private machine paths local and public instructions portable.
 ## Entrypoint Acceptance Map
-Use SkillGuard as the runtime contract executor attached to the native route/check owner: FlowPilot flowpilot_new.py launcher, Router/Controller runtime, and FlowPilot regression checks. It enforces contract gates through that native owner before progress or closure; duplicate SkillGuard-owned execution paths are invalid. Declared gates/routes: opt in gate, route plan, execution checks, closure.
+Use SkillGuard as the declarative contract layer attached to the native route/check owner: the FlowPilot `assets/flowpilot_new.py` launcher, Router/Controller runtime, and FlowPilot regression checks. Every declared FlowPilot route and check must have one explicit native binding to its existing owner source; an empty, missing, extra, or duplicate binding blocks global selection. The native FlowPilot owner executes work and produces evidence; SkillGuard compiles, checks, and consumes that declared evidence without becoming a second role-work runtime. Duplicate SkillGuard-owned execution paths are invalid. Declared gates/routes: opt in gate, route plan, execution checks, closure.
 ## Use When
 Use when the request matches flowpilot and needs this governed workflow, materials, checks, or handoff behavior.
 ## Do Not Use When
 Do not use outside the domain, without required materials, when a more specific skill owns the work, or for tiny direct answers.
 ## Required Workflow
-Select the target-owned native route/check surface, run the SkillGuard contract gates around the native workflow, collect evidence, run checks, fix failures, then report.
+Select the target-owned native route/check surface, compile or check the current declarative contract, let the native FlowPilot owner execute the workflow, collect its evidence, consume the current receipts, fix affected failures, then report.
 ## Hard Gates
 Do not skip phases, do not replace required evidence with prose, do not treat stale reports as current, do not weaken validation to pass, and do not claim completion when blockers remain.
 ## Output Requirements
 Report evidence, failures, blockers, skipped_checks with reasons, residual_risk, and claim_boundary; distinguish checked, unchecked, blocked, and uncertain.
 ## SkillGuard Maintenance
-Keep `.skillguard` contracts, checks, evidence, and ledger current; rerun SkillGuard after entrypoint, route, evidence, or closure changes.
+Keep exactly one current V2 authority trio under `.skillguard`: `contract-source.json`, `compiled-contract.json`, and `check-manifest.json`. Keep `native_route_bindings` exactly equal to the four compiled FlowPilot routes and `native_check_bindings` exactly equal to the declared checks; omission is a blocker, not a fallback to prose routing. Use the public SkillGuard compiler/checkers; do not regenerate former V1 files or call private compiler helpers. Reuse a current receipt only when its execution identity and precise inputs still match. A final receipt check is a read-only consumer and must not use `--background` or `--resume`. Contract-depth mapping is not execution-depth proof. After an entrypoint, route, evidence, or closure change, run only the affected SkillGuard checks. Run full or release validation only for a stable integration snapshot or an explicit release.
 <!-- END SKILLGUARD CONTRACT LAYER -->

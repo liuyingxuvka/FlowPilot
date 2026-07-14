@@ -282,6 +282,36 @@ CONTRACT_EXHAUSTION_MUTATION_CANONICALIZATION = {
     "corrected_second_reviewer_retry": "corrected_second_retry",
     "same_review_failure_attempts_1_to_4": "same_blocker_repeat",
     "same_review_failure_attempt_5_break_glass": "same_blocker_repeat",
+    # Child declaration receipts and full finite universes are evidence and
+    # stage-matrix obligations in this parent control-plane alphabet.
+    "child_runtime_replay_declaration_receipt": "missing_evidence_manifest",
+    "child_control_plane_ledger_hygiene_declaration_receipt": "missing_evidence_manifest",
+    "complete_workstream_cartesian.full_cartesian_cell": "missing_stage_evidence_matrix",
+    "resource_discovery_cartesian.full_cartesian_cell": "missing_stage_evidence_matrix",
+    # Complete-workstream semantic profiles retain their detailed source ids
+    # while bridging to the nearest existing current control-plane mutation.
+    "complete_workstream_pass": "corrected_second_retry",
+    "missing_numbered_plan": "missing_required_child_field",
+    "vague_numbered_plan": "fallback_prose",
+    "incomplete_required_plan_step": "missing_stage_evidence_matrix",
+    "completion_claim_contradiction": "dirty_terminal",
+    "truthful_disclosed_blocker": "dirty_terminal",
+    "plan_evidence_mismatch": "evidence_path_mismatch",
+    "stale_plan_evidence": "stale_evidence",
+    "unintegrated_delegation": "stage_evidence_mismatch",
+    "role_local_flowguard_self_approval": "wrong_owner",
+    "formal_flowguard_independence_preserved": "corrected_second_retry",
+    "reviewer_sub9_pm_disposition_required": "missing_repair_obligation_disposition",
+    "pm_sub9_disposition_recorded": "corrected_second_retry",
+    "corrected_workstream_retry": "corrected_second_retry",
+    "repeated_incomplete_plan_repair": "same_root_no_delta_retry",
+    # Resource discovery keeps the mandatory shallow inventory and ordinary
+    # evidence-work path, while rejecting the removed discovery fields.
+    "mandatory_local_skill_inventory": "corrected_second_retry",
+    "selected_skill_deep_read": "corrected_second_retry",
+    "ordinary_material_evidence_work": "corrected_second_retry",
+    "optional_material_map_absent": "corrected_second_retry",
+    "forbidden_old_discovery_fields": "forbidden_field_present",
 }
 
 BOUNDARIES = (

@@ -179,7 +179,7 @@ HAZARD_EXPECTED_FAILURES = {
     "active_holder_contact_by_stale_packet": "active-holder fast lane accepted a stale or wrong packet",
     "active_holder_contact_after_stale_frontier": "active-holder fast lane accepted contact after route or frontier staleness",
     "active_holder_contact_action_not_allowed": "active-holder fast lane accepted an action outside the lease",
-    "material_active_holder_lease_without_packet_registration": "generalized active-holder lease issued before packet registration, relay, identity boundary, or live holder",
+    "research_active_holder_lease_without_packet_registration": "generalized active-holder lease issued before packet registration, relay, identity boundary, or live holder",
     "research_active_holder_contact_by_wrong_role": "active-holder fast lane accepted contact from a non-holder role",
     "pm_role_work_active_holder_without_live_holder": "generalized active-holder lease issued before packet registration, relay, identity boundary, or live holder",
     "generalized_active_holder_result_not_to_pm": "generalized active-holder result did not return to PM disposition path",

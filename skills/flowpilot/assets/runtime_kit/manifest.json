@@ -92,37 +92,11 @@
       "source": "system"
     },
     {
-      "audience": "project_manager",
-      "id": "pm.material_scan",
-      "issued_by": "router",
-      "kind": "phase",
-      "path": "cards/phases/pm_material_scan.md",
-      "phase": "material_scan",
-      "source": "system"
-    },
-    {
       "audience": "human_like_reviewer",
       "id": "reviewer.discovery_review",
       "issued_by": "router",
       "kind": "reviewer_gate",
       "path": "cards/reviewer/discovery_review.md",
-      "source": "system"
-    },
-    {
-      "audience": "human_like_reviewer",
-      "id": "reviewer.material_sufficiency",
-      "issued_by": "router",
-      "kind": "reviewer_gate",
-      "path": "cards/reviewer/material_sufficiency.md",
-      "source": "system"
-    },
-    {
-      "audience": "project_manager",
-      "id": "pm.material_absorb_or_research",
-      "issued_by": "router",
-      "kind": "phase",
-      "path": "cards/phases/pm_material_absorb_or_research.md",
-      "phase": "material_absorb_or_research",
       "source": "system"
     },
     {
@@ -157,15 +131,6 @@
       "kind": "phase",
       "path": "cards/phases/pm_research_absorb_or_mutate.md",
       "phase": "research_absorb_or_mutate",
-      "source": "system"
-    },
-    {
-      "audience": "project_manager",
-      "id": "pm.material_understanding",
-      "issued_by": "router",
-      "kind": "phase",
-      "path": "cards/phases/pm_material_understanding.md",
-      "phase": "material_understanding",
       "source": "system"
     },
     {

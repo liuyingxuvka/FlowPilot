@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from tests.router_runtime.common import *  # noqa: F403
 from tests.router_runtime.common import FlowPilotRouterRuntimeTestBase
+import flowpilot_material_artifact_map as material_artifact_map  # noqa: E402
 import flowpilot_router_io_locks as router_io_locks  # noqa: E402
 
 
@@ -296,7 +297,6 @@ class TerminalRuntimeTests(FlowPilotRouterRuntimeTestBase):
         root = self.make_project()
         run_root = self.boot_to_controller(root)
         self.complete_startup_runtime_entry(root)
-        self.complete_material_flow(root)
         self.complete_root_contract_before_child_skill_gates(root)
         self.complete_child_skill_gates(root)
         self.complete_implementation_intent_bridge(root)
@@ -431,12 +431,21 @@ class TerminalRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertIn("route_node", gate_families)
         self.assertIn("child_skill_gate", gate_families)
         self.assertIn("evidence_integrity", gate_families)
-        self.assertIn("material_artifact_map", gate_families)
-        self.assertEqual(ledger["source_paths"]["material_artifact_map"], self.rel(root, run_root / "material" / "material_artifact_map.json"))
-        self.assertTrue(ledger["evidence_integrity"]["material_artifact_map_body_text_excluded"])
+        self.assertNotIn("material_artifact_map", gate_families)
+        self.assertNotIn("material_artifact_map", ledger["source_paths"])
+        self.assertFalse(ledger["gate_families"]["material_artifact_map_linked"])
+        self.assertTrue(ledger["evidence_integrity"]["material_artifact_map_checked_if_present"])
+        self.assertIsNone(ledger["evidence_integrity"]["material_artifact_map_navigation_usable"])
+        self.assertIsNone(ledger["evidence_integrity"]["material_artifact_map_body_text_excluded"])
         self.assertEqual(ledger["counts"]["material_artifact_map_blocked_count"], 0)
         self.assertEqual(ledger["counts"]["material_artifact_map_stale_count"], 0)
         self.assertEqual(ledger["counts"]["material_artifact_map_unresolved_count"], 0)
+        self.assertFalse(ledger["material_artifact_map_summary"]["present"])
+        self.assertFalse(material_artifact_map.material_artifact_map_path(run_root).exists())
+        history = read_json(router._route_history_index_path(run_root))
+        prior_context = read_json(router._pm_prior_path_context_path(run_root))
+        self.assertNotIn("material_artifact_map", history)
+        self.assertIsNone(prior_context["material_artifact_map_considered"])
         self.assertEqual(ledger["counts"]["gate_decision_count"], 1)
         self.assertEqual(ledger["gate_decisions"][0]["gate_id"], "final-quality-gate")
         self.assertEqual(ledger["source_paths"]["gate_decision_ledger"], self.rel(root, run_root / "gate_decisions" / "gate_decision_ledger.json"))
@@ -455,6 +464,51 @@ class TerminalRuntimeTests(FlowPilotRouterRuntimeTestBase):
         terminal_map = read_json(run_root / "terminal_human_backward_replay_map.json")
         self.assertIn("flowguard-coverage-governance", {segment["segment_id"] for segment in terminal_map["segments"]})
         self.assertIn("flowguard_coverage_governance", terminal_map["replay_order"])
+
+    def test_final_ledger_links_explicit_existing_optional_map_without_using_it_as_acceptance_evidence(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.complete_pre_route_gates(root)
+        self.activate_route(root)
+        self.complete_leaf_node_with_reviewed_result(root, packet_id="node-packet-final-ledger-map-present")
+        self.complete_evidence_quality_package(root)
+
+        map_doc = material_artifact_map.refresh_material_artifact_map(
+            root,
+            run_root,
+            read_json(router.run_state_path(run_root)),
+            create_if_missing=True,
+        )
+        self.assertTrue(map_doc["body_text_excluded"])
+        router._refresh_route_memory(
+            root,
+            run_root,
+            read_json(router.run_state_path(run_root)),
+            trigger="explicit_optional_map_requested",
+        )
+        history = read_json(router._route_history_index_path(run_root))
+        prior_context = read_json(router._pm_prior_path_context_path(run_root))
+        self.assertTrue(history["material_artifact_map"]["navigation_usable"])
+        self.assertFalse(history["material_artifact_map"]["acceptance_evidence"])
+        self.assertEqual(
+            prior_context["material_artifact_map_considered"]["path"],
+            self.rel(root, material_artifact_map.material_artifact_map_path(run_root)),
+        )
+
+        self.deliver_expected_card(root, "pm.final_ledger")
+        router.record_external_event(root, "pm_records_final_route_wide_ledger_clean", self.final_ledger_payload(root))
+        ledger = read_json(run_root / "final_route_wide_gate_ledger.json")
+        map_path = material_artifact_map.material_artifact_map_path(run_root)
+
+        self.assertTrue(map_path.exists())
+        self.assertTrue(ledger["gate_families"]["material_artifact_map_linked"])
+        self.assertEqual(ledger["source_paths"]["material_artifact_map"], self.rel(root, map_path))
+        self.assertTrue(ledger["evidence_integrity"]["material_artifact_map_navigation_usable"])
+        self.assertTrue(ledger["evidence_integrity"]["material_artifact_map_body_text_excluded"])
+        self.assertTrue(ledger["material_artifact_map_summary"]["present"])
+        self.assertFalse(ledger["material_artifact_map_summary"]["acceptance_evidence"])
+        map_entry = next(entry for entry in ledger["entries"] if entry["entry_id"] == "material_artifact_map:index")
+        self.assertEqual(map_entry["status"], "indexed")
     def test_final_ledger_rejects_dirty_self_interrogation_index(self) -> None:
         root = self.make_project()
         self.boot_to_controller(root)

@@ -643,6 +643,89 @@ def _background_evidence_for_command(
     }
 
 
+def _bundle_evidence_for_command(
+    run_test_tier: Any,
+    command: Any,
+    *,
+    tier: str,
+) -> dict[str, Any] | None:
+    bundle = current_execution_evidence_bundle()
+    dependency = str(getattr(command, "evidence_dependency", "upstream") or "upstream")
+    scope = current_execution_evidence_scope()
+    if dependency == "terminal_consumer":
+        selected = {
+            "name": command.name,
+            "status": "downstream_consumer",
+            "execution_status": "not_run",
+            "ok": True,
+            "proof_scope": "downstream_terminal_consumer",
+            "reasons": ["runs only after strict upstream TestMesh and MTA consumers close"],
+            "artifacts": {},
+        }
+        return {"selected": selected, "inspected": [selected]}
+    if command.release_only and scope == "routine":
+        selected = {
+            "name": command.name,
+            "status": "deferred_release_scope",
+            "execution_status": "not_run",
+            "ok": True,
+            "proof_scope": "explicit_release_deferment",
+            "reasons": ["release-only command is outside routine evidence scope"],
+            "artifacts": {},
+        }
+        return {"selected": selected, "inspected": [selected]}
+    if not isinstance(bundle, dict):
+        return None
+    proof_rows = bundle.get("proof_artifacts")
+    if not isinstance(proof_rows, list) or not proof_rows:
+        return None
+
+    safe_name = run_test_tier._safe_base(command.name)
+    expected_names = {f"{safe_name}.meta.json", f"{safe_name}.exit.txt"}
+    inspected: list[dict[str, Any]] = []
+    for proof in proof_rows:
+        if not isinstance(proof, dict):
+            continue
+        fingerprints = proof.get("artifact_fingerprints")
+        if not isinstance(fingerprints, dict):
+            continue
+        artifact_names = {
+            Path(str(path).replace("\\", "/")).name for path in fingerprints
+        }
+        metadata = proof.get("metadata") if isinstance(proof.get("metadata"), dict) else {}
+        covered_tiers = list(metadata.get("covered_tiers") or metadata.get("tiers") or [])
+        matched = expected_names <= artifact_names
+        row = {
+            "name": command.name,
+            "status": "passed" if matched else "missing_final_artifacts",
+            "execution_status": "passed" if matched else "missing_final_artifacts",
+            "ok": matched,
+            "proof_scope": "current_testmesh_bundle",
+            "reasons": [] if matched else ["command artifacts absent from current TestMesh proof bundle"],
+            "artifacts": {
+                path: digest
+                for path, digest in fingerprints.items()
+                if Path(str(path).replace("\\", "/")).name in expected_names
+            },
+            "proof_artifact_id": proof.get("artifact_id"),
+            "covered_tiers": covered_tiers,
+            "tier": tier,
+        }
+        inspected.append(row)
+        if matched:
+            return {"selected": row, "inspected": inspected}
+    selected = inspected[0] if inspected else {
+        "name": command.name,
+        "status": "missing_final_artifacts",
+        "execution_status": "missing_final_artifacts",
+        "ok": False,
+        "proof_scope": "current_testmesh_bundle",
+        "reasons": ["current TestMesh bundle contains no command artifact rows"],
+        "artifacts": {},
+    }
+    return {"selected": selected, "inspected": inspected or [selected]}
+
+
 def _test_tier_command_surfaces(
     *,
     model_text: str,
@@ -684,11 +767,17 @@ def _test_tier_command_surfaces(
             evidence_status = "passed"
             background_evidence: dict[str, Any] | None = None
             if command.background_recommended or command.long_running:
-                background_evidence = _background_evidence_for_command(
+                background_evidence = _bundle_evidence_for_command(
                     run_test_tier,
                     command,
                     tier=tier,
                 )
+                if background_evidence is None:
+                    background_evidence = _background_evidence_for_command(
+                        run_test_tier,
+                        command,
+                        tier=tier,
+                    )
                 evidence_status = str(background_evidence["selected"]["status"])
             has_validation_target = _command_contains_test_target(command.command) or _command_contains_model_runner(command.command)
             surface = {
@@ -709,6 +798,7 @@ def _test_tier_command_surfaces(
                 "long_running": command.long_running,
                 "release_only": command.release_only,
                 "background_recommended": command.background_recommended,
+                "evidence_dependency": str(getattr(command, "evidence_dependency", "upstream")),
                 "command_text": command_text,
             }
             if background_evidence is not None:

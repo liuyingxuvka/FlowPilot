@@ -144,12 +144,6 @@ def _quarantine_direct_scoped_event_conflict(
 
 
 _DIRECT_PACKAGE_DISPOSITION_DOMAIN_COMMITS = {
-    "pm_records_material_scan_result_disposition": {
-        "batch_kind": "material_scan",
-        "package_label": "material_scan",
-        "gate_kind": "material_sufficiency",
-        "output_path": Path("material") / "pm_material_scan_result_disposition.json",
-    },
     "pm_records_research_result_disposition": {
         "batch_kind": "research",
         "package_label": "research",

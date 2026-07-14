@@ -85,7 +85,7 @@ It should not store the whole history.
 
 ## Parallel Packet Batches
 
-Router records material scan, research, current-node, and PM role-work packet
+Router records ordinary research/evidence, current-node, and PM role-work packet
 batches under `runs/<run-id>/packet_batches/`. Each active batch has a
 member-status block keyed by packet id and role:
 
@@ -136,12 +136,11 @@ experimental history affected the decision.
 
 ## Material Artifact Map
 
-`runs/<run-id>/material/material_artifact_map.json` is a router-derived,
-run-scoped index for reusable material and decision-support artifacts. It
-records metadata for material scan packets, result envelopes, PM formal gate
-packages, PM material understanding, research packages and reports, reviewer
-reports, self-interrogation indexes, generated-resource ledgers, and related
-material artifacts when present.
+`runs/<run-id>/material/material_artifact_map.json` is an optional
+router-derived, run-scoped navigation index for reusable evidence and
+decision-support artifacts. When present it may record ordinary role-work
+packets and results, research reports, reviewer reports, self-interrogation
+indexes, generated-resource ledgers, and related non-authoritative paths.
 
 The map is not an approval artifact. It must include:
 
@@ -162,9 +161,10 @@ use map entries as navigation to concrete source paths or packet-runtime open
 receipts, not as source sufficiency by themselves.
 
 `route_history_index.json`, `pm_prior_path_context.json`, and
-`final_route_wide_gate_ledger.json` cite the material artifact map when it
-exists. They may summarize its counts, but Controller-generated summaries
-remain indexes only and cannot replace PM/reviewer/runtime source evidence.
+`final_route_wide_gate_ledger.json` may cite the material artifact map when it
+exists. Absence of the map never blocks startup, planning, route activation,
+node work, review, or closure. Controller-generated summaries remain indexes
+only and cannot replace PM/reviewer/runtime source evidence.
 
 `startup_runtime_intake_release` is the route-start transaction record. A
 formal route cannot enter child-skill execution, image generation,
@@ -332,27 +332,22 @@ readiness. FlowPilot must distinguish "current responsibility has a fresh
 addressable role surface" from "memory exists for this responsibility"; memory
 alone is never live-agent authority.
 
-## Material Intake Packet
+## Runtime Local Capability Inventory
 
-`material_intake_packet.json` is the authorized-worker material inventory and
-source-quality packet. It also records a local skill and host capability
-inventory as candidate-only route material. The reviewer sufficiency block
-must show direct source inspection, not report-only acceptance:
+The existing `task.discovery` packet body carries
+`runtime_local_capability_inventory` with schema
+`flowpilot.runtime_local_capability_inventory.v1`. Runtime records current
+skill ids, paths, availability, and `path_and_availability_only` inspection
+depth. It also declares `selection_owner: pm` and
+`deep_read_policy: selected_skills_only`.
 
-- `reviewer_fact_check_required: true`;
-- `direct_material_sources_checked` and `direct_material_samples_checked`;
-- non-empty `checked_source_paths` or `runtime_open_receipt_refs` naming what
-  the reviewer actually checked;
-- `packet_matches_checked_sources`: `yes`, `no`, or `partial`;
-- `worker_report_only: false`.
-
-Reviewer approval is invalid when the packet only summarizes worker claims
-without direct material-source checks.
-
-The local skill inventory portion records skill names, `SKILL.md` paths,
-description summaries, candidate fit, possible product capabilities, hard gates
-or safety notes, read depth, deferred/private skills, and host capability
-providers. It must mark every entry as candidate-only until PM selection.
+The positive `task.discovery` result contains only `decision` and
+`candidate_skill_inventory`. PM owns semantic relevance and selection. The
+retired `material_sources`, `material_sufficiency`, and `material_current`
+fields are forbidden; Runtime rejects them without aliases, defaults, or prose
+translation. Reading, research, experiment, source verification, and evidence
+synthesis use ordinary PM role-work packets and existing risk-appropriate
+review instead of a dedicated material packet or sufficiency gate.
 
 ## PM Child-Skill Selection
 

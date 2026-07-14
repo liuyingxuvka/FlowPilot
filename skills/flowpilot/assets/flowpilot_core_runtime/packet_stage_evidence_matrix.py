@@ -32,7 +32,7 @@ PACKET_FAMILY_IDS: tuple[str, ...] = (
 
 
 BLOCKER_CLASS_TO_NEXT_ACTION: dict[str, str] = {
-    "mechanical_contract_missing_field": "same_packet_reissue",
+    "mechanical_contract_missing_field": "same_packet_result_retry",
     "invalid_blocker_shape": "same_role_reissue",
     "local_artifact": "pm_repair_decision",
     "evidence_gap": "pm_repair_decision",
@@ -265,7 +265,7 @@ NODE_ENTRY_REDESIGN_ROUTE_SHAPE = "redesign_route with replacement parent/module
 
 BLOCKER_REPAIR_PACKET_CONTRACTS: dict[str, dict[str, Any]] = {
     "mechanical_contract_missing_field": {
-        "repair_packet_family": "same_packet_reissue",
+        "repair_packet_family": "same_packet_result_retry",
         "owner_role": "original_producer_role",
         "required_context_fields": (
             "blocked_packet_id",
@@ -484,8 +484,6 @@ CURRENT_REQUIRED_FIELDS_BY_FAMILY: dict[str, tuple[str, ...]] = {
     "task.high_standard_contract": ("requirements", "acceptance_item_registry"),
     "task.discovery": (
         "decision",
-        "material_sources",
-        "material_sufficiency",
         "candidate_skill_inventory",
     ),
     "task.skill_standard": ("decision", "obligations"),
@@ -564,7 +562,13 @@ DELETED_FIELDS_BY_FAMILY: dict[str, tuple[str, ...]] = {
         "acceptance_item_registry.items[].final_replay_required",
         "acceptance_item_registry.items[].low_quality_failure_patterns",
     ),
-    "task.discovery": ("local_skill_inventory", "candidate_only_skill_policy"),
+    "task.discovery": (
+        "material_sources",
+        "material_sufficiency",
+        "material_current",
+        "local_skill_inventory",
+        "candidate_only_skill_policy",
+    ),
     "task.skill_standard": (
         "obligations[].closure_blocking",
         "obligations[].evidence_required",
@@ -807,7 +811,7 @@ PACKET_STAGE_EVIDENCE_MATRIX: tuple[dict[str, Any], ...] = tuple(
         "family_id": family_id,
         "lifecycle_stage": {
             "task.high_standard_contract": "preplanning_contract_definition",
-            "task.discovery": "preplanning_material_discovery",
+            "task.discovery": "preplanning_capability_discovery",
             "task.skill_standard": "preplanning_skill_standard_contract",
             "task.planning": "route_planning",
             "task.node_acceptance_plan": "node_plan_definition",
@@ -822,7 +826,7 @@ PACKET_STAGE_EVIDENCE_MATRIX: tuple[dict[str, Any], ...] = tuple(
         }[family_id],
         "required_evidence_owner": {
             "task.high_standard_contract": "flowpilot_runtime_mechanical_contract",
-            "task.discovery": "pm_material_discovery",
+            "task.discovery": "pm_skill_candidate_selection",
             "task.skill_standard": "pm_skill_selection",
             "task.planning": "pm_route_plan",
             "task.node_acceptance_plan": "pm_node_acceptance_plan",

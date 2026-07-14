@@ -13,7 +13,6 @@ from flowpilot_router_errors import RouterError
 _BOUND_ROUTER: ModuleType | None = None
 
 _PARALLEL_PACKET_BATCH_EXPECTED_RESULT_RECIPIENTS = {
-    "material_scan": "project_manager",
     "research": "project_manager",
     "current_node": "project_manager",
     "pm_role_work": "project_manager",
@@ -227,7 +226,7 @@ def _refresh_all_parallel_packet_batches_from_durable_results(
     _bind_router(router)
     summaries = {
         batch_kind: router._refresh_parallel_packet_batch_from_durable_results(project_root, run_root, run_state, batch_kind)
-        for batch_kind in ("material_scan", "research", "current_node", "pm_role_work")
+        for batch_kind in ("research", "current_node", "pm_role_work")
     }
     return {
         "schema_version": "flowpilot.parallel_packet_batch_reconciliation.v1",

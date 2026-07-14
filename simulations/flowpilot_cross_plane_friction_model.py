@@ -7,10 +7,16 @@ from typing import Iterable
 from flowguard import FunctionResult, Workflow
 
 from flowpilot_cross_plane_friction_model_audit import (
+    CURRENT_ROLE_CARD_PATHS,
     ROLE_GATE_EVENT_PREFIXES,
     ROLE_GATE_NON_PASS_MARKERS,
     ROLE_GATE_PASS_MARKERS,
+    RETIRED_MATERIAL_CARD_IDS,
+    RETIRED_MATERIAL_EVENTS,
+    RETIRED_MATERIAL_FIELDS,
+    RETIRED_MATERIAL_PACKET_FAMILIES,
     STRUCTURED_REPORT_GATES,
+    audit_current_prework_sources,
     audit_live_run,
     state_from_findings,
 )
@@ -58,6 +64,7 @@ MAX_SEQUENCE_LENGTH = 20
 __all__ = [
     "ACTIVE_STATUSES",
     "BODY_PATH_NAMES",
+    "CURRENT_ROLE_CARD_PATHS",
     "DONE_ITEM_STATUSES",
     "EXTERNAL_INPUTS",
     "INVARIANTS",
@@ -66,6 +73,10 @@ __all__ = [
     "ROLE_GATE_EVENT_PREFIXES",
     "ROLE_GATE_NON_PASS_MARKERS",
     "ROLE_GATE_PASS_MARKERS",
+    "RETIRED_MATERIAL_CARD_IDS",
+    "RETIRED_MATERIAL_EVENTS",
+    "RETIRED_MATERIAL_FIELDS",
+    "RETIRED_MATERIAL_PACKET_FAMILIES",
     "CURRENT_ROLE_ARCHETYPES",
     "STRUCTURED_REPORT_GATES",
     "TERMINAL_STATUSES",
@@ -74,6 +85,7 @@ __all__ = [
     "State",
     "Tick",
     "Transition",
+    "audit_current_prework_sources",
     "audit_live_run",
     "build_workflow",
     "hazard_states",

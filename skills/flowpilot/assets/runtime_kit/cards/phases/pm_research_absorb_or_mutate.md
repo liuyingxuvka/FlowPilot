@@ -33,10 +33,11 @@ not-yet-done target without explicit user approval.
 
 Allowed outcomes:
 
-- absorb the research into material understanding;
+- absorb the research into the current PM project/architecture evidence;
 - mutate the route or product plan before architecture;
 - ask the user because the decision remains ambiguous;
 - block the run with a concrete blocker.
 
-Do not continue to product architecture unless the reviewed research has been
-absorbed or the route has been explicitly changed.
+Do not use a special material-sufficiency stage. Continue only when the
+ordinary work result has been absorbed into the owning PM decision, or when
+the route has been explicitly changed through the current route path.

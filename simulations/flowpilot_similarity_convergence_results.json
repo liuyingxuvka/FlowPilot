@@ -2,7 +2,8 @@
   "architecture_reduction": {
     "compatibility_surfaces": [],
     "completed_candidate_ids": [],
-    "decision": "architecture_reduction_ready",
+    "covered_candidate_ids": [],
+    "decision": "no_ready_reduction_candidates",
     "findings": [
       {
         "candidate_id": "packet_result_family_shared_kernel_candidate",
@@ -19,35 +20,60 @@
         "message": "candidate looks reducible but must be kept unless stronger evidence is added",
         "metadata": {},
         "severity": "warning"
+      },
+      {
+        "candidate_id": "route_display_false_friend_quarantine",
+        "code": "risky_candidate_kept",
+        "item_id": "",
+        "message": "candidate looks reducible but must be kept unless stronger evidence is added",
+        "metadata": {},
+        "severity": "warning"
       }
     ],
-    "ok": true,
-    "ready_candidate_ids": [
-      "route_display_false_friend_quarantine"
+    "inventory_revision": "",
+    "materialized_similarity_code_obligation_ids": [
+      "maintenance:ack_bundle_card_return+ack_single_card_return+ack_system_card_return:shared-kernel",
+      "maintenance:packet_result_current_node+packet_result_pm_role_work+packet_result_research:shared-kernel",
+      "maintenance:route_mutation_sibling_branch+route_mutation_supersede:shared-kernel",
+      "maintenance:router_reconciliation_role_output_event+router_reconciliation_runtime_resume+router_reconciliation_scheduled_receipt:shared-kernel",
+      "route_mutation_sibling_branch:route_display_refresh:false_friend:false-friend-quarantine"
     ],
+    "materialized_similarity_relation_ids": [
+      "ack_single_card_return:ack_bundle_card_return:same_family_variant",
+      "ack_single_card_return:ack_system_card_return:same_family_variant",
+      "packet_result_research:packet_result_current_node:same_family_variant",
+      "packet_result_research:packet_result_pm_role_work:same_family_variant",
+      "route_mutation_sibling_branch:route_display_refresh:false_friend",
+      "route_mutation_supersede:route_mutation_sibling_branch:same_family_variant",
+      "router_reconciliation_scheduled_receipt:router_reconciliation_role_output_event:same_family_variant",
+      "router_reconciliation_scheduled_receipt:router_reconciliation_runtime_resume:same_family_variant"
+    ],
+    "missing_candidate_ids": [],
+    "ok": true,
+    "ready_candidate_ids": [],
     "reduction_id": "flowpilot_similarity_convergence_reduction_review",
     "required_next_routes": [
       "conformance_replay",
       "model_mesh",
       "model_test_alignment"
     ],
-    "summary": "OK: reduction=flowpilot_similarity_convergence_reduction_review decision=architecture_reduction_ready findings=2",
-    "target_actions": [
-      {
-        "action": "keep_facade",
-        "candidate_id": "route_display_false_friend_quarantine",
-        "code_node_id": "route_display_refresh",
-        "rationale": "Route display and route mutation mention sibling replacement, but display is derived evidence and must not own route state writes.",
-        "required_next_route": "model_mesh"
-      }
-    ]
+    "scoped_candidate_ids": [],
+    "summary": "OK: reduction=flowpilot_similarity_convergence_reduction_review decision=no_ready_reduction_candidates findings=3",
+    "target_actions": [],
+    "unexpected_candidate_ids": []
   },
   "architecture_reduction_ok": true,
   "existing_model_preflight": {
+    "behavior_commitment_id": "",
+    "business_intent_id": "",
+    "covered_surface_ids": [],
     "decision": "full_existing_model_preflight_can_continue",
     "findings": [],
+    "missing_surface_ids": [],
     "ok": true,
     "preflight_id": "flowpilot_similarity_convergence_existing_model_preflight",
+    "primary_path_id": "",
+    "scoped_surface_ids": [],
     "summary": "OK: preflight=flowpilot_similarity_convergence_existing_model_preflight decision=full_existing_model_preflight_can_continue findings=0"
   },
   "existing_model_preflight_ok": true,
@@ -63,6 +89,10 @@
       "name": "missing_maintenance_test_path",
       "ok": true,
       "report": {
+        "affected_surface_ids": [],
+        "behavior_commitment_ids": [],
+        "behavior_planes": [],
+        "business_intent_ids": [],
         "change_impacts": [],
         "code_obligations": [
           {
@@ -70,18 +100,56 @@
               "packet_result_pm_role_work_adapter",
               "packet_result_research_adapter"
             ],
+            "behavior_commitment_ids": [],
+            "behavior_planes": [],
+            "business_intent_ids": [],
             "code_paths": [
               "skills/flowpilot/assets/flowpilot_router_work_packets_pm_role.py",
               "skills/flowpilot/assets/packet_runtime_results.py",
               "skills/flowpilot/assets/flowpilot_router_work_packets_material.py"
             ],
+            "different_elements": [
+              "packet_result_pm_role_work:pm_role_work_result_wait",
+              "packet_result_pm_role_work:role_work_result_returned",
+              "packet_result_pm_role_work:variant:pm_role_work",
+              "packet_result_pm_role_work:adapter:packet_result_pm_role_work_adapter",
+              "packet_result_research:research_result_wait",
+              "packet_result_research:worker_research_report_returned",
+              "packet_result_research:variant:research",
+              "packet_result_research:adapter:packet_result_research_adapter"
+            ],
             "maintenance_group_id": "maintenance:packet_result_pm_role_work+packet_result_research",
+            "matched_elements": [
+              "active_wait_state",
+              "current_router_wait",
+              "durable packet results are folded before stale waits",
+              "durable_result_envelope",
+              "durable_result_envelope_folds_before_wait",
+              "durable_result_joined_but_router_event_absent",
+              "fold_durable_result_envelope",
+              "missing_role_wait_projection",
+              "packet_result_envelope",
+              "packet_result_ledger",
+              "partial result batches keep sibling member gaps visible",
+              "partial_batch_wait_names_only_missing_roles",
+              "preserve_sealed_body_boundary",
+              "project_partial_member_wait",
+              "reject_wrong_recipient_result",
+              "router_wait_state",
+              "sealed_bodies_remain_unopened_by_router",
+              "sealed_body_text_leaks_into_controller_context",
+              "suppress_stale_result_reminder",
+              "update_packet_result_status",
+              "write_router_result_event",
+              "wrong_recipient_result_satisfies_wait"
+            ],
             "model_ids": [
               "packet_result_pm_role_work",
               "packet_result_research"
             ],
             "obligation_id": "maintenance:packet_result_pm_role_work+packet_result_research:shared-kernel",
             "obligation_type": "shared_kernel_or_adapter",
+            "primary_path_ids": [],
             "rationale": "The maintenance group declares shared-kernel or adapter metadata that should drive code structure review.",
             "relation_ids": [
               "packet_result_research:packet_result_pm_role_work:same_family_variant"
@@ -90,11 +158,15 @@
               "model_mesh",
               "model_test_alignment"
             ],
-            "shared_kernel_owner": "packet_result_return_family"
+            "shared_kernel_owner": "packet_result_return_family",
+            "surface_ids": [],
+            "typed_commitment_relation_refs": []
           }
         ],
+        "cross_plane_relation_ids": [],
         "decision": "model_similarity_blocked",
         "evidence_gate_ids": [],
+        "expected_surface_ids": [],
         "findings": [
           {
             "code": "missing_maintenance_test_path",
@@ -113,6 +185,7 @@
               "packet_result_pm_role_work_adapter",
               "packet_result_research_adapter"
             ],
+            "behavior_planes": [],
             "code_paths": [
               "skills/flowpilot/assets/flowpilot_router_work_packets_pm_role.py",
               "skills/flowpilot/assets/packet_runtime_results.py",
@@ -168,6 +241,7 @@
             "test_paths": [
               "tests/router_runtime/packet_result_family.py"
             ],
+            "typed_commitment_relation_refs": [],
             "variant_elements": [
               "packet_result_pm_role_work:pm_role_work_result_wait",
               "packet_result_pm_role_work:role_work_result_returned",
@@ -180,8 +254,10 @@
             ]
           }
         ],
+        "missing_surface_ids": [],
         "ok": false,
         "plan_id": "known_bad_missing_similarity_test_path",
+        "primary_path_ids": [],
         "recommended_next_routes": [
           "model_mesh",
           "model_test_alignment"
@@ -201,6 +277,7 @@
             "evidence_refs": [
               "packet_result_research:packet_result_pm_role_work:same_family_variant:current_review"
             ],
+            "left_behavior_plane": "",
             "left_model_id": "packet_result_research",
             "manual_review_required": false,
             "matched_elements": [
@@ -244,15 +321,19 @@
               "model_mesh",
               "model_test_alignment"
             ],
+            "right_behavior_plane": "",
             "right_model_id": "packet_result_pm_role_work",
             "risk_if_kept_separate": "variants may miss shared family evidence",
-            "risk_if_merged": "merging all variants may erase policy-specific behavior"
+            "risk_if_merged": "merging all variants may erase policy-specific behavior",
+            "typed_commitment_relation_refs": []
           }
         ],
         "risk_template_ids": [],
         "summary": "BLOCKED: plan=known_bad_missing_similarity_test_path decision=model_similarity_blocked relations=1 groups=1 findings=1",
         "test_obligations": [
           {
+            "behavior_commitment_ids": [],
+            "behavior_planes": [],
             "behaviors": [
               "active_wait_state",
               "current_router_wait",
@@ -277,23 +358,8 @@
               "write_router_result_event",
               "wrong_recipient_result_satisfies_wait"
             ],
-            "maintenance_group_id": "maintenance:packet_result_pm_role_work+packet_result_research",
-            "model_ids": [
-              "packet_result_pm_role_work",
-              "packet_result_research"
-            ],
-            "obligation_id": "maintenance:packet_result_pm_role_work+packet_result_research:shared-tests",
-            "obligation_type": "shared_behavior_tests",
-            "rationale": "Shared behavior in a maintenance group needs tests that prove the family, not only one member.",
-            "relation_ids": [
-              "packet_result_research:packet_result_pm_role_work:same_family_variant"
-            ],
-            "test_paths": [
-              "tests/router_runtime/packet_result_family.py"
-            ]
-          },
-          {
-            "behaviors": [
+            "business_intent_ids": [],
+            "different_elements": [
               "packet_result_pm_role_work:pm_role_work_result_wait",
               "packet_result_pm_role_work:role_work_result_returned",
               "packet_result_pm_role_work:variant:pm_role_work",
@@ -304,21 +370,115 @@
               "packet_result_research:adapter:packet_result_research_adapter"
             ],
             "maintenance_group_id": "maintenance:packet_result_pm_role_work+packet_result_research",
+            "matched_elements": [
+              "active_wait_state",
+              "current_router_wait",
+              "durable packet results are folded before stale waits",
+              "durable_result_envelope",
+              "durable_result_envelope_folds_before_wait",
+              "durable_result_joined_but_router_event_absent",
+              "fold_durable_result_envelope",
+              "missing_role_wait_projection",
+              "packet_result_envelope",
+              "packet_result_ledger",
+              "partial result batches keep sibling member gaps visible",
+              "partial_batch_wait_names_only_missing_roles",
+              "preserve_sealed_body_boundary",
+              "project_partial_member_wait",
+              "reject_wrong_recipient_result",
+              "router_wait_state",
+              "sealed_bodies_remain_unopened_by_router",
+              "sealed_body_text_leaks_into_controller_context",
+              "suppress_stale_result_reminder",
+              "update_packet_result_status",
+              "write_router_result_event",
+              "wrong_recipient_result_satisfies_wait"
+            ],
+            "model_ids": [
+              "packet_result_pm_role_work",
+              "packet_result_research"
+            ],
+            "obligation_id": "maintenance:packet_result_pm_role_work+packet_result_research:shared-tests",
+            "obligation_type": "shared_behavior_tests",
+            "primary_path_ids": [],
+            "rationale": "Shared behavior in a maintenance group needs tests that prove the family, not only one member.",
+            "relation_ids": [
+              "packet_result_research:packet_result_pm_role_work:same_family_variant"
+            ],
+            "surface_ids": [],
+            "test_paths": [
+              "tests/router_runtime/packet_result_family.py"
+            ],
+            "typed_commitment_relation_refs": []
+          },
+          {
+            "behavior_commitment_ids": [],
+            "behavior_planes": [],
+            "behaviors": [
+              "packet_result_pm_role_work:pm_role_work_result_wait",
+              "packet_result_pm_role_work:role_work_result_returned",
+              "packet_result_pm_role_work:variant:pm_role_work",
+              "packet_result_pm_role_work:adapter:packet_result_pm_role_work_adapter",
+              "packet_result_research:research_result_wait",
+              "packet_result_research:worker_research_report_returned",
+              "packet_result_research:variant:research",
+              "packet_result_research:adapter:packet_result_research_adapter"
+            ],
+            "business_intent_ids": [],
+            "different_elements": [
+              "packet_result_pm_role_work:pm_role_work_result_wait",
+              "packet_result_pm_role_work:role_work_result_returned",
+              "packet_result_pm_role_work:variant:pm_role_work",
+              "packet_result_pm_role_work:adapter:packet_result_pm_role_work_adapter",
+              "packet_result_research:research_result_wait",
+              "packet_result_research:worker_research_report_returned",
+              "packet_result_research:variant:research",
+              "packet_result_research:adapter:packet_result_research_adapter"
+            ],
+            "maintenance_group_id": "maintenance:packet_result_pm_role_work+packet_result_research",
+            "matched_elements": [
+              "active_wait_state",
+              "current_router_wait",
+              "durable packet results are folded before stale waits",
+              "durable_result_envelope",
+              "durable_result_envelope_folds_before_wait",
+              "durable_result_joined_but_router_event_absent",
+              "fold_durable_result_envelope",
+              "missing_role_wait_projection",
+              "packet_result_envelope",
+              "packet_result_ledger",
+              "partial result batches keep sibling member gaps visible",
+              "partial_batch_wait_names_only_missing_roles",
+              "preserve_sealed_body_boundary",
+              "project_partial_member_wait",
+              "reject_wrong_recipient_result",
+              "router_wait_state",
+              "sealed_bodies_remain_unopened_by_router",
+              "sealed_body_text_leaks_into_controller_context",
+              "suppress_stale_result_reminder",
+              "update_packet_result_status",
+              "write_router_result_event",
+              "wrong_recipient_result_satisfies_wait"
+            ],
             "model_ids": [
               "packet_result_pm_role_work",
               "packet_result_research"
             ],
             "obligation_id": "maintenance:packet_result_pm_role_work+packet_result_research:variant-tests",
             "obligation_type": "variant_behavior_tests",
+            "primary_path_ids": [],
             "rationale": "Variant-specific behavior needs per-member tests so shared-kernel work does not erase differences.",
             "relation_ids": [
               "packet_result_research:packet_result_pm_role_work:same_family_variant"
             ],
+            "surface_ids": [],
             "test_paths": [
               "tests/router_runtime/packet_result_family.py"
-            ]
+            ],
+            "typed_commitment_relation_refs": []
           }
-        ]
+        ],
+        "typed_commitment_relation_refs": []
       }
     },
     {
@@ -331,6 +491,10 @@
       "name": "stale_model_signature_evidence",
       "ok": true,
       "report": {
+        "affected_surface_ids": [],
+        "behavior_commitment_ids": [],
+        "behavior_planes": [],
+        "business_intent_ids": [],
         "change_impacts": [],
         "code_obligations": [
           {
@@ -338,18 +502,56 @@
               "packet_result_current_node_adapter",
               "packet_result_research_adapter"
             ],
+            "behavior_commitment_ids": [],
+            "behavior_planes": [],
+            "business_intent_ids": [],
             "code_paths": [
               "skills/flowpilot/assets/flowpilot_router_work_packets_current_node.py",
               "skills/flowpilot/assets/packet_runtime_results.py",
               "skills/flowpilot/assets/flowpilot_router_work_packets_material.py"
             ],
+            "different_elements": [
+              "packet_result_current_node:current_node_result_wait",
+              "packet_result_current_node:worker_current_node_result_returned",
+              "packet_result_current_node:variant:current_node",
+              "packet_result_current_node:adapter:packet_result_current_node_adapter",
+              "packet_result_research:research_result_wait",
+              "packet_result_research:worker_research_report_returned",
+              "packet_result_research:variant:research",
+              "packet_result_research:adapter:packet_result_research_adapter"
+            ],
             "maintenance_group_id": "maintenance:packet_result_current_node+packet_result_research",
+            "matched_elements": [
+              "active_wait_state",
+              "current_router_wait",
+              "durable packet results are folded before stale waits",
+              "durable_result_envelope",
+              "durable_result_envelope_folds_before_wait",
+              "durable_result_joined_but_router_event_absent",
+              "fold_durable_result_envelope",
+              "missing_role_wait_projection",
+              "packet_result_envelope",
+              "packet_result_ledger",
+              "partial result batches keep sibling member gaps visible",
+              "partial_batch_wait_names_only_missing_roles",
+              "preserve_sealed_body_boundary",
+              "project_partial_member_wait",
+              "reject_wrong_recipient_result",
+              "router_wait_state",
+              "sealed_bodies_remain_unopened_by_router",
+              "sealed_body_text_leaks_into_controller_context",
+              "suppress_stale_result_reminder",
+              "update_packet_result_status",
+              "write_router_result_event",
+              "wrong_recipient_result_satisfies_wait"
+            ],
             "model_ids": [
               "packet_result_current_node",
               "packet_result_research"
             ],
             "obligation_id": "maintenance:packet_result_current_node+packet_result_research:shared-kernel",
             "obligation_type": "shared_kernel_or_adapter",
+            "primary_path_ids": [],
             "rationale": "The maintenance group declares shared-kernel or adapter metadata that should drive code structure review.",
             "relation_ids": [
               "packet_result_research:packet_result_current_node:same_family_variant"
@@ -358,11 +560,15 @@
               "model_mesh",
               "model_test_alignment"
             ],
-            "shared_kernel_owner": "packet_result_return_family"
+            "shared_kernel_owner": "packet_result_return_family",
+            "surface_ids": [],
+            "typed_commitment_relation_refs": []
           }
         ],
+        "cross_plane_relation_ids": [],
         "decision": "model_similarity_blocked",
         "evidence_gate_ids": [],
+        "expected_surface_ids": [],
         "findings": [
           {
             "code": "stale_model_signature_evidence",
@@ -384,6 +590,7 @@
               "packet_result_current_node_adapter",
               "packet_result_research_adapter"
             ],
+            "behavior_planes": [],
             "code_paths": [
               "skills/flowpilot/assets/flowpilot_router_work_packets_current_node.py",
               "skills/flowpilot/assets/packet_runtime_results.py",
@@ -440,6 +647,7 @@
               "tests/router_runtime/packet_result_family.py",
               "tests/router_runtime/packets.py"
             ],
+            "typed_commitment_relation_refs": [],
             "variant_elements": [
               "packet_result_current_node:current_node_result_wait",
               "packet_result_current_node:worker_current_node_result_returned",
@@ -452,8 +660,10 @@
             ]
           }
         ],
+        "missing_surface_ids": [],
         "ok": false,
         "plan_id": "known_bad_stale_similarity_evidence",
+        "primary_path_ids": [],
         "recommended_next_routes": [
           "model_mesh",
           "model_test_alignment"
@@ -473,6 +683,7 @@
             "evidence_refs": [
               "packet_result_research:packet_result_current_node:same_family_variant:current_review"
             ],
+            "left_behavior_plane": "",
             "left_model_id": "packet_result_research",
             "manual_review_required": false,
             "matched_elements": [
@@ -516,15 +727,19 @@
               "model_mesh",
               "model_test_alignment"
             ],
+            "right_behavior_plane": "",
             "right_model_id": "packet_result_current_node",
             "risk_if_kept_separate": "variants may miss shared family evidence",
-            "risk_if_merged": "merging all variants may erase policy-specific behavior"
+            "risk_if_merged": "merging all variants may erase policy-specific behavior",
+            "typed_commitment_relation_refs": []
           }
         ],
         "risk_template_ids": [],
         "summary": "BLOCKED: plan=known_bad_stale_similarity_evidence decision=model_similarity_blocked relations=1 groups=1 findings=1",
         "test_obligations": [
           {
+            "behavior_commitment_ids": [],
+            "behavior_planes": [],
             "behaviors": [
               "active_wait_state",
               "current_router_wait",
@@ -549,24 +764,8 @@
               "write_router_result_event",
               "wrong_recipient_result_satisfies_wait"
             ],
-            "maintenance_group_id": "maintenance:packet_result_current_node+packet_result_research",
-            "model_ids": [
-              "packet_result_current_node",
-              "packet_result_research"
-            ],
-            "obligation_id": "maintenance:packet_result_current_node+packet_result_research:shared-tests",
-            "obligation_type": "shared_behavior_tests",
-            "rationale": "Shared behavior in a maintenance group needs tests that prove the family, not only one member.",
-            "relation_ids": [
-              "packet_result_research:packet_result_current_node:same_family_variant"
-            ],
-            "test_paths": [
-              "tests/router_runtime/packet_result_family.py",
-              "tests/router_runtime/packets.py"
-            ]
-          },
-          {
-            "behaviors": [
+            "business_intent_ids": [],
+            "different_elements": [
               "packet_result_current_node:current_node_result_wait",
               "packet_result_current_node:worker_current_node_result_returned",
               "packet_result_current_node:variant:current_node",
@@ -577,22 +776,117 @@
               "packet_result_research:adapter:packet_result_research_adapter"
             ],
             "maintenance_group_id": "maintenance:packet_result_current_node+packet_result_research",
+            "matched_elements": [
+              "active_wait_state",
+              "current_router_wait",
+              "durable packet results are folded before stale waits",
+              "durable_result_envelope",
+              "durable_result_envelope_folds_before_wait",
+              "durable_result_joined_but_router_event_absent",
+              "fold_durable_result_envelope",
+              "missing_role_wait_projection",
+              "packet_result_envelope",
+              "packet_result_ledger",
+              "partial result batches keep sibling member gaps visible",
+              "partial_batch_wait_names_only_missing_roles",
+              "preserve_sealed_body_boundary",
+              "project_partial_member_wait",
+              "reject_wrong_recipient_result",
+              "router_wait_state",
+              "sealed_bodies_remain_unopened_by_router",
+              "sealed_body_text_leaks_into_controller_context",
+              "suppress_stale_result_reminder",
+              "update_packet_result_status",
+              "write_router_result_event",
+              "wrong_recipient_result_satisfies_wait"
+            ],
+            "model_ids": [
+              "packet_result_current_node",
+              "packet_result_research"
+            ],
+            "obligation_id": "maintenance:packet_result_current_node+packet_result_research:shared-tests",
+            "obligation_type": "shared_behavior_tests",
+            "primary_path_ids": [],
+            "rationale": "Shared behavior in a maintenance group needs tests that prove the family, not only one member.",
+            "relation_ids": [
+              "packet_result_research:packet_result_current_node:same_family_variant"
+            ],
+            "surface_ids": [],
+            "test_paths": [
+              "tests/router_runtime/packet_result_family.py",
+              "tests/router_runtime/packets.py"
+            ],
+            "typed_commitment_relation_refs": []
+          },
+          {
+            "behavior_commitment_ids": [],
+            "behavior_planes": [],
+            "behaviors": [
+              "packet_result_current_node:current_node_result_wait",
+              "packet_result_current_node:worker_current_node_result_returned",
+              "packet_result_current_node:variant:current_node",
+              "packet_result_current_node:adapter:packet_result_current_node_adapter",
+              "packet_result_research:research_result_wait",
+              "packet_result_research:worker_research_report_returned",
+              "packet_result_research:variant:research",
+              "packet_result_research:adapter:packet_result_research_adapter"
+            ],
+            "business_intent_ids": [],
+            "different_elements": [
+              "packet_result_current_node:current_node_result_wait",
+              "packet_result_current_node:worker_current_node_result_returned",
+              "packet_result_current_node:variant:current_node",
+              "packet_result_current_node:adapter:packet_result_current_node_adapter",
+              "packet_result_research:research_result_wait",
+              "packet_result_research:worker_research_report_returned",
+              "packet_result_research:variant:research",
+              "packet_result_research:adapter:packet_result_research_adapter"
+            ],
+            "maintenance_group_id": "maintenance:packet_result_current_node+packet_result_research",
+            "matched_elements": [
+              "active_wait_state",
+              "current_router_wait",
+              "durable packet results are folded before stale waits",
+              "durable_result_envelope",
+              "durable_result_envelope_folds_before_wait",
+              "durable_result_joined_but_router_event_absent",
+              "fold_durable_result_envelope",
+              "missing_role_wait_projection",
+              "packet_result_envelope",
+              "packet_result_ledger",
+              "partial result batches keep sibling member gaps visible",
+              "partial_batch_wait_names_only_missing_roles",
+              "preserve_sealed_body_boundary",
+              "project_partial_member_wait",
+              "reject_wrong_recipient_result",
+              "router_wait_state",
+              "sealed_bodies_remain_unopened_by_router",
+              "sealed_body_text_leaks_into_controller_context",
+              "suppress_stale_result_reminder",
+              "update_packet_result_status",
+              "write_router_result_event",
+              "wrong_recipient_result_satisfies_wait"
+            ],
             "model_ids": [
               "packet_result_current_node",
               "packet_result_research"
             ],
             "obligation_id": "maintenance:packet_result_current_node+packet_result_research:variant-tests",
             "obligation_type": "variant_behavior_tests",
+            "primary_path_ids": [],
             "rationale": "Variant-specific behavior needs per-member tests so shared-kernel work does not erase differences.",
             "relation_ids": [
               "packet_result_research:packet_result_current_node:same_family_variant"
             ],
+            "surface_ids": [],
             "test_paths": [
               "tests/router_runtime/packet_result_family.py",
               "tests/router_runtime/packets.py"
-            ]
+            ],
+            "typed_commitment_relation_refs": []
           }
-        ]
+        ],
+        "typed_commitment_relation_refs": []
       }
     },
     {
@@ -605,6 +899,10 @@
       "name": "missing_current_similarity_evidence",
       "ok": true,
       "report": {
+        "affected_surface_ids": [],
+        "behavior_commitment_ids": [],
+        "behavior_planes": [],
+        "business_intent_ids": [],
         "change_impacts": [],
         "code_obligations": [
           {
@@ -612,18 +910,50 @@
               "ack_bundle_card_adapter",
               "ack_single_card_adapter"
             ],
+            "behavior_commitment_ids": [],
+            "behavior_planes": [],
+            "business_intent_ids": [],
             "code_paths": [
               "skills/flowpilot/assets/card_runtime_bundle.py",
               "skills/flowpilot/assets/flowpilot_router_card_returns.py",
               "skills/flowpilot/assets/card_runtime_ack.py"
             ],
+            "different_elements": [
+              "ack_bundle_card_return:bundle_card_pending_return",
+              "ack_bundle_card_return:bundle_return_acknowledged",
+              "ack_bundle_card_return:variant:bundle_card",
+              "ack_bundle_card_return:adapter:ack_bundle_card_adapter",
+              "ack_single_card_return:card_return_acknowledged",
+              "ack_single_card_return:single_card_pending_return",
+              "ack_single_card_return:variant:single_card",
+              "ack_single_card_return:adapter:ack_single_card_adapter"
+            ],
             "maintenance_group_id": "maintenance:ack_bundle_card_return+ack_single_card_return",
+            "matched_elements": [
+              "ack returns are monotonic and idempotent",
+              "ack_payload",
+              "ack_wait_projection",
+              "card_ack_contract",
+              "completed_return_ledger",
+              "duplicate_ack_does_not_reopen_resolved_return",
+              "duplicate_ack_reopens_resolved_return",
+              "incomplete_ack_does_not_advance_wait",
+              "incomplete_bundle_ack_advances_wait",
+              "merge_terminal_return_monotonically",
+              "pending_return_record",
+              "preconsume_return_ack",
+              "project_incomplete_ack_wait",
+              "update_pending_return_status",
+              "verify_ack_identity",
+              "write_completed_return"
+            ],
             "model_ids": [
               "ack_bundle_card_return",
               "ack_single_card_return"
             ],
             "obligation_id": "maintenance:ack_bundle_card_return+ack_single_card_return:shared-kernel",
             "obligation_type": "shared_kernel_or_adapter",
+            "primary_path_ids": [],
             "rationale": "The maintenance group declares shared-kernel or adapter metadata that should drive code structure review.",
             "relation_ids": [
               "ack_single_card_return:ack_bundle_card_return:same_family_variant"
@@ -632,11 +962,15 @@
               "model_mesh",
               "model_test_alignment"
             ],
-            "shared_kernel_owner": "ack_return_settlement"
+            "shared_kernel_owner": "ack_return_settlement",
+            "surface_ids": [],
+            "typed_commitment_relation_refs": []
           }
         ],
+        "cross_plane_relation_ids": [],
         "decision": "model_similarity_blocked",
         "evidence_gate_ids": [],
+        "expected_surface_ids": [],
         "findings": [
           {
             "code": "missing_current_similarity_evidence",
@@ -655,6 +989,7 @@
               "ack_bundle_card_adapter",
               "ack_single_card_adapter"
             ],
+            "behavior_planes": [],
             "code_paths": [
               "skills/flowpilot/assets/card_runtime_bundle.py",
               "skills/flowpilot/assets/flowpilot_router_card_returns.py",
@@ -705,6 +1040,7 @@
               "tests/test_flowpilot_card_runtime.py",
               "tests/router_runtime/ack_return.py"
             ],
+            "typed_commitment_relation_refs": [],
             "variant_elements": [
               "ack_bundle_card_return:bundle_card_pending_return",
               "ack_bundle_card_return:bundle_return_acknowledged",
@@ -717,8 +1053,10 @@
             ]
           }
         ],
+        "missing_surface_ids": [],
         "ok": false,
         "plan_id": "known_bad_missing_current_similarity_evidence",
+        "primary_path_ids": [],
         "recommended_next_routes": [
           "model_mesh",
           "model_test_alignment"
@@ -736,6 +1074,7 @@
               "adapter:ack_bundle_card_return_only=ack_bundle_card_adapter"
             ],
             "evidence_refs": [],
+            "left_behavior_plane": "",
             "left_model_id": "ack_single_card_return",
             "manual_review_required": false,
             "matched_elements": [
@@ -775,15 +1114,19 @@
               "model_mesh",
               "model_test_alignment"
             ],
+            "right_behavior_plane": "",
             "right_model_id": "ack_bundle_card_return",
             "risk_if_kept_separate": "variants may miss shared family evidence",
-            "risk_if_merged": "merging all variants may erase policy-specific behavior"
+            "risk_if_merged": "merging all variants may erase policy-specific behavior",
+            "typed_commitment_relation_refs": []
           }
         ],
         "risk_template_ids": [],
         "summary": "BLOCKED: plan=known_bad_missing_current_similarity_evidence decision=model_similarity_blocked relations=1 groups=1 findings=1",
         "test_obligations": [
           {
+            "behavior_commitment_ids": [],
+            "behavior_planes": [],
             "behaviors": [
               "ack returns are monotonic and idempotent",
               "ack_payload",
@@ -802,24 +1145,8 @@
               "verify_ack_identity",
               "write_completed_return"
             ],
-            "maintenance_group_id": "maintenance:ack_bundle_card_return+ack_single_card_return",
-            "model_ids": [
-              "ack_bundle_card_return",
-              "ack_single_card_return"
-            ],
-            "obligation_id": "maintenance:ack_bundle_card_return+ack_single_card_return:shared-tests",
-            "obligation_type": "shared_behavior_tests",
-            "rationale": "Shared behavior in a maintenance group needs tests that prove the family, not only one member.",
-            "relation_ids": [
-              "ack_single_card_return:ack_bundle_card_return:same_family_variant"
-            ],
-            "test_paths": [
-              "tests/test_flowpilot_card_runtime.py",
-              "tests/router_runtime/ack_return.py"
-            ]
-          },
-          {
-            "behaviors": [
+            "business_intent_ids": [],
+            "different_elements": [
               "ack_bundle_card_return:bundle_card_pending_return",
               "ack_bundle_card_return:bundle_return_acknowledged",
               "ack_bundle_card_return:variant:bundle_card",
@@ -830,22 +1157,105 @@
               "ack_single_card_return:adapter:ack_single_card_adapter"
             ],
             "maintenance_group_id": "maintenance:ack_bundle_card_return+ack_single_card_return",
+            "matched_elements": [
+              "ack returns are monotonic and idempotent",
+              "ack_payload",
+              "ack_wait_projection",
+              "card_ack_contract",
+              "completed_return_ledger",
+              "duplicate_ack_does_not_reopen_resolved_return",
+              "duplicate_ack_reopens_resolved_return",
+              "incomplete_ack_does_not_advance_wait",
+              "incomplete_bundle_ack_advances_wait",
+              "merge_terminal_return_monotonically",
+              "pending_return_record",
+              "preconsume_return_ack",
+              "project_incomplete_ack_wait",
+              "update_pending_return_status",
+              "verify_ack_identity",
+              "write_completed_return"
+            ],
+            "model_ids": [
+              "ack_bundle_card_return",
+              "ack_single_card_return"
+            ],
+            "obligation_id": "maintenance:ack_bundle_card_return+ack_single_card_return:shared-tests",
+            "obligation_type": "shared_behavior_tests",
+            "primary_path_ids": [],
+            "rationale": "Shared behavior in a maintenance group needs tests that prove the family, not only one member.",
+            "relation_ids": [
+              "ack_single_card_return:ack_bundle_card_return:same_family_variant"
+            ],
+            "surface_ids": [],
+            "test_paths": [
+              "tests/test_flowpilot_card_runtime.py",
+              "tests/router_runtime/ack_return.py"
+            ],
+            "typed_commitment_relation_refs": []
+          },
+          {
+            "behavior_commitment_ids": [],
+            "behavior_planes": [],
+            "behaviors": [
+              "ack_bundle_card_return:bundle_card_pending_return",
+              "ack_bundle_card_return:bundle_return_acknowledged",
+              "ack_bundle_card_return:variant:bundle_card",
+              "ack_bundle_card_return:adapter:ack_bundle_card_adapter",
+              "ack_single_card_return:card_return_acknowledged",
+              "ack_single_card_return:single_card_pending_return",
+              "ack_single_card_return:variant:single_card",
+              "ack_single_card_return:adapter:ack_single_card_adapter"
+            ],
+            "business_intent_ids": [],
+            "different_elements": [
+              "ack_bundle_card_return:bundle_card_pending_return",
+              "ack_bundle_card_return:bundle_return_acknowledged",
+              "ack_bundle_card_return:variant:bundle_card",
+              "ack_bundle_card_return:adapter:ack_bundle_card_adapter",
+              "ack_single_card_return:card_return_acknowledged",
+              "ack_single_card_return:single_card_pending_return",
+              "ack_single_card_return:variant:single_card",
+              "ack_single_card_return:adapter:ack_single_card_adapter"
+            ],
+            "maintenance_group_id": "maintenance:ack_bundle_card_return+ack_single_card_return",
+            "matched_elements": [
+              "ack returns are monotonic and idempotent",
+              "ack_payload",
+              "ack_wait_projection",
+              "card_ack_contract",
+              "completed_return_ledger",
+              "duplicate_ack_does_not_reopen_resolved_return",
+              "duplicate_ack_reopens_resolved_return",
+              "incomplete_ack_does_not_advance_wait",
+              "incomplete_bundle_ack_advances_wait",
+              "merge_terminal_return_monotonically",
+              "pending_return_record",
+              "preconsume_return_ack",
+              "project_incomplete_ack_wait",
+              "update_pending_return_status",
+              "verify_ack_identity",
+              "write_completed_return"
+            ],
             "model_ids": [
               "ack_bundle_card_return",
               "ack_single_card_return"
             ],
             "obligation_id": "maintenance:ack_bundle_card_return+ack_single_card_return:variant-tests",
             "obligation_type": "variant_behavior_tests",
+            "primary_path_ids": [],
             "rationale": "Variant-specific behavior needs per-member tests so shared-kernel work does not erase differences.",
             "relation_ids": [
               "ack_single_card_return:ack_bundle_card_return:same_family_variant"
             ],
+            "surface_ids": [],
             "test_paths": [
               "tests/test_flowpilot_card_runtime.py",
               "tests/router_runtime/ack_return.py"
-            ]
+            ],
+            "typed_commitment_relation_refs": []
           }
-        ]
+        ],
+        "typed_commitment_relation_refs": []
       }
     },
     {
@@ -860,6 +1270,7 @@
       "report": {
         "compatibility_surfaces": [],
         "completed_candidate_ids": [],
+        "covered_candidate_ids": [],
         "decision": "conformance_required",
         "findings": [
           {
@@ -871,14 +1282,35 @@
             "severity": "blocker"
           }
         ],
+        "inventory_revision": "",
+        "materialized_similarity_code_obligation_ids": [
+          "maintenance:ack_bundle_card_return+ack_single_card_return+ack_system_card_return:shared-kernel",
+          "maintenance:packet_result_current_node+packet_result_pm_role_work+packet_result_research:shared-kernel",
+          "maintenance:route_mutation_sibling_branch+route_mutation_supersede:shared-kernel",
+          "maintenance:router_reconciliation_role_output_event+router_reconciliation_runtime_resume+router_reconciliation_scheduled_receipt:shared-kernel",
+          "route_mutation_sibling_branch:route_display_refresh:false_friend:false-friend-quarantine"
+        ],
+        "materialized_similarity_relation_ids": [
+          "ack_single_card_return:ack_bundle_card_return:same_family_variant",
+          "ack_single_card_return:ack_system_card_return:same_family_variant",
+          "packet_result_research:packet_result_current_node:same_family_variant",
+          "packet_result_research:packet_result_pm_role_work:same_family_variant",
+          "route_mutation_sibling_branch:route_display_refresh:false_friend",
+          "route_mutation_supersede:route_mutation_sibling_branch:same_family_variant",
+          "router_reconciliation_scheduled_receipt:router_reconciliation_role_output_event:same_family_variant",
+          "router_reconciliation_scheduled_receipt:router_reconciliation_runtime_resume:same_family_variant"
+        ],
+        "missing_candidate_ids": [],
         "ok": false,
         "ready_candidate_ids": [],
         "reduction_id": "flowpilot_similarity_convergence_reduction_review",
         "required_next_routes": [
           "conformance_replay"
         ],
+        "scoped_candidate_ids": [],
         "summary": "BLOCKED: reduction=flowpilot_similarity_convergence_reduction_review decision=conformance_required findings=1",
-        "target_actions": []
+        "target_actions": [],
+        "unexpected_candidate_ids": []
       }
     }
   ],
@@ -893,31 +1325,36 @@
   },
   "result_type": "flowpilot_similarity_convergence",
   "similarity_handoff": {
+    "affected_surface_ids": [],
+    "behavior_commitment_ids": [],
+    "behavior_planes": [],
+    "business_intent_ids": [],
     "change_impact_ids": [
-      "maintenance:packet_result_current_node+packet_result_material_scan+packet_result_pm_role_work+packet_result_research:packet_result_material_scan:change-impact",
-      "maintenance:packet_result_current_node+packet_result_material_scan+packet_result_pm_role_work+packet_result_research:packet_result_research:change-impact",
+      "maintenance:packet_result_current_node+packet_result_pm_role_work+packet_result_research:packet_result_research:change-impact",
       "maintenance:route_mutation_sibling_branch+route_mutation_supersede:route_mutation_sibling_branch:change-impact",
       "maintenance:route_mutation_sibling_branch+route_mutation_supersede:route_mutation_supersede:change-impact",
       "maintenance:router_reconciliation_role_output_event+router_reconciliation_runtime_resume+router_reconciliation_scheduled_receipt:router_reconciliation_scheduled_receipt:change-impact"
     ],
     "code_obligation_ids": [
       "maintenance:ack_bundle_card_return+ack_single_card_return+ack_system_card_return:shared-kernel",
-      "maintenance:packet_result_current_node+packet_result_material_scan+packet_result_pm_role_work+packet_result_research:shared-kernel",
+      "maintenance:packet_result_current_node+packet_result_pm_role_work+packet_result_research:shared-kernel",
       "maintenance:route_mutation_sibling_branch+route_mutation_supersede:shared-kernel",
       "maintenance:router_reconciliation_role_output_event+router_reconciliation_runtime_resume+router_reconciliation_scheduled_receipt:shared-kernel",
       "route_mutation_sibling_branch:route_display_refresh:false_friend:false-friend-quarantine"
     ],
+    "code_obligations": [],
+    "cross_plane_relation_ids": [],
+    "different_elements": [],
     "evidence_current": true,
     "evidence_duplicate_relation_ids": [],
     "evidence_gate_ids": [],
+    "expected_surface_ids": [],
     "false_friend_rationales": [
       "route_mutation_sibling_branch:route_display_refresh:false_friend: Names or families look related, but material ownership differs."
     ],
     "impacted_model_ids": [
       "packet_result_current_node",
-      "packet_result_material_scan",
       "packet_result_pm_role_work",
-      "packet_result_research",
       "route_mutation_sibling_branch",
       "route_mutation_supersede",
       "router_reconciliation_role_output_event",
@@ -926,18 +1363,20 @@
     "known_bad_case_ids": [],
     "maintenance_group_ids": [
       "maintenance:ack_bundle_card_return+ack_single_card_return+ack_system_card_return",
-      "maintenance:packet_result_current_node+packet_result_material_scan+packet_result_pm_role_work+packet_result_research",
+      "maintenance:packet_result_current_node+packet_result_pm_role_work+packet_result_research",
       "maintenance:route_mutation_sibling_branch+route_mutation_supersede",
       "maintenance:router_reconciliation_role_output_event+router_reconciliation_runtime_resume+router_reconciliation_scheduled_receipt"
     ],
+    "matched_elements": [],
     "metadata": {},
+    "missing_surface_ids": [],
+    "primary_path_ids": [],
     "recommended_next_routes": [
       "manual_review",
       "model_mesh",
       "model_test_alignment"
     ],
     "relation_ids": [
-      "packet_result_material_scan:packet_result_research:same_family_variant",
       "packet_result_research:packet_result_current_node:same_family_variant",
       "packet_result_research:packet_result_pm_role_work:same_family_variant",
       "ack_single_card_return:ack_bundle_card_return:same_family_variant",
@@ -949,7 +1388,6 @@
     ],
     "risk_template_ids": [],
     "same_family_relation_ids": [
-      "packet_result_material_scan:packet_result_research:same_family_variant",
       "packet_result_research:packet_result_current_node:same_family_variant",
       "packet_result_research:packet_result_pm_role_work:same_family_variant",
       "ack_single_card_return:ack_bundle_card_return:same_family_variant",
@@ -962,115 +1400,44 @@
     "test_obligation_ids": [
       "maintenance:ack_bundle_card_return+ack_single_card_return+ack_system_card_return:shared-tests",
       "maintenance:ack_bundle_card_return+ack_single_card_return+ack_system_card_return:variant-tests",
-      "maintenance:packet_result_current_node+packet_result_material_scan+packet_result_pm_role_work+packet_result_research:shared-tests",
-      "maintenance:packet_result_current_node+packet_result_material_scan+packet_result_pm_role_work+packet_result_research:variant-tests",
+      "maintenance:packet_result_current_node+packet_result_pm_role_work+packet_result_research:shared-tests",
+      "maintenance:packet_result_current_node+packet_result_pm_role_work+packet_result_research:variant-tests",
       "maintenance:route_mutation_sibling_branch+route_mutation_supersede:shared-tests",
       "maintenance:route_mutation_sibling_branch+route_mutation_supersede:variant-tests",
       "maintenance:router_reconciliation_role_output_event+router_reconciliation_runtime_resume+router_reconciliation_scheduled_receipt:shared-tests",
       "maintenance:router_reconciliation_role_output_event+router_reconciliation_runtime_resume+router_reconciliation_scheduled_receipt:variant-tests"
     ],
+    "test_obligations": [],
+    "typed_commitment_relation_refs": [],
     "unresolved_gaps": []
   },
   "similarity_ok": true,
   "similarity_review": {
+    "affected_surface_ids": [],
+    "behavior_commitment_ids": [],
+    "behavior_planes": [],
+    "business_intent_ids": [],
     "change_impacts": [
       {
-        "changed_model_id": "packet_result_material_scan",
-        "impact_id": "maintenance:packet_result_current_node+packet_result_material_scan+packet_result_pm_role_work+packet_result_research:packet_result_material_scan:change-impact",
-        "impacted_code_paths": [
-          "skills/flowpilot/assets/flowpilot_router_work_packets_current_node.py",
-          "skills/flowpilot/assets/packet_runtime_results.py",
-          "skills/flowpilot/assets/flowpilot_router_work_packets_pm_role.py",
-          "skills/flowpilot/assets/flowpilot_router_work_packets_material.py"
-        ],
-        "impacted_model_ids": [
-          "packet_result_current_node",
-          "packet_result_pm_role_work",
-          "packet_result_research"
-        ],
-        "impacted_test_paths": [
-          "tests/router_runtime/packet_result_family.py",
-          "tests/router_runtime/packets.py",
-          "tests/router_runtime/pm_role_work.py"
-        ],
-        "maintenance_group_id": "maintenance:packet_result_current_node+packet_result_material_scan+packet_result_pm_role_work+packet_result_research",
-        "rationale": "A changed member of a similarity maintenance group requires sibling code and test review.",
-        "relation_ids": [
-          "packet_result_material_scan:packet_result_research:same_family_variant",
-          "packet_result_research:packet_result_current_node:same_family_variant",
-          "packet_result_research:packet_result_pm_role_work:same_family_variant"
-        ],
-        "required_next_routes": [
-          "model_mesh",
-          "model_test_alignment"
-        ],
-        "shared_elements": [
-          "active_wait_state",
-          "current_router_wait",
-          "durable packet results are folded before stale waits",
-          "durable_result_envelope",
-          "durable_result_envelope_folds_before_wait",
-          "durable_result_joined_but_router_event_absent",
-          "fold_durable_result_envelope",
-          "missing_role_wait_projection",
-          "packet_result_envelope",
-          "packet_result_ledger",
-          "partial result batches keep sibling member gaps visible",
-          "partial_batch_wait_names_only_missing_roles",
-          "preserve_sealed_body_boundary",
-          "project_partial_member_wait",
-          "reject_wrong_recipient_result",
-          "router_wait_state",
-          "sealed_bodies_remain_unopened_by_router",
-          "sealed_body_text_leaks_into_controller_context",
-          "suppress_stale_result_reminder",
-          "update_packet_result_status",
-          "write_router_result_event",
-          "wrong_recipient_result_satisfies_wait"
-        ],
-        "variant_elements": [
-          "packet_result_current_node:current_node_result_wait",
-          "packet_result_current_node:worker_current_node_result_returned",
-          "packet_result_current_node:variant:current_node",
-          "packet_result_current_node:adapter:packet_result_current_node_adapter",
-          "packet_result_material_scan:material_scan_result_wait",
-          "packet_result_material_scan:worker_scan_results_returned",
-          "packet_result_material_scan:variant:material_scan",
-          "packet_result_material_scan:adapter:packet_result_material_scan_adapter",
-          "packet_result_pm_role_work:pm_role_work_result_wait",
-          "packet_result_pm_role_work:role_work_result_returned",
-          "packet_result_pm_role_work:variant:pm_role_work",
-          "packet_result_pm_role_work:adapter:packet_result_pm_role_work_adapter",
-          "packet_result_research:research_result_wait",
-          "packet_result_research:worker_research_report_returned",
-          "packet_result_research:variant:research",
-          "packet_result_research:adapter:packet_result_research_adapter"
-        ]
-      },
-      {
         "changed_model_id": "packet_result_research",
-        "impact_id": "maintenance:packet_result_current_node+packet_result_material_scan+packet_result_pm_role_work+packet_result_research:packet_result_research:change-impact",
+        "impact_id": "maintenance:packet_result_current_node+packet_result_pm_role_work+packet_result_research:packet_result_research:change-impact",
         "impacted_code_paths": [
           "skills/flowpilot/assets/flowpilot_router_work_packets_current_node.py",
           "skills/flowpilot/assets/packet_runtime_results.py",
-          "skills/flowpilot/assets/flowpilot_router_work_packets_material.py",
           "skills/flowpilot/assets/flowpilot_router_work_packets_pm_role.py"
         ],
         "impacted_model_ids": [
           "packet_result_current_node",
-          "packet_result_material_scan",
           "packet_result_pm_role_work"
         ],
         "impacted_test_paths": [
           "tests/router_runtime/packet_result_family.py",
           "tests/router_runtime/packets.py",
-          "tests/router_runtime/material_modeling.py",
           "tests/router_runtime/pm_role_work.py"
         ],
-        "maintenance_group_id": "maintenance:packet_result_current_node+packet_result_material_scan+packet_result_pm_role_work+packet_result_research",
+        "maintenance_group_id": "maintenance:packet_result_current_node+packet_result_pm_role_work+packet_result_research",
         "rationale": "A changed member of a similarity maintenance group requires sibling code and test review.",
         "relation_ids": [
-          "packet_result_material_scan:packet_result_research:same_family_variant",
           "packet_result_research:packet_result_current_node:same_family_variant",
           "packet_result_research:packet_result_pm_role_work:same_family_variant"
         ],
@@ -1107,10 +1474,6 @@
           "packet_result_current_node:worker_current_node_result_returned",
           "packet_result_current_node:variant:current_node",
           "packet_result_current_node:adapter:packet_result_current_node_adapter",
-          "packet_result_material_scan:material_scan_result_wait",
-          "packet_result_material_scan:worker_scan_results_returned",
-          "packet_result_material_scan:variant:material_scan",
-          "packet_result_material_scan:adapter:packet_result_material_scan_adapter",
           "packet_result_pm_role_work:pm_role_work_result_wait",
           "packet_result_pm_role_work:role_work_result_returned",
           "packet_result_pm_role_work:variant:pm_role_work",
@@ -1302,13 +1665,48 @@
           "ack_single_card_adapter",
           "ack_system_card_adapter"
         ],
+        "behavior_commitment_ids": [],
+        "behavior_planes": [],
+        "business_intent_ids": [],
         "code_paths": [
           "skills/flowpilot/assets/card_runtime_bundle.py",
           "skills/flowpilot/assets/flowpilot_router_card_returns.py",
           "skills/flowpilot/assets/card_runtime_ack.py",
           "skills/flowpilot/assets/flowpilot_router_system_cards.py"
         ],
+        "different_elements": [
+          "ack_bundle_card_return:bundle_card_pending_return",
+          "ack_bundle_card_return:bundle_return_acknowledged",
+          "ack_bundle_card_return:variant:bundle_card",
+          "ack_bundle_card_return:adapter:ack_bundle_card_adapter",
+          "ack_single_card_return:card_return_acknowledged",
+          "ack_single_card_return:single_card_pending_return",
+          "ack_single_card_return:variant:single_card",
+          "ack_single_card_return:adapter:ack_single_card_adapter",
+          "ack_system_card_return:system_card_pending_return",
+          "ack_system_card_return:system_card_return_acknowledged",
+          "ack_system_card_return:variant:system_card",
+          "ack_system_card_return:adapter:ack_system_card_adapter"
+        ],
         "maintenance_group_id": "maintenance:ack_bundle_card_return+ack_single_card_return+ack_system_card_return",
+        "matched_elements": [
+          "ack returns are monotonic and idempotent",
+          "ack_payload",
+          "ack_wait_projection",
+          "card_ack_contract",
+          "completed_return_ledger",
+          "duplicate_ack_does_not_reopen_resolved_return",
+          "duplicate_ack_reopens_resolved_return",
+          "incomplete_ack_does_not_advance_wait",
+          "incomplete_bundle_ack_advances_wait",
+          "merge_terminal_return_monotonically",
+          "pending_return_record",
+          "preconsume_return_ack",
+          "project_incomplete_ack_wait",
+          "update_pending_return_status",
+          "verify_ack_identity",
+          "write_completed_return"
+        ],
         "model_ids": [
           "ack_bundle_card_return",
           "ack_single_card_return",
@@ -1316,6 +1714,7 @@
         ],
         "obligation_id": "maintenance:ack_bundle_card_return+ack_single_card_return+ack_system_card_return:shared-kernel",
         "obligation_type": "shared_kernel_or_adapter",
+        "primary_path_ids": [],
         "rationale": "The maintenance group declares shared-kernel or adapter metadata that should drive code structure review.",
         "relation_ids": [
           "ack_single_card_return:ack_bundle_card_return:same_family_variant",
@@ -1325,33 +1724,74 @@
           "model_mesh",
           "model_test_alignment"
         ],
-        "shared_kernel_owner": "ack_return_settlement"
+        "shared_kernel_owner": "ack_return_settlement",
+        "surface_ids": [],
+        "typed_commitment_relation_refs": []
       },
       {
         "adapter_owners": [
           "packet_result_current_node_adapter",
-          "packet_result_material_scan_adapter",
           "packet_result_pm_role_work_adapter",
           "packet_result_research_adapter"
         ],
+        "behavior_commitment_ids": [],
+        "behavior_planes": [],
+        "business_intent_ids": [],
         "code_paths": [
           "skills/flowpilot/assets/flowpilot_router_work_packets_current_node.py",
           "skills/flowpilot/assets/packet_runtime_results.py",
-          "skills/flowpilot/assets/flowpilot_router_work_packets_material.py",
-          "skills/flowpilot/assets/flowpilot_router_work_packets_pm_role.py"
+          "skills/flowpilot/assets/flowpilot_router_work_packets_pm_role.py",
+          "skills/flowpilot/assets/flowpilot_router_work_packets_material.py"
         ],
-        "maintenance_group_id": "maintenance:packet_result_current_node+packet_result_material_scan+packet_result_pm_role_work+packet_result_research",
+        "different_elements": [
+          "packet_result_current_node:current_node_result_wait",
+          "packet_result_current_node:worker_current_node_result_returned",
+          "packet_result_current_node:variant:current_node",
+          "packet_result_current_node:adapter:packet_result_current_node_adapter",
+          "packet_result_pm_role_work:pm_role_work_result_wait",
+          "packet_result_pm_role_work:role_work_result_returned",
+          "packet_result_pm_role_work:variant:pm_role_work",
+          "packet_result_pm_role_work:adapter:packet_result_pm_role_work_adapter",
+          "packet_result_research:research_result_wait",
+          "packet_result_research:worker_research_report_returned",
+          "packet_result_research:variant:research",
+          "packet_result_research:adapter:packet_result_research_adapter"
+        ],
+        "maintenance_group_id": "maintenance:packet_result_current_node+packet_result_pm_role_work+packet_result_research",
+        "matched_elements": [
+          "active_wait_state",
+          "current_router_wait",
+          "durable packet results are folded before stale waits",
+          "durable_result_envelope",
+          "durable_result_envelope_folds_before_wait",
+          "durable_result_joined_but_router_event_absent",
+          "fold_durable_result_envelope",
+          "missing_role_wait_projection",
+          "packet_result_envelope",
+          "packet_result_ledger",
+          "partial result batches keep sibling member gaps visible",
+          "partial_batch_wait_names_only_missing_roles",
+          "preserve_sealed_body_boundary",
+          "project_partial_member_wait",
+          "reject_wrong_recipient_result",
+          "router_wait_state",
+          "sealed_bodies_remain_unopened_by_router",
+          "sealed_body_text_leaks_into_controller_context",
+          "suppress_stale_result_reminder",
+          "update_packet_result_status",
+          "write_router_result_event",
+          "wrong_recipient_result_satisfies_wait"
+        ],
         "model_ids": [
           "packet_result_current_node",
-          "packet_result_material_scan",
           "packet_result_pm_role_work",
           "packet_result_research"
         ],
-        "obligation_id": "maintenance:packet_result_current_node+packet_result_material_scan+packet_result_pm_role_work+packet_result_research:shared-kernel",
+        "obligation_id": "maintenance:packet_result_current_node+packet_result_pm_role_work+packet_result_research:shared-kernel",
         "obligation_type": "shared_kernel_or_adapter",
+        "primary_path_ids": [],
         "rationale": "The maintenance group declares shared-kernel or adapter metadata that should drive code structure review.",
         "relation_ids": [
-          "packet_result_material_scan:packet_result_research:same_family_variant",
           "packet_result_research:packet_result_current_node:same_family_variant",
           "packet_result_research:packet_result_pm_role_work:same_family_variant"
         ],
@@ -1359,24 +1799,63 @@
           "model_mesh",
           "model_test_alignment"
         ],
-        "shared_kernel_owner": "packet_result_return_family"
+        "shared_kernel_owner": "packet_result_return_family",
+        "surface_ids": [],
+        "typed_commitment_relation_refs": []
       },
       {
         "adapter_owners": [
           "route_mutation_sibling_branch_replacement_adapter",
           "route_mutation_supersede_adapter"
         ],
+        "behavior_commitment_ids": [],
+        "behavior_planes": [],
+        "business_intent_ids": [],
         "code_paths": [
           "skills/flowpilot/assets/flowpilot_router_route.py",
           "skills/flowpilot/assets/flowpilot_router_route_frontier.py"
         ],
+        "different_elements": [
+          "route_mutation_sibling_branch:sibling_replacement_frontier",
+          "route_mutation_sibling_branch:variant:sibling_branch_replacement",
+          "route_mutation_sibling_branch:adapter:route_mutation_sibling_branch_replacement_adapter",
+          "route_mutation_supersede:supersede_replacement_frontier",
+          "route_mutation_supersede:variant:supersede",
+          "route_mutation_supersede:adapter:route_mutation_supersede_adapter"
+        ],
         "maintenance_group_id": "maintenance:route_mutation_sibling_branch+route_mutation_supersede",
+        "matched_elements": [
+          "current_frontier",
+          "execution_frontier",
+          "invalidate_stale_route_evidence",
+          "mutated_route_draft",
+          "old_current_node_packet_is_superseded",
+          "old_packet_survives_replacement",
+          "packet_ledger",
+          "pending_route_mutation",
+          "prior_route_evidence",
+          "project_replay_scope",
+          "record_route_mutation",
+          "replacement_declares_replay_scope",
+          "replay_scope",
+          "route replacement invalidates stale proof before replay",
+          "route_draft",
+          "route_mutation_activation_record",
+          "route_mutation_contract",
+          "route_mutation_request",
+          "stale_evidence_blocks_final_ledger",
+          "stale_sibling_evidence_used_for_completion",
+          "supersede_old_current_node_packet",
+          "write_execution_frontier",
+          "write_route_draft"
+        ],
         "model_ids": [
           "route_mutation_sibling_branch",
           "route_mutation_supersede"
         ],
         "obligation_id": "maintenance:route_mutation_sibling_branch+route_mutation_supersede:shared-kernel",
         "obligation_type": "shared_kernel_or_adapter",
+        "primary_path_ids": [],
         "rationale": "The maintenance group declares shared-kernel or adapter metadata that should drive code structure review.",
         "relation_ids": [
           "route_mutation_supersede:route_mutation_sibling_branch:same_family_variant"
@@ -1385,7 +1864,9 @@
           "model_mesh",
           "model_test_alignment"
         ],
-        "shared_kernel_owner": "route_mutation_replacement_family"
+        "shared_kernel_owner": "route_mutation_replacement_family",
+        "surface_ids": [],
+        "typed_commitment_relation_refs": []
       },
       {
         "adapter_owners": [
@@ -1393,6 +1874,9 @@
           "reconciliation_runtime_state_resume_adapter",
           "reconciliation_scheduled_controller_receipt_adapter"
         ],
+        "behavior_commitment_ids": [],
+        "behavior_planes": [],
+        "business_intent_ids": [],
         "code_paths": [
           "skills/flowpilot/assets/flowpilot_router_role_output_bridge_events.py",
           "skills/flowpilot/assets/role_output_runtime.py",
@@ -1401,7 +1885,37 @@
           "skills/flowpilot/assets/flowpilot_router_controller_scheduler_receipts.py",
           "skills/flowpilot/assets/flowpilot_router_controller_reconciliation.py"
         ],
+        "different_elements": [
+          "router_reconciliation_role_output_event:external_event_ledger",
+          "router_reconciliation_role_output_event:reconciled_external_role_event",
+          "router_reconciliation_role_output_event:role_output_event",
+          "router_reconciliation_role_output_event:variant:role_output_event",
+          "router_reconciliation_role_output_event:adapter:reconciliation_role_output_event_adapter",
+          "router_reconciliation_runtime_resume:resume_next_recipient_projection",
+          "router_reconciliation_runtime_resume:resume_projection_state",
+          "router_reconciliation_runtime_resume:runtime_state_resume",
+          "router_reconciliation_runtime_resume:variant:runtime_state_resume",
+          "router_reconciliation_runtime_resume:adapter:reconciliation_runtime_state_resume_adapter",
+          "router_reconciliation_scheduled_receipt:controller_action_row",
+          "router_reconciliation_scheduled_receipt:reconciled_controller_receipt",
+          "router_reconciliation_scheduled_receipt:scheduled_controller_receipt",
+          "router_reconciliation_scheduled_receipt:variant:scheduled_controller_receipt",
+          "router_reconciliation_scheduled_receipt:adapter:reconciliation_scheduled_controller_receipt_adapter"
+        ],
         "maintenance_group_id": "maintenance:router_reconciliation_role_output_event+router_reconciliation_runtime_resume+router_reconciliation_scheduled_receipt",
+        "matched_elements": [
+          "apply_state_writing_effects",
+          "branch_equivalence_overclaimed_without_replay",
+          "classify_reconciliation_input",
+          "control_blocker_index",
+          "map_to_result_case_vocabulary",
+          "progress_only_background_claimed_as_pass",
+          "reconciliation branches expose a small result-case vocabulary",
+          "result_case_vocabulary_is_complete",
+          "router_state",
+          "state_writing_branch_requires_replay_evidence",
+          "write_reconciliation_effect"
+        ],
         "model_ids": [
           "router_reconciliation_role_output_event",
           "router_reconciliation_runtime_resume",
@@ -1409,6 +1923,7 @@
         ],
         "obligation_id": "maintenance:router_reconciliation_role_output_event+router_reconciliation_runtime_resume+router_reconciliation_scheduled_receipt:shared-kernel",
         "obligation_type": "shared_kernel_or_adapter",
+        "primary_path_ids": [],
         "rationale": "The maintenance group declares shared-kernel or adapter metadata that should drive code structure review.",
         "relation_ids": [
           "router_reconciliation_scheduled_receipt:router_reconciliation_role_output_event:same_family_variant",
@@ -1418,23 +1933,54 @@
           "model_mesh",
           "model_test_alignment"
         ],
-        "shared_kernel_owner": "router_reconciliation_result_case_vocabulary"
+        "shared_kernel_owner": "router_reconciliation_result_case_vocabulary",
+        "surface_ids": [],
+        "typed_commitment_relation_refs": []
       },
       {
         "adapter_owners": [],
+        "behavior_commitment_ids": [],
+        "behavior_planes": [],
+        "business_intent_ids": [],
         "code_paths": [
           "skills/flowpilot/assets/flowpilot_router_route.py",
           "skills/flowpilot/assets/flowpilot_router_route_frontier.py",
           "skills/flowpilot/assets/flowpilot_user_flow_diagram.py",
           "skills/flowpilot/assets/flowpilot_user_flow_tree.py"
         ],
+        "different_elements": [
+          "variant:sibling_branch_replacement!=display_projection",
+          "function:route_mutation_sibling_branch_only=invalidate_stale_route_evidence,project_replay_scope,record_route_mutation,supersede_old_current_node_packet",
+          "function:route_display_refresh_only=project_route_sign,refresh_current_node_display",
+          "input:route_mutation_sibling_branch_only=current_frontier,prior_route_evidence,route_mutation_request",
+          "input:route_display_refresh_only=execution_frontier,route_draft",
+          "output:route_mutation_sibling_branch_only=mutated_route_draft,pending_route_mutation,replay_scope",
+          "output:route_display_refresh_only=route_sign_markdown,user_flow_diagram",
+          "state:route_mutation_sibling_branch_only=sibling_replacement_frontier",
+          "state:route_display_refresh_only=route_display_projection",
+          "side_effect:route_mutation_sibling_branch_only=write_execution_frontier,write_route_draft",
+          "side_effect:route_display_refresh_only=write_route_display_artifacts",
+          "invariant:route_mutation_sibling_branch_only=old_current_node_packet_is_superseded,replacement_declares_replay_scope,stale_evidence_blocks_final_ledger",
+          "invariant:route_display_refresh_only=display_must_match_current_route",
+          "failure:route_mutation_sibling_branch_only=old_packet_survives_replacement,stale_sibling_evidence_used_for_completion",
+          "failure:route_display_refresh_only=route_display_reuses_stale_sibling_evidence",
+          "public_behavior:route_mutation_sibling_branch_only=route replacement invalidates stale proof before replay",
+          "public_behavior:route_display_refresh_only=route display is derived evidence, not route mutation authority",
+          "adapter:route_mutation_sibling_branch_only=route_mutation_sibling_branch_replacement_adapter"
+        ],
         "maintenance_group_id": "",
+        "matched_elements": [
+          "state_read:execution_frontier",
+          "state_read:route_draft",
+          "workflow_family:route_mutation_replacement"
+        ],
         "model_ids": [
           "route_mutation_sibling_branch",
           "route_display_refresh"
         ],
         "obligation_id": "route_mutation_sibling_branch:route_display_refresh:false_friend:false-friend-quarantine",
         "obligation_type": "false_friend_quarantine",
+        "primary_path_ids": [],
         "rationale": "False-friend similarity keeps code and test maintenance separate unless manual review proves otherwise.",
         "relation_ids": [
           "route_mutation_sibling_branch:route_display_refresh:false_friend"
@@ -1442,11 +1988,15 @@
         "required_next_routes": [
           "manual_review"
         ],
-        "shared_kernel_owner": ""
+        "shared_kernel_owner": "",
+        "surface_ids": [],
+        "typed_commitment_relation_refs": []
       }
     ],
+    "cross_plane_relation_ids": [],
     "decision": "model_similarity_ready",
     "evidence_gate_ids": [],
+    "expected_surface_ids": [],
     "findings": [],
     "known_bad_case_ids": [],
     "maintenance_groups": [
@@ -1456,6 +2006,7 @@
           "ack_single_card_adapter",
           "ack_system_card_adapter"
         ],
+        "behavior_planes": [],
         "code_paths": [
           "skills/flowpilot/assets/card_runtime_bundle.py",
           "skills/flowpilot/assets/flowpilot_router_card_returns.py",
@@ -1510,6 +2061,7 @@
           "tests/router_runtime/ack_return.py",
           "tests/router_runtime/cards.py"
         ],
+        "typed_commitment_relation_refs": [],
         "variant_elements": [
           "ack_bundle_card_return:bundle_card_pending_return",
           "ack_bundle_card_return:bundle_return_acknowledged",
@@ -1528,30 +2080,28 @@
       {
         "adapter_ids": [
           "packet_result_current_node_adapter",
-          "packet_result_material_scan_adapter",
           "packet_result_pm_role_work_adapter",
           "packet_result_research_adapter"
         ],
+        "behavior_planes": [],
         "code_paths": [
           "skills/flowpilot/assets/flowpilot_router_work_packets_current_node.py",
           "skills/flowpilot/assets/packet_runtime_results.py",
-          "skills/flowpilot/assets/flowpilot_router_work_packets_material.py",
-          "skills/flowpilot/assets/flowpilot_router_work_packets_pm_role.py"
+          "skills/flowpilot/assets/flowpilot_router_work_packets_pm_role.py",
+          "skills/flowpilot/assets/flowpilot_router_work_packets_material.py"
         ],
-        "group_id": "maintenance:packet_result_current_node+packet_result_material_scan+packet_result_pm_role_work+packet_result_research",
+        "group_id": "maintenance:packet_result_current_node+packet_result_pm_role_work+packet_result_research",
         "maintenance_tags": [
           "analogous_defect_scan",
           "sibling_parity"
         ],
         "member_model_ids": [
           "packet_result_current_node",
-          "packet_result_material_scan",
           "packet_result_pm_role_work",
           "packet_result_research"
         ],
         "rationale": "Connected model-similarity relations require these models to be maintained together.",
         "relation_ids": [
-          "packet_result_material_scan:packet_result_research:same_family_variant",
           "packet_result_research:packet_result_current_node:same_family_variant",
           "packet_result_research:packet_result_pm_role_work:same_family_variant"
         ],
@@ -1592,18 +2142,14 @@
         "test_paths": [
           "tests/router_runtime/packet_result_family.py",
           "tests/router_runtime/packets.py",
-          "tests/router_runtime/material_modeling.py",
           "tests/router_runtime/pm_role_work.py"
         ],
+        "typed_commitment_relation_refs": [],
         "variant_elements": [
           "packet_result_current_node:current_node_result_wait",
           "packet_result_current_node:worker_current_node_result_returned",
           "packet_result_current_node:variant:current_node",
           "packet_result_current_node:adapter:packet_result_current_node_adapter",
-          "packet_result_material_scan:material_scan_result_wait",
-          "packet_result_material_scan:worker_scan_results_returned",
-          "packet_result_material_scan:variant:material_scan",
-          "packet_result_material_scan:adapter:packet_result_material_scan_adapter",
           "packet_result_pm_role_work:pm_role_work_result_wait",
           "packet_result_pm_role_work:role_work_result_returned",
           "packet_result_pm_role_work:variant:pm_role_work",
@@ -1619,6 +2165,7 @@
           "route_mutation_sibling_branch_replacement_adapter",
           "route_mutation_supersede_adapter"
         ],
+        "behavior_planes": [],
         "code_paths": [
           "skills/flowpilot/assets/flowpilot_router_route.py",
           "skills/flowpilot/assets/flowpilot_router_route_frontier.py"
@@ -1677,6 +2224,7 @@
           "tests/router_runtime/route_mutation.py",
           "tests/flowpilot_route_mutation_contracts.py"
         ],
+        "typed_commitment_relation_refs": [],
         "variant_elements": [
           "route_mutation_sibling_branch:sibling_replacement_frontier",
           "route_mutation_sibling_branch:variant:sibling_branch_replacement",
@@ -1692,6 +2240,7 @@
           "reconciliation_runtime_state_resume_adapter",
           "reconciliation_scheduled_controller_receipt_adapter"
         ],
+        "behavior_planes": [],
         "code_paths": [
           "skills/flowpilot/assets/flowpilot_router_role_output_bridge_events.py",
           "skills/flowpilot/assets/role_output_runtime.py",
@@ -1744,6 +2293,7 @@
           "tests/router_runtime/resume.py",
           "tests/router_runtime/controller.py"
         ],
+        "typed_commitment_relation_refs": [],
         "variant_elements": [
           "router_reconciliation_role_output_event:external_event_ledger",
           "router_reconciliation_role_output_event:reconciled_external_role_event",
@@ -1763,75 +2313,16 @@
         ]
       }
     ],
+    "missing_surface_ids": [],
     "ok": true,
     "plan_id": "flowpilot_similarity_convergence",
+    "primary_path_ids": [],
     "recommended_next_routes": [
       "manual_review",
       "model_mesh",
       "model_test_alignment"
     ],
     "relations": [
-      {
-        "confidence": "full",
-        "different_elements": [
-          "variant:material_scan!=research",
-          "output:packet_result_material_scan_only=worker_scan_results_returned",
-          "output:packet_result_research_only=worker_research_report_returned",
-          "state:packet_result_material_scan_only=material_scan_result_wait",
-          "state:packet_result_research_only=research_result_wait",
-          "adapter:packet_result_material_scan_only=packet_result_material_scan_adapter",
-          "adapter:packet_result_research_only=packet_result_research_adapter"
-        ],
-        "evidence_refs": [
-          "packet_result_material_scan:packet_result_research:same_family_variant:current_review"
-        ],
-        "left_model_id": "packet_result_material_scan",
-        "manual_review_required": false,
-        "matched_elements": [
-          "function:fold_durable_result_envelope",
-          "function:preserve_sealed_body_boundary",
-          "function:project_partial_member_wait",
-          "function:reject_wrong_recipient_result",
-          "function:suppress_stale_result_reminder",
-          "input:durable_result_envelope",
-          "input:packet_result_ledger",
-          "input:router_wait_state",
-          "output:missing_role_wait_projection",
-          "state_read:active_wait_state",
-          "state_read:packet_result_ledger",
-          "side_effect:update_packet_result_status",
-          "side_effect:write_router_result_event",
-          "invariant:durable_result_envelope_folds_before_wait",
-          "invariant:partial_batch_wait_names_only_missing_roles",
-          "invariant:sealed_bodies_remain_unopened_by_router",
-          "failure:durable_result_joined_but_router_event_absent",
-          "failure:sealed_body_text_leaks_into_controller_context",
-          "failure:wrong_recipient_result_satisfies_wait",
-          "contract_in:current_router_wait",
-          "contract_in:packet_result_envelope",
-          "public_behavior:durable packet results are folded before stale waits",
-          "public_behavior:partial result batches keep sibling member gaps visible",
-          "maintenance_tag:analogous_defect_scan",
-          "maintenance_tag:sibling_parity",
-          "evidence:flowpilot_packet_result_family_parity_results",
-          "workflow_family:packet_result_return_reconciliation"
-        ],
-        "metadata": {},
-        "rationale": "The models share a workflow family while preserving variant-specific differences.",
-        "recommendation": "create_family_variant",
-        "relation_id": "packet_result_material_scan:packet_result_research:same_family_variant",
-        "relation_type": "same_family_variant",
-        "required_evidence": [
-          "current_similarity_evidence"
-        ],
-        "required_next_routes": [
-          "model_mesh",
-          "model_test_alignment"
-        ],
-        "right_model_id": "packet_result_research",
-        "risk_if_kept_separate": "variants may miss shared family evidence",
-        "risk_if_merged": "merging all variants may erase policy-specific behavior"
-      },
       {
         "confidence": "full",
         "different_elements": [
@@ -1846,6 +2337,7 @@
         "evidence_refs": [
           "packet_result_research:packet_result_current_node:same_family_variant:current_review"
         ],
+        "left_behavior_plane": "",
         "left_model_id": "packet_result_research",
         "manual_review_required": false,
         "matched_elements": [
@@ -1889,9 +2381,11 @@
           "model_mesh",
           "model_test_alignment"
         ],
+        "right_behavior_plane": "",
         "right_model_id": "packet_result_current_node",
         "risk_if_kept_separate": "variants may miss shared family evidence",
-        "risk_if_merged": "merging all variants may erase policy-specific behavior"
+        "risk_if_merged": "merging all variants may erase policy-specific behavior",
+        "typed_commitment_relation_refs": []
       },
       {
         "confidence": "full",
@@ -1907,6 +2401,7 @@
         "evidence_refs": [
           "packet_result_research:packet_result_pm_role_work:same_family_variant:current_review"
         ],
+        "left_behavior_plane": "",
         "left_model_id": "packet_result_research",
         "manual_review_required": false,
         "matched_elements": [
@@ -1950,9 +2445,11 @@
           "model_mesh",
           "model_test_alignment"
         ],
+        "right_behavior_plane": "",
         "right_model_id": "packet_result_pm_role_work",
         "risk_if_kept_separate": "variants may miss shared family evidence",
-        "risk_if_merged": "merging all variants may erase policy-specific behavior"
+        "risk_if_merged": "merging all variants may erase policy-specific behavior",
+        "typed_commitment_relation_refs": []
       },
       {
         "confidence": "full",
@@ -1968,6 +2465,7 @@
         "evidence_refs": [
           "ack_single_card_return:ack_bundle_card_return:same_family_variant:current_review"
         ],
+        "left_behavior_plane": "",
         "left_model_id": "ack_single_card_return",
         "manual_review_required": false,
         "matched_elements": [
@@ -2007,9 +2505,11 @@
           "model_mesh",
           "model_test_alignment"
         ],
+        "right_behavior_plane": "",
         "right_model_id": "ack_bundle_card_return",
         "risk_if_kept_separate": "variants may miss shared family evidence",
-        "risk_if_merged": "merging all variants may erase policy-specific behavior"
+        "risk_if_merged": "merging all variants may erase policy-specific behavior",
+        "typed_commitment_relation_refs": []
       },
       {
         "confidence": "full",
@@ -2025,6 +2525,7 @@
         "evidence_refs": [
           "ack_single_card_return:ack_system_card_return:same_family_variant:current_review"
         ],
+        "left_behavior_plane": "",
         "left_model_id": "ack_single_card_return",
         "manual_review_required": false,
         "matched_elements": [
@@ -2064,9 +2565,11 @@
           "model_mesh",
           "model_test_alignment"
         ],
+        "right_behavior_plane": "",
         "right_model_id": "ack_system_card_return",
         "risk_if_kept_separate": "variants may miss shared family evidence",
-        "risk_if_merged": "merging all variants may erase policy-specific behavior"
+        "risk_if_merged": "merging all variants may erase policy-specific behavior",
+        "typed_commitment_relation_refs": []
       },
       {
         "confidence": "full",
@@ -2080,6 +2583,7 @@
         "evidence_refs": [
           "route_mutation_supersede:route_mutation_sibling_branch:same_family_variant:current_review"
         ],
+        "left_behavior_plane": "",
         "left_model_id": "route_mutation_supersede",
         "manual_review_required": false,
         "matched_elements": [
@@ -2123,9 +2627,11 @@
           "model_mesh",
           "model_test_alignment"
         ],
+        "right_behavior_plane": "",
         "right_model_id": "route_mutation_sibling_branch",
         "risk_if_kept_separate": "variants may miss shared family evidence",
-        "risk_if_merged": "merging all variants may erase policy-specific behavior"
+        "risk_if_merged": "merging all variants may erase policy-specific behavior",
+        "typed_commitment_relation_refs": []
       },
       {
         "confidence": "full",
@@ -2143,6 +2649,7 @@
         "evidence_refs": [
           "router_reconciliation_scheduled_receipt:router_reconciliation_role_output_event:same_family_variant:current_review"
         ],
+        "left_behavior_plane": "",
         "left_model_id": "router_reconciliation_scheduled_receipt",
         "manual_review_required": false,
         "matched_elements": [
@@ -2175,9 +2682,11 @@
           "model_mesh",
           "model_test_alignment"
         ],
+        "right_behavior_plane": "",
         "right_model_id": "router_reconciliation_role_output_event",
         "risk_if_kept_separate": "variants may miss shared family evidence",
-        "risk_if_merged": "merging all variants may erase policy-specific behavior"
+        "risk_if_merged": "merging all variants may erase policy-specific behavior",
+        "typed_commitment_relation_refs": []
       },
       {
         "confidence": "full",
@@ -2195,6 +2704,7 @@
         "evidence_refs": [
           "router_reconciliation_scheduled_receipt:router_reconciliation_runtime_resume:same_family_variant:current_review"
         ],
+        "left_behavior_plane": "",
         "left_model_id": "router_reconciliation_scheduled_receipt",
         "manual_review_required": false,
         "matched_elements": [
@@ -2227,9 +2737,11 @@
           "model_mesh",
           "model_test_alignment"
         ],
+        "right_behavior_plane": "",
         "right_model_id": "router_reconciliation_runtime_resume",
         "risk_if_kept_separate": "variants may miss shared family evidence",
-        "risk_if_merged": "merging all variants may erase policy-specific behavior"
+        "risk_if_merged": "merging all variants may erase policy-specific behavior",
+        "typed_commitment_relation_refs": []
       },
       {
         "confidence": "blocked",
@@ -2254,6 +2766,7 @@
           "adapter:route_mutation_sibling_branch_only=route_mutation_sibling_branch_replacement_adapter"
         ],
         "evidence_refs": [],
+        "left_behavior_plane": "",
         "left_model_id": "route_mutation_sibling_branch",
         "manual_review_required": true,
         "matched_elements": [
@@ -2270,15 +2783,19 @@
         "required_next_routes": [
           "manual_review"
         ],
+        "right_behavior_plane": "",
         "right_model_id": "route_display_refresh",
         "risk_if_kept_separate": "keeping separate is expected when rationale is visible",
-        "risk_if_merged": "merging false friends can collapse distinct responsibilities"
+        "risk_if_merged": "merging false friends can collapse distinct responsibilities",
+        "typed_commitment_relation_refs": []
       }
     ],
     "risk_template_ids": [],
-    "summary": "OK: plan=flowpilot_similarity_convergence decision=model_similarity_ready relations=9 groups=4 findings=0",
+    "summary": "OK: plan=flowpilot_similarity_convergence decision=model_similarity_ready relations=8 groups=4 findings=0",
     "test_obligations": [
       {
+        "behavior_commitment_ids": [],
+        "behavior_planes": [],
         "behaviors": [
           "ack returns are monotonic and idempotent",
           "ack_payload",
@@ -2297,27 +2814,8 @@
           "verify_ack_identity",
           "write_completed_return"
         ],
-        "maintenance_group_id": "maintenance:ack_bundle_card_return+ack_single_card_return+ack_system_card_return",
-        "model_ids": [
-          "ack_bundle_card_return",
-          "ack_single_card_return",
-          "ack_system_card_return"
-        ],
-        "obligation_id": "maintenance:ack_bundle_card_return+ack_single_card_return+ack_system_card_return:shared-tests",
-        "obligation_type": "shared_behavior_tests",
-        "rationale": "Shared behavior in a maintenance group needs tests that prove the family, not only one member.",
-        "relation_ids": [
-          "ack_single_card_return:ack_bundle_card_return:same_family_variant",
-          "ack_single_card_return:ack_system_card_return:same_family_variant"
-        ],
-        "test_paths": [
-          "tests/test_flowpilot_card_runtime.py",
-          "tests/router_runtime/ack_return.py",
-          "tests/router_runtime/cards.py"
-        ]
-      },
-      {
-        "behaviors": [
+        "business_intent_ids": [],
+        "different_elements": [
           "ack_bundle_card_return:bundle_card_pending_return",
           "ack_bundle_card_return:bundle_return_acknowledged",
           "ack_bundle_card_return:variant:bundle_card",
@@ -2332,6 +2830,96 @@
           "ack_system_card_return:adapter:ack_system_card_adapter"
         ],
         "maintenance_group_id": "maintenance:ack_bundle_card_return+ack_single_card_return+ack_system_card_return",
+        "matched_elements": [
+          "ack returns are monotonic and idempotent",
+          "ack_payload",
+          "ack_wait_projection",
+          "card_ack_contract",
+          "completed_return_ledger",
+          "duplicate_ack_does_not_reopen_resolved_return",
+          "duplicate_ack_reopens_resolved_return",
+          "incomplete_ack_does_not_advance_wait",
+          "incomplete_bundle_ack_advances_wait",
+          "merge_terminal_return_monotonically",
+          "pending_return_record",
+          "preconsume_return_ack",
+          "project_incomplete_ack_wait",
+          "update_pending_return_status",
+          "verify_ack_identity",
+          "write_completed_return"
+        ],
+        "model_ids": [
+          "ack_bundle_card_return",
+          "ack_single_card_return",
+          "ack_system_card_return"
+        ],
+        "obligation_id": "maintenance:ack_bundle_card_return+ack_single_card_return+ack_system_card_return:shared-tests",
+        "obligation_type": "shared_behavior_tests",
+        "primary_path_ids": [],
+        "rationale": "Shared behavior in a maintenance group needs tests that prove the family, not only one member.",
+        "relation_ids": [
+          "ack_single_card_return:ack_bundle_card_return:same_family_variant",
+          "ack_single_card_return:ack_system_card_return:same_family_variant"
+        ],
+        "surface_ids": [],
+        "test_paths": [
+          "tests/test_flowpilot_card_runtime.py",
+          "tests/router_runtime/ack_return.py",
+          "tests/router_runtime/cards.py"
+        ],
+        "typed_commitment_relation_refs": []
+      },
+      {
+        "behavior_commitment_ids": [],
+        "behavior_planes": [],
+        "behaviors": [
+          "ack_bundle_card_return:bundle_card_pending_return",
+          "ack_bundle_card_return:bundle_return_acknowledged",
+          "ack_bundle_card_return:variant:bundle_card",
+          "ack_bundle_card_return:adapter:ack_bundle_card_adapter",
+          "ack_single_card_return:card_return_acknowledged",
+          "ack_single_card_return:single_card_pending_return",
+          "ack_single_card_return:variant:single_card",
+          "ack_single_card_return:adapter:ack_single_card_adapter",
+          "ack_system_card_return:system_card_pending_return",
+          "ack_system_card_return:system_card_return_acknowledged",
+          "ack_system_card_return:variant:system_card",
+          "ack_system_card_return:adapter:ack_system_card_adapter"
+        ],
+        "business_intent_ids": [],
+        "different_elements": [
+          "ack_bundle_card_return:bundle_card_pending_return",
+          "ack_bundle_card_return:bundle_return_acknowledged",
+          "ack_bundle_card_return:variant:bundle_card",
+          "ack_bundle_card_return:adapter:ack_bundle_card_adapter",
+          "ack_single_card_return:card_return_acknowledged",
+          "ack_single_card_return:single_card_pending_return",
+          "ack_single_card_return:variant:single_card",
+          "ack_single_card_return:adapter:ack_single_card_adapter",
+          "ack_system_card_return:system_card_pending_return",
+          "ack_system_card_return:system_card_return_acknowledged",
+          "ack_system_card_return:variant:system_card",
+          "ack_system_card_return:adapter:ack_system_card_adapter"
+        ],
+        "maintenance_group_id": "maintenance:ack_bundle_card_return+ack_single_card_return+ack_system_card_return",
+        "matched_elements": [
+          "ack returns are monotonic and idempotent",
+          "ack_payload",
+          "ack_wait_projection",
+          "card_ack_contract",
+          "completed_return_ledger",
+          "duplicate_ack_does_not_reopen_resolved_return",
+          "duplicate_ack_reopens_resolved_return",
+          "incomplete_ack_does_not_advance_wait",
+          "incomplete_bundle_ack_advances_wait",
+          "merge_terminal_return_monotonically",
+          "pending_return_record",
+          "preconsume_return_ack",
+          "project_incomplete_ack_wait",
+          "update_pending_return_status",
+          "verify_ack_identity",
+          "write_completed_return"
+        ],
         "model_ids": [
           "ack_bundle_card_return",
           "ack_single_card_return",
@@ -2339,18 +2927,23 @@
         ],
         "obligation_id": "maintenance:ack_bundle_card_return+ack_single_card_return+ack_system_card_return:variant-tests",
         "obligation_type": "variant_behavior_tests",
+        "primary_path_ids": [],
         "rationale": "Variant-specific behavior needs per-member tests so shared-kernel work does not erase differences.",
         "relation_ids": [
           "ack_single_card_return:ack_bundle_card_return:same_family_variant",
           "ack_single_card_return:ack_system_card_return:same_family_variant"
         ],
+        "surface_ids": [],
         "test_paths": [
           "tests/test_flowpilot_card_runtime.py",
           "tests/router_runtime/ack_return.py",
           "tests/router_runtime/cards.py"
-        ]
+        ],
+        "typed_commitment_relation_refs": []
       },
       {
+        "behavior_commitment_ids": [],
+        "behavior_planes": [],
         "behaviors": [
           "active_wait_state",
           "current_router_wait",
@@ -2375,38 +2968,12 @@
           "write_router_result_event",
           "wrong_recipient_result_satisfies_wait"
         ],
-        "maintenance_group_id": "maintenance:packet_result_current_node+packet_result_material_scan+packet_result_pm_role_work+packet_result_research",
-        "model_ids": [
-          "packet_result_current_node",
-          "packet_result_material_scan",
-          "packet_result_pm_role_work",
-          "packet_result_research"
-        ],
-        "obligation_id": "maintenance:packet_result_current_node+packet_result_material_scan+packet_result_pm_role_work+packet_result_research:shared-tests",
-        "obligation_type": "shared_behavior_tests",
-        "rationale": "Shared behavior in a maintenance group needs tests that prove the family, not only one member.",
-        "relation_ids": [
-          "packet_result_material_scan:packet_result_research:same_family_variant",
-          "packet_result_research:packet_result_current_node:same_family_variant",
-          "packet_result_research:packet_result_pm_role_work:same_family_variant"
-        ],
-        "test_paths": [
-          "tests/router_runtime/packet_result_family.py",
-          "tests/router_runtime/packets.py",
-          "tests/router_runtime/material_modeling.py",
-          "tests/router_runtime/pm_role_work.py"
-        ]
-      },
-      {
-        "behaviors": [
+        "business_intent_ids": [],
+        "different_elements": [
           "packet_result_current_node:current_node_result_wait",
           "packet_result_current_node:worker_current_node_result_returned",
           "packet_result_current_node:variant:current_node",
           "packet_result_current_node:adapter:packet_result_current_node_adapter",
-          "packet_result_material_scan:material_scan_result_wait",
-          "packet_result_material_scan:worker_scan_results_returned",
-          "packet_result_material_scan:variant:material_scan",
-          "packet_result_material_scan:adapter:packet_result_material_scan_adapter",
           "packet_result_pm_role_work:pm_role_work_result_wait",
           "packet_result_pm_role_work:role_work_result_returned",
           "packet_result_pm_role_work:variant:pm_role_work",
@@ -2416,29 +2983,133 @@
           "packet_result_research:variant:research",
           "packet_result_research:adapter:packet_result_research_adapter"
         ],
-        "maintenance_group_id": "maintenance:packet_result_current_node+packet_result_material_scan+packet_result_pm_role_work+packet_result_research",
+        "maintenance_group_id": "maintenance:packet_result_current_node+packet_result_pm_role_work+packet_result_research",
+        "matched_elements": [
+          "active_wait_state",
+          "current_router_wait",
+          "durable packet results are folded before stale waits",
+          "durable_result_envelope",
+          "durable_result_envelope_folds_before_wait",
+          "durable_result_joined_but_router_event_absent",
+          "fold_durable_result_envelope",
+          "missing_role_wait_projection",
+          "packet_result_envelope",
+          "packet_result_ledger",
+          "partial result batches keep sibling member gaps visible",
+          "partial_batch_wait_names_only_missing_roles",
+          "preserve_sealed_body_boundary",
+          "project_partial_member_wait",
+          "reject_wrong_recipient_result",
+          "router_wait_state",
+          "sealed_bodies_remain_unopened_by_router",
+          "sealed_body_text_leaks_into_controller_context",
+          "suppress_stale_result_reminder",
+          "update_packet_result_status",
+          "write_router_result_event",
+          "wrong_recipient_result_satisfies_wait"
+        ],
         "model_ids": [
           "packet_result_current_node",
-          "packet_result_material_scan",
           "packet_result_pm_role_work",
           "packet_result_research"
         ],
-        "obligation_id": "maintenance:packet_result_current_node+packet_result_material_scan+packet_result_pm_role_work+packet_result_research:variant-tests",
-        "obligation_type": "variant_behavior_tests",
-        "rationale": "Variant-specific behavior needs per-member tests so shared-kernel work does not erase differences.",
+        "obligation_id": "maintenance:packet_result_current_node+packet_result_pm_role_work+packet_result_research:shared-tests",
+        "obligation_type": "shared_behavior_tests",
+        "primary_path_ids": [],
+        "rationale": "Shared behavior in a maintenance group needs tests that prove the family, not only one member.",
         "relation_ids": [
-          "packet_result_material_scan:packet_result_research:same_family_variant",
           "packet_result_research:packet_result_current_node:same_family_variant",
           "packet_result_research:packet_result_pm_role_work:same_family_variant"
         ],
+        "surface_ids": [],
         "test_paths": [
           "tests/router_runtime/packet_result_family.py",
           "tests/router_runtime/packets.py",
-          "tests/router_runtime/material_modeling.py",
           "tests/router_runtime/pm_role_work.py"
-        ]
+        ],
+        "typed_commitment_relation_refs": []
       },
       {
+        "behavior_commitment_ids": [],
+        "behavior_planes": [],
+        "behaviors": [
+          "packet_result_current_node:current_node_result_wait",
+          "packet_result_current_node:worker_current_node_result_returned",
+          "packet_result_current_node:variant:current_node",
+          "packet_result_current_node:adapter:packet_result_current_node_adapter",
+          "packet_result_pm_role_work:pm_role_work_result_wait",
+          "packet_result_pm_role_work:role_work_result_returned",
+          "packet_result_pm_role_work:variant:pm_role_work",
+          "packet_result_pm_role_work:adapter:packet_result_pm_role_work_adapter",
+          "packet_result_research:research_result_wait",
+          "packet_result_research:worker_research_report_returned",
+          "packet_result_research:variant:research",
+          "packet_result_research:adapter:packet_result_research_adapter"
+        ],
+        "business_intent_ids": [],
+        "different_elements": [
+          "packet_result_current_node:current_node_result_wait",
+          "packet_result_current_node:worker_current_node_result_returned",
+          "packet_result_current_node:variant:current_node",
+          "packet_result_current_node:adapter:packet_result_current_node_adapter",
+          "packet_result_pm_role_work:pm_role_work_result_wait",
+          "packet_result_pm_role_work:role_work_result_returned",
+          "packet_result_pm_role_work:variant:pm_role_work",
+          "packet_result_pm_role_work:adapter:packet_result_pm_role_work_adapter",
+          "packet_result_research:research_result_wait",
+          "packet_result_research:worker_research_report_returned",
+          "packet_result_research:variant:research",
+          "packet_result_research:adapter:packet_result_research_adapter"
+        ],
+        "maintenance_group_id": "maintenance:packet_result_current_node+packet_result_pm_role_work+packet_result_research",
+        "matched_elements": [
+          "active_wait_state",
+          "current_router_wait",
+          "durable packet results are folded before stale waits",
+          "durable_result_envelope",
+          "durable_result_envelope_folds_before_wait",
+          "durable_result_joined_but_router_event_absent",
+          "fold_durable_result_envelope",
+          "missing_role_wait_projection",
+          "packet_result_envelope",
+          "packet_result_ledger",
+          "partial result batches keep sibling member gaps visible",
+          "partial_batch_wait_names_only_missing_roles",
+          "preserve_sealed_body_boundary",
+          "project_partial_member_wait",
+          "reject_wrong_recipient_result",
+          "router_wait_state",
+          "sealed_bodies_remain_unopened_by_router",
+          "sealed_body_text_leaks_into_controller_context",
+          "suppress_stale_result_reminder",
+          "update_packet_result_status",
+          "write_router_result_event",
+          "wrong_recipient_result_satisfies_wait"
+        ],
+        "model_ids": [
+          "packet_result_current_node",
+          "packet_result_pm_role_work",
+          "packet_result_research"
+        ],
+        "obligation_id": "maintenance:packet_result_current_node+packet_result_pm_role_work+packet_result_research:variant-tests",
+        "obligation_type": "variant_behavior_tests",
+        "primary_path_ids": [],
+        "rationale": "Variant-specific behavior needs per-member tests so shared-kernel work does not erase differences.",
+        "relation_ids": [
+          "packet_result_research:packet_result_current_node:same_family_variant",
+          "packet_result_research:packet_result_pm_role_work:same_family_variant"
+        ],
+        "surface_ids": [],
+        "test_paths": [
+          "tests/router_runtime/packet_result_family.py",
+          "tests/router_runtime/packets.py",
+          "tests/router_runtime/pm_role_work.py"
+        ],
+        "typed_commitment_relation_refs": []
+      },
+      {
+        "behavior_commitment_ids": [],
+        "behavior_planes": [],
         "behaviors": [
           "current_frontier",
           "execution_frontier",
@@ -2464,26 +3135,8 @@
           "write_execution_frontier",
           "write_route_draft"
         ],
-        "maintenance_group_id": "maintenance:route_mutation_sibling_branch+route_mutation_supersede",
-        "model_ids": [
-          "route_mutation_sibling_branch",
-          "route_mutation_supersede"
-        ],
-        "obligation_id": "maintenance:route_mutation_sibling_branch+route_mutation_supersede:shared-tests",
-        "obligation_type": "shared_behavior_tests",
-        "rationale": "Shared behavior in a maintenance group needs tests that prove the family, not only one member.",
-        "relation_ids": [
-          "route_mutation_supersede:route_mutation_sibling_branch:same_family_variant"
-        ],
-        "test_paths": [
-          "tests/router_runtime/route_mutation_sibling_replacement.py",
-          "tests/test_flowpilot_user_flow_diagram.py",
-          "tests/router_runtime/route_mutation.py",
-          "tests/flowpilot_route_mutation_contracts.py"
-        ]
-      },
-      {
-        "behaviors": [
+        "business_intent_ids": [],
+        "different_elements": [
           "route_mutation_sibling_branch:sibling_replacement_frontier",
           "route_mutation_sibling_branch:variant:sibling_branch_replacement",
           "route_mutation_sibling_branch:adapter:route_mutation_sibling_branch_replacement_adapter",
@@ -2492,24 +3145,120 @@
           "route_mutation_supersede:adapter:route_mutation_supersede_adapter"
         ],
         "maintenance_group_id": "maintenance:route_mutation_sibling_branch+route_mutation_supersede",
+        "matched_elements": [
+          "current_frontier",
+          "execution_frontier",
+          "invalidate_stale_route_evidence",
+          "mutated_route_draft",
+          "old_current_node_packet_is_superseded",
+          "old_packet_survives_replacement",
+          "packet_ledger",
+          "pending_route_mutation",
+          "prior_route_evidence",
+          "project_replay_scope",
+          "record_route_mutation",
+          "replacement_declares_replay_scope",
+          "replay_scope",
+          "route replacement invalidates stale proof before replay",
+          "route_draft",
+          "route_mutation_activation_record",
+          "route_mutation_contract",
+          "route_mutation_request",
+          "stale_evidence_blocks_final_ledger",
+          "stale_sibling_evidence_used_for_completion",
+          "supersede_old_current_node_packet",
+          "write_execution_frontier",
+          "write_route_draft"
+        ],
+        "model_ids": [
+          "route_mutation_sibling_branch",
+          "route_mutation_supersede"
+        ],
+        "obligation_id": "maintenance:route_mutation_sibling_branch+route_mutation_supersede:shared-tests",
+        "obligation_type": "shared_behavior_tests",
+        "primary_path_ids": [],
+        "rationale": "Shared behavior in a maintenance group needs tests that prove the family, not only one member.",
+        "relation_ids": [
+          "route_mutation_supersede:route_mutation_sibling_branch:same_family_variant"
+        ],
+        "surface_ids": [],
+        "test_paths": [
+          "tests/router_runtime/route_mutation_sibling_replacement.py",
+          "tests/test_flowpilot_user_flow_diagram.py",
+          "tests/router_runtime/route_mutation.py",
+          "tests/flowpilot_route_mutation_contracts.py"
+        ],
+        "typed_commitment_relation_refs": []
+      },
+      {
+        "behavior_commitment_ids": [],
+        "behavior_planes": [],
+        "behaviors": [
+          "route_mutation_sibling_branch:sibling_replacement_frontier",
+          "route_mutation_sibling_branch:variant:sibling_branch_replacement",
+          "route_mutation_sibling_branch:adapter:route_mutation_sibling_branch_replacement_adapter",
+          "route_mutation_supersede:supersede_replacement_frontier",
+          "route_mutation_supersede:variant:supersede",
+          "route_mutation_supersede:adapter:route_mutation_supersede_adapter"
+        ],
+        "business_intent_ids": [],
+        "different_elements": [
+          "route_mutation_sibling_branch:sibling_replacement_frontier",
+          "route_mutation_sibling_branch:variant:sibling_branch_replacement",
+          "route_mutation_sibling_branch:adapter:route_mutation_sibling_branch_replacement_adapter",
+          "route_mutation_supersede:supersede_replacement_frontier",
+          "route_mutation_supersede:variant:supersede",
+          "route_mutation_supersede:adapter:route_mutation_supersede_adapter"
+        ],
+        "maintenance_group_id": "maintenance:route_mutation_sibling_branch+route_mutation_supersede",
+        "matched_elements": [
+          "current_frontier",
+          "execution_frontier",
+          "invalidate_stale_route_evidence",
+          "mutated_route_draft",
+          "old_current_node_packet_is_superseded",
+          "old_packet_survives_replacement",
+          "packet_ledger",
+          "pending_route_mutation",
+          "prior_route_evidence",
+          "project_replay_scope",
+          "record_route_mutation",
+          "replacement_declares_replay_scope",
+          "replay_scope",
+          "route replacement invalidates stale proof before replay",
+          "route_draft",
+          "route_mutation_activation_record",
+          "route_mutation_contract",
+          "route_mutation_request",
+          "stale_evidence_blocks_final_ledger",
+          "stale_sibling_evidence_used_for_completion",
+          "supersede_old_current_node_packet",
+          "write_execution_frontier",
+          "write_route_draft"
+        ],
         "model_ids": [
           "route_mutation_sibling_branch",
           "route_mutation_supersede"
         ],
         "obligation_id": "maintenance:route_mutation_sibling_branch+route_mutation_supersede:variant-tests",
         "obligation_type": "variant_behavior_tests",
+        "primary_path_ids": [],
         "rationale": "Variant-specific behavior needs per-member tests so shared-kernel work does not erase differences.",
         "relation_ids": [
           "route_mutation_supersede:route_mutation_sibling_branch:same_family_variant"
         ],
+        "surface_ids": [],
         "test_paths": [
           "tests/router_runtime/route_mutation_sibling_replacement.py",
           "tests/test_flowpilot_user_flow_diagram.py",
           "tests/router_runtime/route_mutation.py",
           "tests/flowpilot_route_mutation_contracts.py"
-        ]
+        ],
+        "typed_commitment_relation_refs": []
       },
       {
+        "behavior_commitment_ids": [],
+        "behavior_planes": [],
         "behaviors": [
           "apply_state_writing_effects",
           "branch_equivalence_overclaimed_without_replay",
@@ -2523,28 +3272,8 @@
           "state_writing_branch_requires_replay_evidence",
           "write_reconciliation_effect"
         ],
-        "maintenance_group_id": "maintenance:router_reconciliation_role_output_event+router_reconciliation_runtime_resume+router_reconciliation_scheduled_receipt",
-        "model_ids": [
-          "router_reconciliation_role_output_event",
-          "router_reconciliation_runtime_resume",
-          "router_reconciliation_scheduled_receipt"
-        ],
-        "obligation_id": "maintenance:router_reconciliation_role_output_event+router_reconciliation_runtime_resume+router_reconciliation_scheduled_receipt:shared-tests",
-        "obligation_type": "shared_behavior_tests",
-        "rationale": "Shared behavior in a maintenance group needs tests that prove the family, not only one member.",
-        "relation_ids": [
-          "router_reconciliation_scheduled_receipt:router_reconciliation_role_output_event:same_family_variant",
-          "router_reconciliation_scheduled_receipt:router_reconciliation_runtime_resume:same_family_variant"
-        ],
-        "test_paths": [
-          "tests/test_flowpilot_role_output_bridge_events.py",
-          "tests/router_runtime/dispatch_gate.py",
-          "tests/router_runtime/resume.py",
-          "tests/router_runtime/controller.py"
-        ]
-      },
-      {
-        "behaviors": [
+        "business_intent_ids": [],
+        "different_elements": [
           "router_reconciliation_role_output_event:external_event_ledger",
           "router_reconciliation_role_output_event:reconciled_external_role_event",
           "router_reconciliation_role_output_event:role_output_event",
@@ -2562,6 +3291,93 @@
           "router_reconciliation_scheduled_receipt:adapter:reconciliation_scheduled_controller_receipt_adapter"
         ],
         "maintenance_group_id": "maintenance:router_reconciliation_role_output_event+router_reconciliation_runtime_resume+router_reconciliation_scheduled_receipt",
+        "matched_elements": [
+          "apply_state_writing_effects",
+          "branch_equivalence_overclaimed_without_replay",
+          "classify_reconciliation_input",
+          "control_blocker_index",
+          "map_to_result_case_vocabulary",
+          "progress_only_background_claimed_as_pass",
+          "reconciliation branches expose a small result-case vocabulary",
+          "result_case_vocabulary_is_complete",
+          "router_state",
+          "state_writing_branch_requires_replay_evidence",
+          "write_reconciliation_effect"
+        ],
+        "model_ids": [
+          "router_reconciliation_role_output_event",
+          "router_reconciliation_runtime_resume",
+          "router_reconciliation_scheduled_receipt"
+        ],
+        "obligation_id": "maintenance:router_reconciliation_role_output_event+router_reconciliation_runtime_resume+router_reconciliation_scheduled_receipt:shared-tests",
+        "obligation_type": "shared_behavior_tests",
+        "primary_path_ids": [],
+        "rationale": "Shared behavior in a maintenance group needs tests that prove the family, not only one member.",
+        "relation_ids": [
+          "router_reconciliation_scheduled_receipt:router_reconciliation_role_output_event:same_family_variant",
+          "router_reconciliation_scheduled_receipt:router_reconciliation_runtime_resume:same_family_variant"
+        ],
+        "surface_ids": [],
+        "test_paths": [
+          "tests/test_flowpilot_role_output_bridge_events.py",
+          "tests/router_runtime/dispatch_gate.py",
+          "tests/router_runtime/resume.py",
+          "tests/router_runtime/controller.py"
+        ],
+        "typed_commitment_relation_refs": []
+      },
+      {
+        "behavior_commitment_ids": [],
+        "behavior_planes": [],
+        "behaviors": [
+          "router_reconciliation_role_output_event:external_event_ledger",
+          "router_reconciliation_role_output_event:reconciled_external_role_event",
+          "router_reconciliation_role_output_event:role_output_event",
+          "router_reconciliation_role_output_event:variant:role_output_event",
+          "router_reconciliation_role_output_event:adapter:reconciliation_role_output_event_adapter",
+          "router_reconciliation_runtime_resume:resume_next_recipient_projection",
+          "router_reconciliation_runtime_resume:resume_projection_state",
+          "router_reconciliation_runtime_resume:runtime_state_resume",
+          "router_reconciliation_runtime_resume:variant:runtime_state_resume",
+          "router_reconciliation_runtime_resume:adapter:reconciliation_runtime_state_resume_adapter",
+          "router_reconciliation_scheduled_receipt:controller_action_row",
+          "router_reconciliation_scheduled_receipt:reconciled_controller_receipt",
+          "router_reconciliation_scheduled_receipt:scheduled_controller_receipt",
+          "router_reconciliation_scheduled_receipt:variant:scheduled_controller_receipt",
+          "router_reconciliation_scheduled_receipt:adapter:reconciliation_scheduled_controller_receipt_adapter"
+        ],
+        "business_intent_ids": [],
+        "different_elements": [
+          "router_reconciliation_role_output_event:external_event_ledger",
+          "router_reconciliation_role_output_event:reconciled_external_role_event",
+          "router_reconciliation_role_output_event:role_output_event",
+          "router_reconciliation_role_output_event:variant:role_output_event",
+          "router_reconciliation_role_output_event:adapter:reconciliation_role_output_event_adapter",
+          "router_reconciliation_runtime_resume:resume_next_recipient_projection",
+          "router_reconciliation_runtime_resume:resume_projection_state",
+          "router_reconciliation_runtime_resume:runtime_state_resume",
+          "router_reconciliation_runtime_resume:variant:runtime_state_resume",
+          "router_reconciliation_runtime_resume:adapter:reconciliation_runtime_state_resume_adapter",
+          "router_reconciliation_scheduled_receipt:controller_action_row",
+          "router_reconciliation_scheduled_receipt:reconciled_controller_receipt",
+          "router_reconciliation_scheduled_receipt:scheduled_controller_receipt",
+          "router_reconciliation_scheduled_receipt:variant:scheduled_controller_receipt",
+          "router_reconciliation_scheduled_receipt:adapter:reconciliation_scheduled_controller_receipt_adapter"
+        ],
+        "maintenance_group_id": "maintenance:router_reconciliation_role_output_event+router_reconciliation_runtime_resume+router_reconciliation_scheduled_receipt",
+        "matched_elements": [
+          "apply_state_writing_effects",
+          "branch_equivalence_overclaimed_without_replay",
+          "classify_reconciliation_input",
+          "control_blocker_index",
+          "map_to_result_case_vocabulary",
+          "progress_only_background_claimed_as_pass",
+          "reconciliation branches expose a small result-case vocabulary",
+          "result_case_vocabulary_is_complete",
+          "router_state",
+          "state_writing_branch_requires_replay_evidence",
+          "write_reconciliation_effect"
+        ],
         "model_ids": [
           "router_reconciliation_role_output_event",
           "router_reconciliation_runtime_resume",
@@ -2569,22 +3385,26 @@
         ],
         "obligation_id": "maintenance:router_reconciliation_role_output_event+router_reconciliation_runtime_resume+router_reconciliation_scheduled_receipt:variant-tests",
         "obligation_type": "variant_behavior_tests",
+        "primary_path_ids": [],
         "rationale": "Variant-specific behavior needs per-member tests so shared-kernel work does not erase differences.",
         "relation_ids": [
           "router_reconciliation_scheduled_receipt:router_reconciliation_role_output_event:same_family_variant",
           "router_reconciliation_scheduled_receipt:router_reconciliation_runtime_resume:same_family_variant"
         ],
+        "surface_ids": [],
         "test_paths": [
           "tests/test_flowpilot_role_output_bridge_events.py",
           "tests/router_runtime/dispatch_gate.py",
           "tests/router_runtime/resume.py",
           "tests/router_runtime/controller.py"
-        ]
+        ],
+        "typed_commitment_relation_refs": []
       }
-    ]
+    ],
+    "typed_commitment_relation_refs": []
   },
   "summary": {
-    "change_impact_count": 5,
+    "change_impact_count": 4,
     "code_obligation_count": 5,
     "maintenance_group_count": 4,
     "recommended_next_routes": [
@@ -2592,7 +3412,7 @@
       "model_mesh",
       "model_test_alignment"
     ],
-    "relation_count": 9,
+    "relation_count": 8,
     "test_obligation_count": 8
   }
 }

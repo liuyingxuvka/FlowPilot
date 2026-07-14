@@ -86,7 +86,7 @@ class FlowPilotFieldContractModelTests(unittest.TestCase):
         self.assertIn("repair_packet.repair_obligation_context", fields)
         self.assertIn("flowguard.semantic_recheck.consumed_repair_obligation_ids", fields)
         self.assertIn("current_handoff_contract.required_report_contract.required_result_body_fields", fields)
-        self.assertIn("current_handoff_contract.required_report_contract.output_contract.forbidden_fields", fields)
+        self.assertIn("current_handoff_contract.required_report_contract.forbidden_fields", fields)
         self.assertIn("current_handoff_contract.missing_information_response", fields)
         self.assertIn("current_handoff_contract.downstream_consumer.unlocks", fields)
         self.assertIn("current_handoff_contract.status_projection_requirements.repair_chain_visible_when_current", fields)
@@ -115,9 +115,12 @@ class FlowPilotFieldContractModelTests(unittest.TestCase):
         self.assertIn("preplanning.high_standard_contract.acceptance_item_registry.items[].source_type", fields)
         self.assertIn("preplanning.high_standard_contract.acceptance_item_registry.items[].quality_floor", fields)
         self.assertIn("preplanning.high_standard_contract.acceptance_item_registry.items[].future_evidence_rule", fields)
-        self.assertIn("preplanning.discovery.material_sources", fields)
-        self.assertIn("preplanning.discovery.material_sufficiency", fields)
+        self.assertIn("task.discovery.packet.body.runtime_local_capability_inventory", fields)
         self.assertIn("preplanning.discovery.candidate_skill_inventory", fields)
+        self.assertIn("packet_result.contract_self_check.workstream_plan_and_completion", fields)
+        self.assertNotIn("preplanning.discovery.material_sources", fields)
+        self.assertNotIn("preplanning.discovery.material_sufficiency", fields)
+        self.assertNotIn("preplanning.discovery.material_current", fields)
         self.assertIn("preplanning.skill_standard.obligations[]", fields)
         self.assertIn("preplanning.skill_standard.obligations[].obligation_id", fields)
         self.assertIn("preplanning.skill_standard.obligations[].skill", fields)
@@ -327,6 +330,13 @@ class FlowPilotFieldContractModelTests(unittest.TestCase):
         self.assertIn("lifecycle_guard_config.ack_blocker_seconds", forbidden)
         self.assertIn("lifecycle_guard_config.result_liveness_seconds", forbidden)
         self.assertIn("lifecycle_guard_config.progress_grace_seconds", forbidden)
+        self.assertIn("preplanning.discovery.material_sources", forbidden)
+        self.assertIn("preplanning.discovery.material_sufficiency", forbidden)
+        self.assertIn("preplanning.discovery.material_current", forbidden)
+
+        retired = {entry["field"] for entry in model.RETIRED_FIELD_CONTRACTS}
+        self.assertIn("cards/phases/pm_material_scan.md", retired)
+        self.assertIn("cards/reviewer/material_sufficiency.md", retired)
 
     def test_packet_result_contract_catalog_covers_current_packet_families(self) -> None:
         self.assertIs(model.PACKET_RESULT_CONTRACTS, model.packet_result_contracts.PACKET_RESULT_CONTRACTS)

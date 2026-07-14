@@ -18,10 +18,17 @@ from flowguard import (
 FAMILY_ID = "flowpilot.packet_result_return_reconciliation"
 
 MEMBERS = (
-    "material_scan",
     "research",
     "current_node",
     "pm_role_work",
+)
+
+RETIRED_MATERIAL_MEMBERS = frozenset(
+    {
+        "material_scan",
+        "material_sufficiency",
+        "material_understanding",
+    }
 )
 
 MECHANISMS = (
@@ -37,21 +44,6 @@ MODEL_COMMAND = (
     "python simulations/run_flowpilot_packet_result_family_parity_checks.py "
     "--json-out simulations/flowpilot_packet_result_family_parity_results.json"
 )
-MATERIAL_FULL_COMMAND = (
-    "python -m unittest "
-    "tests.router_runtime.packets.PacketsRuntimeTests."
-    "test_material_scan_existing_results_reconcile_before_stale_wait"
-)
-MATERIAL_PARTIAL_COMMAND = (
-    "python -m unittest "
-    "tests.router_runtime.packets.PacketsRuntimeTests."
-    "test_material_scan_full_batch_wait_current_work_names_all_missing_roles"
-)
-MATERIAL_SEALED_COMMAND = (
-    "python -m unittest "
-    "tests.router_runtime.material_modeling.MaterialModelingRuntimeTests."
-    "test_material_scan_result_receipt_folds_batch_lifecycle"
-)
 PM_ROLE_WORK_WRONG_RECIPIENT_COMMAND = (
     "python -m unittest "
     "tests.router_runtime.pm_role_work.PmRoleWorkRuntimeTests."
@@ -60,13 +52,6 @@ PM_ROLE_WORK_WRONG_RECIPIENT_COMMAND = (
 
 
 def _command_for(member: str, mechanism: str) -> str:
-    if member == "material_scan":
-        if mechanism == "full_durable_envelope_event_fold":
-            return MATERIAL_FULL_COMMAND
-        if mechanism in {"partial_member_wait_projection", "stale_reminder_suppression"}:
-            return MATERIAL_PARTIAL_COMMAND
-        if mechanism == "sealed_body_provenance":
-            return MATERIAL_SEALED_COMMAND
     if member == "pm_role_work" and mechanism == "wrong_recipient_rejection":
         return PM_ROLE_WORK_WRONG_RECIPIENT_COMMAND
     return RUNTIME_COMMAND
@@ -288,8 +273,37 @@ def build_report() -> dict[str, Any]:
         "report": unreviewed_scan.to_dict(),
     }
     known_bad.append(analogous_known_bad)
+    family_members = {member.member_id for member in family.members}
+    evidence_members = {row.member_id for row in evidence}
+    retired_family_members = sorted(family_members & RETIRED_MATERIAL_MEMBERS)
+    retired_evidence_members = sorted(evidence_members & RETIRED_MATERIAL_MEMBERS)
+    retired_obligation_ids = sorted(
+        obligation_id
+        for member in family.members
+        for obligation_id in member.obligation_ids
+        if any(
+            obligation_id.startswith(f"packet_result_family.{retired}.")
+            for retired in RETIRED_MATERIAL_MEMBERS
+        )
+    )
+    retired_material_surface_absence = {
+        "ok": not retired_family_members
+        and not retired_evidence_members
+        and not retired_obligation_ids,
+        "retired_member_names": sorted(RETIRED_MATERIAL_MEMBERS),
+        "retired_family_members": retired_family_members,
+        "retired_evidence_members": retired_evidence_members,
+        "retired_obligation_ids": retired_obligation_ids,
+        "claim_boundary": (
+            "Parity authority covers research, current-node, and PM role-work "
+            "only; retired material families remain absence checks, not members."
+        ),
+    }
     return {
-        "ok": parity_report.ok and scan_report.ok and all(case["ok"] for case in known_bad),
+        "ok": parity_report.ok
+        and scan_report.ok
+        and all(case["ok"] for case in known_bad)
+        and retired_material_surface_absence["ok"],
         "result_type": "flowpilot_packet_result_family_parity",
         "family_id": FAMILY_ID,
         "members": list(MEMBERS),
@@ -302,6 +316,7 @@ def build_report() -> dict[str, Any]:
         "parity_report": parity_report.to_dict(),
         "analogous_scan_report": scan_report.to_dict(),
         "known_bad_cases": known_bad,
+        "retired_material_surface_absence": retired_material_surface_absence,
         "family": family.to_dict(),
         "evidence": [row.to_dict() for row in evidence],
     }
@@ -314,6 +329,9 @@ def compact_status(report: dict[str, Any]) -> dict[str, Any]:
         "parity_ok": bool(report.get("parity_ok")),
         "analogous_scan_ok": bool(report.get("analogous_scan_ok")),
         "known_bad_ok": bool(report.get("known_bad_ok")),
+        "retired_material_surface_absence_ok": bool(
+            report.get("retired_material_surface_absence", {}).get("ok")
+        ),
         "members": report.get("members"),
         "required_mechanisms": report.get("required_mechanisms"),
     }

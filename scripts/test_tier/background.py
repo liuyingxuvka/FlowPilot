@@ -13,9 +13,11 @@ from typing import Any, Iterable
 
 try:
     from .definitions import TierCommand, commands_for_tier
+    from .source_fingerprint import source_fingerprint
 except ImportError:  # pragma: no cover - script execution path
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     from definitions import TierCommand, commands_for_tier
+    from source_fingerprint import source_fingerprint
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -74,6 +76,7 @@ def command_to_json(command: TierCommand, *, background_dir: Path) -> dict[str, 
         "release_only": command.release_only,
         "background_recommended": command.background_recommended,
         "background_stage": command.background_stage,
+        "evidence_dependency": command.evidence_dependency,
         "background_artifacts": _artifact_paths_for_json(background_dir, command.name),
     }
 
@@ -165,10 +168,12 @@ def _launch_background(
     *,
     log_root: Path,
     timeout_seconds: int | None = None,
+    source_fingerprint_value: str | None = None,
 ) -> dict[str, Any]:
     log_root.mkdir(parents=True, exist_ok=True)
     paths = artifact_paths(log_root, command.name)
     clear_artifacts(paths)
+    covered_source = source_fingerprint_value or source_fingerprint()
     meta = {
         "name": command.name,
         "command": list(command.command),
@@ -179,6 +184,7 @@ def _launch_background(
         "exit_code": None,
         "proof_reused": None,
         "timeout_seconds": _coerce_timeout_seconds(timeout_seconds),
+        "covered_source_fingerprint": covered_source,
         "artifacts": {key: str(value) for key, value in paths.items()},
     }
     _write_json(paths["meta"], meta)
@@ -194,6 +200,8 @@ def _launch_background(
         str(log_root),
         "--background-child-timeout-seconds",
         str(meta["timeout_seconds"]),
+        "--covered-source-fingerprint",
+        covered_source,
     ]
     proc = subprocess.Popen(
         child_args,
@@ -222,8 +230,14 @@ def launch_background(
     log_root: Path,
     timeout_seconds: int | None = None,
 ) -> list[dict[str, Any]]:
+    covered_source = source_fingerprint()
     return [
-        _launch_background(command, log_root=log_root, timeout_seconds=timeout_seconds)
+        _launch_background(
+            command,
+            log_root=log_root,
+            timeout_seconds=timeout_seconds,
+            source_fingerprint_value=covered_source,
+        )
         for command in commands
     ]
 

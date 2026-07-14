@@ -58,6 +58,9 @@ class State:
     release_required: bool = False
     release_suite_run_or_backgrounded: bool = False
     release_public_check_after_model_proofs: bool = True
+    release_embeds_final_confidence_consumer: bool = False
+    testmesh_mta_final_confidence_cycle: bool = False
+    install_check_after_topology_writers: bool = True
     install_sync_required: bool = False
     install_sync_planned: bool = False
 
@@ -216,6 +219,18 @@ SCENARIOS: dict[str, State] = {
         _valid_background("release_public_check_races_model_proofs", release=True),
         release_public_check_after_model_proofs=False,
     ),
+    "release_embeds_final_confidence_consumer": replace(
+        _valid_background("release_embeds_final_confidence_consumer", release=True),
+        release_embeds_final_confidence_consumer=True,
+    ),
+    "testmesh_mta_final_confidence_dependency_cycle": replace(
+        _valid_background("testmesh_mta_final_confidence_dependency_cycle", release=True),
+        testmesh_mta_final_confidence_cycle=True,
+    ),
+    "install_check_races_topology_writers": replace(
+        _valid_background("install_check_races_topology_writers"),
+        install_check_after_topology_writers=False,
+    ),
     "install_sync_skipped_after_tool_change": replace(
         _valid_fast("install_sync_skipped_after_tool_change"),
         install_sync_required=True,
@@ -288,6 +303,12 @@ def test_tier_failures(state: State) -> list[str]:
         and not state.release_public_check_after_model_proofs
     ):
         failures.append("release_public_check_races_model_proofs")
+    if state.release_embeds_final_confidence_consumer:
+        failures.append("release_tier_embeds_terminal_consumer")
+    if state.testmesh_mta_final_confidence_cycle:
+        failures.append("testmesh_mta_final_confidence_dependency_cycle")
+    if not state.install_check_after_topology_writers:
+        failures.append("install_check_races_topology_writers")
     if state.install_sync_required and not state.install_sync_planned:
         failures.append("install_sync_not_planned")
     return sorted(set(failures))
@@ -335,6 +356,8 @@ class TestTierStep:
         "child_suite_ownership",
         "background_artifacts",
         "release_obligations",
+        "testmesh_mta_final_confidence_dependency_graph",
+        "background_stage_order",
         "install_sync_plan",
     )
     writes = ("tier_confidence", "deferred_release_obligation")
@@ -394,6 +417,19 @@ def release_obligation_must_remain_visible(
     return InvariantResult.pass_()
 
 
+def final_confidence_dependency_must_be_acyclic(
+    state: State, _trace: Sequence[object]
+) -> InvariantResult:
+    if state.status == "accepted" and (
+        state.release_embeds_final_confidence_consumer
+        or state.testmesh_mta_final_confidence_cycle
+    ):
+        return InvariantResult.fail(
+            "accepted final-confidence consumer upstream of its own TestMesh/MTA evidence"
+        )
+    return InvariantResult.pass_()
+
+
 INVARIANTS = (
     Invariant(
         "accepted_states_are_safe",
@@ -414,6 +450,11 @@ INVARIANTS = (
         "release_obligation_must_remain_visible",
         "Deferred release obligations must remain visible.",
         release_obligation_must_remain_visible,
+    ),
+    Invariant(
+        "final_confidence_dependency_must_be_acyclic",
+        "Final confidence is a terminal consumer after TestMesh and strict MTA, never a release-tier input.",
+        final_confidence_dependency_must_be_acyclic,
     ),
 )
 

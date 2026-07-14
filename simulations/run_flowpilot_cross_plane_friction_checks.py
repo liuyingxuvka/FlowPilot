@@ -18,7 +18,7 @@ RESULTS_PATH = ROOT / "flowpilot_cross_plane_friction_results.json"
 
 REQUIRED_LABELS = (
     "controller_boundary_preserved_for_cross_plane_audit",
-    "material_scan_envelopes_have_role_contracts_and_write_targets",
+    "current_prework_contract_excludes_retired_material_protocol",
     "terminal_closure_writes_single_lifecycle_authority",
     "route_snapshot_projects_completed_frontier_nodes",
     "cockpit_projects_completed_nodes_and_hides_closed_runs",
@@ -35,9 +35,10 @@ REQUIRED_LABELS = (
 
 HAZARD_EXPECTED_FAILURES = {
     "controller_reads_sealed_body_during_audit": "Controller opened sealed body files during cross-plane reconciliation",
-    "material_dispatch_output_contract_role_drift": "material-scan dispatch lacks role-scoped output contract",
-    "material_dispatch_write_target_missing": "material-scan dispatch lacks explicit result write target",
-    "unsupported_material_packets_left_unrejected": "material-scan dispatch lacks unsupported packet rejection",
+    "retired_material_protocol_reintroduced": "retired mandatory material protocol is still active",
+    "mandatory_shallow_skill_inventory_removed": "mandatory shallow local skill inventory is missing",
+    "ordinary_resource_work_forced_as_gate": "ordinary PM/research work was turned into a mandatory gate",
+    "complete_workstream_report_contract_dropped": "complete-workstream role report semantics are missing",
     "terminal_closure_missing_run_lifecycle": "terminal closure is missing run_lifecycle.json",
     "terminal_authority_mismatch": "terminal closure is missing router/frontier/lifecycle terminal agreement",
     "terminal_control_blocker_not_cleared": "terminal closure is missing cleared active control blocker",
@@ -65,10 +66,11 @@ def _state_id(state: model.State) -> str:
     return (
         f"status={state.status}|step={state.step}|"
         f"boundary={state.controller_boundary_preserved},body={state.sealed_body_files_opened_by_controller}|"
-        f"material={state.material_scan_packets_observed},"
-        f"{state.material_output_contract_role_scoped},"
-        f"{state.material_dispatch_write_target_explicit},"
-        f"{state.unsupported_material_packets_rejected}|"
+        f"prework={state.current_prework_contract_observed},"
+        f"{state.retired_material_protocol_absent},"
+        f"{state.shallow_skill_inventory_preserved},"
+        f"{state.ordinary_resource_work_optional},"
+        f"{state.complete_workstream_report_contract_preserved}|"
         f"terminal={state.terminal_closure_observed},"
         f"{state.run_lifecycle_record_written},"
         f"{state.router_frontier_lifecycle_terminal_consistent},"
@@ -239,6 +241,7 @@ def run_checks(
     progress = _progress_report(graph)
     explorer = _flowguard_report()
     hazards = _check_hazards()
+    source_contract_audit = model.audit_current_prework_sources(ROOT.parent)
     live_run_audit = (
         model.audit_live_run(live_root, run_id=run_id)
         if live_root is not None
@@ -257,8 +260,7 @@ def run_checks(
     solution = _solution_simulation()
     skipped_checks = {
         "production_mutation": (
-            "skipped_with_reason: user requested model upgrade, scan, and "
-            "minimal repair strategy before production code edits"
+            "skipped_with_reason: this executable model and source reconciliation are read-only"
         )
     }
     if live_run_audit.get("skipped"):
@@ -270,12 +272,14 @@ def run_checks(
         and bool(progress["ok"])
         and bool(explorer["ok"])
         and bool(hazards["ok"])
+        and bool(source_contract_audit["ok"])
         and bool(live_run_audit["ok"])
         and bool(solution["ok"]),
         "safe_graph": safe_graph,
         "progress": progress,
         "flowguard_explorer": explorer,
         "hazard_checks": hazards,
+        "source_contract_audit": source_contract_audit,
         "live_run_audit": live_run_audit,
         "minimal_repair_strategy": repair_strategy,
         "solution_simulation": solution,
@@ -310,4 +314,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

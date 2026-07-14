@@ -13,7 +13,7 @@
   "output_contract_id": "<packet-envelope-output_contract.contract_id>",
   "batch_membership": {
     "batch_id": "<batch-id-or-null>",
-    "batch_kind": "<material_scan|research|current_node|pm_role_work|null>",
+    "batch_kind": "<research|current_node|pm_role_work|null>",
     "join_policy": "<all_results_before_pm_absorption|all_results_before_review>",
     "dependency_class": "<blocking|advisory|prep-only>",
     "blocks_gate_ids": [],

@@ -142,7 +142,7 @@ def _check_existing_pm_package_disposition(
         if existing_hash and incoming_hash and existing_hash != incoming_hash:
             raise RouterError(
                 f'{package_label} result disposition already recorded for this batch/generation; '
-                'different body hash requires an authorized repair/reissue path'
+                'different body hash requires an authorized current repair path'
             )
         raise RouterError(f'{package_label} result disposition already recorded for this batch/generation')
     return incoming_hash

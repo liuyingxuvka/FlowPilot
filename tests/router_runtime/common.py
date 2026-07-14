@@ -325,18 +325,6 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
             encoding="utf-8",
         )
         return envelope
-    def material_scan_event_envelope(self, root: Path, name: str = "material/pm_material_scan") -> tuple[dict, str, str]:
-        payload = self.material_scan_file_backed_payload(root)
-        envelope = {
-            "schema_version": router.EVENT_ENVELOPE_SCHEMA,
-            "event": "pm_issues_material_and_capability_scan_packets",
-            "from_role": "project_manager",
-            "to_role": "controller",
-            "controller_visibility": "event_envelope_only",
-            "packets": payload["packets"],
-        }
-        envelope_path, envelope_hash = self.write_event_envelope(root, name, envelope)
-        return envelope, envelope_path, envelope_hash
     def model_miss_flowguard_operator_report_body(self) -> dict:
         return {
             "reported_by_role": "flowguard_operator",
@@ -486,34 +474,6 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
         run_root = self.run_root_for(root)
         state = read_json(router.run_state_path(run_root))
         return bool(state["flags"].get(name))
-    def material_scan_payload(self) -> dict:
-        return {
-            "packets": [
-                {
-                    "packet_id": "material-scan-001",
-                    "to_role": "worker",
-                    "body_text": "Inspect the current request, repository state, and available local materials.",
-                }
-            ]
-        }
-    def material_scan_file_backed_payload(self, root: Path) -> dict:
-        run_root = self.run_root_for(root)
-        body_path = run_root / "test_role_outputs" / "material" / "scan_packet_body.md"
-        body_path.parent.mkdir(parents=True, exist_ok=True)
-        body_path.write_text(
-            "Inspect current request, repository state, and available local materials.",
-            encoding="utf-8",
-        )
-        return {
-            "packets": [
-                {
-                    "packet_id": "material-scan-file-backed-001",
-                    "to_role": "worker",
-                    "body_path": self.rel(root, body_path),
-                    "body_hash": hashlib.sha256(body_path.read_bytes()).hexdigest(),
-                }
-            ]
-        }
     def apply_next_packet_action(self, root: Path, expected_action_type: str) -> dict:
         action = self.next_after_display_sync(root)
         while action["action_type"] in {"check_packet_ledger", "open_current_role_agent"}:
@@ -554,20 +514,6 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
         for record in index["packets"]:
             result = packet_runtime.load_envelope(root, record["result_envelope_path"])
             packet_runtime.read_result_body_for_role(root, result, role="human_like_reviewer")
-    def absorb_material_scan_results_with_pm(self, root: Path, index_path: Path, *, decision: str = "absorbed") -> None:
-        self.apply_next_packet_action(root, "relay_material_scan_results_to_pm")
-        self.open_results_for_pm(root, index_path)
-        router.record_external_event(
-            root,
-            "pm_records_material_scan_result_disposition",
-            self.pm_package_result_disposition_envelope(
-                root,
-                "pm_records_material_scan_result_disposition",
-                name="material/pm_material_scan_result_disposition",
-                decision=decision,
-                decision_reason="PM absorbed material scan results for formal reviewer gate.",
-            ),
-        )
     def absorb_research_results_with_pm(self, root: Path, index_path: Path, *, decision: str = "absorbed") -> None:
         self.apply_next_packet_action(root, "relay_research_result_to_pm")
         self.open_results_for_pm(root, index_path)
@@ -1400,7 +1346,7 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
         root: Path,
         *,
         label: str,
-        allowed_event: str = "worker_scan_results_returned",
+        allowed_event: str = "worker_current_node_result_returned",
         extra: dict | None = None,
     ) -> dict:
         run_root = self.run_root_for(root)
@@ -1461,61 +1407,6 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
             source_path=run_root / "mailbox" / "outbox" / "user_intake.json",
         )
         self.assertTrue((run_root / "display" / "display_surface.json").exists())
-    def material_review_source_paths(self, root: Path) -> list[str]:
-        run_root = self.run_root_for(root)
-        return [
-            self.rel(root, run_root / "material" / "pm_material_scan_formal_gate_package.json"),
-            self.rel(root, run_root / "material" / "material_artifact_map.json"),
-        ]
-    def complete_material_flow(self, root: Path, material_understanding_payload: dict | None = None) -> None:
-        self.deliver_expected_card(root, "pm.material_scan")
-
-        router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
-        self.apply_next_packet_action(root, "relay_material_scan_packets")
-        run_root = self.run_root_for(root)
-        material_index_path = run_root / "material" / "material_scan_packets.json"
-        self.open_packets_and_write_results(root, material_index_path, result_text="material scan result")
-        router.record_external_event(root, "worker_scan_packet_bodies_delivered_after_dispatch")
-        router.record_external_event(root, "worker_scan_results_returned")
-        self.absorb_material_scan_results_with_pm(root, material_index_path)
-
-        self.deliver_expected_card(root, "reviewer.material_sufficiency")
-
-        router.record_external_event(
-            root,
-            "reviewer_reports_material_sufficient",
-            self.role_report_envelope(
-                root,
-                "material/reviewer_material_sufficiency",
-                {
-                    "pm_visible_summary": ["Reviewed material is sufficient for PM planning."],
-                    "reviewed_by_role": "human_like_reviewer",
-                    "passed": True,
-                    "direct_material_sources_checked": True,
-                    "packet_matches_checked_sources": True,
-                    "pm_ready": True,
-                    "checked_source_paths": self.material_review_source_paths(root),
-                    "runtime_open_receipt_refs": [],
-                    "findings": [],
-                    "blockers": [],
-                    "pm_suggestion_items": [
-                        "PM decision-support: material review passes; consider whether more source triangulation would improve confidence."
-                    ],
-                    "contract_self_check": {"status": "pass"},
-                },
-            ),
-        )
-        self.deliver_expected_card(root, "pm.event.reviewer_report")
-
-        self.deliver_expected_card(root, "pm.material_absorb_or_research")
-
-        router.record_external_event(root, "pm_accepts_reviewed_material")
-        self.deliver_expected_card(root, "pm.material_understanding")
-        router.record_external_event(
-            root,
-            "pm_writes_material_understanding",
-            material_understanding_payload or {"material_summary": "reviewed material accepted"},
-        )
     def complete_root_contract_before_child_skill_gates(self, root: Path) -> None:
         run_root = self.run_root_for(root)
         self.deliver_expected_card(root, "pm.product_architecture")
@@ -1698,7 +1589,6 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
         self.next_after_display_sync(root)
     def complete_pre_route_gates(self, root: Path) -> None:
         self.complete_startup_runtime_entry(root)
-        self.complete_material_flow(root)
         self.complete_product_architecture_and_contract(root)
     def activate_route(self, root: Path, node_id: str = "node-001") -> None:
         router.record_external_event(
@@ -2637,4 +2527,3 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
             if action_type == expected_action_type:
                 return action
         raise AssertionError(f"did not apply {expected_action_type} within {max_steps} router steps")
-

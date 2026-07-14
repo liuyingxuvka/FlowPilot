@@ -67,7 +67,7 @@
   },
   "decision": {
     "passed": false,
-    "decision_reason": "<why-this-can-or-cannot-feed-PM-material-or-route-decisions>",
-    "recommended_pm_action": "<absorb_into_material_understanding|mutate_route|insert_followup_research|ask_user|block>"
+    "decision_reason": "<why-this-can-or-cannot-support-the-current-PM-decision>",
+    "recommended_pm_action": "<absorb_into_current_artifact|mutate_route|insert_followup_research|ask_user|block>"
   }
 }

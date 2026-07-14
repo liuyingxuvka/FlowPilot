@@ -5,7 +5,7 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=3 initial_states=1 traces=108",
+    "summary": "sequences=3 initial_states=1 traces=114",
     "violation_count": 0
   },
   "hazard_checks": {
@@ -20,9 +20,9 @@
       },
       "critical_reviewer_gate_removed": {
         "detected": true,
-        "expected_failure": "critical PM route/node/material/research decision bypassed reviewer gate",
+        "expected_failure": "critical PM route/node/evidence/closure decision bypassed reviewer gate",
         "failures": [
-          "critical PM route/node/material/research decision bypassed reviewer gate"
+          "critical PM route/node/evidence/closure decision bypassed reviewer gate"
         ]
       },
       "formal_evidence_from_undispositioned_result": {
@@ -31,23 +31,25 @@
         "failures": [
           "formal evidence used a worker result without PM absorbed disposition",
           "PM formal gate package release lacked absorbed disposition or package identity",
-          "PM completed a node without PM disposition and reviewer node-completion gate"
-        ]
-      },
-      "material_research_decision_without_gate": {
-        "detected": true,
-        "expected_failure": "critical PM route/node/material/research decision bypassed reviewer gate",
-        "failures": [
-          "critical PM route/node/material/research decision bypassed reviewer gate",
-          "material/research result affected a protected decision without PM absorption and reviewer gate"
+          "PM completed a node without PM disposition and reviewer node-completion gate",
+          "ordinary evidence affected a protected decision without PM absorption and reviewer gate"
         ]
       },
       "node_completion_without_reviewer_gate": {
         "detected": true,
         "expected_failure": "PM completed a node without PM disposition and reviewer node-completion gate",
         "failures": [
-          "critical PM route/node/material/research decision bypassed reviewer gate",
-          "PM completed a node without PM disposition and reviewer node-completion gate"
+          "critical PM route/node/evidence/closure decision bypassed reviewer gate",
+          "PM completed a node without PM disposition and reviewer node-completion gate",
+          "ordinary evidence affected a protected decision without PM absorption and reviewer gate"
+        ]
+      },
+      "ordinary_evidence_decision_without_gate": {
+        "detected": true,
+        "expected_failure": "critical PM route/node/evidence/closure decision bypassed reviewer gate",
+        "failures": [
+          "critical PM route/node/evidence/closure decision bypassed reviewer gate",
+          "ordinary evidence affected a protected decision without PM absorption and reviewer gate"
         ]
       },
       "pm_disposition_half_written_accepted": {
@@ -81,7 +83,8 @@
           "PM disposition forwarded a raw worker package to reviewer",
           "reviewer gate started without a PM-built formal gate package",
           "reviewer gate started without PM disposition release and formal gate package identity",
-          "PM completed a node without PM disposition and reviewer node-completion gate"
+          "PM completed a node without PM disposition and reviewer node-completion gate",
+          "ordinary evidence affected a protected decision without PM absorption and reviewer gate"
         ]
       },
       "raw_worker_result_relayed_to_reviewer": {
@@ -93,7 +96,8 @@
           "formal evidence used a worker result without PM absorbed disposition",
           "reviewer gate started without a PM-built formal gate package",
           "reviewer gate started without PM disposition release and formal gate package identity",
-          "PM completed a node without PM disposition and reviewer node-completion gate"
+          "PM completed a node without PM disposition and reviewer node-completion gate",
+          "ordinary evidence affected a protected decision without PM absorption and reviewer gate"
         ]
       },
       "resume_result_direct_to_reviewer": {
@@ -106,7 +110,15 @@
           "reviewer gate started without a PM-built formal gate package",
           "reviewer gate started without PM disposition release and formal gate package identity",
           "PM completed a node without PM disposition and reviewer node-completion gate",
+          "ordinary evidence affected a protected decision without PM absorption and reviewer gate",
           "resume worker result bypassed PM disposition"
+        ]
+      },
+      "retired_material_authority_used_as_current": {
+        "detected": true,
+        "expected_failure": "retired material-specific package or gate used as current authority",
+        "failures": [
+          "retired material-specific package or gate used as current authority"
         ]
       },
       "reviewer_started_without_pm_gate_package": {
@@ -115,7 +127,8 @@
         "failures": [
           "reviewer gate started without a PM-built formal gate package",
           "reviewer gate started without PM disposition release and formal gate package identity",
-          "PM completed a node without PM disposition and reviewer node-completion gate"
+          "PM completed a node without PM disposition and reviewer node-completion gate",
+          "ordinary evidence affected a protected decision without PM absorption and reviewer gate"
         ]
       },
       "unsupported_historical_reviewer_relay_used_as_current_acceptance": {
@@ -126,6 +139,7 @@
           "formal evidence used a worker result without PM absorbed disposition",
           "PM formal gate package release lacked absorbed disposition or package identity",
           "PM completed a node without PM disposition and reviewer node-completion gate",
+          "ordinary evidence affected a protected decision without PM absorption and reviewer gate",
           "unsupported_historical direct-reviewer relay flag was used as current acceptance"
         ]
       }
@@ -139,15 +153,33 @@
     "samples": [],
     "stuck_state_count": 0
   },
+  "retired_material_surface_absence": {
+    "claim_boundary": "This proves the PM package-absorption model accepts only research, current-node, or PM role-work package owners and exercises retired material authority only as a rejected hazard.",
+    "expected_positive_package_kinds": [
+      "current_node",
+      "pm_role_work",
+      "research"
+    ],
+    "negative_probe_present": true,
+    "observed_positive_package_kinds": [
+      "current_node",
+      "pm_role_work",
+      "research"
+    ],
+    "ok": true,
+    "retired_gate_acceptances": [],
+    "retired_named_valid_scenarios": [],
+    "retired_package_acceptances": []
+  },
   "safe_graph": {
     "accepted_scenarios": [
       "valid_critical_gate_without_worker_package",
       "valid_current_node_pm_gate",
-      "valid_material_pm_gate",
+      "valid_pm_role_work_pm_gate",
       "valid_research_pm_gate",
       "valid_resume_result_to_pm"
     ],
-    "edge_count": 36,
+    "edge_count": 38,
     "invariant_failures": [],
     "missing_labels": [],
     "ok": true,
@@ -155,17 +187,18 @@
       "controller_reads_sealed_body",
       "critical_reviewer_gate_removed",
       "formal_evidence_from_undispositioned_result",
-      "material_research_decision_without_gate",
       "node_completion_without_reviewer_gate",
+      "ordinary_evidence_decision_without_gate",
       "pm_disposition_half_written_accepted",
       "pm_disposition_without_runtime_contract",
       "pm_formal_package_release_without_identity",
       "pm_forwarded_raw_package_to_reviewer",
       "raw_worker_result_relayed_to_reviewer",
       "resume_result_direct_to_reviewer",
+      "retired_material_authority_used_as_current",
       "reviewer_started_without_pm_gate_package",
       "unsupported_historical_reviewer_relay_used_as_current_acceptance"
     ],
-    "state_count": 37
+    "state_count": 39
   }
 }

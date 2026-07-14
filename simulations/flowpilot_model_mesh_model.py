@@ -1035,7 +1035,6 @@ def _router_owned_packet_audit_proof_valid(run_root: Path, audit_path: Path, aud
 def _trusted_packet_authority_audit_ids(run_root: Path) -> set[str]:
     trusted: set[str] = set()
     candidates = {
-        run_root / "material" / "material_packet_review_audit.json",
         run_root / "research" / "research_packet_review_audit.json",
         *run_root.rglob("current_node_packet_runtime_audit.json"),
     }

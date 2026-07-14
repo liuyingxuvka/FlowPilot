@@ -38,7 +38,6 @@ REQUIRED_FLOW_IDS = {
     "e2e.happy.startup_to_terminal",
     "e2e.worker.bad_then_repaired_package",
     "e2e.pm_repair.bad_then_corrected",
-    "e2e.pm_repair.no_producer_then_packet_reissue",
     "e2e.background.progress_only_then_final_proof",
     "e2e.parallel.peer_run_isolation",
     "e2e.terminal.overclaim_then_clean_closure",
@@ -131,40 +130,6 @@ CHAOS_ROWS: tuple[dict[str, Any], ...] = (
         "evidence_role": "primary_full_flow",
         "supporting_evidence": [
             "synthetic PM control-blocker repair tests",
-        ],
-        "live_ai_semantic_quality_proven": False,
-    },
-    {
-        "flow_id": "e2e.pm_repair.no_producer_then_packet_reissue",
-        "phase_sequence": [
-            "startup",
-            "material_scan_dispatch",
-            "stale_worker_result_flags",
-            "control_blocker",
-            "pm_no_producer_repair",
-            "pm_corrected_packet_reissue",
-            "producer_backed_legal_wait",
-        ],
-        "injected_error_sequence": [
-            "stale_worker_result_flags",
-            "no_producer_pm_role_reissue",
-            "corrected_packet_reissue",
-        ],
-        "expected_outcome": "no_producer_repair_rejected_then_packet_reissue_opens_producer_backed_wait",
-        "protected_state_invariant": "active_blocker_remains_until_repair_transaction_has_current_producer",
-        "recovery_route": "packet_reissue_repair_transaction_with_current_generation",
-        "final_state": "awaiting_material_recheck_with_repair_packet_generation_evidence",
-        "evidence_id": "e2e.pm_repair.no_producer_then_packet_reissue",
-        "evidence_test": (
-            "FlowPilotEndToEndSyntheticChaosReplayTests."
-            "test_e2e_no_producer_pm_repair_then_packet_reissue_exposes_producer_evidence"
-        ),
-        "evidence_status": "passed",
-        "evidence_current": True,
-        "evidence_role": "primary_full_flow",
-        "supporting_evidence": [
-            "repair_transactions.negative.material_role_reissue_no_producer",
-            "repair_transactions.happy.material_packet_reissue",
         ],
         "live_ai_semantic_quality_proven": False,
     },
@@ -361,18 +326,22 @@ def validate_rows(rows: Sequence[dict[str, Any]]) -> list[dict[str, Any]]:
                 }
             )
         injected_errors = [str(item) for item in row.get("injected_error_sequence", [])]
-        if "no_producer_pm_role_reissue" in injected_errors and "corrected_packet_reissue" not in injected_errors:
+        if (
+            "no_producer_pm_role_reissue" in injected_errors
+            and "corrected_registered_producer" not in injected_errors
+            and "corrected_safe_operation_replay" not in injected_errors
+        ):
             findings.append(
                 {
                     "code": "no_producer_repair_without_corrected_recovery",
                     "flow_id": flow_id,
-                    "message": "no-producer PM repair rehearsal rows must include corrected packet reissue recovery",
+                    "message": "no-producer PM repair rehearsal rows must include a corrected registered producer or safe operation replay",
                 }
             )
         if (
             "stale_worker_result_flags" in injected_errors
-            and "current_generation" not in str(row.get("final_state") or "")
-            and "repair_packet_generation" not in str(row.get("final_state") or "")
+            and "current_producer_evidence" not in str(row.get("final_state") or "")
+            and "current_operation_replay" not in str(row.get("final_state") or "")
         ):
             findings.append(
                 {

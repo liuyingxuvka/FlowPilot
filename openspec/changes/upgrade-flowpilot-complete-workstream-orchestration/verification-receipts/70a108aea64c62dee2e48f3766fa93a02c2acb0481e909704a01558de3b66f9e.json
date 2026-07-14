@@ -1,0 +1,29 @@
+{
+  "schema_version": 2,
+  "report_protocol_version": 3,
+  "execution_key": "sha256:43b659b8917ae6f8cf9da0ce321e98cfd42cc32a7cc2234ec6ec4c61c928d70e",
+  "result_hash": "sha256:abad29b4bcd26854426c871f419cb012a555caad40d35f18ae890c536203ac8e",
+  "receipt_id": "sha256:70a108aea64c62dee2e48f3766fa93a02c2acb0481e909704a01558de3b66f9e",
+  "result": {
+    "status": "passed",
+    "command": "python",
+    "args": [
+      "scripts/run_flowguard_background.py",
+      "--name",
+      "run_capability_checks",
+      "--verify",
+      "--",
+      "python",
+      "simulations/run_capability_checks.py",
+      "--full",
+      "--force"
+    ],
+    "expected_exit_code": 0,
+    "exit_code": 0,
+    "timeout_seconds": 1800,
+    "stdout": "{\r\n  \"artifacts\": {\r\n    \"combined\": \"C:\\\\Users\\\\liu_y\\\\AppData\\\\Local\\\\Temp\\\\openspec-frozen-gfLCzT\\\\tmp\\\\flowguard_background\\\\run_capability_checks.combined.txt\",\r\n    \"err\": \"C:\\\\Users\\\\liu_y\\\\AppData\\\\Local\\\\Temp\\\\openspec-frozen-gfLCzT\\\\tmp\\\\flowguard_background\\\\run_capability_checks.err.txt\",\r\n    \"exit\": \"C:\\\\Users\\\\liu_y\\\\AppData\\\\Local\\\\Temp\\\\openspec-frozen-gfLCzT\\\\tmp\\\\flowguard_background\\\\run_capability_checks.exit.txt\",\r\n    \"meta\": \"C:\\\\Users\\\\liu_y\\\\AppData\\\\Local\\\\Temp\\\\openspec-frozen-gfLCzT\\\\tmp\\\\flowguard_background\\\\run_capability_checks.meta.json\",\r\n    \"out\": \"C:\\\\Users\\\\liu_y\\\\AppData\\\\Local\\\\Temp\\\\openspec-frozen-gfLCzT\\\\tmp\\\\flowguard_background\\\\run_capability_checks.out.txt\"\r\n  },\r\n  \"command\": [\r\n    \"python\",\r\n    \"simulations/run_capability_checks.py\",\r\n    \"--full\",\r\n    \"--force\"\r\n  ],\r\n  \"failures\": [],\r\n  \"log_root\": \"C:\\\\Users\\\\liu_y\\\\AppData\\\\Local\\\\Temp\\\\openspec-frozen-gfLCzT\\\\tmp\\\\flowguard_background\",\r\n  \"name\": \"run_capability_checks\",\r\n  \"ok\": true,\r\n  \"source_fingerprint\": \"10f38ac754a614ed5508ad30bc16b270a6942087db79b156094f65184c7b4389\",\r\n  \"status\": \"passed\"\r\n}\r\n",
+    "stderr": "",
+    "stdout_preview": "{\r\n  \"artifacts\": {\r\n    \"combined\": \"C:\\\\Users\\\\liu_y\\\\AppData\\\\Local\\\\Temp\\\\openspec-frozen-gfLCzT\\\\tmp\\\\flowguard_background\\\\run_capability_checks.combined.txt\",\r\n    \"err\": \"C:\\\\Users\\\\liu_y\\\\AppData\\\\Local\\\\Temp\\\\openspec-frozen-gfLCzT\\\\tmp\\\\flowguard_background\\\\run_capability_checks.err.txt\",\r\n    \"exit\": \"C:\\\\Users\\\\liu_y\\\\AppData\\\\Local\\\\Temp\\\\openspec-frozen-gfLCzT\\\\tmp\\\\flowguard_background\\\\run_capability_checks.exit.txt\",\r\n    \"meta\": \"C:\\\\Users\\\\liu_y\\\\AppData\\\\Local\\\\Temp\\\\openspec-frozen-gfLCzT\\\\tmp\\\\flowguard_background\\\\run_capability_checks.meta.json\",\r\n    \"out\": \"C:\\\\Users\\\\liu_y\\\\AppData\\\\Local\\\\Temp\\\\openspec-frozen-gfLCzT\\\\tmp\\\\flowguard_background\\\\run_capability_checks.out.txt\"\r\n  },\r\n  \"command\": [\r\n    \"python\",\r\n    \"simulations/run_capability_checks.py\",\r\n    \"--full\",\r\n    \"--force\"\r\n  ],\r\n  \"failures\": [],\r\n  \"log_root\": \"C:\\\\Users\\\\liu_y\\\\AppData\\\\Local\\\\Temp\\\\openspec-frozen-gfLCzT\\\\tmp\\\\flowguard_background\",\r\n  \"name\": \"run_capability_checks\",\r\n  \"ok\": true,\r\n  \"source_fingerprint\": \"10f38ac754a614ed5508ad30bc16b270a6942087db79b156094f65184c7b4389\",\r\n  \"status\": \"passed\"\r\n}\r\n",
+    "stderr_preview": ""
+  }
+}

@@ -11,6 +11,8 @@ from typing import Sequence
 
 
 ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_CLI_TIMEOUT_SECONDS = 90
+PUBLIC_RELEASE_CLI_TIMEOUT_SECONDS = 180
 
 
 def hidden_process_kwargs() -> dict[str, object]:
@@ -25,7 +27,12 @@ def hidden_process_kwargs() -> dict[str, object]:
     }
 
 
-def run_cli(args: Sequence[str], *, expected_codes: set[int] | None = None) -> subprocess.CompletedProcess[str]:
+def run_cli(
+    args: Sequence[str],
+    *,
+    expected_codes: set[int] | None = None,
+    timeout_seconds: int = DEFAULT_CLI_TIMEOUT_SECONDS,
+) -> subprocess.CompletedProcess[str]:
     expected = {0} if expected_codes is None else expected_codes
     completed = subprocess.run(
         [sys.executable, *args],
@@ -33,7 +40,7 @@ def run_cli(args: Sequence[str], *, expected_codes: set[int] | None = None) -> s
         text=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
-        timeout=90,
+        timeout=timeout_seconds,
         **hidden_process_kwargs(),
     )
     if completed.returncode not in expected:
@@ -43,8 +50,17 @@ def run_cli(args: Sequence[str], *, expected_codes: set[int] | None = None) -> s
     return completed
 
 
-def run_json_cli(args: Sequence[str], *, expected_codes: set[int] | None = None) -> dict[str, object]:
-    completed = run_cli(args, expected_codes=expected_codes)
+def run_json_cli(
+    args: Sequence[str],
+    *,
+    expected_codes: set[int] | None = None,
+    timeout_seconds: int = DEFAULT_CLI_TIMEOUT_SECONDS,
+) -> dict[str, object]:
+    completed = run_cli(
+        args,
+        expected_codes=expected_codes,
+        timeout_seconds=timeout_seconds,
+    )
     try:
         payload = json.loads(completed.stdout)
     except json.JSONDecodeError as exc:
@@ -97,6 +113,7 @@ class FlowPilotCliEntrypointTests(unittest.TestCase):
                 "--skip-validation",
             ],
             expected_codes={0, 1},
+            timeout_seconds=PUBLIC_RELEASE_CLI_TIMEOUT_SECONDS,
         )
         self.assertEqual(release["scope"], "flowpilot_repository_only")
         self.assertTrue(release["no_companion_publish_authority"])

@@ -9,7 +9,9 @@ from typing import Sequence
 
 from flowpilot_final_confidence_gate import (
     DEFAULT_RESULT_PATHS,
+    DEFAULT_EVIDENCE_MANIFEST_PATH,
     evaluate_final_confidence,
+    portable_evidence_path,
     result_paths_for_dir,
     run_required_subchecks,
     write_json,
@@ -43,6 +45,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         help="FlowPilot source root for control-plane source-contract checks.",
     )
     parser.add_argument(
+        "--evidence-manifest",
+        type=Path,
+        default=DEFAULT_EVIDENCE_MANIFEST_PATH,
+        help="Current upstream TestMesh proof manifest consumed by the strict MTA subcheck.",
+    )
+    parser.add_argument(
         "--repository-confidence-only",
         action="store_true",
         help=(
@@ -59,6 +67,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             live_root=args.live_root,
             source_root=args.source_root,
             terminal_return_required=terminal_return_required,
+            evidence_manifest=args.evidence_manifest,
         )
         result_paths = result_paths_for_dir(args.results_dir)
     else:
@@ -72,8 +81,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
     report["result_type"] = "flowpilot_final_confidence_gate"
     report["subcheck_runs"] = subcheck_runs
-    report["result_paths"] = {name: str(path) for name, path in result_paths.items()}
+    report["result_paths"] = {
+        name: portable_evidence_path(path) for name, path in result_paths.items()
+    }
     report["terminal_return_required"] = terminal_return_required
+    report["evidence_manifest_path"] = portable_evidence_path(args.evidence_manifest)
 
     output = json.dumps(report, indent=2, sort_keys=True) + "\n"
     if args.json_out:

@@ -107,15 +107,6 @@ def invariant_failures(state: State) -> list[str]:
             state.startup_runtime_mechanical_audit_written,
             state.startup_user_intake_released_to_pm,
             state.pm_controller_reset_decision_returned,
-            state.pm_material_scan_packets_issued,
-            state.reviewer_dispatch_allowed,
-            state.worker_scan_results_returned,
-            state.material_review != "unknown",
-            state.pm_research_package_written,
-            state.research_worker_report_returned,
-            state.research_reviewer_passed,
-            state.material_accepted_by_pm,
-            state.material_understanding_written,
             state.product_architecture_draft_written,
             state.product_architecture_modelability_passed,
             state.product_architecture_reviewer_challenged,
@@ -167,111 +158,23 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("Controller direct free text was treated as authority instead of router-authorized mail")
     if state.controller_inspected_router_internal_hard_checks:
         failures.append("Controller inspected router hard-check internals instead of using black-box router actions")
-    if state.pm_material_scan_card_delivered and not state.controller_role_confirmed:
-        failures.append("PM material scan card delivered before Controller boundary confirmation")
-    if state.pm_material_scan_card_delivered and not state.user_intake_delivered_to_pm:
-        failures.append("PM material scan card delivered before PM received full user intake")
-    if state.pm_material_scan_card_delivered and not state.user_intake_controller_relayed:
-        failures.append("PM material scan card delivered before user intake Controller relay")
-    if state.pm_material_scan_packets_issued and not (
-        state.controller_role_confirmed
-        and state.pm_startup_intake_card_delivered
-        and state.user_intake_delivered_to_pm
-        and state.pm_material_scan_card_delivered
-    ):
-        failures.append(
-            "PM issued material packets before Controller boundary confirmation, full intake delivery, and material scan card"
-        )
-    if state.worker_packets_delivered and not state.reviewer_dispatch_allowed:
-        failures.append("worker packet bodies delivered before router direct dispatch approval")
-    if state.worker_scan_results_returned and not (
-        state.worker_packets_delivered and state.material_scan_result_ledger_checked
-    ):
-        failures.append("worker material scan result reached reviewer before packet-ledger check")
-    if state.reviewer_material_sufficiency_card_delivered and not state.worker_scan_results_returned:
-        failures.append("reviewer material sufficiency card delivered before worker material scan results")
-    if state.material_review != "unknown" and not state.reviewer_material_sufficiency_card_delivered:
-        failures.append("reviewer material sufficiency decision recorded before sufficiency card")
-    if (
-        state.pm_material_absorb_or_research_card_delivered
-        and state.material_review == "unknown"
-    ):
-        failures.append("PM material absorb-or-research card delivered before reviewer material decision")
-    if state.material_accepted_by_pm and not (
-        state.pm_material_absorb_or_research_card_delivered
-        and state.material_review == "sufficient"
-    ):
-        failures.append("PM absorbed material before sufficiency pass and absorb-or-research card")
-    if state.pm_research_package_card_delivered and not (
-        state.pm_material_absorb_or_research_card_delivered
-        and state.material_review == "research_required"
-    ):
-        failures.append("PM research package card delivered before reviewer-required research branch")
-    if state.pm_research_package_written and not state.pm_research_package_card_delivered:
-        failures.append("PM wrote research package before research-package card")
-    if state.research_capability_decision_recorded and not state.pm_research_package_written:
-        failures.append("research capability decision recorded before PM research package")
-    if (
-        state.research_worker_report_card_delivered
-        and not state.research_capability_decision_recorded
-    ):
-        failures.append("worker research report card delivered before research capability decision")
-    if state.research_dispatch_allowed and not state.research_worker_report_card_delivered:
-        failures.append("research direct dispatch preflight passed before worker research card")
-    if state.research_worker_packet_delivered and not state.research_dispatch_allowed:
-        failures.append("research worker packet body delivered before router direct dispatch approval")
-    if state.research_worker_report_returned and not (
-        state.research_worker_report_card_delivered
-        and state.research_worker_packet_delivered
-        and state.research_worker_result_ledger_checked
-    ):
-        failures.append("worker research report reached reviewer before packet, card, and ledger check")
-    if (
-        state.reviewer_research_direct_source_check_card_delivered
-        and not state.research_worker_report_returned
-    ):
-        failures.append("reviewer research direct-source check card delivered before worker research report")
-    if state.research_reviewer_direct_source_check_done and not (
-        state.reviewer_research_direct_source_check_card_delivered
-        and state.research_worker_report_returned
-    ):
-        failures.append("reviewer direct-source research check ran before card and worker report")
-    if state.research_reviewer_passed and not state.research_reviewer_direct_source_check_done:
-        failures.append("reviewer passed research before direct-source check")
-    if state.pm_research_absorb_or_mutate_card_delivered and not state.research_reviewer_passed:
-        failures.append("PM research absorb-or-mutate card delivered before reviewer research pass")
-    if state.research_absorbed_by_pm and not (
-        state.pm_research_absorb_or_mutate_card_delivered and state.research_reviewer_passed
-    ):
-        failures.append("PM absorbed research before reviewer pass and research absorb card")
-    if state.pm_material_understanding_card_delivered and not (
-        state.material_accepted_by_pm or state.research_absorbed_by_pm
-    ):
-        failures.append("PM material understanding card delivered before material or research absorption")
-    if state.material_understanding_written and not (
-        state.pm_material_understanding_card_delivered
-        and (
-            (state.material_review == "sufficient" and state.material_accepted_by_pm)
-            or (
-                state.material_review == "research_required"
-                and state.research_absorbed_by_pm
-            )
-        )
-    ):
-        failures.append(
-            "PM wrote material understanding before reviewed material or reviewed research was absorbed"
-        )
     if state.pm_used_unreviewed_evidence:
         failures.append("PM used unreviewed evidence for a route or phase decision")
     if (
         state.pm_product_architecture_card_delivered
-        and not state.material_understanding_written
+        and not (
+            state.controller_role_confirmed
+            and state.user_intake_delivered_to_pm
+            and state.user_intake_controller_relayed
+        )
     ):
-        failures.append("product architecture card delivered before PM material understanding")
+        failures.append("product architecture card delivered before full user intake reached PM")
     if state.product_architecture_draft_written and not (
-        state.pm_product_architecture_card_delivered and state.material_understanding_written
+        state.pm_product_architecture_card_delivered
+        and state.user_intake_delivered_to_pm
+        and state.user_intake_controller_relayed
     ):
-        failures.append("PM wrote product architecture before card and material understanding")
+        failures.append("PM wrote product architecture before its card and full user intake")
     if (
         state.product_architecture_modelability_card_delivered
         and not state.product_architecture_draft_written
@@ -507,10 +410,7 @@ def invariant_failures(state: State) -> list[str]:
     if state.mail_deliveries and not state.packet_body_identity_boundaries_verified:
         failures.append("packet body delivered without verified recipient identity boundary")
     if (
-        state.worker_scan_results_returned
-        or state.research_worker_report_returned
-        or state.node_worker_result_returned
-        or state.node_repair_result_returned
+        state.node_worker_result_returned or state.node_repair_result_returned
     ) and not state.result_body_identity_boundaries_verified:
         failures.append("result body returned without verified completed-by identity boundary")
     if state.prompt_deliveries > state.manifest_check_requests:

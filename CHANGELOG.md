@@ -1,5 +1,86 @@
 # Changelog
 
+## v0.12.0 - 2026-07-10
+
+### Fixed
+
+- Made `current_handoff_contract.v2` the single runtime authority for result
+  mechanics and made `submission_checklist.v2` a deterministic, identity-bound
+  projection of the current opened packet. Packet bodies, reissue prose,
+  private helpers, old role aliases, and historical execution sources can no
+  longer become alternate successful contract paths.
+- Hardened forbidden-path validation across array members so a forbidden child
+  field in any item is rejected, even when later items omit that child field.
+- Repaired dynamic PM terminal-repair projection so every current active
+  acceptance item remains owned through repair, Reviewer recheck, and terminal
+  replay.
+- Removed unknown-role and unsupported responsibility fallbacks; current role,
+  run, packet, lease, route, source generation, ACK, required reads, and
+  checklist fingerprint now fail closed when they do not agree.
+
+### Changed
+
+- Upgraded every substantive PM, Worker, research Worker, Reviewer, and
+  FlowGuard Operator assignment into an independently accountable complete
+  workstream with a numbered local plan, per-step completion/evidence report,
+  bounded delegation/integration, verification, and in-scope self-repair.
+  Controller remains limited to the Runtime foreground action ledger.
+- Kept one mandatory Runtime-owned shallow local skill/capability availability
+  inventory, with PM-owned candidate selection and selected-skill-only deep
+  reading through the existing Skill Standard Contract path.
+- Removed the dedicated positive material-scan result/card/contract and
+  universal material-sufficiency startup gate from the current path. Reading,
+  research, experiment, source verification, and evidence synthesis now use
+  ordinary PM role-work packages plus existing risk-appropriate review; the
+  material artifact map is optional navigation only.
+- Reworked fake-AI and fake-project rehearsal around the public
+  dispatch/ACK/open/checklist/submit route, including delivery of the actual
+  Reviewer depth rule rather than reconstruction from static policy text.
+- Added a finite AI-response coverage universe with production-validator
+  single-fault cases, public-path pairwise coverage, high-risk three-way
+  interactions, deterministic fuzz and replay profiles, historical-miss pins,
+  stable full-path case identities, and explicit `not_run` boundaries.
+- Replaced model-owned or file-exists evidence shortcuts with current proof
+  artifacts across ContractExhaustionMesh, Model-Test Alignment, TestMesh, and
+  ModelMesh. Missing, stale, progress-only, failed, or un-ticketed reused
+  evidence blocks downstream confidence.
+- Made the release tier consume the fast/all, Router, Integration,
+  adversarial, Meta/Capability full, final-confidence, and public-release
+  layers in dependency order with isolated background artifacts.
+- Replaced the former FlowPilot SkillGuard private/V1 regeneration surface
+  with one public-compiler V2 authority trio and a focused FlowGuard/MTA/
+  ModelMesh projection. FlowPilot remains the only domain runtime, final
+  receipt checks are read-only consumers, and contract depth is not presented
+  as execution-depth proof.
+- Bound every current FlowPilot native route and declared SkillGuard check to
+  its existing source owner. The maintenance-field mesh and global-router
+  smoke now reject missing, extra, duplicate, defaulted, or fallback bindings.
+- Made the release tier the sole Meta/Capability full execution owner. Those
+  nodes now write the stable `run_meta_checks` and `run_capability_checks`
+  receipts directly; later OpenSpec checks verify them without launching the
+  same full parents again.
+
+### Validation boundary
+
+- Added 20 canonical execution-backed semantic profiles, a full 6,075-cell
+  complete-workstream Cartesian space, a full 972-cell resource-discovery
+  Cartesian space, and exhaustive pairwise plus named high-risk three-/four-way
+  projection checks inside the existing ContractExhaustionMesh.
+- Added execution-backed coverage for all current result-contract families and
+  their registered forbidden paths, plus explicit role/source-purity rejection
+  across route planning, dispatch, open, submit, and replay entry points.
+- Registered the finite coverage universe separately from selected and executed
+  cases. The release does not claim exhaustive correctness for arbitrary
+  natural-language AI output; it claims exhaustive registration of the finite
+  mechanical contract space, full execution of mandatory risk classes, and
+  bounded pairwise/three-way/fuzz coverage for the remaining declared space.
+- This working tree is the local v0.12.0 source candidate. It is not considered
+  locally verified until the owning OpenSpec and FlowGuard evidence chain,
+  isolated background tiers, topology, installation freshness, and public-
+  boundary checks all finish with current final artifacts.
+- Git commit, tag, push, and GitHub Release publication are explicitly deferred
+  to a later maintainer action and are not claimed by this changelog entry.
+
 ## v0.11.5 - 2026-07-09
 
 ### Fixed

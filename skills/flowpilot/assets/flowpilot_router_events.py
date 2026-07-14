@@ -194,8 +194,6 @@ def finalize_external_event_record(
         run_state["flags"][flag] = False
     if event == "pm_resume_recovery_decision_returned" and pm_resume_decision == "break_glass":
         run_state["flags"][flag] = False
-    if event == "pm_absorbs_reviewed_research":
-        run_state["flags"]["material_accepted_by_pm"] = True
     run_state["events"].append(record)
     router._mark_scoped_event_recorded(run_state, scoped_identity)
     startup_release: dict[str, Any] | None = None
@@ -207,16 +205,7 @@ def finalize_external_event_record(
         payload=payload,
         source="record_external_event",
     )
-    if event == "router_direct_material_scan_dispatch_recheck_passed":
-        router._finalize_repair_transaction_outcome(project_root, run_root, run_state, event=event, payload=payload)
-        run_state["flags"]["material_scan_dispatch_blocked"] = False
-        run_state["material_dispatch_block"] = None
-    else:
-        router._finalize_repair_transaction_outcome(project_root, run_root, run_state, event=event, payload=payload)
-    if event == "reviewer_reports_material_sufficient":
-        run_state["material_review"] = "sufficient"
-    elif event == "reviewer_reports_material_insufficient":
-        run_state["material_review"] = "insufficient"
+    router._finalize_repair_transaction_outcome(project_root, run_root, run_state, event=event, payload=payload)
     history_payload = {"payload": payload, "wait_closure": wait_closure}
     if startup_release is not None:
         history_payload["startup_user_intake_release"] = startup_release

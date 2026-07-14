@@ -89,8 +89,6 @@ from flowpilot_router_expected_waits_events import (
 from flowpilot_router_expected_waits_reconciliation import (
     _reconcile_pending_role_wait_from_packet_status,
     _record_router_reconciled_external_event,
-    _try_reconcile_material_scan_body_delivery,
-    _try_reconcile_material_scan_results,
     _try_reconcile_research_results,
     _try_reconcile_current_node_results,
     _try_reconcile_pm_role_work_results,

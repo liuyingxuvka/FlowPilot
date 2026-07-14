@@ -56,7 +56,7 @@ HAZARD_EXPECTED_FAILURES = {
     model.WORK_PACKET_MISSING_LOW_QUALITY_WARNING: "work packet lacks node low-quality-success warning",
     model.WORKER_PACKET_MISSING_IN_SCOPE_REPAIR: "executable worker packet lacks in-scope quality repair obligation",
     model.WORKER_PACKET_REPAIRS_OUT_OF_SCOPE: "worker packet does not escalate out-of-scope defects to PM",
-    model.EVIDENCE_PACKET_REPAIRS_TARGET_ARTIFACT: "research or material-scan packet grants target artifact repair instead of report self-correction",
+    model.EVIDENCE_PACKET_REPAIRS_TARGET_ARTIFACT: "research or evidence-work packet grants target artifact repair instead of report self-correction",
     model.FLOWGUARD_OPERATOR_PACKET_REPAIRS_TARGET_ARTIFACT: "FlowGuard operator packet grants target artifact repair instead of model/report self-correction",
     model.REVIEWER_PROMPT_GRANTS_DIRECT_REPAIR: "reviewer prompt grants direct repair authority over the reviewed artifact",
     model.GENERIC_TEMPLATE_USES_BLANKET_REPAIR: "generic packet template uses blanket repair wording instead of role-scoped authority",

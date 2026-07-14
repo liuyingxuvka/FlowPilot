@@ -57,10 +57,11 @@ class State:
     controller_boundary_preserved: bool = False
     sealed_body_files_opened_by_controller: bool = False
 
-    material_scan_packets_observed: bool = False
-    material_output_contract_role_scoped: bool = True
-    material_dispatch_write_target_explicit: bool = True
-    unsupported_material_packets_rejected: bool = True
+    current_prework_contract_observed: bool = False
+    retired_material_protocol_absent: bool = True
+    shallow_skill_inventory_preserved: bool = True
+    ordinary_resource_work_optional: bool = True
+    complete_workstream_report_contract_preserved: bool = True
 
     terminal_closure_observed: bool = False
     run_lifecycle_record_written: bool = True

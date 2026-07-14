@@ -40,7 +40,6 @@ REQUIRED_REHEARSAL_IDS = {
     "real_router.full.startup_to_terminal_fake_ai_packages",
     "real_router.cli.public_boundary_smoke",
     "real_router.recovery.resume_and_background_proof_gate",
-    "real_router.repair.producer_proof_recovery",
     "real_router.authority.rejects_shortcut_overclaims",
 }
 
@@ -66,7 +65,6 @@ REHEARSAL_ROWS: tuple[dict[str, Any], ...] = (
         "rehearsal_id": "real_router.full.startup_to_terminal_fake_ai_packages",
         "phase_sequence": [
             "startup",
-            "material_scan",
             "product_architecture",
             "route_activation",
             "current_node_packet_dispatch",
@@ -82,7 +80,6 @@ REHEARSAL_ROWS: tuple[dict[str, Any], ...] = (
             "startup_intake_record",
             "startup_mechanical_audit",
             "startup_display_surface_status",
-            "material_scan_packets",
             "product_behavior_model",
             "current_node_packet_body",
             "worker_result_envelope",
@@ -241,61 +238,6 @@ REHEARSAL_ROWS: tuple[dict[str, Any], ...] = (
             "control_plane_canary.progress_only_background_artifact",
         ],
         "confidence_boundary": "proves selected compounded recovery/proof gates return to legal control-plane state",
-        "live_ai_semantic_quality_proven": False,
-    },
-    {
-        "rehearsal_id": "real_router.repair.producer_proof_recovery",
-        "phase_sequence": [
-            "startup_complete",
-            "material_scan_dispatch",
-            "stale_worker_result_flags",
-            "control_blocker",
-            "pm_no_producer_repair_rejected",
-            "pm_packet_reissue_repair",
-            "producer_backed_wait_exposed",
-        ],
-        "fake_ai_artifacts": [
-            "material_scan_packets",
-            "stale_worker_result_flags",
-            "pm_no_producer_repair_decision",
-            "pm_packet_reissue_repair_decision",
-            "repair_packet_generation",
-        ],
-        "router_entrypoints": [
-            "router_runtime.record_external_event",
-            "router_runtime.next_action",
-            "packet_runtime.create_packet",
-        ],
-        "required_ack_or_receipt_gates": [
-            "pm_repair_decision_envelope",
-            "repair_packet_generation_receipt",
-            "producer_evidence_on_followup_wait",
-        ],
-        "allowed_event_boundary": (
-            "post-repair waits count only when the repair transaction exposes current producer evidence"
-        ),
-        "forbidden_shortcuts": [
-            "direct_state_mutation",
-            "stale_worker_result_flag_as_fresh_producer",
-            "role_reissue_without_packet_generation",
-            "await_role_event_without_producer_evidence",
-        ],
-        "expected_standard_state": "legal_wait_with_repair_packet_generation_producer_evidence",
-        "evidence_id": "real_router.repair.producer_proof_recovery",
-        "evidence_test": (
-            "FlowPilotRealRouterDryRunRehearsalTests."
-            "test_real_router_repair_rehearsal_rejects_no_producer_then_accepts_packet_reissue"
-        ),
-        "evidence_status": "passed",
-        "evidence_current": True,
-        "evidence_role": "primary_real_router_rehearsal",
-        "supporting_evidence": [
-            "e2e.pm_repair.no_producer_then_packet_reissue",
-            "repair_transactions.negative.material_role_reissue_no_producer",
-        ],
-        "confidence_boundary": (
-            "proves a prepared fake PM repair cannot advance until a current repair producer exists"
-        ),
         "live_ai_semantic_quality_proven": False,
     },
     {

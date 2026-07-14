@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import importlib.util
+from itertools import combinations, product
+from math import prod
 import sys
 import unittest
 from pathlib import Path
@@ -61,10 +63,42 @@ def compact_fake_ai_failure(report: dict[str, object]) -> dict[str, object]:
 
 
 class FlowPilotContractExhaustionMeshTests(unittest.TestCase):
+    @staticmethod
+    def current_manifest(*, reused_without_ticket: bool = False) -> dict[str, object]:
+        proof = {
+            "artifact_id": "proof.contract-exhaustion-current",
+            "producer_route": "flowguard-test-mesh",
+            "command": "python scripts/run_test_tier.py --tier all --background",
+            "result_path": "tmp/test_background/current-all",
+            "result_status": "passed",
+            "exit_code": 0,
+            "artifact_fingerprints": {"all.meta.json": "a" * 64, "all.exit.txt": "b" * 64},
+            "covered_obligation_ids": ["all-current-tests"],
+            "assertion_scope": "external_contract",
+            "current": True,
+            "route_evidence_current": True,
+            "progress_only": False,
+            "metadata": {"selected_child_command_count": 23, "executed_child_command_count": 23},
+        }
+        return {
+            "source_fingerprint": runner.source_fingerprint(),
+            "routine": {
+                "all": {
+                    "result_status": "passed",
+                    "selected_count": 23,
+                    "test_count": 23,
+                    "result_reused": reused_without_ticket,
+                    "proof_artifact": proof,
+                }
+            },
+        }
+
     def test_contract_exhaustion_mesh_accepts_valid_and_rejects_hazards(self) -> None:
-        report = runner.run_checks()
+        report = runner.run_checks(declaration_only=True)
 
         self.assertTrue(report["ok"], compact_fake_ai_failure(report))
+        self.assertEqual(report["claim_scope"], "declaration_only")
+        self.assertEqual(report["evidence_status"], "not_run")
         self.assertEqual(report["model_id"], model.MODEL_ID)
         self.assertGreater(report["required_cells"]["cell_count"], 80)
         self.assertGreaterEqual(report["required_cells"]["family_count"], len(model.CONTRACT_FAMILIES))
@@ -119,6 +153,7 @@ class FlowPilotContractExhaustionMeshTests(unittest.TestCase):
         self.assertIn("control_plane_ledger_hygiene_fake_ai_matrix", owners)
         self.assertIn("real_issue_backfeed_matrix", owners)
         self.assertIn("integration_cartesian_coverage_matrix", owners)
+        self.assertIn("complete_workstream_fake_ai_matrix", owners)
         self.assertLessEqual(model.SYNTHETIC_MUTATION_KINDS, mutation_kinds)
         self.assertTrue(
             [
@@ -197,6 +232,61 @@ class FlowPilotContractExhaustionMeshTests(unittest.TestCase):
                 and cell["mutation_kind"] == "missing_integration_cartesian_shard"
             ]
         )
+        workstream_profile_cells = {
+            str(cell["mutation_kind"])
+            for cell in cells
+            if cell["required_evidence_owner"] == "complete_workstream_fake_ai_matrix"
+        }
+        self.assertEqual(
+            workstream_profile_cells,
+            {
+                *contract_fake_ai.COMPLETE_WORKSTREAM_PROFILE_IDS,
+                *contract_fake_ai.RESOURCE_DISCOVERY_PROFILE_IDS,
+            },
+        )
+
+    def test_complete_workstream_and_resource_universes_are_full_cartesian_with_oracles(self) -> None:
+        universes = (
+            (
+                model.COMPLETE_WORKSTREAM_CARTESIAN_AXES,
+                model.complete_workstream_cartesian_cells(),
+                model.COMPLETE_WORKSTREAM_HIGH_RISK_INTERACTION_GROUPS,
+            ),
+            (
+                model.RESOURCE_DISCOVERY_CARTESIAN_AXES,
+                model.resource_discovery_cartesian_cells(),
+                model.RESOURCE_DISCOVERY_HIGH_RISK_INTERACTION_GROUPS,
+            ),
+        )
+        for axes, cells, high_risk_groups in universes:
+            with self.subTest(axis_names=tuple(axes)):
+                self.assertEqual(len(cells), prod(len(values) for values in axes.values()))
+                self.assertEqual(len({cell["cell_id"] for cell in cells}), len(cells))
+                self.assertTrue(all(cell["expected_outcome"] for cell in cells))
+                self.assertTrue(
+                    all(
+                        cell["required_evidence_owner"] == "complete_workstream_cartesian_matrix"
+                        for cell in cells
+                    )
+                )
+                axis_names = tuple(axes)
+                for left, right in combinations(axis_names, 2):
+                    observed = {
+                        (
+                            cell["axis_assignment"][left],
+                            cell["axis_assignment"][right],
+                        )
+                        for cell in cells
+                    }
+                    expected = set(product(axes[left], axes[right]))
+                    self.assertEqual(observed, expected, (left, right))
+                for group in high_risk_groups:
+                    observed = {
+                        tuple(cell["axis_assignment"][axis] for axis in group)
+                        for cell in cells
+                    }
+                    expected = set(product(*(axes[axis] for axis in group)))
+                    self.assertEqual(observed, expected, group)
 
     def test_review_window_completeness_cells_cover_every_declared_flow(self) -> None:
         cells = list(model.REQUIRED_CONTRACT_EXHAUSTION_CELLS)
@@ -331,7 +421,7 @@ class FlowPilotContractExhaustionMeshTests(unittest.TestCase):
                 self.assertTrue(cell["normal_repair_route"])
 
     def test_contract_exhaustion_test_mesh_registers_every_required_owner(self) -> None:
-        report = runner.run_checks()
+        report = runner.run_checks(evidence_manifest=self.current_manifest())
         required_owners = {
             cell["required_evidence_owner"]
             for cell in report["required_cells"]["required_cells"]
@@ -343,6 +433,11 @@ class FlowPilotContractExhaustionMeshTests(unittest.TestCase):
         self.assertEqual(set(child_suites), required_owners)
         self.assertEqual(report["test_mesh"]["unregistered_required_child_suites"], [])
         self.assertEqual(report["test_mesh"]["missing_or_stale_child_suites"], [])
+        for suite in child_suites.values():
+            self.assertEqual(suite["test_count"], 23)
+            self.assertNotEqual(suite["test_count"], suite["owned_cell_count"])
+            self.assertTrue(suite["proof_artifact"])
+            self.assertTrue(suite["reuse_ticket"])
         self.assertGreater(
             child_suites["contract_exhaustion_historical_failure_matrix"]["owned_cell_count"],
             0,
@@ -352,8 +447,22 @@ class FlowPilotContractExhaustionMeshTests(unittest.TestCase):
             0,
         )
         self.assertGreater(
+            child_suites["fake_ai_runtime_replay_matrix"]["owned_declared_cell_count"],
+            child_suites["fake_ai_runtime_replay_matrix"]["owned_cell_count"],
+        )
+        self.assertTrue(
+            child_suites["fake_ai_runtime_replay_matrix"]["child_declaration_receipts"]
+        )
+        self.assertGreater(
             child_suites["control_plane_ledger_hygiene_fake_ai_matrix"]["owned_cell_count"],
             0,
+        )
+        self.assertGreater(
+            child_suites["control_plane_ledger_hygiene_fake_ai_matrix"]["owned_declared_cell_count"],
+            child_suites["control_plane_ledger_hygiene_fake_ai_matrix"]["owned_cell_count"],
+        )
+        self.assertTrue(
+            child_suites["control_plane_ledger_hygiene_fake_ai_matrix"]["child_declaration_receipts"]
         )
         self.assertGreater(
             child_suites["real_issue_backfeed_matrix"]["owned_cell_count"],
@@ -361,31 +470,56 @@ class FlowPilotContractExhaustionMeshTests(unittest.TestCase):
         )
 
     def test_contract_exhaustion_summary_keeps_large_cell_matrix_out_of_file_artifact(self) -> None:
-        report = runner.run_checks()
+        report = runner.run_checks(evidence_manifest=self.current_manifest())
         summary = runner._summary_report(report)
 
         self.assertTrue(summary["ok"], summary)
         self.assertEqual(summary["required_cell_count"], report["required_cells"]["cell_count"])
         self.assertIn("control_plane_ledger_hygiene_fake_ai_matrix", summary["required_child_suite_owners"])
         self.assertNotIn("required_cells", summary)
-        self.assertNotIn("child_suites", summary)
+        self.assertIn("child_suites", summary)
+        for suite in summary["child_suites"].values():
+            self.assertNotIn("owned_case_ids", suite)
+
+    def test_contract_exhaustion_reused_proof_without_ticket_blocks_strict_evidence(self) -> None:
+        report = runner.run_checks(evidence_manifest=self.current_manifest(reused_without_ticket=True))
+
+        self.assertFalse(report["ok"])
+        self.assertIn(
+            "all:missing_test_reuse_ticket",
+            report["test_mesh"]["execution_evidence"]["failures"],
+        )
 
     def test_contract_exhaustion_registers_runtime_replay_and_backfeed_cells(self) -> None:
         cells = list(model.REQUIRED_CONTRACT_EXHAUSTION_CELLS)
-        runtime_replay_cells = [
+        runtime_replay_receipts = [
             cell
             for cell in cells
             if cell["required_evidence_owner"] == "fake_ai_runtime_replay_matrix"
+        ]
+        hygiene_receipts = [
+            cell
+            for cell in cells
+            if cell["required_evidence_owner"] == "control_plane_ledger_hygiene_fake_ai_matrix"
         ]
         backfeed_cells = [
             cell
             for cell in cells
             if cell["required_evidence_owner"] == "real_issue_backfeed_matrix"
         ]
-        replay_reactions = {cell.get("expected_runtime_reaction") for cell in runtime_replay_cells}
+        replay_reactions = {
+            reaction
+            for cell in runtime_replay_receipts
+            for reaction in cell.get("child_reaction_ids", ())
+        }
         backfeed_ids = {cell["cell_id"] for cell in backfeed_cells}
 
-        self.assertGreater(len(runtime_replay_cells), 400)
+        self.assertEqual(len(runtime_replay_receipts), 1)
+        self.assertEqual(len(hygiene_receipts), 1)
+        self.assertGreater(runtime_replay_receipts[0]["child_declared_cell_count"], 400)
+        self.assertGreater(hygiene_receipts[0]["child_declared_cell_count"], 100_000)
+        self.assertEqual(len(runtime_replay_receipts[0]["child_receipt_sha256"]), 64)
+        self.assertEqual(len(hygiene_receipts[0]["child_receipt_sha256"]), 64)
         self.assertGreaterEqual(len(backfeed_cells), 6)
         self.assertIn("mechanical_reject_reissue_with_strict_json_feedback", replay_reactions)
         self.assertIn("accepted_after_reissue", replay_reactions)
@@ -394,7 +528,7 @@ class FlowPilotContractExhaustionMeshTests(unittest.TestCase):
         self.assertIn("real_issue_backfeed.real.contract_surface.acceptance_owner_hidden_rule", backfeed_ids)
 
     def test_contract_exhaustion_runner_checks_fake_ai_responder_cartesian_parity(self) -> None:
-        report = runner.run_checks()
+        report = runner.run_checks(declaration_only=True)
         fake_ai = report["fake_ai_responder"]
         summary = fake_ai["summary"]
 
@@ -417,7 +551,7 @@ class FlowPilotContractExhaustionMeshTests(unittest.TestCase):
         self.assertGreater(fake_ai["required_option_value_cell_count"], 150)
 
     def test_fake_ai_responder_parity_does_not_absorb_runtime_owned_cells(self) -> None:
-        report = runner.run_checks()
+        report = runner.run_checks(declaration_only=True)
         fake_ai_missing = {
             (
                 cell["contract_family_id"],

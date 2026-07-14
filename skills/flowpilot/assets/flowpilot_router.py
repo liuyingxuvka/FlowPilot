@@ -90,8 +90,6 @@ _FORBIDDEN_STARTUP_INTAKE_BODY_KEYS = {
 
 
 PRE_ROUTE_PHASE_ITEMS = (
-    ("material_scan", "Material scan", "pm_material_scan_card_delivered"),
-    ("material_understanding", "Material understanding", "pm_material_understanding_card_delivered"),
     ("product_architecture", "Product architecture", "pm_product_architecture_card_delivered"),
     ("root_contract", "Root contract", "pm_root_contract_card_delivered"),
     ("dependency_policy", "Dependency policy", "pm_dependency_policy_card_delivered"),

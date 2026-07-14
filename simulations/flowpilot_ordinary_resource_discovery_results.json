@@ -1,0 +1,217 @@
+{
+  "architecture_reduction": {
+    "decision": "architecture_reduction_ready",
+    "ok": true,
+    "report": {
+      "compatibility_surfaces": [],
+      "completed_candidate_ids": [],
+      "covered_candidate_ids": [],
+      "decision": "architecture_reduction_ready",
+      "findings": [],
+      "inventory_revision": "",
+      "materialized_similarity_code_obligation_ids": [],
+      "materialized_similarity_relation_ids": [],
+      "missing_candidate_ids": [],
+      "ok": true,
+      "ready_candidate_ids": [
+        "remove_mandatory_material_scan_stage",
+        "remove_discovery_material_fields",
+        "merge_material_sufficiency_review",
+        "retain_discovery_family_facade",
+        "retain_optional_material_map"
+      ],
+      "reduction_id": "flowpilot_material_discovery_path_contraction",
+      "required_next_routes": [
+        "model_test_alignment",
+        "structure_mesh"
+      ],
+      "scoped_candidate_ids": [],
+      "summary": "OK: reduction=flowpilot_material_discovery_path_contraction decision=architecture_reduction_ready findings=0",
+      "target_actions": [
+        {
+          "action": "remove",
+          "candidate_id": "remove_mandatory_material_scan_stage",
+          "code_node_id": "mandatory_material_scan_startup_path",
+          "rationale": "Ordinary PM role-work already owns requested reading, research and evidence collection.",
+          "required_next_route": "model_test_alignment"
+        },
+        {
+          "action": "remove",
+          "candidate_id": "remove_discovery_material_fields",
+          "code_node_id": "task.discovery.material_sources_and_sufficiency",
+          "rationale": "The fields do not own unique mechanics and incorrectly make material work mandatory.",
+          "required_next_route": "model_test_alignment"
+        },
+        {
+          "action": "merge",
+          "candidate_id": "merge_material_sufficiency_review",
+          "code_node_id": "dedicated_material_sufficiency_reviewer",
+          "rationale": "Risk-appropriate ordinary work review provides the same independent quality boundary.",
+          "required_next_route": "model_test_alignment"
+        },
+        {
+          "action": "keep_facade",
+          "candidate_id": "retain_discovery_family_facade",
+          "code_node_id": "task.discovery",
+          "rationale": "The family remains the single current capability-discovery path and preserves family parity.",
+          "required_next_route": "structure_mesh"
+        },
+        {
+          "action": "keep_facade",
+          "candidate_id": "retain_optional_material_map",
+          "code_node_id": "material_artifact_map_navigation",
+          "rationale": "The index is useful when present but cannot own acceptance or stage progression.",
+          "required_next_route": "structure_mesh"
+        }
+      ],
+      "unexpected_candidate_ids": []
+    }
+  },
+  "claim_boundary": "The model proves the declared finite discovery/resource states only; it does not prove that every future skill or source is semantically useful.",
+  "flowguard_explorer": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "reachability_failures": [],
+    "summary": "sequences=20 initial_states=4 traces=840",
+    "violation_count": 0
+  },
+  "implementation_alignment": {
+    "checks": {
+      "accepted_discovery_has_no_material_current": true,
+      "discovery_contract_keeps_candidate_inventory": true,
+      "discovery_contract_removes_material_sources": true,
+      "discovery_contract_removes_material_sufficiency": true,
+      "focused_negative_source_audit_exists": true,
+      "optional_map_test_exists": true,
+      "ordinary_role_work_test_exists": true,
+      "runtime_inventory_projection": true
+    },
+    "missing": [],
+    "ok": true,
+    "paths": [
+      "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\skills\\flowpilot\\assets\\flowpilot_core_runtime\\runtime.py",
+      "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\skills\\flowpilot\\assets\\flowpilot_core_runtime\\packet_result_contracts.py",
+      "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\skills\\flowpilot\\assets\\flowpilot_core_runtime\\packet_stage_evidence_matrix.py",
+      "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tests\\test_flowpilot_ordinary_resource_discovery.py"
+    ]
+  },
+  "known_bad_hazards": {
+    "known_bad_count": 13,
+    "ok": true,
+    "rows": {
+      "dedicated_material_gate": {
+        "detected": true,
+        "expected": "mandatory dedicated material gate re-entered",
+        "failures": [
+          "mandatory dedicated material gate re-entered the current path"
+        ]
+      },
+      "dedicated_material_result": {
+        "detected": true,
+        "expected": "dedicated material result family became current authority",
+        "failures": [
+          "dedicated material result family became current authority"
+        ]
+      },
+      "map_absence_blocks": {
+        "detected": true,
+        "expected": "optional material artifact-map absence blocked the flow",
+        "failures": [
+          "optional material artifact-map absence blocked the flow"
+        ]
+      },
+      "missing_local_inventory": {
+        "detected": true,
+        "expected": "planning advanced without mandatory local skill inventory",
+        "failures": [
+          "PM selected skills before current Runtime inventory projection",
+          "planning advanced without mandatory local skill inventory"
+        ]
+      },
+      "missing_pm_selection": {
+        "detected": true,
+        "expected": "skills were deeply read before PM relevance selection",
+        "failures": [
+          "skills were deeply read before PM relevance selection",
+          "planning advanced without PM skill relevance selection"
+        ]
+      },
+      "missing_selected_skill_obligations": {
+        "detected": true,
+        "expected": "selected skill deep read produced no reviewer-checkable obligations",
+        "failures": [
+          "selected skill deep read produced no reviewer-checkable obligations",
+          "planning advanced before selected skills became obligations"
+        ]
+      },
+      "old_field_translation": {
+        "detected": true,
+        "expected": "removed discovery material field was translated or defaulted",
+        "failures": [
+          "removed discovery material field was translated or defaulted"
+        ]
+      },
+      "old_material_sources_field": {
+        "detected": true,
+        "expected": "removed material_sources discovery field was accepted",
+        "failures": [
+          "removed material_sources discovery field was accepted"
+        ]
+      },
+      "old_material_sufficiency_field": {
+        "detected": true,
+        "expected": "removed material_sufficiency discovery field was accepted",
+        "failures": [
+          "removed material_sufficiency discovery field was accepted"
+        ]
+      },
+      "ordinary_packet_bypassed": {
+        "detected": true,
+        "expected": "material result bypassed the ordinary role-work packet",
+        "failures": [
+          "material result bypassed the ordinary role-work packet"
+        ]
+      },
+      "ordinary_review_bypassed": {
+        "detected": true,
+        "expected": "risk-applicable ordinary material work bypassed existing review",
+        "failures": [
+          "risk-applicable ordinary material work bypassed existing review"
+        ]
+      },
+      "runtime_deep_reads_all_skills": {
+        "detected": true,
+        "expected": "Runtime deep-read every discovered skill",
+        "failures": [
+          "Runtime deep-read every discovered skill instead of shallow inventory"
+        ]
+      },
+      "stale_inventory_paths": {
+        "detected": true,
+        "expected": "planning advanced with stale or incomplete inventory projection",
+        "failures": [
+          "planning advanced with stale or incomplete inventory projection"
+        ]
+      }
+    }
+  },
+  "model_id": "flowpilot_ordinary_resource_discovery",
+  "ok": true,
+  "safe_graph_and_progress": {
+    "edge_count": 34,
+    "initial_variants_without_success": [],
+    "invariant_failures": [],
+    "missing_labels": [],
+    "ok": true,
+    "state_count": 38,
+    "stuck_states": []
+  },
+  "target_success_failures": {
+    "material=False,map=False": [],
+    "material=False,map=True": [],
+    "material=True,map=False": [],
+    "material=True,map=True": []
+  }
+}

@@ -81,12 +81,12 @@ class FlowPilotBoundaryContractTests(unittest.TestCase):
     def test_material_artifact_map_is_index_only_and_preserves_sealed_body_boundary(self) -> None:
         project_root = self._tmp
         run_root = project_root / ".flowpilot" / "runs" / "run-boundary"
-        packet_dir = run_root / "packets" / "material-scan-001"
-        result_dir = run_root / "results" / "material-scan-001"
-        material_dir = run_root / "material"
+        packet_dir = run_root / "packets" / "research-001"
+        result_dir = run_root / "results" / "research-001"
+        research_dir = run_root / "research"
         packet_dir.mkdir(parents=True)
         result_dir.mkdir(parents=True)
-        material_dir.mkdir(parents=True)
+        research_dir.mkdir(parents=True)
 
         packet_body = packet_dir / "packet_body.md"
         result_body = result_dir / "result_body.md"
@@ -97,7 +97,7 @@ class FlowPilotBoundaryContractTests(unittest.TestCase):
 
         packet_envelope = {
             "schema_version": "test.packet_envelope.v1",
-            "packet_id": "material-scan-001",
+            "packet_id": "research-001",
             "from_role": "project_manager",
             "to_role": "worker",
             "body_path": packet_body_rel,
@@ -109,7 +109,7 @@ class FlowPilotBoundaryContractTests(unittest.TestCase):
 
         result_envelope = {
             "schema_version": "test.result_envelope.v1",
-            "packet_id": "material-scan-001",
+            "packet_id": "research-001",
             "completed_by_role": "worker",
             "next_recipient": "project_manager",
             "result_body_path": result_body_rel,
@@ -120,13 +120,13 @@ class FlowPilotBoundaryContractTests(unittest.TestCase):
         result_envelope_path = result_dir / "result_envelope.json"
         packet_runtime.write_json_atomic(result_envelope_path, result_envelope)
 
-        material_index = {
-            "schema_version": "test.material_index.v1",
-            "batch_id": "batch-material",
+        research_index = {
+            "schema_version": "test.research_index.v1",
+            "batch_id": "batch-research",
             "written_by_role": "project_manager",
             "packets": [
                 {
-                    "packet_id": "material-scan-001",
+                    "packet_id": "research-001",
                     "packet_envelope_path": packet_runtime.project_relative(project_root, packet_envelope_path),
                     "packet_body_path": packet_body_rel,
                     "packet_body_hash": packet_envelope["body_hash"],
@@ -134,9 +134,14 @@ class FlowPilotBoundaryContractTests(unittest.TestCase):
                 }
             ],
         }
-        packet_runtime.write_json_atomic(material_dir / "material_scan_packets.json", material_index)
+        packet_runtime.write_json_atomic(research_dir / "research_packet.json", research_index)
 
-        doc = material_map.refresh_material_artifact_map(project_root, run_root, {"run_id": "run-boundary"})
+        doc = material_map.refresh_material_artifact_map(
+            project_root,
+            run_root,
+            {"run_id": "run-boundary"},
+            create_if_missing=True,
+        )
 
         self.assertEqual(doc["schema_version"], material_map.MATERIAL_ARTIFACT_MAP_SCHEMA)
         self.assertEqual(doc["run_id"], "run-boundary")
@@ -148,17 +153,17 @@ class FlowPilotBoundaryContractTests(unittest.TestCase):
         self.assertNotIn("SEALED_PACKET_BODY_TEXT", json.dumps(doc, sort_keys=True))
         self.assertNotIn("SEALED_RESULT_BODY_TEXT", json.dumps(doc, sort_keys=True))
 
-        entry_ids = material_map.review_source_entry_ids(doc, batch_kind="material_scan")
-        self.assertIn("material_scan:packet_index", entry_ids)
-        self.assertIn("material_scan:packet:material-scan-001", entry_ids)
-        self.assertIn("material_scan:result:material-scan-001", entry_ids)
+        entry_ids = material_map.review_source_entry_ids(doc, batch_kind="research")
+        self.assertIn("research:packet_index", entry_ids)
+        self.assertIn("research:packet:research-001", entry_ids)
+        self.assertIn("research:result:research-001", entry_ids)
         review_paths = material_map.reviewable_source_paths(doc, entry_ids=entry_ids)
-        self.assertIn(packet_runtime.project_relative(project_root, material_dir / "material_scan_packets.json"), review_paths)
+        self.assertIn(packet_runtime.project_relative(project_root, research_dir / "research_packet.json"), review_paths)
         self.assertIn(packet_runtime.project_relative(project_root, packet_envelope_path), review_paths)
         self.assertIn(packet_runtime.project_relative(project_root, result_envelope_path), review_paths)
 
         result_entry = next(
-            entry for entry in doc["entries"] if entry["entry_id"] == "material_scan:result:material-scan-001"
+            entry for entry in doc["entries"] if entry["entry_id"] == "research:result:research-001"
         )
         self.assertTrue(result_entry["sealed_body_boundary_preserved"])
         self.assertTrue(result_entry["requires_runtime_open"])
@@ -175,7 +180,7 @@ class FlowPilotBoundaryContractTests(unittest.TestCase):
         packet_runtime.write_json_atomic(result_envelope_path, result_envelope)
         relayed_doc = material_map.refresh_material_artifact_map(project_root, run_root, {"run_id": "run-boundary"})
         relayed_result_entry = next(
-            entry for entry in relayed_doc["entries"] if entry["entry_id"] == "material_scan:result:material-scan-001"
+            entry for entry in relayed_doc["entries"] if entry["entry_id"] == "research:result:research-001"
         )
         self.assertTrue(relayed_result_entry["sealed_body_boundary_preserved"])
         self.assertTrue(all(ref["ordinary_file_read_allowed"] is False for ref in relayed_result_entry["body_refs"]))
@@ -196,11 +201,11 @@ class FlowPilotBoundaryContractTests(unittest.TestCase):
     def test_material_artifact_map_entry_policy_preserves_reference_boundaries(self) -> None:
         project_root = self._tmp
         run_root = project_root / ".flowpilot" / "runs" / "run-entry-policy"
-        material_dir = run_root / "material"
-        material_dir.mkdir(parents=True)
+        research_dir = run_root / "research"
+        research_dir.mkdir(parents=True)
 
-        source_path = material_dir / "pm_material_scan_result_disposition.json"
-        packet_runtime.write_json_atomic(source_path, {"decision": "absorbed"})
+        source_path = research_dir / "research_package.json"
+        packet_runtime.write_json_atomic(source_path, {"status": "current", "decision_question": "what evidence is needed?"})
         sealed_ref = material_map_entries.sealed_body_ref(
             "sealed/body.md",
             "abc123",
@@ -233,7 +238,7 @@ class FlowPilotBoundaryContractTests(unittest.TestCase):
 
         static_entries = material_map_entries.static_artifact_entries(project_root, run_root)
         by_id = {item["entry_id"]: item for item in static_entries}
-        self.assertEqual(by_id["material:pm_result_disposition"]["status"], "current")
+        self.assertEqual(by_id["research:package"]["status"], "current")
         self.assertEqual(material_map_entries.status_counts(static_entries)["current"], len(static_entries))
 
     def test_receipt_bootloader_policy_child_preserves_facade_boundary(self) -> None:
@@ -357,7 +362,7 @@ class FlowPilotBoundaryContractTests(unittest.TestCase):
                 {
                     "action_type": "await_role_decision",
                     "to_role": "worker",
-                    "allowed_external_events": ["worker_scan_results_returned"],
+                    "allowed_external_events": ["worker_current_node_result_returned"],
                 },
             )
         )
@@ -367,7 +372,7 @@ class FlowPilotBoundaryContractTests(unittest.TestCase):
                 {
                     "action_type": "await_role_decision",
                     "to_role": "worker",
-                    "allowed_external_events": ["worker_scan_results_returned"],
+                    "allowed_external_events": ["worker_current_node_result_returned"],
                 },
             ),
             current_work._pending_role_wait_should_use_batch_projection(
@@ -375,7 +380,7 @@ class FlowPilotBoundaryContractTests(unittest.TestCase):
                 {
                     "action_type": "await_role_decision",
                     "to_role": "worker",
-                    "allowed_external_events": ["worker_scan_results_returned"],
+                    "allowed_external_events": ["worker_current_node_result_returned"],
                 },
             ),
         )

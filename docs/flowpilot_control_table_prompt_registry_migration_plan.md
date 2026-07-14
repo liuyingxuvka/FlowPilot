@@ -1,4 +1,10 @@
-# FlowPilot Control Table and Prompt Registry Migration Plan
+# FlowPilot Control Table and Prompt Registry Migration Plan (Historical Snapshot)
+
+> Status: superseded. This document records an earlier migration slice and is
+> not current Runtime, Router, prompt, repair, or completion authority. The
+> current contract deletes the dedicated material-scan repair/event path;
+> current behavior is defined by the Runtime catalogs, FlowGuard models, tests,
+> and `docs/flowpilot_current_contract_repair_discipline.md`.
 
 ## Scope
 
@@ -17,7 +23,7 @@ repair outcome row.
 | --- | --- | --- | --- | --- |
 | O1 | Freeze the migration inventory | Inventory prompt/command surfaces: `runtime_kit/manifest.json`, card markdown, `contract_index.json`, `packet_runtime.py` command lists, `EXTERNAL_EVENTS`, repair outcome tables, and Controller action payloads. | Planning table maps each surface to a model or source check. | `scripts/check_install.py` knows the new model/doc artifacts. |
 | O2 | Add a first-class event capability registry | Define event capability rows with event name, producer role, node-kind unsupported historical, repair-origin unsupported historical, waitability, rerun-target eligibility, and repair outcome eligibility. | New event-capability FlowGuard model catches all listed event/table hazards. | Router uses one validator before writing waits or repair outcome tables. |
-| O3 | Split repair outcomes into real exits | Require repair `success`, `blocker`, and `protocol_blocker` rows to have distinct registered, context-compatible events unless a row is explicitly unsupported and rejected before persistence. | Existing repair-transaction and new event-capability models reject collapsed outcome rows. | Material repair keeps three routable events; unsupported generic collapsed outcomes fail before state write. |
+| O3 | Split repair outcomes into real exits | Require repair `success`, `blocker`, and `protocol_blocker` rows to have distinct registered, context-compatible events unless a row is explicitly unsupported and rejected before persistence. | Existing repair-transaction and new event-capability models reject collapsed outcome rows. | Current research/current-node/control-blocker repair uses registered current events; retired material events are rejected. |
 | O4 | Lock parent/backward replay repair to parent-safe events | Parent/module backward-replay repairs may only rerun or wait for parent-safe events: parent target build, reviewer backward replay, parent segment decision, parent completion, or a parent protocol blocker. | Event-capability model rejects parent repair targeting leaf current-node packet registration. | Router rejects incompatible `rerun_target` and never persists that wait. |
 | O5 | Unify prompt authorization slices | Generate or compose role prompt authorization text from registry rows rather than duplicating command lists in phase cards. | Card/source coverage model must detect manual command text that is not backed by a registry row. | Prompt/card tests compare generated slices with card references. |
 | O6 | Cross-check command permission tables | Align `packet_runtime.py` allowed/forbidden actions, Controller action payloads, role output contracts, and event capability rows. | Command-refinement, event-contract, and router-action models cover command/event/recipient drift. | Source checks reject orphan command rows and card commands that have no runtime authority. |
@@ -51,7 +57,7 @@ repair outcome row.
 | Risk group | Primary model/check | Required proof before production edits |
 | --- | --- | --- |
 | Event capability by node kind and repair origin | `flowpilot_event_capability_registry_model.py` | Safe scenarios pass; hazards B5-B8 are detected. |
-| Registered/currently receivable waits | `flowpilot_event_contract_model.py` | Existing hazards for unknown events, false prerequisites, ACK waits, and material three-exit repairs remain passing. |
+| Registered/currently receivable waits | `flowpilot_event_contract_model.py` | Existing hazards for unknown events, false prerequisites, ACK waits, and retired material-event absence remain passing. |
 | Repair transaction outcome semantics | `flowpilot_repair_transaction_model.py` | Hazards for parent repair target mismatch and collapsed outcome rows remain detected. |
 | End-to-end Router loop order | `flowpilot_router_loop_model.py` | Hazards for parent current-node packet registration, parent repair target mismatch, and collapsed repair outcomes remain detected. |
 | Route-replanning peer changes | `flowpilot_route_replanning_policy_model.py` | Active node missing and root-like route repair-node hazards remain detected. |
@@ -71,10 +77,9 @@ bounded adaptation:
   `pm_registers_current_node_packet` writer already rejects parent/module nodes,
   but control-blocker waits and repair outcome-table construction can still name
   an incompatible event before that writer runs.
-- Material dispatch repair already has three real outcome events:
-  `router_direct_material_scan_dispatch_recheck_passed`,
-  `router_direct_material_scan_dispatch_recheck_blocked`, and
-  `router_protocol_blocker_material_scan_dispatch_recheck`.
+- The earlier material-dispatch repair events described by this snapshot are
+  now retired current-contract names and may appear only in historical or
+  explicit negative-absence evidence.
 - Generic `event_replay` repairs currently use one rerun target for success,
   blocker, and protocol-blocker rows. That is the unsafe overlap being removed.
 - Because existing PM repair contracts and tests use generic `event_replay`, the
@@ -85,11 +90,11 @@ bounded adaptation:
   operate around route mutation/activation, while this slice gates event waits
   and repair transaction outcomes.
 
-Production implementation therefore follows this unsupported historical rule:
+The current replacement of this historical landing rule is:
 
 | Current surface | Landing rule |
 | --- | --- |
-| Material repair | Keep existing explicit three-outcome material events. |
+| Retired material repair | Reject the deleted event family; use ordinary research/current-node/control-blocker repair owners instead. |
 | Generic control-blocker `event_replay` | Success is the rerun target; blocker and protocol blocker use dedicated PM control-blocker outcome events. |
 | Parent/backward repair | Rerun target and outcome events must be parent-safe; leaf packet/current-node events are rejected before persistence. |
 | Existing writer validation | Keep writer-specific validation as a second line of defense; do not loosen existing validators. |

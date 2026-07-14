@@ -68,7 +68,7 @@ def _router_daemon_control_projection(router: ModuleType, run_state: dict[str, A
 
 
 def _write_router_daemon_status(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any], *, lifecycle_status: str, current_action: dict[str, Any] | None=None, recovery_hints: list[str] | None=None, lock: dict[str, Any] | None=None, error: dict[str, Any] | None=None) -> dict[str, Any]:
-    lock_payload = lock if isinstance(lock, dict) else router.read_json_if_exists(router._router_daemon_lock_path(run_root))
+    lock_payload = lock if isinstance(lock, dict) else router.read_daemon_critical_json_if_exists(router._router_daemon_lock_path(run_root))
     lock_liveness = router._router_daemon_lock_liveness(lock_payload)
     effective_lifecycle_status = lifecycle_status
     if lifecycle_status in {'daemon_active', 'daemon_observing', 'daemon_starting'}:
@@ -135,9 +135,11 @@ def _ensure_daemon_runtime_state(router: ModuleType, project_root: Path, run_roo
 
 
 def _formal_router_daemon_ready(router: ModuleType, project_root: Path, run_root: Path) -> bool:
-    lock = router.read_json_if_exists(router._router_daemon_lock_path(run_root))
-    status = router.read_json_if_exists(router._router_daemon_status_path(run_root))
-    ledger = router.read_json_if_exists(router._controller_action_ledger_path(run_root))
+    # Readiness is a bounded poll. A Windows sharing violation or an atomic
+    # replacement window means "not ready yet", never corruption or success.
+    lock = router.read_json_if_valid(router._router_daemon_lock_path(run_root))
+    status = router.read_json_if_valid(router._router_daemon_status_path(run_root))
+    ledger = router.read_json_if_valid(router._controller_action_ledger_path(run_root))
     return router._router_daemon_lock_is_live(lock) and status.get('schema_version') == router.ROUTER_DAEMON_STATUS_SCHEMA and bool(status.get('daemon_mode_enabled')) and (status.get('tick_interval_seconds') == router.ROUTER_DAEMON_TICK_SECONDS) and bool((status.get('lock') or {}).get('live')) and (ledger.get('schema_version') == router.CONTROLLER_ACTION_LEDGER_SCHEMA) and (status.get('run_root') == router.project_relative(project_root, run_root))
 
 

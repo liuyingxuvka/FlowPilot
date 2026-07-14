@@ -1,0 +1,97 @@
+{
+  "claim_boundary": "These checks prove the finite current FlowPilot-to-SkillGuard contract projection, its single native owner, declared negative cases, and read-only final receipt binding. They do not execute FlowPilot work or license SkillGuard execution-depth claims.",
+  "contract_conformance": {
+    "findings": [],
+    "obligation_count": 10,
+    "ok": true,
+    "owners": [
+      "flowpilot_runtime_router"
+    ],
+    "route_count": 4,
+    "step_count": 12
+  },
+  "contract_refinement": {
+    "covered_obligation_count": 10,
+    "declared_obligation_count": 10,
+    "findings": [],
+    "native_check_binding_count": 7,
+    "native_evaluator_hash": "14BC1F266FF21BE400AAB9DD8508DFB0B1CFAC7DCD9681C822993B8EFBADBD00",
+    "native_route_binding_count": 4,
+    "ok": true
+  },
+  "model_id": "flowpilot_skillguard_current_contract",
+  "ok": true,
+  "progress_and_loop_review": {
+    "loop_or_duplicate_label": false,
+    "monotonic": true,
+    "ok": true,
+    "terminal_closure_reached": true,
+    "trace": [
+      {
+        "block": "BindActivationBoundary",
+        "invariant_failures": [],
+        "label": "activation_bound",
+        "state": {
+          "activation_bound": true,
+          "closure_bound": false,
+          "route_plan_bound": false,
+          "workstream_bound": false
+        }
+      },
+      {
+        "block": "BindRoutePlan",
+        "invariant_failures": [],
+        "label": "route_plan_bound",
+        "state": {
+          "activation_bound": true,
+          "closure_bound": false,
+          "route_plan_bound": true,
+          "workstream_bound": false
+        }
+      },
+      {
+        "block": "BindCompleteWorkstream",
+        "invariant_failures": [],
+        "label": "complete_workstream_bound",
+        "state": {
+          "activation_bound": true,
+          "closure_bound": false,
+          "route_plan_bound": true,
+          "workstream_bound": true
+        }
+      },
+      {
+        "block": "BindIndependentClosure",
+        "invariant_failures": [],
+        "label": "independent_closure_bound",
+        "state": {
+          "activation_bound": true,
+          "closure_bound": true,
+          "route_plan_bound": true,
+          "workstream_bound": true
+        }
+      }
+    ]
+  },
+  "scenario_review": {
+    "known_bad_blockers": {
+      "former_contract_authority": "former_contract_authority_forbidden",
+      "missing_independent_flowguard": "independent_flowguard_missing",
+      "missing_native_check_bindings": "native_check_bindings_missing",
+      "missing_native_route_bindings": "native_route_bindings_missing",
+      "missing_numbered_plan": "numbered_role_plan_missing",
+      "missing_opt_in": "explicit_opt_in_missing",
+      "missing_skill_inventory": "local_skill_inventory_missing",
+      "ordinary_small_task": "complex_long_project_boundary_missing",
+      "parallel_skillguard_route": "parallel_skillguard_route_forbidden",
+      "stale_final_receipts": "final_parent_receipts_missing",
+      "unintegrated_delegation": "delegated_outputs_not_integrated"
+    },
+    "known_bad_count": 11,
+    "mismatches": {},
+    "ok": true,
+    "positive_blocker": "",
+    "positive_closure_bound": true
+  },
+  "schema_version": "flowpilot.skillguard_contract_checks.v1"
+}

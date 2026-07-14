@@ -58,15 +58,27 @@ EVIDENCE_BACKED_RELAY_ACTIONS = {
     "relay_current_node_packet",
     "relay_current_node_result_to_pm",
     "relay_current_node_result_to_reviewer",
-    "relay_material_scan_packets",
-    "relay_material_scan_results_to_pm",
-    "relay_material_scan_results_to_reviewer",
     "relay_pm_role_work_request_packet",
     "relay_pm_role_work_result_to_pm",
     "relay_research_packet",
     "relay_research_result_to_pm",
     "relay_research_result_to_reviewer",
 }
+
+RETIRED_MATERIAL_RELAY_ACTIONS = frozenset(
+    {
+        "relay_material_scan_packets",
+        "relay_material_scan_results_to_pm",
+        "relay_material_scan_results_to_reviewer",
+    }
+)
+RETIRED_MATERIAL_POSTCONDITIONS = frozenset(
+    {
+        "material_scan_packets_relayed",
+        "material_scan_results_relayed_to_pm",
+        "material_scan_results_relayed_to_reviewer",
+    }
+)
 
 STATE_LOAD_ACTION_PATTERN = re.compile(r"^load_[a-z0-9_]*_state$")
 
@@ -384,6 +396,68 @@ def _source_contract_report() -> dict[str, object]:
     }
 
 
+def _retired_material_surface_absence_report(
+    graph: dict[str, Any], source_contract: dict[str, object]
+) -> dict[str, object]:
+    states: list[model.State] = graph["states"]
+    accepted = [state for state in states if state.status == "accepted"]
+    accepted_retired_actions = sorted(
+        {
+            state.action_type
+            for state in accepted
+            if state.action_type in RETIRED_MATERIAL_RELAY_ACTIONS
+        }
+    )
+    accepted_retired_postconditions = sorted(
+        {
+            state.postcondition_name
+            for state in accepted
+            if state.postcondition_name in RETIRED_MATERIAL_POSTCONDITIONS
+        }
+    )
+    configured_retired_actions = sorted(
+        EVIDENCE_BACKED_RELAY_ACTIONS & RETIRED_MATERIAL_RELAY_ACTIONS
+    )
+    source_audit_skipped = bool(source_contract.get("skipped", False))
+    source_action_surfaces: set[str] = set()
+    if not source_audit_skipped:
+        source_action_surfaces.update(
+            str(action) for action in source_contract.get("direct_flag_actions", {})
+        )
+        source_action_surfaces.update(
+            str(action)
+            for action in source_contract.get("receipt_registered_actions", [])
+        )
+        source_action_surfaces.update(
+            str(action)
+            for action in source_contract.get("router_owned_state_replay_actions", [])
+        )
+    source_retired_actions = sorted(
+        source_action_surfaces & RETIRED_MATERIAL_RELAY_ACTIONS
+    )
+    ok = (
+        not accepted_retired_actions
+        and not accepted_retired_postconditions
+        and not configured_retired_actions
+        and (source_audit_skipped or not source_retired_actions)
+    )
+    return {
+        "ok": ok,
+        "accepted_retired_actions": accepted_retired_actions,
+        "accepted_retired_postconditions": accepted_retired_postconditions,
+        "configured_retired_actions": configured_retired_actions,
+        "source_audit_skipped": source_audit_skipped,
+        "source_retired_actions": source_retired_actions,
+        "retired_action_names": sorted(RETIRED_MATERIAL_RELAY_ACTIONS),
+        "retired_postcondition_names": sorted(RETIRED_MATERIAL_POSTCONDITIONS),
+        "claim_boundary": (
+            "The model always proves retired material relay names absent from "
+            "accepted Controller receipt paths. Source absence is proved only "
+            "when source audit is enabled."
+        ),
+    }
+
+
 def run_checks(include_source_audit: bool = True) -> dict[str, object]:
     graph = _build_graph()
     safe_graph = _safe_graph_report(graph)
@@ -391,18 +465,23 @@ def run_checks(include_source_audit: bool = True) -> dict[str, object]:
     flowguard = _flowguard_report()
     hazards = _hazard_report()
     source_contract = _source_contract_report() if include_source_audit else {"ok": True, "skipped": True}
+    retired_material_surface_absence = _retired_material_surface_absence_report(
+        graph, source_contract
+    )
     return {
         "checked_at": datetime.now(timezone.utc).isoformat(),
         "ok": bool(safe_graph["ok"])
         and bool(progress["ok"])
         and bool(flowguard["ok"])
         and bool(hazards["ok"])
-        and bool(source_contract["ok"]),
+        and bool(source_contract["ok"])
+        and bool(retired_material_surface_absence["ok"]),
         "safe_graph": safe_graph,
         "progress": progress,
         "flowguard_explorer": flowguard,
         "hazard_checks": hazards,
         "source_contract": source_contract,
+        "retired_material_surface_absence": retired_material_surface_absence,
         "model_boundary": (
             "focused Controller receipt evidence-fold contract for Router-owned postconditions; "
             "source audit checks direct flag writers against receipt fold registration"

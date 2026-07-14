@@ -107,9 +107,9 @@ def _event_capability_issue(router: ModuleType, event: str, *, run_root: Path | 
     if usage == 'repair_outcome':
         if outcome_kind == 'success' and event in CONTROL_BLOCKER_REPAIR_NON_SUCCESS_EVENTS | {PM_PARENT_PROTOCOL_BLOCKER_EVENT}:
             return 'repair success outcome cannot use a non-success event'
-        if outcome_kind == 'blocker' and event not in CONTROL_BLOCKER_REPAIR_NON_SUCCESS_EVENTS | {'reviewer_blocks_parent_backward_replay', 'router_direct_material_scan_dispatch_recheck_blocked'}:
+        if outcome_kind == 'blocker' and event not in CONTROL_BLOCKER_REPAIR_NON_SUCCESS_EVENTS | {'reviewer_blocks_parent_backward_replay'}:
             return 'repair blocker outcome must use a blocker-capable event'
-        if outcome_kind == 'protocol_blocker' and event not in {PM_CONTROL_BLOCKER_PROTOCOL_BLOCKER_EVENT, PM_PARENT_PROTOCOL_BLOCKER_EVENT, 'router_protocol_blocker_material_scan_dispatch_recheck'}:
+        if outcome_kind == 'protocol_blocker' and event not in {PM_CONTROL_BLOCKER_PROTOCOL_BLOCKER_EVENT, PM_PARENT_PROTOCOL_BLOCKER_EVENT}:
             return 'repair protocol-blocker outcome must use a protocol-blocker-capable event'
     if usage == 'wait' and origin == 'control_plane_reissue':
         return None

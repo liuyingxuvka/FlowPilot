@@ -103,48 +103,23 @@ class RuntimeStatePersistenceTests(unittest.TestCase):
         self.assertTrue(saved["flags"]["foreground_ready"])
         self.assertFalse(any(str(key).startswith("_flowpilot_loaded_") for key in saved))
 
-    def test_stale_save_does_not_restore_material_progress_flags_after_new_generation(self) -> None:
-        run_root = Path(".flowpilot/runs/run-persistence-material-generation-test")
+    def test_stale_save_has_no_retired_material_generation_override(self) -> None:
+        run_root = Path(".flowpilot/runs/run-persistence-current-contract-test")
         loaded_state = _base_state(run_root)
-        loaded_state["flags"].update(
-            {
-                "material_scan_packets_relayed": True,
-                "worker_packets_delivered": True,
-                "worker_scan_results_returned": True,
-                "material_scan_results_relayed_to_pm": True,
-                "material_scan_result_disposition_recorded": True,
-            }
-        )
         persistence._attach_run_state_load_metadata(loaded_state)
 
         foreground_state = _base_state(run_root)
-        foreground_state["active_material_generation"] = {
-            "schema_version": "flowpilot.active_material_generation.v1",
-            "packet_generation_id": "repair-tx-material-gen-001",
-            "repair_transaction_id": "repair-tx-material",
-            "batch_id": "repair-tx-material-gen-001-batch",
-        }
-        foreground_state["flags"].update(
-            {
-                "material_scan_packets_relayed": False,
-                "worker_packets_delivered": False,
-                "worker_scan_results_returned": False,
-                "material_scan_results_relayed_to_pm": False,
-                "material_scan_result_disposition_recorded": False,
-            }
-        )
-
         merged = persistence._merge_stale_run_state_save(foreground_state, loaded_state)
 
-        self.assertEqual(
-            merged["active_material_generation"]["packet_generation_id"],
-            "repair-tx-material-gen-001",
-        )
-        self.assertFalse(merged["flags"]["material_scan_packets_relayed"])
-        self.assertFalse(merged["flags"]["worker_packets_delivered"])
-        self.assertFalse(merged["flags"]["worker_scan_results_returned"])
-        self.assertFalse(merged["flags"]["material_scan_results_relayed_to_pm"])
-        self.assertFalse(merged["flags"]["material_scan_result_disposition_recorded"])
+        self.assertNotIn("active_material_generation", merged)
+        persistence_source = (ROOT / "skills" / "flowpilot" / "assets" / "flowpilot_router_runtime_state_persistence.py").read_text(encoding="utf-8")
+        save_source = (ROOT / "skills" / "flowpilot" / "assets" / "flowpilot_router_runtime_state_persistence_save.py").read_text(encoding="utf-8")
+        for retired_name in (
+            "_material_generation_key",
+            "_MATERIAL_GENERATION_PROGRESS_FLAGS",
+            "pm_records_material_scan_result_disposition",
+        ):
+            self.assertNotIn(retired_name, persistence_source + save_source)
 
     def test_stale_save_preserves_foreground_active_control_blocker(self) -> None:
         run_root = Path(".flowpilot/runs/run-persistence-active-blocker-test")

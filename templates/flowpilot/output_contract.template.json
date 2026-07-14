@@ -3,7 +3,7 @@
   "contract_id": "<system-registry-contract-id>",
   "selected_by_role": "project_manager",
   "recipient_role": "<same-as-packet-envelope-to_role>",
-  "task_family": "<worker.current_node|worker.material_scan|worker.research|reviewer.review|flowguard_operator.model_report|pm.decision>",
+  "task_family": "<worker.current_node|worker.research|worker.role_work|reviewer.review|flowguard_operator.model_report|pm.decision>",
   "packet_type": "<packet-type>",
   "node_id": "<node-id>",
   "required_result_body_sections": [

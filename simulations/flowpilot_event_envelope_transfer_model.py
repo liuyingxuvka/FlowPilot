@@ -8,16 +8,16 @@ Risk intent brief:
   bodies.
 - Model-critical state: event envelope schema, project-local path, file hash,
   event name, producing role, current allowed external event, controller
-  visibility, forbidden body fields, runtime receipt refs, material-scan packet
-  lists, duplicate submission, and router terminal decision.
+  visibility, forbidden body fields, runtime receipt refs, current-node packet
+  refs, duplicate submission, and router terminal decision.
 - Adversarial branches include missing file, hash mismatch, event mismatch,
   wrong role, bad visibility, body-field leakage, hand-reconstructed payloads,
-  missing runtime receipt refs, hidden material packets, duplicate envelope
+  missing runtime receipt refs, hidden current-node packet refs, duplicate envelope
   replay, and envelopes outside the current allowed event group.
 - Hard invariants: envelope refs are equivalent to full envelope payloads for
   legal inputs; every accepted event passed schema/hash/event/role/visibility/
   forbidden-body checks; refs do not let Controller read or mutate sealed body
-  content; known reviewer runtime-receipt and PM material-packets failures are
+  content; known reviewer runtime-receipt and current-node packet-ref failures are
   rejected only on the manual-reconstruction path and avoided by refs.
 - Blindspot: this is a focused control-plane model. It does not judge the
   semantic quality of reviewer reports, PM decisions, or packet bodies.
@@ -33,10 +33,10 @@ from flowguard import FunctionResult, Invariant, InvariantResult, Workflow
 
 VALID_REVIEWER_FULL = "valid_reviewer_full_payload"
 VALID_REVIEWER_REF = "valid_reviewer_envelope_ref"
-VALID_MATERIAL_FULL = "valid_material_full_payload"
-VALID_MATERIAL_REF = "valid_material_envelope_ref"
+VALID_CURRENT_NODE_FULL = "valid_current_node_full_payload"
+VALID_CURRENT_NODE_REF = "valid_current_node_envelope_ref"
 MANUAL_RECEIPT_RENAMED = "manual_receipt_field_renamed"
-MANUAL_PACKETS_NESTED = "manual_packets_nested_or_dropped"
+MANUAL_PACKET_REF_NESTED = "manual_packet_ref_nested_or_dropped"
 DUPLICATE_SAME_ENVELOPE = "duplicate_same_envelope"
 MISSING_FILE = "missing_envelope_file"
 HASH_MISMATCH = "envelope_hash_mismatch"
@@ -52,15 +52,15 @@ MISSING_RUNTIME_RECEIPT_REF = "missing_runtime_receipt_ref"
 ACCEPTED_SCENARIOS = {
     VALID_REVIEWER_FULL,
     VALID_REVIEWER_REF,
-    VALID_MATERIAL_FULL,
-    VALID_MATERIAL_REF,
+    VALID_CURRENT_NODE_FULL,
+    VALID_CURRENT_NODE_REF,
 }
 
 IDEMPOTENT_SCENARIOS = {DUPLICATE_SAME_ENVELOPE}
 
 REJECTED_SCENARIOS = {
     MANUAL_RECEIPT_RENAMED,
-    MANUAL_PACKETS_NESTED,
+    MANUAL_PACKET_REF_NESTED,
     MISSING_FILE,
     HASH_MISMATCH,
     BAD_SCHEMA,
@@ -116,8 +116,8 @@ class State:
 
     runtime_receipt_ref_present: bool = False
     runtime_receipt_ref_preserved: bool = False
-    material_packets_present: bool = False
-    material_packets_preserved_top_level: bool = False
+    packet_ref_present: bool = False
+    packet_ref_preserved_top_level: bool = False
 
     duplicate_submission: bool = False
     prior_event_recorded: bool = False
@@ -140,7 +140,7 @@ class EnvelopeTransferStep:
 
     Input x State -> Set(Output x State)
     reads: envelope ref, envelope file/hash/schema/event/from_role/visibility,
-    forbidden controller-visible fields, runtime receipt refs, material packets,
+    forbidden controller-visible fields, runtime receipt refs, current-node packet refs,
     current allowed external events, and prior event flags.
     writes: accepted event, rejection reason, or idempotent already-recorded
     outcome.
@@ -167,14 +167,14 @@ class EnvelopeTransferStep:
 
 
 def _base_event_fields(scenario: str) -> dict[str, object]:
-    if scenario in {VALID_MATERIAL_FULL, VALID_MATERIAL_REF, MANUAL_PACKETS_NESTED}:
+    if scenario in {VALID_CURRENT_NODE_FULL, VALID_CURRENT_NODE_REF, MANUAL_PACKET_REF_NESTED}:
         return {
-            "event": "pm_issues_material_and_capability_scan_packets",
-            "expected_event": "pm_issues_material_and_capability_scan_packets",
+            "event": "pm_registers_current_node_packet",
+            "expected_event": "pm_registers_current_node_packet",
             "from_role": "project_manager",
             "expected_role": "project_manager",
-            "material_packets_present": True,
-            "material_packets_preserved_top_level": True,
+            "packet_ref_present": True,
+            "packet_ref_preserved_top_level": True,
             "runtime_receipt_ref_present": False,
             "runtime_receipt_ref_preserved": False,
         }
@@ -183,8 +183,8 @@ def _base_event_fields(scenario: str) -> dict[str, object]:
         "expected_event": "reviewer_reports_startup_facts",
         "from_role": "human_like_reviewer",
         "expected_role": "human_like_reviewer",
-        "material_packets_present": False,
-        "material_packets_preserved_top_level": False,
+        "packet_ref_present": False,
+        "packet_ref_preserved_top_level": False,
         "runtime_receipt_ref_present": True,
         "runtime_receipt_ref_preserved": True,
     }
@@ -192,9 +192,9 @@ def _base_event_fields(scenario: str) -> dict[str, object]:
 
 def _selected_state(scenario: str) -> State:
     mode = "manual_reconstruction"
-    if scenario in {VALID_REVIEWER_REF, VALID_MATERIAL_REF, DUPLICATE_SAME_ENVELOPE, MISSING_FILE, HASH_MISMATCH}:
+    if scenario in {VALID_REVIEWER_REF, VALID_CURRENT_NODE_REF, DUPLICATE_SAME_ENVELOPE, MISSING_FILE, HASH_MISMATCH}:
         mode = "envelope_ref"
-    elif scenario in {VALID_REVIEWER_FULL, VALID_MATERIAL_FULL}:
+    elif scenario in {VALID_REVIEWER_FULL, VALID_CURRENT_NODE_FULL}:
         mode = "full_payload"
 
     fields = _base_event_fields(scenario)
@@ -202,7 +202,7 @@ def _selected_state(scenario: str) -> State:
         status="running",
         scenario=scenario,
         input_mode=mode,
-        role_generated_standard_envelope=scenario != MANUAL_RECEIPT_RENAMED and scenario != MANUAL_PACKETS_NESTED,
+        role_generated_standard_envelope=scenario != MANUAL_RECEIPT_RENAMED and scenario != MANUAL_PACKET_REF_NESTED,
         envelope_ref_used=mode == "envelope_ref",
         full_payload_used=mode == "full_payload",
         manual_reconstruction_used=mode == "manual_reconstruction",
@@ -222,8 +222,8 @@ def _selected_state(scenario: str) -> State:
 
     if scenario == MANUAL_RECEIPT_RENAMED:
         state = replace(state, runtime_receipt_ref_present=False, runtime_receipt_ref_preserved=False)
-    elif scenario == MANUAL_PACKETS_NESTED:
-        state = replace(state, material_packets_preserved_top_level=False)
+    elif scenario == MANUAL_PACKET_REF_NESTED:
+        state = replace(state, packet_ref_preserved_top_level=False)
     elif scenario == DUPLICATE_SAME_ENVELOPE:
         state = replace(state, duplicate_submission=True, prior_event_recorded=True)
     elif scenario == MISSING_FILE:
@@ -233,7 +233,7 @@ def _selected_state(scenario: str) -> State:
     elif scenario == BAD_SCHEMA:
         state = replace(state, schema_allowed=False)
     elif scenario == EVENT_MISMATCH:
-        state = replace(state, event_name_matches_cli=False, expected_event="pm_issues_material_and_capability_scan_packets")
+        state = replace(state, event_name_matches_cli=False, expected_event="pm_registers_current_node_packet")
     elif scenario == ROLE_MISMATCH:
         state = replace(state, from_role_matches_contract=False, from_role="project_manager")
     elif scenario == BAD_VISIBILITY:
@@ -281,9 +281,9 @@ def next_safe_states(state: State) -> Iterable[Transition]:
     known_payload_shape_ok = (
         (state.event == "reviewer_reports_startup_facts" and state.runtime_receipt_ref_present and state.runtime_receipt_ref_preserved)
         or (
-            state.event == "pm_issues_material_and_capability_scan_packets"
-            and state.material_packets_present
-            and state.material_packets_preserved_top_level
+            state.event == "pm_registers_current_node_packet"
+            and state.packet_ref_present
+            and state.packet_ref_preserved_top_level
         )
     )
     if hard_checks and known_payload_shape_ok and not state.controller_read_sealed_body:
@@ -303,10 +303,10 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         not state.runtime_receipt_ref_present or not state.runtime_receipt_ref_preserved
     ):
         reason = "runtime_receipt_ref_missing_or_not_preserved"
-    elif state.event == "pm_issues_material_and_capability_scan_packets" and (
-        state.material_packets_present and not state.material_packets_preserved_top_level
+    elif state.event == "pm_registers_current_node_packet" and (
+        state.packet_ref_present and not state.packet_ref_preserved_top_level
     ):
-        reason = "material_packets_not_visible_at_payload_top_level"
+        reason = "current_node_packet_ref_not_visible_at_payload_top_level"
     elif not state.event_currently_allowed:
         reason = "event_not_currently_allowed"
     elif not state.forbidden_body_fields_absent:
@@ -365,7 +365,7 @@ def envelope_ref_preserves_controller_boundary(state: State, trace: object) -> I
 
 def legal_ref_equivalent_to_full_payload(state: State, trace: object) -> InvariantResult:
     del trace
-    if state.scenario in {VALID_REVIEWER_REF, VALID_MATERIAL_REF} and state.status == "accepted" and not state.router_used_loaded_envelope_as_payload:
+    if state.scenario in {VALID_REVIEWER_REF, VALID_CURRENT_NODE_REF} and state.status == "accepted" and not state.router_used_loaded_envelope_as_payload:
         return InvariantResult.fail("legal envelope ref was not normalized to the same payload used by full envelope input")
     return InvariantResult.pass_()
 
@@ -374,12 +374,12 @@ def known_failures_are_rejected_only_on_bad_shape(state: State, trace: object) -
     del trace
     if state.scenario == VALID_REVIEWER_REF and state.status == "rejected":
         return InvariantResult.fail("valid reviewer ref still lost runtime_receipt_ref")
-    if state.scenario == VALID_MATERIAL_REF and state.status == "rejected":
-        return InvariantResult.fail("valid material ref still hid packets from payload.packets")
+    if state.scenario == VALID_CURRENT_NODE_REF and state.status == "rejected":
+        return InvariantResult.fail("valid current-node ref still hid packet_ref from the payload")
     if state.scenario == MANUAL_RECEIPT_RENAMED and state.status == "accepted":
         return InvariantResult.fail("manual reconstruction with renamed runtime receipt was accepted")
-    if state.scenario == MANUAL_PACKETS_NESTED and state.status == "accepted":
-        return InvariantResult.fail("manual reconstruction with hidden material packets was accepted")
+    if state.scenario == MANUAL_PACKET_REF_NESTED and state.status == "accepted":
+        return InvariantResult.fail("manual reconstruction with a hidden current-node packet ref was accepted")
     return InvariantResult.pass_()
 
 
@@ -408,7 +408,7 @@ INVARIANTS = (
     ),
     Invariant(
         "known_failures_are_rejected_only_on_bad_shape",
-        "Refs preserve runtime_receipt_ref and material packets while manual reconstruction failures are rejected.",
+        "Refs preserve runtime_receipt_ref and current-node packet refs while manual reconstruction failures are rejected.",
         known_failures_are_rejected_only_on_bad_shape,
     ),
     Invariant(
@@ -437,7 +437,7 @@ def hazard_states() -> dict[str, State]:
         "accepted_forbidden_body_field": replace(accepted, forbidden_body_fields_absent=False, controller_read_sealed_body=True),
         "ref_controller_mutated_envelope": replace(accepted, envelope_ref_used=True, controller_mutated_envelope_fields=True),
         "manual_receipt_accepted": replace(_selected_state(MANUAL_RECEIPT_RENAMED), status="accepted"),
-        "manual_packets_accepted": replace(_selected_state(MANUAL_PACKETS_NESTED), status="accepted"),
+        "manual_packet_ref_accepted": replace(_selected_state(MANUAL_PACKET_REF_NESTED), status="accepted"),
         "duplicate_side_effect": replace(_selected_state(DUPLICATE_SAME_ENVELOPE), status="already_recorded", duplicate_side_effect_written=True),
     }
 

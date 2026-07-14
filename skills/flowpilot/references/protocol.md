@@ -50,7 +50,7 @@ long-form public explanation lives in `docs/protocol.md`.
    role-binding ledgers, or older role-memory packets are audit history only and must
    not be resumed, relabeled, or counted as current role-binding evidence.
 9. Ask the project manager to ratify the startup self-interrogation and own
-   material understanding, product-function architecture, route, current
+   source-intent/evidence understanding, product-function architecture, route, current
    lifecycle-resume, repair, and completion decisions from this point forward.
    The main assistant becomes the controller for packet flow, not the default
    implementation worker.
@@ -58,44 +58,25 @@ long-form public explanation lives in `docs/protocol.md`.
    startup answers, run/role/continuation/display evidence, and sealed
    user-intake envelope path/hash. The full user work-request body stays
    Router-held.
-10. Before PM product-function synthesis or route decisions, require a
-    PM-authored material-intake packet envelope/body pair that passes router
-    direct-dispatch preflight.
-    Router exposes the full `user_intake` packet as PM mail only after
-    Runtime/Router writes a clean startup mechanical audit and PM records the
-    startup-intake release decision.
-    Router must expose the packet through current assignment before PM opens
-    the body; that assigned delivery comes
-    before material scan, product-function synthesis, route design, or
-    implementation work.
-    The authorized worker writes
-    `.flowpilot/runs/<run-id>/material_intake_packet.json`: inventory,
-    source summaries, source authority/freshness/contradiction classification,
-    local skill and host capability inventory, coverage map, and unread or
-    deferred materials. Local skills are candidate resources only until PM
-    selection. Controller-origin material intake is invalid unless a PM packet
-    explicitly assigns that administrative task to the controller and the
-    router direct-dispatch preflight allows that assignment.
-11. The human-like reviewer approves or blocks material sufficiency. The packet
-    is PM-ready only when obvious sources are not missing, large materials are
-    sampled or scoped honestly, summaries are specific, contradictions and
-    uncertainty are visible, and PM route design would not be misled.
-12. The project manager writes `.flowpilot/runs/<run-id>/pm_material_understanding.json` from
-    the reviewed packet and user intent. It records source-claim matrix, open
-    questions, material complexity (`simple`, `normal`, or `messy/raw`), and
-    whether materials require a formal discovery, cleanup, modeling,
-    validation, or research subtree before implementation.
-13. When a material, mechanism, source, validation, reconciliation, or
-    experiment gap affects dependent decisions, PM writes a formal research
-    package under `.flowpilot/runs/<run-id>/research/<research-package-id>/`.
-    The package names the decision, route impact, allowed source/tool
-    boundaries, worker owner, stop conditions, and reviewer direct-check
-    requirements. Worker output is only a pointer. The human-like reviewer
-    directly checks original sources, search results, local files, logs,
-    screenshots, or experiment outputs. Reviewer failure returns to worker
-    rework, follow-up research, route mutation, user clarification, or block.
-    PM may use the result only after reviewer sufficiency passes and PM records
-    absorption or route mutation.
+10. After Runtime/Router writes a clean startup mechanical audit and PM records
+    the startup-intake release decision, Router exposes the full `user_intake`
+    packet through the current PM assignment. PM opens it only through the
+    current ACK/open-packet path; Controller never reads or reconstructs it.
+11. The existing `task.discovery` packet carries a Runtime-owned shallow local
+    skill/capability/path and availability inventory. PM returns `decision`
+    plus `candidate_skill_inventory`, selects semantic relevance, and deep-reads
+    only selected skills through the existing Skill Standard Contract path.
+    Runtime does not deep-read skills or decide relevance.
+12. There is no material-intake form, material-scan task family, PM material
+    understanding memo, or material-sufficiency Reviewer gate. PM reads ordinary
+    non-sealed project material directly. The optional material artifact map is
+    navigation only and its absence never blocks planning, work, or closure.
+13. When deeper reading, research, experiment, source verification, or evidence
+    synthesis affects a decision, PM issues an ordinary bounded role-work
+    package. The assigned substantive role plans and completes the workstream,
+    returns current evidence, and receives the existing risk-appropriate
+    Reviewer/FlowGuard check. PM then absorbs, repairs, reroutes, asks the user,
+    or blocks through the normal disposition path.
 14. Require the project manager to write
     `.flowpilot/runs/<run-id>/product_function_architecture.json` before contract freeze:
     user-task map, product capability map, feature necessity decisions,
@@ -116,7 +97,7 @@ long-form public explanation lives in `docs/protocol.md`.
 15. Freeze the acceptance contract as a floor in
     `.flowpilot/runs/<run-id>/contract.md` from
     the approved product-function architecture and startup interrogation.
-16. Write the capabilities manifest, including material handoff and
+16. Write the capabilities manifest, including capability/evidence discovery and
     product-function architecture evidence.
 17. Ask the project manager to write the PM child-skill selection manifest from
     the product capability map, frozen contract, capabilities manifest, and
@@ -321,63 +302,32 @@ unsupported downgrade execution, scheduled jobs, manual resume, or a default dis
 surface. The assistant must stop immediately after asking, and the banner is
 emitted only after the later user answer is complete.
 
-## Material Intake And PM Handoff
+## Capability Discovery And Ordinary Evidence Work
 
-Before PM product-function architecture, contract freeze, route generation, or
-capability routing, the PM writes a material-intake packet envelope/body pair,
-the router direct-dispatch preflight passes, and an authorized worker writes
-`.flowpilot/runs/<run-id>/material_intake_packet.json`. It inventories user-provided and
-repository-local materials, summarizes what each source appears to contain,
-classifies authority, freshness, completeness, contradictions, privacy/safety
-notes, inventories locally installed skills and host capabilities as
-candidate-only resources, maps coverage to user intent, and names unread or
-deferred materials. Controller-origin material intake cannot close the gate
-unless the PM packet explicitly assigns that administrative action and the
-router direct-dispatch preflight allows it.
+Before deep child-skill use, Runtime projects one current shallow inventory of
+local skill/capability paths and availability into `task.discovery`. PM is the
+only semantic selection owner and returns `decision` plus
+`candidate_skill_inventory`. Only selected candidates proceed to deep skill
+reading and the existing Skill Standard Contract. The discovery result rejects
+the retired `material_sources`, `material_sufficiency`, and `material_current`
+fields; no alias, default, or prose conversion may restore them.
 
-The human-like reviewer approves material sufficiency before the project
-manager uses the packet. The reviewer must open or sample the actual materials
-behind the packet, not only read the worker's packet. The reviewer blocks if
-obvious sources are missing, large sources are not scoped honestly, summaries
-are shallow, contradictions or uncertainty are hidden, or the packet would
-mislead route design.
+Ordinary non-sealed project material is open to the authorized substantive role
+without a startup form. If a decision needs more reading, research, experiment,
+source verification, or evidence synthesis, PM uses the existing ordinary
+role-work packet/batch, result, Reviewer/FlowGuard check, and PM disposition
+surfaces. The work package carries its own acceptance and risk needs. There is
+no universal material-sufficiency gate.
 
-The project manager then writes
-`.flowpilot/runs/<run-id>/pm_material_understanding.json`.
-It is an interpretive handoff: source-claim matrix, open questions, material
-complexity (`simple`, `normal`, or `messy/raw`), route consequence, and whether
-formal discovery, cleanup, modeling, validation, research, or reconciliation
-nodes are required before implementation. Messy/raw materials cannot feed a
-route decision directly without that discovery decision.
-
-During the same material-understanding step, the project manager maintains the
-shared Spark-style skill maintenance log. PM uses an existing shared log when
-one is present; otherwise PM creates `.codex/skill_maintenance_log.jsonl` in
-the workspace root using the same shared JSONL style. PM appends one concise
-`skill: flowpilot` row with the work summary, workspace root, current `run_id`,
-and current run folder, then records the selected log path and entry id in
-`pm_material_understanding.json` as `shared_skill_maintenance_record`. This is
-bookkeeping only: it creates no route node, reviewer gate, FlowGuard gate, or
-project acceptance condition, and it does not replace the final report or
-FlowPilot skill-improvement report.
-
-If the PM cannot safely decide from reviewed materials, the gap becomes a
-PM-owned research package instead of a loose note. The package records the
-decision to be made, the route impact, allowed local/user/web/browser/source
-types, host capability decision, private/paid/account hard gates, worker owner,
-stop conditions, and reviewer direct-check requirements. Worker reports must
-include raw evidence pointers, negative findings, contradictions, and
-confidence boundaries. The reviewer must directly check original sources or
-experiment outputs; a summary-only pass is invalid. If the reviewer blocks,
-the PM returns concrete rework to the worker, inserts follow-up research or
-validation, mutates the route, asks the user, or blocks. Product architecture,
-route generation, node acceptance, and implementation that depend on the gap
-remain blocked until reviewer sufficiency passes and PM records how the result
-was absorbed or how the route changed.
+The optional material artifact map may index useful paths for long projects,
+but it is never an allowlist or sufficiency proof and its absence cannot block
+startup, architecture, route activation, node work, or closure. The shared
+skill-maintenance log remains bookkeeping during current-run planning and does
+not create a route node or gate.
 
 ## Product Function Architecture Gate
 
-After the material handoff and before contract freeze, the project manager
+After capability/evidence discovery and before contract freeze, the project manager
 writes `.flowpilot/runs/<run-id>/product_function_architecture.json`. Required contents:
 
 - high-standard posture: FlowPilot invocation means the project is important,
@@ -708,7 +658,8 @@ pass, block, challenge, or sufficiency decision.
 
 Reviewer fact checks must name what was directly checked:
 
-- source artifacts or material samples for material sufficiency;
+- source artifacts, experiment outputs, or evidence samples when the ordinary
+  work package's risk and acceptance contract require direct checking;
 - user request, inspected materials, and expected workflow reality for
   product-function architecture usefulness;
 - live startup state, route, frontier, role memory, manual-resume

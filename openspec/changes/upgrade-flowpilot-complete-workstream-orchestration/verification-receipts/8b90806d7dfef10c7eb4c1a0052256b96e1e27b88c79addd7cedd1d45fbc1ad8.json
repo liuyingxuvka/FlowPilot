@@ -1,0 +1,22 @@
+{
+  "schema_version": 2,
+  "report_protocol_version": 3,
+  "execution_key": "sha256:8e956596b01f9814e07688c79fb8f69965440ca1f7f218f34cac2161eb686442",
+  "result_hash": "sha256:70e87d4e05432479a610800797e9a0de469724b191eb2d6e047adaff8b4e0bf4",
+  "receipt_id": "sha256:8b90806d7dfef10c7eb4c1a0052256b96e1e27b88c79addd7cedd1d45fbc1ad8",
+  "result": {
+    "status": "passed",
+    "command": "python",
+    "args": [
+      "scripts/flowguard_project_topology.py",
+      "check"
+    ],
+    "expected_exit_code": 0,
+    "exit_code": 0,
+    "timeout_seconds": 1800,
+    "stdout": "{\r\n  \"findings\": [],\r\n  \"json_path\": \"docs/flowguard_project_topology.json\",\r\n  \"layer_counts\": {\r\n    \"alignment_families\": 18,\r\n    \"code_surfaces\": 1083,\r\n    \"evidence_summaries\": 5,\r\n    \"known_bad_signals\": 2715,\r\n    \"models\": 164,\r\n    \"test_commands\": 451\r\n  },\r\n  \"markdown_path\": \"docs/flowguard_project_topology.md\",\r\n  \"ok\": true,\r\n  \"source_count\": 1083\r\n}\r\n",
+    "stderr": "",
+    "stdout_preview": "{\r\n  \"findings\": [],\r\n  \"json_path\": \"docs/flowguard_project_topology.json\",\r\n  \"layer_counts\": {\r\n    \"alignment_families\": 18,\r\n    \"code_surfaces\": 1083,\r\n    \"evidence_summaries\": 5,\r\n    \"known_bad_signals\": 2715,\r\n    \"models\": 164,\r\n    \"test_commands\": 451\r\n  },\r\n  \"markdown_path\": \"docs/flowguard_project_topology.md\",\r\n  \"ok\": true,\r\n  \"source_count\": 1083\r\n}\r\n",
+    "stderr_preview": ""
+  }
+}

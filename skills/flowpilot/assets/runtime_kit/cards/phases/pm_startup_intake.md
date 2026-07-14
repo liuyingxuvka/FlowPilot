@@ -37,18 +37,19 @@ Preserve source-intent from the user-intake envelope as concrete work meaning:
 important object names, requested actions, quality words, quantities,
 constraints, and explicit prohibitions must survive into the first PM
 acceptance rows. Do not collapse source-intent into a generic completion goal
-such as "complete the user's task"; if the startup material is too sparse to
-derive concrete acceptance rows, block for user clarification or bounded PM
-material intake instead of inventing a vague target.
+such as "complete the user's task"; if the startup evidence is too sparse to
+derive concrete acceptance rows, block for user clarification or issue
+ordinary bounded evidence/research work through the current role-work path
+instead of inventing a vague target.
 
 Do not narrow the user's core deliverable during startup. A request for an
 actual artifact, complete scope, required evidence, required quantity, required
 quality, or named material/source must not become "inventory what is currently
 reachable", "record honest missing status", "write a report about gaps", or
 "process only the easy subset" unless the user explicitly agrees to that
-lowered scope. Missing material, permissions, paths, accounts, external
-systems, test environments, or source access are blockers or material/research
-needs, not acceptance rows.
+lowered scope. Missing evidence, permissions, paths, accounts, external
+systems, test environments, or source access are blockers or ordinary
+evidence/research needs, not acceptance rows.
 
 Do not use `flowpilot_new.py open-packet` for the full `user_intake` packet
 from this phase. That command is only for a later runtime-generated role
@@ -73,8 +74,11 @@ Forbidden:
 
 - do not open the full `user_intake` body before Runtime delivers the current
   PM mail item;
-- do not request material or capability scan packets yet;
+- do not create a dedicated material-scan packet or sufficiency gate; Runtime
+  owns the later shallow local capability inventory and PM owns candidate
+  selection from that current discovery packet;
 - do not write the final route yet;
 - do not issue implementation packets;
-- do not use worker material before PM package-result disposition and reviewer
-  sufficiency review.
+- do not use an ordinary role-work result before PM package-result disposition
+  and any risk-appropriate existing Reviewer/FlowGuard check required by that
+  work package.

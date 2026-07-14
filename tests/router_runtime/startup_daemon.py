@@ -208,7 +208,7 @@ class StartupDaemonRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertIsInstance(stale_state, dict)
 
         foreground = read_json(router.run_state_path(run_root))
-        foreground["flags"]["material_scan_results_relayed_to_pm"] = True
+        foreground["flags"]["user_intake_delivered_to_pm"] = True
         foreground["events"].append({"event": "foreground_event", "payload": {"source": "test"}})
         router.write_json(router.run_state_path(run_root), foreground)
 
@@ -218,7 +218,7 @@ class StartupDaemonRuntimeTests(FlowPilotRouterRuntimeTestBase):
 
         saved = read_json(router.run_state_path(run_root))
         self.assertTrue(saved["daemon_mode_enabled"])
-        self.assertTrue(saved["flags"]["material_scan_results_relayed_to_pm"])
+        self.assertTrue(saved["flags"]["user_intake_delivered_to_pm"])
         self.assertIn({"event": "foreground_event", "payload": {"source": "test"}}, saved["events"])
         self.assertIn({"event": "daemon_history", "payload": {"source": "test"}}, saved["history"])
     def test_router_daemon_stop_targets_one_parallel_run(self) -> None:
@@ -636,6 +636,51 @@ class StartupDaemonRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertEqual(raised.exception.write_lock["verification_error_type"], "PermissionError")
         self.assertFalse(router_io._json_write_lock_path(path).exists())
         self.assertEqual(original_read_json(path)["schema_version"], router.ROUTER_SCHEDULER_LEDGER_SCHEMA)
+
+    def test_readiness_reader_treats_windows_permission_error_as_not_ready(self) -> None:
+        root = self.make_project()
+        path = root / "runtime" / "router_daemon.lock"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text('{"status":"active"}\n', encoding="utf-8")
+
+        with mock.patch.object(
+            router_io_json,
+            "read_json",
+            side_effect=PermissionError("Windows sharing violation"),
+        ):
+            self.assertEqual(router_io_json.read_json_if_valid(path), {})
+
+    def test_formal_daemon_readiness_fails_closed_on_unavailable_lock(self) -> None:
+        root = self.make_project()
+        run_root = root / ".flowpilot" / "runs" / "run-readiness"
+        lock = {
+            "schema_version": router.ROUTER_DAEMON_LOCK_SCHEMA,
+            "status": "active",
+            "last_tick_at": router.utc_now(),
+            "stale_after_seconds": router.ROUTER_DAEMON_LOCK_STALE_SECONDS,
+            "owner": {"pid": os.getpid()},
+        }
+        status = {
+            "schema_version": router.ROUTER_DAEMON_STATUS_SCHEMA,
+            "daemon_mode_enabled": True,
+            "tick_interval_seconds": router.ROUTER_DAEMON_TICK_SECONDS,
+            "lock": {"live": True},
+            "run_root": router.project_relative(root, run_root),
+        }
+        ledger = {"schema_version": router.CONTROLLER_ACTION_LEDGER_SCHEMA}
+
+        with mock.patch.object(
+            router,
+            "read_json_if_valid",
+            side_effect=[{}, status, ledger],
+        ):
+            self.assertFalse(router._formal_router_daemon_ready(root, run_root))
+        with mock.patch.object(
+            router,
+            "read_json_if_valid",
+            side_effect=[lock, status, ledger],
+        ):
+            self.assertTrue(router._formal_router_daemon_ready(root, run_root))
 
     def test_router_daemon_nested_state_write_lock_wait_does_not_exit(self) -> None:
         root = self.make_project()

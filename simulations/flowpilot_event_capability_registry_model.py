@@ -8,7 +8,8 @@ Risk intent brief:
 - Protected harms: parent/module repairs waiting for leaf-only current-node
   packet events, parent backward replay jumping into worker dispatch, success,
   blocker, and protocol-blocker repair rows collapsing onto one business event,
-  and Controller waits being delivered to a role that cannot emit the event.
+  retired material workflow events retaining positive capability, and
+  Controller waits being delivered to a role that cannot emit the event.
 - Hard invariant: an event is not executable merely because it is registered.
   It must be executable for the current route state, repair origin, and usage
   before the Router persists it as a wait, rerun target, or repair outcome.
@@ -28,11 +29,10 @@ from flowguard import FunctionResult, Invariant, InvariantResult, Workflow
 PROJECT_MANAGER = "project_manager"
 REVIEWER = "human_like_reviewer"
 WORKER = "worker"
-CONTROLLER = "controller"
 
 NODE_KINDS = ("leaf", "parent", "module", "repair", "pre_route")
 PARENT_NODE_KINDS = ("parent", "module")
-REPAIR_ORIGINS = ("none", "current_node_result", "parent_backward_replay", "material_dispatch")
+REPAIR_ORIGINS = ("none", "current_node_result", "parent_backward_replay")
 
 PM_REPAIR_EVENT = "pm_records_control_blocker_repair_decision"
 ACK_EVENT = "pm_route_skeleton_card_returned"
@@ -48,11 +48,27 @@ PARENT_PROTOCOL_BLOCKER_EVENT = "pm_records_parent_protocol_blocker"
 PARENT_COMPLETION_EVENT = "pm_completes_parent_node_from_backward_replay"
 GENERIC_BLOCKER_EVENT = "pm_records_control_blocker_followup_blocker"
 GENERIC_PROTOCOL_EVENT = "pm_records_control_blocker_protocol_blocker"
-MATERIAL_SUCCESS_EVENT = "router_direct_material_scan_dispatch_recheck_passed"
-MATERIAL_BLOCKER_EVENT = "router_direct_material_scan_dispatch_recheck_blocked"
-MATERIAL_PROTOCOL_EVENT = "router_protocol_blocker_material_scan_dispatch_recheck"
-MATERIAL_PARTIAL_RESULT_EVENT = "worker_scan_results_returned"
+RESEARCH_RESULT_EVENT = "worker_research_report_returned"
+RESEARCH_REVIEW_PASS_EVENT = "reviewer_passes_research_direct_source_check"
+RESEARCH_REVIEW_BLOCK_EVENT = "reviewer_blocks_research_direct_source_check"
 ROLE_WORK_RESULT_EVENT = "role_work_result_returned"
+
+RETIRED_MATERIAL_EXTERNAL_EVENTS = frozenset(
+    {
+        "pm_issues_material_and_capability_scan_packets",
+        "router_direct_material_scan_dispatch_recheck_passed",
+        "router_direct_material_scan_dispatch_recheck_blocked",
+        "router_protocol_blocker_material_scan_dispatch_recheck",
+        "worker_scan_packet_bodies_delivered_after_dispatch",
+        "worker_scan_results_returned",
+        "pm_records_material_scan_result_disposition",
+        "reviewer_reports_material_sufficient",
+        "reviewer_reports_material_insufficient",
+        "pm_accepts_reviewed_material",
+        "pm_requests_research_after_material_insufficient",
+        "pm_writes_material_understanding",
+    }
+)
 
 ACK_EVENTS = frozenset({ACK_EVENT})
 PARENT_REPAIR_SAFE_EVENTS = frozenset(
@@ -73,6 +89,7 @@ BUSINESS_SUCCESS_EVENTS = frozenset(
         PARENT_REPLAY_PASS_EVENT,
         PARENT_SEGMENT_DECISION_EVENT,
         PARENT_COMPLETION_EVENT,
+        RESEARCH_REVIEW_PASS_EVENT,
     }
 )
 
@@ -161,32 +178,26 @@ EVENT_CAPABILITIES: dict[str, EventCapability] = {
         rerun_target=False,
         outcome_rows=("protocol_blocker",),
     ),
-    MATERIAL_SUCCESS_EVENT: EventCapability(
-        event_name=MATERIAL_SUCCESS_EVENT,
-        producer_role=CONTROLLER,
-        node_kinds=NODE_KINDS,
-        repair_origins=("material_dispatch",),
-        outcome_rows=("success",),
-    ),
-    MATERIAL_BLOCKER_EVENT: EventCapability(
-        event_name=MATERIAL_BLOCKER_EVENT,
-        producer_role=CONTROLLER,
-        node_kinds=NODE_KINDS,
-        repair_origins=("material_dispatch",),
-        outcome_rows=("blocker",),
-    ),
-    MATERIAL_PROTOCOL_EVENT: EventCapability(
-        event_name=MATERIAL_PROTOCOL_EVENT,
-        producer_role=CONTROLLER,
-        node_kinds=NODE_KINDS,
-        repair_origins=("material_dispatch",),
-        outcome_rows=("protocol_blocker",),
-    ),
-    MATERIAL_PARTIAL_RESULT_EVENT: EventCapability(
-        event_name=MATERIAL_PARTIAL_RESULT_EVENT,
+    RESEARCH_RESULT_EVENT: EventCapability(
+        event_name=RESEARCH_RESULT_EVENT,
         producer_role=WORKER,
         node_kinds=NODE_KINDS,
-        repair_origins=("none", "material_dispatch"),
+        repair_origins=("none", "current_node_result"),
+        rerun_target=False,
+        outcome_rows=(),
+    ),
+    RESEARCH_REVIEW_PASS_EVENT: EventCapability(
+        event_name=RESEARCH_REVIEW_PASS_EVENT,
+        producer_role=REVIEWER,
+        node_kinds=NODE_KINDS,
+        repair_origins=("none", "current_node_result"),
+        outcome_rows=("success",),
+    ),
+    RESEARCH_REVIEW_BLOCK_EVENT: EventCapability(
+        event_name=RESEARCH_REVIEW_BLOCK_EVENT,
+        producer_role=REVIEWER,
+        node_kinds=NODE_KINDS,
+        repair_origins=("none", "current_node_result"),
         rerun_target=False,
         outcome_rows=(),
     ),
@@ -213,9 +224,9 @@ VALID_LEAF_CURRENT_PACKET_WAIT = "valid_leaf_current_packet_wait"
 VALID_PARENT_BACKWARD_WAIT = "valid_parent_backward_wait"
 VALID_GENERIC_REPAIR_OUTCOME_TABLE = "valid_generic_repair_outcome_table"
 VALID_PARENT_REPAIR_OUTCOME_TABLE = "valid_parent_repair_outcome_table"
-VALID_MATERIAL_REPAIR_OUTCOME_TABLE = "valid_material_repair_outcome_table"
+VALID_RESEARCH_REVIEW_WAIT = "valid_research_review_wait"
 VALID_WORKER_LEAF_RESULT_WAIT = "valid_worker_leaf_result_wait"
-VALID_MATERIAL_PARTIAL_BATCH_RESULT_WAIT = "valid_material_partial_batch_result_wait"
+VALID_RESEARCH_RESULT_WAIT = "valid_research_result_wait"
 VALID_PM_ROLE_WORK_RESULT_WAIT = "valid_pm_role_work_result_wait"
 
 UNREGISTERED_EVENT_ACCEPTED = "unregistered_event_accepted"
@@ -230,15 +241,20 @@ BLOCKER_OUTCOME_USES_SUCCESS_EVENT = "blocker_outcome_uses_success_event"
 PROTOCOL_OUTCOME_USES_SUCCESS_EVENT = "protocol_outcome_uses_success_event"
 PM_REPAIR_EVENT_AS_RERUN_TARGET = "pm_repair_event_as_rerun_target"
 ROLE_WORK_RESULT_WAIT_UNRECEIVABLE_ACCEPTED = "role_work_result_wait_unreceivable_accepted"
+RETIRED_MATERIAL_EVENT_CAPABILITY_PREFIX = "retired_material_event_capability_"
+RETIRED_MATERIAL_EVENT_CAPABILITY_SCENARIOS = tuple(
+    f"{RETIRED_MATERIAL_EVENT_CAPABILITY_PREFIX}{event_name}"
+    for event_name in sorted(RETIRED_MATERIAL_EXTERNAL_EVENTS)
+)
 
 VALID_SCENARIOS = (
     VALID_LEAF_CURRENT_PACKET_WAIT,
     VALID_PARENT_BACKWARD_WAIT,
     VALID_GENERIC_REPAIR_OUTCOME_TABLE,
     VALID_PARENT_REPAIR_OUTCOME_TABLE,
-    VALID_MATERIAL_REPAIR_OUTCOME_TABLE,
+    VALID_RESEARCH_REVIEW_WAIT,
     VALID_WORKER_LEAF_RESULT_WAIT,
-    VALID_MATERIAL_PARTIAL_BATCH_RESULT_WAIT,
+    VALID_RESEARCH_RESULT_WAIT,
     VALID_PM_ROLE_WORK_RESULT_WAIT,
 )
 NEGATIVE_SCENARIOS = (
@@ -254,7 +270,7 @@ NEGATIVE_SCENARIOS = (
     PROTOCOL_OUTCOME_USES_SUCCESS_EVENT,
     PM_REPAIR_EVENT_AS_RERUN_TARGET,
     ROLE_WORK_RESULT_WAIT_UNRECEIVABLE_ACCEPTED,
-)
+) + RETIRED_MATERIAL_EVENT_CAPABILITY_SCENARIOS
 SCENARIOS = VALID_SCENARIOS + NEGATIVE_SCENARIOS
 
 
@@ -340,18 +356,14 @@ def _scenario_state(scenario: str) -> State:
             repair_blocker_event=PARENT_REPLAY_BLOCK_EVENT,
             repair_protocol_event=PARENT_PROTOCOL_BLOCKER_EVENT,
         )
-    if scenario == VALID_MATERIAL_REPAIR_OUTCOME_TABLE:
+    if scenario == VALID_RESEARCH_REVIEW_WAIT:
         return State(
             status="running",
             scenario=scenario,
             active_node_kind="pre_route",
-            repair_origin="material_dispatch",
-            target_role=CONTROLLER,
-            wait_events=(MATERIAL_SUCCESS_EVENT, MATERIAL_BLOCKER_EVENT, MATERIAL_PROTOCOL_EVENT),
-            rerun_target=MATERIAL_SUCCESS_EVENT,
-            repair_success_event=MATERIAL_SUCCESS_EVENT,
-            repair_blocker_event=MATERIAL_BLOCKER_EVENT,
-            repair_protocol_event=MATERIAL_PROTOCOL_EVENT,
+            repair_origin="none",
+            target_role=REVIEWER,
+            wait_events=(RESEARCH_REVIEW_PASS_EVENT, RESEARCH_REVIEW_BLOCK_EVENT),
         )
     if scenario == VALID_WORKER_LEAF_RESULT_WAIT:
         return State(
@@ -363,14 +375,14 @@ def _scenario_state(scenario: str) -> State:
             wait_events=(WORKER_RESULT_EVENT,),
             rerun_target=WORKER_RESULT_EVENT,
         )
-    if scenario == VALID_MATERIAL_PARTIAL_BATCH_RESULT_WAIT:
+    if scenario == VALID_RESEARCH_RESULT_WAIT:
         return State(
             status="running",
             scenario=scenario,
             active_node_kind="pre_route",
             repair_origin="none",
             target_role=WORKER,
-            wait_events=(MATERIAL_PARTIAL_RESULT_EVENT,),
+            wait_events=(RESEARCH_RESULT_EVENT,),
         )
     if scenario == VALID_PM_ROLE_WORK_RESULT_WAIT:
         return State(
@@ -474,13 +486,13 @@ def _scenario_state(scenario: str) -> State:
         return State(
             status="running",
             scenario=scenario,
-            active_node_kind="pre_route",
-            repair_origin="material_dispatch",
-            target_role=CONTROLLER,
-            rerun_target=MATERIAL_SUCCESS_EVENT,
-            repair_success_event=MATERIAL_SUCCESS_EVENT,
-            repair_blocker_event=MATERIAL_BLOCKER_EVENT,
-            repair_protocol_event=MATERIAL_SUCCESS_EVENT,
+            active_node_kind="leaf",
+            repair_origin="current_node_result",
+            target_role=WORKER,
+            rerun_target=WORKER_RESULT_EVENT,
+            repair_success_event=WORKER_RESULT_EVENT,
+            repair_blocker_event=GENERIC_BLOCKER_EVENT,
+            repair_protocol_event=WORKER_RESULT_EVENT,
         )
     if scenario == PM_REPAIR_EVENT_AS_RERUN_TARGET:
         return State(
@@ -501,6 +513,18 @@ def _scenario_state(scenario: str) -> State:
             target_role=WORKER,
             currently_receivable=False,
             wait_events=(ROLE_WORK_RESULT_EVENT,),
+        )
+    if scenario.startswith(RETIRED_MATERIAL_EVENT_CAPABILITY_PREFIX):
+        retired_event = scenario.removeprefix(RETIRED_MATERIAL_EVENT_CAPABILITY_PREFIX)
+        if retired_event not in RETIRED_MATERIAL_EXTERNAL_EVENTS:
+            raise ValueError(f"unknown retired material event scenario: {scenario}")
+        return State(
+            status="running",
+            scenario=scenario,
+            active_node_kind="pre_route",
+            repair_origin="none",
+            target_role=PROJECT_MANAGER,
+            wait_events=(retired_event,),
         )
     raise ValueError(f"unknown scenario: {scenario}")
 

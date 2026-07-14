@@ -1,8 +1,8 @@
 {
   "actual_card_graph": {
-    "active_card_count": 58,
-    "card_count": 69,
-    "checked_count": 69,
+    "active_card_count": 53,
+    "card_count": 65,
+    "checked_count": 65,
     "external_card_flag_errors": [],
     "failures": [],
     "labels": [
@@ -31,9 +31,6 @@
       "card_instruction_checked:pm.final_ledger",
       "card_instruction_checked:pm.flowguard_operator_request_report_loop",
       "card_instruction_checked:pm.implementation_intent",
-      "card_instruction_checked:pm.material_absorb_or_research",
-      "card_instruction_checked:pm.material_scan",
-      "card_instruction_checked:pm.material_understanding",
       "card_instruction_checked:pm.model_miss_triage",
       "card_instruction_checked:pm.node_acceptance_plan",
       "card_instruction_checked:pm.output_contract_catalog",
@@ -61,7 +58,6 @@
       "card_instruction_checked:reviewer.final_backward_replay",
       "card_instruction_checked:reviewer.high_standard_contract_review",
       "card_instruction_checked:reviewer.implementation_intent_challenge",
-      "card_instruction_checked:reviewer.material_sufficiency",
       "card_instruction_checked:reviewer.node_acceptance_plan_review",
       "card_instruction_checked:reviewer.parent_backward_replay",
       "card_instruction_checked:reviewer.pm_flowguard_acceptance_review",
@@ -92,7 +88,7 @@
       "stale_controller_ack_guidance": false
     },
     "router_sequence_manifest_errors": [],
-    "state_count": 71,
+    "state_count": 67,
     "status": "complete"
   },
   "hazard_checks": {

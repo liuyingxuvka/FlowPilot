@@ -37,6 +37,45 @@ def source_test_evidence() -> tuple[TestEvidence, ...]:
             code_contracts=("router.record_external_event",),
         ),
         _evidence(
+            "source.startup.writer_settlement_after_slow_setup",
+            test_name="test_foreground_writer_settlement_budget_starts_at_first_contention",
+            path="tests/router_runtime/foreground_controller.py",
+            command=(
+                "python -m unittest tests.test_flowpilot_router_runtime."
+                "FlowPilotRouterRuntimeTests."
+                "test_foreground_writer_settlement_budget_starts_at_first_contention"
+            ),
+            test_kind=HAPPY,
+            covers=("startup.runtime_writer_settlement",),
+            code_contracts=("router_io_locks.foreground_writer_settlement",),
+        ),
+        _evidence(
+            "source.startup.writer_settlement_persistent_lock",
+            test_name="test_runtime_writer_settlement_fails_closed_when_live_lock_never_clears",
+            path="tests/router_runtime/foreground_controller.py",
+            command=(
+                "python -m unittest tests.test_flowpilot_router_runtime."
+                "FlowPilotRouterRuntimeTests."
+                "test_runtime_writer_settlement_fails_closed_when_live_lock_never_clears"
+            ),
+            test_kind=NEGATIVE,
+            covers=("startup.runtime_writer_settlement",),
+            code_contracts=("router_io_locks.foreground_writer_settlement",),
+        ),
+        _evidence(
+            "source.startup.daemon_readiness_unavailable_lock",
+            test_name="test_formal_daemon_readiness_fails_closed_on_unavailable_lock",
+            path="tests/router_runtime/startup_daemon.py",
+            command=(
+                "python -m unittest tests.test_flowpilot_router_runtime."
+                "FlowPilotRouterRuntimeTests."
+                "test_formal_daemon_readiness_fails_closed_on_unavailable_lock"
+            ),
+            test_kind=EDGE,
+            covers=("startup.runtime_writer_settlement",),
+            code_contracts=("router_daemon_runtime.formal_readiness",),
+        ),
+        _evidence(
             "source.new_entrypoint.start",
             test_name="test_start_rehearsal_reuses_old_startup_ui_and_enters_new_ledger",
             path="tests/test_flowpilot_new_entrypoint.py",
@@ -130,6 +169,32 @@ def source_test_evidence() -> tuple[TestEvidence, ...]:
             command="python -m unittest tests.test_flowpilot_fake_project_rehearsal.FlowPilotFakeProjectRehearsalTests.test_blackbox_fake_project_rehearsal_smoke_uses_public_cli",
             test_kind=EDGE,
             covers=("new_entrypoint.blackbox_fake_project_rehearsal",),
+            code_contracts=("flowpilot_fake_project_rehearsal.run_checks",),
+        ),
+        _evidence(
+            "source.new_entrypoint.blackbox_rehearsal_missing_ack_current_contract",
+            test_name="test_missing_ack_scenario_submits_current_json_contract_and_blocks",
+            path="tests/test_flowpilot_fake_project_rehearsal.py",
+            command=(
+                "python -m unittest "
+                "tests.test_flowpilot_fake_project_rehearsal.FlowPilotFakeProjectRehearsalTests."
+                "test_missing_ack_scenario_submits_current_json_contract_and_blocks"
+            ),
+            test_kind=NEGATIVE,
+            covers=("new_entrypoint.blackbox_fake_project_rehearsal",),
+            code_contracts=("flowpilot_fake_project_rehearsal.run_checks",),
+        ),
+        _evidence(
+            "source.new_entrypoint.blackbox_rehearsal_portable_results",
+            test_name="test_fake_project_results_remove_machine_local_roots",
+            path="tests/test_flowpilot_fake_project_rehearsal.py",
+            command=(
+                "python -m unittest "
+                "tests.test_flowpilot_fake_project_rehearsal.FlowPilotFakeProjectRehearsalTests."
+                "test_fake_project_results_remove_machine_local_roots"
+            ),
+            test_kind=EDGE,
+            covers=("new_entrypoint.blackbox_fake_project_result_portability",),
             code_contracts=("flowpilot_fake_project_rehearsal.run_checks",),
         ),
         _evidence(
@@ -511,6 +576,36 @@ def source_test_evidence() -> tuple[TestEvidence, ...]:
             ),
         ),
         _evidence(
+            "source.material_artifact_map.absence",
+            test_name="test_missing_map_stays_absent_through_refresh_and_formal_package",
+            path="tests/test_flowpilot_material_access_mesh.py",
+            command="python -m unittest tests.test_flowpilot_material_access_mesh.FlowPilotMaterialAccessMeshTests.test_missing_map_stays_absent_through_refresh_and_formal_package",
+            test_kind=REPLAY,
+            covers=("material_artifact_map.index_only_boundary",),
+            code_contracts=(
+                "material_artifact_map.navigation_status",
+                "material_artifact_map.refresh",
+            ),
+        ),
+        _evidence(
+            "source.material_artifact_map.current_navigation",
+            test_name="test_existing_map_is_refreshed_and_formal_package_links_navigation",
+            path="tests/test_flowpilot_material_access_mesh.py",
+            command="python -m unittest tests.test_flowpilot_material_access_mesh.FlowPilotMaterialAccessMeshTests.test_existing_map_is_refreshed_and_formal_package_links_navigation",
+            test_kind=HAPPY,
+            covers=("material_artifact_map.index_only_boundary",),
+            code_contracts=("material_artifact_map.navigation_status",),
+        ),
+        _evidence(
+            "source.material_artifact_map.noncurrent_navigation_omitted",
+            test_name="test_existing_noncurrent_map_is_checked_but_not_linked",
+            path="tests/test_flowpilot_material_access_mesh.py",
+            command="python -m unittest tests.test_flowpilot_material_access_mesh.FlowPilotMaterialAccessMeshTests.test_existing_noncurrent_map_is_checked_but_not_linked",
+            test_kind=EDGE,
+            covers=("material_artifact_map.index_only_boundary",),
+            code_contracts=("material_artifact_map.navigation_status",),
+        ),
+        _evidence(
             "source.material_artifact_map.child_modules",
             test_name="test_ordinary_project_material_is_public_but_sealed_bodies_stay_runtime_authorized",
             path="tests/test_flowpilot_material_access_mesh.py",
@@ -521,6 +616,8 @@ def source_test_evidence() -> tuple[TestEvidence, ...]:
                 "material_artifact_map_packets.add_packet_index_entries",
                 "material_artifact_map_ordinary.add_ordinary_work_artifact_entries",
             ),
+            evidence_role="supporting_contract",
+            evidence_target_id="material_artifact_map_packets.add_packet_index_entries",
         ),
         _evidence(
             "source.material_artifact_map.entry_policy",
@@ -535,6 +632,8 @@ def source_test_evidence() -> tuple[TestEvidence, ...]:
                 "material_artifact_map_entries.sealed_body_ref",
                 "material_artifact_map_entries.static_artifact_entries",
             ),
+            evidence_role="supporting_contract",
+            evidence_target_id="material_artifact_map_entries.make_entry",
         ),
         _evidence(
             "source.branch_pruning.classifier",
@@ -971,7 +1070,6 @@ def source_test_evidence() -> tuple[TestEvidence, ...]:
             covers=("runtime_owner.router_owner_external_contracts",),
             code_contracts=(
                 "lifecycle_terminal_quarantine.clear_repair_transaction",
-                "lifecycle_terminal_quarantine.material_progress_flags",
                 "lifecycle_terminal_quarantine.duplicate_role_events",
                 "lifecycle_terminal_quarantine.packet_result_authority",
                 "lifecycle_support.lifecycle_record_path",
@@ -1065,8 +1163,10 @@ def source_test_evidence() -> tuple[TestEvidence, ...]:
                 "terminal_closure.terminal_closure_suite_is_closed",
                 "terminal_recovery.recover_terminal_status",
                 "terminal_summary.terminal_summary_action",
-                "work_packets_next_actions.try_reconcile_material_scan",
                 "work_packets_pm_role_actions.try_reconcile_pm_role_work",
+                "work_packets_material.write_research_package",
+                "work_packets_next_actions.bind_router",
+                "work_packets_result_reconciliation.reconciled_payload",
             ),
         ),
         _evidence(

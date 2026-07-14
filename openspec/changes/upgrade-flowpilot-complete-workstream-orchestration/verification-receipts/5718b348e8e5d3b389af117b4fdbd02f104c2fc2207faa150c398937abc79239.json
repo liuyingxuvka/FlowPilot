@@ -1,0 +1,25 @@
+{
+  "schema_version": 2,
+  "report_protocol_version": 3,
+  "execution_key": "sha256:16337d21bd694dc4d87f86487de90cb0daed92084c342001656eac5a3faa620e",
+  "result_hash": "sha256:07f6225261dfbcd9887aedd65f5ad5bbbb2c923fb65912ebb3f797b952b2603f",
+  "receipt_id": "sha256:5718b348e8e5d3b389af117b4fdbd02f104c2fc2207faa150c398937abc79239",
+  "result": {
+    "status": "passed",
+    "command": "python",
+    "args": [
+      "-m",
+      "unittest",
+      "-v",
+      "tests.test_flowpilot_synthetic_agent_trace_replay.FlowPilotSyntheticAgentTraceReplayTests.test_happy_path_worker_trace_reaches_pm_disposition",
+      "tests.test_flowpilot_synthetic_agent_trace_replay.FlowPilotSyntheticAgentTraceReplayTests.test_raw_worker_result_cannot_skip_pm_disposition_to_reviewer_pass"
+    ],
+    "expected_exit_code": 0,
+    "exit_code": 0,
+    "timeout_seconds": 1800,
+    "stdout": "",
+    "stderr": "test_happy_path_worker_trace_reaches_pm_disposition (tests.test_flowpilot_synthetic_agent_trace_replay.FlowPilotSyntheticAgentTraceReplayTests.test_happy_path_worker_trace_reaches_pm_disposition) ... ok\r\ntest_raw_worker_result_cannot_skip_pm_disposition_to_reviewer_pass (tests.test_flowpilot_synthetic_agent_trace_replay.FlowPilotSyntheticAgentTraceReplayTests.test_raw_worker_result_cannot_skip_pm_disposition_to_reviewer_pass) ... ok\r\n\r\n----------------------------------------------------------------------\r\nRan 2 tests in 1.482s\r\n\r\nOK\r\n",
+    "stdout_preview": "",
+    "stderr_preview": "test_happy_path_worker_trace_reaches_pm_disposition (tests.test_flowpilot_synthetic_agent_trace_replay.FlowPilotSyntheticAgentTraceReplayTests.test_happy_path_worker_trace_reaches_pm_disposition) ... ok\r\ntest_raw_worker_result_cannot_skip_pm_disposition_to_reviewer_pass (tests.test_flowpilot_synthetic_agent_trace_replay.FlowPilotSyntheticAgentTraceReplayTests.test_raw_worker_result_cannot_skip_pm_disposition_to_reviewer_pass) ... ok\r\n\r\n----------------------------------------------------------------------\r\nRan 2 tests in 1.482s\r\n\r\nOK\r\n"
+  }
+}

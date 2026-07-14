@@ -42,6 +42,12 @@ from flowpilot_structure_maintenance_router_catalog import (
     ROUTER_STRUCTURE_MODULES,
     ROUTER_STRUCTURE_PARTITIONS,
 )
+from flowpilot_structure_maintenance_resource_catalog import (
+    RESOURCE_FACADE_MODULES,
+    RESOURCE_FACADE_PARTITIONS,
+    RESOURCE_PUBLIC_ENTRYPOINTS,
+    RESOURCE_STRUCTURE_HAZARDS,
+)
 from flowpilot_structure_maintenance_testmesh_catalog import (
     ROUTER_TEST_PARTITIONS,
     ROUTER_TEST_SUITES,
@@ -372,17 +378,147 @@ def model_structure_hazard_plan(name: str) -> StructureMeshPlan:
     raise ValueError(f"unknown model structure hazard: {name}")
 
 
+def resource_facade_target_structure() -> CodeStructureRecommendation:
+    return CodeStructureRecommendation(
+        recommendation_id="flowpilot_resource_facade_structure_target_v1",
+        source_model_id="flowpilot_ordinary_resource_discovery",
+        source_model_path="simulations/flowpilot_ordinary_resource_discovery_model.py",
+        parent_module_id="flowpilot_resource_facade_structure",
+        source_model_evidence_tier=EVIDENCE_CONFORMANCE_GREEN,
+        target_modules=_target_modules_from_structure_evidence(
+            RESOURCE_FACADE_MODULES,
+            public_entrypoints_by_module={
+                "discovery_family_facade": ("task.discovery",),
+                "material_map_navigation_owner": (
+                    "material_artifact_map_navigation_status",
+                ),
+            },
+        ),
+        function_block_map=_function_block_map_from_partitions(
+            RESOURCE_FACADE_PARTITIONS
+        ),
+        state_owner_map=_state_owner_map(RESOURCE_FACADE_MODULES),
+        side_effect_owner_map=_side_effect_owner_map(RESOURCE_FACADE_MODULES),
+        config_owner_map=_config_owner_map(RESOURCE_FACADE_MODULES),
+        public_entrypoint_map=(
+            ("task.discovery", "discovery_family_facade"),
+            (
+                "material_artifact_map_navigation_status",
+                "material_map_navigation_owner",
+            ),
+        ),
+        facade_module_id="discovery_family_facade",
+        validation_boundaries=(
+            "ordinary resource discovery current-result family parity",
+            "optional material-map present/absent/noncurrent navigation parity",
+            "retained facade owner and delegation identity",
+        ),
+        rationale=(
+            "The existing discovery model derives one retained packet-family "
+            "facade, one runtime result owner, the ordinary task.node material "
+            "path, and one optional map navigation owner without duplicating "
+            "state or side effects."
+        ),
+        hierarchical_model_used=True,
+    )
+
+
+def resource_facade_structure_plan(
+    *,
+    decision_scope: str = STRUCTURE_SCOPE_RELEASE,
+    required_evidence_tier: str = EVIDENCE_CONFORMANCE_GREEN,
+) -> StructureMeshPlan:
+    return StructureMeshPlan(
+        parent_module_id="flowpilot_resource_facade_structure",
+        decision_scope=decision_scope,
+        required_evidence_tier=required_evidence_tier,
+        partition_items=RESOURCE_FACADE_PARTITIONS,
+        child_modules=RESOURCE_FACADE_MODULES,
+        public_entrypoints=RESOURCE_PUBLIC_ENTRYPOINTS,
+        target_structure=resource_facade_target_structure(),
+    )
+
+
+def resource_facade_structure_hazard_plan(name: str) -> StructureMeshPlan:
+    good = resource_facade_structure_plan()
+    if name == "missing_resource_facade":
+        modules = tuple(
+            replace(module, facade_retained=False)
+            if module.module_id == "discovery_family_facade"
+            else module
+            for module in good.child_modules
+        )
+        return replace(good, child_modules=modules)
+    if name == "removed_resource_entrypoint":
+        entrypoints = tuple(
+            replace(entrypoint, compatibility_preserved=False, facade_available=False)
+            if entrypoint.entrypoint_id == "task.discovery"
+            else entrypoint
+            for entrypoint in good.public_entrypoints
+        )
+        return replace(good, public_entrypoints=entrypoints)
+    if name == "duplicate_resource_state_owner":
+        modules = tuple(
+            replace(
+                module,
+                owns_state=(
+                    *module.owns_state,
+                    "preplanning_discovery.candidate_skill_inventory",
+                ),
+            )
+            if module.module_id == "material_map_navigation_owner"
+            else module
+            for module in good.child_modules
+        )
+        return replace(good, child_modules=modules)
+    if name == "stale_resource_parity":
+        modules = tuple(
+            replace(module, behavior_parity_current=False)
+            if module.module_id == "material_map_navigation_owner"
+            else module
+            for module in good.child_modules
+        )
+        return replace(good, child_modules=modules)
+    if name == "insufficient_resource_release_evidence":
+        entrypoints = tuple(
+            replace(entrypoint, parity_evidence_tier=EVIDENCE_ABSTRACT_GREEN)
+            if entrypoint.entrypoint_id == "material_artifact_map_navigation_status"
+            else entrypoint
+            for entrypoint in good.public_entrypoints
+        )
+        return replace(good, public_entrypoints=entrypoints)
+    raise ValueError(f"unknown resource structure hazard: {name}")
+
+
 def router_testmesh_plan(
     *,
-    decision_scope: str = TEST_SCOPE_RELEASE,
+    decision_scope: str = TEST_SCOPE_ROUTINE,
     required_evidence_tier: str = EVIDENCE_CONFORMANCE_GREEN,
 ) -> TestMeshPlan:
+    suites = ROUTER_TEST_SUITES
+    if decision_scope == TEST_SCOPE_ROUTINE:
+        suites = tuple(
+            replace(
+                suite,
+                result_status="not_run",
+                evidence_current=False,
+                exit_code=None,
+                has_exit_artifact=False,
+                has_result_artifact=False,
+                release_required=True,
+                not_run_reason=(
+                    "declaration-only child; current final receipt is supplied "
+                    "by the owning background test tier"
+                ),
+            )
+            for suite in ROUTER_TEST_SUITES
+        )
     return TestMeshPlan(
         parent_suite_id="flowpilot_router_runtime_testmesh",
         decision_scope=decision_scope,
         required_evidence_tier=required_evidence_tier,
         partition_items=ROUTER_TEST_PARTITIONS,
-        child_suites=ROUTER_TEST_SUITES,
+        child_suites=suites,
         target_split_derivation=router_target_test_split(),
     )
 
@@ -421,7 +557,7 @@ def router_testmesh_hazard_plan(name: str) -> TestMeshPlan:
     if name == "timeout_suite":
         suites = tuple(
             replace(suite, result_status=TEST_STATUS_TIMEOUT, exit_code=124)
-            if suite.suite_id == "router_material_modeling_modelability"
+            if suite.suite_id == "router_quality_gates_node_contracts"
             else suite
             for suite in ROUTER_TEST_SUITES
         )

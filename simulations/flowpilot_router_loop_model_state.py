@@ -164,7 +164,7 @@ class State:
     active_holder_packet_opened_through_runtime: bool = False
     active_holder_progress_recorded: bool = False
     active_holder_progress_controller_safe: bool = True
-    active_holder_packet_family: str = "current_node"  # current_node | material_scan | research | pm_role_work
+    active_holder_packet_family: str = "current_node"  # current_node | research | pm_role_work
     generalized_packet_registered: bool = False
     generalized_packet_relayed: bool = False
     generalized_packet_identity_boundary_present: bool = True

@@ -34,6 +34,29 @@ RECURSIVE_ROUTE_BAD_CASES = (
 )
 
 
+def _portableize(value: Any, *, work_root: Path) -> Any:
+    """Remove machine-local roots from a tracked rehearsal result."""
+
+    if isinstance(value, dict):
+        return {key: _portableize(item, work_root=work_root) for key, item in value.items()}
+    if isinstance(value, list):
+        return [_portableize(item, work_root=work_root) for item in value]
+    if isinstance(value, tuple):
+        return tuple(_portableize(item, work_root=work_root) for item in value)
+    if not isinstance(value, str):
+        return value
+
+    portable = value
+    replacements = (
+        (work_root.resolve(), "<work-root>"),
+        (REPO_ROOT.resolve(), "."),
+    )
+    for path, replacement in replacements:
+        for prefix in (str(path), path.as_posix()):
+            portable = portable.replace(prefix, replacement)
+    return portable
+
+
 def _flowguard_report() -> dict[str, Any]:
     report = Explorer(
         workflow=model.build_workflow(),
@@ -142,6 +165,7 @@ def _run_checks_in_root(work_root: Path, *, scenario_names: set[str] | None = No
         "terminal_supplemental_repair": ("fake_project_blackbox_cli_terminal_supplemental_repair", "skills/flowpilot/assets/flowpilot_new.py"),
         "slow_reviewer_progress_preserved": ("fake_project_blackbox_cli_slow_reviewer_progress", "skills/flowpilot/assets/flowpilot_new.py"),
         "missing_current_result_fields_reissue": ("fake_project_blackbox_cli_missing_current_result_fields_reissue", "skills/flowpilot/assets/flowpilot_new.py"),
+        "cross_run_public_open_isolation": ("fake_project_blackbox_cli_cross_run_public_open_isolation", "simulations/flowpilot_fake_project_rehearsal_scenarios.py"),
         "accepted_packet_reassignment_rejected": ("fake_project_blackbox_cli_accepted_packet_reassignment", "skills/flowpilot/assets/flowpilot_new.py"),
         "stop_terminal_fence": ("fake_project_blackbox_cli_stop_terminal_fence", "skills/flowpilot/assets/flowpilot_new.py"),
         "progress_evidence_replacement": ("fake_project_blackbox_cli_progress_evidence_replacement", "skills/flowpilot/assets/flowpilot_new.py"),
@@ -158,7 +182,7 @@ def _run_checks_in_root(work_root: Path, *, scenario_names: set[str] | None = No
                 ["skills/flowpilot/assets/flowpilot_new.py"],
             )
         )
-    return {
+    return _portableize({
         "result_type": "flowpilot_fake_project_rehearsal_checks",
         "model_id": model.MODEL_ID,
         "ok": (
@@ -185,7 +209,7 @@ def _run_checks_in_root(work_root: Path, *, scenario_names: set[str] | None = No
             "rows": rows,
             "routine_gate": {"ok": all(row["status"] == "passed" for row in rows)},
         },
-    }
+    }, work_root=work_root)
 
 
 def run_checks(work_root: Path | None = None, *, scenario_names: set[str] | None = None) -> dict[str, Any]:

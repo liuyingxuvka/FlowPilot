@@ -60,7 +60,7 @@ MARKER_REQUIREMENTS: tuple[Mapping[str, Any], ...] = (
             "work_packet.allowed_writes",
             "work_packet.forbidden_actions",
             "work_packet.success_evidence",
-            "fresh packet generation",
+            "existing current-node, research-package, and role-work",
             "invalidate stale evidence",
         ),
         "covers": (OBL_REQUIRED_REPAIR, OBL_WORKER_DELTA, OBL_ROUTE_MUTATION),

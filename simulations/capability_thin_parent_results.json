@@ -1,5 +1,5 @@
 {
-  "created_at": "2026-07-09T06:41:44.375403+00:00",
+  "created_at": "2026-07-14T05:58:35.092420+00:00",
   "graph": {
     "edge_count": 14,
     "invariant_failure_count": 0,
@@ -11,7 +11,7 @@
     "current": true,
     "required_for_release": true,
     "status": {
-      "created_at": "2026-07-09T06:15:47.468482+00:00",
+      "created_at": "2026-07-14T05:58:24.736797+00:00",
       "edge_count": 16,
       "kind": "layered_full_parent",
       "proof_file": "simulations/capability_layered_full_results.proof.json",
@@ -58,7 +58,7 @@
             "ok": true,
             "proof_status": "not_present",
             "result_file": "simulations/flowpilot_startup_control_results.json",
-            "result_fingerprint": "6e41c0a63e30d7ea47ac6683ee39c5fbaeb1262d36cdd93f8595db2267aea588",
+            "result_fingerprint": "98f250916fd29f45dfc3ebcb25870e2fd616cc3295120553e1618d9483fdcb38",
             "skipped_required_checks": [],
             "skipped_required_checks_visible": true,
             "state_count": 70
@@ -129,7 +129,7 @@
             "ok": true,
             "proof_status": "not_present",
             "result_file": "simulations/flowpilot_planning_quality_results.json",
-            "result_fingerprint": "c57e25030590ca084b7e88640745fb7223fd8edb4953479abf0de8b987d76c12",
+            "result_fingerprint": "5be8a5494bb9316c1b07fc76a6dd76f50a27156491d90586014b4317e898943d",
             "skipped_required_checks": [],
             "skipped_required_checks_visible": true,
             "state_count": 159
@@ -146,11 +146,25 @@
             "skipped_required_checks": [],
             "skipped_required_checks_visible": true,
             "state_count": 41
+          },
+          {
+            "edge_count": 34,
+            "failures": [],
+            "missing": false,
+            "model_id": "flowpilot_ordinary_resource_discovery",
+            "ok": true,
+            "proof_status": "not_present",
+            "result_file": "simulations/flowpilot_ordinary_resource_discovery_results.json",
+            "result_fingerprint": "2ac5079a8def95f0bc7298b0f509529558f640b8a3649b49cfe4468f54734904",
+            "skipped_required_checks": [],
+            "skipped_required_checks_visible": true,
+            "state_count": 38
           }
         ],
         "evidence_ids": [
           "flowpilot_planning_quality",
-          "flowpilot_model_driven_recursive_route"
+          "flowpilot_model_driven_recursive_route",
+          "flowpilot_ordinary_resource_discovery"
         ],
         "id": "product_architecture",
         "invariant_families": [
@@ -172,10 +186,10 @@
             "ok": true,
             "proof_status": "not_present",
             "result_file": "simulations/card_instruction_coverage_results.json",
-            "result_fingerprint": "b9b51620a8dbd06dd95404cc0c85d38fe6ef73c19226adc780a730c64094df5f",
+            "result_fingerprint": "8eefa4594ff03b1e620ef4ca8c22eb2f48b0ed0fa1759e6da67a915da2e1e8d7",
             "skipped_required_checks": [],
             "skipped_required_checks_visible": true,
-            "state_count": 71
+            "state_count": 67
           },
           {
             "edge_count": 66,
@@ -215,13 +229,27 @@
             "skipped_required_checks": [],
             "skipped_required_checks_visible": true,
             "state_count": null
+          },
+          {
+            "edge_count": 55,
+            "failures": [],
+            "missing": false,
+            "model_id": "flowpilot_complete_workstream_orchestration",
+            "ok": true,
+            "proof_status": "not_present",
+            "result_file": "simulations/flowpilot_complete_workstream_orchestration_results.json",
+            "result_fingerprint": "95ba3a03771537277a93e98c843c6814e0053bd47d4272d3dc427dcd4bf45d72",
+            "skipped_required_checks": [],
+            "skipped_required_checks_visible": true,
+            "state_count": 60
           }
         ],
         "evidence_ids": [
           "card_instruction_coverage",
           "flowpilot_reviewer_active_challenge",
           "flowpilot_requirement_traceability",
-          "flowpilot_output_contract"
+          "flowpilot_output_contract",
+          "flowpilot_complete_workstream_orchestration"
         ],
         "id": "child_skill_capability",
         "invariant_families": [
@@ -276,29 +304,29 @@
             "state_count": 54
           },
           {
-            "edge_count": null,
+            "edge_count": 55,
             "failures": [],
             "missing": false,
-            "model_id": "flowpilot_role_output_runtime",
+            "model_id": "flowpilot_complete_workstream_orchestration",
             "ok": true,
             "proof_status": "not_present",
-            "result_file": "simulations/flowpilot_role_output_runtime_results.json",
-            "result_fingerprint": "0af63706a828f032f6de5db3e5a5335f9d625f144041c8294e620549f39fc8bf",
+            "result_file": "simulations/flowpilot_complete_workstream_orchestration_results.json",
+            "result_fingerprint": "95ba3a03771537277a93e98c843c6814e0053bd47d4272d3dc427dcd4bf45d72",
             "skipped_required_checks": [],
             "skipped_required_checks_visible": true,
-            "state_count": null
+            "state_count": 60
           }
         ],
         "evidence_ids": [
           "flowpilot_packet_lifecycle",
           "flowpilot_packet_open_authority",
           "flowpilot_card_envelope",
-          "flowpilot_role_output_runtime"
+          "flowpilot_complete_workstream_orchestration"
         ],
         "id": "packet_and_role_authority",
         "invariant_families": [
           "active_child_skill_bindings",
-          "role_output_runtime",
+          "complete_workstream_semantic_result",
           "packet_open_authority"
         ],
         "ok": true,
@@ -419,17 +447,17 @@
             "state_count": 49
           },
           {
-            "edge_count": 204,
+            "edge_count": 57,
             "failures": [],
             "missing": false,
             "model_id": "flowpilot_repair_transaction",
             "ok": true,
             "proof_status": "not_present",
             "result_file": "simulations/flowpilot_repair_transaction_results.json",
-            "result_fingerprint": "1c9b64b1b24b4b2165c629ba92bf3e0896cc6be585bae3f8cbebf737f5ad719a",
+            "result_fingerprint": "cc62f6cebfddf508b1cb7da251e31e2359ada4cc9b6f60ba75f3bb4647a9c14b",
             "skipped_required_checks": [],
             "skipped_required_checks_visible": true,
-            "state_count": 205
+            "state_count": 58
           }
         ],
         "evidence_ids": [
@@ -458,7 +486,7 @@
             "ok": true,
             "proof_status": "not_present",
             "result_file": "simulations/flowpilot_model_mesh_results.json",
-            "result_fingerprint": "f309a2fb7ad390ebd63e7d9e7c8b249552b179bc1a9c5f4304f953cce98ad404",
+            "result_fingerprint": "e5df7b016b317a688ddba00d9c641a3255ea9fd1be6823914b6765fd6f0b600e",
             "skipped_required_checks": [],
             "skipped_required_checks_visible": true,
             "state_count": 71
@@ -503,6 +531,19 @@
             "state_count": 11
           },
           {
+            "edge_count": null,
+            "failures": [],
+            "missing": false,
+            "model_id": "flowpilot_skillguard_current_contract",
+            "ok": true,
+            "proof_status": "not_present",
+            "result_file": "simulations/flowpilot_skillguard_current_contract_results.json",
+            "result_fingerprint": "3be721a359e406efb4c88d68f8e5cfdd12f3641b36852e52446d683e3546c5c8",
+            "skipped_required_checks": [],
+            "skipped_required_checks_visible": true,
+            "state_count": null
+          },
+          {
             "edge_count": 39,
             "failures": [],
             "missing": false,
@@ -521,12 +562,14 @@
           "flowpilot_control_transaction_registry",
           "flowpilot_legal_next_action",
           "proof_carrying",
+          "flowpilot_skillguard_current_contract",
           "release_tooling"
         ],
         "id": "evidence_mesh_and_install_sync",
         "invariant_families": [
           "capability_evidence_sync",
           "model_mesh_authority",
+          "skillguard_current_contract_projection",
           "install_sync_boundary"
         ],
         "ok": true,

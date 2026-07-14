@@ -25,7 +25,7 @@ REQUIRED_LABELS = tuple(
 
 HAZARD_EXPECTED_FAILURES = {
     model.OBSERVED_RECEIPT_FLAG_WITHOUT_BATCH_LIFECYCLE: (
-        "receipt flag says material results relayed but durable batch lifecycle was not advanced"
+        "receipt flag says packet results relayed but durable batch lifecycle was not advanced"
     ),
     model.OBSERVED_SUPERSEDED_OLD_REQUEST_STILL_OPEN: (
         "superseding PM role-work request did not terminalize the old request"
@@ -42,8 +42,11 @@ HAZARD_EXPECTED_FAILURES = {
     model.RESULT_BODY_SELF_CHECK_NOT_PROJECTED: (
         "result body self-check section was not projected into envelope metadata"
     ),
-    model.MATERIAL_REVIEW_EVENT_LEFT_ONLY_IN_ROLE_OUTPUT_LEDGER: (
+    model.REVIEW_BLOCK_EVENT_LEFT_ONLY_IN_ROLE_OUTPUT_LEDGER: (
         "direct role-output event stayed in role output ledger without canonical Router event"
+    ),
+    model.RETIRED_MATERIAL_PROJECTION_REINTRODUCED: (
+        "retired material_scan/material_sufficiency/material_understanding projection is active"
     ),
     model.DONE_WAIT_ROW_STILL_AUTHORIZES_PENDING_ACTION: (
         "pending_action was not validated against resolved Controller or scheduler wait rows"
@@ -55,7 +58,7 @@ HAZARD_EXPECTED_FAILURES = {
         "superseding PM role-work request did not terminalize the old request"
     ),
     model.SUPERSEDE_ONLY_FIX_LEAVES_PROJECTION_DRIFT: (
-        "receipt flag says material results relayed but durable batch lifecycle was not advanced"
+        "receipt flag says packet results relayed but durable batch lifecycle was not advanced"
     ),
     model.CASE_PATCHES_CLAIM_ROOT_FIX_WITHOUT_RECONCILER: (
         "root fix was claimed without a shared durable reconciliation barrier before next action"
@@ -85,7 +88,7 @@ def _state_id(state: model.State) -> str:
     return (
         f"scenario={state.scenario}|status={state.status}|"
         f"receipt={state.controller_receipt_done},{state.receipt_postcondition_flag},"
-        f"{state.material_results_joined},{state.durable_batch_status},"
+        f"{state.packet_results_joined},{state.durable_batch_status},"
         f"{state.router_projection_batch_status}|"
         f"pm_disposition={state.pm_disposition_attempted},{state.pm_disposition_accepted}|"
         f"supersede={state.supersedes_declared},{state.old_request_status},"
@@ -102,8 +105,9 @@ def _state_id(state: model.State) -> str:
         f"role_output_event={state.direct_role_output_event_submitted},"
         f"{state.role_output_event_type},{state.generic_role_output_event_reconciler},"
         f"{state.role_output_event_folded_to_router_state},{state.router_event_flag_synced},"
-        f"{state.material_review_projection_synced},"
-        f"{state.material_insufficient_pm_repair_branch_exposed}|"
+        f"{state.review_block_projection_synced},"
+        f"{state.review_block_pm_repair_branch_exposed},"
+        f"{state.retired_material_projection_absent}|"
         f"packet_batch={state.packet_batch_family},{state.packet_batch_results_joined},"
         f"{state.packet_batch_all_results_returned},{state.packet_batch_missing_roles},"
         f"{state.packet_batch_next_recipient},{state.packet_batch_reconciler_covers_family},"
@@ -122,7 +126,7 @@ def _state_id(state: model.State) -> str:
         f"{state.prompt_hash_mismatch_blocks_daemon_recovery},"
         f"{state.daemon_recovery_status_write_succeeds}|"
         f"stop={state.stop_scope},{state.flowpilot_daemon_stopped},"
-        f"{state.flowpilot_heartbeat_stopped},{state.flowpilot_role_bindings_stopped},"
+        f"{state.flowpilot_manual_resume_binding_stopped},{state.flowpilot_role_bindings_stopped},"
         f"{state.unrelated_host_automations_active},{state.global_host_cleanup_claimed}|"
         f"root={state.shared_reconcile_before_next_action},"
         f"{state.next_action_from_reconciled_state},{state.root_fix_claimed}|"

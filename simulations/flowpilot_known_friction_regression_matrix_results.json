@@ -6,7 +6,7 @@
       "defect_family:worker_self_check_failure",
       "defect_family:pm_repair_atomicity",
       "defect_family:package_disposition_conflict_replay",
-      "defect_family:packet_reissue_continuation",
+      "defect_family:producerless_repair_continuation",
       "defect_family:status_projection_stale",
       "defect_family:ack_false_blocker",
       "defect_family:controlled_stop_reconciliation",
@@ -33,7 +33,7 @@
         "defect_family:worker_self_check_failure",
         "defect_family:pm_repair_atomicity",
         "defect_family:package_disposition_conflict_replay",
-        "defect_family:packet_reissue_continuation",
+        "defect_family:producerless_repair_continuation",
         "defect_family:status_projection_stale",
         "defect_family:ack_false_blocker",
         "defect_family:controlled_stop_reconciliation",
@@ -198,12 +198,12 @@
         },
         {
           "code": "missing_required_friction",
-          "friction_id": "known_friction.packet_reissue_continuation",
+          "friction_id": "known_friction.pm_repair_atomicity",
           "message": "required known-friction row is missing"
         },
         {
           "code": "missing_required_friction",
-          "friction_id": "known_friction.pm_repair_atomicity",
+          "friction_id": "known_friction.producerless_repair_continuation",
           "message": "required known-friction row is missing"
         },
         {
@@ -249,11 +249,6 @@
         {
           "code": "missing_source_class",
           "message": "required historical source class is not represented",
-          "source_class": "material_packet_generation_reissue"
-        },
-        {
-          "code": "missing_source_class",
-          "message": "required historical source class is not represented",
           "source_class": "new_runtime_wait_reassignment_race"
         },
         {
@@ -265,6 +260,11 @@
           "code": "missing_source_class",
           "message": "required historical source class is not represented",
           "source_class": "pm_repair_transaction_interleaving"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "producerless_repair_transaction"
         },
         {
           "code": "missing_source_class",
@@ -330,7 +330,7 @@
               "metadata": {
                 "evidence": {
                   "assertion_scope": "external_contract",
-                  "command": "python simulations/run_flowpilot_control_plane_friction_checks.py; tests.test_flowpilot_output_contracts.FlowPilotOutputContractTests.test_contract_self_check_metadata_reports_live_worker_missing_fields",
+                  "command": "python simulations/run_flowpilot_control_plane_friction_checks.py; tests.test_flowpilot_output_contracts.FlowPilotOutputContractTests.test_contract_self_check_metadata_reports_current_node_worker_missing_fields",
                   "current": true,
                   "evidence_id": "proof:defect_family:worker_self_check_failure",
                   "metadata": {
@@ -351,11 +351,11 @@
                   "producer_route": "known_friction_regression_matrix",
                   "proof_artifact": {
                     "artifact_fingerprints": {
-                      "simulations/flowpilot_control_plane_friction_results.json": "sha256:59a09929678b4c465dd7ddcb1389321c8d9cdf4b80b98a1a16d5dbc25f95503a"
+                      "simulations/flowpilot_control_plane_friction_results.json": "sha256:e5a4cd1e31ec027ea32ab3bec393fe2ad405a65f257d7edf035d4669aa5c9c50"
                     },
                     "artifact_id": "artifact:defect_family:worker_self_check_failure",
                     "assertion_scope": "external_contract",
-                    "command": "python simulations/run_flowpilot_control_plane_friction_checks.py; tests.test_flowpilot_output_contracts.FlowPilotOutputContractTests.test_contract_self_check_metadata_reports_live_worker_missing_fields",
+                    "command": "python simulations/run_flowpilot_control_plane_friction_checks.py; tests.test_flowpilot_output_contracts.FlowPilotOutputContractTests.test_contract_self_check_metadata_reports_current_node_worker_missing_fields",
                     "covered_obligation_ids": [
                       "control_plane_friction.pm_package_disposition_packet_outcomes_missing",
                       "proof:defect_family:worker_self_check_failure",
@@ -396,7 +396,7 @@
               "metadata": {
                 "evidence": {
                   "assertion_scope": "external_contract",
-                  "command": "python simulations/run_flowpilot_control_plane_friction_checks.py; tests.test_flowpilot_output_contracts.FlowPilotOutputContractTests.test_contract_self_check_metadata_reports_live_worker_missing_fields",
+                  "command": "python simulations/run_flowpilot_control_plane_friction_checks.py; tests.test_flowpilot_output_contracts.FlowPilotOutputContractTests.test_contract_self_check_metadata_reports_current_node_worker_missing_fields",
                   "current": true,
                   "evidence_id": "proof:defect_family:worker_self_check_failure",
                   "metadata": {
@@ -417,11 +417,11 @@
                   "producer_route": "known_friction_regression_matrix",
                   "proof_artifact": {
                     "artifact_fingerprints": {
-                      "simulations/flowpilot_control_plane_friction_results.json": "sha256:59a09929678b4c465dd7ddcb1389321c8d9cdf4b80b98a1a16d5dbc25f95503a"
+                      "simulations/flowpilot_control_plane_friction_results.json": "sha256:e5a4cd1e31ec027ea32ab3bec393fe2ad405a65f257d7edf035d4669aa5c9c50"
                     },
                     "artifact_id": "artifact:defect_family:worker_self_check_failure",
                     "assertion_scope": "external_contract",
-                    "command": "python simulations/run_flowpilot_control_plane_friction_checks.py; tests.test_flowpilot_output_contracts.FlowPilotOutputContractTests.test_contract_self_check_metadata_reports_live_worker_missing_fields",
+                    "command": "python simulations/run_flowpilot_control_plane_friction_checks.py; tests.test_flowpilot_output_contracts.FlowPilotOutputContractTests.test_contract_self_check_metadata_reports_current_node_worker_missing_fields",
                     "covered_obligation_ids": [
                       "control_plane_friction.pm_package_disposition_packet_outcomes_missing",
                       "proof:defect_family:worker_self_check_failure",
@@ -528,18 +528,18 @@
               "metadata": {
                 "proof": {
                   "assertion_scope": "external_contract",
-                  "command": "python simulations/run_flowpilot_control_plane_friction_checks.py; tests.test_flowpilot_output_contracts.FlowPilotOutputContractTests.test_contract_self_check_metadata_reports_live_worker_missing_fields",
+                  "command": "python simulations/run_flowpilot_control_plane_friction_checks.py; tests.test_flowpilot_output_contracts.FlowPilotOutputContractTests.test_contract_self_check_metadata_reports_current_node_worker_missing_fields",
                   "current": true,
                   "evidence_id": "proof:defect_family:worker_self_check_failure",
                   "metadata": {},
                   "producer_route": "known_friction_regression_matrix",
                   "proof_artifact": {
                     "artifact_fingerprints": {
-                      "simulations/flowpilot_control_plane_friction_results.json": "sha256:59a09929678b4c465dd7ddcb1389321c8d9cdf4b80b98a1a16d5dbc25f95503a"
+                      "simulations/flowpilot_control_plane_friction_results.json": "sha256:e5a4cd1e31ec027ea32ab3bec393fe2ad405a65f257d7edf035d4669aa5c9c50"
                     },
                     "artifact_id": "artifact:defect_family:worker_self_check_failure",
                     "assertion_scope": "external_contract",
-                    "command": "python simulations/run_flowpilot_control_plane_friction_checks.py; tests.test_flowpilot_output_contracts.FlowPilotOutputContractTests.test_contract_self_check_metadata_reports_live_worker_missing_fields",
+                    "command": "python simulations/run_flowpilot_control_plane_friction_checks.py; tests.test_flowpilot_output_contracts.FlowPilotOutputContractTests.test_contract_self_check_metadata_reports_current_node_worker_missing_fields",
                     "covered_obligation_ids": [
                       "control_plane_friction.pm_package_disposition_packet_outcomes_missing",
                       "proof:defect_family:worker_self_check_failure",
@@ -581,18 +581,18 @@
               "metadata": {
                 "proof": {
                   "assertion_scope": "external_contract",
-                  "command": "python simulations/run_flowpilot_control_plane_friction_checks.py; tests.test_flowpilot_output_contracts.FlowPilotOutputContractTests.test_contract_self_check_metadata_reports_live_worker_missing_fields",
+                  "command": "python simulations/run_flowpilot_control_plane_friction_checks.py; tests.test_flowpilot_output_contracts.FlowPilotOutputContractTests.test_contract_self_check_metadata_reports_current_node_worker_missing_fields",
                   "current": true,
                   "evidence_id": "proof:defect_family:worker_self_check_failure",
                   "metadata": {},
                   "producer_route": "known_friction_regression_matrix",
                   "proof_artifact": {
                     "artifact_fingerprints": {
-                      "simulations/flowpilot_control_plane_friction_results.json": "sha256:59a09929678b4c465dd7ddcb1389321c8d9cdf4b80b98a1a16d5dbc25f95503a"
+                      "simulations/flowpilot_control_plane_friction_results.json": "sha256:e5a4cd1e31ec027ea32ab3bec393fe2ad405a65f257d7edf035d4669aa5c9c50"
                     },
                     "artifact_id": "artifact:defect_family:worker_self_check_failure",
                     "assertion_scope": "external_contract",
-                    "command": "python simulations/run_flowpilot_control_plane_friction_checks.py; tests.test_flowpilot_output_contracts.FlowPilotOutputContractTests.test_contract_self_check_metadata_reports_live_worker_missing_fields",
+                    "command": "python simulations/run_flowpilot_control_plane_friction_checks.py; tests.test_flowpilot_output_contracts.FlowPilotOutputContractTests.test_contract_self_check_metadata_reports_current_node_worker_missing_fields",
                     "covered_obligation_ids": [
                       "control_plane_friction.pm_package_disposition_packet_outcomes_missing",
                       "proof:defect_family:worker_self_check_failure",
@@ -684,12 +684,12 @@
         },
         {
           "code": "missing_required_friction",
-          "friction_id": "known_friction.packet_reissue_continuation",
+          "friction_id": "known_friction.pm_repair_atomicity",
           "message": "required known-friction row is missing"
         },
         {
           "code": "missing_required_friction",
-          "friction_id": "known_friction.pm_repair_atomicity",
+          "friction_id": "known_friction.producerless_repair_continuation",
           "message": "required known-friction row is missing"
         },
         {
@@ -735,11 +735,6 @@
         {
           "code": "missing_source_class",
           "message": "required historical source class is not represented",
-          "source_class": "material_packet_generation_reissue"
-        },
-        {
-          "code": "missing_source_class",
-          "message": "required historical source class is not represented",
           "source_class": "new_runtime_wait_reassignment_race"
         },
         {
@@ -751,6 +746,11 @@
           "code": "missing_source_class",
           "message": "required historical source class is not represented",
           "source_class": "pm_repair_transaction_interleaving"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "producerless_repair_transaction"
         },
         {
           "code": "missing_source_class",
@@ -818,7 +818,7 @@
               "metadata": {
                 "evidence": {
                   "assertion_scope": "external_contract",
-                  "command": "python simulations/run_flowpilot_control_plane_friction_checks.py; tests.test_flowpilot_output_contracts.FlowPilotOutputContractTests.test_contract_self_check_metadata_reports_live_worker_missing_fields",
+                  "command": "python simulations/run_flowpilot_control_plane_friction_checks.py; tests.test_flowpilot_output_contracts.FlowPilotOutputContractTests.test_contract_self_check_metadata_reports_current_node_worker_missing_fields",
                   "current": false,
                   "evidence_id": "proof:defect_family:worker_self_check_failure",
                   "metadata": {
@@ -839,11 +839,11 @@
                   "producer_route": "known_friction_regression_matrix",
                   "proof_artifact": {
                     "artifact_fingerprints": {
-                      "simulations/flowpilot_control_plane_friction_results.json": "sha256:59a09929678b4c465dd7ddcb1389321c8d9cdf4b80b98a1a16d5dbc25f95503a"
+                      "simulations/flowpilot_control_plane_friction_results.json": "sha256:e5a4cd1e31ec027ea32ab3bec393fe2ad405a65f257d7edf035d4669aa5c9c50"
                     },
                     "artifact_id": "artifact:defect_family:worker_self_check_failure",
                     "assertion_scope": "external_contract",
-                    "command": "python simulations/run_flowpilot_control_plane_friction_checks.py; tests.test_flowpilot_output_contracts.FlowPilotOutputContractTests.test_contract_self_check_metadata_reports_live_worker_missing_fields",
+                    "command": "python simulations/run_flowpilot_control_plane_friction_checks.py; tests.test_flowpilot_output_contracts.FlowPilotOutputContractTests.test_contract_self_check_metadata_reports_current_node_worker_missing_fields",
                     "covered_obligation_ids": [
                       "control_plane_friction.pm_package_disposition_packet_outcomes_missing",
                       "proof:defect_family:worker_self_check_failure",
@@ -952,18 +952,18 @@
               "metadata": {
                 "proof": {
                   "assertion_scope": "external_contract",
-                  "command": "python simulations/run_flowpilot_control_plane_friction_checks.py; tests.test_flowpilot_output_contracts.FlowPilotOutputContractTests.test_contract_self_check_metadata_reports_live_worker_missing_fields",
+                  "command": "python simulations/run_flowpilot_control_plane_friction_checks.py; tests.test_flowpilot_output_contracts.FlowPilotOutputContractTests.test_contract_self_check_metadata_reports_current_node_worker_missing_fields",
                   "current": false,
                   "evidence_id": "proof:defect_family:worker_self_check_failure",
                   "metadata": {},
                   "producer_route": "known_friction_regression_matrix",
                   "proof_artifact": {
                     "artifact_fingerprints": {
-                      "simulations/flowpilot_control_plane_friction_results.json": "sha256:59a09929678b4c465dd7ddcb1389321c8d9cdf4b80b98a1a16d5dbc25f95503a"
+                      "simulations/flowpilot_control_plane_friction_results.json": "sha256:e5a4cd1e31ec027ea32ab3bec393fe2ad405a65f257d7edf035d4669aa5c9c50"
                     },
                     "artifact_id": "artifact:defect_family:worker_self_check_failure",
                     "assertion_scope": "external_contract",
-                    "command": "python simulations/run_flowpilot_control_plane_friction_checks.py; tests.test_flowpilot_output_contracts.FlowPilotOutputContractTests.test_contract_self_check_metadata_reports_live_worker_missing_fields",
+                    "command": "python simulations/run_flowpilot_control_plane_friction_checks.py; tests.test_flowpilot_output_contracts.FlowPilotOutputContractTests.test_contract_self_check_metadata_reports_current_node_worker_missing_fields",
                     "covered_obligation_ids": [
                       "control_plane_friction.pm_package_disposition_packet_outcomes_missing",
                       "proof:defect_family:worker_self_check_failure",
@@ -1055,12 +1055,12 @@
         },
         {
           "code": "missing_required_friction",
-          "friction_id": "known_friction.packet_reissue_continuation",
+          "friction_id": "known_friction.pm_repair_atomicity",
           "message": "required known-friction row is missing"
         },
         {
           "code": "missing_required_friction",
-          "friction_id": "known_friction.pm_repair_atomicity",
+          "friction_id": "known_friction.producerless_repair_continuation",
           "message": "required known-friction row is missing"
         },
         {
@@ -1106,11 +1106,6 @@
         {
           "code": "missing_source_class",
           "message": "required historical source class is not represented",
-          "source_class": "material_packet_generation_reissue"
-        },
-        {
-          "code": "missing_source_class",
-          "message": "required historical source class is not represented",
           "source_class": "new_runtime_wait_reassignment_race"
         },
         {
@@ -1122,6 +1117,11 @@
           "code": "missing_source_class",
           "message": "required historical source class is not represented",
           "source_class": "pm_repair_transaction_interleaving"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "producerless_repair_transaction"
         },
         {
           "code": "missing_source_class",
@@ -1506,22 +1506,6 @@
     "analogous_scan_report": {
       "candidates": [
         {
-          "candidate_id": "research_joined_without_return_event:material_scan:full_durable_envelope_event_fold:scan",
-          "description": "material_scan sibling scan for durable-envelope event fold.",
-          "disposition": "covered_current",
-          "disposition_reason": "Covered by the packet-result family runtime suite and parity evidence.",
-          "evidence_ids": [
-            "flowpilot.packet_result_return_reconciliation.material_scan.full_durable_envelope_event_fold"
-          ],
-          "failure_mode": "durable_result_joined_but_router_event_absent",
-          "family_id": "flowpilot.packet_result_return_reconciliation",
-          "mechanism_id": "full_durable_envelope_event_fold",
-          "member_id": "material_scan",
-          "metadata": {},
-          "radius": "must_scan",
-          "source": "explicit_sibling_review"
-        },
-        {
           "candidate_id": "research_joined_without_return_event:current_node:full_durable_envelope_event_fold:scan",
           "description": "current_node sibling scan for durable-envelope event fold.",
           "disposition": "covered_current",
@@ -1558,47 +1542,44 @@
       "decision": "analogous_defect_scan_complete",
       "derived_bad_cases": [
         {
-          "case_id": "research_joined_without_return_event:material_scan:full_durable_envelope_event_fold",
-          "description": "A research packet batch had durable joined results, but Router did not fold them into worker_research_report_returned before waiting/reminding.",
-          "expected_status": "must_fail_before_repair",
-          "failure_mode": "durable_result_joined_but_router_event_absent",
-          "family_id": "flowpilot.packet_result_return_reconciliation",
-          "mechanism_id": "full_durable_envelope_event_fold",
-          "member_id": "material_scan",
-          "metadata": {
-            "observed_date": "2026-05-28",
-            "seed_id": "research_joined_without_return_event"
-          },
-          "source_case_id": "openspec.reconcile-research-batch-results",
-          "source_member_id": "research"
-        },
-        {
+          "affected_model_ids": [],
           "case_id": "research_joined_without_return_event:current_node:full_durable_envelope_event_fold",
+          "coverage_receipt_ids": [],
           "description": "A research packet batch had durable joined results, but Router did not fold them into worker_research_report_returned before waiting/reminding.",
           "expected_status": "must_fail_before_repair",
           "failure_mode": "durable_result_joined_but_router_event_absent",
           "family_id": "flowpilot.packet_result_return_reconciliation",
+          "generated_combination_case_ids": [],
+          "interaction_group_ids": [],
           "mechanism_id": "full_durable_envelope_event_fold",
           "member_id": "current_node",
           "metadata": {
             "observed_date": "2026-05-28",
             "seed_id": "research_joined_without_return_event"
           },
+          "observed_combination_case_id": "",
+          "root_cause_dimension_ids": [],
           "source_case_id": "openspec.reconcile-research-batch-results",
           "source_member_id": "research"
         },
         {
+          "affected_model_ids": [],
           "case_id": "research_joined_without_return_event:pm_role_work:full_durable_envelope_event_fold",
+          "coverage_receipt_ids": [],
           "description": "A research packet batch had durable joined results, but Router did not fold them into worker_research_report_returned before waiting/reminding.",
           "expected_status": "must_fail_before_repair",
           "failure_mode": "durable_result_joined_but_router_event_absent",
           "family_id": "flowpilot.packet_result_return_reconciliation",
+          "generated_combination_case_ids": [],
+          "interaction_group_ids": [],
           "mechanism_id": "full_durable_envelope_event_fold",
           "member_id": "pm_role_work",
           "metadata": {
             "observed_date": "2026-05-28",
             "seed_id": "research_joined_without_return_event"
           },
+          "observed_combination_case_id": "",
+          "root_cause_dimension_ids": [],
           "source_case_id": "openspec.reconcile-research-batch-results",
           "source_member_id": "research"
         }
@@ -1606,121 +1587,27 @@
       "findings": [],
       "ok": true,
       "seed": {
+        "affected_model_ids": [],
+        "coverage_receipt_ids": [],
         "description": "A research packet batch had durable joined results, but Router did not fold them into worker_research_report_returned before waiting/reminding.",
         "exclude_member_ids": [],
         "failure_mode": "durable_result_joined_but_router_event_absent",
         "family_id": "flowpilot.packet_result_return_reconciliation",
+        "generated_combination_case_ids": [],
+        "interaction_group_ids": [],
         "mechanism_id": "full_durable_envelope_event_fold",
         "metadata": {
           "observed_date": "2026-05-28"
         },
+        "observed_combination_case_id": "",
+        "root_cause_dimension_ids": [],
         "seed_id": "research_joined_without_return_event",
         "source_case_id": "openspec.reconcile-research-batch-results",
         "source_member_id": "research"
       },
-      "summary": "OK: decision=analogous_defect_scan_complete findings=0 candidates=3"
+      "summary": "OK: decision=analogous_defect_scan_complete findings=0 candidates=2"
     },
     "evidence": [
-      {
-        "assertion_scope": "external_contract",
-        "command": "python -m unittest tests.router_runtime.packets.PacketsRuntimeTests.test_material_scan_existing_results_reconcile_before_stale_wait",
-        "covered_obligations": [
-          "packet_result_family.material_scan.durable_event_fold",
-          "packet_result_family.material_scan.partial_wait",
-          "packet_result_family.material_scan.recipient_and_sealed_boundary"
-        ],
-        "current": true,
-        "evidence_id": "flowpilot.packet_result_return_reconciliation.material_scan.full_durable_envelope_event_fold",
-        "family_id": "flowpilot.packet_result_return_reconciliation",
-        "mechanism_id": "full_durable_envelope_event_fold",
-        "member_id": "material_scan",
-        "metadata": {},
-        "proof_artifact": null,
-        "provenance": "runtime_test",
-        "result_status": "passed",
-        "stale_reasons": [],
-        "summary": "material_scan covers full_durable_envelope_event_fold through packet-result family tests."
-      },
-      {
-        "assertion_scope": "external_contract",
-        "command": "python -m unittest tests.router_runtime.packets.PacketsRuntimeTests.test_material_scan_full_batch_wait_current_work_names_all_missing_roles",
-        "covered_obligations": [
-          "packet_result_family.material_scan.durable_event_fold",
-          "packet_result_family.material_scan.partial_wait",
-          "packet_result_family.material_scan.recipient_and_sealed_boundary"
-        ],
-        "current": true,
-        "evidence_id": "flowpilot.packet_result_return_reconciliation.material_scan.partial_member_wait_projection",
-        "family_id": "flowpilot.packet_result_return_reconciliation",
-        "mechanism_id": "partial_member_wait_projection",
-        "member_id": "material_scan",
-        "metadata": {},
-        "proof_artifact": null,
-        "provenance": "runtime_test",
-        "result_status": "passed",
-        "stale_reasons": [],
-        "summary": "material_scan covers partial_member_wait_projection through packet-result family tests."
-      },
-      {
-        "assertion_scope": "external_contract",
-        "command": "python -m unittest tests.router_runtime.packets.PacketsRuntimeTests.test_material_scan_full_batch_wait_current_work_names_all_missing_roles",
-        "covered_obligations": [
-          "packet_result_family.material_scan.durable_event_fold",
-          "packet_result_family.material_scan.partial_wait",
-          "packet_result_family.material_scan.recipient_and_sealed_boundary"
-        ],
-        "current": true,
-        "evidence_id": "flowpilot.packet_result_return_reconciliation.material_scan.stale_reminder_suppression",
-        "family_id": "flowpilot.packet_result_return_reconciliation",
-        "mechanism_id": "stale_reminder_suppression",
-        "member_id": "material_scan",
-        "metadata": {},
-        "proof_artifact": null,
-        "provenance": "runtime_test",
-        "result_status": "passed",
-        "stale_reasons": [],
-        "summary": "material_scan covers stale_reminder_suppression through packet-result family tests."
-      },
-      {
-        "assertion_scope": "external_contract",
-        "command": "python -m unittest tests.router_runtime.packet_result_family",
-        "covered_obligations": [
-          "packet_result_family.material_scan.durable_event_fold",
-          "packet_result_family.material_scan.partial_wait",
-          "packet_result_family.material_scan.recipient_and_sealed_boundary"
-        ],
-        "current": true,
-        "evidence_id": "flowpilot.packet_result_return_reconciliation.material_scan.wrong_recipient_rejection",
-        "family_id": "flowpilot.packet_result_return_reconciliation",
-        "mechanism_id": "wrong_recipient_rejection",
-        "member_id": "material_scan",
-        "metadata": {},
-        "proof_artifact": null,
-        "provenance": "runtime_test",
-        "result_status": "passed",
-        "stale_reasons": [],
-        "summary": "material_scan covers wrong_recipient_rejection through packet-result family tests."
-      },
-      {
-        "assertion_scope": "external_contract",
-        "command": "python -m unittest tests.router_runtime.material_modeling.MaterialModelingRuntimeTests.test_material_scan_result_receipt_folds_batch_lifecycle",
-        "covered_obligations": [
-          "packet_result_family.material_scan.durable_event_fold",
-          "packet_result_family.material_scan.partial_wait",
-          "packet_result_family.material_scan.recipient_and_sealed_boundary"
-        ],
-        "current": true,
-        "evidence_id": "flowpilot.packet_result_return_reconciliation.material_scan.sealed_body_provenance",
-        "family_id": "flowpilot.packet_result_return_reconciliation",
-        "mechanism_id": "sealed_body_provenance",
-        "member_id": "material_scan",
-        "metadata": {},
-        "proof_artifact": null,
-        "provenance": "runtime_test",
-        "result_status": "passed",
-        "stale_reasons": [],
-        "summary": "material_scan covers sealed_body_provenance through packet-result family tests."
-      },
       {
         "assertion_scope": "external_contract",
         "command": "python -m unittest tests.router_runtime.packet_result_family",
@@ -2049,21 +1936,11 @@
         "flowguard_model"
       ],
       "description": "Every Router-owned packet-result family must reconcile durable result envelopes into existing result-return control-plane events before waits/reminders or broad confidence claims.",
+      "expected_member_ids": [],
       "family_id": "flowpilot.packet_result_return_reconciliation",
+      "inventory_revision": "",
+      "inventory_source_ref": "",
       "members": [
-        {
-          "allowed_provenance": [],
-          "description": "FlowPilot packet-result reconciliation member: material_scan",
-          "exception_reason": "",
-          "member_id": "material_scan",
-          "obligation_ids": [
-            "packet_result_family.material_scan.durable_event_fold",
-            "packet_result_family.material_scan.partial_wait",
-            "packet_result_family.material_scan.recipient_and_sealed_boundary"
-          ],
-          "required": true,
-          "required_mechanisms": []
-        },
         {
           "allowed_provenance": [],
           "description": "FlowPilot packet-result reconciliation member: research",
@@ -2108,6 +1985,7 @@
         "controller_visibility": "metadata_only",
         "owner_boundary": "Router durable wait reconciliation"
       },
+      "require_complete_inventory": false,
       "require_external_evidence": true,
       "require_proof_artifacts": false,
       "required": true,
@@ -2117,7 +1995,13 @@
         "stale_reminder_suppression",
         "wrong_recipient_rejection",
         "sealed_body_provenance"
-      ]
+      ],
+      "scoped_member_reasons": {},
+      "scoped_similarity_reasons": {},
+      "similarity_impacted_member_ids": [],
+      "similarity_impacted_obligation_ids": [],
+      "similarity_provenance_current": true,
+      "similarity_relation_ids": []
     },
     "family_id": "flowpilot.packet_result_return_reconciliation",
     "known_bad_cases": [
@@ -2133,71 +2017,6 @@
         "report": {
           "confidence": "blocked",
           "coverage_matrix": [
-            {
-              "accepted_provenance": [
-                "runtime_test"
-              ],
-              "evidence_ids": [
-                "flowpilot.packet_result_return_reconciliation.material_scan.full_durable_envelope_event_fold"
-              ],
-              "family_id": "flowpilot.packet_result_return_reconciliation",
-              "mechanism_id": "full_durable_envelope_event_fold",
-              "member_id": "material_scan",
-              "scoped_reasons": [],
-              "status": "covered"
-            },
-            {
-              "accepted_provenance": [
-                "runtime_test"
-              ],
-              "evidence_ids": [
-                "flowpilot.packet_result_return_reconciliation.material_scan.partial_member_wait_projection"
-              ],
-              "family_id": "flowpilot.packet_result_return_reconciliation",
-              "mechanism_id": "partial_member_wait_projection",
-              "member_id": "material_scan",
-              "scoped_reasons": [],
-              "status": "covered"
-            },
-            {
-              "accepted_provenance": [
-                "runtime_test"
-              ],
-              "evidence_ids": [
-                "flowpilot.packet_result_return_reconciliation.material_scan.stale_reminder_suppression"
-              ],
-              "family_id": "flowpilot.packet_result_return_reconciliation",
-              "mechanism_id": "stale_reminder_suppression",
-              "member_id": "material_scan",
-              "scoped_reasons": [],
-              "status": "covered"
-            },
-            {
-              "accepted_provenance": [
-                "runtime_test"
-              ],
-              "evidence_ids": [
-                "flowpilot.packet_result_return_reconciliation.material_scan.wrong_recipient_rejection"
-              ],
-              "family_id": "flowpilot.packet_result_return_reconciliation",
-              "mechanism_id": "wrong_recipient_rejection",
-              "member_id": "material_scan",
-              "scoped_reasons": [],
-              "status": "covered"
-            },
-            {
-              "accepted_provenance": [
-                "runtime_test"
-              ],
-              "evidence_ids": [
-                "flowpilot.packet_result_return_reconciliation.material_scan.sealed_body_provenance"
-              ],
-              "family_id": "flowpilot.packet_result_return_reconciliation",
-              "mechanism_id": "sealed_body_provenance",
-              "member_id": "material_scan",
-              "scoped_reasons": [],
-              "status": "covered"
-            },
             {
               "accepted_provenance": [
                 "runtime_test"
@@ -2393,6 +2212,7 @@
               "status": "covered"
             }
           ],
+          "covered_member_ids": [],
           "decision": "obligation_family_parity_blocked",
           "derived_bad_cases": [],
           "findings": [
@@ -2407,8 +2227,12 @@
               "severity": "blocker"
             }
           ],
+          "inventory_revisions": {},
+          "missing_member_ids": [],
           "ok": false,
-          "summary": "BLOCKED: decision=obligation_family_parity_blocked findings=1 cells=20"
+          "scoped_member_ids": [],
+          "summary": "BLOCKED: decision=obligation_family_parity_blocked findings=1 cells=15",
+          "unexpected_member_ids": []
         }
       },
       {
@@ -2423,71 +2247,6 @@
         "report": {
           "confidence": "blocked",
           "coverage_matrix": [
-            {
-              "accepted_provenance": [
-                "runtime_test"
-              ],
-              "evidence_ids": [
-                "flowpilot.packet_result_return_reconciliation.material_scan.full_durable_envelope_event_fold"
-              ],
-              "family_id": "flowpilot.packet_result_return_reconciliation",
-              "mechanism_id": "full_durable_envelope_event_fold",
-              "member_id": "material_scan",
-              "scoped_reasons": [],
-              "status": "covered"
-            },
-            {
-              "accepted_provenance": [
-                "runtime_test"
-              ],
-              "evidence_ids": [
-                "flowpilot.packet_result_return_reconciliation.material_scan.partial_member_wait_projection"
-              ],
-              "family_id": "flowpilot.packet_result_return_reconciliation",
-              "mechanism_id": "partial_member_wait_projection",
-              "member_id": "material_scan",
-              "scoped_reasons": [],
-              "status": "covered"
-            },
-            {
-              "accepted_provenance": [
-                "runtime_test"
-              ],
-              "evidence_ids": [
-                "flowpilot.packet_result_return_reconciliation.material_scan.stale_reminder_suppression"
-              ],
-              "family_id": "flowpilot.packet_result_return_reconciliation",
-              "mechanism_id": "stale_reminder_suppression",
-              "member_id": "material_scan",
-              "scoped_reasons": [],
-              "status": "covered"
-            },
-            {
-              "accepted_provenance": [
-                "runtime_test"
-              ],
-              "evidence_ids": [
-                "flowpilot.packet_result_return_reconciliation.material_scan.wrong_recipient_rejection"
-              ],
-              "family_id": "flowpilot.packet_result_return_reconciliation",
-              "mechanism_id": "wrong_recipient_rejection",
-              "member_id": "material_scan",
-              "scoped_reasons": [],
-              "status": "covered"
-            },
-            {
-              "accepted_provenance": [
-                "runtime_test"
-              ],
-              "evidence_ids": [
-                "flowpilot.packet_result_return_reconciliation.material_scan.sealed_body_provenance"
-              ],
-              "family_id": "flowpilot.packet_result_return_reconciliation",
-              "mechanism_id": "sealed_body_provenance",
-              "member_id": "material_scan",
-              "scoped_reasons": [],
-              "status": "covered"
-            },
             {
               "accepted_provenance": [],
               "evidence_ids": [
@@ -2685,6 +2444,7 @@
               "status": "covered"
             }
           ],
+          "covered_member_ids": [],
           "decision": "obligation_family_parity_blocked",
           "derived_bad_cases": [],
           "findings": [
@@ -2713,8 +2473,12 @@
               "severity": "blocker"
             }
           ],
+          "inventory_revisions": {},
+          "missing_member_ids": [],
           "ok": false,
-          "summary": "BLOCKED: decision=obligation_family_parity_blocked findings=2 cells=20"
+          "scoped_member_ids": [],
+          "summary": "BLOCKED: decision=obligation_family_parity_blocked findings=2 cells=15",
+          "unexpected_member_ids": []
         }
       },
       {
@@ -2729,71 +2493,6 @@
         "report": {
           "confidence": "blocked",
           "coverage_matrix": [
-            {
-              "accepted_provenance": [
-                "runtime_test"
-              ],
-              "evidence_ids": [
-                "flowpilot.packet_result_return_reconciliation.material_scan.full_durable_envelope_event_fold"
-              ],
-              "family_id": "flowpilot.packet_result_return_reconciliation",
-              "mechanism_id": "full_durable_envelope_event_fold",
-              "member_id": "material_scan",
-              "scoped_reasons": [],
-              "status": "covered"
-            },
-            {
-              "accepted_provenance": [
-                "runtime_test"
-              ],
-              "evidence_ids": [
-                "flowpilot.packet_result_return_reconciliation.material_scan.partial_member_wait_projection"
-              ],
-              "family_id": "flowpilot.packet_result_return_reconciliation",
-              "mechanism_id": "partial_member_wait_projection",
-              "member_id": "material_scan",
-              "scoped_reasons": [],
-              "status": "covered"
-            },
-            {
-              "accepted_provenance": [
-                "runtime_test"
-              ],
-              "evidence_ids": [
-                "flowpilot.packet_result_return_reconciliation.material_scan.stale_reminder_suppression"
-              ],
-              "family_id": "flowpilot.packet_result_return_reconciliation",
-              "mechanism_id": "stale_reminder_suppression",
-              "member_id": "material_scan",
-              "scoped_reasons": [],
-              "status": "covered"
-            },
-            {
-              "accepted_provenance": [
-                "runtime_test"
-              ],
-              "evidence_ids": [
-                "flowpilot.packet_result_return_reconciliation.material_scan.wrong_recipient_rejection"
-              ],
-              "family_id": "flowpilot.packet_result_return_reconciliation",
-              "mechanism_id": "wrong_recipient_rejection",
-              "member_id": "material_scan",
-              "scoped_reasons": [],
-              "status": "covered"
-            },
-            {
-              "accepted_provenance": [
-                "runtime_test"
-              ],
-              "evidence_ids": [
-                "flowpilot.packet_result_return_reconciliation.material_scan.sealed_body_provenance"
-              ],
-              "family_id": "flowpilot.packet_result_return_reconciliation",
-              "mechanism_id": "sealed_body_provenance",
-              "member_id": "material_scan",
-              "scoped_reasons": [],
-              "status": "covered"
-            },
             {
               "accepted_provenance": [
                 "runtime_test"
@@ -2991,6 +2690,7 @@
               "status": "covered"
             }
           ],
+          "covered_member_ids": [],
           "decision": "obligation_family_parity_blocked",
           "derived_bad_cases": [],
           "findings": [
@@ -3011,8 +2711,12 @@
               "severity": "blocker"
             }
           ],
+          "inventory_revisions": {},
+          "missing_member_ids": [],
           "ok": false,
-          "summary": "BLOCKED: decision=obligation_family_parity_blocked findings=1 cells=20"
+          "scoped_member_ids": [],
+          "summary": "BLOCKED: decision=obligation_family_parity_blocked findings=1 cells=15",
+          "unexpected_member_ids": []
         }
       },
       {
@@ -3026,24 +2730,6 @@
         "ok": true,
         "report": {
           "candidates": [
-            {
-              "candidate_id": "research_joined_without_return_event:material_scan:full_durable_envelope_event_fold:scan",
-              "description": "A research packet batch had durable joined results, but Router did not fold them into worker_research_report_returned before waiting/reminding.",
-              "disposition": "unreviewed",
-              "disposition_reason": "",
-              "evidence_ids": [],
-              "failure_mode": "durable_result_joined_but_router_event_absent",
-              "family_id": "flowpilot.packet_result_return_reconciliation",
-              "mechanism_id": "full_durable_envelope_event_fold",
-              "member_id": "material_scan",
-              "metadata": {
-                "observed_date": "2026-05-28",
-                "seed_id": "research_joined_without_return_event",
-                "source_case_id": "openspec.reconcile-research-batch-results"
-              },
-              "radius": "must_scan",
-              "source": "derived_same_class_bad_case"
-            },
             {
               "candidate_id": "research_joined_without_return_event:current_node:full_durable_envelope_event_fold:scan",
               "description": "A research packet batch had durable joined results, but Router did not fold them into worker_research_report_returned before waiting/reminding.",
@@ -3085,62 +2771,49 @@
           "decision": "analogous_defect_scan_blocked",
           "derived_bad_cases": [
             {
-              "case_id": "research_joined_without_return_event:material_scan:full_durable_envelope_event_fold",
-              "description": "A research packet batch had durable joined results, but Router did not fold them into worker_research_report_returned before waiting/reminding.",
-              "expected_status": "must_fail_before_repair",
-              "failure_mode": "durable_result_joined_but_router_event_absent",
-              "family_id": "flowpilot.packet_result_return_reconciliation",
-              "mechanism_id": "full_durable_envelope_event_fold",
-              "member_id": "material_scan",
-              "metadata": {
-                "observed_date": "2026-05-28",
-                "seed_id": "research_joined_without_return_event"
-              },
-              "source_case_id": "openspec.reconcile-research-batch-results",
-              "source_member_id": "research"
-            },
-            {
+              "affected_model_ids": [],
               "case_id": "research_joined_without_return_event:current_node:full_durable_envelope_event_fold",
+              "coverage_receipt_ids": [],
               "description": "A research packet batch had durable joined results, but Router did not fold them into worker_research_report_returned before waiting/reminding.",
               "expected_status": "must_fail_before_repair",
               "failure_mode": "durable_result_joined_but_router_event_absent",
               "family_id": "flowpilot.packet_result_return_reconciliation",
+              "generated_combination_case_ids": [],
+              "interaction_group_ids": [],
               "mechanism_id": "full_durable_envelope_event_fold",
               "member_id": "current_node",
               "metadata": {
                 "observed_date": "2026-05-28",
                 "seed_id": "research_joined_without_return_event"
               },
+              "observed_combination_case_id": "",
+              "root_cause_dimension_ids": [],
               "source_case_id": "openspec.reconcile-research-batch-results",
               "source_member_id": "research"
             },
             {
+              "affected_model_ids": [],
               "case_id": "research_joined_without_return_event:pm_role_work:full_durable_envelope_event_fold",
+              "coverage_receipt_ids": [],
               "description": "A research packet batch had durable joined results, but Router did not fold them into worker_research_report_returned before waiting/reminding.",
               "expected_status": "must_fail_before_repair",
               "failure_mode": "durable_result_joined_but_router_event_absent",
               "family_id": "flowpilot.packet_result_return_reconciliation",
+              "generated_combination_case_ids": [],
+              "interaction_group_ids": [],
               "mechanism_id": "full_durable_envelope_event_fold",
               "member_id": "pm_role_work",
               "metadata": {
                 "observed_date": "2026-05-28",
                 "seed_id": "research_joined_without_return_event"
               },
+              "observed_combination_case_id": "",
+              "root_cause_dimension_ids": [],
               "source_case_id": "openspec.reconcile-research-batch-results",
               "source_member_id": "research"
             }
           ],
           "findings": [
-            {
-              "candidate_id": "research_joined_without_return_event:material_scan:full_durable_envelope_event_fold:scan",
-              "code": "unreviewed_analogous_defect_candidate",
-              "family_id": "flowpilot.packet_result_return_reconciliation",
-              "mechanism_id": "full_durable_envelope_event_fold",
-              "member_id": "material_scan",
-              "message": "analogous defect candidate has not been reviewed or dispositioned",
-              "metadata": {},
-              "severity": "blocker"
-            },
             {
               "candidate_id": "research_joined_without_return_event:current_node:full_durable_envelope_event_fold:scan",
               "code": "unreviewed_analogous_defect_candidate",
@@ -3164,25 +2837,30 @@
           ],
           "ok": false,
           "seed": {
+            "affected_model_ids": [],
+            "coverage_receipt_ids": [],
             "description": "A research packet batch had durable joined results, but Router did not fold them into worker_research_report_returned before waiting/reminding.",
             "exclude_member_ids": [],
             "failure_mode": "durable_result_joined_but_router_event_absent",
             "family_id": "flowpilot.packet_result_return_reconciliation",
+            "generated_combination_case_ids": [],
+            "interaction_group_ids": [],
             "mechanism_id": "full_durable_envelope_event_fold",
             "metadata": {
               "observed_date": "2026-05-28"
             },
+            "observed_combination_case_id": "",
+            "root_cause_dimension_ids": [],
             "seed_id": "research_joined_without_return_event",
             "source_case_id": "openspec.reconcile-research-batch-results",
             "source_member_id": "research"
           },
-          "summary": "BLOCKED: decision=analogous_defect_scan_blocked findings=3 candidates=3"
+          "summary": "BLOCKED: decision=analogous_defect_scan_blocked findings=2 candidates=2"
         }
       }
     ],
     "known_bad_ok": true,
     "members": [
-      "material_scan",
       "research",
       "current_node",
       "pm_role_work"
@@ -3193,71 +2871,6 @@
     "parity_report": {
       "confidence": "full",
       "coverage_matrix": [
-        {
-          "accepted_provenance": [
-            "runtime_test"
-          ],
-          "evidence_ids": [
-            "flowpilot.packet_result_return_reconciliation.material_scan.full_durable_envelope_event_fold"
-          ],
-          "family_id": "flowpilot.packet_result_return_reconciliation",
-          "mechanism_id": "full_durable_envelope_event_fold",
-          "member_id": "material_scan",
-          "scoped_reasons": [],
-          "status": "covered"
-        },
-        {
-          "accepted_provenance": [
-            "runtime_test"
-          ],
-          "evidence_ids": [
-            "flowpilot.packet_result_return_reconciliation.material_scan.partial_member_wait_projection"
-          ],
-          "family_id": "flowpilot.packet_result_return_reconciliation",
-          "mechanism_id": "partial_member_wait_projection",
-          "member_id": "material_scan",
-          "scoped_reasons": [],
-          "status": "covered"
-        },
-        {
-          "accepted_provenance": [
-            "runtime_test"
-          ],
-          "evidence_ids": [
-            "flowpilot.packet_result_return_reconciliation.material_scan.stale_reminder_suppression"
-          ],
-          "family_id": "flowpilot.packet_result_return_reconciliation",
-          "mechanism_id": "stale_reminder_suppression",
-          "member_id": "material_scan",
-          "scoped_reasons": [],
-          "status": "covered"
-        },
-        {
-          "accepted_provenance": [
-            "runtime_test"
-          ],
-          "evidence_ids": [
-            "flowpilot.packet_result_return_reconciliation.material_scan.wrong_recipient_rejection"
-          ],
-          "family_id": "flowpilot.packet_result_return_reconciliation",
-          "mechanism_id": "wrong_recipient_rejection",
-          "member_id": "material_scan",
-          "scoped_reasons": [],
-          "status": "covered"
-        },
-        {
-          "accepted_provenance": [
-            "runtime_test"
-          ],
-          "evidence_ids": [
-            "flowpilot.packet_result_return_reconciliation.material_scan.sealed_body_provenance"
-          ],
-          "family_id": "flowpilot.packet_result_return_reconciliation",
-          "mechanism_id": "sealed_body_provenance",
-          "member_id": "material_scan",
-          "scoped_reasons": [],
-          "status": "covered"
-        },
         {
           "accepted_provenance": [
             "runtime_test"
@@ -3455,57 +3068,59 @@
           "status": "covered"
         }
       ],
+      "covered_member_ids": [],
       "decision": "obligation_family_parity_full_confidence",
       "derived_bad_cases": [
         {
-          "case_id": "research_joined_without_return_event:material_scan:full_durable_envelope_event_fold",
-          "description": "A research packet batch had durable joined results, but Router did not fold them into worker_research_report_returned before waiting/reminding.",
-          "expected_status": "must_fail_before_repair",
-          "failure_mode": "durable_result_joined_but_router_event_absent",
-          "family_id": "flowpilot.packet_result_return_reconciliation",
-          "mechanism_id": "full_durable_envelope_event_fold",
-          "member_id": "material_scan",
-          "metadata": {
-            "observed_date": "2026-05-28",
-            "seed_id": "research_joined_without_return_event"
-          },
-          "source_case_id": "openspec.reconcile-research-batch-results",
-          "source_member_id": "research"
-        },
-        {
+          "affected_model_ids": [],
           "case_id": "research_joined_without_return_event:current_node:full_durable_envelope_event_fold",
+          "coverage_receipt_ids": [],
           "description": "A research packet batch had durable joined results, but Router did not fold them into worker_research_report_returned before waiting/reminding.",
           "expected_status": "must_fail_before_repair",
           "failure_mode": "durable_result_joined_but_router_event_absent",
           "family_id": "flowpilot.packet_result_return_reconciliation",
+          "generated_combination_case_ids": [],
+          "interaction_group_ids": [],
           "mechanism_id": "full_durable_envelope_event_fold",
           "member_id": "current_node",
           "metadata": {
             "observed_date": "2026-05-28",
             "seed_id": "research_joined_without_return_event"
           },
+          "observed_combination_case_id": "",
+          "root_cause_dimension_ids": [],
           "source_case_id": "openspec.reconcile-research-batch-results",
           "source_member_id": "research"
         },
         {
+          "affected_model_ids": [],
           "case_id": "research_joined_without_return_event:pm_role_work:full_durable_envelope_event_fold",
+          "coverage_receipt_ids": [],
           "description": "A research packet batch had durable joined results, but Router did not fold them into worker_research_report_returned before waiting/reminding.",
           "expected_status": "must_fail_before_repair",
           "failure_mode": "durable_result_joined_but_router_event_absent",
           "family_id": "flowpilot.packet_result_return_reconciliation",
+          "generated_combination_case_ids": [],
+          "interaction_group_ids": [],
           "mechanism_id": "full_durable_envelope_event_fold",
           "member_id": "pm_role_work",
           "metadata": {
             "observed_date": "2026-05-28",
             "seed_id": "research_joined_without_return_event"
           },
+          "observed_combination_case_id": "",
+          "root_cause_dimension_ids": [],
           "source_case_id": "openspec.reconcile-research-batch-results",
           "source_member_id": "research"
         }
       ],
       "findings": [],
+      "inventory_revisions": {},
+      "missing_member_ids": [],
       "ok": true,
-      "summary": "OK: decision=obligation_family_parity_full_confidence findings=0 cells=20"
+      "scoped_member_ids": [],
+      "summary": "OK: decision=obligation_family_parity_full_confidence findings=0 cells=15",
+      "unexpected_member_ids": []
     },
     "required_mechanisms": [
       "full_durable_envelope_event_fold",
@@ -3515,6 +3130,18 @@
       "sealed_body_provenance"
     ],
     "result_type": "flowpilot_packet_result_family_parity",
+    "retired_material_surface_absence": {
+      "claim_boundary": "Parity authority covers research, current-node, and PM role-work only; retired material families remain absence checks, not members.",
+      "ok": true,
+      "retired_evidence_members": [],
+      "retired_family_members": [],
+      "retired_member_names": [
+        "material_scan",
+        "material_sufficiency",
+        "material_understanding"
+      ],
+      "retired_obligation_ids": []
+    },
     "runtime_command": "python -m unittest tests.router_runtime.packet_result_family"
   },
   "packet_result_family_parity_ok": true,
@@ -3537,7 +3164,7 @@
         "pm_package_disposition_semantics"
       ],
       "code_contract_id": "known_friction_contract:worker_self_check_failure",
-      "defect_family_authority_boundary": "role_output_runtime + packet_runtime + material_scan PM disposition writer",
+      "defect_family_authority_boundary": "role_output_runtime + packet_runtime + current_node PM disposition writer",
       "defect_family_gate_required": true,
       "defect_family_high_risk": true,
       "defect_family_id": "defect_family:worker_self_check_failure",
@@ -3546,7 +3173,7 @@
       "evidence_current": true,
       "evidence_role": "primary_known_friction_gate",
       "evidence_status": "passed",
-      "expected_safe_behavior": "PM disposition records rework without reviewer release, status names the failed self-check, and repair continues through fresh packet generation.",
+      "expected_safe_behavior": "PM disposition records rework without reviewer release, status names the failed self-check, and repair remains on the current work-packet path.",
       "forbidden_shortcuts": [
         "treat_contract_self_check_heading_as_pass",
         "release_reviewer_gate_without_formal_pm_package"
@@ -3560,16 +3187,16 @@
         "current_transcript_regression",
         "scoped_confidence_disclosure"
       ],
-      "historical_bad_case": "Worker material-scan result body has a Contract Self-Check heading but misses required machine fields.",
+      "historical_bad_case": "A worker current-node result body has a Contract Self-Check heading but misses required machine fields.",
       "live_ai_semantic_quality_proven": false,
       "model_check": "python simulations/run_flowpilot_control_plane_friction_checks.py",
       "model_obligation": "control_plane_friction.pm_package_disposition_packet_outcomes_missing",
       "priority": "P0",
       "replay_fixture": "historical_live_run.semantic.contract.missing_standard_matrix_or_waiver",
-      "runtime_surface": "role_output_runtime + packet_runtime + material_scan PM disposition writer",
-      "runtime_test": "tests.test_flowpilot_output_contracts.FlowPilotOutputContractTests.test_contract_self_check_metadata_reports_live_worker_missing_fields",
+      "runtime_surface": "role_output_runtime + packet_runtime + current_node PM disposition writer",
+      "runtime_test": "tests.test_flowpilot_output_contracts.FlowPilotOutputContractTests.test_contract_self_check_metadata_reports_current_node_worker_missing_fields",
       "source_class": "worker_output_contract_failure",
-      "trigger_state": "material_scan batch is results_relayed_to_pm and PM must decide whether every worker result satisfies the source output contract."
+      "trigger_state": "A current_node batch is results_relayed_to_pm and PM must decide whether every worker result satisfies the source output contract."
     },
     {
       "child_evidence_ids": [
@@ -3606,9 +3233,9 @@
       "model_check": "python simulations/run_flowpilot_repair_transaction_checks.py",
       "model_obligation": "repair_transactions.pm_decision_flag_atomicity",
       "priority": "P0",
-      "replay_fixture": "known_friction.pm_repair_decision_enables_material_recheck",
+      "replay_fixture": "known_friction.pm_repair_decision_persists_before_current_followup_wait",
       "runtime_surface": "control_blocker PM repair decision handler + persistent router daemon status projection",
-      "runtime_test": "tests.router_runtime.material_modeling.MaterialModelingRuntimeTests.test_pm_repair_decision_side_effect_exposes_flag_before_wait_events",
+      "runtime_test": "tests.router_runtime.control_blockers.ControlBlockersRuntimeTests.test_pm_repair_decision_state_persists_before_followup_wait_is_exposed",
       "source_class": "pm_repair_transaction_interleaving",
       "trigger_state": "control blocker requires PM repair and Router commits a follow-up wait or recheck event."
     },
@@ -3664,38 +3291,38 @@
         "real_router_dry_run_rehearsal_matrix",
         "historical_live_run_replay_matrix"
       ],
-      "code_contract_id": "known_friction_contract:packet_reissue_continuation",
-      "defect_family_authority_boundary": "material packet generation registry + Router next-action projection",
+      "code_contract_id": "known_friction_contract:producerless_repair_continuation",
+      "defect_family_authority_boundary": "control-blocker repair transaction validation + Router next-action projection",
       "defect_family_gate_required": true,
       "defect_family_high_risk": true,
-      "defect_family_id": "defect_family:packet_reissue_continuation",
+      "defect_family_id": "defect_family:producerless_repair_continuation",
       "defect_family_promoted": true,
       "defect_family_recurrence_count": 2,
       "evidence_current": true,
       "evidence_role": "primary_known_friction_gate",
       "evidence_status": "passed",
-      "expected_safe_behavior": "Router exposes fresh producer evidence and only relays or waits on current-generation material work.",
+      "expected_safe_behavior": "Router rejects retired replacement-packet authority and producerless waits; corrected repair converges through a registered current rerun target or safe operation replay.",
       "forbidden_shortcuts": [
-        "reuse_old_worker_result_flags",
+        "accept_retired_replacement_packets",
         "wait_for_role_event_without_current_producer"
       ],
-      "friction_id": "known_friction.packet_reissue_continuation",
+      "friction_id": "known_friction.producerless_repair_continuation",
       "full_confidence_boundary": "Covers current-generation producer proof and stale-result rejection for bounded repair paths; does not prove every packet family.",
       "global_gates": [
         "historical_live_run_replay",
         "current_transcript_regression",
         "scoped_confidence_disclosure"
       ],
-      "historical_bad_case": "A packet_reissue repair leaves stale PM decision wording or waits for an event without a fresh packet producer.",
+      "historical_bad_case": "A repair submits retired replacement_packets or waits for an event without a concrete current producer.",
       "live_ai_semantic_quality_proven": false,
       "model_check": "python simulations/run_flowpilot_repair_transaction_checks.py",
-      "model_obligation": "repair_transactions.material_rework_requires_fresh_producer",
+      "model_obligation": "repair_transactions.current_repair_requires_concrete_producer",
       "priority": "P0",
-      "replay_fixture": "e2e_synthetic_chaos.stale_worker_result_flags_then_packet_reissue",
-      "runtime_surface": "material packet generation registry + Router next-action projection",
-      "runtime_test": "tests.router_runtime.material_modeling.MaterialModelingRuntimeTests.test_pm_material_repair_rejects_role_reissue_without_fresh_packet_producer",
-      "source_class": "material_packet_generation_reissue",
-      "trigger_state": "material repair requires reissuing worker packets after a rejected or rework-requested result."
+      "replay_fixture": "control_blocker.producerless_role_reissue_then_registered_current_repair",
+      "runtime_surface": "control-blocker repair transaction validation + Router next-action projection",
+      "runtime_test": "tests.router_runtime.control_blockers.ControlBlockersRuntimeTests.test_delivered_control_blocker_with_empty_repair_transaction_requires_pm_repair_decision",
+      "source_class": "producerless_repair_transaction",
+      "trigger_state": "A current control blocker repair proposes role_reissue, await_existing_event, or operation_replay after a rejected result."
     },
     {
       "child_evidence_ids": [
@@ -3726,8 +3353,8 @@
       ],
       "historical_bad_case": "Current status or display projection says a stale blocker, old ACK wait, or terminal-looking state while Router facts disagree.",
       "live_ai_semantic_quality_proven": false,
-      "model_check": "python simulations/run_flowpilot_model_test_alignment_checks.py",
-      "model_obligation": "router_loop.historical_live_run_replay_package_suite",
+      "model_check": "python simulations/run_flowpilot_current_status_projection_checks.py",
+      "model_obligation": "current_status_projection.current_router_facts_drive_display",
       "priority": "P1",
       "replay_fixture": "historical.snapshot.stale_pending_terminal_display",
       "runtime_surface": "current status summary + route frontier display projection",

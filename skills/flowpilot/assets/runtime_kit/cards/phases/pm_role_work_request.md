@@ -67,7 +67,7 @@ worker responsibility and the request is bounded implementation or repair, requi
 worker to fix in-scope defects inside the allowed reads, allowed writes,
 acceptance slice, role authority, and verification requirements, rerun required
 checks, and return `blocked`, `needs_pm`, or a PM Suggestion Item for
-out-of-scope defects. If the request is research, material scan, review, or
+out-of-scope defects. If the request is research, evidence work, review, or
 FlowGuard operator modeling, require self-correction of the role's own report/model/review
 output and route target defects through findings, blockers, repair requests, or
 PM Suggestion Items instead of silent target repair.

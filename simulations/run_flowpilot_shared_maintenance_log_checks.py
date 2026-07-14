@@ -26,13 +26,13 @@ HAZARD_EXPECTED_FAILURES = {
     model.CONTROLLER_WRITES_SEMANTIC_SUMMARY: "PM does not own the maintenance work summary",
     model.ROUTER_VALIDATES_LOG_SEMANTICS: "Router validates semantic maintenance content instead of preserving PM report",
     model.MISSING_REQUIRED_LOOKUP_FIELDS: "maintenance row lacks required skill summary workspace run_id or run_root fields",
-    model.PM_REPORT_NOT_PRESERVED: "PM material understanding does not preserve the shared maintenance record",
+    model.PM_REPORT_NOT_PRESERVED: "PM planning report does not cite the shared maintenance record",
     model.BOOKKEEPING_REVIEWER_GATE: "bookkeeping created a reviewer gate",
     model.BOOKKEEPING_FLOWGUARD_GATE: "bookkeeping created a FlowGuard gate",
     model.BOOKKEEPING_ROUTE_NODE: "bookkeeping created a route node",
     model.BOOKKEEPING_ACCEPTANCE_GATE: "bookkeeping became a project acceptance gate",
     model.REPLACES_SKILL_IMPROVEMENT_REPORT: "shared maintenance log replaced the FlowPilot skill-improvement report",
-    model.FINAL_REPORT_REQUIRED_AT_START: "startup bookkeeping requires final report path before material understanding",
+    model.FINAL_REPORT_REQUIRED_AT_START: "startup bookkeeping requires final report path before planning",
 }
 
 
@@ -41,7 +41,7 @@ def _state_id(state: model.State) -> str:
         f"scenario={state.scenario}|status={state.status}|"
         f"log_scope={state.log_scope}|format={state.log_format}|"
         f"pm={state.pm_owns_work_summary}|controller={state.controller_owns_work_summary}|"
-        f"report={state.pm_report_preserved_in_material_understanding}|"
+        f"report={state.pm_report_cites_maintenance_entry}|"
         f"reason={state.terminal_reason}"
     )
 

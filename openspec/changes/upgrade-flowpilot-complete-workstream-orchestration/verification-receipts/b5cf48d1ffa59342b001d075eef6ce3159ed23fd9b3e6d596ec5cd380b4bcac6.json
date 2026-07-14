@@ -1,0 +1,29 @@
+{
+  "schema_version": 2,
+  "report_protocol_version": 3,
+  "execution_key": "sha256:254cd0855595a091b661c0daeda551b7fe13e3dc38c430ea880d714444b97504",
+  "result_hash": "sha256:fbc5361f42b408215c8559cec0d03373eef7c285a4567c775fc09b842df73b48",
+  "receipt_id": "sha256:b5cf48d1ffa59342b001d075eef6ce3159ed23fd9b3e6d596ec5cd380b4bcac6",
+  "result": {
+    "status": "passed",
+    "command": "python",
+    "args": [
+      "scripts/run_flowguard_background.py",
+      "--name",
+      "run_capability_checks",
+      "--verify",
+      "--",
+      "python",
+      "simulations/run_capability_checks.py",
+      "--full",
+      "--force"
+    ],
+    "expected_exit_code": 0,
+    "exit_code": 0,
+    "timeout_seconds": 1800,
+    "stdout": "{\r\n  \"artifacts\": {\r\n    \"combined\": \"C:\\\\Users\\\\liu_y\\\\AppData\\\\Local\\\\Temp\\\\openspec-frozen-8P9JL1\\\\tmp\\\\flowguard_background\\\\run_capability_checks.combined.txt\",\r\n    \"err\": \"C:\\\\Users\\\\liu_y\\\\AppData\\\\Local\\\\Temp\\\\openspec-frozen-8P9JL1\\\\tmp\\\\flowguard_background\\\\run_capability_checks.err.txt\",\r\n    \"exit\": \"C:\\\\Users\\\\liu_y\\\\AppData\\\\Local\\\\Temp\\\\openspec-frozen-8P9JL1\\\\tmp\\\\flowguard_background\\\\run_capability_checks.exit.txt\",\r\n    \"meta\": \"C:\\\\Users\\\\liu_y\\\\AppData\\\\Local\\\\Temp\\\\openspec-frozen-8P9JL1\\\\tmp\\\\flowguard_background\\\\run_capability_checks.meta.json\",\r\n    \"out\": \"C:\\\\Users\\\\liu_y\\\\AppData\\\\Local\\\\Temp\\\\openspec-frozen-8P9JL1\\\\tmp\\\\flowguard_background\\\\run_capability_checks.out.txt\"\r\n  },\r\n  \"command\": [\r\n    \"python\",\r\n    \"simulations/run_capability_checks.py\",\r\n    \"--full\",\r\n    \"--force\"\r\n  ],\r\n  \"failures\": [],\r\n  \"log_root\": \"C:\\\\Users\\\\liu_y\\\\AppData\\\\Local\\\\Temp\\\\openspec-frozen-8P9JL1\\\\tmp\\\\flowguard_background\",\r\n  \"name\": \"run_capability_checks\",\r\n  \"ok\": true,\r\n  \"source_fingerprint\": \"10f38ac754a614ed5508ad30bc16b270a6942087db79b156094f65184c7b4389\",\r\n  \"status\": \"passed\"\r\n}\r\n",
+    "stderr": "",
+    "stdout_preview": "{\r\n  \"artifacts\": {\r\n    \"combined\": \"C:\\\\Users\\\\liu_y\\\\AppData\\\\Local\\\\Temp\\\\openspec-frozen-8P9JL1\\\\tmp\\\\flowguard_background\\\\run_capability_checks.combined.txt\",\r\n    \"err\": \"C:\\\\Users\\\\liu_y\\\\AppData\\\\Local\\\\Temp\\\\openspec-frozen-8P9JL1\\\\tmp\\\\flowguard_background\\\\run_capability_checks.err.txt\",\r\n    \"exit\": \"C:\\\\Users\\\\liu_y\\\\AppData\\\\Local\\\\Temp\\\\openspec-frozen-8P9JL1\\\\tmp\\\\flowguard_background\\\\run_capability_checks.exit.txt\",\r\n    \"meta\": \"C:\\\\Users\\\\liu_y\\\\AppData\\\\Local\\\\Temp\\\\openspec-frozen-8P9JL1\\\\tmp\\\\flowguard_background\\\\run_capability_checks.meta.json\",\r\n    \"out\": \"C:\\\\Users\\\\liu_y\\\\AppData\\\\Local\\\\Temp\\\\openspec-frozen-8P9JL1\\\\tmp\\\\flowguard_background\\\\run_capability_checks.out.txt\"\r\n  },\r\n  \"command\": [\r\n    \"python\",\r\n    \"simulations/run_capability_checks.py\",\r\n    \"--full\",\r\n    \"--force\"\r\n  ],\r\n  \"failures\": [],\r\n  \"log_root\": \"C:\\\\Users\\\\liu_y\\\\AppData\\\\Local\\\\Temp\\\\openspec-frozen-8P9JL1\\\\tmp\\\\flowguard_background\",\r\n  \"name\": \"run_capability_checks\",\r\n  \"ok\": true,\r\n  \"source_fingerprint\": \"10f38ac754a614ed5508ad30bc16b270a6942087db79b156094f65184c7b4389\",\r\n  \"status\": \"passed\"\r\n}\r\n",
+    "stderr_preview": ""
+  }
+}

@@ -76,7 +76,7 @@ def _acquire_router_daemon_lock(
         router._append_router_daemon_event(run_root, "router_daemon_lock_acquired", {"lock_path": router.project_relative(project_root, path)})
         return lock
     except FileExistsError:
-        existing = router.read_json_if_exists(path)
+        existing = router.read_daemon_critical_json_if_exists(path)
         existing_liveness = router._router_daemon_lock_liveness(existing)
         if existing_liveness.get("live") or router._router_daemon_lock_has_live_owner(existing_liveness):
             raise router.RouterError("router daemon lock is already active for this run; attach to the existing daemon instead of starting a second writer")
@@ -95,7 +95,7 @@ def _acquire_router_daemon_lock(
 
 def _refresh_router_daemon_lock(router: ModuleType, project_root: Path, run_root: Path) -> dict[str, Any]:
     path = router._router_daemon_lock_path(run_root)
-    lock = router.read_json_if_exists(path)
+    lock = router.read_daemon_critical_json_if_exists(path)
     if lock.get("schema_version") != router.ROUTER_DAEMON_LOCK_SCHEMA:
         raise router.RouterError("router daemon lock is missing or invalid")
     if lock.get("status") != "active":
@@ -116,7 +116,7 @@ def _release_router_daemon_lock(
     status: str = "released",
 ) -> dict[str, Any]:
     path = router._router_daemon_lock_path(run_root)
-    lock = router.read_json_if_exists(path)
+    lock = router.read_daemon_critical_json_if_exists(path)
     if lock.get("schema_version") != router.ROUTER_DAEMON_LOCK_SCHEMA:
         return {"status": "missing", "reason": reason}
     lock["status"] = status

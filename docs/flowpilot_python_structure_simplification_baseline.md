@@ -112,10 +112,11 @@ being split:
   that the relay itself must satisfy. The dispatch-recipient gate now models
   formal packet relay output events, so same-obligation relays are not blocked
   by their own expected output wait.
-- Durable material-scan reconciliation could re-raise a known bad result
-  envelope before the control-blocker reissue path was shown. Automatic
-  reconciliation now leaves invalid durable results pending, while explicit
-  event submission still hard-rejects them.
+- The former durable material-scan reconciliation could re-raise a known bad
+  result envelope before the control-blocker repair path was shown. That
+  special material path is now retired; current automatic reconciliation keeps
+  invalid ordinary results pending, while explicit event submission still
+  hard-rejects them.
 - A completed current-node packet could remain active in `packet_ledger.json`
   after the frontier advanced to the next node, causing stale PM-held work to
   block the next node's PM cards. Node completion now closes the current-node

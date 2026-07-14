@@ -1,77 +1,137 @@
 {
+  "claim_boundary": "This finite model proves only the declared missing/requested/existing map paths and known-bad mutations; direct runtime tests still own concrete file and terminal behavior.",
   "flowguard_explorer": {
     "dead_branch_count": 0,
     "exception_branch_count": 0,
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=3 initial_states=1 traces=78",
+    "summary": "sequences=3 initial_states=1 traces=102",
     "violation_count": 0
   },
   "hazard_checks": {
     "failures": [],
     "hazards": {
-      "controller_summary_used_as_evidence": {
+      "formal_package_lacks_direct_evidence": {
         "detected": true,
-        "expected_failure": "material artifact map or Controller summary was treated as acceptance evidence",
+        "expected_failure": "formal package relied on optional map instead of direct current evidence",
         "failures": [
-          "material artifact map or Controller summary was treated as acceptance evidence"
+          "formal package relied on optional map instead of direct current evidence"
         ]
       },
-      "final_ledger_accepts_stale_material": {
+      "map_absence_blocks_formal_package": {
         "detected": true,
-        "expected_failure": "final ledger accepted stale current material as completion evidence",
+        "expected_failure": "optional map absence blocked formal package release",
         "failures": [
-          "final ledger accepted stale current material as completion evidence"
+          "optional map absence blocked formal package release"
         ]
       },
-      "final_ledger_accepts_unresolved_material": {
+      "map_absence_blocks_planning": {
         "detected": true,
-        "expected_failure": "final ledger accepted unresolved current material as completion evidence",
+        "expected_failure": "optional map absence blocked planning",
         "failures": [
-          "final ledger accepted unresolved current material as completion evidence"
+          "optional map absence blocked planning"
+        ]
+      },
+      "map_absence_blocks_route_memory": {
+        "detected": true,
+        "expected_failure": "optional map absence blocked route memory",
+        "failures": [
+          "optional map absence blocked route memory"
+        ]
+      },
+      "map_absence_blocks_terminal": {
+        "detected": true,
+        "expected_failure": "optional map absence blocked terminal closure",
+        "failures": [
+          "optional map absence blocked terminal closure"
+        ]
+      },
+      "map_created_without_request": {
+        "detected": true,
+        "expected_failure": "missing optional map was created without an explicit request",
+        "failures": [
+          "missing optional map was created without an explicit request"
         ]
       },
       "map_leaks_sealed_body": {
         "detected": true,
         "expected_failure": "material artifact map leaked sealed packet or result body content",
         "failures": [
-          "material artifact map leaked sealed packet or result body content"
+          "material artifact map leaked sealed packet or result body content",
+          "unsafe, blocked, stale, or unresolved optional map was linked"
         ]
       },
-      "pm_package_lacks_review_refs": {
+      "map_links_stale_index": {
         "detected": true,
-        "expected_failure": "PM formal package lacks material-map review refs",
+        "expected_failure": "unsafe, blocked, stale, or unresolved optional map was linked",
         "failures": [
-          "PM formal package lacks material-map review refs"
+          "unsafe, blocked, stale, or unresolved optional map was linked"
         ]
       },
-      "reviewer_passes_without_checked_sources": {
+      "map_links_unresolved_index": {
         "detected": true,
-        "expected_failure": "reviewer material sufficiency passed without checked source refs",
+        "expected_failure": "unsafe, blocked, stale, or unresolved optional map was linked",
         "failures": [
-          "reviewer material sufficiency passed without checked source refs",
-          "reviewer passed from material-map or Controller summary alone"
+          "unsafe, blocked, stale, or unresolved optional map was linked"
         ]
       },
-      "worker_reads_sealed_without_runtime": {
+      "map_links_unsafe_index": {
         "detected": true,
-        "expected_failure": "worker read a sealed body without packet-runtime authority",
+        "expected_failure": "unsafe, blocked, stale, or unresolved optional map was linked",
         "failures": [
-          "worker read a sealed body without packet-runtime authority",
-          "sealed material-map reference lacks runtime-open receipt"
+          "unsafe, blocked, stale, or unresolved optional map was linked"
         ]
       },
-      "worker_reads_unlisted_entry": {
+      "map_used_as_acceptance": {
         "detected": true,
-        "expected_failure": "worker read material-map entries outside the current packet authorization",
+        "expected_failure": "optional material map was treated as acceptance evidence",
         "failures": [
-          "worker read material-map entries outside the current packet authorization"
+          "optional material map was treated as acceptance evidence"
+        ]
+      },
+      "retired_material_scan_prefix": {
+        "detected": true,
+        "expected_failure": "retired material-scan index or review prefix re-entered the current map",
+        "failures": [
+          "retired material-scan index or review prefix re-entered the current map"
+        ]
+      },
+      "sealed_ref_bypasses_runtime": {
+        "detected": true,
+        "expected_failure": "sealed material reference bypassed runtime open authority",
+        "failures": [
+          "sealed material reference bypassed runtime open authority"
         ]
       }
     },
     "ok": true
   },
+  "implementation_alignment": {
+    "checks": {
+      "absent_and_present_tests_exist": true,
+      "explicit_creation_required": true,
+      "formal_package_uses_optional_ref": true,
+      "missing_map_not_created_by_default": true,
+      "retired_disposition_branch_absent": true,
+      "retired_disposition_event_absent": true,
+      "retired_index_prefix_absent": true,
+      "retired_route_markers_absent": true,
+      "route_memory_uses_optional_context": true,
+      "terminal_links_map_conditionally": true
+    },
+    "missing": [],
+    "ok": true,
+    "paths": [
+      "skills/flowpilot/assets/flowpilot_material_artifact_map.py",
+      "skills/flowpilot/assets/flowpilot_router_work_packets_pm_role_writes_decisions_formal_gate.py",
+      "skills/flowpilot/assets/flowpilot_router_work_packets_pm_role_writes_decisions_package_disposition.py",
+      "skills/flowpilot/assets/flowpilot_router_route_frontier_context_memory.py",
+      "skills/flowpilot/assets/flowpilot_router_terminal_ledger_writer.py",
+      "tests/test_flowpilot_material_access_mesh.py"
+    ]
+  },
+  "model_id": "flowpilot_optional_material_artifact_map",
   "ok": true,
   "progress": {
     "cannot_reach_terminal_count": 0,
@@ -81,17 +141,16 @@
   },
   "safe_graph": {
     "accepted_scenarios": [
-      "valid_pm_package_review_refs",
-      "valid_refresh_metadata_only",
-      "valid_route_memory_and_final_ledger",
-      "valid_runtime_open_for_sealed_ref",
-      "valid_workeruthorized_read"
+      "valid_map_absent_flow",
+      "valid_map_existing_flow",
+      "valid_map_requested_flow",
+      "valid_ordinary_evidence_flow"
     ],
-    "edge_count": 26,
+    "edge_count": 34,
     "invariant_failures": [],
     "missing_labels": [],
     "ok": true,
-    "rejected_state_count": 8,
-    "state_count": 27
+    "rejected_state_count": 13,
+    "state_count": 35
   }
 }

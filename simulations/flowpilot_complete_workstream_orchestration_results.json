@@ -1,0 +1,180 @@
+{
+  "claim_boundary": "This focused finite-state model proves only the declared role lifecycle and known-bad mutations; it does not prove arbitrary future AI semantics.",
+  "flowguard_explorer": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "reachability_failures": [],
+    "summary": "sequences=24 initial_states=5 traces=1500",
+    "violation_count": 0
+  },
+  "implementation_alignment": {
+    "checks": {
+      "accountable_leaf_wording": true,
+      "controller_excluded": true,
+      "flowguard_no_self_approval": true,
+      "pm_long_project_posture": true,
+      "reviewer_plan_artifact_audit": true,
+      "semantic_self_check_shape": true,
+      "shared_handoff_lifecycle": true,
+      "worker_numbered_plan": true
+    },
+    "missing": [],
+    "ok": true,
+    "paths": [
+      "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\skills\\flowpilot\\assets\\flowpilot_core_runtime\\role_handoff.py",
+      "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\skills\\flowpilot\\assets\\flowpilot_core_runtime\\packet_result_contracts.py",
+      "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\skills\\flowpilot\\assets\\flowpilot_core_runtime\\runtime.py",
+      "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\skills\\flowpilot\\assets\\runtime_kit\\cards\\roles\\project_manager.md",
+      "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\skills\\flowpilot\\assets\\runtime_kit\\cards\\roles\\worker.md",
+      "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\skills\\flowpilot\\assets\\runtime_kit\\cards\\roles\\human_like_reviewer.md",
+      "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\skills\\flowpilot\\assets\\runtime_kit\\cards\\roles\\flowguard_operator.md"
+    ]
+  },
+  "known_bad_hazards": {
+    "known_bad_count": 16,
+    "ok": true,
+    "rows": {
+      "completion_contradiction": {
+        "detected": true,
+        "expected": "completion claim contradicts incomplete plan rows",
+        "failures": [
+          "completion claim contradicts incomplete plan rows"
+        ]
+      },
+      "controller_substantive_plan": {
+        "detected": true,
+        "expected": "non-substantive Controller entered",
+        "failures": [
+          "non-substantive Controller entered the substantive workstream lifecycle",
+          "Controller invented a substantive project or role plan"
+        ]
+      },
+      "delegation_not_integrated": {
+        "detected": true,
+        "expected": "delegated outputs were not integrated",
+        "failures": [
+          "delegated outputs were not integrated into the role's result"
+        ]
+      },
+      "evidence_mismatch": {
+        "detected": true,
+        "expected": "reported plan evidence does not match actual artifacts",
+        "failures": [
+          "reported plan evidence does not match actual artifacts"
+        ]
+      },
+      "formal_gate_replaced": {
+        "detected": true,
+        "expected": "role-local FlowGuard replaced a required independent gate",
+        "failures": [
+          "role-local FlowGuard replaced a required independent gate"
+        ]
+      },
+      "incomplete_required_step": {
+        "detected": true,
+        "expected": "Reviewer accepted an incomplete required plan step",
+        "failures": [
+          "Reviewer accepted an incomplete required plan step"
+        ]
+      },
+      "missing_plan": {
+        "detected": true,
+        "expected": "role executed before writing a numbered plan",
+        "failures": [
+          "role executed before writing a numbered plan",
+          "workstream completed before the full role lifecycle closed"
+        ]
+      },
+      "pm_ignored_sub9": {
+        "detected": true,
+        "expected": "PM silently ignored a Reviewer score below 9",
+        "failures": [
+          "PM silently ignored a Reviewer score below 9"
+        ]
+      },
+      "repair_missing": {
+        "detected": true,
+        "expected": "role left a known in-scope defect unrepaired",
+        "failures": [
+          "role left a known in-scope defect unrepaired"
+        ]
+      },
+      "role_local_flowguard_self_approval": {
+        "detected": true,
+        "expected": "role-local FlowGuard self-approved",
+        "failures": [
+          "role-local FlowGuard self-approved the role's own work"
+        ]
+      },
+      "stale_evidence": {
+        "detected": true,
+        "expected": "role or Reviewer used stale evidence for completion",
+        "failures": [
+          "role or Reviewer used stale evidence for completion"
+        ]
+      },
+      "unresolved_hidden": {
+        "detected": true,
+        "expected": "substantive report hid unresolved work",
+        "failures": [
+          "substantive report hid unresolved work"
+        ]
+      },
+      "vague_plan": {
+        "detected": true,
+        "expected": "role executed from a missing or vague plan",
+        "failures": [
+          "role executed from a missing or vague plan",
+          "Reviewer accepted a vague plan as complete"
+        ]
+      },
+      "verification_missing": {
+        "detected": true,
+        "expected": "role submitted without current verification",
+        "failures": [
+          "role submitted without current verification",
+          "workstream completed before the full role lifecycle closed"
+        ]
+      },
+      "worker_product_scope_leak": {
+        "detected": true,
+        "expected": "Worker changed PM-owned product scope",
+        "failures": [
+          "Worker changed PM-owned product scope"
+        ]
+      },
+      "worker_route_authority_leak": {
+        "detected": true,
+        "expected": "Worker changed PM-owned route or acceptance boundaries",
+        "failures": [
+          "Worker changed PM-owned route or acceptance boundaries"
+        ]
+      }
+    }
+  },
+  "model_id": "flowpilot_complete_workstream_orchestration",
+  "ok": true,
+  "safe_graph_and_progress": {
+    "all_initial_roles_can_reach_success": true,
+    "edge_count": 55,
+    "fairness": {
+      "role_count": 5,
+      "success_role_count": 5
+    },
+    "invariant_failures": [],
+    "missing_labels": [],
+    "missing_role_success": [],
+    "ok": true,
+    "state_count": 60,
+    "stuck_states": []
+  },
+  "target_success_failures": {
+    "flowguard_operator": [],
+    "human_like_reviewer": [],
+    "pm": [],
+    "research_worker": [],
+    "worker": []
+  }
+}

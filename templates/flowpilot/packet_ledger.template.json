@@ -28,7 +28,7 @@
     "schema_version": "flowpilot.parallel_packet_batch_member_status.v1",
     "controller_visibility": "metadata_only",
     "active_batch_id": "<batch-id-or-null>",
-    "active_batch_kind": "<material_scan|research|current_node|pm_role_work|null>",
+    "active_batch_kind": "<research|current_node|pm_role_work|null>",
     "join_policy": "<all_results_before_pm_absorption|all_results_before_review>",
     "dependency_class": "<blocking|advisory|prep-only>",
     "packet_count": 0,

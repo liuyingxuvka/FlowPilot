@@ -17,6 +17,7 @@ if str(ASSETS_ROOT) not in sys.path:
     sys.path.insert(0, str(ASSETS_ROOT))
 
 from flowpilot_core_runtime import (  # noqa: E402
+    host,
     packet_result_contracts,
     packets,
     pointer_store,
@@ -355,7 +356,8 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
             {
                 "blocker_id": "terminal-blocker-001",
                 "blocker_class": "terminal_closure",
-                "recommended_resolution": "Repair delivered-product signposting and restart terminal replay.",
+                "summary": "Delivered-product signposting does not match the current accepted route.",
+                "required_repair": "Repair delivered-product signposting and restart terminal replay.",
             }
         ]
         if omit_blockers:
@@ -688,7 +690,7 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         self.assertEqual(criteria[0], "specific criterion")
         self.assertIn(runtime.REPLAYABLE_ARTIFACT_ACCEPTANCE_CRITERION, criteria)
 
-    def test_packet_handoff_contract_is_visible_in_envelope_body_and_role_handoff(self) -> None:
+    def test_packet_handoff_contract_is_visible_only_in_envelope_and_role_handoff(self) -> None:
         ledger = runtime.new_ledger("Goal", "Contract")
         authorize_background_collaboration(ledger)
         runtime.create_route(ledger, "Route", ["Do work"])
@@ -703,7 +705,7 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         envelope_contract = packet["envelope"]["current_handoff_contract"]
         body = json.loads(packet["body"])
 
-        self.assertEqual(body["current_handoff_contract"], envelope_contract)
+        self.assertNotIn("current_handoff_contract", body)
         self.assertEqual(envelope_contract["contract_family_id"], "task.node")
         self.assertEqual(
             envelope_contract["required_report_contract"]["required_result_body_fields"],
@@ -833,7 +835,9 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         }
         review_body = json.loads(review_record["body"])
         handoff_required_reads = set(
-            review_body["current_handoff_contract"]["input_material_manifest"]["required_authorized_reads_before_submit"]
+            review_record["envelope"]["current_handoff_contract"]["input_material_manifest"][
+                "required_authorized_reads_before_submit"
+            ]
         )
 
         self.assertIn(subject_result_id, read_ids)
@@ -909,8 +913,12 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
             and event["payload"]["blocked_packet_id"] == review_packet
         )
         reissue_body = json.loads(ledger["packets"][reissue_packet_id]["body"])
-        self.assertIn("pm_suggestion_items", reissue_body["non_empty_array_fields"])
-        self.assertTrue(reissue_body["minimal_valid_shape"]["pm_suggestion_items"])
+        reissue_contract = ledger["packets"][reissue_packet_id]["envelope"]["current_handoff_contract"][
+            "required_report_contract"
+        ]
+        self.assertIn("pm_suggestion_items", reissue_contract["non_empty_array_fields"])
+        self.assertTrue(reissue_contract["minimal_valid_shape"]["pm_suggestion_items"])
+        self.assertNotIn("minimal_valid_shape", reissue_body)
 
     def test_create_new_reviewer_rejects_reusing_forbidden_prior_agent(self) -> None:
         ledger, packet_id, worker = runtime_runner._base_ledger()
@@ -1588,7 +1596,8 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
             {
                 "blocker_id": "terminal-blocker-hygiene",
                 "blocker_class": "terminal_closure",
-                "recommended_resolution": "Repair final artifact hygiene before terminal replay can close.",
+                "summary": "Final artifact hygiene remains incomplete.",
+                "required_repair": "Repair final artifact hygiene before terminal replay can close.",
             }
         )
 
@@ -1860,9 +1869,11 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         blocker_id = next(iter(ledger["active_blockers"]))
         blocker = ledger["active_blockers"][blocker_id]
         pm_packet_id = blocker["pm_repair_packet_id"]
-        pm_body = json.loads(ledger["packets"][pm_packet_id]["body"])
-        minimal_shape = pm_body["minimal_valid_shape"]
-        allowed_options = pm_body["current_handoff_contract"]["required_report_contract"]["allowed_value_options"]
+        pm_packet = ledger["packets"][pm_packet_id]
+        pm_body = json.loads(pm_packet["body"])
+        report_contract = pm_packet["envelope"]["current_handoff_contract"]["required_report_contract"]
+        minimal_shape = report_contract["minimal_valid_shape"]
+        allowed_options = report_contract["allowed_value_options"]
         supplemental_contract = minimal_shape["supplemental_repair_contract"]
         route_nodes = minimal_shape["route_plan"]["nodes"]
         hygiene_options = allowed_options[
@@ -1877,6 +1888,8 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         self.assertNotIn("current_goal_required", hygiene_options)
         self.assertIn("terminal-supplemental-repair-r1", route_nodes[1]["supplemental_repair_contract_ids"])
         self.assertIn("terminal-gap-r1-item-1", route_nodes[1]["supplemental_repair_item_ids"])
+        self.assertNotIn("minimal_valid_shape", pm_body)
+        self.assertNotIn("conditional_required_fields", pm_body)
 
     def test_supplemental_repair_item_projection_blocks_final_ledgers(self) -> None:
         ledger, node_id, _validation_id = self._ledger_with_final_quality_node()
@@ -2852,16 +2865,23 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
 
         body_with_items = json.loads(ledger["packets"][packet_with_items]["body"])
         body_without_items = json.loads(ledger["packets"][packet_without_items]["body"])
+        contract_with_items = ledger["packets"][packet_with_items]["envelope"]["current_handoff_contract"][
+            "required_report_contract"
+        ]
+        contract_without_items = ledger["packets"][packet_without_items]["envelope"]["current_handoff_contract"][
+            "required_report_contract"
+        ]
         self.assertEqual(body_with_items["node_acceptance_item_ids"], ["acc-node-001", "acc-node-002"])
         self.assertEqual(
             [
                 row["acceptance_item_id"]
-                for row in body_with_items["minimal_valid_shape"]["acceptance_item_disposition"]
+                for row in contract_with_items["minimal_valid_shape"]["acceptance_item_disposition"]
             ],
             ["acc-node-001", "acc-node-002"],
         )
         self.assertEqual(body_without_items["node_acceptance_item_ids"], [])
-        self.assertEqual(body_without_items["minimal_valid_shape"]["acceptance_item_disposition"], [])
+        self.assertEqual(contract_without_items["minimal_valid_shape"]["acceptance_item_disposition"], [])
+        self.assertNotIn("minimal_valid_shape", body_with_items)
 
     def test_pm_disposition_mechanical_reissue_preserves_current_node_acceptance_items(self) -> None:
         ledger = runtime.new_ledger("Goal", "Acceptance")
@@ -2911,15 +2931,17 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         ]
         self.assertEqual(len(reissues), 1)
         reissue_body = json.loads(reissues[0]["body"])
+        reissue_contract = reissues[0]["envelope"]["current_handoff_contract"]["required_report_contract"]
         self.assertEqual(reissue_body["schema_version"], "black_box_flowpilot.pm_disposition_reissue_packet.v1")
         self.assertEqual(reissue_body["node_acceptance_item_ids"], ["acc-node-001"])
         self.assertEqual(
             [
                 row["acceptance_item_id"]
-                for row in reissue_body["minimal_valid_shape"]["acceptance_item_disposition"]
+                for row in reissue_contract["minimal_valid_shape"]["acceptance_item_disposition"]
             ],
             ["acc-node-001"],
         )
+        self.assertNotIn("minimal_valid_shape", reissue_body)
 
     def test_node_acceptance_plan_mechanical_reissue_preserves_acceptance_items(self) -> None:
         ledger = runtime.new_ledger("Goal", "Acceptance")
@@ -3232,10 +3254,9 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
             repair_blocker_id="blocker-formal",
         )
         packet = ledger["packets"][packet_id]
-        payload = json.loads(packet["body"])
-        payload["current_handoff_contract"]["input_material_manifest"]["blocker_id"] = "blocker-body"
-        packet["body"] = json.dumps(payload, indent=2, sort_keys=True)
-        packet["envelope"]["body_hash"] = runtime.hash_text(packet["body"])
+        packet["envelope"]["current_handoff_contract"]["input_material_manifest"][
+            "blocker_id"
+        ] = "blocker-body"
         lease_id = runtime.lease_agent(ledger, "worker", agent_id="worker-formal", packet_id=packet_id)
         runtime.assign_packet(ledger, packet_id, lease_id)
         runtime.ack_lease(ledger, lease_id, packet_id)
@@ -3300,10 +3321,7 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
             repair_packet["envelope"]["current_handoff_contract"]["input_material_manifest"]["blocker_id"],
             blocker_id,
         )
-        self.assertEqual(
-            body["current_handoff_contract"]["input_material_manifest"]["blocker_id"],
-            blocker_id,
-        )
+        self.assertNotIn("current_handoff_contract", body)
 
     def test_dirty_accepted_result_pointer_blocks_assignment_repair_and_terminal_hygiene(self) -> None:
         ledger = runtime.new_ledger("Goal", "Contract")
@@ -3477,10 +3495,7 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
             packet["envelope"]["current_handoff_contract"]["input_material_manifest"]["blocker_id"],
             blocker_id,
         )
-        self.assertEqual(
-            body["current_handoff_contract"]["input_material_manifest"]["blocker_id"],
-            blocker_id,
-        )
+        self.assertNotIn("current_handoff_contract", body)
 
     def test_final_closure_blocks_open_break_glass_incident_and_pending_patch(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -3866,10 +3881,7 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         self.assertEqual(reissue_reads, source_reads)
         self.assertEqual(reissue_body["authorized_result_reads"], source_reads)
         self.assertEqual(manifest["required_authorized_reads_before_submit"], source_required)
-        self.assertEqual(
-            reissue_body["current_handoff_contract"]["input_material_manifest"]["required_authorized_reads_before_submit"],
-            source_required,
-        )
+        self.assertNotIn("current_handoff_contract", reissue_body)
         self.assertEqual(reissue_required, source_required)
         self.assertGreater(manifest["required_authorized_read_count"], 0)
 
@@ -5175,7 +5187,9 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         ]
         self.assertEqual(len(reissues), 1)
         reissue_body = json.loads(reissues[0]["body"])
-        self.assertIn("pm_visible_summary", reissue_body["required_result_body_fields"])
+        reissue_contract = reissues[0]["envelope"]["current_handoff_contract"]["required_report_contract"]
+        self.assertIn("pm_visible_summary", reissue_contract["required_result_body_fields"])
+        self.assertNotIn("required_result_body_fields", reissue_body)
         self.assertFalse(ledger["active_blockers"])
 
     def test_flowguard_packet_rejects_generic_decision_summary_result(self) -> None:
@@ -5422,12 +5436,6 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
             runtime._packet_authorized_result_reads(packet),
         )
         envelope["current_handoff_contract"] = handoff_contract
-        packet["body"] = runtime._packet_body_with_current_handoff_contract(
-            str(packet.get("body", "")),
-            handoff_contract,
-            replace_existing=True,
-        )
-        envelope["body_hash"] = runtime.hash_text(packet["body"])
         flowguard_lease = runtime.lease_agent(
             ledger,
             "flowguard_operator",
@@ -5853,6 +5861,20 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         self.assertIn("formal_flowguard_evidence", obligation_kinds)
         self.assertIn("fresh_current_evidence", obligation_kinds)
         self.assertEqual(pm_body["authorized_result_reads"][0]["result_id"], blocking_result_id)
+        report_contract = ledger["packets"][pm_packet]["envelope"]["current_handoff_contract"][
+            "required_report_contract"
+        ]
+        self.assertEqual(
+            {
+                row["obligation_id"]
+                for row in report_contract["minimal_valid_shape"]["repair_obligation_disposition"]
+            },
+            {row["obligation_id"] for row in pm_body["repair_evidence_obligations"]},
+        )
+        self.assertNotIn("required_result_body_fields", pm_body)
+        self.assertNotIn("forbidden_fields", pm_body)
+        self.assertNotIn("conditional_required_fields", pm_body)
+        self.assertNotIn("minimal_valid_shape", pm_body)
 
         pm_lease = runtime.lease_agent(ledger, "pm", agent_id="pm-obligations", packet_id=pm_packet)
         runtime.assign_packet(ledger, pm_packet, pm_lease)
@@ -6325,7 +6347,7 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         self.assertFalse(ledger["pm_repair_decisions"])
 
     def test_generated_role_handoff_and_packet_open_are_role_symmetric(self) -> None:
-        for role in sorted(runtime.RESPONSIBILITIES):
+        for role in sorted(host.CURRENT_RESPONSIBILITIES):
             with self.subTest(role=role):
                 ledger = runtime.new_ledger("Goal", "Contract")
                 authorize_background_collaboration(ledger)
@@ -6741,10 +6763,15 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         self.assertEqual(result["mechanical_contract_failure"]["failed_field_path"], "route_plan.nodes[].title")
         self.assertEqual(fresh_body["failed_branch"], "decision=redesign_route")
         self.assertEqual(fresh_body["failed_field_path"], "route_plan.nodes[].title")
-        self.assertEqual(fresh_body["minimal_valid_shape"]["target_blocker_id"], blocker_id)
-        self.assertEqual(fresh_body["branch_minimal_valid_shape"]["target_blocker_id"], blocker_id)
-        self.assertEqual(fresh_body["branch_minimal_valid_shape"]["decision"], "redesign_route")
-        self.assertIn("title", fresh_body["branch_minimal_valid_shape"]["route_plan"]["nodes"][0])
+        fresh_contract = ledger["packets"][fresh_pm_packet]["envelope"]["current_handoff_contract"][
+            "required_report_contract"
+        ]
+        redesign_shape = fresh_contract["branch_valid_shapes"]["decision=redesign_route"]
+        self.assertEqual(fresh_contract["minimal_valid_shape"]["target_blocker_id"], blocker_id)
+        self.assertEqual(redesign_shape["target_blocker_id"], blocker_id)
+        self.assertEqual(redesign_shape["decision"], "redesign_route")
+        self.assertIn("title", redesign_shape["route_plan"]["nodes"][0])
+        self.assertNotIn("minimal_valid_shape", fresh_body)
 
     def test_june3_same_node_empty_fresh_packet_regression_is_rejected(self) -> None:
         ledger, packet_id, worker = runtime_runner._base_ledger()
@@ -6988,10 +7015,7 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
             blocker_id,
         )
         self.assertEqual(fresh_flowguard_body["recheck_for_blocker_id"], blocker_id)
-        self.assertEqual(
-            fresh_flowguard_body["current_handoff_contract"]["input_material_manifest"]["blocker_id"],
-            blocker_id,
-        )
+        self.assertNotIn("current_handoff_contract", fresh_flowguard_body)
         self.assertEqual(fresh_flowguard_body["generator_inputs"]["blocker_id"], blocker_id)
         self.assertEqual(fresh_flowguard_body["subject_context"]["blocker_id"], blocker_id)
 
@@ -7038,10 +7062,7 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
             blocker_id,
         )
         self.assertEqual(fresh_review_body["recheck_for_blocker_id"], blocker_id)
-        self.assertEqual(
-            fresh_review_body["current_handoff_contract"]["input_material_manifest"]["blocker_id"],
-            blocker_id,
-        )
+        self.assertNotIn("current_handoff_contract", fresh_review_body)
         self.assertEqual(fresh_review_body["subject_context"]["blocker_id"], blocker_id)
         self.assertEqual(
             fresh_review_body["flowguard_evidence_manifest"]["entries"][0]["blocker_id"],

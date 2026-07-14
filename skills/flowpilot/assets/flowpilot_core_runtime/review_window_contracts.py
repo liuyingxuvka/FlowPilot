@@ -109,11 +109,14 @@ REVIEW_FLOW_STAGE_CHALLENGE_BINDINGS = {
     },
     "preplanning_discovery_review": {
         "reviewer_card_id": "reviewer.discovery_review",
-        "stage_focus": "preplanning material discovery",
+        "stage_focus": "preplanning local capability discovery",
         "challenge_rule": (
-            "Challenge source sufficiency, source quality, stale or inferred material, and whether "
-            "PM can proceed without more research. Name the weakest material boundary, a missing-source "
-            "or contradiction hypothesis, and a concrete PM action or no-action rationale."
+            "Challenge whether Runtime projected current local skill paths and availability, PM selected "
+            "relevant candidates rather than treating raw inventory as authority, and only selected skills "
+            "are scheduled for deep reading and reviewer-checkable obligations. Name the weakest inventory "
+            "or selection boundary, test a stale-path, missing-skill, irrelevant-selection, or blanket-deep-read "
+            "hypothesis, and give PM a concrete candidate-selection repair or no-action rationale. Extra material "
+            "work belongs to ordinary role-work packets, not this gate."
         ),
     },
     "preplanning_skill_standard_review": {
@@ -140,8 +143,10 @@ REVIEW_FLOW_STAGE_CHALLENGE_BINDINGS = {
         "reviewer_card_id": "reviewer.node_acceptance_plan_review",
         "stage_focus": "node acceptance plan",
         "challenge_rule": (
-            "Challenge whether the node plan is worker-ready without worker replanning, preserves assigned "
-            "acceptance items, names proof-of-depth for hard parts, and rejects existence-only evidence. "
+            "Challenge whether the node is one independently accountable complete workstream: it must allow "
+            "a serious Worker-local numbered execution plan while preserving PM-owned product scope, route "
+            "nodes, cross-node order, dependencies, and acceptance boundaries. Check assigned acceptance "
+            "items, proof-of-depth for hard parts, and rejection of existence-only evidence. "
             "Name the weakest dispatch evidence, test a worker-readiness failure hypothesis, and give PM "
             "a concrete plan repair or dispatch-ready rationale."
         ),
@@ -152,7 +157,10 @@ REVIEW_FLOW_STAGE_CHALLENGE_BINDINGS = {
         "challenge_rule": (
             "Challenge whether the PM-absorbed worker result closes the actual packet acceptance slice "
             "with current evidence, proves the hard part, preserves final-user intent, and avoids stale "
-            "or existence-only proof. Name the weakest result evidence, test a stale-result or thin-success "
+            "or existence-only proof. Audit contract_self_check.workstream_plan_and_completion against the "
+            "actual artifact: every numbered step, completion status, evidence ref, deviation, unresolved item, "
+            "delegation integration, verification, and repair claim must agree. Name the weakest result evidence, "
+            "test a stale-result, incomplete-plan, unintegrated-delegation, or thin-success "
             "failure hypothesis, and give PM a concrete repair/reissue suggestion or pass rationale."
         ),
     },
@@ -203,7 +211,7 @@ REVIEW_WINDOW_COMPLETENESS_ROWS = (
         "review_flow_id": "preplanning_discovery_review",
         "review_result_family_id": "review.any_current_subject",
         "subject_family_id": "task.discovery",
-        "subject_lifecycle_stage": "preplanning_material_discovery",
+        "subject_lifecycle_stage": "preplanning_capability_discovery",
         "review_kind": "current_subject_quality_review",
         "required_read_purposes": ("subject_result_for_review", "matching_flowguard_result_for_review"),
         "required_material_classes": ("subject_result_body", "matching_flowguard_report"),

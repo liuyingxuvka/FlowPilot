@@ -179,6 +179,43 @@ class FlowPilotRoleOutputRuntimeTests(unittest.TestCase):
         self.assertEqual(authority["authority_source"], "fixed_contract_event")
         self.assertEqual(authority["event_name"], "pm_resume_recovery_decision_returned")
 
+    def test_fixed_router_event_output_requires_router_directed_submission(self) -> None:
+        root = self.make_project()
+        run_root = root / ".flowpilot" / "runs" / "run-test"
+        output_path = run_root / "continuation" / "local_fixed_event_body.json"
+        files_before = {
+            path.relative_to(run_root).as_posix(): path.read_bytes()
+            for path in run_root.rglob("*")
+            if path.is_file()
+        }
+
+        with self.assertRaisesRegex(
+            role_output_runtime.RoleOutputRuntimeError,
+            "fixed Router event .*submit-output-to-router",
+        ):
+            role_output_runtime.submit_output(
+                root,
+                output_type="pm_resume_decision",
+                role="project_manager",
+                agent_id="agent-pm-fixed-local-rejected",
+                body={
+                    "decision": "continue_current_packet_loop",
+                    "explicit_recovery_evidence_recorded": True,
+                },
+                output_path=output_path,
+            )
+
+        files_after = {
+            path.relative_to(run_root).as_posix(): path.read_bytes()
+            for path in run_root.rglob("*")
+            if path.is_file()
+        }
+        self.assertEqual(files_after, files_before)
+        self.assertFalse(output_path.exists())
+        self.assertFalse((run_root / "role_output_ledger.json").exists())
+        self.assertFalse((run_root / "role_output_sessions").exists())
+        self.assertFalse((run_root / "return_event_ledger.json").exists())
+
     def test_router_supplied_direct_submission_requires_current_wait_authority(self) -> None:
         root = self.make_project()
         with self.assertRaisesRegex(role_output_runtime.RoleOutputRuntimeError, "Router-supplied event"):

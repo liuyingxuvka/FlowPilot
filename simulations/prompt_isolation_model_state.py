@@ -64,34 +64,6 @@ class State:
     pm_controller_reset_decision_returned: bool = False
     controller_role_confirmed: bool = False
 
-    pm_material_scan_card_delivered: bool = False
-    pm_material_scan_packets_issued: bool = False
-    reviewer_dispatch_card_delivered: bool = False
-    reviewer_dispatch_allowed: bool = False
-    worker_packets_delivered: bool = False
-    worker_scan_results_returned: bool = False
-    material_scan_result_ledger_checked: bool = False
-    reviewer_material_sufficiency_card_delivered: bool = False
-    material_review: str = "unknown"  # unknown | sufficient | research_required
-    pm_material_absorb_or_research_card_delivered: bool = False
-    material_accepted_by_pm: bool = False
-    pm_research_package_card_delivered: bool = False
-    pm_research_package_written: bool = False
-    research_capability_decision_recorded: bool = False
-    research_worker_report_card_delivered: bool = False
-    research_reviewer_dispatch_card_delivered: bool = False
-    research_dispatch_allowed: bool = False
-    research_worker_packet_delivered: bool = False
-    research_worker_report_returned: bool = False
-    research_worker_result_ledger_checked: bool = False
-    reviewer_research_direct_source_check_card_delivered: bool = False
-    research_reviewer_direct_source_check_done: bool = False
-    research_reviewer_passed: bool = False
-    pm_research_absorb_or_mutate_card_delivered: bool = False
-    research_absorbed_by_pm: bool = False
-    pm_material_understanding_card_delivered: bool = False
-    material_understanding_written: bool = False
-
     pm_product_architecture_card_delivered: bool = False
     product_architecture_draft_written: bool = False
     product_architecture_modelability_card_delivered: bool = False

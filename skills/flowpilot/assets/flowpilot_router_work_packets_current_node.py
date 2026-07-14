@@ -23,7 +23,6 @@ from flowpilot_router_work_packets_current_node_paths import (
     _packet_envelope_path_from_record,
     _result_envelope_path_from_packet_record,
     _load_packet_index,
-    _material_scan_index_path,
     _research_packet_index_path,
 )
 import flowpilot_router_work_packets_current_node_relay as _current_node_relay
@@ -104,7 +103,6 @@ __all__ = (
     '_packet_envelope_path_from_record',
     '_result_envelope_path_from_packet_record',
     '_load_packet_index',
-    '_material_scan_index_path',
     '_research_packet_index_path',
     '_relay_packet_records',
     '_active_holder_frontier_version',

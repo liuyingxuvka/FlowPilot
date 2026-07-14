@@ -105,14 +105,6 @@ REQUIRED_SCOPED_EVENT_POLICIES = {
         "severity": "low",
         "why": "completion retry is currently guarded by missing-write detection, but it still belongs to scoped idempotency",
     },
-    "pm_records_material_scan_result_disposition": {
-        "family": "pm_package_disposition",
-        "dedupe_fields": ("batch_id", "packet_ids", "packet_generation_id"),
-        "forbidden_dedupe_fields": ("body_hash",),
-        "conflict_fields": ("body_hash",),
-        "severity": "high",
-        "why": "material result disposition can recur after repair generations; conflicting same-generation bodies must block instead of creating another disposition",
-    },
     "pm_records_research_result_disposition": {
         "family": "pm_package_disposition",
         "dedupe_fields": ("batch_id", "packet_ids", "packet_generation_id"),
@@ -333,6 +325,40 @@ def _source_audit_report() -> dict[str, object]:
     scoped_policies = _extract_scoped_event_policies(source)
     findings: list[dict[str, object]] = []
 
+    retired_runtime_catalog_residue = sorted(model.RETIRED_MATERIAL_EXTERNAL_EVENTS & set(events))
+    retired_scoped_policy_residue = sorted(model.RETIRED_MATERIAL_EXTERNAL_EVENTS & set(scoped_policies))
+    model_scenario_events = {
+        model._selected_state(scenario).event_name  # type: ignore[attr-defined]
+        for scenario in model.SCENARIOS
+    }
+    retired_model_scenario_residue = sorted(
+        model.RETIRED_MATERIAL_EXTERNAL_EVENTS & model_scenario_events
+    )
+    for event in retired_runtime_catalog_residue:
+        findings.append(
+            {
+                "event": event,
+                "severity": "high",
+                "issue": "retired material event remains in current external event catalog",
+            }
+        )
+    for event in retired_scoped_policy_residue:
+        findings.append(
+            {
+                "event": event,
+                "severity": "high",
+                "issue": "retired material event retains positive scoped idempotency policy",
+            }
+        )
+    for event in retired_model_scenario_residue:
+        findings.append(
+            {
+                "event": event,
+                "severity": "high",
+                "issue": "retired material event remains in positive idempotency model scenario",
+            }
+        )
+
     for event, policy in REQUIRED_SCOPED_EVENT_POLICIES.items():
         meta = events.get(event)
         if not meta:
@@ -435,6 +461,10 @@ def _source_audit_report() -> dict[str, object]:
         "repeatable_exception_count": len(repeatable),
         "repeatable_exceptions": repeatable,
         "required_scoped_event_count": len(REQUIRED_SCOPED_EVENT_POLICIES),
+        "retired_material_event_count": len(model.RETIRED_MATERIAL_EXTERNAL_EVENTS),
+        "retired_material_runtime_catalog_residue": retired_runtime_catalog_residue,
+        "retired_material_scoped_policy_residue": retired_scoped_policy_residue,
+        "retired_material_model_scenario_residue": retired_model_scenario_residue,
         "finding_count": len(findings),
         "findings": findings,
         "model_confidence": "source-audit checks that required scoped events have production idempotency policies; targeted router tests cover key runtime behavior",
@@ -462,6 +492,10 @@ def run_checks() -> dict[str, object]:
             "same_key": "return already_recorded without side effects",
             "new_key": "execute the event writer even when the run-wide flag for that event is already true",
             "retry_budget": "after a configured retry budget, emit explicit PM escalation/dead-end instead of silently swallowing",
+            "retired_material_events": (
+                "remain absent from the runtime catalog, scoped policy registry, and positive model scenarios; "
+                "ordinary research/current-node dispositions carry package idempotency"
+            ),
         },
     }
 

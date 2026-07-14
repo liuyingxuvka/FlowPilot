@@ -22,21 +22,21 @@ runtime_context: Treat the runtime delivery envelope as the live source for the 
 FlowPilot proceeds through these phases:
 
 1. `startup_intake`
-2. `material_scan`
-3. `material_absorb_or_research`
-4. `research_package` when material is insufficient
-5. `research_absorb_or_mutate` when research was required
-6. `material_understanding`
-7. `product_architecture`
-8. `root_contract`
-9. `route_skeleton`
-10. `current_node_loop`
-11. `review_repair`
-12. `final_ledger`
-13. `closure`
+2. mandatory shallow local capability/skill inventory and PM selection through
+   the existing discovery/skill-standard contracts
+3. optional ordinary `research_package` or PM role-work package when deeper
+   reading, experiment, source verification, or evidence synthesis is needed
+4. `research_absorb_or_mutate` when ordinary research was requested
+5. `product_architecture`
+6. `root_contract`
+7. `route_skeleton`
+8. `current_node_loop`
+9. `review_repair`
+10. `final_ledger`
+11. `closure`
 
 At each phase, act only from the current phase card, current event cards, and
-reviewed mail. If the needed material is missing, request a bounded packet.
+reviewed mail. If needed evidence is missing, request an ordinary bounded role-work packet.
 If the route no longer fits reviewed facts, request route mutation.
 When PM owns a decision and needs another FlowPilot role to gather evidence,
 run or update a model, review, research, or implement a bounded slice first,

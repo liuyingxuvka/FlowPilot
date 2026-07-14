@@ -41,9 +41,9 @@
       },
       "evidence_packet_repairs_target_artifact": {
         "detected": true,
-        "expected_failure": "research or material-scan packet grants target artifact repair instead of report self-correction",
+        "expected_failure": "research or evidence-work packet grants target artifact repair instead of report self-correction",
         "failures": [
-          "research or material-scan packet grants target artifact repair instead of report self-correction"
+          "research or evidence-work packet grants target artifact repair instead of report self-correction"
         ]
       },
       "final_ledger_acceptance_item_unresolved": {

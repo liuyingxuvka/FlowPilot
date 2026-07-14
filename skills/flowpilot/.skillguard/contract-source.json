@@ -1,0 +1,553 @@
+{
+  "artifacts": [],
+  "checks": [
+    {
+      "check_id": "check:flowpilot-contract-model",
+      "kind": "model_assertion",
+      "evidence_class": "hard",
+      "covers_obligation_ids": [
+        "obligation:flowpilot-explicit-opt-in",
+        "obligation:flowpilot-complex-project-boundary"
+      ],
+      "input_selectors": [
+        {
+          "kind": "path",
+          "path": "simulations/flowpilot_skillguard_contract_model.py"
+        }
+      ],
+      "timeout_seconds": 60
+    },
+    {
+      "check_id": "check:flowpilot-skillguard-current-authority",
+      "kind": "command",
+      "command": "python",
+      "args": [
+        "scripts/refresh_flowpilot_skillguard_contract.py",
+        "--check"
+      ],
+      "cwd_token": "repository_root",
+      "evidence_class": "hard",
+      "evidence_domain_id": "contract_authority",
+      "depends_on_check_ids": [
+        "check:flowpilot-contract-model"
+      ],
+      "covers_obligation_ids": [
+        "obligation:flowpilot-current-skillguard-authority"
+      ],
+      "input_selectors": [
+        {
+          "kind": "subtree",
+          "path": "skills/flowpilot"
+        },
+        {
+          "kind": "path",
+          "path": "simulations/flowpilot_skillguard_contract_model.py"
+        },
+        {
+          "kind": "path",
+          "path": "scripts/refresh_flowpilot_skillguard_contract.py"
+        },
+        {
+          "kind": "path",
+          "path": "tests/test_flowpilot_skillguard_deep_contract.py"
+        }
+      ],
+      "expected": {
+        "exit_code": 0
+      },
+      "timeout_seconds": 120
+    },
+    {
+      "check_id": "check:flowpilot-resource-model",
+      "kind": "command",
+      "command": "python",
+      "args": [
+        "simulations/run_flowpilot_ordinary_resource_discovery_checks.py"
+      ],
+      "cwd_token": "repository_root",
+      "evidence_class": "hard",
+      "covers_obligation_ids": [
+        "obligation:flowpilot-local-skill-inventory",
+        "obligation:flowpilot-pm-route-plan"
+      ],
+      "input_selectors": [
+        {
+          "kind": "path",
+          "path": "simulations/flowpilot_ordinary_resource_discovery_model.py"
+        },
+        {
+          "kind": "path",
+          "path": "simulations/run_flowpilot_ordinary_resource_discovery_checks.py"
+        },
+        {
+          "kind": "path",
+          "path": "tests/test_flowpilot_ordinary_resource_discovery.py"
+        }
+      ],
+      "expected": {
+        "exit_code": 0
+      },
+      "timeout_seconds": 180
+    },
+    {
+      "check_id": "check:flowpilot-workstream-model",
+      "kind": "command",
+      "command": "python",
+      "args": [
+        "simulations/run_flowpilot_complete_workstream_orchestration_checks.py"
+      ],
+      "cwd_token": "repository_root",
+      "evidence_class": "hard",
+      "covers_obligation_ids": [
+        "obligation:flowpilot-numbered-role-plan",
+        "obligation:flowpilot-integrate-verify-repair"
+      ],
+      "input_selectors": [
+        {
+          "kind": "path",
+          "path": "simulations/flowpilot_complete_workstream_orchestration_model.py"
+        },
+        {
+          "kind": "path",
+          "path": "simulations/run_flowpilot_complete_workstream_orchestration_checks.py"
+        },
+        {
+          "kind": "path",
+          "path": "tests/test_flowpilot_complete_workstream_orchestration.py"
+        }
+      ],
+      "expected": {
+        "exit_code": 0
+      },
+      "timeout_seconds": 180
+    },
+    {
+      "check_id": "check:flowpilot-workstream-report",
+      "kind": "command",
+      "command": "python",
+      "args": [
+        "-m",
+        "unittest",
+        "-v",
+        "tests.test_flowpilot_complete_workstream_orchestration"
+      ],
+      "cwd_token": "repository_root",
+      "evidence_class": "hard",
+      "covers_obligation_ids": [
+        "obligation:flowpilot-numbered-completion-report",
+        "obligation:flowpilot-independent-flowguard-review"
+      ],
+      "input_selectors": [
+        {
+          "kind": "path",
+          "path": "tests/test_flowpilot_complete_workstream_orchestration.py"
+        },
+        {
+          "kind": "subtree",
+          "path": "skills/flowpilot/assets/runtime_kit/cards"
+        },
+        {
+          "kind": "subtree",
+          "path": "skills/flowpilot/assets/runtime_kit/prompts"
+        }
+      ],
+      "expected": {
+        "exit_code": 0
+      },
+      "timeout_seconds": 120
+    },
+    {
+      "check_id": "check:flowpilot-tier-ownership",
+      "kind": "command",
+      "command": "python",
+      "args": [
+        "-m",
+        "unittest",
+        "-v",
+        "tests.test_flowpilot_test_tiers.FlowPilotTestTierTests.test_complete_workstream_and_resource_checks_participate_in_parent_tiers",
+        "tests.test_flowpilot_test_tiers.FlowPilotTestTierTests.test_release_and_final_confidence_have_acyclic_single_owner_order"
+      ],
+      "cwd_token": "repository_root",
+      "evidence_class": "hard",
+      "covers_obligation_ids": [
+        "obligation:flowpilot-current-final-receipts"
+      ],
+      "input_selectors": [
+        {
+          "kind": "path",
+          "path": "scripts/run_test_tier.py"
+        },
+        {
+          "kind": "subtree",
+          "path": "scripts/test_tier"
+        },
+        {
+          "kind": "path",
+          "path": "tests/test_flowpilot_test_tiers.py"
+        }
+      ],
+      "expected": {
+        "exit_code": 0
+      },
+      "timeout_seconds": 120
+    },
+    {
+      "check_id": "check:flowpilot-final-receipt",
+      "kind": "command",
+      "command": "python",
+      "args": [
+        "scripts/run_test_tier.py",
+        "--tier",
+        "final-confidence",
+        "--verify-background",
+        "--background-dir",
+        "tmp/test_background/complete-workstream-final17",
+        "--json"
+      ],
+      "cwd_token": "repository_root",
+      "evidence_class": "hard",
+      "depends_on_check_ids": [
+        "check:flowpilot-tier-ownership"
+      ],
+      "covers_obligation_ids": [
+        "obligation:flowpilot-current-final-receipts"
+      ],
+      "input_selectors": [
+        {
+          "kind": "path",
+          "path": "scripts/run_test_tier.py"
+        },
+        {
+          "kind": "subtree",
+          "path": "scripts/test_tier"
+        }
+      ],
+      "expected": {
+        "exit_code": 0
+      },
+      "timeout_seconds": 120
+    }
+  ],
+  "claim_boundary": "This current contract binds FlowPilot's existing opt-in, PM planning, complete-role-workstream, resource-discovery, independent-review, and frozen-receipt checks without creating a SkillGuard-owned runtime. CONTRACT_DEPTH_PASS proves the mapping only; FlowPilot's own current TestMesh, OpenSpec, install, and final parent receipts remain the execution authority.",
+  "closure_profiles": [
+    {
+      "profile_id": "routine",
+      "required_obligation_ids": [
+        "obligation:flowpilot-explicit-opt-in",
+        "obligation:flowpilot-complex-project-boundary",
+        "obligation:flowpilot-current-skillguard-authority"
+      ]
+    },
+    {
+      "profile_id": "functional",
+      "required_obligation_ids": [
+        "obligation:flowpilot-explicit-opt-in",
+        "obligation:flowpilot-complex-project-boundary",
+        "obligation:flowpilot-current-skillguard-authority",
+        "obligation:flowpilot-local-skill-inventory",
+        "obligation:flowpilot-pm-route-plan",
+        "obligation:flowpilot-numbered-role-plan",
+        "obligation:flowpilot-integrate-verify-repair",
+        "obligation:flowpilot-numbered-completion-report"
+      ]
+    },
+    {
+      "profile_id": "release",
+      "required_obligation_ids": [
+        "obligation:flowpilot-explicit-opt-in",
+        "obligation:flowpilot-complex-project-boundary",
+        "obligation:flowpilot-current-skillguard-authority",
+        "obligation:flowpilot-local-skill-inventory",
+        "obligation:flowpilot-pm-route-plan",
+        "obligation:flowpilot-numbered-role-plan",
+        "obligation:flowpilot-integrate-verify-repair",
+        "obligation:flowpilot-numbered-completion-report",
+        "obligation:flowpilot-independent-flowguard-review",
+        "obligation:flowpilot-current-final-receipts"
+      ]
+    },
+    {
+      "profile_id": "highest_quality",
+      "required_obligation_ids": [
+        "obligation:flowpilot-explicit-opt-in",
+        "obligation:flowpilot-complex-project-boundary",
+        "obligation:flowpilot-current-skillguard-authority",
+        "obligation:flowpilot-local-skill-inventory",
+        "obligation:flowpilot-pm-route-plan",
+        "obligation:flowpilot-numbered-role-plan",
+        "obligation:flowpilot-integrate-verify-repair",
+        "obligation:flowpilot-numbered-completion-report",
+        "obligation:flowpilot-independent-flowguard-review",
+        "obligation:flowpilot-current-final-receipts"
+      ]
+    }
+  ],
+  "confirmed": true,
+  "default_route_id": "route:flowpilot-opt-in",
+  "depth_profile": {
+    "schema_version": "skillguard.depth_profile.v2",
+    "profile_id": "flowpilot.current_contract_depth.v2",
+    "target_skill_id": "flowpilot",
+    "integration_mode": "native-integrated",
+    "native_owner_id": "flowpilot_runtime_router",
+    "native_route_ids": [
+      "route:flowpilot-opt-in",
+      "route:flowpilot-route-plan",
+      "route:flowpilot-complete-workstream",
+      "route:flowpilot-independent-closure"
+    ],
+    "native_check_ids": [
+      "check:flowpilot-contract-model",
+      "check:flowpilot-skillguard-current-authority",
+      "check:flowpilot-resource-model",
+      "check:flowpilot-workstream-model",
+      "check:flowpilot-workstream-report",
+      "check:flowpilot-tier-ownership",
+      "check:flowpilot-final-receipt"
+    ],
+    "skillguard_adds_domain_route": false,
+    "enforcement_level": "contract_mapped",
+    "required_closure_profiles": [
+      "functional",
+      "release",
+      "highest_quality"
+    ],
+    "coverage_universes": [],
+    "dimensions": [
+      {
+        "dimension_id": "input",
+        "required": true,
+        "minimum_coverage": 1,
+        "obligation_ids": [
+          "obligation:flowpilot-explicit-opt-in",
+          "obligation:flowpilot-complex-project-boundary",
+          "obligation:flowpilot-current-skillguard-authority"
+        ],
+        "important_obligation_ids": [
+          "obligation:flowpilot-explicit-opt-in",
+          "obligation:flowpilot-complex-project-boundary",
+          "obligation:flowpilot-current-skillguard-authority"
+        ],
+        "accepted_evidence_classes": [
+          "hard"
+        ],
+        "allow_shared_evidence": false,
+        "claim_blocker": true,
+        "coverage_universe_ids": []
+      },
+      {
+        "dimension_id": "workflow",
+        "required": true,
+        "minimum_coverage": 1,
+        "obligation_ids": [
+          "obligation:flowpilot-local-skill-inventory",
+          "obligation:flowpilot-pm-route-plan",
+          "obligation:flowpilot-numbered-role-plan",
+          "obligation:flowpilot-integrate-verify-repair",
+          "obligation:flowpilot-numbered-completion-report"
+        ],
+        "important_obligation_ids": [
+          "obligation:flowpilot-local-skill-inventory",
+          "obligation:flowpilot-pm-route-plan",
+          "obligation:flowpilot-numbered-role-plan",
+          "obligation:flowpilot-integrate-verify-repair",
+          "obligation:flowpilot-numbered-completion-report"
+        ],
+        "accepted_evidence_classes": [
+          "hard"
+        ],
+        "allow_shared_evidence": false,
+        "claim_blocker": true,
+        "coverage_universe_ids": []
+      },
+      {
+        "dimension_id": "closure",
+        "required": true,
+        "minimum_coverage": 1,
+        "obligation_ids": [
+          "obligation:flowpilot-independent-flowguard-review",
+          "obligation:flowpilot-current-final-receipts"
+        ],
+        "important_obligation_ids": [
+          "obligation:flowpilot-independent-flowguard-review",
+          "obligation:flowpilot-current-final-receipts"
+        ],
+        "accepted_evidence_classes": [
+          "hard"
+        ],
+        "allow_shared_evidence": false,
+        "claim_blocker": true,
+        "coverage_universe_ids": []
+      }
+    ],
+    "calibration": {
+      "calibration_pair_id": "flowpilot.contract-mapped.no-execution-calibration.v1",
+      "native_evaluator_id": "flowpilot_skillguard_contract_model",
+      "native_evaluator_version": "14BC1F266FF21BE400AAB9DD8508DFB0B1CFAC7DCD9681C822993B8EFBADBD00",
+      "native_evaluator_check_id": "check:flowpilot-contract-model",
+      "important_obligation_ids": [
+        "obligation:flowpilot-explicit-opt-in",
+        "obligation:flowpilot-complex-project-boundary",
+        "obligation:flowpilot-current-skillguard-authority",
+        "obligation:flowpilot-local-skill-inventory",
+        "obligation:flowpilot-pm-route-plan",
+        "obligation:flowpilot-numbered-role-plan",
+        "obligation:flowpilot-integrate-verify-repair",
+        "obligation:flowpilot-numbered-completion-report",
+        "obligation:flowpilot-independent-flowguard-review",
+        "obligation:flowpilot-current-final-receipts"
+      ],
+      "required_capability_ids": [
+        "flowpilot.current_contract_mapping"
+      ],
+      "positive_cases": [],
+      "shallow_cases": []
+    },
+    "claim_boundary": "Contract-depth mapping only. FlowPilot native tests already contain positive and known-bad scenarios, but this profile intentionally declares no SkillGuard execution-depth universe or portable two-key calibration receipt. It cannot license EXECUTION_DEPTH_PASS or replace FlowPilot's own final evidence."
+  },
+  "implementation_paths": [
+    "skills/flowpilot",
+    "simulations/flowpilot_skillguard_contract_model.py",
+    "simulations/flowpilot_complete_workstream_orchestration_model.py",
+    "simulations/run_flowpilot_complete_workstream_orchestration_checks.py",
+    "simulations/flowpilot_ordinary_resource_discovery_model.py",
+    "simulations/run_flowpilot_ordinary_resource_discovery_checks.py",
+    "scripts/refresh_flowpilot_skillguard_contract.py",
+    "scripts/run_test_tier.py",
+    "scripts/test_tier",
+    "tests/test_flowpilot_skillguard_deep_contract.py",
+    "tests/test_flowpilot_complete_workstream_orchestration.py",
+    "tests/test_flowpilot_ordinary_resource_discovery.py",
+    "tests/test_flowpilot_test_tiers.py"
+  ],
+  "integration_mode": "native-integrated",
+  "judgment_rubrics": [],
+  "may_define_parallel_execution_route": false,
+  "may_define_skillguard_runtime_route": false,
+  "model_id": "flowpilot.skillguard_current_contract.v2",
+  "model_path": "simulations/flowpilot_skillguard_contract_model.py",
+  "native_check_bindings": [
+    {
+      "binding_id": "native-check:flowpilot-contract-model",
+      "evidence_source": "simulations/run_flowpilot_skillguard_contract_checks.py",
+      "native_check_id": "check:flowpilot-contract-model",
+      "required": true
+    },
+    {
+      "binding_id": "native-check:flowpilot-skillguard-current-authority",
+      "evidence_source": "scripts/refresh_flowpilot_skillguard_contract.py",
+      "native_check_id": "check:flowpilot-skillguard-current-authority",
+      "required": true
+    },
+    {
+      "binding_id": "native-check:flowpilot-resource-model",
+      "evidence_source": "simulations/run_flowpilot_ordinary_resource_discovery_checks.py",
+      "native_check_id": "check:flowpilot-resource-model",
+      "required": true
+    },
+    {
+      "binding_id": "native-check:flowpilot-workstream-model",
+      "evidence_source": "simulations/run_flowpilot_complete_workstream_orchestration_checks.py",
+      "native_check_id": "check:flowpilot-workstream-model",
+      "required": true
+    },
+    {
+      "binding_id": "native-check:flowpilot-workstream-report",
+      "evidence_source": "tests/test_flowpilot_complete_workstream_orchestration.py",
+      "native_check_id": "check:flowpilot-workstream-report",
+      "required": true
+    },
+    {
+      "binding_id": "native-check:flowpilot-tier-ownership",
+      "evidence_source": "tests/test_flowpilot_test_tiers.py",
+      "native_check_id": "check:flowpilot-tier-ownership",
+      "required": true
+    },
+    {
+      "binding_id": "native-check:flowpilot-final-receipt",
+      "evidence_source": "scripts/run_test_tier.py",
+      "native_check_id": "check:flowpilot-final-receipt",
+      "required": true
+    }
+  ],
+  "native_route_bindings": [
+    {
+      "binding_id": "native:flowpilot-opt-in",
+      "native_route_id": "route:flowpilot-opt-in",
+      "required_before_closure": true,
+      "source": "skills/flowpilot/SKILL.md"
+    },
+    {
+      "binding_id": "native:flowpilot-route-plan",
+      "native_route_id": "route:flowpilot-route-plan",
+      "required_before_closure": true,
+      "source": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py"
+    },
+    {
+      "binding_id": "native:flowpilot-complete-workstream",
+      "native_route_id": "route:flowpilot-complete-workstream",
+      "required_before_closure": true,
+      "source": "skills/flowpilot/assets/flowpilot_core_runtime/role_handoff.py"
+    },
+    {
+      "binding_id": "native:flowpilot-independent-closure",
+      "native_route_id": "route:flowpilot-independent-closure",
+      "required_before_closure": true,
+      "source": "skills/flowpilot/assets/flowpilot_core_runtime/review_window_contracts.py"
+    }
+  ],
+  "native_route_owner": "flowpilot_runtime_router",
+  "release_eligible": false,
+  "schema_version": "skillguard.contract_source.v2",
+  "skill_id": "flowpilot",
+  "step_bindings": [
+    {
+      "step_id": "step:flowpilot-opt-in",
+      "action": {
+        "kind": "inventory",
+        "summary": "Confirm explicit opt-in, complex-project scope, the current contract trio, and FlowPilot as the sole native runtime."
+      },
+      "check_ids": [
+        "check:flowpilot-contract-model",
+        "check:flowpilot-skillguard-current-authority"
+      ],
+      "output_artifact_ids": []
+    },
+    {
+      "step_id": "step:flowpilot-route-plan",
+      "action": {
+        "kind": "native",
+        "summary": "Bind the shallow local skill inventory and PM-owned project route plan."
+      },
+      "check_ids": [
+        "check:flowpilot-resource-model"
+      ],
+      "output_artifact_ids": []
+    },
+    {
+      "step_id": "step:flowpilot-complete-workstream",
+      "action": {
+        "kind": "native",
+        "summary": "Bind numbered planning, execution, integration, verification, repair, and numbered completion reports for substantive roles."
+      },
+      "check_ids": [
+        "check:flowpilot-workstream-model",
+        "check:flowpilot-workstream-report"
+      ],
+      "output_artifact_ids": []
+    },
+    {
+      "step_id": "step:flowpilot-independent-closure",
+      "action": {
+        "kind": "verifier",
+        "summary": "Consume independent FlowGuard, Reviewer/PM disposition, acyclic parent ownership, and the frozen final receipt."
+      },
+      "check_ids": [
+        "check:flowpilot-workstream-report",
+        "check:flowpilot-tier-ownership",
+        "check:flowpilot-final-receipt"
+      ],
+      "output_artifact_ids": []
+    }
+  ]
+}

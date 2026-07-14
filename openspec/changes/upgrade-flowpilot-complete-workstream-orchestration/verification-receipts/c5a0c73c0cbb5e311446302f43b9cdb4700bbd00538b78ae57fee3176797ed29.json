@@ -1,0 +1,24 @@
+{
+  "schema_version": 2,
+  "report_protocol_version": 3,
+  "execution_key": "sha256:9acb0b39cb976b2dbc71d4670d9bd384c2791893a500ebf48c5177b2c39972c3",
+  "result_hash": "sha256:90052c9d51d75cf735d7d765433b85fcb9c5dd2996beabd9cae45b909a4f7c36",
+  "receipt_id": "sha256:c5a0c73c0cbb5e311446302f43b9cdb4700bbd00538b78ae57fee3176797ed29",
+  "result": {
+    "status": "passed",
+    "command": "openspec",
+    "args": [
+      "validate",
+      "upgrade-flowpilot-complete-workstream-orchestration",
+      "--strict",
+      "--no-interactive"
+    ],
+    "expected_exit_code": 0,
+    "exit_code": 0,
+    "timeout_seconds": 1800,
+    "stdout": "Change 'upgrade-flowpilot-complete-workstream-orchestration' is valid\n",
+    "stderr": "",
+    "stdout_preview": "Change 'upgrade-flowpilot-complete-workstream-orchestration' is valid\n",
+    "stderr_preview": ""
+  }
+}

@@ -7,9 +7,8 @@
   "updated_at": "<iso-8601-timestamp>",
   "source_inputs": {
     "startup_self_interrogation_path": "<path-or-null>",
-    "material_intake_packet_path": ".flowpilot/runs/<run-id>/material_intake_packet.json",
     "local_skill_inventory_path": ".flowpilot/runs/<run-id>/local_skill_inventory.json",
-    "pm_material_understanding_path": ".flowpilot/runs/<run-id>/pm_material_understanding.json",
+    "ordinary_evidence_work_result_paths": [],
     "flowguard_capability_snapshot_path": ".flowpilot/runs/<run-id>/flowguard/capability_snapshot.json",
     "product_modeling_plan_path": ".flowpilot/runs/<run-id>/flowguard/product_modeling_plan.json",
     "draft_floor_source": "<chat|file|user-brief|other>",

@@ -120,8 +120,8 @@ def run_checks(result: dict[str, object]) -> None:
             result["ok"] = False
         small_router_launcher = (
             len(text.splitlines()) < 160
-            and "flowpilot_new.py" in text
-            and "public formal-run control surface is `flowpilot_new.py` only" in text
+            and "assets/flowpilot_new.py" in text
+            and "public formal-run control surface is `assets/flowpilot_new.py` only" in text
             and "Do not read FlowPilot reference files" in text
             and "Final Route-Wide Gate Ledger" not in text
         )
@@ -135,8 +135,9 @@ def run_checks(result: dict[str, object]) -> None:
             for term in (
                 "flowpilot_new.py --root <project-root> --json start",
                 "native startup intake UI",
-                "There is no requirement for a non-startup monitoring UI",
-                ".flowpilot/runs/<run-id>/ledger.json` is authority",
+                "there is no requirement for a non-startup monitoring UI",
+                "The runtime-provided current-run ledger is authority",
+                "project-local active-run metadata is only UI focus/default-target metadata",
                 "create or attach only the requested responsibility through an available host-supported, addressable, isolated role surface",
             )
         )

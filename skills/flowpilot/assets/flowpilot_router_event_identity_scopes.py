@@ -127,7 +127,6 @@ def _pm_role_work_result_decision_identity_scope(router: ModuleType, payload_vie
 
 def _pm_package_disposition_identity_scope(router: ModuleType, run_root: Path, payload_view: dict[str, Any], event: str) -> dict[str, str]:
     batch_kind = {
-        'pm_records_material_scan_result_disposition': 'material_scan',
         'pm_records_research_result_disposition': 'research',
         'pm_records_current_node_result_disposition': 'current_node',
     }.get(event, 'unknown')
@@ -140,9 +139,6 @@ def _pm_package_disposition_identity_scope(router: ModuleType, run_root: Path, p
     else:
         packet_ids = sorted(str(record.get('packet_id') or '') for record in records if record.get('packet_id'))
     packet_generation_id = str(payload_view.get('packet_generation_id') or payload_view.get('current_generation_id') or '')
-    if not packet_generation_id and batch_kind == 'material_scan':
-        material_index = router.read_json_if_exists(router._material_scan_index_path(run_root))
-        packet_generation_id = str(material_index.get('current_generation_id') or '')
     if not packet_generation_id:
         generation_ids = sorted({str(record.get('packet_generation_id') or '') for record in records if record.get('packet_generation_id')})
         packet_generation_id = ','.join(generation_ids) if generation_ids else 'no-generation'
@@ -181,7 +177,7 @@ def _scoped_event_identity(router: ModuleType, project_root: Path, run_root: Pat
         scope = router._current_node_result_identity_scope(payload_view)
     elif event == router.PM_ROLE_WORK_RESULT_DECISION_EVENT:
         scope = router._pm_role_work_result_decision_identity_scope(payload_view)
-    elif event in {'pm_records_material_scan_result_disposition', 'pm_records_research_result_disposition', 'pm_records_current_node_result_disposition'}:
+    elif event in {'pm_records_research_result_disposition', 'pm_records_current_node_result_disposition'}:
         scope = router._pm_package_disposition_identity_scope(run_root, payload_view, event)
     else:
         return None

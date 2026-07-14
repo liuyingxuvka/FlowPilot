@@ -55,7 +55,6 @@ class QualityGatesRuntimeTests(FlowPilotRouterRuntimeTestBase):
         root = self.make_project()
         self.boot_to_controller(root)
         self.complete_startup_runtime_entry(root)
-        self.complete_material_flow(root)
         self.complete_root_contract_before_child_skill_gates(root)
         self.complete_child_skill_gates(root)
         self.complete_implementation_intent_bridge(root)
@@ -117,7 +116,6 @@ class QualityGatesRuntimeTests(FlowPilotRouterRuntimeTestBase):
         root = self.make_project()
         run_root = self.boot_to_controller(root)
         self.complete_startup_runtime_entry(root)
-        self.complete_material_flow(root)
         self.complete_root_contract_before_child_skill_gates(root)
         self.complete_child_skill_gates(root)
         self.assertFalse((run_root / "flowguard" / "product_architecture_modelability.json").exists())
@@ -177,7 +175,6 @@ class QualityGatesRuntimeTests(FlowPilotRouterRuntimeTestBase):
         root = self.make_project()
         self.boot_to_controller(root)
         self.complete_startup_runtime_entry(root)
-        self.complete_material_flow(root)
         self.complete_root_contract_before_child_skill_gates(root)
         self.complete_child_skill_gates(root)
         self.complete_implementation_intent_bridge(root)
@@ -207,7 +204,6 @@ class QualityGatesRuntimeTests(FlowPilotRouterRuntimeTestBase):
         root = self.make_project()
         self.boot_to_controller(root)
         self.complete_startup_runtime_entry(root)
-        self.complete_material_flow(root)
         self.complete_root_contract_before_child_skill_gates(root)
         self.complete_child_skill_gates(root)
         self.complete_implementation_intent_bridge(root)
@@ -244,7 +240,6 @@ class QualityGatesRuntimeTests(FlowPilotRouterRuntimeTestBase):
         root = self.make_project()
         self.boot_to_controller(root)
         self.complete_startup_runtime_entry(root)
-        self.complete_material_flow(root)
         self.complete_root_contract_before_child_skill_gates(root)
         self.complete_child_skill_gates(root)
         self.complete_implementation_intent_bridge(root)
@@ -422,7 +417,6 @@ class QualityGatesRuntimeTests(FlowPilotRouterRuntimeTestBase):
         root = self.make_project()
         run_root = self.boot_to_controller(root)
         self.complete_startup_runtime_entry(root)
-        self.complete_material_flow(root)
         self.complete_root_contract_before_child_skill_gates(root)
 
         selected_skills = [
@@ -483,7 +477,6 @@ class QualityGatesRuntimeTests(FlowPilotRouterRuntimeTestBase):
         root = self.make_project()
         run_root = self.boot_to_controller(root)
         self.complete_startup_runtime_entry(root)
-        self.complete_material_flow(root)
         self.complete_root_contract_before_child_skill_gates(root)
 
         selected_skills = [
@@ -924,7 +917,7 @@ class QualityGatesRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertIn("pm.role_binding_recovery_freshness", card_ids)
         self.assertIn("pm.resume_decision", card_ids)
         self.assertIn("pm.role_work_request", card_ids)
-        self.assertIn("pm.material_understanding", card_ids)
+        self.assertNotIn("pm.material_understanding", card_ids)
         self.assertIn("pm.research_package", card_ids)
         self.assertIn("pm.product_architecture", card_ids)
         self.assertIn("pm.root_contract", card_ids)
@@ -934,10 +927,7 @@ class QualityGatesRuntimeTests(FlowPilotRouterRuntimeTestBase):
     def test_reviewer_block_events_are_registered_in_external_taxonomy(self) -> None:
         self.assertNotIn("reviewer_blocks_current_node_dispatch", router.EXTERNAL_EVENTS)
         self.assertNotIn("flowguard_operator_product_scope_model_report", router.EXTERNAL_EVENTS)
-        self.assertEqual(
-            router.EXTERNAL_EVENTS["router_direct_material_scan_dispatch_recheck_blocked"]["flag"],
-            "material_scan_dispatch_recheck_blocked",
-        )
+        self.assertNotIn("router_direct_material_scan_dispatch_recheck_blocked", router.EXTERNAL_EVENTS)
         self.assertEqual(router.EXTERNAL_EVENTS["reviewer_blocks_node_acceptance_plan"]["flag"], "node_acceptance_plan_review_blocked")
     def test_model_miss_review_block_flags_stay_in_sync(self) -> None:
         expected_flags = set(router.MODEL_MISS_REVIEW_BLOCK_FLAGS)
@@ -950,9 +940,7 @@ class QualityGatesRuntimeTests(FlowPilotRouterRuntimeTestBase):
             for entry in router.SYSTEM_CARD_SEQUENCE
             if entry.get("card_id") in {"pm.model_miss_triage", "pm.review_repair", "pm.event.reviewer_blocked"}
         }
-        repair_writer_flags = set(router.MODEL_MISS_ROUTE_MUTATION_BLOCK_FLAGS) | set(
-            router.MODEL_MISS_MATERIAL_DISPATCH_REPAIR_FLAGS
-        )
+        repair_writer_flags = set(router.MODEL_MISS_ROUTE_MUTATION_BLOCK_FLAGS)
 
         self.assertEqual(event_flags, expected_flags)
         self.assertEqual(repair_writer_flags, expected_flags)

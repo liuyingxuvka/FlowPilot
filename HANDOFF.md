@@ -9,7 +9,7 @@ model-backed project-control runtime:
 
 1. interrogate its understanding before freezing a contract;
 2. create persistent project-control state under `.flowpilot/`;
-3. require material intake and PM material understanding before product design;
+3. require a shallow local skill/capability inventory and PM candidate selection before deep skill use, while treating material work as ordinary role work;
 4. require a PM-owned product-function architecture before contract freeze;
 5. model the project-control route with FlowGuard;
 6. route to specialized capabilities at explicit nodes;
@@ -18,7 +18,7 @@ model-backed project-control runtime:
 9. update the model and route when new facts invalidate the current route;
 10. open, reuse, or replace only the currently requested packet responsibility
   for each new formal FlowPilot task, with a project manager as route-decision
-  authority and worker roles limited to bounded Helper tasks;
+  authority and substantive roles responsible for complete bounded workstreams;
 11. finish only after evidence proves the frozen contract is met.
 
 ## Current Maintenance Gate
@@ -49,6 +49,23 @@ The same maintenance baseline now includes a FlowGuard Model-Test Alignment
 gate. It lives in `simulations/run_flowpilot_model_test_alignment_checks.py`
 and maps major model obligations to ordinary tests before a coverage claim is
 trusted.
+
+FlowPilot's SkillGuard target now uses only the current V2 authority trio in
+`skills/flowpilot/.skillguard/`. Maintain it through
+`scripts/refresh_flowpilot_skillguard_contract.py`, which delegates to the
+public compiler and checkers. The focused
+`simulations/run_flowpilot_skillguard_contract_checks.py` model projection
+binds the existing opt-in, PM route-plan, complete-workstream, and independent
+closure stages without adding a SkillGuard runtime. Its final receipt check is
+read-only; `--background` and `--resume` belong only to the single frozen
+execution owner, never to this consumer.
+
+Because the target is `native-integrated`, `contract-source.json` must also
+bind the exact current four native routes and all seven declared checks to
+their existing FlowPilot sources. The FieldLifecycleMesh treats these as
+maintenance authority fields with one source writer and compiler/router/model
+readers. Missing, extra, duplicate, guessed, defaulted, or fallback bindings
+block global FlowPilot selection.
 
 The maintenance baseline also includes a FlowGuard model maturation closure
 gate. It lives in `simulations/run_flowpilot_model_maturation_checks.py` and
@@ -241,20 +258,22 @@ and model-confidence overclaims must also fail.
 - Routes are versioned. Old routes are retained and may be rolled back to only
   if their checkpoints remain valid.
 - `self-interrogation` style self-interrogation is a required early gate.
-- Formal startup now has a material intake and PM material understanding gate
-  after full self-interrogation and runtime role-binding readiness, but before PM
-  product-function architecture. It inventories user-provided and
-  repository-local materials, records source summaries, authority, freshness,
-  contradictions, local skills and host capabilities as candidate-only
-  resources, unread or deferred sources, reviewer sufficiency, PM source-claim
-  matrix, open questions, complexity, and discovery/cleanup route consequences.
-- PM material gaps are now first-class research packages rather than informal
-  notes. If reviewed materials are insufficient for product architecture, route
-  choice, node acceptance, mechanism understanding, external source confidence,
-  or validation, the PM writes a bounded research/evidence package, assigns
-  worker execution, requires reviewer direct-source or experiment-output
-  checks, and only then absorbs the result into material understanding or
-  mutates/blocks the route.
+- Runtime now performs one mandatory shallow local skill/capability/path and
+  availability inventory in the existing `task.discovery` packet. PM selects
+  relevant candidates; only selected skills proceed to the existing deep-read
+  and Skill Standard Contract path. Runtime never decides semantic relevance.
+- There is no mandatory material-intake form, material-scan packet, or material
+  sufficiency gate. PM reads ordinary non-sealed material normally. When deeper
+  reading, research, experiment, source verification, or evidence synthesis is
+  needed, PM issues an ordinary bounded role-work package, applies the existing
+  risk-appropriate Reviewer/FlowGuard checks, and absorbs or dispositions the
+  result through the normal PM path.
+- Every substantive PM, Worker, Reviewer, research Worker, and FlowGuard
+  Operator assignment is an independently accountable complete workstream.
+  Each role writes a numbered local plan, executes/delegates and integrates it,
+  verifies and repairs its own in-scope work, and returns per-step status and
+  evidence in the existing semantic result body. Controller is excluded and
+  follows only the Runtime foreground action ledger.
 - Formal startup then has a PM-owned product-function architecture gate before
   contract freeze. It captures user tasks, product capabilities, feature
   necessity, display rationale, missing high-value features, negative scope,
@@ -375,7 +394,7 @@ and model-confidence overclaims must also fail.
   hypotheses, cite concrete files/screenshots/state fields/commands/results,
   record residual blindspots, and write independent validation evidence before
   approving. Completion-report-only approval is invalid across startup gates,
-  material intake, product architecture, child-skill manifests, FlowGuard model
+  ordinary evidence/research work, product architecture, child-skill manifests, FlowGuard model
   gates, implementation/human review, composite backward review, final product
   replay, and the final route-wide ledger.
 - Human-like reviewer reports now have a concrete Reviewer Independent
@@ -421,14 +440,17 @@ and model-confidence overclaims must also fail.
   follows the returned foreground duty, routes existing worker results through
   the runtime, and blocks ambiguous worker state rather than letting Controller
   infer or finish work.
-- Material scan, research, and current-node execution now use physical
-  packet/result envelopes. Controller may relay envelope metadata only; workers
-  open packet bodies, worker results return to PM, PM records a package-result
-  disposition, and reviewers inspect PM-built formal gate packages rather than
-  raw worker result bodies. PM may complete a node only after the formal
-  reviewer node-completion gate passes plus any required parent backward replay
-  and PM segment decision. Generalized async FlowGuard operator request/report
-  packets remain the next packet-loop expansion.
+- Research/evidence work, PM role work, and current-node execution use physical
+  packet/result envelopes. Ordinary project material is read directly when
+  authorized; deeper reading or source verification becomes one of those
+  ordinary work packages rather than a special material packet. Controller may
+  relay envelope metadata only; workers open packet bodies, worker results
+  return to PM, PM records a package-result disposition, and reviewers inspect
+  PM-built formal gate packages rather than raw worker result bodies. PM may
+  complete a node only after the formal reviewer node-completion gate passes
+  plus any required parent backward replay and PM segment decision. Generalized
+  async FlowGuard operator request/report packets remain the next packet-loop
+  expansion.
 - The project manager may proactively use FlowGuard as a modeling laboratory
   for uncertain route, repair, feature, product-object, file-format, protocol,
   or validation decisions. The PM writes a structured modeling request, assigns
@@ -541,11 +563,11 @@ FlowGuard caught and fixed these design issues:
     necessity, display rationale, missing-feature review, negative scope, and
     a functional acceptance matrix, FlowPilot may freeze a contract around
     unnecessary UI text or miss obvious high-value functions.
-17. A PM product-function architecture package cannot substitute for material
-    intake when source materials are non-trivial. The controller must
-    inventory and summarize materials, the reviewer must approve sufficiency,
-    and the PM must record material understanding and complexity before product
-    architecture or route decisions.
+17. A PM product-function architecture package cannot pretend that missing
+    evidence was inspected. PM must route any decision-critical reading,
+    research, experiment, or source verification through ordinary role work
+    and risk-appropriate existing review. This is not a mandatory startup form
+    or a special material-sufficiency gate.
 18. Local node checks and the initial route checklist cannot substitute for a
     PM-built final route-wide gate ledger. After route mutation or repair,
     terminal completion must rescan the current route, collect all effective
@@ -726,8 +748,10 @@ FlowGuard caught and fixed these design issues:
 - Router runtime tests now have domain entry files covering all `304` aggregate
   runtime tests exactly once, including resume, cards, packets, route mutation,
   startup daemon, dispatch gate, Controller, ACK/return, terminal, closure,
-  bootstrap/CLI, foreground, PM role work, material/modeling, control blockers,
-  and quality gates. `tests/test_flowpilot_router_runtime.py` remains available
+  bootstrap/CLI, foreground, PM role work, control blockers,
+  and quality gates. Dedicated old-Router material/modeling commands are
+  historical diagnostics and are excluded from current public tiers.
+  `tests/test_flowpilot_router_runtime.py` remains available
   as the source of the shared test case class.
 - `scripts/run_test_tier.py` hides Windows subprocess windows for both
   background children and foreground child commands. Use the background

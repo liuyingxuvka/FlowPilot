@@ -764,10 +764,6 @@
             "target": "_clear_successful_repair_lane_state"
           },
           {
-            "public": "_commit_material_scan_repair_generation",
-            "target": "_commit_material_scan_repair_generation"
-          },
-          {
             "public": "_control_blocker_allowed_resolution_events",
             "target": "_control_blocker_allowed_resolution_events"
           },
@@ -946,10 +942,6 @@
           {
             "public": "_repair_outcome_table",
             "target": "_repair_outcome_table"
-          },
-          {
-            "public": "_repair_packet_specs_from_decision",
-            "target": "_repair_packet_specs_from_decision"
           },
           {
             "public": "_repair_transaction_execution_plan",
@@ -1605,14 +1597,6 @@
             "target": "_try_reconcile_current_node_results"
           },
           {
-            "public": "_try_reconcile_material_scan_body_delivery",
-            "target": "_try_reconcile_material_scan_body_delivery"
-          },
-          {
-            "public": "_try_reconcile_material_scan_results",
-            "target": "_try_reconcile_material_scan_results"
-          },
-          {
             "public": "_try_reconcile_research_results",
             "target": "_try_reconcile_research_results"
           },
@@ -1769,10 +1753,6 @@
           {
             "public": "_write_gate_outcome_block_report",
             "target": "_write_gate_outcome_block_report"
-          },
-          {
-            "public": "_write_material_dispatch_repair",
-            "target": "_write_material_dispatch_repair"
           },
           {
             "public": "_write_node_acceptance_plan",
@@ -3660,14 +3640,6 @@
             "target": "_mark_parallel_batch_reviewed"
           },
           {
-            "public": "_material_packet_body_text_from_spec",
-            "target": "_material_packet_body_text_from_spec"
-          },
-          {
-            "public": "_material_scan_index_path",
-            "target": "_material_scan_index_path"
-          },
-          {
             "public": "_verified_agent_role_map_from_binding_ledger",
             "target": "_verified_agent_role_map_from_binding_ledger"
           },
@@ -3682,10 +3654,6 @@
           {
             "public": "_next_current_node_packet_action",
             "target": "_next_current_node_packet_action"
-          },
-          {
-            "public": "_next_material_packet_action",
-            "target": "_next_material_packet_action"
           },
           {
             "public": "_next_pm_role_work_request_action",
@@ -3898,26 +3866,6 @@
           {
             "public": "_validate_role_work_result_process_binding",
             "target": "_validate_role_work_result_process_binding"
-          },
-          {
-            "public": "_write_material_dispatch_block_report",
-            "target": "_write_material_dispatch_block_report"
-          },
-          {
-            "public": "_write_material_dispatch_recheck_protocol_blocker",
-            "target": "_write_material_dispatch_recheck_protocol_blocker"
-          },
-          {
-            "public": "_write_material_scan_packets",
-            "target": "_write_material_scan_packets"
-          },
-          {
-            "public": "_write_material_sufficiency_report",
-            "target": "_write_material_sufficiency_report"
-          },
-          {
-            "public": "_write_material_understanding",
-            "target": "_write_material_understanding"
           },
           {
             "public": "_write_flowguard_operator_request_lifecycle_index",

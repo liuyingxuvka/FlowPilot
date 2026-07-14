@@ -35,9 +35,6 @@ def _controller_receipt_fold_records(
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     _bind_router(router)
     source = spec["record_source"]
-    if source == "material_scan_index":
-        index = router._load_packet_index(router._material_scan_index_path(run_root), label="material scan")
-        return list(index["packets"]), {"index_path": project_relative(project_root, router._material_scan_index_path(run_root))}
     if source == "research_packet_index":
         index = router._load_packet_index(router._research_packet_index_path(run_root), label="research")
         return list(index["packets"]), {"index_path": project_relative(project_root, router._research_packet_index_path(run_root))}

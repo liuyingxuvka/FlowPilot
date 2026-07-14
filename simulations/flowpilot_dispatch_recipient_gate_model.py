@@ -6,12 +6,11 @@ Risk purpose:
   as Controller work.
 - Guards against a busy target role receiving a second independent packet,
   mail, or PM role-work request before its prior obligation has closed.
-- Treats user_intake as PM's first formal work material: the only PM system
-  card allowed while PM holds user_intake is the pm.material_scan
-  same-obligation instruction card, and independent PM dispatch waits until PM
-  returns material/capability scan packet specs.
+- Treats user_intake as PM's first formal work obligation: the same-obligation
+  `pm.product_architecture` card may be delivered while PM holds user_intake,
+  and independent PM dispatch waits until PM returns the product architecture.
 - Classifies role-facing system cards by obligation: only ACK-only cards are
-  prompt/material delivery; any card or bundle that asks for a decision,
+  prompt-context delivery; any card or bundle that asks for a decision,
   report, packet, result, or blocker is an output-bearing work package.
 - Also preserves existing dispatch constraints: same-role card bundles are one
   grouped delivery, different idle roles can work in parallel, illegal packets

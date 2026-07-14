@@ -49,9 +49,8 @@ def _bind_router(router: ModuleType) -> None:
 
 def _control_blocker_repair_origin(router: ModuleType, active: dict[str, Any], *, rerun_target: str, requested_plan_kind: str, run_root: Path, run_state: dict[str, Any]) -> str:
     _bind_router(router)
+    del requested_plan_kind
     originating_event = str(active.get('originating_event') or '')
-    if requested_plan_kind == 'packet_reissue' or rerun_target in MATERIAL_REPAIR_OUTCOME_EVENTS or originating_event in MATERIAL_REPAIR_OUTCOME_EVENTS:
-        return 'material_dispatch'
     if rerun_target in PARENT_REPAIR_SAFE_EVENTS or originating_event in PARENT_REPAIR_SAFE_EVENTS or run_state.get('flags', {}).get('parent_backward_replay_blocked'):
         return 'parent_backward_replay'
     if rerun_target in LEAF_CURRENT_NODE_EVENT_CAPABILITY_EVENTS or originating_event in LEAF_CURRENT_NODE_EVENT_CAPABILITY_EVENTS:
@@ -65,8 +64,6 @@ def _control_blocker_repair_origin(router: ModuleType, active: dict[str, Any], *
 
 def _repair_outcome_table(router: ModuleType, rerun_target: str, *, repair_origin: str='none') -> dict[str, dict[str, Any]]:
     _bind_router(router)
-    if rerun_target == 'router_direct_material_scan_dispatch_recheck_passed':
-        return {'success': {'event': 'router_direct_material_scan_dispatch_recheck_passed', 'terminal': 'complete'}, 'blocker': {'event': 'router_direct_material_scan_dispatch_recheck_blocked', 'terminal': 'blocked'}, 'protocol_blocker': {'event': 'router_protocol_blocker_material_scan_dispatch_recheck', 'terminal': 'blocked'}}
     if repair_origin == 'parent_backward_replay':
         if rerun_target not in PARENT_REPAIR_SAFE_EVENTS:
             raise RouterError('parent backward replay repair rerun_target must be a parent-safe event')
@@ -105,37 +102,11 @@ def _repair_outcome_events(router: ModuleType, outcome_table: dict[str, Any]) ->
             events.append(event)
     return events
 
-def _repair_packet_specs_from_decision(router: ModuleType, project_root: Path, run_root: Path, decision: dict[str, Any], *, rerun_target: str) -> tuple[list[dict[str, Any]], dict[str, Any] | None]:
-    _bind_router(router)
-    transaction = decision.get('repair_transaction') if isinstance(decision.get('repair_transaction'), dict) else {}
-    raw_packets = transaction.get('replacement_packets') or transaction.get('packets') or decision.get('replacement_packets') or decision.get('packets')
-    if isinstance(raw_packets, list) and raw_packets:
-        return (raw_packets, {'source': 'decision_inline', 'packet_count': len(raw_packets)})
-    raw_path = transaction.get('replacement_packet_specs_path') or transaction.get('packet_reissue_spec_path') or decision.get('replacement_packet_specs_path') or decision.get('packet_reissue_spec_path')
-    if not raw_path and rerun_target == 'router_direct_material_scan_dispatch_recheck_passed':
-        default_path = run_root / 'material' / 'pm_material_scan_packet_specs_reissue.project_manager.json'
-        if default_path.exists():
-            raw_path = project_relative(project_root, default_path)
-    if not raw_path:
-        return ([], None)
-    spec_path = resolve_project_path(project_root, str(raw_path))
-    if not spec_path.exists():
-        raise RouterError(f'repair transaction packet spec path is missing: {raw_path}')
-    expected_hash = transaction.get('replacement_packet_specs_hash') or transaction.get('packet_reissue_spec_hash') or decision.get('replacement_packet_specs_hash') or decision.get('packet_reissue_spec_hash')
-    if expected_hash and packet_runtime.sha256_file(spec_path) != str(expected_hash):
-        raise RouterError('repair transaction packet spec hash mismatch')
-    spec = read_json(spec_path)
-    packets = spec.get('packets')
-    if not isinstance(packets, list) or not packets:
-        raise RouterError('repair transaction packet spec requires non-empty packets')
-    return (packets, {'source': 'packet_spec_file', 'path': project_relative(project_root, spec_path), 'sha256': packet_runtime.sha256_file(spec_path), 'packet_count': len(packets)})
-
 __all__ = (
     '_control_blocker_repair_origin',
     '_repair_outcome_table',
     '_validate_repair_outcome_table',
     '_repair_outcome_events',
-    '_repair_packet_specs_from_decision',
 )
 
 _LOCAL_NAMES = set(globals())

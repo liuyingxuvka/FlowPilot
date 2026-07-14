@@ -19,11 +19,7 @@ _RUN_STATE_VOLATILE_META_KEYS = {_RUN_STATE_LOAD_META_HASH, _RUN_STATE_LOAD_META
 _RUN_STATE_APPEND_ONLY_LIST_FIELDS = ("history", "events", "quarantined_role_reports", "control_blockers", "resolved_control_blockers", "protocol_blockers",
                                       "gate_decisions", "delivered_cards", "delivered_mail", "role_output_replay_quarantine")
 _RUN_STATE_PENDING_REMINDER_FIELDS = ("last_wait_reminder_at", "last_wait_reminder_sha256", "wait_reminder_text", "wait_reminder_text_sha256")
-_MATERIAL_GENERATION_PROGRESS_FLAGS = {"material_scan_packets_relayed", "worker_packets_delivered", "worker_scan_results_returned",
-                                       "material_scan_results_relayed_to_pm", "material_scan_result_disposition_recorded",
-                                       "material_scan_results_absorbed_by_pm", "material_review_sufficient", "material_review_insufficient"}
 _PM_PACKAGE_DISPOSITION_EVENTS = {
-    "pm_records_material_scan_result_disposition",
     "pm_records_research_result_disposition",
     "pm_records_current_node_result_disposition",
 }
@@ -51,18 +47,6 @@ def _json_clone(value: Any) -> Any:
 
 def _public_run_state_snapshot(state: dict[str, Any]) -> dict[str, Any]:
     return {key: _json_clone(value) for key, value in state.items() if key not in _RUN_STATE_VOLATILE_META_KEYS}
-
-
-def _material_generation_key(state: dict[str, Any]) -> tuple[str, str, str] | None:
-    generation = state.get("active_material_generation")
-    if not isinstance(generation, dict):
-        return None
-    key = (
-        str(generation.get("packet_generation_id") or ""),
-        str(generation.get("repair_transaction_id") or ""),
-        str(generation.get("batch_id") or ""),
-    )
-    return key if any(key) else None
 
 
 def _run_state_snapshot_hash(state: dict[str, Any]) -> str:

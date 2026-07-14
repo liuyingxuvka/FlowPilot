@@ -43,6 +43,9 @@ REQUIRED_LABELS = {
     "reject_release_obligation_hidden",
     "reject_release_claim_without_release_suite",
     "reject_release_public_check_races_model_proofs",
+    "reject_release_embeds_final_confidence_consumer",
+    "reject_testmesh_mta_final_confidence_dependency_cycle",
+    "reject_install_check_races_topology_writers",
     "reject_install_sync_skipped_after_tool_change",
 }
 
@@ -81,6 +84,13 @@ EXPECTED_HAZARD_FAILURES = {
     "release_obligation_hidden": {"release_obligation_hidden"},
     "release_claim_without_release_suite": {"release_scope_missing_release_suite"},
     "release_public_check_races_model_proofs": {"release_public_check_races_model_proofs"},
+    "release_embeds_final_confidence_consumer": {"release_tier_embeds_terminal_consumer"},
+    "testmesh_mta_final_confidence_dependency_cycle": {
+        "testmesh_mta_final_confidence_dependency_cycle"
+    },
+    "install_check_races_topology_writers": {
+        "install_check_races_topology_writers"
+    },
     "install_sync_skipped_after_tool_change": {"install_sync_not_planned"},
 }
 
@@ -104,6 +114,7 @@ def _state_id(state: model.State) -> str:
         f"release={state.release_required},{state.release_obligation_visible},"
         f"{state.release_suite_run_or_backgrounded},"
         f"{state.release_public_check_after_model_proofs}|"
+        f"install_order={state.install_check_after_topology_writers}|"
         f"sync={state.install_sync_required},{state.install_sync_planned}"
     )
 

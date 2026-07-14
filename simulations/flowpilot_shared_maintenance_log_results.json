@@ -49,9 +49,9 @@
       },
       "final_report_required_at_start": {
         "detected": true,
-        "expected_failure": "startup bookkeeping requires final report path before material understanding",
+        "expected_failure": "startup bookkeeping requires final report path before planning",
         "failures": [
-          "startup bookkeeping requires final report path before material understanding",
+          "startup bookkeeping requires final report path before planning",
           "final report path is not optional in the startup maintenance row"
         ]
       },
@@ -71,9 +71,9 @@
       },
       "pm_report_not_preserved": {
         "detected": true,
-        "expected_failure": "PM material understanding does not preserve the shared maintenance record",
+        "expected_failure": "PM planning report does not cite the shared maintenance record",
         "failures": [
-          "PM material understanding does not preserve the shared maintenance record"
+          "PM planning report does not cite the shared maintenance record"
         ]
       },
       "replaces_skill_improvement_report": {

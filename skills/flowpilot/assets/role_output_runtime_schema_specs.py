@@ -120,7 +120,6 @@ _BUILTIN_OUTPUT_TYPE_SPECS: dict[str, OutputTypeSpec] = {
         body_schema_version="flowpilot.pm_control_blocker_repair_decision.v1",
         explicit_array_fields=(
             "blockers",
-            "repair_transaction.replacement_packets",
             "prior_path_context_review.completed_nodes_considered",
             "prior_path_context_review.superseded_nodes_considered",
             "prior_path_context_review.stale_evidence_considered",
@@ -165,24 +164,6 @@ _BUILTIN_OUTPUT_TYPE_SPECS: dict[str, OutputTypeSpec] = {
         body_schema_version="flowpilot.flowguard_operator_model_report.v1",
         explicit_array_fields=(
             "pm_visible_summary",
-            "blockers",
-            "pm_suggestion_items",
-        ),
-    ),
-    "material_sufficiency_report": OutputTypeSpec(
-        output_type="material_sufficiency_report",
-        contract_id="flowpilot.output_contract.material_sufficiency_report.v1",
-        allowed_roles=("human_like_reviewer",),
-        path_key="report_path",
-        hash_key="report_hash",
-        default_subdir="reviews",
-        default_filename_prefix="material_sufficiency_report",
-        body_schema_version="flowpilot.material_sufficiency_report.v1",
-        explicit_array_fields=(
-            "pm_visible_summary",
-            "checked_source_paths",
-            "runtime_open_receipt_refs",
-            "findings",
             "blockers",
             "pm_suggestion_items",
         ),

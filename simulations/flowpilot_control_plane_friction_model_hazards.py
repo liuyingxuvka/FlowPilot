@@ -61,9 +61,6 @@ def _safe_base(**changes: object) -> State:
             stale_run_state_resurrected_closed_wait=False,
             self_check_template_status_pass_allowed=True,
             self_check_parser_status_pass_accepted=True,
-            material_gate_depends_on_result_body=True,
-            result_self_check_machine_parseable=True,
-            result_reader_authority_matches_runtime=True,
             pm_research_package_written=True,
             research_package_has_decision_question=True,
             research_package_has_allowed_sources=True,
@@ -71,13 +68,13 @@ def _safe_base(**changes: object) -> State:
             research_capability_decision_recorded=True,
             worker_packet_written=True,
             worker_packet_preserves_research_fields=True,
-            material_dispatch_requested=True,
-            material_dispatch_reviewed=True,
-            material_dispatch_allowed=True,
-            material_dispatch_phase_context_consistent=True,
-            material_dispatch_output_contract_consistent=True,
-            material_dispatch_write_target_explicit=True,
-            material_dispatch_single_canonical_body=True,
+            ordinary_work_dispatch_requested=True,
+            ordinary_work_dispatch_reviewed=True,
+            ordinary_work_dispatch_allowed=True,
+            ordinary_work_dispatch_family="pm_role_work",
+            ordinary_work_dispatch_current_scope=True,
+            ordinary_work_dispatch_output_contract_valid=True,
+            ordinary_work_dispatch_write_target_explicit=True,
             pm_repair_reissue_spec_written=False,
             pm_repair_reissue_packet_files_materialized=True,
             pm_repair_reissue_packets_registered_in_ledger=True,
@@ -116,10 +113,7 @@ def _safe_base(**changes: object) -> State:
             pm_formal_review_package_scope_declared=True,
             reviewer_report_written=True,
             reviewer_report_accepted=True,
-            pm_material_understanding_written=True,
-            pm_material_understanding_source_available=True,
             product_architecture_card_delivered=True,
-            product_architecture_delivery_has_material_context=True,
             protocol_blocker_file_written=False,
             protocol_blocker_registered_in_router_state=False,
             control_blocker_artifact_status_written=False,
@@ -155,7 +149,7 @@ def _safe_base(**changes: object) -> State:
             terminal_lifecycle_cleanup_proven=True,
             role_output_envelopes_recorded=False,
             role_output_hashes_replayable=True,
-            stage_advanced_after_material_scan=True,
+            stage_advanced_after_product_architecture_delivery=True,
             frontier_fresh_after_stage_advance=True,
             product_stage_view_published=True,
             product_stage_view_fresh=True,
@@ -247,23 +241,14 @@ def _safe_base(**changes: object) -> State:
             role_output_event_accepted=True,
             role_output_file_backed_body_path_present=True,
             role_output_body_hash_verified=True,
-            material_repair_generation_protocol_checked=True,
+            ordinary_repair_replay_protocol_checked=True,
             operation_replay_fresh_controller_action_id=True,
-            operation_replay_targets_current_generation=True,
+            operation_replay_targets_current_work_unit=True,
             operation_replay_ledger_io_authorized=True,
             controller_repair_work_packet_receipt_folded=True,
             controller_repair_work_packet_facade_exported=True,
-            pm_material_disposition_generation_scoped=True,
-            pm_material_disposition_matches_current_generation=True,
-            stale_pm_material_disposition_restored=False,
-            material_progress_projection_generation_scoped=True,
-            material_global_progress_flags_match_active_generation=True,
-            material_next_action_derived_from_active_batch=True,
-            material_reissue_clears_or_quarantines_stale_progress_flags=True,
-            stale_run_state_save_preserves_material_generation_flag_clear=True,
-            material_dispatch_block_matches_active_generation=True,
             role_output_event_deduped_by_body_ref=True,
-            role_output_current_generation_not_short_circuited_by_global_flag=True,
+            role_output_current_work_unit_not_short_circuited_by_global_flag=True,
             duplicate_role_event_side_effect_written=False,
             packet_result_author_identity_replayable=True,
             packet_result_author_matches_current_role=True,
@@ -275,27 +260,27 @@ def _safe_base(**changes: object) -> State:
 def hazard_states() -> dict[str, State]:
     return {
         "research_package_scope_dropped": _safe_base(worker_packet_preserves_research_fields=False),
-        "material_dispatch_phase_mismatch": _safe_base(
-            material_dispatch_phase_context_consistent=False,
+        "ordinary_work_dispatch_retired_family": _safe_base(
+            ordinary_work_dispatch_family="material_scan",
         ),
-        "material_dispatch_output_contract_mismatch": _safe_base(
-            material_dispatch_output_contract_consistent=False,
+        "ordinary_work_dispatch_wrong_scope": _safe_base(
+            ordinary_work_dispatch_current_scope=False,
         ),
-        "material_dispatch_write_target_missing": _safe_base(
-            material_dispatch_write_target_explicit=False,
+        "ordinary_work_dispatch_output_contract_missing": _safe_base(
+            ordinary_work_dispatch_output_contract_valid=False,
         ),
-        "material_dispatch_duplicate_canonical_body": _safe_base(
-            material_dispatch_single_canonical_body=False,
+        "ordinary_work_dispatch_write_target_missing": _safe_base(
+            ordinary_work_dispatch_write_target_explicit=False,
         ),
-        "material_dispatch_allowed_without_preflight": _safe_base(
-            material_dispatch_reviewed=False,
-            material_dispatch_allowed=True,
+        "ordinary_work_dispatch_allowed_without_review": _safe_base(
+            ordinary_work_dispatch_reviewed=False,
+            ordinary_work_dispatch_allowed=True,
         ),
-        "signed_material_envelope_rewritten_after_relay": _safe_base(
+        "signed_envelope_rewritten_after_relay": _safe_base(
             signed_envelope_relayed=True,
             signed_envelope_rewritten_after_relay=True,
         ),
-        "signed_material_migration_sidecar_missing": _safe_base(
+        "signed_envelope_migration_sidecar_missing": _safe_base(
             signed_envelope_relayed=True,
             signed_envelope_mutable_indexes_backfilled=True,
             signed_envelope_migration_sidecar_written=False,
@@ -335,14 +320,6 @@ def hazard_states() -> dict[str, State]:
             self_check_template_status_pass_allowed=True,
             self_check_parser_status_pass_accepted=False,
         ),
-        "material_gate_result_self_check_unparseable": _safe_base(
-            material_gate_depends_on_result_body=True,
-            result_self_check_machine_parseable=False,
-        ),
-        "material_gate_result_reader_not_runtime_backed": _safe_base(
-            material_gate_depends_on_result_body=True,
-            result_reader_authority_matches_runtime=False,
-        ),
         "pm_formal_gate_package_missing_artifact": _safe_base(
             pm_formal_review_package_released=True,
             pm_formal_review_package_has_artifact=False,
@@ -370,9 +347,6 @@ def hazard_states() -> dict[str, State]:
         "stale_snapshot_published_as_active": _safe_base(
             snapshot_published_as_active=True,
             snapshot_fresh_against_frontier_and_ledger=False,
-        ),
-        "product_architecture_delivery_missing_material_context": _safe_base(
-            product_architecture_delivery_has_material_context=False,
         ),
         "protocol_blocker_file_unregistered": _safe_base(
             protocol_blocker_file_written=True,
@@ -1101,10 +1075,10 @@ def hazard_states() -> dict[str, State]:
         "operation_replay_reuses_controller_action_id": _safe_base(
             operation_replay_fresh_controller_action_id=False,
         ),
-        "operation_replay_targets_superseded_generation": _safe_base(
-            operation_replay_targets_current_generation=False,
+        "operation_replay_targets_superseded_work_unit": _safe_base(
+            operation_replay_targets_current_work_unit=False,
         ),
-        "material_result_relay_replay_without_ledger_authority": _safe_base(
+        "ordinary_result_relay_replay_without_ledger_authority": _safe_base(
             operation_replay_ledger_io_authorized=False,
         ),
         "controller_repair_work_packet_receipt_not_folded": _safe_base(
@@ -1113,34 +1087,12 @@ def hazard_states() -> dict[str, State]:
         "controller_repair_work_packet_facade_export_missing": _safe_base(
             controller_repair_work_packet_facade_exported=False,
         ),
-        "pm_material_disposition_generation_blind": _safe_base(
-            pm_material_disposition_generation_scoped=False,
-        ),
-        "stale_pm_material_disposition_restored": _safe_base(
-            stale_pm_material_disposition_restored=True,
-        ),
-        "material_progress_flags_not_generation_scoped": _safe_base(
-            material_progress_projection_generation_scoped=False,
-            material_global_progress_flags_match_active_generation=False,
-        ),
-        "material_next_action_uses_stale_global_flags": _safe_base(
-            material_next_action_derived_from_active_batch=False,
-        ),
-        "material_reissue_keeps_stale_progress_flags": _safe_base(
-            material_reissue_clears_or_quarantines_stale_progress_flags=False,
-        ),
-        "stale_material_progress_flags_resurrected_by_save": _safe_base(
-            stale_run_state_save_preserves_material_generation_flag_clear=False,
-        ),
-        "material_dispatch_block_stale_generation": _safe_base(
-            material_dispatch_block_matches_active_generation=False,
-        ),
         "role_output_duplicate_not_deduped": _safe_base(
             role_output_event_deduped_by_body_ref=False,
             duplicate_role_event_side_effect_written=True,
         ),
-        "role_output_current_generation_short_circuited_by_global_flag": _safe_base(
-            role_output_current_generation_not_short_circuited_by_global_flag=False,
+        "role_output_current_work_unit_short_circuited_by_global_flag": _safe_base(
+            role_output_current_work_unit_not_short_circuited_by_global_flag=False,
         ),
         "pm_package_disposition_reconciled_without_domain_commit": _safe_base(
             role_output_package_disposition_domain_first_commit=False,

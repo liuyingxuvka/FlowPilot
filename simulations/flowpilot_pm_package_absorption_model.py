@@ -1,38 +1,10 @@
-"""FlowGuard model for FlowPilot PM-first worker package absorption.
+"""FlowGuard model for PM-first absorption of ordinary worker packages.
 
-Risk purpose:
-- Uses FlowGuard (https://github.com/liuyingxuvka/FlowGuard) to review the
-  FlowPilot protocol change where PM-issued worker package results return to
-  the Project Manager before any reviewer gate.
-- Guards against raw worker results being sent to the human-like reviewer,
-  PM decisions using undisposed worker results, accidental removal of critical
-  reviewer gates, resume paths bypassing PM disposition, unsupported_historical reviewer-relay
-  flags becoming current proof, and Controller sealed-body access.
-- Update and run this model whenever package result routing, reviewer gate
-  authority, resume result handling, or packet/result envelope contracts change.
-- Companion check command:
-  `python simulations/run_flowpilot_pm_package_absorption_checks.py`.
-
-Risk intent brief:
-- Protected harm: FlowPilot authority drift, where the reviewer becomes a
-  receiving clerk for PM-issued worker packages or, conversely, reviewer hard
-  gates are removed while cleaning up noisy package reviews.
-- Model-critical state: PM package authorship, worker result return, mechanical
-  result validation, PM relay, PM disposition, formal PM gate package creation,
-  reviewer gate review, route/node/material/research evidence use, resume
-  result handling, unsupported_historical direct-review flags, and Controller body isolation.
-- Adversarial branches: raw direct-to-reviewer routing, hidden PM forwarding
-  to reviewer, node completion without reviewer gate, formal evidence from
-  undisposed worker result, reviewer gate without PM package, removed critical
-  gate, resume direct-to-reviewer, material/research decision without gate,
-  unsupported_historical reviewer relay used as current acceptance, and Controller body reads.
-- Hard invariants: every PM-issued worker result returns to PM; reviewer reviews
-  only PM-built formal gate packages; PM disposition is mandatory before formal
-  evidence use; protected route/node/material/research/closure gates still
-  require reviewer participation; resume follows the same PM-first rule; unsupported_historical
-  reviewer-relay flags are audit history only; Controller remains envelope-only.
-- Blindspot: this is an abstract protocol model. Runtime tests must still check
-  concrete router actions, cards, contract files, and installed-skill sync.
+Research, current-node, and PM role-work packages are the only positive packet
+owners.  Their results return to PM for one runtime-bound disposition before a
+PM-built formal gate package can reach Reviewer.  Retired material scan or
+sufficiency authority is represented only by a negative scenario and can never
+be accepted as current proof.  Controller remains envelope-only.
 """
 
 from __future__ import annotations
@@ -44,8 +16,8 @@ from flowguard import FunctionResult, Invariant, InvariantResult, Workflow
 
 
 VALID_CURRENT_NODE_PM_GATE = "valid_current_node_pm_gate"
-VALID_MATERIAL_PM_GATE = "valid_material_pm_gate"
 VALID_RESEARCH_PM_GATE = "valid_research_pm_gate"
+VALID_PM_ROLE_WORK_PM_GATE = "valid_pm_role_work_pm_gate"
 VALID_RESUME_RESULT_TO_PM = "valid_resume_result_to_pm"
 VALID_CRITICAL_GATE_WITHOUT_WORKER_PACKAGE = "valid_critical_gate_without_worker_package"
 
@@ -55,7 +27,8 @@ REVIEWER_STARTED_WITHOUT_PM_GATE_PACKAGE = "reviewer_started_without_pm_gate_pac
 NODE_COMPLETION_WITHOUT_REVIEWER_GATE = "node_completion_without_reviewer_gate"
 CRITICAL_REVIEWER_GATE_REMOVED = "critical_reviewer_gate_removed"
 RESUME_RESULT_DIRECT_TO_REVIEWER = "resume_result_direct_to_reviewer"
-MATERIAL_RESEARCH_DECISION_WITHOUT_GATE = "material_research_decision_without_gate"
+ORDINARY_EVIDENCE_DECISION_WITHOUT_GATE = "ordinary_evidence_decision_without_gate"
+RETIRED_MATERIAL_AUTHORITY_USED_AS_CURRENT = "retired_material_authority_used_as_current"
 CONTROLLER_READS_SEALED_BODY = "controller_reads_sealed_body"
 RETIRED_REVIEWER_RELAY_USED_AS_CURRENT_ACCEPTANCE = (
     "unsupported_historical_reviewer_relay_used_as_current_acceptance"
@@ -69,8 +42,8 @@ PM_DISPOSITION_HALF_WRITTEN_ACCEPTED = "pm_disposition_half_written_accepted"
 
 VALID_SCENARIOS = (
     VALID_CURRENT_NODE_PM_GATE,
-    VALID_MATERIAL_PM_GATE,
     VALID_RESEARCH_PM_GATE,
+    VALID_PM_ROLE_WORK_PM_GATE,
     VALID_RESUME_RESULT_TO_PM,
     VALID_CRITICAL_GATE_WITHOUT_WORKER_PACKAGE,
 )
@@ -82,7 +55,8 @@ NEGATIVE_SCENARIOS = (
     NODE_COMPLETION_WITHOUT_REVIEWER_GATE,
     CRITICAL_REVIEWER_GATE_REMOVED,
     RESUME_RESULT_DIRECT_TO_REVIEWER,
-    MATERIAL_RESEARCH_DECISION_WITHOUT_GATE,
+    ORDINARY_EVIDENCE_DECISION_WITHOUT_GATE,
+    RETIRED_MATERIAL_AUTHORITY_USED_AS_CURRENT,
     CONTROLLER_READS_SEALED_BODY,
     RETIRED_REVIEWER_RELAY_USED_AS_CURRENT_ACCEPTANCE,
     PM_FORWARDED_RAW_PACKAGE_TO_REVIEWER,
@@ -94,13 +68,12 @@ NEGATIVE_SCENARIOS = (
 SCENARIOS = VALID_SCENARIOS + NEGATIVE_SCENARIOS
 
 PACKAGE_NONE = "none"
-PACKAGE_CURRENT_NODE = "current_node_work"
-PACKAGE_MATERIAL_SCAN = "material_scan"
+PACKAGE_CURRENT_NODE = "current_node"
 PACKAGE_RESEARCH = "research"
-PACKAGE_RESUME_EXISTING = "resume_existing_result"
+PACKAGE_PM_ROLE_WORK = "pm_role_work"
+RETIRED_PACKAGE_MATERIAL_SCAN = "material_scan"
 
 GATE_NONE = "none"
-GATE_MATERIAL_SUFFICIENCY = "material_sufficiency"
 GATE_RESEARCH_SOURCE = "research_source"
 GATE_PRODUCT_ARCHITECTURE = "product_architecture"
 GATE_ROUTE_CHALLENGE = "route_challenge"
@@ -109,10 +82,10 @@ GATE_NODE_COMPLETION = "node_completion"
 GATE_PARENT_BACKWARD = "parent_backward_replay"
 GATE_EVIDENCE_QUALITY = "evidence_quality"
 GATE_FINAL_BACKWARD = "final_backward_replay"
+RETIRED_GATE_MATERIAL_SUFFICIENCY = "material_sufficiency"
 
 CRITICAL_REVIEWER_GATES = frozenset(
     {
-        GATE_MATERIAL_SUFFICIENCY,
         GATE_RESEARCH_SOURCE,
         GATE_PRODUCT_ARCHITECTURE,
         GATE_ROUTE_CHALLENGE,
@@ -172,7 +145,7 @@ class State:
     reviewer_gate_passed: bool = False
 
     formal_evidence_uses_worker_result: bool = False
-    material_or_research_affects_decision: bool = False
+    ordinary_evidence_affects_decision: bool = False
     route_or_node_decision_recorded: bool = False
     node_completion_recorded: bool = False
 
@@ -194,7 +167,7 @@ class PMPackageAbsorptionStep:
     reads: package kind, worker result envelope, PM disposition, reviewer gate
     package, resume marker, unsupported_historical relay marker, and Controller boundary
     writes: PM result relay, PM disposition, formal gate package, reviewer gate
-    decision, route/node/material/research use, or terminal rejection
+    decision, route/node/evidence use, or terminal rejection
     idempotency: a worker result has one PM disposition; repeated ticks do not
     create a second current acceptance from the same raw or unsupported_historical result.
     """
@@ -255,61 +228,31 @@ def _scenario_base(scenario: str) -> State:
             reviewer_gate_started=True,
             reviewer_gate_passed=True,
             formal_evidence_uses_worker_result=True,
+            ordinary_evidence_affects_decision=True,
             route_or_node_decision_recorded=True,
             node_completion_recorded=True,
-        )
-    if scenario == VALID_MATERIAL_PM_GATE:
-        return State(
-            status="running",
-            scenario=scenario,
-            package_kind=PACKAGE_MATERIAL_SCAN,
-            gate_kind=GATE_MATERIAL_SUFFICIENCY,
-            critical_gate_required=True,
-            pm_authored_package=True,
-            worker_result_returned=True,
-            result_mechanically_validated=True,
-            result_relayed_to_pm=True,
-            pm_disposition=DISPOSITION_ABSORBED,
-            pm_disposition_recorded=True,
-            pm_disposition_runtime_contract_bound=True,
-            pm_disposition_transaction_committed=True,
-            pm_disposition_replay_verified=True,
-            pm_gate_package_written=True,
-            pm_gate_package_released_by_disposition=True,
-            pm_gate_package_identity_recorded=True,
-            reviewer_gate_started=True,
-            reviewer_gate_passed=True,
-            formal_evidence_uses_worker_result=True,
-            material_or_research_affects_decision=True,
-            route_or_node_decision_recorded=True,
         )
     if scenario == VALID_RESEARCH_PM_GATE:
-        return replace(_scenario_base(VALID_MATERIAL_PM_GATE), scenario=scenario, package_kind=PACKAGE_RESEARCH, gate_kind=GATE_RESEARCH_SOURCE)
-    if scenario == VALID_RESUME_RESULT_TO_PM:
-        return State(
-            status="running",
+        return replace(
+            _scenario_base(VALID_CURRENT_NODE_PM_GATE),
             scenario=scenario,
-            package_kind=PACKAGE_RESUME_EXISTING,
-            gate_kind=GATE_NODE_COMPLETION,
+            package_kind=PACKAGE_RESEARCH,
+            gate_kind=GATE_RESEARCH_SOURCE,
+            node_completion_recorded=False,
+        )
+    if scenario == VALID_PM_ROLE_WORK_PM_GATE:
+        return replace(
+            _scenario_base(VALID_CURRENT_NODE_PM_GATE),
+            scenario=scenario,
+            package_kind=PACKAGE_PM_ROLE_WORK,
+            gate_kind=GATE_PRODUCT_ARCHITECTURE,
+            node_completion_recorded=False,
+        )
+    if scenario == VALID_RESUME_RESULT_TO_PM:
+        return replace(
+            _scenario_base(VALID_CURRENT_NODE_PM_GATE),
+            scenario=scenario,
             resume_path=True,
-            critical_gate_required=True,
-            pm_authored_package=True,
-            worker_result_returned=True,
-            result_mechanically_validated=True,
-            result_relayed_to_pm=True,
-            pm_disposition=DISPOSITION_ABSORBED,
-            pm_disposition_recorded=True,
-            pm_disposition_runtime_contract_bound=True,
-            pm_disposition_transaction_committed=True,
-            pm_disposition_replay_verified=True,
-            pm_gate_package_written=True,
-            pm_gate_package_released_by_disposition=True,
-            pm_gate_package_identity_recorded=True,
-            reviewer_gate_started=True,
-            reviewer_gate_passed=True,
-            formal_evidence_uses_worker_result=True,
-            route_or_node_decision_recorded=True,
-            node_completion_recorded=True,
         )
     if scenario == VALID_CRITICAL_GATE_WITHOUT_WORKER_PACKAGE:
         return State(
@@ -392,7 +335,7 @@ def _scenario_state(scenario: str) -> State:
             pm_gate_package_identity_recorded=False,
             reviewer_received_raw_worker_result=True,
         )
-    if scenario == MATERIAL_RESEARCH_DECISION_WITHOUT_GATE:
+    if scenario == ORDINARY_EVIDENCE_DECISION_WITHOUT_GATE:
         return replace(
             _scenario_base(VALID_RESEARCH_PM_GATE),
             scenario=scenario,
@@ -401,8 +344,15 @@ def _scenario_state(scenario: str) -> State:
             pm_gate_package_identity_recorded=False,
             reviewer_gate_started=False,
             reviewer_gate_passed=False,
-            material_or_research_affects_decision=True,
+            ordinary_evidence_affects_decision=True,
             route_or_node_decision_recorded=True,
+        )
+    if scenario == RETIRED_MATERIAL_AUTHORITY_USED_AS_CURRENT:
+        return replace(
+            _scenario_base(VALID_RESEARCH_PM_GATE),
+            scenario=scenario,
+            package_kind=RETIRED_PACKAGE_MATERIAL_SCAN,
+            gate_kind=RETIRED_GATE_MATERIAL_SUFFICIENCY,
         )
     if scenario == CONTROLLER_READS_SEALED_BODY:
         return replace(_scenario_base(VALID_CURRENT_NODE_PM_GATE), scenario=scenario, controller_read_sealed_body=True)
@@ -491,10 +441,14 @@ def package_absorption_failures(state: State) -> list[str]:
     failures: list[str] = []
     pm_issued_package = state.package_kind in {
         PACKAGE_CURRENT_NODE,
-        PACKAGE_MATERIAL_SCAN,
         PACKAGE_RESEARCH,
-        PACKAGE_RESUME_EXISTING,
+        PACKAGE_PM_ROLE_WORK,
     }
+    if (
+        state.package_kind == RETIRED_PACKAGE_MATERIAL_SCAN
+        or state.gate_kind == RETIRED_GATE_MATERIAL_SUFFICIENCY
+    ):
+        failures.append("retired material-specific package or gate used as current authority")
     if state.controller_read_sealed_body:
         failures.append("Controller read sealed packet/result body")
     if pm_issued_package and state.worker_result_returned and state.reviewer_received_raw_worker_result:
@@ -552,7 +506,7 @@ def package_absorption_failures(state: State) -> list[str]:
         and state.route_or_node_decision_recorded
         and not state.reviewer_gate_passed
     ):
-        failures.append("critical PM route/node/material/research decision bypassed reviewer gate")
+        failures.append("critical PM route/node/evidence/closure decision bypassed reviewer gate")
     if state.node_completion_recorded and not (
         state.gate_kind == GATE_NODE_COMPLETION
         and state.pm_gate_package_written
@@ -561,11 +515,12 @@ def package_absorption_failures(state: State) -> list[str]:
     ):
         failures.append("PM completed a node without PM disposition and reviewer node-completion gate")
     if (
-        state.material_or_research_affects_decision
-        and state.package_kind in {PACKAGE_MATERIAL_SCAN, PACKAGE_RESEARCH}
+        state.ordinary_evidence_affects_decision
+        and state.package_kind
+        in {PACKAGE_CURRENT_NODE, PACKAGE_RESEARCH, PACKAGE_PM_ROLE_WORK}
         and not (state.pm_disposition_recorded and state.pm_gate_package_written and state.reviewer_gate_passed)
     ):
-        failures.append("material/research result affected a protected decision without PM absorption and reviewer gate")
+        failures.append("ordinary evidence affected a protected decision without PM absorption and reviewer gate")
     if (
         state.resume_path
         and state.worker_result_returned
@@ -628,6 +583,18 @@ def unsupported_historical_reviewer_relay_is_audit_only(state: State, trace) -> 
     return InvariantResult.pass_()
 
 
+def retired_material_authority_is_negative_only(state: State, trace) -> InvariantResult:
+    del trace
+    if state.status == "accepted" and (
+        state.package_kind == RETIRED_PACKAGE_MATERIAL_SCAN
+        or state.gate_kind == RETIRED_GATE_MATERIAL_SUFFICIENCY
+    ):
+        return InvariantResult.fail(
+            "accepted retired material-specific package or gate as current authority"
+        )
+    return InvariantResult.pass_()
+
+
 INVARIANTS = (
     Invariant(
         name="accepts_only_safe_pm_first_flows",
@@ -646,7 +613,7 @@ INVARIANTS = (
     ),
     Invariant(
         name="critical_reviewer_gates_stay_mandatory",
-        description="Protected route, node, material, research, and closure gates still require reviewer pass.",
+        description="Protected route, node, evidence, and closure gates still require reviewer pass.",
         predicate=critical_reviewer_gates_stay_mandatory,
     ),
     Invariant(
@@ -658,6 +625,11 @@ INVARIANTS = (
         name="unsupported_historical_reviewer_relay_is_audit_only",
         description="Retired direct-reviewer relay flags cannot satisfy current PM disposition or gate proof.",
         predicate=unsupported_historical_reviewer_relay_is_audit_only,
+    ),
+    Invariant(
+        name="retired_material_authority_is_negative_only",
+        description="Retired material-specific package and gate names cannot satisfy current acceptance.",
+        predicate=retired_material_authority_is_negative_only,
     ),
 )
 

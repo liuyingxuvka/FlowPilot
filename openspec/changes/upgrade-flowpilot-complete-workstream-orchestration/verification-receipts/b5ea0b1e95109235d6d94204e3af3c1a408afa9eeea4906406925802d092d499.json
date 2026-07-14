@@ -1,0 +1,27 @@
+{
+  "schema_version": 2,
+  "report_protocol_version": 3,
+  "execution_key": "sha256:2065b3e99d0ffb74073604a9567aaa3c4634501355890197d3e608287765ac7d",
+  "result_hash": "sha256:6034b3981687faa9f7ce13691827fa3e884f6c756ce823334234ec0ce9bac638",
+  "receipt_id": "sha256:b5ea0b1e95109235d6d94204e3af3c1a408afa9eeea4906406925802d092d499",
+  "result": {
+    "status": "passed",
+    "command": "python",
+    "args": [
+      "-m",
+      "pytest",
+      "tests/test_flowpilot_installer_dependencies.py",
+      "tests/test_flowpilot_cli_entrypoints.py",
+      "tests/test_flowpilot_skillguard_deep_contract.py",
+      "tests/test_flowguard_background_helper.py",
+      "-q"
+    ],
+    "expected_exit_code": 0,
+    "exit_code": 0,
+    "timeout_seconds": 1800,
+    "stdout": ".......................                                                  [100%]\r\n23 passed in 17.06s\r\n",
+    "stderr": "",
+    "stdout_preview": ".......................                                                  [100%]\r\n23 passed in 17.06s\r\n",
+    "stderr_preview": ""
+  }
+}

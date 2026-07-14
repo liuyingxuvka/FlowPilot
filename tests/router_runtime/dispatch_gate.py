@@ -5,6 +5,21 @@ from tests.router_runtime.common import FlowPilotRouterRuntimeTestBase
 
 
 class DispatchGateRuntimeTests(FlowPilotRouterRuntimeTestBase):
+    def test_user_intake_progresses_to_product_architecture_without_material_card(self) -> None:
+        root = self.make_project()
+        self.boot_to_controller(root)
+        self.complete_startup_runtime_entry(root)
+
+        action = self.next_after_display_sync(root)
+
+        self.assertEqual(action["action_type"], "deliver_system_card")
+        self.assertEqual(action["card_id"], "pm.product_architecture")
+        self.assertNotEqual(action.get("card_id"), "pm.material_scan")
+        self.assertEqual(
+            action["dispatch_recipient_gate"]["same_obligation_instruction"]["expected_first_output_event"],
+            "pm_writes_product_function_architecture",
+        )
+
     def test_dispatch_recipient_gate_blocks_busy_packet_holder(self) -> None:
         root = self.make_project()
         run_root = self.write_minimal_run(root, "run-dispatch-gate-busy-holder")
@@ -67,9 +82,9 @@ class DispatchGateRuntimeTests(FlowPilotRouterRuntimeTestBase):
         action = router.make_action(
             action_type="deliver_system_card",
             actor="controller",
-            label="pm_material_scan_card_delivered",
-            summary="Deliver the PM material scan instruction card.",
-            card_id="pm.material_scan",
+            label="pm_product_architecture_phase_card_delivered",
+            summary="Deliver the PM product-architecture instruction card.",
+            card_id="pm.product_architecture",
             to_role="project_manager",
         )
 
@@ -80,10 +95,10 @@ class DispatchGateRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertTrue(gate["passed"])
         self.assertEqual(gate["target_roles"], ["project_manager"])
         self.assertEqual(gate["same_obligation_instruction"]["packet_id"], "user_intake")
-        self.assertEqual(gate["same_obligation_instruction"]["instruction_card_id"], "pm.material_scan")
+        self.assertEqual(gate["same_obligation_instruction"]["instruction_card_id"], "pm.product_architecture")
         self.assertEqual(
             gate["same_obligation_instruction"]["expected_first_output_event"],
-            "pm_issues_material_and_capability_scan_packets",
+            "pm_writes_product_function_architecture",
         )
         self.assertFalse(gate["sealed_body_reads_allowed"])
     def test_dispatch_recipient_gate_blocks_independent_pm_dispatch_while_user_intake_output_pending(self) -> None:
@@ -119,7 +134,7 @@ class DispatchGateRuntimeTests(FlowPilotRouterRuntimeTestBase):
 
         self.assertEqual(gated["action_type"], "await_role_decision")
         self.assertEqual(gated["to_role"], "project_manager")
-        self.assertEqual(gated["allowed_external_events"], ["pm_issues_material_and_capability_scan_packets"])
+        self.assertEqual(gated["allowed_external_events"], ["pm_writes_product_function_architecture"])
         gate = gated["dispatch_recipient_gate"]
         self.assertFalse(gate["passed"])
         self.assertEqual(gate["busy_source"], "packet_ledger")
@@ -131,7 +146,7 @@ class DispatchGateRuntimeTests(FlowPilotRouterRuntimeTestBase):
         run_root = self.write_minimal_run(root, "run-dispatch-gate-user-intake-done")
         state = read_json(router.run_state_path(run_root))
         state["flags"]["user_intake_delivered_to_pm"] = True
-        state["flags"]["pm_material_packets_issued"] = True
+        state["flags"]["product_architecture_written_by_pm"] = True
         router.write_json(router.run_state_path(run_root), state)
         ledger = router._create_empty_packet_ledger(root, state["run_id"], run_root)
         ledger["active_packet_id"] = "user_intake"
@@ -168,10 +183,10 @@ class DispatchGateRuntimeTests(FlowPilotRouterRuntimeTestBase):
         wait_action = router.make_action(
             action_type="await_role_decision",
             actor="controller",
-            label="controller_waits_for_pm_material_scan_packets",
-            summary="Controller waits for PM to issue material scan packets.",
+            label="controller_waits_for_pm_product_architecture",
+            summary="Controller waits for PM to write the product-function architecture.",
             to_role="project_manager",
-            extra={"allowed_external_events": ["pm_issues_material_and_capability_scan_packets"]},
+            extra={"allowed_external_events": ["pm_writes_product_function_architecture"]},
         )
         router._write_controller_action_entry(root, run_root, state, wait_action)
 
@@ -408,8 +423,8 @@ class DispatchGateRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertEqual(action["mail_id"], "user_intake")
         obligation = action["mail_role_obligation"]
         self.assertTrue(obligation["mail_is_formal_work_material"])
-        self.assertEqual(obligation["first_output_instruction_card_id"], "pm.material_scan")
-        self.assertEqual(obligation["first_expected_output_event"], "pm_issues_material_and_capability_scan_packets")
+        self.assertEqual(obligation["first_output_instruction_card_id"], "pm.product_architecture")
+        self.assertEqual(obligation["first_expected_output_event"], "pm_writes_product_function_architecture")
         self.assertEqual(action["next_step_contract"]["mail_role_obligation"], obligation)
     def test_current_node_parallel_batch_waits_for_all_results_before_review(self) -> None:
         root = self.make_project()
@@ -447,7 +462,15 @@ class DispatchGateRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertEqual(batch_index["batch_id"], "node-parallel-batch-001")
         self.assertEqual(len(batch_index["packets"]), 2)
 
+        opened_roles: list[str] = []
         action = self.next_after_display_sync(root)
+        while action["action_type"] == "open_current_role_agent":
+            opened_roles.append(str(action.get("target_role_key") or action.get("to_role") or ""))
+            router.apply_action(root, "open_current_role_agent", self.payload_for_action(action))
+            action = self.next_after_display_sync(root)
+        self.assertIn("worker", opened_roles)
+        self.assertTrue(self.active_agent_id_for_role(root, "worker"))
+        self.assertTrue(self.active_agent_id_for_role(root, "flowguard_operator"))
         self.assertEqual(action["action_type"], "relay_current_node_packet")
         self.assertEqual(sorted(action["packet_ids"]), ["node-batch-flowguard-1", "node-batch-worker-1"])
         router.apply_action(root, "relay_current_node_packet")

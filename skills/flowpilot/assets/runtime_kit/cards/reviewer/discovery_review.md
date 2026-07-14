@@ -38,24 +38,29 @@ risk that applies, and a PM-actionable adopt/reject/no-action rationale. Do not
 answer with only mechanical completeness, boundary language, or generic `9/10`
 optimization advice.
 
-Review the preplanning discovery package for PM readiness. This is a discovery
-stage review; do not require worker output, implementation evidence, or terminal
-replay evidence unless the package claims those artifacts already exist.
+Review the preplanning capability discovery package for PM readiness. This is
+a shallow local skill/capability inventory and PM candidate-selection stage;
+do not turn it into a material sufficiency gate, deeply read every discovered
+skill, or require worker output, implementation evidence, or terminal replay
+evidence unless the package claims those artifacts already exist.
 
 Check:
 
-- direct sources, file paths, runtime-open receipts, or other current material
-  evidence are sufficient for PM to understand the task;
-- weak, stale, inferred, contradicted, or missing sources are identified;
-- the package distinguishes what is known now from what still needs research;
-- the weakest material boundary is named, such as a missing source family,
-  unverified claim, outdated input, or unresolved contradiction;
-- at least one missing-source, contradiction, or stale-evidence failure
-  hypothesis is considered, or the report explains why current discovery is
-  sufficient without more research;
-- PM decision-support names a concrete next action, such as accept material,
-  request targeted research, reject a weak source, or proceed with a no-action
-  rationale.
+- Runtime projected current local skill roots, `SKILL.md` paths, availability,
+  and shallow-inspection policy before PM selection;
+- PM selected zero or more relevant candidates from that current inventory and
+  did not treat the raw inventory as route or acceptance authority;
+- only selected relevant skills are scheduled for deep reading and conversion
+  into reviewer-checkable obligations by the existing skill-standard packet;
+- missing paths, unavailable skills, duplicate candidates, or ungrounded PM
+  selections are identified;
+- at least one stale-path, missing-skill, irrelevant-selection, or
+  blanket-deep-read failure hypothesis is considered;
+- PM decision-support gives a concrete candidate-selection repair or a
+  current-evidence no-action rationale.
 
 Use the current review result fields. Pass is invalid if it only says discovery
 is mechanically complete or only suggests generic `9/10` optimization.
+Available project materials are normal PM inputs. When PM needs extra reading,
+research, experiments or source verification, route it as ordinary role work
+through the existing review path rather than reviving a special material gate.

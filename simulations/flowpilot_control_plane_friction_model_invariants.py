@@ -19,24 +19,24 @@ def research_scope_preserved(state: State, trace) -> InvariantResult:
         and state.worker_packet_preserves_research_fields
     ):
         return InvariantResult.fail(
-            "worker research packet was materialized after PM package scope fields were dropped"
+            "worker research packet was issued after PM package scope fields were dropped"
         )
     return InvariantResult.pass_()
 
-def material_scan_dispatch_requires_packet_integrity(state: State, trace) -> InvariantResult:
+def ordinary_work_dispatch_requires_current_contract(state: State, trace) -> InvariantResult:
     del trace
-    if state.material_dispatch_requested and not (
-        state.material_dispatch_phase_context_consistent
-        and state.material_dispatch_output_contract_consistent
-        and state.material_dispatch_write_target_explicit
-        and state.material_dispatch_single_canonical_body
+    if state.ordinary_work_dispatch_requested and not (
+        state.ordinary_work_dispatch_family in {"research", "pm_role_work", "current_node"}
+        and state.ordinary_work_dispatch_current_scope
+        and state.ordinary_work_dispatch_output_contract_valid
+        and state.ordinary_work_dispatch_write_target_explicit
     ):
         return InvariantResult.fail(
-            "material scan dispatch request had inconsistent phase, output contract, write-target, or canonical-body state"
+            "ordinary work dispatch used a retired family or lacked current scope, output contract, or write target"
         )
-    if state.material_dispatch_allowed and not state.material_dispatch_reviewed:
+    if state.ordinary_work_dispatch_allowed and not state.ordinary_work_dispatch_reviewed:
         return InvariantResult.fail(
-            "material scan dispatch was allowed before router direct-dispatch preflight"
+            "ordinary work dispatch was allowed before Router mechanical contract review"
         )
     return InvariantResult.pass_()
 
@@ -96,18 +96,6 @@ def active_snapshot_is_fresh(state: State, trace) -> InvariantResult:
     del trace
     if state.snapshot_published_as_active and not state.snapshot_fresh_against_frontier_and_ledger:
         return InvariantResult.fail("active route_state_snapshot is stale against frontier or packet ledger")
-    return InvariantResult.pass_()
-
-def product_architecture_delivery_requires_material_context(state: State, trace) -> InvariantResult:
-    del trace
-    if state.product_architecture_card_delivered and not (
-        state.pm_material_understanding_written
-        and state.pm_material_understanding_source_available
-        and state.product_architecture_delivery_has_material_context
-    ):
-        return InvariantResult.fail(
-            "product architecture card was delivered without PM material-understanding source paths"
-        )
     return InvariantResult.pass_()
 
 def protocol_blockers_are_router_visible(state: State, trace) -> InvariantResult:
@@ -225,20 +213,6 @@ def packet_ledger_io_is_atomic_and_recoverable(state: State, trace) -> Invariant
     if not state.packet_ledger_corruption_recoverable:
         return InvariantResult.fail(
             "packet ledger corruption was not modeled as recoverable before daemon continuation"
-        )
-    return InvariantResult.pass_()
-
-def material_gate_result_evidence_is_machine_and_authority_backed(
-    state: State, trace
-) -> InvariantResult:
-    del trace
-    if state.material_gate_depends_on_result_body and not state.result_self_check_machine_parseable:
-        return InvariantResult.fail(
-            "material gate depended on a result body whose Contract Self-Check was not machine-parseable"
-        )
-    if state.material_gate_depends_on_result_body and not state.result_reader_authority_matches_runtime:
-        return InvariantResult.fail(
-            "artifact map advertised result-body reader access that runtime relay authority did not grant"
         )
     return InvariantResult.pass_()
 
@@ -431,21 +405,21 @@ def role_output_events_require_file_backed_body(state: State, trace) -> Invarian
         )
     return InvariantResult.pass_()
 
-def material_repair_generation_protocol_is_current(state: State, trace) -> InvariantResult:
+def ordinary_repair_replay_protocol_is_current(state: State, trace) -> InvariantResult:
     del trace
-    if not state.material_repair_generation_protocol_checked:
+    if not state.ordinary_repair_replay_protocol_checked:
         return InvariantResult.pass_()
     if not state.operation_replay_fresh_controller_action_id:
         return InvariantResult.fail(
             "operation replay reused a closed Controller action identity"
         )
-    if not state.operation_replay_targets_current_generation:
+    if not state.operation_replay_targets_current_work_unit:
         return InvariantResult.fail(
-            "operation replay targeted a superseded material packet generation"
+            "operation replay targeted a superseded ordinary work unit"
         )
     if not state.operation_replay_ledger_io_authorized:
         return InvariantResult.fail(
-            "material result relay replay lacked current packet-ledger and material-index authority"
+            "ordinary result relay replay lacked current packet-ledger authority"
         )
     if not state.controller_repair_work_packet_receipt_folded:
         return InvariantResult.fail(
@@ -455,53 +429,19 @@ def material_repair_generation_protocol_is_current(state: State, trace) -> Invar
         return InvariantResult.fail(
             "controller_repair_work_packet receipt helper was not exported through the Router facade"
         )
-    if not (
-        state.pm_material_disposition_generation_scoped
-        and state.pm_material_disposition_matches_current_generation
-    ):
-        return InvariantResult.fail(
-            "PM material result disposition was not scoped to the current packet generation"
-        )
-    if state.stale_pm_material_disposition_restored:
-        return InvariantResult.fail(
-            "stale PM material disposition was restored as current-generation success"
-        )
-    if not (
-        state.material_progress_projection_generation_scoped
-        and state.material_global_progress_flags_match_active_generation
-    ):
-        return InvariantResult.fail(
-            "material progress flags were not scoped to the active material generation"
-        )
-    if not state.material_next_action_derived_from_active_batch:
-        return InvariantResult.fail(
-            "material next action was derived from stale run-wide material flags instead of active batch state"
-        )
-    if not state.material_reissue_clears_or_quarantines_stale_progress_flags:
-        return InvariantResult.fail(
-            "material packet reissue left superseded progress flags visible for the current generation"
-        )
-    if not state.stale_run_state_save_preserves_material_generation_flag_clear:
-        return InvariantResult.fail(
-            "stale run-state save restored superseded material progress flags after current generation reset"
-        )
-    if not state.material_dispatch_block_matches_active_generation:
-        return InvariantResult.fail(
-            "material dispatch protocol block referenced a superseded repair generation"
-        )
     return InvariantResult.pass_()
 
 def role_event_identity_and_audit_records_are_closed(state: State, trace) -> InvariantResult:
     del trace
-    if not state.material_repair_generation_protocol_checked:
+    if not state.ordinary_repair_replay_protocol_checked:
         return InvariantResult.pass_()
     if not state.role_output_event_deduped_by_body_ref:
         return InvariantResult.fail(
             "role-output events were not deduped by event type and body reference"
         )
-    if not state.role_output_current_generation_not_short_circuited_by_global_flag:
+    if not state.role_output_current_work_unit_not_short_circuited_by_global_flag:
         return InvariantResult.fail(
-            "role-output reconciliation short-circuited current-generation material event on a run-wide flag"
+            "role-output reconciliation short-circuited a current ordinary work-unit event on a run-wide flag"
         )
     if not state.role_output_package_disposition_domain_first_commit:
         return InvariantResult.fail(
@@ -582,7 +522,7 @@ def role_event_identity_and_audit_records_are_closed(state: State, trace) -> Inv
 
 def packet_result_authority_is_ledger_replayable(state: State, trace) -> InvariantResult:
     del trace
-    if not state.material_repair_generation_protocol_checked:
+    if not state.ordinary_repair_replay_protocol_checked:
         return InvariantResult.pass_()
     if not state.packet_result_author_identity_replayable:
         return InvariantResult.fail(
@@ -814,10 +754,10 @@ def frontier_tracks_product_architecture_delivery(state: State, trace) -> Invari
     del trace
     if (
         state.product_architecture_card_delivered
-        and state.stage_advanced_after_material_scan
+        and state.stage_advanced_after_product_architecture_delivery
         and not state.frontier_fresh_after_stage_advance
     ):
-        return InvariantResult.fail("execution frontier remained at material_scan after product architecture delivery")
+        return InvariantResult.fail("execution frontier remained stale after product architecture delivery")
     return InvariantResult.pass_()
 
 def display_surfaces_track_product_architecture_delivery(state: State, trace) -> InvariantResult:
@@ -1264,9 +1204,9 @@ INVARIANTS = (
         predicate=research_scope_preserved,
     ),
     Invariant(
-        name="material_scan_dispatch_requires_packet_integrity",
-        description="Material-scan dispatch reviews verify phase, output contract, write target, and canonical packet body consistency.",
-        predicate=material_scan_dispatch_requires_packet_integrity,
+        name="ordinary_work_dispatch_requires_current_contract",
+        description="Ordinary research, PM role-work, and current-node dispatches require current scope, output contract, and write-target evidence.",
+        predicate=ordinary_work_dispatch_requires_current_contract,
     ),
     Invariant(
         name="reviewer_report_requires_open_receipts",
@@ -1292,11 +1232,6 @@ INVARIANTS = (
         name="active_snapshot_is_fresh",
         description="User-visible active snapshots are fresh against frontier and packet ledger.",
         predicate=active_snapshot_is_fresh,
-    ),
-    Invariant(
-        name="product_architecture_delivery_requires_material_context",
-        description="Product architecture delivery includes canonical PM material-understanding source paths.",
-        predicate=product_architecture_delivery_requires_material_context,
     ),
     Invariant(
         name="protocol_blockers_are_router_visible",
@@ -1332,11 +1267,6 @@ INVARIANTS = (
         name="packet_ledger_io_is_atomic_and_recoverable",
         description="Packet ledger writes are atomic/locked/readback-validated and corrupt reads become recoverable blockers.",
         predicate=packet_ledger_io_is_atomic_and_recoverable,
-    ),
-    Invariant(
-        name="material_gate_result_evidence_is_machine_and_authority_backed",
-        description="Material gates depend only on machine-parseable result self-checks and runtime-backed reader authority.",
-        predicate=material_gate_result_evidence_is_machine_and_authority_backed,
     ),
     Invariant(
         name="router_owned_artifacts_are_reclaimed_before_blocker",
@@ -1399,9 +1329,9 @@ INVARIANTS = (
         predicate=role_output_events_require_file_backed_body,
     ),
     Invariant(
-        name="material_repair_generation_protocol_is_current",
-        description="Material repair replay, Controller receipts, and PM dispositions stay scoped to the current packet generation.",
-        predicate=material_repair_generation_protocol_is_current,
+        name="ordinary_repair_replay_protocol_is_current",
+        description="Ordinary work replay, Controller repair receipts, and result relay stay scoped to the current work unit and packet ledger.",
+        predicate=ordinary_repair_replay_protocol_is_current,
     ),
     Invariant(
         name="role_event_identity_and_audit_records_are_closed",

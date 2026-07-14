@@ -60,7 +60,8 @@ def _looks_like_sealed_body_path(path: Path) -> bool:
     normalized = "/".join(path.parts).lower()
     name = path.name.lower()
     return (
-        ".sealed" in name
+        name in {"packet_body.md", "result_body.md"}
+        or ".sealed" in name
         or name.endswith("_sealed.json")
         or name.endswith("_sealed.md")
         or "sealed_body" in normalized

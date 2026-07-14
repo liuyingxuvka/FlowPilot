@@ -40,22 +40,22 @@ class RoleOutputBridgeEventChildTests(unittest.TestCase):
             project_root = Path(tmp)
             run_root = project_root / ".flowpilot" / "runs" / "run-test"
             run_root.mkdir(parents=True)
-            body_path = run_root / "role_outputs" / "material.json"
-            _write_json(body_path, {"sufficient": True})
+            body_path = run_root / "role_outputs" / "current_node_review.json"
+            _write_json(body_path, {"passed": True})
             router = _dummy_router(project_root)
 
             payload = role_output_bridge_events._role_output_body_payload_from_record(
                 router,
                 project_root,
-                {"body_path": ".flowpilot/runs/run-test/role_outputs/material.json"},
+                {"body_path": ".flowpilot/runs/run-test/role_outputs/current_node_review.json"},
                 {
-                    "event_name": "reviewer_reports_material_sufficient",
-                    "body_ref": {"path": ".flowpilot/runs/run-test/role_outputs/material.json"},
+                    "event_name": "current_node_reviewer_passes_result",
+                    "body_ref": {"path": ".flowpilot/runs/run-test/role_outputs/current_node_review.json"},
                 },
             )
 
-            self.assertTrue(payload["sufficient"])
-            self.assertEqual(payload["_role_output_envelope"]["event_name"], "reviewer_reports_material_sufficient")
+            self.assertTrue(payload["passed"])
+            self.assertEqual(payload["_role_output_envelope"]["event_name"], "current_node_reviewer_passes_result")
             self.assertTrue(
                 role_output_bridge_events._role_output_event_has_durable_authority(
                     router,
@@ -64,10 +64,10 @@ class RoleOutputBridgeEventChildTests(unittest.TestCase):
                         "flags": {},
                         "pending_action": {
                             "action_type": "await_role_decision",
-                            "allowed_external_events": ["reviewer_reports_material_sufficient"],
+                            "allowed_external_events": ["current_node_reviewer_passes_result"],
                         },
                     },
-                    "reviewer_reports_material_sufficient",
+                    "current_node_reviewer_passes_result",
                 )
             )
             self.assertFalse(
@@ -75,7 +75,7 @@ class RoleOutputBridgeEventChildTests(unittest.TestCase):
                     router,
                     run_root,
                     {"flags": {}, "pending_action": {}},
-                    "reviewer_reports_material_sufficient",
+                    "current_node_reviewer_passes_result",
                 )
             )
 

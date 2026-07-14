@@ -53,8 +53,8 @@ The known high-level dirty families are currently:
   machine-checkable contract fields.
 - `pm_repair_atomicity`: PM repair decisions expose follow-up events before
   daemon-visible repair state is committed.
-- `packet_reissue_continuation`: material packet repair waits on stale worker
-  result flags or lacks a fresh packet producer.
+- `producerless_repair_continuation`: a repair waits on stale result flags or
+  names an event without a concrete current producer or safe operation replay.
 - `status_projection_stale`: user-visible status or route display is generated
   from stale Router facts.
 - `ack_false_blocker`: ACK receipt clearance is confused with semantic role

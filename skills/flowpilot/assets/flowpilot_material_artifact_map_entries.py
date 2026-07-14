@@ -128,55 +128,16 @@ def entry_for_artifact(
 
 
 def artifact_status(kind: str, data: dict[str, Any]) -> str:
-    if kind == "material_sufficiency_report":
-        if data.get("sufficient") is True and data.get("pm_ready") is True:
-            return "current"
-        return "blocked"
+    declared_status = str(data.get("status") or "")
+    if declared_status in {"blocked", "stale", "unresolved"}:
+        return declared_status
     if kind == "pm_package_result_disposition":
         decision = str(data.get("decision") or "")
         return "current" if decision == "absorbed" else (decision or "blocked")
-    if kind == "pm_material_understanding":
-        return "accepted"
     return "current"
 
 
 STATIC_ARTIFACT_SPECS = (
-    (
-        "material:pm_result_disposition",
-        "pm_package_result_disposition",
-        ("material", "pm_material_scan_result_disposition.json"),
-        "project_manager",
-        "project_manager",
-        "pm_decision_support",
-        "PM disposition for material scan result package.",
-    ),
-    (
-        "material:pm_formal_gate_package",
-        "pm_formal_gate_package",
-        ("material", "pm_material_scan_formal_gate_package.json"),
-        "project_manager",
-        "human_like_reviewer",
-        "reviewable_evidence",
-        "PM formal material gate package for reviewer.",
-    ),
-    (
-        "material:reviewer_sufficiency",
-        "material_sufficiency_report",
-        ("material", "material_sufficiency_report.json"),
-        "human_like_reviewer",
-        "project_manager",
-        "reviewable_evidence",
-        "Reviewer material sufficiency report.",
-    ),
-    (
-        "material:pm_understanding",
-        "pm_material_understanding",
-        ("pm_material_understanding.json",),
-        "project_manager",
-        "project_manager",
-        "accepted_material_basis",
-        "PM material understanding memo.",
-    ),
     (
         "research:package",
         "research_package",
@@ -260,8 +221,7 @@ def static_artifact_entries(project_root: Path, run_root: Path) -> list[dict[str
             status=artifact_status(kind, data),
             metadata={
                 "decision": data.get("decision"),
-                "sufficient": data.get("sufficient"),
-                "pm_ready": data.get("pm_ready"),
+                "source_status": data.get("status"),
             },
         )
         if entry is not None:

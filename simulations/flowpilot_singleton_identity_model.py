@@ -36,10 +36,6 @@ LIVE_SINGLETON_REQUIRED_EVIDENCE_FILES = (
         "surface": "route_frontier_current_authority",
         "relative_path": "execution_frontier.json",
     },
-    {
-        "surface": "material_progress_generation",
-        "relative_path": "router_state.json",
-    },
 )
 
 LEGAL_PARALLEL_RUNS = "legal_parallel_runs"
@@ -50,7 +46,8 @@ PM_PACKAGE_SAME_BODY_REPLAY = "pm_package_same_body_replay"
 PM_PACKAGE_DIFFERENT_BODY_CONFLICT = "pm_package_different_body_conflict"
 ROUTE_REPLACEMENT_DISPOSED = "route_replacement_old_packet_disposed"
 ROUTE_REPLACEMENT_UNDISPOSED = "route_replacement_old_packet_undisposed"
-MATERIAL_REISSUE_STALE_FLAG = "material_reissue_stale_global_flag"
+PACKET_BATCH_REPLACEMENT_STALE_REF = "packet_batch_replacement_stale_active_ref"
+RETIRED_MATERIAL_SINGLETON_AUTHORITY_PRESENT = "retired_material_singleton_authority_present"
 ACK_ONLY_OUTPUT_CLOSURE = "ack_only_output_closure"
 FINAL_PROGRESS_ONLY_CLOSURE = "final_progress_only_closure"
 MISSING_LEDGER_EVIDENCE = "missing_ledger_evidence"
@@ -64,7 +61,8 @@ SCENARIOS = (
     PM_PACKAGE_DIFFERENT_BODY_CONFLICT,
     ROUTE_REPLACEMENT_DISPOSED,
     ROUTE_REPLACEMENT_UNDISPOSED,
-    MATERIAL_REISSUE_STALE_FLAG,
+    PACKET_BATCH_REPLACEMENT_STALE_REF,
+    RETIRED_MATERIAL_SINGLETON_AUTHORITY_PRESENT,
     ACK_ONLY_OUTPUT_CLOSURE,
     FINAL_PROGRESS_ONLY_CLOSURE,
     MISSING_LEDGER_EVIDENCE,
@@ -82,7 +80,8 @@ RISK_SCENARIOS = {
     ACTIVE_PACKET_CONFLICT,
     PM_PACKAGE_DIFFERENT_BODY_CONFLICT,
     ROUTE_REPLACEMENT_UNDISPOSED,
-    MATERIAL_REISSUE_STALE_FLAG,
+    PACKET_BATCH_REPLACEMENT_STALE_REF,
+    RETIRED_MATERIAL_SINGLETON_AUTHORITY_PRESENT,
     ACK_ONLY_OUTPUT_CLOSURE,
     FINAL_PROGRESS_ONLY_CLOSURE,
 }
@@ -179,18 +178,21 @@ def authority_matrix() -> tuple[AuthorityRow, ...]:
             test_surfaces=("tests/router_runtime/route_mutation_sibling_replacement.py",),
         ),
         AuthorityRow(
-            object_family="material_progress_generation",
-            legal_plurality="one progress authority per material generation",
-            singleton_scope="run_id + active material batch + current generation",
-            canonical_owner="material work-packet lifecycle",
-            identity_key="material_batch_id + packet_ids",
-            generation_key="current_generation_id",
-            legal_replay="same generation progress replay is idempotent",
-            conflict_behavior="old run-wide flags cannot close new generation work",
-            old_object_disposition="old generation progress is historical, superseded, or stale",
-            code_surfaces=("flowpilot_router_work_packets_material.py", "flowpilot_material_artifact_map.py"),
-            model_surfaces=("material-progress-generation-projection",),
-            test_surfaces=("tests/test_flowpilot_router_runtime.py",),
+            object_family="ordinary_packet_batch_generation",
+            legal_plurality="one active batch reference per ordinary packet family",
+            singleton_scope="run_id + batch_kind (research/current_node/pm_role_work)",
+            canonical_owner="parallel packet-batch lifecycle",
+            identity_key="batch_kind + active_batch_id + packet_ids",
+            generation_key="batch_id + packet_generation_id",
+            legal_replay="same batch identity and member set replay is idempotent",
+            conflict_behavior="a stale active-batch reference cannot authorize current work",
+            old_object_disposition="replaced batch reference is superseded, terminal, or removed",
+            code_surfaces=(
+                "flowpilot_router_work_packets_parallel.py",
+                "flowpilot_router_work_packets_parallel_reconciliation.py",
+            ),
+            model_surfaces=("parallel-packet-batch-reconciliation",),
+            test_surfaces=("tests/test_flowpilot_high_standard_control_flow.py",),
         ),
         AuthorityRow(
             object_family="ack_vs_output_completion",
@@ -250,6 +252,7 @@ class State:
     authorized_reissue_or_repair: bool = False
     old_object_disposed: bool = True
     stale_evidence_consumed_as_current: bool = False
+    retired_material_authority_present: bool = False
     progress_only_evidence_consumed_as_completion: bool = False
     ack_settled: bool = False
     output_completed: bool = False
@@ -361,15 +364,23 @@ def _selected_state(scenario: str) -> State:
             old_object_disposed=False,
             authorized_reissue_or_repair=True,
         )
-    if scenario == MATERIAL_REISSUE_STALE_FLAG:
+    if scenario == PACKET_BATCH_REPLACEMENT_STALE_REF:
         return State(
             status="running",
             scenario=scenario,
-            object_family="material_progress_generation",
+            object_family="ordinary_packet_batch_generation",
             duplicate_authority_count=2,
             authorized_reissue_or_repair=True,
             old_object_disposed=False,
             stale_evidence_consumed_as_current=True,
+        )
+    if scenario == RETIRED_MATERIAL_SINGLETON_AUTHORITY_PRESENT:
+        return State(
+            status="running",
+            scenario=scenario,
+            object_family="retired_material_protocol",
+            duplicate_authority_count=1,
+            retired_material_authority_present=True,
         )
     if scenario == ACK_ONLY_OUTPUT_CLOSURE:
         return State(
@@ -437,6 +448,12 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             replace(state, status="risk", classification="risk"),
         )
         return
+    if state.retired_material_authority_present:
+        yield Transition(
+            "classify_retired_material_authority_risk",
+            replace(state, status="risk", classification="risk"),
+        )
+        return
     if state.stale_evidence_consumed_as_current:
         yield Transition(
             "classify_stale_evidence_current_authority_risk",
@@ -495,6 +512,8 @@ def _hard_check_failures(state: State) -> list[str]:
         failures.append("replacement or reissue was safe without old-object disposition")
     if state.status == "safe" and state.stale_evidence_consumed_as_current:
         failures.append("stale singleton evidence was consumed as current")
+    if state.status == "safe" and state.retired_material_authority_present:
+        failures.append("retired material_scan/material_sufficiency/material_understanding authority was marked safe")
     if state.status == "safe" and state.progress_only_evidence_consumed_as_completion:
         failures.append("progress-only singleton evidence was consumed as completion")
     if state.status == "safe" and state.ack_settled and state.output_completed:
@@ -553,8 +572,12 @@ def hazard_states() -> dict[str, State]:
             _selected_state(ROUTE_REPLACEMENT_UNDISPOSED),
             status="safe",
         ),
-        "stale_material_flag_marked_current": replace(
-            _selected_state(MATERIAL_REISSUE_STALE_FLAG),
+        "stale_packet_batch_ref_marked_current": replace(
+            _selected_state(PACKET_BATCH_REPLACEMENT_STALE_REF),
+            status="safe",
+        ),
+        "retired_material_authority_marked_safe": replace(
+            _selected_state(RETIRED_MATERIAL_SINGLETON_AUTHORITY_PRESENT),
             status="safe",
         ),
         "ack_only_output_marked_complete": replace(
@@ -596,7 +619,7 @@ def _rel(path: Path, root: Path) -> str:
     try:
         return str(path.relative_to(root)).replace("\\", "/")
     except ValueError:
-        return str(path).replace("\\", "/")
+        return f"<external>/{path.name}"
 
 
 def _surface(name: str, status: str, detail: str, evidence: dict[str, Any] | None = None) -> dict[str, Any]:
@@ -628,6 +651,110 @@ def _active_packet_records(packet_ledger: dict[str, Any]) -> list[dict[str, Any]
     return active
 
 
+ORDINARY_PACKET_BATCH_KINDS = frozenset({"research", "current_node", "pm_role_work"})
+
+
+def _ordinary_packet_batch_generation_surface(run_root: Path, root: Path) -> dict[str, Any]:
+    batch_root = run_root / "packet_batches"
+    if not batch_root.exists():
+        return _surface(
+            "ordinary_packet_batch_generation",
+            "safe",
+            "no ordinary packet batch currently claims active generation authority",
+            {"path": _rel(batch_root, root), "active_ref_count": 0},
+        )
+
+    active_refs = sorted(batch_root.glob("active_*.json"))
+    invalid_refs: list[dict[str, str]] = []
+    retired_refs: list[str] = []
+    unexpected_kinds: list[str] = []
+    active_rows: list[dict[str, str]] = []
+    active_ids_by_kind: dict[str, set[str]] = {}
+    for ref_path in active_refs:
+        implied_kind = ref_path.stem.removeprefix("active_")
+        ref, ref_error = _read_json(ref_path)
+        if implied_kind == "material_scan":
+            retired_refs.append(_rel(ref_path, root))
+            continue
+        if ref is None:
+            invalid_refs.append({"path": _rel(ref_path, root), "error": ref_error})
+            continue
+        batch_kind = str(ref.get("batch_kind") or implied_kind)
+        if batch_kind == "material_scan":
+            retired_refs.append(_rel(ref_path, root))
+            continue
+        if batch_kind not in ORDINARY_PACKET_BATCH_KINDS:
+            unexpected_kinds.append(batch_kind)
+            continue
+        active_batch_id = str(ref.get("active_batch_id") or "")
+        batch_path_value = str(ref.get("batch_path") or "")
+        if not active_batch_id or not batch_path_value:
+            invalid_refs.append(
+                {
+                    "path": _rel(ref_path, root),
+                    "error": "missing active_batch_id or batch_path",
+                }
+            )
+            continue
+        batch_path = root / batch_path_value
+        batch, batch_error = _read_json(batch_path)
+        if batch is None:
+            invalid_refs.append({"path": _rel(batch_path, root), "error": batch_error})
+            continue
+        if (
+            str(batch.get("batch_id") or "") != active_batch_id
+            or str(batch.get("batch_kind") or "") != batch_kind
+        ):
+            invalid_refs.append(
+                {
+                    "path": _rel(batch_path, root),
+                    "error": "active reference identity does not match batch payload",
+                }
+            )
+            continue
+        active_ids_by_kind.setdefault(batch_kind, set()).add(active_batch_id)
+        active_rows.append(
+            {
+                "batch_kind": batch_kind,
+                "active_batch_id": active_batch_id,
+                "ref_path": _rel(ref_path, root),
+                "batch_path": _rel(batch_path, root),
+            }
+        )
+
+    duplicate_family_authority = sorted(
+        batch_kind
+        for batch_kind, batch_ids in active_ids_by_kind.items()
+        if len(batch_ids) > 1
+    )
+    if retired_refs or unexpected_kinds or duplicate_family_authority:
+        return _surface(
+            "ordinary_packet_batch_generation",
+            "risk",
+            "active packet-batch references expose retired, unknown, or duplicate family authority",
+            {
+                "retired_material_refs": retired_refs,
+                "unexpected_batch_kinds": sorted(set(unexpected_kinds)),
+                "duplicate_family_authority": duplicate_family_authority,
+                "active_rows": active_rows,
+                "invalid_refs": invalid_refs,
+            },
+        )
+    if invalid_refs:
+        return _surface(
+            "ordinary_packet_batch_generation",
+            "evidence_insufficient",
+            "ordinary packet-batch active reference could not be verified",
+            {"invalid_refs": invalid_refs, "active_rows": active_rows},
+        )
+    return _surface(
+        "ordinary_packet_batch_generation",
+        "safe",
+        "each active ordinary packet family has one identity-matched batch reference",
+        {"active_rows": active_rows, "active_ref_count": len(active_rows)},
+    )
+
+
 def build_live_singleton_audit(repo_root: Path | str = ROOT) -> dict[str, Any]:
     root = Path(repo_root)
     current, current_error = _read_json(root / ".flowpilot" / "current.json")
@@ -645,7 +772,7 @@ def build_live_singleton_audit(repo_root: Path | str = ROOT) -> dict[str, Any]:
                 "current_run_pointer",
                 "safe",
                 "current pointer is present and treated as UI focus/default target",
-                {"run_id": run_id, "run_root": run_root_value},
+                {"run_id": run_id, "run_root": _rel(run_root, root)},
             )
         )
     else:
@@ -774,34 +901,7 @@ def build_live_singleton_audit(repo_root: Path | str = ROOT) -> dict[str, Any]:
             )
         )
 
-    router_state, router_state_error = _read_json(run_root / "router_state.json")
-    if router_state is None:
-        surfaces.append(_surface("material_progress_generation", "evidence_insufficient", router_state_error, {"path": _rel(run_root / "router_state.json", root)}))
-    else:
-        flags = router_state.get("flags", {}) if isinstance(router_state, dict) else {}
-        if not isinstance(flags, dict):
-            flags = {}
-        material_packets_relayed = flags.get("material_scan_packets_relayed") is True
-        material_results_relayed = flags.get("material_scan_results_relayed_to_pm") is True
-        material_disposition = flags.get("material_scan_result_disposition_recorded") is True
-        current_phase = ""
-        if isinstance(frontier, dict):
-            current_phase = str(frontier.get("phase") or frontier.get("status") or "")
-        stale_result_closure = current_phase == "material_scan" and material_disposition and not material_results_relayed
-        status = "risk" if stale_result_closure else "safe"
-        surfaces.append(
-            _surface(
-                "material_progress_generation",
-                status,
-                "material progress flags are reported with current phase context",
-                {
-                    "phase": current_phase,
-                    "material_scan_packets_relayed": material_packets_relayed,
-                    "material_scan_results_relayed_to_pm": material_results_relayed,
-                    "material_scan_result_disposition_recorded": material_disposition,
-                },
-            )
-        )
+    surfaces.append(_ordinary_packet_batch_generation_surface(run_root, root))
 
     return _live_summary(surfaces)
 

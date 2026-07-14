@@ -351,7 +351,7 @@ def _source_alignment_report() -> dict[str, object]:
             "test_pm_disposition_summary_is_not_reason_fallback",
             "test_fake_e2e_success_bodies_use_declared_contract_fields",
             "test_fake_project_success_bodies_use_declared_contract_fields",
-            "test_packet_handoff_contract_is_visible_in_envelope_body_and_role_handoff",
+            "test_packet_handoff_contract_is_visible_only_in_envelope_and_role_handoff",
             "test_review_packet_authorizes_matching_flowguard_result_read",
             "test_pm_repair_handoff_contract_includes_branch_shapes",
             "test_pm_repair_redesign_route_reissue_names_branch_field_path",
@@ -364,9 +364,9 @@ def _source_alignment_report() -> dict[str, object]:
             "test_staged_effect_same_family_rejects_different_formal_blocker_identity",
             "test_flowguard_packet_rejects_generic_decision_summary_result",
             "test_review_packet_rejects_generic_decision_summary_result",
-            "test_late_result_preserves_noncurrent_packet_statuses",
-            "test_fake_host_late_result_appends_audit_without_reactivation",
-            "test_duplicate_after_accepted_preserves_accepted_result_pointer",
+            "test_late_result_rejects_noncurrent_packet_statuses_without_mutation",
+            "test_fake_host_late_result_is_rejected_without_reactivation",
+            "test_duplicate_after_accepted_rejects_without_polluting_accepted_result_pointer",
             "test_routing_projection_excludes_noncurrent_node_packets_without_blocking_closure",
             "test_closure_accepted_evidence_projection_keeps_accepted_node_packets",
             "test_closure_accepted_evidence_projection_excludes_superseded_node_packets",
@@ -381,8 +381,6 @@ def _source_alignment_report() -> dict[str, object]:
             "test_start_run_records_portable_runtime_self_check_receipt",
             "test_pm_package_disposition_rejects_reason_alias_for_decision_reason",
             "test_pm_formal_gate_package_rejects_reason_alias_for_decision_reason",
-            "test_material_sufficiency_rejects_runtime_open_receipts_alias",
-            "test_material_sufficiency_rejects_checked_by_role_alias",
             "test_pm_role_work_request_rejects_old_alias_fields",
             "test_research_packet_rejects_recipient_role_alias",
         )
@@ -402,7 +400,9 @@ def _source_alignment_report() -> dict[str, object]:
         and "all_required_authorized_result_bodies_must_be_opened_before_submit" in runtime_text
         and "result_contract_profile_ids" in runtime_text
         and "result_contract_profile_bindings" in runtime_text
-        and "_submission_checklist_from_packet_body" in new_role_commands_text
+        and "_submission_checklist_from_current_handoff_contract" in new_role_commands_text
+        and "black_box_flowpilot.submission_checklist.v2" in new_role_commands_text
+        and '"source": "current_handoff_contract"' in new_role_commands_text
         and '"required_child_fields"' in new_role_commands_text
         and '"branch_valid_shapes"' in new_role_commands_text
         and '"non_empty_array_fields"' in new_role_commands_text
@@ -514,7 +514,7 @@ def _source_alignment_report() -> dict[str, object]:
         term
         for term in (
             '"requirements"',
-            '"material_sources"',
+            '"candidate_skill_inventory"',
             '"obligations"',
             '"node_context_package"',
             '"pm_visible_summary"',

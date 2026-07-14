@@ -25,10 +25,12 @@ PM must issue only packets scoped to the current node. Include node id,
 objective, allowed reads/writes, forbidden actions, acceptance slice, required
 verification, and expected result recipient.
 
-The packet must include the registry `output_contract`
-`flowpilot.output_contract.worker_current_node_result.v1` in both the packet
-envelope and packet body's `Output Contract` section, and the contract must
-match the current node and target worker role.
+The packet must select registry `output_contract`
+`flowpilot.output_contract.worker_current_node_result.v1`; runtime projects it
+through the packet envelope and `current_handoff_contract.v2` into the
+addressed role's `submission_checklist.v2`. The packet body must not repeat it
+as a second mechanical contract. The contract must match the current node and
+target worker role.
 When FlowGuard-derived obligations apply, the packet must require
 `FlowGuard Obligation Coverage` rows. Worker coverage is packet-scoped only and
 does not close broad FlowGuard report gaps.

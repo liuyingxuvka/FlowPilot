@@ -123,7 +123,7 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("worker project work started before active-holder lease")
     if state.worker_dispatched and not state.worker_packet_identity_boundary_present:
         failures.append("worker dispatched without packet recipient identity boundary")
-    if state.active_holder_packet_family not in {"current_node", "material_scan", "research", "pm_role_work"}:
+    if state.active_holder_packet_family not in {"current_node", "research", "pm_role_work"}:
         failures.append("active-holder lease used unsupported packet family")
     if state.active_holder_lease_issued and state.active_holder_packet_family == "current_node" and not (
         state.current_node_packet_registered
@@ -144,7 +144,7 @@ def invariant_failures(state: State) -> list[str]:
         )
     if (
         state.active_holder_lease_issued
-        and state.active_holder_packet_family in {"material_scan", "research", "pm_role_work"}
+        and state.active_holder_packet_family in {"research", "pm_role_work"}
         and not state.generalized_result_target_is_pm
     ):
         failures.append("generalized active-holder result did not return to PM disposition path")

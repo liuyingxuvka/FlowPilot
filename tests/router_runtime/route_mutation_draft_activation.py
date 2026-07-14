@@ -9,7 +9,6 @@ class RouteMutationDraftActivationRuntimeTests(FlowPilotRouterRuntimeTestBase):
             root = self.make_project()
             run_root = self.boot_to_controller(root)
             self.complete_startup_runtime_entry(root)
-            self.complete_material_flow(root)
             self.complete_root_contract_before_child_skill_gates(root)
             self.complete_child_skill_gates(root)
             self.complete_implementation_intent_bridge(root)

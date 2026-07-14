@@ -1,4 +1,4 @@
-"""Run checks for the FlowPilot material artifact-map model."""
+"""Run checks for the FlowPilot optional material artifact-map model."""
 
 from __future__ import annotations
 
@@ -24,22 +24,28 @@ REQUIRED_LABELS = tuple(
 )
 
 HAZARD_EXPECTED_FAILURES = {
+    model.MAP_CREATED_WITHOUT_REQUEST: "missing optional map was created without an explicit request",
+    model.MAP_ABSENCE_BLOCKS_PLANNING: "optional map absence blocked planning",
+    model.MAP_ABSENCE_BLOCKS_FORMAL_PACKAGE: "optional map absence blocked formal package release",
+    model.MAP_ABSENCE_BLOCKS_ROUTE_MEMORY: "optional map absence blocked route memory",
+    model.MAP_ABSENCE_BLOCKS_TERMINAL: "optional map absence blocked terminal closure",
     model.MAP_LEAKS_SEALED_BODY: "material artifact map leaked sealed packet or result body content",
-    model.CONTROLLER_SUMMARY_USED_AS_EVIDENCE: "material artifact map or Controller summary was treated as acceptance evidence",
-    model.WORKER_READS_UNLISTED_ENTRY: "worker read material-map entries outside the current packet authorization",
-    model.WORKER_READS_SEALED_WITHOUT_RUNTIME: "worker read a sealed body without packet-runtime authority",
-    model.REVIEWER_PASSES_WITHOUT_CHECKED_SOURCES: "reviewer material sufficiency passed without checked source refs",
-    model.PM_PACKAGE_LACKS_REVIEW_REFS: "PM formal package lacks material-map review refs",
-    model.FINAL_LEDGER_ACCEPTS_STALE_MATERIAL: "final ledger accepted stale current material as completion evidence",
-    model.FINAL_LEDGER_ACCEPTS_UNRESOLVED_MATERIAL: "final ledger accepted unresolved current material as completion evidence",
+    model.MAP_USED_AS_ACCEPTANCE: "optional material map was treated as acceptance evidence",
+    model.MAP_LINKS_UNSAFE_INDEX: "unsafe, blocked, stale, or unresolved optional map was linked",
+    model.MAP_LINKS_STALE_INDEX: "unsafe, blocked, stale, or unresolved optional map was linked",
+    model.MAP_LINKS_UNRESOLVED_INDEX: "unsafe, blocked, stale, or unresolved optional map was linked",
+    model.FORMAL_PACKAGE_LACKS_DIRECT_EVIDENCE: "formal package relied on optional map instead of direct current evidence",
+    model.SEALED_REF_BYPASSES_RUNTIME: "sealed material reference bypassed runtime open authority",
+    model.RETIRED_MATERIAL_SCAN_PREFIX: "retired material-scan index or review prefix re-entered the current map",
 }
 
 
 def _state_id(state: model.State) -> str:
     return (
         f"scenario={state.scenario}|status={state.status}|"
-        f"map={state.map_written}|reviewer={state.reviewer_reports_sufficient}|"
-        f"final={state.final_ledger_closes}|reason={state.terminal_reason}"
+        f"map={state.map_initially_present},{state.map_creation_requested},{state.map_written},"
+        f"{state.map_ref_present}|stages={state.planning_advanced},{state.formal_package_written},"
+        f"{state.route_memory_written},{state.final_ledger_written}|reason={state.terminal_reason}"
     )
 
 
@@ -57,11 +63,9 @@ def _build_graph() -> dict[str, Any]:
         source = index[state]
         while len(edges) <= source:
             edges.append([])
-
         failures = model.invariant_failures(state)
         if failures:
             invariant_failures.append({"state": _state_id(state), "failures": failures})
-
         for transition in model.next_safe_states(state):
             labels.add(transition.label)
             if transition.state not in index:
@@ -109,21 +113,11 @@ def _progress_report(graph: dict[str, Any]) -> dict[str, object]:
     while changed:
         changed = False
         for source, outgoing in enumerate(edges):
-            if source not in can_reach_terminal and any(
-                target in can_reach_terminal for _label, target in outgoing
-            ):
+            if source not in can_reach_terminal and any(target in can_reach_terminal for _label, target in outgoing):
                 can_reach_terminal.add(source)
                 changed = True
-    stuck = [
-        _state_id(state)
-        for idx, state in enumerate(states)
-        if idx not in terminal and not edges[idx]
-    ]
-    cannot_reach_terminal = [
-        _state_id(state)
-        for idx, state in enumerate(states)
-        if idx not in can_reach_terminal
-    ]
+    stuck = [_state_id(state) for idx, state in enumerate(states) if idx not in terminal and not edges[idx]]
+    cannot_reach_terminal = [_state_id(state) for idx, state in enumerate(states) if idx not in can_reach_terminal]
     return {
         "ok": not stuck and not cannot_reach_terminal,
         "stuck_state_count": len(stuck),
@@ -150,9 +144,7 @@ def _flowguard_report() -> dict[str, object]:
         "dead_branch_count": len(report.dead_branches),
         "exception_branch_count": len(report.exception_branches),
         "reachability_failure_count": len(report.reachability_failures),
-        "reachability_failures": [
-            failure.message for failure in report.reachability_failures
-        ],
+        "reachability_failures": [failure.message for failure in report.reachability_failures],
     }
 
 
@@ -160,17 +152,45 @@ def _hazard_report() -> dict[str, object]:
     hazards: dict[str, object] = {}
     failures: list[str] = []
     for name, state in model.hazard_states().items():
-        material_failures = model.material_map_failures(state)
+        observed = model.material_map_failures(state)
         expected = HAZARD_EXPECTED_FAILURES[name]
-        detected = any(expected in failure for failure in material_failures)
-        hazards[name] = {
-            "detected": detected,
-            "expected_failure": expected,
-            "failures": material_failures,
-        }
+        detected = any(expected in failure for failure in observed)
+        hazards[name] = {"detected": detected, "expected_failure": expected, "failures": observed}
         if not detected:
             failures.append(f"{name}: expected failure containing {expected!r}")
     return {"ok": not failures, "hazards": hazards, "failures": failures}
+
+
+def _implementation_alignment() -> dict[str, object]:
+    root = Path(__file__).resolve().parents[1]
+    paths = {
+        "map": root / "skills/flowpilot/assets/flowpilot_material_artifact_map.py",
+        "formal": root / "skills/flowpilot/assets/flowpilot_router_work_packets_pm_role_writes_decisions_formal_gate.py",
+        "disposition": root / "skills/flowpilot/assets/flowpilot_router_work_packets_pm_role_writes_decisions_package_disposition.py",
+        "memory": root / "skills/flowpilot/assets/flowpilot_router_route_frontier_context_memory.py",
+        "terminal": root / "skills/flowpilot/assets/flowpilot_router_terminal_ledger_writer.py",
+        "tests": root / "tests/test_flowpilot_material_access_mesh.py",
+    }
+    texts = {key: path.read_text(encoding="utf-8") for key, path in paths.items()}
+    checks = {
+        "missing_map_not_created_by_default": "create_if_missing: bool = False" in texts["map"],
+        "explicit_creation_required": "if not path.exists() and not create_if_missing" in texts["map"],
+        "retired_index_prefix_absent": "material_scan:packet_index" not in texts["map"],
+        "formal_package_uses_optional_ref": "material_artifact_map_navigation_usable" in texts["formal"],
+        "retired_disposition_branch_absent": "batch_kind == 'material_scan'" not in texts["disposition"],
+        "retired_disposition_event_absent": "pm_records_material_scan_result_disposition" not in texts["disposition"],
+        "route_memory_uses_optional_context": "map_context is not None" in texts["memory"],
+        "retired_route_markers_absent": "reviewer_reports_material_sufficient" not in texts["memory"],
+        "terminal_links_map_conditionally": "if isinstance(map_ref, dict)" in texts["terminal"],
+        "absent_and_present_tests_exist": "test_missing_map_stays_absent" in texts["tests"] and "test_existing_map_is_refreshed" in texts["tests"],
+    }
+    missing = sorted(key for key, value in checks.items() if not value)
+    return {
+        "ok": not missing,
+        "checks": checks,
+        "missing": missing,
+        "paths": [path.relative_to(root).as_posix() for path in paths.values()],
+    }
 
 
 def run_checks() -> dict[str, object]:
@@ -179,15 +199,20 @@ def run_checks() -> dict[str, object]:
     progress = _progress_report(graph)
     explorer = _flowguard_report()
     hazards = _hazard_report()
+    alignment = _implementation_alignment()
     result = {
+        "model_id": model.MODEL_ID,
         "safe_graph": safe_graph,
         "progress": progress,
         "flowguard_explorer": explorer,
         "hazard_checks": hazards,
+        "implementation_alignment": alignment,
+        "claim_boundary": (
+            "This finite model proves only the declared missing/requested/existing map paths and known-bad "
+            "mutations; direct runtime tests still own concrete file and terminal behavior."
+        ),
     }
-    result["ok"] = all(
-        section.get("ok", False) for section in (safe_graph, progress, explorer, hazards)
-    )
+    result["ok"] = all(section.get("ok", False) for section in (safe_graph, progress, explorer, hazards, alignment))
     return result
 
 
@@ -195,7 +220,6 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--json-out", type=Path, default=RESULTS_PATH)
     args = parser.parse_args()
-
     result = run_checks()
     output = json.dumps(result, indent=2, sort_keys=True)
     print(output)

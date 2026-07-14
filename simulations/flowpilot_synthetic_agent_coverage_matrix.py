@@ -16,6 +16,7 @@ sys.path.insert(0, str(ROOT / "simulations"))
 from flowpilot_model_test_alignment_diagnostics import (  # noqa: E402
     build_full_model_test_code_diagnostic,
 )
+import flowpilot_model_test_alignment_common as alignment_common  # noqa: E402
 from flowpilot_model_test_alignment_family_plans import (  # noqa: E402
     build_alignment_plan_entries,
 )
@@ -35,7 +36,7 @@ from flowpilot_fake_ai_runtime_replay_model import (  # noqa: E402
     CONTROL_PLANE_LEDGER_HYGIENE_SOURCE,
     MODEL_ID as FAKE_AI_RUNTIME_REPLAY_MODEL_ID,
     REQUIRED_EVIDENCE_OWNER as FAKE_AI_RUNTIME_REPLAY_OWNER,
-    control_plane_ledger_hygiene_cells,
+    control_plane_ledger_hygiene_declaration_summary,
 )
 from flowpilot_real_issue_backfeed import (  # noqa: E402
     MODEL_ID as REAL_ISSUE_BACKFEED_MODEL_ID,
@@ -556,23 +557,24 @@ SYNTHETIC_TRACE_ROWS: tuple[dict[str, Any], ...] = (
         "covered_failure_mode": "controller_receipts_without_deliverable_escalate_after_retry_budget",
     },
     {
-        "family": "material modeling",
-        "model_id": "material_modeling",
-        "obligation_id": "material_repair.active_generation_overrides_stale_flags",
-        "branch_kind": "negative_path",
+        "family": "ordinary resource work",
+        "model_id": "flowpilot_ordinary_resource_discovery",
+        "obligation_id": "ordinary_resource.optional_material_work_uses_existing_role_work",
+        "branch_kind": "positive_path",
         "coverage_kind": "synthetic_trace",
-        "evidence_owner": "synthetic_agent_exception_trace_replay",
-        "evidence_id": "synthetic.material.negative.active_generation_blocks_stale_flags",
-        "test_name": "test_material_repair_generation_blocks_stale_flags_fake_package",
-        "path": "tests/test_flowpilot_synthetic_agent_trace_replay.py",
-        "command": "python -m pytest tests/test_flowpilot_synthetic_agent_trace_replay.py",
+        "evidence_owner": "complete_workstream_fake_ai_execution",
+        "evidence_id": "ordinary_resource.existing_role_work_path",
+        "test_name": "test_resource_profiles_use_real_current_family_checklists_and_submit_paths",
+        "path": "tests/test_flowpilot_complete_workstream_fake_ai.py",
+        "command": "python -m pytest tests/test_flowpilot_complete_workstream_fake_ai.py",
         "evidence_status": "passed",
         "evidence_current": True,
         "live_completion_allowed": False,
         "coverage_boundary": "control_flow_only",
         "risk_tier": "P1",
         "synthetic_replay_required": True,
-        "covered_failure_mode": "active_repair_generation_ignores_stale_global_progress_flags",
+        "synthetic_replay_status": "present",
+        "covered_failure_mode": "material_need_does_not_create_a_special_packet_or_gate_family",
     },
     {
         "family": "terminal/closure/resume",
@@ -637,29 +639,6 @@ SYNTHETIC_TRACE_ROWS: tuple[dict[str, Any], ...] = (
         "story_level": "system",
         "recovery_loop": "control_blocker_preemption",
         "story_steps": ["active_control_blocker", "dirty_pm_suggestion_ledger", "handle_control_blocker"],
-        "terminal_expectation": "blocked",
-    },
-    {
-        "family": "material modeling",
-        "model_id": "systemic_synthetic_agent_replay",
-        "obligation_id": "systemic.failed_pm_repair_loop_escalates",
-        "branch_kind": "system_recovery_path",
-        "coverage_kind": "synthetic_trace",
-        "evidence_owner": "systemic_synthetic_agent_replay",
-        "evidence_id": "systemic.pm_repair_loop.followup_blocker",
-        "test_name": "test_system_story_failed_pm_repair_loop_registers_followup_blocker",
-        "path": "tests/test_flowpilot_synthetic_agent_trace_replay.py",
-        "command": "python -m pytest tests/test_flowpilot_synthetic_agent_trace_replay.py",
-        "evidence_status": "passed",
-        "evidence_current": True,
-        "live_completion_allowed": False,
-        "coverage_boundary": "control_flow_only",
-        "risk_tier": "P1",
-        "synthetic_replay_required": True,
-        "covered_failure_mode": "pm_repair_attempt_that_still_blocks_registers_followup_blocker",
-        "story_level": "system",
-        "recovery_loop": "pm_repair_escalation",
-        "story_steps": ["pm_repair_decision", "repair_transaction", "recheck_blocked", "followup_blocker"],
         "terminal_expectation": "blocked",
     },
     {
@@ -1060,17 +1039,14 @@ def _cartesian_exhaustion_required_cells() -> list[dict[str, str]]:
 
 
 def _control_plane_ledger_hygiene_required_cells() -> list[dict[str, str]]:
-    cells: list[dict[str, str]] = []
-    for cell in control_plane_ledger_hygiene_cells():
-        cells.append(
-            {
-                "family": str(cell["family"]),
-                "model_id": FAKE_AI_RUNTIME_REPLAY_MODEL_ID,
-                "obligation_id": f"fake_ai_runtime_replay.{cell['cell_id']}",
-                "branch_kind": str(cell["expected_runtime_reaction"]),
-            }
-        )
-    return cells
+    return [
+        {
+            "family": "control_plane_ledger_hygiene",
+            "model_id": FAKE_AI_RUNTIME_REPLAY_MODEL_ID,
+            "obligation_id": "fake_ai_runtime_replay.control_plane_ledger_hygiene_declaration_receipt",
+            "branch_kind": "structural_enumeration",
+        }
+    ]
 
 
 def _rejection_liveness_rows() -> list[dict[str, Any]]:
@@ -1301,44 +1277,37 @@ def _cartesian_exhaustion_rows() -> list[dict[str, Any]]:
 
 
 def _control_plane_ledger_hygiene_rows() -> list[dict[str, Any]]:
-    rows: list[dict[str, Any]] = []
-    for cell in control_plane_ledger_hygiene_cells():
-        reaction = str(cell["expected_runtime_reaction"])
-        terminal_block = reaction.startswith("block_terminal") or reaction.startswith("reject_")
-        rows.append(
-            {
-                **ALIGNMENT_ROW_DEFAULTS,
-                "family": str(cell["family"]),
-                "model_id": FAKE_AI_RUNTIME_REPLAY_MODEL_ID,
-                "obligation_id": f"fake_ai_runtime_replay.{cell['cell_id']}",
-                "branch_kind": reaction,
-                "coverage_kind": "synthetic_trace",
-                "evidence_owner": CONTROL_PLANE_LEDGER_HYGIENE_OWNER,
-                "evidence_id": f"fake_ai_runtime_replay.{cell['cell_id']}",
-                "test_name": "test_control_plane_ledger_hygiene_fake_ai_matrix_is_cartesian",
-                "path": "tests/test_flowpilot_fake_ai_runtime_replay.py",
-                "command": "python -m unittest tests.test_flowpilot_fake_ai_runtime_replay",
-                "evidence_status": "passed",
-                "evidence_current": True,
-                "evidence_role": "primary",
-                "live_completion_allowed": False,
-                "coverage_boundary": "control_flow_only",
-                "risk_tier": "P0" if terminal_block else "P1",
-                "synthetic_replay_required": True,
-                "synthetic_replay_status": "present",
-                "covered_failure_mode": reaction,
-                "source": CONTROL_PLANE_LEDGER_HYGIENE_SOURCE,
-                "result_status": cell["result_status"],
-                "accepted_pointer": cell["accepted_pointer"],
-                "repair_identity": cell["repair_identity"],
-                "packet_family": cell["packet_family"],
-                "blocker": cell["blocker"],
-                "break_glass": cell["break_glass"],
-                "reviewer_authorization": cell["reviewer_authorization"],
-                "closure_phase": cell["closure_phase"],
-            }
-        )
-    return rows
+    summary = control_plane_ledger_hygiene_declaration_summary()
+    return [
+        {
+            **ALIGNMENT_ROW_DEFAULTS,
+            "family": "control_plane_ledger_hygiene",
+            "model_id": FAKE_AI_RUNTIME_REPLAY_MODEL_ID,
+            "obligation_id": "fake_ai_runtime_replay.control_plane_ledger_hygiene_declaration_receipt",
+            "branch_kind": "structural_enumeration",
+            "coverage_kind": "model_matrix",
+            "evidence_owner": CONTROL_PLANE_LEDGER_HYGIENE_OWNER,
+            "evidence_id": "fake_ai_runtime_replay.control_plane_ledger_hygiene_declaration_receipt",
+            "test_name": "test_control_plane_ledger_hygiene_fake_ai_matrix_is_cartesian",
+            "path": "tests/test_flowpilot_fake_ai_runtime_replay.py",
+            "command": "python -m unittest tests.test_flowpilot_fake_ai_runtime_replay",
+            "evidence_status": "not_run",
+            "evidence_current": False,
+            "evidence_role": "primary",
+            "live_completion_allowed": False,
+            "coverage_boundary": "model_only_control_plane_ledger_hygiene_declaration",
+            "risk_tier": "P1",
+            "synthetic_replay_required": True,
+            "synthetic_replay_status": "present",
+            "covered_failure_mode": (
+                f"declared_cells={summary['declared_cell_count']};"
+                f"receipt_sha256={summary['cell_receipt_sha256']}"
+            ),
+            "source": CONTROL_PLANE_LEDGER_HYGIENE_SOURCE,
+            "declared_cell_count": summary["declared_cell_count"],
+            "cell_receipt_sha256": summary["cell_receipt_sha256"],
+        }
+    ]
 
 
 def _alignment_rows() -> list[dict[str, Any]]:
@@ -1433,6 +1402,22 @@ def build_coverage_rows() -> list[dict[str, Any]]:
     return rows
 
 
+def _as_declaration_rows(rows: Sequence[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Remove execution-green claims from the structural ownership matrix.
+
+    The executable AI-response owner is
+    ``run_flowpilot_ai_response_execution_closure_checks.py``.  This older,
+    much larger matrix remains useful for declaration/ownership completeness,
+    but a row's test name or generated cell is not current execution evidence.
+    """
+
+    declared = list(rows)
+    for row in declared:
+        row["evidence_status"] = "not_run"
+        row["evidence_current"] = False
+    return declared
+
+
 def _cell_key(row: dict[str, Any]) -> tuple[str, str, str, str]:
     return (
         str(row.get("family", "")),
@@ -1445,24 +1430,35 @@ def _cell_key(row: dict[str, Any]) -> tuple[str, str, str, str]:
 def validate_coverage_rows(
     rows: Sequence[dict[str, Any]],
     required_cells: Sequence[dict[str, str]] | None = None,
+    *,
+    require_execution_evidence: bool = True,
 ) -> list[dict[str, Any]]:
     findings: list[dict[str, Any]] = []
     required_cells = required_cells or []
 
-    passing_cells = {
+    owned_cells = {
         _cell_key(row)
         for row in rows
         if row.get("evidence_role", "primary") == "primary"
-        and row.get("evidence_status") in PASS_STATUSES
-        and row.get("evidence_current") is True
+        and (
+            not require_execution_evidence
+            or (
+                row.get("evidence_status") in PASS_STATUSES
+                and row.get("evidence_current") is True
+            )
+        )
     }
     for cell in required_cells:
         key = _cell_key(cell)
-        if key not in passing_cells:
+        if key not in owned_cells:
             findings.append(
                 {
                     "code": "missing_branch_owner",
-                    "message": "required model branch has no current passing primary evidence owner",
+                    "message": (
+                        "required model branch has no current passing primary evidence owner"
+                        if require_execution_evidence
+                        else "required model branch has no declared primary evidence owner"
+                    ),
                     **cell,
                 }
             )
@@ -1482,7 +1478,11 @@ def validate_coverage_rows(
                     "evidence_id": str(row.get("evidence_id", "")),
                 }
             )
-        if row.get("evidence_role", "primary") == "primary" and row.get("evidence_status") not in PASS_STATUSES:
+        if (
+            require_execution_evidence
+            and row.get("evidence_role", "primary") == "primary"
+            and row.get("evidence_status") not in PASS_STATUSES
+        ):
             findings.append(
                 {
                     "code": "invalid_primary_evidence_status",
@@ -1491,7 +1491,11 @@ def validate_coverage_rows(
                     "evidence_status": str(row.get("evidence_status", "")),
                 }
             )
-        if row.get("coverage_kind") == "background_artifact" and row.get("evidence_status") in BACKGROUND_INCOMPLETE_STATUSES:
+        if (
+            require_execution_evidence
+            and row.get("coverage_kind") == "background_artifact"
+            and row.get("evidence_status") in BACKGROUND_INCOMPLETE_STATUSES
+        ):
             findings.append(
                 {
                     "code": "progress_only_background_evidence",
@@ -1711,10 +1715,36 @@ def known_bad_cases() -> list[dict[str, Any]]:
     ]
 
 
-def build_report(*, include_rows: bool = True) -> dict[str, Any]:
+def build_report(
+    *,
+    include_rows: bool = True,
+    declaration_only: bool = False,
+) -> dict[str, Any]:
+    if not declaration_only:
+        raise ValueError(
+            "synthetic-agent coverage matrix is declaration-only; use the formal "
+            "AI-response execution-closure runner for execution proof"
+        )
+    alignment_common.configure_execution_evidence(
+        {"ok": False, "failures": ["declaration_only_execution_not_run"]},
+        declaration_only=True,
+    )
     required_cells = _alignment_required_cells()
-    rows = build_coverage_rows()
-    findings = validate_coverage_rows(rows, required_cells)
+    rows = _as_declaration_rows(build_coverage_rows())
+    control_plane_hygiene = control_plane_ledger_hygiene_declaration_summary()
+    findings = validate_coverage_rows(
+        rows,
+        required_cells,
+        require_execution_evidence=False,
+    )
+    if not control_plane_hygiene["ok"]:
+        findings.append(
+            {
+                "code": "control_plane_ledger_hygiene_declaration_incomplete",
+                "message": "streamed control-plane ledger hygiene declaration receipt is incomplete",
+                "finding_counts": control_plane_hygiene["finding_counts"],
+            }
+        )
     executable_bridge = executable_matrix_coverage_report()
     liveness_cartesian = liveness_evidence_cartesian_report()
     if not liveness_cartesian["ok"]:
@@ -1738,6 +1768,7 @@ def build_report(*, include_rows: bool = True) -> dict[str, Any]:
             )
     full_diagnostic = build_full_model_test_code_diagnostic()
     deferred_diagnostic_findings: list[dict[str, Any]] = []
+    deferred_execution_findings: list[dict[str, Any]] = []
     blocking_diagnostic_findings: list[dict[str, Any]] = []
     for finding in full_diagnostic["actionable_findings"]:
         diagnostic_finding = {
@@ -1754,6 +1785,9 @@ def build_report(*, include_rows: bool = True) -> dict[str, Any]:
         ) and finding.get("repair_type") == "defer_structure_split":
             deferred_diagnostic_findings.append(diagnostic_finding)
             continue
+        if finding.get("repair_type") == "complete_background_evidence":
+            deferred_execution_findings.append(diagnostic_finding)
+            continue
         blocking_diagnostic_findings.append(diagnostic_finding)
         findings.append(diagnostic_finding)
 
@@ -1762,22 +1796,50 @@ def build_report(*, include_rows: bool = True) -> dict[str, Any]:
     for row in rows:
         rows_by_family[str(row["family"])] += 1
         rows_by_coverage_kind[str(row["coverage_kind"])] += 1
+    structural_required_cell_count = (
+        len(required_cells)
+        - 1
+        + int(control_plane_hygiene["declared_cell_count"])
+    )
+    structural_generated_cell_count = (
+        len(rows)
+        - 1
+        + int(control_plane_hygiene["declared_cell_count"])
+    )
 
     report = {
         "ok": not findings,
         "result_type": "flowpilot_synthetic_agent_coverage_matrix",
+        "claim_scope": "declaration_only",
+        "evidence_status": "not_run",
+        "execution_owner": "run_flowpilot_ai_response_execution_closure_checks.py",
         "coverage_boundary": (
-            "Matrix rows prove declared control-flow, runtime, model-test, and "
-            "background-artifact coverage ownership. Synthetic or fixture rows "
-            "do not prove live AI semantic quality or live completion."
+            "Matrix rows declare control-flow, runtime, model-test, and "
+            "background-artifact ownership only. They do not count generated "
+            "cells or test-name presence as execution, pass, live AI semantic "
+            "quality, or live completion evidence."
         ),
-        "required_cell_count": len(required_cells),
+        "required_cell_count": structural_required_cell_count,
+        "materialized_required_cell_count": len(required_cells),
         "row_count": len(rows),
+        "materialized_row_count": len(rows),
         "rows_by_family": dict(sorted(rows_by_family.items())),
         "rows_by_coverage_kind": dict(sorted(rows_by_coverage_kind.items())),
         "synthetic_trace_row_count": sum(
             1 for row in rows if row["coverage_kind"] in SYNTHETIC_NON_LIVE_KINDS
         ),
+        "coverage_summary": {
+            "declared": structural_required_cell_count,
+            "generated": structural_generated_cell_count,
+            "materialized_required": len(required_cells),
+            "materialized_rows": len(rows),
+            "selected": 0,
+            "executed": 0,
+            "passed": 0,
+            "failed": 0,
+            "stale": 0,
+            "proof_backed": 0,
+        },
         "executable_bridge": {
             "ok": executable_bridge["ok"],
             "model_id": executable_bridge["model_id"],
@@ -1805,11 +1867,15 @@ def build_report(*, include_rows: bool = True) -> dict[str, Any]:
             "source": CONTROL_PLANE_LEDGER_HYGIENE_SOURCE,
             "owner": CONTROL_PLANE_LEDGER_HYGIENE_OWNER,
             "expected_cell_count": CONTROL_PLANE_LEDGER_HYGIENE_EXPECTED_CELL_COUNT,
-            "row_count": sum(
+            "materialized_row_count": sum(
                 1
                 for row in rows
                 if row.get("source") == CONTROL_PLANE_LEDGER_HYGIENE_SOURCE
             ),
+            "declared_cell_count": control_plane_hygiene["declared_cell_count"],
+            "cell_receipt_sha256": control_plane_hygiene["cell_receipt_sha256"],
+            "by_reaction": control_plane_hygiene["by_reaction"],
+            "finding_counts": control_plane_hygiene["finding_counts"],
         },
         "findings": findings,
         "required_cell_sample": required_cells[:25],
@@ -1822,6 +1888,7 @@ def build_report(*, include_rows: bool = True) -> dict[str, Any]:
             "actionable_summary": full_diagnostic["actionable_summary"],
             "blocking_actionable_findings": blocking_diagnostic_findings,
             "deferred_structure_split_findings": deferred_diagnostic_findings,
+            "deferred_execution_findings": deferred_execution_findings,
         },
     }
     if include_rows:
@@ -1833,9 +1900,16 @@ def build_report(*, include_rows: bool = True) -> dict[str, Any]:
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--json-out", type=Path, default=None)
+    parser.add_argument("--declaration-only", action="store_true")
     args = parser.parse_args(argv)
 
-    report = build_report(include_rows=False)
+    if not args.declaration_only:
+        parser.error(
+            "this matrix is declaration-only; pass --declaration-only and use "
+            "run_flowpilot_ai_response_execution_closure_checks.py for execution proof"
+        )
+
+    report = build_report(include_rows=False, declaration_only=True)
     output = json.dumps(report, indent=2, sort_keys=True) + "\n"
     if args.json_out:
         args.json_out.parent.mkdir(parents=True, exist_ok=True)

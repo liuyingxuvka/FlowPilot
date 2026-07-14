@@ -397,7 +397,6 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
 
     def test_pm_worker_packet_cards_carry_lightweight_dispatch_guidance(self) -> None:
         worker_packet_cards = _card_paths_by_id(
-            "pm.material_scan",
             "pm.current_node_loop",
             "pm.research_package",
         )
@@ -417,7 +416,6 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
     def test_worker_and_flowguard_operator_packets_carry_soft_pm_note_guidance(self) -> None:
         guidance_paths = [
             *_card_paths_by_id(
-                "pm.material_scan",
                 "pm.current_node_loop",
                 "pm.research_package",
                 "pm.flowguard_operator_request_report_loop",
@@ -487,7 +485,6 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
                 self.assertIn("pm suggestion item", text)
 
         evidence_prompts = _card_paths_by_id(
-            "pm.material_scan",
             "pm.research_package",
             "worker.research_report",
         )
@@ -550,9 +547,6 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
             normalized("pm.root_contract"),
             normalized("pm.route_skeleton"),
             normalized("pm.node_acceptance_plan"),
-            normalized("pm.material_scan"),
-            normalized("pm.material_understanding"),
-            normalized("pm.material_absorb_or_research"),
             normalized("pm.research_package"),
             normalized("pm.research_absorb_or_mutate"),
             normalized("pm.final_ledger"),
@@ -575,7 +569,6 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
             normalized("reviewer.route_challenge"),
             normalized("reviewer.node_acceptance_plan_review"),
             normalized("reviewer.worker_result_review"),
-            normalized("reviewer.material_sufficiency"),
             normalized("reviewer.research_direct_source_check"),
             normalized("reviewer.strict_gate_obligation_review"),
             normalized("reviewer.evidence_quality_review"),
@@ -782,7 +775,6 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
             ROOT / "templates" / "flowpilot" / "packets" / "packet_body.template.md",
             _card_path_by_id("reviewer.core"),
             _card_path_by_id("reviewer.worker_result_review"),
-            _card_path_by_id("reviewer.material_sufficiency"),
             _card_path_by_id("pm.core"),
             _card_path_by_id("pm.event.reviewer_report"),
             _card_path_by_id("pm.event.reviewer_blocked"),
@@ -958,7 +950,8 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
         self.assertIn("not one tree for execution plus a second pm-maintained display plan", reviewer_card)
         self.assertIn("reviewer is the semantic decomposition quality gate", reviewer_card)
         self.assertIn("concrete pm-actionable split recommendation", reviewer_card)
-        self.assertIn("worker replanning is not an acceptable substitute for route depth", reviewer_card)
+        self.assertIn("worker-local planning is required inside every bounded leaf", reviewer_card)
+        self.assertIn("require pm to deepen the canonical route tree", reviewer_card)
         self.assertIn("must not override the canonical route node shape", node_plan_card)
         self.assertIn("route-depth safety gate", node_plan_card)
         self.assertIn("mutate routes", controller_text)

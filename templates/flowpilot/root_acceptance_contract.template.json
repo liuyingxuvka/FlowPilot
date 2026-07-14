@@ -9,8 +9,7 @@
   "source_paths": {
     "product_function_architecture": ".flowpilot/runs/<run-id>/product_function_architecture.json",
     "contract": ".flowpilot/runs/<run-id>/contract.md",
-    "material_intake_packet": ".flowpilot/runs/<run-id>/material_intake_packet.json",
-    "pm_material_understanding": ".flowpilot/runs/<run-id>/pm_material_understanding.json"
+    "ordinary_evidence_work_results": []
   },
   "scope_rule": "This root contract records only project-level hard requirements, high-risk requirements, and proof obligations that must be preserved across all nodes. Node-local details are added later in node_acceptance_plan files.",
   "requirement_traceability_policy": {

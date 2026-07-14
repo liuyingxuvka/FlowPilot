@@ -86,7 +86,7 @@ class State:
     route_mutation_without_pm_absorption: bool = False
     reviewer_before_pm_absorption: bool = False
     worker_started_before_node_plan_review: bool = False
-    worker_replanned_broad_leaf: bool = False
+    worker_changed_pm_route_boundary: bool = False
     final_reviewer_accepted_without_worker_artifacts: bool = False
 
 
@@ -332,8 +332,8 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("Reviewer inspected route effect before PM absorbed FlowGuard result")
     if state.worker_started_before_node_plan_review:
         failures.append("worker packet issued before ordinary node plan Reviewer pass")
-    if state.worker_replanned_broad_leaf:
-        failures.append("Worker replanned a broad leaf instead of PM route deepening")
+    if state.worker_changed_pm_route_boundary:
+        failures.append("Worker changed PM-owned route scope, order, dependencies, or acceptance boundary")
     if state.node_plan_reviewer_required_worker_artifacts:
         failures.append("Node plan Reviewer required Worker artifacts before Worker dispatch")
     if state.node_plan_reviewer_treated_plan_as_result_proof:
@@ -529,7 +529,7 @@ def hazard_states() -> dict[str, State]:
         "route_commit_before_reviewer": replace(route_base, route_reviewer_passed=False),
         "worker_before_node_plan_reviewer": replace(ordinary_base, worker_started_before_node_plan_review=True),
         "worker_context_missing": replace(ordinary_base, worker_context_attached=False),
-        "worker_replans_broad_leaf": replace(ordinary_base, worker_replanned_broad_leaf=True),
+        "worker_changes_pm_route_boundary": replace(ordinary_base, worker_changed_pm_route_boundary=True),
         "node_plan_reviewer_demands_worker_artifacts": replace(
             ordinary_base,
             node_plan_reviewer_required_worker_artifacts=True,

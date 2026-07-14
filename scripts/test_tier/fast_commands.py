@@ -61,12 +61,6 @@ SYNTHETIC_AGENT_TRACE_SYSTEM_STORY_SHARDS = (
         description="Single-scenario synthetic trace shard for controller repair budget escalation.",
     ),
     _pytest_k(
-        "synthetic_agent_trace_material_repair_tests",
-        SYNTHETIC_AGENT_TRACE_REPLAY_PATH,
-        "test_material_repair_generation_blocks_stale_flags_fake_package",
-        description="Single-scenario synthetic trace shard for stale material repair flags.",
-    ),
-    _pytest_k(
         "synthetic_agent_trace_dirty_terminal_tests",
         SYNTHETIC_AGENT_TRACE_REPLAY_PATH,
         "test_dirty_terminal_ledgers_block_completion_fake_package",
@@ -83,12 +77,6 @@ SYNTHETIC_AGENT_TRACE_SYSTEM_STORY_SHARDS = (
         SYNTHETIC_AGENT_TRACE_REPLAY_PATH,
         "test_system_story_stacked_blockers_preempt_and_preserve_dirty_ledger",
         description="Single-scenario system-story shard for stacked blocker preemption.",
-    ),
-    _pytest_k(
-        "synthetic_agent_trace_failed_repair_loop_tests",
-        SYNTHETIC_AGENT_TRACE_REPLAY_PATH,
-        "test_system_story_failed_pm_repair_loop_registers_followup_blocker",
-        description="Single-scenario system-story shard for failed PM repair loop follow-up.",
     ),
     _pytest_k(
         "synthetic_agent_trace_stale_run_state_tests",
@@ -132,12 +120,6 @@ E2E_SYNTHETIC_CHAOS_REPLAY_REPAIR_SHARDS = (
 )
 
 E2E_SYNTHETIC_CHAOS_REPLAY_PROOF_SHARDS = (
-    _pytest_k(
-        "e2e_synthetic_chaos_no_producer_tests",
-        E2E_SYNTHETIC_CHAOS_REPLAY_PATH,
-        "test_e2e_no_producer_pm_repair_then_packet_reissue_exposes_producer_evidence",
-        description="Single-scenario end-to-end replay shard for no-producer repair gate.",
-    ),
     _pytest_k(
         "e2e_synthetic_chaos_background_proof_tests",
         E2E_SYNTHETIC_CHAOS_REPLAY_PATH,
@@ -199,6 +181,48 @@ SHADOW_LAUNCHER_CHAOS_REPLAY_SHARDS = (
 
 FAST_COMMANDS = (
     TierCommand(
+        name="flowguard_complete_workstream_orchestration",
+        command=_py(
+            "simulations/run_flowpilot_complete_workstream_orchestration_checks.py",
+            "--json-out",
+            "simulations/flowpilot_complete_workstream_orchestration_results.json",
+        ),
+        description="Focused FlowGuard lifecycle for substantive role planning, execution, integration, verification, repair, reporting, and independent review.",
+    ),
+    TierCommand(
+        name="flowguard_ordinary_resource_discovery",
+        command=_py(
+            "simulations/run_flowpilot_ordinary_resource_discovery_checks.py",
+            "--json-out",
+            "simulations/flowpilot_ordinary_resource_discovery_results.json",
+        ),
+        description="Focused FlowGuard lifecycle for mandatory shallow skill inventory, PM selection, ordinary material work, and optional navigation maps.",
+    ),
+    TierCommand(
+        name="flowguard_skillguard_current_contract",
+        command=_py(
+            "simulations/run_flowpilot_skillguard_contract_checks.py",
+            "--json-out",
+            "simulations/flowpilot_skillguard_current_contract_results.json",
+        ),
+        description=(
+            "Focused FlowGuard projection of the current native-integrated SkillGuard "
+            "contract, single FlowPilot runtime owner, and read-only final receipt binding."
+        ),
+    ),
+    TierCommand(
+        name="complete_workstream_contract_tests",
+        command=_py(
+            "-m",
+            "pytest",
+            "tests/test_flowpilot_complete_workstream_orchestration.py",
+            "tests/test_flowpilot_ordinary_resource_discovery.py",
+            "tests/test_flowpilot_retired_material_test_authority.py",
+            "-q",
+        ),
+        description="Static and focused current-contract checks for all substantive role reports and deletion of special material paths.",
+    ),
+    TierCommand(
         name="flowguard_test_tiering",
         command=_py(
             "simulations/run_flowpilot_test_tiering_checks.py",
@@ -229,19 +253,21 @@ FAST_COMMANDS = (
         name="flowguard_model_test_alignment",
         command=_py(
             "simulations/run_flowpilot_model_test_alignment_checks.py",
+            "--declaration-only",
             "--json-out",
-            "simulations/flowpilot_model_test_alignment_results.json",
+            "tmp/test_results/flowpilot_model_test_alignment_declaration.json",
         ),
-        description="FlowGuard Model-Test Alignment checks for model obligations and ordinary test evidence.",
+        description="Declaration-only MTA structure check; final proof is compiled and consumed after execution tiers finish.",
     ),
     TierCommand(
         name="flowguard_contract_exhaustion_mesh",
         command=_py(
             "simulations/run_flowpilot_contract_exhaustion_mesh_checks.py",
+            "--declaration-only",
             "--json-out",
-            "simulations/flowpilot_contract_exhaustion_mesh_results.json",
+            "tmp/test_results/flowpilot_contract_exhaustion_mesh_declaration.json",
         ),
-        description="FlowGuard contract-exhaustion matrix for current packet/result/control-plane fields, handoffs, and no-delta loops.",
+        description="Declaration-only contract universe check; strict TestMesh proof runs after background evidence compilation.",
     ),
     TierCommand(
         name="flowguard_cartesian_control_plane_exhaustion",
@@ -250,7 +276,7 @@ FAST_COMMANDS = (
             "--json-out",
             "simulations/flowpilot_cartesian_control_plane_exhaustion_results.json",
         ),
-        description="FlowGuard Cartesian control-plane matrix for declared material, mutation, handoff, consumer, and recovery combinations.",
+        description="FlowGuard Cartesian control-plane matrix for declared contract, mutation, handoff, consumer, and recovery combinations.",
     ),
     TierCommand(
         name="flowguard_project_topology_orientation",
@@ -265,10 +291,11 @@ FAST_COMMANDS = (
         name="synthetic_agent_coverage_matrix",
         command=_py(
             "simulations/flowpilot_synthetic_agent_coverage_matrix.py",
+            "--declaration-only",
             "--json-out",
-            "simulations/flowpilot_synthetic_agent_coverage_matrix_results.json",
+            "tmp/test_results/flowpilot_synthetic_agent_coverage_matrix_declaration.json",
         ),
-        description="Coverage matrix gate for synthetic AI traces, ordinary branch evidence, and full diagnostic blockers.",
+        description="Declaration-only ownership matrix; formal AI execution closure owns current pass evidence.",
     ),
     TierCommand(
         name="hard_gate_red_team_matrix",
@@ -286,7 +313,7 @@ FAST_COMMANDS = (
             "--json-out",
             "simulations/flowpilot_e2e_synthetic_chaos_matrix_results.json",
         ),
-        description="End-to-end synthetic chaos matrix for daemon-driven fake AI full-flow replays, including no-producer PM repair recovery.",
+        description="End-to-end synthetic chaos matrix for daemon-driven fake AI lifecycle, repair, proof, isolation, and closure replays.",
     ),
     TierCommand(
         name="real_router_dry_run_rehearsal_matrix",
@@ -295,7 +322,7 @@ FAST_COMMANDS = (
             "--json-out",
             "simulations/flowpilot_real_router_dry_run_rehearsal_matrix_results.json",
         ),
-        description="Real Router dry-run rehearsal matrix for prepared fake AI packages through public runtime boundaries, including producer-proof repair waits.",
+        description="Historical Router rehearsal matrix for prepared fake AI packages through retained diagnostic boundaries.",
     ),
     TierCommand(
         name="control_plane_failure_canary_matrix",
@@ -323,6 +350,15 @@ FAST_COMMANDS = (
             "simulations/flowpilot_historical_live_run_replay_matrix_results.json",
         ),
         description="Historical live-run replay package matrix for control-plane, relay, install, projection, and filesystem edge cases.",
+    ),
+    TierCommand(
+        name="flowguard_current_status_projection",
+        command=_py(
+            "simulations/run_flowpilot_current_status_projection_checks.py",
+            "--json-out",
+            "simulations/flowpilot_current_status_projection_results.json",
+        ),
+        description="Direct current-status projection owner proof required before the known-friction parent consumes it.",
     ),
     TierCommand(
         name="known_friction_regression_matrix",
@@ -402,10 +438,14 @@ FAST_COMMANDS = (
         "tests/test_flowpilot_real_router_dry_run_rehearsal_matrix.py",
         description="Focused tests for real Router rehearsal rows and known-bad overclaim rejection.",
     ),
-    _pytest(
+    _pytest_k(
         "real_router_dry_run_rehearsal_tests",
         "tests/test_flowpilot_real_router_dry_run_rehearsal.py",
-        description="Runtime rehearsals for prepared fake AI packages through real Router, CLI, repair producer proof, recovery, proof, and terminal gates.",
+        (
+            "test_real_router_full_fake_ai_package_rehearsal_reaches_terminal_standard_state "
+            "or test_recovery_rehearsal_resume_idempotency_and_background_proof_gate"
+        ),
+        description="Historical Router diagnostics for retained fake-AI lifecycle, recovery, proof, and terminal gates.",
     ),
     _pytest(
         "control_plane_failure_canary_matrix_tests",
@@ -439,6 +479,11 @@ FAST_COMMANDS = (
         description="Focused tests for six accepted known-friction parent rows, global gates, and known-bad overclaim rejection.",
     ),
     _pytest(
+        "resource_facade_structure_mesh_tests",
+        "tests/test_flowpilot_resource_facade_structure_mesh.py",
+        description="Focused StructureMesh parity and known-bad checks for retained discovery and optional material-map facades.",
+    ),
+    _pytest(
         "model_test_alignment_tests",
         "tests/test_flowpilot_model_test_alignment.py",
         description="Focused tests for FlowGuard Model-Test Alignment evidence and known-bad cases.",
@@ -463,10 +508,21 @@ FAST_COMMANDS = (
         "tests/test_flowpilot_maintenance_tools.py",
         description="Small maintenance-tool regression tests.",
     ),
+    TierCommand(
+        name="cli_entrypoint_tests",
+        command=_py("-m", "pytest", "tests/test_flowpilot_cli_entrypoints.py", "-q"),
+        description=(
+            "Public CLI entrypoint smoke tests with install and release audits "
+            "serialized after topology and install stages."
+        ),
+        long_running=True,
+        background_recommended=True,
+        background_stage=3,
+    ),
     _pytest(
-        "cli_entrypoint_tests",
-        "tests/test_flowpilot_cli_entrypoints.py",
-        description="Fast public CLI entrypoint smoke tests.",
+        "skillguard_deep_contract_tests",
+        "tests/test_flowpilot_skillguard_deep_contract.py",
+        description="FlowPilot native-integrated SkillGuard target-lock and no-parallel-route checks.",
     ),
 )
 

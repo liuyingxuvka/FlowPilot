@@ -458,7 +458,7 @@ def router_facade_testmesh_plan() -> TestMeshPlan:
             ),
             TestSuiteEvidence(
                 "packet_runtime",
-                command="python -m unittest tests.router_runtime.packets tests.router_runtime.material_modeling tests.router_runtime.pm_role_work",
+                command="python -m unittest tests.router_runtime.packets tests.router_runtime.packet_result_family tests.router_runtime.pm_role_work",
                 result_status=TEST_STATUS_PASSED,
                 evidence_tier=EVIDENCE_CONFORMANCE_GREEN,
                 result_path="simulations/flowpilot_router_facade_split_results.json",

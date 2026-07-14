@@ -199,10 +199,16 @@ rather than duplicating the child skill's prompt text.
 Required early gate:
 
 - showcase-grade floor;
-- material intake before PM route design: the controller writes a Material
-  Intake Packet, the human-like reviewer approves sufficiency, and the project
-  manager writes a material understanding memo with complexity classification
-  and any discovery-subtree decision;
+- mandatory shallow local skill/capability inventory before deep skill use:
+  Runtime exposes paths and availability in the existing discovery packet, PM
+  selects relevant candidates, and only selected skills are deeply read;
+- ordinary evidence work instead of a universal material gate: PM reads
+  non-sealed material directly and routes decision-specific research,
+  experiment, source verification, or evidence synthesis through normal
+  role-work plus risk-appropriate existing review;
+- complete bounded workstreams: every substantive role writes a numbered local
+  plan and returns per-step status/evidence while PM retains product, route,
+  acceptance, and whole-project integration authority;
 - visible full self-interrogation at formal boundaries, with at least 100 questions per
   active layer;
 - focused self-interrogation at phase/group/module/leaf-node/child-skill boundaries,

@@ -5,90 +5,43 @@ from tests.router_runtime.common import FlowPilotRouterRuntimeTestBase
 
 
 class PacketResultFamilyRuntimeTests(FlowPilotRouterRuntimeTestBase):
-    def _prepare_material_scan_batch(self, root: Path) -> tuple[Path, Path]:
-        run_root = self.boot_to_controller(root)
-        self.complete_startup_runtime_entry(root)
-        self.deliver_expected_card(root, "pm.material_scan")
-        router.record_external_event(
-            root,
-            "pm_issues_material_and_capability_scan_packets",
-            {
-                "packets": [
-                    {
-                        "packet_id": "material-family-worker-1",
-                        "to_role": "worker",
-                        "body_text": "Inspect local materials.",
-                    },
-                ]
-            },
-        )
-        self.ensure_current_role_agent_for_role(root, "worker")
-        self.apply_next_packet_action(root, "relay_material_scan_packets")
-        return run_root, run_root / "material" / "material_scan_packets.json"
-
     def _prepare_research_batch(self, root: Path) -> tuple[Path, Path]:
         run_root = self.boot_to_controller(root)
         self.complete_startup_runtime_entry(root)
-        self.deliver_expected_card(root, "pm.material_scan")
-        router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
-        self.apply_next_packet_action(root, "relay_material_scan_packets")
-        material_index_path = run_root / "material" / "material_scan_packets.json"
-        self.open_packets_and_write_results(root, material_index_path, result_text="research needed")
-        router.record_external_event(root, "worker_scan_packet_bodies_delivered_after_dispatch")
-        router.record_external_event(root, "worker_scan_results_returned")
-        self.absorb_material_scan_results_with_pm(root, material_index_path)
-        self.deliver_expected_card(root, "reviewer.material_sufficiency")
-        router.record_external_event(
-            root,
-            "reviewer_reports_material_insufficient",
-            self.role_report_envelope(
-                root,
-                "material/reviewer_material_insufficient_for_family",
+        state = read_json(router.run_state_path(run_root))
+        package = {
+            "decision_question": "which source is authoritative?",
+            "allowed_source_types": ["current_repository_files"],
+            "host_capability_decision": "local_sources_first",
+            "worker_owner": "worker",
+            "batch_id": "research-family-batch-001",
+            "packets": [
                 {
-                    "pm_visible_summary": ["Reviewed material is insufficient for PM execution."],
-                    "reviewed_by_role": "human_like_reviewer",
-                    "passed": False,
-                    "direct_material_sources_checked": True,
-                    "packet_matches_checked_sources": True,
-                    "pm_ready": False,
-                    "checked_source_paths": self.material_review_source_paths(root),
-                    "runtime_open_receipt_refs": [],
-                    "findings": [],
-                    "blockers": [],
-                    "pm_suggestion_items": [
-                        "PM decision-support: material review is insufficient; PM should route targeted research before continuing."
-                    ],
-                    "contract_self_check": {"status": "pass"},
+                    "packet_id": "research-family-worker-1",
+                    "to_role": "worker",
+                    "body_text": "Verify the bounded source question as ordinary research work.",
                 },
-            ),
-        )
-        self.deliver_expected_card(root, "pm.event.reviewer_report")
-        self.deliver_expected_card(root, "pm.material_absorb_or_research")
-        router.record_external_event(root, "pm_requests_research_after_material_insufficient")
-        self.apply_next_non_card_action(root)
-        self.ack_system_card_action(root, router.next_action(root))
-        router.record_external_event(
+                {
+                    "packet_id": "research-family-flowguard-1",
+                    "to_role": "flowguard_operator",
+                    "body_text": "Model the bounded source decision as ordinary FlowGuard support work.",
+                },
+            ],
+            "stop_conditions": ["Do not edit production code."],
+        }
+        router._write_research_package(root, run_root, state, package)  # type: ignore[attr-defined]
+        state.setdefault("flags", {})["research_package_written_by_pm"] = True
+        router._write_research_capability_decision(  # type: ignore[attr-defined]
             root,
-            "pm_writes_research_package",
-            {
-                "decision_question": "which source is authoritative?",
-                "allowed_source_types": ["current_repository_files"],
-                "host_capability_decision": "local_sources_first",
-                "worker_owner": "worker",
-                "batch_id": "research-family-batch-001",
-                "packets": [
-                    {"packet_id": "research-family-worker-1", "to_role": "worker"},
-                    {"packet_id": "research-family-flowguard-1", "to_role": "flowguard_operator"},
-                ],
-                "stop_conditions": ["Do not edit production code."],
-            },
+            run_root,
+            state,
+            {"batch_id": "research-family-batch-001"},
         )
-        router.record_external_event(root, "research_capability_decision_recorded", {})
-        self.apply_next_non_card_action(root)
-        self.ack_system_card_action(root, router.next_action(root))
+        state["flags"]["research_capability_decision_recorded"] = True
+        router.save_run_state(run_root, state)
         self.ensure_current_role_agent_for_role(root, "worker")
         self.ensure_current_role_agent_for_role(root, "flowguard_operator")
-        self.apply_next_packet_action(root, "relay_research_packet")
+        self.apply_until_action(root, "relay_research_packet")
         return run_root, run_root / "research" / "research_packet.json"
 
     def _prepare_current_node_batch(self, root: Path) -> tuple[Path, dict[str, str]]:
@@ -162,36 +115,6 @@ class PacketResultFamilyRuntimeTests(FlowPilotRouterRuntimeTestBase):
         )
         self.apply_until_action(root, "relay_pm_role_work_request_packet")
         return run_root, request_ids
-
-    def test_material_scan_wrong_recipient_envelope_is_not_counted_as_family_result(self) -> None:
-        root = self.make_project()
-        run_root, material_index_path = self._prepare_material_scan_batch(root)
-        index = read_json(material_index_path)
-        first = index["packets"][0]
-        envelope = packet_runtime.load_envelope(root, first["packet_envelope_path"])
-        packet_runtime.read_packet_body_for_role(root, envelope, role=envelope["to_role"])
-        completed_by_role = str(envelope["to_role"])
-        packet_runtime.write_result(
-            root,
-            packet_envelope=envelope,
-            completed_by_role=completed_by_role,
-            completed_by_agent_id=self.active_agent_id_for_role(root, completed_by_role),
-            result_body_text=f"{first['packet_id']} result\n\nContract Self-Check\n\nstatus: pass\n",
-            next_recipient="human_like_reviewer",
-        )
-
-        action = self.next_after_display_sync(root)
-
-        self.assertEqual(action["action_type"], "await_role_decision")
-        self.assertEqual(action["allowed_external_events"], ["worker_scan_results_returned"])
-        self.assertEqual(action["to_role"], "worker")
-        batch_ref = read_json(run_root / "packet_batches" / "active_material_scan.json")
-        batch = read_json(root / batch_ref["batch_path"])
-        self.assertEqual(batch["member_status"]["returned_roles"], [])
-        self.assertEqual(batch["member_status"]["missing_roles"], ["worker"])
-        self.assertEqual(batch["member_status"]["invalid_result_roles"], ["worker"])
-        state = read_json(router.run_state_path(run_root))
-        self.assertFalse(state["flags"].get("worker_scan_results_returned"))
 
     def test_research_full_batch_reconciles_from_durable_results_without_manual_event(self) -> None:
         root = self.make_project()

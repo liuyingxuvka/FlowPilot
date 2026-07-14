@@ -58,9 +58,11 @@ runtime and record a disposition:
 PM-built node-completion review package. PM may complete the node only after the
 reviewer passes that formal PM gate package or a repaired formal package.
 
-Every current-node worker packet must include the registry `output_contract`
-`flowpilot.output_contract.worker_current_node_result.v1` in both the packet
-envelope and packet body's `Output Contract` section. The contract must match
+Every current-node worker packet must select registry `output_contract`
+`flowpilot.output_contract.worker_current_node_result.v1`; runtime projects it
+through `current_handoff_contract.v2` into the addressed role's
+`submission_checklist.v2`. The packet body must not repeat a mechanical
+contract. The contract must match
 the active node id, recipient role, acceptance plan, required verification, and
 reviewer block conditions.
 Every current-node worker packet must also include the node's
@@ -83,10 +85,10 @@ If PM discovers at entry that an apparent leaf is still too broad for one
 bounded worker packet, promote it to a parent/module, add ordered child nodes,
 invalidate stale approvals for that subtree, and rerun local FlowGuard operator product-model,
 FlowGuard operator process-model, PM decision, and Reviewer gates before any worker dispatch.
-The packet body must also include the generated `Report Contract For This Task`
-block, including required result sections, required return envelope fields,
-blocked/needs-PM behavior, and the rule that field names and section names must
-not be renamed.
+The addressed worker must ACK and open the packet, then use the returned
+`submission_checklist.v2` for required result fields, branch shapes, finite
+values, and blocked behavior. Packet-body required-field or shape mirrors must
+not be generated or consumed as current authority.
 The packet body must also ask the worker to include a soft `PM Note` in the
 sealed result body with exactly these labels: `In-scope quality choice` and
 `PM consideration`. This note is PM decision-support, not a reviewer hard gate:

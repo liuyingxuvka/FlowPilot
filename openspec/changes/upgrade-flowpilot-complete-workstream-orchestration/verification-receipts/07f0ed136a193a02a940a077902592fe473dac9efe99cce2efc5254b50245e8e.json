@@ -1,0 +1,26 @@
+{
+  "schema_version": 2,
+  "report_protocol_version": 3,
+  "execution_key": "sha256:c3c3db83072f045ba821fa06a75dd340351022327fb668b71d51c4e7ecae2f1a",
+  "result_hash": "sha256:c236f705619df00f3ae017517844c0a8604bfd781582af86eb3b26fd0a0c0959",
+  "receipt_id": "sha256:07f0ed136a193a02a940a077902592fe473dac9efe99cce2efc5254b50245e8e",
+  "result": {
+    "status": "passed",
+    "command": "python",
+    "args": [
+      "-m",
+      "unittest",
+      "-v",
+      "tests.test_flowpilot_material_access_mesh",
+      "tests.router_runtime.terminal.TerminalRuntimeTests.test_final_ledger_records_frozen_contract_replay_source_paths",
+      "tests.router_runtime.terminal.TerminalRuntimeTests.test_final_ledger_links_explicit_existing_optional_map_without_using_it_as_acceptance_evidence"
+    ],
+    "expected_exit_code": 0,
+    "exit_code": 0,
+    "timeout_seconds": 1800,
+    "stdout": "",
+    "stderr": "test_existing_map_is_refreshed_and_formal_package_links_navigation (tests.test_flowpilot_material_access_mesh.FlowPilotMaterialAccessMeshTests.test_existing_map_is_refreshed_and_formal_package_links_navigation) ... ok\r\ntest_existing_noncurrent_map_is_checked_but_not_linked (tests.test_flowpilot_material_access_mesh.FlowPilotMaterialAccessMeshTests.test_existing_noncurrent_map_is_checked_but_not_linked) ... ok\r\ntest_missing_map_stays_absent_through_refresh_and_formal_package (tests.test_flowpilot_material_access_mesh.FlowPilotMaterialAccessMeshTests.test_missing_map_stays_absent_through_refresh_and_formal_package) ... ok\r\ntest_model_alignment_evidence_paths_are_repository_relative (tests.test_flowpilot_material_access_mesh.FlowPilotMaterialAccessMeshTests.test_model_alignment_evidence_paths_are_repository_relative) ... ok\r\ntest_ordinary_project_material_is_public_but_sealed_bodies_stay_runtime_authorized (tests.test_flowpilot_material_access_mesh.FlowPilotMaterialAccessMeshTests.test_ordinary_project_material_is_public_but_sealed_bodies_stay_runtime_authorized) ... ok\r\ntest_retired_material_scan_family_and_events_are_not_current_map_authority (tests.test_flowpilot_material_access_mesh.FlowPilotMaterialAccessMeshTests.test_retired_material_scan_family_and_events_are_not_current_map_authority) ... ok\r\ntest_final_ledger_records_frozen_contract_replay_source_paths (tests.router_runtime.terminal.TerminalRuntimeTests.test_final_ledger_records_frozen_contract_replay_source_paths) ... ok\r\ntest_final_ledger_links_explicit_existing_optional_map_without_using_it_as_acceptance_evidence (tests.router_runtime.terminal.TerminalRuntimeTests.test_final_ledger_links_explicit_existing_optional_map_without_using_it_as_acceptance_evidence) ... ok\r\n\r\n----------------------------------------------------------------------\r\nRan 8 tests in 219.394s\r\n\r\nOK\r\n",
+    "stdout_preview": "",
+    "stderr_preview": "test_existing_map_is_refreshed_and_formal_package_links_navigation (tests.test_flowpilot_material_access_mesh.FlowPilotMaterialAccessMeshTests.test_existing_map_is_refreshed_and_formal_package_links_navigation) ... ok\r\ntest_existing_noncurrent_map_is_checked_but_not_linked (tests.test_flowpilot_material_access_mesh.FlowPilotMaterialAccessMeshTests.test_existing_noncurrent_map_is_checked_but_not_linked) ... ok\r\ntest_missing_map_stays_absent_through_refresh_and_formal_package (tests.test_flowpilot_material_access_mesh.FlowPilotMaterialAccessMeshTests.test_missing_map_stays_absent_through_refresh_and_formal_package) ... ok\r\ntest_model_alignment_evidence_paths_are_repository_relative (tests.test_flowpilot_material_access_mesh.FlowPilotMaterialAccessMeshTests.test_model_alignment_evidence_paths_are_repository_relative) ... ok\r\ntest_ordinary_project_material_is_public_but_sealed_bodies_stay_runtime_authorized (tests.test_flowpilot_material_access_mesh.FlowPilotMaterialAccessMeshTests.test_ordinary_project_material_is_public_but_sealed_bodies_stay_runtime_authorized) ... ok\r\ntest_retired_material_scan_family_and_events_are_not_current_map_authority (tests.test_flowpilot_material_access_mesh.FlowPilotMaterialAccessMeshTests.test_retired_material_scan_family_and_events_are_not_current_map_authority) ... ok\r\ntest_final_ledger_records_frozen_contract_replay_source_paths (tests.router_runtime.terminal.TerminalRuntimeTests.test_final_ledger_records_frozen_contract_replay_source_paths) ... ok\r\ntest_final_ledger_links_explicit_existing_optional_map_without_using_it_as_acceptance_evidence (tests.router_runtime.terminal.TerminalRuntimeTests.test_final_ledger_links_explicit_existing_optional_map_without_using_it_as_acceptance_evidence) ... ok\r\n\r\n----------------------------------------------------------------------\r\nRan 8 tests in 219.394s\r\n\r\nOK\r\n"
+  }
+}

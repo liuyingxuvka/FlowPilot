@@ -1113,7 +1113,7 @@ ROUTER_FACADE_MODULES = (
     ModuleStructureEvidence(
         "work_packets",
         path="skills/flowpilot/assets/flowpilot_router_work_packets.py",
-        owns_functions=("_next_material_packet_action", "_next_research_packet_action", "_next_current_node_packet_action", "_next_pm_role_work_request_action"),
+        owns_functions=("_next_research_packet_action", "_next_current_node_packet_action", "_next_pm_role_work_request_action"),
         owns_state=("packet_ledger", "parallel_packet_batches", "pm_role_work_index", "current_node_packet_records"),
         dependencies=("route_frontier", "router_facade"),
         behavior_contracts=("packet relay lifecycle", "PM role-work lifecycle", "current-node packet absorption"),

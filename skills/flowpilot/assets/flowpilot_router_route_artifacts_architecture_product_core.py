@@ -56,9 +56,9 @@ def _write_product_function_architecture(project_root: Path, run_root: Path, run
     payload = _load_file_backed_role_payload_if_present(project_root, payload)
     if payload.get("pm_owned", True) is not True:
         raise RouterError("product-function architecture must be PM-owned")
-    material_understanding_path = run_root / "pm_material_understanding.json"
-    if not material_understanding_path.exists():
-        raise RouterError("product-function architecture requires pm_material_understanding.json")
+    startup_answers_path = run_root / "startup_answers.json"
+    if not startup_answers_path.exists():
+        raise RouterError("product-function architecture requires current startup_answers.json")
     required_lists = ("user_task_map", "product_capability_map", "feature_decisions", "functional_acceptance_matrix")
     missing_lists = [name for name in required_lists if not isinstance(payload.get(name), list) or not payload.get(name)]
     if missing_lists:
@@ -77,7 +77,7 @@ def _write_product_function_architecture(project_root: Path, run_root: Path, run
             {
                 "source_requirement_id": str(item.get("source_requirement_id") or item.get("requirement_id") or item.get("acceptance_id") or f"req-{index:03d}"),
                 "source_type": str(item.get("source") or "product_function_architecture"),
-                "source_path": project_relative(project_root, material_understanding_path),
+                "source_path": project_relative(project_root, startup_answers_path),
                 "statement": str(item.get("goal") or item.get("behavior") or item.get("acceptance_statement") or item.get("acceptance_id") or f"Requirement {index}"),
                 "status": "active",
                 "superseded_by": [],
@@ -102,11 +102,9 @@ def _write_product_function_architecture(project_root: Path, run_root: Path, run
         "created_at": utc_now(),
         "updated_at": utc_now(),
         "source_paths": {
-            "startup_answers": project_relative(project_root, run_root / "startup_answers.json"),
+            "startup_answers": project_relative(project_root, startup_answers_path),
             "display_surface": project_relative(project_root, run_root / "display" / "display_surface.json"),
-            "pm_material_understanding": project_relative(project_root, material_understanding_path),
         },
-        "source_material_review": run_state.get("material_review"),
         "requirement_trace": requirement_trace,
         "high_standard_posture": payload.get("high_standard_posture") or {"highest_reasonably_achievable_is_floor": True},
         "unacceptable_result_review": payload.get("unacceptable_result_review") or [],

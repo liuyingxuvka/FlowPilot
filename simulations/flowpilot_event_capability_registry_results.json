@@ -5,7 +5,8 @@
       "Use the capability validator before writing control-blocker waits.",
       "Use the capability validator before committing a PM repair rerun target.",
       "Reject unsupported generic repair outcome tables instead of collapsing non-success rows onto the success event.",
-      "Keep material dispatch repair on its existing three explicit outcome events."
+      "Use current research and current-node events for ordinary evidence and repair flows.",
+      "Keep retired material workflow events outside every positive capability surface."
     ],
     "name": "event_capability_registry",
     "principles": [
@@ -22,7 +23,7 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=3 initial_states=1 traces=120",
+    "summary": "sequences=3 initial_states=1 traces=192",
     "violation_count": 0
   },
   "hazard_checks": {
@@ -71,7 +72,7 @@
           "rerun_target": "worker_current_node_result_returned",
           "scenario": "blocker_outcome_uses_success_event",
           "status": "running",
-          "target_role": "worker_a",
+          "target_role": "worker",
           "terminal_reason": "none",
           "wait_events": []
         }
@@ -95,7 +96,7 @@
           "rerun_target": "worker_current_node_result_returned",
           "scenario": "collapsed_repair_outcomes_on_business_event",
           "status": "running",
-          "target_role": "worker_a",
+          "target_role": "worker",
           "terminal_reason": "none",
           "wait_events": []
         }
@@ -222,22 +223,299 @@
         "detected": true,
         "expected_failure": "repair outcome event is not eligible for protocol_blocker row",
         "failures": [
+          "repair non-success outcome uses success-only business event",
           "repair outcome event is not eligible for protocol_blocker row",
           "repair outcome table collapsed success blocker and protocol-blocker events"
         ],
         "state": {
-          "active_node_kind": "pre_route",
+          "active_node_kind": "leaf",
           "currently_receivable": true,
-          "repair_blocker_event": "router_direct_material_scan_dispatch_recheck_blocked",
-          "repair_origin": "material_dispatch",
-          "repair_protocol_event": "router_direct_material_scan_dispatch_recheck_passed",
-          "repair_success_event": "router_direct_material_scan_dispatch_recheck_passed",
-          "rerun_target": "router_direct_material_scan_dispatch_recheck_passed",
+          "repair_blocker_event": "pm_records_control_blocker_followup_blocker",
+          "repair_origin": "current_node_result",
+          "repair_protocol_event": "worker_current_node_result_returned",
+          "repair_success_event": "worker_current_node_result_returned",
+          "rerun_target": "worker_current_node_result_returned",
           "scenario": "protocol_outcome_uses_success_event",
           "status": "running",
-          "target_role": "controller",
+          "target_role": "worker",
           "terminal_reason": "none",
           "wait_events": []
+        }
+      },
+      "retired_material_event_capability_pm_accepts_reviewed_material": {
+        "detected": true,
+        "expected_failure": "event capability row is missing",
+        "failures": [
+          "event capability row is missing"
+        ],
+        "state": {
+          "active_node_kind": "pre_route",
+          "currently_receivable": true,
+          "repair_blocker_event": "none",
+          "repair_origin": "none",
+          "repair_protocol_event": "none",
+          "repair_success_event": "none",
+          "rerun_target": "none",
+          "scenario": "retired_material_event_capability_pm_accepts_reviewed_material",
+          "status": "running",
+          "target_role": "project_manager",
+          "terminal_reason": "none",
+          "wait_events": [
+            "pm_accepts_reviewed_material"
+          ]
+        }
+      },
+      "retired_material_event_capability_pm_issues_material_and_capability_scan_packets": {
+        "detected": true,
+        "expected_failure": "event capability row is missing",
+        "failures": [
+          "event capability row is missing"
+        ],
+        "state": {
+          "active_node_kind": "pre_route",
+          "currently_receivable": true,
+          "repair_blocker_event": "none",
+          "repair_origin": "none",
+          "repair_protocol_event": "none",
+          "repair_success_event": "none",
+          "rerun_target": "none",
+          "scenario": "retired_material_event_capability_pm_issues_material_and_capability_scan_packets",
+          "status": "running",
+          "target_role": "project_manager",
+          "terminal_reason": "none",
+          "wait_events": [
+            "pm_issues_material_and_capability_scan_packets"
+          ]
+        }
+      },
+      "retired_material_event_capability_pm_records_material_scan_result_disposition": {
+        "detected": true,
+        "expected_failure": "event capability row is missing",
+        "failures": [
+          "event capability row is missing"
+        ],
+        "state": {
+          "active_node_kind": "pre_route",
+          "currently_receivable": true,
+          "repair_blocker_event": "none",
+          "repair_origin": "none",
+          "repair_protocol_event": "none",
+          "repair_success_event": "none",
+          "rerun_target": "none",
+          "scenario": "retired_material_event_capability_pm_records_material_scan_result_disposition",
+          "status": "running",
+          "target_role": "project_manager",
+          "terminal_reason": "none",
+          "wait_events": [
+            "pm_records_material_scan_result_disposition"
+          ]
+        }
+      },
+      "retired_material_event_capability_pm_requests_research_after_material_insufficient": {
+        "detected": true,
+        "expected_failure": "event capability row is missing",
+        "failures": [
+          "event capability row is missing"
+        ],
+        "state": {
+          "active_node_kind": "pre_route",
+          "currently_receivable": true,
+          "repair_blocker_event": "none",
+          "repair_origin": "none",
+          "repair_protocol_event": "none",
+          "repair_success_event": "none",
+          "rerun_target": "none",
+          "scenario": "retired_material_event_capability_pm_requests_research_after_material_insufficient",
+          "status": "running",
+          "target_role": "project_manager",
+          "terminal_reason": "none",
+          "wait_events": [
+            "pm_requests_research_after_material_insufficient"
+          ]
+        }
+      },
+      "retired_material_event_capability_pm_writes_material_understanding": {
+        "detected": true,
+        "expected_failure": "event capability row is missing",
+        "failures": [
+          "event capability row is missing"
+        ],
+        "state": {
+          "active_node_kind": "pre_route",
+          "currently_receivable": true,
+          "repair_blocker_event": "none",
+          "repair_origin": "none",
+          "repair_protocol_event": "none",
+          "repair_success_event": "none",
+          "rerun_target": "none",
+          "scenario": "retired_material_event_capability_pm_writes_material_understanding",
+          "status": "running",
+          "target_role": "project_manager",
+          "terminal_reason": "none",
+          "wait_events": [
+            "pm_writes_material_understanding"
+          ]
+        }
+      },
+      "retired_material_event_capability_reviewer_reports_material_insufficient": {
+        "detected": true,
+        "expected_failure": "event capability row is missing",
+        "failures": [
+          "event capability row is missing"
+        ],
+        "state": {
+          "active_node_kind": "pre_route",
+          "currently_receivable": true,
+          "repair_blocker_event": "none",
+          "repair_origin": "none",
+          "repair_protocol_event": "none",
+          "repair_success_event": "none",
+          "rerun_target": "none",
+          "scenario": "retired_material_event_capability_reviewer_reports_material_insufficient",
+          "status": "running",
+          "target_role": "project_manager",
+          "terminal_reason": "none",
+          "wait_events": [
+            "reviewer_reports_material_insufficient"
+          ]
+        }
+      },
+      "retired_material_event_capability_reviewer_reports_material_sufficient": {
+        "detected": true,
+        "expected_failure": "event capability row is missing",
+        "failures": [
+          "event capability row is missing"
+        ],
+        "state": {
+          "active_node_kind": "pre_route",
+          "currently_receivable": true,
+          "repair_blocker_event": "none",
+          "repair_origin": "none",
+          "repair_protocol_event": "none",
+          "repair_success_event": "none",
+          "rerun_target": "none",
+          "scenario": "retired_material_event_capability_reviewer_reports_material_sufficient",
+          "status": "running",
+          "target_role": "project_manager",
+          "terminal_reason": "none",
+          "wait_events": [
+            "reviewer_reports_material_sufficient"
+          ]
+        }
+      },
+      "retired_material_event_capability_router_direct_material_scan_dispatch_recheck_blocked": {
+        "detected": true,
+        "expected_failure": "event capability row is missing",
+        "failures": [
+          "event capability row is missing"
+        ],
+        "state": {
+          "active_node_kind": "pre_route",
+          "currently_receivable": true,
+          "repair_blocker_event": "none",
+          "repair_origin": "none",
+          "repair_protocol_event": "none",
+          "repair_success_event": "none",
+          "rerun_target": "none",
+          "scenario": "retired_material_event_capability_router_direct_material_scan_dispatch_recheck_blocked",
+          "status": "running",
+          "target_role": "project_manager",
+          "terminal_reason": "none",
+          "wait_events": [
+            "router_direct_material_scan_dispatch_recheck_blocked"
+          ]
+        }
+      },
+      "retired_material_event_capability_router_direct_material_scan_dispatch_recheck_passed": {
+        "detected": true,
+        "expected_failure": "event capability row is missing",
+        "failures": [
+          "event capability row is missing"
+        ],
+        "state": {
+          "active_node_kind": "pre_route",
+          "currently_receivable": true,
+          "repair_blocker_event": "none",
+          "repair_origin": "none",
+          "repair_protocol_event": "none",
+          "repair_success_event": "none",
+          "rerun_target": "none",
+          "scenario": "retired_material_event_capability_router_direct_material_scan_dispatch_recheck_passed",
+          "status": "running",
+          "target_role": "project_manager",
+          "terminal_reason": "none",
+          "wait_events": [
+            "router_direct_material_scan_dispatch_recheck_passed"
+          ]
+        }
+      },
+      "retired_material_event_capability_router_protocol_blocker_material_scan_dispatch_recheck": {
+        "detected": true,
+        "expected_failure": "event capability row is missing",
+        "failures": [
+          "event capability row is missing"
+        ],
+        "state": {
+          "active_node_kind": "pre_route",
+          "currently_receivable": true,
+          "repair_blocker_event": "none",
+          "repair_origin": "none",
+          "repair_protocol_event": "none",
+          "repair_success_event": "none",
+          "rerun_target": "none",
+          "scenario": "retired_material_event_capability_router_protocol_blocker_material_scan_dispatch_recheck",
+          "status": "running",
+          "target_role": "project_manager",
+          "terminal_reason": "none",
+          "wait_events": [
+            "router_protocol_blocker_material_scan_dispatch_recheck"
+          ]
+        }
+      },
+      "retired_material_event_capability_worker_scan_packet_bodies_delivered_after_dispatch": {
+        "detected": true,
+        "expected_failure": "event capability row is missing",
+        "failures": [
+          "event capability row is missing"
+        ],
+        "state": {
+          "active_node_kind": "pre_route",
+          "currently_receivable": true,
+          "repair_blocker_event": "none",
+          "repair_origin": "none",
+          "repair_protocol_event": "none",
+          "repair_success_event": "none",
+          "rerun_target": "none",
+          "scenario": "retired_material_event_capability_worker_scan_packet_bodies_delivered_after_dispatch",
+          "status": "running",
+          "target_role": "project_manager",
+          "terminal_reason": "none",
+          "wait_events": [
+            "worker_scan_packet_bodies_delivered_after_dispatch"
+          ]
+        }
+      },
+      "retired_material_event_capability_worker_scan_results_returned": {
+        "detected": true,
+        "expected_failure": "event capability row is missing",
+        "failures": [
+          "event capability row is missing"
+        ],
+        "state": {
+          "active_node_kind": "pre_route",
+          "currently_receivable": true,
+          "repair_blocker_event": "none",
+          "repair_origin": "none",
+          "repair_protocol_event": "none",
+          "repair_success_event": "none",
+          "rerun_target": "none",
+          "scenario": "retired_material_event_capability_worker_scan_results_returned",
+          "status": "running",
+          "target_role": "project_manager",
+          "terminal_reason": "none",
+          "wait_events": [
+            "worker_scan_results_returned"
+          ]
         }
       },
       "role_work_result_wait_unreceivable_accepted": {
@@ -256,7 +534,7 @@
           "rerun_target": "none",
           "scenario": "role_work_result_wait_unreceivable_accepted",
           "status": "running",
-          "target_role": "worker_a",
+          "target_role": "worker",
           "terminal_reason": "none",
           "wait_events": [
             "role_work_result_returned"
@@ -318,20 +596,20 @@
     "ok": true,
     "samples": [],
     "stuck_state_count": 0,
-    "terminal_state_count": 20
+    "terminal_state_count": 32
   },
   "safe_graph": {
     "accepted_scenarios": [
       "valid_generic_repair_outcome_table",
       "valid_leaf_current_packet_wait",
-      "valid_material_partial_batch_result_wait",
-      "valid_material_repair_outcome_table",
       "valid_parent_backward_wait",
       "valid_parent_repair_outcome_table",
       "valid_pm_role_work_result_wait",
+      "valid_research_result_wait",
+      "valid_research_review_wait",
       "valid_worker_leaf_result_wait"
     ],
-    "edge_count": 40,
+    "edge_count": 64,
     "invariant_failures": [],
     "missing_labels": [],
     "ok": true,
@@ -345,10 +623,31 @@
       "parent_current_packet_wait_accepted",
       "pm_repair_event_as_rerun_target",
       "protocol_outcome_uses_success_event",
+      "retired_material_event_capability_pm_accepts_reviewed_material",
+      "retired_material_event_capability_pm_issues_material_and_capability_scan_packets",
+      "retired_material_event_capability_pm_records_material_scan_result_disposition",
+      "retired_material_event_capability_pm_requests_research_after_material_insufficient",
+      "retired_material_event_capability_pm_writes_material_understanding",
+      "retired_material_event_capability_reviewer_reports_material_insufficient",
+      "retired_material_event_capability_reviewer_reports_material_sufficient",
+      "retired_material_event_capability_router_direct_material_scan_dispatch_recheck_blocked",
+      "retired_material_event_capability_router_direct_material_scan_dispatch_recheck_passed",
+      "retired_material_event_capability_router_protocol_blocker_material_scan_dispatch_recheck",
+      "retired_material_event_capability_worker_scan_packet_bodies_delivered_after_dispatch",
+      "retired_material_event_capability_worker_scan_results_returned",
       "role_work_result_wait_unreceivable_accepted",
       "unregistered_event_accepted",
       "wrong_producer_role_wait_accepted"
     ],
-    "state_count": 41
+    "state_count": 65
+  },
+  "source_audit": {
+    "known_bad_contract": "Retired material external events are absent from both the current runtime catalog and the positive event-capability registry; every attempted capability lookup is rejected.",
+    "missing_model_capabilities_in_runtime": [],
+    "model_capability_count": 15,
+    "ok": true,
+    "retired_material_event_count": 12,
+    "retired_material_model_capability_residue": [],
+    "retired_material_runtime_catalog_residue": []
   }
 }

@@ -14,12 +14,6 @@ from flowpilot_router_errors import RouterError
 
 
 _RECONCILED_PM_PACKAGE_DOMAIN_COMMITS: dict[str, dict[str, str]] = {
-    "pm_records_material_scan_result_disposition": {
-        "batch_kind": "material_scan",
-        "package_label": "material_scan",
-        "gate_kind": "material_sufficiency",
-        "output_path": "material/pm_material_scan_result_disposition.json",
-    },
     "pm_records_research_result_disposition": {
         "batch_kind": "research",
         "package_label": "research",

@@ -7,18 +7,6 @@ from types import ModuleType
 from typing import Any
 
 
-_TERMINAL_MATERIAL_PROGRESS_FLAGS = (
-    "material_scan_packets_relayed",
-    "worker_packets_delivered",
-    "worker_scan_results_returned",
-    "material_scan_results_relayed_to_pm",
-    "material_scan_result_disposition_recorded",
-    "material_scan_results_absorbed_by_pm",
-    "material_review_sufficient",
-    "material_review_insufficient",
-)
-
-
 def clear_active_repair_transaction_for_terminal_lifecycle(
     router: ModuleType,
     project_root: Path,
@@ -54,67 +42,6 @@ def clear_active_repair_transaction_for_terminal_lifecycle(
         "previous_status": previous_status or None,
         "status": "superseded_by_terminal_lifecycle",
     }
-
-
-def quarantine_material_progress_for_terminal_lifecycle(
-    router: ModuleType,
-    project_root: Path,
-    run_root: Path,
-    run_state: dict[str, Any],
-    *,
-    mode: str,
-    event: str,
-    reconciled_at: str,
-) -> dict[str, Any] | None:
-    flags = run_state.get("flags")
-    if not isinstance(flags, dict):
-        return None
-    previous_true = {flag: True for flag in _TERMINAL_MATERIAL_PROGRESS_FLAGS if flags.get(flag) is True}
-    if not previous_true:
-        return None
-    for flag in previous_true:
-        flags[flag] = False
-    receipt = {
-        "authority": "material_progress_flags",
-        "previous_true_flags": sorted(previous_true),
-        "cleared_for_terminal_lifecycle": True,
-    }
-    material_index_path = run_root / "material" / "material_scan_packets.json"
-    if material_index_path.exists():
-        material_index = router.read_json(material_index_path)
-        material_index["terminal_lifecycle_quarantine"] = {
-            "status": "terminal_lifecycle_quarantined",
-            "event": event,
-            "terminal_lifecycle_status": mode,
-            "reason": "run stopped before active material generation completed; stale run-wide progress flags are not current-generation evidence",
-            "quarantined_at": reconciled_at,
-        }
-        router.write_json(material_index_path, material_index)
-        receipt["material_index_path"] = router.project_relative(project_root, material_index_path)
-    active_ref_path = run_root / "packet_batches" / "active_material_scan.json"
-    if active_ref_path.exists():
-        active_ref = router.read_json(active_ref_path)
-        batch_path = router.resolve_project_path(project_root, str(active_ref.get("batch_path") or ""))
-        if batch_path.exists():
-            batch = router.read_json(batch_path)
-            batch["terminal_lifecycle_quarantine"] = {
-                "status": "terminal_lifecycle_quarantined",
-                "event": event,
-                "terminal_lifecycle_status": mode,
-                "previous_status": batch.get("status"),
-                "quarantined_at": reconciled_at,
-            }
-            router.write_json(batch_path, batch)
-            receipt["active_batch_path"] = router.project_relative(project_root, batch_path)
-    run_state["terminal_material_progress_quarantine"] = {
-        "schema_version": "flowpilot.terminal_material_progress_quarantine.v1",
-        "status": "terminal_lifecycle_quarantined",
-        "event": event,
-        "terminal_lifecycle_status": mode,
-        "previous_true_flags": sorted(previous_true),
-        "quarantined_at": reconciled_at,
-    }
-    return receipt
 
 
 def quarantine_duplicate_role_events_for_terminal_lifecycle(
@@ -162,7 +89,6 @@ def quarantine_duplicate_role_events_for_terminal_lifecycle(
     processed = idempotency.get("processed") if isinstance(idempotency, dict) else None
     if isinstance(processed, dict):
         for event_name in (
-            "pm_records_material_scan_result_disposition",
             "pm_records_research_result_disposition",
             "pm_records_current_node_result_disposition",
         ):
@@ -251,6 +177,5 @@ def quarantine_packet_result_authority_for_terminal_lifecycle(
 __all__ = (
     "clear_active_repair_transaction_for_terminal_lifecycle",
     "quarantine_duplicate_role_events_for_terminal_lifecycle",
-    "quarantine_material_progress_for_terminal_lifecycle",
     "quarantine_packet_result_authority_for_terminal_lifecycle",
 )

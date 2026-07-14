@@ -109,9 +109,9 @@
   "ok": true,
   "prompt_split": {
     "asset_count": 12,
-    "child_module_count": 320,
+    "child_module_count": 318,
     "coarse_owner_count": 36,
-    "facade_line_count": 107,
+    "facade_line_count": 105,
     "facade_top_level_function_count": 0,
     "findings": [],
     "micro_module_count": 0,
@@ -129,12 +129,16 @@
     "summary": "OK: parent=flowpilot_router_facade_prompt_store_split scope=release decision=structure_mesh_green_can_continue findings=0"
   },
   "test_mesh": {
+    "covered_inventory_item_ids": [],
     "decision": "test_mesh_green_can_continue",
     "decision_scope": "release",
     "findings": [],
+    "inventory_revision": "",
+    "missing_inventory_item_ids": [],
     "ok": true,
     "parent_suite_id": "flowpilot_router_facade_prompt_store_testmesh",
     "release_obligations": [],
+    "scoped_inventory_item_ids": [],
     "summary": "OK: parent=flowpilot_router_facade_prompt_store_testmesh scope=release decision=test_mesh_green_can_continue findings=0"
   }
 }

@@ -13,6 +13,11 @@ import time
 from pathlib import Path
 from typing import Any
 
+try:  # pragma: no cover - supports package and direct script execution
+    from . import flowpilot_contract_driven_fake_ai as contract_driven_fake_ai
+except ImportError:  # pragma: no cover
+    import flowpilot_contract_driven_fake_ai as contract_driven_fake_ai
+
 
 ROOT = Path(__file__).resolve().parent
 REPO_ROOT = ROOT.parent
@@ -395,22 +400,73 @@ def open_current_packet_inputs(
     opened_packet = run_cli(root, command_log, "open-packet", "--lease-id", lease_id, "--packet-id", packet_id)
     if opened_packet.get("authorized_input_materials_delivered") is False:
         raise RehearsalFailure(f"open-packet did not deliver authorized input materials for {packet_id}")
-    opened_projection = opened_packet.get("packet")
-    ensure(isinstance(opened_projection, dict), f"open-packet did not return packet projection for {packet_id}")
-    sealed_body = opened_packet.get("sealed_packet_body")
-    if isinstance(sealed_body, str):
-        opened_projection["body"] = sealed_body
-    handoff_contract = opened_projection.get("current_handoff_contract")
-    if isinstance(handoff_contract, dict):
-        if not opened_projection.get("route_scope"):
-            opened_projection["route_scope"] = str(handoff_contract.get("route_scope") or "")
-        manifest = handoff_contract.get("input_material_manifest")
-        if isinstance(manifest, dict):
-            if not opened_projection.get("route_node_id"):
-                opened_projection["route_node_id"] = str(manifest.get("route_node_id") or "")
-            if not opened_projection.get("target_result_id"):
-                opened_projection["target_result_id"] = str(manifest.get("target_result_id") or "")
-    return opened_projection
+    _canonical_open_context(opened_packet)
+    return opened_packet
+
+
+def _canonical_open_context(opened_packet: dict[str, Any]) -> tuple[Any, dict[str, Any]]:
+    """Validate and unwrap one real public open result without creating a second authority."""
+
+    try:
+        responder = contract_driven_fake_ai.ContractDrivenFakeAIResponder.from_open_packet_result(
+            opened_packet
+        )
+    except (KeyError, TypeError, ValueError) as exc:
+        raise RehearsalFailure(f"fake AI rejected noncurrent public open-packet result: {exc}") from exc
+    packet = opened_packet.get("packet")
+    ensure(isinstance(packet, dict), "public open-packet result lacks packet projection")
+    projection = _json_clone(packet)
+    handoff_contract = projection.get("current_handoff_contract")
+    ensure(isinstance(handoff_contract, dict), "public open-packet result lacks current handoff")
+    manifest = handoff_contract.get("input_material_manifest")
+    manifest = manifest if isinstance(manifest, dict) else {}
+    projection["run_id"] = str(opened_packet.get("run_id") or "")
+    projection["lease_id"] = str((opened_packet.get("lease") or {}).get("lease_id") or "")
+    projection["route_scope"] = str(handoff_contract.get("route_scope") or "")
+    projection["route_node_id"] = str(manifest.get("route_node_id") or "")
+    projection["target_result_id"] = str(manifest.get("target_result_id") or "")
+    projection["body"] = str(opened_packet.get("sealed_packet_body") or "")
+    projection["submission_checklist"] = _json_clone(opened_packet["submission_checklist"])
+    projection["authorized_input_materials"] = _json_clone(
+        opened_packet.get("authorized_input_materials") or []
+    )
+    required_ids = [
+        str(result_id)
+        for result_id in projection["submission_checklist"].get(
+            "required_authorized_result_read_ids", []
+        )
+        if str(result_id)
+    ]
+    required_count = projection["submission_checklist"].get("required_authorized_read_count")
+    ensure(
+        required_count == len(required_ids),
+        "public open-packet checklist required-read count does not match its required ids",
+    )
+    materials_by_id = {
+        str(material.get("result_id") or ""): material
+        for material in projection["authorized_input_materials"]
+        if isinstance(material, dict)
+    }
+    unopened: list[str] = []
+    for result_id in required_ids:
+        material = materials_by_id.get(result_id)
+        receipt = material.get("open_receipt") if isinstance(material, dict) else None
+        if (
+            not isinstance(material, dict)
+            or material.get("required_before_submit") is not True
+            or not isinstance(receipt, dict)
+            or receipt.get("result_id") != result_id
+            or receipt.get("packet_id") != projection.get("packet_id")
+            or receipt.get("lease_id") != projection.get("lease_id")
+            or receipt.get("body_hash") != material.get("body_hash")
+        ):
+            unopened.append(result_id)
+    ensure(
+        not unopened,
+        "public open-packet did not open every required authorized result body: "
+        + ", ".join(unopened),
+    )
+    return responder, projection
 
 
 def reset_scenario_root(work_root: Path, name: str) -> Path:
@@ -468,11 +524,11 @@ def _route_plan_payload(*, node_count: int = MIN_ACCEPTED_ROUTE_NODES) -> dict[s
         },
         {
             "node_id": "node-002",
-            "title": "Validate fake project evidence",
+            "title": "Complete ordinary source and evidence verification work",
             "responsibility": "worker",
             "modeled_target": "model_test_alignment",
             "acceptance_criteria": [
-                "FlowGuard and ordinary validation evidence are current.",
+                "Ordinary reading, research, source verification, and FlowGuard evidence are current.",
                 "Evidence can be challenged by an independent reviewer.",
             ],
             "acceptance_item_ids": ["acc-002"],
@@ -499,15 +555,10 @@ def _route_plan_payload(*, node_count: int = MIN_ACCEPTED_ROUTE_NODES) -> dict[s
     }
 
 
-def _route_plan_body(*, node_count: int = MIN_ACCEPTED_ROUTE_NODES) -> str:
-    route_plan = _route_plan_payload(node_count=node_count)
-    return json.dumps(
-        {
-            "decision": "pass",
-            **route_plan,
-        },
-        sort_keys=True,
-    )
+def _apply_route_plan_semantics(payload: dict[str, Any], *, node_count: int) -> dict[str, Any]:
+    payload["decision"] = "pass"
+    payload.update(_route_plan_payload(node_count=node_count))
+    return payload
 
 
 def _acceptance_item_ids_for_packet(packet: dict[str, Any]) -> list[str]:
@@ -531,10 +582,13 @@ def _acceptance_item_ids_for_packet(packet: dict[str, Any]) -> list[str]:
     }.get(str(packet.get("route_node_id") or ""), [])
 
 
-def _node_acceptance_plan_body(packet: dict[str, Any]) -> str:
+def _apply_node_acceptance_plan_semantics(
+    payload: dict[str, Any],
+    packet: dict[str, Any],
+) -> dict[str, Any]:
     node_id = str(packet.get("route_node_id") or "")
     acceptance_item_ids = _acceptance_item_ids_for_packet(packet)
-    return json.dumps(
+    payload.update(
         {
             "decision": "pass",
             "pm_visible_summary": [f"PM accepted a current node plan for {node_id or 'the active node'}."],
@@ -562,10 +616,11 @@ def _node_acceptance_plan_body(packet: dict[str, Any]) -> str:
             },
         }
     )
+    return payload
 
 
-def _high_standard_contract_body() -> str:
-    return json.dumps(
+def _apply_high_standard_semantics(payload: dict[str, Any]) -> dict[str, Any]:
+    payload.update(
         {
             "requirements": [
                 {
@@ -599,26 +654,24 @@ def _high_standard_contract_body() -> str:
                     },
                 ],
             },
-        },
-        sort_keys=True,
+        }
     )
+    return payload
 
 
-def _discovery_body() -> str:
-    return json.dumps(
+def _apply_discovery_semantics(payload: dict[str, Any]) -> dict[str, Any]:
+    payload.update(
         {
             "decision": "pass",
-            "pm_visible_summary": ["PM confirmed current startup material and candidate skill inventory."],
-            "material_sources": ["startup"],
-            "material_sufficiency": "sufficient_for_route_planning",
+            "pm_visible_summary": ["PM reviewed the current local capability inventory and selected relevant candidate skills."],
             "candidate_skill_inventory": ["flowguard-development-process-flow"],
-        },
-        sort_keys=True,
+        }
     )
+    return payload
 
 
-def _skill_standard_body() -> str:
-    return json.dumps(
+def _apply_skill_standard_semantics(payload: dict[str, Any]) -> dict[str, Any]:
+    payload.update(
         {
             "decision": "pass",
             "pm_visible_summary": ["PM set current skill obligations for the fake project route."],
@@ -632,45 +685,19 @@ def _skill_standard_body() -> str:
                     "evidence_rule": "FlowGuard operator records current-run model evidence in its own evidence file.",
                 }
             ],
-        },
-        sort_keys=True,
+        }
     )
+    return payload
 
 
-def _generic_current_result_body(packet: dict[str, Any]) -> str:
-    packet_id = str(packet.get("packet_id") or "")
-    packet_kind = str(packet.get("packet_kind") or "task")
-    route_scope = str(packet.get("route_scope") or "")
-    summary_subject = f"{packet_kind} result for {packet_id}"
-    if route_scope:
-        summary_subject += f" in {route_scope}"
-    payload: dict[str, Any] = {
-        "decision": "pass",
-        "pm_visible_summary": [f"Fake AI submitted current-contract {summary_subject}."],
-    }
-    if packet_kind == "task" and route_scope == "node":
-        payload["current_evidence_refs"] = [f"fake-current-evidence:{packet_id}"]
-    return json.dumps(payload, sort_keys=True)
-
-
-def _packet_result_contract_body(packet: dict[str, Any]) -> str:
-    if str(ASSETS) not in sys.path:
-        sys.path.insert(0, str(ASSETS))
-    from flowpilot_core_runtime import packet_result_contracts
-
-    envelope = packet.get("envelope") if isinstance(packet.get("envelope"), dict) else packet
-    family_id = packet_result_contracts.packet_result_family_id(envelope)
+def _apply_packet_result_semantics(
+    payload: dict[str, Any],
+    packet: dict[str, Any],
+) -> dict[str, Any]:
+    checklist = packet.get("submission_checklist")
+    ensure(isinstance(checklist, dict), "canonical open context lacks submission checklist")
+    family_id = str(checklist.get("contract_family_id") or "")
     packet_body = _packet_body_payload(packet)
-    handoff = packet_body.get("current_handoff_contract") if isinstance(packet_body, dict) else None
-    report_contract = (
-        handoff.get("required_report_contract")
-        if isinstance(handoff, dict) and isinstance(handoff.get("required_report_contract"), dict)
-        else {}
-    )
-    if isinstance(report_contract.get("minimal_valid_shape"), dict):
-        payload = dict(report_contract["minimal_valid_shape"])
-    else:
-        payload = packet_result_contracts.effective_result_contract_from_envelope(envelope)["minimal_valid_shape"]
     if family_id == "flowguard_check.post_result":
         payload = dict(payload)
     if family_id == "review.terminal_backward_replay":
@@ -705,7 +732,7 @@ def _packet_result_contract_body(packet: dict[str, Any]) -> str:
         summary_subject += f" in {route_scope}"
     if "pm_visible_summary" in payload:
         payload["pm_visible_summary"] = [f"Fake AI submitted current-contract {summary_subject}."]
-    return json.dumps(payload, sort_keys=True)
+    return payload
 
 
 def _packet_body_payload(packet: dict[str, Any]) -> dict[str, Any]:
@@ -753,8 +780,12 @@ def _project_supplemental_repair_ids(payload: dict[str, Any]) -> None:
             node.setdefault("supplemental_repair_item_ids", [])
 
 
-def _terminal_backward_replay_block_body(packet: dict[str, Any]) -> str:
-    payload = json.loads(_packet_result_contract_body(packet))
+def _terminal_backward_replay_block_body(opened_packet: dict[str, Any]) -> str:
+    responder, packet = _canonical_open_context(opened_packet)
+    payload = _apply_packet_result_semantics(
+        responder.complete_workstream_payload("complete_workstream_pass"),
+        packet,
+    )
     route_segment_replay = payload.get("route_segment_replay")
     blocker_id = "terminal-delivered-product-signposting"
     if isinstance(route_segment_replay, list) and route_segment_replay:
@@ -766,10 +797,9 @@ def _terminal_backward_replay_block_body(packet: dict[str, Any]) -> str:
     blocker = {
         "blocker_id": blocker_id,
         "blocker_class": "terminal_closure",
-        "recommended_resolution": "Repair delivered-product signposting and restart terminal replay.",
+        "summary": "Delivered-product signposting does not match the current accepted route.",
+        "required_repair": "Repair delivered-product signposting and restart terminal replay.",
     }
-    payload["passed"] = False
-    payload["blockers"] = [blocker]
     payload["final_blockers"] = [
         {
             **blocker,
@@ -778,66 +808,40 @@ def _terminal_backward_replay_block_body(packet: dict[str, Any]) -> str:
     return json.dumps(payload, sort_keys=True)
 
 
-def _pm_repair_decision_body_for_packet(packet: dict[str, Any], *, decision: str | None = None) -> str:
+def _apply_pm_repair_semantics(
+    payload: dict[str, Any],
+    packet: dict[str, Any],
+    *,
+    decision: str | None = None,
+) -> dict[str, Any]:
     packet_body = _packet_body_payload(packet)
-    minimal_shape = packet_body.get("minimal_valid_shape")
-    branch_shape = packet_body.get("branch_minimal_valid_shape")
-    payload: dict[str, Any] = {}
-    handoff_contract = packet_body.get("current_handoff_contract")
-    report_contract = handoff_contract.get("required_report_contract") if isinstance(handoff_contract, dict) else {}
-    branch_valid_shapes = report_contract.get("branch_valid_shapes") if isinstance(report_contract, dict) else {}
-    repair_decision_contract = packet_body.get("repair_decision_contract")
-    terminal_supplemental_required = (
-        isinstance(repair_decision_contract, dict)
-        and repair_decision_contract.get("terminal_supplemental_repair_required") is True
-    )
-    if decision == "redesign_route" and terminal_supplemental_required and isinstance(branch_valid_shapes, dict):
+    checklist = packet.get("submission_checklist")
+    if not isinstance(checklist, dict) or checklist.get("source") != "current_handoff_contract":
+        raise RehearsalFailure("fake PM requires the real open-packet submission_checklist")
+    branch_valid_shapes = checklist.get("branch_valid_shapes")
+    if decision == "redesign_route" and isinstance(branch_valid_shapes, dict):
         supplemental_branch = branch_valid_shapes.get("decision=redesign_route_terminal_supplemental")
         if isinstance(supplemental_branch, dict):
             payload = _merge_json_objects(payload, supplemental_branch)
-    if isinstance(minimal_shape, dict):
-        payload = _merge_json_objects(payload, minimal_shape)
-    if isinstance(branch_shape, dict):
-        payload = _merge_json_objects(payload, branch_shape)
     if not payload:
-        payload = {
-            "decision": decision or "repair_current_scope",
-            "reason": "fake PM repair decision derived from the current opened packet.",
-        }
+        raise RehearsalFailure("current PM repair checklist did not provide a result skeleton")
     if decision:
         payload["decision"] = decision
         payload["next_action"] = decision
     payload["reason"] = "fake PM chose a current terminal supplemental repair path."
-    conditional = packet_body.get("conditional_required_fields")
-    required_for_decision: list[str] = []
-    if isinstance(conditional, dict):
-        row = conditional.get(str(payload.get("decision") or ""))
-        if isinstance(row, list):
-            required_for_decision = [str(item) for item in row]
-    if "supplemental_repair_contract" in required_for_decision:
-        if "supplemental_repair_contract" not in payload and isinstance(minimal_shape, dict):
-            template = minimal_shape.get("supplemental_repair_contract")
-            if isinstance(template, dict):
-                payload["supplemental_repair_contract"] = _json_clone(template)
-        if "supplemental_repair_contract" not in payload:
-            raise RehearsalFailure(
-                "current PM repair packet requires supplemental_repair_contract but did not provide a template"
-            )
-    if "route_plan" in required_for_decision and "route_plan" not in payload and isinstance(minimal_shape, dict):
-        route_plan = minimal_shape.get("route_plan")
-        if isinstance(route_plan, dict):
-            payload["route_plan"] = _json_clone(route_plan)
-    if "route_plan" in required_for_decision and "route_plan" not in payload and isinstance(branch_valid_shapes, dict):
-        route_branch = branch_valid_shapes.get("decision=redesign_route")
-        if isinstance(route_branch, dict) and isinstance(route_branch.get("route_plan"), dict):
-            payload["route_plan"] = _json_clone(route_branch["route_plan"])
-    if "route_plan" in required_for_decision and "route_plan" not in payload:
-        payload["route_plan"] = _route_plan_payload()
+    if decision and isinstance(branch_valid_shapes, dict):
+        selected = branch_valid_shapes.get(f"decision={decision}")
+        if isinstance(selected, dict):
+            payload = _merge_json_objects(payload, selected)
+            payload["decision"] = decision
+            payload["next_action"] = decision
     _project_supplemental_repair_ids(payload)
-    return json.dumps(payload, sort_keys=True)
+    return payload
 
 
 def write_flowguard_evidence_artifact_for_packet(packet: dict[str, Any], *, decision: str = "pass") -> Path | None:
+    if packet.get("schema_version") == "black_box_flowpilot.open_packet_result.v1":
+        _responder, packet = _canonical_open_context(packet)
     if str(packet.get("packet_kind") or "") != "flowguard_check":
         return None
     packet_body = _packet_body_payload(packet)
@@ -867,64 +871,90 @@ def write_flowguard_evidence_artifact_for_packet(packet: dict[str, Any], *, deci
     return path
 
 
-def current_contract_body_for_packet(
-    packet: dict[str, Any],
+def current_contract_body_from_open_result(
+    opened_packet: dict[str, Any],
     *,
+    expected_run_id: str | None = None,
     pm_disposition_decision: str = "accept",
     route_node_count: int = MIN_ACCEPTED_ROUTE_NODES,
     pm_repair_decision: str | None = None,
 ) -> str:
+    if expected_run_id is not None and str(opened_packet.get("run_id") or "") != expected_run_id:
+        raise RehearsalFailure(
+            "fake AI public open result belongs to a different current run: "
+            f"expected={expected_run_id} actual={opened_packet.get('run_id')}"
+        )
+    responder, packet = _canonical_open_context(opened_packet)
+    payload = responder.complete_workstream_payload("complete_workstream_pass")
     packet_kind = str(packet.get("packet_kind") or "")
     route_scope = str(packet.get("route_scope") or "")
     packet_id = str(packet.get("packet_id") or "")
     if packet_kind == "task" and route_scope == "high_standard_contract":
-        return _high_standard_contract_body()
-    if packet_kind == "task" and route_scope == "discovery":
-        return _discovery_body()
-    if packet_kind == "task" and route_scope == "skill_standard":
-        return _skill_standard_body()
-    if packet_kind == "task" and route_scope == "planning":
-        return _route_plan_body(node_count=route_node_count)
-    if packet_kind == "task" and route_scope == "node_acceptance_plan":
-        return _node_acceptance_plan_body(packet)
-    if packet_kind == "task" and route_scope == "parent_backward_replay":
-        return _packet_result_contract_body(packet)
-    if packet_kind in {"flowguard_check", "review"}:
-        return _packet_result_contract_body(packet)
-    if packet_kind == "pm_flowguard_acceptance":
-        if str(ASSETS) not in sys.path:
-            sys.path.insert(0, str(ASSETS))
-        from flowpilot_core_runtime import packet_result_contracts
-
-        payload = packet_result_contracts.minimal_valid_shape_for_family(
-            "pm_flowguard_acceptance.pm_flowguard_acceptance"
-        )
+        payload = _apply_high_standard_semantics(payload)
+    elif packet_kind == "task" and route_scope == "discovery":
+        payload = _apply_discovery_semantics(payload)
+    elif packet_kind == "task" and route_scope == "skill_standard":
+        payload = _apply_skill_standard_semantics(payload)
+    elif packet_kind == "task" and route_scope == "planning":
+        payload = _apply_route_plan_semantics(payload, node_count=route_node_count)
+    elif packet_kind == "task" and route_scope == "node_acceptance_plan":
+        payload = _apply_node_acceptance_plan_semantics(payload, packet)
+    elif packet_kind == "task" and route_scope in {"parent_backward_replay", "node"}:
+        payload = _apply_packet_result_semantics(payload, packet)
+    elif packet_kind in {"flowguard_check", "review"}:
+        payload = _apply_packet_result_semantics(payload, packet)
+    elif packet_kind == "pm_flowguard_acceptance":
         flowguard_result_id = str(packet.get("target_result_id") or "")
         if flowguard_result_id:
             payload["accepted_flowguard_result_id"] = flowguard_result_id
         payload["reason"] = "fake PM absorbed the current FlowGuard report and keeps the staged structural route plan"
         payload["flowguard_absorption"] = "fake PM absorbed current FlowGuard findings before Reviewer review"
-        return json.dumps(payload, sort_keys=True)
-    if packet_kind == "pm_disposition":
+    elif packet_kind == "pm_disposition":
         acceptance_item_ids = _acceptance_item_ids_for_packet(packet)
-        payload = {
-            "decision": pm_disposition_decision,
-            "reason": f"fake PM disposition {pm_disposition_decision}",
-            "acceptance_item_disposition": [
-                {
-                    "acceptance_item_id": item_id,
-                    "disposition": "accepted" if pm_disposition_decision == "accept" else "blocked",
-                    "basis": f"fake PM {pm_disposition_decision} disposition for {item_id}",
-                }
-                for item_id in acceptance_item_ids
-            ],
-        }
+        payload["decision"] = pm_disposition_decision
+        payload["reason"] = f"fake PM disposition {pm_disposition_decision}"
+        payload["acceptance_item_disposition"] = [
+            {
+                "acceptance_item_id": item_id,
+                "disposition": "accepted" if pm_disposition_decision == "accept" else "blocked",
+                "basis": f"fake PM {pm_disposition_decision} disposition for {item_id}",
+            }
+            for item_id in acceptance_item_ids
+        ]
         if pm_disposition_decision == "redesign_route":
             payload["route_plan"] = _route_plan_payload(node_count=route_node_count)
-        return json.dumps(payload, sort_keys=True)
-    if packet_kind == "pm_repair_decision":
-        return _pm_repair_decision_body_for_packet(packet, decision=pm_repair_decision)
-    return _generic_current_result_body(packet)
+    elif packet_kind == "pm_repair_decision":
+        payload = _apply_pm_repair_semantics(payload, packet, decision=pm_repair_decision)
+    else:
+        raise RehearsalFailure(
+            f"fake AI has no registered current-contract body builder for {packet_kind}:{route_scope}:{packet_id}"
+        )
+    self_check = payload.get("contract_self_check")
+    workstream = (
+        self_check.get("workstream_plan_and_completion")
+        if isinstance(self_check, dict)
+        else None
+    )
+    ensure(
+        isinstance(workstream, dict) and isinstance(workstream.get("steps"), list),
+        f"substantive fake result lacks workstream plan/completion report: {packet_kind}:{route_scope}",
+    )
+    ensure(
+        [row.get("step_number") for row in workstream["steps"] if isinstance(row, dict)]
+        == [1, 2, 3, 4],
+        f"substantive fake result lacks stable numbered workstream steps: {packet_kind}:{route_scope}",
+    )
+    if packet_kind == "task" and route_scope == "node" and str(packet.get("route_node_id") or "") == "node-002":
+        workstream["delegation_and_integration"] = {
+            "delegated": True,
+            "integration_status": "integrated",
+            "evidence_refs": ["ordinary-evidence-helper-result", "integrated-source-verification"],
+        }
+        workstream["ordinary_evidence_work"] = {
+            "used_existing_role_work_path": True,
+            "dedicated_material_gate_used": False,
+        }
+    return json.dumps(payload, sort_keys=True)
 
 
 def complete_full_packet_chain(
@@ -943,6 +973,9 @@ def complete_full_packet_chain(
     pm_disposition_count = 0
     terminal_replay_blocked = False
     supplemental_contract_ids: list[str] = []
+    workstream_report_count = 0
+    integrated_delegation_count = 0
+    ordinary_evidence_work_count = 0
     for step_index in range(FULL_PACKET_CHAIN_BUDGET):
         action = current_payload.get("next_action")
         ensure(isinstance(action, dict), f"missing next action at step {step_index}")
@@ -980,7 +1013,13 @@ def complete_full_packet_chain(
 
         ack_payload = run_cli(root, command_log, "ack", "--lease-id", lease_id, "--packet-id", packet_id)
         ensure(ack_payload["next_action"]["action_type"] == "wait_for_result", f"expected wait_for_result: {ack_payload}")
-        packet = open_current_packet_inputs(root, command_log, lease_id=lease_id, packet={"packet_id": packet_id})
+        opened_packet = open_current_packet_inputs(
+            root,
+            command_log,
+            lease_id=lease_id,
+            packet={"packet_id": packet_id},
+        )
+        _responder, packet = _canonical_open_context(opened_packet)
         packet_kind = str(packet.get("packet_kind", ""))
         ensure(packet_kind, f"missing packet kind for {packet_id}: {packet}")
         ensure(
@@ -997,21 +1036,50 @@ def complete_full_packet_chain(
             and str(packet.get("route_scope") or "") == "terminal_backward_replay"
             and not terminal_replay_blocked
         ):
-            body = _terminal_backward_replay_block_body(packet)
+            body = _terminal_backward_replay_block_body(opened_packet)
             terminal_replay_blocked = True
         else:
-            body = current_contract_body_for_packet(
-                packet,
+            body = current_contract_body_from_open_result(
+                opened_packet,
                 pm_disposition_decision=decision,
                 route_node_count=route_node_count,
                 pm_repair_decision=pm_repair_decision,
+            )
+            body_payload = json.loads(body)
+            self_check = body_payload.get("contract_self_check")
+            workstream = (
+                self_check.get("workstream_plan_and_completion")
+                if isinstance(self_check, dict)
+                else None
+            )
+            ensure(isinstance(workstream, dict), "fake project result lost semantic workstream report")
+            workstream_report_count += 1
+            delegation = workstream.get("delegation_and_integration")
+            if isinstance(delegation, dict) and delegation.get("delegated") is True:
+                ensure(
+                    delegation.get("integration_status") == "integrated",
+                    "fake project delegated work without integration",
+                )
+                integrated_delegation_count += 1
+            ordinary_evidence = workstream.get("ordinary_evidence_work")
+            if isinstance(ordinary_evidence, dict):
+                ensure(
+                    ordinary_evidence.get("used_existing_role_work_path") is True
+                    and ordinary_evidence.get("dedicated_material_gate_used") is False,
+                    "fake project did not keep ordinary evidence work on the existing role-work path",
+                )
+                ordinary_evidence_work_count += 1
+            ensure(
+                not {"material_sources", "material_sufficiency", "material_current"}
+                & set(body_payload),
+                "fake project emitted retired material discovery fields",
             )
             if packet_kind == "pm_repair_decision":
                 payload = json.loads(body)
                 supplemental_contract = payload.get("supplemental_repair_contract")
                 if isinstance(supplemental_contract, dict):
                     supplemental_contract_ids.append(str(supplemental_contract.get("contract_id") or ""))
-        write_flowguard_evidence_artifact_for_packet(packet)
+        write_flowguard_evidence_artifact_for_packet(opened_packet)
 
         current_payload = run_cli(
             root,
@@ -1078,6 +1146,9 @@ def complete_full_packet_chain(
         "terminal_replay_blocked": terminal_replay_blocked,
         "supplemental_contract_ids": [item for item in supplemental_contract_ids if item],
         "accepted_packet_repairs": completed_accepted_packet_repairs,
+        "workstream_report_count": workstream_report_count,
+        "integrated_delegation_count": integrated_delegation_count,
+        "ordinary_evidence_work_count": ordinary_evidence_work_count,
     }
 
 
@@ -1101,13 +1172,19 @@ def complete_planning_chain_only(
         )
         lease_id = str(lease_payload["lease_id"])
         run_cli(root, command_log, "ack", "--lease-id", lease_id, "--packet-id", packet_id)
-        packet = open_current_packet_inputs(root, command_log, lease_id=lease_id, packet={"packet_id": packet_id})
+        opened_packet = open_current_packet_inputs(
+            root,
+            command_log,
+            lease_id=lease_id,
+            packet={"packet_id": packet_id},
+        )
+        _responder, packet = _canonical_open_context(opened_packet)
         packet_kind = str(packet.get("packet_kind", ""))
         route_scope = str(packet.get("route_scope", ""))
         ensure(packet_kind in {"task", "flowguard_check", "review"}, f"wrong planning packet kind: {packet}")
         ensure(responsibility == packet.get("responsibility"), f"wrong planning responsibility: {action}")
-        body = current_contract_body_for_packet(packet)
-        write_flowguard_evidence_artifact_for_packet(packet)
+        body = current_contract_body_from_open_result(opened_packet)
+        write_flowguard_evidence_artifact_for_packet(opened_packet)
         current_payload = run_cli(
             root,
             command_log,

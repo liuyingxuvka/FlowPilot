@@ -134,21 +134,20 @@ PACKET_RESULT_CONTRACTS: tuple[dict[str, Any], ...] = (
         "route_scope": "discovery",
         "owner": "flowpilot_core_runtime",
         "validator": "_discovery_result_violation",
-        "required_fields": (
-            "decision",
+        "required_fields": ("decision", "candidate_skill_inventory"),
+        "required_child_fields": (),
+        "explicit_array_fields": ("candidate_skill_inventory",),
+        "non_empty_array_fields": (),
+        "forbidden_fields": (
             "material_sources",
             "material_sufficiency",
-            "candidate_skill_inventory",
+            "material_current",
+            "local_skill_inventory",
+            "candidate_only_skill_policy",
         ),
-        "required_child_fields": (),
-        "explicit_array_fields": ("material_sources", "candidate_skill_inventory"),
-        "non_empty_array_fields": ("material_sources",),
-        "forbidden_fields": ("local_skill_inventory", "candidate_only_skill_policy"),
         "fake_ai_success_fields": (
             "decision",
             "pm_visible_summary",
-            "material_sources",
-            "material_sufficiency",
             "candidate_skill_inventory",
         ),
         "unlocks": "discovery_record_flowguard_review",
@@ -399,7 +398,6 @@ PACKET_RESULT_CONTRACTS: tuple[dict[str, Any], ...] = (
             "findings",
             "blockers",
             "pm_suggestion_items",
-            "contract_self_check",
             "decision",
             "outcome",
             "status",
@@ -858,7 +856,10 @@ def fake_ai_success_fields_for_family(family_id: str) -> tuple[str, ...]:
 
 
 def undeclared_success_fields_for_family(family_id: str, payload: Mapping[str, Any]) -> tuple[str, ...]:
-    declared = set(fake_ai_success_fields_for_family(family_id))
+    # The shared Contract Self-Check is semantic Reviewer evidence, not a
+    # family-specific mechanical success field.  It may accompany every
+    # current family without expanding that family's required contract.
+    declared = set(fake_ai_success_fields_for_family(family_id)) | {"contract_self_check"}
     return tuple(sorted(str(field) for field in payload if str(field) not in declared))
 
 
@@ -1116,7 +1117,7 @@ def branch_valid_shapes_for_family(family_id: str) -> dict[str, Any]:
     return {}
 
 
-def minimal_valid_shape_for_family(family_id: str) -> dict[str, Any]:
+def _minimal_valid_shape_for_family_base(family_id: str) -> dict[str, Any]:
     if family_id == "task.high_standard_contract":
         return {
             "requirements": [
@@ -1155,8 +1156,6 @@ def minimal_valid_shape_for_family(family_id: str) -> dict[str, Any]:
     if family_id == "task.discovery":
         return {
             "decision": "pass",
-            "material_sources": ["current source id"],
-            "material_sufficiency": "sufficient_for_route_planning",
             "candidate_skill_inventory": [],
         }
     if family_id == "task.skill_standard":
@@ -1316,3 +1315,81 @@ def minimal_valid_shape_for_family(family_id: str) -> dict[str, Any]:
             },
         }
     return {"decision": "pass", "pm_visible_summary": ["Role-authored summary for PM."]}
+
+
+def workstream_plan_and_completion_example() -> dict[str, Any]:
+    """Return the shared semantic plan-completion example for role reports.
+
+    Runtime deliberately does not score this section. Reviewer compares these
+    role-authored rows with actual artifacts, evidence, delegation and current
+    verification through the existing review/repair path.
+    """
+
+    return {
+        "plan_written_before_execution": True,
+        "steps": [
+            {
+                "step_number": 1,
+                "plan": "Understand the bounded assignment, current evidence, authority and failure conditions.",
+                "status": "completed",
+                "evidence_refs": ["current-packet-and-authorized-inputs"],
+                "deviation": "none",
+                "unresolved": "none",
+            },
+            {
+                "step_number": 2,
+                "plan": "Execute the role-local work and integrate any bounded delegated outputs.",
+                "status": "completed",
+                "evidence_refs": ["current-role-artifact"],
+                "deviation": "none",
+                "unresolved": "none",
+            },
+            {
+                "step_number": 3,
+                "plan": "Verify the actual result and repair every in-scope defect found.",
+                "status": "completed",
+                "evidence_refs": ["current-verification-receipt"],
+                "deviation": "none",
+                "unresolved": "none",
+            },
+            {
+                "step_number": 4,
+                "plan": "Reconcile plan status, evidence, deviations and unresolved work before submission.",
+                "status": "completed",
+                "evidence_refs": ["current-report-self-check"],
+                "deviation": "none",
+                "unresolved": "none",
+            },
+        ],
+        "delegation_and_integration": {
+            "delegated": False,
+            "integration_status": "not_applicable",
+            "evidence_refs": [],
+        },
+        "verification": {
+            "status": "completed",
+            "evidence_refs": ["current-verification-receipt"],
+            "repair_rounds": 0,
+        },
+        "remaining_blockers": [],
+    }
+
+
+def minimal_valid_shape_for_family(family_id: str) -> dict[str, Any]:
+    """Project the existing family shape plus the shared semantic workstream report.
+
+    `contract_self_check.workstream_plan_and_completion` is intentionally not
+    added to any family's mechanical `required_fields`; omission or weak
+    content is Reviewer-visible quality evidence, not a Runtime shape parser.
+    """
+
+    shape = _minimal_valid_shape_for_family_base(family_id)
+    self_check = shape.get("contract_self_check")
+    if not isinstance(self_check, dict):
+        self_check = {}
+        shape["contract_self_check"] = self_check
+    self_check.setdefault(
+        "workstream_plan_and_completion",
+        workstream_plan_and_completion_example(),
+    )
+    return shape

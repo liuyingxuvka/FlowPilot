@@ -57,9 +57,6 @@ def _default_for_required_field(
         choices = contract.get("allowed_repair_transaction_plan_kind_values") or []
         return {
             "plan_kind": _choose_placeholder("repair_transaction.plan_kind", [str(item) for item in choices]),
-            "replacement_packet_specs_path": None,
-            "replacement_packet_specs_hash": None,
-            "replacement_packets": [],
         }
     if field_path == "controller_reminder":
         return {

@@ -5,6 +5,7 @@ import json
 import sys
 import tempfile
 import unittest
+from dataclasses import fields
 from pathlib import Path
 
 
@@ -12,6 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "simulations"))
 
 import flowpilot_control_plane_friction_model_audit as control_audit  # noqa: E402
+import flowpilot_control_plane_friction_model as control_model  # noqa: E402
 import flowpilot_cross_plane_friction_model_audit as cross_audit  # noqa: E402
 import flowpilot_daemon_reconciliation_checks_projection_common as daemon_projection  # noqa: E402
 import flowpilot_model_mesh_model as model_mesh  # noqa: E402
@@ -25,6 +27,45 @@ def _write_json(path: Path, payload: object) -> None:
 
 
 class FlowPilotFullCoverageFindingRepairTests(unittest.TestCase):
+    def test_control_plane_live_audit_redacts_project_root_from_public_evidence(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            project_root = Path(tmp).resolve()
+            run_root = project_root / ".flowpilot" / "runs" / "run-test"
+            _write_json(
+                project_root / ".flowpilot" / "current.json",
+                {
+                    "run_id": "run-test",
+                    "run_root": str(run_root),
+                    "status": "running",
+                },
+            )
+
+            report = control_audit.audit_live_run(project_root, source_root=ROOT)
+
+            self.assertNotIn(str(project_root), json.dumps(report, sort_keys=True))
+
+    def test_control_plane_model_retires_material_specific_positive_protocol(self) -> None:
+        forbidden_fragments = {
+            "material_gate",
+            "material_dispatch",
+            "pm_material_understanding",
+            "material_repair_generation",
+            "material_progress",
+        }
+        state_fields = {field.name for field in fields(control_model.State)}
+        invariant_names = {invariant.name for invariant in control_model.INVARIANTS}
+        hazard_rows = control_model.hazard_states()
+
+        for fragment in forbidden_fragments:
+            self.assertFalse(any(fragment in name for name in state_fields), fragment)
+            self.assertFalse(any(fragment in name for name in invariant_names), fragment)
+            self.assertFalse(any(fragment in name for name in hazard_rows), fragment)
+        self.assertFalse(hasattr(control_audit, "_audit_material_scan_dispatch_integrity"))
+        self.assertFalse(hasattr(control_audit, "_audit_material_repair_generation_protocol"))
+        retired = hazard_rows["ordinary_work_dispatch_retired_family"]
+        self.assertEqual(retired.ordinary_work_dispatch_family, "material_scan")
+        self.assertTrue(control_model.invariant_failures(retired))
+
     def test_cross_plane_audit_resolves_split_completion_helper(self) -> None:
         findings = cross_audit._audit_router_source(ROOT)
 
@@ -37,96 +78,61 @@ class FlowPilotFullCoverageFindingRepairTests(unittest.TestCase):
         contracts, error = control_audit._router_external_event_contracts(ROOT)
 
         self.assertIsNone(error)
-        self.assertEqual(
-            contracts["reviewer_reports_material_sufficient"]["requires_flag"],
-            "reviewer_material_sufficiency_card_delivered",
+        self.assertIn("pm_registers_role_work_request", contracts)
+        self.assertIn("worker_current_node_result_returned", contracts)
+        self.assertIn("pm_records_research_result_disposition", contracts)
+        self.assertTrue(
+            control_audit.RETIRED_MATERIAL_EVENT_NAMES.isdisjoint(contracts)
         )
-        self.assertEqual(
-            contracts["reviewer_reports_material_insufficient"]["requires_flag"],
-            "reviewer_material_sufficiency_card_delivered",
-        )
+        absence = control_audit.audit_retired_material_surfaces(ROOT)
+        self.assertTrue(absence["ok"], absence)
+        self.assertEqual(absence["retired_actions"], [])
+        self.assertEqual(absence["retired_packet_families"], [])
 
-    def test_material_scan_file_backed_pm_spec_counts_as_materialized_packet_body(self) -> None:
+    def test_ordinary_work_dispatch_accepts_research_and_rejects_retired_family(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             project_root = Path(tmp)
             run_root = project_root / ".flowpilot" / "runs" / "run-test"
-            packet_id = "material-scan-runtime-data-worker-1"
-            result_body_path = ".flowpilot/runs/run-test/packets/material/result_body.md"
-            spec_body_path = ".flowpilot/runs/run-test/material/packet_bodies/spec.md"
-            packet_body_path = ".flowpilot/runs/run-test/packets/material/packet_body.md"
-            envelope_path = ".flowpilot/runs/run-test/packets/material/packet_envelope.json"
-            output_contract = {
-                "contract_id": "flowpilot.output_contract.worker_material_scan_result.v1",
-                "task_family": "worker.material_scan",
-                "recipient_role": "worker",
-                "expected_result_body_path": result_body_path,
-            }
-            spec_text = "Inspect runtime data and return the material scan result."
-            packet_text = (
-                f"{spec_text}\n\n## Output Contract\n```json\n"
-                f"{json.dumps(output_contract, indent=2, sort_keys=True)}\n```\n\n"
-                f"Write result to {result_body_path}.\n"
-            )
-            (project_root / spec_body_path).parent.mkdir(parents=True, exist_ok=True)
-            (project_root / spec_body_path).write_text(spec_text, encoding="utf-8")
-            (project_root / packet_body_path).parent.mkdir(parents=True, exist_ok=True)
-            (project_root / packet_body_path).write_text(packet_text, encoding="utf-8")
-            envelope = {
-                "packet_id": packet_id,
-                "packet_type": "material_scan",
-                "to_role": "worker",
-                "body_path": packet_body_path,
-                "body_hash": hashlib.sha256(packet_text.encode("utf-8")).hexdigest(),
-                "result_body_path": result_body_path,
-                "output_contract": output_contract,
-            }
-            _write_json(project_root / envelope_path, envelope)
-            _write_json(
-                run_root / "material" / "material_scan_packets.json",
-                {
-                    "router_direct_dispatch_required_before_worker": True,
-                    "packets": [
-                        {
-                            "packet_id": packet_id,
-                            "packet_envelope_path": envelope_path,
-                            "result_body_path": result_body_path,
-                        }
-                    ],
-                },
-            )
-            _write_json(
-                run_root / "material" / "pm_material_scan_packet_specs.project_manager.json",
-                {
-                    "packets": [
-                        {
-                            "packet_id": packet_id,
-                            "body_path": spec_body_path,
-                            "body_hash": hashlib.sha256(spec_text.encode("utf-8")).hexdigest(),
-                        }
-                    ]
-                },
-            )
+            result_body_path = ".flowpilot/runs/run-test/packets/research/result.md"
             _write_json(
                 run_root / "packet_ledger.json",
                 {
                     "packets": [
                         {
-                            "packet_id": packet_id,
+                            "packet_id": "research-1",
+                            "packet_type": "research",
                             "result_body_path": result_body_path,
+                            "output_contract": {
+                                "contract_id": "flowpilot.output_contract.research.v1",
+                                "expected_result_body_path": result_body_path,
+                            },
                         }
-                    ]
+                    ],
                 },
             )
-
-            result = control_audit._audit_material_scan_dispatch_integrity(
+            current = control_audit._audit_ordinary_work_dispatch_integrity(
                 project_root=project_root,
                 run_root=run_root,
-                router_state={"phase": "material_scan", "flags": {}},
-                frontier={"phase": "material_scan", "status": "material_scan"},
+            )
+            ledger, _ = control_audit._read_json(run_root / "packet_ledger.json")
+            ledger["packets"].append(
+                {
+                    "packet_id": "retired-1",
+                    "packet_type": "material_scan",
+                    "result_body_path": "retired.md",
+                    "output_contract": {"contract_id": "retired"},
+                }
+            )
+            _write_json(run_root / "packet_ledger.json", ledger)
+            retired = control_audit._audit_ordinary_work_dispatch_integrity(
+                project_root=project_root,
+                run_root=run_root,
             )
 
-        self.assertTrue(result["single_canonical_body"])
-        self.assertTrue(result["packet_details"][0]["pm_spec_body_materialized"])
+        self.assertTrue(current["allowed"])
+        self.assertEqual(current["ordinary_packet_details"][0]["packet_family"], "research")
+        self.assertFalse(retired["allowed"])
+        self.assertEqual(retired["retired_packet_details"][0]["packet_family"], "material_scan")
 
     def test_daemon_projection_treats_recipient_opened_result_status_as_released(self) -> None:
         packet = {
@@ -281,8 +287,8 @@ class FlowPilotFullCoverageFindingRepairTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             project_root = Path(tmp)
             run_root = project_root / ".flowpilot" / "runs" / "run-test"
-            audit_path = run_root / "material" / "material_packet_review_audit.json"
-            packet_id = "material-scan-runtime-data-worker-1"
+            audit_path = run_root / "research" / "research_packet_review_audit.json"
+            packet_id = "research-runtime-data-worker-1"
             audit = {
                 "schema_version": "flowpilot.packet_group_reviewer_audit.v1",
                 "run_id": "run-test",
@@ -309,7 +315,7 @@ class FlowPilotFullCoverageFindingRepairTests(unittest.TestCase):
                 {
                     "schema_version": "flowpilot.router_owned_check_proof.v1",
                     "run_id": "run-test",
-                    "audit_path": ".flowpilot/runs/run-test/material/material_packet_review_audit.json",
+                    "audit_path": ".flowpilot/runs/run-test/research/research_packet_review_audit.json",
                     "audit_sha256": audit_hash,
                     "check_name": "packet_group_reviewer_audit",
                     "check_owner": "flowpilot_router",
@@ -339,6 +345,51 @@ class FlowPilotFullCoverageFindingRepairTests(unittest.TestCase):
         self.assertFalse(
             model_mesh._packet_authority_unchecked(packet_ledger, trusted_packet_ids=trusted_ids)
         )
+
+    def test_model_mesh_ignores_retired_material_packet_review_audit(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            run_root = Path(tmp) / ".flowpilot" / "runs" / "run-test"
+            audit_path = run_root / "material" / "material_packet_review_audit.json"
+            _write_json(
+                audit_path,
+                {
+                    "schema_version": "flowpilot.packet_group_reviewer_audit.v1",
+                    "run_id": "run-test",
+                    "passed": True,
+                    "overall_passed": True,
+                    "self_attested_ai_claims_accepted_as_proof": False,
+                    "blockers": [],
+                    "audits": [
+                        {
+                            "packet_id": "material-scan-retired",
+                            "passed": True,
+                            "blockers": [],
+                            "packet_ledger_record_found": True,
+                            "result_envelope_checked": True,
+                            "result_envelope_completed_by_role_checked": True,
+                            "completed_agent_id_belongs_to_role": True,
+                        }
+                    ],
+                },
+            )
+            audit_hash = hashlib.sha256(audit_path.read_bytes()).hexdigest()
+            _write_json(
+                audit_path.with_name(audit_path.name + ".proof.json"),
+                {
+                    "schema_version": "flowpilot.router_owned_check_proof.v1",
+                    "run_id": "run-test",
+                    "audit_path": ".flowpilot/runs/run-test/material/material_packet_review_audit.json",
+                    "audit_sha256": audit_hash,
+                    "check_name": "packet_group_reviewer_audit",
+                    "check_owner": "flowpilot_router",
+                    "source_kind": "packet_runtime_hash",
+                    "self_attested_ai_claims_accepted_as_proof": False,
+                },
+            )
+
+            trusted_ids = model_mesh._trusted_packet_authority_audit_ids(run_root)
+
+        self.assertEqual(trusted_ids, set())
 
     def test_model_mesh_blocks_current_lifecycle_guard_stuck(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

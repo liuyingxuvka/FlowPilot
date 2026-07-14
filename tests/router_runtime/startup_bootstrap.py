@@ -1081,7 +1081,7 @@ class StartupBootstrapRuntimeTests(FlowPilotRouterRuntimeTestBase):
 
         self.deliver_user_intake_mail(root)
         self.assert_startup_user_intake_released_to_pm(root)
-        self.deliver_expected_card(root, "pm.material_scan")
+        self.deliver_expected_card(root, "pm.product_architecture")
 
         state = read_json(router.run_state_path(run_root))
         self.assertTrue(state["flags"]["user_intake_delivered_to_pm"])

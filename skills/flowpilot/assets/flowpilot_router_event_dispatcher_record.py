@@ -177,33 +177,6 @@ def _record_external_event_unchecked(router: ModuleType, project_root: Path, eve
         _write_role_block_report(project_root, run_root, run_state, payload, expected_role='human_like_reviewer', path=_active_node_root(run_root, frontier) / 'reviews' / 'node_acceptance_plan_block.json', schema_version='flowpilot.node_acceptance_plan_block.v1', checked_paths=[_active_node_acceptance_plan_path(run_root, frontier), run_root / 'execution_frontier.json'])
         run_state['flags']['node_acceptance_plan_reviewer_passed'] = False
         run_state['flags']['node_acceptance_plan_revised_by_pm'] = False
-    elif event == 'pm_issues_material_and_capability_scan_packets':
-        router._write_material_scan_packets(project_root, run_root, run_state, payload)
-    elif event == 'router_direct_material_scan_dispatch_recheck_blocked':
-        router._write_material_dispatch_block_report(project_root, run_root, run_state, payload)
-        router._finalize_repair_transaction_outcome(project_root, run_root, run_state, event=event, payload=payload)
-    elif event == 'router_protocol_blocker_material_scan_dispatch_recheck':
-        router._write_material_dispatch_recheck_protocol_blocker(project_root, run_root, run_state, payload, event_name=event)
-        router._finalize_repair_transaction_outcome(project_root, run_root, run_state, event=event, payload=payload)
-    elif event == 'worker_scan_packet_bodies_delivered_after_dispatch':
-        material_index = router._load_packet_index(router._material_scan_index_path(run_root), label='material scan')
-        router._validate_packet_bodies_opened_by_targets(project_root, run_state, material_index['packets'])
-    elif event == 'worker_scan_results_returned':
-        material_index = router._load_packet_index(router._material_scan_index_path(run_root), label='material scan')
-        router._validate_results_exist_for_packets(project_root, run_state, material_index['packets'], next_recipient='project_manager')
-        router._mark_parallel_batch_results_joined(project_root, run_root, run_state, 'material_scan')
-    elif event == 'pm_records_material_scan_result_disposition':
-        router._write_pm_package_result_disposition(project_root, run_root, run_state, payload, batch_kind='material_scan', package_label='material_scan', gate_kind='material_sufficiency', output_path=run_root / 'material' / 'pm_material_scan_result_disposition.json', router_event=event)
-    elif event == 'reviewer_reports_material_sufficient':
-        router._write_material_sufficiency_report(project_root, run_root, run_state, payload, sufficient=True)
-        material_batch = router._active_parallel_packet_batch(run_root, 'material_scan')
-        if material_batch:
-            router._mark_parallel_batch_reviewed(run_root, 'material_scan', passed=True, reviewed_packet_ids=[str(record.get('packet_id')) for record in material_batch['packets'] if isinstance(record, dict)])
-    elif event == 'reviewer_reports_material_insufficient':
-        router._write_material_sufficiency_report(project_root, run_root, run_state, payload, sufficient=False)
-        material_batch = router._active_parallel_packet_batch(run_root, 'material_scan')
-        if material_batch:
-            router._mark_parallel_batch_reviewed(run_root, 'material_scan', passed=False, reviewed_packet_ids=[str(record.get('packet_id')) for record in material_batch['packets'] if isinstance(record, dict)])
     elif event == 'pm_writes_research_package':
         router._write_research_package(project_root, run_root, run_state, payload)
     elif event == 'research_capability_decision_recorded':
@@ -229,8 +202,6 @@ def _record_external_event_unchecked(router: ModuleType, project_root: Path, eve
             router._mark_parallel_batch_reviewed(run_root, 'research', passed=True, reviewed_packet_ids=[str(record.get('packet_id')) for record in research_batch['packets'] if isinstance(record, dict)])
     elif event == 'pm_absorbs_reviewed_research':
         router._write_pm_research_absorption(project_root, run_root, run_state)
-    elif event == 'pm_writes_material_understanding':
-        router._write_material_understanding(project_root, run_root, run_state, payload)
     elif event == 'pm_writes_product_function_architecture':
         _write_product_function_architecture(project_root, run_root, run_state, payload)
     elif event == 'reviewer_passes_product_architecture':
@@ -331,10 +302,4 @@ def _record_external_event_unchecked(router: ModuleType, project_root: Path, eve
         router._write_gate_decision(project_root, run_root, run_state, payload)
     elif event == 'pm_approves_terminal_closure':
         router._write_terminal_closure_suite(project_root, run_root, run_state, payload)
-    elif event == 'pm_accepts_reviewed_material':
-        if run_state.get('material_review') != 'sufficient':
-            raise RouterError('PM can accept material only after a sufficient reviewer material report')
-    elif event == 'pm_requests_research_after_material_insufficient':
-        if run_state.get('material_review') != 'insufficient':
-            raise RouterError('PM can request research on this path only after an insufficient reviewer material report')
     return flowpilot_router_events.finalize_external_event_record(router, project_root, run_root, run_state, event, meta, payload, flag=flag, scoped_identity=scoped_identity, model_miss_triage_decision=model_miss_triage_decision, parent_segment_decision=parent_segment_decision, pm_resume_decision=pm_resume_decision)

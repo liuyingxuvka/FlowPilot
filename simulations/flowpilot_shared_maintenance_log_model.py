@@ -1,16 +1,15 @@
 """FlowGuard model for FlowPilot shared skill maintenance log bookkeeping.
 
 Risk intent brief:
-- Validate the smallest PM-owned bookkeeping behavior before prompt cards and
-  runtime material-understanding copy-through are changed.
+- Validate the smallest PM-owned bookkeeping behavior during current-run
+  planning without creating a dedicated packet, result, or gate.
 - Protected harms: FlowPilot creating a private maintenance table instead of
   the shared Spark-style log, Controller or Router owning semantic work
   summaries, bookkeeping becoming a reviewer/FlowGuard/route/acceptance gate,
   missing lookup fields, and the shared log replacing existing run-local final
   or skill-improvement reports.
-- Modeled state and side effects: PM material understanding, existing-log
-  append, missing-log fallback creation, PM report preservation, and non-gating
-  handling.
+- Modeled state and side effects: PM planning, existing-log append, missing-log
+  fallback creation, PM report citation, and non-gating handling.
 - Hard invariants: accepted flows use a shared log format, include the required
   run lookup fields, preserve the PM report, remain non-gating, and keep the
   skill-improvement/final-report surfaces separate.
@@ -75,7 +74,7 @@ class Action:
 class State:
     status: str = "new"  # new | running | accepted | rejected
     scenario: str = "unset"
-    material_understanding_phase: bool = False
+    current_run_planning_phase: bool = False
     pm_owns_work_summary: bool = False
     controller_owns_work_summary: bool = False
     router_validates_semantic_content: bool = False
@@ -93,13 +92,13 @@ class State:
     field_run_root: bool = False
     final_report_path_optional: bool = False
 
-    pm_report_preserved_in_material_understanding: bool = False
+    pm_report_cites_maintenance_entry: bool = False
     reviewer_gate_created: bool = False
     flowguard_gate_created: bool = False
     route_node_created: bool = False
     acceptance_gate_created: bool = False
     replaces_skill_improvement_report: bool = False
-    final_report_required_before_material_understanding: bool = False
+    final_report_required_before_planning: bool = False
     terminal_reason: str = "none"
 
 
@@ -112,7 +111,7 @@ class SharedMaintenanceLogStep:
     """Model one PM shared-maintenance bookkeeping decision.
 
     Input x State -> Set(Output x State)
-    reads: material-understanding phase, PM/controller/router ownership,
+    reads: current-run planning phase, PM/controller/router ownership,
     shared-log discovery, row fields, and gate side effects
     writes: terminal bookkeeping policy decision
     idempotency: scenario facts are monotonic; accepted/rejected terminal
@@ -123,7 +122,7 @@ class SharedMaintenanceLogStep:
     input_description = "FlowPilot PM shared maintenance log bookkeeping tick"
     output_description = "one shared-maintenance transition"
     reads = (
-        "material_understanding_phase",
+        "current_run_planning_phase",
         "pm_owns_work_summary",
         "existing_shared_log_found",
         "fallback_shared_log_created",
@@ -153,7 +152,7 @@ def _valid_existing_log_append() -> State:
     return State(
         status="running",
         scenario=VALID_EXISTING_LOG_APPEND,
-        material_understanding_phase=True,
+        current_run_planning_phase=True,
         pm_owns_work_summary=True,
         existing_shared_log_found=True,
         log_scope="shared",
@@ -165,7 +164,7 @@ def _valid_existing_log_append() -> State:
         field_run_id=True,
         field_run_root=True,
         final_report_path_optional=True,
-        pm_report_preserved_in_material_understanding=True,
+        pm_report_cites_maintenance_entry=True,
     )
 
 
@@ -194,7 +193,7 @@ def _scenario_state(scenario: str) -> State:
     if scenario == MISSING_REQUIRED_LOOKUP_FIELDS:
         return replace(state, field_workspace_root=False, field_run_root=False)
     if scenario == PM_REPORT_NOT_PRESERVED:
-        return replace(state, pm_report_preserved_in_material_understanding=False)
+        return replace(state, pm_report_cites_maintenance_entry=False)
     if scenario == BOOKKEEPING_REVIEWER_GATE:
         return replace(state, reviewer_gate_created=True)
     if scenario == BOOKKEEPING_FLOWGUARD_GATE:
@@ -209,7 +208,7 @@ def _scenario_state(scenario: str) -> State:
         return replace(
             state,
             final_report_path_optional=False,
-            final_report_required_before_material_understanding=True,
+            final_report_required_before_planning=True,
         )
     return state
 
@@ -217,8 +216,8 @@ def _scenario_state(scenario: str) -> State:
 def bookkeeping_failures(state: State) -> list[str]:
     failures: list[str] = []
 
-    if not state.material_understanding_phase:
-        failures.append("shared maintenance bookkeeping is outside PM material understanding")
+    if not state.current_run_planning_phase:
+        failures.append("shared maintenance bookkeeping is outside current-run PM planning")
     if not state.pm_owns_work_summary:
         failures.append("PM does not own the maintenance work summary")
     if state.controller_owns_work_summary:
@@ -239,8 +238,8 @@ def bookkeeping_failures(state: State) -> list[str]:
         and state.field_run_root
     ):
         failures.append("maintenance row lacks required skill summary workspace run_id or run_root fields")
-    if not state.pm_report_preserved_in_material_understanding:
-        failures.append("PM material understanding does not preserve the shared maintenance record")
+    if not state.pm_report_cites_maintenance_entry:
+        failures.append("PM planning report does not cite the shared maintenance record")
     if state.reviewer_gate_created:
         failures.append("bookkeeping created a reviewer gate")
     if state.flowguard_gate_created:
@@ -251,8 +250,8 @@ def bookkeeping_failures(state: State) -> list[str]:
         failures.append("bookkeeping became a project acceptance gate")
     if state.replaces_skill_improvement_report:
         failures.append("shared maintenance log replaced the FlowPilot skill-improvement report")
-    if state.final_report_required_before_material_understanding:
-        failures.append("startup bookkeeping requires final report path before material understanding")
+    if state.final_report_required_before_planning:
+        failures.append("startup bookkeeping requires final report path before planning")
     if not state.final_report_path_optional:
         failures.append("final report path is not optional in the startup maintenance row")
     return failures
@@ -304,8 +303,8 @@ def pm_owns_summary_router_preserves_report(state: State, trace) -> InvariantRes
         return InvariantResult.fail("PM does not uniquely own the maintenance summary")
     if state.router_validates_semantic_content:
         return InvariantResult.fail("Router validates semantic maintenance content")
-    if not state.pm_report_preserved_in_material_understanding:
-        return InvariantResult.fail("PM material understanding does not preserve the shared maintenance record")
+    if not state.pm_report_cites_maintenance_entry:
+        return InvariantResult.fail("PM planning report does not cite the shared maintenance record")
     return InvariantResult.pass_()
 
 
@@ -329,7 +328,7 @@ def keeps_existing_reports_separate(state: State, trace) -> InvariantResult:
         return InvariantResult.pass_()
     if state.replaces_skill_improvement_report:
         return InvariantResult.fail("shared maintenance log replaced the FlowPilot skill-improvement report")
-    if state.final_report_required_before_material_understanding or not state.final_report_path_optional:
+    if state.final_report_required_before_planning or not state.final_report_path_optional:
         return InvariantResult.fail("startup bookkeeping incorrectly requires final report data")
     return InvariantResult.pass_()
 

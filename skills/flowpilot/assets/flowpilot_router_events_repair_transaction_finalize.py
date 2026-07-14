@@ -49,16 +49,7 @@ def _bind_router(router: ModuleType) -> None:
 
 def _clear_successful_repair_lane_state(router: ModuleType, run_state: dict[str, Any], transaction: dict[str, Any], *, event: str) -> None:
     _bind_router(router)
-    rerun_target = str(transaction.get('rerun_target') or '')
-    is_material_repair = event in MATERIAL_REPAIR_OUTCOME_EVENTS or rerun_target in MATERIAL_REPAIR_OUTCOME_EVENTS
-    flags = run_state.get('flags')
-    if isinstance(flags, dict) and is_material_repair:
-        for flag in MATERIAL_REPAIR_RECHECK_FLAGS:
-            flags[flag] = False
-        if event == 'router_direct_material_scan_dispatch_recheck_passed':
-            flags['material_scan_dispatch_blocked'] = False
-    if is_material_repair:
-        run_state['material_dispatch_block'] = None
+    del event
     pending = run_state.get('pending_action')
     if isinstance(pending, dict):
         outcome_events = set(router._repair_outcome_events(transaction.get('outcome_table') if isinstance(transaction.get('outcome_table'), dict) else {}))

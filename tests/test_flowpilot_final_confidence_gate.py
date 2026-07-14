@@ -53,6 +53,9 @@ PASSING_PAYLOADS = {
         "ok": True,
         "alignment_ok": True,
         "full_diagnostic_ok": True,
+        "evidence_status": "passed",
+        "claim_scope": "done",
+        "execution_evidence": {"ok": True},
         "full_coverage_ok": True,
         "release_convergence_ok": True,
         "full_model_test_code_diagnostic": {
@@ -97,6 +100,17 @@ PASSING_PAYLOADS = {
 
 
 class FlowPilotFinalConfidenceGateTests(unittest.TestCase):
+    def test_evidence_rows_project_repository_paths_without_machine_prefixes(self) -> None:
+        row = gate._row(
+            "terminal_return",
+            ROOT / "simulations" / "flowpilot_terminal_return_preflight_results.json",
+        )
+
+        self.assertEqual(
+            row["path"],
+            "simulations/flowpilot_terminal_return_preflight_results.json",
+        )
+
     def evaluate(self, payloads: dict[str, dict]) -> dict:
         with tempfile.TemporaryDirectory(prefix="flowpilot-final-confidence-") as tmp_name:
             root = Path(tmp_name)
@@ -250,6 +264,18 @@ class FlowPilotFinalConfidenceGateTests(unittest.TestCase):
         self.assertIn("release_convergence_ok_false", blocker["codes"])
         self.assertEqual(blocker["details"]["gap_counts"], {"missing_test": 1})
 
+    def test_routine_only_alignment_cannot_close_repository_final_confidence(self) -> None:
+        payloads = copy.deepcopy(PASSING_PAYLOADS)
+        payloads["model_test_alignment"]["claim_scope"] = "routine"
+
+        report = self.evaluate(payloads)
+
+        self.assertFalse(report["ok"])
+        blocker = next(
+            item for item in report["blockers"] if item["evidence"] == "model_test_alignment"
+        )
+        self.assertIn("model_test_alignment_scope_not_done", blocker["codes"])
+
     def test_known_friction_scoped_risk_ledger_blocks(self) -> None:
         payloads = copy.deepcopy(PASSING_PAYLOADS)
         payloads["known_friction"]["defect_family_gate_report"]["risk_ledger_report"] = {
@@ -350,11 +376,14 @@ class FlowPilotFinalConfidenceGateTests(unittest.TestCase):
 
             stale_path = root / "flowpilot_known_friction_regression_matrix_results.json"
             stale_path.write_text('{"stale": true}', encoding="utf-8")
+            evidence_manifest = root / "acceptance-testmesh-manifest.json"
+            evidence_manifest.write_text('{"source_fingerprint":"current"}\n', encoding="utf-8")
             with mock.patch.object(gate.subprocess, "run", side_effect=fake_run):
                 runs = gate.run_required_subchecks(
                     root,
                     live_root=Path("project-root"),
                     source_root=Path("source-root"),
+                    evidence_manifest=evidence_manifest,
                 )
 
         self.assertTrue(all(run["exit_code"] == 0 for run in runs))
@@ -364,6 +393,10 @@ class FlowPilotFinalConfidenceGateTests(unittest.TestCase):
             command for command in commands if command[1].endswith("run_flowpilot_control_plane_friction_checks.py")
         )
         control_run = next(run for run in runs if run["name"] == "control_plane")
+        mta_run = next(run for run in runs if run["name"] == "model_test_alignment")
+        mta_command = next(
+            command for command in commands if command[1].endswith("run_flowpilot_model_test_alignment_checks.py")
+        )
         self.assertIn("--live-root", control_command)
         self.assertIn("project-root", control_command)
         self.assertIn("--source-root", control_command)
@@ -372,6 +405,12 @@ class FlowPilotFinalConfidenceGateTests(unittest.TestCase):
         self.assertIn("<flowpilot-source-root>", control_run["command"])
         self.assertNotIn("project-root", control_run["command"])
         self.assertNotIn("source-root", control_run["command"])
+        self.assertIn("--evidence-manifest", mta_command)
+        self.assertIn(str(evidence_manifest), mta_command)
+        self.assertIn("--evidence-scope", mta_command)
+        self.assertIn("done", mta_command)
+        self.assertIn("<external>/acceptance-testmesh-manifest.json", mta_run["command"])
+        self.assertNotIn(str(evidence_manifest), mta_run["command"])
         for command in commands:
             if command is not control_command:
                 if command[1].endswith("flowpilot_new.py"):

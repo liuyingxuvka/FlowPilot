@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from collections import deque
 from pathlib import Path
 from typing import Any
@@ -14,6 +15,10 @@ import flowpilot_event_capability_registry_model as model
 
 
 RESULTS_PATH = Path(__file__).resolve().with_name("flowpilot_event_capability_registry_results.json")
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+ASSETS_PATH = PROJECT_ROOT / "skills" / "flowpilot" / "assets"
+if str(ASSETS_PATH) not in sys.path:
+    sys.path.insert(0, str(ASSETS_PATH))
 
 REQUIRED_LABELS = tuple(
     [f"select_{scenario}" for scenario in model.SCENARIOS]
@@ -35,6 +40,12 @@ HAZARD_EXPECTED_FAILURES = {
     model.PM_REPAIR_EVENT_AS_RERUN_TARGET: "event capability cannot be used as repair rerun target",
     model.ROLE_WORK_RESULT_WAIT_UNRECEIVABLE_ACCEPTED: "event capability precondition is not currently receivable",
 }
+HAZARD_EXPECTED_FAILURES.update(
+    {
+        scenario: "event capability row is missing"
+        for scenario in model.RETIRED_MATERIAL_EVENT_CAPABILITY_SCENARIOS
+    }
+)
 
 
 def _state_id(state: model.State) -> str:
@@ -169,6 +180,32 @@ def _hazard_report() -> dict[str, object]:
     return {"ok": not failures, "hazards": hazards, "failures": failures}
 
 
+def _source_audit_report() -> dict[str, object]:
+    from flowpilot_router_protocol_external_events import EXTERNAL_EVENTS
+
+    runtime_events = set(EXTERNAL_EVENTS)
+    model_capability_events = set(model.EVENT_CAPABILITIES)
+    missing_model_capabilities_in_runtime = sorted(model_capability_events - runtime_events)
+    retired_runtime_residue = sorted(model.RETIRED_MATERIAL_EXTERNAL_EVENTS & runtime_events)
+    retired_model_capability_residue = sorted(
+        model.RETIRED_MATERIAL_EXTERNAL_EVENTS & model_capability_events
+    )
+    return {
+        "ok": not missing_model_capabilities_in_runtime
+        and not retired_runtime_residue
+        and not retired_model_capability_residue,
+        "model_capability_count": len(model_capability_events),
+        "missing_model_capabilities_in_runtime": missing_model_capabilities_in_runtime,
+        "retired_material_event_count": len(model.RETIRED_MATERIAL_EXTERNAL_EVENTS),
+        "retired_material_runtime_catalog_residue": retired_runtime_residue,
+        "retired_material_model_capability_residue": retired_model_capability_residue,
+        "known_bad_contract": (
+            "Retired material external events are absent from both the current runtime catalog and the "
+            "positive event-capability registry; every attempted capability lookup is rejected."
+        ),
+    }
+
+
 def _architecture_candidate() -> dict[str, object]:
     return {
         "name": "event_capability_registry",
@@ -184,7 +221,8 @@ def _architecture_candidate() -> dict[str, object]:
             "Use the capability validator before writing control-blocker waits.",
             "Use the capability validator before committing a PM repair rerun target.",
             "Reject unsupported generic repair outcome tables instead of collapsing non-success rows onto the success event.",
-            "Keep material dispatch repair on its existing three explicit outcome events.",
+            "Use current research and current-node events for ordinary evidence and repair flows.",
+            "Keep retired material workflow events outside every positive capability surface.",
         ],
     }
 
@@ -195,14 +233,19 @@ def run_checks() -> dict[str, object]:
     progress = _progress_report(graph)
     explorer = _flowguard_report()
     hazards = _hazard_report()
+    source_audit = _source_audit_report()
     result = {
         "safe_graph": safe_graph,
         "progress": progress,
         "flowguard_explorer": explorer,
         "hazard_checks": hazards,
+        "source_audit": source_audit,
         "architecture_candidate": _architecture_candidate(),
     }
-    result["ok"] = all(section.get("ok", False) for section in (safe_graph, progress, explorer, hazards))
+    result["ok"] = all(
+        section.get("ok", False)
+        for section in (safe_graph, progress, explorer, hazards, source_audit)
+    )
     return result
 
 

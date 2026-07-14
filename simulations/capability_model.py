@@ -95,29 +95,9 @@ class State:
     self_interrogation_findings_dispositioned: bool = False
     quality_candidate_pool_seeded: bool = False
     validation_strategy_seeded: bool = False
-    material_sources_scanned: bool = False
-    material_source_summaries_written: bool = False
-    material_source_quality_classified: bool = False
-    local_skill_inventory_written: bool = False
-    local_skill_inventory_candidate_classified: bool = False
-    material_intake_packet_written: bool = False
-    material_reviewer_direct_source_probe_done: bool = False
-    material_reviewer_sufficiency_checked: bool = False
-    material_reviewer_sufficiency_approved: bool = False
-    pm_material_understanding_memo_written: bool = False
-    pm_material_complexity_classified: bool = False
-    pm_material_discovery_decision_recorded: bool = False
-    pm_material_research_decision_recorded: bool = False
-    material_research_need: str = "unknown"  # unknown | not_required | required
-    pm_research_package_written: bool = False
-    research_tool_capability_decision_recorded: bool = False
-    research_worker_report_returned: bool = False
-    research_reviewer_direct_source_check_done: bool = False
-    research_reviewer_rework_required: bool = False
-    research_worker_rework_completed: bool = False
-    research_reviewer_recheck_done: bool = False
-    research_reviewer_sufficiency_passed: bool = False
-    pm_research_result_absorbed_or_route_mutated: bool = False
+    ordinary_resource_discovery_child_registered: bool = False
+    ordinary_resource_discovery_child_passed: bool = False
+    ordinary_resource_discovery_evidence_current: bool = False
     product_function_architecture_pm_synthesized: bool = False
     product_function_high_standard_posture_written: bool = False
     product_function_target_and_failure_bar_written: bool = False
@@ -861,7 +841,7 @@ def _self_interrogation_index_final_ready(state: State) -> bool:
 
 def _product_function_architecture_ready(state: State) -> bool:
     return (
-        _material_handoff_ready(state)
+        _ordinary_resource_discovery_child_ready(state)
         and state.product_function_architecture_pm_synthesized
         and state.product_function_high_standard_posture_written
         and state.product_function_target_and_failure_bar_written
@@ -884,34 +864,12 @@ def _product_function_architecture_ready(state: State) -> bool:
     )
 
 
-def _material_handoff_ready(state: State) -> bool:
+def _ordinary_resource_discovery_child_ready(state: State) -> bool:
     return (
         state.self_interrogation_pm_ratified
-        and state.material_sources_scanned
-        and state.material_source_summaries_written
-        and state.material_source_quality_classified
-        and state.local_skill_inventory_written
-        and state.local_skill_inventory_candidate_classified
-        and state.material_intake_packet_written
-        and state.material_reviewer_direct_source_probe_done
-        and state.material_reviewer_sufficiency_checked
-        and state.material_reviewer_sufficiency_approved
-        and state.pm_material_understanding_memo_written
-        and state.pm_material_complexity_classified
-        and state.pm_material_discovery_decision_recorded
-        and state.pm_material_research_decision_recorded
-        and (
-            state.material_research_need == "not_required"
-            or (
-                state.material_research_need == "required"
-                and state.pm_research_package_written
-                and state.research_tool_capability_decision_recorded
-                and state.research_worker_report_returned
-                and state.research_reviewer_direct_source_check_done
-                and state.research_reviewer_sufficiency_passed
-                and state.pm_research_result_absorbed_or_route_mutated
-            )
-        )
+        and state.ordinary_resource_discovery_child_registered
+        and state.ordinary_resource_discovery_child_passed
+        and state.ordinary_resource_discovery_evidence_current
     )
 
 
@@ -1580,27 +1538,9 @@ class CapabilityRouterStep:
         "self_interrogation_findings_dispositioned",
         "quality_candidate_pool_seeded",
         "validation_strategy_seeded",
-        "material_sources_scanned",
-        "material_source_summaries_written",
-        "material_source_quality_classified",
-        "material_intake_packet_written",
-        "material_reviewer_direct_source_probe_done",
-        "material_reviewer_sufficiency_checked",
-        "material_reviewer_sufficiency_approved",
-        "pm_material_understanding_memo_written",
-        "pm_material_complexity_classified",
-        "pm_material_discovery_decision_recorded",
-        "pm_material_research_decision_recorded",
-        "material_research_need",
-        "pm_research_package_written",
-        "research_tool_capability_decision_recorded",
-        "research_worker_report_returned",
-        "research_reviewer_direct_source_check_done",
-        "research_reviewer_rework_required",
-        "research_worker_rework_completed",
-        "research_reviewer_recheck_done",
-        "research_reviewer_sufficiency_passed",
-        "pm_research_result_absorbed_or_route_mutated",
+        "ordinary_resource_discovery_child_registered",
+        "ordinary_resource_discovery_child_passed",
+        "ordinary_resource_discovery_evidence_current",
         "product_function_architecture_pm_synthesized",
         "product_function_high_standard_posture_written",
         "product_function_target_and_failure_bar_written",
@@ -1950,27 +1890,9 @@ class CapabilityRouterStep:
         "self_interrogation_findings_dispositioned",
         "quality_candidate_pool_seeded",
         "validation_strategy_seeded",
-        "material_sources_scanned",
-        "material_source_summaries_written",
-        "material_source_quality_classified",
-        "material_intake_packet_written",
-        "material_reviewer_direct_source_probe_done",
-        "material_reviewer_sufficiency_checked",
-        "material_reviewer_sufficiency_approved",
-        "pm_material_understanding_memo_written",
-        "pm_material_complexity_classified",
-        "pm_material_discovery_decision_recorded",
-        "pm_material_research_decision_recorded",
-        "material_research_need",
-        "pm_research_package_written",
-        "research_tool_capability_decision_recorded",
-        "research_worker_report_returned",
-        "research_reviewer_direct_source_check_done",
-        "research_reviewer_rework_required",
-        "research_worker_rework_completed",
-        "research_reviewer_recheck_done",
-        "research_reviewer_sufficiency_passed",
-        "pm_research_result_absorbed_or_route_mutated",
+        "ordinary_resource_discovery_child_registered",
+        "ordinary_resource_discovery_child_passed",
+        "ordinary_resource_discovery_evidence_current",
         "product_function_architecture_pm_synthesized",
         "product_function_high_standard_posture_written",
         "product_function_target_and_failure_bar_written",
@@ -2330,13 +2252,13 @@ class CapabilityRouterStep:
         yield from apply_startup_phase(self, state)
 
 
-    def _apply_material_phase(self, state: State) -> Iterable[FunctionResult]:
+    def _apply_resource_phase(self, state: State) -> Iterable[FunctionResult]:
         if __package__:
-            from .capability_model_material_phase import apply_material_phase
+            from .capability_model_resource_phase import apply_resource_phase
         else:
-            from capability_model_material_phase import apply_material_phase
+            from capability_model_resource_phase import apply_resource_phase
 
-        yield from apply_material_phase(self, state)
+        yield from apply_resource_phase(self, state)
 
 
     def _apply_route_phase(self, state: State) -> Iterable[FunctionResult]:
@@ -2400,7 +2322,7 @@ class CapabilityRouterStep:
             return
 
         yield from self._apply_startup_phase(state)
-        yield from self._apply_material_phase(state)
+        yield from self._apply_resource_phase(state)
         yield from self._apply_route_phase(state)
         yield from self._apply_resume_phase(state)
         yield from self._apply_node_execution_phase(state)
@@ -3664,113 +3586,30 @@ def core_deliverable_non_downgrade_gates_required(
     return InvariantResult.pass_()
 
 
-def material_handoff_before_capability_route_design(
+def ordinary_resource_discovery_child_before_capability_route_design(
     state: State, trace
 ) -> InvariantResult:
     del trace
-    if state.material_intake_packet_written and not (
-        state.material_sources_scanned
-        and state.material_source_summaries_written
-        and state.material_source_quality_classified
-        and state.local_skill_inventory_written
-        and state.local_skill_inventory_candidate_classified
+    if (
+        state.ordinary_resource_discovery_child_passed
+        and not state.ordinary_resource_discovery_child_registered
     ):
         return InvariantResult.fail(
-            "capability Material Intake Packet was written before sources and local skills were scanned, summarized, quality-classified, and candidate-classified"
-        )
-    if state.material_reviewer_sufficiency_approved and not (
-        state.material_intake_packet_written
-        and state.material_reviewer_sufficiency_checked
-    ):
-        return InvariantResult.fail(
-            "capability material packet was approved before reviewer sufficiency check"
-        )
-    if state.pm_material_understanding_memo_written and not (
-        state.material_reviewer_sufficiency_approved
-    ):
-        return InvariantResult.fail(
-            "PM capability material understanding memo was written before reviewer-approved intake evidence"
-        )
-    if state.pm_material_discovery_decision_recorded and not (
-        state.pm_material_understanding_memo_written
-        and state.pm_material_complexity_classified
-    ):
-        return InvariantResult.fail(
-            "PM capability material discovery decision was recorded before understanding memo and complexity classification"
-        )
-    if state.pm_material_research_decision_recorded and not state.pm_material_discovery_decision_recorded:
-        return InvariantResult.fail(
-            "PM capability material research-package decision was recorded before the material discovery decision"
+            "ordinary-resource-discovery child passed without current parent registration"
         )
     if (
-        state.pm_material_research_decision_recorded
-        and state.material_research_need not in {"not_required", "required"}
+        state.ordinary_resource_discovery_evidence_current
+        and not state.ordinary_resource_discovery_child_passed
     ):
         return InvariantResult.fail(
-            "PM capability material research-package decision did not classify need"
-        )
-    if state.pm_research_package_written and not (
-        state.pm_material_research_decision_recorded
-        and state.material_research_need == "required"
-    ):
-        return InvariantResult.fail(
-            "PM capability research package was written without a recorded material gap requiring research"
-        )
-    if state.research_tool_capability_decision_recorded and not state.pm_research_package_written:
-        return InvariantResult.fail(
-            "capability research tool decision was recorded before the PM research package"
-        )
-    if state.research_worker_report_returned and not (
-        state.pm_research_package_written
-        and state.research_tool_capability_decision_recorded
-    ):
-        return InvariantResult.fail(
-            "capability worker research report returned before PM package and tool capability decision"
-        )
-    if state.research_reviewer_direct_source_check_done and not state.research_worker_report_returned:
-        return InvariantResult.fail(
-            "capability research reviewer checked sources before a worker research report existed"
-        )
-    if state.research_reviewer_rework_required and not state.research_reviewer_direct_source_check_done:
-        return InvariantResult.fail(
-            "capability research reviewer required rework before direct source checks"
-        )
-    if state.research_worker_rework_completed and not state.research_reviewer_rework_required:
-        return InvariantResult.fail(
-            "capability research worker rework completed before reviewer requested rework"
-        )
-    if state.research_reviewer_recheck_done and not state.research_worker_rework_completed:
-        return InvariantResult.fail(
-            "capability research reviewer rechecked before worker completed research rework"
-        )
-    if state.research_reviewer_sufficiency_passed and not (
-        state.research_reviewer_direct_source_check_done
-        and (
-            not state.research_reviewer_rework_required
-            or (
-                state.research_worker_rework_completed
-                and state.research_reviewer_recheck_done
-            )
-        )
-    ):
-        return InvariantResult.fail(
-            "capability research reviewer sufficiency passed without direct source check and required rework/recheck evidence"
-        )
-    if state.pm_research_result_absorbed_or_route_mutated and not state.research_reviewer_sufficiency_passed:
-        return InvariantResult.fail(
-            "PM absorbed or routed capability research result before reviewer sufficiency pass"
+            "ordinary-resource-discovery evidence was marked current before the child passed"
         )
     if (
         state.product_function_architecture_pm_synthesized
-        and state.material_research_need == "required"
-        and not state.pm_research_result_absorbed_or_route_mutated
-    ):
+        or state.pm_initial_capability_decision_recorded
+    ) and not _ordinary_resource_discovery_child_ready(state):
         return InvariantResult.fail(
-            "capability product-function architecture started while required material research package was unresolved"
-        )
-    if state.pm_initial_capability_decision_recorded and not _material_handoff_ready(state):
-        return InvariantResult.fail(
-            "PM capability route decision was recorded before reviewed material handoff"
+            "capability route design advanced without the current ordinary-resource-discovery child result"
         )
     if state.pm_child_skill_selection_manifest_written and not (
         _product_function_architecture_ready(state)
@@ -3784,10 +3623,10 @@ def material_handoff_before_capability_route_design(
         state.pm_child_skill_selection_manifest_written
         and state.pm_child_skill_minimum_sufficient_complexity_review_written
         and state.product_function_capability_map_written
-        and state.local_skill_inventory_candidate_classified
+        and _ordinary_resource_discovery_child_ready(state)
     ):
         return InvariantResult.fail(
-            "PM child-skill selection decisions were recorded before the PM manifest, minimum sufficient complexity review, product capability map, and local skill candidate classification"
+            "PM child-skill selection decisions were recorded before the PM manifest, minimum sufficient complexity review, product capability map, and current PM-selected local-skill discovery evidence"
         )
     if state.child_skill_route_design_discovery_started and not (
         state.pm_child_skill_selection_manifest_written
@@ -3797,7 +3636,6 @@ def material_handoff_before_capability_route_design(
             "child-skill route discovery started from raw local skill availability instead of the PM selection manifest"
         )
     return InvariantResult.pass_()
-
 
 def actor_authority_gates_require_correct_role(
     state: State, trace
@@ -3809,7 +3647,6 @@ def actor_authority_gates_require_correct_role(
         )
     any_role_approval = (
         state.self_interrogation_pm_ratified
-        or state.material_reviewer_sufficiency_approved
         or state.product_function_architecture_flowguard_operator_product_scope_approved
         or state.product_function_architecture_reviewer_challenged
         or state.child_skill_manifest_reviewer_reviewed
@@ -3832,10 +3669,10 @@ def actor_authority_gates_require_correct_role(
             "role approval was recorded before the independent adversarial approval protocol existed"
         )
     if state.product_function_architecture_pm_synthesized and not (
-        _runtime_roles_ready(state) and _material_handoff_ready(state)
+        _runtime_roles_ready(state) and _ordinary_resource_discovery_child_ready(state)
     ):
         return InvariantResult.fail(
-            "capability product-function architecture was synthesized before role binding recovery and reviewed material handoff"
+            "capability product-function architecture was synthesized before role binding recovery and current ordinary-resource-discovery child evidence"
         )
     product_architecture_inputs_ready = (
         state.product_function_architecture_pm_synthesized
@@ -3854,13 +3691,6 @@ def actor_authority_gates_require_correct_role(
         and state.root_acceptance_proof_matrix_written
         and state.standard_scenario_pack_selected
     )
-    if state.material_reviewer_sufficiency_approved and not (
-        state.material_reviewer_direct_source_probe_done
-        and state.material_reviewer_sufficiency_checked
-    ):
-        return InvariantResult.fail(
-            "capability material approval was recorded before reviewer direct source probes"
-        )
     if state.product_function_architecture_flowguard_operator_product_scope_approved and not (
         product_architecture_inputs_ready
         and state.product_architecture_flowguard_operator_adversarial_probe_done
@@ -4278,9 +4108,9 @@ INVARIANTS = (
         predicate=core_deliverable_non_downgrade_gates_required,
     ),
     Invariant(
-        name="material_handoff_before_capability_route_design",
-        description="Material intake, reviewer sufficiency, and PM understanding happen before capability route design.",
-        predicate=material_handoff_before_capability_route_design,
+        name="ordinary_resource_discovery_child_before_capability_route_design",
+        description="The current focused resource-discovery child proves shallow skill inventory, PM selection, ordinary evidence work, and optional-map behavior before capability route design.",
+        predicate=ordinary_resource_discovery_child_before_capability_route_design,
     ),
     Invariant(
         name="actor_authority_gates_require_correct_role",

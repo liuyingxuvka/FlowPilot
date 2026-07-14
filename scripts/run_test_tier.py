@@ -64,6 +64,7 @@ try:
         plan_for_tier,
         should_use_background_supervisor,
     )
+
 except ImportError:  # pragma: no cover - script execution path
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     from test_tier.background import (
@@ -94,6 +95,18 @@ except ImportError:  # pragma: no cover - script execution path
         plan_for_tier,
         should_use_background_supervisor,
     )
+
+try:
+    from .test_tier.source_fingerprint import source_fingerprint
+except ImportError:  # pragma: no cover - script execution path
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from test_tier.source_fingerprint import source_fingerprint
+
+try:
+    from .test_tier.verification import verify_background_tier
+except ImportError:  # pragma: no cover - script execution path
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from test_tier.verification import verify_background_tier
 
 def next_background_launch_index(
     pending: Sequence[TierCommand],
@@ -182,6 +195,7 @@ def run_background_supervisor(
     name = background_supervisor_name(tier)
     paths = artifact_paths(log_root, name)
     log_root.mkdir(parents=True, exist_ok=True)
+    source_fingerprint_start = source_fingerprint()
     meta: dict[str, Any] = {
         "name": name,
         "tier": tier,
@@ -194,6 +208,9 @@ def run_background_supervisor(
         "max_parallel": max_parallel,
         "timeout_seconds": timeout_seconds,
         "command_count": len(commands),
+        "covered_source_fingerprint_start": source_fingerprint_start,
+        "covered_source_fingerprint_end": None,
+        "source_fingerprint_current": None,
         "running": [],
         "completed": [],
         "artifacts": {key: str(value) for key, value in paths.items()},
@@ -218,6 +235,7 @@ def run_background_supervisor(
                         command,
                         log_root=log_root,
                         timeout_seconds=timeout_seconds,
+                        source_fingerprint_value=source_fingerprint_start,
                     )
                     running.append(command)
                     line = f"launched {command.name} pid={launched['child_pid']}\n"
@@ -277,7 +295,16 @@ def run_background_supervisor(
         _write_json(paths["meta"], meta)
         return 1
 
-    ok = all(item["ok"] for item in completed) and len(completed) == len(commands)
+    source_fingerprint_end = source_fingerprint()
+    source_fingerprint_current = source_fingerprint_start == source_fingerprint_end
+    if not source_fingerprint_current:
+        with paths["err"].open("a", encoding="utf-8", errors="replace") as err_file:
+            err_file.write("covered source changed while the background tier was running\n")
+    ok = (
+        all(item["ok"] for item in completed)
+        and len(completed) == len(commands)
+        and source_fingerprint_current
+    )
     exit_code = 0 if ok else 1
     paths["exit"].write_text(f"{exit_code}\n", encoding="utf-8")
     meta["status"] = "passed" if ok else "failed"
@@ -285,6 +312,10 @@ def run_background_supervisor(
     meta["exit_code"] = exit_code
     meta["completed"] = completed
     meta["running"] = []
+    meta["covered_source_fingerprint_end"] = source_fingerprint_end
+    meta["source_fingerprint_current"] = source_fingerprint_current
+    if not source_fingerprint_current:
+        meta["failure_reason"] = "covered_source_changed_during_tier"
     _write_json(paths["meta"], meta)
     return exit_code
 
@@ -314,9 +345,11 @@ def run_background_child(
     *,
     log_root: Path,
     timeout_seconds: int = DEFAULT_BACKGROUND_CHILD_TIMEOUT_SECONDS,
+    source_fingerprint_value: str | None = None,
 ) -> int:
     paths = artifact_paths(log_root, name)
     log_root.mkdir(parents=True, exist_ok=True)
+    covered_source = source_fingerprint_value or source_fingerprint()
     meta = {
         "name": name,
         "command": list(command),
@@ -328,6 +361,10 @@ def run_background_child(
         "proof_reused": False,
         "timeout_seconds": timeout_seconds,
         "timed_out": False,
+        "covered_source_fingerprint": covered_source,
+        "covered_source_fingerprint_start": covered_source,
+        "covered_source_fingerprint_end": None,
+        "source_fingerprint_current": None,
         "artifacts": {key: str(value) for key, value in paths.items()},
     }
     _write_json(paths["meta"], meta)
@@ -389,13 +426,26 @@ def run_background_child(
         )
         returncode = 1
 
+    covered_source_end = source_fingerprint()
+    source_current = covered_source == covered_source_end
+    if returncode == 0 and not source_current:
+        returncode = 1
+        message = "covered source changed while the background child was running\n"
+        with paths["err"].open("a", encoding="utf-8", errors="replace") as err_file:
+            err_file.write(message)
+        with paths["combined"].open("a", encoding="utf-8", errors="replace") as combined_file:
+            combined_file.write(f"[runner] {message}")
     paths["exit"].write_text(f"{returncode}\n", encoding="utf-8")
     meta["status"] = "passed" if returncode == 0 else "failed"
     meta["end_time"] = _utc_now()
     meta["exit_code"] = returncode
     meta["proof_reused"] = flags["proof_reused"]
+    meta["covered_source_fingerprint_end"] = covered_source_end
+    meta["source_fingerprint_current"] = source_current
     if meta["timed_out"]:
         meta["failure_reason"] = "background_child_timeout"
+    elif not source_current:
+        meta["failure_reason"] = "covered_source_changed_during_command"
     _write_json(paths["meta"], meta)
     return returncode
 
@@ -432,6 +482,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--dry-run", action="store_true", help="Plan commands without executing.")
     parser.add_argument("--json", action="store_true", help="Print machine-readable JSON.")
     parser.add_argument("--background", action="store_true", help="Launch commands as detached jobs.")
+    parser.add_argument(
+        "--verify-background",
+        action="store_true",
+        help="Verify existing final background artifacts without launching commands.",
+    )
     parser.add_argument("--background-dir", type=Path, default=DEFAULT_BACKGROUND_DIR)
     parser.add_argument(
         "--background-max-parallel",
@@ -450,6 +505,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--background-supervisor", action="store_true", help=argparse.SUPPRESS)
     parser.add_argument("--name", default="", help=argparse.SUPPRESS)
     parser.add_argument("--command-json", default="", help=argparse.SUPPRESS)
+    parser.add_argument("--covered-source-fingerprint", default="", help=argparse.SUPPRESS)
     args = parser.parse_args(argv)
 
     if args.background_child:
@@ -461,6 +517,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             [str(part) for part in command],
             log_root=args.background_dir,
             timeout_seconds=_coerce_timeout_seconds(args.background_child_timeout_seconds),
+            source_fingerprint_value=args.covered_source_fingerprint or None,
         )
 
     if args.background_supervisor:
@@ -485,6 +542,22 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     commands = commands_for_tier(args.tier)
     plan = plan_for_tier(args.tier, background_dir=args.background_dir)
+    if args.verify_background:
+        report = verify_background_tier(
+            args.tier,
+            commands,
+            log_root=args.background_dir,
+        )
+        if args.json:
+            print(json.dumps(report, indent=2, sort_keys=True))
+        elif report["ok"]:
+            print(
+                f"Verified {report['verified_count']} background test command(s) "
+                f"under {args.background_dir}"
+            )
+        else:
+            print("Background tier verification failed: " + "; ".join(report["failures"]))
+        return 0 if report["ok"] else 1
     if args.dry_run:
         if args.json:
             print(json.dumps(plan, indent=2, sort_keys=True))

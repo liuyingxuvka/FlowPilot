@@ -29,14 +29,6 @@
       "contract_id": "flowpilot.output_contract.worker_current_node_result.v1"
     },
     {
-      "task_family": "worker.material_scan",
-      "packet_type": "material_scan",
-      "recipient_roles": [
-        "worker"
-      ],
-      "contract_id": "flowpilot.output_contract.worker_material_scan_result.v1"
-    },
-    {
       "task_family": "worker.research",
       "packet_type": "research",
       "recipient_roles": [
@@ -501,47 +493,6 @@
       "pm_must_absorb_cancel_or_supersede": true
     },
     {
-      "contract_id": "flowpilot.output_contract.worker_material_scan_result.v1",
-      "schema_version": "flowpilot.output_contract.v1",
-      "task_family": "worker.material_scan",
-      "packet_types": [
-        "material_scan"
-      ],
-      "recipient_roles": [
-        "worker"
-      ],
-      "expected_return_envelope": "result_envelope",
-      "required_result_body_sections": [
-        "Status",
-        "Evidence",
-        "Open Issues",
-        "Artifact Handoff",
-        "PM Suggestion Items",
-        "Contract Self-Check"
-      ],
-      "conditional_required_result_body_sections": {
-        "source_packet_declares_inherited_skill_standard_ids": [
-          "Skill Standard Result Matrix"
-        ],
-        "source_packet_declares_role_skill_use_bindings": [
-          "Role Skill Use Evidence"
-        ]
-      },
-      "required_result_envelope_values": {
-        "next_recipient": "project_manager",
-        "body_visibility": "sealed_target_role_only"
-      },
-      "required_report_body_fields": [
-        "raw_evidence_pointers",
-        "negative_findings",
-        "contradictions",
-        "answers_decision_question"
-      ],
-      "contract_self_check_required": true,
-      "pm_must_record_package_result_disposition": true,
-      "reviewer_reviews_pm_formal_gate_package_only": true
-    },
-    {
       "contract_id": "flowpilot.output_contract.worker_research_result.v1",
       "schema_version": "flowpilot.output_contract.v1",
       "task_family": "worker.research",
@@ -847,50 +798,6 @@
       ]
     },
     {
-      "contract_id": "flowpilot.output_contract.material_sufficiency_report.v1",
-      "schema_version": "flowpilot.output_contract.v1",
-      "task_family": "reviewer.material_sufficiency",
-      "recipient_roles": [
-        "human_like_reviewer"
-      ],
-      "required_body_fields": [
-        "pm_visible_summary",
-        "reviewed_by_role",
-        "passed",
-        "direct_material_sources_checked",
-        "packet_matches_checked_sources",
-        "pm_ready",
-        "checked_source_paths",
-        "runtime_open_receipt_refs",
-        "findings",
-        "blockers",
-        "pm_suggestion_items",
-        "contract_self_check"
-      ],
-      "required_body_values": {
-        "reviewed_by_role": "human_like_reviewer",
-        "direct_material_sources_checked": true,
-        "packet_matches_checked_sources": true
-      },
-      "expected_return_envelope": "role_output_envelope",
-      "runtime_channel": "role_output_runtime",
-      "output_type": "material_sufficiency_report",
-      "body_schema_version": "flowpilot.material_sufficiency_report.v1",
-      "default_subdir": "reviews",
-      "default_filename_prefix": "material_sufficiency_report",
-      "path_key": "report_path",
-      "hash_key": "report_hash",
-      "router_event_mode": "router_supplied",
-      "explicit_array_fields": [
-        "pm_visible_summary",
-        "checked_source_paths",
-        "runtime_open_receipt_refs",
-        "findings",
-        "blockers",
-        "pm_suggestion_items"
-      ]
-    },
-    {
       "contract_id": "flowpilot.output_contract.current_node_result_review_pass.v1",
       "schema_version": "flowpilot.output_contract.v1",
       "task_family": "reviewer.pm_node_completion_package_review",
@@ -967,7 +874,6 @@
       "allowed_repair_transaction_plan_kind_values": [
         "operation_replay",
         "controller_repair_work_packet",
-        "packet_reissue",
         "role_reissue",
         "router_internal_reconcile",
         "await_existing_event",
@@ -990,7 +896,6 @@
         "await_existing_event_requires_existing_producer": true
       },
       "outcome_table_owned_by_router": true,
-      "packet_reissue_requires_atomic_generation_commit": true,
       "reviewer_recheck_outcomes": [
         "success",
         "blocker",
@@ -1008,7 +913,6 @@
       "router_event": "pm_records_control_blocker_repair_decision",
       "explicit_array_fields": [
         "blockers",
-        "repair_transaction.replacement_packets",
         "prior_path_context_review.completed_nodes_considered",
         "prior_path_context_review.superseded_nodes_considered",
         "prior_path_context_review.stale_evidence_considered",

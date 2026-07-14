@@ -60,8 +60,9 @@ user request explicitly asks for it.
 
 5. Extend the router into the current-node packet loop.
    - Add route/frontier resolver state under the active run root.
-   - Add PM packet issue events for material scan, product architecture, route
-     model, current-node work, repair, final ledger, and closure.
+   - Add the mandatory shallow local capability discovery result, then PM
+     packet issue events for product architecture, route model, ordinary
+     research/current-node/role work, repair, final ledger, and closure.
    - Add reviewer dispatch and worker result events using the existing packet
      runtime.
    - Add explicit route mutation events that invalidate stale evidence and

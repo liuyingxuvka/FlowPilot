@@ -135,6 +135,24 @@ class FlowGuardResultProofTests(unittest.TestCase):
             ],
         )
 
+    def test_smoke_structure_alignment_is_declaration_only_and_cannot_overwrite_strict_evidence(self) -> None:
+        commands = smoke_flowpilot.build_check_groups(fast=True)["structure"]
+        alignment_command = next(
+            command
+            for command in commands
+            if "simulations/run_flowpilot_model_test_alignment_checks.py" in command
+        )
+
+        self.assertIn("--declaration-only", alignment_command)
+        self.assertNotIn(
+            "simulations/flowpilot_model_test_alignment_results.json",
+            alignment_command,
+        )
+        self.assertIn(
+            "tmp/test_results/flowpilot_model_test_alignment_declaration_only.json",
+            alignment_command,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

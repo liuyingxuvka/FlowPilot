@@ -7,10 +7,10 @@ from typing import Any
 
 ROLE_WORK_RESULT_RETURNED_EVENT = "role_work_result_returned"
 DISPATCH_RECIPIENT_GATE_SAME_OBLIGATION_CARDS_BY_PACKET = {
-    ("project_manager", "user_intake"): "pm.material_scan",
+    ("project_manager", "user_intake"): "pm.product_architecture",
 }
 DISPATCH_RECIPIENT_GATE_PACKET_COMPLETION_FLAGS = {
-    "user_intake": "pm_material_packets_issued",
+    "user_intake": "product_architecture_written_by_pm",
 }
 PM_ROLE_WORK_TARGET_BUSY_STATUSES = {"open", "packet_created", "packet_relayed"}
 PM_ROLE_WORK_PM_BUSY_STATUSES = {"result_returned", "result_relayed_to_pm"}
@@ -82,9 +82,7 @@ def _dispatch_gate_wait_events_for_packet_record(record: dict[str, Any]) -> list
     packet_id = str(record.get("packet_id") or "").strip()
     holder = str(record.get("active_packet_holder") or "").strip()
     if holder == "project_manager" and packet_id == "user_intake":
-        return ["pm_issues_material_and_capability_scan_packets"]
-    if holder == "project_manager" and packet_id.startswith("material-scan"):
-        return ["pm_records_material_scan_result_disposition"]
+        return ["pm_writes_product_function_architecture"]
     if holder == "project_manager" and "research" in packet_id:
         return ["pm_records_research_result_disposition"]
     if holder == "project_manager" and "node" in packet_id:
@@ -93,8 +91,6 @@ def _dispatch_gate_wait_events_for_packet_record(record: dict[str, Any]) -> list
         return [ROLE_WORK_RESULT_RETURNED_EVENT]
     if packet_family == "research" or "research" in packet_id:
         return ["worker_research_report_returned"]
-    if packet_family == "material_scan" or "material" in packet_id:
-        return ["worker_scan_results_returned"]
     return ["worker_current_node_result_returned", ROLE_WORK_RESULT_RETURNED_EVENT]
 
 
@@ -103,8 +99,6 @@ def _dispatch_gate_packet_completed_by_flow_state(record: dict[str, Any], run_st
     completion_flag = DISPATCH_RECIPIENT_GATE_PACKET_COMPLETION_FLAGS.get(packet_id)
     flags = run_state.get("flags") if isinstance(run_state.get("flags"), dict) else {}
     if completion_flag and flags.get(completion_flag):
-        return True
-    if packet_id.startswith("material-scan") and flags.get("material_scan_results_absorbed_by_pm"):
         return True
     if "research" in packet_id and flags.get("research_result_absorbed_for_review_by_pm"):
         return True
@@ -126,4 +120,7 @@ def _dispatch_gate_same_obligation_instruction(
     if not expected_card or str(action.get("card_id") or "") != expected_card:
         return False
     flags = run_state.get("flags") if isinstance(run_state.get("flags"), dict) else {}
-    return bool(flags.get("user_intake_delivered_to_pm") and not flags.get("pm_material_packets_issued"))
+    return bool(
+        flags.get("user_intake_delivered_to_pm")
+        and not flags.get("product_architecture_written_by_pm")
+    )

@@ -289,14 +289,21 @@ def _runtime_write_progress_signature(path: Path, lock_path: Path) -> tuple[obje
     return (*_stat_signature(path), *_stat_signature(lock_path))
 
 
-def _wait_for_runtime_json_writer_to_settle(exc: RouterLedgerWriteInProgress) -> dict[str, Any]:
+def _wait_for_runtime_json_writer_to_settle(
+    exc: RouterLedgerWriteInProgress,
+    *,
+    timeout_seconds: float | None = None,
+) -> dict[str, Any]:
     path = exc.path
     lock_path = _json_write_lock_path(path)
     started = time.monotonic()
+    if timeout_seconds is None:
+        timeout_seconds = RUNTIME_JSON_WRITE_LOCK_TIMEOUT_SECONDS
+    timeout_seconds = max(0.0, timeout_seconds)
+    deadline = started + timeout_seconds
     poll_count = 0
     last_liveness = dict(exc.write_lock)
     last_signature = _runtime_write_progress_signature(path, lock_path)
-    last_progress_at = started
     progress_count = 0
     while True:
         liveness = _json_write_lock_liveness(path)
@@ -304,21 +311,27 @@ def _wait_for_runtime_json_writer_to_settle(exc: RouterLedgerWriteInProgress) ->
         signature = _runtime_write_progress_signature(path, lock_path)
         if signature != last_signature:
             last_signature = signature
-            last_progress_at = time.monotonic()
             progress_count += 1
-        progress_recent = progress_count > 0 and (
-            time.monotonic() - last_progress_at <= RUNTIME_JSON_WRITE_LOCK_STALE_SECONDS
-        )
-        if not liveness.get("active") and not progress_recent:
+        now = time.monotonic()
+        if not liveness.get("active"):
             return {
                 "path": str(path),
                 "lock_path": str(lock_path),
-                "waited_seconds": max(0.0, time.monotonic() - started),
+                "waited_seconds": max(0.0, now - started),
                 "poll_count": poll_count,
                 "progress_count": progress_count,
                 "initial_liveness": dict(exc.write_lock),
                 "final_liveness": last_liveness,
             }
+        if now >= deadline:
+            raise RouterLedgerWriteInProgress(
+                path,
+                last_liveness,
+                (
+                    "active runtime JSON write lock did not settle within "
+                    f"{timeout_seconds:.3f} seconds"
+                ),
+            )
         poll_count += 1
         time.sleep(RUNTIME_JSON_WRITE_LOCK_POLL_SECONDS)
 
@@ -329,12 +342,25 @@ def _run_foreground_with_runtime_writer_settlement(
     command_name: str,
 ) -> dict[str, Any]:
     waits: list[dict[str, Any]] = []
+    settlement_started: float | None = None
     while True:
         try:
             result = operation()
             break
         except RouterLedgerWriteInProgress as exc:
-            waits.append(_wait_for_runtime_json_writer_to_settle(exc))
+            if settlement_started is None:
+                settlement_started = time.monotonic()
+            remaining = RUNTIME_JSON_WRITE_LOCK_TIMEOUT_SECONDS - (
+                time.monotonic() - settlement_started
+            )
+            if remaining <= 0:
+                raise
+            waits.append(
+                _wait_for_runtime_json_writer_to_settle(
+                    exc,
+                    timeout_seconds=remaining,
+                )
+            )
     if waits:
         result = dict(result)
         result["runtime_write_settlement"] = {
