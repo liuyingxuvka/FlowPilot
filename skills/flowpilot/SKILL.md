@@ -88,25 +88,3 @@ The active prompt content lives in the copied runtime kit and prompt manifest:
 
 Old long-form protocol material is source-history material only.
 
-<!-- BEGIN SKILLGUARD CONTRACT LAYER -->
-## Purpose
-Bind each flowpilot run to the declared integration mode, evidence, blockers, residual_risk, and claim_boundary.
-## Entrypoint Scope
-Covers flowpilot plus explicitly routed local materials; no unrelated repos, private files, external services, publication, or release claims unless requested and routed.
-## Local Material Routing
-Use workspace, skill directory, user files, or configured project paths; keep private machine paths local and public instructions portable.
-## Entrypoint Acceptance Map
-Use SkillGuard as the declarative contract layer attached to the native route/check owner: the FlowPilot `assets/flowpilot_new.py` launcher, Router/Controller runtime, and FlowPilot regression checks. Every declared FlowPilot route and check must have one explicit native binding to its existing owner source; an empty, missing, extra, or duplicate binding blocks global selection. The native FlowPilot owner executes work and produces evidence; SkillGuard compiles, checks, and consumes that declared evidence without becoming a second role-work runtime. Duplicate SkillGuard-owned execution paths are invalid. Declared gates/routes: opt in gate, route plan, execution checks, closure.
-## Use When
-Use when the request matches flowpilot and needs this governed workflow, materials, checks, or handoff behavior.
-## Do Not Use When
-Do not use outside the domain, without required materials, when a more specific skill owns the work, or for tiny direct answers.
-## Required Workflow
-Select the target-owned native route/check surface, compile or check the current declarative contract, let the native FlowPilot owner execute the workflow, collect its evidence, consume the current receipts, fix affected failures, then report.
-## Hard Gates
-Do not skip phases, do not replace required evidence with prose, do not treat stale reports as current, do not weaken validation to pass, and do not claim completion when blockers remain.
-## Output Requirements
-Report evidence, failures, blockers, skipped_checks with reasons, residual_risk, and claim_boundary; distinguish checked, unchecked, blocked, and uncertain.
-## SkillGuard Maintenance
-Keep exactly one current V2 authority trio under `.skillguard`: `contract-source.json`, `compiled-contract.json`, and `check-manifest.json`. Keep `native_route_bindings` exactly equal to the four compiled FlowPilot routes and `native_check_bindings` exactly equal to the declared checks; omission is a blocker, not a fallback to prose routing. Use the public SkillGuard compiler/checkers; do not regenerate former V1 files or call private compiler helpers. Reuse a current receipt only when its execution identity and precise inputs still match. A final receipt check is a read-only consumer and must not use `--background` or `--resume`. Contract-depth mapping is not execution-depth proof. After an entrypoint, route, evidence, or closure change, run only the affected SkillGuard checks. Run full or release validation only for a stable integration snapshot or an explicit release.
-<!-- END SKILLGUARD CONTRACT LAYER -->

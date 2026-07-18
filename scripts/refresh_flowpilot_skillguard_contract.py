@@ -104,7 +104,7 @@ def main() -> int:
         "check-contract",
         "--target",
         target_arg,
-        "--target-root",
+        "--repository-root",
         str(ROOT),
     ]
     contract_exit, contract_payload = _run_json(contract_command)
