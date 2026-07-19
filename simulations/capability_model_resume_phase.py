@@ -75,7 +75,7 @@ def apply_resume_phase(self, state: State) -> Iterable[FunctionResult]:
         yield _step(
             state,
             label="resume_loaded_role_binding_memory",
-            action="continuation turn loads all runtime roles compact role memory packets before restoring or replacing runtime responsibilities",
+            action="continuation turn loads the exact current-obligation role memory packet and current route delta; idle or historical roles remain audit-only",
             resume_loaded_role_binding_memory=True,
         )
         return
@@ -84,7 +84,7 @@ def apply_resume_phase(self, state: State) -> Iterable[FunctionResult]:
         yield _step(
             state,
             label="resume_host_spawn_or_rehydrate_runtime_roles",
-            action="router asks the host to restore or open all runtime-requested roles before PM resume",
+            action="router asks the host to restore or open only the exact currently requested responsibility before PM resume",
             resume_host_rehydrate_requested=True,
         )
         return
@@ -93,7 +93,7 @@ def apply_resume_phase(self, state: State) -> Iterable[FunctionResult]:
         yield _step(
             state,
             label="resume_restored_required_role_binding_coverage",
-            action="continuation turn restores live runtime responsibilities when available and prepares memory-seeded replacements otherwise",
+            action="continuation turn restores the exact requested live responsibility when current and prepares one memory-seeded replacement only when that responsibility requires replacement",
             resume_restored_runtime_roles=True,
             replacement_roles_seeded_from_memory=True,
         )
@@ -103,7 +103,7 @@ def apply_resume_phase(self, state: State) -> Iterable[FunctionResult]:
         yield _step(
             state,
             label="resume_rehydrated_required_role_binding_coverage",
-            action="rehydrate the six FlowPilot roles from role memory packets before asking the project manager for the next capability runway",
+            action="rehydrate only the exact current-obligation role from current route memory before asking the project manager for the next capability runway",
             resume_rehydrated_runtime_roles=True,
         )
         return
@@ -112,7 +112,7 @@ def apply_resume_phase(self, state: State) -> Iterable[FunctionResult]:
         yield _step(
             state,
             label="resume_injected_current_run_memory_into_roles",
-            action="host injects each role's current-run memory and PM resume context before PM runway",
+            action="host injects the requested role's current-run memory and current route delta before PM runway",
             resume_injected_current_run_memory_into_roles=True,
         )
         return
@@ -121,7 +121,7 @@ def apply_resume_phase(self, state: State) -> Iterable[FunctionResult]:
         yield _step(
             state,
             label="role_binding_recovery_report_written",
-            action="write the role-binding rehydration report with restored, replaced, blocked, and memory-seeded role status before any PM resume decision",
+            action="write the requested-role rehydration report with exact target, restored or replaced status, current generation, and route delta before any PM resume decision",
             role_binding_recovery_report_written=True,
         )
         return

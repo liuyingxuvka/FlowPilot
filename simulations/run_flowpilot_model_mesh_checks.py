@@ -107,6 +107,59 @@ CONTRACT_COVERAGE_RESULT_SPECS = (
         Path("simulations/flowpilot_skillguard_current_contract_results.json"),
         "ok",
     ),
+    (
+        "receipt.unified_repair_integrity",
+        "flowpilot_unified_repair_integrity",
+        Path("simulations/flowpilot_unified_repair_integrity_results.json"),
+        "ok",
+    ),
+)
+
+UNIFIED_REPAIR_MODEL_ID = "flowpilot_unified_repair_integrity"
+UNIFIED_REPAIR_SOURCE_FINGERPRINT_ALGORITHM = (
+    "sha256(path_utf8+nul+raw_bytes+nul), ordered:model,runner"
+)
+UNIFIED_REPAIR_MODEL_PATH = Path(
+    "simulations/flowpilot_unified_repair_integrity_model.py"
+)
+UNIFIED_REPAIR_RUNNER_PATH = Path(
+    "simulations/run_flowpilot_unified_repair_integrity_checks.py"
+)
+UNIFIED_REPAIR_RESULT_PATH = Path(
+    "simulations/flowpilot_unified_repair_integrity_results.json"
+)
+UNIFIED_REPAIR_CORE_RUNTIME_PATH = Path(
+    "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py"
+)
+UNIFIED_REPAIR_RUNTIME_SOURCE_PATHS = (
+    UNIFIED_REPAIR_CORE_RUNTIME_PATH,
+    Path("skills/flowpilot/assets/flowpilot_core_runtime/run_shell.py"),
+    Path("skills/flowpilot/assets/flowpilot_core_runtime/migration.py"),
+    Path("skills/flowpilot/assets/flowpilot_core_runtime/pointer_store.py"),
+    Path("skills/flowpilot/assets/flowpilot_core_runtime/control_surface.py"),
+)
+UNIFIED_REPAIR_NATIVE_RUNTIME_OWNER_PATH = Path(
+    "simulations/run_flowpilot_unified_repair_native_runtime_conformance.py"
+)
+UNIFIED_REPAIR_NATIVE_RUNTIME_FIXTURE_PATH = Path(
+    "tests/flowpilot_repair_test_helpers.py"
+)
+UNIFIED_REPAIR_EXACT_NATIVE_TEST_OWNER_PATH = Path(
+    "simulations/run_flowpilot_unified_repair_exact_native_test_owner.py"
+)
+UNIFIED_REPAIR_EXACT_TEST_PATHS = (
+    Path("tests/test_flowpilot_unified_repair_runtime.py"),
+    Path("tests/test_flowpilot_core_runtime.py"),
+    Path("tests/test_flowpilot_high_standard_control_flow.py"),
+    Path("tests/test_flowpilot_complete_system_runtime.py"),
+    Path("tests/test_flowpilot_terminal_ledger_source_entries.py"),
+    Path("tests/router_runtime/route_mutation_transactions.py"),
+    Path("tests/router_runtime/route_mutation_parent_backward.py"),
+    Path("tests/router_runtime/route_mutation_sibling_replacement.py"),
+)
+UNIFIED_REPAIR_REQUIRED_CONFORMANCE_CHECK_IDS = (
+    "native_runtime_conformance",
+    "exact_native_test_conformance",
 )
 
 DPF_EXACT_EVIDENCE_IDS = (
@@ -125,6 +178,301 @@ def _sha256(path: Path) -> str:
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def _unified_repair_source_contract(project_root: Path) -> dict[str, Any]:
+    combined = hashlib.sha256()
+    missing_paths: list[str] = []
+    individual: dict[str, Any] = {}
+
+    for label, relative_path in (
+        ("model", UNIFIED_REPAIR_MODEL_PATH),
+        ("runner", UNIFIED_REPAIR_RUNNER_PATH),
+    ):
+        path = project_root / relative_path
+        relative_posix = relative_path.as_posix()
+        if not path.is_file():
+            missing_paths.append(relative_posix)
+            individual[label] = {
+                "path": relative_posix,
+                "exists": False,
+                "sha256": "",
+                "size_bytes": 0,
+            }
+            continue
+        raw = path.read_bytes()
+        combined.update(relative_posix.encode("utf-8"))
+        combined.update(b"\0")
+        combined.update(raw)
+        combined.update(b"\0")
+        individual[label] = {
+            "path": relative_posix,
+            "exists": True,
+            "sha256": hashlib.sha256(raw).hexdigest(),
+            "size_bytes": len(raw),
+        }
+
+    for label, relative_paths in (
+        (
+            "unified_runtime_sources",
+            UNIFIED_REPAIR_RUNTIME_SOURCE_PATHS,
+        ),
+        (
+            "native_runtime_owner",
+            (UNIFIED_REPAIR_NATIVE_RUNTIME_OWNER_PATH,),
+        ),
+        (
+            "native_runtime_fixture",
+            (UNIFIED_REPAIR_NATIVE_RUNTIME_FIXTURE_PATH,),
+        ),
+        (
+            "exact_native_test_owner",
+            (UNIFIED_REPAIR_EXACT_NATIVE_TEST_OWNER_PATH,),
+        ),
+        ("exact_relevant_tests", UNIFIED_REPAIR_EXACT_TEST_PATHS),
+    ):
+        rows: list[dict[str, Any]] = []
+        for relative_path in relative_paths:
+            path = project_root / relative_path
+            relative_posix = relative_path.as_posix()
+            if not path.is_file():
+                missing_paths.append(relative_posix)
+                rows.append(
+                    {
+                        "path": relative_posix,
+                        "exists": False,
+                        "sha256": "",
+                        "size_bytes": 0,
+                    }
+                )
+                continue
+            raw = path.read_bytes()
+            rows.append(
+                {
+                    "path": relative_posix,
+                    "exists": True,
+                    "sha256": hashlib.sha256(raw).hexdigest(),
+                    "size_bytes": len(raw),
+                }
+            )
+        individual[label] = (
+            rows
+            if label
+            in {"unified_runtime_sources", "exact_relevant_tests"}
+            else rows[0]
+        )
+
+    return {
+        "source_fingerprint": combined.hexdigest() if not missing_paths else "",
+        "source_fingerprints": individual,
+        "missing_paths": sorted(set(missing_paths)),
+    }
+
+
+def _unified_repair_contract_report(
+    *,
+    project_root: Path,
+    payload: Mapping[str, Any],
+    parse_error: str = "",
+) -> dict[str, Any]:
+    expected = _unified_repair_source_contract(project_root)
+    expected_fingerprint = str(expected["source_fingerprint"])
+    actual_fingerprint = str(payload.get("source_fingerprint") or "")
+    actual_fingerprints = (
+        payload.get("source_fingerprints")
+        if isinstance(payload.get("source_fingerprints"), Mapping)
+        else {}
+    )
+    conformance = (
+        payload.get("conformance")
+        if isinstance(payload.get("conformance"), Mapping)
+        else {}
+    )
+    skipped_checks = payload.get("skipped_checks")
+    skipped_rows = skipped_checks if isinstance(skipped_checks, list) else []
+    blocking_skips = [
+        {
+            "check_id": str(row.get("check_id") or ""),
+            "status": str(row.get("status") or ""),
+        }
+        for row in skipped_rows
+        if isinstance(row, Mapping)
+        and str(row.get("check_id") or "")
+        in UNIFIED_REPAIR_REQUIRED_CONFORMANCE_CHECK_IDS
+        and str(row.get("status") or "") != "passed"
+    ]
+
+    fingerprint_gaps: list[str] = []
+    expected_fingerprints = expected["source_fingerprints"]
+    for label in (
+        "model",
+        "runner",
+        "unified_runtime_sources",
+        "native_runtime_owner",
+        "native_runtime_fixture",
+        "exact_native_test_owner",
+    ):
+        if actual_fingerprints.get(label) != expected_fingerprints[label]:
+            fingerprint_gaps.append(label)
+    if actual_fingerprints.get("exact_relevant_tests") != expected_fingerprints[
+        "exact_relevant_tests"
+    ]:
+        fingerprint_gaps.append("exact_relevant_tests")
+
+    runtime_evidence_ids = conformance.get("runtime_evidence_ids")
+    test_evidence_ids = conformance.get("test_evidence_ids")
+    missing = conformance.get("missing")
+    expected_open_gap_ids = conformance.get("expected_open_gap_ids")
+    unexpected_gap_ids = conformance.get("unexpected_gap_ids")
+    known_bad = payload.get("known_bad") if isinstance(payload.get("known_bad"), Mapping) else {}
+    accepted_traces = payload.get("accepted_traces")
+    failed_good_cases = payload.get("failed_good_cases")
+
+    findings = tuple(
+        code
+        for code, active in (
+            ("unified_result_parse_error", bool(parse_error)),
+            ("unified_model_id_mismatch", payload.get("model_id") != UNIFIED_REPAIR_MODEL_ID),
+            ("unified_model_contract_failed", payload.get("model_ok") is not True),
+            ("unified_result_not_green", payload.get("ok") is not True),
+            (
+                "unified_runtime_conformance_not_green",
+                payload.get("runtime_conformance_ok") is not True,
+            ),
+            (
+                "unified_runtime_conformance_status_mismatch",
+                payload.get("runtime_conformance_ok") is not conformance.get("ok"),
+            ),
+            (
+                "unified_source_fingerprint_algorithm_mismatch",
+                payload.get("source_fingerprint_algorithm")
+                != UNIFIED_REPAIR_SOURCE_FINGERPRINT_ALGORITHM,
+            ),
+            (
+                "unified_source_fingerprint_inputs_missing",
+                bool(expected["missing_paths"]),
+            ),
+            (
+                "unified_source_fingerprint_mismatch",
+                not expected_fingerprint
+                or actual_fingerprint != expected_fingerprint
+                or conformance.get("source_fingerprint") != expected_fingerprint,
+            ),
+            ("unified_source_fingerprint_catalog_stale", bool(fingerprint_gaps)),
+            ("unified_known_bad_contract_failed", known_bad.get("ok") is not True),
+            (
+                "unified_known_bad_coverage_incomplete",
+                bool(known_bad.get("missing"))
+                or not isinstance(known_bad.get("expected_count"), int)
+                or known_bad.get("expected_count", 0) < 14
+                or known_bad.get("detected_count") != known_bad.get("expected_count"),
+            ),
+            (
+                "unified_accepted_trace_contract_failed",
+                not isinstance(accepted_traces, list)
+                or not accepted_traces
+                or any(
+                    not isinstance(row, Mapping) or row.get("accepted") is not True
+                    for row in accepted_traces or []
+                )
+                or failed_good_cases not in ([], ()),
+            ),
+            ("unified_conformance_required_missing", conformance.get("required") is not True),
+            ("unified_conformance_not_green", conformance.get("ok") is not True),
+            ("unified_conformance_marked_skipped", conformance.get("skipped") is not False),
+            ("unified_required_conformance_skipped", bool(blocking_skips)),
+            (
+                "unified_runtime_evidence_missing",
+                not isinstance(runtime_evidence_ids, list)
+                or not runtime_evidence_ids
+                or any(not isinstance(item, str) or not item for item in runtime_evidence_ids or []),
+            ),
+            (
+                "unified_test_evidence_missing",
+                not isinstance(test_evidence_ids, list)
+                or not test_evidence_ids
+                or any(not isinstance(item, str) or not item for item in test_evidence_ids or []),
+            ),
+            ("unified_missing_conformance_obligations", missing not in ([], ())),
+            ("unified_expected_runtime_gaps_open", expected_open_gap_ids not in ([], ())),
+            ("unified_unexpected_runtime_gaps", unexpected_gap_ids not in ([], ())),
+            (
+                "unified_conformance_model_contract_mismatch",
+                conformance.get("model_contract_ok") is not True
+                or conformance.get("model_contract_ok") is not payload.get("model_ok"),
+            ),
+        )
+        if active
+    )
+    return {
+        "ok": not findings,
+        "findings": list(findings),
+        "expected_source_fingerprint": expected_fingerprint,
+        "actual_source_fingerprint": actual_fingerprint,
+        "missing_source_paths": expected["missing_paths"],
+        "fingerprint_catalog_gaps": fingerprint_gaps,
+        "required_conformance_check_ids": list(
+            UNIFIED_REPAIR_REQUIRED_CONFORMANCE_CHECK_IDS
+        ),
+        "blocking_skipped_checks": blocking_skips,
+        "runtime_evidence_ids": list(runtime_evidence_ids or []),
+        "test_evidence_ids": list(test_evidence_ids or []),
+        "missing_conformance": list(missing or []),
+        "expected_open_gap_ids": list(expected_open_gap_ids or []),
+        "unexpected_gap_ids": list(unexpected_gap_ids or []),
+        "native_owner_receipt_synthesized": False,
+        "aggregate_proof_substitution_allowed": False,
+    }
+
+
+def _unified_repair_integrity_gate(project_root: Path) -> dict[str, Any]:
+    result_path = project_root / UNIFIED_REPAIR_RESULT_PATH
+    payload, parse_error = read_json_object(result_path)
+    contract = _unified_repair_contract_report(
+        project_root=project_root,
+        payload=payload,
+        parse_error=parse_error,
+    )
+    blockers = list(contract["findings"])
+    return {
+        "ok": bool(contract["ok"]),
+        "gate_id": "unified_repair_integrity_gate",
+        "model_id": UNIFIED_REPAIR_MODEL_ID,
+        "status": "conformance_green" if contract["ok"] else "blocked",
+        "evidence_tier": (
+            "conformance_green"
+            if contract["ok"]
+            else "abstract_green_conformance_blocked"
+        ),
+        "result_path": str(UNIFIED_REPAIR_RESULT_PATH.as_posix()),
+        "result_sha256": _sha256(result_path) if result_path.is_file() else "",
+        "parse_error": parse_error,
+        "failures": blockers,
+        "blockers": blockers,
+        "skipped_checks": contract["blocking_skipped_checks"],
+        "residual_risk": (
+            []
+            if contract["ok"]
+            else [
+                "The abstract unified repair model cannot authorize the real workflow "
+                "until exact native runtime and test conformance is current."
+            ]
+        ),
+        "claim_boundary": (
+            "This always-on gate consumes the exact current unified repair result and "
+            "source identities. It does not depend on the optional TestMesh evidence "
+            "manifest and cannot synthesize native owner receipts."
+        ),
+        "typed_next_actions": (
+            []
+            if contract["ok"]
+            else [
+                "flowguard-model-test-alignment: close exact runtime/test conformance gaps",
+                "flowguard-test-mesh: provide current native owner evidence ids",
+            ]
+        ),
+        "contract": contract,
+    }
 
 
 def _coverage_case_ids(payload: Mapping[str, Any], model_id: str) -> tuple[str, ...]:
@@ -149,6 +497,19 @@ def _coverage_case_ids(payload: Mapping[str, Any], model_id: str) -> tuple[str, 
                     if isinstance(row, Mapping)
                     and row.get("profile_id")
                     and row.get("execution_status") in {"passed", "failed"}
+                }
+            )
+        )
+    if model_id == UNIFIED_REPAIR_MODEL_ID:
+        accepted = payload.get("accepted_traces") or []
+        known_bad = payload.get("known_bad") if isinstance(payload.get("known_bad"), Mapping) else {}
+        rejected = known_bad.get("rejected_traces") or []
+        return tuple(
+            sorted(
+                {
+                    f"repair:{row.get('case_id')}"
+                    for row in (*accepted, *rejected)
+                    if isinstance(row, Mapping) and row.get("case_id")
                 }
             )
         )
@@ -180,12 +541,33 @@ def _contract_coverage_receipt_report(
         payload: dict[str, Any] = {}
         parse_error = ""
         payload, parse_error = read_json_object(path)
-        proof, reuse_ticket, reuse_gaps = derived_owner_proof(
-            bundle,
-            owner_id=f"modelmesh:{model_id}",
-            covered_obligation_ids=(f"model-receipt:{model_id}",),
-        )
-        passed = bool(payload.get(ok_field)) and not parse_error and proof is not None and reuse_ticket is not None and not reuse_gaps
+        unified_contract: dict[str, Any] = {}
+        if model_id == UNIFIED_REPAIR_MODEL_ID:
+            # The unified child explicitly reports model success separately from
+            # native runtime/test conformance.  An aggregate TestMesh proof must
+            # never be relabelled as that child's native owner receipt.
+            proof = None
+            reuse_ticket = None
+            reuse_gaps: tuple[str, ...] = ()
+            unified_contract = _unified_repair_contract_report(
+                project_root=project_root,
+                payload=payload,
+                parse_error=parse_error,
+            )
+            passed = bool(unified_contract["ok"])
+        else:
+            proof, reuse_ticket, reuse_gaps = derived_owner_proof(
+                bundle,
+                owner_id=f"modelmesh:{model_id}",
+                covered_obligation_ids=(f"model-receipt:{model_id}",),
+            )
+            passed = (
+                bool(payload.get(ok_field))
+                and not parse_error
+                and proof is not None
+                and reuse_ticket is not None
+                and not reuse_gaps
+            )
         current = passed and source_current and proof_gate_ok
         case_ids = _coverage_case_ids(payload, model_id)
         missing = () if passed else (f"case:{model_id}",)
@@ -202,14 +584,31 @@ def _contract_coverage_receipt_report(
             missing_case_ids=missing,
             blocked_case_ids=missing,
             finding_codes=tuple(
-                code
-                for code, active in (
-                    ("model_result_missing_or_failed", not passed),
-                    ("source_fingerprint_stale", not source_current),
-                    ("proof_manifest_nonpassing", not proof_gate_ok),
-                    ("proof_reuse_ticket_invalid", bool(reuse_gaps)),
+                dict.fromkeys(
+                    [
+                        *unified_contract.get("findings", []),
+                        *(
+                            ["model_result_missing_or_failed"]
+                            if not passed
+                            else []
+                        ),
+                        *(
+                            ["source_fingerprint_stale"]
+                            if not source_current
+                            else []
+                        ),
+                        *(
+                            ["proof_manifest_nonpassing"]
+                            if not proof_gate_ok
+                            else []
+                        ),
+                        *(
+                            ["proof_reuse_ticket_invalid"]
+                            if reuse_gaps
+                            else []
+                        ),
+                    ]
                 )
-                if active
             ),
             metadata={
                 "result_path": str(path),
@@ -219,6 +618,7 @@ def _contract_coverage_receipt_report(
                 "source_fingerprint": manifest_source,
                 "proof_artifact": proof.to_dict() if proof else None,
                 "reuse_ticket": reuse_ticket.to_dict() if reuse_ticket else None,
+                "unified_repair_contract": unified_contract or None,
             },
         )
         child_receipts.append(receipt)
@@ -251,6 +651,7 @@ def _contract_coverage_receipt_report(
                 "flowpilot_ordinary_resource_discovery": "consumed_current_capability_inventory_and_material_contraction",
                 "flowpilot_complete_workstream_fake_ai_execution": "consumed_current_execution_backed_workstream_and_resource_profiles",
                 "flowpilot_skillguard_current_contract": "consumed_current_native_integrated_contract_projection",
+                "flowpilot_unified_repair_integrity": "requires_exact_model_source_and_native_runtime_test_conformance",
             }
         },
     )
@@ -722,6 +1123,7 @@ def build_report(
     contract = _contract_refinement_report()
     hazards = _hazard_report()
     coverage = _coverage_report()
+    unified_repair_integrity_gate = _unified_repair_integrity_gate(project_root)
     live_projection = None
     if include_live_audit:
         live_projection = model.project_live_run(project_root=project_root, run_id=run_id)
@@ -733,7 +1135,15 @@ def build_report(
             claim_scope=claim_scope,
         )
 
-    sections = [graph, progress, flowguard, contract, hazards, coverage]
+    sections = [
+        graph,
+        progress,
+        flowguard,
+        contract,
+        hazards,
+        coverage,
+        unified_repair_integrity_gate,
+    ]
     if live_projection is not None:
         sections.append(live_projection)
     if contract_coverage_receipts is not None:
@@ -749,6 +1159,7 @@ def build_report(
         "contract_refinement": contract,
         "hazard_review": hazards,
         "coverage": coverage,
+        "unified_repair_integrity_gate": unified_repair_integrity_gate,
         "live_run_projection": live_projection,
         "contract_coverage_receipts": contract_coverage_receipts,
     }

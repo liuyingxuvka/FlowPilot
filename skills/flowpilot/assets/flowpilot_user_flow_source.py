@@ -124,6 +124,22 @@ def _review_display(
         findings.extend(display_packet["source_health"]["findings"])
     if display_packet["return_or_repair"]["required"] and not display_packet["return_or_repair"]["edge_present"]:
         findings.append("A review/validation return or route mutation lacks a visible repair edge.")
+    replacement_history = (
+        display_packet.get("replacement_history")
+        if isinstance(display_packet.get("replacement_history"), dict)
+        else {}
+    )
+    if replacement_history.get("requested_visible") and not replacement_history.get("rendered_visible"):
+        findings.append(
+            "Superseded repair history was requested, but complete runtime replacement identity was not available."
+        )
+    if replacement_history.get("rendered_visible") and (
+        replacement_history.get("producer_identity_status") != "complete"
+        or replacement_history.get("current_authority_policy") != "replacement_only"
+    ):
+        findings.append(
+            "Rendered repair history is not bound to complete replacement-only runtime authority."
+        )
     active_node = str(display_packet.get("active_node") or "")
     active_path_ids = {
         str(item.get("node_id") or item.get("id") or "")
@@ -157,5 +173,11 @@ def _review_display(
         "checked_active_graph_highlight": active_graph_highlighted,
         "checked_return_or_repair_edge": not display_packet["return_or_repair"]["required"]
         or display_packet["return_or_repair"]["edge_present"],
+        "checked_replacement_history_identity": not replacement_history.get("requested_visible")
+        or (
+            replacement_history.get("rendered_visible")
+            and replacement_history.get("producer_identity_status") == "complete"
+            and replacement_history.get("current_authority_policy") == "replacement_only"
+        ),
         "blocking_findings": findings,
     }

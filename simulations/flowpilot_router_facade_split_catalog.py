@@ -494,7 +494,7 @@ ROUTER_FACADE_MODULES = (
     ModuleStructureEvidence(
         "cli",
         path="skills/flowpilot/assets/flowpilot_router_cli.py",
-        owns_functions=("parse_args", "main"),
+        owns_functions=("parse_args", "_start_fresh_formal_invocation", "main"),
         dependencies=("router_facade", "controller_runtime"),
         behavior_contracts=("CLI command surface", "JSON error envelope", "runtime writer settlement"),
         behavior_parity_tier=EVIDENCE_CONFORMANCE_GREEN,

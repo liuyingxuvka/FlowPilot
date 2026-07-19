@@ -6,14 +6,17 @@ Risk intent brief:
 - Preserve PM freedom to choose a return repair, a replacement/supersede node,
   or a bounded branch-then-continue detour.
 - Critical durable state: active route/frontier, candidate route topology,
-  stale evidence invalidation, process/product/reviewer route checks, PM
-  activation, current-node entry, and user-visible route display receipt.
+  before/after effective-member inventory, unaffected sibling rebinding,
+  active-route version agreement, stale evidence invalidation,
+  process/product/reviewer route checks, PM activation, current-node entry,
+  final-ledger/terminal-target equality, and user-visible route display receipt.
 - Adversarial branches include active flow overwrite before activation,
   frontier entering the candidate repair node too early, candidate route display
   before activation, missing topology strategy, forced return for replacement
   nodes, missing return target for return repairs, list-order Mermaid appending
   repair nodes after terminal stages, unresolved superseded nodes, stale
   evidence reuse, old current-node packet obligations blocking route recheck,
+  parent-decision self-invalidation of route-memory authority,
   generated-files-only display, and sealed-body leakage.
 - Hard invariant: a mutation proposal is not the current route; only a checked
   and PM-activated route may become current, and only node entry may publish
@@ -59,6 +62,9 @@ class State:
 
     reviewer_block_recorded: bool = False
     pm_mutation_proposed: bool = False
+    route_memory_authority_validated_before_event_write: bool = False
+    route_mutation_consumed_same_authority: bool = False
+    route_memory_revalidated_after_parent_decision_write: bool = False
     topology_strategy: str = "none"
     repair_node_id_declared: bool = False
     repair_of_node_id_declared: bool = False
@@ -67,6 +73,19 @@ class State:
     continue_target_declared: bool = False
     affected_sibling_nodes_declared: bool = False
     replay_scope_declared: bool = False
+
+    effective_member_inventory_recorded: bool = False
+    before_effective_member_ids: tuple[str, ...] = ()
+    superseded_effective_member_ids: tuple[str, ...] = ()
+    replacement_effective_member_id: str = ""
+    after_effective_member_ids: tuple[str, ...] = ()
+    unaffected_sibling_node_ids: tuple[str, ...] = ()
+    unaffected_siblings_rebound: bool = False
+    candidate_route_version: int = 0
+    active_route_version: int = 0
+    after_member_route_versions: tuple[tuple[str, int], ...] = ()
+    final_ledger_effective_member_ids: tuple[str, ...] = ()
+    terminal_target_member_ids: tuple[str, ...] = ()
 
     active_route_overwritten_before_activation: bool = False
     frontier_entered_candidate_before_activation: bool = False
@@ -117,10 +136,24 @@ def _proposal(
     affected_siblings: bool = False,
     replay_scope: bool = False,
 ) -> State:
+    before_members = ("node-before", "node-original", "node-sibling")
+    superseded_members = (
+        ("node-original",)
+        if strategy in {SUPERSEDE_ORIGINAL, SIBLING_BRANCH_REPLACEMENT}
+        else ()
+    )
+    after_members = (
+        ("node-before", "node-repair", "node-sibling")
+        if superseded_members
+        else ("node-before", "node-repair", "node-original", "node-sibling")
+    )
+    candidate_route_version = 2
     return _running(
         state,
         holder=label_holder,
         pm_mutation_proposed=True,
+        route_memory_authority_validated_before_event_write=True,
+        route_mutation_consumed_same_authority=True,
         topology_strategy=strategy,
         repair_node_id_declared=True,
         repair_of_node_id_declared=True,
@@ -129,6 +162,18 @@ def _proposal(
         continue_target_declared=continue_target,
         affected_sibling_nodes_declared=affected_siblings,
         replay_scope_declared=replay_scope,
+        effective_member_inventory_recorded=True,
+        before_effective_member_ids=before_members,
+        superseded_effective_member_ids=superseded_members,
+        replacement_effective_member_id="node-repair",
+        after_effective_member_ids=after_members,
+        unaffected_sibling_node_ids=("node-before", "node-sibling"),
+        unaffected_siblings_rebound=True,
+        candidate_route_version=candidate_route_version,
+        active_route_version=1,
+        after_member_route_versions=tuple((node_id, candidate_route_version) for node_id in after_members),
+        final_ledger_effective_member_ids=after_members,
+        terminal_target_member_ids=after_members,
     )
 
 
@@ -150,9 +195,14 @@ class RouteMutationActivationStep:
     reads = (
         "active_route",
         "execution_frontier",
+        "pm_prior_path_context",
+        "route_memory_source_snapshot",
         "candidate_route_topology",
+        "before_after_effective_member_inventory",
         "stale_evidence_ledger",
         "route_check_reports",
+        "final_route_wide_gate_ledger",
+        "terminal_backward_replay_targets",
         "display_receipt",
     )
     writes = (
@@ -160,6 +210,8 @@ class RouteMutationActivationStep:
         "route_mutation_record",
         "route_check_status",
         "active_route_activation",
+        "unaffected_sibling_route_rebindings",
+        "effective_member_inventory_receipt",
         "current_node_entry",
         "user_visible_route_sign",
     )
@@ -264,7 +316,12 @@ def next_safe_states(state: State) -> Iterable[Transition]:
     if not state.pm_activation_recorded:
         yield Transition(
             "pm_activates_checked_candidate_route",
-            _running(state, holder="project_manager", pm_activation_recorded=True),
+            _running(
+                state,
+                holder="project_manager",
+                pm_activation_recorded=True,
+                active_route_version=state.candidate_route_version,
+            ),
         )
         return
 
@@ -309,6 +366,12 @@ def invariant_failures(state: State) -> list[str]:
     failures: list[str] = []
 
     if state.pm_mutation_proposed:
+        if not state.route_memory_authority_validated_before_event_write:
+            failures.append("route mutation authority was not validated before event-local writes")
+        if not state.route_mutation_consumed_same_authority:
+            failures.append("route mutation did not consume the parent decision's validated authority")
+        if state.route_memory_revalidated_after_parent_decision_write:
+            failures.append("route mutation revalidated route memory after its own parent-decision write")
         if state.topology_strategy not in TOPOLOGY_STRATEGIES:
             failures.append("route mutation proposal lacks an explicit topology strategy")
         if not state.repair_node_id_declared:
@@ -329,6 +392,20 @@ def invariant_failures(state: State) -> list[str]:
                 failures.append("sibling_branch_replacement mutation lacks affected sibling nodes")
             if not state.replay_scope_declared:
                 failures.append("sibling_branch_replacement mutation lacks replay scope")
+        if not state.effective_member_inventory_recorded:
+            failures.append("route mutation lacks before/after effective member inventory")
+        before_members = set(state.before_effective_member_ids)
+        superseded_members = set(state.superseded_effective_member_ids)
+        after_members = set(state.after_effective_member_ids)
+        retained_members = before_members - superseded_members
+        expected_after_members = retained_members | ({state.replacement_effective_member_id} if state.replacement_effective_member_id else set())
+        missing_unaffected = set(state.unaffected_sibling_node_ids) - after_members
+        if missing_unaffected:
+            failures.append("route replacement lost unaffected effective siblings")
+        if after_members & superseded_members:
+            failures.append("superseded route members remained effective after replacement")
+        if after_members != expected_after_members:
+            failures.append("after-replacement effective member inventory does not conserve retained members plus replacement")
 
     if state.active_route_overwritten_before_activation:
         failures.append("candidate route overwrote active flow.json before checked PM activation")
@@ -348,6 +425,16 @@ def invariant_failures(state: State) -> list[str]:
             failures.append("PM activated candidate route before product FlowGuard recheck")
         if not state.reviewer_recheck_passed:
             failures.append("PM activated candidate route before reviewer route challenge")
+        if state.active_route_version != state.candidate_route_version:
+            failures.append("activated route version disagrees with the replacement route version")
+        route_versions = dict(state.after_member_route_versions)
+        if any(route_versions.get(node_id) != state.active_route_version for node_id in state.after_effective_member_ids):
+            failures.append("effective route members do not all agree with active_route_version")
+        if not state.unaffected_siblings_rebound or any(
+            route_versions.get(node_id) != state.active_route_version
+            for node_id in state.unaffected_sibling_node_ids
+        ):
+            failures.append("unaffected siblings were not rebound into the activated route version")
 
     if state.route_visible_as_current:
         if not state.pm_activation_recorded:
@@ -371,6 +458,16 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("final ledger started before same-scope replay after route mutation")
     if state.status == "complete" and not state.same_scope_replay_rerun_after_mutation:
         failures.append("route mutation completed before same-scope replay rerun")
+    if state.same_scope_replay_rerun_after_mutation or state.final_ledger_started or state.status == "complete":
+        after_members = set(state.after_effective_member_ids)
+        final_ledger_members = set(state.final_ledger_effective_member_ids)
+        terminal_target_members = set(state.terminal_target_member_ids)
+        if final_ledger_members != after_members:
+            failures.append("final ledger effective members disagree with activated effective route members")
+        if terminal_target_members != after_members:
+            failures.append("terminal replay targets disagree with activated effective route members")
+        if final_ledger_members != terminal_target_members:
+            failures.append("final ledger and terminal replay target inventories diverge")
 
     if not state.sealed_body_boundary_preserved:
         failures.append("route mutation display weakened the sealed packet/result body boundary")
@@ -401,20 +498,18 @@ INVARIANTS = (
 
 
 def _proposal_state(strategy: str, **changes: object) -> State:
-    base = State(
-        status="running",
-        holder="project_manager",
-        reviewer_block_recorded=True,
-        pm_mutation_proposed=True,
-        topology_strategy=strategy,
-        repair_node_id_declared=True,
-        repair_of_node_id_declared=True,
-        return_target_declared=strategy == RETURN_TO_ORIGINAL,
-        superseded_nodes_declared=strategy == SUPERSEDE_ORIGINAL,
-        continue_target_declared=strategy == BRANCH_THEN_CONTINUE,
-        affected_sibling_nodes_declared=strategy == SIBLING_BRANCH_REPLACEMENT,
-        replay_scope_declared=strategy == SIBLING_BRANCH_REPLACEMENT,
+    base = _proposal(
+        State(reviewer_block_recorded=True),
+        label_holder="project_manager",
+        strategy=strategy,
+        return_target=strategy == RETURN_TO_ORIGINAL,
+        superseded=strategy == SUPERSEDE_ORIGINAL,
+        continue_target=strategy == BRANCH_THEN_CONTINUE,
+        affected_siblings=strategy == SIBLING_BRANCH_REPLACEMENT,
+        replay_scope=strategy == SIBLING_BRANCH_REPLACEMENT,
     )
+    if changes.get("pm_activation_recorded") is True and "active_route_version" not in changes:
+        changes["active_route_version"] = base.candidate_route_version
     return replace(base, **changes)
 
 
@@ -427,6 +522,7 @@ def _activated_display_state(strategy: str, **changes: object) -> State:
         product_recheck_passed=True,
         reviewer_recheck_passed=True,
         pm_activation_recorded=True,
+        active_route_version=2,
         candidate_node_entry_recorded=True,
         same_scope_replay_rerun_after_mutation=True,
         route_visible_as_current=True,
@@ -449,6 +545,11 @@ def hazard_states() -> dict[str, State]:
         "candidate_route_displayed_before_activation": _proposal_state(
             RETURN_TO_ORIGINAL,
             candidate_route_displayed_as_current=True,
+        ),
+        "parent_decision_self_invalidates_nested_route_mutation_authority": _proposal_state(
+            RETURN_TO_ORIGINAL,
+            route_mutation_consumed_same_authority=False,
+            route_memory_revalidated_after_parent_decision_write=True,
         ),
         "activation_without_process_recheck": _proposal_state(
             RETURN_TO_ORIGINAL,
@@ -531,6 +632,34 @@ def hazard_states() -> dict[str, State]:
         "sealed_body_boundary_broken": _activated_display_state(
             RETURN_TO_ORIGINAL,
             sealed_body_boundary_preserved=False,
+        ),
+        "replacement_drops_unaffected_sibling": _activated_display_state(
+            SUPERSEDE_ORIGINAL,
+            after_effective_member_ids=("node-before", "node-repair"),
+            after_member_route_versions=(("node-before", 2), ("node-repair", 2)),
+            final_ledger_effective_member_ids=("node-before", "node-repair"),
+            terminal_target_member_ids=("node-before", "node-repair"),
+        ),
+        "unaffected_sibling_not_rebound": _activated_display_state(
+            SUPERSEDE_ORIGINAL,
+            unaffected_siblings_rebound=False,
+            after_member_route_versions=(
+                ("node-before", 2),
+                ("node-repair", 2),
+                ("node-sibling", 1),
+            ),
+        ),
+        "activated_route_version_mismatch": _activated_display_state(
+            SUPERSEDE_ORIGINAL,
+            active_route_version=1,
+        ),
+        "final_ledger_effective_members_mismatch": _activated_display_state(
+            SUPERSEDE_ORIGINAL,
+            final_ledger_effective_member_ids=("node-before", "node-repair"),
+        ),
+        "terminal_targets_effective_members_mismatch": _activated_display_state(
+            SUPERSEDE_ORIGINAL,
+            terminal_target_member_ids=("node-before", "node-repair"),
         ),
     }
 

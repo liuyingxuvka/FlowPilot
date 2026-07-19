@@ -47,6 +47,7 @@ def test_pm_decision_contract_rejects_known_hard_route_blocker_as_ordinary_repai
         subject_id=blocker_id,
         route_scope="pm_repair_decision",
         repair_blocker_id=blocker_id,
+        repair_trigger_origin="reviewer_or_system_failure",
     )
     result = {
         "body": json.dumps(

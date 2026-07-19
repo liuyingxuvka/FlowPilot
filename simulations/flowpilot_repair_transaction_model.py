@@ -14,7 +14,10 @@ Risk intent brief:
 
 This remains the existing repair-transaction model owner. It intentionally
 contracts the retired material-generation branch instead of adding a parallel
-model or compatibility path.
+model or compatibility path. It is a blocker-backed transaction-mechanics
+child of the unified repair engine: it carries a typed blocker trigger into
+that engine, but it cannot claim direct PM historical-defect intake or shared
+repair-engine ownership.
 """
 
 from __future__ import annotations
@@ -101,6 +104,11 @@ class State:
     holder: str = "controller"
     active_node_kind: str = "leaf"
     control_repair_origin: str = "none"
+    repair_trigger_origin: str = "none"  # none | reviewer_or_system_failure | pm_historical_defect
+    shared_repair_engine_handoff_recorded: bool = False
+    shared_repair_engine_handoff_id_present: bool = False
+    owns_shared_repair_engine: bool = False
+    pm_proactive_historical_intake_claimed: bool = False
     rerun_target_event: str = "reviewer_current_node_result_decision"
     steps: int = 0
 
@@ -275,6 +283,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                     blocker_kind=blocker_kind,
                     blocker_pm_repair_lane=lane,
                     control_repair_origin=origin,
+                    repair_trigger_origin="reviewer_or_system_failure",
                     pm_model_miss_cards_accept_blocker_kind=True,
                     pm_model_miss_triage_accepts_blocker_kind=True,
                     pm_review_repair_event_accepts_blocker_kind=True,
@@ -292,6 +301,18 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 blocker_registered_in_router=True,
                 blocker_has_origin_event=True,
                 blocker_has_allowed_nonterminal_events=True,
+            ),
+        )
+        return
+
+    if not state.shared_repair_engine_handoff_recorded:
+        yield Transition(
+            "router_hands_blocker_trigger_to_unified_repair_engine",
+            _inc(
+                state,
+                holder="controller",
+                shared_repair_engine_handoff_recorded=True,
+                shared_repair_engine_handoff_id_present=True,
             ),
         )
         return
@@ -498,6 +519,40 @@ def blocker_registration_is_routable(state: State, trace) -> InvariantResult:
     ):
         return InvariantResult.fail(
             "router blocker registration lacks origin or nonterminal repair events"
+        )
+    return InvariantResult.pass_()
+
+
+def blocker_transaction_delegates_to_unified_engine(
+    state: State, trace
+) -> InvariantResult:
+    del trace
+    if (
+        state.pm_proactive_historical_intake_claimed
+        or state.repair_trigger_origin == "pm_historical_defect"
+    ):
+        return InvariantResult.fail(
+            "blocker repair transaction child cannot own PM-proactive historical repair intake"
+        )
+    if state.owns_shared_repair_engine:
+        return InvariantResult.fail(
+            "blocker repair transaction child claimed shared repair-engine ownership"
+        )
+    if (
+        state.blocker_registered_in_router
+        and (
+            state.model_miss_triage_recorded
+            or state.pm_repair_decision_recorded
+            or state.repair_transaction_opened
+        )
+        and not (
+            state.repair_trigger_origin == "reviewer_or_system_failure"
+            and state.shared_repair_engine_handoff_recorded
+            and state.shared_repair_engine_handoff_id_present
+        )
+    ):
+        return InvariantResult.fail(
+            "blocker repair transaction did not hand its typed trigger to the unified repair engine"
         )
     return InvariantResult.pass_()
 
@@ -788,6 +843,11 @@ INVARIANTS = (
         predicate=blocker_registration_is_routable,
     ),
     Invariant(
+        name="blocker_transaction_delegates_to_unified_engine",
+        description="Blocker transaction mechanics carry one typed blocker trigger to the shared engine without owning PM-proactive intake.",
+        predicate=blocker_transaction_delegates_to_unified_engine,
+    ),
+    Invariant(
         name="model_miss_block_kind_has_end_to_end_repair_lane",
         description="Every current reviewer blocker kind has one PM repair lane.",
         predicate=model_miss_block_kind_has_end_to_end_repair_lane,
@@ -890,6 +950,9 @@ def _safe_base(**changes: object) -> State:
         holder="human_like_reviewer",
         active_node_kind="leaf",
         control_repair_origin="current_node_result",
+        repair_trigger_origin="reviewer_or_system_failure",
+        shared_repair_engine_handoff_recorded=True,
+        shared_repair_engine_handoff_id_present=True,
         rerun_target_event="reviewer_current_node_result_decision",
         blocker_detected=True,
         blocker_kind="node_result",
@@ -938,6 +1001,17 @@ def _safe_base(**changes: object) -> State:
 
 def hazard_states() -> dict[str, State]:
     return {
+        "blocker_handoff_to_unified_engine_missing": _safe_base(
+            shared_repair_engine_handoff_recorded=False,
+            shared_repair_engine_handoff_id_present=False,
+        ),
+        "pm_proactive_historical_intake_claimed_by_blocker_child": _safe_base(
+            repair_trigger_origin="pm_historical_defect",
+            pm_proactive_historical_intake_claimed=True,
+        ),
+        "blocker_child_claims_shared_engine_ownership": _safe_base(
+            owns_shared_repair_engine=True,
+        ),
         "router_blocker_missing_origin": _safe_base(
             blocker_has_origin_event=False
         ),
@@ -1076,4 +1150,4 @@ def is_success(state: State) -> bool:
 
 
 EXTERNAL_INPUTS = (Tick(),)
-MAX_SEQUENCE_LENGTH = 20
+MAX_SEQUENCE_LENGTH = 21

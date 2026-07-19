@@ -65,12 +65,26 @@ HAZARD_EXPECTED_FAILURES = {
     model.REPAIR_LOOP_OVER_THRESHOLD_ALLOWED_PM_REPAIR: (
         "same-node repair loop threshold exceeded but ordinary PM repair continued"
     ),
+    model.PM_PROACTIVE_REPAIR_MISROUTED_TO_BLOCKER_CHILD: (
+        "blocker-specific information-flow child cannot own PM-proactive historical repair intake"
+    ),
+    model.BLOCKER_HANDOFF_TO_SHARED_ENGINE_MISSING: (
+        "blocker trigger was not handed to the unified repair engine"
+    ),
+    model.BLOCKER_CHILD_CLAIMS_SHARED_ENGINE_OWNERSHIP: (
+        "blocker-specific information-flow child claimed shared repair-engine ownership"
+    ),
+    model.BLOCKER_SOURCE_TRIGGER_ORIGIN_MISMATCH: (
+        "blocker source role and typed trigger origin do not describe the same intake"
+    ),
 }
 
 
 def _state_id(state: model.State) -> str:
     return (
         f"scenario={state.scenario}|status={state.status}|source={state.blocker_source_role}|"
+        f"origin={state.repair_trigger_origin}|handoff={state.shared_engine_handoff_recorded},"
+        f"{state.shared_engine_handoff_id_present}|child_owner={state.blocker_child_claims_shared_engine_ownership}|"
         f"blocker=current:{state.blocker_payload_current},id:{state.blocker_id_present},"
         f"source_ref:{state.source_result_ref_present},specific:{state.specific_failure_present},"
         f"required:{state.required_repair_present}|"
@@ -272,8 +286,12 @@ def run_checks() -> dict[str, Any]:
                 "final preflight current-effective blocker filtering",
                 "same-blocker no-progress loop escape",
                 "same-dossier repair attempts at five consecutive repair nodes route to Controller break-glass instead of ordinary PM repair",
+                "blocker-backed triggers carry a typed handoff identity into the unified repair engine",
+                "the blocker-specific child rejects PM-proactive historical-defect intake and shared-engine ownership",
             ],
             "does_not_cover": [
+                "direct PM historical-defect intake, which belongs to the unified repair engine",
+                "shared repair-engine topology selection or execution ownership",
                 "concrete runtime packet builder conformance",
                 "prompt-card wording conformance",
                 "installed skill synchronization",

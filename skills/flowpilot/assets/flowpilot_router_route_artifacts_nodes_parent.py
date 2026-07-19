@@ -23,6 +23,7 @@ from typing import Any, Callable, Iterable
 
 import card_runtime
 import flowpilot_runtime_closure
+import flowpilot_router_route
 import flowpilot_user_flow_diagram
 import packet_runtime
 import role_output_runtime
@@ -150,7 +151,6 @@ def _write_parent_segment_decision(project_root: Path, run_root: Path, run_state
     payload = _load_file_backed_role_payload(project_root, payload)
     if payload.get("decision_owner") != "project_manager":
         raise RouterError("parent segment decision requires decision_owner=project_manager")
-    prior_review = _require_pm_prior_path_context(project_root, run_root, payload, purpose="parent segment decision")
     frontier = _active_frontier(run_root)
     replay_path = _active_node_root(run_root, frontier) / "parent_backward_replay.json"
     if not replay_path.exists():
@@ -158,6 +158,34 @@ def _write_parent_segment_decision(project_root: Path, run_root: Path, run_state
     decision = str(payload.get("decision") or "continue")
     if decision not in PM_PARENT_SEGMENT_DECISION_ALLOWED_VALUES:
         raise RouterError(f"unsupported parent segment decision: {decision}")
+    mutation_payload: dict[str, Any] | None = None
+    mutation_authority = None
+    if decision != "continue":
+        repair_node_id = str(payload.get("repair_node_id") or f"{frontier['active_node_id']}-repair-{int(frontier.get('route_version') or 1) + 1}")
+        mutation_payload = {
+            "route_id": frontier["active_route_id"],
+            "repair_node_id": repair_node_id,
+            "reason": f"parent_segment_decision:{decision}",
+            "stale_evidence": [project_relative(project_root, replay_path)],
+            "superseded_nodes": payload.get("superseded_nodes") or [],
+            "repair_return_to_node_id": payload.get("repair_return_to_node_id") or payload.get("return_to_node_id"),
+            "prior_path_context_review": payload.get("prior_path_context_review"),
+        }
+        mutation_authority = flowpilot_router_route._validate_route_mutation_authority(
+            _bound_router(),
+            project_root,
+            run_root,
+            mutation_payload,
+            purpose="parent segment decision",
+        )
+        prior_review = dict(mutation_authority.prior_path_context_review)
+    else:
+        prior_review = _require_pm_prior_path_context(
+            project_root,
+            run_root,
+            payload,
+            purpose="parent segment decision",
+        )
     record = {
         "schema_version": "flowpilot.parent_segment_decision.v1",
         "run_id": run_state["run_id"],
@@ -178,21 +206,14 @@ def _write_parent_segment_decision(project_root: Path, run_root: Path, run_state
         **_role_output_envelope_record(payload),
     }
     write_json(_active_node_root(run_root, frontier) / "pm_parent_segment_decision.json", record)
-    if decision != "continue":
-        repair_node_id = str(payload.get("repair_node_id") or f"{frontier['active_node_id']}-repair-{int(frontier.get('route_version') or 1) + 1}")
-        _write_route_mutation(
+    if mutation_payload is not None and mutation_authority is not None:
+        flowpilot_router_route.write_route_mutation(
+            _bound_router(),
             project_root,
             run_root,
             run_state,
-            {
-                "route_id": frontier["active_route_id"],
-                "repair_node_id": repair_node_id,
-                "reason": f"parent_segment_decision:{decision}",
-                "stale_evidence": [project_relative(project_root, replay_path)],
-                "superseded_nodes": payload.get("superseded_nodes") or [],
-                "repair_return_to_node_id": payload.get("repair_return_to_node_id") or payload.get("return_to_node_id"),
-                "prior_path_context_review": payload.get("prior_path_context_review"),
-            },
+            mutation_payload,
+            validated_authority=mutation_authority,
         )
     return decision
 

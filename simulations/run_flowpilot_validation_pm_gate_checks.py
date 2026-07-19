@@ -98,6 +98,21 @@ def _model_test_alignment_report() -> dict[str, Any]:
         "staged_effect_same_family_convergence_test": (
             "test_staged_effect_same_family_reuses_pending_effect" in core_test_text
         ),
+        "staged_effect_exact_current_identity": all(
+            field in runtime_text
+            for field in (
+                "source_packet_id",
+                "source_result_id",
+                "target_node_id",
+                "blocker_id",
+                "repair_trigger_id",
+                "repair_trigger_origin",
+                "gate_id",
+                "route_scope",
+                "repair_generation",
+                "source_generation",
+            )
+        ),
         "review_future_state_boundary_card_test": "test_current_contract_staged_effect_guidance_is_role_scoped" in (
             REPO_ROOT / "tests" / "test_flowpilot_card_instruction_coverage.py"
         ).read_text(encoding="utf-8"),

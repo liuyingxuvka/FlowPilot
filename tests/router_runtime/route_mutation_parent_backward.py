@@ -2,9 +2,28 @@ from __future__ import annotations
 
 from tests.router_runtime.common import *  # noqa: F403
 from tests.router_runtime.common import FlowPilotRouterRuntimeTestBase
+import flowpilot_router_route
 
 
 class RouteMutationParentBackwardRuntimeTests(FlowPilotRouterRuntimeTestBase):
+    def test_route_mutation_rejects_unvalidated_authority_dict(self) -> None:
+            root = self.make_project()
+            run_root = self.boot_to_controller(root)
+            state = read_json(router.run_state_path(run_root))
+
+            with self.assertRaisesRegex(
+                router.RouterError,
+                "validated_authority must be the current in-memory authority",
+            ):
+                flowpilot_router_route.write_route_mutation(
+                    router,
+                    root,
+                    run_root,
+                    state,
+                    {},
+                    validated_authority={},
+                )
+
     def _activate_parent_with_completed_child(self, root: Path) -> Path:
             run_root = self.boot_to_controller(root)
             self.complete_pre_route_gates(root)

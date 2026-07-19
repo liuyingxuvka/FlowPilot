@@ -28,6 +28,33 @@ def _write_json(path: Path, payload: dict) -> None:
     path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
+def completed_workstream() -> dict:
+    return {
+        "plan_written_before_execution": True,
+        "steps": [
+            {
+                "step_number": 1,
+                "plan": "Complete and verify the bounded role-output decision.",
+                "status": "completed",
+                "evidence_refs": ["current-role-output"],
+                "deviation": "",
+                "unresolved": "",
+            }
+        ],
+        "delegation_and_integration": {
+            "delegated": False,
+            "integration_status": "not_applicable",
+            "evidence_refs": [],
+        },
+        "verification": {
+            "status": "completed",
+            "evidence_refs": ["current-role-output-validation"],
+            "repair_rounds": 0,
+        },
+        "remaining_blockers": [],
+    }
+
+
 class FlowPilotRoleOutputRuntimeTests(unittest.TestCase):
     def make_project(self) -> Path:
         root = Path(tempfile.mkdtemp(prefix="flowpilot-role-output-runtime-"))
@@ -105,6 +132,9 @@ class FlowPilotRoleOutputRuntimeTests(unittest.TestCase):
             body={
                 "decision": "continue_current_packet_loop",
                 "explicit_recovery_evidence_recorded": True,
+                "contract_self_check": {
+                    "workstream_plan_and_completion": completed_workstream(),
+                },
                 "prior_path_context_review": {
                     "impact_on_decision": "PM checked current route memory and found no stale or superseded path.",
                 },
@@ -307,6 +337,9 @@ class FlowPilotRoleOutputRuntimeTests(unittest.TestCase):
             body={
                 "decision": "restore_or_replace_roles_from_memory",
                 "explicit_recovery_evidence_recorded": False,
+                "contract_self_check": {
+                    "workstream_plan_and_completion": completed_workstream(),
+                },
                 "prior_path_context_review": {
                     "impact_on_decision": "PM selected role restoration after checking current route memory.",
                 },
@@ -342,6 +375,9 @@ class FlowPilotRoleOutputRuntimeTests(unittest.TestCase):
                 agent_id="agent-pm-003",
                 body={
                     "explicit_recovery_evidence_recorded": True,
+                    "contract_self_check": {
+                        "workstream_plan_and_completion": completed_workstream(),
+                    },
                     "prior_path_context_review": {
                         "impact_on_decision": "Missing decision should be rejected before the router sees it.",
                     },
@@ -510,6 +546,9 @@ class FlowPilotRoleOutputRuntimeTests(unittest.TestCase):
                 ],
                 "reason": "The reviewer has direct evidence for the gate decision.",
                 "next_action": "continue",
+                "contract_self_check": {
+                    "workstream_plan_and_completion": completed_workstream(),
+                },
             },
             router_directed_submission=True,
         )
@@ -551,6 +590,9 @@ class FlowPilotRoleOutputRuntimeTests(unittest.TestCase):
                 "pm_visible_summary": ["Reviewer checked the declared generic quality-pack rows."],
                 "reviewed_by_role": "human_like_reviewer",
                 "passed": True,
+                "contract_self_check": {
+                    "workstream_plan_and_completion": completed_workstream(),
+                },
                 "review_summary": "Reviewer checked the declared generic quality-pack rows.",
                 "findings": [],
                 "blockers": [],
@@ -589,6 +631,9 @@ class FlowPilotRoleOutputRuntimeTests(unittest.TestCase):
                     "review_summary": "Missing declared quality pack rows should fail.",
                     "findings": [],
                     "blockers": [],
+                    "contract_self_check": {
+                        "workstream_plan_and_completion": completed_workstream(),
+                    },
                 },
             )
 
@@ -669,6 +714,9 @@ class FlowPilotRoleOutputRuntimeTests(unittest.TestCase):
             body={
                 "decision": "continue_current_packet_loop",
                 "explicit_recovery_evidence_recorded": True,
+                "contract_self_check": {
+                    "workstream_plan_and_completion": completed_workstream(),
+                },
                 "prior_path_context_review": {
                     "impact_on_decision": "PM checked current route memory before resuming.",
                 },

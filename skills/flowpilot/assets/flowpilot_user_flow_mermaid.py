@@ -19,6 +19,7 @@ from flowpilot_user_flow_tree import (
     _normalize,
     _route_active_path,
     _route_display_depth,
+    _replacement_history_projection,
     _visible_active_node_id,
 )
 
@@ -29,8 +30,27 @@ def _escape_label(text: str) -> str:
 
 
 
-def _route_nodes(frontier: dict[str, Any], route: dict[str, Any]) -> list[dict[str, Any]]:
-    nodes = [node for node in _display_depth_nodes(route) if _node_id(node)]
+def _route_nodes(
+    frontier: dict[str, Any],
+    route: dict[str, Any],
+    *,
+    replacement_history: dict[str, Any],
+) -> list[dict[str, Any]]:
+    include_history = bool(replacement_history.get("rendered_visible"))
+    history_node_ids = {
+        str(item)
+        for item in replacement_history.get("history_node_ids") or []
+        if item
+    }
+    nodes = [
+        node
+        for node in _display_depth_nodes(
+            route,
+            include_superseded_history=include_history,
+            history_node_ids=history_node_ids,
+        )
+        if _node_id(node)
+    ]
     mainline = [str(item) for item in frontier.get("current_mainline") or []]
     if mainline:
         by_id = {_node_id(node): node for node in nodes}
@@ -44,6 +64,22 @@ def _route_nodes(frontier: dict[str, Any], route: dict[str, Any]) -> list[dict[s
                 if _node_id(node) not in included
                 and (_node_id(node) == active_node or _is_mutation_node(node))
             )
+            if include_history:
+                for item in replacement_history.get("identity_items") or []:
+                    source_id = str(item.get("source_node_id") or "")
+                    replacement_id = str(item.get("replacement_node_id") or "")
+                    source = by_id.get(source_id)
+                    if source is None or source in ordered:
+                        continue
+                    replacement_index = next(
+                        (
+                            index
+                            for index, node in enumerate(ordered)
+                            if _node_id(node) == replacement_id
+                        ),
+                        len(ordered),
+                    )
+                    ordered.insert(replacement_index, source)
             return ordered
     return nodes
 
@@ -122,6 +158,7 @@ def _build_route_node_mermaid(
     nodes: list[dict[str, Any]],
     active_node: str | None,
     return_path: dict[str, Any],
+    replacement_history: dict[str, Any],
 ) -> str:
     active_route = _active_route(frontier, {}, route) or "unknown route"
     route_version = frontier.get("route_version") or route.get("route_version") or "unknown"
@@ -154,7 +191,10 @@ def _build_route_node_mermaid(
             frontier=frontier,
             route=route,
         )
-        lines.append(f'  {mermaid_id}["{_escape_label(_node_label(node))}"]')
+        label = _node_label(node)
+        if status == "superseded":
+            label = f"{label} (history only)"
+        lines.append(f'  {mermaid_id}["{_escape_label(label)}"]')
         if status == "active":
             active_ids.append(mermaid_id)
         elif status == "done":
@@ -176,10 +216,20 @@ def _build_route_node_mermaid(
     edge_lines: set[str] = set()
     topology_by_id = {node_id: _node_topology(node) for node_id, node in zip(node_ids, nodes)}
     replacement_by_superseded: dict[str, str] = {}
+    history_pairs = {
+        (
+            str(item.get("source_node_id") or ""),
+            str(item.get("replacement_node_id") or ""),
+        )
+        for item in replacement_history.get("identity_items") or []
+        if item.get("source_node_id") and item.get("replacement_node_id")
+    }
     for node_id, topology in topology_by_id.items():
         if topology["topology_strategy"] in {"supersede_original", "sibling_branch_replacement"}:
             for superseded_node in topology["superseded_nodes"] + topology["affected_sibling_nodes"]:
                 replacement_by_superseded[str(superseded_node)] = node_id
+    for source_id, replacement_id in history_pairs:
+        replacement_by_superseded[source_id] = replacement_id
 
     mainline_ids: list[str] = []
     for node in nodes:
@@ -211,6 +261,13 @@ def _build_route_node_mermaid(
         add_edge(f"  {mermaid_ids[left]} --> {mermaid_ids[right]}", edge_lines)
 
     topology_edge_present = False
+    for source_id, replacement_id in sorted(history_pairs):
+        if source_id in mermaid_ids and replacement_id in mermaid_ids:
+            add_edge(
+                f'  {mermaid_ids[source_id]} -. "history only; repaired by" .-> '
+                f"{mermaid_ids[replacement_id]}",
+                edge_lines,
+            )
     for node_id, topology in topology_by_id.items():
         strategy = topology.get("topology_strategy")
         if strategy == "return_to_original":
@@ -223,9 +280,14 @@ def _build_route_node_mermaid(
                 add_edge(f'  {mermaid_ids[node_id]} -- "returns for repair" --> {mermaid_ids[return_to]}', edge_lines)
                 topology_edge_present = True
         elif strategy == "supersede_original":
+            topology_edge_present = True
             for superseded_node in topology.get("superseded_nodes") or []:
-                if superseded_node in mermaid_ids:
-                    add_edge(f'  {mermaid_ids[superseded_node]} -. "superseded by" .-> {mermaid_ids[node_id]}', edge_lines)
+                if superseded_node in mermaid_ids and (superseded_node, node_id) not in history_pairs:
+                    add_edge(
+                        f'  {mermaid_ids[superseded_node]} -. "history only; repaired by" .-> '
+                        f"{mermaid_ids[node_id]}",
+                        edge_lines,
+                    )
                     topology_edge_present = True
         elif strategy == "branch_then_continue":
             repair_of = str(topology.get("repair_of_node_id") or "")
@@ -237,9 +299,14 @@ def _build_route_node_mermaid(
                 add_edge(f"  {mermaid_ids[node_id]} --> {mermaid_ids[continue_after]}", edge_lines)
                 topology_edge_present = True
         elif strategy == "sibling_branch_replacement":
+            topology_edge_present = True
             for sibling_node in topology.get("affected_sibling_nodes") or []:
-                if sibling_node in mermaid_ids:
-                    add_edge(f'  {mermaid_ids[sibling_node]} -. "replaced by" .-> {mermaid_ids[node_id]}', edge_lines)
+                if sibling_node in mermaid_ids and (sibling_node, node_id) not in history_pairs:
+                    add_edge(
+                        f'  {mermaid_ids[sibling_node]} -. "history only; repaired by" .-> '
+                        f"{mermaid_ids[node_id]}",
+                        edge_lines,
+                    )
                     topology_edge_present = True
             replay_scope = str(topology.get("replay_scope_node_id") or "")
             if replay_scope in mermaid_ids:
@@ -338,9 +405,19 @@ def build_mermaid(
     route: dict[str, Any],
     current_stage: str,
     trigger: str,
+    include_superseded_history: bool = False,
 ) -> tuple[str, dict[str, Any]]:
     active_node = _active_node(frontier, route=route)
-    nodes = _route_nodes(frontier, route)
+    replacement_history = _replacement_history_projection(
+        frontier=frontier,
+        route=route,
+        requested_visible=include_superseded_history,
+    )
+    nodes = _route_nodes(
+        frontier,
+        route,
+        replacement_history=replacement_history,
+    )
     active_path = _route_active_path(frontier, route, str(active_node) if active_node else None)
     hidden_leaf_progress = _hidden_leaf_progress(route)
     return_path = detect_return_path(
@@ -362,6 +439,7 @@ def build_mermaid(
             nodes=nodes,
             active_node=str(active_node) if active_node else None,
             return_path=return_path,
+            replacement_history=replacement_history,
         )
         layout = "route_nodes"
         node_ids = [_node_id(node) for node in nodes]
@@ -397,4 +475,5 @@ def build_mermaid(
         "active_highlight": active_highlight,
         "graph_labels_surface_neutral": True,
         "hidden_leaf_progress": hidden_leaf_progress,
+        "replacement_history": replacement_history,
     }

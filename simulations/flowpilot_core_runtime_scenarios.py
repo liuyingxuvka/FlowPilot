@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import sys
 import tempfile
 from pathlib import Path
@@ -82,6 +83,10 @@ def _role_result_body(summary: str, **fields: object) -> str:
     return json.dumps(payload)
 
 
+def _completed_workstream() -> dict[str, object]:
+    return packet_result_contracts.workstream_plan_and_completion_example()
+
+
 def _pm_repair_decision_body(
     ledger: dict[str, Any],
     pm_packet_id: str,
@@ -123,6 +128,7 @@ def _flowguard_result_body(summary: str, **fields: object) -> str:
             "empty_required_arrays_explicit": True,
             "runtime_mechanical_validation_passed": True,
             "semantic_sufficiency_reviewed_by_runtime": False,
+            "workstream_plan_and_completion": _completed_workstream(),
         },
     }
     payload.update(fields)
@@ -146,6 +152,7 @@ def _review_result_body(summary: str, **fields: object) -> str:
             "empty_required_arrays_explicit": True,
             "runtime_mechanical_validation_passed": True,
             "semantic_sufficiency_reviewed_by_runtime": False,
+            "workstream_plan_and_completion": _completed_workstream(),
         },
     }
     payload.update(fields)
@@ -432,6 +439,38 @@ def _mark_node_ready_for_final_closure(ledger: dict[str, Any], node_id: str) -> 
 def _mark_high_standard_node_context_accepted(ledger: dict[str, Any], node_id: str) -> None:
     plan_id = f"{node_id}-acceptance-plan"
     context_id = f"{node_id}-context-package"
+    project_root = Path(str(ledger.get("run_root") or tempfile.mkdtemp(prefix="flowpilot-core-runtime-"))).resolve()
+    ledger["project_root"] = project_root.as_posix()
+    reference_root = project_root / "current-authorities"
+    reference_root.mkdir(parents=True, exist_ok=True)
+    source_packet_id = f"{context_id}-packet"
+    source_result_id = f"{context_id}-result"
+    reference_specs = (
+        ("acceptance_authority", "acceptance.md", "Current acceptance authority."),
+        ("route_authority", "route.md", "Current route authority."),
+    )
+    normalized_references: list[dict[str, object]] = []
+    for reference_kind, filename, content in reference_specs:
+        path = reference_root / filename
+        path.write_text(content, encoding="utf-8")
+        fingerprint = "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
+        normalized_references.append(
+            {
+                "schema_version": runtime.NODE_CONTEXT_REFERENCE_SCHEMA_VERSION,
+                "reference_kind": reference_kind,
+                "authority_id": f"{node_id}-{reference_kind}",
+                "owner": "pm",
+                "path": path.relative_to(project_root).as_posix(),
+                "fingerprint": fingerprint,
+                "consumer_scope": "current_route_node",
+                "run_id": str(ledger.get("project_id") or ""),
+                "route_version": ledger.get("active_route_version"),
+                "node_id": node_id,
+                "packet_id": source_packet_id,
+                "result_id": source_result_id,
+                "source_generation": int(ledger.get("source_generation", 0) or 0),
+            }
+        )
     ledger.setdefault("node_acceptance_plans", {})[plan_id] = {
         "plan_id": plan_id,
         "node_id": node_id,
@@ -439,10 +478,16 @@ def _mark_high_standard_node_context_accepted(ledger: dict[str, Any], node_id: s
         "repair_generation": int(ledger["route_nodes"][node_id].get("repair_generation", 0)),
     }
     ledger.setdefault("node_context_packages", {})[context_id] = {
+        "schema_version": "black_box_flowpilot.node_context_package.v2",
         "context_package_id": context_id,
         "node_id": node_id,
         "status": "accepted",
         "repair_generation": int(ledger["route_nodes"][node_id].get("repair_generation", 0)),
+        "route_version": ledger.get("active_route_version"),
+        "source_generation": int(ledger.get("source_generation", 0) or 0),
+        "source_packet_id": source_packet_id,
+        "source_result_id": source_result_id,
+        "relevant_references": normalized_references,
     }
     ledger["route_nodes"][node_id]["node_acceptance_plan_id"] = plan_id
     ledger["route_nodes"][node_id]["node_context_package_id"] = context_id

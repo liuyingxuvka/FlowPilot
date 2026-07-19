@@ -1,0 +1,147 @@
+{
+  "schema_version": "flowpilot.observed_problem_backfeed.v1",
+  "change_id": "restore-flowpilot-test-evidence-closure",
+  "claim_boundary": "Each row is a mandatory regression and owner handoff. It is not proof until the named current test and parent evidence gate pass.",
+  "rows": [
+    {
+      "problem_id": "databank-control-plane-miss-20260707",
+      "origin": "historical live run packet-0205/result-0209/event-5616",
+      "owner": "control-plane ledger hygiene runtime and historical replay",
+      "mandatory_test": "tests/test_flowpilot_historical_live_run_replay.py::FlowPilotHistoricalLiveRunReplayTests::test_run_20260707_databank_control_plane_miss_fixture_is_rejected",
+      "expected_reaction": "mechanical reject with no dirty accepted pointer or terminal continuation"
+    },
+    {
+      "problem_id": "zero-forbidden-fake-ai-coverage",
+      "origin": "13 base families registered 122 forbidden paths while responder projected zero",
+      "owner": "ContractExhaustionMesh and strict fake-AI responder",
+      "mandatory_test": "tests/test_flowpilot_formal_ai_contract_execution.py::FlowPilotFormalAIContractExecutionTests::test_static_universe_exhausts_registered_families_and_declared_faults",
+      "expected_reaction": "all registered forbidden paths receive stable cells and no vacuous green is allowed"
+    },
+    {
+      "problem_id": "packet-body-checklist-bypass",
+      "origin": "fake responses could use body mechanical mirrors instead of the opened checklist",
+      "owner": "current handoff/checklist single authority",
+      "mandatory_test": "tests/test_flowpilot_new_entrypoint.py::FlowPilotNewEntrypointTests::test_open_packet_submission_checklist_rejects_packet_body_as_contract_authority",
+      "expected_reaction": "fail closed; body content cannot repair, override, or reconstruct the checklist"
+    },
+    {
+      "problem_id": "static-reviewer-policy-reconstruction",
+      "origin": "fake Reviewer could reconstruct review depth from static flow id",
+      "owner": "delivered review_window and contract fingerprint",
+      "mandatory_test": "tests/test_flowpilot_contract_driven_fake_ai_open_packet.py::ContractDrivenFakeAIOpenPacketTests::test_reviewer_consumes_delivered_rule_without_static_flow_lookup",
+      "expected_reaction": "missing, unknown, or tampered delivered review policy is rejected"
+    },
+    {
+      "problem_id": "wrong-role-or-retired-alias-continuation",
+      "origin": "unknown, planner, project_manager, or wrong-role values could normalize to Worker or continue",
+      "owner": "host, role handoff, runtime responsibility normalization, and current Cartesian",
+      "mandatory_test": "tests/test_flowpilot_role_source_purity.py",
+      "expected_reaction": "mechanical reject before dispatch/open/submit continuation"
+    },
+    {
+      "problem_id": "daemon-replay-current-authority",
+      "origin": "daemon_replay appeared as a positive current execution source",
+      "owner": "current-contract source-purity Cartesian",
+      "mandatory_test": "tests/test_flowpilot_current_contract_cartesian_matrix.py::FlowPilotCurrentContractCartesianMatrixTests::test_daemon_replay_is_historical_negative_only",
+      "expected_reaction": "historical negative only; no current stage can continue"
+    },
+    {
+      "problem_id": "terminal-pm-repair-static-acceptance-owner",
+      "origin": "public fake E2E found active acc-003 absent from a static route-plan minimum, causing endless mechanical reissue after the model was green",
+      "owner": "runtime dynamic PM repair contract projection and Model-Miss Review",
+      "mandatory_test": "tests/test_flowpilot_new_entrypoint.py::FlowPilotNewEntrypointTests::test_fake_end_to_end_terminal_replay_blocker_repairs_to_completion",
+      "expected_reaction": "all current active acceptance ids are projected to a route owner and supplemental repair item before submit"
+    },
+    {
+      "problem_id": "duplicate-json-key-public-submit",
+      "origin": "ordinary json.loads silently keeps the last duplicate key, so malformed duplicate-key intent can look valid",
+      "owner": "formal deterministic fuzz and public submit boundary",
+      "mandatory_test": "tests/test_flowpilot_formal_ai_contract_execution.py",
+      "expected_reaction": "duplicate-aware fuzz detects the source ambiguity and records the observed public boundary instead of pretending ordinary parsing caught it"
+    },
+    {
+      "problem_id": "layered-proof-expected-copied-to-observed",
+      "origin": "layered boundary cells copied declared owner, reaction, and current status into observed outputs, making equality vacuous",
+      "owner": "FlowGuard layered boundary proof artifact projection",
+      "mandatory_test": "tests/test_flowpilot_layered_boundary_proof.py::FlowPilotLayeredBoundaryProofTests::test_contract_exhaustion_observations_come_from_child_proof_artifacts",
+      "expected_reaction": "observed outputs come from current result fields and missing, stale, or tampered proof artifacts make the parent non-passing"
+    },
+    {
+      "problem_id": "background-proof-posthoc-source-fingerprint",
+      "origin": "the evidence compiler previously attached the compile-time source fingerprint without proving the background tier started and ended on that source",
+      "owner": "test-tier supervisor and TestMesh evidence compiler",
+      "mandatory_test": "tests/test_flowpilot_acceptance_testmesh.py::FlowPilotAcceptanceTestMeshTests::test_background_evidence_compiler_rejects_source_changed_during_tier",
+      "expected_reaction": "supervisor records start/end fingerprints, source change fails the tier, and compiler rejects any missing or mismatched fingerprint chain"
+    },
+    {
+      "problem_id": "synthetic-coverage-declaration-counted-as-current-pass",
+      "origin": "the broad synthetic-agent matrix reused declared test names and generated cells as passed/current after MTA correctly marked them not_run",
+      "owner": "synthetic coverage declaration boundary, formal AI execution closure, and PPA Risk Evidence Ledger",
+      "mandatory_test": "tests/test_flowpilot_synthetic_agent_coverage_matrix.py::FlowPilotSyntheticAgentCoverageMatrixTests::test_coverage_matrix_declares_required_branch_owners_without_execution_green",
+      "expected_reaction": "the broad matrix reports declaration_only with zero executed/passed/proof-backed counts, while PPA consumes current formal AI and strict MTA evidence instead of a hard-coded green"
+    },
+    {
+      "problem_id": "background-child-settlement-window-too-short",
+      "origin": "the installed shadow-launcher test passed but the outer tier owner terminated three exact Windows descendants still completing normal teardown after the former two-second window",
+      "owner": "background test child exact-process settlement and descendant-zero proof",
+      "mandatory_test": "tests/test_flowpilot_test_tiers.py::FlowPilotTestTierTests::test_background_child_allows_exact_descendants_to_exit_within_bounded_settlement",
+      "expected_reaction": "an exact descendant may exit naturally within the fifteen-second bounded window; any descendant surviving that window is terminated and the child receipt remains failed"
+    },
+    {
+      "problem_id": "background-inner-interpreter-followed-external-upgrade",
+      "origin": "a release owner launched from frozen FlowGuard 0.58.0 but its nested literal python resolved to the concurrently updated default FlowGuard 0.58.1 environment",
+      "owner": "background command execution-owner toolchain binding",
+      "mandatory_test": "tests/test_flowpilot_test_tiers.py::FlowPilotTestTierTests::test_flowguard_background_binds_literal_python_to_current_interpreter",
+      "expected_reaction": "an exact leading python token is bound to the current execution-owner interpreter for both launch and receipt verification; external toolchain drift cannot enter the frozen release plan"
+    },
+    {
+      "problem_id": "windows-venv-shim-exited-before-background-command",
+      "origin": "the Windows virtual-environment launcher exited before its real packaged Python child completed a passing shadow-launcher pytest command, causing the outer owner to mistake active command execution for orphan settlement",
+      "owner": "background child direct interpreter process-owner binding",
+      "mandatory_test": "tests/test_flowpilot_test_tiers.py::FlowPilotTestTierTests::test_background_child_binds_windows_venv_to_direct_current_owner",
+      "expected_reaction": "the frozen base interpreter is the direct tracked process owner while __PYVENV_LAUNCHER__ preserves the requested virtual-environment identity; bounded settlement remains reserved for descendants after the real command exits"
+    },
+    {
+      "problem_id": "daemon-stop-window-descendant-not-collected",
+      "origin": "initial analysis of the surviving daemon exposed that stop cleanup only sampled descendants before the wait; later command evidence established startup write-lock failure as the primary repeated incident",
+      "owner": "Router daemon exact-tree stop transaction",
+      "mandatory_test": "tests/router_runtime/startup_daemon.py::FlowPilotRouterRuntimeTests::test_router_daemon_stop_collects_descendant_created_during_stop_wait",
+      "expected_reaction": "the current stop transaction accumulates exact descendants throughout the wait, cleans every surviving identity, and releases the lock only after descendant-zero confirmation"
+    },
+    {
+      "problem_id": "startup-write-lock-acquire-permission-escaped-settlement",
+      "origin": "under the real two-owner all-tier load, start failed with PermissionError while foreground startup and the newly opened daemon contended for startup_state.json.write.lock; the test then could not enter its cleanup finally block",
+      "owner": "current runtime JSON write-lock acquisition and existing foreground writer settlement",
+      "mandatory_test": "tests/router_runtime/startup_daemon.py::FlowPilotRouterRuntimeTests::test_atomic_lock_acquire_retries_transient_windows_permission_error",
+      "expected_reaction": "transient Windows permission denial stays inside the existing bounded writer settlement and uses the same lock path; persistent denial becomes structured RouterLedgerWriteInProgress and blocks"
+    },
+    {
+      "problem_id": "startup-writer-retry-allocated-multiple-runs",
+      "origin": "after write-lock permission entered settlement, one start command retried new_invocation and allocated three run roots with separate live daemons; after single allocation, the final retry initially lost actions completed before contention",
+      "owner": "public start single allocation, foreground writer settlement, and exact current-run daemon startup authority",
+      "mandatory_test": "tests/test_flowpilot_shadow_launcher_chaos_replay.py::FlowPilotShadowLauncherChaosReplayTests::test_installed_launcher_shadow_start_reaches_releasable_standard_state",
+      "expected_reaction": "one start allocates one persisted bootstrap, retries advance that bootstrap, reattaches one exact live in-flight daemon, preserves completed folded-action evidence, and rejects multiple live startup owners"
+    },
+    {
+      "problem_id": "startup-completed-action-exception-type-missing",
+      "origin": "strict MTA entered the run_until_wait writer-contention branch and exposed that the split module referenced RouterLedgerWriteInProgress without importing it",
+      "owner": "run_until_wait current exception handler and foreground settlement receipt chain",
+      "mandatory_test": "tests/router_runtime/foreground_controller.py::ForegroundControllerRuntimeTests::test_foreground_writer_retry_preserves_completed_folded_actions_from_run_until_wait",
+      "expected_reaction": "the current writer-contention exception is caught by its real type, carries only completed folded actions, and is merged by the existing foreground settlement owner without an alternate retry path"
+    },
+    {
+      "problem_id": "modelmesh-consumed-stale-behavior-commitment-risk",
+      "origin": "the final ModelMesh correctly blocked because the verification contract refreshed strict MTA but did not require the behavior-commitment and primary-path risk result to consume the current formal AI execution and MTA results first",
+      "owner": "OpenSpec verification receipt dependency chain",
+      "mandatory_test": "tests/test_flowpilot_model_mesh_coverage_receipts.py::FlowPilotModelMeshCoverageReceiptTests::test_parent_consumes_every_current_child_receipt_and_composite_handoff",
+      "expected_reaction": "the single release sequence runs formal AI execution, strict MTA, behavior-commitment risk, and ModelMesh in that order; a missing or stale intermediate result blocks rather than falling back to an aggregate tier result"
+    },
+    {
+      "problem_id": "modelmesh-red-gate-test-read-live-green-repository",
+      "origin": "the required known-bad suite expected the repository's live unified-repair result to remain red, so the test failed after exact native evidence legitimately made that shared result green",
+      "owner": "ModelMesh unified-repair negative test fixture",
+      "mandatory_test": "tests/test_flowpilot_model_mesh_coverage_receipts.py::FlowPilotModelMeshCoverageReceiptTests::test_build_report_without_manifest_still_consumes_current_unified_red_gate",
+      "expected_reaction": "the negative test creates a source-matching red unified-repair result inside its own temporary project root and proves the always-on gate consumes it without depending on mutable repository evidence"
+    }
+  ]
+}

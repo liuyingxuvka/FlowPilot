@@ -216,7 +216,12 @@ def _implementation_alignment() -> dict[str, object]:
         "optional_map_test_exists": "material_map_absence" in texts["tests"],
     }
     missing = sorted(key for key, value in checks.items() if not value)
-    return {"ok": not missing, "checks": checks, "missing": missing, "paths": [str(path) for path in paths.values()]}
+    return {
+        "ok": not missing,
+        "checks": checks,
+        "missing": missing,
+        "paths": [path.relative_to(root).as_posix() for path in paths.values()],
+    }
 
 
 def run_checks() -> dict[str, object]:

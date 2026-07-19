@@ -422,6 +422,11 @@ def _new_static_packet(
         subject_id=subject_id,
         result_contract_profile_ids=list(profile_ids),
         result_contract_profile_bindings=profile_bindings or {},
+        repair_trigger_origin=(
+            "reviewer_or_system_failure"
+            if packet_kind == "pm_repair_decision"
+            else ""
+        ),
     )
     observed_family = packet_result_contracts.packet_result_family_id(
         ledger["packets"][packet_id]["envelope"]

@@ -1375,7 +1375,7 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
         )
 
         expected_families = {
-            "model-first-function-flow": "cross_route_coordination",
+            "flowguard": "cross_route_coordination",
             "flowguard-ui-flow-structure": "ui_interaction",
             "flowguard-development-process-flow": "route_process",
             "flowguard-code-structure-recommendation": "architecture",
@@ -1547,10 +1547,15 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
         self.assertEqual(role_ledger["schema_version"], role_io_protocol.ROLE_IO_PROTOCOL_LEDGER_SCHEMA)
         self.assertEqual(terminal_status, "cancelled_by_user")
         self.assertEqual(summary_action["action_type"], "write_terminal_summary")
-        self.assertTrue(startup_closure_status["clean"])
-        self.assertEqual(startup_closure_status["dirty_families"], [])
+        self.assertFalse(startup_closure_status["clean"])
+        self.assertEqual(startup_closure_status["dirty_families"], ["role_memory"])
         self.assertFalse(startup_closure_status["defect_ledger"]["present"])
         self.assertFalse(startup_closure_status["role_memory"]["present"])
+        self.assertTrue(startup_closure_status["role_memory"]["required_for_current_run"])
+        self.assertEqual(
+            startup_closure_status["role_memory"]["missing_role_keys"],
+            ["project_manager"],
+        )
         self.assertFalse(startup_closure_status["continuation_quarantine"]["present"])
         self.assertFalse(closure_closed)
         self.assertFalse(pm_role_reconciled)
@@ -2018,6 +2023,7 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
                 "result_requires_dispatch",
                 "dispatch_requires_controller_reminder",
                 "packet_open_blocks_never_produce_result_or_advance",
+                "result_ingress_rejection_never_produces_result_or_advance",
                 "manual_resume_packet_requires_pm_request",
                 "manual_resume_packet_requires_loaded_state",
                 "ambiguous_worker_state_never_advances",

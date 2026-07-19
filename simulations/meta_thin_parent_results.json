@@ -1,5 +1,5 @@
 {
-  "created_at": "2026-07-14T05:57:57.784929+00:00",
+  "created_at": "2026-07-19T05:59:55.490354+00:00",
   "graph": {
     "edge_count": 18,
     "invariant_failure_count": 0,
@@ -11,7 +11,7 @@
     "current": true,
     "required_for_release": true,
     "status": {
-      "created_at": "2026-07-14T05:57:47.661585+00:00",
+      "created_at": "2026-07-19T05:59:47.456520+00:00",
       "edge_count": 20,
       "kind": "layered_full_parent",
       "proof_file": "simulations/meta_layered_full_results.proof.json",
@@ -129,7 +129,7 @@
             "ok": true,
             "proof_status": "not_present",
             "result_file": "simulations/flowpilot_ordinary_resource_discovery_results.json",
-            "result_fingerprint": "2ac5079a8def95f0bc7298b0f509529558f640b8a3649b49cfe4468f54734904",
+            "result_fingerprint": "0f061f494a2545cc6f17a6981296dba9e0e6848f3116313b718468fd50af3e59",
             "skipped_required_checks": [],
             "skipped_required_checks_visible": true,
             "state_count": 38
@@ -323,23 +323,23 @@
             "ok": true,
             "proof_status": "not_present",
             "result_file": "simulations/flowpilot_daemon_reconciliation_results.json",
-            "result_fingerprint": "b83a9b506b8142ec341579dd86b42ab634dacd689b66ce8c1344c8144155de9e",
+            "result_fingerprint": "3d755c1b16c9426ed60eb46f7b07c7da129215e9fa294e64b6bcb562af01610f",
             "skipped_required_checks": [],
             "skipped_required_checks_visible": true,
             "state_count": 1141
           },
           {
-            "edge_count": 42,
+            "edge_count": 48,
             "failures": [],
             "missing": false,
             "model_id": "flowpilot_route_replanning_policy",
             "ok": true,
             "proof_status": "not_present",
             "result_file": "simulations/flowpilot_route_replanning_policy_results.json",
-            "result_fingerprint": "bdf96059fd1f733b5779552046bda5646c4d4c8fd80d4f1f7c16278af1565c85",
+            "result_fingerprint": "2c066be8c7102af96fd79fdc154bfc20126c2a6e9dd5a769873554cc1405d2c8",
             "skipped_required_checks": [],
             "skipped_required_checks_visible": true,
-            "state_count": 43
+            "state_count": 49
           }
         ],
         "evidence_ids": [
@@ -410,7 +410,7 @@
             "ok": true,
             "proof_status": "not_present",
             "result_file": "simulations/flowpilot_complete_workstream_orchestration_results.json",
-            "result_fingerprint": "95ba3a03771537277a93e98c843c6814e0053bd47d4272d3dc427dcd4bf45d72",
+            "result_fingerprint": "e065cb101aa78e1e8dfa562a9797387797ab6c4680af8f9e11c62e78ca2a5001",
             "skipped_required_checks": [],
             "skipped_required_checks_visible": true,
             "state_count": 60
@@ -557,19 +557,34 @@
             "skipped_required_checks": [],
             "skipped_required_checks_visible": true,
             "state_count": 58
+          },
+          {
+            "edge_count": null,
+            "failures": [],
+            "missing": false,
+            "model_id": "flowpilot_unified_repair_integrity",
+            "ok": true,
+            "proof_status": "not_present",
+            "result_file": "simulations/flowpilot_unified_repair_integrity_results.json",
+            "result_fingerprint": "68ab0db80f7b1a867a5a08c0fa64b9ee06908224328b559ce14a224a968026a8",
+            "skipped_required_checks": [],
+            "skipped_required_checks_visible": true,
+            "state_count": null
           }
         ],
         "evidence_ids": [
           "flowpilot_terminal_state_monotonicity",
           "flowpilot_terminal_summary",
           "defect_governance",
-          "flowpilot_repair_transaction"
+          "flowpilot_repair_transaction",
+          "flowpilot_unified_repair_integrity"
         ],
         "id": "terminal_ledger",
         "invariant_families": [
           "terminal_state_monotonicity",
           "final_summary_boundary",
-          "repair_transaction_evidence"
+          "repair_transaction_evidence",
+          "unified_repair_integrity"
         ],
         "ok": true,
         "owner_type": "shared_kernel",
@@ -585,23 +600,23 @@
             "ok": true,
             "proof_status": "not_present",
             "result_file": "simulations/flowpilot_model_mesh_results.json",
-            "result_fingerprint": "e5df7b016b317a688ddba00d9c641a3255ea9fd1be6823914b6765fd6f0b600e",
+            "result_fingerprint": "e334a5dc204b5e521841dc11018b87cf8896e081584b3eeb7240320c3885ac1c",
             "skipped_required_checks": [],
             "skipped_required_checks_visible": true,
             "state_count": 71
           },
           {
-            "edge_count": 50,
+            "edge_count": 72,
             "failures": [],
             "missing": false,
             "model_id": "flowpilot_control_transaction_registry",
             "ok": true,
             "proof_status": "not_present",
             "result_file": "simulations/flowpilot_control_transaction_registry_results.json",
-            "result_fingerprint": "3bb3c2b1006caf33e45d232b58444d51aa227f90968a652e3980566c661fd006",
+            "result_fingerprint": "da4bf12befd149c238ceb68897ac7577089862c5f57289baae77f3e6270e0dec",
             "skipped_required_checks": [],
             "skipped_required_checks_visible": true,
-            "state_count": 51
+            "state_count": 73
           },
           {
             "edge_count": 38,
@@ -675,6 +690,8 @@
         "owner_type": "shared_kernel",
         "release_obligation": "full_regression_required_for_release"
       }
-    ]
+    ],
+    "typed_consumer_count": 0,
+    "typed_consumers": []
   }
 }

@@ -76,16 +76,16 @@
       ]
     },
     {
-      "name": "model-first-function-flow",
+      "name": "flowguard-agent-skill",
       "type": "codex_skill",
       "required": true,
-      "install_name": "model-first-function-flow",
+      "install_name": "flowguard",
       "source": {
         "kind": "github",
         "repo": "liuyingxuvka/FlowGuard",
         "ref": "main",
-        "path": ".agents/skills/model-first-function-flow",
-        "url": "https://github.com/liuyingxuvka/FlowGuard/tree/main/.agents/skills/model-first-function-flow"
+        "path": ".agents/skills/flowguard",
+        "url": "https://github.com/liuyingxuvka/FlowGuard/tree/main/.agents/skills/flowguard"
       },
       "install": {
         "mode": "github_skill",
@@ -98,7 +98,7 @@
         {
           "kind": "skill_file",
           "path": "SKILL.md",
-          "contains": "name: model-first-function-flow"
+          "contains": "name: flowguard"
         }
       ]
     },

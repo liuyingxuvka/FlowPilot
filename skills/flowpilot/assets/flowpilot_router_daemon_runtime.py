@@ -7,6 +7,7 @@ shared state writers, controller scheduling, and startup-driver decisions.
 
 from __future__ import annotations
 
+import uuid
 from pathlib import Path
 from types import ModuleType
 from typing import Any
@@ -19,6 +20,7 @@ from flowpilot_router_daemon_runtime_lock import (
     _acquire_router_daemon_lock,
     _append_router_daemon_event,
     _refresh_router_daemon_lock,
+    _request_router_daemon_stop,
     _release_router_daemon_lock,
     _resolve_run_root_target,
 )
@@ -151,11 +153,65 @@ def _tail_text(router: ModuleType, path: Path, *, max_chars: int=2000) -> str:
     return text[-max_chars:]
 
 
+def _current_live_startup_daemon_spawn(
+    router: ModuleType,
+    run_root: Path,
+) -> dict[str, Any] | None:
+    event_path = router._router_daemon_event_log_path(run_root)
+    if not event_path.exists():
+        return None
+    try:
+        lines = event_path.read_text(encoding='utf-8').splitlines()
+    except OSError as exc:
+        raise router.RouterError(f'cannot inspect current Router daemon startup authority: {exc}') from exc
+    live_spawns: dict[tuple[int, str], dict[str, Any]] = {}
+    for line_number, line in enumerate(lines, start=1):
+        if not line.strip():
+            continue
+        try:
+            record = router.json.loads(line)
+        except router.json.JSONDecodeError as exc:
+            raise router.RouterError(
+                f'current Router daemon event log is malformed at line {line_number}'
+            ) from exc
+        if not isinstance(record, dict) or record.get('event') != 'formal_router_daemon_process_opened':
+            continue
+        details = record.get('details') if isinstance(record.get('details'), dict) else {}
+        identity = details.get('process_identity') if isinstance(details.get('process_identity'), dict) else {}
+        if not router._process_identity_is_live(identity):
+            continue
+        key = (int(identity['pid']), str(identity['start_token']))
+        live_spawns[key] = {
+            'pid': int(identity['pid']),
+            'process_identity': dict(identity),
+            'process_launch_plan': dict(details.get('process_launch_plan') or {}),
+            'daemon_instance_id': str(details.get('daemon_instance_id') or ''),
+            'command': list(details.get('command') or []),
+            'stdout_path': str(details.get('stdout_path') or ''),
+            'stderr_path': str(details.get('stderr_path') or ''),
+        }
+    if len(live_spawns) > 1:
+        raise router.RouterError(
+            'multiple live Router daemon startup owners exist for the current run'
+        )
+    return next(iter(live_spawns.values()), None)
+
+
 def _spawn_startup_router_daemon_process(router: ModuleType, project_root: Path, run_root: Path) -> dict[str, Any]:
     router._runtime_dir(run_root).mkdir(parents=True, exist_ok=True)
     stdout_path = router._runtime_dir(run_root) / 'router_daemon.startup.out.txt'
     stderr_path = router._runtime_dir(run_root) / 'router_daemon.startup.err.txt'
     command = [router.sys.executable, str(Path(router.__file__).resolve()), '--root', str(project_root), '--json', 'daemon', '--run-root', router.project_relative(project_root, run_root)]
+    daemon_instance_id = f"router-daemon-{uuid.uuid4().hex}"
+    child_env = dict(router.os.environ)
+    child_env["FLOWPILOT_ROUTER_DAEMON_DEDICATED"] = "1"
+    child_env["FLOWPILOT_ROUTER_DAEMON_INSTANCE_ID"] = daemon_instance_id
+    process_command, process_environment, process_launch_plan = (
+        router._resolve_current_python_process_launch(
+            command,
+            environment=child_env,
+        )
+    )
     creationflags = 0
     start_new_session = router.os.name != 'nt'
     if router.os.name == 'nt':
@@ -170,12 +226,21 @@ def _spawn_startup_router_daemon_process(router: ModuleType, project_root: Path,
     stdout_handle = stdout_path.open('a', encoding='utf-8')
     stderr_handle = stderr_path.open('a', encoding='utf-8')
     try:
-        process = router.subprocess.Popen(command, cwd=str(project_root), stdin=router.subprocess.DEVNULL, stdout=stdout_handle, stderr=stderr_handle, close_fds=True, start_new_session=start_new_session, creationflags=creationflags)
+        process = router.subprocess.Popen(process_command, cwd=str(project_root), stdin=router.subprocess.DEVNULL, stdout=stdout_handle, stderr=stderr_handle, close_fds=True, start_new_session=start_new_session, creationflags=creationflags, env=process_environment)
     finally:
         stdout_handle.close()
         stderr_handle.close()
-    router._append_router_daemon_event(run_root, 'formal_router_daemon_process_opened', {'pid': process.pid, 'stdout_path': router.project_relative(project_root, stdout_path), 'stderr_path': router.project_relative(project_root, stderr_path)})
-    return {'pid': process.pid, 'command': command, 'stdout_path': router.project_relative(project_root, stdout_path), 'stderr_path': router.project_relative(project_root, stderr_path)}
+    process_identity = router._process_identity(process.pid)
+    if process_identity is None:
+        process.terminate()
+        try:
+            process.wait(timeout=router.ROUTER_DAEMON_STARTUP_TIMEOUT_SECONDS)
+        except router.subprocess.TimeoutExpired:
+            process.kill()
+            process.wait(timeout=router.ROUTER_DAEMON_STARTUP_TIMEOUT_SECONDS)
+        raise router.RouterError('formal Router daemon process identity could not be established')
+    router._append_router_daemon_event(run_root, 'formal_router_daemon_process_opened', {'process_identity': process_identity, 'process_launch_plan': process_launch_plan, 'daemon_instance_id': daemon_instance_id, 'command': command, 'stdout_path': router.project_relative(project_root, stdout_path), 'stderr_path': router.project_relative(project_root, stderr_path)})
+    return {'pid': process.pid, 'process_identity': process_identity, 'process_launch_plan': process_launch_plan, 'daemon_instance_id': daemon_instance_id, 'command': command, 'stdout_path': router.project_relative(project_root, stdout_path), 'stderr_path': router.project_relative(project_root, stderr_path)}
 
 
 def _start_or_attach_formal_router_daemon(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any]) -> dict[str, Any]:
@@ -187,19 +252,38 @@ def _start_or_attach_formal_router_daemon(router: ModuleType, project_root: Path
         attached_existing = True
         spawn_info: dict[str, Any] | None = None
     else:
+        in_flight_spawn = _current_live_startup_daemon_spawn(router, run_root)
         lock = router.read_json_if_exists(lock_path)
+        lock_liveness = router._router_daemon_lock_liveness(lock)
+        lock_owner = lock.get('owner') if isinstance(lock.get('owner'), dict) else {}
+        same_in_flight_owner = bool(
+            in_flight_spawn
+            and lock_owner.get('daemon_instance_id') == in_flight_spawn.get('daemon_instance_id')
+            and lock_owner.get('pid') == (in_flight_spawn.get('process_identity') or {}).get('pid')
+            and lock_owner.get('start_token') == (in_flight_spawn.get('process_identity') or {}).get('start_token')
+        )
         if router._router_daemon_lock_is_live(lock):
-            raise router.RouterError('cannot start Controller core: a live Router daemon lock exists but startup readiness artifacts are incomplete')
-        if lock.get('status') == 'active':
-            raise router.RouterError('cannot start Controller core: Router daemon lock is stale; repair or replace stale lock explicitly')
-        try:
-            spawn_info = router._spawn_startup_router_daemon_process(project_root, run_root)
-        except Exception as exc:
-            run_state['daemon_mode_enabled'] = False
-            run_state['flags']['router_daemon_start_failed'] = True
-            router.append_history(run_state, 'formal_router_daemon_start_failed', {'error': str(exc)})
-            router.save_run_state(run_root, run_state)
-            raise router.RouterError(f'formal Router daemon failed to start: {exc}') from exc
+            if not same_in_flight_owner:
+                raise router.RouterError('cannot start Controller core: a live Router daemon lock exists but startup readiness artifacts are incomplete')
+        if (
+            lock.get('status') in {'stop_requested', 'terminal_exit_pending', 'cleanup_unconfirmed', 'error'}
+            and lock_liveness.get('process_live')
+        ):
+            raise router.RouterError('cannot start Controller core: prior Router daemon cleanup is not complete')
+        if lock.get('status') in {'active', 'stop_requested', 'terminal_exit_pending', 'cleanup_unconfirmed'}:
+            if not same_in_flight_owner:
+                raise router.RouterError('cannot start Controller core: Router daemon lock is stale; repair or replace stale lock explicitly')
+        if in_flight_spawn is not None:
+            spawn_info = in_flight_spawn
+        else:
+            try:
+                spawn_info = router._spawn_startup_router_daemon_process(project_root, run_root)
+            except Exception as exc:
+                run_state['daemon_mode_enabled'] = False
+                run_state['flags']['router_daemon_start_failed'] = True
+                router.append_history(run_state, 'formal_router_daemon_start_failed', {'error': str(exc)})
+                router.save_run_state(run_root, run_state)
+                raise router.RouterError(f'formal Router daemon failed to start: {exc}') from exc
         attached_existing = False
         deadline = router.time.monotonic() + router.ROUTER_DAEMON_STARTUP_TIMEOUT_SECONDS
         while router.time.monotonic() < deadline:
@@ -210,9 +294,28 @@ def _start_or_attach_formal_router_daemon(router: ModuleType, project_root: Path
             run_state['daemon_mode_enabled'] = False
             run_state['flags']['router_daemon_start_failed'] = True
             stderr_tail = router._tail_text(router.resolve_project_path(project_root, str(spawn_info.get('stderr_path') or '')))
-            router.append_history(run_state, 'formal_router_daemon_start_timeout', {'timeout_seconds': router.ROUTER_DAEMON_STARTUP_TIMEOUT_SECONDS, 'stderr_tail': stderr_tail})
+            cleanup = router._terminate_process_tree(
+                spawn_info.get('process_identity'),
+                timeout_seconds=router.ROUTER_DAEMON_STOP_TIMEOUT_SECONDS,
+            )
+            lock = router.read_json_if_exists(lock_path)
+            owner = lock.get('owner') if isinstance(lock.get('owner'), dict) else {}
+            if (
+                cleanup.get('cleanup_confirmed') is True
+                and lock.get('schema_version') == router.ROUTER_DAEMON_LOCK_SCHEMA
+                and owner.get('daemon_instance_id') == spawn_info.get('daemon_instance_id')
+            ):
+                router._release_router_daemon_lock(
+                    project_root,
+                    run_root,
+                    reason='formal_daemon_start_timeout_after_cleanup',
+                    status='released',
+                    cleanup_proof=cleanup,
+                )
+            router.append_history(run_state, 'formal_router_daemon_start_timeout', {'timeout_seconds': router.ROUTER_DAEMON_STARTUP_TIMEOUT_SECONDS, 'stderr_tail': stderr_tail, 'process_cleanup': cleanup})
             router.save_run_state(run_root, run_state)
-            raise router.RouterError('formal Router daemon failed readiness check before Controller core load' + (f'; stderr tail: {stderr_tail}' if stderr_tail else ''))
+            cleanup_suffix = '' if cleanup.get('cleanup_confirmed') else '; cleanup-unconfirmed'
+            raise router.RouterError('formal Router daemon failed readiness check before Controller core load' + cleanup_suffix + (f'; stderr tail: {stderr_tail}' if stderr_tail else ''))
     latest_state, latest_root = router.load_run_state_from_run_root(project_root, run_root)
     if latest_state is not None and latest_root is not None:
         run_root = latest_root
@@ -229,7 +332,39 @@ def _start_or_attach_formal_router_daemon(router: ModuleType, project_root: Path
 
 
 def _mark_router_daemon_terminal(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any], *, reason: str) -> dict[str, Any]:
-    lock = router._release_router_daemon_lock(project_root, run_root, reason=reason, status='terminal_stopped')
+    lock_path = router._router_daemon_lock_path(run_root)
+    existing = router.read_json_if_exists(lock_path)
+    owner = existing.get('owner') if isinstance(existing.get('owner'), dict) else {}
+    owner_is_current_dedicated_daemon = (
+        owner.get('process_kind') == 'dedicated_daemon'
+        and owner.get('pid') == router.os.getpid()
+        and owner.get('start_token') == router._process_start_token(router.os.getpid())
+    )
+    if owner_is_current_dedicated_daemon:
+        lock = dict(existing)
+        lock['status'] = 'terminal_exit_pending'
+        lock['terminal_observed_at'] = router.utc_now()
+        lock['terminal_reason'] = reason
+        router.write_json(lock_path, lock)
+        router._append_router_daemon_event(
+            run_root,
+            'router_daemon_terminal_exit_pending',
+            {'reason': reason, 'owner': owner},
+        )
+    else:
+        inline_cleanup = {
+            'cleanup_confirmed': True,
+            'descendant_zero_confirmed': True,
+            'reason': 'bounded_inline_terminal_loop_exit',
+            'remaining_live_identities': [],
+        }
+        lock = router._release_router_daemon_lock(
+            project_root,
+            run_root,
+            reason=reason,
+            status='terminal_stopped',
+            cleanup_proof=inline_cleanup,
+        )
     return router._write_router_daemon_status(project_root, run_root, run_state, lifecycle_status='terminal_stopped', lock=lock, recovery_hints=[])
 
 
@@ -353,12 +488,36 @@ def run_router_daemon(router: ModuleType, project_root: Path, *, max_ticks: int 
         router.save_run_state(run_root, run_state)
         return {'ok': True, 'command': 'daemon', 'run_id': run_state.get('run_id'), 'run_root': router.project_relative(project_root, run_root), 'tick_interval_seconds': router.ROUTER_DAEMON_TICK_SECONDS, 'tick_count': 0, 'ticks': [], 'observe_only': observe_only, 'lock_path': router.project_relative(project_root, router._router_daemon_lock_path(run_root)), 'lock_status': (router.read_json_if_exists(router._router_daemon_lock_path(run_root)) or {}).get('status'), 'status_path': router.project_relative(project_root, router._router_daemon_status_path(run_root)), 'daemon_status': status, 'terminal': True}
     run_state['daemon_mode_enabled'] = True
-    lock = router._acquire_router_daemon_lock(project_root, run_root, run_state, replace_stale=replace_stale_lock)
+    daemon_process_kind = 'dedicated_daemon' if max_ticks is None else 'bounded_inline'
+    lock = router._acquire_router_daemon_lock(
+        project_root,
+        run_root,
+        run_state,
+        replace_stale=replace_stale_lock,
+        process_kind=daemon_process_kind,
+        daemon_instance_id=router.os.environ.get('FLOWPILOT_ROUTER_DAEMON_INSTANCE_ID'),
+    )
     ticks: list[dict[str, Any]] = []
     error: Exception | None = None
     runtime_initialized = False
     try:
         while True:
+            stop_lock = router.read_json_if_exists(router._router_daemon_lock_path(run_root))
+            if stop_lock.get('status') == 'stop_requested':
+                stop_tick = {
+                    'tick_at': router.utc_now(),
+                    'observe_only': observe_only,
+                    'stop_requested': True,
+                    'stop_reason': stop_lock.get('stop_reason'),
+                    'terminal': False,
+                }
+                ticks.append(stop_tick)
+                router._append_router_daemon_event(
+                    run_root,
+                    'router_daemon_stop_acknowledged',
+                    {'reason': stop_lock.get('stop_reason'), 'owner': stop_lock.get('owner')},
+                )
+                break
             try:
                 if not runtime_initialized:
                     router._ensure_daemon_runtime_state(project_root, run_root, run_state, lifecycle_status='daemon_starting')
@@ -424,7 +583,162 @@ def stop_router_daemon(router: ModuleType, project_root: Path, *, reason: str='m
     if run_state is None or run_root is None:
         raise router.RouterError('router daemon stop requires an active FlowPilot run')
     run_state['daemon_mode_enabled'] = False
-    lock = router._release_router_daemon_lock(project_root, run_root, reason=reason, status='released')
+    router.save_run_state(run_root, run_state)
+    lock_path = router._router_daemon_lock_path(run_root)
+    existing_lock = router.read_json_if_exists(lock_path)
+    if existing_lock.get('schema_version') != router.ROUTER_DAEMON_LOCK_SCHEMA:
+        cleanup = {
+            'cleanup_confirmed': True,
+            'descendant_zero_confirmed': True,
+            'reason': 'daemon_lock_missing',
+            'remaining_live_identities': [],
+        }
+        lock = {'status': 'missing', 'reason': reason, 'cleanup_proof': cleanup}
+    elif (
+        existing_lock.get('status') in {'released', 'terminal_stopped'}
+        and isinstance(existing_lock.get('cleanup_proof'), dict)
+        and existing_lock['cleanup_proof'].get('cleanup_confirmed') is True
+        and existing_lock['cleanup_proof'].get('descendant_zero_confirmed') is True
+    ):
+        cleanup = existing_lock['cleanup_proof']
+        lock = existing_lock
+    else:
+        owner = dict(existing_lock.get('owner') or {}) if isinstance(existing_lock.get('owner'), dict) else {}
+        owner_is_current_process = (
+            owner.get('pid') == router.os.getpid()
+            and owner.get('start_token') == router._process_start_token(router.os.getpid())
+        )
+        owner_identity_live = router._process_identity_is_live(owner)
+        observed_descendant_map: dict[tuple[int, str], dict[str, Any]] = {}
+
+        def observe_exact_descendants() -> None:
+            if owner_is_current_process or not router._process_identity_is_live(owner):
+                return
+            for descendant in router._process_descendant_identities(owner):
+                key = (int(descendant['pid']), str(descendant['start_token']))
+                observed_descendant_map[key] = descendant
+
+        if owner_identity_live:
+            observe_exact_descendants()
+        _request_router_daemon_stop(router, project_root, run_root, reason=reason)
+        if owner_is_current_process:
+            cleanup = {
+                'cleanup_confirmed': True,
+                'descendant_zero_confirmed': True,
+                'reason': 'bounded_inline_daemon_loop_not_running',
+                'target_identity': owner,
+                'observed_descendant_identities': [],
+                'remaining_live_identities': [],
+                'pid_reuse_detected': False,
+                'signal_sent': False,
+            }
+        elif not owner_identity_live:
+            cleanup = {
+                'cleanup_confirmed': True,
+                'descendant_zero_confirmed': True,
+                'reason': (
+                    'pid_reused_target_identity_not_signaled'
+                    if router._process_is_live(owner.get('pid'))
+                    else 'target_identity_already_exited'
+                ),
+                'target_identity': owner,
+                'observed_descendant_identities': [],
+                'remaining_live_identities': [],
+                'pid_reuse_detected': bool(router._process_is_live(owner.get('pid'))),
+                'signal_sent': False,
+            }
+        elif owner.get('process_kind') != 'dedicated_daemon':
+            cleanup = {
+                'cleanup_confirmed': False,
+                'descendant_zero_confirmed': False,
+                'reason': 'cleanup_unconfirmed_owner_process_kind',
+                'target_identity': owner,
+                'observed_descendant_identities': list(observed_descendant_map.values()),
+                'remaining_live_identities': [owner, *observed_descendant_map.values()],
+                'pid_reuse_detected': False,
+                'signal_sent': False,
+            }
+        else:
+            deadline = router.time.monotonic() + router.ROUTER_DAEMON_STOP_TIMEOUT_SECONDS
+            while router.time.monotonic() < deadline and router._process_identity_is_live(owner):
+                observe_exact_descendants()
+                router.time.sleep(router.ROUTER_DAEMON_STARTUP_POLL_SECONDS)
+            observe_exact_descendants()
+            owner_cleanup: dict[str, Any] | None = None
+            if router._process_identity_is_live(owner):
+                owner_cleanup = router._terminate_process_tree(
+                    owner,
+                    timeout_seconds=router.ROUTER_DAEMON_STOP_TIMEOUT_SECONDS,
+                )
+                for descendant in owner_cleanup.get('observed_descendant_identities') or []:
+                    key = (int(descendant['pid']), str(descendant['start_token']))
+                    observed_descendant_map[key] = descendant
+            observed_descendants = list(observed_descendant_map.values())
+            descendant_cleanup: list[dict[str, Any]] = []
+            for descendant in observed_descendants:
+                if router._process_identity_is_live(descendant):
+                    descendant_cleanup.append(
+                        router._terminate_process_tree(
+                            descendant,
+                            timeout_seconds=router.ROUTER_DAEMON_STOP_TIMEOUT_SECONDS,
+                        )
+                    )
+            remaining_identities = (
+                [owner] if router._process_identity_is_live(owner) else []
+            ) + [
+                descendant
+                for descendant in observed_descendants
+                if router._process_identity_is_live(descendant)
+            ]
+            cleanup = {
+                'cleanup_confirmed': not remaining_identities,
+                'descendant_zero_confirmed': not remaining_identities,
+                'reason': (
+                    (
+                        str(owner_cleanup.get('reason') or 'daemon_process_tree_terminated')
+                        if owner_cleanup is not None
+                        else 'daemon_exited_after_stop_request'
+                    )
+                    if not remaining_identities
+                    else 'cleanup_unconfirmed'
+                ),
+                'target_identity': owner,
+                'observed_descendant_identities': observed_descendants,
+                'owner_cleanup_result': owner_cleanup,
+                'descendant_cleanup_results': descendant_cleanup,
+                'remaining_live_identities': remaining_identities,
+                'pid_reuse_detected': bool(
+                    owner_cleanup and owner_cleanup.get('pid_reuse_detected')
+                ),
+                'signal_sent': bool(
+                    (owner_cleanup and owner_cleanup.get('signal_sent'))
+                    or any(result.get('signal_sent') for result in descendant_cleanup)
+                ),
+            }
+        if cleanup.get('cleanup_confirmed') is not True or cleanup.get('descendant_zero_confirmed') is not True:
+            cleanup_lock = router.read_json_if_exists(lock_path)
+            cleanup_lock['status'] = 'cleanup_unconfirmed'
+            cleanup_lock['cleanup_checked_at'] = router.utc_now()
+            cleanup_lock['cleanup_proof'] = cleanup
+            router.write_json(lock_path, cleanup_lock)
+            status = router._write_router_daemon_status(
+                project_root,
+                run_root,
+                run_state,
+                lifecycle_status='daemon_cleanup_unconfirmed',
+                current_action=run_state.get('pending_action') if isinstance(run_state.get('pending_action'), dict) else None,
+                lock=cleanup_lock,
+                error={'reason': 'cleanup_unconfirmed', 'process_cleanup': cleanup},
+            )
+            router.save_run_state(run_root, run_state)
+            raise router.RouterError('router daemon stop cleanup-unconfirmed; lock was not released')
+        lock = router._release_router_daemon_lock(
+            project_root,
+            run_root,
+            reason=reason,
+            status='released',
+            cleanup_proof=cleanup,
+        )
     status = router._write_router_daemon_status(project_root, run_root, run_state, lifecycle_status='daemon_stopped', current_action=run_state.get('pending_action') if isinstance(run_state.get('pending_action'), dict) else None, lock=lock)
     router.save_run_state(run_root, run_state)
-    return {'ok': True, 'command': 'daemon-stop', 'run_id': run_state.get('run_id'), 'lock_status': lock.get('status'), 'status_path': router.project_relative(project_root, router._router_daemon_status_path(run_root)), 'daemon_status': status}
+    return {'ok': True, 'command': 'daemon-stop', 'run_id': run_state.get('run_id'), 'lock_status': lock.get('status'), 'process_cleanup': cleanup, 'status_path': router.project_relative(project_root, router._router_daemon_status_path(run_root)), 'daemon_status': status}

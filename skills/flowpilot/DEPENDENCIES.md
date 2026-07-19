@@ -5,7 +5,7 @@ FlowPilot is not complete when only the `flowpilot` skill folder is present.
 Required before a formal FlowPilot run:
 
 - `flowguard`: real Python package from `https://github.com/liuyingxuvka/FlowGuard`
-- `model-first-function-flow`: Codex skill from the FlowGuard repository
+- `flowguard`: current Codex agent skill from the FlowGuard repository
 - `flowpilot`: this skill
 
 Recommended full-repository install:

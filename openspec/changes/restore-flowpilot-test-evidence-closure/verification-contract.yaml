@@ -1,0 +1,561 @@
+contract_version: 1
+change: restore-flowpilot-test-evidence-closure
+obligations:
+  - id: req.authority.single_projection
+    source: "specs/flowpilot-control-plane-contract-kernel/spec.md#Requirement: Current handoff contract is the only mechanical result authority"
+    claim: Envelope handoff, checklist, canonical fake AI, and validator use one current mechanical contract with no body/private fallback.
+    required: true
+    evidence:
+      - check.authority.projection
+      - check.formal_ai.execution
+  - id: req.authority.current_sources
+    source: "specs/flowpilot-control-plane-contract-kernel/spec.md#Requirement: Current execution sources reject historical authority"
+    claim: Daemon replay and unsupported responsibilities cannot continue a current stage.
+    required: true
+    evidence:
+      - check.current_matrix.model
+      - check.formal_ai.execution
+  - id: req.authority.structured_current_reference
+    source: "specs/flowpilot-control-plane-contract-kernel/spec.md#Requirement: Current authority references are structured and exact"
+    claim: Current node context carries exact typed authority identities and file fingerprints, and stale, prose, duplicate, or inferred references fail closed.
+    required: true
+    evidence:
+      - check.current_runtime.contracts
+      - check.core_development.model
+  - id: req.start.single_invocation_retry
+    source: "specs/flowpilot-control-plane-contract-kernel/spec.md#Requirement: Foreground start retry preserves one current invocation"
+    claim: One start command allocates one bootstrap, reattaches one exact live current-run daemon, and preserves completed folded-action evidence across writer settlement.
+    required: true
+    evidence:
+      - check.router.start_single_invocation_retry
+      - check.core_development.model
+  - id: req.resume.exact_current_roles
+    source: "specs/flowpilot-control-plane-contract-kernel/spec.md#Requirement: Manual resume targets exactly the current requested roles"
+    claim: Resume restores every and only current-obligation roles; idle, historical, fixed-roster, stale, and duplicate roles remain non-authoritative.
+    required: true
+    evidence:
+      - check.router.exact_resume
+      - check.core_development.model
+  - id: req.review.workstream_semantics
+    source: "specs/flowpilot-packet-review-flow/spec.md#Requirement: Substantive roles retain the existing complete-workstream structure"
+    claim: The existing workstream plan remains a role planning and Reviewer comparison surface, while Runtime never substitutes mechanical semantic scoring.
+    required: true
+    evidence:
+      - check.review.workstream
+      - check.core_development.model
+  - id: req.review.compact_challenge
+    source: "specs/flowpilot-packet-review-flow/spec.md#Requirement: Reviewer challenge uses the compact current result contract"
+    claim: Reviewer performs stage-specific challenge through existing compact fields and rejects the deleted independent_challenge output object.
+    required: true
+    evidence:
+      - check.review.workstream
+      - check.authority.projection
+  - id: req.review.delivered_policy
+    source: "specs/flowpilot-packet-review-flow/spec.md#Requirement: Reviewer execution consumes delivered review policy"
+    claim: Reviewer fake AI consumes and validates the delivered review window/depth rule.
+    required: true
+    evidence:
+      - check.formal_ai.execution
+      - check.fake_ai.replay
+  - id: req.coverage.universe
+    source: "specs/flowpilot-ai-response-cartesian-execution-closure/spec.md#Requirement: AI response coverage declares a finite universe"
+    claim: Broad coverage has a formal finite universe, structured exclusions, and separated counts.
+    required: true
+    evidence:
+      - check.execution_closure.model
+      - check.contract_exhaustion.model
+  - id: req.coverage.oracles
+    source: "specs/flowpilot-ai-response-cartesian-execution-closure/spec.md#Requirement: AI response cases have executable oracles and unique identity"
+    claim: Required cases have unique full-path ids, actionable oracles, and evidence-backed equivalence groups.
+    required: true
+    evidence:
+      - check.execution_closure.model
+      - check.contract_exhaustion.model
+  - id: req.coverage.tiered_execution
+    source: "specs/flowpilot-ai-response-cartesian-execution-closure/spec.md#Requirement: Tiered execution closes distinct behavior rather than raw product size"
+    claim: Structural enumeration, all single faults, public pairwise, high-risk interactions, history, and fuzz have distinct executable lanes.
+    required: true
+    evidence:
+      - check.formal_ai.execution
+      - check.tier.formal_fast
+      - check.tier.formal_adversarial
+  - id: req.coverage.parent_receipts
+    source: "specs/flowpilot-ai-response-cartesian-execution-closure/spec.md#Requirement: Parent confidence consumes proof-backed child receipts"
+    claim: Parent confidence consumes current child receipts and composite acceptance ids.
+    required: true
+    evidence:
+      - check.execution_closure.model
+      - check.model_mesh
+      - check.layered_boundary
+  - id: req.forbidden.non_vacuous
+    source: "specs/synthetic-agent-coverage-matrix/spec.md#Requirement: Forbidden surfaces have non-vacuous end-to-end coverage"
+    claim: Registered, projected, generated, executed, and passed forbidden-field counts agree and are non-zero.
+    required: true
+    evidence:
+      - check.authority.projection
+      - check.formal_ai.execution
+  - id: req.coverage.truthful_counts
+    source: "specs/synthetic-agent-coverage-matrix/spec.md#Requirement: Coverage reports distinguish model ownership from execution"
+    claim: Generated/model-owned cells are not reported as executed or passed without proof artifacts.
+    required: true
+    evidence:
+      - check.execution_closure.model
+      - check.fake_ai.replay
+  - id: req.fake_ai.public_path
+    source: "specs/end-to-end-synthetic-agent-chaos-replay/spec.md#Requirement: Canonical fake AI executes the current public packet path"
+    claim: Canonical fake AI requires current ACK/open checklist identity and public submit with no generic fallback.
+    required: true
+    evidence:
+      - check.formal_ai.execution
+      - check.fake_project.rehearsal
+  - id: req.fake_ai.syntax_risk
+    source: "specs/end-to-end-synthetic-agent-chaos-replay/spec.md#Requirement: Chaos replay includes unbounded-syntax risk classes"
+    claim: Deterministic parser/size/encoding/replay/concurrency profiles have explicit public-entrypoint oracles.
+    required: true
+    evidence:
+      - check.formal_ai.execution
+  - id: req.testmesh.execution_evidence
+    source: "specs/flowguard-test-obligation-ownership/spec.md#Requirement: TestMesh child evidence is execution-backed"
+    claim: Child suites use real final result evidence, fingerprints, proof artifacts, and reuse tickets rather than hard-coded green rows.
+    required: true
+    evidence:
+      - check.execution_closure.model
+      - check.testmesh.known_bad
+  - id: req.testmesh.parent_consumption
+    source: "specs/flowguard-test-obligation-ownership/spec.md#Requirement: Parent TestMesh consumes every required execution shard"
+    claim: Required shards have current owners and stale/progress-only evidence blocks parent scope.
+    required: true
+    evidence:
+      - check.execution_closure.model
+      - check.model_mesh
+  - id: req.mta.binding
+    source: "specs/flowguard-boundary-test-alignment/spec.md#Requirement: Cartesian obligations bind model, owner code, and external execution"
+    claim: Risk-shard obligations bind owner code, source audit, runtime observation, and external tests without copying expected metadata as observed.
+    required: true
+    evidence:
+      - check.model_test_alignment
+      - check.execution_closure.model
+  - id: req.mta.backfeed
+    source: "specs/flowguard-boundary-test-alignment/spec.md#Requirement: Real miss backfeed updates the whole evidence chain"
+    claim: Observed public-runtime misses map to same-class cases, MTA/TestMesh evidence, and parent receipts.
+    required: true
+    evidence:
+      - check.execution_closure.model
+      - check.model_test_alignment
+  - id: req.tiers.explicit_ownership
+    source: "specs/tiered-flowpilot-test-validation/spec.md#Requirement: Formal AI-response execution is owned by explicit tiers"
+    claim: Formal-submit fast/adversarial tiers directly own required AI-response execution evidence.
+    required: true
+    evidence:
+      - check.tier.formal_fast
+      - check.tier.formal_adversarial
+  - id: req.tiers.background_final
+    source: "specs/tiered-flowpilot-test-validation/spec.md#Requirement: Background evidence requires final artifacts"
+    claim: Background progress without final exit/result artifacts cannot satisfy pass.
+    required: true
+    evidence:
+      - check.execution_closure.model
+      - check.testmesh.known_bad
+  - id: req.execution.descendant_zero
+    source: "specs/flowguard-test-obligation-ownership/spec.md#Requirement: Heavy execution receipts require descendant-zero cleanup"
+    claim: Daemon and heavy-check owners bind exact process identity and prove a zero-descendant terminal cleanup before release or reuse.
+    required: true
+    evidence:
+      - check.router.descendant_zero
+      - check.tier.cleanup_contract
+  - id: req.execution.same_source_fingerprint
+    source: "specs/flowguard-test-obligation-ownership/spec.md#Requirement: Proof consumers share one frozen source fingerprint"
+    claim: Required tier owners, manifests, and proof consumers use one covered-source fingerprint with no newest-result or mixed-snapshot fallback.
+    required: true
+    evidence:
+      - check.tier.fingerprint_contract
+      - check.evidence.final_manifest
+  - id: req.tiers.budget
+    source: "specs/tiered-flowpilot-test-validation/spec.md#Requirement: Test budgets are measured and enforced without dropping coverage"
+    claim: Tier receipts report duration/budget and preserve required coverage under sharding.
+    required: true
+    evidence:
+      - check.tier.formal_fast
+      - check.tier.formal_adversarial
+  - id: req.release.current_closure
+    source: "specs/flowpilot-maintenance-ideal-state/spec.md#Requirement: Candidate closure uses current source, model, test, and install evidence"
+    claim: Topology and installed repository-owned skill are current after final source changes; the exact task commit, GitHub default branch, annotated v0.12.0 tag, and source-only GitHub Release must identify the same commit.
+    required: true
+    evidence:
+      - check.topology
+      - check.install
+      - check.remote_publication
+  - id: req.release.predecessor_disposition
+    source: "specs/flowpilot-maintenance-ideal-state/spec.md#Requirement: Incomplete predecessor coverage changes are explicitly superseded"
+    claim: Predecessor coverage changes are inventoried and cannot independently support the successor release claim.
+    required: true
+    evidence:
+      - check.execution_closure.model
+      - check.predecessor.disposition
+
+checks:
+  - id: check.authority.projection
+    kind: command
+    command: python
+    args: [-m, unittest, -v, tests.test_flowpilot_ai_contract_projection, tests.test_flowpilot_contract_driven_fake_ai_open_packet, tests.test_flowpilot_new_entrypoint.FlowPilotNewEntrypointTests.test_open_packet_submission_checklist_rejects_packet_body_as_contract_authority]
+    required: true
+    covers: [req.authority.single_projection, req.forbidden.non_vacuous]
+    expected: {exit_code: 0}
+  - id: check.current_runtime.contracts
+    kind: command
+    command: python
+    args: [-m, unittest, -v, tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_node_context_current_authority_references_reject_old_shape_missing_kind_and_stale_fingerprint, tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_role_memory_seed_prioritizes_exact_current_packet_and_stales_on_generation_change, tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_staged_effect_same_family_reuses_pending_effect_and_rejects_different_formal_blocker_identity, tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_terminal_replay_rejects_missing_or_unexpected_segments]
+    execution_owner: focused.current_runtime_contracts
+    required: true
+    covers: [req.authority.structured_current_reference, req.resume.exact_current_roles]
+    expected: {exit_code: 0}
+  - id: check.review.workstream
+    kind: command
+    command: python
+    args: [-m, unittest, -v, tests.test_flowpilot_complete_workstream_orchestration, tests.test_flowpilot_role_output_runtime, tests.test_flowpilot_ai_contract_projection]
+    execution_owner: focused.review_workstream_contract
+    required: true
+    covers: [req.review.workstream_semantics, req.review.compact_challenge]
+    expected: {exit_code: 0}
+  - id: check.router.exact_resume
+    kind: command
+    command: python
+    args: [-m, unittest, -v, tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_mid_run_role_liveness_fault_uses_unified_recovery_before_normal_work, tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_resume_ambiguous_state_blocks_continue_without_recovery_evidence, tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_route_memory_rejects_changed_current_source_snapshot]
+    execution_owner: focused.router_exact_resume
+    required: true
+    covers: [req.resume.exact_current_roles]
+    expected: {exit_code: 0}
+  - id: check.router.descendant_zero
+    kind: command
+    command: python
+    args: [-m, unittest, -v, tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_router_daemon_liveness_rejects_reused_pid_identity, tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_router_daemon_stop_releases_only_after_exact_tree_cleanup, tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_router_daemon_stop_does_not_signal_reused_pid]
+    execution_owner: focused.router_descendant_zero
+    required: true
+    covers: [req.execution.descendant_zero]
+    expected: {exit_code: 0}
+  - id: check.router.start_single_invocation_retry
+    kind: command
+    command: python
+    args: [-m, pytest, "tests/router_runtime/bootstrap_cli.py::BootstrapCliRuntimeTests::test_start_writer_retry_allocates_one_bootstrap_and_preserves_actions", "tests/router_runtime/foreground_controller.py::ForegroundControllerRuntimeTests::test_foreground_writer_retry_preserves_completed_folded_actions", "tests/router_runtime/startup_daemon.py::StartupDaemonRuntimeTests::test_foreground_retry_reattaches_current_inflight_daemon_without_second_spawn", "tests/test_flowpilot_shadow_launcher_chaos_replay.py::FlowPilotShadowLauncherChaosReplayTests::test_installed_launcher_shadow_start_reaches_releasable_standard_state", -q]
+    execution_owner: focused.router_start_single_invocation_retry
+    required: true
+    covers: [req.start.single_invocation_retry, req.mta.backfeed]
+    expected: {exit_code: 0}
+  - id: check.core_development.model
+    kind: command
+    command: python
+    args: [simulations/run_flowpilot_core_runtime_development_checks.py]
+    execution_owner: model.core_runtime_development
+    required: true
+    covers: [req.authority.structured_current_reference, req.start.single_invocation_retry, req.resume.exact_current_roles, req.review.workstream_semantics, req.review.compact_challenge, req.execution.descendant_zero, req.execution.same_source_fingerprint]
+    expected: {exit_code: 0}
+  - id: check.formal_ai.execution
+    kind: command
+    command: python
+    args: [-m, unittest, -v, tests.test_flowpilot_formal_ai_contract_execution]
+    required: true
+    covers: [req.authority.single_projection, req.authority.current_sources, req.review.delivered_policy, req.coverage.tiered_execution, req.forbidden.non_vacuous, req.fake_ai.public_path, req.fake_ai.syntax_risk]
+    expected: {exit_code: 0}
+  - id: check.fake_project.rehearsal
+    kind: command
+    command: python
+    args: [-m, unittest, -v, tests.test_flowpilot_fake_project_rehearsal]
+    required: true
+    covers: [req.fake_ai.public_path]
+    expected: {exit_code: 0}
+  - id: check.execution_closure.model
+    kind: command
+    command: python
+    args: [simulations/run_flowpilot_ai_response_execution_closure_checks.py, --mode, adversarial, --budget-seconds, "3600", --json-out, simulations/flowpilot_ai_response_execution_closure_results.json]
+    required: true
+    covers: [req.coverage.universe, req.coverage.oracles, req.coverage.parent_receipts, req.coverage.truthful_counts, req.testmesh.execution_evidence, req.testmesh.parent_consumption, req.mta.binding, req.mta.backfeed, req.tiers.background_final, req.release.predecessor_disposition]
+    expected: {exit_code: 0}
+  - id: check.unified_repair.exact_native_receipt
+    kind: receipt
+    execution_owner: native.unified_repair.exact_runtime_tests
+    consumer: restore-test-evidence-closure-exact-native-projection
+    receipt_path: simulations/flowpilot_unified_repair_exact_native_test_owner_results.json
+    required: true
+    covers: [req.testmesh.execution_evidence, req.testmesh.parent_consumption, req.release.current_closure]
+  - id: check.tier.all.background
+    kind: command
+    command: python
+    args: [scripts/run_test_tier.py, --tier, all, --verify-background, --background-dir, tmp/test_background/v0.12.0-all-final-r13, --json]
+    execution_owner: receipt_consumer.tier.all
+    required: true
+    covers: [req.testmesh.execution_evidence, req.testmesh.parent_consumption, req.tiers.background_final]
+    expected: {exit_code: 0}
+  - id: check.tier.adversarial.background
+    kind: command
+    command: python
+    args: [scripts/run_test_tier.py, --tier, formal-submit-adversarial, --verify-background, --background-dir, tmp/test_background/v0.12.0-adversarial-final-r13, --json]
+    execution_owner: receipt_consumer.tier.adversarial
+    required: true
+    covers: [req.coverage.tiered_execution, req.testmesh.execution_evidence, req.tiers.background_final]
+    expected: {exit_code: 0}
+  - id: check.tier.release.background
+    kind: command
+    command: python
+    args: [scripts/run_test_tier.py, --tier, release, --verify-background, --background-dir, tmp/test_background/v0.12.0-release-final-r13b, --json]
+    execution_owner: receipt_consumer.tier.release
+    required: true
+    covers: [req.testmesh.parent_consumption, req.tiers.background_final, req.release.current_closure]
+    expected: {exit_code: 0}
+  - id: check.evidence.final_manifest
+    kind: command
+    command: python
+    args: [scripts/compile_flowpilot_acceptance_testmesh_evidence.py, --phase, final, --all-root, tmp/test_background/v0.12.0-all-final-r13, --adversarial-root, tmp/test_background/v0.12.0-adversarial-final-r13, --release-root, tmp/test_background/v0.12.0-release-final-r13b, --json-out, simulations/flowpilot_acceptance_testmesh_evidence_manifest.json]
+    depends_on_receipts: [check.unified_repair.exact_native_receipt, check.tier.all.background, check.tier.adversarial.background, check.tier.release.background]
+    required: true
+    covers: [req.coverage.parent_receipts, req.testmesh.execution_evidence, req.testmesh.parent_consumption, req.tiers.background_final, req.execution.same_source_fingerprint, req.release.current_closure]
+    expected: {exit_code: 0}
+  - id: check.contract_exhaustion.model
+    kind: command
+    command: python
+    args: [simulations/run_flowpilot_contract_exhaustion_mesh_checks.py, --evidence-manifest, simulations/flowpilot_acceptance_testmesh_evidence_manifest.json, --evidence-scope, done, --json-out, simulations/flowpilot_contract_exhaustion_mesh_results.json]
+    depends_on_receipts: [check.evidence.final_manifest]
+    required: true
+    covers: [req.coverage.universe, req.coverage.oracles]
+    expected: {exit_code: 0}
+  - id: check.current_matrix.model
+    kind: command
+    command: python
+    args: [simulations/run_flowpilot_current_contract_cartesian_matrix_checks.py, --evidence-manifest, simulations/flowpilot_acceptance_testmesh_evidence_manifest.json, --evidence-scope, done, --json-out, simulations/flowpilot_current_contract_cartesian_matrix_results.json]
+    depends_on_receipts: [check.evidence.final_manifest]
+    required: true
+    covers: [req.authority.current_sources]
+    expected: {exit_code: 0}
+  - id: check.fake_ai.replay
+    kind: command
+    command: python
+    args: [simulations/run_flowpilot_fake_ai_runtime_replay_checks.py, --json-out, simulations/flowpilot_fake_ai_runtime_replay_summary.json]
+    required: true
+    covers: [req.review.delivered_policy, req.coverage.truthful_counts]
+    expected: {exit_code: 0}
+  - id: check.model_test_alignment
+    kind: command
+    command: python
+    args: [simulations/run_flowpilot_model_test_alignment_checks.py, --evidence-manifest, simulations/flowpilot_acceptance_testmesh_evidence_manifest.json, --evidence-scope, done, --json-out, simulations/flowpilot_model_test_alignment_results.json]
+    depends_on_receipts: [check.evidence.final_manifest]
+    required: true
+    covers: [req.mta.binding, req.mta.backfeed]
+    expected: {exit_code: 0}
+  - id: check.behavior_commitment_risk.model
+    kind: command
+    command: python
+    args: [simulations/run_flowpilot_053_ppa_maintenance_checks.py, --json-out, simulations/flowpilot_053_ppa_maintenance_results.json]
+    depends_on_receipts: [check.execution_closure.model, check.model_test_alignment]
+    required: true
+    covers: [req.authority.single_projection, req.authority.current_sources, req.coverage.parent_receipts, req.mta.binding, req.release.current_closure]
+    expected: {exit_code: 0}
+  - id: check.acceptance_testmesh
+    kind: command
+    command: python
+    args: [simulations/run_flowpilot_acceptance_testmesh_checks.py, --evidence-manifest, simulations/flowpilot_acceptance_testmesh_evidence_manifest.json, --json-out, simulations/flowpilot_acceptance_testmesh_results.json]
+    depends_on_receipts: [check.evidence.final_manifest]
+    required: true
+    covers: [req.testmesh.execution_evidence, req.testmesh.parent_consumption, req.tiers.background_final]
+    expected: {exit_code: 0}
+  - id: check.model_mesh
+    kind: command
+    command: python
+    args: [simulations/run_flowpilot_model_mesh_checks.py, --evidence-manifest, simulations/flowpilot_acceptance_testmesh_evidence_manifest.json, --claim-scope, done, --json-out, simulations/flowpilot_model_mesh_results.json]
+    depends_on_receipts: [check.evidence.final_manifest, check.behavior_commitment_risk.model]
+    required: true
+    covers: [req.coverage.parent_receipts, req.testmesh.parent_consumption]
+    expected: {exit_code: 0}
+  - id: check.layered_boundary
+    kind: command
+    command: python
+    args: [simulations/flowpilot_layered_boundary_proof.py, --json-out, simulations/flowpilot_layered_boundary_proof_results.json]
+    required: true
+    covers: [req.coverage.parent_receipts]
+    expected: {exit_code: 0}
+  - id: check.tier.final.background
+    kind: command
+    command: python
+    args: [scripts/run_test_tier.py, --tier, final-confidence, --verify-background, --background-dir, tmp/test_background/v0.12.0-final-confidence-r13, --json]
+    execution_owner: receipt_consumer.tier.final_confidence
+    depends_on_receipts: [check.contract_exhaustion.model, check.current_matrix.model, check.model_test_alignment, check.acceptance_testmesh, check.model_mesh]
+    required: true
+    covers: [req.testmesh.parent_consumption, req.tiers.background_final, req.release.current_closure]
+    expected: {exit_code: 0}
+  - id: check.meta.background
+    kind: command
+    command: python
+    args: [scripts/run_flowguard_background.py, --name, run_meta_checks, --verify, --, python, simulations/run_meta_checks.py, --full, --force]
+    execution_owner: receipt_consumer.parent.meta
+    depends_on_receipts: [check.tier.release.background]
+    required: true
+    covers: [req.testmesh.parent_consumption, req.release.current_closure]
+    expected: {exit_code: 0}
+  - id: check.capability.background
+    kind: command
+    command: python
+    args: [scripts/run_flowguard_background.py, --name, run_capability_checks, --verify, --, python, simulations/run_capability_checks.py, --full, --force]
+    execution_owner: receipt_consumer.parent.capability
+    depends_on_receipts: [check.tier.release.background]
+    required: true
+    covers: [req.testmesh.parent_consumption, req.release.current_closure]
+    expected: {exit_code: 0}
+  - id: check.testmesh.known_bad
+    kind: command
+    command: python
+    args: [-m, unittest, -v, tests.test_flowpilot_ai_response_execution_closure, tests.test_flowpilot_acceptance_testmesh, tests.test_flowpilot_model_mesh_coverage_receipts]
+    required: true
+    covers: [req.testmesh.execution_evidence, req.tiers.background_final]
+    expected: {exit_code: 0}
+  - id: check.tier.formal_fast
+    kind: command
+    command: python
+    args: [scripts/run_test_tier.py, --tier, formal-submit-fast, --json]
+    required: true
+    covers: [req.coverage.tiered_execution, req.tiers.explicit_ownership, req.tiers.budget]
+    expected: {exit_code: 0}
+  - id: check.tier.formal_adversarial
+    kind: command
+    command: python
+    args: [scripts/run_test_tier.py, --tier, formal-submit-adversarial, --dry-run, --json]
+    execution_owner: focused.tier_adversarial_plan
+    required: true
+    covers: [req.coverage.tiered_execution, req.tiers.explicit_ownership, req.tiers.budget]
+    expected: {exit_code: 0}
+  - id: check.tier.cleanup_contract
+    kind: command
+    command: python
+    args: [-m, unittest, -v, tests.test_flowpilot_test_tiers.FlowPilotTestTierTests.test_timeout_terminates_descendant_tree_before_writing_terminal_receipt]
+    execution_owner: focused.tier_cleanup_contract
+    required: true
+    covers: [req.execution.descendant_zero]
+    expected: {exit_code: 0}
+  - id: check.tier.fingerprint_contract
+    kind: command
+    command: python
+    args: [-m, unittest, -v, tests.test_flowpilot_test_tiers.FlowPilotTestTierTests.test_covered_source_fingerprint_ignores_generated_results_but_tracks_source]
+    execution_owner: focused.tier_fingerprint_contract
+    required: true
+    covers: [req.execution.same_source_fingerprint]
+    expected: {exit_code: 0}
+  - id: check.predecessor.disposition
+    kind: command
+    command: python
+    args: [-m, unittest, -v, tests.test_flowpilot_test_tiers.FlowPilotTestTierTests.test_successor_predecessor_disposition_inventory_is_explicit]
+    execution_owner: focused.predecessor_disposition
+    required: true
+    covers: [req.release.predecessor_disposition]
+    expected: {exit_code: 0}
+  - id: check.topology
+    kind: command
+    command: python
+    args: [scripts/flowguard_project_topology.py, check]
+    required: true
+    covers: [req.release.current_closure]
+    expected: {exit_code: 0}
+  - id: check.install
+    kind: command
+    command: python
+    args: [scripts/check_install.py, --json]
+    required: true
+    covers: [req.release.current_closure]
+    expected: {exit_code: 0}
+  - id: check.skillguard.deep_contract
+    kind: command
+    command: python
+    args: [scripts/refresh_flowpilot_skillguard_contract.py, --check]
+    required: true
+    covers: [req.release.current_closure]
+    expected: {exit_code: 0}
+  - id: check.public_boundary
+    kind: command
+    command: python
+    args: [scripts/check_public_release.py, --json]
+    required: true
+    covers: [req.release.current_closure]
+    expected: {exit_code: 0}
+  - id: check.remote_publication
+    kind: receipt
+    execution_owner: release.github.same_commit_publication
+    consumer: restore-test-evidence-closure-remote-publication
+    receipt_path: tmp/release_evidence/v0.12.0.json
+    required: true
+    covers: [req.release.current_closure]
+
+freshness:
+  watch:
+    - openspec/changes/restore-flowpilot-test-evidence-closure/proposal.md
+    - openspec/changes/restore-flowpilot-test-evidence-closure/design.md
+    - openspec/changes/restore-flowpilot-test-evidence-closure/tasks.md
+    - openspec/changes/restore-flowpilot-test-evidence-closure/specs/**/*.md
+    - openspec/changes/restore-flowpilot-test-evidence-closure/verification-contract.yaml
+    - skills/flowpilot/SKILL.md
+    - skills/flowpilot/assets/flowpilot_new.py
+    - skills/flowpilot/assets/flowpilot_new_role_commands.py
+    - skills/flowpilot/assets/flowpilot_core_runtime/runtime.py
+    - skills/flowpilot/assets/flowpilot_core_runtime/packet_result_contracts.py
+    - skills/flowpilot/assets/flowpilot_core_runtime/role_handoff.py
+    - skills/flowpilot/assets/flowpilot_core_runtime/review_window_contracts.py
+    - skills/flowpilot/assets/role_output_runtime_contracts.py
+    - skills/flowpilot/assets/flowpilot_core_runtime/host.py
+    - skills/flowpilot/assets/flowpilot_core_runtime/fake_e2e.py
+    - skills/flowpilot/assets/flowpilot_router_startup_role_context.py
+    - skills/flowpilot/assets/flowpilot_router_startup_resume_binding_records.py
+    - skills/flowpilot/assets/flowpilot_router_action_handlers_resume.py
+    - skills/flowpilot/assets/flowpilot_router_daemon_runtime.py
+    - skills/flowpilot/assets/flowpilot_router_daemon_runtime_lock.py
+    - skills/flowpilot/assets/flowpilot_router_startup_daemon.py
+    - skills/flowpilot/assets/runtime_kit/cards/**/*.md
+    - skills/flowpilot/assets/runtime_kit/prompts/**/*
+    - simulations/flowpilot_contract_driven_fake_ai.py
+    - simulations/flowpilot_fake_project_rehearsal_cli.py
+    - simulations/flowpilot_contract_exhaustion_mesh_model.py
+    - simulations/flowpilot_current_contract_cartesian_matrix.py
+    - simulations/flowpilot_fake_ai_runtime_replay_model.py
+    - simulations/flowpilot_ai_response_execution_closure_model.py
+    - simulations/flowpilot_core_runtime_development_model.py
+    - simulations/run_flowpilot_core_runtime_development_checks.py
+    - simulations/run_flowpilot_ai_response_execution_closure_checks.py
+    - simulations/flowpilot_model_test_alignment_*.py
+    - simulations/flowpilot_model_mesh_model.py
+    - simulations/run_flowpilot_model_mesh_checks.py
+    - simulations/flowpilot_acceptance_testmesh_model.py
+    - simulations/run_flowpilot_acceptance_testmesh_checks.py
+    - skills/flowpilot/.skillguard/contract-source.json
+    - skills/flowpilot/.skillguard/compiled-contract.json
+    - skills/flowpilot/.skillguard/check-manifest.json
+    - simulations/flowpilot_skillguard_contract_model.py
+    - simulations/run_flowpilot_skillguard_contract_checks.py
+    - scripts/refresh_flowpilot_skillguard_contract.py
+    - scripts/compile_flowpilot_acceptance_testmesh_evidence.py
+    - scripts/run_flowguard_background.py
+    - scripts/run_test_tier.py
+    - simulations/flowpilot_structure_maintenance_*.py
+    - simulations/run_flowpilot_structure_maintenance_checks.py
+    - openspec/changes/restore-flowpilot-test-evidence-closure/evidence/**/*
+    - simulations/flowpilot_layered_boundary_proof.py
+    - scripts/test_tier/**/*.py
+    - tests/test_flowpilot_ai_contract_projection.py
+    - tests/flowpilot_current_authority_test_helpers.py
+    - tests/test_flowpilot_core_runtime.py
+    - tests/test_flowpilot_role_output_runtime.py
+    - tests/test_flowpilot_complete_workstream_orchestration.py
+    - tests/test_flowpilot_router_runtime.py
+    - tests/router_runtime/**/*.py
+    - tests/test_flowpilot_test_tiers.py
+    - tests/test_flowpilot_resource_facade_structure_mesh.py
+    - tests/test_flowpilot_new_entrypoint.py
+    - tests/test_flowpilot_formal_ai_contract_execution.py
+    - tests/test_flowpilot_ai_response_execution_closure.py
+    - tests/test_flowpilot_contract_driven_fake_ai_open_packet.py
+    - tests/test_flowpilot_acceptance_testmesh.py
+    - tests/test_flowpilot_model_mesh_coverage_receipts.py
+    - tests/test_flowpilot_skillguard_deep_contract.py
+    - tests/test_flowpilot_fake_project_rehearsal.py
+    - tests/test_flowpilot_fake_ai_runtime_replay.py
+    - tests/test_flowpilot_contract_exhaustion_mesh.py
+    - tests/test_flowpilot_current_contract_cartesian_matrix.py
+    - VERSION
+    - CHANGELOG.md
+    - README.md
+    - AGENTS.md
+    - .flowguard/project.toml
+    - docs/flowguard_project_topology.json

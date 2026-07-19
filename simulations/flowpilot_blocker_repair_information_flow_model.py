@@ -11,7 +11,9 @@ Risk intent brief:
 - Hard invariant: every repair loop either carries current, concrete blocker
   facts into a new executable packet with a semantic delta and success evidence
   contract, or records an explicit route mutation, terminal stop, or follow-up
-  blocker instead of silently continuing.
+  blocker instead of silently continuing. This blocker-specific child hands a
+  typed blocker trigger to the unified repair engine; it never owns direct PM
+  historical-defect intake or the shared engine itself.
 - Blindspot: this model checks the protocol information contract. Concrete
   runtime tests must still prove packet builders, cards, and result bodies use
   these fields in production code.
@@ -64,6 +66,14 @@ ACCEPTED_NONCURRENT_REPAIR_PACKET_BLOCKS_FINAL_PREFLIGHT = (
 )
 STALE_PRIOR_ROUTE_REPAIR_BLOCKER_LEFT_OPEN = "stale_prior_route_repair_blocker_left_open"
 REPAIR_LOOP_OVER_THRESHOLD_ALLOWED_PM_REPAIR = "repair_loop_over_threshold_allowed_pm_repair"
+PM_PROACTIVE_REPAIR_MISROUTED_TO_BLOCKER_CHILD = (
+    "pm_proactive_repair_misrouted_to_blocker_child"
+)
+BLOCKER_HANDOFF_TO_SHARED_ENGINE_MISSING = "blocker_handoff_to_shared_engine_missing"
+BLOCKER_CHILD_CLAIMS_SHARED_ENGINE_OWNERSHIP = (
+    "blocker_child_claims_shared_engine_ownership"
+)
+BLOCKER_SOURCE_TRIGGER_ORIGIN_MISMATCH = "blocker_source_trigger_origin_mismatch"
 
 VALID_SCENARIOS = (
     VALID_REVIEWER_BLOCKER_REPAIR_PACKET,
@@ -99,6 +109,10 @@ NEGATIVE_SCENARIOS = (
     ACCEPTED_NONCURRENT_REPAIR_PACKET_BLOCKS_FINAL_PREFLIGHT,
     STALE_PRIOR_ROUTE_REPAIR_BLOCKER_LEFT_OPEN,
     REPAIR_LOOP_OVER_THRESHOLD_ALLOWED_PM_REPAIR,
+    PM_PROACTIVE_REPAIR_MISROUTED_TO_BLOCKER_CHILD,
+    BLOCKER_HANDOFF_TO_SHARED_ENGINE_MISSING,
+    BLOCKER_CHILD_CLAIMS_SHARED_ENGINE_OWNERSHIP,
+    BLOCKER_SOURCE_TRIGGER_ORIGIN_MISMATCH,
 )
 
 SCENARIOS = VALID_SCENARIOS + NEGATIVE_SCENARIOS
@@ -119,6 +133,12 @@ class Action:
 class State:
     status: str = "new"  # new | running | accepted | rejected
     scenario: str = "unset"
+
+    repair_trigger_origin: str = "none"  # none | reviewer_failure | worker_failure | system_failure | pm_historical_defect
+    shared_engine_handoff_recorded: bool = False
+    shared_engine_handoff_id_present: bool = False
+    blocker_child_claims_shared_engine_ownership: bool = False
+    pm_proactive_historical_intake: bool = False
 
     blocker_detected: bool = False
     blocker_source_role: str = "none"  # none | reviewer | worker
@@ -212,6 +232,9 @@ def _safe_reviewer_base(**changes: object) -> State:
     return replace(
         State(
             status="running",
+            repair_trigger_origin="reviewer_failure",
+            shared_engine_handoff_recorded=True,
+            shared_engine_handoff_id_present=True,
             blocker_detected=True,
             blocker_source_role="reviewer",
             blocker_payload_current=True,
@@ -268,6 +291,7 @@ def _safe_worker_base(**changes: object) -> State:
     return replace(
         _safe_reviewer_base(
             blocker_source_role="worker",
+            repair_trigger_origin="worker_failure",
             reviewer_advice_present=False,
             pm_decision_integrates_reviewer_advice=False,
         ),
@@ -293,6 +317,9 @@ def _scenario_state(scenario: str) -> State:
         return State(
             status="running",
             scenario=scenario,
+            repair_trigger_origin="reviewer_failure",
+            shared_engine_handoff_recorded=True,
+            shared_engine_handoff_id_present=True,
             blocker_detected=True,
             blocker_source_role="reviewer",
             blocker_payload_current=True,
@@ -323,6 +350,9 @@ def _scenario_state(scenario: str) -> State:
         return State(
             status="running",
             scenario=scenario,
+            repair_trigger_origin="reviewer_failure",
+            shared_engine_handoff_recorded=True,
+            shared_engine_handoff_id_present=True,
             blocker_detected=True,
             blocker_source_role="reviewer",
             blocker_payload_current=True,
@@ -533,11 +563,77 @@ def _scenario_state(scenario: str) -> State:
             ordinary_pm_repair_continued_over_threshold=True,
             same_family_pm_packets_superseded=False,
         )
+    if scenario == PM_PROACTIVE_REPAIR_MISROUTED_TO_BLOCKER_CHILD:
+        return replace(
+            _safe_reviewer_base(),
+            scenario=scenario,
+            repair_trigger_origin="pm_historical_defect",
+            pm_proactive_historical_intake=True,
+            blocker_detected=False,
+            blocker_id_present=False,
+            shared_engine_handoff_recorded=False,
+            shared_engine_handoff_id_present=False,
+        )
+    if scenario == BLOCKER_HANDOFF_TO_SHARED_ENGINE_MISSING:
+        return replace(
+            _safe_reviewer_base(),
+            scenario=scenario,
+            shared_engine_handoff_recorded=False,
+            shared_engine_handoff_id_present=False,
+        )
+    if scenario == BLOCKER_CHILD_CLAIMS_SHARED_ENGINE_OWNERSHIP:
+        return replace(
+            _safe_reviewer_base(),
+            scenario=scenario,
+            blocker_child_claims_shared_engine_ownership=True,
+        )
+    if scenario == BLOCKER_SOURCE_TRIGGER_ORIGIN_MISMATCH:
+        return replace(
+            _safe_worker_base(),
+            scenario=scenario,
+            repair_trigger_origin="reviewer_failure",
+        )
     raise ValueError(f"unknown scenario: {scenario}")
 
 
 def information_flow_failures(state: State) -> list[str]:
     failures: list[str] = []
+
+    if (
+        state.pm_proactive_historical_intake
+        or state.repair_trigger_origin == "pm_historical_defect"
+    ):
+        failures.append(
+            "blocker-specific information-flow child cannot own PM-proactive historical repair intake"
+        )
+    if state.blocker_child_claims_shared_engine_ownership:
+        failures.append(
+            "blocker-specific information-flow child claimed shared repair-engine ownership"
+        )
+    if state.blocker_detected:
+        if state.repair_trigger_origin not in {
+            "reviewer_failure",
+            "worker_failure",
+            "system_failure",
+        }:
+            failures.append("blocker trigger origin is not a supported blocker-backed intake")
+        if not (
+            state.shared_engine_handoff_recorded
+            and state.shared_engine_handoff_id_present
+        ):
+            failures.append(
+                "blocker trigger was not handed to the unified repair engine"
+            )
+        if (
+            state.blocker_source_role == "reviewer"
+            and state.repair_trigger_origin != "reviewer_failure"
+        ) or (
+            state.blocker_source_role == "worker"
+            and state.repair_trigger_origin != "worker_failure"
+        ):
+            failures.append(
+                "blocker source role and typed trigger origin do not describe the same intake"
+            )
 
     if state.blocker_detected:
         if not state.blocker_payload_current:
@@ -705,6 +801,7 @@ class BlockerRepairInformationFlowStep:
     input_description = "blocker repair information-flow tick"
     output_description = "accepted flow or rejected no-progress repair loop"
     reads = (
+        "repair_trigger_origin",
         "current_blocker",
         "role_result_report",
         "pm_repair_decision",
@@ -718,6 +815,7 @@ class BlockerRepairInformationFlowStep:
         "final_preflight_current_effective_blockers",
     )
     writes = (
+        "unified_repair_engine_handoff",
         "repair_flow_decision",
         "worker_packet_generation",
         "runtime_mechanical_identity_gate",

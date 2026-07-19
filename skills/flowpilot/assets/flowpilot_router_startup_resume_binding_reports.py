@@ -56,13 +56,90 @@ def _write_resume_role_rehydration_report(router: ModuleType, project_root: Path
     replacement_roles = [record['role_key'] for record in records if record.get('current_run_binding_decision') == 'current_run_replacement_opened']
     report_path = run_root / 'continuation' / 'role_binding_recovery_report.json'
     report = {'schema_version': 'flowpilot.role_binding_recovery_report.v1', 'run_id': run_state['run_id'], 'resume_tick_id': router._latest_resume_tick_id(run_state), 'role_binding_mode': 'current_run_manual_resume_rehydration', 'target_role_keys': target_role_keys, 'recorded_at': utc_now(), 'source_paths': {'resume_reentry': project_relative(project_root, run_root / 'continuation' / 'resume_reentry.json'), 'role_binding_ledger': project_relative(project_root, run_root / 'role_binding_ledger.json'), 'role_binding_memory': project_relative(project_root, run_root / 'role_binding_memory'), 'execution_frontier': project_relative(project_root, run_root / 'execution_frontier.json'), 'packet_ledger': project_relative(project_root, run_root / 'packet_ledger.json'), 'prompt_delivery_ledger': project_relative(project_root, run_root / 'prompt_delivery_ledger.json'), 'role_io_protocol_ledger': project_relative(project_root, _role_io_protocol_ledger_path(run_root)), 'pm_prior_path_context': project_relative(project_root, router._pm_prior_path_context_path(run_root)), 'route_history_index': project_relative(project_root, router._route_history_index_path(run_root))}, 'required_role_bindings_ready': [record['role_key'] for record in records] == target_role_keys, 'role_binding_evidence_policy': {'checked_at': utc_now(), 'current_wait_authority': 'ack_progress_evidence_only', 'awaiting_role': resume_next.get('next_recipient_role'), 'roles_checked': [record['role_key'] for record in records], 'replacement_role_keys': replacement_roles, 'decision': 'roles_ready_after_replacement' if replacement_roles else 'current_resume_roles_addressable'}, 'liveness_preflight': {'roles_checked': target_role_keys, 'current_wait_authority': 'ack_progress_evidence_only', 'wait_agent_timeout_treated_as_active': any((record.get('wait_agent_timeout_treated_as_active') is True for record in records)), 'bounded_wait_result_values': [str(record.get('bounded_wait_result') or '') for record in records if record.get('bounded_wait_result')]}, 'current_run_memory_complete': memory_complete, 'missing_memory_role_keys': [record['role_key'] for record in records if record.get('role_memory_status') != 'available'], 'pm_memory_rehydrated': any((record['role_key'] == 'project_manager' and record.get('pm_resume_context_delivered') is True and (record.get('role_memory_status') == 'available') for record in records)), 'role_records': records, 'controller_visibility': 'state_and_envelopes_only', 'sealed_body_reads_allowed': False, 'chat_history_progress_inference_allowed': False}
-    write_json(report_path, report)
     runtime_roles_path = run_root / 'role_binding_ledger.json'
     role_binding = read_json_if_exists(runtime_roles_path)
+    if role_binding.get('schema_version') != 'flowpilot.role_binding_ledger.v1':
+        raise RouterError('resume role rehydration requires current role_binding_ledger schema')
+    if str(role_binding.get('run_id') or '') != str(run_state['run_id']):
+        raise RouterError('resume role rehydration requires current role_binding_ledger run_id')
+    existing_slots = role_binding.get('role_slots') if isinstance(role_binding.get('role_slots'), list) else []
+    slots_by_role: dict[str, dict[str, Any]] = {}
+    for slot in existing_slots:
+        if not isinstance(slot, dict):
+            raise RouterError('resume role rehydration found non-object role slot')
+        role = str(slot.get('role_key') or '')
+        if role not in RUNTIME_ROLE_KEYS or role in slots_by_role:
+            raise RouterError('resume role rehydration found unsupported or duplicate role slot')
+        slots_by_role[role] = dict(slot)
+    for record in records:
+        slots_by_role[str(record['role_key'])] = dict(record)
+    role_order = {role: index for index, role in enumerate(RUNTIME_ROLE_KEYS)}
+    merged_slots = sorted(
+        slots_by_role.values(),
+        key=lambda slot: role_order.get(str(slot.get('role_key') or ''), 999),
+    )
+    binding_generation = max(
+        [
+            router._current_role_binding_generation(role_binding),
+            *[
+                int(record['role_binding_generation'])
+                for record in records
+                if isinstance(record.get('role_binding_generation'), int)
+            ],
+        ]
+    )
+    memory_updates: list[tuple[Path, dict[str, Any]]] = []
+    for record in records:
+        role = str(record['role_key'])
+        memory_path = router._role_memory_path(run_root, role)
+        memory = read_json_if_exists(memory_path)
+        if memory and (
+            memory.get('schema_version') != 'flowpilot.role_memory.v1'
+            or str(memory.get('run_id') or '') != str(run_state['run_id'])
+            or str(memory.get('role_key') or '') != role
+        ):
+            raise RouterError(f'resume role rehydration rejects stale role memory for {role}')
+        recent_deltas = list(memory.get('recent_deltas') or []) if isinstance(memory.get('recent_deltas'), list) else []
+        memory.update({
+            'schema_version': 'flowpilot.role_memory.v1',
+            'run_id': run_state['run_id'],
+            'role_key': role,
+            'agent_id': record.get('agent_id'),
+            'role_binding_generation': record.get('role_binding_generation'),
+            'status': 'available',
+            'summary': memory.get('summary') or '',
+            'recent_deltas': recent_deltas,
+            'identity_policy': {'agent_id_is_diagnostic_only': True, 'current_authority_source': 'role_binding_ledger'},
+            'controller_decision_authority': False,
+            'role_memory_used_for_completion_authority': False,
+            'last_rehydration': {
+                'historical_agent_id_reused': False,
+                'current_role_agent_binding': True,
+                'resume_tick_id': report['resume_tick_id'],
+            },
+            'updated_at': report['recorded_at'],
+        })
+        memory_updates.append((memory_path, memory))
     history = role_binding.get('resume_rehydration_history') if isinstance(role_binding.get('resume_rehydration_history'), list) else []
     history.append({'report_path': project_relative(project_root, report_path), 'resume_tick_id': report['resume_tick_id'], 'recorded_at': report['recorded_at'], 'required_role_bindings_ready': report['required_role_bindings_ready'], 'current_run_memory_complete': memory_complete, 'binding_decision': report['role_binding_evidence_policy']['decision'], 'replacement_role_keys': replacement_roles})
-    role_binding.update({'schema_version': 'flowpilot.role_binding_ledger.v1', 'run_id': run_state['run_id'], 'role_slots': records, 'role_binding_generation': router._current_role_binding_generation(role_binding), 'latest_resume_rehydration_report': project_relative(project_root, report_path), 'resume_rehydration_history': history, 'updated_at': utc_now()})
+    target_roles = {str(record['role_key']) for record in records}
+    role_binding.update({'schema_version': 'flowpilot.role_binding_ledger.v1', 'run_id': run_state['run_id'], 'role_slots': merged_slots, 'role_binding_generation': binding_generation, 'latest_resume_rehydration_report': project_relative(project_root, report_path), 'resume_rehydration_history': history, 'role_binding_memory_paths': [project_relative(project_root, router._role_memory_path(run_root, str(slot['role_key']))) for slot in merged_slots if str(slot['role_key']) in target_roles or router._role_memory_path(run_root, str(slot['role_key'])).exists()], 'updated_at': utc_now()})
     write_json(runtime_roles_path, role_binding)
+    for memory_path, memory in memory_updates:
+        write_json(memory_path, memory)
+    write_json(report_path, report)
+    for record in records:
+        role = str(record['role_key'])
+        memory_path = router._role_memory_path(run_root, role)
+        current_bindings = run_state.setdefault('current_role_agent_bindings', {})
+        if isinstance(current_bindings, dict):
+            current_bindings[role] = {
+                'role_binding_ledger_path': project_relative(project_root, runtime_roles_path),
+                'role_binding_memory_path': project_relative(project_root, memory_path),
+                'agent_id': record.get('agent_id'),
+                'role_binding_generation': record.get('role_binding_generation'),
+                'opened_at': report['recorded_at'],
+            }
     transaction = router._latest_role_recovery_transaction(run_root)
     if transaction.get('schema_version') == ROLE_RECOVERY_TRANSACTION_SCHEMA:
         role_recovery_report_path = router._role_recovery_report_path(run_root)

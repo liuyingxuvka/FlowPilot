@@ -1,6 +1,8 @@
 {
+  "blocking_signal_ids": [],
   "claim_scope": "routine FlowPilot maintenance and local install confidence",
   "current": {
+    "blocking_signal_ids": [],
     "confidence": "scoped",
     "decision": "model_maturation_scoped_claim",
     "findings": [
@@ -15,7 +17,7 @@
           "in_scope": true,
           "metadata": {
             "freshness": {
-              "max_source_mtime": 1783699251.4197772,
+              "max_source_mtime": 1784369360.931586,
               "missing_sources": [],
               "result": "simulations/flowpilot_prompt_boundary_results.json",
               "result_missing": false,
@@ -33,7 +35,8 @@
               "ok": true,
               "result": "simulations/flowpilot_prompt_boundary_results.json",
               "result_type": ""
-            }
+            },
+            "unified_repair_contract": null
           },
           "model_id": "flowpilot_prompt_boundary",
           "required": true,
@@ -63,7 +66,7 @@
           "in_scope": true,
           "metadata": {
             "freshness": {
-              "max_source_mtime": 1783699251.4197772,
+              "max_source_mtime": 1784369360.931586,
               "missing_sources": [],
               "result": "simulations/flowpilot_prompt_boundary_results.json",
               "result_missing": false,
@@ -81,7 +84,8 @@
               "ok": true,
               "result": "simulations/flowpilot_prompt_boundary_results.json",
               "result_type": ""
-            }
+            },
+            "unified_repair_contract": null
           },
           "model_id": "flowpilot_prompt_boundary",
           "required": true,
@@ -111,7 +115,7 @@
           "in_scope": true,
           "metadata": {
             "freshness": {
-              "max_source_mtime": 1783699251.4197772,
+              "max_source_mtime": 1784369360.931586,
               "missing_sources": [],
               "result": "simulations/flowpilot_prompt_boundary_results.json",
               "result_missing": false,
@@ -129,7 +133,8 @@
               "ok": true,
               "result": "simulations/flowpilot_prompt_boundary_results.json",
               "result_type": ""
-            }
+            },
+            "unified_repair_contract": null
           },
           "model_id": "flowpilot_prompt_boundary",
           "required": true,
@@ -150,6 +155,7 @@
       }
     ],
     "full_closure_ok": false,
+    "hard_gate_ok": true,
     "maintenance_obligations": [
       {
         "anchor_paths": [],
@@ -172,7 +178,7 @@
               "in_scope": true,
               "metadata": {
                 "freshness": {
-                  "max_source_mtime": 1783699251.4197772,
+                  "max_source_mtime": 1784369360.931586,
                   "missing_sources": [],
                   "result": "simulations/flowpilot_prompt_boundary_results.json",
                   "result_missing": false,
@@ -190,7 +196,8 @@
                   "ok": true,
                   "result": "simulations/flowpilot_prompt_boundary_results.json",
                   "result_type": ""
-                }
+                },
+                "unified_repair_contract": null
               },
               "model_id": "flowpilot_prompt_boundary",
               "required": true,
@@ -250,7 +257,7 @@
               "in_scope": true,
               "metadata": {
                 "freshness": {
-                  "max_source_mtime": 1783699251.4197772,
+                  "max_source_mtime": 1784369360.931586,
                   "missing_sources": [],
                   "result": "simulations/flowpilot_prompt_boundary_results.json",
                   "result_missing": false,
@@ -268,7 +275,8 @@
                   "ok": true,
                   "result": "simulations/flowpilot_prompt_boundary_results.json",
                   "result_type": ""
-                }
+                },
+                "unified_repair_contract": null
               },
               "model_id": "flowpilot_prompt_boundary",
               "required": true,
@@ -328,7 +336,7 @@
               "in_scope": true,
               "metadata": {
                 "freshness": {
-                  "max_source_mtime": 1783699251.4197772,
+                  "max_source_mtime": 1784369360.931586,
                   "missing_sources": [],
                   "result": "simulations/flowpilot_prompt_boundary_results.json",
                   "result_missing": false,
@@ -346,7 +354,8 @@
                   "ok": true,
                   "result": "simulations/flowpilot_prompt_boundary_results.json",
                   "result_type": ""
-                }
+                },
+                "unified_repair_contract": null
               },
               "model_id": "flowpilot_prompt_boundary",
               "required": true,
@@ -399,10 +408,12 @@
     "scoped_signal_ids": [
       "prompt_assets_are_contract_inputs"
     ],
-    "signal_count": 10,
+    "signal_count": 11,
     "summary": "Only a scoped FlowGuard claim is supported until maturation signals are resolved."
   },
+  "decision": "model_maturation_scoped_claim",
   "full_closure_ok": false,
+  "hard_gate_ok": true,
   "known_bad_ok": true,
   "known_bad_sanity_checks": [
     {
@@ -500,6 +511,22 @@
       ],
       "finding_count": 2,
       "name": "singleton_duplicate_authority_gap",
+      "ok": true
+    },
+    {
+      "actual_actions": [
+        "add_code_boundary_observation",
+        "downgrade_claim",
+        "refresh_evidence"
+      ],
+      "decision": "model_maturation_scoped_claim",
+      "expected_actions": [
+        "add_code_boundary_observation",
+        "downgrade_claim",
+        "refresh_evidence"
+      ],
+      "finding_count": 3,
+      "name": "unified_repair_conformance_open",
       "ok": true
     }
   ],

@@ -421,7 +421,7 @@ class QualityGatesRuntimeTests(FlowPilotRouterRuntimeTestBase):
 
         selected_skills = [
             {
-                "skill_name": "model-first-function-flow",
+                "skill_name": "flowguard",
                 "decision": "required",
                 "supported_capabilities": ["cap-001"],
                 "gates": [
@@ -481,7 +481,7 @@ class QualityGatesRuntimeTests(FlowPilotRouterRuntimeTestBase):
 
         selected_skills = [
             {
-                "skill_name": "model-first-function-flow",
+                "skill_name": "flowguard",
                 "decision": "required",
                 "supported_capabilities": ["cap-001"],
                 "gates": [

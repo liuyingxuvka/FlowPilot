@@ -23,13 +23,13 @@
     "missing": [],
     "ok": true,
     "paths": [
-      "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\skills\\flowpilot\\assets\\flowpilot_core_runtime\\role_handoff.py",
-      "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\skills\\flowpilot\\assets\\flowpilot_core_runtime\\packet_result_contracts.py",
-      "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\skills\\flowpilot\\assets\\flowpilot_core_runtime\\runtime.py",
-      "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\skills\\flowpilot\\assets\\runtime_kit\\cards\\roles\\project_manager.md",
-      "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\skills\\flowpilot\\assets\\runtime_kit\\cards\\roles\\worker.md",
-      "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\skills\\flowpilot\\assets\\runtime_kit\\cards\\roles\\human_like_reviewer.md",
-      "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\skills\\flowpilot\\assets\\runtime_kit\\cards\\roles\\flowguard_operator.md"
+      "skills/flowpilot/assets/flowpilot_core_runtime/role_handoff.py",
+      "skills/flowpilot/assets/flowpilot_core_runtime/packet_result_contracts.py",
+      "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+      "skills/flowpilot/assets/runtime_kit/cards/roles/project_manager.md",
+      "skills/flowpilot/assets/runtime_kit/cards/roles/worker.md",
+      "skills/flowpilot/assets/runtime_kit/cards/roles/human_like_reviewer.md",
+      "skills/flowpilot/assets/runtime_kit/cards/roles/flowguard_operator.md"
     ]
   },
   "known_bad_hazards": {

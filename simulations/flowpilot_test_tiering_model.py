@@ -53,6 +53,12 @@ class State:
     background_exit_inspected: bool = False
     background_progress_claimed_as_pass: bool = False
     background_timeout_enforced: bool = True
+    background_interpreter_bound_to_owner: bool = True
+    background_interpreter_is_direct_process_owner: bool = True
+    shared_runtime_resources_serialized: bool = True
+    background_descendant_settlement_bounded: bool = True
+    background_descendant_lineage_ordered: bool = True
+    background_surviving_descendants_fail_closed: bool = True
     json_write_readback_bounded: bool = True
     release_obligation_visible: bool = True
     release_required: bool = False
@@ -199,6 +205,30 @@ SCENARIOS: dict[str, State] = {
         background_progress_claimed_as_pass=True,
         background_timeout_enforced=False,
     ),
+    "background_inner_interpreter_follows_external_upgrade": replace(
+        _valid_background("background_inner_interpreter_follows_external_upgrade"),
+        background_interpreter_bound_to_owner=False,
+    ),
+    "background_windows_venv_shim_exits_before_process_owner": replace(
+        _valid_background("background_windows_venv_shim_exits_before_process_owner"),
+        background_interpreter_is_direct_process_owner=False,
+    ),
+    "background_shared_runtime_resource_race": replace(
+        _valid_background("background_shared_runtime_resource_race"),
+        shared_runtime_resources_serialized=False,
+    ),
+    "background_descendant_settlement_missing": replace(
+        _valid_background("background_descendant_settlement_missing"),
+        background_descendant_settlement_bounded=False,
+    ),
+    "background_predating_process_misclassified_as_descendant": replace(
+        _valid_background("background_predating_process_misclassified_as_descendant"),
+        background_descendant_lineage_ordered=False,
+    ),
+    "background_surviving_descendant_promoted": replace(
+        _valid_background("background_surviving_descendant_promoted"),
+        background_surviving_descendants_fail_closed=False,
+    ),
     "json_write_readback_can_hang_control_gate": replace(
         _valid_background("json_write_readback_can_hang_control_gate"),
         json_write_readback_bounded=False,
@@ -287,6 +317,18 @@ def test_tier_failures(state: State) -> list[str]:
         failures.append("background_progress_is_not_completion_evidence")
     if state.background_requested and not state.background_timeout_enforced:
         failures.append("background_timeout_not_enforced")
+    if state.background_requested and not state.background_interpreter_bound_to_owner:
+        failures.append("background_interpreter_not_bound_to_execution_owner")
+    if state.background_requested and not state.background_interpreter_is_direct_process_owner:
+        failures.append("background_interpreter_shim_not_direct_process_owner")
+    if state.background_requested and not state.shared_runtime_resources_serialized:
+        failures.append("background_shared_runtime_resource_not_serialized")
+    if state.background_requested and not state.background_descendant_settlement_bounded:
+        failures.append("background_descendant_settlement_not_bounded")
+    if state.background_requested and not state.background_descendant_lineage_ordered:
+        failures.append("background_descendant_lineage_not_ordered")
+    if state.background_requested and not state.background_surviving_descendants_fail_closed:
+        failures.append("background_surviving_descendants_not_fail_closed")
     if state.background_requested and not state.json_write_readback_bounded:
         failures.append("json_write_readback_not_bounded")
     if state.tier_scope == "release" and not state.release_suite_run_or_backgrounded:
@@ -358,6 +400,9 @@ class TestTierStep:
         "release_obligations",
         "testmesh_mta_final_confidence_dependency_graph",
         "background_stage_order",
+        "background_exclusive_resource",
+        "background_interpreter_launch_plan",
+        "background_process_tree_identity",
         "install_sync_plan",
     )
     writes = ("tier_confidence", "deferred_release_obligation")
@@ -399,6 +444,54 @@ def background_completion_requires_exit_evidence(
         return InvariantResult.fail("accepted background tier without inspected exit evidence")
     if state.status == "accepted" and state.background_requested and not state.background_timeout_enforced:
         return InvariantResult.fail("accepted background tier without timeout guard")
+    if (
+        state.status == "accepted"
+        and state.background_requested
+        and not state.background_interpreter_bound_to_owner
+    ):
+        return InvariantResult.fail(
+            "accepted background tier whose inner interpreter can follow an external upgrade"
+        )
+    if (
+        state.status == "accepted"
+        and state.background_requested
+        and not state.background_interpreter_is_direct_process_owner
+    ):
+        return InvariantResult.fail(
+            "accepted background tier whose short-lived interpreter shim is the process owner"
+        )
+    if (
+        state.status == "accepted"
+        and state.background_requested
+        and not state.shared_runtime_resources_serialized
+    ):
+        return InvariantResult.fail(
+            "accepted background tier with overlapping shared runtime resources"
+        )
+    if (
+        state.status == "accepted"
+        and state.background_requested
+        and not state.background_descendant_settlement_bounded
+    ):
+        return InvariantResult.fail(
+            "accepted background tier without bounded descendant settlement"
+        )
+    if (
+        state.status == "accepted"
+        and state.background_requested
+        and not state.background_descendant_lineage_ordered
+    ):
+        return InvariantResult.fail(
+            "accepted background tier that could terminate a process predating its owner"
+        )
+    if (
+        state.status == "accepted"
+        and state.background_requested
+        and not state.background_surviving_descendants_fail_closed
+    ):
+        return InvariantResult.fail(
+            "accepted background tier that promoted a surviving descendant"
+        )
     if state.status == "accepted" and state.background_requested and not state.json_write_readback_bounded:
         return InvariantResult.fail("accepted background tier with unbounded JSON write readback")
     return InvariantResult.pass_()

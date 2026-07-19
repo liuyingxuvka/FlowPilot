@@ -179,7 +179,12 @@ def _implementation_alignment() -> dict[str, object]:
         "controller_excluded": "controller" in texts["handoff"] and "foreground action ledger" in texts["handoff"],
     }
     missing = sorted(key for key, value in checks.items() if not value)
-    return {"ok": not missing, "checks": checks, "missing": missing, "paths": [str(path) for path in paths.values()]}
+    return {
+        "ok": not missing,
+        "checks": checks,
+        "missing": missing,
+        "paths": [path.relative_to(root).as_posix() for path in paths.values()],
+    }
 
 
 def run_checks() -> dict[str, object]:
@@ -221,4 +226,3 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

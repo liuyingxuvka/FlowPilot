@@ -323,19 +323,26 @@ class FlowPilotFakeProjectRehearsalTests(unittest.TestCase):
             {"packet_id": "packet-pm", "packet_kind": "pm_disposition", "route_scope": "node_pm_disposition"},
         ]
 
-        for packet in packets:
-            with self.subTest(packet=packet["packet_id"]):
-                opened = unit_open_result_fixture(packet)
-                family_id = packet_result_contracts.packet_result_family_id(packet)
-                body = json.loads(fake_project_cli.current_contract_body_from_open_result(opened))
-                self.assertFalse(
-                    packet_result_contracts.undeclared_success_fields_for_family(family_id, body),
-                    (family_id, body),
-                )
-                self.assertFalse(
-                    packet_result_contracts.forbidden_success_fields_for_family(family_id, body),
-                    (family_id, body),
-                )
+        with tempfile.TemporaryDirectory(prefix="flowpilot-current-contract-body-") as temp_root:
+            project_root = Path(temp_root)
+            for packet in packets:
+                with self.subTest(packet=packet["packet_id"]):
+                    opened = unit_open_result_fixture(packet)
+                    family_id = packet_result_contracts.packet_result_family_id(packet)
+                    body = json.loads(
+                        fake_project_cli.current_contract_body_from_open_result(
+                            opened,
+                            project_root=project_root,
+                        )
+                    )
+                    self.assertFalse(
+                        packet_result_contracts.undeclared_success_fields_for_family(family_id, body),
+                        (family_id, body),
+                    )
+                    self.assertFalse(
+                        packet_result_contracts.forbidden_success_fields_for_family(family_id, body),
+                        (family_id, body),
+                    )
 
     def test_flowguard_fake_body_consumes_required_subject_artifacts(self) -> None:
         packet = {

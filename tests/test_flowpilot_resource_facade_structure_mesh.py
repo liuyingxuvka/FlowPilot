@@ -65,6 +65,42 @@ class FlowPilotResourceFacadeStructureMeshTests(unittest.TestCase):
         self.assertTrue(child["report"]["ok"])
         self.assertTrue(all(row["blocked"] for row in child["hazards"]))
 
+    def test_test_tier_split_keeps_one_public_facade_and_single_child_owners(self) -> None:
+        plan = model.test_tier_structure_plan()
+        report = review_structure_mesh(plan)
+
+        self.assertTrue(report.ok, report.to_dict())
+        self.assertEqual(
+            {entry.entrypoint_id for entry in plan.public_entrypoints},
+            {"run_test_tier_cli", "run_test_tier_import_api"},
+        )
+        owners = {item.item_id: item.owner_module_id for item in plan.partition_items}
+        self.assertEqual(
+            owners["background_child_exact_process_tree"],
+            "test_tier_background_child",
+        )
+        self.assertEqual(
+            owners["background_supervisor_stage_scheduler"],
+            "test_tier_background_supervisor",
+        )
+
+    def test_test_tier_split_known_bad_variants_are_blocked(self) -> None:
+        expected = {
+            "missing_test_tier_partition_owner": "coverage_gap",
+            "duplicate_test_tier_state_owner": "duplicate_state_owner",
+            "missing_test_tier_facade": "facade_missing",
+            "removed_test_tier_entrypoint": "entrypoint_removed",
+            "stale_test_tier_parity": "release_parity_not_current",
+            "insufficient_test_tier_release_evidence": "insufficient_evidence_tier",
+        }
+        for name, code in expected.items():
+            with self.subTest(name=name):
+                report = review_structure_mesh(
+                    model.test_tier_structure_hazard_plan(name)
+                )
+                self.assertFalse(report.ok)
+                self.assertIn(code, {finding.code for finding in report.findings})
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,4 +1,6 @@
 {
+  "claim_boundary": "The refined model proves effective-member conservation, sibling rebinding, version agreement, and ledger/terminal target equality. Overall pass additionally requires current runtime/test conformance; no skipped production replay is counted as pass.",
+  "decision": "passed",
   "flowguard_explorer": {
     "dead_branch_count": 0,
     "exception_branch_count": 0,
@@ -10,6 +12,99 @@
   },
   "hazard_checks": {
     "hazards": {
+      "activated_route_version_mismatch": {
+        "detected": true,
+        "expected_failure": "activated route version disagrees with the replacement route version",
+        "failures": [
+          "activated route version disagrees with the replacement route version",
+          "effective route members do not all agree with active_route_version",
+          "unaffected siblings were not rebound into the activated route version"
+        ],
+        "state": {
+          "active_route_overwritten_before_activation": false,
+          "active_route_version": 1,
+          "affected_sibling_nodes_declared": false,
+          "after_effective_member_ids": [
+            "node-before",
+            "node-repair",
+            "node-sibling"
+          ],
+          "after_member_route_versions": [
+            [
+              "node-before",
+              2
+            ],
+            [
+              "node-repair",
+              2
+            ],
+            [
+              "node-sibling",
+              2
+            ]
+          ],
+          "before_effective_member_ids": [
+            "node-before",
+            "node-original",
+            "node-sibling"
+          ],
+          "candidate_node_entry_recorded": true,
+          "candidate_route_displayed_as_current": false,
+          "candidate_route_version": 2,
+          "continue_target_declared": false,
+          "display_receipt_recorded": true,
+          "effective_member_inventory_recorded": true,
+          "final_ledger_effective_member_ids": [
+            "node-before",
+            "node-repair",
+            "node-sibling"
+          ],
+          "final_ledger_started": false,
+          "forced_return_for_supersede": false,
+          "frontier_entered_candidate_before_activation": false,
+          "generated_files_only_display": false,
+          "holder": "project_manager",
+          "mermaid_topology_projected": true,
+          "old_current_node_packet_superseded": true,
+          "old_sibling_evidence_reused_as_current": false,
+          "pm_activation_recorded": true,
+          "pm_mutation_proposed": true,
+          "process_recheck_passed": true,
+          "product_recheck_passed": true,
+          "repair_node_id_declared": true,
+          "repair_of_node_id_declared": true,
+          "repair_rendered_as_final_mainline": false,
+          "replacement_effective_member_id": "node-repair",
+          "replay_scope_declared": false,
+          "return_target_declared": false,
+          "reviewer_block_recorded": true,
+          "reviewer_recheck_passed": true,
+          "route_memory_authority_validated_before_event_write": true,
+          "route_memory_revalidated_after_parent_decision_write": false,
+          "route_mutation_consumed_same_authority": true,
+          "route_visible_as_current": true,
+          "same_scope_replay_rerun_after_mutation": true,
+          "sealed_body_boundary_preserved": true,
+          "stale_evidence_invalidated": true,
+          "status": "running",
+          "superseded_effective_member_ids": [
+            "node-original"
+          ],
+          "superseded_node_shown_as_pending": false,
+          "superseded_nodes_declared": true,
+          "terminal_target_member_ids": [
+            "node-before",
+            "node-repair",
+            "node-sibling"
+          ],
+          "topology_strategy": "supersede_original",
+          "unaffected_sibling_node_ids": [
+            "node-before",
+            "node-sibling"
+          ],
+          "unaffected_siblings_rebound": true
+        }
+      },
       "activation_without_process_recheck": {
         "detected": true,
         "expected_failure": "PM activated candidate route before process FlowGuard recheck",
@@ -18,11 +113,49 @@
         ],
         "state": {
           "active_route_overwritten_before_activation": false,
+          "active_route_version": 2,
           "affected_sibling_nodes_declared": false,
+          "after_effective_member_ids": [
+            "node-before",
+            "node-repair",
+            "node-original",
+            "node-sibling"
+          ],
+          "after_member_route_versions": [
+            [
+              "node-before",
+              2
+            ],
+            [
+              "node-repair",
+              2
+            ],
+            [
+              "node-original",
+              2
+            ],
+            [
+              "node-sibling",
+              2
+            ]
+          ],
+          "before_effective_member_ids": [
+            "node-before",
+            "node-original",
+            "node-sibling"
+          ],
           "candidate_node_entry_recorded": false,
           "candidate_route_displayed_as_current": false,
+          "candidate_route_version": 2,
           "continue_target_declared": false,
           "display_receipt_recorded": false,
+          "effective_member_inventory_recorded": true,
+          "final_ledger_effective_member_ids": [
+            "node-before",
+            "node-repair",
+            "node-original",
+            "node-sibling"
+          ],
           "final_ledger_started": false,
           "forced_return_for_supersede": false,
           "frontier_entered_candidate_before_activation": false,
@@ -38,18 +171,34 @@
           "repair_node_id_declared": true,
           "repair_of_node_id_declared": true,
           "repair_rendered_as_final_mainline": false,
+          "replacement_effective_member_id": "node-repair",
           "replay_scope_declared": false,
           "return_target_declared": true,
           "reviewer_block_recorded": true,
           "reviewer_recheck_passed": true,
+          "route_memory_authority_validated_before_event_write": true,
+          "route_memory_revalidated_after_parent_decision_write": false,
+          "route_mutation_consumed_same_authority": true,
           "route_visible_as_current": false,
           "same_scope_replay_rerun_after_mutation": false,
           "sealed_body_boundary_preserved": true,
           "stale_evidence_invalidated": true,
           "status": "running",
+          "superseded_effective_member_ids": [],
           "superseded_node_shown_as_pending": false,
           "superseded_nodes_declared": false,
-          "topology_strategy": "return_to_original"
+          "terminal_target_member_ids": [
+            "node-before",
+            "node-repair",
+            "node-original",
+            "node-sibling"
+          ],
+          "topology_strategy": "return_to_original",
+          "unaffected_sibling_node_ids": [
+            "node-before",
+            "node-sibling"
+          ],
+          "unaffected_siblings_rebound": true
         }
       },
       "activation_without_product_or_reviewer_recheck": {
@@ -61,11 +210,49 @@
         ],
         "state": {
           "active_route_overwritten_before_activation": false,
+          "active_route_version": 2,
           "affected_sibling_nodes_declared": false,
+          "after_effective_member_ids": [
+            "node-before",
+            "node-repair",
+            "node-original",
+            "node-sibling"
+          ],
+          "after_member_route_versions": [
+            [
+              "node-before",
+              2
+            ],
+            [
+              "node-repair",
+              2
+            ],
+            [
+              "node-original",
+              2
+            ],
+            [
+              "node-sibling",
+              2
+            ]
+          ],
+          "before_effective_member_ids": [
+            "node-before",
+            "node-original",
+            "node-sibling"
+          ],
           "candidate_node_entry_recorded": false,
           "candidate_route_displayed_as_current": false,
+          "candidate_route_version": 2,
           "continue_target_declared": false,
           "display_receipt_recorded": false,
+          "effective_member_inventory_recorded": true,
+          "final_ledger_effective_member_ids": [
+            "node-before",
+            "node-repair",
+            "node-original",
+            "node-sibling"
+          ],
           "final_ledger_started": false,
           "forced_return_for_supersede": false,
           "frontier_entered_candidate_before_activation": false,
@@ -81,18 +268,34 @@
           "repair_node_id_declared": true,
           "repair_of_node_id_declared": true,
           "repair_rendered_as_final_mainline": false,
+          "replacement_effective_member_id": "node-repair",
           "replay_scope_declared": false,
           "return_target_declared": true,
           "reviewer_block_recorded": true,
           "reviewer_recheck_passed": false,
+          "route_memory_authority_validated_before_event_write": true,
+          "route_memory_revalidated_after_parent_decision_write": false,
+          "route_mutation_consumed_same_authority": true,
           "route_visible_as_current": false,
           "same_scope_replay_rerun_after_mutation": false,
           "sealed_body_boundary_preserved": true,
           "stale_evidence_invalidated": true,
           "status": "running",
+          "superseded_effective_member_ids": [],
           "superseded_node_shown_as_pending": false,
           "superseded_nodes_declared": false,
-          "topology_strategy": "return_to_original"
+          "terminal_target_member_ids": [
+            "node-before",
+            "node-repair",
+            "node-original",
+            "node-sibling"
+          ],
+          "topology_strategy": "return_to_original",
+          "unaffected_sibling_node_ids": [
+            "node-before",
+            "node-sibling"
+          ],
+          "unaffected_siblings_rebound": true
         }
       },
       "active_flow_overwritten_before_activation": {
@@ -103,11 +306,49 @@
         ],
         "state": {
           "active_route_overwritten_before_activation": true,
+          "active_route_version": 1,
           "affected_sibling_nodes_declared": false,
+          "after_effective_member_ids": [
+            "node-before",
+            "node-repair",
+            "node-original",
+            "node-sibling"
+          ],
+          "after_member_route_versions": [
+            [
+              "node-before",
+              2
+            ],
+            [
+              "node-repair",
+              2
+            ],
+            [
+              "node-original",
+              2
+            ],
+            [
+              "node-sibling",
+              2
+            ]
+          ],
+          "before_effective_member_ids": [
+            "node-before",
+            "node-original",
+            "node-sibling"
+          ],
           "candidate_node_entry_recorded": false,
           "candidate_route_displayed_as_current": false,
+          "candidate_route_version": 2,
           "continue_target_declared": false,
           "display_receipt_recorded": false,
+          "effective_member_inventory_recorded": true,
+          "final_ledger_effective_member_ids": [
+            "node-before",
+            "node-repair",
+            "node-original",
+            "node-sibling"
+          ],
           "final_ledger_started": false,
           "forced_return_for_supersede": false,
           "frontier_entered_candidate_before_activation": false,
@@ -123,18 +364,34 @@
           "repair_node_id_declared": true,
           "repair_of_node_id_declared": true,
           "repair_rendered_as_final_mainline": false,
+          "replacement_effective_member_id": "node-repair",
           "replay_scope_declared": false,
           "return_target_declared": true,
           "reviewer_block_recorded": true,
           "reviewer_recheck_passed": false,
+          "route_memory_authority_validated_before_event_write": true,
+          "route_memory_revalidated_after_parent_decision_write": false,
+          "route_mutation_consumed_same_authority": true,
           "route_visible_as_current": false,
           "same_scope_replay_rerun_after_mutation": false,
           "sealed_body_boundary_preserved": true,
           "stale_evidence_invalidated": false,
           "status": "running",
+          "superseded_effective_member_ids": [],
           "superseded_node_shown_as_pending": false,
           "superseded_nodes_declared": false,
-          "topology_strategy": "return_to_original"
+          "terminal_target_member_ids": [
+            "node-before",
+            "node-repair",
+            "node-original",
+            "node-sibling"
+          ],
+          "topology_strategy": "return_to_original",
+          "unaffected_sibling_node_ids": [
+            "node-before",
+            "node-sibling"
+          ],
+          "unaffected_siblings_rebound": true
         }
       },
       "candidate_route_displayed_before_activation": {
@@ -145,11 +402,49 @@
         ],
         "state": {
           "active_route_overwritten_before_activation": false,
+          "active_route_version": 1,
           "affected_sibling_nodes_declared": false,
+          "after_effective_member_ids": [
+            "node-before",
+            "node-repair",
+            "node-original",
+            "node-sibling"
+          ],
+          "after_member_route_versions": [
+            [
+              "node-before",
+              2
+            ],
+            [
+              "node-repair",
+              2
+            ],
+            [
+              "node-original",
+              2
+            ],
+            [
+              "node-sibling",
+              2
+            ]
+          ],
+          "before_effective_member_ids": [
+            "node-before",
+            "node-original",
+            "node-sibling"
+          ],
           "candidate_node_entry_recorded": false,
           "candidate_route_displayed_as_current": true,
+          "candidate_route_version": 2,
           "continue_target_declared": false,
           "display_receipt_recorded": false,
+          "effective_member_inventory_recorded": true,
+          "final_ledger_effective_member_ids": [
+            "node-before",
+            "node-repair",
+            "node-original",
+            "node-sibling"
+          ],
           "final_ledger_started": false,
           "forced_return_for_supersede": false,
           "frontier_entered_candidate_before_activation": false,
@@ -165,18 +460,125 @@
           "repair_node_id_declared": true,
           "repair_of_node_id_declared": true,
           "repair_rendered_as_final_mainline": false,
+          "replacement_effective_member_id": "node-repair",
           "replay_scope_declared": false,
           "return_target_declared": true,
           "reviewer_block_recorded": true,
           "reviewer_recheck_passed": false,
+          "route_memory_authority_validated_before_event_write": true,
+          "route_memory_revalidated_after_parent_decision_write": false,
+          "route_mutation_consumed_same_authority": true,
           "route_visible_as_current": false,
           "same_scope_replay_rerun_after_mutation": false,
           "sealed_body_boundary_preserved": true,
           "stale_evidence_invalidated": false,
           "status": "running",
+          "superseded_effective_member_ids": [],
           "superseded_node_shown_as_pending": false,
           "superseded_nodes_declared": false,
-          "topology_strategy": "return_to_original"
+          "terminal_target_member_ids": [
+            "node-before",
+            "node-repair",
+            "node-original",
+            "node-sibling"
+          ],
+          "topology_strategy": "return_to_original",
+          "unaffected_sibling_node_ids": [
+            "node-before",
+            "node-sibling"
+          ],
+          "unaffected_siblings_rebound": true
+        }
+      },
+      "final_ledger_effective_members_mismatch": {
+        "detected": true,
+        "expected_failure": "final ledger effective members disagree with activated effective route members",
+        "failures": [
+          "final ledger effective members disagree with activated effective route members",
+          "final ledger and terminal replay target inventories diverge"
+        ],
+        "state": {
+          "active_route_overwritten_before_activation": false,
+          "active_route_version": 2,
+          "affected_sibling_nodes_declared": false,
+          "after_effective_member_ids": [
+            "node-before",
+            "node-repair",
+            "node-sibling"
+          ],
+          "after_member_route_versions": [
+            [
+              "node-before",
+              2
+            ],
+            [
+              "node-repair",
+              2
+            ],
+            [
+              "node-sibling",
+              2
+            ]
+          ],
+          "before_effective_member_ids": [
+            "node-before",
+            "node-original",
+            "node-sibling"
+          ],
+          "candidate_node_entry_recorded": true,
+          "candidate_route_displayed_as_current": false,
+          "candidate_route_version": 2,
+          "continue_target_declared": false,
+          "display_receipt_recorded": true,
+          "effective_member_inventory_recorded": true,
+          "final_ledger_effective_member_ids": [
+            "node-before",
+            "node-repair"
+          ],
+          "final_ledger_started": false,
+          "forced_return_for_supersede": false,
+          "frontier_entered_candidate_before_activation": false,
+          "generated_files_only_display": false,
+          "holder": "project_manager",
+          "mermaid_topology_projected": true,
+          "old_current_node_packet_superseded": true,
+          "old_sibling_evidence_reused_as_current": false,
+          "pm_activation_recorded": true,
+          "pm_mutation_proposed": true,
+          "process_recheck_passed": true,
+          "product_recheck_passed": true,
+          "repair_node_id_declared": true,
+          "repair_of_node_id_declared": true,
+          "repair_rendered_as_final_mainline": false,
+          "replacement_effective_member_id": "node-repair",
+          "replay_scope_declared": false,
+          "return_target_declared": false,
+          "reviewer_block_recorded": true,
+          "reviewer_recheck_passed": true,
+          "route_memory_authority_validated_before_event_write": true,
+          "route_memory_revalidated_after_parent_decision_write": false,
+          "route_mutation_consumed_same_authority": true,
+          "route_visible_as_current": true,
+          "same_scope_replay_rerun_after_mutation": true,
+          "sealed_body_boundary_preserved": true,
+          "stale_evidence_invalidated": true,
+          "status": "running",
+          "superseded_effective_member_ids": [
+            "node-original"
+          ],
+          "superseded_node_shown_as_pending": false,
+          "superseded_nodes_declared": true,
+          "terminal_target_member_ids": [
+            "node-before",
+            "node-repair",
+            "node-sibling"
+          ],
+          "topology_strategy": "supersede_original",
+          "unaffected_sibling_node_ids": [
+            "node-before",
+            "node-sibling"
+          ],
+          "unaffected_siblings_rebound": true
         }
       },
       "final_scan_before_same_scope_replay_after_mutation": {
@@ -187,11 +589,49 @@
         ],
         "state": {
           "active_route_overwritten_before_activation": false,
+          "active_route_version": 2,
           "affected_sibling_nodes_declared": false,
+          "after_effective_member_ids": [
+            "node-before",
+            "node-repair",
+            "node-original",
+            "node-sibling"
+          ],
+          "after_member_route_versions": [
+            [
+              "node-before",
+              2
+            ],
+            [
+              "node-repair",
+              2
+            ],
+            [
+              "node-original",
+              2
+            ],
+            [
+              "node-sibling",
+              2
+            ]
+          ],
+          "before_effective_member_ids": [
+            "node-before",
+            "node-original",
+            "node-sibling"
+          ],
           "candidate_node_entry_recorded": true,
           "candidate_route_displayed_as_current": false,
+          "candidate_route_version": 2,
           "continue_target_declared": false,
           "display_receipt_recorded": false,
+          "effective_member_inventory_recorded": true,
+          "final_ledger_effective_member_ids": [
+            "node-before",
+            "node-repair",
+            "node-original",
+            "node-sibling"
+          ],
           "final_ledger_started": true,
           "forced_return_for_supersede": false,
           "frontier_entered_candidate_before_activation": false,
@@ -207,18 +647,34 @@
           "repair_node_id_declared": true,
           "repair_of_node_id_declared": true,
           "repair_rendered_as_final_mainline": false,
+          "replacement_effective_member_id": "node-repair",
           "replay_scope_declared": false,
           "return_target_declared": true,
           "reviewer_block_recorded": true,
           "reviewer_recheck_passed": true,
+          "route_memory_authority_validated_before_event_write": true,
+          "route_memory_revalidated_after_parent_decision_write": false,
+          "route_mutation_consumed_same_authority": true,
           "route_visible_as_current": false,
           "same_scope_replay_rerun_after_mutation": false,
           "sealed_body_boundary_preserved": true,
           "stale_evidence_invalidated": true,
           "status": "running",
+          "superseded_effective_member_ids": [],
           "superseded_node_shown_as_pending": false,
           "superseded_nodes_declared": false,
-          "topology_strategy": "return_to_original"
+          "terminal_target_member_ids": [
+            "node-before",
+            "node-repair",
+            "node-original",
+            "node-sibling"
+          ],
+          "topology_strategy": "return_to_original",
+          "unaffected_sibling_node_ids": [
+            "node-before",
+            "node-sibling"
+          ],
+          "unaffected_siblings_rebound": true
         }
       },
       "frontier_entered_candidate_before_activation": {
@@ -229,11 +685,49 @@
         ],
         "state": {
           "active_route_overwritten_before_activation": false,
+          "active_route_version": 1,
           "affected_sibling_nodes_declared": false,
+          "after_effective_member_ids": [
+            "node-before",
+            "node-repair",
+            "node-original",
+            "node-sibling"
+          ],
+          "after_member_route_versions": [
+            [
+              "node-before",
+              2
+            ],
+            [
+              "node-repair",
+              2
+            ],
+            [
+              "node-original",
+              2
+            ],
+            [
+              "node-sibling",
+              2
+            ]
+          ],
+          "before_effective_member_ids": [
+            "node-before",
+            "node-original",
+            "node-sibling"
+          ],
           "candidate_node_entry_recorded": false,
           "candidate_route_displayed_as_current": false,
+          "candidate_route_version": 2,
           "continue_target_declared": false,
           "display_receipt_recorded": false,
+          "effective_member_inventory_recorded": true,
+          "final_ledger_effective_member_ids": [
+            "node-before",
+            "node-repair",
+            "node-original",
+            "node-sibling"
+          ],
           "final_ledger_started": false,
           "forced_return_for_supersede": false,
           "frontier_entered_candidate_before_activation": true,
@@ -249,18 +743,34 @@
           "repair_node_id_declared": true,
           "repair_of_node_id_declared": true,
           "repair_rendered_as_final_mainline": false,
+          "replacement_effective_member_id": "node-repair",
           "replay_scope_declared": false,
           "return_target_declared": true,
           "reviewer_block_recorded": true,
           "reviewer_recheck_passed": false,
+          "route_memory_authority_validated_before_event_write": true,
+          "route_memory_revalidated_after_parent_decision_write": false,
+          "route_mutation_consumed_same_authority": true,
           "route_visible_as_current": false,
           "same_scope_replay_rerun_after_mutation": false,
           "sealed_body_boundary_preserved": true,
           "stale_evidence_invalidated": false,
           "status": "running",
+          "superseded_effective_member_ids": [],
           "superseded_node_shown_as_pending": false,
           "superseded_nodes_declared": false,
-          "topology_strategy": "return_to_original"
+          "terminal_target_member_ids": [
+            "node-before",
+            "node-repair",
+            "node-original",
+            "node-sibling"
+          ],
+          "topology_strategy": "return_to_original",
+          "unaffected_sibling_node_ids": [
+            "node-before",
+            "node-sibling"
+          ],
+          "unaffected_siblings_rebound": true
         }
       },
       "generated_files_only_display": {
@@ -271,11 +781,49 @@
         ],
         "state": {
           "active_route_overwritten_before_activation": false,
+          "active_route_version": 2,
           "affected_sibling_nodes_declared": false,
+          "after_effective_member_ids": [
+            "node-before",
+            "node-repair",
+            "node-original",
+            "node-sibling"
+          ],
+          "after_member_route_versions": [
+            [
+              "node-before",
+              2
+            ],
+            [
+              "node-repair",
+              2
+            ],
+            [
+              "node-original",
+              2
+            ],
+            [
+              "node-sibling",
+              2
+            ]
+          ],
+          "before_effective_member_ids": [
+            "node-before",
+            "node-original",
+            "node-sibling"
+          ],
           "candidate_node_entry_recorded": true,
           "candidate_route_displayed_as_current": false,
+          "candidate_route_version": 2,
           "continue_target_declared": false,
           "display_receipt_recorded": false,
+          "effective_member_inventory_recorded": true,
+          "final_ledger_effective_member_ids": [
+            "node-before",
+            "node-repair",
+            "node-original",
+            "node-sibling"
+          ],
           "final_ledger_started": false,
           "forced_return_for_supersede": false,
           "frontier_entered_candidate_before_activation": false,
@@ -291,18 +839,34 @@
           "repair_node_id_declared": true,
           "repair_of_node_id_declared": true,
           "repair_rendered_as_final_mainline": false,
+          "replacement_effective_member_id": "node-repair",
           "replay_scope_declared": false,
           "return_target_declared": true,
           "reviewer_block_recorded": true,
           "reviewer_recheck_passed": true,
+          "route_memory_authority_validated_before_event_write": true,
+          "route_memory_revalidated_after_parent_decision_write": false,
+          "route_mutation_consumed_same_authority": true,
           "route_visible_as_current": true,
           "same_scope_replay_rerun_after_mutation": true,
           "sealed_body_boundary_preserved": true,
           "stale_evidence_invalidated": true,
           "status": "running",
+          "superseded_effective_member_ids": [],
           "superseded_node_shown_as_pending": false,
           "superseded_nodes_declared": false,
-          "topology_strategy": "return_to_original"
+          "terminal_target_member_ids": [
+            "node-before",
+            "node-repair",
+            "node-original",
+            "node-sibling"
+          ],
+          "topology_strategy": "return_to_original",
+          "unaffected_sibling_node_ids": [
+            "node-before",
+            "node-sibling"
+          ],
+          "unaffected_siblings_rebound": true
         }
       },
       "missing_topology_strategy": {
@@ -313,11 +877,49 @@
         ],
         "state": {
           "active_route_overwritten_before_activation": false,
+          "active_route_version": 1,
           "affected_sibling_nodes_declared": false,
+          "after_effective_member_ids": [
+            "node-before",
+            "node-repair",
+            "node-original",
+            "node-sibling"
+          ],
+          "after_member_route_versions": [
+            [
+              "node-before",
+              2
+            ],
+            [
+              "node-repair",
+              2
+            ],
+            [
+              "node-original",
+              2
+            ],
+            [
+              "node-sibling",
+              2
+            ]
+          ],
+          "before_effective_member_ids": [
+            "node-before",
+            "node-original",
+            "node-sibling"
+          ],
           "candidate_node_entry_recorded": false,
           "candidate_route_displayed_as_current": false,
+          "candidate_route_version": 2,
           "continue_target_declared": false,
           "display_receipt_recorded": false,
+          "effective_member_inventory_recorded": true,
+          "final_ledger_effective_member_ids": [
+            "node-before",
+            "node-repair",
+            "node-original",
+            "node-sibling"
+          ],
           "final_ledger_started": false,
           "forced_return_for_supersede": false,
           "frontier_entered_candidate_before_activation": false,
@@ -333,18 +935,34 @@
           "repair_node_id_declared": true,
           "repair_of_node_id_declared": true,
           "repair_rendered_as_final_mainline": false,
+          "replacement_effective_member_id": "node-repair",
           "replay_scope_declared": false,
           "return_target_declared": false,
           "reviewer_block_recorded": true,
           "reviewer_recheck_passed": false,
+          "route_memory_authority_validated_before_event_write": true,
+          "route_memory_revalidated_after_parent_decision_write": false,
+          "route_mutation_consumed_same_authority": true,
           "route_visible_as_current": false,
           "same_scope_replay_rerun_after_mutation": false,
           "sealed_body_boundary_preserved": true,
           "stale_evidence_invalidated": false,
           "status": "running",
+          "superseded_effective_member_ids": [],
           "superseded_node_shown_as_pending": false,
           "superseded_nodes_declared": false,
-          "topology_strategy": "none"
+          "terminal_target_member_ids": [
+            "node-before",
+            "node-repair",
+            "node-original",
+            "node-sibling"
+          ],
+          "topology_strategy": "none",
+          "unaffected_sibling_node_ids": [
+            "node-before",
+            "node-sibling"
+          ],
+          "unaffected_siblings_rebound": true
         }
       },
       "old_sibling_evidence_reused_after_replacement": {
@@ -355,11 +973,43 @@
         ],
         "state": {
           "active_route_overwritten_before_activation": false,
+          "active_route_version": 2,
           "affected_sibling_nodes_declared": true,
+          "after_effective_member_ids": [
+            "node-before",
+            "node-repair",
+            "node-sibling"
+          ],
+          "after_member_route_versions": [
+            [
+              "node-before",
+              2
+            ],
+            [
+              "node-repair",
+              2
+            ],
+            [
+              "node-sibling",
+              2
+            ]
+          ],
+          "before_effective_member_ids": [
+            "node-before",
+            "node-original",
+            "node-sibling"
+          ],
           "candidate_node_entry_recorded": true,
           "candidate_route_displayed_as_current": false,
+          "candidate_route_version": 2,
           "continue_target_declared": false,
           "display_receipt_recorded": true,
+          "effective_member_inventory_recorded": true,
+          "final_ledger_effective_member_ids": [
+            "node-before",
+            "node-repair",
+            "node-sibling"
+          ],
           "final_ledger_started": false,
           "forced_return_for_supersede": false,
           "frontier_entered_candidate_before_activation": false,
@@ -375,18 +1025,132 @@
           "repair_node_id_declared": true,
           "repair_of_node_id_declared": true,
           "repair_rendered_as_final_mainline": false,
+          "replacement_effective_member_id": "node-repair",
           "replay_scope_declared": true,
           "return_target_declared": false,
           "reviewer_block_recorded": true,
           "reviewer_recheck_passed": true,
+          "route_memory_authority_validated_before_event_write": true,
+          "route_memory_revalidated_after_parent_decision_write": false,
+          "route_mutation_consumed_same_authority": true,
           "route_visible_as_current": true,
           "same_scope_replay_rerun_after_mutation": true,
           "sealed_body_boundary_preserved": true,
           "stale_evidence_invalidated": true,
           "status": "running",
+          "superseded_effective_member_ids": [
+            "node-original"
+          ],
           "superseded_node_shown_as_pending": false,
           "superseded_nodes_declared": false,
-          "topology_strategy": "sibling_branch_replacement"
+          "terminal_target_member_ids": [
+            "node-before",
+            "node-repair",
+            "node-sibling"
+          ],
+          "topology_strategy": "sibling_branch_replacement",
+          "unaffected_sibling_node_ids": [
+            "node-before",
+            "node-sibling"
+          ],
+          "unaffected_siblings_rebound": true
+        }
+      },
+      "parent_decision_self_invalidates_nested_route_mutation_authority": {
+        "detected": true,
+        "expected_failure": "route mutation revalidated route memory after its own parent-decision write",
+        "failures": [
+          "route mutation did not consume the parent decision's validated authority",
+          "route mutation revalidated route memory after its own parent-decision write"
+        ],
+        "state": {
+          "active_route_overwritten_before_activation": false,
+          "active_route_version": 1,
+          "affected_sibling_nodes_declared": false,
+          "after_effective_member_ids": [
+            "node-before",
+            "node-repair",
+            "node-original",
+            "node-sibling"
+          ],
+          "after_member_route_versions": [
+            [
+              "node-before",
+              2
+            ],
+            [
+              "node-repair",
+              2
+            ],
+            [
+              "node-original",
+              2
+            ],
+            [
+              "node-sibling",
+              2
+            ]
+          ],
+          "before_effective_member_ids": [
+            "node-before",
+            "node-original",
+            "node-sibling"
+          ],
+          "candidate_node_entry_recorded": false,
+          "candidate_route_displayed_as_current": false,
+          "candidate_route_version": 2,
+          "continue_target_declared": false,
+          "display_receipt_recorded": false,
+          "effective_member_inventory_recorded": true,
+          "final_ledger_effective_member_ids": [
+            "node-before",
+            "node-repair",
+            "node-original",
+            "node-sibling"
+          ],
+          "final_ledger_started": false,
+          "forced_return_for_supersede": false,
+          "frontier_entered_candidate_before_activation": false,
+          "generated_files_only_display": false,
+          "holder": "project_manager",
+          "mermaid_topology_projected": false,
+          "old_current_node_packet_superseded": false,
+          "old_sibling_evidence_reused_as_current": false,
+          "pm_activation_recorded": false,
+          "pm_mutation_proposed": true,
+          "process_recheck_passed": false,
+          "product_recheck_passed": false,
+          "repair_node_id_declared": true,
+          "repair_of_node_id_declared": true,
+          "repair_rendered_as_final_mainline": false,
+          "replacement_effective_member_id": "node-repair",
+          "replay_scope_declared": false,
+          "return_target_declared": true,
+          "reviewer_block_recorded": true,
+          "reviewer_recheck_passed": false,
+          "route_memory_authority_validated_before_event_write": true,
+          "route_memory_revalidated_after_parent_decision_write": true,
+          "route_mutation_consumed_same_authority": false,
+          "route_visible_as_current": false,
+          "same_scope_replay_rerun_after_mutation": false,
+          "sealed_body_boundary_preserved": true,
+          "stale_evidence_invalidated": false,
+          "status": "running",
+          "superseded_effective_member_ids": [],
+          "superseded_node_shown_as_pending": false,
+          "superseded_nodes_declared": false,
+          "terminal_target_member_ids": [
+            "node-before",
+            "node-repair",
+            "node-original",
+            "node-sibling"
+          ],
+          "topology_strategy": "return_to_original",
+          "unaffected_sibling_node_ids": [
+            "node-before",
+            "node-sibling"
+          ],
+          "unaffected_siblings_rebound": true
         }
       },
       "repair_rendered_as_final_mainline": {
@@ -397,11 +1161,49 @@
         ],
         "state": {
           "active_route_overwritten_before_activation": false,
+          "active_route_version": 2,
           "affected_sibling_nodes_declared": false,
+          "after_effective_member_ids": [
+            "node-before",
+            "node-repair",
+            "node-original",
+            "node-sibling"
+          ],
+          "after_member_route_versions": [
+            [
+              "node-before",
+              2
+            ],
+            [
+              "node-repair",
+              2
+            ],
+            [
+              "node-original",
+              2
+            ],
+            [
+              "node-sibling",
+              2
+            ]
+          ],
+          "before_effective_member_ids": [
+            "node-before",
+            "node-original",
+            "node-sibling"
+          ],
           "candidate_node_entry_recorded": true,
           "candidate_route_displayed_as_current": false,
+          "candidate_route_version": 2,
           "continue_target_declared": false,
           "display_receipt_recorded": true,
+          "effective_member_inventory_recorded": true,
+          "final_ledger_effective_member_ids": [
+            "node-before",
+            "node-repair",
+            "node-original",
+            "node-sibling"
+          ],
           "final_ledger_started": false,
           "forced_return_for_supersede": false,
           "frontier_entered_candidate_before_activation": false,
@@ -417,117 +1219,77 @@
           "repair_node_id_declared": true,
           "repair_of_node_id_declared": true,
           "repair_rendered_as_final_mainline": true,
+          "replacement_effective_member_id": "node-repair",
           "replay_scope_declared": false,
           "return_target_declared": true,
           "reviewer_block_recorded": true,
           "reviewer_recheck_passed": true,
+          "route_memory_authority_validated_before_event_write": true,
+          "route_memory_revalidated_after_parent_decision_write": false,
+          "route_mutation_consumed_same_authority": true,
           "route_visible_as_current": true,
           "same_scope_replay_rerun_after_mutation": true,
           "sealed_body_boundary_preserved": true,
           "stale_evidence_invalidated": true,
           "status": "running",
+          "superseded_effective_member_ids": [],
           "superseded_node_shown_as_pending": false,
           "superseded_nodes_declared": false,
-          "topology_strategy": "return_to_original"
+          "terminal_target_member_ids": [
+            "node-before",
+            "node-repair",
+            "node-original",
+            "node-sibling"
+          ],
+          "topology_strategy": "return_to_original",
+          "unaffected_sibling_node_ids": [
+            "node-before",
+            "node-sibling"
+          ],
+          "unaffected_siblings_rebound": true
         }
       },
-      "return_repair_without_return_target": {
+      "replacement_drops_unaffected_sibling": {
         "detected": true,
-        "expected_failure": "return_to_original mutation lacks repair_return_to_node_id",
+        "expected_failure": "route replacement lost unaffected effective siblings",
         "failures": [
-          "return_to_original mutation lacks repair_return_to_node_id"
+          "route replacement lost unaffected effective siblings",
+          "after-replacement effective member inventory does not conserve retained members plus replacement",
+          "unaffected siblings were not rebound into the activated route version"
         ],
         "state": {
           "active_route_overwritten_before_activation": false,
+          "active_route_version": 2,
           "affected_sibling_nodes_declared": false,
-          "candidate_node_entry_recorded": false,
-          "candidate_route_displayed_as_current": false,
-          "continue_target_declared": false,
-          "display_receipt_recorded": false,
-          "final_ledger_started": false,
-          "forced_return_for_supersede": false,
-          "frontier_entered_candidate_before_activation": false,
-          "generated_files_only_display": false,
-          "holder": "project_manager",
-          "mermaid_topology_projected": false,
-          "old_current_node_packet_superseded": false,
-          "old_sibling_evidence_reused_as_current": false,
-          "pm_activation_recorded": false,
-          "pm_mutation_proposed": true,
-          "process_recheck_passed": false,
-          "product_recheck_passed": false,
-          "repair_node_id_declared": true,
-          "repair_of_node_id_declared": true,
-          "repair_rendered_as_final_mainline": false,
-          "replay_scope_declared": false,
-          "return_target_declared": false,
-          "reviewer_block_recorded": true,
-          "reviewer_recheck_passed": false,
-          "route_visible_as_current": false,
-          "same_scope_replay_rerun_after_mutation": false,
-          "sealed_body_boundary_preserved": true,
-          "stale_evidence_invalidated": false,
-          "status": "running",
-          "superseded_node_shown_as_pending": false,
-          "superseded_nodes_declared": false,
-          "topology_strategy": "return_to_original"
-        }
-      },
-      "route_recheck_before_old_packet_superseded": {
-        "detected": true,
-        "expected_failure": "route recheck started while the old current-node packet still blocked PM work",
-        "failures": [
-          "route recheck started while the old current-node packet still blocked PM work"
-        ],
-        "state": {
-          "active_route_overwritten_before_activation": false,
-          "affected_sibling_nodes_declared": false,
-          "candidate_node_entry_recorded": false,
-          "candidate_route_displayed_as_current": false,
-          "continue_target_declared": false,
-          "display_receipt_recorded": false,
-          "final_ledger_started": false,
-          "forced_return_for_supersede": false,
-          "frontier_entered_candidate_before_activation": false,
-          "generated_files_only_display": false,
-          "holder": "project_manager",
-          "mermaid_topology_projected": false,
-          "old_current_node_packet_superseded": false,
-          "old_sibling_evidence_reused_as_current": false,
-          "pm_activation_recorded": false,
-          "pm_mutation_proposed": true,
-          "process_recheck_passed": true,
-          "product_recheck_passed": false,
-          "repair_node_id_declared": true,
-          "repair_of_node_id_declared": true,
-          "repair_rendered_as_final_mainline": false,
-          "replay_scope_declared": false,
-          "return_target_declared": true,
-          "reviewer_block_recorded": true,
-          "reviewer_recheck_passed": false,
-          "route_visible_as_current": false,
-          "same_scope_replay_rerun_after_mutation": false,
-          "sealed_body_boundary_preserved": true,
-          "stale_evidence_invalidated": true,
-          "status": "running",
-          "superseded_node_shown_as_pending": false,
-          "superseded_nodes_declared": false,
-          "topology_strategy": "return_to_original"
-        }
-      },
-      "sealed_body_boundary_broken": {
-        "detected": true,
-        "expected_failure": "route mutation display weakened the sealed packet/result body boundary",
-        "failures": [
-          "route mutation display weakened the sealed packet/result body boundary"
-        ],
-        "state": {
-          "active_route_overwritten_before_activation": false,
-          "affected_sibling_nodes_declared": false,
+          "after_effective_member_ids": [
+            "node-before",
+            "node-repair"
+          ],
+          "after_member_route_versions": [
+            [
+              "node-before",
+              2
+            ],
+            [
+              "node-repair",
+              2
+            ]
+          ],
+          "before_effective_member_ids": [
+            "node-before",
+            "node-original",
+            "node-sibling"
+          ],
           "candidate_node_entry_recorded": true,
           "candidate_route_displayed_as_current": false,
+          "candidate_route_version": 2,
           "continue_target_declared": false,
           "display_receipt_recorded": true,
+          "effective_member_inventory_recorded": true,
+          "final_ledger_effective_member_ids": [
+            "node-before",
+            "node-repair"
+          ],
           "final_ledger_started": false,
           "forced_return_for_supersede": false,
           "frontier_entered_candidate_before_activation": false,
@@ -543,18 +1305,322 @@
           "repair_node_id_declared": true,
           "repair_of_node_id_declared": true,
           "repair_rendered_as_final_mainline": false,
+          "replacement_effective_member_id": "node-repair",
+          "replay_scope_declared": false,
+          "return_target_declared": false,
+          "reviewer_block_recorded": true,
+          "reviewer_recheck_passed": true,
+          "route_memory_authority_validated_before_event_write": true,
+          "route_memory_revalidated_after_parent_decision_write": false,
+          "route_mutation_consumed_same_authority": true,
+          "route_visible_as_current": true,
+          "same_scope_replay_rerun_after_mutation": true,
+          "sealed_body_boundary_preserved": true,
+          "stale_evidence_invalidated": true,
+          "status": "running",
+          "superseded_effective_member_ids": [
+            "node-original"
+          ],
+          "superseded_node_shown_as_pending": false,
+          "superseded_nodes_declared": true,
+          "terminal_target_member_ids": [
+            "node-before",
+            "node-repair"
+          ],
+          "topology_strategy": "supersede_original",
+          "unaffected_sibling_node_ids": [
+            "node-before",
+            "node-sibling"
+          ],
+          "unaffected_siblings_rebound": true
+        }
+      },
+      "return_repair_without_return_target": {
+        "detected": true,
+        "expected_failure": "return_to_original mutation lacks repair_return_to_node_id",
+        "failures": [
+          "return_to_original mutation lacks repair_return_to_node_id"
+        ],
+        "state": {
+          "active_route_overwritten_before_activation": false,
+          "active_route_version": 1,
+          "affected_sibling_nodes_declared": false,
+          "after_effective_member_ids": [
+            "node-before",
+            "node-repair",
+            "node-original",
+            "node-sibling"
+          ],
+          "after_member_route_versions": [
+            [
+              "node-before",
+              2
+            ],
+            [
+              "node-repair",
+              2
+            ],
+            [
+              "node-original",
+              2
+            ],
+            [
+              "node-sibling",
+              2
+            ]
+          ],
+          "before_effective_member_ids": [
+            "node-before",
+            "node-original",
+            "node-sibling"
+          ],
+          "candidate_node_entry_recorded": false,
+          "candidate_route_displayed_as_current": false,
+          "candidate_route_version": 2,
+          "continue_target_declared": false,
+          "display_receipt_recorded": false,
+          "effective_member_inventory_recorded": true,
+          "final_ledger_effective_member_ids": [
+            "node-before",
+            "node-repair",
+            "node-original",
+            "node-sibling"
+          ],
+          "final_ledger_started": false,
+          "forced_return_for_supersede": false,
+          "frontier_entered_candidate_before_activation": false,
+          "generated_files_only_display": false,
+          "holder": "project_manager",
+          "mermaid_topology_projected": false,
+          "old_current_node_packet_superseded": false,
+          "old_sibling_evidence_reused_as_current": false,
+          "pm_activation_recorded": false,
+          "pm_mutation_proposed": true,
+          "process_recheck_passed": false,
+          "product_recheck_passed": false,
+          "repair_node_id_declared": true,
+          "repair_of_node_id_declared": true,
+          "repair_rendered_as_final_mainline": false,
+          "replacement_effective_member_id": "node-repair",
+          "replay_scope_declared": false,
+          "return_target_declared": false,
+          "reviewer_block_recorded": true,
+          "reviewer_recheck_passed": false,
+          "route_memory_authority_validated_before_event_write": true,
+          "route_memory_revalidated_after_parent_decision_write": false,
+          "route_mutation_consumed_same_authority": true,
+          "route_visible_as_current": false,
+          "same_scope_replay_rerun_after_mutation": false,
+          "sealed_body_boundary_preserved": true,
+          "stale_evidence_invalidated": false,
+          "status": "running",
+          "superseded_effective_member_ids": [],
+          "superseded_node_shown_as_pending": false,
+          "superseded_nodes_declared": false,
+          "terminal_target_member_ids": [
+            "node-before",
+            "node-repair",
+            "node-original",
+            "node-sibling"
+          ],
+          "topology_strategy": "return_to_original",
+          "unaffected_sibling_node_ids": [
+            "node-before",
+            "node-sibling"
+          ],
+          "unaffected_siblings_rebound": true
+        }
+      },
+      "route_recheck_before_old_packet_superseded": {
+        "detected": true,
+        "expected_failure": "route recheck started while the old current-node packet still blocked PM work",
+        "failures": [
+          "route recheck started while the old current-node packet still blocked PM work"
+        ],
+        "state": {
+          "active_route_overwritten_before_activation": false,
+          "active_route_version": 1,
+          "affected_sibling_nodes_declared": false,
+          "after_effective_member_ids": [
+            "node-before",
+            "node-repair",
+            "node-original",
+            "node-sibling"
+          ],
+          "after_member_route_versions": [
+            [
+              "node-before",
+              2
+            ],
+            [
+              "node-repair",
+              2
+            ],
+            [
+              "node-original",
+              2
+            ],
+            [
+              "node-sibling",
+              2
+            ]
+          ],
+          "before_effective_member_ids": [
+            "node-before",
+            "node-original",
+            "node-sibling"
+          ],
+          "candidate_node_entry_recorded": false,
+          "candidate_route_displayed_as_current": false,
+          "candidate_route_version": 2,
+          "continue_target_declared": false,
+          "display_receipt_recorded": false,
+          "effective_member_inventory_recorded": true,
+          "final_ledger_effective_member_ids": [
+            "node-before",
+            "node-repair",
+            "node-original",
+            "node-sibling"
+          ],
+          "final_ledger_started": false,
+          "forced_return_for_supersede": false,
+          "frontier_entered_candidate_before_activation": false,
+          "generated_files_only_display": false,
+          "holder": "project_manager",
+          "mermaid_topology_projected": false,
+          "old_current_node_packet_superseded": false,
+          "old_sibling_evidence_reused_as_current": false,
+          "pm_activation_recorded": false,
+          "pm_mutation_proposed": true,
+          "process_recheck_passed": true,
+          "product_recheck_passed": false,
+          "repair_node_id_declared": true,
+          "repair_of_node_id_declared": true,
+          "repair_rendered_as_final_mainline": false,
+          "replacement_effective_member_id": "node-repair",
+          "replay_scope_declared": false,
+          "return_target_declared": true,
+          "reviewer_block_recorded": true,
+          "reviewer_recheck_passed": false,
+          "route_memory_authority_validated_before_event_write": true,
+          "route_memory_revalidated_after_parent_decision_write": false,
+          "route_mutation_consumed_same_authority": true,
+          "route_visible_as_current": false,
+          "same_scope_replay_rerun_after_mutation": false,
+          "sealed_body_boundary_preserved": true,
+          "stale_evidence_invalidated": true,
+          "status": "running",
+          "superseded_effective_member_ids": [],
+          "superseded_node_shown_as_pending": false,
+          "superseded_nodes_declared": false,
+          "terminal_target_member_ids": [
+            "node-before",
+            "node-repair",
+            "node-original",
+            "node-sibling"
+          ],
+          "topology_strategy": "return_to_original",
+          "unaffected_sibling_node_ids": [
+            "node-before",
+            "node-sibling"
+          ],
+          "unaffected_siblings_rebound": true
+        }
+      },
+      "sealed_body_boundary_broken": {
+        "detected": true,
+        "expected_failure": "route mutation display weakened the sealed packet/result body boundary",
+        "failures": [
+          "route mutation display weakened the sealed packet/result body boundary"
+        ],
+        "state": {
+          "active_route_overwritten_before_activation": false,
+          "active_route_version": 2,
+          "affected_sibling_nodes_declared": false,
+          "after_effective_member_ids": [
+            "node-before",
+            "node-repair",
+            "node-original",
+            "node-sibling"
+          ],
+          "after_member_route_versions": [
+            [
+              "node-before",
+              2
+            ],
+            [
+              "node-repair",
+              2
+            ],
+            [
+              "node-original",
+              2
+            ],
+            [
+              "node-sibling",
+              2
+            ]
+          ],
+          "before_effective_member_ids": [
+            "node-before",
+            "node-original",
+            "node-sibling"
+          ],
+          "candidate_node_entry_recorded": true,
+          "candidate_route_displayed_as_current": false,
+          "candidate_route_version": 2,
+          "continue_target_declared": false,
+          "display_receipt_recorded": true,
+          "effective_member_inventory_recorded": true,
+          "final_ledger_effective_member_ids": [
+            "node-before",
+            "node-repair",
+            "node-original",
+            "node-sibling"
+          ],
+          "final_ledger_started": false,
+          "forced_return_for_supersede": false,
+          "frontier_entered_candidate_before_activation": false,
+          "generated_files_only_display": false,
+          "holder": "project_manager",
+          "mermaid_topology_projected": true,
+          "old_current_node_packet_superseded": true,
+          "old_sibling_evidence_reused_as_current": false,
+          "pm_activation_recorded": true,
+          "pm_mutation_proposed": true,
+          "process_recheck_passed": true,
+          "product_recheck_passed": true,
+          "repair_node_id_declared": true,
+          "repair_of_node_id_declared": true,
+          "repair_rendered_as_final_mainline": false,
+          "replacement_effective_member_id": "node-repair",
           "replay_scope_declared": false,
           "return_target_declared": true,
           "reviewer_block_recorded": true,
           "reviewer_recheck_passed": true,
+          "route_memory_authority_validated_before_event_write": true,
+          "route_memory_revalidated_after_parent_decision_write": false,
+          "route_mutation_consumed_same_authority": true,
           "route_visible_as_current": true,
           "same_scope_replay_rerun_after_mutation": true,
           "sealed_body_boundary_preserved": false,
           "stale_evidence_invalidated": true,
           "status": "running",
+          "superseded_effective_member_ids": [],
           "superseded_node_shown_as_pending": false,
           "superseded_nodes_declared": false,
-          "topology_strategy": "return_to_original"
+          "terminal_target_member_ids": [
+            "node-before",
+            "node-repair",
+            "node-original",
+            "node-sibling"
+          ],
+          "topology_strategy": "return_to_original",
+          "unaffected_sibling_node_ids": [
+            "node-before",
+            "node-sibling"
+          ],
+          "unaffected_siblings_rebound": true
         }
       },
       "sibling_replacement_without_affected_siblings": {
@@ -565,11 +1631,43 @@
         ],
         "state": {
           "active_route_overwritten_before_activation": false,
+          "active_route_version": 1,
           "affected_sibling_nodes_declared": false,
+          "after_effective_member_ids": [
+            "node-before",
+            "node-repair",
+            "node-sibling"
+          ],
+          "after_member_route_versions": [
+            [
+              "node-before",
+              2
+            ],
+            [
+              "node-repair",
+              2
+            ],
+            [
+              "node-sibling",
+              2
+            ]
+          ],
+          "before_effective_member_ids": [
+            "node-before",
+            "node-original",
+            "node-sibling"
+          ],
           "candidate_node_entry_recorded": false,
           "candidate_route_displayed_as_current": false,
+          "candidate_route_version": 2,
           "continue_target_declared": false,
           "display_receipt_recorded": false,
+          "effective_member_inventory_recorded": true,
+          "final_ledger_effective_member_ids": [
+            "node-before",
+            "node-repair",
+            "node-sibling"
+          ],
           "final_ledger_started": false,
           "forced_return_for_supersede": false,
           "frontier_entered_candidate_before_activation": false,
@@ -585,18 +1683,35 @@
           "repair_node_id_declared": true,
           "repair_of_node_id_declared": true,
           "repair_rendered_as_final_mainline": false,
+          "replacement_effective_member_id": "node-repair",
           "replay_scope_declared": true,
           "return_target_declared": false,
           "reviewer_block_recorded": true,
           "reviewer_recheck_passed": false,
+          "route_memory_authority_validated_before_event_write": true,
+          "route_memory_revalidated_after_parent_decision_write": false,
+          "route_mutation_consumed_same_authority": true,
           "route_visible_as_current": false,
           "same_scope_replay_rerun_after_mutation": false,
           "sealed_body_boundary_preserved": true,
           "stale_evidence_invalidated": false,
           "status": "running",
+          "superseded_effective_member_ids": [
+            "node-original"
+          ],
           "superseded_node_shown_as_pending": false,
           "superseded_nodes_declared": false,
-          "topology_strategy": "sibling_branch_replacement"
+          "terminal_target_member_ids": [
+            "node-before",
+            "node-repair",
+            "node-sibling"
+          ],
+          "topology_strategy": "sibling_branch_replacement",
+          "unaffected_sibling_node_ids": [
+            "node-before",
+            "node-sibling"
+          ],
+          "unaffected_siblings_rebound": true
         }
       },
       "sibling_replacement_without_replay_scope": {
@@ -607,11 +1722,43 @@
         ],
         "state": {
           "active_route_overwritten_before_activation": false,
+          "active_route_version": 1,
           "affected_sibling_nodes_declared": true,
+          "after_effective_member_ids": [
+            "node-before",
+            "node-repair",
+            "node-sibling"
+          ],
+          "after_member_route_versions": [
+            [
+              "node-before",
+              2
+            ],
+            [
+              "node-repair",
+              2
+            ],
+            [
+              "node-sibling",
+              2
+            ]
+          ],
+          "before_effective_member_ids": [
+            "node-before",
+            "node-original",
+            "node-sibling"
+          ],
           "candidate_node_entry_recorded": false,
           "candidate_route_displayed_as_current": false,
+          "candidate_route_version": 2,
           "continue_target_declared": false,
           "display_receipt_recorded": false,
+          "effective_member_inventory_recorded": true,
+          "final_ledger_effective_member_ids": [
+            "node-before",
+            "node-repair",
+            "node-sibling"
+          ],
           "final_ledger_started": false,
           "forced_return_for_supersede": false,
           "frontier_entered_candidate_before_activation": false,
@@ -627,18 +1774,35 @@
           "repair_node_id_declared": true,
           "repair_of_node_id_declared": true,
           "repair_rendered_as_final_mainline": false,
+          "replacement_effective_member_id": "node-repair",
           "replay_scope_declared": false,
           "return_target_declared": false,
           "reviewer_block_recorded": true,
           "reviewer_recheck_passed": false,
+          "route_memory_authority_validated_before_event_write": true,
+          "route_memory_revalidated_after_parent_decision_write": false,
+          "route_mutation_consumed_same_authority": true,
           "route_visible_as_current": false,
           "same_scope_replay_rerun_after_mutation": false,
           "sealed_body_boundary_preserved": true,
           "stale_evidence_invalidated": false,
           "status": "running",
+          "superseded_effective_member_ids": [
+            "node-original"
+          ],
           "superseded_node_shown_as_pending": false,
           "superseded_nodes_declared": false,
-          "topology_strategy": "sibling_branch_replacement"
+          "terminal_target_member_ids": [
+            "node-before",
+            "node-repair",
+            "node-sibling"
+          ],
+          "topology_strategy": "sibling_branch_replacement",
+          "unaffected_sibling_node_ids": [
+            "node-before",
+            "node-sibling"
+          ],
+          "unaffected_siblings_rebound": true
         }
       },
       "stale_evidence_reused_before_activation": {
@@ -649,11 +1813,49 @@
         ],
         "state": {
           "active_route_overwritten_before_activation": false,
+          "active_route_version": 2,
           "affected_sibling_nodes_declared": false,
+          "after_effective_member_ids": [
+            "node-before",
+            "node-repair",
+            "node-original",
+            "node-sibling"
+          ],
+          "after_member_route_versions": [
+            [
+              "node-before",
+              2
+            ],
+            [
+              "node-repair",
+              2
+            ],
+            [
+              "node-original",
+              2
+            ],
+            [
+              "node-sibling",
+              2
+            ]
+          ],
+          "before_effective_member_ids": [
+            "node-before",
+            "node-original",
+            "node-sibling"
+          ],
           "candidate_node_entry_recorded": false,
           "candidate_route_displayed_as_current": false,
+          "candidate_route_version": 2,
           "continue_target_declared": false,
           "display_receipt_recorded": false,
+          "effective_member_inventory_recorded": true,
+          "final_ledger_effective_member_ids": [
+            "node-before",
+            "node-repair",
+            "node-original",
+            "node-sibling"
+          ],
           "final_ledger_started": false,
           "forced_return_for_supersede": false,
           "frontier_entered_candidate_before_activation": false,
@@ -669,18 +1871,34 @@
           "repair_node_id_declared": true,
           "repair_of_node_id_declared": true,
           "repair_rendered_as_final_mainline": false,
+          "replacement_effective_member_id": "node-repair",
           "replay_scope_declared": false,
           "return_target_declared": true,
           "reviewer_block_recorded": true,
           "reviewer_recheck_passed": true,
+          "route_memory_authority_validated_before_event_write": true,
+          "route_memory_revalidated_after_parent_decision_write": false,
+          "route_mutation_consumed_same_authority": true,
           "route_visible_as_current": false,
           "same_scope_replay_rerun_after_mutation": false,
           "sealed_body_boundary_preserved": true,
           "stale_evidence_invalidated": false,
           "status": "running",
+          "superseded_effective_member_ids": [],
           "superseded_node_shown_as_pending": false,
           "superseded_nodes_declared": false,
-          "topology_strategy": "return_to_original"
+          "terminal_target_member_ids": [
+            "node-before",
+            "node-repair",
+            "node-original",
+            "node-sibling"
+          ],
+          "topology_strategy": "return_to_original",
+          "unaffected_sibling_node_ids": [
+            "node-before",
+            "node-sibling"
+          ],
+          "unaffected_siblings_rebound": true
         }
       },
       "supersede_original_forced_to_return": {
@@ -691,11 +1909,43 @@
         ],
         "state": {
           "active_route_overwritten_before_activation": false,
+          "active_route_version": 1,
           "affected_sibling_nodes_declared": false,
+          "after_effective_member_ids": [
+            "node-before",
+            "node-repair",
+            "node-sibling"
+          ],
+          "after_member_route_versions": [
+            [
+              "node-before",
+              2
+            ],
+            [
+              "node-repair",
+              2
+            ],
+            [
+              "node-sibling",
+              2
+            ]
+          ],
+          "before_effective_member_ids": [
+            "node-before",
+            "node-original",
+            "node-sibling"
+          ],
           "candidate_node_entry_recorded": false,
           "candidate_route_displayed_as_current": false,
+          "candidate_route_version": 2,
           "continue_target_declared": false,
           "display_receipt_recorded": false,
+          "effective_member_inventory_recorded": true,
+          "final_ledger_effective_member_ids": [
+            "node-before",
+            "node-repair",
+            "node-sibling"
+          ],
           "final_ledger_started": false,
           "forced_return_for_supersede": true,
           "frontier_entered_candidate_before_activation": false,
@@ -711,18 +1961,35 @@
           "repair_node_id_declared": true,
           "repair_of_node_id_declared": true,
           "repair_rendered_as_final_mainline": false,
+          "replacement_effective_member_id": "node-repair",
           "replay_scope_declared": false,
           "return_target_declared": false,
           "reviewer_block_recorded": true,
           "reviewer_recheck_passed": false,
+          "route_memory_authority_validated_before_event_write": true,
+          "route_memory_revalidated_after_parent_decision_write": false,
+          "route_mutation_consumed_same_authority": true,
           "route_visible_as_current": false,
           "same_scope_replay_rerun_after_mutation": false,
           "sealed_body_boundary_preserved": true,
           "stale_evidence_invalidated": false,
           "status": "running",
+          "superseded_effective_member_ids": [
+            "node-original"
+          ],
           "superseded_node_shown_as_pending": false,
           "superseded_nodes_declared": true,
-          "topology_strategy": "supersede_original"
+          "terminal_target_member_ids": [
+            "node-before",
+            "node-repair",
+            "node-sibling"
+          ],
+          "topology_strategy": "supersede_original",
+          "unaffected_sibling_node_ids": [
+            "node-before",
+            "node-sibling"
+          ],
+          "unaffected_siblings_rebound": true
         }
       },
       "superseded_node_visible_as_pending": {
@@ -733,11 +2000,43 @@
         ],
         "state": {
           "active_route_overwritten_before_activation": false,
+          "active_route_version": 2,
           "affected_sibling_nodes_declared": false,
+          "after_effective_member_ids": [
+            "node-before",
+            "node-repair",
+            "node-sibling"
+          ],
+          "after_member_route_versions": [
+            [
+              "node-before",
+              2
+            ],
+            [
+              "node-repair",
+              2
+            ],
+            [
+              "node-sibling",
+              2
+            ]
+          ],
+          "before_effective_member_ids": [
+            "node-before",
+            "node-original",
+            "node-sibling"
+          ],
           "candidate_node_entry_recorded": true,
           "candidate_route_displayed_as_current": false,
+          "candidate_route_version": 2,
           "continue_target_declared": false,
           "display_receipt_recorded": true,
+          "effective_member_inventory_recorded": true,
+          "final_ledger_effective_member_ids": [
+            "node-before",
+            "node-repair",
+            "node-sibling"
+          ],
           "final_ledger_started": false,
           "forced_return_for_supersede": false,
           "frontier_entered_candidate_before_activation": false,
@@ -753,24 +2052,253 @@
           "repair_node_id_declared": true,
           "repair_of_node_id_declared": true,
           "repair_rendered_as_final_mainline": false,
+          "replacement_effective_member_id": "node-repair",
           "replay_scope_declared": false,
           "return_target_declared": false,
           "reviewer_block_recorded": true,
           "reviewer_recheck_passed": true,
+          "route_memory_authority_validated_before_event_write": true,
+          "route_memory_revalidated_after_parent_decision_write": false,
+          "route_mutation_consumed_same_authority": true,
           "route_visible_as_current": true,
           "same_scope_replay_rerun_after_mutation": true,
           "sealed_body_boundary_preserved": true,
           "stale_evidence_invalidated": true,
           "status": "running",
+          "superseded_effective_member_ids": [
+            "node-original"
+          ],
           "superseded_node_shown_as_pending": true,
           "superseded_nodes_declared": true,
-          "topology_strategy": "supersede_original"
+          "terminal_target_member_ids": [
+            "node-before",
+            "node-repair",
+            "node-sibling"
+          ],
+          "topology_strategy": "supersede_original",
+          "unaffected_sibling_node_ids": [
+            "node-before",
+            "node-sibling"
+          ],
+          "unaffected_siblings_rebound": true
+        }
+      },
+      "terminal_targets_effective_members_mismatch": {
+        "detected": true,
+        "expected_failure": "terminal replay targets disagree with activated effective route members",
+        "failures": [
+          "terminal replay targets disagree with activated effective route members",
+          "final ledger and terminal replay target inventories diverge"
+        ],
+        "state": {
+          "active_route_overwritten_before_activation": false,
+          "active_route_version": 2,
+          "affected_sibling_nodes_declared": false,
+          "after_effective_member_ids": [
+            "node-before",
+            "node-repair",
+            "node-sibling"
+          ],
+          "after_member_route_versions": [
+            [
+              "node-before",
+              2
+            ],
+            [
+              "node-repair",
+              2
+            ],
+            [
+              "node-sibling",
+              2
+            ]
+          ],
+          "before_effective_member_ids": [
+            "node-before",
+            "node-original",
+            "node-sibling"
+          ],
+          "candidate_node_entry_recorded": true,
+          "candidate_route_displayed_as_current": false,
+          "candidate_route_version": 2,
+          "continue_target_declared": false,
+          "display_receipt_recorded": true,
+          "effective_member_inventory_recorded": true,
+          "final_ledger_effective_member_ids": [
+            "node-before",
+            "node-repair",
+            "node-sibling"
+          ],
+          "final_ledger_started": false,
+          "forced_return_for_supersede": false,
+          "frontier_entered_candidate_before_activation": false,
+          "generated_files_only_display": false,
+          "holder": "project_manager",
+          "mermaid_topology_projected": true,
+          "old_current_node_packet_superseded": true,
+          "old_sibling_evidence_reused_as_current": false,
+          "pm_activation_recorded": true,
+          "pm_mutation_proposed": true,
+          "process_recheck_passed": true,
+          "product_recheck_passed": true,
+          "repair_node_id_declared": true,
+          "repair_of_node_id_declared": true,
+          "repair_rendered_as_final_mainline": false,
+          "replacement_effective_member_id": "node-repair",
+          "replay_scope_declared": false,
+          "return_target_declared": false,
+          "reviewer_block_recorded": true,
+          "reviewer_recheck_passed": true,
+          "route_memory_authority_validated_before_event_write": true,
+          "route_memory_revalidated_after_parent_decision_write": false,
+          "route_mutation_consumed_same_authority": true,
+          "route_visible_as_current": true,
+          "same_scope_replay_rerun_after_mutation": true,
+          "sealed_body_boundary_preserved": true,
+          "stale_evidence_invalidated": true,
+          "status": "running",
+          "superseded_effective_member_ids": [
+            "node-original"
+          ],
+          "superseded_node_shown_as_pending": false,
+          "superseded_nodes_declared": true,
+          "terminal_target_member_ids": [
+            "node-before",
+            "node-repair"
+          ],
+          "topology_strategy": "supersede_original",
+          "unaffected_sibling_node_ids": [
+            "node-before",
+            "node-sibling"
+          ],
+          "unaffected_siblings_rebound": true
+        }
+      },
+      "unaffected_sibling_not_rebound": {
+        "detected": true,
+        "expected_failure": "unaffected siblings were not rebound into the activated route version",
+        "failures": [
+          "effective route members do not all agree with active_route_version",
+          "unaffected siblings were not rebound into the activated route version"
+        ],
+        "state": {
+          "active_route_overwritten_before_activation": false,
+          "active_route_version": 2,
+          "affected_sibling_nodes_declared": false,
+          "after_effective_member_ids": [
+            "node-before",
+            "node-repair",
+            "node-sibling"
+          ],
+          "after_member_route_versions": [
+            [
+              "node-before",
+              2
+            ],
+            [
+              "node-repair",
+              2
+            ],
+            [
+              "node-sibling",
+              1
+            ]
+          ],
+          "before_effective_member_ids": [
+            "node-before",
+            "node-original",
+            "node-sibling"
+          ],
+          "candidate_node_entry_recorded": true,
+          "candidate_route_displayed_as_current": false,
+          "candidate_route_version": 2,
+          "continue_target_declared": false,
+          "display_receipt_recorded": true,
+          "effective_member_inventory_recorded": true,
+          "final_ledger_effective_member_ids": [
+            "node-before",
+            "node-repair",
+            "node-sibling"
+          ],
+          "final_ledger_started": false,
+          "forced_return_for_supersede": false,
+          "frontier_entered_candidate_before_activation": false,
+          "generated_files_only_display": false,
+          "holder": "project_manager",
+          "mermaid_topology_projected": true,
+          "old_current_node_packet_superseded": true,
+          "old_sibling_evidence_reused_as_current": false,
+          "pm_activation_recorded": true,
+          "pm_mutation_proposed": true,
+          "process_recheck_passed": true,
+          "product_recheck_passed": true,
+          "repair_node_id_declared": true,
+          "repair_of_node_id_declared": true,
+          "repair_rendered_as_final_mainline": false,
+          "replacement_effective_member_id": "node-repair",
+          "replay_scope_declared": false,
+          "return_target_declared": false,
+          "reviewer_block_recorded": true,
+          "reviewer_recheck_passed": true,
+          "route_memory_authority_validated_before_event_write": true,
+          "route_memory_revalidated_after_parent_decision_write": false,
+          "route_mutation_consumed_same_authority": true,
+          "route_visible_as_current": true,
+          "same_scope_replay_rerun_after_mutation": true,
+          "sealed_body_boundary_preserved": true,
+          "stale_evidence_invalidated": true,
+          "status": "running",
+          "superseded_effective_member_ids": [
+            "node-original"
+          ],
+          "superseded_node_shown_as_pending": false,
+          "superseded_nodes_declared": true,
+          "terminal_target_member_ids": [
+            "node-before",
+            "node-repair",
+            "node-sibling"
+          ],
+          "topology_strategy": "supersede_original",
+          "unaffected_sibling_node_ids": [
+            "node-before",
+            "node-sibling"
+          ],
+          "unaffected_siblings_rebound": false
         }
       }
     },
     "ok": true
   },
+  "model_ok": true,
   "ok": true,
+  "production_conformance": {
+    "claim_boundary": "This is current source/test conformance, not a skipped replay. A route-version filter without retained-member rebinding and final-ledger/terminal-target regression evidence remains failed.",
+    "evidence": [
+      "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+      "skills/flowpilot/assets/flowpilot_router_route.py",
+      "skills/flowpilot/assets/flowpilot_router_route_artifacts_nodes_parent.py",
+      "tests/test_flowpilot_core_runtime.py",
+      "tests/test_flowpilot_high_standard_control_flow.py",
+      "tests/router_runtime/route_mutation_sibling_replacement.py",
+      "tests/router_runtime/route_mutation_parent_backward.py",
+      "tests/test_flowpilot_user_flow_diagram.py",
+      "tests/test_flowpilot_unified_repair_runtime.py"
+    ],
+    "missing": [],
+    "obligations": {
+      "existing_replacement_activation_baseline_tests_present": true,
+      "final_ledger_and_terminal_targets_match_effective_members_test": true,
+      "parent_segment_same_authority_success_test": true,
+      "parent_segment_validates_route_memory_before_event_local_write": true,
+      "route_mutation_rejects_unvalidated_authority_dict_test": true,
+      "route_repair_unaffected_sibling_rebind_test": true,
+      "runtime_rebinds_unaffected_members_to_new_route_version": true,
+      "runtime_records_before_after_effective_member_inventory": true,
+      "runtime_uses_active_route_version_for_effective_member_selection": true
+    },
+    "ok": true,
+    "status": "passed"
+  },
   "progress": {
     "cannot_reach_terminal_count": 0,
     "cannot_reach_terminal_samples": [],
@@ -779,6 +2307,8 @@
     "stuck_state_samples": [],
     "terminal_state_count": 4
   },
+  "result_type": "flowpilot_route_mutation_activation_checks",
+  "runtime_conformance_ok": true,
   "safe_graph": {
     "edge_count": 45,
     "invariant_failures": [],
@@ -786,7 +2316,17 @@
     "ok": true,
     "state_count": 46
   },
-  "skipped_checks": {
-    "production_conformance_replay": "skipped_with_reason: this runner validates the route-mutation activation/display model; production behavior is covered by router and user-flow-diagram tests"
+  "source_fingerprints": {
+    "simulations/flowpilot_route_mutation_activation_model.py": "ff852008ca714c1204cd4d607ec87231f6a735dd78c7f9cd2a6b968497df8abc",
+    "simulations/run_flowpilot_route_mutation_activation_checks.py": "b7a0e3f16e356418532cf4823c1703c7b56d71cbe76bd6092f542932e0d7e086",
+    "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py": "9020c32af1537c4c199e44c1aca1e02d9c105034fcb00849072f495457bd8b74",
+    "skills/flowpilot/assets/flowpilot_router_route.py": "fcbddcd4bdc24bcafdb0716bcc81eef0de490dbf14e671fd10343b6380f86e22",
+    "skills/flowpilot/assets/flowpilot_router_route_artifacts_nodes_parent.py": "1b40cc8867cb62313bc1418e3905fee1fb8446dece86a31e353305c6e631fb19",
+    "tests/router_runtime/route_mutation_parent_backward.py": "55422a95cb1c67476b9202644fa0d26baca52d81ae9956a91f5a2b8704dd5e85",
+    "tests/router_runtime/route_mutation_sibling_replacement.py": "b7e3c140a76009db4c3f576958a10e3434f96b8c9ca8bfbbbe12d42538086c4d",
+    "tests/test_flowpilot_core_runtime.py": "d9df671916b2b3bf0c563bc7c7d270544e18a81a67ccac2b7a4fd6d6d66acfd8",
+    "tests/test_flowpilot_high_standard_control_flow.py": "106638f8dcbf8da106e20bbf6fe3d5dc4cae6bd09b0b8b00645d420751c29f4e",
+    "tests/test_flowpilot_unified_repair_runtime.py": "bd591c182bbd61e2bee463cf9aaeac1ec3d79da3ed1c2ce1689a10755d0c9453",
+    "tests/test_flowpilot_user_flow_diagram.py": "8565a1cbe8a98845a7a8e0b7576c4b3443171faa783aba4eba2c33971f505050"
   }
 }

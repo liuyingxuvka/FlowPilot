@@ -48,16 +48,28 @@ class FlowPilotInstallerDependencyTests(unittest.TestCase):
 
         self.assertEqual(
             policy["required"],
-            ["flowpilot", "flowguard", "model-first-function-flow"],
+            ["flowpilot", "flowguard", "flowguard-agent-skill"],
         )
         self.assertIn("flowguard", policy["required_python_packages"])
-        self.assertIn("model-first-function-flow", policy["required_codex_skills"])
+        self.assertIn("flowguard-agent-skill", policy["required_codex_skills"])
         self.assertEqual(policy["optional"], ["autonomous-concept-ui-redesign"])
         self.assertIn("autonomous-concept-ui-redesign", policy["optional_codex_skills"])
         self.assertNotIn("frontend-design", policy["optional"])
         self.assertNotIn("design-iterator", policy["optional_codex_skills"])
         self.assertIn("--install-flowguard", policy["policy"])
         self.assertIn("--include-optional", policy["policy"])
+
+    def test_current_flowguard_agent_skill_replaces_retired_model_first_dependency(self) -> None:
+        flowguard_skill = self.dependency("flowguard-agent-skill")
+
+        self.assertTrue(flowguard_skill["required"])
+        self.assertEqual(flowguard_skill["type"], "codex_skill")
+        self.assertEqual(flowguard_skill["install_name"], "flowguard")
+        self.assertEqual(flowguard_skill["source"]["path"], ".agents/skills/flowguard")
+        self.assertNotIn(
+            "model-first-function-flow",
+            {item["name"] for item in self.manifest["dependencies"]},
+        )
 
     def test_flowguard_source_is_public_github_python_package(self) -> None:
         flowguard = self.dependency("flowguard")
@@ -116,6 +128,19 @@ class FlowPilotInstallerDependencyTests(unittest.TestCase):
         text = '{"root": "' + "C:" + "\\\\" + "Users" + "\\\\" + "liu_y" + "\\\\" + "Documents" + '"}'
 
         self.assertTrue(any(pattern.search(text) for pattern in check_public_release.SECRET_PATTERNS))
+
+    def test_public_release_allows_only_the_canonical_public_flowguard_ledger(self) -> None:
+        for path in check_public_release.PUBLIC_FLOWGUARD_PATHS:
+            with self.subTest(path=path):
+                self.assertFalse(check_public_release.path_has_private_component(path))
+
+        for path in (
+            ".flowguard/private.json",
+            ".flowguard/behavior_commitment_ledger/local-receipt.json",
+            ".flowguard/project.toml",
+        ):
+            with self.subTest(path=path):
+                self.assertTrue(check_public_release.path_has_private_component(path))
 
     def test_flowpilot_skill_package_includes_startup_intake_icon(self) -> None:
         flowpilot = self.dependency("flowpilot")

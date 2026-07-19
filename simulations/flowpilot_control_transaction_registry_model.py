@@ -31,6 +31,9 @@ VALID_REVIEWER_GATE_RESULT = "valid_reviewer_gate_result"
 VALID_CONTROL_BLOCKER_REPAIR = "valid_control_blocker_repair"
 VALID_CONTROL_PLANE_REISSUE = "valid_control_plane_reissue"
 VALID_ROUTE_MUTATION = "valid_route_mutation"
+VALID_STAGED_REPAIR_EFFECT_COMMIT = "valid_staged_repair_effect_commit"
+VALID_REJECTED_STAGED_EFFECT_DISPOSAL = "valid_rejected_staged_effect_disposal"
+VALID_CANCELLED_STAGED_EFFECT_DISPOSAL = "valid_cancelled_staged_effect_disposal"
 
 UNREGISTERED_TRANSACTION_TYPE = "unregistered_transaction_type"
 CONTRACT_PASS_EVENT_CAPABILITY_MISSING = "contract_pass_event_capability_missing"
@@ -49,6 +52,18 @@ REVIEWER_NON_SUCCESS_USES_SUCCESS_EVENT = "reviewer_non_success_uses_success_eve
 ATOMIC_COMMIT_TARGET_MISSING = "atomic_commit_target_missing"
 CONTROL_PLANE_REISSUE_WITHOUT_DELIVERY_AUTHORITY = "control_plane_reissue_without_delivery_authority"
 PM_PACKAGE_DISPOSITION_PARTIAL_COMMIT = "pm_package_disposition_partial_commit"
+STAGED_EFFECT_ID_MISSING = "staged_effect_id_missing"
+STAGED_EFFECT_REPAIR_GENERATION_MISMATCH = "staged_effect_repair_generation_mismatch"
+STAGED_EFFECT_SOURCE_GENERATION_MISMATCH = "staged_effect_source_generation_mismatch"
+REJECTED_STAGED_EFFECT_NOT_DISPOSED = "rejected_staged_effect_not_disposed"
+CANCELLED_STAGED_EFFECT_NOT_DISPOSED = "cancelled_staged_effect_not_disposed"
+REJECTED_STAGED_EFFECT_OPENS_WORKER = "rejected_staged_effect_opens_worker"
+REJECTED_STAGED_EFFECT_CONSUMES_TERMINAL_ROUND = (
+    "rejected_staged_effect_consumes_terminal_round"
+)
+STAGED_EFFECT_COMMIT_NOT_ATOMICALLY_VISIBLE = (
+    "staged_effect_commit_not_atomically_visible"
+)
 
 VALID_SCENARIOS = (
     VALID_ROUTE_PROGRESSION,
@@ -59,6 +74,9 @@ VALID_SCENARIOS = (
     VALID_CONTROL_BLOCKER_REPAIR,
     VALID_CONTROL_PLANE_REISSUE,
     VALID_ROUTE_MUTATION,
+    VALID_STAGED_REPAIR_EFFECT_COMMIT,
+    VALID_REJECTED_STAGED_EFFECT_DISPOSAL,
+    VALID_CANCELLED_STAGED_EFFECT_DISPOSAL,
 )
 NEGATIVE_SCENARIOS = (
     UNREGISTERED_TRANSACTION_TYPE,
@@ -78,6 +96,14 @@ NEGATIVE_SCENARIOS = (
     ATOMIC_COMMIT_TARGET_MISSING,
     CONTROL_PLANE_REISSUE_WITHOUT_DELIVERY_AUTHORITY,
     PM_PACKAGE_DISPOSITION_PARTIAL_COMMIT,
+    STAGED_EFFECT_ID_MISSING,
+    STAGED_EFFECT_REPAIR_GENERATION_MISMATCH,
+    STAGED_EFFECT_SOURCE_GENERATION_MISMATCH,
+    REJECTED_STAGED_EFFECT_NOT_DISPOSED,
+    CANCELLED_STAGED_EFFECT_NOT_DISPOSED,
+    REJECTED_STAGED_EFFECT_OPENS_WORKER,
+    REJECTED_STAGED_EFFECT_CONSUMES_TERMINAL_ROUND,
+    STAGED_EFFECT_COMMIT_NOT_ATOMICALLY_VISIBLE,
 )
 SCENARIOS = VALID_SCENARIOS + NEGATIVE_SCENARIOS
 
@@ -89,6 +115,7 @@ REGISTERED_TRANSACTION_TYPES = {
     "control_blocker_repair",
     "control_plane_reissue",
     "route_mutation",
+    "staged_repair_effect",
 }
 COMMIT_TARGETS = {
     "frontier",
@@ -103,6 +130,8 @@ COMMIT_TARGETS = {
     "pm_package_disposition",
     "wait_closure",
     "formal_gate_package",
+    "staged_effect",
+    "worker_packet",
 }
 REQUIRED_TARGETS_BY_TYPE = {
     "route_progression": frozenset({"frontier", "run_state", "status_summary"}),
@@ -112,7 +141,22 @@ REQUIRED_TARGETS_BY_TYPE = {
     "control_blocker_repair": frozenset({"repair_transaction", "blocker_index", "run_state", "status_summary"}),
     "control_plane_reissue": frozenset({"blocker_index", "run_state", "status_summary"}),
     "route_mutation": frozenset({"route", "frontier", "stale_evidence", "run_state", "status_summary"}),
+    "staged_repair_effect": frozenset({"staged_effect", "run_state", "status_summary"}),
 }
+STAGED_EFFECT_COMMIT_TARGETS = frozenset(
+    {
+        "staged_effect",
+        "repair_transaction",
+        "route",
+        "frontier",
+        "worker_packet",
+        "run_state",
+        "status_summary",
+    }
+)
+STAGED_EFFECT_DISPOSITION_TARGETS = frozenset(
+    {"staged_effect", "run_state", "status_summary"}
+)
 
 
 @dataclass(frozen=True)
@@ -157,6 +201,18 @@ class State:
     control_plane_reissue: bool = False
     reissue_delivery_authority_present: bool = False
     original_event_flag_currently_set: bool = True
+    staged_effect_required: bool = False
+    staged_effect_id: str = ""
+    staged_effect_operation: str = "none"  # none | commit | dispose_rejected | dispose_cancelled
+    decision_gate_status: str = "none"  # none | accepted | rejected | cancelled
+    current_repair_generation: int = 0
+    current_source_generation: int = 0
+    staged_effect_repair_generation: int = 0
+    staged_effect_source_generation: int = 0
+    staged_effect_disposition: str = "none"  # none | committed | disposed_rejected | disposed_cancelled
+    atomic_commit_visible: bool = False
+    worker_opened: bool = False
+    terminal_round_consumed: bool = False
     terminal_reason: str = "none"
 
 
@@ -246,6 +302,55 @@ def _scenario_state(scenario: str) -> State:
             stale_evidence_policy_applied=True,
             commit_targets=("route", "frontier", "stale_evidence", "run_state", "status_summary"),
         )
+    if scenario == VALID_STAGED_REPAIR_EFFECT_COMMIT:
+        return State(
+            status="selected",
+            scenario=scenario,
+            transaction_type="staged_repair_effect",
+            registry_row_present=True,
+            repair_transaction_required=True,
+            staged_effect_required=True,
+            staged_effect_id="staged-effect-repair-g2",
+            staged_effect_operation="commit",
+            decision_gate_status="accepted",
+            current_repair_generation=2,
+            current_source_generation=7,
+            staged_effect_repair_generation=2,
+            staged_effect_source_generation=7,
+            staged_effect_disposition="committed",
+            atomic_commit_visible=True,
+            worker_opened=True,
+            commit_targets=tuple(sorted(STAGED_EFFECT_COMMIT_TARGETS)),
+        )
+    if scenario == VALID_REJECTED_STAGED_EFFECT_DISPOSAL:
+        return State(
+            status="selected",
+            scenario=scenario,
+            transaction_type="staged_repair_effect",
+            registry_row_present=True,
+            repair_transaction_required=True,
+            staged_effect_required=True,
+            staged_effect_id="staged-effect-repair-g2",
+            staged_effect_operation="dispose_rejected",
+            decision_gate_status="rejected",
+            current_repair_generation=2,
+            current_source_generation=7,
+            staged_effect_repair_generation=2,
+            staged_effect_source_generation=7,
+            staged_effect_disposition="disposed_rejected",
+            atomic_commit_visible=False,
+            worker_opened=False,
+            terminal_round_consumed=False,
+            commit_targets=tuple(sorted(STAGED_EFFECT_DISPOSITION_TARGETS)),
+        )
+    if scenario == VALID_CANCELLED_STAGED_EFFECT_DISPOSAL:
+        return replace(
+            _scenario_state(VALID_REJECTED_STAGED_EFFECT_DISPOSAL),
+            scenario=scenario,
+            staged_effect_operation="dispose_cancelled",
+            decision_gate_status="cancelled",
+            staged_effect_disposition="disposed_cancelled",
+        )
     if scenario == UNREGISTERED_TRANSACTION_TYPE:
         return replace(_scenario_state(VALID_ROUTE_PROGRESSION), scenario=scenario, transaction_type="ad_hoc_next_step")
     if scenario == CONTRACT_PASS_EVENT_CAPABILITY_MISSING:
@@ -315,7 +420,65 @@ def _scenario_state(scenario: str) -> State:
             scenario=scenario,
             commit_targets=("packet_ledger", "run_state", "status_summary"),
         )
+    if scenario == STAGED_EFFECT_ID_MISSING:
+        return replace(
+            _scenario_state(VALID_STAGED_REPAIR_EFFECT_COMMIT),
+            scenario=scenario,
+            staged_effect_id="",
+        )
+    if scenario == STAGED_EFFECT_REPAIR_GENERATION_MISMATCH:
+        return replace(
+            _scenario_state(VALID_STAGED_REPAIR_EFFECT_COMMIT),
+            scenario=scenario,
+            staged_effect_repair_generation=3,
+        )
+    if scenario == STAGED_EFFECT_SOURCE_GENERATION_MISMATCH:
+        return replace(
+            _scenario_state(VALID_STAGED_REPAIR_EFFECT_COMMIT),
+            scenario=scenario,
+            staged_effect_source_generation=8,
+        )
+    if scenario == REJECTED_STAGED_EFFECT_NOT_DISPOSED:
+        return replace(
+            _scenario_state(VALID_REJECTED_STAGED_EFFECT_DISPOSAL),
+            scenario=scenario,
+            staged_effect_disposition="none",
+        )
+    if scenario == CANCELLED_STAGED_EFFECT_NOT_DISPOSED:
+        return replace(
+            _scenario_state(VALID_CANCELLED_STAGED_EFFECT_DISPOSAL),
+            scenario=scenario,
+            staged_effect_disposition="none",
+        )
+    if scenario == REJECTED_STAGED_EFFECT_OPENS_WORKER:
+        return replace(
+            _scenario_state(VALID_REJECTED_STAGED_EFFECT_DISPOSAL),
+            scenario=scenario,
+            worker_opened=True,
+        )
+    if scenario == REJECTED_STAGED_EFFECT_CONSUMES_TERMINAL_ROUND:
+        return replace(
+            _scenario_state(VALID_REJECTED_STAGED_EFFECT_DISPOSAL),
+            scenario=scenario,
+            terminal_round_consumed=True,
+        )
+    if scenario == STAGED_EFFECT_COMMIT_NOT_ATOMICALLY_VISIBLE:
+        return replace(
+            _scenario_state(VALID_STAGED_REPAIR_EFFECT_COMMIT),
+            scenario=scenario,
+            atomic_commit_visible=False,
+        )
     raise ValueError(f"unknown scenario: {scenario}")
+
+
+def required_commit_targets(state: State) -> frozenset[str]:
+    if state.transaction_type != "staged_repair_effect":
+        return REQUIRED_TARGETS_BY_TYPE.get(state.transaction_type, frozenset())
+    if state.staged_effect_operation == "commit":
+        return STAGED_EFFECT_COMMIT_TARGETS
+    if state.staged_effect_operation in {"dispose_rejected", "dispose_cancelled"}:
+        return STAGED_EFFECT_DISPOSITION_TARGETS
+    return REQUIRED_TARGETS_BY_TYPE["staged_repair_effect"]
 
 
 def control_transaction_failures(state: State) -> list[str]:
@@ -349,7 +512,7 @@ def control_transaction_failures(state: State) -> list[str]:
             failures.append("non-success outcome uses a success-only event")
     if state.parent_repair and state.repair_target_is_leaf_event:
         failures.append("parent repair targets a leaf-only event")
-    required_targets = REQUIRED_TARGETS_BY_TYPE.get(state.transaction_type, frozenset())
+    required_targets = required_commit_targets(state)
     if required_targets and not required_targets.issubset(set(state.commit_targets)):
         failures.append("transaction commit targets are incomplete")
     if state.atomic_commit_declared and required_targets and not required_targets.issubset(set(state.commit_targets)):
@@ -358,6 +521,64 @@ def control_transaction_failures(state: State) -> list[str]:
         failures.append("active blocker cannot be marked safe to continue")
     if state.route_mutation and not state.stale_evidence_policy_applied:
         failures.append("route mutation omitted stale-evidence policy")
+    if state.staged_effect_required:
+        if not state.staged_effect_id:
+            failures.append("staged_effect identity is missing")
+        if (
+            state.current_repair_generation <= 0
+            or state.staged_effect_repair_generation
+            != state.current_repair_generation
+        ):
+            failures.append(
+                "staged_effect repair generation does not match the current repair generation"
+            )
+        if (
+            state.current_source_generation <= 0
+            or state.staged_effect_source_generation
+            != state.current_source_generation
+        ):
+            failures.append(
+                "staged_effect source generation does not match the current source generation"
+            )
+        if state.staged_effect_operation == "commit":
+            if (
+                state.decision_gate_status != "accepted"
+                or state.staged_effect_disposition != "committed"
+            ):
+                failures.append(
+                    "staged_effect commit lacks an accepted decision gate and committed disposition"
+                )
+            if not state.atomic_commit_visible or not state.worker_opened:
+                failures.append(
+                    "staged_effect commit is not atomically visible with Worker opening"
+                )
+        elif state.staged_effect_operation in {
+            "dispose_rejected",
+            "dispose_cancelled",
+        }:
+            expected_gate = (
+                "rejected"
+                if state.staged_effect_operation == "dispose_rejected"
+                else "cancelled"
+            )
+            expected_disposition = f"disposed_{expected_gate}"
+            if (
+                state.decision_gate_status != expected_gate
+                or state.staged_effect_disposition != expected_disposition
+            ):
+                failures.append(
+                    "rejected or cancelled staged_effect was not dispositioned"
+                )
+            if state.worker_opened or state.atomic_commit_visible:
+                failures.append(
+                    "rejected or cancelled staged_effect opened Worker or exposed a commit"
+                )
+            if state.terminal_round_consumed:
+                failures.append(
+                    "rejected or cancelled staged_effect consumed a terminal repair round"
+                )
+        else:
+            failures.append("staged_effect operation is not registered")
     return failures
 
 
@@ -447,7 +668,7 @@ def commits_are_complete(state: State, trace) -> InvariantResult:
     del trace
     if state.status != "accepted":
         return InvariantResult.pass_()
-    required = REQUIRED_TARGETS_BY_TYPE.get(state.transaction_type, frozenset())
+    required = required_commit_targets(state)
     if required and not required.issubset(set(state.commit_targets)):
         return InvariantResult.fail("accepted transaction omitted required commit targets")
     return InvariantResult.pass_()
@@ -521,5 +742,6 @@ __all__ = [
     "is_terminal",
     "next_safe_states",
     "next_states",
+    "required_commit_targets",
     "terminal_predicate",
 ]

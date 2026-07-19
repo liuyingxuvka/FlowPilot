@@ -154,6 +154,9 @@ class State:
     foreground_start_reads_runtime_during_writer: bool = False
     foreground_start_waits_for_runtime_writer: bool = False
     foreground_start_retries_after_writer_finishes: bool = False
+    foreground_start_run_allocation_count: int = 0
+    foreground_start_completed_actions_before_writer: bool = False
+    foreground_start_completed_actions_preserved: bool = False
     foreground_start_returns_live_daemon_status: bool = False
     foreground_start_fatal_from_active_writer: bool = False
     queue_stop_reason: str = "none"  # none | barrier | no_action | pending_action_changed | max_actions_per_tick

@@ -9,7 +9,7 @@ from flowguard import FunctionResult, Invariant, InvariantResult, Workflow
 
 
 MODEL_ID = "flowpilot_core_runtime_development_process"
-MAX_SEQUENCE_LENGTH = 14
+MAX_SEQUENCE_LENGTH = 18
 
 
 @dataclass(frozen=True)
@@ -22,6 +22,9 @@ class State:
     lease_packet_runtime_done: bool = False
     router_runtime_done: bool = False
     flowguard_review_closure_console_done: bool = False
+    current_authority_and_resume_done: bool = False
+    review_effect_and_replay_done: bool = False
+    cleanup_and_fingerprint_protocol_done: bool = False
     tests_written: bool = False
     routine_checks_passed: bool = False
     background_regressions_inspected: bool = False
@@ -29,6 +32,13 @@ class State:
     git_committed: bool = False
     fixed_role_topology_required: bool = False
     prior_runtime_state_authoritative: bool = False
+    unstructured_authority_reference_accepted: bool = False
+    idle_or_historical_role_restored_on_resume: bool = False
+    partial_staged_effect_identity_reused: bool = False
+    aggregate_terminal_replay_accepted: bool = False
+    runtime_scored_workstream_semantics: bool = False
+    descendants_live_after_interruption: bool = False
+    mixed_source_fingerprint_evidence_consumed: bool = False
     console_exposes_sealed_body: bool = False
     release_claimed: bool = False
 
@@ -57,6 +67,9 @@ REQUIRED_SAFE_LABELS = (
     "implement_lease_packet_runtime",
     "implement_router_runtime",
     "implement_flowguard_review_closure_console",
+    "implement_current_authority_and_exact_resume",
+    "implement_review_effect_and_terminal_replay",
+    "implement_cleanup_and_same_fingerprint_protocol",
     "write_focused_tests",
     "run_routine_checks",
     "inspect_background_regressions",
@@ -139,6 +152,27 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
                 replace(state, flowguard_review_closure_console_done=True),
             ),
         )
+    if not state.current_authority_and_resume_done:
+        return (
+            Transition(
+                "implement_current_authority_and_exact_resume",
+                replace(state, current_authority_and_resume_done=True),
+            ),
+        )
+    if not state.review_effect_and_replay_done:
+        return (
+            Transition(
+                "implement_review_effect_and_terminal_replay",
+                replace(state, review_effect_and_replay_done=True),
+            ),
+        )
+    if not state.cleanup_and_fingerprint_protocol_done:
+        return (
+            Transition(
+                "implement_cleanup_and_same_fingerprint_protocol",
+                replace(state, cleanup_and_fingerprint_protocol_done=True),
+            ),
+        )
     if not state.tests_written:
         return (Transition("write_focused_tests", replace(state, tests_written=True)),)
     if not state.routine_checks_passed:
@@ -178,6 +212,18 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("router runtime was implemented before lease/packet mechanics")
     if state.flowguard_review_closure_console_done and not state.router_runtime_done:
         failures.append("review/closure/console were implemented before router mechanics")
+    if state.current_authority_and_resume_done and not state.flowguard_review_closure_console_done:
+        failures.append("current authority and exact resume were implemented before core review/closure runtime")
+    if state.review_effect_and_replay_done and not state.current_authority_and_resume_done:
+        failures.append("review/effect/replay hardening was implemented before current authority and exact resume")
+    if state.cleanup_and_fingerprint_protocol_done and not state.review_effect_and_replay_done:
+        failures.append("cleanup and fingerprint protocol were implemented before effect/replay hardening")
+    if state.tests_written and not (
+        state.current_authority_and_resume_done
+        and state.review_effect_and_replay_done
+        and state.cleanup_and_fingerprint_protocol_done
+    ):
+        failures.append("focused tests were written before current-contract hardening was complete")
     if state.routine_checks_passed and not state.tests_written:
         failures.append("routine checks passed before focused tests existed")
     if state.background_regressions_inspected and not state.routine_checks_passed:
@@ -192,6 +238,20 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("fixed role topology was required as current authority")
     if state.prior_runtime_state_authoritative:
         failures.append("prior runtime state was used as current authority")
+    if state.unstructured_authority_reference_accepted:
+        failures.append("free-form or unfingerprinted authority reference was accepted")
+    if state.idle_or_historical_role_restored_on_resume:
+        failures.append("resume restored an idle or historical role outside the exact current obligation")
+    if state.partial_staged_effect_identity_reused:
+        failures.append("pending staged effect was reused under a different current identity")
+    if state.aggregate_terminal_replay_accepted:
+        failures.append("terminal replay passed without exact current segment accounting")
+    if state.runtime_scored_workstream_semantics:
+        failures.append("Runtime replaced Reviewer by semantically scoring the workstream narrative")
+    if state.descendants_live_after_interruption:
+        failures.append("interrupted validation left a live descendant process")
+    if state.mixed_source_fingerprint_evidence_consumed:
+        failures.append("verification consumed producer evidence from a different source fingerprint")
     if state.console_exposes_sealed_body:
         failures.append("console exposed sealed packet or result body")
     return failures
@@ -207,6 +267,9 @@ def hazard_states() -> dict[str, State]:
         lease_packet_runtime_done=True,
         router_runtime_done=True,
         flowguard_review_closure_console_done=True,
+        current_authority_and_resume_done=True,
+        review_effect_and_replay_done=True,
+        cleanup_and_fingerprint_protocol_done=True,
         tests_written=True,
         routine_checks_passed=True,
         background_regressions_inspected=True,
@@ -224,6 +287,13 @@ def hazard_states() -> dict[str, State]:
         "release_before_git": replace(safe, git_committed=False),
         "fixed_role_topology_reintroduced": replace(safe, fixed_role_topology_required=True),
         "prior_runtime_state_authoritative": replace(safe, prior_runtime_state_authoritative=True),
+        "unstructured_authority_reference_accepted": replace(safe, unstructured_authority_reference_accepted=True),
+        "idle_or_historical_role_restored_on_resume": replace(safe, idle_or_historical_role_restored_on_resume=True),
+        "partial_staged_effect_identity_reused": replace(safe, partial_staged_effect_identity_reused=True),
+        "aggregate_terminal_replay_accepted": replace(safe, aggregate_terminal_replay_accepted=True),
+        "runtime_scored_workstream_semantics": replace(safe, runtime_scored_workstream_semantics=True),
+        "descendants_live_after_interruption": replace(safe, descendants_live_after_interruption=True),
+        "mixed_source_fingerprint_evidence_consumed": replace(safe, mixed_source_fingerprint_evidence_consumed=True),
         "console_leaks_sealed_body": replace(safe, console_exposes_sealed_body=True),
     }
 
@@ -250,7 +320,10 @@ INVARIANTS = (
         description=(
             "The clean runtime build must validate OpenSpec, run FlowGuard "
             "development-process modeling, implement ledger authority before "
-            "leases/packets/router/review, pass routine checks, inspect "
+            "leases/packets/router/review, bind exact current authority and "
+            "resume identity, preserve Reviewer semantic ownership, require "
+            "exact staged effects and terminal replay, prove descendant-zero "
+            "and same-fingerprint verification, pass routine checks, inspect "
             "background evidence, sync install state, and close local git "
             "before release completion."
         ),
@@ -282,6 +355,9 @@ def state_summary(state: State) -> dict[str, Any]:
         "lease_packet_runtime_done": state.lease_packet_runtime_done,
         "router_runtime_done": state.router_runtime_done,
         "flowguard_review_closure_console_done": state.flowguard_review_closure_console_done,
+        "current_authority_and_resume_done": state.current_authority_and_resume_done,
+        "review_effect_and_replay_done": state.review_effect_and_replay_done,
+        "cleanup_and_fingerprint_protocol_done": state.cleanup_and_fingerprint_protocol_done,
         "tests_written": state.tests_written,
         "routine_checks_passed": state.routine_checks_passed,
         "background_regressions_inspected": state.background_regressions_inspected,

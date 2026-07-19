@@ -34,6 +34,11 @@ from flowguard import (
     review_model_maturation_loop,
 )
 
+try:  # pragma: no cover - direct-script fallback below.
+    from .run_flowpilot_model_mesh_checks import _unified_repair_contract_report
+except ImportError:  # pragma: no cover
+    from run_flowpilot_model_mesh_checks import _unified_repair_contract_report
+
 
 ROOT = Path(__file__).resolve().parents[1]
 PLAN_ID = "flowpilot-model-maturation-routine-closure"
@@ -53,6 +58,8 @@ class EvidenceGate:
     result: str = ""
     required_actions: tuple[str, ...] = ()
     require_json_ok: bool = True
+    require_unified_repair_conformance: bool = False
+    blocks_model_maturation: bool = False
 
 
 def _path(relpath: str) -> Path:
@@ -109,7 +116,15 @@ def _gate_signal(gate: EvidenceGate) -> ModelMaturationSignal:
     json_meta: dict[str, Any] = {}
     if gate.result and gate.require_json_ok:
         json_current, json_meta = _json_ok(gate.result)
-    resolved = current and json_current
+    contract_current = True
+    contract_meta: dict[str, Any] = {}
+    if gate.result and gate.require_unified_repair_conformance:
+        contract_meta = _unified_repair_contract_report(
+            project_root=ROOT,
+            payload=_read_json(gate.result),
+        )
+        contract_current = bool(contract_meta["ok"])
+    resolved = current and json_current and contract_current
     return ModelMaturationSignal(
         signal_id=gate.signal_id,
         signal_type=gate.signal_type,
@@ -124,6 +139,7 @@ def _gate_signal(gate: EvidenceGate) -> ModelMaturationSignal:
         metadata={
             "freshness": freshness,
             "json": json_meta,
+            "unified_repair_contract": contract_meta or None,
         },
     )
 
@@ -302,6 +318,38 @@ def evidence_gates() -> tuple[EvidenceGate, ...]:
                 MATURITY_ACTION_DOWNGRADE_CLAIM,
             ),
         ),
+        EvidenceGate(
+            signal_id="unified_repair_runtime_test_conformance_current",
+            signal_type=MODEL_MATURATION_SIGNAL_MISSING_CODE_BOUNDARY_OBSERVATION,
+            source_route="flowguard_model_mesh",
+            model_id="flowpilot_unified_repair_integrity",
+            risk_id="unified_repair_model_exists_without_runtime_test_conformance",
+            description=(
+                "The unified repair model must not mature until its exact current "
+                "runtime and native-test conformance evidence is present and no "
+                "required conformance check is skipped."
+            ),
+            sources=(
+                "simulations/flowpilot_unified_repair_integrity_model.py",
+                "simulations/run_flowpilot_unified_repair_integrity_checks.py",
+                "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+                "tests/test_flowpilot_core_runtime.py",
+                "tests/test_flowpilot_high_standard_control_flow.py",
+                "tests/test_flowpilot_complete_system_runtime.py",
+                "tests/test_flowpilot_terminal_ledger_source_entries.py",
+                "tests/router_runtime/route_mutation_transactions.py",
+                "tests/router_runtime/route_mutation_parent_backward.py",
+                "tests/router_runtime/route_mutation_sibling_replacement.py",
+            ),
+            result="simulations/flowpilot_unified_repair_integrity_results.json",
+            required_actions=(
+                MATURITY_ACTION_ADD_CODE_BOUNDARY_OBSERVATION,
+                MATURITY_ACTION_REFRESH_EVIDENCE,
+                MATURITY_ACTION_DOWNGRADE_CLAIM,
+            ),
+            require_unified_repair_conformance=True,
+            blocks_model_maturation=True,
+        ),
     )
 
 
@@ -322,10 +370,20 @@ def current_plan() -> ModelMaturationPlan:
 
 
 def current_report_dict() -> dict[str, Any]:
-    report = review_model_maturation_loop(current_plan())
+    plan = current_plan()
+    report = review_model_maturation_loop(plan)
+    gate_by_id = {gate.signal_id: gate for gate in evidence_gates()}
+    blocking_signal_ids = [
+        signal.signal_id
+        for signal in plan.signals
+        if gate_by_id[signal.signal_id].blocks_model_maturation
+        and not signal.resolved
+    ]
     payload = report.to_dict()
     payload["full_closure_ok"] = report.decision == MODEL_MATURATION_DECISION_CURRENT
-    payload["signal_count"] = len(current_plan().signals)
+    payload["signal_count"] = len(plan.signals)
+    payload["hard_gate_ok"] = not blocking_signal_ids
+    payload["blocking_signal_ids"] = blocking_signal_ids
     return payload
 
 
@@ -377,6 +435,15 @@ def known_bad_cases() -> tuple[dict[str, Any], ...]:
                 MATURITY_ACTION_ADD_CODE_BOUNDARY_OBSERVATION,
             },
         },
+        {
+            "name": "unified_repair_conformance_open",
+            "signal_type": MODEL_MATURATION_SIGNAL_MISSING_CODE_BOUNDARY_OBSERVATION,
+            "expected_actions": {
+                MATURITY_ACTION_ADD_CODE_BOUNDARY_OBSERVATION,
+                MATURITY_ACTION_REFRESH_EVIDENCE,
+                MATURITY_ACTION_DOWNGRADE_CLAIM,
+            },
+        },
     )
 
 
@@ -419,11 +486,19 @@ def build_report() -> dict[str, Any]:
     known_bad = [known_bad_report(case) for case in known_bad_cases()]
     known_bad_ok = all(item["ok"] for item in known_bad)
     full_closure_ok = current["full_closure_ok"]
+    hard_gate_ok = current["hard_gate_ok"]
     return {
-        "ok": bool(current["ok"] and known_bad_ok),
+        "ok": bool(current["ok"] and known_bad_ok and hard_gate_ok),
+        "decision": (
+            "model_maturation_scoped_claim"
+            if hard_gate_ok
+            else "current_runtime_gap"
+        ),
         "result_type": "flowpilot_model_maturation",
         "claim_scope": "routine FlowPilot maintenance and local install confidence",
         "full_closure_ok": full_closure_ok,
+        "hard_gate_ok": hard_gate_ok,
+        "blocking_signal_ids": current["blocking_signal_ids"],
         "known_bad_ok": known_bad_ok,
         "current": current,
         "known_bad_sanity_checks": known_bad,

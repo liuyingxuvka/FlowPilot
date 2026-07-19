@@ -64,7 +64,7 @@ def _portable_skill_search_roots(router: ModuleType, project_root: Path) -> list
 
 def _flowguard_route_classification(skill_name: str) -> dict[str, Any]:
     name = skill_name.lower()
-    if name == "model-first-function-flow":
+    if name == "flowguard":
         return {
             "route_description": "Core model-first behavior and route-selection kernel.",
             "role_fit": ["project_manager", "flowguard_operator", "flowguard_operator"],
@@ -128,7 +128,7 @@ def _discover_flowguard_skill_routes(router: ModuleType, project_root: Path) -> 
             if not skill_dir.is_dir():
                 continue
             skill_name = skill_dir.name
-            if not (skill_name.startswith("flowguard-") or skill_name == "model-first-function-flow"):
+            if not (skill_name.startswith("flowguard-") or skill_name == "flowguard"):
                 continue
             skill_md = skill_dir / "SKILL.md"
             if not skill_md.exists():

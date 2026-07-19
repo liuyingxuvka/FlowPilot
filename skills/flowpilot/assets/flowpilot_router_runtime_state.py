@@ -272,9 +272,16 @@ def _set_pre_route_frontier_phase(router: ModuleType, run_root: Path, run_id: st
     frontier['source'] = 'flowpilot_router'
     write_json(run_root / 'execution_frontier.json', frontier)
 
-def _create_empty_role_memory(router: ModuleType, run_id: str, role: str) -> dict[str, Any]:
+def _create_empty_role_memory(
+    router: ModuleType,
+    run_id: str,
+    role: str,
+    *,
+    role_binding_generation: int,
+    agent_id: str,
+) -> dict[str, Any]:
     _bind_router(router)
-    return {'schema_version': 'flowpilot.role_memory.v1', 'run_id': run_id, 'role_key': role, 'status': 'slot_created_no_work_yet', 'summary': '', 'controller_decision_authority': False, 'updated_at': utc_now()}
+    return {'schema_version': 'flowpilot.role_memory.v1', 'run_id': run_id, 'role_key': role, 'agent_id': agent_id, 'role_binding_generation': role_binding_generation, 'status': 'slot_created_no_work_yet', 'summary': '', 'recent_deltas': [], 'controller_decision_authority': False, 'role_memory_used_for_completion_authority': False, 'updated_at': utc_now()}
 
 def _role_memory_event_role(router: ModuleType, event: str, payload: dict[str, Any]) -> str | None:
     _bind_router(router)
@@ -297,8 +304,49 @@ def _append_role_memory_delta(router: ModuleType, run_root: Path, run_state: dic
     role = router._role_memory_event_role(event, payload)
     if role not in RUNTIME_ROLE_KEYS:
         return None
+    run_id = str(run_state['run_id'])
+    role_binding = read_json_if_exists(run_root / 'role_binding_ledger.json')
+    if role_binding.get('schema_version') != 'flowpilot.role_binding_ledger.v1':
+        return None
+    if str(role_binding.get('run_id') or '') != run_id:
+        raise RouterError(f'role memory update for {role} found a stale role-binding ledger')
+    slots = role_binding.get('role_slots') if isinstance(role_binding.get('role_slots'), list) else []
+    matching_slots = [
+        slot
+        for slot in slots
+        if isinstance(slot, dict) and str(slot.get('role_key') or '') == role
+    ]
+    if not matching_slots:
+        return None
+    if len(matching_slots) != 1:
+        raise RouterError(f'role memory update for {role} found duplicate role-binding slots')
+    slot = matching_slots[0]
+    if not router._role_slot_has_current_binding(slot):
+        return None
+    generation = slot.get('role_binding_generation')
+    if not isinstance(generation, int) or generation < 1:
+        raise RouterError(f'role memory update for {role} requires current role_binding_generation')
+    agent_id = str(slot.get('agent_id') or '').strip()
     memory_path = router._role_memory_path(run_root, role)
-    memory = read_json_if_exists(memory_path) or router._create_empty_role_memory(str(run_state['run_id']), role)
+    memory = read_json_if_exists(memory_path)
+    if memory:
+        checks = (
+            (memory.get('schema_version') == 'flowpilot.role_memory.v1', 'schema mismatch'),
+            (str(memory.get('run_id') or '') == run_id, 'run mismatch'),
+            (str(memory.get('role_key') or '') == role, 'role mismatch'),
+            (memory.get('role_binding_generation') == generation, 'generation mismatch'),
+            (str(memory.get('agent_id') or '') == agent_id, 'agent mismatch'),
+        )
+        for passed, reason in checks:
+            if not passed:
+                raise RouterError(f'role memory update for {role} blocked by {reason}')
+    else:
+        memory = router._create_empty_role_memory(
+            run_id,
+            role,
+            role_binding_generation=generation,
+            agent_id=agent_id,
+        )
     artifact_refs = {key: value for key, value in payload.items() if isinstance(key, str) and isinstance(value, str) and (key.endswith('_path') or key.endswith('_hash') or key in {'packet_id', 'request_id', 'defect_or_blocker_id', 'decision'})}
     delta = {'event': event, 'recorded_at': utc_now(), 'artifact_refs': artifact_refs, 'authority': 'memory_index_only', 'controller_decision_authority': False, 'sealed_body_stored': False}
     deltas = memory.get('recent_deltas') if isinstance(memory.get('recent_deltas'), list) else []

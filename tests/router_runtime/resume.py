@@ -78,6 +78,7 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertEqual(action["ack_progress_evidence_policy"]["current_wait_authority"], "ack_progress_evidence_only")
         self.assertTrue(action["ack_progress_evidence_policy"]["unsupported_legacy_payloads_rejected"])
         target_roles = action["role_keys"]
+        self.assertEqual(target_roles, ["project_manager"])
         self.assertEqual(
             {item["role_key"] for item in action["role_rehydration_request"]},
             set(target_roles),
@@ -357,6 +358,16 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
         root = self.make_project()
         run_root = self.boot_to_controller(root)
         self.complete_startup_runtime_entry(root)
+        self.ensure_current_role_agent_for_role(root, "worker")
+        worker_memory_path = run_root / "role_binding_memory" / "worker.json"
+        worker_memory = read_json(worker_memory_path)
+        worker_memory["recent_deltas"] = [
+            {
+                "kind": "test_current_obligation",
+                "summary": "Preserve this current-run worker delta through exact-role recovery.",
+            }
+        ]
+        router.write_json(worker_memory_path, worker_memory)
         state = read_json(router.run_state_path(run_root))
         blocker = router._write_control_blocker(  # type: ignore[attr-defined]
             root,
@@ -393,13 +404,29 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertEqual(action["target_role_keys"], ["worker"])
         self.assertTrue(action["background_collaboration_authorized"])
         self.assertIn("restore_old_agent", action["recovery_ladder"])
-        self.assertIn("full_role_binding_recovery", action["recovery_ladder"])
+        self.assertNotIn("full_role_binding_recovery", action["recovery_ladder"])
+        self.assertNotIn("full_role_binding_recovery_scope_if_escalated", action)
         self.assertFalse(action["normal_waits_allowed_before_recovery"])
         payload = self.role_recovery_agent_payload(root, action, role="worker")
         legacy_payload = self.role_recovery_agent_payload(root, action, role="worker")
         legacy_payload["role_bindings"] = legacy_payload.pop("recovered_role_bindings")
         with self.assertRaisesRegex(router.RouterError, "old role_bindings aliases"):
             router.apply_action(root, "recover_role_bindings", legacy_payload)
+        widened_payload = self.role_recovery_agent_payload(root, action, role="worker")
+        widened_payload["recovery_scope"] = "full_role_binding"
+        with self.assertRaisesRegex(router.RouterError, "scope mismatch"):
+            router.apply_action(root, "recover_role_bindings", widened_payload)
+        full_result_payload = self.role_recovery_agent_payload(root, action, role="worker")
+        full_result_payload["recovered_role_bindings"][0]["recovery_result"] = "full_role_binding_recovery_opened"
+        with self.assertRaisesRegex(router.RouterError, "full role binding recovery is unsupported"):
+            router.apply_action(root, "recover_role_bindings", full_result_payload)
+        worker_memory = read_json(worker_memory_path)
+        stale_memory = dict(worker_memory)
+        stale_memory["role_binding_generation"] = int(worker_memory["role_binding_generation"]) + 1
+        router.write_json(worker_memory_path, stale_memory)
+        with self.assertRaisesRegex(router.RouterError, "rejects stale role memory"):
+            router.apply_action(root, "recover_role_bindings", payload)
+        router.write_json(worker_memory_path, worker_memory)
         state = read_json(router.run_state_path(run_root))
         state["startup_answers"]["background_collaboration_authorized"] = False
         router.save_run_state(run_root, state)
@@ -422,6 +449,17 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
         worker_slot = next(slot for slot in role_binding["role_slots"] if slot["role_key"] == "worker")
         self.assertEqual(worker_slot["last_role_recovery_result"], "targeted_replacement_opened")
         self.assertTrue(worker_slot["superseded_agent_output_quarantined"])
+        worker_memory = read_json(worker_memory_path)
+        self.assertEqual(worker_memory["role_binding_generation"], worker_slot["role_binding_generation"])
+        self.assertEqual(
+            worker_memory["recent_deltas"],
+            [
+                {
+                    "kind": "test_current_obligation",
+                    "summary": "Preserve this current-run worker delta through exact-role recovery.",
+                }
+            ],
+        )
 
         action = self.next_after_display_sync(root)
         self.assertEqual(action["action_type"], "handle_control_blocker")
@@ -945,6 +983,16 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
         root = self.make_project()
         run_root = self.boot_to_controller(root)
         self.ensure_current_role_agent_for_role(root, "worker")
+        state = read_json(router.run_state_path(run_root))
+        state["pending_action"] = router.make_action(
+            action_type="await_role_decision",
+            actor="controller",
+            label="controller_waits_for_worker_before_manual_resume",
+            summary="Controller is waiting for the current worker obligation.",
+            to_role="worker",
+            extra={"allowed_external_events": ["role_work_result_returned"]},
+        )
+        router.save_run_state(run_root, state)
         (run_root / "role_binding_memory" / "worker.json").unlink()
 
         router.record_external_event(root, "manual_resume_requested")

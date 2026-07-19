@@ -225,6 +225,7 @@ ROUTER_ROUTE_COMMANDS = (
         "tests.router_runtime.route_mutation_parent_backward",
         patterns=(
             "test_parent_backward_targets_require_current_child_completion_ledgers",
+            "test_route_mutation_rejects_unvalidated_authority_dict",
             "test_parent_completion_wrong_path_returns_route_authority_repair_feedback",
             "test_unsupported_route_action_alias_is_rejected_without_translation",
             "test_fallback_route_action_payload_is_rejected_without_translation",

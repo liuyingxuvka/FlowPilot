@@ -29941,6 +29941,39 @@ Evidence supports the local repository and installed FlowPilot skill for the mat
 - Rerun affected FlowGuard model checks and focused tests before broad confidence.
 
 
+## restore-test-evidence-closure - Final evidence dependency and negative-fixture repair
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: final ModelMesh and required known-bad verification exposed two evidence-consumption gaps after the v0.12.0 source freeze
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-07-19T02:16:10+00:00
+- Ended: 2026-07-19T02:31:34+00:00
+
+### Model Files
+- simulations/run_flowpilot_model_mesh_checks.py
+- simulations/run_flowpilot_053_ppa_maintenance_checks.py
+- simulations/run_flowpilot_ai_response_execution_closure_checks.py
+
+### Findings
+- ModelMesh correctly rejected a stale behavior-commitment risk receipt because the verification contract did not refresh that receipt after current formal AI execution and strict MTA.
+- A unified-repair negative test depended on the mutable repository result remaining red and became invalid once exact native evidence made the repository result green.
+
+### Repairs
+- The existing verification contract now orders formal AI execution, strict MTA, behavior-commitment risk, and ModelMesh through explicit receipt dependencies.
+- The negative test now owns a source-matching red fixture in a temporary project root.
+- No runtime field, compatibility reader, alternate authority, or fallback route was added.
+
+### Validation
+- Current formal AI execution: 441 selected, 441 executed, 441 passed.
+- Behavior commitment and primary path risk: full confidence, no findings.
+- ModelMesh: current parent receipt consumed every required child receipt.
+- Focused negative fixture test: passed.
+
+### Claim Boundary
+- These results support repository release confidence for the frozen source identity. They do not replace a future FlowPilot run's own terminal-return authority.
+
+
 ## flowguard-project-upgrade - FlowGuard project upgrade record update
 
 - Project: FlowGuardProjectAutopilot_20260430
@@ -30082,3 +30115,83 @@ Evidence supports the local repository and installed FlowPilot skill for the mat
 - No external FlowGuard, OpenSpec, or SkillGuard repository was modified.
 - Other installed skills remain under their own migration owners and are not claimed current by this repair.
 - No final17, full OpenSpec verification, archive, release, or execution-depth claim is made here.
+
+
+## flowguard-project-upgrade - FlowGuard project upgrade record update
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: target project requires current semantic adoption and version records
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-07-17T06:51:11+00:00
+- Ended: 2026-07-17T06:51:11+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- none recorded
+
+### Commands
+- OK (0.000s): `managed adoption rule-set preflight` - generated block contains every required stable rule
+- OK (0.000s): `canonical FlowGuard skill-suite validation` - pass
+- OK (0.000s): `post-write project adoption audit` - semantic and version parity after write
+
+### Findings
+- adoption_record_written: FlowGuard project AGENTS block and manifest were written or refreshed.
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- Project adoption does not replace executable model checks, tests, replay, or closure evidence.
+
+### Risk Evidence Summary
+- none recorded
+
+### Next Actions
+- python -m flowguard project-audit --root . --json
+- python scripts/verify_skill_suite_markers.py --root . --json
+- Rerun affected FlowGuard model checks and focused tests before broad confidence.
+
+
+## flowguard-project-upgrade - FlowGuard project upgrade record update
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: target project requires current semantic adoption and version records
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-07-18T14:45:40+00:00
+- Ended: 2026-07-18T14:45:40+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- none recorded
+
+### Commands
+- OK (0.000s): `managed adoption rule-set preflight` - generated block contains every required stable rule
+- OK (0.000s): `canonical FlowGuard skill-suite validation` - pass
+- OK (0.000s): `post-write project adoption audit` - semantic and version parity after write
+
+### Findings
+- adoption_record_written: FlowGuard project AGENTS block and manifest were written or refreshed.
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- Project adoption does not replace executable model checks, tests, replay, or closure evidence.
+
+### Risk Evidence Summary
+- none recorded
+
+### Next Actions
+- python -m flowguard project-audit --root . --json
+- python scripts/verify_skill_suite_markers.py --root . --json
+- Rerun affected FlowGuard model checks and focused tests before broad confidence.

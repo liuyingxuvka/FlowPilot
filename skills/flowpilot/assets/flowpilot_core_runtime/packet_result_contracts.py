@@ -61,7 +61,15 @@ TERMINAL_BACKWARD_REPLAY_REQUIRED_FIELDS = (
     "waiver_records",
     "final_blockers",
 )
-TERMINAL_BACKWARD_REPLAY_REQUIRED_CHILD_FIELDS = ()
+TERMINAL_BACKWARD_REPLAY_REQUIRED_CHILD_FIELDS = (
+    "final_artifact_refs[].id",
+    "final_artifact_refs[].status",
+    "final_artifact_refs[].basis",
+    "route_segment_replay[].segment_id",
+    "route_segment_replay[].segment_kind",
+    "route_segment_replay[].status",
+    "route_segment_replay[].basis",
+)
 TERMINAL_BACKWARD_REPLAY_EXPLICIT_ARRAY_FIELDS = (
     "final_artifact_refs",
     "acceptance_item_closure",
@@ -71,7 +79,7 @@ TERMINAL_BACKWARD_REPLAY_EXPLICIT_ARRAY_FIELDS = (
 )
 TERMINAL_BACKWARD_REPLAY_NON_EMPTY_ARRAY_FIELDS = (
     "final_artifact_refs",
-    "acceptance_item_closure",
+    "route_segment_replay",
 )
 PM_DISPOSITION_REQUIRED_FIELDS = (
     "decision",
@@ -204,6 +212,13 @@ PACKET_RESULT_CONTRACTS: tuple[dict[str, Any], ...] = (
             "node_context_package.purpose when decision=pass",
             "node_context_package.acceptance_criteria when decision=pass",
             "node_context_package.relevant_references when decision=pass",
+            "node_context_package.relevant_references[] when decision=pass",
+            "node_context_package.relevant_references[].reference_kind when decision=pass",
+            "node_context_package.relevant_references[].authority_id when decision=pass",
+            "node_context_package.relevant_references[].owner when decision=pass",
+            "node_context_package.relevant_references[].path when decision=pass",
+            "node_context_package.relevant_references[].fingerprint when decision=pass",
+            "node_context_package.relevant_references[].consumer_scope when decision=pass",
             "node_context_package.known_risks when decision=pass",
             "node_context_package.acceptance_item_projection when decision=pass",
             "route_plan when decision=redesign_route",
@@ -429,6 +444,15 @@ PACKET_RESULT_CONTRACTS: tuple[dict[str, Any], ...] = (
             "repair_parent_scope_contract.repair_child_specs[].node_id when decision=repair_parent_scope",
             "repair_parent_scope_contract.repair_child_specs[].purpose when decision=repair_parent_scope",
             "repair_parent_scope_contract.repair_child_specs[].required_evidence when decision=repair_parent_scope",
+            "repair_subtree_scope when decision=repair_subtree",
+            "repair_subtree_scope.source_node_id when decision=repair_subtree",
+            "repair_subtree_scope.include_descendants when decision=repair_subtree",
+            "repair_subtree_scope.preserve_unaffected_siblings when decision=repair_subtree",
+            "repair_subtree_scope.replay_policy when decision=repair_subtree",
+            "repair_subtree_scope.repair_child_specs[] when decision=repair_subtree",
+            "repair_subtree_scope.repair_child_specs[].node_id when decision=repair_subtree",
+            "repair_subtree_scope.repair_child_specs[].purpose when decision=repair_subtree",
+            "repair_subtree_scope.repair_child_specs[].required_evidence when decision=repair_subtree",
             "route_plan when decision=redesign_route",
             "route_plan.schema_version when decision=redesign_route",
             "route_plan.nodes[] when decision=redesign_route",
@@ -943,6 +967,24 @@ def parent_repair_scope_contract_minimal_shape(source_parent_node_id: str = "par
     }
 
 
+def repair_subtree_scope_minimal_shape(source_node_id: str = "source-node-id") -> dict[str, Any]:
+    return {
+        "source_node_id": source_node_id,
+        "include_descendants": True,
+        "preserve_unaffected_siblings": True,
+        "replay_policy": "derived_dependency_cone",
+        "repair_child_specs": [
+            {
+                "node_id": f"{source_node_id}-repair-child-001",
+                "title": "Repair affected subtree",
+                "purpose": "Rebuild the selected subtree with current evidence.",
+                "required_evidence": ["current repair child result", "affected replay evidence"],
+                "acceptance_criteria": ["The current subtree repair closes its bounded defect."],
+            }
+        ],
+    }
+
+
 def repair_obligation_disposition_minimal_shape(
     disposition: str = "fresh_repair_packet_required",
     return_gate: str = "current_scope_repair_packet",
@@ -1010,6 +1052,17 @@ def branch_valid_shapes_for_family(family_id: str) -> dict[str, Any]:
                 "repair_obligation_disposition": repair_obligation_disposition_minimal_shape(
                     "parent_scope_repair_required",
                     "parent_scope_repair_packet",
+                ),
+            },
+            "decision=repair_subtree": {
+                "decision": "repair_subtree",
+                "reason": "Concrete PM subtree repair reason.",
+                "target_blocker_id": "blocker-current",
+                "next_action": "repair_subtree",
+                "repair_subtree_scope": repair_subtree_scope_minimal_shape(),
+                "repair_obligation_disposition": repair_obligation_disposition_minimal_shape(
+                    "subtree_repair_required",
+                    "subtree_repair_packet",
                 ),
             },
             "decision=redesign_route": {
@@ -1192,7 +1245,24 @@ def _minimal_valid_shape_for_family_base(family_id: str) -> dict[str, Any]:
             "node_context_package": {
                 "purpose": "Current node purpose.",
                 "acceptance_criteria": ["criterion"],
-                "relevant_references": ["reference"],
+                "relevant_references": [
+                    {
+                        "reference_kind": "acceptance_authority",
+                        "authority_id": "current-root-acceptance",
+                        "owner": "pm",
+                        "path": "<current-root-acceptance-path>",
+                        "fingerprint": "sha256:<current-content-sha256>",
+                        "consumer_scope": "current_route_node",
+                    },
+                    {
+                        "reference_kind": "route_authority",
+                        "authority_id": "current-active-route",
+                        "owner": "pm",
+                        "path": "<current-active-route-path>",
+                        "fingerprint": "sha256:<current-content-sha256>",
+                        "consumer_scope": "current_route_node",
+                    },
+                ],
                 "known_risks": ["risk"],
                 "acceptance_item_projection": [],
             },

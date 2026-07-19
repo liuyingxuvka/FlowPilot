@@ -42,6 +42,114 @@ run_capability_checks = load_module(
 
 
 class FlowPilotThinParentChecksTests(unittest.TestCase):
+    def test_unified_repair_integrity_has_one_primary_parent_partition(self) -> None:
+        ledger = json.loads(thin_parent_checks.LEDGER_PATH.read_text(encoding="utf-8"))
+        owners = [
+            (str(parent_id), str(partition.get("id") or ""))
+            for parent_id, parent in ledger["parents"].items()
+            for partition in parent.get("partitions", [])
+            if "flowpilot_unified_repair_integrity"
+            in partition.get("evidence_ids", [])
+        ]
+
+        self.assertEqual(owners, [("meta", "terminal_ledger")])
+        terminal = next(
+            partition
+            for partition in ledger["parents"]["meta"]["partitions"]
+            if partition.get("id") == "terminal_ledger"
+        )
+        self.assertIn("unified_repair_integrity", terminal["invariant_families"])
+        self.assertEqual(
+            ledger["typed_consumer_integration_gaps"],
+            [],
+        )
+        self.assertEqual(
+            ledger["typed_consumers"],
+            [
+                {
+                    "relation_id": "consumer.capability.unified_repair_terminal_orchestration",
+                    "evidence_id": "flowpilot_unified_repair_integrity",
+                    "primary_owner_parent": "meta",
+                    "primary_owner_partition": "terminal_ledger",
+                    "consumer_parent": "capability",
+                    "consumer_partition_ids": [
+                        "child_skill_capability",
+                        "packet_and_role_authority",
+                        "terminal_ledger",
+                    ],
+                    "relation_types": [
+                        "orchestration_repair_intake",
+                        "terminal_replay_shared_engine",
+                    ],
+                    "required_invariant_families": [
+                        "complete_workstream_semantic_result",
+                        "capability_backward_replay",
+                        "terminal_capability_ledger",
+                    ],
+                    "status": "current",
+                    "claim_boundary": (
+                        "Capability consumes the current shared-engine child through "
+                        "its orchestration, packet/result authority, and terminal "
+                        "replay partitions; Meta terminal_ledger remains the single "
+                        "evidence owner."
+                    ),
+                }
+            ],
+        )
+
+    def test_capability_consumes_unified_repair_as_typed_relation_not_owner(self) -> None:
+        ledger = json.loads(thin_parent_checks.LEDGER_PATH.read_text(encoding="utf-8"))
+        failures = thin_parent_checks._validate_ledger_shape(ledger, "capability")
+
+        self.assertEqual(failures, [])
+        owners = [
+            (parent_id, partition["id"])
+            for parent_id, parent in ledger["parents"].items()
+            for partition in parent["partitions"]
+            if "flowpilot_unified_repair_integrity"
+            in partition.get("evidence_ids", [])
+        ]
+        self.assertEqual(owners, [("meta", "terminal_ledger")])
+
+        rows = thin_parent_checks.result_index()
+        original = thin_parent_checks.result_index
+        with tempfile.TemporaryDirectory() as temp_dir:
+            isolated_result = Path(temp_dir) / "unified_repair_results.json"
+            isolated_result.write_text(
+                json.dumps({"ok": True, "skipped_checks": []}),
+                encoding="utf-8",
+            )
+            try:
+                thin_parent_checks.result_index = lambda: {
+                    **rows,
+                    "flowpilot_unified_repair_integrity": {
+                        "model_id": "flowpilot_unified_repair_integrity",
+                        "result_file": "simulations/flowpilot_unified_repair_integrity_results.json",
+                        "result_path": isolated_result,
+                        "result_fingerprint": "current-test-fingerprint",
+                        "state_count": 2,
+                        "edge_count": 1,
+                        "ok": True,
+                        "parent_evidence_ok": True,
+                        "result_type": "flowpilot_unified_repair_integrity_checks",
+                    },
+                }
+                result = thin_parent_checks.build_thin_parent_result("capability")
+            finally:
+                thin_parent_checks.result_index = original
+
+        typed = result["thin_parent"]["typed_consumers"]
+        self.assertEqual(len(typed), 1)
+        self.assertTrue(typed[0]["ok"])
+        self.assertEqual(
+            typed[0]["consumer_partition_ids"],
+            [
+                "child_skill_capability",
+                "packet_and_role_authority",
+                "terminal_ledger",
+            ],
+        )
+
     def test_live_projection_failure_does_not_block_static_parent_evidence(self) -> None:
         payload = {
             "ok": False,

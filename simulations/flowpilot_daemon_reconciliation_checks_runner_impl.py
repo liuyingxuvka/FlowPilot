@@ -102,6 +102,8 @@ HAZARD_EXPECTED_FAILURES = {
     "active_runtime_writer_stops_daemon": "active runtime writer stopped the daemon before settlement",
     "foreground_start_active_writer_fatal": "foreground start command failed on active runtime writer instead of waiting and retrying",
     "foreground_start_reports_before_writer_settles": "foreground start reported live daemon status before runtime writer settled",
+    "foreground_start_retry_allocates_duplicate_current_run": "one foreground start command allocated more than one current run",
+    "foreground_start_retry_loses_completed_action_evidence": "foreground start retry lost completed folded-action evidence",
     "startup_reconciled_action_false_pm_blocker": "startup bootloader row produced a control blocker after it was already reconciled",
     "startup_receipt_apply_split_requires_later_apply": "startup Controller receipt required a separate apply path to advance",
     "startup_receipt_apply_split_false_pm_blocker": "startup Controller receipt reached next action through split receipt/apply ownership",
@@ -194,6 +196,9 @@ def _state_id(state: model.State) -> str:
         f"read_during_writer={state.foreground_start_reads_runtime_during_writer},"
         f"waited={state.foreground_start_waits_for_runtime_writer},"
         f"retried={state.foreground_start_retries_after_writer_finishes},"
+        f"run_allocations={state.foreground_start_run_allocation_count},"
+        f"completed_before_writer={state.foreground_start_completed_actions_before_writer},"
+        f"completed_preserved={state.foreground_start_completed_actions_preserved},"
         f"returned_live={state.foreground_start_returns_live_daemon_status},"
         f"fatal={state.foreground_start_fatal_from_active_writer}|"
         f"queue={state.queue_stop_reason},sleep={state.sleep_taken},"

@@ -124,7 +124,8 @@ always owns the optimization choice and whether to continue, bind the item to
 an already named node/gate, reject with reason, waive, stop, ask the user, or
 issue repair. Do not treat the score alone as Reviewer authority to force
 repair. This remains true even when Reviewer reports no blocker and PM is
-considering optional optimization.
+considering optional optimization. Runtime must not manufacture a blocker from
+the numeric score alone when every applicable hard gate passes.
 If Reviewer identifies an explicit current quantitative gap, such as required
 item count, word count, coverage rows, required ids, evidence count, or named
 sections where delivered quantity is short, treat that as hard-blocker repair
@@ -165,6 +166,15 @@ not treat historical bodies as current passing evidence. Read only the sealed
 bodies listed in `authorized_result_reads`; the dossier does not grant open
 access to every packet in the run.
 
+PM may also enter this repair decision directly from an evidence-bound
+historical defect that PM discovered in accepted or completed work. That
+proactive origin does not require a fabricated Reviewer result, semantic
+blocker, or control blocker. Record the real defect observation, source node,
+current route/run identity, supporting evidence, and affected dependency
+frontier, then send the topology decision through the same staged repair engine
+used for blocker-backed, parent-replay, system-gate, and terminal-replay
+origins.
+
 If PM runs a focused repair-strategy self-interrogation, write a
 `flowpilot.self_interrogation_record.v1` with scope `repair` and register it
 in `self_interrogation_index.json`. Hard/current findings from that record
@@ -186,15 +196,28 @@ FlowGuard operator process-model, then Reviewer route challenge before execution
 
 Apply Minimum Sufficient Complexity to repair strategy. Choose the smallest
 current-contract decision that can close the blocker and restore the frozen
-contract. Use `repair_current_scope` when the current route node or current
-packet scope should be replaced by a fresh repair scope. Use
+contract. The conceptual topology menu is exactly local same-slot replacement,
+parent replacement, subtree rebuild, route redesign, authorized waiver, or
+stop. Use the exact current Runtime decision value for the selected topology;
+do not guess an alias when the Runtime contract does not offer that scope.
+Use `repair_current_scope` only for a fresh local replacement at the source
+node's same parent, business intent, commitment, and logical slot. Use
 `repair_parent_scope` only when the explicit parent scope is the faulty unit and
 include `repair_parent_scope_contract` with `source_parent_node_id`,
 `inherit_existing_children: true`, and non-empty `repair_child_specs[]`. Old
 children/results become inherited history only; the replacement parent must run
-the new repair child specs as current child work. Use `redesign_route` only when
-the route structure itself is wrong and a strict `route_plan` is required.
-Record why the smaller current-contract decision was insufficient.
+the new repair child specs as current child work. Use the Runtime's explicit
+subtree-rebuild path when descendants must be rebuilt, and use
+`redesign_route` only when the route structure itself is wrong and a strict
+`route_plan` is required. Record why every smaller topology was insufficient.
+
+For every local, parent, or subtree repair, create a fresh replacement
+generation instead of mutating the source node. Preserve `repair_of_node_id`,
+stable `repair_root_id`, immediately prior `previous_repair_node_id` for
+repeated repair, and strictly increasing `repair_generation`. The superseded
+source is immutable history and never current authority; the active replacement
+is the sole current authority. Any bounded repair children attach only beneath
+the active replacement.
 
 For a terminal backward replay blocker, a continuing PM repair decision must
 write a current `supplemental_repair_contract`. Do not edit the frozen original
@@ -206,9 +229,15 @@ must name `gap_kind`, `original_goal_link`, `reviewer_gap`, `required_repair`,
 `status: "open"`. If the decision uses `redesign_route`, the route plan nodes
 must project the same `supplemental_repair_contract_ids` and
 `supplemental_repair_item_ids`; otherwise the repair is not dispatchable.
-Runtime allows at most three supplemental repair rounds for the same terminal
-gap. After the third round, PM must choose a legal terminal disposition, stop
-for the user, or route a new PM decision from the current blocker context.
+The terminal Reviewer reports the structured gap but does not perform the
+repair. PM selects the smallest owning topology and submits it through the
+pre-effect decision gate. Only after that gate is system-closed may Runtime
+commit the replacement and dispatch a fresh Worker packet. Post-work FlowGuard
+then checks the exact Worker result, and the same terminal Reviewer gate
+rechecks that result under the same supplemental contract, source generation,
+and repair generation before PM disposition and terminal replay. Do not reuse
+the topology-decision Reviewer evidence as post-work evidence, and do not let
+Reviewer author the substantive repair result.
 When the Reviewer blocker comes from terminal final-artifact hygiene review, use
 `gap_kind: "final_artifact_hygiene_gap"` and include a `hygiene_category`
 such as `code_maintainability`, `test_coverage`, `model_coverage`,
@@ -219,7 +248,10 @@ route, or stop. `pm_decision_support` and `future_contract_candidate` findings
 belong in PM suggestion disposition unless PM explicitly imports them into the
 supplemental contract.
 Terminal supplemental repair is capped at three rounds by runtime. When round
-three is exhausted, stop rather than issuing another PM repair decision.
+three remains unresolved, Runtime records `repair_rounds_exhausted` and returns
+terminal stopped status. This is the single hard disposition: do not dispatch
+another Reviewer, PM, or Worker packet, do not create a fourth supplemental
+contract, and do not route a new PM repair decision from the exhausted gap.
 
 If terminal replay or PM final ledger is blocked only because terminal
 FlowGuard coverage is missing, stale, progress-only, unaccepted, or still has

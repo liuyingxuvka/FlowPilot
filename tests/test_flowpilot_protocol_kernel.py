@@ -91,7 +91,7 @@ class FlowPilotProtocolKernelTests(unittest.TestCase):
         )
         routes = {route["modeled_target"]: route for route in scheduler["routes"]}
         expected = {
-            "target_product_behavior": "model-first-function-flow",
+            "target_product_behavior": "flowguard",
             "development_process": "flowguard-development-process-flow",
             "ui_interaction_flow": "flowguard-ui-flow-structure",
             "code_structure_plan": "flowguard-code-structure-recommendation",

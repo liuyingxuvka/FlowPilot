@@ -7,8 +7,17 @@
     "meta"
   ],
   "expected_hazard_failures": {
+    "background_descendant_settlement_missing": [
+      "background_descendant_settlement_not_bounded"
+    ],
+    "background_inner_interpreter_follows_external_upgrade": [
+      "background_interpreter_not_bound_to_execution_owner"
+    ],
     "background_missing_artifact_set": [
       "background_artifact_set_missing"
+    ],
+    "background_predating_process_misclassified_as_descendant": [
+      "background_descendant_lineage_not_ordered"
     ],
     "background_progress_only_claimed_pass": [
       "background_progress_is_not_completion_evidence"
@@ -16,6 +25,15 @@
     "background_running_without_timeout_guard": [
       "background_progress_is_not_completion_evidence",
       "background_timeout_not_enforced"
+    ],
+    "background_shared_runtime_resource_race": [
+      "background_shared_runtime_resource_not_serialized"
+    ],
+    "background_surviving_descendant_promoted": [
+      "background_surviving_descendants_not_fail_closed"
+    ],
+    "background_windows_venv_shim_exits_before_process_owner": [
+      "background_interpreter_shim_not_direct_process_owner"
     ],
     "coverage_sweep_blocks_fast_tier": [
       "coverage_sweep_blocks_fast_tier"
@@ -84,20 +102,26 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=2 initial_states=1 traces=81",
+    "summary": "sequences=2 initial_states=1 traces=99",
     "violation_count": 0
   },
   "graph": {
     "accepted_state_count": 4,
-    "edge_count": 54,
+    "edge_count": 66,
     "labels_seen": [
       "accept_valid_background_integration_tier",
       "accept_valid_fast_tier",
       "accept_valid_release_background_tier",
       "accept_valid_router_child_tier",
+      "reject_background_descendant_settlement_missing",
+      "reject_background_inner_interpreter_follows_external_upgrade",
       "reject_background_missing_artifact_set",
+      "reject_background_predating_process_misclassified_as_descendant",
       "reject_background_progress_only_claimed_pass",
       "reject_background_running_without_timeout_guard",
+      "reject_background_shared_runtime_resource_race",
+      "reject_background_surviving_descendant_promoted",
+      "reject_background_windows_venv_shim_exits_before_process_owner",
       "reject_coverage_sweep_blocks_fast_tier",
       "reject_duplicate_child_owner",
       "reject_foreground_full_regression",
@@ -118,9 +142,15 @@
       "reject_router_slice_import_broken_counted_green",
       "reject_stale_child_evidence_used",
       "reject_testmesh_mta_final_confidence_dependency_cycle",
+      "select_background_descendant_settlement_missing",
+      "select_background_inner_interpreter_follows_external_upgrade",
       "select_background_missing_artifact_set",
+      "select_background_predating_process_misclassified_as_descendant",
       "select_background_progress_only_claimed_pass",
       "select_background_running_without_timeout_guard",
+      "select_background_shared_runtime_resource_race",
+      "select_background_surviving_descendant_promoted",
+      "select_background_windows_venv_shim_exits_before_process_owner",
       "select_coverage_sweep_blocks_fast_tier",
       "select_duplicate_child_owner",
       "select_foreground_full_regression",
@@ -148,9 +178,9 @@
     ],
     "missing_labels": [],
     "ok": true,
-    "rejected_state_count": 23,
-    "state_count": 55,
-    "terminal_state_count": 27,
+    "rejected_state_count": 29,
+    "state_count": 67,
+    "terminal_state_count": 33,
     "violations": []
   },
   "model": "flowpilot_test_tiering",
@@ -167,9 +197,15 @@
     "bad_accepts": [],
     "bad_rejects": [],
     "hazard_scenarios_rejected": [
+      "background_descendant_settlement_missing",
+      "background_inner_interpreter_follows_external_upgrade",
       "background_missing_artifact_set",
+      "background_predating_process_misclassified_as_descendant",
       "background_progress_only_claimed_pass",
       "background_running_without_timeout_guard",
+      "background_shared_runtime_resource_race",
+      "background_surviving_descendant_promoted",
+      "background_windows_venv_shim_exits_before_process_owner",
       "coverage_sweep_blocks_fast_tier",
       "duplicate_child_owner",
       "foreground_full_regression",

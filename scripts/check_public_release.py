@@ -29,6 +29,15 @@ PRIVATE_PATH_PREFIXES = (
     ".codex/",
 )
 
+PUBLIC_FLOWGUARD_PATHS = frozenset(
+    {
+        ".flowguard/behavior_commitment_ledger/README.md",
+        ".flowguard/behavior_commitment_ledger/ledger.json",
+        ".flowguard/behavior_commitment_ledger/model.py",
+        ".flowguard/behavior_commitment_ledger/run_checks.py",
+    }
+)
+
 PRIVATE_PATH_NAMES = {
     ".env",
     ".pytest_cache",
@@ -129,6 +138,8 @@ def git_command() -> str | None:
 
 def path_has_private_component(path: str) -> bool:
     normalized = path.replace("\\", "/")
+    if normalized in PUBLIC_FLOWGUARD_PATHS:
+        return False
     parts = set(normalized.split("/"))
     if any(normalized == prefix.rstrip("/") or normalized.startswith(prefix) for prefix in PRIVATE_PATH_PREFIXES):
         return True

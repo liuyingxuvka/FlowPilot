@@ -30,6 +30,7 @@ from flowguard import (
 from flowpilot_structure_maintenance_hazards import (
     MODEL_STRUCTURE_HAZARDS,
     STRUCTURE_HAZARDS,
+    TEST_TIER_STRUCTURE_HAZARDS,
     TESTMESH_HAZARDS,
 )
 from flowpilot_structure_maintenance_model_catalog import (
@@ -51,6 +52,11 @@ from flowpilot_structure_maintenance_resource_catalog import (
 from flowpilot_structure_maintenance_testmesh_catalog import (
     ROUTER_TEST_PARTITIONS,
     ROUTER_TEST_SUITES,
+)
+from flowpilot_structure_maintenance_test_tier_catalog import (
+    TEST_TIER_PUBLIC_ENTRYPOINTS,
+    TEST_TIER_STRUCTURE_MODULES,
+    TEST_TIER_STRUCTURE_PARTITIONS,
 )
 
 def _target_modules_from_structure_evidence(
@@ -376,6 +382,124 @@ def model_structure_hazard_plan(name: str) -> StructureMeshPlan:
         )
         return replace(model_structure_plan(), child_modules=modules)
     raise ValueError(f"unknown model structure hazard: {name}")
+
+
+def test_tier_target_structure() -> CodeStructureRecommendation:
+    return CodeStructureRecommendation(
+        recommendation_id="flowpilot_test_tier_structure_target_v1",
+        source_model_id="flowpilot_test_tiering",
+        source_model_path="simulations/flowpilot_test_tiering_model.py",
+        parent_module_id="flowpilot_test_tier_structure_split",
+        source_model_evidence_tier=EVIDENCE_CONFORMANCE_GREEN,
+        target_modules=_target_modules_from_structure_evidence(
+            TEST_TIER_STRUCTURE_MODULES,
+            public_entrypoints_by_module={
+                "test_tier_facade": (
+                    "run_test_tier_cli",
+                    "run_test_tier_import_api",
+                ),
+            },
+        ),
+        function_block_map=_function_block_map_from_partitions(
+            TEST_TIER_STRUCTURE_PARTITIONS
+        ),
+        state_owner_map=_state_owner_map(TEST_TIER_STRUCTURE_MODULES),
+        side_effect_owner_map=_side_effect_owner_map(TEST_TIER_STRUCTURE_MODULES),
+        config_owner_map=_config_owner_map(TEST_TIER_STRUCTURE_MODULES),
+        public_entrypoint_map=(
+            ("run_test_tier_cli", "test_tier_facade"),
+            ("run_test_tier_import_api", "test_tier_facade"),
+        ),
+        facade_module_id="test_tier_facade",
+        validation_boundaries=(
+            "test-tier CLI and import facade parity",
+            "background supervisor stage ordering and bounded fanout",
+            "background child exact process-tree cleanup",
+            "same covered-source fingerprint at every receipt boundary",
+        ),
+        rationale=(
+            "The existing FlowPilot test-tier model keeps one public facade and "
+            "assigns artifact classification, child process execution, "
+            "supervisor scheduling, fingerprinting, and receipt verification "
+            "to single focused owners."
+        ),
+        hierarchical_model_used=True,
+    )
+
+
+def test_tier_structure_plan(
+    *,
+    decision_scope: str = STRUCTURE_SCOPE_RELEASE,
+    required_evidence_tier: str = EVIDENCE_CONFORMANCE_GREEN,
+) -> StructureMeshPlan:
+    return StructureMeshPlan(
+        parent_module_id="flowpilot_test_tier_structure_split",
+        decision_scope=decision_scope,
+        required_evidence_tier=required_evidence_tier,
+        partition_items=TEST_TIER_STRUCTURE_PARTITIONS,
+        child_modules=TEST_TIER_STRUCTURE_MODULES,
+        public_entrypoints=TEST_TIER_PUBLIC_ENTRYPOINTS,
+        target_structure=test_tier_target_structure(),
+    )
+
+
+def test_tier_structure_hazard_plan(name: str) -> StructureMeshPlan:
+    good = test_tier_structure_plan()
+    if name == "missing_test_tier_partition_owner":
+        return replace(
+            good,
+            partition_items=(
+                StructurePartitionItem(
+                    "background_child_exact_process_tree",
+                    owner_module_id="",
+                ),
+            ),
+        )
+    if name == "duplicate_test_tier_state_owner":
+        modules = tuple(
+            replace(
+                module,
+                owns_state=(
+                    *module.owns_state,
+                    "background_child_process_identity_observation",
+                ),
+            )
+            if module.module_id == "test_tier_background_supervisor"
+            else module
+            for module in good.child_modules
+        )
+        return replace(good, child_modules=modules)
+    if name == "missing_test_tier_facade":
+        modules = tuple(
+            replace(module, facade_retained=False)
+            if module.module_id == "test_tier_facade"
+            else module
+            for module in good.child_modules
+        )
+        return replace(good, child_modules=modules)
+    if name == "removed_test_tier_entrypoint":
+        entrypoints = tuple(
+            replace(entrypoint, compatibility_preserved=False, facade_available=False)
+            for entrypoint in good.public_entrypoints
+        )
+        return replace(good, public_entrypoints=entrypoints)
+    if name == "stale_test_tier_parity":
+        modules = tuple(
+            replace(module, behavior_parity_current=False)
+            if module.module_id == "test_tier_background_child"
+            else module
+            for module in good.child_modules
+        )
+        return replace(good, child_modules=modules)
+    if name == "insufficient_test_tier_release_evidence":
+        modules = tuple(
+            replace(module, behavior_parity_tier=EVIDENCE_ABSTRACT_GREEN)
+            if module.module_id == "test_tier_facade"
+            else module
+            for module in good.child_modules
+        )
+        return replace(good, child_modules=modules)
+    raise ValueError(f"unknown test-tier structure hazard: {name}")
 
 
 def resource_facade_target_structure() -> CodeStructureRecommendation:

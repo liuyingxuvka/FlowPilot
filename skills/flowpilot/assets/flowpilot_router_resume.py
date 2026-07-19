@@ -55,6 +55,25 @@ def append_manual_resume_tick(
     source = str(payload.get("source") or "manual_resume")
     if source != "manual_resume":
         raise router.RouterError("manual_resume_requested requires payload.source=manual_resume")
+    current_obligation_role_keys: list[str] = []
+
+    def add_role(raw_role: object) -> None:
+        role = str(raw_role or "").strip()
+        if role in router.RUNTIME_ROLE_KEYS and role not in current_obligation_role_keys:
+            current_obligation_role_keys.append(role)
+
+    pending = run_state.get("pending_action")
+    if isinstance(pending, dict):
+        for field in ("target_role_key", "to_role", "target_no_output_role", "awaiting_role"):
+            add_role(pending.get(field))
+    if not current_obligation_role_keys and run_state.get("flags", {}).get("resume_reentry_requested"):
+        prior_ticks = run_state.get("resume_ticks") if isinstance(run_state.get("resume_ticks"), list) else []
+        prior_tick = prior_ticks[-1] if prior_ticks and isinstance(prior_ticks[-1], dict) else {}
+        for role in prior_tick.get("current_obligation_role_keys") or []:
+            add_role(role)
+    if not current_obligation_role_keys:
+        resume_next = router._derive_resume_next_recipient_from_packet_ledger(run_root)
+        add_role(resume_next.get("next_recipient_role"))
     tick = {
         "schema_version": "flowpilot.manual_resume_tick.v1",
         "run_id": run_state["run_id"],
@@ -65,6 +84,7 @@ def append_manual_resume_tick(
         "source": source,
         "resume_requested": True,
         "router_reentry_required": True,
+        "current_obligation_role_keys": current_obligation_role_keys,
         "self_keepalive_allowed": False,
         "host_automation_supported": False,
     }
@@ -79,6 +99,7 @@ def append_manual_resume_tick(
             "work_chain_status": tick["work_chain_status"],
             "resume_requested": tick["resume_requested"],
             "router_reentry_required": tick["router_reentry_required"],
+            "current_obligation_role_keys": tick["current_obligation_role_keys"],
             "self_keepalive_allowed": tick["self_keepalive_allowed"],
             "host_automation_supported": False,
         }

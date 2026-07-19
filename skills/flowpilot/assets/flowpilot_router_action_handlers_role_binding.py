@@ -94,9 +94,15 @@ def _write_current_role_agent_binding(
     record = _normalize_current_role_agent_binding(router, project_root, run_root, run_state, role, payload)
     role_binding_path = run_root / "role_binding_ledger.json"
     existing = router.read_json_if_exists(role_binding_path)
+    if existing:
+        if existing.get("schema_version") != "flowpilot.role_binding_ledger.v1":
+            raise router.RouterError("current role_binding_ledger schema_version mismatch")
+        if str(existing.get("run_id") or "") != str(run_state["run_id"]):
+            raise router.RouterError("current role_binding_ledger run_id mismatch")
     existing_slots = existing.get("role_slots") if isinstance(existing.get("role_slots"), list) else []
     preserved_slots: list[dict[str, Any]] = []
     unsupported_roles: list[str] = []
+    prior_slot: dict[str, Any] | None = None
     for slot in existing_slots:
         if not isinstance(slot, dict):
             raise router.RouterError("current role_binding_ledger contains a non-object role slot")
@@ -106,6 +112,10 @@ def _write_current_role_agent_binding(
             continue
         if slot_role != role:
             preserved_slots.append(slot)
+        elif prior_slot is not None:
+            raise router.RouterError(f"current role_binding_ledger contains duplicate role slot for {role}")
+        else:
+            prior_slot = slot
     if unsupported_roles:
         raise router.RouterError(f"current role_binding_ledger contains unsupported role slots: {', '.join(unsupported_roles)}")
     generation = int(existing.get("role_binding_generation") or 0) + 1 if existing else 1
@@ -117,11 +127,29 @@ def _write_current_role_agent_binding(
     memory_root = run_root / "role_binding_memory"
     memory_root.mkdir(parents=True, exist_ok=True)
     memory_path = router._role_memory_path(run_root, role)
+    prior_memory = router.read_json_if_exists(memory_path)
+    if prior_memory:
+        prior_generation = prior_slot.get("role_binding_generation") if isinstance(prior_slot, dict) else None
+        if prior_slot is None:
+            raise router.RouterError(f"current role memory for {role} has no owning role-binding slot")
+        if prior_memory.get("schema_version") != "flowpilot.role_memory.v1":
+            raise router.RouterError(f"current role memory schema mismatch for {role}")
+        if str(prior_memory.get("run_id") or "") != str(run_state["run_id"]):
+            raise router.RouterError(f"current role memory run_id mismatch for {role}")
+        if str(prior_memory.get("role_key") or "") != role:
+            raise router.RouterError(f"current role memory role_key mismatch for {role}")
+        if prior_memory.get("role_binding_generation") != prior_generation:
+            raise router.RouterError(f"current role memory generation mismatch for {role}")
+        if str(prior_memory.get("agent_id") or "") != str(prior_slot.get("agent_id") or ""):
+            raise router.RouterError(f"current role memory agent mismatch for {role}")
+    now = router.utc_now()
     memory = {
+        **prior_memory,
         "schema_version": "flowpilot.role_memory.v1",
         "run_id": run_state["run_id"],
         "role_key": role,
         "agent_id": record["agent_id"],
+        "role_binding_generation": generation,
         "identity_policy": {
             "agent_id_is_diagnostic_only": True,
             "current_authority_source": "role_binding_ledger",
@@ -141,7 +169,13 @@ def _write_current_role_agent_binding(
             "historical_agent_id_reused": False,
             "current_role_agent_binding": True,
         },
-        "recorded_at": router.utc_now(),
+        "status": prior_memory.get("status") or "available",
+        "summary": prior_memory.get("summary") or "",
+        "recent_deltas": list(prior_memory.get("recent_deltas") or [])
+        if isinstance(prior_memory.get("recent_deltas"), list)
+        else [],
+        "recorded_at": prior_memory.get("recorded_at") or now,
+        "updated_at": now,
     }
     router.write_json(memory_path, memory)
     ledger = {

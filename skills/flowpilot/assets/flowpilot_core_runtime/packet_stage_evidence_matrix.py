@@ -96,6 +96,7 @@ PM_REPAIR_DECISION_OPTIONS: tuple[str, ...] = (
     "break_glass",
     "repair_current_scope",
     "repair_parent_scope",
+    "repair_subtree",
     "redesign_route",
     "waive_with_authority",
     "stop_for_user",

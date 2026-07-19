@@ -29,13 +29,22 @@ except ImportError:  # pragma: no cover
 try:  # pragma: no cover
     from . import flowpilot_contract_exhaustion_mesh_model as model
     from .flowpilot_contract_driven_fake_ai import ContractDrivenFakeAIResponder
+    from . import run_flowpilot_unified_repair_integrity_checks as unified_repair_runner
 except ImportError:  # pragma: no cover
     import flowpilot_contract_exhaustion_mesh_model as model
     from flowpilot_contract_driven_fake_ai import ContractDrivenFakeAIResponder
+    import run_flowpilot_unified_repair_integrity_checks as unified_repair_runner
 
 
 ROOT = Path(__file__).resolve().parent
 RESULTS_PATH = ROOT / "flowpilot_contract_exhaustion_mesh_results.json"
+UNIFIED_REPAIR_RESULTS_PATH = (
+    ROOT / "flowpilot_unified_repair_integrity_results.json"
+)
+UNIFIED_REPAIR_CONSUMER_ID = "flowguard-contract-exhaustion-mesh"
+UNIFIED_REPAIR_PARENT_RECEIPT_ID = (
+    "receipt.unified_repair.integrity_parent"
+)
 
 REQUIRED_LABELS = {
     *(f"select_{name}" for name in model.SCENARIOS),
@@ -308,6 +317,155 @@ def _test_mesh_report(
     }
 
 
+def _unified_repair_coverage_receipt_report(
+    supplied_result: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Consume, but never execute or relabel, the unified-repair owner receipt."""
+
+    failures: list[str] = []
+    if supplied_result is None:
+        try:
+            loaded = json.loads(
+                UNIFIED_REPAIR_RESULTS_PATH.read_text(encoding="utf-8")
+            )
+        except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+            loaded = {}
+            failures.append(f"unified_repair_result_unreadable:{exc}")
+    else:
+        loaded = supplied_result
+    if not isinstance(loaded, dict):
+        loaded = {}
+        failures.append("unified_repair_result_not_object")
+
+    expected_fingerprints = unified_repair_runner._source_fingerprints()
+    expected_source_fingerprint = (
+        unified_repair_runner._combined_source_fingerprint(
+            unified_repair_runner.SOURCE_FINGERPRINT_INPUTS
+        )
+    )
+    if loaded.get("model_id") != unified_repair_runner.model.MODEL_ID:
+        failures.append("unified_repair_model_id_mismatch")
+    if loaded.get("ok") is not True:
+        failures.append("unified_repair_owner_result_not_current_success")
+    if loaded.get("runtime_conformance_ok") is not True:
+        failures.append("unified_repair_runtime_conformance_not_current")
+    if loaded.get("source_fingerprint") != expected_source_fingerprint:
+        failures.append("unified_repair_source_fingerprint_stale")
+    if loaded.get("source_fingerprints") != expected_fingerprints:
+        failures.append("unified_repair_source_inventory_stale")
+
+    coverage = loaded.get("coverage_receipts")
+    if not isinstance(coverage, dict):
+        coverage = {}
+        failures.append("unified_repair_coverage_receipts_missing")
+    if coverage.get("ok") is not True:
+        failures.append("unified_repair_coverage_receipts_not_current")
+
+    parent = coverage.get("parent_receipt")
+    if not isinstance(parent, dict):
+        parent = {}
+        failures.append("unified_repair_parent_receipt_missing")
+    if parent.get("receipt_id") != UNIFIED_REPAIR_PARENT_RECEIPT_ID:
+        failures.append("unified_repair_parent_receipt_id_mismatch")
+    if not (
+        parent.get("current") is True
+        and parent.get("status") == "covered"
+        and parent.get("confidence") == "full"
+    ):
+        failures.append("unified_repair_parent_receipt_not_current")
+
+    required_child_ids = tuple(parent.get("required_child_receipt_ids") or ())
+    consumed_child_ids = tuple(parent.get("consumed_child_receipt_ids") or ())
+    if (
+        not required_child_ids
+        or set(consumed_child_ids) != set(required_child_ids)
+        or parent.get("blocked_case_ids")
+    ):
+        failures.append("unified_repair_child_receipt_consumption_incomplete")
+
+    requirements = coverage.get("parent_consumption_requirements")
+    if not isinstance(requirements, list):
+        requirements = []
+    matching_requirements = [
+        row
+        for row in requirements
+        if isinstance(row, dict)
+        and row.get("consumer_id") == UNIFIED_REPAIR_CONSUMER_ID
+    ]
+    if len(matching_requirements) != 1:
+        failures.append("unified_repair_consumer_requirement_not_singular")
+        requirement: dict[str, Any] = {}
+    else:
+        requirement = matching_requirements[0]
+        if not (
+            requirement.get("required_parent_receipt_id")
+            == UNIFIED_REPAIR_PARENT_RECEIPT_ID
+            and requirement.get("status") == "current"
+            and requirement.get("execution_mode")
+            == "read_only_receipt_consumer"
+            and set(requirement.get("required_child_receipt_ids") or ())
+            == set(required_child_ids)
+            and set(requirement.get("consumed_child_receipt_ids") or ())
+            == set(required_child_ids)
+            and not requirement.get("missing_child_receipt_ids")
+        ):
+            failures.append("unified_repair_consumer_requirement_invalid")
+
+    handoffs = coverage.get("composite_handoff_acceptances")
+    if not isinstance(handoffs, list):
+        handoffs = []
+    expected_acceptance_id = (
+        "handoff.unified_repair.to."
+        + UNIFIED_REPAIR_CONSUMER_ID.replace(".", "_").replace("-", "_")
+    )
+    matching_handoffs = [
+        row
+        for row in handoffs
+        if isinstance(row, dict)
+        and row.get("acceptance_id") == expected_acceptance_id
+    ]
+    if len(matching_handoffs) != 1:
+        failures.append("unified_repair_handoff_acceptance_not_singular")
+        handoff: dict[str, Any] = {}
+    else:
+        handoff = matching_handoffs[0]
+        metadata = handoff.get("metadata")
+        if not isinstance(metadata, dict):
+            metadata = {}
+        if not (
+            tuple(handoff.get("route_ids") or ())
+            == (
+                unified_repair_runner.model.MODEL_ID,
+                UNIFIED_REPAIR_CONSUMER_ID,
+            )
+            and metadata.get("required_parent_receipt_id")
+            == UNIFIED_REPAIR_PARENT_RECEIPT_ID
+            and set(metadata.get("required_child_receipt_ids") or ())
+            == set(required_child_ids)
+        ):
+            failures.append("unified_repair_handoff_acceptance_invalid")
+
+    return {
+        "ok": not failures,
+        "consumer_id": UNIFIED_REPAIR_CONSUMER_ID,
+        "execution_mode": "read_only_receipt_consumer",
+        "source_result_path": UNIFIED_REPAIR_RESULTS_PATH.relative_to(
+            REPO_ROOT
+        ).as_posix(),
+        "source_fingerprint": loaded.get("source_fingerprint"),
+        "expected_source_fingerprint": expected_source_fingerprint,
+        "parent_receipt": parent,
+        "consumer_requirement": requirement,
+        "handoff_acceptance": handoff,
+        "failures": failures,
+        "claim_boundary": (
+            "This check consumes the exact current unified-repair parent "
+            "receipt. It does not run native tests, execute child owners, or "
+            "relabel their evidence."
+        ),
+    }
+
+
 RESPONDER_SUPPORTED_MUTATIONS = {
     "empty_required_array",
     "forbidden_alias_used",
@@ -477,6 +635,9 @@ def _summary_report(report: dict[str, Any]) -> dict[str, Any]:
         "execution_evidence": test_mesh.get("execution_evidence", {}),
         "child_suites": compact_children,
         "fake_ai_responder": fake_ai.get("summary", {}),
+        "unified_repair_coverage_receipt": report.get(
+            "unified_repair_coverage_receipt", {}
+        ),
         "evidence_status": report.get("evidence_status"),
         "claim_scope": report.get("claim_scope"),
     }
@@ -487,6 +648,7 @@ def run_checks(
     evidence_manifest: dict[str, Any] | None = None,
     declaration_only: bool = False,
     evidence_scope: str = "routine",
+    unified_repair_result: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     flowguard = _flowguard_report()
     walk = _walk_report()
@@ -499,8 +661,28 @@ def run_checks(
         declaration_only=declaration_only,
         evidence_scope=evidence_scope,
     )
-    declaration_ok = all(section["ok"] for section in (flowguard, walk, hazards, cells, fake_ai_responder))
-    ok = declaration_ok if declaration_only else declaration_ok and test_mesh["ok"]
+    unified_repair_coverage_receipt = (
+        _unified_repair_coverage_receipt_report(unified_repair_result)
+    )
+    declaration_ok = all(
+        section["ok"]
+        for section in (
+            flowguard,
+            walk,
+            hazards,
+            cells,
+            fake_ai_responder,
+        )
+    )
+    ok = (
+        declaration_ok
+        if declaration_only
+        else (
+            declaration_ok
+            and test_mesh["ok"]
+            and unified_repair_coverage_receipt["ok"]
+        )
+    )
     return {
         "model_id": model.MODEL_ID,
         "ok": ok,
@@ -513,6 +695,9 @@ def run_checks(
         "required_cells": cells,
         "test_mesh": test_mesh,
         "fake_ai_responder": fake_ai_responder,
+        "unified_repair_coverage_receipt": (
+            unified_repair_coverage_receipt
+        ),
     }
 
 

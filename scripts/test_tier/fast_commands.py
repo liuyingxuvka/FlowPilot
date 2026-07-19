@@ -146,36 +146,42 @@ SHADOW_LAUNCHER_CHAOS_REPLAY_SHARDS = (
         SHADOW_LAUNCHER_CHAOS_REPLAY_PATH,
         "test_installed_launcher_shadow_start_reaches_releasable_standard_state",
         description="Single-scenario shadow launcher replay shard for installed start lifecycle.",
+        background_exclusive_resource="installed_flowpilot_shadow_runtime",
     ),
     _pytest_k(
         "shadow_launcher_crash_recovery_tests",
         SHADOW_LAUNCHER_CHAOS_REPLAY_PATH,
         "test_crash_recovery_bundle_handles_dead_daemon_duplicate_resume_and_progress_only_proof",
         description="Single-scenario shadow launcher replay shard for crash recovery and progress-only proof.",
+        background_exclusive_resource="installed_flowpilot_shadow_runtime",
     ),
     _pytest_k(
         "shadow_launcher_peer_conflict_tests",
         SHADOW_LAUNCHER_CHAOS_REPLAY_PATH,
         "test_peer_conflict_keeps_current_run_authority_and_rejects_stale_peer_proof",
         description="Single-scenario shadow launcher replay shard for peer conflict authority.",
+        background_exclusive_resource="installed_flowpilot_shadow_runtime",
     ),
     _pytest_k(
         "shadow_launcher_current_assets_tests",
         SHADOW_LAUNCHER_CHAOS_REPLAY_PATH,
         "test_current_pointer_and_installed_assets_resolve_to_current_standard_state",
         description="Single-scenario shadow launcher replay shard for current pointer and installed assets.",
+        background_exclusive_resource="installed_flowpilot_shadow_runtime",
     ),
     _pytest_k(
         "shadow_launcher_malformed_package_tests",
         SHADOW_LAUNCHER_CHAOS_REPLAY_PATH,
         "test_malformed_fake_ai_package_generator_rejects_finite_bad_classes",
         description="Single-scenario shadow launcher replay shard for malformed fake AI package rejection.",
+        background_exclusive_resource="installed_flowpilot_shadow_runtime",
     ),
     _pytest_k(
         "shadow_launcher_bounded_soak_tests",
         SHADOW_LAUNCHER_CHAOS_REPLAY_PATH,
         "test_bounded_soak_repeats_startup_recovery_and_cleanup_without_residue",
         description="Single-scenario shadow launcher replay shard for bounded startup/recovery soak.",
+        background_exclusive_resource="installed_flowpilot_shadow_runtime",
     ),
 )
 

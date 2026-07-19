@@ -15,7 +15,7 @@ Do not infer activation from task size, repository type, UI work, continuation l
 
 ## Dependency Bootstrap
 
-Before a formal FlowPilot run, verify the real `flowguard` package, the installed/readable `model-first-function-flow` skill, and this `flowpilot` skill.
+Before a formal FlowPilot run, verify the real `flowguard` package, the installed/readable current `flowguard` agent skill, and this `flowpilot` skill.
 
 If this skill was installed from the full repository, prefer:
 

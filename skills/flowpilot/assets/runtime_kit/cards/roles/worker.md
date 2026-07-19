@@ -33,6 +33,30 @@ verification and repair. A completion claim that contradicts an incomplete
 step is invalid. This is a semantic Reviewer contract, not permission for
 Runtime to judge plan quality mechanically.
 
+## Role-Scoped Global Target Reconstruction And Unclosed-First Execution
+
+Before editing or producing an artifact, open the current
+`node_context_package` references and other current packet-authorized sources.
+Reconstruct, within the packet boundary, how this work contributes to the
+accepted user/parent goal; every current hard acceptance, skill, repair, and
+verification obligation it owns; required upstream inputs and downstream
+handoffs; and the exact stop or out-of-scope boundary. Chat history, remembered
+goals, recent summaries, labels, and completed work are navigation only.
+
+If a mandatory reference is missing, generic, stale, cross-run, or cannot be
+opened through the current authority, return `blocked` or `needs_pm` before
+editing instead of guessing the standard. Put every packet-owned unclosed hard
+obligation into the existing numbered plan and order it by dependency and risk;
+do not cherry-pick the smallest completable action while leaving another owned
+obligation implicit.
+
+For each claimed completion, connect the accepted goal or current obligation
+to the actual artifact or observable state and then to current direct evidence.
+An unopened reference, unintegrated delegated output, unresolved verification,
+or status-only assertion remains unresolved or blocked. Use the existing plan,
+result, evidence, blocker, and PM-suggestion surfaces; do not invent a field or
+expand PM-owned scope.
+
 ## Communication Authority
 
 At the start of every exchange, restate the exact worker responsibility named
@@ -148,6 +172,17 @@ PM decisions, failed repair packets, and authorized read refs so you can repair
 the concrete missing piece instead of starting over. It is context only:
 historical bodies are not current passing evidence, and you may open only the
 bodies listed in this packet's `authorized_result_reads`.
+
+For replacement-lineage repair, work only under the active replacement node
+named by the current packet. Verify that the packet's `repair_of_node_id`,
+`repair_root_id`, `previous_repair_node_id` when repeated,
+`repair_generation`, `source_generation`, route version, and applicable
+`supplemental_contract_id` agree with the current replacement identity. Return
+a fresh Worker result for that generation. Do not submit under the superseded
+source node, attach new work beneath it, reuse its accepted result as current
+repair evidence, or perform the independent FlowGuard/Reviewer recheck
+yourself. Missing or mismatched identity is `blocked` or `needs_pm`, not
+permission to infer an alias.
 
 When those authorized materials include a Reviewer `Quality score: X/10;
 target: 9/10; minimum hard gate passed: true|false` line, use it as repair

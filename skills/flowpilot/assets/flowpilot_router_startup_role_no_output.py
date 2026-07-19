@@ -220,12 +220,10 @@ def _write_role_recovery_report(router: ModuleType, project_root: Path, run_root
     runtime_roles_path = run_root / 'role_binding_ledger.json'
     role_binding = read_json_if_exists(runtime_roles_path) or {'schema_version': 'flowpilot.role_binding_ledger.v1', 'run_id': run_state['run_id'], 'role_slots': []}
     current_generation = router._current_role_binding_generation(role_binding)
-    full_role_binding = any((record['recovery_result'] == ROLE_BINDING_FULL_SET_RECOVERY_RESULT for record in records))
-    next_generation = current_generation + 1 if full_role_binding else current_generation
+    replacement_created = any((record['recovery_result'] == ROLE_BINDING_TARGETED_REPLACEMENT_RESULT for record in records))
+    next_generation = current_generation + 1 if replacement_created else current_generation
     slots = role_binding.get('role_slots') if isinstance(role_binding.get('role_slots'), list) else []
     slots_by_role = {str(slot.get('role_key')): dict(slot) for slot in slots if isinstance(slot, dict) and slot.get('role_key') in RUNTIME_ROLE_KEYS}
-    for role in RUNTIME_ROLE_KEYS:
-        slots_by_role.setdefault(role, {'role_key': role, 'status': 'unknown', 'agent_id': None})
     if not environment_blocked:
         for record in records:
             role = record['role_key']
@@ -236,30 +234,66 @@ def _write_role_recovery_report(router: ModuleType, project_root: Path, run_root
             old_agent_id = record.get('old_agent_id')
             if isinstance(old_agent_id, str) and old_agent_id and (old_agent_id != record.get('agent_id')) and (old_agent_id not in superseded):
                 superseded.append(old_agent_id)
-            slots_by_role[role] = {**old, 'role_key': role, 'status': 'live_agent_recovered' if not full_role_binding else 'live_agent_recycled', 'agent_id': record['agent_id'], 'model_policy': record['model_policy'], 'reasoning_effort_policy': record['reasoning_effort_policy'], 'role_surface_addressable': bool(record.get('role_surface_addressable')), 'current_run_binding_decision': record.get('current_run_binding_decision'), 'role_binding_generation': next_generation, 'role_binding_epoch': epoch + 1, 'last_role_recovery_transaction_id': transaction['transaction_id'], 'last_role_recovery_result': record['recovery_result'], 'superseded_agent_ids': superseded, 'superseded_agent_output_quarantined': bool(record.get('superseded_agent_output_quarantined')), 'memory_seeded_from_current_run': bool(record.get('memory_seeded_from_current_run')), 'replacement_seeded_from_common_run_context': bool(record.get('replacement_seeded_from_common_run_context')), 'recovered_at': record['recorded_at']}
-    all_slots = [slots_by_role[role] for role in RUNTIME_ROLE_KEYS]
-    required_role_keys = list(RUNTIME_ROLE_KEYS) if full_role_binding else list(transaction['target_role_keys'])
-    required_slots = [slots_by_role[role] for role in required_role_keys]
-    required_bindings_ready = not environment_blocked and all((router._role_slot_has_current_binding(slot) for slot in required_slots))
+            slots_by_role[role] = {**old, 'role_key': role, 'status': 'live_agent_recovered', 'agent_id': record['agent_id'], 'model_policy': record['model_policy'], 'reasoning_effort_policy': record['reasoning_effort_policy'], 'role_surface_addressable': bool(record.get('role_surface_addressable')), 'current_run_binding_decision': record.get('current_run_binding_decision'), 'role_binding_generation': next_generation, 'role_binding_epoch': epoch + 1, 'last_role_recovery_transaction_id': transaction['transaction_id'], 'last_role_recovery_result': record['recovery_result'], 'superseded_agent_ids': superseded, 'superseded_agent_output_quarantined': bool(record.get('superseded_agent_output_quarantined')), 'memory_seeded_from_current_run': bool(record.get('memory_seeded_from_current_run')), 'replacement_seeded_from_common_run_context': bool(record.get('replacement_seeded_from_common_run_context')), 'recovered_at': record['recorded_at']}
+    role_order = {role: index for index, role in enumerate(RUNTIME_ROLE_KEYS)}
+    all_slots = sorted(slots_by_role.values(), key=lambda slot: role_order[str(slot['role_key'])])
+    required_role_keys = list(transaction['target_role_keys'])
+    required_slots = [slots_by_role.get(role) for role in required_role_keys]
+    required_bindings_ready = not environment_blocked and all((isinstance(slot, dict) and router._role_slot_has_current_binding(slot) for slot in required_slots))
     report_path = router._role_recovery_report_path(run_root)
-    proof_state = {'recovery_requested': True, 'replacement_created': any((record.get('recovery_result') in {ROLE_BINDING_TARGETED_REPLACEMENT_RESULT, ROLE_BINDING_FULL_SET_RECOVERY_RESULT} for record in records)), 'memory_seeded': all((record.get('memory_context_injected') for record in records)) if not environment_blocked else False, 'role_surface_addressable': all((record.get('role_surface_addressable') for record in records)) if not environment_blocked else False}
+    proof_state = {'recovery_requested': True, 'replacement_created': replacement_created, 'memory_seeded': all((record.get('memory_context_injected') for record in records)) if not environment_blocked else False, 'role_surface_addressable': all((record.get('role_surface_addressable') for record in records)) if not environment_blocked else False}
     report = {'schema_version': ROLE_RECOVERY_REPORT_SCHEMA, 'run_id': run_state['run_id'], 'transaction_id': transaction['transaction_id'], 'trigger_source': transaction['trigger_source'], 'recovery_scope': payload.get('recovery_scope') or transaction['recovery_scope'], 'target_role_keys': transaction['target_role_keys'], 'recorded_at': utc_now(), 'priority': 'preempt_normal_work', 'normal_work_suspended_until_report': True, 'required_role_bindings_ready': required_bindings_ready, 'environment_blocked': environment_blocked, 'role_binding_generation_before': current_generation, 'role_binding_generation_after': next_generation, 'role_records': records, 'role_recovery_proof_state': proof_state, 'packet_ownership_reconciled': all((record.get('packet_ownership_reconciled') for record in records)) if not environment_blocked else False, 'memory_context_injected': all((record.get('memory_context_injected') for record in records)) if not environment_blocked else False, 'stale_generation_output_quarantined': all((record.get('superseded_agent_output_quarantined') or record.get('recovery_result') == ROLE_BINDING_RESTORE_RESULT for record in records)) if not environment_blocked else False, 'pm_decision_required_before_normal_work': False, 'mechanical_obligation_replay_before_pm': True, 'controller_visibility': 'state_and_envelopes_only', 'sealed_body_reads_allowed': False, 'chat_history_progress_inference_allowed': False, 'source_paths': {'transaction': project_relative(project_root, router._role_recovery_latest_transaction_path(run_root)), 'state_load': project_relative(project_root, router._role_recovery_state_path(run_root)), 'role_binding_ledger': project_relative(project_root, runtime_roles_path), 'packet_ledger': project_relative(project_root, run_root / 'packet_ledger.json'), 'pm_prior_path_context': project_relative(project_root, router._pm_prior_path_context_path(run_root)), 'route_history_index': project_relative(project_root, router._route_history_index_path(run_root))}}
-    write_json(report_path, report)
+    role_memory_updates: list[tuple[Path, dict[str, Any]]] = []
+    if not environment_blocked:
+        for record in records:
+            role = str(record['role_key'])
+            memory_path = router._role_memory_path(run_root, role)
+            memory = read_json_if_exists(memory_path)
+            recent_deltas = list(memory.get('recent_deltas') or []) if isinstance(memory.get('recent_deltas'), list) else []
+            memory.update({
+                'schema_version': 'flowpilot.role_memory.v1',
+                'run_id': run_state['run_id'],
+                'role_key': role,
+                'agent_id': record['agent_id'],
+                'role_binding_generation': next_generation,
+                'status': 'available',
+                'summary': memory.get('summary') or '',
+                'recent_deltas': recent_deltas,
+                'identity_policy': {'agent_id_is_diagnostic_only': True, 'current_authority_source': 'role_binding_ledger'},
+                'controller_decision_authority': False,
+                'role_memory_used_for_completion_authority': False,
+                'last_rehydration': {
+                    'historical_agent_id_reused': False,
+                    'current_role_agent_binding': True,
+                    'role_recovery_transaction_id': transaction['transaction_id'],
+                },
+                'updated_at': report['recorded_at'],
+            })
+            role_memory_updates.append((memory_path, memory))
     history = role_binding.get('role_recovery_history') if isinstance(role_binding.get('role_recovery_history'), list) else []
     history.append({'transaction_id': transaction['transaction_id'], 'report_path': project_relative(project_root, report_path), 'trigger_source': transaction['trigger_source'], 'target_role_keys': transaction['target_role_keys'], 'recovery_scope': report['recovery_scope'], 'required_role_bindings_ready': required_bindings_ready, 'environment_blocked': environment_blocked, 'recorded_at': report['recorded_at']})
-    role_binding.update({'schema_version': 'flowpilot.role_binding_ledger.v1', 'run_id': run_state['run_id'], 'role_binding_generation': next_generation, 'role_slots': all_slots, 'latest_role_recovery_report': project_relative(project_root, report_path), 'role_recovery_history': history, 'updated_at': utc_now()})
+    role_memory_paths = [
+        project_relative(project_root, router._role_memory_path(run_root, str(slot['role_key'])))
+        for slot in all_slots
+        if router._role_memory_path(run_root, str(slot['role_key'])).exists()
+        or (not environment_blocked and str(slot['role_key']) in required_role_keys)
+    ]
+    role_binding.update({'schema_version': 'flowpilot.role_binding_ledger.v1', 'run_id': run_state['run_id'], 'role_binding_generation': next_generation, 'role_slots': all_slots, 'role_binding_memory_paths': role_memory_paths, 'latest_role_recovery_report': project_relative(project_root, report_path), 'role_recovery_history': history, 'updated_at': utc_now()})
     write_json(runtime_roles_path, role_binding)
+    for memory_path, memory in role_memory_updates:
+        write_json(memory_path, memory)
+    write_json(report_path, report)
     ready_records = [record for record in records if record['recovery_result'] != ROLE_BINDING_ENVIRONMENT_BLOCKED_RESULT]
     if ready_records:
         _append_role_io_protocol_injections(project_root, run_root, str(run_state['run_id']), ready_records, default_lifecycle_phase='role_liveness_recovery', resume_tick_id=str(transaction['transaction_id']), source_action='recover_role_bindings')
     role_binding_recovery_path = run_root / 'continuation' / 'role_binding_recovery_report.json'
     if not environment_blocked:
-        write_json(role_binding_recovery_path, {'schema_version': 'flowpilot.role_binding_recovery_report.v1', 'run_id': run_state['run_id'], 'role_recovery_report_path': project_relative(project_root, report_path), 'resume_tick_id': str(transaction['transaction_id']), 'role_binding_mode': 'current_run_role_recovery', 'recorded_at': report['recorded_at'], 'required_role_bindings_ready': required_bindings_ready, 'current_run_memory_complete': bool(report['memory_context_injected']), 'missing_memory_role_keys': [record['role_key'] for record in records if record.get('role_memory_status') != 'available'], 'pm_memory_rehydrated': any((slot.get('role_key') == 'project_manager' and isinstance(slot.get('agent_id'), str) and bool(str(slot.get('agent_id')).strip()) for slot in all_slots)), 'role_binding_evidence_policy': {'checked_at': report['recorded_at'], 'current_wait_authority': 'ack_progress_evidence_only', 'roles_checked': list(transaction['target_role_keys']), 'replacement_role_keys': [record['role_key'] for record in records if record['recovery_result'] in {ROLE_BINDING_TARGETED_REPLACEMENT_RESULT, ROLE_BINDING_FULL_SET_RECOVERY_RESULT}], 'role_surface_addressable': bool(proof_state['role_surface_addressable']), 'decision': 'roles_ready_after_role_recovery' if required_bindings_ready else 'role_recovery_incomplete_addressability'}, 'role_records': records, 'controller_visibility': 'state_and_envelopes_only', 'sealed_body_reads_allowed': False, 'chat_history_progress_inference_allowed': False})
+        write_json(role_binding_recovery_path, {'schema_version': 'flowpilot.role_binding_recovery_report.v1', 'run_id': run_state['run_id'], 'role_recovery_report_path': project_relative(project_root, report_path), 'resume_tick_id': str(transaction['transaction_id']), 'role_binding_mode': 'current_run_role_recovery', 'recorded_at': report['recorded_at'], 'required_role_bindings_ready': required_bindings_ready, 'current_run_memory_complete': bool(report['memory_context_injected']), 'missing_memory_role_keys': [], 'pm_memory_rehydrated': any((slot.get('role_key') == 'project_manager' and isinstance(slot.get('agent_id'), str) and bool(str(slot.get('agent_id')).strip()) for slot in all_slots)), 'role_binding_evidence_policy': {'checked_at': report['recorded_at'], 'current_wait_authority': 'ack_progress_evidence_only', 'roles_checked': list(transaction['target_role_keys']), 'replacement_role_keys': [record['role_key'] for record in records if record['recovery_result'] == ROLE_BINDING_TARGETED_REPLACEMENT_RESULT], 'role_surface_addressable': bool(proof_state['role_surface_addressable']), 'decision': 'roles_ready_after_role_recovery' if required_bindings_ready else 'role_recovery_incomplete_addressability'}, 'role_records': records, 'controller_visibility': 'state_and_envelopes_only', 'sealed_body_reads_allowed': False, 'chat_history_progress_inference_allowed': False})
     run_state['flags']['role_recovery_roles_restored'] = not environment_blocked
     run_state['flags']['role_recovery_report_written'] = True
     run_state['flags']['role_recovery_environment_blocked'] = environment_blocked
     if environment_blocked:
-        router._write_control_blocker(project_root, run_root, run_state, source='role_recovery_environment_blocked', error_message='Role recovery failed after full role binding recycle; environment or user action is required before route work can continue.', action_type='role_recovery_environment_blocked', payload={'role_recovery_report_path': project_relative(project_root, report_path), 'transaction_id': transaction['transaction_id'], 'target_role_keys': transaction['target_role_keys']})
+        router._write_control_blocker(project_root, run_root, run_state, source='role_recovery_environment_blocked', error_message='Exact-role recovery failed after restore, targeted replacement, and any required requested-slot reconciliation; environment or user action is required before route work can continue.', action_type='role_recovery_environment_blocked', payload={'role_recovery_report_path': project_relative(project_root, report_path), 'transaction_id': transaction['transaction_id'], 'target_role_keys': transaction['target_role_keys']})
         return
     run_state['flags']['resume_reentry_requested'] = True
     run_state['flags']['resume_state_loaded'] = True

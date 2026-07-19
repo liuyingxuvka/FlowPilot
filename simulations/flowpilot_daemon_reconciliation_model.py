@@ -40,8 +40,10 @@ Risk intent brief:
   stop the daemon; daemon
   queue budget exhaustion must immediately start the next tick instead of
   sleeping; foreground start commands that collide with a fresh runtime-state
-  writer must wait for settlement and return live daemon status instead of
-  failing; startup Controller receipts must fold action, scheduler, pending,
+  writer must allocate one current run before advancement, wait for settlement,
+  preserve already completed action evidence, and return live daemon status
+  instead of failing or allocating another run; startup Controller receipts
+  must fold action, scheduler, pending,
   bootstrap, and run-state projections under one owner instead of depending on
   a later apply path; real waits must not busy-loop; and stale daemon snapshots
   must never erase newer durable evidence.

@@ -536,7 +536,7 @@ class FlowPilotCompleteSystemRuntimeTests(unittest.TestCase):
             ]
         )
 
-    def test_repeated_blocker_family_is_visible_as_advisory_context(self) -> None:
+    def test_repeated_blocker_family_is_visible_as_mechanical_context(self) -> None:
         ledger = runtime.new_ledger("Goal", "Contract")
         authorize_background_collaboration(ledger)
         runtime.create_route(ledger, "Route", ["Do work"])
@@ -569,7 +569,7 @@ class FlowPilotCompleteSystemRuntimeTests(unittest.TestCase):
         pm_body = json.loads(pm_packet["body"])
 
         self.assertEqual(pm_body["repeat_context"]["repeat_count"], 2)
-        self.assertTrue(pm_body["repeat_context"]["advisory_only"])
+        self.assertFalse(pm_body["repeat_context"]["advisory_only"])
         self.assertIn(list(ledger["active_blockers"].values())[0]["blocker_id"], pm_body["repeat_context"]["previous_blocker_ids"])
 
     def test_fifth_repeated_blocker_projects_break_glass_instead_of_pm_repair(self) -> None:

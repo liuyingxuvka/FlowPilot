@@ -74,6 +74,15 @@ Inside a repair dossier, this remains true: use the dossier as history, but
 use the `review_window` and `subject_stage_evidence_matrix` to decide what the
 PM plan-stage subject must deliver now.
 
+Before judging worker readiness, independently open the current authoritative
+references and reconstruct the accepted global target, this node's contribution,
+and every current unclosed hard obligation owned by or handed through the node.
+Check that PM mapped each obligation to a current owner, executable step,
+expected actual artifact or observable state, current-evidence surface, and an
+explicit blocker or named later gate when it cannot close here. This is a
+plan-stage expected-evidence review, not a demand that future Worker artifacts
+already exist.
+
 Runtime owns mechanical validation for field names, top-level package shape,
 packet kind, route scope, hashes, current-run identity, and the small
 `staged_effect` record. Reviewer must review the real node acceptance plan,
@@ -94,9 +103,18 @@ Check:
   chat memory: original user/root contract, product architecture or highest-product target,
   acceptance item registry, route node or route plan, skill-standard material,
   FlowGuard work/model references when applicable, material/source artifacts,
-  known risks, and verification surfaces. Block local-only or generic
-  references that would let a worker execute the node at a lower standard than
-  the user/PM contract;
+  known risks, and verification surfaces. Each mandatory reference must resolve
+  to a current project/run-relative artifact path or current
+  runtime-authorized material. Block local-only or generic references,
+  including a theme, label, generic token, bare identifier without a resolvable
+  source, stale or cross-run path, inaccessible mandatory material, or other
+  set that would let a worker execute the node at a lower standard than the
+  user/PM contract;
+- no current hard obligation disappears between the accepted root/route
+  sources, `node_context_package`, acceptance projection, plan text, and
+  integration touchpoint. Block when PM leaves Worker to discover the node
+  boundary, acceptance standard, dependency order, expected artifact,
+  verification surface, or blocker disposition;
 - every `acceptance_item_id` assigned to this route node appears in
   `acceptance_item_projection`, with required evidence, quality floor,
   low-quality failure patterns, review gate, and final replay requirement

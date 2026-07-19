@@ -41,6 +41,7 @@ STRONG_COVERAGE = {
     "flowpilot_startup_control",
     "flowpilot_packet_lifecycle",
     "flowpilot_repair_transaction",
+    "flowpilot_unified_repair_integrity",
     "flowpilot_control_transaction_registry",
     "flowpilot_contract_exhaustion_mesh",
     "flowpilot_cartesian_control_plane_exhaustion",

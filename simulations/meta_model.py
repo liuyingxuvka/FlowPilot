@@ -3212,7 +3212,7 @@ INVARIANTS = (
     ),
     Invariant(
         name="role_binding_memory_rehydration_required",
-        description="Six-role recovery uses persisted role memory before PM runway, checkpoint, or terminal archive.",
+        description="Exact current-obligation role recovery uses current-run memory and route delta before PM runway, checkpoint, or terminal archive; idle and historical roles remain audit-only.",
         predicate=role_binding_memory_rehydration_required,
     ),
 )

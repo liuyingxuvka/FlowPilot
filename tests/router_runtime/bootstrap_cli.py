@@ -1,7 +1,11 @@
 from __future__ import annotations
 
+from types import SimpleNamespace
+
 from tests.router_runtime.common import *  # noqa: F403
 from tests.router_runtime.common import FlowPilotRouterRuntimeTestBase
+import flowpilot_router_cli as router_cli  # noqa: E402
+import flowpilot_router_io_locks as router_io_locks  # noqa: E402
 
 
 class BootstrapCliRuntimeTests(FlowPilotRouterRuntimeTestBase):
@@ -23,6 +27,103 @@ class BootstrapCliRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertTrue((root / current["run_root"] / "run.json").exists())
         self.assertEqual(read_json(router.run_state_path(old_run_root)), old_state_before)
         self.assertFalse((old_run_root / "runtime" / "controller_action_ledger.json").exists())
+
+    def test_start_writer_retry_allocates_one_bootstrap_and_preserves_actions(self) -> None:
+        root = self.make_project()
+        target = root / ".flowpilot" / "runs" / "run-single" / "router_state.json"
+        contention = router.RouterLedgerWriteInProgress(
+            target,
+            {"active": True, "classification": "active_writer"},
+            "current startup writer is settling",
+        )
+        contention.completed_folded_actions = [
+            {
+                "action_type": "create_run_shell",
+                "result": {"ok": True, "applied": "create_run_shell"},
+            }
+        ]
+        create_count = 0
+        save_count = 0
+        advance_count = 0
+        new_invocation_values: list[bool] = []
+
+        def create_bootstrap(project_root: Path) -> dict:
+            nonlocal create_count
+            self.assertEqual(project_root, root)
+            create_count += 1
+            return {
+                "run_id": "run-single",
+                "run_root": ".flowpilot/runs/run-single",
+            }
+
+        def save_bootstrap(project_root: Path, bootstrap: dict) -> None:
+            nonlocal save_count
+            self.assertEqual(project_root, root)
+            self.assertEqual(bootstrap["run_id"], "run-single")
+            save_count += 1
+
+        def advance(
+            project_root: Path,
+            *,
+            max_steps: int,
+            new_invocation: bool,
+        ) -> dict:
+            nonlocal advance_count
+            self.assertEqual(project_root, root)
+            self.assertEqual(max_steps, 50)
+            new_invocation_values.append(new_invocation)
+            advance_count += 1
+            if advance_count == 1:
+                raise contention
+            return {
+                "action_type": "open_startup_intake_ui",
+                "folded_applied_count": 1,
+                "folded_applied_actions": [
+                    {
+                        "action_type": "start_router_daemon",
+                        "result": {"ok": True, "applied": "start_router_daemon"},
+                    }
+                ],
+                "folded_stop_reason": "requires_user_host_or_role_boundary",
+            }
+
+        fake_router = SimpleNamespace(
+            _create_startup_bootstrap_state=create_bootstrap,
+            save_bootstrap_state=save_bootstrap,
+            _run_foreground_with_runtime_writer_settlement=(
+                router_io_locks._run_foreground_with_runtime_writer_settlement
+            ),
+            run_until_wait=advance,
+        )
+        wait_receipt = {
+            "path": str(target),
+            "lock_path": str(router_io_locks._json_write_lock_path(target)),
+            "waited_seconds": 0.001,
+            "poll_count": 1,
+            "progress_count": 1,
+            "initial_liveness": dict(contention.write_lock),
+            "final_liveness": {"active": False},
+        }
+        with mock.patch.object(
+            router_io_locks,
+            "_wait_for_runtime_json_writer_to_settle",
+            return_value=wait_receipt,
+        ):
+            result = router_cli._start_fresh_formal_invocation(
+                fake_router,
+                root,
+                max_steps=50,
+            )
+
+        self.assertEqual(create_count, 1)
+        self.assertEqual(save_count, 1)
+        self.assertEqual(advance_count, 2)
+        self.assertEqual(new_invocation_values, [False, False])
+        self.assertEqual(
+            [item["action_type"] for item in result["folded_applied_actions"]],
+            ["create_run_shell", "start_router_daemon"],
+        )
+
     def test_new_invocation_preserves_multiple_parallel_running_runs(self) -> None:
         root = self.make_project()
         run_a = self.write_minimal_run(root, "run-a", status="controller_ready")

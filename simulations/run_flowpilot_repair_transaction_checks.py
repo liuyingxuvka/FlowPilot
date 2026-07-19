@@ -17,6 +17,7 @@ REQUIRED_LABELS = (
     "reviewer_blocker_detected_current_node_dispatch",
     "reviewer_blocker_detected_node_result",
     "router_registers_blocker_with_origin_and_failure_events",
+    "router_hands_blocker_trigger_to_unified_repair_engine",
     "pm_records_model_miss_triage_for_modelable_blocker",
     "pm_requests_flowguard_operator_same_class_model",
     "flowguard_operator_reports_same_class_findings",
@@ -36,6 +37,9 @@ REQUIRED_LABELS = (
 
 
 HAZARD_EXPECTED_FAILURES = {
+    "blocker_handoff_to_unified_engine_missing": "blocker repair transaction did not hand its typed trigger to the unified repair engine",
+    "pm_proactive_historical_intake_claimed_by_blocker_child": "blocker repair transaction child cannot own PM-proactive historical repair intake",
+    "blocker_child_claims_shared_engine_ownership": "blocker repair transaction child claimed shared repair-engine ownership",
     "router_blocker_missing_origin": "router blocker registration lacks origin or nonterminal repair events",
     "node_acceptance_plan_without_pm_lane": "reviewer block kind node_acceptance_plan is not accepted end-to-end by PM model-miss repair",
     "current_node_dispatch_missing_model_miss_card_support": "reviewer block kind current_node_dispatch is not accepted end-to-end by PM model-miss repair",
@@ -231,6 +235,8 @@ def _architecture_candidate() -> dict[str, object]:
             "The PM decision flag, transaction, outcome table, and follow-up wait share one ordered current-state boundary.",
             "Independent FlowGuard and Reviewer checks consume the current repair effect before success resumes the main flow.",
             "Retired replacement-packet authority is rejected rather than translated.",
+            "Blocker-backed transaction mechanics delegate through one typed handoff to the unified repair engine.",
+            "Direct PM historical-defect intake remains outside this blocker-specific child.",
         ],
         "implementation_map": [
             "Validate plan_kind and plan-specific execution evidence before commit.",

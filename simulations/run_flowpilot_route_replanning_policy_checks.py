@@ -31,6 +31,8 @@ HAZARD_EXPECTED_FAILURES = {
     model.CHANGED_ROUTE_WITHOUT_REVIEWER: "changed route was used before Reviewer approval",
     model.NODE_ENTRY_REPAIR_BEFORE_WORK: "node-entry capability gap used a repair node before node work started",
     model.IN_PROGRESS_REPAIR_BEFORE_REVIEW_FAILURE: "in-progress capability gap used a repair node before reviewed failure",
+    model.PM_HISTORICAL_DEFECT_FORCED_THROUGH_BLOCKER: "PM historical defect was forced through a fabricated blocker prerequisite",
+    model.PM_HISTORICAL_DEFECT_WITHOUT_OBSERVATION: "PM historical defect repair lacks a structured defect observation",
     model.REPAIR_NODE_MISSING_FIELDS: "repair node lacks target reason input output evidence return or recheck fields",
     model.REPAIR_WITHOUT_STALE_RESET: "repair node lacks stale evidence reset",
     model.REPAIR_WITHOUT_MAINLINE_RETURN: "repair node lacks mainline return",
@@ -43,7 +45,10 @@ HAZARD_EXPECTED_FAILURES = {
 def _state_id(state: model.State) -> str:
     return (
         f"scenario={state.scenario}|status={state.status}|phase={state.phase}|"
-        f"issue={state.issue_kind}|route_started={state.route_started}|"
+        f"issue={state.issue_kind}|origin={state.repair_trigger_origin}|"
+        f"observation={state.structured_defect_observation_recorded}|"
+        f"blocker_required={state.blocker_prerequisite_required}|"
+        f"route_started={state.route_started}|"
         f"completed={state.completed_nodes}|node={state.current_node_kind}|"
         f"change={state.change_kind}|repair={state.repair_node_created}|"
         f"product_changed={state.product_capability_changed}|"

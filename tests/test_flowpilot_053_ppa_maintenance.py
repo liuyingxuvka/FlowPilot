@@ -58,7 +58,7 @@ class FlowPilot053PPAMaintenanceTests(unittest.TestCase):
                 "commit.current_handoff_checklist_single_authority",
                 "commit.fake_ai_coverage_is_execution_backed",
                 "commit.testmesh_pass_requires_current_proof",
-                "commit.dynamic_pm_repair_owns_active_acceptance_items",
+                "commit.repair_reissue_no_fallback",
                 "commit.substantive_roles_complete_bounded_workstreams",
                 "commit.controller_uses_runtime_foreground_ledger_only",
                 "commit.local_capability_inventory_precedes_pm_selection",
@@ -87,6 +87,24 @@ class FlowPilot053PPAMaintenanceTests(unittest.TestCase):
                 "preplanning.discovery.material_current",
             }.issubset(set(report["coverage"]["field_ids"]))
         )
+
+    def test_proof_commands_reject_machine_specific_absolute_paths(self) -> None:
+        portable, portable_ok = model._portable_proof_command(
+            "python simulations/run_check.py"
+        )
+        windows, windows_ok = model._portable_proof_command(
+            "C:" + "\\Users\\example\\python.exe simulations/run_check.py"
+        )
+        posix, posix_ok = model._portable_proof_command(
+            "/home/example/.venv/bin/python simulations/run_check.py"
+        )
+
+        self.assertTrue(portable_ok)
+        self.assertEqual(portable, "python simulations/run_check.py")
+        self.assertFalse(windows_ok)
+        self.assertFalse(posix_ok)
+        self.assertEqual(windows, "<nonportable-command-rejected>")
+        self.assertEqual(posix, "<nonportable-command-rejected>")
 
     def test_evidence_report_paths_are_repository_relative(self) -> None:
         formal = runner._formal_ai_execution_evidence_report()
@@ -192,6 +210,59 @@ class FlowPilot053PPAMaintenanceTests(unittest.TestCase):
                     authority["primary_path_id"],
                     commitment["commitment_id"],
                 )
+
+    def test_unified_late_defect_repair_has_one_commitment_and_primary_path(self) -> None:
+        payload = json.loads(model.LEDGER_PATH.read_text(encoding="utf-8"))[
+            "ledger"
+        ]
+        intent_id = (
+            "intent:flowpilot.repair-late-defect-through-current-shared-engine"
+        )
+        commitments = [
+            row
+            for row in payload["commitments"]
+            if row["business_intent_id"] == intent_id
+        ]
+        surfaces = [
+            row
+            for row in payload["source_surfaces"]
+            if intent_id in row["business_intent_ids"]
+        ]
+
+        self.assertEqual(len(commitments), 1)
+        commitment = commitments[0]
+        self.assertEqual(
+            commitment["path_authority"]["primary_path_id"],
+            "path.runtime.unified-late-defect-repair",
+        )
+        self.assertEqual(len(surfaces), 5)
+        self.assertEqual(
+            len(
+                [
+                    surface
+                    for surface in surfaces
+                    if not surface["delegates_to_primary_path"]
+                ]
+            ),
+            1,
+        )
+        self.assertEqual(
+            {
+                surface["metadata"].get("repair_trigger_origin")
+                for surface in surfaces
+                if surface["delegates_to_primary_path"]
+            },
+            {
+                "pm_historical_defect",
+                "reviewer_or_system_failure",
+                "parent_backward_replay_or_scoped_decision",
+                "terminal_backward_replay",
+            },
+        )
+        self.assertNotIn(
+            "commit.dynamic_pm_repair_owns_active_acceptance_items",
+            {row["commitment_id"] for row in payload["commitments"]},
+        )
 
     def test_field_lifecycle_covers_existing_fields_without_new_contract_fields(self) -> None:
         field_report = review_field_lifecycle(model.build_field_lifecycle_plan())

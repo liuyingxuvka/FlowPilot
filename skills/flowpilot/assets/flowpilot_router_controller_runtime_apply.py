@@ -9,7 +9,7 @@ from typing import Any
 import packet_runtime
 import flowpilot_router_action_handlers
 import flowpilot_router_controller_runtime_next as runtime_next
-from flowpilot_router_errors import RouterError
+from flowpilot_router_errors import RouterError, RouterLedgerWriteInProgress
 from flowpilot_router_protocol_catalog import *
 
 _BOUND_ROUTER: ModuleType | None = None
@@ -160,9 +160,17 @@ def run_until_wait(project_root: Path, *, max_steps: int = 50, new_invocation: b
     if max_steps < 1:
         raise RouterError("run-until-wait requires max_steps >= 1")
     applied_actions: list[dict[str, Any]] = []
+
+    def preserve_completed_actions(exc: RouterLedgerWriteInProgress) -> None:
+        exc.completed_folded_actions = list(applied_actions)
+
     start_new = new_invocation
     for _ in range(max_steps):
-        action = runtime_next.next_action(project_root, new_invocation=start_new)
+        try:
+            action = runtime_next.next_action(project_root, new_invocation=start_new)
+        except RouterLedgerWriteInProgress as exc:
+            preserve_completed_actions(exc)
+            raise
         start_new = False
         action_type = str(action.get("action_type") or "")
         action_crosses_boundary = (
@@ -181,7 +189,11 @@ def run_until_wait(project_root: Path, *, max_steps: int = 50, new_invocation: b
             result["folded_applied_actions"] = applied_actions
             result["folded_stop_reason"] = "requires_user_host_or_role_boundary"
             return result
-        applied = apply_action(project_root, action_type, {})
+        try:
+            applied = apply_action(project_root, action_type, {})
+        except RouterLedgerWriteInProgress as exc:
+            preserve_completed_actions(exc)
+            raise
         applied_actions.append({"action_type": action_type, "result": applied})
         if applied.get("waiting") or applied.get("terminal"):
             result = dict(applied)

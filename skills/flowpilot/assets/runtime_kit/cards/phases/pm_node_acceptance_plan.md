@@ -62,6 +62,14 @@ If PM already knows the route must change, do not try to pass the node first.
 Runtime owns mechanical validation of required fields, node identity, packet
 kind, route scope, hashes, and current-run identity.
 
+Before choosing `decision: "pass"`, reconstruct from current authoritative
+references the accepted user outcome, this node's contribution, every current
+hard obligation owned by the node, non-downgrade constraints, upstream and
+downstream handoffs, and the verification surfaces that will prove the work.
+Completed or superseded work is context only. Prioritize unclosed hard
+obligations before optional improvements and do not delegate discovery of the
+node boundary or acceptance standard to Worker.
+
 Use only the active route, active frontier, root acceptance contract, accepted
 skill standards, and latest route-memory prior path context. If prior path
 context mentions completed, superseded, or stale work, use it only as
@@ -71,8 +79,8 @@ stale evidence close this node. If `decision: "pass"`, the result body must incl
 
 - `purpose`: why this node exists now;
 - `acceptance_criteria`: the node's current acceptance criteria;
-- `relevant_references`: current materials or artifacts the next role should
-  open first;
+- `relevant_references`: current project/run-relative artifact paths or
+  runtime-authorized materials the next role should open first;
 - `known_risks`: risks PM already knows and wants downstream roles to inspect;
 - `acceptance_item_projection`: one row for every acceptance item assigned to
   this route node, with `acceptance_item_id`, `status_for_this_node`, and
@@ -88,6 +96,17 @@ material/source artifacts, known risk or low-quality-success records, and the
 verification or evidence surfaces that define this node. If a reference does
 not exist yet, name the missing source as a blocker, repair need, research
 need, or route redesign reason instead of silently lowering the node standard.
+A theme, label, generic token, bare identifier with no resolvable current
+source, stale or cross-run path, or inaccessible mandatory material is not an
+authoritative reference. Repair the same plan, route the existing blocker or
+research path, or redesign the route instead of returning `decision: "pass"`.
+
+Use the existing `purpose`, `acceptance_criteria`, `known_risks`,
+`acceptance_item_projection`, supporting plan text, and
+`integration_touchpoint` to keep each node-owned hard obligation connected to
+its expected actual artifact or observable state and the current direct
+evidence or explicit blocker that will disposition it. Do not add a node
+context field for this obligation-to-evidence map.
 
 For user-sourced acceptance items, preserve the source-intent acceptance force
 in the projection. Do not shorten a concrete user requirement into a generic

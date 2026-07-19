@@ -12,6 +12,7 @@ import tempfile
 import unittest
 from collections import Counter
 from pathlib import Path
+from unittest import mock
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -52,6 +53,14 @@ run_slow_contract_checks = load_module(
 source_fingerprint_module = load_module(
     "flowpilot_test_tier_source_fingerprint",
     ROOT / "scripts" / "test_tier" / "source_fingerprint.py",
+)
+process_liveness_module = load_module(
+    "flowpilot_test_process_liveness",
+    ROOT / "skills" / "flowpilot" / "assets" / "flowpilot_process_liveness.py",
+)
+run_flowguard_background_module = load_module(
+    "flowpilot_test_run_flowguard_background",
+    ROOT / "scripts" / "run_flowguard_background.py",
 )
 
 
@@ -1067,10 +1076,184 @@ class FlowPilotTestTierTests(unittest.TestCase):
             self.assertTrue(meta["timed_out"])
             self.assertTrue(meta["covered_source_fingerprint"])
             self.assertEqual(meta["failure_reason"], "background_child_timeout")
+            self.assertTrue(meta["descendant_zero_confirmed"])
+            self.assertTrue(meta["cleanup_proof"]["cleanup_confirmed"])
             self.assertEqual(
                 paths["exit"].read_text(encoding="utf-8").strip(),
                 str(run_test_tier.BACKGROUND_CHILD_TIMEOUT_EXIT_CODE),
             )
+
+    def test_background_child_binds_windows_venv_to_direct_current_owner(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="flowpilot-tier-owner-") as tmp_name:
+            exit_code = run_test_tier.run_background_child(
+                "direct_current_owner_fixture",
+                (
+                    sys.executable,
+                    "-c",
+                    "import json,sys;print(json.dumps({'executable':sys.executable}))",
+                ),
+                log_root=Path(tmp_name),
+                timeout_seconds=5,
+            )
+            paths = run_test_tier.artifact_paths(
+                Path(tmp_name),
+                "direct_current_owner_fixture",
+            )
+            meta = json.loads(paths["meta"].read_text(encoding="utf-8"))
+            payload = json.loads(paths["out"].read_text(encoding="utf-8"))
+
+            self.assertEqual(exit_code, 0, meta)
+            self.assertEqual(
+                os.path.normcase(os.path.abspath(payload["executable"])),
+                os.path.normcase(os.path.abspath(sys.executable)),
+            )
+            plan = meta["process_launch_plan"]
+            self.assertEqual(plan["requested_executable"], sys.executable)
+            if sys.platform == "win32" and os.path.normcase(
+                os.path.abspath(str(getattr(sys, "_base_executable", "") or sys.executable))
+            ) != os.path.normcase(os.path.abspath(sys.executable)):
+                self.assertEqual(plan["kind"], "windows_venv_direct_base_owner")
+                self.assertEqual(
+                    os.path.normcase(os.path.abspath(plan["process_owner_executable"])),
+                    os.path.normcase(os.path.abspath(sys._base_executable)),
+                )
+                self.assertEqual(plan["venv_launcher_binding"], sys.executable)
+            else:
+                self.assertEqual(plan["kind"], "direct_command")
+
+    def test_timeout_terminates_descendant_tree_before_writing_terminal_receipt(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="flowpilot-tier-descendants-") as tmp_name:
+            exit_code = run_test_tier.run_background_child(
+                "descendant_timeout_fixture",
+                (
+                    sys.executable,
+                    "-c",
+                    (
+                        "import subprocess,sys,time;"
+                        "subprocess.Popen([sys.executable,'-c','import time;time.sleep(30)']);"
+                        "time.sleep(30)"
+                    ),
+                ),
+                log_root=Path(tmp_name),
+                timeout_seconds=1,
+            )
+            paths = run_test_tier.artifact_paths(
+                Path(tmp_name),
+                "descendant_timeout_fixture",
+            )
+            meta = json.loads(paths["meta"].read_text(encoding="utf-8"))
+
+            self.assertEqual(exit_code, run_test_tier.BACKGROUND_CHILD_TIMEOUT_EXIT_CODE)
+            self.assertTrue(meta["process_identity"]["start_token"])
+            self.assertTrue(meta["observed_descendant_identities"])
+            self.assertTrue(meta["cleanup_proof"]["cleanup_confirmed"], meta)
+            self.assertTrue(meta["cleanup_proof"]["descendant_zero_confirmed"], meta)
+            self.assertTrue(meta["descendant_zero_confirmed"], meta)
+
+    def test_descendant_identity_rejects_process_that_predates_exact_owner(self) -> None:
+        owner = {"pid": 1100, "start_token": "win-filetime:200"}
+        older_process = {"pid": 1101, "start_token": "win-filetime:100"}
+        current_child = {"pid": 1102, "start_token": "win-filetime:201"}
+        self.assertFalse(
+            process_liveness_module.process_identity_started_not_before(
+                older_process,
+                owner,
+            )
+        )
+        with mock.patch.object(
+            process_liveness_module,
+            "process_identity_is_live",
+            return_value=True,
+        ), mock.patch.object(
+            process_liveness_module,
+            "_descendant_pids",
+            return_value=[older_process["pid"], current_child["pid"]],
+        ), mock.patch.object(
+            process_liveness_module,
+            "process_identity",
+            side_effect={
+                older_process["pid"]: older_process,
+                current_child["pid"]: current_child,
+            }.get,
+        ):
+            self.assertEqual(
+                process_liveness_module.process_descendant_identities(owner),
+                [current_child],
+            )
+        self.assertTrue(
+            process_liveness_module.process_identity_started_not_before(
+                current_child,
+                owner,
+            )
+        )
+
+    def test_background_child_allows_exact_descendants_to_exit_within_bounded_settlement(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="flowpilot-tier-settlement-") as tmp_name:
+            exit_code = run_test_tier.run_background_child(
+                "descendant_settlement_fixture",
+                (
+                    sys.executable,
+                    "-c",
+                    (
+                        "import subprocess,sys,time;"
+                        "subprocess.Popen([sys.executable,'-c','import time;time.sleep(8.0)']);"
+                        "time.sleep(0.15)"
+                    ),
+                ),
+                log_root=Path(tmp_name),
+                timeout_seconds=5,
+            )
+            paths = run_test_tier.artifact_paths(
+                Path(tmp_name),
+                "descendant_settlement_fixture",
+            )
+            meta = json.loads(paths["meta"].read_text(encoding="utf-8"))
+
+            self.assertEqual(exit_code, 0, meta)
+            self.assertTrue(meta["observed_descendant_identities"], meta)
+            self.assertEqual(
+                meta["cleanup_proof"]["reason"],
+                "process_tree_exited_after_bounded_settlement",
+            )
+            self.assertTrue(meta["descendant_zero_confirmed"], meta)
+            self.assertNotIn("cleanup_attempts", meta["cleanup_proof"])
+
+    def test_background_child_rejects_descendant_surviving_bounded_settlement(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="flowpilot-tier-orphan-") as tmp_name:
+            exit_code = run_test_tier.run_background_child(
+                "descendant_orphan_fixture",
+                (
+                    sys.executable,
+                    "-c",
+                    (
+                        "import subprocess,sys,time;"
+                        "subprocess.Popen([sys.executable,'-c','import time;time.sleep(30)']);"
+                        "time.sleep(0.15)"
+                    ),
+                ),
+                log_root=Path(tmp_name),
+                timeout_seconds=5,
+            )
+            paths = run_test_tier.artifact_paths(
+                Path(tmp_name),
+                "descendant_orphan_fixture",
+            )
+            meta = json.loads(paths["meta"].read_text(encoding="utf-8"))
+
+            self.assertEqual(exit_code, 1, meta)
+            self.assertEqual(meta["status"], "failed")
+            self.assertTrue(meta["observed_descendant_identities"], meta)
+            self.assertEqual(
+                meta["cleanup_proof"]["reason"],
+                "orphan_descendants_terminated",
+            )
+            if sys.platform == "win32":
+                self.assertTrue(
+                    meta["remaining_identity_details_before_cleanup"],
+                    meta,
+                )
+            self.assertTrue(meta["cleanup_proof"]["cleanup_confirmed"], meta)
+            self.assertTrue(meta["descendant_zero_confirmed"], meta)
 
     def test_background_supervisor_records_launch_failures(self) -> None:
         original_launch = run_test_tier._launch_background
@@ -1210,7 +1393,7 @@ class FlowPilotTestTierTests(unittest.TestCase):
             ROOT
             / "openspec"
             / "changes"
-            / "upgrade-flowpilot-complete-workstream-orchestration"
+            / "restore-flowpilot-test-evidence-closure"
             / "verification-contract.yaml"
         ).read_text(encoding="utf-8")
         for receipt_name in ("run_meta_checks", "run_capability_checks"):
@@ -1218,6 +1401,48 @@ class FlowPilotTestTierTests(unittest.TestCase):
                 f"--name, {receipt_name}, --verify",
                 verification_contract,
             )
+
+    def test_flowguard_background_binds_literal_python_to_current_interpreter(self) -> None:
+        command = run_flowguard_background_module._command_from_remainder(
+            ("--", "python", "simulations/run_meta_checks.py", "--full", "--force")
+        )
+        self.assertEqual(command[0], sys.executable)
+        self.assertEqual(
+            command[1:],
+            ("simulations/run_meta_checks.py", "--full", "--force"),
+        )
+
+    def test_successor_predecessor_disposition_inventory_is_explicit(self) -> None:
+        design = (
+            ROOT
+            / "openspec"
+            / "changes"
+            / "restore-flowpilot-test-evidence-closure"
+            / "design.md"
+        ).read_text(encoding="utf-8")
+        disposition_section = design.split(
+            "### 13. Predecessor changes have explicit dispositions",
+            1,
+        )[1].split("## Risks / Trade-offs", 1)[0]
+        for predecessor in (
+            "harden-flowpilot-control-plane-ledger-hygiene",
+            "adopt-runtime-requested-role-bindings",
+            "harden-flowpilot-role-continuity-memory",
+            "strengthen-flowpilot-reviewer-pm-challenge-chain",
+            "reduce-flowpilot-contract-surface",
+            "harden-flowpilot-fake-ai-review-window-coverage",
+            "harden-review-window-completeness-matrix",
+        ):
+            with self.subTest(predecessor=predecessor):
+                self.assertIn(f"`{predecessor}`", disposition_section)
+        self.assertIn(
+            "Earlier Cartesian, contract-exhaustion, formal-artifact, and AI-projection coverage changes",
+            disposition_section,
+        )
+        self.assertIn("old coverage report is not successor proof", disposition_section)
+        self.assertIn("reject any all-slot or fixed-role restoration interpretation", disposition_section)
+        self.assertIn("`independent_challenge` stays forbidden", disposition_section)
+        self.assertIn("supersede standalone broad evidence claims", disposition_section)
 
     def test_background_supervisor_respects_stage_barriers(self) -> None:
         pending = [
@@ -1237,12 +1462,67 @@ class FlowPilotTestTierTests(unittest.TestCase):
         self.assertEqual(run_test_tier.next_background_launch_index(pending, []), 1)
         self.assertEqual(run_test_tier.next_background_launch_index([pending[0]], [pending[1]]), None)
 
+    def test_background_supervisor_serializes_shared_runtime_resources(self) -> None:
+        shared = "installed_flowpilot_shadow_runtime"
+        running = [
+            run_test_tier.TierCommand(
+                name="shadow_start",
+                command=(sys.executable, "-c", "pass"),
+                description="owns the installed shadow runtime",
+                background_exclusive_resource=shared,
+            )
+        ]
+        pending = [
+            run_test_tier.TierCommand(
+                name="shadow_recovery",
+                command=(sys.executable, "-c", "pass"),
+                description="needs the same installed shadow runtime",
+                background_exclusive_resource=shared,
+            ),
+            run_test_tier.TierCommand(
+                name="unrelated_model",
+                command=(sys.executable, "-c", "pass"),
+                description="does not share the runtime",
+            ),
+        ]
+        self.assertEqual(
+            run_test_tier.next_background_launch_index(pending, running),
+            1,
+        )
+        shadow_commands = {
+            command.name: command
+            for command in run_test_tier.commands_for_tier("all")
+            if command.name.startswith("shadow_launcher_")
+            and command.name.endswith("_tests")
+        }
+        expected = {
+            "shadow_launcher_shadow_start_tests",
+            "shadow_launcher_crash_recovery_tests",
+            "shadow_launcher_peer_conflict_tests",
+            "shadow_launcher_current_assets_tests",
+            "shadow_launcher_malformed_package_tests",
+            "shadow_launcher_bounded_soak_tests",
+        }
+        self.assertLessEqual(expected, set(shadow_commands))
+        self.assertEqual(
+            {
+                shadow_commands[name].background_exclusive_resource
+                for name in expected
+            },
+            {shared},
+        )
+
     def test_tiering_flowguard_model_rejects_known_bad_hazards(self) -> None:
         report = run_tiering_checks.build_report()
         self.assertTrue(report["ok"], report)
         rejected = set(report["scenario_review"]["hazard_scenarios_rejected"])
         self.assertIn("background_progress_only_claimed_pass", rejected)
         self.assertIn("background_running_without_timeout_guard", rejected)
+        self.assertIn("background_inner_interpreter_follows_external_upgrade", rejected)
+        self.assertIn("background_shared_runtime_resource_race", rejected)
+        self.assertIn("background_descendant_settlement_missing", rejected)
+        self.assertIn("background_predating_process_misclassified_as_descendant", rejected)
+        self.assertIn("background_surviving_descendant_promoted", rejected)
         self.assertIn("json_write_readback_can_hang_control_gate", rejected)
         self.assertIn("root_pytest_scans_backup_tests", rejected)
         self.assertIn("router_slice_import_broken_counted_green", rejected)

@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.12.0 - 2026-07-10
+## v0.12.0 - 2026-07-18
 
 ### Fixed
 
@@ -74,12 +74,12 @@
   natural-language AI output; it claims exhaustive registration of the finite
   mechanical contract space, full execution of mandatory risk classes, and
   bounded pairwise/three-way/fuzz coverage for the remaining declared space.
-- This working tree is the local v0.12.0 source candidate. It is not considered
-  locally verified until the owning OpenSpec and FlowGuard evidence chain,
-  isolated background tiers, topology, installation freshness, and public-
-  boundary checks all finish with current final artifacts.
-- Git commit, tag, push, and GitHub Release publication are explicitly deferred
-  to a later maintainer action and are not claimed by this changelog entry.
+- The v0.12.0 release is admitted only after the owning OpenSpec and FlowGuard
+  evidence chain, isolated background tiers, topology, installation freshness,
+  and public-boundary checks finish with current final artifacts.
+- Release closure requires one exact task-owned commit, a fast-forward update
+  of the GitHub default branch, an annotated `v0.12.0` tag, and a source-only
+  GitHub Release that all identify the same commit.
 
 ## v0.11.5 - 2026-07-09
 

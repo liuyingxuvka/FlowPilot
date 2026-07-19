@@ -145,8 +145,12 @@ REVIEW_FLOW_STAGE_CHALLENGE_BINDINGS = {
         "challenge_rule": (
             "Challenge whether the node is one independently accountable complete workstream: it must allow "
             "a serious Worker-local numbered execution plan while preserving PM-owned product scope, route "
-            "nodes, cross-node order, dependencies, and acceptance boundaries. Check assigned acceptance "
-            "items, proof-of-depth for hard parts, and rejection of existence-only evidence. "
+            "nodes, cross-node order, dependencies, and acceptance boundaries. Independently reconstruct the "
+            "accepted global target and this node's contribution from current authoritative references, then "
+            "check that every current unclosed hard obligation has an owner, executable step, expected artifact "
+            "or observable state, current-evidence path, and explicit blocker or later gate when it cannot close "
+            "here. Check assigned acceptance items, proof-of-depth for hard parts, rejection of existence-only "
+            "evidence, and whether PM left boundary or acceptance discovery for Worker to invent. "
             "Name the weakest dispatch evidence, test a worker-readiness failure hypothesis, and give PM "
             "a concrete plan repair or dispatch-ready rationale."
         ),
@@ -157,9 +161,12 @@ REVIEW_FLOW_STAGE_CHALLENGE_BINDINGS = {
         "challenge_rule": (
             "Challenge whether the PM-absorbed worker result closes the actual packet acceptance slice "
             "with current evidence, proves the hard part, preserves final-user intent, and avoids stale "
-            "or existence-only proof. Audit contract_self_check.workstream_plan_and_completion against the "
-            "actual artifact: every numbered step, completion status, evidence ref, deviation, unresolved item, "
-            "delegation integration, verification, and repair claim must agree. Name the weakest result evidence, "
+            "or existence-only proof. Reconstruct the current accepted target and unclosed packet obligations "
+            "from authoritative references, then audit obligation continuity from node context and source packet "
+            "through contract_self_check.workstream_plan_and_completion to the actual artifact or observable state "
+            "and current direct evidence. Every numbered step, completion status, evidence ref, deviation, "
+            "unresolved item, delegation integration, verification, and repair claim must agree; no hard obligation "
+            "may disappear between those surfaces. Name the weakest result evidence, "
             "test a stale-result, incomplete-plan, unintegrated-delegation, or thin-success "
             "failure hypothesis, and give PM a concrete repair/reissue suggestion or pass rationale."
         ),

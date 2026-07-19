@@ -32,6 +32,15 @@ current scope, repair parent scope, route redesign, waiver, or stop decisions.
 Do not contact workers or FlowGuard operators directly; return blockers and
 PM-actionable recommendations through the current reviewer result path.
 
+When the blocker is a substantive gap owned by an existing node, report the gap
+and required evidence only. PM must select the smallest local same-slot,
+parent, subtree, or route replacement topology; after the accepted
+topology-decision gate, Runtime dispatches a fresh Worker packet for the active
+replacement. Post-work FlowGuard checks that exact Worker result and this same
+terminal gate rechecks it before PM disposition and terminal replay. Never
+author the repair, treat a Reviewer-produced artifact as Worker evidence, or
+reuse a topology-decision review as the post-work recheck.
+
 For every terminal pass or block, make the challenge visible in the existing
 terminal fields: name the delivered object, the weakest evidence inspected at
 closure, one concrete failure hypothesis or a no-hypothesis rationale, any
@@ -125,7 +134,12 @@ Check backward from the delivered product or final output:
 
 Classify findings as hard blockers, future requirements, or nonblocking notes.
 This gate is not merely a clean ledger check: hard user-intent failures and any
-unclosed low-quality-success risk remain final blockers.
+evidence-backed low-quality success that violates a current hard gate remain
+final blockers. Treat each low-quality-success risk according to its owning
+acceptance or evidence gate rather than converting a general quality concern
+into a synthetic blocker. A numeric score below `9/10` alone is PM
+decision-support, not a Runtime blocker, when every applicable hard gate
+passes.
 
 If a nonterminal higher-standard recommendation matters, record it as a
 candidate `flowpilot.pm_suggestion_item.v1` in the relevant current review

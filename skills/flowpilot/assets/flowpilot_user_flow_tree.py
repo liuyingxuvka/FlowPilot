@@ -147,11 +147,22 @@ def _is_route_root_node(node: dict[str, Any]) -> bool:
         return False
 
 
-def _display_depth_nodes(route: dict[str, Any]) -> list[dict[str, Any]]:
+def _display_depth_nodes(
+    route: dict[str, Any],
+    *,
+    include_superseded_history: bool = False,
+    history_node_ids: set[str] | None = None,
+) -> list[dict[str, Any]]:
     display_depth = _route_display_depth(route)
+    allowed_history_ids = history_node_ids or set()
     visible: list[dict[str, Any]] = []
     for node in _all_route_nodes(route):
         if _is_route_root_node(node):
+            continue
+        node_id = _node_id(node)
+        if _normalize(node.get("status")) in {"superseded", "stale"} and not (
+            include_superseded_history and node_id in allowed_history_ids
+        ):
             continue
         if _route_node_depth(node) <= display_depth or _truthy(node.get("user_visible")):
             visible.append(node)
@@ -226,6 +237,7 @@ def _hidden_leaf_progress(route: dict[str, Any]) -> dict[str, Any]:
         node
         for node in _all_route_nodes(route)
         if _route_node_depth(node) > display_depth and _node_kind(node) in {"leaf", "repair"}
+        and _normalize(node.get("status")) not in {"superseded", "stale"}
     ]
     completed = [
         node
@@ -404,6 +416,175 @@ def _node_topology(node: dict[str, Any]) -> dict[str, Any]:
         "affected_sibling_nodes": [str(item) for item in (affected_siblings or [])],
         "replay_scope_node_id": node.get("replay_scope_node_id") or topology.get("replay_scope_node_id"),
         "continue_after_node_id": node.get("continue_after_node_id") or topology.get("continue_after_node_id"),
+    }
+
+
+def _integer_or_none(value: Any) -> int | None:
+    if isinstance(value, bool):
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _replacement_history_projection(
+    *,
+    frontier: dict[str, Any],
+    route: dict[str, Any],
+    requested_visible: bool,
+) -> dict[str, Any]:
+    """Bind on-demand history to complete runtime-produced replacement identity.
+
+    The projection deliberately does not infer repair lineage from labels,
+    mutation-looking ids, or a one-sided fixture. A superseded source is
+    renderable only when the current route source proves both directions of the
+    source/replacement relation, its generation edge, stable lineage root, and
+    replacement-only current membership.
+    """
+
+    nodes = _all_route_nodes(route)
+    nodes_by_id = {_node_id(node): node for node in nodes if _node_id(node)}
+    current_members = [
+        str(item)
+        for item in (
+            frontier.get("current_mainline")
+            or route.get("node_order")
+            or route.get("current_mainline")
+            or []
+        )
+        if item
+    ]
+    current_member_set = set(current_members)
+    route_version = route.get("route_version")
+    complete_items: list[dict[str, Any]] = []
+    incomplete_items: list[dict[str, Any]] = []
+    findings: list[str] = []
+
+    for source in nodes:
+        if _normalize(source.get("status")) != "superseded":
+            continue
+        source_id = _node_id(source)
+        replacement_id = str(source.get("superseded_by") or "")
+        replacement = nodes_by_id.get(replacement_id)
+        item_findings: list[str] = []
+        if not replacement_id:
+            item_findings.append("source.superseded_by is missing")
+        if replacement is None:
+            item_findings.append("replacement node is absent from the canonical route source")
+            replacement = {}
+
+        repair_of_node_id = str(replacement.get("repair_of_node_id") or "")
+        repair_root_id = str(replacement.get("repair_root_id") or "")
+        previous_repair_node_id = str(replacement.get("previous_repair_node_id") or "")
+        source_generation = (
+            _integer_or_none(source.get("repair_generation"))
+            if "repair_generation" in source
+            else None
+        )
+        replacement_generation = (
+            _integer_or_none(replacement.get("repair_generation"))
+            if "repair_generation" in replacement
+            else None
+        )
+        replacement_route_version = (
+            replacement.get("route_version") if "route_version" in replacement else None
+        )
+
+        if repair_of_node_id != source_id:
+            item_findings.append("replacement.repair_of_node_id does not name the superseded source")
+        if not repair_root_id:
+            item_findings.append("replacement.repair_root_id is missing")
+        if "previous_repair_node_id" not in replacement:
+            item_findings.append("replacement.previous_repair_node_id is missing")
+        if source_generation is None:
+            item_findings.append("source.repair_generation is missing or invalid")
+        if replacement_generation is None:
+            item_findings.append("replacement.repair_generation is missing or invalid")
+        elif source_generation is not None and replacement_generation != source_generation + 1:
+            item_findings.append("replacement repair generation is not source generation plus one")
+        if replacement_generation is not None and replacement_generation > 1:
+            if previous_repair_node_id != source_id:
+                item_findings.append(
+                    "repeated replacement.previous_repair_node_id does not name the prior active generation"
+                )
+            if str(source.get("repair_root_id") or "") != repair_root_id:
+                item_findings.append("repeated replacement does not preserve the source repair_root_id")
+        elif replacement_generation == 1 and previous_repair_node_id:
+            item_findings.append("first replacement must not claim a previous repair generation")
+        if replacement_route_version is None:
+            item_findings.append("replacement.route_version is missing")
+        elif route_version is None or str(replacement_route_version) != str(route_version):
+            item_findings.append("replacement.route_version does not match the rendered route version")
+        if _normalize(replacement.get("status")) in {"superseded", "stale"}:
+            item_findings.append("replacement is not a current authority candidate")
+        if not current_member_set:
+            item_findings.append("canonical current membership is missing")
+        else:
+            if source_id in current_member_set:
+                item_findings.append("superseded source remains in current membership")
+            if replacement_id not in current_member_set:
+                item_findings.append("replacement is absent from current membership")
+
+        item = {
+            "source_node_id": source_id,
+            "replacement_node_id": replacement_id,
+            "repair_of_node_id": repair_of_node_id,
+            "repair_root_id": repair_root_id,
+            "previous_repair_node_id": previous_repair_node_id,
+            "source_repair_generation": source_generation,
+            "repair_generation": replacement_generation,
+            "route_version": replacement_route_version,
+            "source_authority": "history_only",
+            "current_authority_node_id": replacement_id,
+            "lineage_relation": "repaired_by",
+        }
+        if item_findings:
+            incomplete_items.append({**item, "identity_findings": item_findings})
+            findings.extend(f"{source_id}: {finding}" for finding in item_findings)
+        else:
+            complete_items.append(item)
+
+    if not complete_items and not incomplete_items:
+        producer_identity_status = "not_applicable"
+    elif incomplete_items:
+        producer_identity_status = "incomplete"
+    else:
+        producer_identity_status = "complete"
+    history_available = producer_identity_status == "complete" and bool(complete_items)
+    rendered_visible = bool(requested_visible and history_available)
+
+    return {
+        "schema_version": "flowpilot.replacement_history_projection.v1",
+        "content_class": "user_on_demand",
+        "default_visibility": "hidden",
+        "requested_visible": bool(requested_visible),
+        "rendered_visible": rendered_visible,
+        "history_available": history_available,
+        "producer_identity_status": producer_identity_status,
+        "current_authority_policy": "replacement_only",
+        "superseded_source_policy": "history_only_never_current_authority",
+        "reveal_control": {
+            "control_id": "show_superseded_history",
+            "label": "Show repair history",
+            "action": "regenerate_route_sign",
+            "parameter": {"include_superseded_history": True},
+            "keyboard_operable": True,
+        },
+        "return_control": {
+            "control_id": "hide_superseded_history",
+            "label": "Hide repair history",
+            "action": "regenerate_route_sign",
+            "parameter": {"include_superseded_history": False},
+            "keyboard_operable": True,
+        },
+        "history_node_ids": [item["source_node_id"] for item in complete_items],
+        "current_authority_node_ids": [
+            item["current_authority_node_id"] for item in complete_items
+        ],
+        "identity_items": complete_items,
+        "incomplete_identity_items": incomplete_items,
+        "blocking_findings": findings,
     }
 
 

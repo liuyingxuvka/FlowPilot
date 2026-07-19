@@ -2,7 +2,18 @@
   "accepted_scenarios": [
     "valid_terminal_supplemental_completion"
   ],
-  "edge_count": 28,
+  "claim_boundary": "The refined model closes the Worker/Reviewer, causality, terminal-gate, and shared-engine behavior class. Overall pass additionally requires current production/test conformance; no skipped production check is counted as pass.",
+  "decision": "passed",
+  "edge_count": 46,
+  "flowguard_explorer": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "reachability_failures": [],
+    "summary": "sequences=4 initial_states=1 traces=230",
+    "violation_count": 0
+  },
   "hazard_failures": {
     "final_ledger_omits_hygiene": [
       "final ledgers must include final artifact hygiene closure rows"
@@ -19,14 +30,31 @@
     "hygiene_gap_not_contractualized": [
       "required final artifact hygiene gap requires PM supplemental repair contract"
     ],
+    "mismatched_repair_evidence": [
+      "repair evidence must match the supplemental contract, item, and owner repair node"
+    ],
+    "mismatched_shared_engine_handoff": [
+      "Reviewer handoff must consume the matching current shared-engine receipt"
+    ],
     "missing_repair_item_owner": [
       "supplemental repair items require owner repair nodes"
     ],
     "missing_route_node_projection": [
       "repair route nodes must project supplemental contract and item ids"
     ],
+    "missing_shared_engine_receipt": [
+      "terminal repair requires a current shared-engine receipt after Worker evidence",
+      "Reviewer handoff must consume the matching current shared-engine receipt"
+    ],
     "missing_supplemental_contract": [
       "terminal gap repair requires PM supplemental contract"
+    ],
+    "missing_worker_repair_packet": [
+      "terminal substantive repair requires a Worker task packet, not a Reviewer repair packet",
+      "Worker repair packet must be created after the supplemental contract"
+    ],
+    "missing_worker_repair_result": [
+      "terminal substantive repair requires a fresh Worker-owned result after the repair packet"
     ],
     "optional_hygiene_note_blocks": [
       "optional hygiene notes must not block closure unless PM imports them"
@@ -34,34 +62,92 @@
     "original_contract_mutated": [
       "terminal supplemental repair must not mutate frozen original contract"
     ],
+    "pre_contract_repair_evidence": [
+      "Worker repair packet must be created after the supplemental contract",
+      "repair evidence must be created after supplemental contract generation"
+    ],
     "repair_bypasses_existing_gates": [
       "supplemental repair nodes must reuse existing FlowPilot gates"
+    ],
+    "reviewer_only_substantive_repair": [
+      "terminal substantive repair requires a Worker task packet, not a Reviewer repair packet",
+      "terminal substantive repair requires a fresh Worker-owned result after the repair packet",
+      "terminal repair result requires a distinct Reviewer after Worker execution"
     ],
     "terminal_replay_omits_hygiene_segment": [
       "terminal backward replay must include final artifact hygiene segment"
     ],
     "terminal_replay_omits_supplemental": [
       "terminal backward replay must include supplemental repair segments"
+    ],
+    "worker_self_reviews_repair": [
+      "terminal repair result requires a distinct Reviewer after Worker execution"
+    ],
+    "wrong_terminal_gate": [
+      "terminal repair must return through the same terminal backward-replay gate"
     ]
   },
   "invariant_failures": [],
   "missing_expected_hazards": [],
   "missing_labels": [],
+  "model_ok": true,
   "ok": true,
+  "production_conformance": {
+    "claim_boundary": "This is current source/test conformance, not a skipped check. Missing Worker dispatch, generation binding, or terminal shared-engine/gate regression evidence keeps the runner red.",
+    "evidence": [
+      "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+      "tests/test_flowpilot_core_runtime.py",
+      "tests/test_flowpilot_fake_project_rehearsal.py",
+      "tests/test_flowpilot_new_entrypoint.py",
+      "simulations/run_flowpilot_unified_repair_native_runtime_conformance.py"
+    ],
+    "missing": [],
+    "obligations": {
+      "existing_terminal_supplemental_baseline_tests_present": true,
+      "ordinary_shared_engine_receipt_handoff_surface_exists": true,
+      "precontract_and_mismatched_evidence_negative_test": true,
+      "supplemental_contract_precedes_bound_repair_evidence": true,
+      "terminal_repair_dispatches_explicit_worker_task": true,
+      "terminal_repair_reuses_terminal_gate_and_shared_handoff_test": true,
+      "terminal_repair_worker_then_distinct_reviewer_test": true
+    },
+    "ok": true,
+    "status": "passed"
+  },
   "rejected_scenarios": [
     "final_ledger_omits_hygiene",
     "final_ledger_omits_supplemental",
     "fourth_round_pm_packet_opened",
     "hygiene_category_missing",
     "hygiene_gap_not_contractualized",
+    "mismatched_repair_evidence",
+    "mismatched_shared_engine_handoff",
     "missing_repair_item_owner",
     "missing_route_node_projection",
+    "missing_shared_engine_receipt",
     "missing_supplemental_contract",
+    "missing_worker_repair_packet",
+    "missing_worker_repair_result",
     "optional_hygiene_note_blocks",
     "original_contract_mutated",
+    "pre_contract_repair_evidence",
     "repair_bypasses_existing_gates",
+    "reviewer_only_substantive_repair",
     "terminal_replay_omits_hygiene_segment",
-    "terminal_replay_omits_supplemental"
+    "terminal_replay_omits_supplemental",
+    "worker_self_reviews_repair",
+    "wrong_terminal_gate"
   ],
-  "state_count": 29
+  "result_type": "flowpilot_terminal_supplemental_repair_checks",
+  "runtime_conformance_ok": true,
+  "source_fingerprints": {
+    "simulations/flowpilot_terminal_supplemental_repair_model.py": "377b56d68509ccdf9b0a977364a3bb71e4ea796d0b915070b0386f971e6f712b",
+    "simulations/run_flowpilot_terminal_supplemental_repair_checks.py": "a9296da4c3d822020a9aa6701873c2882947986a987e30f2521d2b054e33166e",
+    "simulations/run_flowpilot_unified_repair_native_runtime_conformance.py": "1cd65a0c9643f96c169131997f5129cee3da745551cbd3db67dfdf1afc046c4b",
+    "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py": "28fcb7d24d50bb8c83610b3fc9120983d39f0197a00d43037c2c0cff55c074e8",
+    "tests/test_flowpilot_core_runtime.py": "53512c93d0c258536fbd39d539c291077742494e9749d12f3580b436937120b0",
+    "tests/test_flowpilot_fake_project_rehearsal.py": "d002924dfec175018603baa28a8685470ca9dc9d3ad1c30f7fd3ea09fe29e611",
+    "tests/test_flowpilot_new_entrypoint.py": "8a5a73129c073dcb94e58aa8b1f3d147eacb920e8725e5f5bb61f6019173d569"
+  },
+  "state_count": 47
 }

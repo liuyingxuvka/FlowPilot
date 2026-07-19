@@ -13,8 +13,11 @@ from flowguard import review_architecture_reduction
 
 ROOT = Path(__file__).resolve().parents[1]
 ASSETS = ROOT / "skills" / "flowpilot" / "assets"
+SIMULATIONS = ROOT / "simulations"
 if str(ASSETS) not in sys.path:
     sys.path.insert(0, str(ASSETS))
+if str(SIMULATIONS) not in sys.path:
+    sys.path.insert(0, str(SIMULATIONS))
 
 packet_result_contracts = importlib.import_module(
     "flowpilot_core_runtime.packet_result_contracts"
@@ -52,9 +55,21 @@ repair_transaction_model = importlib.import_module(
 resource_discovery_model = importlib.import_module(
     "simulations.flowpilot_ordinary_resource_discovery_model"
 )
+resource_discovery_runner = importlib.import_module(
+    "run_flowpilot_ordinary_resource_discovery_checks"
+)
 
 
 class FlowPilotOrdinaryResourceDiscoveryTests(unittest.TestCase):
+    def test_model_result_paths_are_public_repo_relative(self) -> None:
+        report = resource_discovery_runner._implementation_alignment()
+
+        self.assertTrue(report["ok"], report)
+        self.assertTrue(report["paths"])
+        for path in report["paths"]:
+            self.assertFalse(Path(path).is_absolute(), path)
+            self.assertNotIn("\\", path)
+
     def test_runtime_projects_current_shallow_local_inventory_before_pm_selection(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp)

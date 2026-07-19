@@ -13,6 +13,21 @@ runner = importlib.import_module("simulations.run_flowpilot_model_mesh_checks")
 
 class FlowPilotModelMeshCoverageReceiptTests(unittest.TestCase):
     def evidence_fixture(self, root: Path) -> tuple[dict[str, object], dict[str, Path]]:
+        source_paths = (
+            runner.UNIFIED_REPAIR_MODEL_PATH,
+            runner.UNIFIED_REPAIR_RUNNER_PATH,
+            *runner.UNIFIED_REPAIR_RUNTIME_SOURCE_PATHS,
+            runner.UNIFIED_REPAIR_NATIVE_RUNTIME_OWNER_PATH,
+            runner.UNIFIED_REPAIR_NATIVE_RUNTIME_FIXTURE_PATH,
+            runner.UNIFIED_REPAIR_EXACT_NATIVE_TEST_OWNER_PATH,
+            *runner.UNIFIED_REPAIR_EXACT_TEST_PATHS,
+        )
+        for relative_path in source_paths:
+            source_path = root / relative_path
+            source_path.parent.mkdir(parents=True, exist_ok=True)
+            source_path.write_bytes(f"fixture:{relative_path.as_posix()}".encode("utf-8"))
+        unified_source = runner._unified_repair_source_contract(root)
+
         paths: dict[str, Path] = {}
         for _receipt_id, model_id, _relative_path, ok_field in runner.CONTRACT_COVERAGE_RESULT_SPECS:
             path = root / f"{model_id}.json"
@@ -30,6 +45,43 @@ class FlowPilotModelMeshCoverageReceiptTests(unittest.TestCase):
                     {"profile_id": "complete", "execution_status": "passed"},
                     {"profile_id": "not-run", "execution_status": "not_run"},
                 ]
+            if model_id == runner.UNIFIED_REPAIR_MODEL_ID:
+                fingerprint = unified_source["source_fingerprint"]
+                payload = {
+                    "model_id": runner.UNIFIED_REPAIR_MODEL_ID,
+                    "model_ok": True,
+                    "runtime_conformance_ok": True,
+                    "ok": True,
+                    "decision": "runtime_conformance_current",
+                    "source_fingerprint": fingerprint,
+                    "source_fingerprint_algorithm": runner.UNIFIED_REPAIR_SOURCE_FINGERPRINT_ALGORITHM,
+                    "source_fingerprints": unified_source["source_fingerprints"],
+                    "accepted_traces": [{"case_id": "good", "accepted": True}],
+                    "failed_good_cases": [],
+                    "known_bad": {
+                        "ok": True,
+                        "expected_count": 14,
+                        "detected_count": 14,
+                        "missing": [],
+                        "rejected_traces": [
+                            {"case_id": "bad", "rejected": True}
+                        ],
+                    },
+                    "conformance": {
+                        "required": True,
+                        "ok": True,
+                        "skipped": False,
+                        "source_fingerprint": fingerprint,
+                        "model_contract_ok": True,
+                        "runtime_evidence_ids": ["runtime.native.current"],
+                        "test_evidence_ids": ["tests.native.current"],
+                        "missing": [],
+                        "runtime_gap_rows": [],
+                        "expected_open_gap_ids": [],
+                        "unexpected_gap_ids": [],
+                    },
+                    "skipped_checks": [],
+                }
             path.write_text(json.dumps(payload), encoding="utf-8")
             paths[model_id] = path
         proof = {
@@ -53,6 +105,69 @@ class FlowPilotModelMeshCoverageReceiptTests(unittest.TestCase):
             "release": {"result_status": "passed", "selected_count": 12, "test_count": 12, "proof_artifact": dict(proof, artifact_id="proof.release")},
         }
         return manifest, paths
+
+    @staticmethod
+    def child_receipt(report: dict[str, object], model_id: str) -> dict[str, object]:
+        return next(
+            row
+            for row in report["child_receipts"]  # type: ignore[index]
+            if row["model_id"] == model_id
+        )
+
+    def test_build_report_without_manifest_still_consumes_current_unified_red_gate(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            _manifest, paths = self.evidence_fixture(root)
+            result_path = root / runner.UNIFIED_REPAIR_RESULT_PATH
+            result_path.parent.mkdir(parents=True, exist_ok=True)
+            payload = json.loads(
+                paths[runner.UNIFIED_REPAIR_MODEL_ID].read_text(encoding="utf-8")
+            )
+            payload["ok"] = False
+            payload["runtime_conformance_ok"] = False
+            payload["decision"] = "runtime_conformance_blocked"
+            payload["conformance"]["ok"] = False
+            payload["conformance"]["missing"] = ["native_runtime_conformance"]
+            result_path.write_text(json.dumps(payload), encoding="utf-8")
+            report = runner.build_report(
+                project_root=root,
+                run_id=None,
+                include_live_audit=False,
+                evidence_manifest=None,
+            )
+
+        self.assertIsNone(report["contract_coverage_receipts"])
+        self.assertFalse(report["unified_repair_integrity_gate"]["ok"])
+        self.assertFalse(report["ok"])
+        self.assertIn(
+            "unified_conformance_not_green",
+            report["unified_repair_integrity_gate"]["blockers"],
+        )
+
+    def test_build_report_without_manifest_can_green_with_exact_conformant_fixture(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            _manifest, paths = self.evidence_fixture(root)
+            result_path = root / runner.UNIFIED_REPAIR_RESULT_PATH
+            result_path.parent.mkdir(parents=True, exist_ok=True)
+            result_path.write_text(
+                paths[runner.UNIFIED_REPAIR_MODEL_ID].read_text(encoding="utf-8"),
+                encoding="utf-8",
+            )
+            report = runner.build_report(
+                project_root=root,
+                run_id=None,
+                include_live_audit=False,
+                evidence_manifest=None,
+            )
+
+        self.assertIsNone(report["contract_coverage_receipts"])
+        self.assertTrue(report["unified_repair_integrity_gate"]["ok"], report)
+        self.assertEqual(
+            report["unified_repair_integrity_gate"]["evidence_tier"],
+            "conformance_green",
+        )
+        self.assertTrue(report["ok"], report)
 
     def test_parent_consumes_every_current_child_receipt_and_composite_handoff(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -158,6 +273,107 @@ class FlowPilotModelMeshCoverageReceiptTests(unittest.TestCase):
                 )
             self.assertFalse(report["ok"])
             self.assertIn("release:missing_test_reuse_ticket", report["nonpassing_proofs"])
+
+    def test_unified_child_rejects_stale_exact_source_fingerprint(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            manifest, paths = self.evidence_fixture(root)
+            path = paths[runner.UNIFIED_REPAIR_MODEL_ID]
+            payload = json.loads(path.read_text(encoding="utf-8"))
+            payload["source_fingerprint"] = "stale"
+            path.write_text(json.dumps(payload), encoding="utf-8")
+            report = runner._contract_coverage_receipt_report(
+                project_root=root,
+                evidence_manifest=manifest,
+                result_path_overrides=paths,
+            )
+
+        receipt = self.child_receipt(report, runner.UNIFIED_REPAIR_MODEL_ID)
+        self.assertFalse(receipt["current"])
+        self.assertIn("unified_source_fingerprint_mismatch", receipt["finding_codes"])
+
+    def test_unified_child_rejects_open_or_skipped_required_conformance(self) -> None:
+        mutations = (
+            (
+                lambda payload: (
+                    payload.update({"ok": False, "runtime_conformance_ok": False}),
+                    payload["conformance"].update({"ok": False}),
+                ),
+                "unified_conformance_not_green",
+            ),
+            (
+                lambda payload: payload.update(
+                    {
+                        "skipped_checks": [
+                            {
+                                "check_id": "native_runtime_conformance",
+                                "status": "not_run",
+                            }
+                        ]
+                    }
+                ),
+                "unified_required_conformance_skipped",
+            ),
+        )
+        for mutate, expected_finding in mutations:
+            with self.subTest(expected_finding=expected_finding), tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp)
+                manifest, paths = self.evidence_fixture(root)
+                path = paths[runner.UNIFIED_REPAIR_MODEL_ID]
+                payload = json.loads(path.read_text(encoding="utf-8"))
+                mutate(payload)
+                path.write_text(json.dumps(payload), encoding="utf-8")
+                report = runner._contract_coverage_receipt_report(
+                    project_root=root,
+                    evidence_manifest=manifest,
+                    result_path_overrides=paths,
+                )
+
+            receipt = self.child_receipt(report, runner.UNIFIED_REPAIR_MODEL_ID)
+            self.assertFalse(receipt["current"])
+            self.assertIn(expected_finding, receipt["finding_codes"])
+
+    def test_unified_child_requires_both_native_evidence_domains(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            manifest, paths = self.evidence_fixture(root)
+            path = paths[runner.UNIFIED_REPAIR_MODEL_ID]
+            payload = json.loads(path.read_text(encoding="utf-8"))
+            payload["conformance"]["runtime_evidence_ids"] = []
+            payload["conformance"]["test_evidence_ids"] = []
+            path.write_text(json.dumps(payload), encoding="utf-8")
+            report = runner._contract_coverage_receipt_report(
+                project_root=root,
+                evidence_manifest=manifest,
+                result_path_overrides=paths,
+            )
+
+        receipt = self.child_receipt(report, runner.UNIFIED_REPAIR_MODEL_ID)
+        self.assertFalse(receipt["current"])
+        self.assertIn("unified_runtime_evidence_missing", receipt["finding_codes"])
+        self.assertIn("unified_test_evidence_missing", receipt["finding_codes"])
+
+    def test_aggregate_proof_cannot_substitute_for_unified_native_conformance(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            manifest, paths = self.evidence_fixture(root)
+            path = paths[runner.UNIFIED_REPAIR_MODEL_ID]
+            payload = json.loads(path.read_text(encoding="utf-8"))
+            payload.pop("conformance")
+            path.write_text(json.dumps(payload), encoding="utf-8")
+            report = runner._contract_coverage_receipt_report(
+                project_root=root,
+                evidence_manifest=manifest,
+                result_path_overrides=paths,
+            )
+
+        receipt = self.child_receipt(report, runner.UNIFIED_REPAIR_MODEL_ID)
+        contract = receipt["metadata"]["unified_repair_contract"]
+        self.assertTrue(report["proof_gate_ok"])
+        self.assertFalse(receipt["current"])
+        self.assertIsNone(receipt["metadata"]["proof_artifact"])
+        self.assertFalse(contract["native_owner_receipt_synthesized"])
+        self.assertFalse(contract["aggregate_proof_substitution_allowed"])
 
 
 if __name__ == "__main__":

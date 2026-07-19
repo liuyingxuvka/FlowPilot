@@ -97,6 +97,31 @@ def _resource_facade_structure_review() -> dict[str, Any]:
     }
 
 
+def _test_tier_structure_review() -> dict[str, Any]:
+    report = review_structure_mesh(model.test_tier_structure_plan())
+    hazards: list[dict[str, Any]] = []
+    for name in model.TEST_TIER_STRUCTURE_HAZARDS:
+        hazard_report = review_structure_mesh(
+            model.test_tier_structure_hazard_plan(name)
+        )
+        hazards.append(
+            {
+                "name": name,
+                "blocked": not hazard_report.ok,
+                "decision": hazard_report.decision,
+                "finding_codes": sorted(
+                    {finding.code for finding in hazard_report.findings}
+                ),
+                "blocker_count": hazard_report.blocker_count(),
+            }
+        )
+    return {
+        "ok": report.ok and all(hazard["blocked"] for hazard in hazards),
+        "report": _jsonable(report),
+        "hazards": hazards,
+    }
+
+
 def _testmesh_review() -> dict[str, Any]:
     report = review_test_mesh(model.router_testmesh_plan())
     hazards: list[dict[str, Any]] = []
@@ -122,6 +147,7 @@ def build_report() -> dict[str, Any]:
     structure = _structure_review()
     model_structure = _model_structure_review()
     resource_facade_structure = _resource_facade_structure_review()
+    test_tier_structure = _test_tier_structure_review()
     testmesh = _testmesh_review()
     return {
         "model": "flowpilot_structure_maintenance",
@@ -129,11 +155,13 @@ def build_report() -> dict[str, Any]:
             structure["ok"]
             and model_structure["ok"]
             and resource_facade_structure["ok"]
+            and test_tier_structure["ok"]
             and testmesh["ok"]
         ),
         "structure_mesh": structure,
         "model_structure_mesh": model_structure,
         "resource_facade_structure_mesh": resource_facade_structure,
+        "test_tier_structure_mesh": test_tier_structure,
         "test_mesh": testmesh,
         "claim_boundary": (
             "StructureMesh parity is reviewed at release scope. The embedded "

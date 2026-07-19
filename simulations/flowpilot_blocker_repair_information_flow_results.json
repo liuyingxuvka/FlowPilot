@@ -14,9 +14,13 @@
       "stale prior-route repair blocker disposition after route mutation",
       "final preflight current-effective blocker filtering",
       "same-blocker no-progress loop escape",
-      "same-dossier repair attempts at five consecutive repair nodes route to Controller break-glass instead of ordinary PM repair"
+      "same-dossier repair attempts at five consecutive repair nodes route to Controller break-glass instead of ordinary PM repair",
+      "blocker-backed triggers carry a typed handoff identity into the unified repair engine",
+      "the blocker-specific child rejects PM-proactive historical-defect intake and shared-engine ownership"
     ],
     "does_not_cover": [
+      "direct PM historical-defect intake, which belongs to the unified repair engine",
+      "shared repair-engine topology selection or execution ownership",
       "concrete runtime packet builder conformance",
       "prompt-card wording conformance",
       "installed skill synchronization"
@@ -28,7 +32,7 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=3 initial_states=1 traces=180",
+    "summary": "sequences=3 initial_states=1 traces=204",
     "violation_count": 0
   },
   "hazard_detection": {
@@ -41,11 +45,32 @@
           "final preflight treated a noncurrent repair blocker as current authority"
         ]
       },
+      "blocker_child_claims_shared_engine_ownership": {
+        "detected": true,
+        "expected_failure": "blocker-specific information-flow child claimed shared repair-engine ownership",
+        "failures": [
+          "blocker-specific information-flow child claimed shared repair-engine ownership"
+        ]
+      },
+      "blocker_handoff_to_shared_engine_missing": {
+        "detected": true,
+        "expected_failure": "blocker trigger was not handed to the unified repair engine",
+        "failures": [
+          "blocker trigger was not handed to the unified repair engine"
+        ]
+      },
       "blocker_routed_without_pm_decision": {
         "detected": true,
         "expected_failure": "repair packet was issued without a PM repair decision",
         "failures": [
           "repair packet was issued without a PM repair decision"
+        ]
+      },
+      "blocker_source_trigger_origin_mismatch": {
+        "detected": true,
+        "expected_failure": "blocker source role and typed trigger origin do not describe the same intake",
+        "failures": [
+          "blocker source role and typed trigger origin do not describe the same intake"
         ]
       },
       "current_blocker_payload_missing_details": {
@@ -111,6 +136,13 @@
         "expected_failure": "blocker was closed without a bound reviewer recheck pass",
         "failures": [
           "blocker was closed without a bound reviewer recheck pass"
+        ]
+      },
+      "pm_proactive_repair_misrouted_to_blocker_child": {
+        "detected": true,
+        "expected_failure": "blocker-specific information-flow child cannot own PM-proactive historical repair intake",
+        "failures": [
+          "blocker-specific information-flow child cannot own PM-proactive historical repair intake"
         ]
       },
       "pm_repair_package_omits_new_blocker_content": {
@@ -225,7 +257,7 @@
     "ok": true,
     "samples": [],
     "stuck_state_count": 0,
-    "terminal_state_count": 30
+    "terminal_state_count": 34
   },
   "result_type": "flowpilot_blocker_repair_information_flow_checks",
   "safe_graph": {
@@ -237,13 +269,16 @@
       "valid_threshold_break_glass_loop_escape",
       "valid_worker_blocker_reissue"
     ],
-    "edge_count": 60,
+    "edge_count": 68,
     "invariant_failures": [],
     "missing_labels": [],
     "ok": true,
     "rejected_scenarios": [
       "accepted_noncurrent_repair_packet_blocks_final_preflight",
+      "blocker_child_claims_shared_engine_ownership",
+      "blocker_handoff_to_shared_engine_missing",
       "blocker_routed_without_pm_decision",
+      "blocker_source_trigger_origin_mismatch",
       "current_blocker_payload_missing_details",
       "flowguard_evidence_has_blocker_but_staged_effect_empty",
       "flowguard_recheck_evidence_not_delivered_to_reviewer",
@@ -252,6 +287,7 @@
       "gate_derived_pm_flowguard_acceptance_identity_dropped",
       "no_success_evidence_contract",
       "pm_closes_blocker_without_recheck",
+      "pm_proactive_repair_misrouted_to_blocker_child",
       "pm_repair_package_omits_new_blocker_content",
       "pm_required_report_not_delivered",
       "repair_loop_over_threshold_allowed_pm_repair",
@@ -267,6 +303,6 @@
       "worker_packet_has_no_semantic_delta",
       "worker_packet_omits_repair_direction"
     ],
-    "state_count": 61
+    "state_count": 69
   }
 }

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import atexit
+import hashlib
 import json
 import queue
 import shutil
@@ -582,11 +583,50 @@ def _acceptance_item_ids_for_packet(packet: dict[str, Any]) -> list[str]:
     }.get(str(packet.get("route_node_id") or ""), [])
 
 
+def _current_authority_references(
+    project_root: Path,
+    *,
+    node_id: str,
+    repair_required: bool,
+) -> list[dict[str, str]]:
+    authority_root = project_root.resolve() / ".flowpilot" / "fake-current-authorities"
+    authority_root.mkdir(parents=True, exist_ok=True)
+    specs = [
+        ("acceptance_authority", "acceptance.md", "Current fake-project acceptance authority.\n"),
+        ("route_authority", "route.md", "Current fake-project route authority.\n"),
+    ]
+    if repair_required:
+        specs.append(("repair_authority", "repair.md", "Current fake-project repair authority.\n"))
+    references: list[dict[str, str]] = []
+    for reference_kind, filename, content in specs:
+        path = authority_root / filename
+        path.write_text(content, encoding="utf-8")
+        references.append(
+            {
+                "reference_kind": reference_kind,
+                "authority_id": f"{node_id or 'current-node'}-{reference_kind}",
+                "owner": "pm",
+                "path": path.relative_to(project_root.resolve()).as_posix(),
+                "fingerprint": "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest(),
+                "consumer_scope": "current_route_node",
+            }
+        )
+    return references
+
+
 def _apply_node_acceptance_plan_semantics(
     payload: dict[str, Any],
     packet: dict[str, Any],
+    *,
+    project_root: Path,
 ) -> dict[str, Any]:
     node_id = str(packet.get("route_node_id") or "")
+    packet_body = _packet_body_payload(packet)
+    repair_required = bool(
+        packet_body.get("repair_required")
+        or packet_body.get("repair_blocker_id")
+        or packet_body.get("repair_generation")
+    )
     acceptance_item_ids = _acceptance_item_ids_for_packet(packet)
     payload.update(
         {
@@ -598,12 +638,16 @@ def _apply_node_acceptance_plan_semantics(
             "low_quality_success_risks": ["existence-only evidence", "missing skill evidence"],
             "node_context_package": {
                 "purpose": "Complete the current route node with bounded worker execution, FlowGuard checks, review, and validation.",
-                "acceptance_criteria": [
-                    "worker result satisfies the node packet",
-                    "node-plan Reviewer, post-result FlowGuard, and final Reviewer evidence are current",
-                    "reviewer independently challenges the node outcome",
-                ],
-                "relevant_references": ["route node contract", "high standard contract", "runtime ledger"],
+                    "acceptance_criteria": [
+                        "worker result satisfies the node packet",
+                        "node-plan Reviewer, post-result FlowGuard, and final Reviewer evidence are current",
+                        "reviewer audits obligation, artifact, and current-evidence continuity",
+                    ],
+                    "relevant_references": _current_authority_references(
+                        project_root,
+                        node_id=node_id,
+                        repair_required=repair_required,
+                    ),
                 "known_risks": ["existence-only evidence", "stale generation", "review without active inspection"],
                 "acceptance_item_projection": [
                     {
@@ -874,6 +918,7 @@ def write_flowguard_evidence_artifact_for_packet(packet: dict[str, Any], *, deci
 def current_contract_body_from_open_result(
     opened_packet: dict[str, Any],
     *,
+    project_root: Path | None = None,
     expected_run_id: str | None = None,
     pm_disposition_decision: str = "accept",
     route_node_count: int = MIN_ACCEPTED_ROUTE_NODES,
@@ -898,7 +943,15 @@ def current_contract_body_from_open_result(
     elif packet_kind == "task" and route_scope == "planning":
         payload = _apply_route_plan_semantics(payload, node_count=route_node_count)
     elif packet_kind == "task" and route_scope == "node_acceptance_plan":
-        payload = _apply_node_acceptance_plan_semantics(payload, packet)
+        ensure(
+            project_root is not None,
+            "node-acceptance fake AI response requires the current project root",
+        )
+        payload = _apply_node_acceptance_plan_semantics(
+            payload,
+            packet,
+            project_root=project_root,
+        )
     elif packet_kind == "task" and route_scope in {"parent_backward_replay", "node"}:
         payload = _apply_packet_result_semantics(payload, packet)
     elif packet_kind in {"flowguard_check", "review"}:
@@ -1041,6 +1094,7 @@ def complete_full_packet_chain(
         else:
             body = current_contract_body_from_open_result(
                 opened_packet,
+                project_root=root,
                 pm_disposition_decision=decision,
                 route_node_count=route_node_count,
                 pm_repair_decision=pm_repair_decision,
@@ -1183,7 +1237,10 @@ def complete_planning_chain_only(
         route_scope = str(packet.get("route_scope", ""))
         ensure(packet_kind in {"task", "flowguard_check", "review"}, f"wrong planning packet kind: {packet}")
         ensure(responsibility == packet.get("responsibility"), f"wrong planning responsibility: {action}")
-        body = current_contract_body_from_open_result(opened_packet)
+        body = current_contract_body_from_open_result(
+            opened_packet,
+            project_root=root,
+        )
         write_flowguard_evidence_artifact_for_packet(opened_packet)
         current_payload = run_cli(
             root,

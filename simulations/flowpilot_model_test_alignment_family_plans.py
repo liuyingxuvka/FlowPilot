@@ -2625,6 +2625,696 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
         ),
     )
 
+    unified_repair_integrity = ModelTestAlignmentPlan(
+        model_id="flowpilot_unified_repair_integrity",
+        obligations=(
+            _obligation(
+                "unified_repair.pm_historical_direct_entry_no_blocker",
+                obligation_type="transition",
+                description=(
+                    "A PM-discovered historical-node defect enters the ordinary repair decision engine from a "
+                    "structured defect observation and impact frontier without manufacturing a semantic blocker."
+                ),
+                required_test_kinds=(HAPPY, NEGATIVE),
+                allow_shared_implementation=True,
+            ),
+            _obligation(
+                "unified_repair.same_slot_replacement_single_authority",
+                obligation_type="invariant",
+                description=(
+                    "The repair graft preserves logical parent, business intent, and logical slot; the historical "
+                    "node remains immutable and exactly one replacement is active authority."
+                ),
+                required_test_kinds=(HAPPY, NEGATIVE),
+                allow_shared_implementation=True,
+            ),
+            _obligation(
+                "unified_repair.repair_child_under_active_replacement",
+                obligation_type="invariant",
+                description=(
+                    "A bounded repair child is attached only beneath the active replacement node, enters the active "
+                    "route/node order, final ledger, and terminal target set, receives its own Worker packet/result "
+                    "and acceptance, and is consumed by parent closure; it never hangs beneath the superseded node."
+                ),
+                required_test_kinds=(HAPPY, NEGATIVE),
+                allow_shared_implementation=True,
+            ),
+            _obligation(
+                "unified_repair.worker_flowguard_reviewer_chain",
+                obligation_type="transition",
+                description=(
+                    "Substantive repair executes through a fresh Worker packet/result, then current FlowGuard "
+                    "evidence, then an independent Reviewer result for that same repair generation."
+                ),
+                required_test_kinds=(HAPPY, NEGATIVE),
+                allow_shared_implementation=True,
+            ),
+            _obligation(
+                "unified_repair.contract_evidence_generation",
+                obligation_type="hazard",
+                description=(
+                    "Repair contract, Worker result, FlowGuard evidence, Reviewer evidence, PM acceptance, and closure "
+                    "all bind the current repair generation; pre-contract or prior-generation evidence is rejected."
+                ),
+                required_test_kinds=(NEGATIVE, REPLAY),
+                allow_shared_implementation=True,
+            ),
+            _obligation(
+                "unified_repair.decision_gate_before_effect_commit",
+                obligation_type="transition",
+                description=(
+                    "A continue-repair decision stages its effect, then completes FlowGuard, PM absorption, the "
+                    "pre-effect Reviewer gate, and system validation before _apply_staged_pm_decision_gate commits "
+                    "the effect and opens Worker work. The later Worker-result Reviewer is a distinct gate. Rejected "
+                    "or cancelled gates cannot commit, open Worker, retain an orphan effect, or consume a terminal round."
+                ),
+                required_test_kinds=(HAPPY, NEGATIVE),
+                allow_shared_implementation=True,
+            ),
+            _obligation(
+                "unified_repair.unaffected_sibling_rebind_conservation",
+                obligation_type="invariant",
+                description=(
+                    "Replacing one target conserves the effective active-member set: every unaffected sibling is "
+                    "rebound into the new route version and remains visible to progress and final-ledger projections."
+                ),
+                required_test_kinds=(EDGE, NEGATIVE),
+                allow_shared_implementation=True,
+            ),
+            _obligation(
+                "unified_repair.affected_downstream_replay",
+                obligation_type="transition",
+                description=(
+                    "Every dependency-affected downstream node and parent replay is invalidated and freshly replayed "
+                    "before closure, including a same-slot repair whenever its impact frontier reaches a parent or "
+                    "downstream consumer, while unaffected siblings retain valid evidence."
+                ),
+                required_test_kinds=(REPLAY, NEGATIVE),
+                allow_shared_implementation=True,
+            ),
+            _obligation(
+                "unified_repair.repeated_lineage_generation",
+                obligation_type="invariant",
+                description=(
+                    "A repeated r2 repair supersedes the latest active r1 rather than replacing the original again, "
+                    "preserves one stable root, records the previous repair node/packet/result/recheck and new delta, "
+                    "increments attempt and generation exactly by one, returns to the declared gate, and cannot cycle."
+                ),
+                required_test_kinds=(REPLAY, NEGATIVE),
+                allow_shared_implementation=True,
+            ),
+            _obligation(
+                "unified_repair.terminal_shared_engine",
+                obligation_type="refinement",
+                description=(
+                    "Terminal backward replay adds a coordinating supplemental contract but delegates substantive "
+                    "work to the same ordinary repair transaction, Worker, FlowGuard, Reviewer, PM, and replay engine."
+                ),
+                required_test_kinds=(HAPPY, NEGATIVE),
+                allow_shared_implementation=True,
+            ),
+            _obligation(
+                "unified_repair.terminal_round_cap_three",
+                obligation_type="hazard",
+                description=(
+                    "Terminal supplemental repair opens at most three coordinated rounds, never opens a fourth round, "
+                    "and does not treat exhaustion as successful closure."
+                ),
+                required_test_kinds=(EDGE, NEGATIVE),
+                allow_shared_implementation=True,
+            ),
+            _obligation(
+                "unified_repair.completed_run_distinct_current_import",
+                obligation_type="transition",
+                description=(
+                    "A late defect discovered after completion or stop creates a distinct current run, imports the "
+                    "historical output only as read-only context, and never reactivates the old run's control state."
+                ),
+                required_test_kinds=(HAPPY, NEGATIVE),
+                allow_shared_implementation=True,
+            ),
+            _obligation(
+                "unified_repair.action_runtime_refinement",
+                obligation_type="refinement",
+                description=(
+                    "Every model action has one explicit runtime refinement row: repair_same_slot -> "
+                    "repair_current_scope; repair_parent_scope -> repair_parent_scope; repair_subtree -> "
+                    "repair_parent_scope with an explicit supersede-descendants scope contract; redesign_route -> "
+                    "redesign_route; authorized_waiver -> waive_with_authority; and stop_for_user -> stop_for_user. "
+                    "Unknown, missing, or ambiguous mappings block before runtime effect selection."
+                ),
+                required_test_kinds=(HAPPY, NEGATIVE),
+                allow_shared_implementation=True,
+            ),
+        ),
+        code_contracts=(
+            _contract(
+                "unified_repair.runtime.pm_historical_direct_entry",
+                path="skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+                symbol="ensure_pm_historical_repair_decision_packet",
+                implements=("unified_repair.pm_historical_direct_entry_no_blocker",),
+                external_inputs=(
+                    "ledger",
+                    "historical_target_node_id",
+                    "defect_summary",
+                    "impact_summary",
+                    "evidence_refs",
+                ),
+                external_outputs=("pm_repair_decision_packet_id",),
+                state_reads=("route_nodes", "execution_frontier", "pm_repair_decisions"),
+                state_writes=("packets", "pm_repair_decisions"),
+                error_paths=("missing_defect_observation", "noncurrent_historical_target", "fabricated_blocker_prerequisite"),
+            ),
+            _contract(
+                "unified_repair.runtime.same_slot_single_authority",
+                path="skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+                symbol="_replace_route_node_for_repair",
+                implements=("unified_repair.same_slot_replacement_single_authority",),
+                external_inputs=(
+                    "ledger",
+                    "node_id",
+                    "logical_parent_id",
+                    "business_intent_id",
+                    "logical_slot_id",
+                    "disposition_id",
+                    "reason",
+                ),
+                external_outputs=("active_replacement_node_id",),
+                state_reads=("route_nodes", "routes", "active_route_version"),
+                state_writes=("route_nodes", "routes", "active_route_version", "execution_frontier"),
+                error_paths=("historical_node_mutated", "logical_slot_drift", "multiple_active_authorities"),
+            ),
+            _contract(
+                "unified_repair.runtime.repair_child_active_parent",
+                path="skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+                symbol="_materialize_parent_repair_child_nodes",
+                implements=("unified_repair.repair_child_under_active_replacement",),
+                external_inputs=("ledger", "replacement_id", "source_parent", "contract", "route_version"),
+                external_outputs=(
+                    "active_repair_child_node_ids",
+                    "active_route_node_order",
+                    "final_ledger_child_entry_ids",
+                    "terminal_target_child_ids",
+                ),
+                state_reads=("route_nodes", "routes", "final_route_wide_gate_ledger", "terminal_backward_replay"),
+                state_writes=(
+                    "route_nodes",
+                    "routes.node_order",
+                    "final_route_wide_gate_ledger",
+                    "terminal_backward_replay.segment_targets",
+                ),
+                side_effects=("worker_packet_issued", "child_result_accepted", "parent_closure_consumed_child"),
+                error_paths=(
+                    "child_attached_to_superseded_parent",
+                    "duplicate_child_id",
+                    "missing_replacement_parent",
+                    "child_missing_from_active_order",
+                    "child_missing_worker_result_or_acceptance",
+                    "child_missing_from_final_or_terminal_projection",
+                    "parent_closed_without_child",
+                ),
+            ),
+            _contract(
+                "unified_repair.runtime.worker_flowguard_reviewer_handoff",
+                path="skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+                symbol="_ensure_review_packet_for_task_result",
+                implements=("unified_repair.worker_flowguard_reviewer_chain",),
+                external_inputs=("ledger", "subject_id", "repair_generation", "force_new", "repair_blocker_id", "recheck_reason"),
+                external_outputs=("review_packet_id",),
+                state_reads=("packets", "results", "flowguard_work_orders", "source_generation", "route_nodes"),
+                state_writes=("packets", "active_blockers"),
+                error_paths=("reviewer_before_worker", "reviewer_before_flowguard", "flowguard_generation_mismatch"),
+            ),
+            _contract(
+                "unified_repair.runtime.generation_currentness",
+                path="skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+                symbol="_node_final_quality_evidence_valid",
+                implements=("unified_repair.contract_evidence_generation",),
+                external_inputs=("ledger", "node", "repair_contract_generation"),
+                external_outputs=("current_generation_valid",),
+                state_reads=(
+                    "source_generation",
+                    "route_nodes.repair_generation",
+                    "results",
+                    "flowguard_work_orders",
+                    "reviews",
+                    "pm_dispositions",
+                ),
+                error_paths=("pre_contract_evidence", "stale_repair_generation", "mixed_generation_closure"),
+            ),
+            _contract(
+                "unified_repair.runtime.decision_gate_effect_commit",
+                path="skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+                symbol="_apply_staged_pm_decision_gate",
+                implements=("unified_repair.decision_gate_before_effect_commit",),
+                external_inputs=(
+                    "ledger",
+                    "gate",
+                    "system_closure_id",
+                    "pre_effect_review_id",
+                    "post_worker_review_id",
+                ),
+                external_outputs=("committed_effect_id", "opened_worker_packet_id"),
+                state_reads=(
+                    "pm_decision_gates.status",
+                    "pm_decision_gates.flowguard_order_id",
+                    "pm_decision_gates.pm_flowguard_acceptance_result_id",
+                    "pm_decision_gates.review_id",
+                    "pm_decision_gates.validation_evidence_id",
+                    "pm_decision_gates.system_closure_id",
+                    "pm_decision_gates.staged_effect",
+                    "terminal_supplemental_repair.round",
+                ),
+                state_writes=(
+                    "pm_decision_gates",
+                    "staged_effect.status",
+                    "packets",
+                    "terminal_supplemental_repair",
+                ),
+                side_effects=("staged_effect_committed", "worker_packet_opened_after_gate"),
+                error_paths=(
+                    "gate_not_system_validated",
+                    "pre_effect_and_worker_review_conflated",
+                    "rejected_gate_committed",
+                    "cancelled_gate_opened_worker",
+                    "orphan_staged_effect",
+                    "rejected_gate_consumed_terminal_round",
+                ),
+            ),
+            _contract(
+                "unified_repair.runtime.member_conservation",
+                path="skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+                symbol="_active_route_node_records",
+                implements=("unified_repair.unaffected_sibling_rebind_conservation",),
+                external_inputs=("ledger", "expected_effective_member_ids", "include_superseded"),
+                external_outputs=("effective_active_route_node_records", "missing_member_ids", "extra_member_ids"),
+                state_reads=("route_nodes", "routes", "active_route_version", "route_mutations"),
+                error_paths=("unaffected_sibling_not_rebound", "effective_member_loss", "superseded_member_reactivated"),
+            ),
+            _contract(
+                "unified_repair.runtime.downstream_replay",
+                path="skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+                symbol="_advance_frontier_after_node_acceptance",
+                implements=("unified_repair.affected_downstream_replay",),
+                external_inputs=(
+                    "ledger",
+                    "node_id",
+                    "repair_action",
+                    "affected_dependency_cone",
+                    "same_slot_parent_or_downstream_impact",
+                ),
+                external_outputs=("replay_obligation_ids", "next_active_node_id"),
+                state_reads=("execution_frontier", "route_nodes", "routes", "route_mutations"),
+                state_writes=("execution_frontier", "route_nodes", "parent_backward_replays"),
+                error_paths=(
+                    "affected_downstream_not_replayed",
+                    "parent_replay_skipped",
+                    "same_slot_impact_replay_skipped",
+                    "unaffected_evidence_invalidated",
+                ),
+            ),
+            _contract(
+                "unified_repair.runtime.repeated_lineage",
+                path="skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+                symbol="_record_repair_transaction",
+                implements=("unified_repair.repeated_lineage_generation",),
+                external_inputs=(
+                    "ledger",
+                    "blocker_or_defect",
+                    "decision_id",
+                    "source_id",
+                    "fresh_packet_id",
+                    "repair_root_id",
+                    "previous_repair_transaction_id",
+                    "latest_active_repair_transaction_id",
+                    "previous_attempt",
+                    "previous_generation",
+                    "repair_delta",
+                    "return_gate_id",
+                ),
+                external_outputs=(
+                    "repair_transaction_id",
+                    "superseded_previous_repair_transaction_id",
+                    "attempt",
+                    "generation",
+                ),
+                state_reads=("repair_transactions", "route_nodes", "packets", "results"),
+                state_writes=("repair_transactions", "repair_transactions.status"),
+                error_paths=(
+                    "lineage_root_changed",
+                    "previous_repair_missing",
+                    "latest_active_repair_not_superseded",
+                    "original_replaced_again",
+                    "attempt_not_previous_plus_one",
+                    "generation_not_previous_plus_one",
+                    "repair_lineage_cycle",
+                    "repair_delta_missing",
+                ),
+            ),
+            _contract(
+                "unified_repair.runtime.terminal_shared_adapter",
+                path="skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+                symbol="_record_terminal_supplemental_repair_contract",
+                implements=("unified_repair.terminal_shared_engine",),
+                external_inputs=("ledger", "payload", "source_result_id", "ordinary_repair_transaction_id"),
+                external_outputs=("supplemental_contract_id", "ordinary_repair_trigger"),
+                state_reads=("terminal_supplemental_repair", "supplemental_repair_contracts", "repair_transactions"),
+                state_writes=("terminal_supplemental_repair", "supplemental_repair_contracts"),
+                error_paths=("terminal_parallel_repair_shortcut", "terminal_contract_not_projected", "terminal_replay_not_rerun"),
+            ),
+            _contract(
+                "unified_repair.runtime.terminal_round_cap",
+                path="skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+                symbol="_terminal_supplemental_rounds_exhausted",
+                implements=("unified_repair.terminal_round_cap_three",),
+                external_inputs=("ledger",),
+                external_outputs=("rounds_exhausted",),
+                state_reads=("terminal_supplemental_repair.round", "terminal_supplemental_repair.max_rounds"),
+                error_paths=("fourth_round_opened", "exhaustion_treated_as_closure"),
+            ),
+            _contract(
+                "unified_repair.runtime.completed_run_bridge",
+                path="skills/flowpilot/assets/flowpilot_core_runtime/run_shell.py",
+                symbol="create_historical_repair_run_shell",
+                implements=(
+                    "unified_repair.completed_run_distinct_current_import",
+                ),
+                external_inputs=(
+                    "project_root",
+                    "source_run_id",
+                    "goal",
+                    "acceptance_contract",
+                    "run_id",
+                ),
+                external_outputs=(
+                    "new_current_run_shell",
+                    "read_only_imported_evidence_ids",
+                ),
+                state_reads=(
+                    "source_run_ledger",
+                    "source_run_terminal_lifecycle",
+                    "source_run_results",
+                ),
+                state_writes=(
+                    "new_run_ledger",
+                    "historical_repair_intake",
+                    "current_run_pointer",
+                ),
+                error_paths=(
+                    "source_run_not_terminal",
+                    "new_run_id_matches_source",
+                    "old_control_state_reactivated",
+                    "imported_evidence_mutable",
+                ),
+            ),
+            _contract(
+                "unified_repair.runtime.action_runtime_refinement",
+                path="skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+                symbol="_apply_pm_repair_decision",
+                implements=("unified_repair.action_runtime_refinement",),
+                external_inputs=(
+                    "ledger",
+                    "blocker_or_defect_id",
+                    "decision_id",
+                    "model_repair_action",
+                    "action_refinement_mapping_id",
+                    "scope_contract",
+                ),
+                external_outputs=("selected_runtime_decision", "validated_scope_contract"),
+                state_reads=("repair_action_refinement_map", "pm_repair_decisions", "route_nodes", "active_blockers"),
+                state_writes=("pm_repair_decisions.runtime_refinement",),
+                error_paths=(
+                    "missing_action_refinement",
+                    "unknown_model_action",
+                    "unknown_runtime_decision",
+                    "ambiguous_action_refinement",
+                    "repair_subtree_scope_contract_missing",
+                ),
+            ),
+        ),
+        test_evidence=tuple(
+            _evidence(
+                f"unified_repair.native.{suffix}.{test_kind}",
+                test_name=test_name,
+                path=test_path,
+                command=command,
+                test_kind=test_kind,
+                covers=(obligation_id,),
+                code_contracts=(contract_id,),
+            )
+            for obligation_id, contract_id, suffix, test_specs in (
+                (
+                    "unified_repair.pm_historical_direct_entry_no_blocker",
+                    "unified_repair.runtime.pm_historical_direct_entry",
+                    "pm_historical_direct_entry_no_blocker",
+                    (
+                        (
+                            HAPPY,
+                            "tests/test_flowpilot_unified_repair_runtime.py",
+                            "test_historical_intake_requires_evidence_and_creates_no_blocker",
+                            "python -m pytest tests/test_flowpilot_unified_repair_runtime.py::test_historical_intake_requires_evidence_and_creates_no_blocker -q",
+                        ),
+                        (
+                            NEGATIVE,
+                            "tests/test_flowpilot_unified_repair_runtime.py",
+                            "test_pm_repair_packet_rejects_missing_or_unknown_trigger_origin",
+                            "python -m pytest tests/test_flowpilot_unified_repair_runtime.py::test_pm_repair_packet_rejects_missing_or_unknown_trigger_origin -q",
+                        ),
+                    ),
+                ),
+                (
+                    "unified_repair.same_slot_replacement_single_authority",
+                    "unified_repair.runtime.same_slot_single_authority",
+                    "same_slot_replacement_single_authority",
+                    (
+                        (
+                            HAPPY,
+                            "tests/test_flowpilot_unified_repair_runtime.py",
+                            "test_staged_historical_repair_has_no_early_effect_then_commits_same_slot",
+                            "python -m pytest tests/test_flowpilot_unified_repair_runtime.py::test_staged_historical_repair_has_no_early_effect_then_commits_same_slot -q",
+                        ),
+                        (
+                            NEGATIVE,
+                            "tests/test_flowpilot_unified_repair_runtime.py",
+                            "test_apply_preflight_failure_disposes_effect_and_leaves_no_partial_repair",
+                            "python -m pytest tests/test_flowpilot_unified_repair_runtime.py::test_apply_preflight_failure_disposes_effect_and_leaves_no_partial_repair -q",
+                        ),
+                    ),
+                ),
+                (
+                    "unified_repair.repair_child_under_active_replacement",
+                    "unified_repair.runtime.repair_child_active_parent",
+                    "repair_child_under_active_replacement",
+                    (
+                        (
+                            HAPPY,
+                            "tests/test_flowpilot_unified_repair_runtime.py",
+                            "test_structured_subtree_places_repair_children_under_active_replacement",
+                            "python -m pytest tests/test_flowpilot_unified_repair_runtime.py::test_structured_subtree_places_repair_children_under_active_replacement -q",
+                        ),
+                        (
+                            NEGATIVE,
+                            "tests/test_flowpilot_high_standard_control_flow.py",
+                            "test_pm_repair_parent_scope_requires_structured_repair_child_specs",
+                            "python -m pytest tests/test_flowpilot_high_standard_control_flow.py::FlowPilotHighStandardControlFlowTests::test_pm_repair_parent_scope_requires_structured_repair_child_specs -q",
+                        ),
+                    ),
+                ),
+                (
+                    "unified_repair.worker_flowguard_reviewer_chain",
+                    "unified_repair.runtime.worker_flowguard_reviewer_handoff",
+                    "worker_flowguard_reviewer_chain",
+                    (
+                        (
+                            HAPPY,
+                            "tests/test_flowpilot_core_runtime.py",
+                            "test_terminal_replay_repair_current_scope_preserves_targets_and_closes",
+                            "python -m pytest tests/test_flowpilot_core_runtime.py::FlowPilotCoreRuntimeTests::test_terminal_replay_repair_current_scope_preserves_targets_and_closes -q",
+                        ),
+                        (
+                            NEGATIVE,
+                            "tests/test_flowpilot_core_runtime.py",
+                            "test_terminal_replay_block_branch_requires_repair_evidence",
+                            "python -m pytest tests/test_flowpilot_core_runtime.py::FlowPilotCoreRuntimeTests::test_terminal_replay_block_branch_requires_repair_evidence -q",
+                        ),
+                    ),
+                ),
+                (
+                    "unified_repair.contract_evidence_generation",
+                    "unified_repair.runtime.generation_currentness",
+                    "contract_evidence_generation",
+                    (
+                        (
+                            NEGATIVE,
+                            "tests/test_flowpilot_core_runtime.py",
+                            "test_terminal_repair_evidence_rejects_wrong_or_early_contract_generation_identity",
+                            "python -m pytest tests/test_flowpilot_core_runtime.py::FlowPilotCoreRuntimeTests::test_terminal_repair_evidence_rejects_wrong_or_early_contract_generation_identity -q",
+                        ),
+                        (
+                            REPLAY,
+                            "tests/test_flowpilot_unified_repair_runtime.py",
+                            "test_terminal_replacement_projects_committed_supplemental_contract_without_preseeding_source",
+                            "python -m pytest tests/test_flowpilot_unified_repair_runtime.py::test_terminal_replacement_projects_committed_supplemental_contract_without_preseeding_source -q",
+                        ),
+                    ),
+                ),
+                (
+                    "unified_repair.decision_gate_before_effect_commit",
+                    "unified_repair.runtime.decision_gate_effect_commit",
+                    "decision_gate_before_effect_commit",
+                    (
+                        (
+                            HAPPY,
+                            "tests/test_flowpilot_unified_repair_runtime.py",
+                            "test_staged_historical_repair_has_no_early_effect_then_commits_same_slot",
+                            "python -m pytest tests/test_flowpilot_unified_repair_runtime.py::test_staged_historical_repair_has_no_early_effect_then_commits_same_slot -q",
+                        ),
+                        (
+                            NEGATIVE,
+                            "tests/test_flowpilot_unified_repair_runtime.py",
+                            "test_apply_preflight_failure_disposes_effect_and_leaves_no_partial_repair",
+                            "python -m pytest tests/test_flowpilot_unified_repair_runtime.py::test_apply_preflight_failure_disposes_effect_and_leaves_no_partial_repair -q",
+                        ),
+                    ),
+                ),
+                (
+                    "unified_repair.unaffected_sibling_rebind_conservation",
+                    "unified_repair.runtime.member_conservation",
+                    "unaffected_sibling_rebind_conservation",
+                    (
+                        (
+                            EDGE,
+                            "tests/test_flowpilot_unified_repair_runtime.py",
+                            "test_route_repair_rebinds_unaffected_siblings_into_new_effective_route",
+                            "python -m pytest tests/test_flowpilot_unified_repair_runtime.py::test_route_repair_rebinds_unaffected_siblings_into_new_effective_route -q",
+                        ),
+                        (
+                            NEGATIVE,
+                            "tests/test_flowpilot_unified_repair_runtime.py",
+                            "test_dependency_cone_fails_closed_for_unknown_or_cyclic_topology",
+                            "python -m pytest tests/test_flowpilot_unified_repair_runtime.py::test_dependency_cone_fails_closed_for_unknown_or_cyclic_topology -q",
+                        ),
+                    ),
+                ),
+                (
+                    "unified_repair.affected_downstream_replay",
+                    "unified_repair.runtime.downstream_replay",
+                    "affected_downstream_replay",
+                    (
+                        (
+                            REPLAY,
+                            "tests/test_flowpilot_unified_repair_runtime.py",
+                            "test_nested_dependency_cone_invalidates_only_ancestors_and_preserves_parallel_siblings",
+                            "python -m pytest tests/test_flowpilot_unified_repair_runtime.py::test_nested_dependency_cone_invalidates_only_ancestors_and_preserves_parallel_siblings -q",
+                        ),
+                        (
+                            NEGATIVE,
+                            "tests/test_flowpilot_unified_repair_runtime.py",
+                            "test_dependency_cone_fails_closed_for_unknown_or_cyclic_topology",
+                            "python -m pytest tests/test_flowpilot_unified_repair_runtime.py::test_dependency_cone_fails_closed_for_unknown_or_cyclic_topology -q",
+                        ),
+                    ),
+                ),
+                (
+                    "unified_repair.repeated_lineage_generation",
+                    "unified_repair.runtime.repeated_lineage",
+                    "repeated_lineage_generation",
+                    (
+                        (
+                            REPLAY,
+                            "tests/test_flowpilot_unified_repair_runtime.py",
+                            "test_repeated_repair_targets_latest_generation_and_keeps_stable_root",
+                            "python -m pytest tests/test_flowpilot_unified_repair_runtime.py::test_repeated_repair_targets_latest_generation_and_keeps_stable_root -q",
+                        ),
+                        (
+                            NEGATIVE,
+                            "tests/test_flowpilot_unified_repair_runtime.py",
+                            "test_repeated_repair_lineage_is_mechanically_bound_to_the_failed_attempt",
+                            "python -m pytest tests/test_flowpilot_unified_repair_runtime.py::test_repeated_repair_lineage_is_mechanically_bound_to_the_failed_attempt -q",
+                        ),
+                    ),
+                ),
+                (
+                    "unified_repair.terminal_shared_engine",
+                    "unified_repair.runtime.terminal_shared_adapter",
+                    "terminal_shared_engine",
+                    (
+                        (
+                            HAPPY,
+                            "tests/test_flowpilot_core_runtime.py",
+                            "test_terminal_replay_repair_current_scope_preserves_targets_and_closes",
+                            "python -m pytest tests/test_flowpilot_core_runtime.py::FlowPilotCoreRuntimeTests::test_terminal_replay_repair_current_scope_preserves_targets_and_closes -q",
+                        ),
+                        (
+                            NEGATIVE,
+                            "tests/test_flowpilot_core_runtime.py",
+                            "test_terminal_replay_block_branch_requires_repair_evidence",
+                            "python -m pytest tests/test_flowpilot_core_runtime.py::FlowPilotCoreRuntimeTests::test_terminal_replay_block_branch_requires_repair_evidence -q",
+                        ),
+                    ),
+                ),
+                (
+                    "unified_repair.terminal_round_cap_three",
+                    "unified_repair.runtime.terminal_round_cap",
+                    "terminal_round_cap_three",
+                    (
+                        (
+                            EDGE,
+                            "tests/test_flowpilot_core_runtime.py",
+                            "test_terminal_supplemental_repair_exhausts_after_third_round_without_pm_packet",
+                            "python -m pytest tests/test_flowpilot_core_runtime.py::FlowPilotCoreRuntimeTests::test_terminal_supplemental_repair_exhausts_after_third_round_without_pm_packet -q",
+                        ),
+                        (
+                            NEGATIVE,
+                            "tests/test_flowpilot_core_runtime.py",
+                            "test_stale_terminal_pm_packet_cannot_create_a_fourth_round_or_reissue",
+                            "python -m pytest tests/test_flowpilot_core_runtime.py::FlowPilotCoreRuntimeTests::test_stale_terminal_pm_packet_cannot_create_a_fourth_round_or_reissue -q",
+                        ),
+                    ),
+                ),
+                (
+                    "unified_repair.completed_run_distinct_current_import",
+                    "unified_repair.runtime.completed_run_bridge",
+                    "completed_run_distinct_current_import",
+                    (
+                        (
+                            HAPPY,
+                            "tests/test_flowpilot_unified_repair_runtime.py",
+                            "test_completed_run_repair_creates_distinct_current_run_with_read_only_imports",
+                            "python -m pytest tests/test_flowpilot_unified_repair_runtime.py::test_completed_run_repair_creates_distinct_current_run_with_read_only_imports -q",
+                        ),
+                        (
+                            NEGATIVE,
+                            "tests/test_flowpilot_unified_repair_runtime.py",
+                            "test_completed_run_repair_creates_distinct_current_run_with_read_only_imports",
+                            "python -m pytest tests/test_flowpilot_unified_repair_runtime.py::test_completed_run_repair_creates_distinct_current_run_with_read_only_imports -q",
+                        ),
+                    ),
+                ),
+                (
+                    "unified_repair.action_runtime_refinement",
+                    "unified_repair.runtime.action_runtime_refinement",
+                    "action_runtime_refinement",
+                    (
+                        (
+                            HAPPY,
+                            "tests/test_flowpilot_unified_repair_runtime.py",
+                            "test_historical_waiver_and_stop_are_packet_free_explicit_pm_dispositions",
+                            "python -m pytest tests/test_flowpilot_unified_repair_runtime.py::test_historical_waiver_and_stop_are_packet_free_explicit_pm_dispositions -q",
+                        ),
+                        (
+                            NEGATIVE,
+                            "tests/test_flowpilot_unified_repair_runtime.py",
+                            "test_pm_repair_packet_rejects_missing_or_unknown_trigger_origin",
+                            "python -m pytest tests/test_flowpilot_unified_repair_runtime.py::test_pm_repair_packet_rejects_missing_or_unknown_trigger_origin -q",
+                        ),
+                    ),
+                ),
+            )
+            for test_kind, test_path, test_name, command in test_specs
+        ),
+    )
+
     currentness_field_projections = (
         _field_projection(
             "field_lifecycle_currentness.packet_status_terminal_monotonic",
@@ -4248,6 +4938,12 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 required_test_kinds=(NEGATIVE,),
             ),
             _obligation(
+                "test_tiering.shared_runtime_resource_serialization",
+                obligation_type="hazard",
+                description="Background commands that launch the same installed shadow runtime declare one exclusive resource and cannot overlap, while unrelated model checks remain parallel.",
+                required_test_kinds=(HAPPY, NEGATIVE),
+            ),
+            _obligation(
                 "slow_test.parent_child_contracts",
                 obligation_type="contract",
                 description="Slow-test parents declare child owners and I/O contracts and do not replay child internals as parent proof.",
@@ -4258,6 +4954,23 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 obligation_type="invariant",
                 description="All, formal-submit-adversarial, and release proof compile before strict MTA/TestMesh parents; repository final-confidence is a downstream terminal consumer and per-run terminal return remains run-local.",
                 required_test_kinds=(HAPPY, NEGATIVE),
+            ),
+        ),
+        code_contracts=(
+            _contract(
+                "runtime_path.test_tiering_slow_contracts.test_tiering_shared_runtime_resource_serialization",
+                path="scripts/test_tier/background_supervisor.py",
+                symbol="next_background_launch_index",
+                implements=("test_tiering.shared_runtime_resource_serialization",),
+                external_inputs=("pending_tier_commands", "running_tier_commands"),
+                external_outputs=("next_launch_index_or_wait",),
+                state_reads=(
+                    "background_stage",
+                    "background_exclusive_resource",
+                ),
+                error_paths=("same_exclusive_resource_selected_while_owner_running",),
+                behavior_plane="development_process",
+                behavior_commitment_id="commit.testmesh_pass_requires_current_proof",
             ),
         ),
         test_evidence=(
@@ -4284,6 +4997,24 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 command="python -m unittest tests.test_flowpilot_test_tiers.FlowPilotTestTierTests.test_tiering_flowguard_model_rejects_known_bad_hazards",
                 test_kind=NEGATIVE,
                 covers=("test_tiering.background_artifact_contract",),
+            ),
+            _evidence(
+                "tiering.happy.shared_runtime_resource_serialization",
+                test_name="test_background_supervisor_serializes_shared_runtime_resources",
+                path="tests/test_flowpilot_test_tiers.py",
+                command="python -m unittest tests.test_flowpilot_test_tiers.FlowPilotTestTierTests.test_background_supervisor_serializes_shared_runtime_resources",
+                test_kind=HAPPY,
+                covers=("test_tiering.shared_runtime_resource_serialization",),
+                code_contracts=("runtime_path.test_tiering_slow_contracts.test_tiering_shared_runtime_resource_serialization",),
+            ),
+            _evidence(
+                "tiering.negative.shared_runtime_resource_race",
+                test_name="test_tiering_flowguard_model_rejects_known_bad_hazards",
+                path="tests/test_flowpilot_test_tiers.py",
+                command="python -m unittest tests.test_flowpilot_test_tiers.FlowPilotTestTierTests.test_tiering_flowguard_model_rejects_known_bad_hazards",
+                test_kind=NEGATIVE,
+                covers=("test_tiering.shared_runtime_resource_serialization",),
+                code_contracts=("runtime_path.test_tiering_slow_contracts.test_tiering_shared_runtime_resource_serialization",),
             ),
             _evidence(
                 "slow_contract.happy.valid_contracts",
@@ -5326,6 +6057,10 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
     packet_card_ack = _with_runtime_path(packet_card_ack, "packet/card/ack")
     packet_result_family = _with_runtime_path(packet_result_family, "packet result family")
     route_mutation = _with_runtime_path(route_mutation, "route mutation")
+    unified_repair_integrity = _with_runtime_path(
+        unified_repair_integrity,
+        "unified historical and terminal repair integrity",
+    )
     currentness_field_lifecycle = _with_runtime_path(currentness_field_lifecycle, "field lifecycle currentness")
     current_node_trunk = _with_runtime_path(current_node_trunk, "current-node trunk invariant")
     terminal_closure_resume = _with_runtime_path(terminal_closure_resume, "terminal/closure/resume")
@@ -5386,6 +6121,22 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
             route_mutation,
             model_checks=("python simulations/run_flowpilot_route_mutation_activation_checks.py",),
             coverage_boundary="Route-mutation alignment covers activation preconditions, sibling replacement, stale evidence, and route-sign projection for ordinary tests.",
+        ),
+        _plan_entry(
+            "unified historical and terminal repair integrity",
+            unified_repair_integrity,
+            model_checks=(
+                "python simulations/run_flowpilot_unified_repair_integrity_checks.py --json-out simulations/flowpilot_unified_repair_integrity_results.json",
+            ),
+            coverage_boundary=(
+                "This declaration aligns PM-proactive historical repair and terminal backward-replay repair to one "
+                "same-slot replacement engine, one Worker -> FlowGuard -> Reviewer evidence chain, current repair "
+                "generations, the staged PM-decision gate before effect commit/Worker dispatch, route-member "
+                "conservation, repair-child closure projection, same-slot affected replay, repeated lineage, "
+                "explicit model-action/runtime-decision refinement, and the three-round "
+                "terminal cap. Each obligation is bound to a real current ordinary runtime regression; the "
+                "model runner remains separate and is never substituted for ordinary TestEvidence."
+            ),
         ),
         _plan_entry(
             "field lifecycle currentness",

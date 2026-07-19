@@ -29,6 +29,110 @@ def source_obligations() -> tuple[ModelObligation, ...]:
 
     return (
         _source_obligation(
+            "current_contract.structured_authority_references",
+            obligation_type="invariant",
+            description=(
+                "Current node context accepts only typed, current-run authority references with exact "
+                "path fingerprints and required route, packet, result, node, and generation identity."
+            ),
+            required_test_kinds=(HAPPY, NEGATIVE),
+            allow_shared_evidence=True,
+        ),
+        _source_obligation(
+            "current_contract.exact_requested_role_resume",
+            obligation_type="transition",
+            description=(
+                "Manual resume and role-memory recovery target every and only roles owning a current "
+                "unresolved obligation; idle, historical, fixed-roster, stale, and foreign roles stay audit-only."
+            ),
+            required_test_kinds=(HAPPY, NEGATIVE),
+            allow_shared_evidence=True,
+        ),
+        _source_obligation(
+            "current_contract.staged_effect_exact_identity",
+            obligation_type="invariant",
+            description=(
+                "A pending staged effect is reusable only for the exact source packet/result, target, "
+                "blocker, trigger gate, scope, repair generation, and source generation."
+            ),
+            required_test_kinds=(HAPPY, NEGATIVE),
+            allow_shared_evidence=True,
+        ),
+        _source_obligation(
+            "current_contract.terminal_exact_segment_replay",
+            obligation_type="invariant",
+            description=(
+                "Terminal backward replay accounts exact route segments, final artifacts, acceptance items, "
+                "blockers, and waivers without aggregate or newest-result substitution."
+            ),
+            required_test_kinds=(HAPPY, NEGATIVE),
+            allow_shared_evidence=True,
+        ),
+        _source_obligation(
+            "current_contract.reviewer_workstream_semantics",
+            obligation_type="contract",
+            description=(
+                "The existing workstream plan remains a planning and Reviewer comparison surface; Runtime "
+                "projects mechanical shape but does not score narrative completeness or replace substantive review."
+            ),
+            required_test_kinds=(HAPPY, NEGATIVE),
+            allow_shared_evidence=True,
+        ),
+        _source_obligation(
+            "current_contract.daemon_descendant_zero_cleanup",
+            obligation_type="hazard",
+            description=(
+                "The Router daemon owner binds exact process identity, continuously accumulates exact "
+                "descendants throughout the stop window, and produces descendant-zero cleanup proof "
+                "before releasing its lock or admitting a terminal stop."
+            ),
+            required_test_kinds=(EDGE,),
+            allow_shared_evidence=True,
+        ),
+        _source_obligation(
+            "current_contract.process_tree_descendant_lineage",
+            obligation_type="hazard",
+            description=(
+                "A process can enter an exact owner's descendant set only when its orderable start "
+                "token is not earlier than that owner; stale Windows parent-PID links cannot authorize "
+                "termination of a pre-existing process."
+            ),
+            required_test_kinds=(NEGATIVE,),
+        ),
+        _source_obligation(
+            "current_contract.background_child_descendant_zero_cleanup",
+            obligation_type="hazard",
+            description=(
+                "Each heavyweight background validation owner binds exact process identity, allows one "
+                "bounded natural-exit settlement window, and produces descendant-zero cleanup proof "
+                "before its terminal receipt can be reused; any descendant surviving that window fails closed."
+            ),
+            required_test_kinds=(NEGATIVE, EDGE),
+            allow_shared_evidence=True,
+        ),
+        _source_obligation(
+            "current_contract.background_toolchain_identity",
+            obligation_type="evidence_freshness",
+            description=(
+                "A heavyweight background owner binds an inner Python command to the current "
+                "execution-owner interpreter and, on Windows virtual environments, launches the "
+                "bound base interpreter as the direct process owner while preserving the virtual-"
+                "environment identity, so an external FlowGuard upgrade or short-lived launcher "
+                "shim cannot change or prematurely end one frozen release plan."
+            ),
+            required_test_kinds=(EDGE,),
+        ),
+        _source_obligation(
+            "current_contract.same_source_fingerprint",
+            obligation_type="evidence_freshness",
+            description=(
+                "Final tier owners, proof artifacts, compiled manifests, and consumers bind one frozen "
+                "covered-source fingerprint and reject changed or mixed snapshots."
+            ),
+            required_test_kinds=(HAPPY, NEGATIVE),
+            allow_shared_evidence=True,
+        ),
+        _source_obligation(
             "startup.questions.pause_before_work",
             obligation_type="contract",
             description="Source-audited startup boundary for run-until-wait, action application, and next-action answer handling.",
@@ -45,8 +149,10 @@ def source_obligations() -> tuple[ModelObligation, ...]:
             obligation_type="invariant",
             description=(
                 "Foreground startup begins its bounded writer-settlement budget at first contention, "
-                "treats transient daemon-readiness sharing violations as not-ready, and still fails "
-                "closed for a persistent current writer."
+                "treats transient daemon-readiness sharing violations and Windows write-lock acquire "
+                "permission errors as current writer contention, allocates one current run before "
+                "advancement, reattaches the exact current in-flight daemon, preserves completed "
+                "folded-action evidence across retry, and still fails closed for a persistent current writer."
             ),
             required_test_kinds=(HAPPY, NEGATIVE, EDGE),
             allow_shared_evidence=True,
@@ -166,14 +272,24 @@ def source_obligations() -> tuple[ModelObligation, ...]:
         _source_obligation(
             "route_mutation.topology_and_recheck",
             obligation_type="contract",
-            description="Source-audited route mutation precondition boundary through Router events and packet issuance.",
-            required_test_kinds=(NEGATIVE,),
+            description="Source-audited route mutation precondition boundary through Router events, exact pre-write route-memory authority, and packet issuance.",
+            required_test_kinds=(HAPPY, NEGATIVE),
         ),
         _source_obligation(
             "route_mutation.sibling_replacement_stales_old_evidence",
             obligation_type="hazard",
             description="Source-audited sibling replacement boundary through Router events, packet issuance, and route-sign output.",
             required_test_kinds=(EDGE, NEGATIVE),
+        ),
+        _source_obligation(
+            "unified_repair.pm_historical_direct_entry_no_blocker",
+            obligation_type="transition",
+            description=(
+                "Source-audited PM historical-defect entry accepts a structured defect observation, target node, "
+                "and impact frontier without requiring a manufactured semantic blocker."
+            ),
+            required_test_kinds=(HAPPY, NEGATIVE),
+            allow_shared_evidence=True,
         ),
         _source_obligation(
             "route_authority.rejection_feedback_projection",

@@ -103,10 +103,29 @@ def _role_memory_reconciliation_status(router: ModuleType, project_root: Path, r
     memory_root = run_root / 'role_binding_memory'
     files = sorted(memory_root.glob('*.json')) if memory_root.exists() else []
     expected_run_id = str(run_state.get('run_id') or run_root.name)
+    required_roles = router._current_resume_role_keys(project_root, run_root, run_state)
+    role_binding = read_json_if_exists(run_root / 'role_binding_ledger.json')
+    role_slots = role_binding.get('role_slots') if isinstance(role_binding.get('role_slots'), list) else []
+    slots_by_role: dict[str, dict[str, Any]] = {}
     issues: list[str] = []
     stale_paths: list[str] = []
     role_keys_seen: set[str] = set()
     historical_authority_count = 0
+    if required_roles or files:
+        if role_binding.get('schema_version') != 'flowpilot.role_binding_ledger.v1':
+            issues.append('role_binding_ledger schema_version mismatch')
+        elif str(role_binding.get('run_id') or '') != expected_run_id:
+            issues.append('role_binding_ledger run_id does not match current run')
+        else:
+            for slot in role_slots:
+                if not isinstance(slot, dict):
+                    issues.append('role_binding_ledger contains a non-object role slot')
+                    continue
+                role_key = str(slot.get('role_key') or '')
+                if role_key not in RUNTIME_ROLE_KEYS or role_key in slots_by_role:
+                    issues.append('role_binding_ledger contains an unsupported or duplicate role slot')
+                    continue
+                slots_by_role[role_key] = slot
     for path in files:
         memory = read_json(path)
         rel_path = project_relative(project_root, path)
@@ -117,6 +136,13 @@ def _role_memory_reconciliation_status(router: ModuleType, project_root: Path, r
             issues.append(f'{rel_path}: unknown role_key')
         else:
             role_keys_seen.add(role_key)
+            slot = slots_by_role.get(role_key)
+            if slot is None:
+                issues.append(f'{rel_path}: no current role binding slot')
+            elif memory.get('role_binding_generation') != slot.get('role_binding_generation'):
+                issues.append(f'{rel_path}: role_binding_generation does not match current slot')
+            elif str(memory.get('agent_id') or '') != str(slot.get('agent_id') or ''):
+                issues.append(f'{rel_path}: agent_id does not match current slot')
         if str(memory.get('run_id') or '') != expected_run_id:
             stale_paths.append(rel_path)
             issues.append(f'{rel_path}: run_id does not match current run')
@@ -131,8 +157,10 @@ def _role_memory_reconciliation_status(router: ModuleType, project_root: Path, r
         if memory.get('controller_decision_authority') is True or memory.get('role_memory_used_for_completion_authority') is True:
             historical_authority_count += 1
             issues.append(f'{rel_path}: role memory claims completion authority')
-    missing_roles = [role for role in RUNTIME_ROLE_KEYS if files and role not in role_keys_seen]
-    return {'present': bool(files), 'path': project_relative(project_root, memory_root) if memory_root.exists() else None, 'required_for_current_run': bool(files), 'absence_is_pass_claim': False, 'file_count': len(files), 'role_count': len(role_keys_seen), 'missing_role_keys': missing_roles, 'stale_role_memory_paths': stale_paths, 'historical_agent_authority_count': historical_authority_count, 'issue_count': len(issues), 'issues': issues, 'clean': not issues}
+    missing_roles = [role for role in required_roles if role not in role_keys_seen]
+    for role in missing_roles:
+        issues.append(f'missing current role memory for {role}')
+    return {'present': bool(files), 'path': project_relative(project_root, memory_root) if memory_root.exists() else None, 'required_for_current_run': bool(required_roles), 'absence_is_pass_claim': False, 'file_count': len(files), 'role_count': len(role_keys_seen), 'required_role_keys': required_roles, 'missing_role_keys': missing_roles, 'stale_role_memory_paths': stale_paths, 'historical_agent_authority_count': historical_authority_count, 'issue_count': len(issues), 'issues': issues, 'clean': not issues}
 
 def _continuation_quarantine_reconciliation_status(router: ModuleType, project_root: Path, run_root: Path) -> dict[str, Any]:
     _bind_router(router)

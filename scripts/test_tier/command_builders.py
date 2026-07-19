@@ -14,6 +14,7 @@ class TierCommand:
     release_only: bool = False
     background_recommended: bool = False
     background_stage: int = 0
+    background_exclusive_resource: str = ""
     evidence_dependency: str = "upstream"
 
 
@@ -25,11 +26,19 @@ def _pytest(name: str, *paths: str, description: str) -> TierCommand:
     return TierCommand(name=name, command=_py("-m", "pytest", *paths, "-q"), description=description)
 
 
-def _pytest_k(name: str, path: str, pattern: str, *, description: str) -> TierCommand:
+def _pytest_k(
+    name: str,
+    path: str,
+    pattern: str,
+    *,
+    description: str,
+    background_exclusive_resource: str = "",
+) -> TierCommand:
     return TierCommand(
         name=name,
         command=_py("-m", "pytest", path, "-k", pattern, "-q"),
         description=description,
+        background_exclusive_resource=background_exclusive_resource,
     )
 
 

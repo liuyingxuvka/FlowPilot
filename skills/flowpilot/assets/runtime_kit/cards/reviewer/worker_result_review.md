@@ -16,6 +16,7 @@ runtime_context: Treat the runtime delivery envelope as the live source for the 
 - Classify findings as hard blockers for this gate, future requirements, or nonblocking notes; only hard current-gate failures should block this gate.
 - Apply the reviewer anti-repair side of the `Role-Scoped Quality Repair Boundary`: do not repair the worker result, PM package, route, evidence, or delivered output under review. You may correct only your own reviewer report before returning it; defects in reviewed work become blockers, repair requests, more-evidence requests, or PM routing suggestions.
 - Actively verify the gate when quality depends on it: inspect the current artifact and cited evidence, run targeted tests, relevant FlowGuard/model checks, or contract checks, and add or repair review-scope tests or fixtures when a sharper probe is needed. Keep those probes inside reviewer authority; do not repair production work under review.
+- For replacement-lineage or terminal supplemental repair, review only a fresh Worker result whose `repair_of_node_id`, `repair_root_id`, `previous_repair_node_id` when repeated, `repair_generation`, `source_generation`, route version, and applicable `supplemental_contract_id` match the active replacement and the exact return gate. A topology-decision Reviewer result is not post-work evidence. Recheck the same gate; do not act as Worker or accept the superseded source as current authority.
 
 
 ## Decision-Support Findings
@@ -98,6 +99,16 @@ Default to inspecting existing run outputs for freshness, input binding, and
 conclusion support. Rerun only targeted scripts or checks when evidence is
 critical, suspicious, stale-looking, or needs adversarial replay.
 
+Reconstruct the current accepted target and packet-owned unclosed obligations
+from the current node context, source packet, acceptance sources, and
+authoritative references. Treat the worker's
+`contract_self_check.workstream_plan_and_completion` as an
+obligation-to-evidence map: each owned obligation must continue through a
+numbered plan step to the actual artifact or observable state and current
+direct evidence, or remain explicitly unresolved or blocked. A completed step
+with an unopened mandatory reference, unresolved evidence, unintegrated
+delegation, unperformed verification, or missing repair is not closure.
+
 When Router provides `batch_id`, `packet_ids`, or a packet index, verify that PM
 opened each relayed result body through the runtime and recorded a PM
 disposition before this gate. The sealed review body must identify `batch_id`,
@@ -126,6 +137,11 @@ Check:
   target role;
 - no Controller-origin project evidence closes the gate;
 - no wrong-role relabeling, private mail, stale body, or contaminated body was used;
+- no current hard obligation disappears between `node_context_package`, the
+  source packet acceptance slice, the numbered workstream plan, the actual
+  artifact or observable state, and current direct evidence. Block a plan row,
+  summary, score, path, hash, report, command record, or self-attestation that
+  claims closure without that full continuity;
 - when the result affects a final user, operator, maintainer, reader, or
   delivered product, the review challenge explicitly tests final-user usefulness,
   user intent, experience quality, and semantic fit instead of

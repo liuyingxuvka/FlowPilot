@@ -268,7 +268,7 @@
     "child_evidence_tier_counts": {
       "medium": 1,
       "small": 35,
-      "unknown": 2
+      "unknown": 3
     },
     "evidence_contract_version": "flowpilot.parent_evidence_layers.v1",
     "heavy_parent_full_regression_obligations": [],
@@ -282,7 +282,7 @@
         "layered_full_regression": {
           "current": true,
           "proof": {
-            "created_at": "2026-07-14T02:56:13.221809+00:00",
+            "created_at": "2026-07-19T05:59:47.456520+00:00",
             "edge_count": 20,
             "kind": "layered_full_parent",
             "proof_file": "simulations/meta_layered_full_results.proof.json",
@@ -296,7 +296,7 @@
         "model_id": "meta",
         "ok": true,
         "proof": {
-          "created_at": "2026-07-14T02:56:13.221809+00:00",
+          "created_at": "2026-07-19T05:59:47.456520+00:00",
           "edge_count": 20,
           "kind": "layered_full_parent",
           "proof_file": "simulations/meta_layered_full_results.proof.json",
@@ -317,7 +317,7 @@
         "state_count": 10,
         "thin_parent": {
           "proof": {
-            "created_at": "2026-07-14T02:56:19.372420+00:00",
+            "created_at": "2026-07-19T05:59:55.512368+00:00",
             "proof_file": "simulations/meta_thin_parent_results.proof.json",
             "reason": "valid proof",
             "result_file": "simulations/meta_thin_parent_results.json",
@@ -343,7 +343,7 @@
         "layered_full_regression": {
           "current": true,
           "proof": {
-            "created_at": "2026-07-14T02:56:36.072283+00:00",
+            "created_at": "2026-07-19T05:59:54.543020+00:00",
             "edge_count": 16,
             "kind": "layered_full_parent",
             "proof_file": "simulations/capability_layered_full_results.proof.json",
@@ -357,7 +357,7 @@
         "model_id": "capability",
         "ok": true,
         "proof": {
-          "created_at": "2026-07-14T02:56:36.072283+00:00",
+          "created_at": "2026-07-19T05:59:54.543020+00:00",
           "edge_count": 16,
           "kind": "layered_full_parent",
           "proof_file": "simulations/capability_layered_full_results.proof.json",
@@ -378,7 +378,7 @@
         "state_count": 8,
         "thin_parent": {
           "proof": {
-            "created_at": "2026-07-14T05:42:12.200212+00:00",
+            "created_at": "2026-07-19T06:00:01.845715+00:00",
             "proof_file": "simulations/capability_thin_parent_results.proof.json",
             "reason": "valid proof",
             "result_file": "simulations/capability_thin_parent_results.json",
@@ -599,7 +599,8 @@
             "defect_governance",
             "flowpilot_repair_transaction",
             "flowpilot_terminal_state_monotonicity",
-            "flowpilot_terminal_summary"
+            "flowpilot_terminal_summary",
+            "flowpilot_unified_repair_integrity"
           ],
           "invariant_families": [
             "capability_backward_replay",
@@ -607,7 +608,8 @@
             "final_summary_boundary",
             "repair_transaction_evidence",
             "terminal_capability_ledger",
-            "terminal_state_monotonicity"
+            "terminal_state_monotonicity",
+            "unified_repair_integrity"
           ],
           "owners": [
             "shared_kernel",
@@ -903,12 +905,14 @@
               "flowpilot_terminal_state_monotonicity",
               "flowpilot_terminal_summary",
               "defect_governance",
-              "flowpilot_repair_transaction"
+              "flowpilot_repair_transaction",
+              "flowpilot_unified_repair_integrity"
             ],
             "invariant_families": [
               "terminal_state_monotonicity",
               "final_summary_boundary",
-              "repair_transaction_evidence"
+              "repair_transaction_evidence",
+              "unified_repair_integrity"
             ],
             "owner": "shared_kernel",
             "owner_type": "shared_kernel",
@@ -1193,7 +1197,8 @@
           "defect_governance",
           "flowpilot_repair_transaction",
           "flowpilot_terminal_state_monotonicity",
-          "flowpilot_terminal_summary"
+          "flowpilot_terminal_summary",
+          "flowpilot_unified_repair_integrity"
         ],
         "invariant_families": [
           "capability_backward_replay",
@@ -1201,7 +1206,8 @@
           "final_summary_boundary",
           "repair_transaction_evidence",
           "terminal_capability_ledger",
-          "terminal_state_monotonicity"
+          "terminal_state_monotonicity",
+          "unified_repair_integrity"
         ],
         "owners": [
           "shared_kernel",
@@ -1241,7 +1247,7 @@
         ]
       }
     },
-    "registered_child_count": 38,
+    "registered_child_count": 39,
     "registered_children": [
       {
         "edge_count": null,
@@ -1284,13 +1290,13 @@
         "tier": "small"
       },
       {
-        "edge_count": 50,
+        "edge_count": 72,
         "model_id": "flowpilot_control_transaction_registry",
         "ok": true,
         "registered_in_partition": true,
         "result_file": "simulations/flowpilot_control_transaction_registry_results.json",
         "role": "child_evidence",
-        "state_count": 51,
+        "state_count": 73,
         "tier": "small"
       },
       {
@@ -1514,13 +1520,13 @@
         "tier": "small"
       },
       {
-        "edge_count": 42,
+        "edge_count": 48,
         "model_id": "flowpilot_route_replanning_policy",
         "ok": true,
         "registered_in_partition": true,
         "result_file": "simulations/flowpilot_route_replanning_policy_results.json",
         "role": "child_evidence",
-        "state_count": 43,
+        "state_count": 49,
         "tier": "small"
       },
       {
@@ -1582,6 +1588,16 @@
         "role": "child_evidence",
         "state_count": 21,
         "tier": "small"
+      },
+      {
+        "edge_count": null,
+        "model_id": "flowpilot_unified_repair_integrity",
+        "ok": true,
+        "registered_in_partition": true,
+        "result_file": "simulations/flowpilot_unified_repair_integrity_results.json",
+        "role": "child_evidence",
+        "state_count": null,
+        "tier": "unknown"
       },
       {
         "edge_count": 10,

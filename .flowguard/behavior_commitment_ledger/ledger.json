@@ -136,19 +136,21 @@
         "actor": "FlowPilot runtime/router",
         "actor_kind": "ai_agent",
         "behavior_plane": "product_runtime",
-        "business_intent_id": "intent:flowpilot.apply-current-control-blocker-repair",
+        "business_intent_id": "intent:flowpilot.repair-late-defect-through-current-shared-engine",
         "child_model_ids": [],
         "commitment_id": "commit.repair_reissue_no_fallback",
         "commitment_kind": "workflow",
         "evidence": {
           "code_contract_ids": [
-            "repair_transactions.current_repair_requires_concrete_producer"
+            "unified_repair.shared_current_transaction_engine",
+            "unified_repair.same_slot_replacement_and_replay"
           ],
           "coverage_case_ids": [
             "case:flowpilot.synthetic_agent_global_d_card_matrix",
             "case:flowpilot.current_contract_cartesian_matrix",
             "case:flowpilot.contract_exhaustion_mesh",
-            "case:flowpilot.ai_response_execution_closure"
+            "case:flowpilot.ai_response_execution_closure",
+            "case:flowpilot.unified_repair_native_runtime_conformance"
           ],
           "coverage_receipt_ids": [
             "contract_coverage:flowpilot_053_ppa_maintenance",
@@ -162,34 +164,52 @@
           "evidence_state": "current_pass",
           "metadata": {},
           "model_obligation_ids": [
-            "flowpilot_053.repair_reissue_no_fallback"
+            "unified_repair.shared_engine",
+            "unified_repair.repair_children_and_replay",
+            "unified_repair.terminal_shared_engine"
           ],
           "proof_artifact_ids": [
-            "simulations/flowpilot_053_ppa_maintenance_results.json"
+            "simulations/flowpilot_053_ppa_maintenance_results.json",
+            "simulations/flowpilot_unified_repair_native_runtime_conformance_results.json"
           ],
           "risk_gate_ids": [
             "risk_gate:behavior_commitment_coverage:flowpilot_053_behavior_commitments",
             "risk_gate:behavior_commitment_cartesian_coverage:flowpilot_053_behavior_commitments"
           ],
           "test_evidence_ids": [
-            "test:tests/router_runtime/control_blockers.py"
+            "test:tests/test_flowpilot_unified_repair_runtime.py",
+            "test:simulations/run_flowpilot_unified_repair_native_runtime_conformance.py"
           ],
           "test_mesh_state": "shard_current"
         },
         "excluded_behavior_ids": [],
-        "expected_result": "runtime accepts only a supported executable repair plan with current producer/action evidence and rejects retired packet_reissue or replacement fields",
-        "expected_terminal": "runtime accepts only a supported executable repair plan with current producer/action evidence and rejects retired packet_reissue or replacement fields",
+        "expected_result": "PM-proactive historical, blocker-backed, parent, subtree, and terminal late defects enter one current repair transaction engine that creates an authoritative same-slot replacement, runs fresh Worker/FlowGuard/Reviewer evidence, replays only the derived impact cone, and keeps superseded history read-only",
+        "expected_terminal": "one current replacement authority closes through the shared replay path or ends in an explicit PM waiver or stop; no origin-specific path can independently claim repair success",
         "external_differences": [],
-        "failure_boundary": "no old package, replacement-packet branch, fallback cache, alias, or prose result may become success",
+        "failure_boundary": "a fabricated blocker for PM history, Reviewer-only terminal repair, origin-specific completion path, stale generation, old-run reactivation, or unsupported replacement packet remains visibly blocked",
         "in_scope": true,
-        "label": "Repair stays on one current executable plan and package/result/blocker path.",
+        "label": "Every current late defect uses one shared replacement-and-replay repair path.",
         "lookup_binding": {
-          "error_signatures": [],
+          "error_signatures": [
+            "historical defect forced through blocker",
+            "terminal repair closed without Worker result",
+            "repair generation mismatch",
+            "supplemental contract projection missing"
+          ],
           "metadata": {},
           "path_patterns": [],
-          "task_terms": [],
+          "task_terms": [
+            "historical defect",
+            "late defect",
+            "repair node",
+            "terminal repair",
+            "parent repair",
+            "subtree repair"
+          ],
           "tool_ids": [],
-          "workflow_families": []
+          "workflow_families": [
+            "unified_late_defect_repair"
+          ]
         },
         "metadata": {},
         "miss_origin_state": "no_miss",
@@ -197,14 +217,18 @@
         "owner": "FlowPilot runtime/router",
         "path_authority": {
           "behavior_commitment_id": "commit.repair_reissue_no_fallback",
-          "business_intent": "Repair stays on one current executable plan and package/result/blocker path.",
-          "business_intent_id": "intent:flowpilot.apply-current-control-blocker-repair",
+          "business_intent": "Every current late defect uses one shared replacement-and-replay repair path.",
+          "business_intent_id": "intent:flowpilot.repair-late-defect-through-current-shared-engine",
           "evidence_current": true,
           "evidence_refs": [
-            "simulations/flowpilot_053_ppa_maintenance_results.json"
+            "simulations/flowpilot_053_ppa_maintenance_results.json",
+            "simulations/flowpilot_unified_repair_native_runtime_conformance_results.json"
           ],
           "fallback_candidate_ids": [
-            "fallback.retired-replacement-packet-repair"
+            "fallback.retired-replacement-packet-repair",
+            "fallback.synthetic-blocker-for-historical-defect",
+            "fallback.terminal-reviewer-only-repair",
+            "fallback.reactivate-completed-run"
           ],
           "metadata": {},
           "path_sensitive": true,
@@ -224,18 +248,18 @@
             "risk_gate:primary_path_authority:flowpilot_053_ppa_maintenance",
             "risk_gate:primary_path_authority_cartesian_coverage:flowpilot_053_ppa_maintenance"
           ],
-          "primary_path_id": "path.runtime.apply-current-control-blocker-repair",
+          "primary_path_id": "path.runtime.unified-late-defect-repair",
           "proof_artifact_ids": [
-            "proof:flowpilot:path_runtime_apply_current_control_blocker_repair"
+            "proof:flowpilot:path_runtime_unified_late_defect_repair"
           ],
           "runtime_observation_ids": [
-            "runtime:path_runtime_apply_current_control_blocker_repair"
+            "runtime:path_runtime_unified_late_defect_repair"
           ],
           "scoped_out_reason": ""
         },
         "preconditions": [],
         "primary_owner_model_id": "flowpilot_053_ppa_maintenance",
-        "rationale": "Repeated and stale submissions are audit records, not alternate success paths.",
+        "rationale": "Trigger origin changes intake evidence and scope, not the success authority; replacement, causal evidence, replay, and closure remain one runtime-owned path.",
         "relations": [],
         "replacement_state": "active",
         "scoped_out_reason": "",
@@ -243,19 +267,27 @@
         "similarity_obligation_ids": [],
         "similarity_relation_ids": [],
         "source_refs": [
-          "skills/flowpilot/assets/flowpilot_router_events_repair_repair_decisions.py"
+          "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+          "skills/flowpilot/assets/flowpilot_core_runtime/run_shell.py",
+          "simulations/flowpilot_unified_repair_integrity_model.py"
         ],
         "source_surface_ids": [
-          "surface.runtime.repair_reissue"
+          "surface.runtime.unified_late_defect_repair_engine",
+          "surface.runtime.pm_historical_defect_intake",
+          "surface.runtime.blocker_repair_intake",
+          "surface.runtime.parent_subtree_repair_intake",
+          "surface.runtime.terminal_repair_intake"
         ],
         "state_writes": [],
         "supporting_model_ids": [
+          "flowpilot_unified_repair_integrity",
           "flowpilot_repair_transaction",
-          "flowpilot_route_authority_singularity"
+          "flowpilot_route_mutation_activation",
+          "flowpilot_terminal_supplemental_repair"
         ],
         "surface_delegation_only": false,
-        "trigger": "a current control blocker requires PM repair or a current packet result requires correction",
-        "validation_boundary": "current executable plan and packet/result/blocker repair state",
+        "trigger": "PM observes a historical defect, a current blocker requires repair, a parent or subtree must be replaced, or terminal backward replay finds a substantive gap",
+        "validation_boundary": "current repair trigger, PM decision, replacement lineage, causal Worker/FlowGuard/Reviewer evidence, impact-cone replay, final ledgers, and terminal closure",
         "variant_of_business_intent_id": ""
       },
       {
@@ -499,7 +531,8 @@
         "commitment_kind": "process",
         "evidence": {
           "code_contract_ids": [
-            "tiered_flowpilot_test_validation.release_claims"
+            "tiered_flowpilot_test_validation.release_claims",
+            "router_cli.start_single_allocation"
           ],
           "coverage_case_ids": [
             "case:flowpilot.synthetic_agent_global_d_card_matrix",
@@ -519,7 +552,8 @@
           "evidence_state": "current_pass",
           "metadata": {},
           "model_obligation_ids": [
-            "flowpilot_053.release_claims_current_evidence"
+            "flowpilot_053.release_claims_current_evidence",
+            "startup.runtime_writer_settlement"
           ],
           "proof_artifact_ids": [
             "simulations/flowpilot_053_ppa_maintenance_results.json"
@@ -529,7 +563,10 @@
             "risk_gate:behavior_commitment_cartesian_coverage:flowpilot_053_behavior_commitments"
           ],
           "test_evidence_ids": [
-            "test:tests/test_flowpilot_test_tiers.py"
+            "test:tests/test_flowpilot_test_tiers.py",
+            "test:tests/test_flowpilot_shadow_launcher_chaos_replay.py",
+            "test:tests/router_runtime/foreground_controller.py",
+            "test:tests/router_runtime/startup_daemon.py"
           ],
           "test_mesh_state": "shard_current"
         },
@@ -537,7 +574,7 @@
         "expected_result": "all, adversarial, and release proof compiles before strict parents, with repository final confidence downstream",
         "expected_terminal": "all, adversarial, and release proof compiles before strict parents, with repository final confidence downstream",
         "external_differences": [],
-        "failure_boundary": "stale proof, deferred release suites, or a final-confidence/TestMesh/MTA cycle blocks broad claims",
+        "failure_boundary": "stale proof, deferred release suites, duplicate run or daemon startup under writer contention, lost completed-action receipts, or a final-confidence/TestMesh/MTA cycle blocks broad claims",
         "in_scope": true,
         "label": "Release and done claims require current model/test/install evidence.",
         "lookup_binding": {
@@ -594,7 +631,9 @@
         "similarity_relation_ids": [],
         "source_refs": [
           "scripts/compile_flowpilot_acceptance_testmesh_evidence.py",
-          "simulations/run_flowpilot_final_confidence_gate_checks.py"
+          "simulations/run_flowpilot_final_confidence_gate_checks.py",
+          "skills/flowpilot/assets/flowpilot_router_cli.py",
+          "skills/flowpilot/assets/flowpilot_router_daemon_runtime.py"
         ],
         "source_surface_ids": [
           "surface.release_evidence"
@@ -654,10 +693,10 @@
           "test_mesh_state": "shard_current"
         },
         "excluded_behavior_ids": [],
-        "expected_result": "submission_checklist.v2 is a fingerprinted projection of current_handoff_contract.v2",
-        "expected_terminal": "submission_checklist.v2 is a fingerprinted projection of current_handoff_contract.v2",
+        "expected_result": "submission_checklist.v2 and node context are fingerprinted projections of the exact current_handoff_contract.v2 and typed current authority references",
+        "expected_terminal": "every consumed authority reference has current run, route, packet, result, node, generation, path, and content fingerprint identity",
         "external_differences": [],
-        "failure_boundary": "packet bodies, reissue diagnostics, old schemas, aliases, and remembered registry shapes cannot authorize a result",
+        "failure_boundary": "packet bodies, prose references, stale hashes, duplicate kinds, reissue diagnostics, old schemas, aliases, and remembered registry shapes cannot authorize a result",
         "in_scope": true,
         "label": "Open-packet checklist has one mechanical contract authority.",
         "lookup_binding": {
@@ -732,7 +771,142 @@
         ],
         "surface_delegation_only": false,
         "trigger": "ACKed current packet is opened for submission",
-        "validation_boundary": "mechanical handoff and checklist projection",
+        "validation_boundary": "mechanical handoff, typed current-authority reference, and checklist projection",
+        "variant_of_business_intent_id": ""
+      },
+      {
+        "actor": "FlowPilot runtime/router",
+        "actor_kind": "automation",
+        "behavior_plane": "agent_operation",
+        "business_intent_id": "intent:flowpilot.resume-exact-current-obligation-roles",
+        "child_model_ids": [],
+        "commitment_id": "commit.resume_exact_current_obligation_roles",
+        "commitment_kind": "workflow",
+        "evidence": {
+          "code_contract_ids": [
+            "runtime.exact_requested_role_resume"
+          ],
+          "coverage_case_ids": [
+            "case:flowpilot.synthetic_agent_global_d_card_matrix",
+            "case:flowpilot.current_contract_cartesian_matrix",
+            "case:flowpilot.contract_exhaustion_mesh",
+            "case:flowpilot.ai_response_execution_closure"
+          ],
+          "coverage_receipt_ids": [
+            "contract_coverage:flowpilot_053_ppa_maintenance",
+            "contract_coverage:flowpilot_053_bcl_maintenance"
+          ],
+          "coverage_shard_ids": [
+            "contract_shard:flowpilot_053_ppa_maintenance:no_fallback_cartesian",
+            "contract_shard:flowpilot_053_bcl_maintenance:behavior_commitment_cartesian"
+          ],
+          "current": true,
+          "evidence_state": "current_pass",
+          "metadata": {},
+          "model_obligation_ids": [
+            "current_contract.exact_requested_role_resume"
+          ],
+          "proof_artifact_ids": [
+            "simulations/flowpilot_053_ppa_maintenance_results.json"
+          ],
+          "risk_gate_ids": [
+            "risk_gate:behavior_commitment_coverage:flowpilot_053_behavior_commitments",
+            "risk_gate:behavior_commitment_cartesian_coverage:flowpilot_053_behavior_commitments"
+          ],
+          "test_evidence_ids": [
+            "test:tests/test_flowpilot_core_runtime.py::test_role_memory_seed_prioritizes_exact_current_packet_and_stales_on_generation_change",
+            "test:tests/test_flowpilot_router_runtime.py::test_mid_run_role_liveness_fault_uses_unified_recovery_before_normal_work"
+          ],
+          "test_mesh_state": "shard_current"
+        },
+        "excluded_behavior_ids": [],
+        "expected_result": "manual resume restores every and only the roles owning current unresolved obligations, using exact current-run memory and route-delta identity",
+        "expected_terminal": "the exact requested-role set is current, deduplicated, and either rehydrated with binding evidence or visibly blocked",
+        "external_differences": [],
+        "failure_boundary": "idle, historical, fixed-roster, duplicate, stale-generation, or foreign-run roles cannot become current resume targets",
+        "in_scope": true,
+        "label": "Resume restores only exact current-obligation roles.",
+        "lookup_binding": {
+          "error_signatures": [],
+          "metadata": {},
+          "path_patterns": [],
+          "task_terms": [],
+          "tool_ids": [],
+          "workflow_families": []
+        },
+        "metadata": {
+          "change_mode": "added",
+          "idle_role_memory_audit_only": true
+        },
+        "miss_origin_state": "no_miss",
+        "model_sync_state": "owner_model_current",
+        "owner": "FlowPilot runtime/router",
+        "path_authority": {
+          "behavior_commitment_id": "commit.resume_exact_current_obligation_roles",
+          "business_intent": "Resume restores only exact current-obligation roles.",
+          "business_intent_id": "intent:flowpilot.resume-exact-current-obligation-roles",
+          "evidence_current": true,
+          "evidence_refs": [
+            "simulations/flowpilot_053_ppa_maintenance_results.json"
+          ],
+          "fallback_candidate_ids": [
+            "fallback.resume-all-known-role-slots"
+          ],
+          "metadata": {},
+          "path_sensitive": true,
+          "ppa_confidence": "full",
+          "ppa_coverage_receipt_ids": [
+            "contract_coverage:flowpilot_053_ppa_maintenance",
+            "contract_coverage:flowpilot_053_bcl_maintenance"
+          ],
+          "ppa_coverage_shard_ids": [
+            "contract_shard:flowpilot_053_ppa_maintenance:no_fallback_cartesian",
+            "contract_shard:flowpilot_053_bcl_maintenance:behavior_commitment_cartesian"
+          ],
+          "ppa_decision": "primary_path_authority_green",
+          "ppa_ok": true,
+          "ppa_report_id": "flowpilot_055_primary_path_authority",
+          "ppa_risk_gate_ids": [
+            "risk_gate:primary_path_authority:flowpilot_053_ppa_maintenance",
+            "risk_gate:primary_path_authority_cartesian_coverage:flowpilot_053_ppa_maintenance"
+          ],
+          "primary_path_id": "path.agent-operation.resume-exact-current-obligation-roles",
+          "proof_artifact_ids": [
+            "proof:flowpilot:path_agent_operation_resume_exact_current_obligation_roles"
+          ],
+          "runtime_observation_ids": [
+            "runtime:path_agent_operation_resume_exact_current_obligation_roles"
+          ],
+          "scoped_out_reason": ""
+        },
+        "preconditions": [],
+        "primary_owner_model_id": "flowpilot_053_ppa_maintenance",
+        "rationale": "Role continuity is useful context, but only unresolved current obligations authorize resumed work.",
+        "relations": [],
+        "replacement_state": "active",
+        "scoped_out_reason": "",
+        "side_effects": [],
+        "similarity_obligation_ids": [],
+        "similarity_relation_ids": [],
+        "source_refs": [
+          "skills/flowpilot/assets/flowpilot_new_run_commands.py",
+          "skills/flowpilot/assets/flowpilot_router_startup_role_context.py",
+          "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py"
+        ],
+        "source_surface_ids": [
+          "surface.resume_exact_current_obligation_roles"
+        ],
+        "state_writes": [
+          "role_rehydration_request",
+          "role_memory"
+        ],
+        "supporting_model_ids": [
+          "flowpilot_core_runtime_development_process",
+          "flowpilot_model_test_alignment"
+        ],
+        "surface_delegation_only": false,
+        "trigger": "manual resume finds unresolved current role-owned obligations",
+        "validation_boundary": "exact current requested-role set, route generation, and role-memory source snapshot",
         "variant_of_business_intent_id": ""
       },
       {
@@ -854,7 +1028,10 @@
         "commitment_kind": "process",
         "evidence": {
           "code_contract_ids": [
-            "packet_result_family.acceptance_testmesh_proof_binding"
+            "packet_result_family.acceptance_testmesh_proof_binding",
+            "runtime_path.test_tiering_slow_contracts.test_tiering_shared_runtime_resource_serialization",
+            "process_liveness.descendant_identity_order",
+            "test_tier.run_background_child"
           ],
           "coverage_case_ids": [
             "case:flowpilot.synthetic_agent_global_d_card_matrix",
@@ -874,7 +1051,12 @@
           "evidence_state": "current_pass",
           "metadata": {},
           "model_obligation_ids": [
-            "packet_result_family.testmesh_requires_fingerprinted_proof"
+            "current_contract.background_child_descendant_zero_cleanup",
+            "current_contract.background_toolchain_identity",
+            "current_contract.daemon_descendant_zero_cleanup",
+            "current_contract.process_tree_descendant_lineage",
+            "packet_result_family.testmesh_requires_fingerprinted_proof",
+            "test_tiering.shared_runtime_resource_serialization"
           ],
           "proof_artifact_ids": [
             "simulations/flowpilot_053_ppa_maintenance_results.json"
@@ -884,15 +1066,23 @@
             "risk_gate:behavior_commitment_cartesian_coverage:flowpilot_053_behavior_commitments"
           ],
           "test_evidence_ids": [
-            "test:tests/test_flowpilot_acceptance_testmesh.py"
+            "test:source.descendant_zero.bounded_natural_settlement",
+            "test:source.descendant_zero.current_interpreter_binding",
+            "test:source.descendant_zero.daemon_late_child",
+            "test:source.descendant_zero.direct_interpreter_process_owner",
+            "test:source.descendant_zero.rejects_predating_process",
+            "test:source.descendant_zero.surviving_orphan",
+            "test:tests/test_flowpilot_acceptance_testmesh.py",
+            "test:tiering.happy.shared_runtime_resource_serialization",
+            "test:tiering.negative.shared_runtime_resource_race"
           ],
           "test_mesh_state": "shard_current"
         },
         "excluded_behavior_ids": [],
-        "expected_result": "the child supplies final command, result path, exit code, selected/executed counts, covered ids, and artifact fingerprints",
-        "expected_terminal": "the child supplies final command, result path, exit code, selected/executed counts, covered ids, and artifact fingerprints",
+        "expected_result": "the child binds inner Python execution to the current execution-owner interpreter, uses the bound base interpreter as the direct Windows process owner while preserving virtual-environment identity, continuously accumulates exact Router-daemon descendants through the stop window, and supplies final command, exact process identity, bounded natural-exit settlement followed by descendant-zero cleanup proof, result path, exit code, selected/executed counts, covered ids, and the one frozen source fingerprint; commands sharing one external runtime resource are serialized while unrelated owners remain parallel",
+        "expected_terminal": "every required tier and proof consumer is terminal, descendant-zero, resource-safe, and bound to the same covered-source fingerprint",
         "external_differences": [],
-        "failure_boundary": "not-run, stale, progress-only, failed, missing-exit, or proof-free rows remain blocking",
+        "failure_boundary": "not-run, stale, progress-only, failed, missing-exit, cleanup-unconfirmed, interpreter-drift, short-lived-interpreter-shim-owner, daemon-descendant-created-during-stop-untracked, descendant-survives-bounded-settlement, mixed-fingerprint, proof-free, or shared-runtime-resource-overlap rows remain blocking",
         "in_scope": true,
         "label": "TestMesh green requires current fingerprinted proof artifacts.",
         "lookup_binding": {
@@ -904,7 +1094,7 @@
           "workflow_families": []
         },
         "metadata": {},
-        "miss_origin_state": "no_miss",
+        "miss_origin_state": "observed_model_miss",
         "model_sync_state": "owner_model_current",
         "owner": "FlowGuard TestMesh",
         "path_authority": {
@@ -930,7 +1120,7 @@
         },
         "preconditions": [],
         "primary_owner_model_id": "flowpilot_053_ppa_maintenance",
-        "rationale": "A model-authored green label cannot substitute for an executed child proof.",
+        "rationale": "A model-authored green label cannot substitute for an executed child proof. Inner Python execution stays bound to the current execution owner, a short-lived Windows virtual-environment shim cannot impersonate the real process owner, exact descendants receive one bounded natural-exit settlement window, survivors still fail closed, and bounded concurrency cannot authorize two children to own the same external runtime resource at once.",
         "relations": [],
         "replacement_state": "active",
         "scoped_out_reason": "",
@@ -950,129 +1140,6 @@
         "surface_delegation_only": false,
         "trigger": "a child suite is consumed by routine, done, release, or publish confidence",
         "validation_boundary": "parent/child proof freshness and truth",
-        "variant_of_business_intent_id": ""
-      },
-      {
-        "actor": "project manager",
-        "actor_kind": "ai_agent",
-        "behavior_plane": "product_runtime",
-        "business_intent_id": "intent:flowpilot.project-terminal-acceptance-items-into-current-pm-repair",
-        "child_model_ids": [],
-        "commitment_id": "commit.dynamic_pm_repair_owns_active_acceptance_items",
-        "commitment_kind": "workflow",
-        "evidence": {
-          "code_contract_ids": [
-            "packet_result_family.runtime.dynamic_pm_repair_contract"
-          ],
-          "coverage_case_ids": [
-            "case:flowpilot.synthetic_agent_global_d_card_matrix",
-            "case:flowpilot.current_contract_cartesian_matrix",
-            "case:flowpilot.contract_exhaustion_mesh",
-            "case:flowpilot.ai_response_execution_closure"
-          ],
-          "coverage_receipt_ids": [
-            "contract_coverage:flowpilot_053_ppa_maintenance",
-            "contract_coverage:flowpilot_053_bcl_maintenance"
-          ],
-          "coverage_shard_ids": [
-            "contract_shard:flowpilot_053_ppa_maintenance:no_fallback_cartesian",
-            "contract_shard:flowpilot_053_bcl_maintenance:behavior_commitment_cartesian"
-          ],
-          "current": true,
-          "evidence_state": "current_pass",
-          "metadata": {},
-          "model_obligation_ids": [
-            "packet_result_family.dynamic_pm_repair_owner_projection"
-          ],
-          "proof_artifact_ids": [
-            "simulations/flowpilot_053_ppa_maintenance_results.json"
-          ],
-          "risk_gate_ids": [
-            "risk_gate:behavior_commitment_coverage:flowpilot_053_behavior_commitments",
-            "risk_gate:behavior_commitment_cartesian_coverage:flowpilot_053_behavior_commitments"
-          ],
-          "test_evidence_ids": [
-            "test:tests/test_flowpilot_new_entrypoint.py::test_fake_end_to_end_terminal_replay_blocker_repairs_to_completion"
-          ],
-          "test_mesh_state": "shard_current"
-        },
-        "excluded_behavior_ids": [],
-        "expected_result": "the current checklist projects all active acceptance items onto a route owner and supplemental repair item",
-        "expected_terminal": "the current checklist projects all active acceptance items onto a route owner and supplemental repair item",
-        "external_differences": [],
-        "failure_boundary": "static example ids or missing owner projection mechanically block and cannot enter an endless reissue loop",
-        "in_scope": true,
-        "label": "Terminal PM repair owns every current acceptance item.",
-        "lookup_binding": {
-          "error_signatures": [],
-          "metadata": {},
-          "path_patterns": [],
-          "task_terms": [],
-          "tool_ids": [],
-          "workflow_families": []
-        },
-        "metadata": {},
-        "miss_origin_state": "no_miss",
-        "model_sync_state": "owner_model_current",
-        "owner": "FlowPilot runtime/router",
-        "path_authority": {
-          "behavior_commitment_id": "commit.dynamic_pm_repair_owns_active_acceptance_items",
-          "business_intent": "Terminal PM repair owns every current acceptance item.",
-          "business_intent_id": "intent:flowpilot.project-terminal-acceptance-items-into-current-pm-repair",
-          "evidence_current": true,
-          "evidence_refs": [
-            "simulations/flowpilot_053_ppa_maintenance_results.json"
-          ],
-          "fallback_candidate_ids": [],
-          "metadata": {},
-          "path_sensitive": true,
-          "ppa_confidence": "full",
-          "ppa_coverage_receipt_ids": [
-            "contract_coverage:flowpilot_053_ppa_maintenance",
-            "contract_coverage:flowpilot_053_bcl_maintenance"
-          ],
-          "ppa_coverage_shard_ids": [
-            "contract_shard:flowpilot_053_ppa_maintenance:no_fallback_cartesian",
-            "contract_shard:flowpilot_053_bcl_maintenance:behavior_commitment_cartesian"
-          ],
-          "ppa_decision": "primary_path_authority_green",
-          "ppa_ok": true,
-          "ppa_report_id": "flowpilot_055_primary_path_authority",
-          "ppa_risk_gate_ids": [
-            "risk_gate:primary_path_authority:flowpilot_053_ppa_maintenance",
-            "risk_gate:primary_path_authority_cartesian_coverage:flowpilot_053_ppa_maintenance"
-          ],
-          "primary_path_id": "path.runtime.dynamic-pm-repair-owner-projection",
-          "proof_artifact_ids": [
-            "proof:flowpilot:path_runtime_dynamic_pm_repair_owner_projection"
-          ],
-          "runtime_observation_ids": [
-            "runtime:path_runtime_dynamic_pm_repair_owner_projection"
-          ],
-          "scoped_out_reason": ""
-        },
-        "preconditions": [],
-        "primary_owner_model_id": "flowpilot_053_ppa_maintenance",
-        "rationale": "This closes the observed acc-003 model miss without accepting a compatibility fallback.",
-        "relations": [],
-        "replacement_state": "active",
-        "scoped_out_reason": "",
-        "side_effects": [],
-        "similarity_obligation_ids": [],
-        "similarity_relation_ids": [],
-        "source_refs": [
-          "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py"
-        ],
-        "source_surface_ids": [
-          "surface.dynamic_pm_repair_contract"
-        ],
-        "state_writes": [],
-        "supporting_model_ids": [
-          "flowpilot_model_miss_review"
-        ],
-        "surface_delegation_only": false,
-        "trigger": "terminal backward replay creates a repair decision packet",
-        "validation_boundary": "terminal PM repair checklist projection",
         "variant_of_business_intent_id": ""
       },
       {
@@ -2036,17 +2103,17 @@
         "variant_of_business_intent_id": ""
       }
     ],
-    "current_revision": "flowguard-0.55-exact-mta-runtime-path-authority",
+    "current_revision": "flowguard-0.57-current-authority-exact-resume-evidence-stability",
     "expected_business_intent_ids": [
       "intent:flowpilot.submit-current-packet-result",
-      "intent:flowpilot.apply-current-control-blocker-repair",
+      "intent:flowpilot.repair-late-defect-through-current-shared-engine",
       "intent:flowpilot.relay-role-authored-pm-visible-summary",
       "intent:flowpilot.open-authorized-current-result-material",
       "intent:flowpilot.admit-broad-claim-only-with-current-evidence",
       "intent:flowpilot.open-current-submission-checklist",
+      "intent:flowpilot.resume-exact-current-obligation-roles",
       "intent:flowpilot.prove-fake-ai-coverage-by-execution",
       "intent:flowpilot.admit-testmesh-child-only-with-current-proof",
-      "intent:flowpilot.project-terminal-acceptance-items-into-current-pm-repair",
       "intent:flowpilot.complete-bounded-substantive-role-workstream",
       "intent:flowpilot.execute-runtime-foreground-action-only",
       "intent:flowpilot.inventory-local-capabilities-before-pm-selection",
@@ -2063,9 +2130,9 @@
       "commit.authorized_result_reads_are_required_material",
       "commit.release_claims_require_current_evidence",
       "commit.current_handoff_checklist_single_authority",
+      "commit.resume_exact_current_obligation_roles",
       "commit.fake_ai_coverage_is_execution_backed",
       "commit.testmesh_pass_requires_current_proof",
-      "commit.dynamic_pm_repair_owns_active_acceptance_items",
       "commit.substantive_roles_complete_bounded_workstreams",
       "commit.controller_uses_runtime_foreground_ledger_only",
       "commit.local_capability_inventory_precedes_pm_selection",
@@ -2112,7 +2179,7 @@
       },
       {
         "business_intent_ids": [
-          "intent:flowpilot.apply-current-control-blocker-repair"
+          "intent:flowpilot.repair-late-defect-through-current-shared-engine"
         ],
         "commitment_ids": [
           "commit.repair_reissue_no_fallback"
@@ -2120,18 +2187,122 @@
         "delegates_to_primary_path": false,
         "freshness_state": "current",
         "in_scope": true,
-        "label": "surface.runtime.repair_reissue",
-        "metadata": {},
-        "owner": "FlowPilot maintenance model",
-        "primary_path_id": "path.runtime.apply-current-control-blocker-repair",
-        "rationale": "Maps a current behavior surface to one behavior commitment.",
+        "label": "Unified current late-defect repair engine",
+        "metadata": {
+          "surface_role": "primary_runtime_authority"
+        },
+        "owner": "FlowPilot runtime/router",
+        "primary_path_id": "path.runtime.unified-late-defect-repair",
+        "rationale": "The runtime replacement transaction, lineage, evidence, replay, and closure path is the only successful repair authority.",
         "scoped_out_reason": "",
         "similarity_obligation_ids": [],
         "similarity_relation_ids": [],
-        "source_ref": "skills/flowpilot/assets/flowpilot_router_events_repair_repair_decisions.py",
-        "surface_id": "surface.runtime.repair_reissue",
+        "source_ref": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+        "surface_id": "surface.runtime.unified_late_defect_repair_engine",
         "surface_kind": "code",
-        "validation_boundary": "current FlowPilot runtime contract"
+        "validation_boundary": "shared current repair transaction, replacement lineage, causal evidence, replay, and closure"
+      },
+      {
+        "business_intent_ids": [
+          "intent:flowpilot.repair-late-defect-through-current-shared-engine"
+        ],
+        "commitment_ids": [
+          "commit.repair_reissue_no_fallback"
+        ],
+        "delegates_to_primary_path": true,
+        "freshness_state": "current",
+        "in_scope": true,
+        "label": "PM-proactive historical-defect intake adapter",
+        "metadata": {
+          "repair_trigger_origin": "pm_historical_defect",
+          "synthetic_blocker_forbidden": true
+        },
+        "owner": "FlowPilot runtime/router",
+        "primary_path_id": "path.runtime.unified-late-defect-repair",
+        "rationale": "PM history intake supplies observation and scope but delegates all repair success to the shared runtime path.",
+        "scoped_out_reason": "",
+        "similarity_obligation_ids": [],
+        "similarity_relation_ids": [],
+        "source_ref": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+        "surface_id": "surface.runtime.pm_historical_defect_intake",
+        "surface_kind": "code",
+        "validation_boundary": "structured defect observation and exact historical source-node identity"
+      },
+      {
+        "business_intent_ids": [
+          "intent:flowpilot.repair-late-defect-through-current-shared-engine"
+        ],
+        "commitment_ids": [
+          "commit.repair_reissue_no_fallback"
+        ],
+        "delegates_to_primary_path": true,
+        "freshness_state": "current",
+        "in_scope": true,
+        "label": "Reviewer/system blocker repair intake adapter",
+        "metadata": {
+          "repair_trigger_origin": "reviewer_or_system_failure"
+        },
+        "owner": "FlowPilot runtime/router",
+        "primary_path_id": "path.runtime.unified-late-defect-repair",
+        "rationale": "The blocker contributes typed failure evidence but cannot own a narrower repair completion path.",
+        "scoped_out_reason": "",
+        "similarity_obligation_ids": [],
+        "similarity_relation_ids": [],
+        "source_ref": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+        "surface_id": "surface.runtime.blocker_repair_intake",
+        "surface_kind": "code",
+        "validation_boundary": "current blocker identity, repair target, and required recheck"
+      },
+      {
+        "business_intent_ids": [
+          "intent:flowpilot.repair-late-defect-through-current-shared-engine"
+        ],
+        "commitment_ids": [
+          "commit.repair_reissue_no_fallback"
+        ],
+        "delegates_to_primary_path": true,
+        "freshness_state": "current",
+        "in_scope": true,
+        "label": "Parent and subtree repair scope adapter",
+        "metadata": {
+          "repair_trigger_origin": "parent_backward_replay_or_scoped_decision"
+        },
+        "owner": "FlowPilot runtime/router",
+        "primary_path_id": "path.runtime.unified-late-defect-repair",
+        "rationale": "Parent and subtree contracts select replacement scope and repair children but delegate commit and closure to the shared path.",
+        "scoped_out_reason": "",
+        "similarity_obligation_ids": [],
+        "similarity_relation_ids": [],
+        "source_ref": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+        "surface_id": "surface.runtime.parent_subtree_repair_intake",
+        "surface_kind": "code",
+        "validation_boundary": "parent/subtree scope contract, child ownership, and affected dependency cone"
+      },
+      {
+        "business_intent_ids": [
+          "intent:flowpilot.repair-late-defect-through-current-shared-engine"
+        ],
+        "commitment_ids": [
+          "commit.repair_reissue_no_fallback"
+        ],
+        "delegates_to_primary_path": true,
+        "freshness_state": "current",
+        "in_scope": true,
+        "label": "Terminal supplemental repair intake adapter",
+        "metadata": {
+          "repair_trigger_origin": "terminal_backward_replay",
+          "reviewer_only_repair_forbidden": true
+        },
+        "owner": "FlowPilot runtime/router",
+        "primary_path_id": "path.runtime.unified-late-defect-repair",
+        "rationale": "The supplemental contract and three-round cap add terminal constraints while Worker execution and closure remain on the shared path.",
+        "scoped_out_reason": "",
+        "similarity_obligation_ids": [],
+        "similarity_relation_ids": [],
+        "source_ref": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+        "surface_id": "surface.runtime.terminal_repair_intake",
+        "surface_kind": "code",
+        "validation_boundary": "supplemental contract, causal generation binding, Worker/FlowGuard/Reviewer chain, and terminal replay"
       },
       {
         "business_intent_ids": [
@@ -2227,6 +2398,31 @@
       },
       {
         "business_intent_ids": [
+          "intent:flowpilot.resume-exact-current-obligation-roles"
+        ],
+        "commitment_ids": [
+          "commit.resume_exact_current_obligation_roles"
+        ],
+        "delegates_to_primary_path": false,
+        "freshness_state": "current",
+        "in_scope": true,
+        "label": "surface.resume_exact_current_obligation_roles",
+        "metadata": {
+          "idle_role_memory_audit_only": true
+        },
+        "owner": "FlowPilot runtime/router",
+        "primary_path_id": "path.agent-operation.resume-exact-current-obligation-roles",
+        "rationale": "Manual resume uses only current unresolved obligation owners; history and fixed role rosters cannot authorize work.",
+        "scoped_out_reason": "",
+        "similarity_obligation_ids": [],
+        "similarity_relation_ids": [],
+        "source_ref": "skills/flowpilot/assets/flowpilot_new_run_commands.py",
+        "surface_id": "surface.resume_exact_current_obligation_roles",
+        "surface_kind": "code",
+        "validation_boundary": "exact current requested-role set and current role-memory identity"
+      },
+      {
+        "business_intent_ids": [
           "intent:flowpilot.prove-fake-ai-coverage-by-execution"
         ],
         "commitment_ids": [
@@ -2269,29 +2465,6 @@
         "source_ref": "simulations/flowpilot_acceptance_testmesh_model.py",
         "surface_id": "surface.acceptance_testmesh_proofs",
         "surface_kind": "process",
-        "validation_boundary": "current FlowPilot runtime contract"
-      },
-      {
-        "business_intent_ids": [
-          "intent:flowpilot.project-terminal-acceptance-items-into-current-pm-repair"
-        ],
-        "commitment_ids": [
-          "commit.dynamic_pm_repair_owns_active_acceptance_items"
-        ],
-        "delegates_to_primary_path": false,
-        "freshness_state": "current",
-        "in_scope": true,
-        "label": "surface.dynamic_pm_repair_contract",
-        "metadata": {},
-        "owner": "FlowPilot maintenance model",
-        "primary_path_id": "path.runtime.dynamic-pm-repair-owner-projection",
-        "rationale": "Maps a current behavior surface to one behavior commitment.",
-        "scoped_out_reason": "",
-        "similarity_obligation_ids": [],
-        "similarity_relation_ids": [],
-        "source_ref": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
-        "surface_id": "surface.dynamic_pm_repair_contract",
-        "surface_kind": "code",
         "validation_boundary": "current FlowPilot runtime contract"
       },
       {

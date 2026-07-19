@@ -975,7 +975,7 @@ ROUTER_STRUCTURE_MODULES = (
     ModuleStructureEvidence(
         "packet_runtime_cli",
         path="skills/flowpilot/assets/packet_runtime_cli.py",
-        owns_functions=("parse_args", "main"),
+        owns_functions=("parse_args", "_start_fresh_formal_invocation", "main"),
         dependencies=("packet_runtime_creation", "packet_runtime_results", "packet_runtime_audit"),
         behavior_contracts=("packet runtime CLI unsupported_historical", "subcommand dispatch"),
         behavior_parity_tier=EVIDENCE_CONFORMANCE_GREEN,

@@ -13,7 +13,9 @@
       "Contract registry, event capability registry, repair transaction records, and packet authority are sub-registries.",
       "The registry authorizes commits, not only event names.",
       "Unsupported transaction names are rejected instead of replayed.",
-      "Accepted transactions commit required state surfaces together."
+      "Accepted transactions commit required state surfaces together.",
+      "Staged repair effects bind one effect id to the current repair/source generations.",
+      "Accepted effects expose one atomic commit plus Worker opening; rejected or cancelled effects are disposed with no Worker or terminal-round consumption."
     ]
   },
   "flowguard_explorer": {
@@ -22,7 +24,7 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=3 initial_states=1 traces=150",
+    "summary": "sequences=3 initial_states=1 traces=216",
     "violation_count": 0
   },
   "hazard_checks": {
@@ -37,6 +39,7 @@
         "state": {
           "active_blocker_present": true,
           "atomic_commit_declared": true,
+          "atomic_commit_visible": false,
           "commit_targets": [
             "frontier",
             "run_state",
@@ -47,6 +50,9 @@
           "contract_binding_ok": true,
           "contract_required": true,
           "control_plane_reissue": false,
+          "current_repair_generation": 0,
+          "current_source_generation": 0,
+          "decision_gate_status": "none",
           "event_capability_ok": true,
           "event_capability_required": true,
           "non_success_uses_success_event": false,
@@ -65,11 +71,19 @@
           "route_mutation": false,
           "safe_to_continue_claimed": true,
           "scenario": "active_blocker_marked_green",
+          "staged_effect_disposition": "none",
+          "staged_effect_id": "",
+          "staged_effect_operation": "none",
+          "staged_effect_repair_generation": 0,
+          "staged_effect_required": false,
+          "staged_effect_source_generation": 0,
           "stale_evidence_policy_applied": false,
           "status": "selected",
           "terminal_reason": "none",
+          "terminal_round_consumed": false,
           "transaction_type": "route_progression",
-          "unsupported_transaction_name": false
+          "unsupported_transaction_name": false,
+          "worker_opened": false
         }
       },
       "atomic_commit_target_missing": {
@@ -82,6 +96,7 @@
         "state": {
           "active_blocker_present": false,
           "atomic_commit_declared": true,
+          "atomic_commit_visible": false,
           "commit_targets": [
             "run_state",
             "status_summary"
@@ -91,6 +106,9 @@
           "contract_binding_ok": true,
           "contract_required": true,
           "control_plane_reissue": false,
+          "current_repair_generation": 0,
+          "current_source_generation": 0,
+          "decision_gate_status": "none",
           "event_capability_ok": true,
           "event_capability_required": true,
           "non_success_uses_success_event": false,
@@ -109,11 +127,75 @@
           "route_mutation": false,
           "safe_to_continue_claimed": false,
           "scenario": "atomic_commit_target_missing",
+          "staged_effect_disposition": "none",
+          "staged_effect_id": "",
+          "staged_effect_operation": "none",
+          "staged_effect_repair_generation": 0,
+          "staged_effect_required": false,
+          "staged_effect_source_generation": 0,
           "stale_evidence_policy_applied": false,
           "status": "selected",
           "terminal_reason": "none",
+          "terminal_round_consumed": false,
           "transaction_type": "result_absorption",
-          "unsupported_transaction_name": false
+          "unsupported_transaction_name": false,
+          "worker_opened": false
+        }
+      },
+      "cancelled_staged_effect_not_disposed": {
+        "detected": true,
+        "expected_failure": "rejected or cancelled staged_effect was not dispositioned",
+        "failures": [
+          "rejected or cancelled staged_effect was not dispositioned"
+        ],
+        "state": {
+          "active_blocker_present": false,
+          "atomic_commit_declared": true,
+          "atomic_commit_visible": false,
+          "commit_targets": [
+            "run_state",
+            "staged_effect",
+            "status_summary"
+          ],
+          "completed_agent_id_belongs_to_role": true,
+          "completed_agent_id_is_role_key": false,
+          "contract_binding_ok": true,
+          "contract_required": true,
+          "control_plane_reissue": false,
+          "current_repair_generation": 2,
+          "current_source_generation": 7,
+          "decision_gate_status": "cancelled",
+          "event_capability_ok": true,
+          "event_capability_required": true,
+          "non_success_uses_success_event": false,
+          "original_event_flag_currently_set": true,
+          "outcome_events_distinct": true,
+          "outcome_policy": "none",
+          "packet_authority_required": false,
+          "parent_repair": false,
+          "registry_references_exist": true,
+          "registry_row_present": true,
+          "reissue_delivery_authority_present": false,
+          "repair_target_is_leaf_event": false,
+          "repair_transaction_present": true,
+          "repair_transaction_required": true,
+          "role_origin_checked": true,
+          "route_mutation": false,
+          "safe_to_continue_claimed": false,
+          "scenario": "cancelled_staged_effect_not_disposed",
+          "staged_effect_disposition": "none",
+          "staged_effect_id": "staged-effect-repair-g2",
+          "staged_effect_operation": "dispose_cancelled",
+          "staged_effect_repair_generation": 2,
+          "staged_effect_required": true,
+          "staged_effect_source_generation": 7,
+          "stale_evidence_policy_applied": false,
+          "status": "selected",
+          "terminal_reason": "none",
+          "terminal_round_consumed": false,
+          "transaction_type": "staged_repair_effect",
+          "unsupported_transaction_name": false,
+          "worker_opened": false
         }
       },
       "collapsed_repair_outcomes": {
@@ -125,6 +207,7 @@
         "state": {
           "active_blocker_present": false,
           "atomic_commit_declared": true,
+          "atomic_commit_visible": false,
           "commit_targets": [
             "repair_transaction",
             "blocker_index",
@@ -136,6 +219,9 @@
           "contract_binding_ok": true,
           "contract_required": true,
           "control_plane_reissue": false,
+          "current_repair_generation": 0,
+          "current_source_generation": 0,
+          "decision_gate_status": "none",
           "event_capability_ok": true,
           "event_capability_required": true,
           "non_success_uses_success_event": false,
@@ -154,11 +240,19 @@
           "route_mutation": false,
           "safe_to_continue_claimed": false,
           "scenario": "collapsed_repair_outcomes",
+          "staged_effect_disposition": "none",
+          "staged_effect_id": "",
+          "staged_effect_operation": "none",
+          "staged_effect_repair_generation": 0,
+          "staged_effect_required": false,
+          "staged_effect_source_generation": 0,
           "stale_evidence_policy_applied": false,
           "status": "selected",
           "terminal_reason": "none",
+          "terminal_round_consumed": false,
           "transaction_type": "control_blocker_repair",
-          "unsupported_transaction_name": false
+          "unsupported_transaction_name": false,
+          "worker_opened": false
         }
       },
       "completed_agent_invalid": {
@@ -170,6 +264,7 @@
         "state": {
           "active_blocker_present": false,
           "atomic_commit_declared": true,
+          "atomic_commit_visible": false,
           "commit_targets": [
             "packet_ledger",
             "pm_package_disposition",
@@ -182,6 +277,9 @@
           "contract_binding_ok": true,
           "contract_required": true,
           "control_plane_reissue": false,
+          "current_repair_generation": 0,
+          "current_source_generation": 0,
+          "decision_gate_status": "none",
           "event_capability_ok": true,
           "event_capability_required": true,
           "non_success_uses_success_event": false,
@@ -200,11 +298,19 @@
           "route_mutation": false,
           "safe_to_continue_claimed": false,
           "scenario": "completed_agent_invalid",
+          "staged_effect_disposition": "none",
+          "staged_effect_id": "",
+          "staged_effect_operation": "none",
+          "staged_effect_repair_generation": 0,
+          "staged_effect_required": false,
+          "staged_effect_source_generation": 0,
           "stale_evidence_policy_applied": false,
           "status": "selected",
           "terminal_reason": "none",
+          "terminal_round_consumed": false,
           "transaction_type": "result_absorption",
-          "unsupported_transaction_name": false
+          "unsupported_transaction_name": false,
+          "worker_opened": false
         }
       },
       "contract_pass_event_capability_missing": {
@@ -216,6 +322,7 @@
         "state": {
           "active_blocker_present": false,
           "atomic_commit_declared": true,
+          "atomic_commit_visible": false,
           "commit_targets": [
             "frontier",
             "run_state",
@@ -226,6 +333,9 @@
           "contract_binding_ok": true,
           "contract_required": true,
           "control_plane_reissue": false,
+          "current_repair_generation": 0,
+          "current_source_generation": 0,
+          "decision_gate_status": "none",
           "event_capability_ok": false,
           "event_capability_required": true,
           "non_success_uses_success_event": false,
@@ -244,11 +354,19 @@
           "route_mutation": false,
           "safe_to_continue_claimed": false,
           "scenario": "contract_pass_event_capability_missing",
+          "staged_effect_disposition": "none",
+          "staged_effect_id": "",
+          "staged_effect_operation": "none",
+          "staged_effect_repair_generation": 0,
+          "staged_effect_required": false,
+          "staged_effect_source_generation": 0,
           "stale_evidence_policy_applied": false,
           "status": "selected",
           "terminal_reason": "none",
+          "terminal_round_consumed": false,
           "transaction_type": "route_progression",
-          "unsupported_transaction_name": false
+          "unsupported_transaction_name": false,
+          "worker_opened": false
         }
       },
       "control_plane_reissue_without_delivery_authority": {
@@ -261,6 +379,7 @@
         "state": {
           "active_blocker_present": false,
           "atomic_commit_declared": true,
+          "atomic_commit_visible": false,
           "commit_targets": [
             "blocker_index",
             "run_state",
@@ -271,6 +390,9 @@
           "contract_binding_ok": true,
           "contract_required": false,
           "control_plane_reissue": true,
+          "current_repair_generation": 0,
+          "current_source_generation": 0,
+          "decision_gate_status": "none",
           "event_capability_ok": false,
           "event_capability_required": true,
           "non_success_uses_success_event": false,
@@ -289,11 +411,19 @@
           "route_mutation": false,
           "safe_to_continue_claimed": false,
           "scenario": "control_plane_reissue_without_delivery_authority",
+          "staged_effect_disposition": "none",
+          "staged_effect_id": "",
+          "staged_effect_operation": "none",
+          "staged_effect_repair_generation": 0,
+          "staged_effect_required": false,
+          "staged_effect_source_generation": 0,
           "stale_evidence_policy_applied": false,
           "status": "selected",
           "terminal_reason": "none",
+          "terminal_round_consumed": false,
           "transaction_type": "control_plane_reissue",
-          "unsupported_transaction_name": false
+          "unsupported_transaction_name": false,
+          "worker_opened": false
         }
       },
       "event_pass_contract_missing": {
@@ -305,6 +435,7 @@
         "state": {
           "active_blocker_present": false,
           "atomic_commit_declared": true,
+          "atomic_commit_visible": false,
           "commit_targets": [
             "frontier",
             "run_state",
@@ -315,6 +446,9 @@
           "contract_binding_ok": false,
           "contract_required": true,
           "control_plane_reissue": false,
+          "current_repair_generation": 0,
+          "current_source_generation": 0,
+          "decision_gate_status": "none",
           "event_capability_ok": true,
           "event_capability_required": true,
           "non_success_uses_success_event": false,
@@ -333,11 +467,19 @@
           "route_mutation": false,
           "safe_to_continue_claimed": false,
           "scenario": "event_pass_contract_missing",
+          "staged_effect_disposition": "none",
+          "staged_effect_id": "",
+          "staged_effect_operation": "none",
+          "staged_effect_repair_generation": 0,
+          "staged_effect_required": false,
+          "staged_effect_source_generation": 0,
           "stale_evidence_policy_applied": false,
           "status": "selected",
           "terminal_reason": "none",
+          "terminal_round_consumed": false,
           "transaction_type": "route_progression",
-          "unsupported_transaction_name": false
+          "unsupported_transaction_name": false,
+          "worker_opened": false
         }
       },
       "packet_authority_missing": {
@@ -349,6 +491,7 @@
         "state": {
           "active_blocker_present": false,
           "atomic_commit_declared": true,
+          "atomic_commit_visible": false,
           "commit_targets": [
             "packet_ledger",
             "pm_package_disposition",
@@ -361,6 +504,9 @@
           "contract_binding_ok": true,
           "contract_required": true,
           "control_plane_reissue": false,
+          "current_repair_generation": 0,
+          "current_source_generation": 0,
+          "decision_gate_status": "none",
           "event_capability_ok": true,
           "event_capability_required": true,
           "non_success_uses_success_event": false,
@@ -379,11 +525,19 @@
           "route_mutation": false,
           "safe_to_continue_claimed": false,
           "scenario": "packet_authority_missing",
+          "staged_effect_disposition": "none",
+          "staged_effect_id": "",
+          "staged_effect_operation": "none",
+          "staged_effect_repair_generation": 0,
+          "staged_effect_required": false,
+          "staged_effect_source_generation": 0,
           "stale_evidence_policy_applied": false,
           "status": "selected",
           "terminal_reason": "none",
+          "terminal_round_consumed": false,
           "transaction_type": "result_absorption",
-          "unsupported_transaction_name": false
+          "unsupported_transaction_name": false,
+          "worker_opened": false
         }
       },
       "parent_repair_leaf_event": {
@@ -395,6 +549,7 @@
         "state": {
           "active_blocker_present": false,
           "atomic_commit_declared": true,
+          "atomic_commit_visible": false,
           "commit_targets": [
             "repair_transaction",
             "blocker_index",
@@ -406,6 +561,9 @@
           "contract_binding_ok": true,
           "contract_required": true,
           "control_plane_reissue": false,
+          "current_repair_generation": 0,
+          "current_source_generation": 0,
+          "decision_gate_status": "none",
           "event_capability_ok": true,
           "event_capability_required": true,
           "non_success_uses_success_event": false,
@@ -424,11 +582,19 @@
           "route_mutation": false,
           "safe_to_continue_claimed": false,
           "scenario": "parent_repair_leaf_event",
+          "staged_effect_disposition": "none",
+          "staged_effect_id": "",
+          "staged_effect_operation": "none",
+          "staged_effect_repair_generation": 0,
+          "staged_effect_required": false,
+          "staged_effect_source_generation": 0,
           "stale_evidence_policy_applied": false,
           "status": "selected",
           "terminal_reason": "none",
+          "terminal_round_consumed": false,
           "transaction_type": "control_blocker_repair",
-          "unsupported_transaction_name": false
+          "unsupported_transaction_name": false,
+          "worker_opened": false
         }
       },
       "partial_commit_targets": {
@@ -441,6 +607,7 @@
         "state": {
           "active_blocker_present": false,
           "atomic_commit_declared": true,
+          "atomic_commit_visible": false,
           "commit_targets": [
             "run_state"
           ],
@@ -449,6 +616,9 @@
           "contract_binding_ok": true,
           "contract_required": true,
           "control_plane_reissue": false,
+          "current_repair_generation": 0,
+          "current_source_generation": 0,
+          "decision_gate_status": "none",
           "event_capability_ok": true,
           "event_capability_required": true,
           "non_success_uses_success_event": false,
@@ -467,11 +637,19 @@
           "route_mutation": false,
           "safe_to_continue_claimed": false,
           "scenario": "partial_commit_targets",
+          "staged_effect_disposition": "none",
+          "staged_effect_id": "",
+          "staged_effect_operation": "none",
+          "staged_effect_repair_generation": 0,
+          "staged_effect_required": false,
+          "staged_effect_source_generation": 0,
           "stale_evidence_policy_applied": false,
           "status": "selected",
           "terminal_reason": "none",
+          "terminal_round_consumed": false,
           "transaction_type": "control_blocker_repair",
-          "unsupported_transaction_name": false
+          "unsupported_transaction_name": false,
+          "worker_opened": false
         }
       },
       "pm_package_disposition_partial_commit": {
@@ -484,6 +662,7 @@
         "state": {
           "active_blocker_present": false,
           "atomic_commit_declared": true,
+          "atomic_commit_visible": false,
           "commit_targets": [
             "packet_ledger",
             "run_state",
@@ -494,6 +673,9 @@
           "contract_binding_ok": true,
           "contract_required": true,
           "control_plane_reissue": false,
+          "current_repair_generation": 0,
+          "current_source_generation": 0,
+          "decision_gate_status": "none",
           "event_capability_ok": true,
           "event_capability_required": true,
           "non_success_uses_success_event": false,
@@ -512,11 +694,19 @@
           "route_mutation": false,
           "safe_to_continue_claimed": false,
           "scenario": "pm_package_disposition_partial_commit",
+          "staged_effect_disposition": "none",
+          "staged_effect_id": "",
+          "staged_effect_operation": "none",
+          "staged_effect_repair_generation": 0,
+          "staged_effect_required": false,
+          "staged_effect_source_generation": 0,
           "stale_evidence_policy_applied": false,
           "status": "selected",
           "terminal_reason": "none",
+          "terminal_round_consumed": false,
           "transaction_type": "result_absorption",
-          "unsupported_transaction_name": false
+          "unsupported_transaction_name": false,
+          "worker_opened": false
         }
       },
       "registry_reference_missing": {
@@ -528,6 +718,7 @@
         "state": {
           "active_blocker_present": false,
           "atomic_commit_declared": true,
+          "atomic_commit_visible": false,
           "commit_targets": [
             "packet_ledger",
             "run_state",
@@ -538,6 +729,9 @@
           "contract_binding_ok": true,
           "contract_required": true,
           "control_plane_reissue": false,
+          "current_repair_generation": 0,
+          "current_source_generation": 0,
+          "decision_gate_status": "none",
           "event_capability_ok": true,
           "event_capability_required": true,
           "non_success_uses_success_event": false,
@@ -556,11 +750,187 @@
           "route_mutation": false,
           "safe_to_continue_claimed": false,
           "scenario": "registry_reference_missing",
+          "staged_effect_disposition": "none",
+          "staged_effect_id": "",
+          "staged_effect_operation": "none",
+          "staged_effect_repair_generation": 0,
+          "staged_effect_required": false,
+          "staged_effect_source_generation": 0,
           "stale_evidence_policy_applied": false,
           "status": "selected",
           "terminal_reason": "none",
+          "terminal_round_consumed": false,
           "transaction_type": "packet_dispatch",
-          "unsupported_transaction_name": false
+          "unsupported_transaction_name": false,
+          "worker_opened": false
+        }
+      },
+      "rejected_staged_effect_consumes_terminal_round": {
+        "detected": true,
+        "expected_failure": "rejected or cancelled staged_effect consumed a terminal repair round",
+        "failures": [
+          "rejected or cancelled staged_effect consumed a terminal repair round"
+        ],
+        "state": {
+          "active_blocker_present": false,
+          "atomic_commit_declared": true,
+          "atomic_commit_visible": false,
+          "commit_targets": [
+            "run_state",
+            "staged_effect",
+            "status_summary"
+          ],
+          "completed_agent_id_belongs_to_role": true,
+          "completed_agent_id_is_role_key": false,
+          "contract_binding_ok": true,
+          "contract_required": true,
+          "control_plane_reissue": false,
+          "current_repair_generation": 2,
+          "current_source_generation": 7,
+          "decision_gate_status": "rejected",
+          "event_capability_ok": true,
+          "event_capability_required": true,
+          "non_success_uses_success_event": false,
+          "original_event_flag_currently_set": true,
+          "outcome_events_distinct": true,
+          "outcome_policy": "none",
+          "packet_authority_required": false,
+          "parent_repair": false,
+          "registry_references_exist": true,
+          "registry_row_present": true,
+          "reissue_delivery_authority_present": false,
+          "repair_target_is_leaf_event": false,
+          "repair_transaction_present": true,
+          "repair_transaction_required": true,
+          "role_origin_checked": true,
+          "route_mutation": false,
+          "safe_to_continue_claimed": false,
+          "scenario": "rejected_staged_effect_consumes_terminal_round",
+          "staged_effect_disposition": "disposed_rejected",
+          "staged_effect_id": "staged-effect-repair-g2",
+          "staged_effect_operation": "dispose_rejected",
+          "staged_effect_repair_generation": 2,
+          "staged_effect_required": true,
+          "staged_effect_source_generation": 7,
+          "stale_evidence_policy_applied": false,
+          "status": "selected",
+          "terminal_reason": "none",
+          "terminal_round_consumed": true,
+          "transaction_type": "staged_repair_effect",
+          "unsupported_transaction_name": false,
+          "worker_opened": false
+        }
+      },
+      "rejected_staged_effect_not_disposed": {
+        "detected": true,
+        "expected_failure": "rejected or cancelled staged_effect was not dispositioned",
+        "failures": [
+          "rejected or cancelled staged_effect was not dispositioned"
+        ],
+        "state": {
+          "active_blocker_present": false,
+          "atomic_commit_declared": true,
+          "atomic_commit_visible": false,
+          "commit_targets": [
+            "run_state",
+            "staged_effect",
+            "status_summary"
+          ],
+          "completed_agent_id_belongs_to_role": true,
+          "completed_agent_id_is_role_key": false,
+          "contract_binding_ok": true,
+          "contract_required": true,
+          "control_plane_reissue": false,
+          "current_repair_generation": 2,
+          "current_source_generation": 7,
+          "decision_gate_status": "rejected",
+          "event_capability_ok": true,
+          "event_capability_required": true,
+          "non_success_uses_success_event": false,
+          "original_event_flag_currently_set": true,
+          "outcome_events_distinct": true,
+          "outcome_policy": "none",
+          "packet_authority_required": false,
+          "parent_repair": false,
+          "registry_references_exist": true,
+          "registry_row_present": true,
+          "reissue_delivery_authority_present": false,
+          "repair_target_is_leaf_event": false,
+          "repair_transaction_present": true,
+          "repair_transaction_required": true,
+          "role_origin_checked": true,
+          "route_mutation": false,
+          "safe_to_continue_claimed": false,
+          "scenario": "rejected_staged_effect_not_disposed",
+          "staged_effect_disposition": "none",
+          "staged_effect_id": "staged-effect-repair-g2",
+          "staged_effect_operation": "dispose_rejected",
+          "staged_effect_repair_generation": 2,
+          "staged_effect_required": true,
+          "staged_effect_source_generation": 7,
+          "stale_evidence_policy_applied": false,
+          "status": "selected",
+          "terminal_reason": "none",
+          "terminal_round_consumed": false,
+          "transaction_type": "staged_repair_effect",
+          "unsupported_transaction_name": false,
+          "worker_opened": false
+        }
+      },
+      "rejected_staged_effect_opens_worker": {
+        "detected": true,
+        "expected_failure": "rejected or cancelled staged_effect opened Worker or exposed a commit",
+        "failures": [
+          "rejected or cancelled staged_effect opened Worker or exposed a commit"
+        ],
+        "state": {
+          "active_blocker_present": false,
+          "atomic_commit_declared": true,
+          "atomic_commit_visible": false,
+          "commit_targets": [
+            "run_state",
+            "staged_effect",
+            "status_summary"
+          ],
+          "completed_agent_id_belongs_to_role": true,
+          "completed_agent_id_is_role_key": false,
+          "contract_binding_ok": true,
+          "contract_required": true,
+          "control_plane_reissue": false,
+          "current_repair_generation": 2,
+          "current_source_generation": 7,
+          "decision_gate_status": "rejected",
+          "event_capability_ok": true,
+          "event_capability_required": true,
+          "non_success_uses_success_event": false,
+          "original_event_flag_currently_set": true,
+          "outcome_events_distinct": true,
+          "outcome_policy": "none",
+          "packet_authority_required": false,
+          "parent_repair": false,
+          "registry_references_exist": true,
+          "registry_row_present": true,
+          "reissue_delivery_authority_present": false,
+          "repair_target_is_leaf_event": false,
+          "repair_transaction_present": true,
+          "repair_transaction_required": true,
+          "role_origin_checked": true,
+          "route_mutation": false,
+          "safe_to_continue_claimed": false,
+          "scenario": "rejected_staged_effect_opens_worker",
+          "staged_effect_disposition": "disposed_rejected",
+          "staged_effect_id": "staged-effect-repair-g2",
+          "staged_effect_operation": "dispose_rejected",
+          "staged_effect_repair_generation": 2,
+          "staged_effect_required": true,
+          "staged_effect_source_generation": 7,
+          "stale_evidence_policy_applied": false,
+          "status": "selected",
+          "terminal_reason": "none",
+          "terminal_round_consumed": false,
+          "transaction_type": "staged_repair_effect",
+          "unsupported_transaction_name": false,
+          "worker_opened": true
         }
       },
       "repair_without_transaction": {
@@ -572,6 +942,7 @@
         "state": {
           "active_blocker_present": false,
           "atomic_commit_declared": true,
+          "atomic_commit_visible": false,
           "commit_targets": [
             "repair_transaction",
             "blocker_index",
@@ -583,6 +954,9 @@
           "contract_binding_ok": true,
           "contract_required": true,
           "control_plane_reissue": false,
+          "current_repair_generation": 0,
+          "current_source_generation": 0,
+          "decision_gate_status": "none",
           "event_capability_ok": true,
           "event_capability_required": true,
           "non_success_uses_success_event": false,
@@ -601,11 +975,19 @@
           "route_mutation": false,
           "safe_to_continue_claimed": false,
           "scenario": "repair_without_transaction",
+          "staged_effect_disposition": "none",
+          "staged_effect_id": "",
+          "staged_effect_operation": "none",
+          "staged_effect_repair_generation": 0,
+          "staged_effect_required": false,
+          "staged_effect_source_generation": 0,
           "stale_evidence_policy_applied": false,
           "status": "selected",
           "terminal_reason": "none",
+          "terminal_round_consumed": false,
           "transaction_type": "control_blocker_repair",
-          "unsupported_transaction_name": false
+          "unsupported_transaction_name": false,
+          "worker_opened": false
         }
       },
       "reviewer_non_success_uses_success_event": {
@@ -617,6 +999,7 @@
         "state": {
           "active_blocker_present": false,
           "atomic_commit_declared": true,
+          "atomic_commit_visible": false,
           "commit_targets": [
             "run_state",
             "blocker_index",
@@ -627,6 +1010,9 @@
           "contract_binding_ok": true,
           "contract_required": true,
           "control_plane_reissue": false,
+          "current_repair_generation": 0,
+          "current_source_generation": 0,
+          "decision_gate_status": "none",
           "event_capability_ok": true,
           "event_capability_required": true,
           "non_success_uses_success_event": true,
@@ -645,11 +1031,19 @@
           "route_mutation": false,
           "safe_to_continue_claimed": false,
           "scenario": "reviewer_non_success_uses_success_event",
+          "staged_effect_disposition": "none",
+          "staged_effect_id": "",
+          "staged_effect_operation": "none",
+          "staged_effect_repair_generation": 0,
+          "staged_effect_required": false,
+          "staged_effect_source_generation": 0,
           "stale_evidence_policy_applied": false,
           "status": "selected",
           "terminal_reason": "none",
+          "terminal_round_consumed": false,
           "transaction_type": "reviewer_gate_result",
-          "unsupported_transaction_name": false
+          "unsupported_transaction_name": false,
+          "worker_opened": false
         }
       },
       "route_mutation_without_stale_policy": {
@@ -661,6 +1055,7 @@
         "state": {
           "active_blocker_present": false,
           "atomic_commit_declared": true,
+          "atomic_commit_visible": false,
           "commit_targets": [
             "route",
             "frontier",
@@ -673,6 +1068,9 @@
           "contract_binding_ok": true,
           "contract_required": true,
           "control_plane_reissue": false,
+          "current_repair_generation": 0,
+          "current_source_generation": 0,
+          "decision_gate_status": "none",
           "event_capability_ok": true,
           "event_capability_required": true,
           "non_success_uses_success_event": false,
@@ -691,11 +1089,259 @@
           "route_mutation": true,
           "safe_to_continue_claimed": false,
           "scenario": "route_mutation_without_stale_policy",
+          "staged_effect_disposition": "none",
+          "staged_effect_id": "",
+          "staged_effect_operation": "none",
+          "staged_effect_repair_generation": 0,
+          "staged_effect_required": false,
+          "staged_effect_source_generation": 0,
           "stale_evidence_policy_applied": false,
           "status": "selected",
           "terminal_reason": "none",
+          "terminal_round_consumed": false,
           "transaction_type": "route_mutation",
-          "unsupported_transaction_name": false
+          "unsupported_transaction_name": false,
+          "worker_opened": false
+        }
+      },
+      "staged_effect_commit_not_atomically_visible": {
+        "detected": true,
+        "expected_failure": "staged_effect commit is not atomically visible with Worker opening",
+        "failures": [
+          "staged_effect commit is not atomically visible with Worker opening"
+        ],
+        "state": {
+          "active_blocker_present": false,
+          "atomic_commit_declared": true,
+          "atomic_commit_visible": false,
+          "commit_targets": [
+            "frontier",
+            "repair_transaction",
+            "route",
+            "run_state",
+            "staged_effect",
+            "status_summary",
+            "worker_packet"
+          ],
+          "completed_agent_id_belongs_to_role": true,
+          "completed_agent_id_is_role_key": false,
+          "contract_binding_ok": true,
+          "contract_required": true,
+          "control_plane_reissue": false,
+          "current_repair_generation": 2,
+          "current_source_generation": 7,
+          "decision_gate_status": "accepted",
+          "event_capability_ok": true,
+          "event_capability_required": true,
+          "non_success_uses_success_event": false,
+          "original_event_flag_currently_set": true,
+          "outcome_events_distinct": true,
+          "outcome_policy": "none",
+          "packet_authority_required": false,
+          "parent_repair": false,
+          "registry_references_exist": true,
+          "registry_row_present": true,
+          "reissue_delivery_authority_present": false,
+          "repair_target_is_leaf_event": false,
+          "repair_transaction_present": true,
+          "repair_transaction_required": true,
+          "role_origin_checked": true,
+          "route_mutation": false,
+          "safe_to_continue_claimed": false,
+          "scenario": "staged_effect_commit_not_atomically_visible",
+          "staged_effect_disposition": "committed",
+          "staged_effect_id": "staged-effect-repair-g2",
+          "staged_effect_operation": "commit",
+          "staged_effect_repair_generation": 2,
+          "staged_effect_required": true,
+          "staged_effect_source_generation": 7,
+          "stale_evidence_policy_applied": false,
+          "status": "selected",
+          "terminal_reason": "none",
+          "terminal_round_consumed": false,
+          "transaction_type": "staged_repair_effect",
+          "unsupported_transaction_name": false,
+          "worker_opened": true
+        }
+      },
+      "staged_effect_id_missing": {
+        "detected": true,
+        "expected_failure": "staged_effect identity is missing",
+        "failures": [
+          "staged_effect identity is missing"
+        ],
+        "state": {
+          "active_blocker_present": false,
+          "atomic_commit_declared": true,
+          "atomic_commit_visible": true,
+          "commit_targets": [
+            "frontier",
+            "repair_transaction",
+            "route",
+            "run_state",
+            "staged_effect",
+            "status_summary",
+            "worker_packet"
+          ],
+          "completed_agent_id_belongs_to_role": true,
+          "completed_agent_id_is_role_key": false,
+          "contract_binding_ok": true,
+          "contract_required": true,
+          "control_plane_reissue": false,
+          "current_repair_generation": 2,
+          "current_source_generation": 7,
+          "decision_gate_status": "accepted",
+          "event_capability_ok": true,
+          "event_capability_required": true,
+          "non_success_uses_success_event": false,
+          "original_event_flag_currently_set": true,
+          "outcome_events_distinct": true,
+          "outcome_policy": "none",
+          "packet_authority_required": false,
+          "parent_repair": false,
+          "registry_references_exist": true,
+          "registry_row_present": true,
+          "reissue_delivery_authority_present": false,
+          "repair_target_is_leaf_event": false,
+          "repair_transaction_present": true,
+          "repair_transaction_required": true,
+          "role_origin_checked": true,
+          "route_mutation": false,
+          "safe_to_continue_claimed": false,
+          "scenario": "staged_effect_id_missing",
+          "staged_effect_disposition": "committed",
+          "staged_effect_id": "",
+          "staged_effect_operation": "commit",
+          "staged_effect_repair_generation": 2,
+          "staged_effect_required": true,
+          "staged_effect_source_generation": 7,
+          "stale_evidence_policy_applied": false,
+          "status": "selected",
+          "terminal_reason": "none",
+          "terminal_round_consumed": false,
+          "transaction_type": "staged_repair_effect",
+          "unsupported_transaction_name": false,
+          "worker_opened": true
+        }
+      },
+      "staged_effect_repair_generation_mismatch": {
+        "detected": true,
+        "expected_failure": "staged_effect repair generation does not match the current repair generation",
+        "failures": [
+          "staged_effect repair generation does not match the current repair generation"
+        ],
+        "state": {
+          "active_blocker_present": false,
+          "atomic_commit_declared": true,
+          "atomic_commit_visible": true,
+          "commit_targets": [
+            "frontier",
+            "repair_transaction",
+            "route",
+            "run_state",
+            "staged_effect",
+            "status_summary",
+            "worker_packet"
+          ],
+          "completed_agent_id_belongs_to_role": true,
+          "completed_agent_id_is_role_key": false,
+          "contract_binding_ok": true,
+          "contract_required": true,
+          "control_plane_reissue": false,
+          "current_repair_generation": 2,
+          "current_source_generation": 7,
+          "decision_gate_status": "accepted",
+          "event_capability_ok": true,
+          "event_capability_required": true,
+          "non_success_uses_success_event": false,
+          "original_event_flag_currently_set": true,
+          "outcome_events_distinct": true,
+          "outcome_policy": "none",
+          "packet_authority_required": false,
+          "parent_repair": false,
+          "registry_references_exist": true,
+          "registry_row_present": true,
+          "reissue_delivery_authority_present": false,
+          "repair_target_is_leaf_event": false,
+          "repair_transaction_present": true,
+          "repair_transaction_required": true,
+          "role_origin_checked": true,
+          "route_mutation": false,
+          "safe_to_continue_claimed": false,
+          "scenario": "staged_effect_repair_generation_mismatch",
+          "staged_effect_disposition": "committed",
+          "staged_effect_id": "staged-effect-repair-g2",
+          "staged_effect_operation": "commit",
+          "staged_effect_repair_generation": 3,
+          "staged_effect_required": true,
+          "staged_effect_source_generation": 7,
+          "stale_evidence_policy_applied": false,
+          "status": "selected",
+          "terminal_reason": "none",
+          "terminal_round_consumed": false,
+          "transaction_type": "staged_repair_effect",
+          "unsupported_transaction_name": false,
+          "worker_opened": true
+        }
+      },
+      "staged_effect_source_generation_mismatch": {
+        "detected": true,
+        "expected_failure": "staged_effect source generation does not match the current source generation",
+        "failures": [
+          "staged_effect source generation does not match the current source generation"
+        ],
+        "state": {
+          "active_blocker_present": false,
+          "atomic_commit_declared": true,
+          "atomic_commit_visible": true,
+          "commit_targets": [
+            "frontier",
+            "repair_transaction",
+            "route",
+            "run_state",
+            "staged_effect",
+            "status_summary",
+            "worker_packet"
+          ],
+          "completed_agent_id_belongs_to_role": true,
+          "completed_agent_id_is_role_key": false,
+          "contract_binding_ok": true,
+          "contract_required": true,
+          "control_plane_reissue": false,
+          "current_repair_generation": 2,
+          "current_source_generation": 7,
+          "decision_gate_status": "accepted",
+          "event_capability_ok": true,
+          "event_capability_required": true,
+          "non_success_uses_success_event": false,
+          "original_event_flag_currently_set": true,
+          "outcome_events_distinct": true,
+          "outcome_policy": "none",
+          "packet_authority_required": false,
+          "parent_repair": false,
+          "registry_references_exist": true,
+          "registry_row_present": true,
+          "reissue_delivery_authority_present": false,
+          "repair_target_is_leaf_event": false,
+          "repair_transaction_present": true,
+          "repair_transaction_required": true,
+          "role_origin_checked": true,
+          "route_mutation": false,
+          "safe_to_continue_claimed": false,
+          "scenario": "staged_effect_source_generation_mismatch",
+          "staged_effect_disposition": "committed",
+          "staged_effect_id": "staged-effect-repair-g2",
+          "staged_effect_operation": "commit",
+          "staged_effect_repair_generation": 2,
+          "staged_effect_required": true,
+          "staged_effect_source_generation": 8,
+          "stale_evidence_policy_applied": false,
+          "status": "selected",
+          "terminal_reason": "none",
+          "terminal_round_consumed": false,
+          "transaction_type": "staged_repair_effect",
+          "unsupported_transaction_name": false,
+          "worker_opened": true
         }
       },
       "unregistered_transaction_type": {
@@ -707,6 +1353,7 @@
         "state": {
           "active_blocker_present": false,
           "atomic_commit_declared": true,
+          "atomic_commit_visible": false,
           "commit_targets": [
             "frontier",
             "run_state",
@@ -717,6 +1364,9 @@
           "contract_binding_ok": true,
           "contract_required": true,
           "control_plane_reissue": false,
+          "current_repair_generation": 0,
+          "current_source_generation": 0,
+          "decision_gate_status": "none",
           "event_capability_ok": true,
           "event_capability_required": true,
           "non_success_uses_success_event": false,
@@ -735,11 +1385,19 @@
           "route_mutation": false,
           "safe_to_continue_claimed": false,
           "scenario": "unregistered_transaction_type",
+          "staged_effect_disposition": "none",
+          "staged_effect_id": "",
+          "staged_effect_operation": "none",
+          "staged_effect_repair_generation": 0,
+          "staged_effect_required": false,
+          "staged_effect_source_generation": 0,
           "stale_evidence_policy_applied": false,
           "status": "selected",
           "terminal_reason": "none",
+          "terminal_round_consumed": false,
           "transaction_type": "ad_hoc_next_step",
-          "unsupported_transaction_name": false
+          "unsupported_transaction_name": false,
+          "worker_opened": false
         }
       },
       "unsupported_reconcile_transaction_continues": {
@@ -751,6 +1409,7 @@
         "state": {
           "active_blocker_present": false,
           "atomic_commit_declared": true,
+          "atomic_commit_visible": false,
           "commit_targets": [
             "repair_transaction",
             "blocker_index",
@@ -762,6 +1421,9 @@
           "contract_binding_ok": true,
           "contract_required": true,
           "control_plane_reissue": false,
+          "current_repair_generation": 0,
+          "current_source_generation": 0,
+          "decision_gate_status": "none",
           "event_capability_ok": true,
           "event_capability_required": true,
           "non_success_uses_success_event": false,
@@ -780,11 +1442,19 @@
           "route_mutation": false,
           "safe_to_continue_claimed": true,
           "scenario": "unsupported_reconcile_transaction_continues",
+          "staged_effect_disposition": "none",
+          "staged_effect_id": "",
+          "staged_effect_operation": "none",
+          "staged_effect_repair_generation": 0,
+          "staged_effect_required": false,
+          "staged_effect_source_generation": 0,
           "stale_evidence_policy_applied": false,
           "status": "selected",
           "terminal_reason": "none",
+          "terminal_round_consumed": false,
           "transaction_type": "unsupported_historical_reconcile",
-          "unsupported_transaction_name": true
+          "unsupported_transaction_name": true,
+          "worker_opened": false
         }
       }
     },
@@ -796,26 +1466,30 @@
     "ok": true,
     "samples": [],
     "stuck_state_count": 0,
-    "terminal_state_count": 25
+    "terminal_state_count": 36
   },
   "safe_graph": {
     "accepted_scenarios": [
+      "valid_cancelled_staged_effect_disposal",
       "valid_control_blocker_repair",
       "valid_control_plane_reissue",
       "valid_packet_dispatch",
       "valid_pm_package_result_absorption",
+      "valid_rejected_staged_effect_disposal",
       "valid_result_absorption",
       "valid_reviewer_gate_result",
       "valid_route_mutation",
-      "valid_route_progression"
+      "valid_route_progression",
+      "valid_staged_repair_effect_commit"
     ],
-    "edge_count": 50,
+    "edge_count": 72,
     "invariant_failures": [],
     "missing_labels": [],
     "ok": true,
     "rejected_scenarios": [
       "active_blocker_marked_green",
       "atomic_commit_target_missing",
+      "cancelled_staged_effect_not_disposed",
       "collapsed_repair_outcomes",
       "completed_agent_invalid",
       "contract_pass_event_capability_missing",
@@ -826,12 +1500,19 @@
       "partial_commit_targets",
       "pm_package_disposition_partial_commit",
       "registry_reference_missing",
+      "rejected_staged_effect_consumes_terminal_round",
+      "rejected_staged_effect_not_disposed",
+      "rejected_staged_effect_opens_worker",
       "repair_without_transaction",
       "reviewer_non_success_uses_success_event",
       "route_mutation_without_stale_policy",
+      "staged_effect_commit_not_atomically_visible",
+      "staged_effect_id_missing",
+      "staged_effect_repair_generation_mismatch",
+      "staged_effect_source_generation_mismatch",
       "unregistered_transaction_type",
       "unsupported_reconcile_transaction_continues"
     ],
-    "state_count": 51
+    "state_count": 73
   }
 }

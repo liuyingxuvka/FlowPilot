@@ -20,6 +20,15 @@ MODEL_STRUCTURE_HAZARDS = (
     "insufficient_model_release_evidence",
 )
 
+TEST_TIER_STRUCTURE_HAZARDS = (
+    "missing_test_tier_partition_owner",
+    "duplicate_test_tier_state_owner",
+    "missing_test_tier_facade",
+    "removed_test_tier_entrypoint",
+    "stale_test_tier_parity",
+    "insufficient_test_tier_release_evidence",
+)
+
 TESTMESH_HAZARDS = (
     "missing_child_owner",
     "duplicate_state_owner",

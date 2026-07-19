@@ -342,12 +342,18 @@ def _run_foreground_with_runtime_writer_settlement(
     command_name: str,
 ) -> dict[str, Any]:
     waits: list[dict[str, Any]] = []
+    completed_folded_actions: list[dict[str, Any]] = []
     settlement_started: float | None = None
     while True:
         try:
             result = operation()
             break
         except RouterLedgerWriteInProgress as exc:
+            partial_actions = getattr(exc, "completed_folded_actions", None)
+            if isinstance(partial_actions, list):
+                completed_folded_actions.extend(
+                    action for action in partial_actions if isinstance(action, dict)
+                )
             if settlement_started is None:
                 settlement_started = time.monotonic()
             remaining = RUNTIME_JSON_WRITE_LOCK_TIMEOUT_SECONDS - (
@@ -361,6 +367,17 @@ def _run_foreground_with_runtime_writer_settlement(
                     timeout_seconds=remaining,
                 )
             )
+    if completed_folded_actions:
+        result = dict(result)
+        current_actions = result.get("folded_applied_actions")
+        current_action_rows = (
+            [action for action in current_actions if isinstance(action, dict)]
+            if isinstance(current_actions, list)
+            else []
+        )
+        all_actions = completed_folded_actions + current_action_rows
+        result["folded_applied_actions"] = all_actions
+        result["folded_applied_count"] = len(all_actions)
     if waits:
         result = dict(result)
         result["runtime_write_settlement"] = {
@@ -383,6 +400,19 @@ def _acquire_json_write_lock(path: Path) -> Path:
     while True:
         try:
             fd = os.open(str(lock_path), os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+        except PermissionError as exc:
+            liveness = _json_write_lock_liveness(path)
+            liveness["acquire_permission_error"] = True
+            liveness["acquire_error_type"] = type(exc).__name__
+            liveness["acquire_error_message"] = str(exc)
+            if time.monotonic() >= deadline:
+                raise RouterLedgerWriteInProgress(
+                    path,
+                    liveness,
+                    f"timed out acquiring JSON write lock after PermissionError: {exc}",
+                ) from exc
+            time.sleep(RUNTIME_JSON_WRITE_LOCK_POLL_SECONDS)
+            continue
         except FileExistsError:
             liveness = _json_write_lock_liveness(path)
             if liveness.get("takeover_allowed"):

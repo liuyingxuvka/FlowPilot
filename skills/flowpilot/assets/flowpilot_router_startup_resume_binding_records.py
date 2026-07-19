@@ -94,6 +94,16 @@ def _resume_role_rehydration_action_extra(router: ModuleType, project_root: Path
 def _normalize_resume_role_agent_records(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> list[dict[str, Any]]:
     _bind_router(router)
     contexts = {item['role_key']: item for item in router._resume_role_contexts(project_root, run_root, run_state)}
+    stale_memory_roles = [
+        role
+        for role, context in contexts.items()
+        if context.get('role_memory_status') == 'stale'
+    ]
+    if stale_memory_roles:
+        raise RouterError(
+            "resume role rehydration rejects stale role memory for: "
+            + ", ".join(stale_memory_roles)
+        )
     role_binding = read_json_if_exists(run_root / 'role_binding_ledger.json')
     current_generation = router._current_role_binding_generation(role_binding)
     existing_slots = {str(slot.get('role_key')): slot for slot in (role_binding.get('role_slots') if isinstance(role_binding.get('role_slots'), list) else []) if isinstance(slot, dict) and slot.get('role_key') in RUNTIME_ROLE_KEYS}
@@ -126,6 +136,13 @@ def _normalize_resume_role_agent_records(router: ModuleType, project_root: Path,
         iterable = raw_records
     else:
         raise RouterError('rehydrate_role_bindings requires payload.rehydrated_role_bindings list or object')
+    replacement_requested = any(
+        isinstance(raw, dict)
+        and (raw.get('rehydration_result') or raw.get('binding_open_result'))
+        == ROLE_BINDING_REHYDRATION_RESULT
+        for raw in iterable
+    )
+    replacement_generation = current_generation + 1 if replacement_requested else current_generation
     records_by_role: dict[str, dict[str, Any]] = {}
     for raw in iterable:
         if not isinstance(raw, dict):
@@ -155,6 +172,12 @@ def _normalize_resume_role_agent_records(router: ModuleType, project_root: Path,
         old_slot = existing_slots.get(str(role)) or {}
         old_epoch = old_slot.get('role_binding_epoch')
         role_epoch = int(old_epoch) if isinstance(old_epoch, int) else 0
+        old_generation = old_slot.get('role_binding_generation')
+        continuity_generation = (
+            int(old_generation)
+            if isinstance(old_generation, int) and old_generation > 0
+            else current_generation
+        )
         agent_id = raw.get('agent_id')
         if not isinstance(agent_id, str) or not agent_id.strip():
             raise RouterError(f'{role} requires a non-empty live resume agent_id')
@@ -174,8 +197,18 @@ def _normalize_resume_role_agent_records(router: ModuleType, project_root: Path,
             raise RouterError(f'{role} requires resume_agent_attempted=true')
         if result == ROLE_BINDING_CONTINUITY_RESULT and binding_decision != 'existing_current_agent_reused':
             raise RouterError(f'{role} live continuity requires existing_current_agent_reused')
+        if result == ROLE_BINDING_CONTINUITY_RESULT:
+            old_agent_id = str(old_slot.get('agent_id') or '').strip()
+            if not old_agent_id or agent_id.strip() != old_agent_id:
+                raise RouterError(f'{role} live continuity requires the exact current role-binding agent')
         if result == ROLE_BINDING_REHYDRATION_RESULT and binding_decision != 'current_run_replacement_opened':
             raise RouterError(f'{role} replacement rehydration requires current_run_replacement_opened')
+        if (
+            result == ROLE_BINDING_REHYDRATION_RESULT
+            and isinstance(old_slot.get('agent_id'), str)
+            and agent_id.strip() == str(old_slot.get('agent_id')).strip()
+        ):
+            raise RouterError(f'{role} replacement rehydration requires a new role-binding agent')
         if raw.get('rehydrated_for_run_id') != run_state['run_id']:
             raise RouterError(f"{role} must be rehydrated_for_run_id={run_state['run_id']}")
         if raw.get('rehydrated_after_resume_tick_id') != resume_tick_id:
@@ -203,7 +236,12 @@ def _normalize_resume_role_agent_records(router: ModuleType, project_root: Path,
                 raise RouterError(f'{role} replacement must be seeded from common current-run context')
         if role == 'project_manager' and raw.get('pm_resume_context_delivered') is not True:
             raise RouterError('project_manager resume rehydration requires PM context delivery')
-        records_by_role[str(role)] = {'role_key': str(role), 'status': 'live_agent_rehydrated', 'agent_id': agent_id.strip(), 'model_policy': ROLE_BINDING_MODEL_POLICY, 'reasoning_effort_policy': ROLE_BINDING_REASONING_EFFORT_POLICY, 'rehydration_result': str(result), 'role_surface_addressable': True, 'current_run_binding_decision': binding_decision, 'resume_agent_attempted': True, 'ack_progress_evidence_policy': 'current_wait_authority_only', 'rehydrated_for_run_id': run_state['run_id'], 'rehydrated_after_resume_tick_id': resume_tick_id, 'rehydrated_after_resume_state_loaded': True, 'replacement_opened_after_resume_state_loaded': result == ROLE_BINDING_REHYDRATION_RESULT, 'role_binding_generation': current_generation, 'role_binding_epoch': role_epoch + (1 if result == ROLE_BINDING_REHYDRATION_RESULT or agent_id.strip() != str(old_slot.get('agent_id') or '') else 0), 'superseded_agent_ids': [str(old_slot.get('agent_id'))] if result == ROLE_BINDING_REHYDRATION_RESULT and isinstance(old_slot.get('agent_id'), str) and (old_slot.get('agent_id') != agent_id.strip()) else [], 'role_memory_status': memory_status, 'memory_packet_path': context['memory_packet_path'], 'memory_packet_hash': context['memory_packet_hash'], 'core_prompt_path': context['core_prompt_path'], 'core_prompt_hash': context['core_prompt_hash'], 'memory_seeded_from_current_run': memory_status == 'available', 'replacement_seeded_from_common_run_context': memory_status != 'available', 'pm_resume_context_delivered': role == 'project_manager', 'recorded_at': utc_now()}
+        record_generation = (
+            replacement_generation
+            if result == ROLE_BINDING_REHYDRATION_RESULT
+            else continuity_generation
+        )
+        records_by_role[str(role)] = {'role_key': str(role), 'status': 'live_agent_rehydrated', 'agent_id': agent_id.strip(), 'model_policy': ROLE_BINDING_MODEL_POLICY, 'reasoning_effort_policy': ROLE_BINDING_REASONING_EFFORT_POLICY, 'rehydration_result': str(result), 'role_surface_addressable': True, 'current_run_binding_decision': binding_decision, 'resume_agent_attempted': True, 'ack_progress_evidence_policy': 'current_wait_authority_only', 'rehydrated_for_run_id': run_state['run_id'], 'rehydrated_after_resume_tick_id': resume_tick_id, 'rehydrated_after_resume_state_loaded': True, 'replacement_opened_after_resume_state_loaded': result == ROLE_BINDING_REHYDRATION_RESULT, 'role_binding_generation': record_generation, 'role_binding_epoch': role_epoch + (1 if result == ROLE_BINDING_REHYDRATION_RESULT or agent_id.strip() != str(old_slot.get('agent_id') or '') else 0), 'superseded_agent_ids': [str(old_slot.get('agent_id'))] if result == ROLE_BINDING_REHYDRATION_RESULT and isinstance(old_slot.get('agent_id'), str) and (old_slot.get('agent_id') != agent_id.strip()) else [], 'role_memory_status': memory_status, 'memory_packet_path': context['memory_packet_path'], 'memory_packet_hash': context['memory_packet_hash'], 'core_prompt_path': context['core_prompt_path'], 'core_prompt_hash': context['core_prompt_hash'], 'memory_seeded_from_current_run': memory_status == 'available', 'replacement_seeded_from_common_run_context': memory_status != 'available', 'pm_resume_context_delivered': role == 'project_manager', 'recorded_at': utc_now()}
     expected_roles = list(contexts.keys())
     missing = [role for role in expected_roles if role not in records_by_role]
     if missing:

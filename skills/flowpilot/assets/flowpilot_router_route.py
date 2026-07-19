@@ -7,9 +7,35 @@ router facade keeps the current helper names bound to focused owners.
 from __future__ import annotations
 
 import hashlib
+from dataclasses import dataclass
 from pathlib import Path
 from types import ModuleType
 from typing import Any
+
+
+@dataclass(frozen=True)
+class _ValidatedRouteMutationAuthority:
+    """Ephemeral proof that current route memory was checked before event writes."""
+
+    prior_path_context_review: dict[str, Any]
+
+
+def _validate_route_mutation_authority(
+    router: ModuleType,
+    project_root: Path,
+    run_root: Path,
+    payload: dict[str, Any],
+    *,
+    purpose: str = "route mutation",
+) -> _ValidatedRouteMutationAuthority:
+    return _ValidatedRouteMutationAuthority(
+        prior_path_context_review=router._require_pm_prior_path_context(
+            project_root,
+            run_root,
+            payload,
+            purpose=purpose,
+        )
+    )
 
 
 def route_payload_from_reviewed_draft(
@@ -114,8 +140,21 @@ def write_route_mutation(
     run_root: Path,
     run_state: dict[str, Any],
     payload: dict[str, Any],
+    *,
+    validated_authority: _ValidatedRouteMutationAuthority | None = None,
 ) -> None:
-    prior_review = router._require_pm_prior_path_context(project_root, run_root, payload, purpose="route mutation")
+    if validated_authority is None:
+        validated_authority = _validate_route_mutation_authority(
+            router,
+            project_root,
+            run_root,
+            payload,
+        )
+    elif not isinstance(validated_authority, _ValidatedRouteMutationAuthority):
+        raise router.RouterError(
+            "route mutation validated_authority must be the current in-memory authority"
+        )
+    prior_review = dict(validated_authority.prior_path_context_review)
     frontier = router.read_json_if_exists(run_root / "execution_frontier.json")
     route_id = str(payload.get("route_id") or frontier.get("active_route_id") or "route-001")
     current_active_node_id = str(frontier.get("active_node_id") or "node-001")

@@ -167,6 +167,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 runtime_settlement_waiting=False,
                 runtime_settlement_progress_observed=False,
                 foreground_start_retries_after_writer_finishes=True,
+                foreground_start_completed_actions_preserved=True,
             ),
         )
         return
@@ -309,6 +310,8 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                         runtime_writer_active=True,
                         foreground_start_command_active=True,
                         foreground_start_reads_runtime_during_writer=True,
+                        foreground_start_run_allocation_count=1,
+                        foreground_start_completed_actions_before_writer=True,
                     ),
                 )
         if not state.startup_card_bundle_ack_resolved:

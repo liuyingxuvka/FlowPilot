@@ -50,4 +50,16 @@ actual current artifact and evidence through the existing review/repair path.
 Controller is excluded because its Runtime-derived foreground action ledger is
 its only plan.
 
+Before writing that plan, reconstruct the role-scoped global target from the
+current packet, node context, and current authoritative references. List all
+packet-owned hard obligations and unresolved evidence before optional
+improvements, then order the work by dependency and risk rather than by what is
+easiest to mark complete. A mandatory reference that is missing, generic,
+stale, cross-run, or inaccessible requires the blocker or PM-routing outcome
+allowed by the current contract instead of a guessed standard. In the existing result fields and
+numbered plan, every completion claim must preserve the closure triangle:
+accepted goal or current obligation -> actual artifact or observable state ->
+current direct evidence. If any side is absent, report the obligation as
+unresolved or blocked. Do not add a result field for this semantic check.
+
 ${required_sections_block}${required_envelope_block}${required_values_block}${allowed_decisions_block}${segment_values_block}${body_template_block}Before returning, write a `Contract Self-Check` section in the sealed result, report, or decision body. If any required field, evidence item, or section is missing, return `blocked` or `needs_pm` instead of a pass.

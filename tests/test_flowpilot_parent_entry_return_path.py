@@ -6,6 +6,8 @@ import sys
 import unittest
 from pathlib import Path
 
+from tests.flowpilot_current_authority_test_helpers import normalized_current_authority_references
+
 
 ROOT = Path(__file__).resolve().parents[1]
 ASSETS = ROOT / "skills" / "flowpilot" / "assets"
@@ -124,6 +126,8 @@ def _accept_entry_gate(ledger: dict[str, object], node_id: str) -> None:
     generation = int(node.get("repair_generation", 0))
     plan_id = f"plan-{node_id}"
     context_id = f"context-{node_id}"
+    source_packet_id = f"{context_id}-packet"
+    source_result_id = f"{context_id}-result"
     ledger["node_acceptance_plans"][plan_id] = {
         "plan_id": plan_id,
         "status": "accepted",
@@ -132,15 +136,30 @@ def _accept_entry_gate(ledger: dict[str, object], node_id: str) -> None:
         "created_at": runtime.now_iso(),
     }
     ledger["node_context_packages"][context_id] = {
+        "schema_version": "black_box_flowpilot.node_context_package.v2",
         "context_package_id": context_id,
         "status": "accepted",
         "node_id": node_id,
+        "route_version": ledger.get("active_route_version"),
         "repair_generation": generation,
         "purpose": "Current node context.",
         "acceptance_criteria": list(node.get("acceptance_criteria") or []),
-        "relevant_references": [],
+        "relevant_references": normalized_current_authority_references(
+            ledger,
+            node_id=node_id,
+            source_packet_id=source_packet_id,
+            source_result_id=source_result_id,
+            include_repair=(
+                str(node.get("node_kind") or "") == "repair"
+                or generation > 0
+            ),
+            fixture_id=f"parent-entry-{node_id}",
+        ),
         "known_risks": [],
         "acceptance_item_projection": [],
+        "source_packet_id": source_packet_id,
+        "source_result_id": source_result_id,
+        "source_generation": int(ledger.get("source_generation", 0) or 0),
         "created_at": runtime.now_iso(),
     }
     node["node_acceptance_plan_id"] = plan_id
@@ -203,6 +222,7 @@ def _add_current_worker_quality_evidence(ledger: dict[str, object], node_id: str
         "result_id": result_id,
         "packet_id": packet_id,
         "status": "accepted",
+        "accepted": True,
         "body": json.dumps({"decision": "pass"}),
         "envelope": {"body_hash": runtime.hash_text(json.dumps({"decision": "pass"}))},
         "created_at": runtime.now_iso(),
@@ -555,6 +575,19 @@ class FlowPilotParentEntryReturnPathTests(unittest.TestCase):
                 "subject_id": "packet-pm-repair",
                 "repair_blocker_id": "blocker-active",
             },
+        }
+        ledger["results"]["result-pm-repair"] = {
+            "result_id": "result-pm-repair",
+            "packet_id": "packet-pm-repair",
+            "status": "accepted",
+            "accepted": True,
+            "body": json.dumps({"decision": "repair_current_scope"}),
+            "envelope": {
+                "body_hash": runtime.hash_text(
+                    json.dumps({"decision": "repair_current_scope"})
+                )
+            },
+            "created_at": runtime.now_iso(),
         }
         ledger["active_blockers"]["blocker-active"] = {
             "blocker_id": "blocker-active",

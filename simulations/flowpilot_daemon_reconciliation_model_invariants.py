@@ -112,6 +112,16 @@ def invariant_failures(state: State) -> list[str]:
     ):
         failures.append("foreground start retried runtime read without first waiting on the active writer")
 
+    if state.foreground_start_run_allocation_count > 1:
+        failures.append("one foreground start command allocated more than one current run")
+
+    if (
+        state.foreground_start_returns_live_daemon_status
+        and state.foreground_start_completed_actions_before_writer
+        and not state.foreground_start_completed_actions_preserved
+    ):
+        failures.append("foreground start retry lost completed folded-action evidence")
+
     if state.controller_receipt_action_class == "mail_delivery":
         mail_fold_complete = (
             state.mail_delivery_postcondition_applied
@@ -378,6 +388,8 @@ INVARIANTS = (
     _invariant("foreground_start_waits_on_active_runtime_writer", "foreground start command failed on active runtime writer instead of waiting and retrying"),
     _invariant("foreground_start_reports_after_runtime_writer_settlement", "foreground start reported live daemon status before runtime writer settled"),
     _invariant("foreground_start_retry_requires_writer_wait", "foreground start retried runtime read without first waiting on the active writer"),
+    _invariant("foreground_start_retry_keeps_one_run_allocation", "one foreground start command allocated more than one current run"),
+    _invariant("foreground_start_retry_preserves_completed_action_evidence", "foreground start retry lost completed folded-action evidence"),
     _invariant("mail_delivery_receipt_folds_or_blocks", "mail delivery receipt reached next action without packet ledger fold or control blocker"),
     _invariant("mail_delivery_postcondition_folds_packet_ledger", "mail delivery postcondition was applied without moving the packet ledger and Router flag together"),
     _invariant("mail_delivery_flag_requires_packet_release", "mail delivery Router flag was set while the packet still belonged to Controller"),

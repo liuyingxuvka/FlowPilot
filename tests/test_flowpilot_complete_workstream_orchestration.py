@@ -9,8 +9,11 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 ASSETS = ROOT / "skills" / "flowpilot" / "assets"
+SIMULATIONS = ROOT / "simulations"
 if str(ASSETS) not in sys.path:
     sys.path.insert(0, str(ASSETS))
+if str(SIMULATIONS) not in sys.path:
+    sys.path.insert(0, str(SIMULATIONS))
 
 host = importlib.import_module("flowpilot_core_runtime.host")
 packet_result_contracts = importlib.import_module(
@@ -21,6 +24,9 @@ review_window_contracts = importlib.import_module(
 )
 role_handoff = importlib.import_module("flowpilot_core_runtime.role_handoff")
 runtime = importlib.import_module("flowpilot_core_runtime.runtime")
+workstream_runner = importlib.import_module(
+    "run_flowpilot_complete_workstream_orchestration_checks"
+)
 
 
 ROLE_CARDS = {
@@ -33,6 +39,15 @@ ROLE_CARDS = {
 
 
 class FlowPilotCompleteWorkstreamOrchestrationTests(unittest.TestCase):
+    def test_model_result_paths_are_public_repo_relative(self) -> None:
+        report = workstream_runner._implementation_alignment()
+
+        self.assertTrue(report["ok"], report)
+        self.assertTrue(report["paths"])
+        for path in report["paths"]:
+            self.assertFalse(Path(path).is_absolute(), path)
+            self.assertNotIn("\\", path)
+
     def test_every_substantive_role_card_requires_a_complete_numbered_workstream(self) -> None:
         for role, path in ROLE_CARDS.items():
             with self.subTest(role=role):
@@ -136,9 +151,9 @@ class FlowPilotCompleteWorkstreamOrchestrationTests(unittest.TestCase):
         )
 
     def test_reviewer_audits_plan_rows_against_actual_artifacts(self) -> None:
-        challenge = review_window_contracts.REVIEW_FLOW_STAGE_CHALLENGE_BINDINGS[
+        challenge = review_window_contracts.review_flow_stage_challenge_rule(
             "worker_node_result_review"
-        ]["challenge_rule"].lower()
+        ).lower()
         for phrase in (
             "workstream_plan_and_completion",
             "actual artifact",

@@ -20,6 +20,7 @@ def build_chat_markdown(
     hidden_leaf_progress: dict[str, Any] | None = None,
     source_status: str,
     source_findings: list[str],
+    replacement_history: dict[str, Any] | None = None,
 ) -> str:
     """Build only the user-visible route sign body.
 
@@ -61,6 +62,29 @@ def build_chat_markdown(
                 "Hidden leaf progress: "
                 f"{hidden_leaf_progress.get('completed_hidden_leaf_count', 0)}/"
                 f"{hidden_leaf_progress.get('hidden_leaf_count', 0)} complete",
+                "",
+            ]
+        )
+    history = replacement_history or {}
+    if history.get("history_available"):
+        if history.get("rendered_visible"):
+            lines.extend(
+                [
+                    "Repair history: shown as history-only context; the active replacement remains current authority. Use “Hide repair history” to return to the current-only view.",
+                    "",
+                ]
+            )
+        else:
+            lines.extend(
+                [
+                    "Repair history: available on demand. Use “Show repair history” to reveal it; current work remains replacement-only.",
+                    "",
+                ]
+            )
+    elif history.get("requested_visible") and history.get("producer_identity_status") == "incomplete":
+        lines.extend(
+            [
+                "Repair history: unavailable because the current route source does not provide complete replacement identity.",
                 "",
             ]
         )

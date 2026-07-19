@@ -5,23 +5,33 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=14 initial_states=1 traces=105",
+    "summary": "sequences=18 initial_states=1 traces=171",
     "violation_count": 0
   },
   "hazard_detection": {
     "expected": [
+      "aggregate_terminal_replay_accepted",
       "checks_before_tests",
       "code_before_openspec",
       "console_leaks_sealed_body",
+      "descendants_live_after_interruption",
       "fixed_role_topology_reintroduced",
       "git_before_install",
+      "idle_or_historical_role_restored_on_resume",
       "install_before_background",
+      "mixed_source_fingerprint_evidence_consumed",
+      "partial_staged_effect_identity_reused",
       "prior_runtime_state_authoritative",
       "release_before_git",
       "router_before_packets",
-      "runtime_before_flowguard_model"
+      "runtime_before_flowguard_model",
+      "runtime_scored_workstream_semantics",
+      "unstructured_authority_reference_accepted"
     ],
     "hazards": {
+      "aggregate_terminal_replay_accepted": [
+        "terminal replay passed without exact current segment accounting"
+      ],
       "checks_before_tests": [
         "routine checks passed before focused tests existed"
       ],
@@ -31,14 +41,26 @@
       "console_leaks_sealed_body": [
         "console exposed sealed packet or result body"
       ],
+      "descendants_live_after_interruption": [
+        "interrupted validation left a live descendant process"
+      ],
       "fixed_role_topology_reintroduced": [
         "fixed role topology was required as current authority"
       ],
       "git_before_install": [
         "git commit happened before install sync/check"
       ],
+      "idle_or_historical_role_restored_on_resume": [
+        "resume restored an idle or historical role outside the exact current obligation"
+      ],
       "install_before_background": [
         "install sync/check ran before background evidence was inspected"
+      ],
+      "mixed_source_fingerprint_evidence_consumed": [
+        "verification consumed producer evidence from a different source fingerprint"
+      ],
+      "partial_staged_effect_identity_reused": [
+        "pending staged effect was reused under a different current identity"
       ],
       "prior_runtime_state_authoritative": [
         "prior runtime state was used as current authority"
@@ -51,6 +73,12 @@
       ],
       "runtime_before_flowguard_model": [
         "runtime assets were written before development-process modeling"
+      ],
+      "runtime_scored_workstream_semantics": [
+        "Runtime replaced Reviewer by semantically scoring the workstream narrative"
+      ],
+      "unstructured_authority_reference_accepted": [
+        "free-form or unfingerprinted authority reference was accepted"
       ]
     },
     "ok": true
@@ -69,6 +97,9 @@
       "implement_lease_packet_runtime",
       "implement_router_runtime",
       "implement_flowguard_review_closure_console",
+      "implement_current_authority_and_exact_resume",
+      "implement_review_effect_and_terminal_replay",
+      "implement_cleanup_and_same_fingerprint_protocol",
       "write_focused_tests",
       "run_routine_checks",
       "inspect_background_regressions",
@@ -79,6 +110,8 @@
     "ok": true,
     "state": {
       "background_regressions_inspected": true,
+      "cleanup_and_fingerprint_protocol_done": true,
+      "current_authority_and_resume_done": true,
       "flowguard_dev_model_passed": true,
       "flowguard_review_closure_console_done": true,
       "git_committed": true,
@@ -87,6 +120,7 @@
       "ledger_runtime_done": true,
       "openspec_validated": true,
       "release_claimed": true,
+      "review_effect_and_replay_done": true,
       "router_runtime_done": true,
       "routine_checks_passed": true,
       "runtime_assets_written": true,

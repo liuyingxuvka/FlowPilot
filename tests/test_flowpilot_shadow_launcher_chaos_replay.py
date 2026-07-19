@@ -6,7 +6,6 @@ import io
 import json
 import os
 import shutil
-import signal
 import subprocess
 import sys
 import tempfile
@@ -40,9 +39,13 @@ class FlowPilotShadowLauncherChaosReplayTests(FlowPilotRouterRuntimeTestBase):
         command = [sys.executable, str(router_script), "--root", str(root), *args]
         if "--json" not in command:
             command.append("--json")
+        process_command, process_environment, _process_launch_plan = (
+            router._resolve_current_python_process_launch(command)
+        )
         completed = subprocess.run(
-            command,
+            process_command,
             cwd=router_script.parent,
+            env=process_environment,
             text=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -54,34 +57,12 @@ class FlowPilotShadowLauncherChaosReplayTests(FlowPilotRouterRuntimeTestBase):
         return payload
 
     def stop_opened_daemon(self, router_script: Path, root: Path, started: dict) -> dict:
-        spawn_info = {}
-        for item in started.get("folded_applied_actions", []):
-            result = item.get("result") if isinstance(item, dict) else {}
-            if isinstance(result, dict) and isinstance(result.get("spawn_info"), dict):
-                spawn_info = result["spawn_info"]
-        child_pid = spawn_info.get("pid")
-        if not isinstance(child_pid, int) or child_pid <= 0:
-            try:
-                state = self.run_installed_cli(router_script, root, ["state"])
-                run_root = root / str(state.get("run_root") or "")
-                lock = read_json(run_root / "runtime" / "router_daemon.lock")
-                child_pid = (lock.get("owner") or {}).get("pid")
-            except (AssertionError, OSError, ValueError, json.JSONDecodeError):
-                child_pid = None
+        del started
         stopped = self.run_installed_cli(router_script, root, ["daemon-stop", "--reason", "shadow_launcher_test_cleanup"])
-        if not isinstance(child_pid, int) or child_pid <= 0:
-            return stopped
-        deadline = time.monotonic() + 3.0
-        while time.monotonic() < deadline:
-            try:
-                os.kill(child_pid, 0)
-            except OSError:
-                return stopped
-            time.sleep(0.1)
-        try:
-            os.kill(child_pid, signal.SIGTERM)
-        except OSError:
-            return stopped
+        cleanup = stopped.get("process_cleanup") if isinstance(stopped.get("process_cleanup"), dict) else {}
+        self.assertTrue(cleanup.get("cleanup_confirmed"), stopped)
+        self.assertTrue(cleanup.get("descendant_zero_confirmed"), stopped)
+        self.assertEqual(cleanup.get("remaining_live_identities"), [])
         return stopped
 
     def test_installed_launcher_shadow_start_reaches_releasable_standard_state(self) -> None:
@@ -97,13 +78,33 @@ class FlowPilotShadowLauncherChaosReplayTests(FlowPilotRouterRuntimeTestBase):
             state = self.run_installed_cli(router_script, root, ["state"])
             self.assertTrue(state["run_root"])
             run_root = root / state["run_root"]
+            run_roots = list((root / ".flowpilot" / "runs").iterdir())
+            self.assertEqual(
+                [candidate.name for candidate in run_roots],
+                [run_root.name],
+                "one start command must allocate exactly one current run",
+            )
             self.assertTrue((run_root / "router_state.json").exists())
             self.assertTrue((run_root / "runtime" / "router_daemon.lock").exists())
+            daemon_owner = dict(
+                read_json(run_root / "runtime" / "router_daemon.lock").get("owner") or {}
+            )
         finally:
             stopped = self.stop_opened_daemon(router_script, root, started)
 
         lock = read_json(run_root / "runtime" / "router_daemon.lock")
         self.assertTrue(stopped["ok"])
+        self.assertEqual(
+            stopped["process_cleanup"]["target_identity"]["pid"],
+            daemon_owner["pid"],
+            stopped,
+        )
+        self.assertEqual(
+            stopped["process_cleanup"]["target_identity"]["start_token"],
+            daemon_owner["start_token"],
+            stopped,
+        )
+        self.assertFalse(router._process_identity_is_live(daemon_owner), stopped)
         self.assertIn(lock["status"], {"released", "terminal_stopped", "error"})
 
     def test_crash_recovery_bundle_handles_dead_daemon_duplicate_resume_and_progress_only_proof(self) -> None:

@@ -1,5 +1,5 @@
 {
-  "schema_version": "flowpilot.parent_responsibility_ledger.v1",
+  "schema_version": "flowpilot.parent_responsibility_ledger.v2",
   "heavyweight_state_threshold": 10000,
   "parents": {
     "meta": {
@@ -122,12 +122,14 @@
             "flowpilot_terminal_state_monotonicity",
             "flowpilot_terminal_summary",
             "defect_governance",
-            "flowpilot_repair_transaction"
+            "flowpilot_repair_transaction",
+            "flowpilot_unified_repair_integrity"
           ],
           "invariant_families": [
             "terminal_state_monotonicity",
             "final_summary_boundary",
-            "repair_transaction_evidence"
+            "repair_transaction_evidence",
+            "unified_repair_integrity"
           ],
           "release_obligation": "thin_parent_ok"
         },
@@ -275,6 +277,32 @@
       ]
     }
   },
+  "typed_consumers": [
+    {
+      "relation_id": "consumer.capability.unified_repair_terminal_orchestration",
+      "evidence_id": "flowpilot_unified_repair_integrity",
+      "primary_owner_parent": "meta",
+      "primary_owner_partition": "terminal_ledger",
+      "consumer_parent": "capability",
+      "consumer_partition_ids": [
+        "child_skill_capability",
+        "packet_and_role_authority",
+        "terminal_ledger"
+      ],
+      "relation_types": [
+        "orchestration_repair_intake",
+        "terminal_replay_shared_engine"
+      ],
+      "required_invariant_families": [
+        "complete_workstream_semantic_result",
+        "capability_backward_replay",
+        "terminal_capability_ledger"
+      ],
+      "status": "current",
+      "claim_boundary": "Capability consumes the current shared-engine child through its orchestration, packet/result authority, and terminal replay partitions; Meta terminal_ledger remains the single evidence owner."
+    }
+  ],
+  "typed_consumer_integration_gaps": [],
   "state_write_ownership": [
     {
       "field": "current_run_pointer",

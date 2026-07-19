@@ -223,7 +223,9 @@ def _contract_refinement_report(exported: Mapping[str, Any]) -> dict[str, Any]:
         {},
     )
     final_args = [str(value) for value in final_check.get("args", [])]
-    evaluator_hash = hashlib.sha256(model.__file__ and Path(model.__file__).read_bytes()).hexdigest().upper()
+    evaluator_hash = hashlib.sha256(
+        model.__file__ and Path(model.__file__).read_bytes()
+    ).hexdigest().upper()
     findings: list[str] = []
     if source.get("integration_mode") != "native-integrated":
         findings.append("integration_mode_not_native_integrated")
@@ -274,18 +276,25 @@ def _contract_refinement_report(exported: Mapping[str, Any]) -> dict[str, Any]:
     if "--background" in final_args or "--resume" in final_args:
         findings.append("final_receipt_consumer_can_execute_owner")
     if "--verify-background" not in final_args or not any(
-        value.replace("\\", "/").endswith("/complete-workstream-final17")
+        value.replace("\\", "/").endswith("/v0.12.0-final")
         for value in final_args
     ):
-        findings.append("final_receipt_identity_not_final17_read_only")
-    native_version = str(
-        ((source.get("depth_profile") or {}).get("calibration") or {}).get(
-            "native_evaluator_version"
-        )
-        or ""
-    )
-    if native_version != evaluator_hash:
-        findings.append("native_evaluator_hash_stale")
+        findings.append("final_receipt_identity_not_v0_12_0_read_only")
+    depth_profile = source.get("depth_profile") or {}
+    if depth_profile.get("enforcement_level") != "enforced":
+        findings.append("declared_check_supervision_not_enforced")
+    if depth_profile.get("required_closure_profiles") != ["enforced"]:
+        findings.append("declared_check_closure_not_singular")
+    provider_runtime = depth_profile.get("provider_runtime") or {}
+    if provider_runtime.get("required_enrollment_status") != "enrolled":
+        findings.append("provider_runtime_not_enrolled")
+    readiness_check_ids = {
+        str(check_id)
+        for check_id in provider_runtime.get("readiness_check_ids", [])
+        if check_id
+    }
+    if not readiness_check_ids or not readiness_check_ids <= declared_check_ids:
+        findings.append("provider_runtime_readiness_not_target_owned")
     return {
         "ok": not findings,
         "declared_obligation_count": len(declared_obligations),

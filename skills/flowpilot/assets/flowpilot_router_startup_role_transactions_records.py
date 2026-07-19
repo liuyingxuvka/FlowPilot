@@ -73,8 +73,18 @@ def _normalize_role_recovery_agent_records(router: ModuleType, project_root: Pat
         raise RouterError('role recovery trigger_source mismatch')
     requested_scope = str(transaction.get('recovery_scope') or 'targeted')
     payload_scope = str(payload.get('recovery_scope') or requested_scope)
-    if payload_scope not in {requested_scope, 'full_role_binding'}:
+    if payload_scope != requested_scope:
         raise RouterError('role recovery scope mismatch')
+    unsupported_full_keys = sorted(
+        key
+        for key in payload
+        if key == 'full_role_binding' or key.startswith('full_role_binding_')
+    )
+    if unsupported_full_keys:
+        raise RouterError(
+            'role recovery contains unsupported full-role fields: '
+            + ', '.join(unsupported_full_keys)
+        )
     target_roles = [str(role) for role in transaction.get('target_role_keys') or []]
     payload_targets = payload.get('target_role_keys')
     if payload_targets != target_roles:
@@ -91,9 +101,8 @@ def _normalize_role_recovery_agent_records(router: ModuleType, project_root: Pat
     role_binding = read_json_if_exists(run_root / 'role_binding_ledger.json')
     slots = role_binding.get('role_slots') if isinstance(role_binding.get('role_slots'), list) else []
     existing_by_role = {str(slot.get('role_key')): slot for slot in slots if isinstance(slot, dict) and slot.get('role_key') in RUNTIME_ROLE_KEYS}
-    full_role_binding = payload_scope == 'full_role_binding' or any((isinstance(raw, dict) and raw.get('recovery_result') == ROLE_BINDING_FULL_SET_RECOVERY_RESULT for raw in iterable))
-    expected_roles = list(RUNTIME_ROLE_KEYS) if full_role_binding else target_roles
-    context_roles = list(RUNTIME_ROLE_KEYS) if full_role_binding else target_roles
+    expected_roles = target_roles
+    context_roles = target_roles
     contexts = {
         role: router._resume_role_context(project_root, run_root, run_state, role)
         for role in context_roles
@@ -113,9 +122,21 @@ def _normalize_role_recovery_agent_records(router: ModuleType, project_root: Pat
             raise RouterError(f'role recovery record {role} is outside the expected recovery scope')
         if role in records_by_role:
             raise RouterError(f'duplicate role recovery record for {role}')
+        unsupported_record_keys = sorted(
+            key
+            for key in raw
+            if key == 'full_role_binding' or key.startswith('full_role_binding_')
+        )
+        if unsupported_record_keys:
+            raise RouterError(
+                f"{role} role recovery contains unsupported full-role fields: "
+                + ', '.join(unsupported_record_keys)
+            )
         result = str(raw.get('recovery_result') or '')
         if result not in ROLE_RECOVERY_RESULTS:
             raise RouterError(f'{role} requires supported recovery_result')
+        if result == ROLE_BINDING_FULL_SET_RECOVERY_RESULT:
+            raise RouterError(f'{role} full role binding recovery is unsupported')
         restore_attempted = raw.get('restore_attempted') is True
         restore_result = str(raw.get('restore_result') or 'unknown')
         targeted_attempted = raw.get('targeted_replacement_attempted') is True
@@ -123,8 +144,6 @@ def _normalize_role_recovery_agent_records(router: ModuleType, project_root: Pat
         old_close_failed = raw.get('old_close_failed') is True
         binding_capacity_full = raw.get('binding_capacity_full') is True or targeted_result == 'capacity_full'
         slot_reconciliation_attempted = raw.get('slot_reconciliation_attempted') is True
-        full_recycle_attempted = raw.get('full_role_binding_recovery_attempted') is True
-        full_recycle_result = str(raw.get('full_role_binding_recovery_result') or 'not_attempted')
         if result != ROLE_BINDING_ENVIRONMENT_BLOCKED_RESULT:
             legacy_record_keys = {
                 'host_liveness_status',
@@ -165,6 +184,9 @@ def _normalize_role_recovery_agent_records(router: ModuleType, project_root: Pat
                 raise RouterError(f'{role} old-agent restore result requires restore_attempted=true and restore_result=success')
             if binding_decision != 'existing_current_agent_reused':
                 raise RouterError(f'{role} old-agent restore requires existing_current_agent_reused')
+            current_agent_id = str(existing_by_role.get(role, {}).get('agent_id') or '').strip()
+            if not current_agent_id or agent_id.strip() != current_agent_id:
+                raise RouterError(f'{role} old-agent restore requires the exact current role-binding agent')
         elif result == ROLE_BINDING_TARGETED_REPLACEMENT_RESULT:
             if not restore_attempted or restore_result != 'failed':
                 raise RouterError(f'{role} targeted replacement requires failed restore first')
@@ -172,23 +194,25 @@ def _normalize_role_recovery_agent_records(router: ModuleType, project_root: Pat
                 raise RouterError(f'{role} targeted replacement requires targeted_replacement_attempted=true and targeted_replacement_result=success')
             if binding_decision != 'current_run_replacement_opened':
                 raise RouterError(f'{role} targeted replacement requires current_run_replacement_opened')
-        elif result == ROLE_BINDING_FULL_SET_RECOVERY_RESULT:
-            if requested_scope == 'targeted' and (not (restore_attempted and restore_result == 'failed' and targeted_attempted and (targeted_result in {'failed', 'capacity_full'}) and slot_reconciliation_attempted)):
-                raise RouterError(f'{role} full role binding recycle requires targeted restore/replacement/slot reconciliation escalation')
-            if not full_recycle_attempted or full_recycle_result != 'success':
-                raise RouterError(f'{role} full role binding recycle requires full_role_binding_recovery_attempted=true and full_role_binding_recovery_result=success')
-            if binding_decision != 'current_run_replacement_opened':
-                raise RouterError(f'{role} full role binding recycle requires current_run_replacement_opened')
+            if (
+                isinstance(existing_by_role.get(role, {}).get('agent_id'), str)
+                and agent_id.strip() == str(existing_by_role[role].get('agent_id')).strip()
+            ):
+                raise RouterError(f'{role} targeted replacement requires a new role-binding agent')
         elif result == ROLE_BINDING_ENVIRONMENT_BLOCKED_RESULT:
-            if not full_recycle_attempted or full_recycle_result != 'failed':
-                raise RouterError(f'{role} environment_blocked requires failed full role binding recycle')
-        if old_close_failed and binding_capacity_full and (not full_recycle_attempted):
-            raise RouterError(f'{role} capacity/full-slot conflict requires full role binding recycle escalation')
-        if result in {ROLE_BINDING_TARGETED_REPLACEMENT_RESULT, ROLE_BINDING_FULL_SET_RECOVERY_RESULT}:
+            if not restore_attempted or restore_result != 'failed':
+                raise RouterError(f'{role} environment_blocked requires failed restore first')
+            if not targeted_attempted or targeted_result not in {'failed', 'capacity_full'}:
+                raise RouterError(f'{role} environment_blocked requires failed targeted replacement')
+            if binding_capacity_full and not slot_reconciliation_attempted:
+                raise RouterError(f'{role} capacity/full-slot conflict requires requested-slot reconciliation')
+        if result == ROLE_BINDING_TARGETED_REPLACEMENT_RESULT:
             if raw.get('superseded_agent_output_quarantined') is not True:
-                raise RouterError(f'{role} replacement/recycle requires superseded_agent_output_quarantined=true')
+                raise RouterError(f'{role} replacement requires superseded_agent_output_quarantined=true')
         context = contexts[role]
         memory_status = context['role_memory_status']
+        if memory_status == 'stale':
+            raise RouterError(f'{role} role recovery rejects stale role memory')
         if result != ROLE_BINDING_ENVIRONMENT_BLOCKED_RESULT and memory_status == 'available':
             if raw.get('memory_packet_path') != context['memory_packet_path']:
                 raise RouterError(f'{role} memory packet path mismatch')
@@ -203,7 +227,7 @@ def _normalize_role_recovery_agent_records(router: ModuleType, project_root: Pat
                 raise RouterError(f'{role} replacement must be seeded from common current-run context')
         old_slot = existing_by_role.get(role) or {}
         old_agent_id = raw.get('old_agent_id') or old_slot.get('agent_id')
-        records_by_role[role] = {'role_key': role, 'old_agent_id': old_agent_id, 'agent_id': agent_id, 'model_policy': ROLE_BINDING_MODEL_POLICY if agent_id else None, 'reasoning_effort_policy': ROLE_BINDING_REASONING_EFFORT_POLICY if agent_id else None, 'recovery_result': result, 'restore_attempted': restore_attempted, 'restore_result': restore_result, 'targeted_replacement_attempted': targeted_attempted, 'targeted_replacement_result': targeted_result, 'old_close_failed': old_close_failed, 'binding_capacity_full': binding_capacity_full, 'slot_reconciliation_attempted': slot_reconciliation_attempted, 'full_role_binding_recovery_attempted': full_recycle_attempted, 'full_role_binding_recovery_result': full_recycle_result, 'role_surface_addressable': result != ROLE_BINDING_ENVIRONMENT_BLOCKED_RESULT, 'current_run_binding_decision': binding_decision, 'rehydrated_for_run_id': run_state['run_id'], 'memory_context_injected': result != ROLE_BINDING_ENVIRONMENT_BLOCKED_RESULT, 'packet_ownership_reconciled': result != ROLE_BINDING_ENVIRONMENT_BLOCKED_RESULT, 'role_binding_epoch_advanced': result != ROLE_BINDING_ENVIRONMENT_BLOCKED_RESULT, 'superseded_agent_output_quarantined': bool(raw.get('superseded_agent_output_quarantined')), 'role_memory_status': memory_status, 'memory_packet_path': context['memory_packet_path'], 'memory_packet_hash': context['memory_packet_hash'], 'core_prompt_path': context['core_prompt_path'], 'core_prompt_hash': context['core_prompt_hash'], 'memory_seeded_from_current_run': result != ROLE_BINDING_ENVIRONMENT_BLOCKED_RESULT and memory_status == 'available', 'replacement_seeded_from_common_run_context': result != ROLE_BINDING_ENVIRONMENT_BLOCKED_RESULT and memory_status != 'available', 'recorded_at': utc_now()}
+        records_by_role[role] = {'role_key': role, 'old_agent_id': old_agent_id, 'agent_id': agent_id, 'model_policy': ROLE_BINDING_MODEL_POLICY if agent_id else None, 'reasoning_effort_policy': ROLE_BINDING_REASONING_EFFORT_POLICY if agent_id else None, 'recovery_result': result, 'restore_attempted': restore_attempted, 'restore_result': restore_result, 'targeted_replacement_attempted': targeted_attempted, 'targeted_replacement_result': targeted_result, 'old_close_failed': old_close_failed, 'binding_capacity_full': binding_capacity_full, 'slot_reconciliation_attempted': slot_reconciliation_attempted, 'role_surface_addressable': result != ROLE_BINDING_ENVIRONMENT_BLOCKED_RESULT, 'current_run_binding_decision': binding_decision, 'rehydrated_for_run_id': run_state['run_id'], 'memory_context_injected': result != ROLE_BINDING_ENVIRONMENT_BLOCKED_RESULT, 'packet_ownership_reconciled': result != ROLE_BINDING_ENVIRONMENT_BLOCKED_RESULT, 'role_binding_epoch_advanced': result != ROLE_BINDING_ENVIRONMENT_BLOCKED_RESULT, 'superseded_agent_output_quarantined': bool(raw.get('superseded_agent_output_quarantined')), 'role_memory_status': memory_status, 'memory_packet_path': context['memory_packet_path'], 'memory_packet_hash': context['memory_packet_hash'], 'core_prompt_path': context['core_prompt_path'], 'core_prompt_hash': context['core_prompt_hash'], 'memory_seeded_from_current_run': result != ROLE_BINDING_ENVIRONMENT_BLOCKED_RESULT and memory_status == 'available', 'replacement_seeded_from_common_run_context': result != ROLE_BINDING_ENVIRONMENT_BLOCKED_RESULT and memory_status != 'available', 'recorded_at': utc_now()}
     missing = [role for role in expected_roles if role not in records_by_role]
     if missing:
         raise RouterError(f"missing role recovery records: {', '.join(missing)}")

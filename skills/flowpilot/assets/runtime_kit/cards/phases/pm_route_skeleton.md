@@ -29,6 +29,20 @@ Before drafting, read the latest
 `route_history_index.json`. If this is a fresh route, cite that the context
 contains no completed or superseded nodes yet. Do not draft from chat history,
 old route files, or Controller summaries.
+
+Before choosing route nodes, reconstruct the accepted global target from the
+current root/user contract and other current authoritative references, then
+scan unclosed obligations before completed history or optional improvement:
+active acceptance items, realization obligations, non-downgrade rules, hard
+risks, blockers, stale or missing evidence, generated-resource consumption,
+producer/consumer handoffs, parent reattachment, and terminal proof. Every
+current hard item must have an owning current route node or an explicit current
+blocker, approved waiver, user stop, or named later gate with owner and evidence
+responsibility. Do not route only the easiest subset or let recent/completed
+work displace unfinished hard work. Express this through the existing route
+fields, acceptance criteria, required outputs, checks, and requirement or skill
+ids; do not create a second obligation schema.
+
 The first route draft must be a high-standard execution design, not a low-cost
 task list. It must show how the strongest feasible product target, root
 contract, acceptance item registry, child-skill standards, FlowGuard
@@ -141,6 +155,12 @@ Route requirements:
   `acceptance_item_ids`. Do not leave user-sourced items or PM high-standard
   items only in prose, and do not reference unknown item ids. Route redesigns
   must reassign all still-active items before activation;
+- preserve obligation-to-evidence continuity across the route. For every
+  current hard obligation, the owning node's existing fields must lead from the
+  accepted goal to the expected actual artifact or observable state and then to
+  the current direct evidence or explicit blocker that Reviewer will inspect.
+  A planned file, status row, summary, hash, report, or self-attestation is not
+  by itself closure evidence;
 - every route node should be written so downstream roles can recover why the
   node exists, what high-standard acceptance slice it owns, which current
   references define that slice, what hard part or thin-success trap it must

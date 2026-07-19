@@ -21,10 +21,11 @@
 
 English comes first. The second half is a full Chinese mirror.
 
-This working tree is the local v0.12.0 source candidate. Git commit, tag, push,
-and GitHub Release publication are intentionally deferred to a later maintainer
-action; the source-version label does not claim that the remote release already
-exists.
+This source is v0.12.0. Its release closure requires one exact task-owned
+commit, a fast-forward update of the GitHub default branch, an annotated
+`v0.12.0` tag, and a source-only GitHub Release that all identify that same
+commit. Until those remote checks pass, the version label is source metadata,
+not a claim that publication has completed.
 
 ## What FlowPilot Is
 
@@ -366,8 +367,10 @@ startup intake
 | Required core dependency | real `flowguard` Python package |
 | Current UI surface | Windows WPF startup intake dialog plus chat route signs |
 
-当前工作树是本地 `v0.12.0` 源码候选。Git commit、tag、push 和 GitHub Release
-已明确延期，由 maintainer 之后单独处理；这里的 Source version 不代表远端版本已经发布。
+当前源码版本是 `v0.12.0`。本次发布闭环要求：只包含本任务文件的精确 Git commit、
+GitHub 默认分支的 fast-forward 更新、指向同一 commit 的 `v0.12.0` annotated tag，
+以及同一版本的 source-only GitHub Release。远端核验完成前，Source version 只是
+源码元数据，不代表发布已经完成。
 
 `v0.12.0` 把当前已打开 packet 返回的 `submission_checklist.v2` 设为角色唯一可见的机械提交权威，并把它绑定到当前 run、packet、lease、route、source generation 和 contract fingerprint。packet body 镜像、private helper、退役 alias、历史 execution source 都不能成为第二条成功路径。测试方面，系统先完整登记有限机械契约空间，再完整执行所有强制单故障与高风险类别；其余声明空间采用确定性的 pairwise、three-way、fuzz、replay 和历史 miss 覆盖。这个结论只针对已声明的有限 runtime contract，并不声称任意自然语言 AI 回答都一定正确。
 

@@ -91,10 +91,10 @@
     "missing": [],
     "ok": true,
     "paths": [
-      "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\skills\\flowpilot\\assets\\flowpilot_core_runtime\\runtime.py",
-      "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\skills\\flowpilot\\assets\\flowpilot_core_runtime\\packet_result_contracts.py",
-      "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\skills\\flowpilot\\assets\\flowpilot_core_runtime\\packet_stage_evidence_matrix.py",
-      "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tests\\test_flowpilot_ordinary_resource_discovery.py"
+      "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+      "skills/flowpilot/assets/flowpilot_core_runtime/packet_result_contracts.py",
+      "skills/flowpilot/assets/flowpilot_core_runtime/packet_stage_evidence_matrix.py",
+      "tests/test_flowpilot_ordinary_resource_discovery.py"
     ]
   },
   "known_bad_hazards": {

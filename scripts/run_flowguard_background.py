@@ -32,6 +32,8 @@ def _command_from_remainder(values: Sequence[str]) -> tuple[str, ...]:
         command.pop(0)
     if not command:
         raise ValueError("a command is required after --")
+    if command[0] == "python":
+        command[0] = sys.executable
     return tuple(command)
 
 

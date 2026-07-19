@@ -136,8 +136,11 @@ python scripts/check_public_release.py
 
 Expected:
 
-- tracked files do not include `.flowpilot/`, `.flowguard/`, `kb/`, local
-  environment files, caches, or secret-shaped content;
+- tracked files do not include `.flowpilot/`, private `.flowguard/` state,
+  `kb/`, local environment files, caches, or secret-shaped content; the exact
+  four-file public Behavior Commitment Ledger source/model allowlist under
+  `.flowguard/behavior_commitment_ledger/` is permitted, while every other
+  `.flowguard/` path remains rejected;
 - the dependency manifest parses and has explicit sources for GitHub-backed
   dependencies;
 - external dependency `SKILL.md` links are reachable when URL checking is not

@@ -1,11 +1,25 @@
 {
+  "claim_boundary": "The FlowGuard state model covers blocker-backed and PM-proactive canonical repair selection. Runtime conformance remains failed until the direct historical-repair entry and owner tests exist.",
+  "decision": "current_runtime_gap",
+  "expected_runtime_gaps": [
+    {
+      "action_id": "runtime.add_pm_historical_node_repair_decision",
+      "finding_id": "repair.pm_historical_direct_entry_missing",
+      "status": "open"
+    },
+    {
+      "action_id": "tests.add_pm_historical_node_repair_matrix",
+      "finding_id": "repair.pm_historical_direct_test_missing",
+      "status": "open"
+    }
+  ],
   "flowguard": {
     "dead_branch_count": 0,
     "exception_branch_count": 0,
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=11 initial_states=1 traces=246",
+    "summary": "sequences=13 initial_states=1 traces=732",
     "violation_count": 0
   },
   "hazard_detection": {
@@ -20,6 +34,9 @@
       "parent_repair_missing_child_specs",
       "parent_repair_missing_contract",
       "parent_repair_missing_inherited_history",
+      "pm_historical_defect_forced_through_blocker",
+      "pm_historical_defect_missing_impact_frontier",
+      "pm_historical_defect_missing_target_evidence",
       "removed_decision_reached_runtime",
       "repair_packet_open_without_current_open_packet",
       "repair_packet_open_without_fresh_packet",
@@ -72,6 +89,18 @@
         "parent repair replacement failed to record inherited child history",
         "completion claimed before repair-scope obligations were satisfied"
       ],
+      "pm_historical_defect_forced_through_blocker": [
+        "PM historical repair fabricated a blocker prerequisite",
+        "completion claimed before repair-scope obligations were satisfied"
+      ],
+      "pm_historical_defect_missing_impact_frontier": [
+        "PM historical repair lacks an affected frontier",
+        "completion claimed before repair-scope obligations were satisfied"
+      ],
+      "pm_historical_defect_missing_target_evidence": [
+        "PM historical repair lacks target defect evidence",
+        "completion claimed before repair-scope obligations were satisfied"
+      ],
       "removed_decision_reached_runtime": [
         "removed PM repair decision reached runtime application",
         "completion claimed before repair-scope obligations were satisfied"
@@ -114,6 +143,7 @@
     "ok": true
   },
   "model_id": "flowpilot_canonical_repair_scope_rotation",
+  "model_ok": true,
   "model_test_alignment": {
     "evidence": [
       "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
@@ -123,7 +153,10 @@
       "tests/test_flowpilot_complete_system_runtime.py",
       "tests/test_flowpilot_break_glass_depth.py"
     ],
-    "missing": [],
+    "missing": [
+      "pm_historical_defect_direct_runtime_entry",
+      "pm_historical_defect_direct_runtime_test"
+    ],
     "obligations": {
       "current_pm_menu_includes_break_glass": true,
       "current_scope_replacement_test": true,
@@ -139,20 +172,30 @@
       "pm_break_glass_runtime_route": true,
       "pm_disposition_current_name": true,
       "pm_flowguard_acceptance_break_glass_test": true,
+      "pm_historical_defect_direct_runtime_entry": false,
+      "pm_historical_defect_direct_runtime_test": false,
       "pm_repair_break_glass_test": true,
       "removed_decision_negative_test": true,
       "repair_depth_breakglass_test": true,
       "route_redesign_test": true,
       "same_lineage_breakglass_runtime": true
     },
-    "ok": true
+    "ok": false
   },
-  "ok": true,
+  "ok": false,
   "result_type": "flowpilot_canonical_repair_scope_rotation_checks",
+  "runtime_conformance_ok": false,
+  "source_fingerprints": {
+    "simulations/flowpilot_canonical_repair_scope_rotation_model.py": "23d09c973f0c04b5b0333c0c1738d7ba2b763f4b0e3d21bd1c1825d24a9316a5",
+    "simulations/run_flowpilot_canonical_repair_scope_rotation_checks.py": "5053d8768e6eed3f08d7f8e4f68eebb01d6129483c0caed6bd996f096068362d",
+    "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py": "7b8474041c4a445c15df1269a4453004bca2414526b9179bcc0557ae95f9ffdb",
+    "tests/test_flowpilot_core_runtime.py": "389766837dcaa85aed13bf7217976a4236d7621e559b58efd063b10057b3b32c",
+    "tests/test_flowpilot_high_standard_control_flow.py": "81acaa5145a93f7d74da1d929729e180bfb24e6f45e6e93e2d04b4b6371a4a65"
+  },
   "target_plan": {
-    "failures": [],
     "labels": [
       "record_current_blocker",
+      "record_pm_historical_defect",
       "declare_current_pm_menu",
       "reject_removed_pm_decisions",
       "pm_selects_break_glass",
@@ -161,6 +204,7 @@
       "runtime_replaces_current_scope",
       "runtime_records_fresh_packet_transaction",
       "runtime_opens_blocker_repair_packet",
+      "runtime_opens_historical_repair_packet",
       "complete_nonterminal_repair_rotation",
       "pm_selects_repair_parent_scope",
       "runtime_replaces_parent_scope",
@@ -171,44 +215,100 @@
       "pm_selects_stop_for_user"
     ],
     "ok": true,
-    "state": {
-      "active_repair_child_nodes_created": 0,
-      "authority_ref_present": false,
-      "blocker_detected": true,
-      "blocker_id": "blocker-001",
-      "blocker_repair_packet_open": true,
-      "blocker_terminal": false,
-      "break_glass_routed_to_controller": false,
-      "descendants_superseded": false,
-      "flowguard_scan_passed": false,
-      "fresh_packet_current_open": true,
-      "fresh_packet_id": "packet-001-repair",
-      "inherited_child_history_recorded": false,
-      "inherited_children_current": false,
-      "menu_declared": true,
-      "old_decision_accepted": false,
-      "old_decisions_rejected": true,
-      "old_scope_superseded": true,
-      "parent_found": false,
-      "parent_repair_contract_present": false,
-      "parent_repair_inherited_only_replay": false,
-      "pm_decision": "repair_current_scope",
-      "repair_child_specs_count": 0,
-      "repair_loop_break_glass_required": false,
-      "replacement_scope_created": true,
-      "reviewer_scan_passed": false,
-      "route_plan_packet_present": false,
-      "route_version_switched": false,
-      "same_lineage_attempt_count": 0,
-      "same_node_repair_in_place": false,
-      "source_id": "node-001",
-      "status": "complete",
-      "transaction_recorded": true
+    "triggers": {
+      "pm_historical_defect": {
+        "failures": [],
+        "ok": true,
+        "state": {
+          "active_repair_child_nodes_created": 0,
+          "authority_ref_present": false,
+          "blocker_detected": false,
+          "blocker_id": "",
+          "blocker_repair_packet_open": true,
+          "blocker_terminal": false,
+          "break_glass_routed_to_controller": false,
+          "descendants_superseded": false,
+          "flowguard_scan_passed": false,
+          "fresh_packet_current_open": true,
+          "fresh_packet_id": "packet-001-repair",
+          "historical_defect_id": "historical-defect-001",
+          "historical_defect_recorded": true,
+          "historical_target_evidence_present": true,
+          "impact_frontier_declared": true,
+          "inherited_child_history_recorded": false,
+          "inherited_children_current": false,
+          "menu_declared": true,
+          "old_decision_accepted": false,
+          "old_decisions_rejected": true,
+          "old_scope_superseded": true,
+          "parent_found": false,
+          "parent_repair_contract_present": false,
+          "parent_repair_inherited_only_replay": false,
+          "pm_decision": "repair_current_scope",
+          "repair_child_specs_count": 0,
+          "repair_loop_break_glass_required": false,
+          "repair_subject_id": "historical-defect-001",
+          "replacement_scope_created": true,
+          "reviewer_scan_passed": false,
+          "route_plan_packet_present": false,
+          "route_version_switched": false,
+          "same_lineage_attempt_count": 0,
+          "same_node_repair_in_place": false,
+          "source_id": "node-001",
+          "status": "complete",
+          "transaction_recorded": true,
+          "trigger_origin": "pm_historical_defect"
+        }
+      },
+      "reviewer_or_system_blocker": {
+        "failures": [],
+        "ok": true,
+        "state": {
+          "active_repair_child_nodes_created": 0,
+          "authority_ref_present": false,
+          "blocker_detected": true,
+          "blocker_id": "blocker-001",
+          "blocker_repair_packet_open": true,
+          "blocker_terminal": false,
+          "break_glass_routed_to_controller": false,
+          "descendants_superseded": false,
+          "flowguard_scan_passed": false,
+          "fresh_packet_current_open": true,
+          "fresh_packet_id": "packet-001-repair",
+          "historical_defect_id": "",
+          "historical_defect_recorded": false,
+          "historical_target_evidence_present": false,
+          "impact_frontier_declared": false,
+          "inherited_child_history_recorded": false,
+          "inherited_children_current": false,
+          "menu_declared": true,
+          "old_decision_accepted": false,
+          "old_decisions_rejected": true,
+          "old_scope_superseded": true,
+          "parent_found": false,
+          "parent_repair_contract_present": false,
+          "parent_repair_inherited_only_replay": false,
+          "pm_decision": "repair_current_scope",
+          "repair_child_specs_count": 0,
+          "repair_loop_break_glass_required": false,
+          "repair_subject_id": "blocker-001",
+          "replacement_scope_created": true,
+          "reviewer_scan_passed": false,
+          "route_plan_packet_present": false,
+          "route_version_switched": false,
+          "same_lineage_attempt_count": 0,
+          "same_node_repair_in_place": false,
+          "source_id": "node-001",
+          "status": "complete",
+          "transaction_recorded": true,
+          "trigger_origin": "reviewer_or_system_blocker"
+        }
+      }
     }
   },
   "test_mesh": {
     "routine_gate": {
-      "ok": true
+      "ok": false
     },
     "rows": [
       {
@@ -250,7 +350,7 @@
         "freshness": "current",
         "id": "canonical_repair_scope_model_test_alignment",
         "scope": "routine",
-        "status": "passed"
+        "status": "failed"
       }
     ]
   }

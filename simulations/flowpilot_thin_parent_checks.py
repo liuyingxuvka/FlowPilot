@@ -14,6 +14,10 @@ LEDGER_PATH = ROOT / "flowpilot_parent_responsibility_ledger.json"
 PROOF_SCHEMA = 1
 HEAVYWEIGHT_STATE_THRESHOLD = 10_000
 ALLOWED_OWNER_TYPES = {"child", "shared_kernel", "parent_only", "out_of_scope"}
+ALLOWED_TYPED_CONSUMER_RELATIONS = {
+    "orchestration_repair_intake",
+    "terminal_replay_shared_engine",
+}
 THIN_RESULT_PATHS = {
     "meta": ROOT / "meta_thin_parent_results.json",
     "capability": ROOT / "capability_thin_parent_results.json",
@@ -472,6 +476,139 @@ def _validate_ledger_shape(ledger: dict[str, Any], parent: str) -> list[dict[str
                 }
             )
         ownership[field] = owner
+
+    typed_relation_ids: set[str] = set()
+    for row in ledger.get("typed_consumers", []):
+        if not isinstance(row, Mapping):
+            failures.append({"code": "typed_consumer_not_object"})
+            continue
+        relation_id = str(row.get("relation_id") or "")
+        evidence_id = str(row.get("evidence_id") or "")
+        primary_owner_parent = str(row.get("primary_owner_parent") or "")
+        primary_owner_partition = str(row.get("primary_owner_partition") or "")
+        consumer_parent = str(row.get("consumer_parent") or "")
+        consumer_partition_ids = tuple(
+            str(value) for value in row.get("consumer_partition_ids", [])
+        )
+        relation_types = tuple(str(value) for value in row.get("relation_types", []))
+        required_families = {
+            str(value) for value in row.get("required_invariant_families", [])
+        }
+        if not relation_id:
+            failures.append({"code": "typed_consumer_relation_id_missing"})
+        elif relation_id in typed_relation_ids:
+            failures.append(
+                {
+                    "code": "typed_consumer_relation_duplicate",
+                    "relation_id": relation_id,
+                }
+            )
+        typed_relation_ids.add(relation_id)
+        if not evidence_id:
+            failures.append(
+                {
+                    "code": "typed_consumer_evidence_id_missing",
+                    "relation_id": relation_id,
+                }
+            )
+        if row.get("status") != "current":
+            failures.append(
+                {
+                    "code": "typed_consumer_not_current",
+                    "relation_id": relation_id,
+                }
+            )
+        if not row.get("claim_boundary"):
+            failures.append(
+                {
+                    "code": "typed_consumer_claim_boundary_missing",
+                    "relation_id": relation_id,
+                }
+            )
+        if not relation_types or any(
+            value not in ALLOWED_TYPED_CONSUMER_RELATIONS
+            for value in relation_types
+        ):
+            failures.append(
+                {
+                    "code": "typed_consumer_relation_type_invalid",
+                    "relation_id": relation_id,
+                    "relation_types": list(relation_types),
+                }
+            )
+
+        evidence_owners = [
+            (str(parent_id), str(partition.get("id") or ""))
+            for parent_id, parent_row in ledger.get("parents", {}).items()
+            for partition in parent_row.get("partitions", [])
+            if isinstance(partition, Mapping)
+            and evidence_id in partition.get("evidence_ids", [])
+        ]
+        if evidence_owners != [(primary_owner_parent, primary_owner_partition)]:
+            failures.append(
+                {
+                    "code": "typed_consumer_primary_owner_mismatch",
+                    "relation_id": relation_id,
+                    "declared_owner": [
+                        primary_owner_parent,
+                        primary_owner_partition,
+                    ],
+                    "actual_owners": [list(value) for value in evidence_owners],
+                }
+            )
+
+        consumer_data = ledger.get("parents", {}).get(consumer_parent)
+        consumer_partitions = {
+            str(partition.get("id") or ""): partition
+            for partition in (
+                consumer_data.get("partitions", [])
+                if isinstance(consumer_data, Mapping)
+                else []
+            )
+            if isinstance(partition, Mapping)
+        }
+        if not consumer_partition_ids or any(
+            partition_id not in consumer_partitions
+            for partition_id in consumer_partition_ids
+        ):
+            failures.append(
+                {
+                    "code": "typed_consumer_partition_missing",
+                    "relation_id": relation_id,
+                    "consumer_parent": consumer_parent,
+                    "consumer_partition_ids": list(consumer_partition_ids),
+                }
+            )
+        consumer_families = {
+            str(family)
+            for partition_id in consumer_partition_ids
+            for family in consumer_partitions.get(partition_id, {}).get(
+                "invariant_families", []
+            )
+        }
+        if not required_families or not required_families.issubset(
+            consumer_families
+        ):
+            failures.append(
+                {
+                    "code": "typed_consumer_invariant_family_mismatch",
+                    "relation_id": relation_id,
+                    "missing_families": sorted(
+                        required_families - consumer_families
+                    ),
+                }
+            )
+        if any(
+            evidence_id
+            in consumer_partitions.get(partition_id, {}).get("evidence_ids", [])
+            for partition_id in consumer_partition_ids
+        ):
+            failures.append(
+                {
+                    "code": "typed_consumer_registered_as_second_owner",
+                    "relation_id": relation_id,
+                }
+            )
     return failures
 
 
@@ -518,6 +655,45 @@ def build_thin_parent_result(parent: str) -> dict[str, Any]:
             }
         )
 
+    typed_consumers: list[dict[str, Any]] = []
+    for relation in ledger.get("typed_consumers", []):
+        if not isinstance(relation, Mapping):
+            continue
+        if str(relation.get("consumer_parent") or "") != parent:
+            continue
+        evidence_id = str(relation.get("evidence_id") or "")
+        contract = _evidence_contract(evidence_id, result_rows.get(evidence_id))
+        relation_id = str(relation.get("relation_id") or "")
+        for failure in contract["failures"]:
+            failures.append(
+                {
+                    "code": failure,
+                    "parent": parent,
+                    "typed_consumer": relation_id,
+                    "evidence_id": evidence_id,
+                }
+            )
+        typed_consumers.append(
+            {
+                "relation_id": relation_id,
+                "evidence_id": evidence_id,
+                "primary_owner_parent": relation.get("primary_owner_parent"),
+                "primary_owner_partition": relation.get(
+                    "primary_owner_partition"
+                ),
+                "consumer_partition_ids": relation.get(
+                    "consumer_partition_ids", []
+                ),
+                "relation_types": relation.get("relation_types", []),
+                "required_invariant_families": relation.get(
+                    "required_invariant_families", []
+                ),
+                "claim_boundary": relation.get("claim_boundary"),
+                "evidence": contract,
+                "ok": contract["ok"],
+            }
+        )
+
     release_status = release_regression_status(parent)
     # Release-only obligations stay visible even when a valid full proof exists.
     if release_status.get("valid") and full_release_obligations:
@@ -548,6 +724,8 @@ def build_thin_parent_result(parent: str) -> dict[str, Any]:
             "ledger_file": LEDGER_PATH.relative_to(ROOT.parent).as_posix(),
             "partition_count": len(partitions),
             "partitions": partitions,
+            "typed_consumers": typed_consumers,
+            "typed_consumer_count": len(typed_consumers),
             "failures": failures,
             "full_regression_release_partitions": full_release_obligations,
         },
@@ -578,6 +756,13 @@ def thin_input_fingerprint(parent: str, runner_path: Path) -> str:
             for partition in parent_data.get("partitions", [])
             if isinstance(partition, Mapping)
             for evidence_id in partition.get("evidence_ids", [])
+        }
+        | {
+            str(row.get("evidence_id") or "")
+            for row in _ledger().get("typed_consumers", [])
+            if isinstance(row, Mapping)
+            and str(row.get("consumer_parent") or "") == parent
+            and str(row.get("evidence_id") or "")
         }
     )
     evidence = {

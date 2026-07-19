@@ -39,6 +39,12 @@ REQUIRED_LABELS = {
     "reject_background_progress_only_claimed_pass",
     "reject_background_missing_artifact_set",
     "reject_background_running_without_timeout_guard",
+    "reject_background_inner_interpreter_follows_external_upgrade",
+    "reject_background_windows_venv_shim_exits_before_process_owner",
+    "reject_background_shared_runtime_resource_race",
+    "reject_background_descendant_settlement_missing",
+    "reject_background_predating_process_misclassified_as_descendant",
+    "reject_background_surviving_descendant_promoted",
     "reject_json_write_readback_can_hang_control_gate",
     "reject_release_obligation_hidden",
     "reject_release_claim_without_release_suite",
@@ -78,6 +84,24 @@ EXPECTED_HAZARD_FAILURES = {
         "background_progress_is_not_completion_evidence",
         "background_timeout_not_enforced",
     },
+    "background_inner_interpreter_follows_external_upgrade": {
+        "background_interpreter_not_bound_to_execution_owner",
+    },
+    "background_windows_venv_shim_exits_before_process_owner": {
+        "background_interpreter_shim_not_direct_process_owner",
+    },
+    "background_shared_runtime_resource_race": {
+        "background_shared_runtime_resource_not_serialized",
+    },
+    "background_descendant_settlement_missing": {
+        "background_descendant_settlement_not_bounded",
+    },
+    "background_predating_process_misclassified_as_descendant": {
+        "background_descendant_lineage_not_ordered",
+    },
+    "background_surviving_descendant_promoted": {
+        "background_surviving_descendants_not_fail_closed",
+    },
     "json_write_readback_can_hang_control_gate": {
         "json_write_readback_not_bounded",
     },
@@ -110,6 +134,12 @@ def _state_id(state: model.State) -> str:
         f"background={state.background_requested},{state.background_artifacts_declared},"
         f"{state.background_exit_artifact_present},{state.background_exit_inspected},"
         f"{state.background_progress_claimed_as_pass},{state.background_timeout_enforced},"
+        f"{state.background_interpreter_bound_to_owner},"
+        f"{state.background_interpreter_is_direct_process_owner},"
+        f"{state.shared_runtime_resources_serialized},"
+        f"{state.background_descendant_settlement_bounded},"
+        f"{state.background_descendant_lineage_ordered},"
+        f"{state.background_surviving_descendants_fail_closed},"
         f"{state.json_write_readback_bounded}|"
         f"release={state.release_required},{state.release_obligation_visible},"
         f"{state.release_suite_run_or_backgrounded},"

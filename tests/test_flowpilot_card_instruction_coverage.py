@@ -865,6 +865,59 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
         self.assertIn("blocked", worker_core)
         self.assertIn("needs_pm", worker_core)
 
+    def test_historical_and_terminal_repairs_share_replacement_lineage_role_chain(self) -> None:
+        pm_core = _normalized_path(_card_path_by_id("pm.core"))
+        pm_repair = _normalized_path(_card_path_by_id("pm.review_repair"))
+        reviewer_core = _normalized_path(_card_path_by_id("reviewer.core"))
+        reviewer_terminal = _normalized_path(_card_path_by_id("reviewer.final_backward_replay"))
+        reviewer_worker = _normalized_path(_card_path_by_id("reviewer.worker_result_review"))
+        worker_core = _normalized_path(_card_path_by_id("worker.core"))
+        pm_report = _normalized_path(_card_path_by_id("pm.event.reviewer_report"))
+        pm_blocked = _normalized_path(_card_path_by_id("pm.event.reviewer_blocked"))
+
+        for text in (pm_core, pm_repair):
+            self.assertTrue(
+                "historical-defect" in text or "historical defect" in text
+            )
+            self.assertIn("fabricated", text)
+            self.assertIn("local same-slot replacement", text)
+            self.assertIn("parent replacement", text)
+            self.assertIn("subtree rebuild", text)
+            self.assertIn("route redesign", text)
+            self.assertIn("repair_of_node_id", text)
+            self.assertIn("repair_root_id", text)
+            self.assertIn("previous_repair_node_id", text)
+            self.assertIn("repair_generation", text)
+            self.assertIn("sole current authority", text)
+            self.assertIn("only beneath", text)
+            self.assertIn("active replacement", text)
+
+        for text in (
+            pm_core,
+            pm_repair,
+            reviewer_core,
+            reviewer_terminal,
+            pm_report,
+            pm_blocked,
+        ):
+            self.assertIn("worker", text)
+            self.assertIn("post-work flowguard", text)
+            self.assertIn("same", text)
+
+        self.assertIn("a reviewer-authored artifact or decision-gate review must not substitute", pm_report)
+        self.assertIn("do not route substantive terminal repair back to reviewer as the executor", pm_blocked)
+        self.assertIn("never author the repair", reviewer_terminal)
+        self.assertIn("a topology-decision reviewer result is not post-work evidence", reviewer_worker)
+        self.assertIn("do not submit under the superseded source node", worker_core)
+        self.assertNotIn("same-node result", pm_core)
+        self.assertNotIn("same-node revision", pm_core)
+        self.assertIn("never describe a route node repair as an in-place or same-node mutation", pm_core)
+
+        for text in (pm_core, pm_repair, reviewer_core, reviewer_terminal, pm_report, pm_blocked):
+            self.assertIn("numeric score", text)
+            self.assertIn("runtime", text)
+            self.assertIn("hard gate", text)
+
     def test_flowguard_work_order_protocol_reaches_core_cards(self) -> None:
         prompt_policy = (
             RUNTIME_KIT / "prompts" / "cards" / "flowguard_work_order_policy.md"
@@ -1364,8 +1417,10 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
         self.assertIn("repair_dossier_context", pm_repair)
         self.assertIn("do not issue another ordinary pm repair decision packet", pm_repair)
         self.assertIn("terminal supplemental repair contracts use the runtime's separate three-round cap", pm_repair)
-        self.assertIn("after the third round, pm must choose a legal terminal disposition", pm_repair)
-        self.assertIn("route a new pm decision from the current blocker context", pm_repair)
+        self.assertIn("runtime records `repair_rounds_exhausted`", pm_repair)
+        self.assertIn("this is the single hard disposition", pm_repair)
+        self.assertIn("do not create a fourth supplemental contract", pm_repair)
+        self.assertIn("do not route a new pm repair decision from the exhausted gap", pm_repair)
         self.assertIn("repair_loop_break_glass_review", controller)
         self.assertIn("same repair dossier under the same parent has reached five consecutive repair nodes", controller)
         self.assertIn("similar blocker classes spread across different route nodes are ordinary repair evidence", controller)

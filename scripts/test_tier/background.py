@@ -21,6 +21,18 @@ except ImportError:  # pragma: no cover - script execution path
 
 
 ROOT = Path(__file__).resolve().parents[2]
+FLOWPILOT_ASSETS_ROOT = ROOT / "skills" / "flowpilot" / "assets"
+if str(FLOWPILOT_ASSETS_ROOT) not in sys.path:
+    sys.path.insert(0, str(FLOWPILOT_ASSETS_ROOT))
+
+from flowpilot_process_liveness import (  # noqa: E402
+    process_descendant_identities as _process_descendant_identities,
+    process_identity as _process_identity,
+    process_identity_is_live as _process_identity_is_live,
+    resolve_current_python_process_launch as _resolve_current_python_process_launch,
+    terminate_process_tree as _terminate_exact_process_tree,
+)
+
 ARTIFACT_SUFFIXES = ("out", "err", "combined", "exit", "meta")
 BACKGROUND_CHILD_ENTRYPOINT = ROOT / "scripts" / "run_test_tier.py"
 DEFAULT_BACKGROUND_CHILD_TIMEOUT_SECONDS = int(
@@ -76,6 +88,7 @@ def command_to_json(command: TierCommand, *, background_dir: Path) -> dict[str, 
         "release_only": command.release_only,
         "background_recommended": command.background_recommended,
         "background_stage": command.background_stage,
+        "background_exclusive_resource": command.background_exclusive_resource,
         "evidence_dependency": command.evidence_dependency,
         "background_artifacts": _artifact_paths_for_json(background_dir, command.name),
     }
@@ -145,22 +158,10 @@ def _coerce_timeout_seconds(value: int | str | None) -> int:
     return max(0, parsed)
 
 
-def _terminate_process_tree(pid: int) -> None:
-    if pid <= 0:
-        return
-    if os.name == "nt":
-        subprocess.run(
-            ["taskkill", "/PID", str(pid), "/T", "/F"],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            check=False,
-            **_hidden_process_kwargs(),
-        )
-        return
-    try:
-        os.kill(pid, 9)
-    except OSError:
-        pass
+def _terminate_process_tree(identity: dict[str, Any]) -> dict[str, Any]:
+    """Terminate one exact process tree and return reusable cleanup proof."""
+
+    return _terminate_exact_process_tree(identity, timeout_seconds=5.0)
 
 
 def _launch_background(

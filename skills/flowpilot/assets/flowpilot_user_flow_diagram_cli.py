@@ -23,6 +23,14 @@ def main() -> int:
         help="Diagnostic only: allow flow.draft.json as a route-sign source.",
     )
     parser.add_argument(
+        "--show-superseded-history",
+        action="store_true",
+        help=(
+            "Show runtime-identity-bound superseded repair history. "
+            "Omit this option to return to the default current-only view."
+        ),
+    )
+    parser.add_argument(
         "--trigger",
         default="user_request",
         choices=sorted(DISPLAY_TRIGGERS),
@@ -62,6 +70,7 @@ def main() -> int:
         mark_ui_displayed=_truthy(args.mark_ui_displayed),
         reviewer_check=_truthy(args.reviewer_check),
         include_drafts=_truthy(args.include_drafts),
+        include_superseded_history=_truthy(args.show_superseded_history),
     )
     if args.json:
         print(json.dumps(payload, indent=2, sort_keys=True))

@@ -9,23 +9,929 @@
     "summary": "OK: layered_boundary_proof parent=flowpilot-full-flowguard-coverage decision=layered_boundary_proof_green findings=0"
   },
   "claim_boundary": "layered_accounting_ok means FlowPilot has current parent/child coverage accounting and leaf matrix proof for the inventory boundary. full_leaf_cartesian_ok is stricter and remains false while scoped replay, skipped evidence, hard runner findings, deferred StructureMesh split, or alignment full_coverage_ok=false remain.",
-  "full_leaf_cartesian_ok": true,
+  "full_leaf_cartesian_ok": false,
   "layered_accounting_ok": true,
   "ok": true,
   "requirement_blockers": {
-    "alignment_full_coverage_ok": true,
+    "alignment_full_coverage_ok": false,
     "blocking_gap_counts": {},
-    "deferred_structure_split_count": 0,
-    "deferred_structure_split_surfaces": []
+    "deferred_structure_split_count": 8,
+    "deferred_structure_split_surfaces": [
+      {
+        "message": "flowpilot_router_daemon_runtime has 744 lines, above the 450 line diagnostic threshold",
+        "path": "skills/flowpilot/assets/flowpilot_router_daemon_runtime.py",
+        "surface_id": "asset:flowpilot_router_daemon_runtime"
+      },
+      {
+        "message": "flowpilot_router_route_frontier_memory_paths has 322 lines, above the 320 line diagnostic threshold",
+        "path": "skills/flowpilot/assets/flowpilot_router_route_frontier_memory_paths.py",
+        "surface_id": "asset:flowpilot_router_route_frontier_memory_paths"
+      },
+      {
+        "message": "flowpilot_router_startup_role_no_output has 323 lines, above the 320 line diagnostic threshold",
+        "path": "skills/flowpilot/assets/flowpilot_router_startup_role_no_output.py",
+        "surface_id": "asset:flowpilot_router_startup_role_no_output"
+      },
+      {
+        "message": "flowpilot_user_flow_mermaid has 479 lines, above the 450 line diagnostic threshold",
+        "path": "skills/flowpilot/assets/flowpilot_user_flow_mermaid.py",
+        "surface_id": "asset:flowpilot_user_flow_mermaid"
+      },
+      {
+        "message": "flowpilot_user_flow_tree has 592 lines, above the 450 line diagnostic threshold",
+        "path": "skills/flowpilot/assets/flowpilot_user_flow_tree.py",
+        "surface_id": "asset:flowpilot_user_flow_tree"
+      },
+      {
+        "message": "run_flowpilot_contract_exhaustion_mesh_checks has 737 lines, above the 650 line diagnostic threshold",
+        "path": "simulations/run_flowpilot_contract_exhaustion_mesh_checks.py",
+        "surface_id": "model-check:run_flowpilot_contract_exhaustion_mesh_checks"
+      },
+      {
+        "message": "run_flowpilot_model_mesh_checks has 1206 lines, above the 650 line diagnostic threshold",
+        "path": "simulations/run_flowpilot_model_mesh_checks.py",
+        "surface_id": "model-check:run_flowpilot_model_mesh_checks"
+      },
+      {
+        "message": "run_flowpilot_unified_repair_integrity_checks has 1644 lines, above the 650 line diagnostic threshold",
+        "path": "simulations/run_flowpilot_unified_repair_integrity_checks.py",
+        "surface_id": "model-check:run_flowpilot_unified_repair_integrity_checks"
+      }
+    ]
   },
-  "requirement_decision": "layered_boundary_proof_green",
+  "requirement_decision": "child_evidence_not_current",
   "requirement_report": {
-    "decision": "layered_boundary_proof_green",
-    "findings": [],
-    "ok": true,
+    "decision": "child_evidence_not_current",
+    "findings": [
+      {
+        "cell_id": "",
+        "child_model_id": "full_leaf_cartesian_requirement",
+        "code": "child_evidence_not_current_pass",
+        "item_id": "",
+        "message": "child evidence is stale, skipped, not run, running, progress-only, or failed",
+        "metadata": {
+          "child_model_id": "full_leaf_cartesian_requirement",
+          "contracts_out": [
+            "full_leaf_cartesian_requirement"
+          ],
+          "evidence_current": true,
+          "evidence_id": "full-leaf-requirement:e17685605ef02678",
+          "evidence_status": "failed",
+          "functions_owned": [
+            "flowpilot_layered_boundary_proof.build_requirement_plan"
+          ],
+          "inputs_accepted": [
+            "runtime_gap_class",
+            "runtime_contract_surface",
+            "alignment_full_coverage"
+          ],
+          "invariants_owned": [],
+          "is_leaf": true,
+          "leaf_matrix_id": "flowpilot-full-leaf-cartesian-requirement-matrix",
+          "outputs_emitted": [
+            "alignment_full_coverage_false",
+            "full_leaf_cartesian_blocked",
+            "structure_split_backlog_present"
+          ],
+          "proof_artifact": null,
+          "rationale": "This stricter child is green only when no scoped replay/skipped evidence, no hard model gaps, no deferred StructureMesh split, and alignment full_coverage_ok is true.",
+          "responsibilities": [
+            "full_leaf_cartesian_for_all_runtime_contracts"
+          ],
+          "risk_classes": [],
+          "side_effects_owned": [],
+          "split_required": false,
+          "state_owned": [
+            "current_inventory",
+            "full_diagnostic"
+          ]
+        },
+        "parent_model_id": "flowpilot-full-flowguard-coverage",
+        "severity": "blocker"
+      },
+      {
+        "cell_id": "",
+        "child_model_id": "full_leaf_cartesian_requirement",
+        "code": "leaf_split_required",
+        "item_id": "",
+        "message": "leaf boundary matrix is not small enough for complete finite proof",
+        "metadata": {
+          "cells": [
+            {
+              "assertion_scope": "external_contract",
+              "cell_id": "requirement:no_runner_unparsed_or_unavailable",
+              "evidence_current": true,
+              "evidence_ids": [
+                "simulations/flowpilot_full_model_coverage_inventory_results.json"
+              ],
+              "evidence_status": "passed",
+              "expected_error_paths": [],
+              "expected_next_states": [
+                "full_leaf_candidate"
+              ],
+              "expected_outputs": [
+                "absent"
+              ],
+              "expected_side_effects": [],
+              "expected_state_writes": [],
+              "input_case": "runtime_gap_class=runner_unparsed_or_unavailable",
+              "metadata": {
+                "count": 0
+              },
+              "observed_error_paths": [],
+              "observed_next_states": [
+                "full_leaf_candidate"
+              ],
+              "observed_outputs": [
+                "absent"
+              ],
+              "observed_side_effects": [],
+              "observed_state_writes": [],
+              "proof_artifact": null,
+              "runtime_node_ids": [],
+              "runtime_path_evidence_ids": [],
+              "state_case": "current_inventory"
+            },
+            {
+              "assertion_scope": "external_contract",
+              "cell_id": "requirement:no_runner_not_ok",
+              "evidence_current": true,
+              "evidence_ids": [
+                "simulations/flowpilot_full_model_coverage_inventory_results.json"
+              ],
+              "evidence_status": "passed",
+              "expected_error_paths": [],
+              "expected_next_states": [
+                "full_leaf_candidate"
+              ],
+              "expected_outputs": [
+                "absent"
+              ],
+              "expected_side_effects": [],
+              "expected_state_writes": [],
+              "input_case": "runtime_gap_class=runner_not_ok",
+              "metadata": {
+                "count": 0
+              },
+              "observed_error_paths": [],
+              "observed_next_states": [
+                "full_leaf_candidate"
+              ],
+              "observed_outputs": [
+                "absent"
+              ],
+              "observed_side_effects": [],
+              "observed_state_writes": [],
+              "proof_artifact": null,
+              "runtime_node_ids": [],
+              "runtime_path_evidence_ids": [],
+              "state_case": "current_inventory"
+            },
+            {
+              "assertion_scope": "external_contract",
+              "cell_id": "requirement:no_live_runtime_or_state_findings",
+              "evidence_current": true,
+              "evidence_ids": [
+                "simulations/flowpilot_full_model_coverage_inventory_results.json"
+              ],
+              "evidence_status": "passed",
+              "expected_error_paths": [],
+              "expected_next_states": [
+                "full_leaf_candidate"
+              ],
+              "expected_outputs": [
+                "absent"
+              ],
+              "expected_side_effects": [],
+              "expected_state_writes": [],
+              "input_case": "runtime_gap_class=live_runtime_or_state_findings",
+              "metadata": {
+                "count": 0
+              },
+              "observed_error_paths": [],
+              "observed_next_states": [
+                "full_leaf_candidate"
+              ],
+              "observed_outputs": [
+                "absent"
+              ],
+              "observed_side_effects": [],
+              "observed_state_writes": [],
+              "proof_artifact": null,
+              "runtime_node_ids": [],
+              "runtime_path_evidence_ids": [],
+              "state_case": "current_inventory"
+            },
+            {
+              "assertion_scope": "external_contract",
+              "cell_id": "requirement:no_source_or_code_findings",
+              "evidence_current": true,
+              "evidence_ids": [
+                "simulations/flowpilot_full_model_coverage_inventory_results.json"
+              ],
+              "evidence_status": "passed",
+              "expected_error_paths": [],
+              "expected_next_states": [
+                "full_leaf_candidate"
+              ],
+              "expected_outputs": [
+                "absent"
+              ],
+              "expected_side_effects": [],
+              "expected_state_writes": [],
+              "input_case": "runtime_gap_class=source_or_code_findings",
+              "metadata": {
+                "count": 0
+              },
+              "observed_error_paths": [],
+              "observed_next_states": [
+                "full_leaf_candidate"
+              ],
+              "observed_outputs": [
+                "absent"
+              ],
+              "observed_side_effects": [],
+              "observed_state_writes": [],
+              "proof_artifact": null,
+              "runtime_node_ids": [],
+              "runtime_path_evidence_ids": [],
+              "state_case": "current_inventory"
+            },
+            {
+              "assertion_scope": "external_contract",
+              "cell_id": "requirement:no_missing_or_scoped_replay_adapter",
+              "evidence_current": true,
+              "evidence_ids": [
+                "simulations/flowpilot_full_model_coverage_inventory_results.json"
+              ],
+              "evidence_status": "passed",
+              "expected_error_paths": [],
+              "expected_next_states": [
+                "full_leaf_candidate"
+              ],
+              "expected_outputs": [
+                "absent"
+              ],
+              "expected_side_effects": [],
+              "expected_state_writes": [],
+              "input_case": "runtime_gap_class=missing_or_scoped_replay_adapter",
+              "metadata": {
+                "count": 0
+              },
+              "observed_error_paths": [],
+              "observed_next_states": [
+                "full_leaf_candidate"
+              ],
+              "observed_outputs": [
+                "absent"
+              ],
+              "observed_side_effects": [],
+              "observed_state_writes": [],
+              "proof_artifact": null,
+              "runtime_node_ids": [],
+              "runtime_path_evidence_ids": [],
+              "state_case": "current_inventory"
+            },
+            {
+              "assertion_scope": "external_contract",
+              "cell_id": "requirement:no_skipped_or_scoped_evidence",
+              "evidence_current": true,
+              "evidence_ids": [
+                "simulations/flowpilot_full_model_coverage_inventory_results.json"
+              ],
+              "evidence_status": "passed",
+              "expected_error_paths": [],
+              "expected_next_states": [
+                "full_leaf_candidate"
+              ],
+              "expected_outputs": [
+                "absent"
+              ],
+              "expected_side_effects": [],
+              "expected_state_writes": [],
+              "input_case": "runtime_gap_class=skipped_or_scoped_evidence",
+              "metadata": {
+                "count": 0
+              },
+              "observed_error_paths": [],
+              "observed_next_states": [
+                "full_leaf_candidate"
+              ],
+              "observed_outputs": [
+                "absent"
+              ],
+              "observed_side_effects": [],
+              "observed_state_writes": [],
+              "proof_artifact": null,
+              "runtime_node_ids": [],
+              "runtime_path_evidence_ids": [],
+              "state_case": "current_inventory"
+            },
+            {
+              "assertion_scope": "external_contract",
+              "cell_id": "requirement:no_abstract_without_detected_ordinary_test_reference",
+              "evidence_current": true,
+              "evidence_ids": [
+                "simulations/flowpilot_full_model_coverage_inventory_results.json"
+              ],
+              "evidence_status": "passed",
+              "expected_error_paths": [],
+              "expected_next_states": [
+                "full_leaf_candidate"
+              ],
+              "expected_outputs": [
+                "absent"
+              ],
+              "expected_side_effects": [],
+              "expected_state_writes": [],
+              "input_case": "runtime_gap_class=abstract_without_detected_ordinary_test_reference",
+              "metadata": {
+                "count": 0
+              },
+              "observed_error_paths": [],
+              "observed_next_states": [
+                "full_leaf_candidate"
+              ],
+              "observed_outputs": [
+                "absent"
+              ],
+              "observed_side_effects": [],
+              "observed_state_writes": [],
+              "proof_artifact": null,
+              "runtime_node_ids": [],
+              "runtime_path_evidence_ids": [],
+              "state_case": "current_inventory"
+            },
+            {
+              "assertion_scope": "external_contract",
+              "cell_id": "requirement:no_deferred_structure_split",
+              "evidence_current": true,
+              "evidence_ids": [
+                "simulations/flowpilot_model_test_alignment_results.json"
+              ],
+              "evidence_status": "failed",
+              "expected_error_paths": [],
+              "expected_next_states": [
+                "full_leaf_candidate"
+              ],
+              "expected_outputs": [
+                "absent"
+              ],
+              "expected_side_effects": [],
+              "expected_state_writes": [],
+              "input_case": "runtime_contract_surface=all",
+              "metadata": {
+                "count": 8
+              },
+              "observed_error_paths": [],
+              "observed_next_states": [
+                "must_split_or_repair"
+              ],
+              "observed_outputs": [
+                "present"
+              ],
+              "observed_side_effects": [],
+              "observed_state_writes": [],
+              "proof_artifact": null,
+              "runtime_node_ids": [],
+              "runtime_path_evidence_ids": [],
+              "state_case": "full_diagnostic"
+            },
+            {
+              "assertion_scope": "external_contract",
+              "cell_id": "requirement:alignment_full_coverage_ok",
+              "evidence_current": true,
+              "evidence_ids": [
+                "simulations/flowpilot_model_test_alignment_results.json"
+              ],
+              "evidence_status": "failed",
+              "expected_error_paths": [],
+              "expected_next_states": [
+                "full_leaf_candidate"
+              ],
+              "expected_outputs": [
+                "true"
+              ],
+              "expected_side_effects": [],
+              "expected_state_writes": [],
+              "input_case": "alignment_full_coverage",
+              "metadata": {},
+              "observed_error_paths": [],
+              "observed_next_states": [
+                "must_split_or_repair"
+              ],
+              "observed_outputs": [
+                "false"
+              ],
+              "observed_side_effects": [],
+              "observed_state_writes": [],
+              "proof_artifact": null,
+              "runtime_node_ids": [],
+              "runtime_path_evidence_ids": [],
+              "state_case": "current_alignment_result"
+            }
+          ],
+          "complete": true,
+          "evidence_current": true,
+          "expected_cell_ids": [
+            "requirement:no_runner_unparsed_or_unavailable",
+            "requirement:no_runner_not_ok",
+            "requirement:no_live_runtime_or_state_findings",
+            "requirement:no_source_or_code_findings",
+            "requirement:no_missing_or_scoped_replay_adapter",
+            "requirement:no_skipped_or_scoped_evidence",
+            "requirement:no_abstract_without_detected_ordinary_test_reference",
+            "requirement:no_deferred_structure_split",
+            "requirement:alignment_full_coverage_ok"
+          ],
+          "finite": true,
+          "input_cases": [],
+          "leaf_model_id": "full_leaf_cartesian_requirement",
+          "matrix_id": "flowpilot-full-leaf-cartesian-requirement-matrix",
+          "rationale": "Each cell states whether a blocker class is absent. Any present blocker prevents claiming whole-system full leaf Cartesian proof.",
+          "scoped_exemption": "remaining gaps must be repaired or split before full leaf proof",
+          "split_required": true,
+          "state_cases": [],
+          "too_large_for_leaf": false
+        },
+        "parent_model_id": "flowpilot-full-flowguard-coverage",
+        "severity": "refactor"
+      },
+      {
+        "cell_id": "requirement:no_deferred_structure_split",
+        "child_model_id": "full_leaf_cartesian_requirement",
+        "code": "leaf_cell_evidence_not_current_pass",
+        "item_id": "",
+        "message": "leaf boundary cell evidence is stale, skipped, not run, running, progress-only, or failed",
+        "metadata": {
+          "assertion_scope": "external_contract",
+          "cell_id": "requirement:no_deferred_structure_split",
+          "evidence_current": true,
+          "evidence_ids": [
+            "simulations/flowpilot_model_test_alignment_results.json"
+          ],
+          "evidence_status": "failed",
+          "expected_error_paths": [],
+          "expected_next_states": [
+            "full_leaf_candidate"
+          ],
+          "expected_outputs": [
+            "absent"
+          ],
+          "expected_side_effects": [],
+          "expected_state_writes": [],
+          "input_case": "runtime_contract_surface=all",
+          "metadata": {
+            "count": 8
+          },
+          "observed_error_paths": [],
+          "observed_next_states": [
+            "must_split_or_repair"
+          ],
+          "observed_outputs": [
+            "present"
+          ],
+          "observed_side_effects": [],
+          "observed_state_writes": [],
+          "proof_artifact": null,
+          "runtime_node_ids": [],
+          "runtime_path_evidence_ids": [],
+          "state_case": "full_diagnostic"
+        },
+        "parent_model_id": "flowpilot-full-flowguard-coverage",
+        "severity": "blocker"
+      },
+      {
+        "cell_id": "requirement:no_deferred_structure_split",
+        "child_model_id": "full_leaf_cartesian_requirement",
+        "code": "leaf_cell_missing_output",
+        "item_id": "",
+        "message": "leaf boundary cell did not observe declared output",
+        "metadata": {
+          "cell": {
+            "assertion_scope": "external_contract",
+            "cell_id": "requirement:no_deferred_structure_split",
+            "evidence_current": true,
+            "evidence_ids": [
+              "simulations/flowpilot_model_test_alignment_results.json"
+            ],
+            "evidence_status": "failed",
+            "expected_error_paths": [],
+            "expected_next_states": [
+              "full_leaf_candidate"
+            ],
+            "expected_outputs": [
+              "absent"
+            ],
+            "expected_side_effects": [],
+            "expected_state_writes": [],
+            "input_case": "runtime_contract_surface=all",
+            "metadata": {
+              "count": 8
+            },
+            "observed_error_paths": [],
+            "observed_next_states": [
+              "must_split_or_repair"
+            ],
+            "observed_outputs": [
+              "present"
+            ],
+            "observed_side_effects": [],
+            "observed_state_writes": [],
+            "proof_artifact": null,
+            "runtime_node_ids": [],
+            "runtime_path_evidence_ids": [],
+            "state_case": "full_diagnostic"
+          },
+          "missing": [
+            "absent"
+          ]
+        },
+        "parent_model_id": "flowpilot-full-flowguard-coverage",
+        "severity": "blocker"
+      },
+      {
+        "cell_id": "requirement:no_deferred_structure_split",
+        "child_model_id": "full_leaf_cartesian_requirement",
+        "code": "leaf_cell_extra_output",
+        "item_id": "",
+        "message": "leaf boundary cell observed output outside the declared allowance",
+        "metadata": {
+          "cell": {
+            "assertion_scope": "external_contract",
+            "cell_id": "requirement:no_deferred_structure_split",
+            "evidence_current": true,
+            "evidence_ids": [
+              "simulations/flowpilot_model_test_alignment_results.json"
+            ],
+            "evidence_status": "failed",
+            "expected_error_paths": [],
+            "expected_next_states": [
+              "full_leaf_candidate"
+            ],
+            "expected_outputs": [
+              "absent"
+            ],
+            "expected_side_effects": [],
+            "expected_state_writes": [],
+            "input_case": "runtime_contract_surface=all",
+            "metadata": {
+              "count": 8
+            },
+            "observed_error_paths": [],
+            "observed_next_states": [
+              "must_split_or_repair"
+            ],
+            "observed_outputs": [
+              "present"
+            ],
+            "observed_side_effects": [],
+            "observed_state_writes": [],
+            "proof_artifact": null,
+            "runtime_node_ids": [],
+            "runtime_path_evidence_ids": [],
+            "state_case": "full_diagnostic"
+          },
+          "extra": [
+            "present"
+          ]
+        },
+        "parent_model_id": "flowpilot-full-flowguard-coverage",
+        "severity": "blocker"
+      },
+      {
+        "cell_id": "requirement:no_deferred_structure_split",
+        "child_model_id": "full_leaf_cartesian_requirement",
+        "code": "leaf_cell_missing_next_state",
+        "item_id": "",
+        "message": "leaf boundary cell did not observe declared next state",
+        "metadata": {
+          "cell": {
+            "assertion_scope": "external_contract",
+            "cell_id": "requirement:no_deferred_structure_split",
+            "evidence_current": true,
+            "evidence_ids": [
+              "simulations/flowpilot_model_test_alignment_results.json"
+            ],
+            "evidence_status": "failed",
+            "expected_error_paths": [],
+            "expected_next_states": [
+              "full_leaf_candidate"
+            ],
+            "expected_outputs": [
+              "absent"
+            ],
+            "expected_side_effects": [],
+            "expected_state_writes": [],
+            "input_case": "runtime_contract_surface=all",
+            "metadata": {
+              "count": 8
+            },
+            "observed_error_paths": [],
+            "observed_next_states": [
+              "must_split_or_repair"
+            ],
+            "observed_outputs": [
+              "present"
+            ],
+            "observed_side_effects": [],
+            "observed_state_writes": [],
+            "proof_artifact": null,
+            "runtime_node_ids": [],
+            "runtime_path_evidence_ids": [],
+            "state_case": "full_diagnostic"
+          },
+          "missing": [
+            "full_leaf_candidate"
+          ]
+        },
+        "parent_model_id": "flowpilot-full-flowguard-coverage",
+        "severity": "blocker"
+      },
+      {
+        "cell_id": "requirement:no_deferred_structure_split",
+        "child_model_id": "full_leaf_cartesian_requirement",
+        "code": "leaf_cell_extra_next_state",
+        "item_id": "",
+        "message": "leaf boundary cell observed next state outside the declared allowance",
+        "metadata": {
+          "cell": {
+            "assertion_scope": "external_contract",
+            "cell_id": "requirement:no_deferred_structure_split",
+            "evidence_current": true,
+            "evidence_ids": [
+              "simulations/flowpilot_model_test_alignment_results.json"
+            ],
+            "evidence_status": "failed",
+            "expected_error_paths": [],
+            "expected_next_states": [
+              "full_leaf_candidate"
+            ],
+            "expected_outputs": [
+              "absent"
+            ],
+            "expected_side_effects": [],
+            "expected_state_writes": [],
+            "input_case": "runtime_contract_surface=all",
+            "metadata": {
+              "count": 8
+            },
+            "observed_error_paths": [],
+            "observed_next_states": [
+              "must_split_or_repair"
+            ],
+            "observed_outputs": [
+              "present"
+            ],
+            "observed_side_effects": [],
+            "observed_state_writes": [],
+            "proof_artifact": null,
+            "runtime_node_ids": [],
+            "runtime_path_evidence_ids": [],
+            "state_case": "full_diagnostic"
+          },
+          "extra": [
+            "must_split_or_repair"
+          ]
+        },
+        "parent_model_id": "flowpilot-full-flowguard-coverage",
+        "severity": "blocker"
+      },
+      {
+        "cell_id": "requirement:alignment_full_coverage_ok",
+        "child_model_id": "full_leaf_cartesian_requirement",
+        "code": "leaf_cell_evidence_not_current_pass",
+        "item_id": "",
+        "message": "leaf boundary cell evidence is stale, skipped, not run, running, progress-only, or failed",
+        "metadata": {
+          "assertion_scope": "external_contract",
+          "cell_id": "requirement:alignment_full_coverage_ok",
+          "evidence_current": true,
+          "evidence_ids": [
+            "simulations/flowpilot_model_test_alignment_results.json"
+          ],
+          "evidence_status": "failed",
+          "expected_error_paths": [],
+          "expected_next_states": [
+            "full_leaf_candidate"
+          ],
+          "expected_outputs": [
+            "true"
+          ],
+          "expected_side_effects": [],
+          "expected_state_writes": [],
+          "input_case": "alignment_full_coverage",
+          "metadata": {},
+          "observed_error_paths": [],
+          "observed_next_states": [
+            "must_split_or_repair"
+          ],
+          "observed_outputs": [
+            "false"
+          ],
+          "observed_side_effects": [],
+          "observed_state_writes": [],
+          "proof_artifact": null,
+          "runtime_node_ids": [],
+          "runtime_path_evidence_ids": [],
+          "state_case": "current_alignment_result"
+        },
+        "parent_model_id": "flowpilot-full-flowguard-coverage",
+        "severity": "blocker"
+      },
+      {
+        "cell_id": "requirement:alignment_full_coverage_ok",
+        "child_model_id": "full_leaf_cartesian_requirement",
+        "code": "leaf_cell_missing_output",
+        "item_id": "",
+        "message": "leaf boundary cell did not observe declared output",
+        "metadata": {
+          "cell": {
+            "assertion_scope": "external_contract",
+            "cell_id": "requirement:alignment_full_coverage_ok",
+            "evidence_current": true,
+            "evidence_ids": [
+              "simulations/flowpilot_model_test_alignment_results.json"
+            ],
+            "evidence_status": "failed",
+            "expected_error_paths": [],
+            "expected_next_states": [
+              "full_leaf_candidate"
+            ],
+            "expected_outputs": [
+              "true"
+            ],
+            "expected_side_effects": [],
+            "expected_state_writes": [],
+            "input_case": "alignment_full_coverage",
+            "metadata": {},
+            "observed_error_paths": [],
+            "observed_next_states": [
+              "must_split_or_repair"
+            ],
+            "observed_outputs": [
+              "false"
+            ],
+            "observed_side_effects": [],
+            "observed_state_writes": [],
+            "proof_artifact": null,
+            "runtime_node_ids": [],
+            "runtime_path_evidence_ids": [],
+            "state_case": "current_alignment_result"
+          },
+          "missing": [
+            "true"
+          ]
+        },
+        "parent_model_id": "flowpilot-full-flowguard-coverage",
+        "severity": "blocker"
+      },
+      {
+        "cell_id": "requirement:alignment_full_coverage_ok",
+        "child_model_id": "full_leaf_cartesian_requirement",
+        "code": "leaf_cell_extra_output",
+        "item_id": "",
+        "message": "leaf boundary cell observed output outside the declared allowance",
+        "metadata": {
+          "cell": {
+            "assertion_scope": "external_contract",
+            "cell_id": "requirement:alignment_full_coverage_ok",
+            "evidence_current": true,
+            "evidence_ids": [
+              "simulations/flowpilot_model_test_alignment_results.json"
+            ],
+            "evidence_status": "failed",
+            "expected_error_paths": [],
+            "expected_next_states": [
+              "full_leaf_candidate"
+            ],
+            "expected_outputs": [
+              "true"
+            ],
+            "expected_side_effects": [],
+            "expected_state_writes": [],
+            "input_case": "alignment_full_coverage",
+            "metadata": {},
+            "observed_error_paths": [],
+            "observed_next_states": [
+              "must_split_or_repair"
+            ],
+            "observed_outputs": [
+              "false"
+            ],
+            "observed_side_effects": [],
+            "observed_state_writes": [],
+            "proof_artifact": null,
+            "runtime_node_ids": [],
+            "runtime_path_evidence_ids": [],
+            "state_case": "current_alignment_result"
+          },
+          "extra": [
+            "false"
+          ]
+        },
+        "parent_model_id": "flowpilot-full-flowguard-coverage",
+        "severity": "blocker"
+      },
+      {
+        "cell_id": "requirement:alignment_full_coverage_ok",
+        "child_model_id": "full_leaf_cartesian_requirement",
+        "code": "leaf_cell_missing_next_state",
+        "item_id": "",
+        "message": "leaf boundary cell did not observe declared next state",
+        "metadata": {
+          "cell": {
+            "assertion_scope": "external_contract",
+            "cell_id": "requirement:alignment_full_coverage_ok",
+            "evidence_current": true,
+            "evidence_ids": [
+              "simulations/flowpilot_model_test_alignment_results.json"
+            ],
+            "evidence_status": "failed",
+            "expected_error_paths": [],
+            "expected_next_states": [
+              "full_leaf_candidate"
+            ],
+            "expected_outputs": [
+              "true"
+            ],
+            "expected_side_effects": [],
+            "expected_state_writes": [],
+            "input_case": "alignment_full_coverage",
+            "metadata": {},
+            "observed_error_paths": [],
+            "observed_next_states": [
+              "must_split_or_repair"
+            ],
+            "observed_outputs": [
+              "false"
+            ],
+            "observed_side_effects": [],
+            "observed_state_writes": [],
+            "proof_artifact": null,
+            "runtime_node_ids": [],
+            "runtime_path_evidence_ids": [],
+            "state_case": "current_alignment_result"
+          },
+          "missing": [
+            "full_leaf_candidate"
+          ]
+        },
+        "parent_model_id": "flowpilot-full-flowguard-coverage",
+        "severity": "blocker"
+      },
+      {
+        "cell_id": "requirement:alignment_full_coverage_ok",
+        "child_model_id": "full_leaf_cartesian_requirement",
+        "code": "leaf_cell_extra_next_state",
+        "item_id": "",
+        "message": "leaf boundary cell observed next state outside the declared allowance",
+        "metadata": {
+          "cell": {
+            "assertion_scope": "external_contract",
+            "cell_id": "requirement:alignment_full_coverage_ok",
+            "evidence_current": true,
+            "evidence_ids": [
+              "simulations/flowpilot_model_test_alignment_results.json"
+            ],
+            "evidence_status": "failed",
+            "expected_error_paths": [],
+            "expected_next_states": [
+              "full_leaf_candidate"
+            ],
+            "expected_outputs": [
+              "true"
+            ],
+            "expected_side_effects": [],
+            "expected_state_writes": [],
+            "input_case": "alignment_full_coverage",
+            "metadata": {},
+            "observed_error_paths": [],
+            "observed_next_states": [
+              "must_split_or_repair"
+            ],
+            "observed_outputs": [
+              "false"
+            ],
+            "observed_side_effects": [],
+            "observed_state_writes": [],
+            "proof_artifact": null,
+            "runtime_node_ids": [],
+            "runtime_path_evidence_ids": [],
+            "state_case": "current_alignment_result"
+          },
+          "extra": [
+            "must_split_or_repair"
+          ]
+        },
+        "parent_model_id": "flowpilot-full-flowguard-coverage",
+        "severity": "blocker"
+      }
+    ],
+    "ok": false,
     "parent_model_id": "flowpilot-full-flowguard-coverage",
     "proof_id": "flowpilot-full-leaf-cartesian-requirement",
-    "summary": "OK: layered_boundary_proof parent=flowpilot-full-flowguard-coverage decision=layered_boundary_proof_green findings=0"
+    "summary": "BLOCKED: layered_boundary_proof parent=flowpilot-full-flowguard-coverage decision=child_evidence_not_current findings=12"
   },
   "result_type": "flowpilot_layered_boundary_proof",
   "schema_version": "flowpilot.layered_boundary_proof.v1"

@@ -21,6 +21,13 @@ runtime_context: Treat the runtime delivery envelope as the live source for the 
 Reviewer has returned a formal material, research, node-completion, or route
 gate report.
 
+If this is a terminal backward-replay gap, treat the Reviewer result only as
+trigger evidence. PM selects the smallest owning replacement topology; after
+the topology-decision gate is accepted and system-closed, a Worker produces a
+fresh repair result, post-work FlowGuard checks it, and the same terminal
+Reviewer gate rechecks it. A Reviewer-authored artifact or decision-gate review
+must not substitute for Worker repair evidence.
+
 If the report includes PM-actionable `pm_suggestion_items`, disposition them
 through the existing PM suggestion ledger or the relevant PM decision body
 before the dependent gate or final closure advances. Adopt, repair/reissue,
@@ -37,7 +44,8 @@ the user's standard. Scores below `9/10` are PM decision-support when the hard
 gate is met; PM always owns the optimization choice, including whether to
 continue, optimize, bind the item to an already named node/gate, reject with
 reason, waive, stop, ask the user, or issue repair. This remains true even
-when Reviewer reports no blocker.
+when Reviewer reports no blocker. Runtime must not manufacture a blocker from
+the numeric score alone when every applicable hard gate passes.
 
 If the Reviewer report identifies a current quantitative gap, such as required
 item count, word count, coverage rows, required ids, evidence count, or named

@@ -6,7 +6,7 @@
     {
       "modeled_target": "target_product_behavior",
       "risk_type": "state_or_function_behavior",
-      "selected_skill": "model-first-function-flow",
+      "selected_skill": "flowguard",
       "examples": ["feature behavior", "state transition", "ordinary invariant"]
     },
     {

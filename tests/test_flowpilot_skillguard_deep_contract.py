@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import hashlib
 import importlib.util
 import json
 from pathlib import Path
@@ -87,7 +86,10 @@ class FlowPilotSkillGuardDeepContractTests(unittest.TestCase):
             "without creating a SkillGuard-owned runtime",
             self.contract["claim_boundary"],
         )
-        self.assertIn("execution authority", self.contract["claim_boundary"])
+        self.assertIn(
+            "FlowPilot owns every domain action and native check",
+            self.contract["claim_boundary"],
+        )
         owners = {row["owner_id"] for row in self.contract["routes"]}
         self.assertEqual(owners, {"flowpilot_runtime_router"})
 
@@ -154,32 +156,33 @@ class FlowPilotSkillGuardDeepContractTests(unittest.TestCase):
         }
         self.assertEqual(covered, obligation_ids)
 
-        previous: set[str] = set()
-        for profile_id in ("routine", "functional", "release", "highest_quality"):
-            profile = next(
-                row
-                for row in self.contract["closure_profiles"]
-                if row["profile_id"] == profile_id
-            )
-            current = set(profile["required_obligation_ids"])
-            self.assertTrue(previous <= current, profile_id)
-            previous = current
-        self.assertEqual(previous, obligation_ids)
+        self.assertEqual(
+            [row["profile_id"] for row in self.contract["closure_profiles"]],
+            ["enforced"],
+        )
+        self.assertEqual(
+            set(self.contract["closure_profiles"][0]["required_obligation_ids"]),
+            obligation_ids,
+        )
 
-    def test_depth_profile_is_explicitly_contract_mapped_not_execution_proof(self) -> None:
+    def test_depth_profile_enforces_declared_checks_without_domain_ownership(self) -> None:
         profile = self.contract["depth_profile"]
         self.assertEqual(profile["schema_version"], "skillguard.depth_profile.v2")
-        self.assertEqual(profile["enforcement_level"], "contract_mapped")
+        self.assertEqual(profile["enforcement_level"], "enforced")
         self.assertFalse(profile["skillguard_adds_domain_route"])
-        self.assertEqual(profile["coverage_universes"], [])
-        self.assertEqual(profile["calibration"]["positive_cases"], [])
-        self.assertEqual(profile["calibration"]["shallow_cases"], [])
-        self.assertIn("cannot license EXECUTION_DEPTH_PASS", profile["claim_boundary"])
-
-        model_hash = hashlib.sha256(MODEL_PATH.read_bytes()).hexdigest().upper()
         self.assertEqual(
-            profile["calibration"]["native_evaluator_version"], model_hash
+            profile["required_closure_profiles"],
+            ["enforced"],
         )
+        self.assertEqual(
+            profile["provider_runtime"]["required_enrollment_status"],
+            "enrolled",
+        )
+        self.assertTrue(
+            set(profile["provider_runtime"]["readiness_check_ids"])
+            <= set(profile["native_check_ids"])
+        )
+        self.assertIn("FlowPilot owns the meaning", profile["claim_boundary"])
 
     def test_final_receipt_check_is_a_read_only_consumer_not_a_second_owner(self) -> None:
         check = next(
@@ -192,7 +195,7 @@ class FlowPilotSkillGuardDeepContractTests(unittest.TestCase):
         self.assertNotIn("--resume", check["args"])
         self.assertTrue(
             any(
-                str(value).endswith("/complete-workstream-final17")
+                str(value).endswith("/v0.12.0-final")
                 for value in check["args"]
             )
         )
@@ -210,7 +213,7 @@ class FlowPilotSkillGuardDeepContractTests(unittest.TestCase):
             ROOT
             / "openspec"
             / "changes"
-            / "upgrade-flowpilot-complete-workstream-orchestration"
+            / "restore-flowpilot-test-evidence-closure"
             / "verification-contract.yaml"
         ).read_text(encoding="utf-8")
         freshness = contract_text.split("freshness:", 1)[1]

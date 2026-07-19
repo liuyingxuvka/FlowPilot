@@ -5,7 +5,7 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=3 initial_states=1 traces=126",
+    "summary": "sequences=3 initial_states=1 traces=144",
     "violation_count": 0
   },
   "hazard_checks": {
@@ -44,7 +44,7 @@
         "expected_failure": "in-progress capability gap used a repair node before reviewed failure",
         "failures": [
           "in-progress capability gap used a repair node before reviewed failure",
-          "repair node lacks reviewed failure trigger",
+          "repair node lacks a valid reviewed-failure or PM historical-defect trigger",
           "repair node lacks stale evidence reset",
           "repair node lacks mainline return",
           "repair node lacks rerun obligations"
@@ -55,7 +55,7 @@
         "expected_failure": "node-entry capability gap used a repair node before node work started",
         "failures": [
           "node-entry capability gap used a repair node before node work started",
-          "repair node lacks reviewed failure trigger",
+          "repair node lacks a valid reviewed-failure or PM historical-defect trigger",
           "repair node lacks stale evidence reset",
           "repair node lacks mainline return",
           "repair node lacks rerun obligations"
@@ -74,8 +74,24 @@
         "failures": [
           "planning-phase issue used a repair node instead of route draft rewrite or ordinary node expansion",
           "root planning created a repair node before any child execution",
-          "repair node lacks reviewed failure trigger",
+          "repair node lacks a valid reviewed-failure or PM historical-defect trigger",
           "repair node lacks rerun obligations"
+        ]
+      },
+      "pm_historical_defect_forced_through_blocker": {
+        "detected": true,
+        "expected_failure": "PM historical defect was forced through a fabricated blocker prerequisite",
+        "failures": [
+          "PM historical defect was forced through a fabricated blocker prerequisite",
+          "repair node lacks a valid reviewed-failure or PM historical-defect trigger"
+        ]
+      },
+      "pm_historical_defect_without_observation": {
+        "detected": true,
+        "expected_failure": "PM historical defect repair lacks a structured defect observation",
+        "failures": [
+          "PM historical defect repair lacks a structured defect observation",
+          "repair node lacks a valid reviewed-failure or PM historical-defect trigger"
         ]
       },
       "process_before_product_for_capability_change": {
@@ -112,7 +128,7 @@
         "failures": [
           "planning-phase issue used a repair node instead of route draft rewrite or ordinary node expansion",
           "root planning created a repair node before any child execution",
-          "repair node lacks reviewed failure trigger",
+          "repair node lacks a valid reviewed-failure or PM historical-defect trigger",
           "repair node lacks target reason input output evidence return or recheck fields",
           "repair node lacks stale evidence reset",
           "repair node lacks mainline return",
@@ -149,14 +165,15 @@
       "valid_node_entry_replan",
       "valid_planning_capability_expansion",
       "valid_planning_replan",
+      "valid_pm_historical_defect_repair",
       "valid_review_failure_local_patch",
       "valid_review_failure_repair"
     ],
-    "edge_count": 42,
+    "edge_count": 48,
     "invariant_failures": [],
     "missing_labels": [],
     "ok": true,
-    "rejected_state_count": 15,
-    "state_count": 43
+    "rejected_state_count": 17,
+    "state_count": 49
   }
 }

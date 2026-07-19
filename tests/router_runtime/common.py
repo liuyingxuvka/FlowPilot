@@ -1253,21 +1253,36 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
     def resume_role_agent_payload(self, root: Path, action: dict | None = None) -> dict:
         action = action or self.next_after_display_sync(root)
         records = []
+        run_root = self.run_root_for(root)
         for request in action["role_rehydration_request"]:
             role = request["role_key"]
+            current_agent_id = router._active_agent_id_for_role(run_root, role)  # type: ignore[attr-defined]
+            continuity = isinstance(current_agent_id, str) and bool(current_agent_id.strip())
             record = {
                 "role_key": role,
-                "agent_id": f"live-agent-{request['rehydrated_after_resume_tick_id']}-{role}",
+                "agent_id": (
+                    current_agent_id
+                    if continuity
+                    else f"replacement-agent-{request['rehydrated_after_resume_tick_id']}-{role}"
+                ),
                 "model_policy": "strongest_available",
                 "reasoning_effort_policy": "highest_available",
-                "rehydration_result": "live_agent_continuity_confirmed",
+                "rehydration_result": (
+                    "live_agent_continuity_confirmed"
+                    if continuity
+                    else "rehydrated_from_current_run_memory"
+                ),
                 "role_surface_addressable": True,
-                "current_run_binding_decision": "existing_current_agent_reused",
+                "current_run_binding_decision": (
+                    "existing_current_agent_reused"
+                    if continuity
+                    else "current_run_replacement_opened"
+                ),
                 "resume_agent_attempted": True,
                 "rehydrated_for_run_id": request["rehydrated_for_run_id"],
                 "rehydrated_after_resume_tick_id": request["rehydrated_after_resume_tick_id"],
                 "rehydrated_after_resume_state_loaded": True,
-                "replacement_opened_after_resume_state_loaded": False,
+                "replacement_opened_after_resume_state_loaded": not continuity,
                 "core_prompt_path": request["core_prompt_path"],
                 "core_prompt_hash": request["core_prompt_hash"],
             }
@@ -1311,7 +1326,6 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
             "role_surface_addressable": True,
             "current_run_binding_decision": "current_run_replacement_opened",
             "slot_reconciliation_attempted": False,
-            "full_role_binding_recovery_attempted": False,
             "rehydrated_for_run_id": transaction["run_id"],
             "memory_context_injected": True,
             "packet_ownership_reconciled": True,
@@ -1533,7 +1547,7 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
     def complete_child_skill_gates(self, root: Path) -> None:
         selected_skills = [
             {
-                "skill_name": "model-first-function-flow",
+                "skill_name": "flowguard",
                 "decision": "required",
                 "supported_capabilities": ["cap-001"],
                 "references_loaded_now": [],
@@ -1564,7 +1578,7 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
             "pm_writes_capabilities_manifest",
             {
                 "capabilities": [{"capability_id": "cap-001", "behavior": "model and gate route work"}],
-                "capability_to_skill_needs": [{"capability_id": "cap-001", "candidate_skill": "model-first-function-flow"}],
+                "capability_to_skill_needs": [{"capability_id": "cap-001", "candidate_skill": "flowguard"}],
             },
         )
 

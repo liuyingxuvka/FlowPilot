@@ -10,6 +10,292 @@ def source_test_evidence() -> tuple[TestEvidence, ...]:
 
     return (
         _evidence(
+            "source.current_authority.structured_happy",
+            test_name="test_node_context_current_authority_references_reject_old_shape_missing_kind_and_stale_fingerprint",
+            path="tests/test_flowpilot_core_runtime.py",
+            command=(
+                "python -m unittest tests.test_flowpilot_core_runtime."
+                "FlowPilotCoreRuntimeTests."
+                "test_node_context_current_authority_references_reject_old_shape_missing_kind_and_stale_fingerprint"
+            ),
+            test_kind=HAPPY,
+            covers=("current_contract.structured_authority_references",),
+            code_contracts=("runtime.node_context_from_pm_result", "runtime.node_context_current"),
+        ),
+        _evidence(
+            "source.current_authority.structured_negative",
+            test_name="test_node_context_current_authority_references_reject_old_shape_missing_kind_and_stale_fingerprint",
+            path="tests/test_flowpilot_core_runtime.py",
+            command=(
+                "python -m unittest tests.test_flowpilot_core_runtime."
+                "FlowPilotCoreRuntimeTests."
+                "test_node_context_current_authority_references_reject_old_shape_missing_kind_and_stale_fingerprint"
+            ),
+            test_kind=NEGATIVE,
+            covers=("current_contract.structured_authority_references",),
+            code_contracts=("runtime.node_context_from_pm_result", "runtime.node_context_current"),
+        ),
+        _evidence(
+            "source.exact_resume.current_role",
+            test_name="test_role_memory_seed_prioritizes_exact_current_packet_and_stales_on_generation_change",
+            path="tests/test_flowpilot_core_runtime.py",
+            command=(
+                "python -m unittest tests.test_flowpilot_core_runtime."
+                "FlowPilotCoreRuntimeTests."
+                "test_role_memory_seed_prioritizes_exact_current_packet_and_stales_on_generation_change"
+            ),
+            test_kind=HAPPY,
+            covers=("current_contract.exact_requested_role_resume",),
+            code_contracts=(
+                "runtime.build_role_memory_seed",
+                "runtime.role_memory_seed_for_lease",
+            ),
+        ),
+        _evidence(
+            "source.exact_resume.stale_or_ambiguous",
+            test_name="test_role_memory_seed_prioritizes_exact_current_packet_and_stales_on_generation_change",
+            path="tests/test_flowpilot_core_runtime.py",
+            command=(
+                "python -m unittest tests.test_flowpilot_core_runtime."
+                "FlowPilotCoreRuntimeTests."
+                "test_role_memory_seed_prioritizes_exact_current_packet_and_stales_on_generation_change"
+            ),
+            test_kind=NEGATIVE,
+            covers=("current_contract.exact_requested_role_resume",),
+            code_contracts=(
+                "runtime.build_role_memory_seed",
+                "runtime.role_memory_seed_for_lease",
+            ),
+        ),
+        _evidence(
+            "source.staged_effect.exact_reuse",
+            test_name="_assert_staged_effect_same_family_rejects_different_formal_blocker_identity",
+            path="tests/test_flowpilot_core_runtime.py",
+            command=(
+                "python -m unittest tests.test_flowpilot_core_runtime."
+                "FlowPilotCoreRuntimeTests."
+                "test_staged_effect_same_family_reuses_pending_effect_and_rejects_different_formal_blocker_identity"
+            ),
+            test_kind=HAPPY,
+            covers=("current_contract.staged_effect_exact_identity",),
+            code_contracts=("runtime.attach_staged_effect",),
+        ),
+        _evidence(
+            "source.staged_effect.identity_mismatch",
+            test_name="_assert_staged_effect_same_family_rejects_different_formal_blocker_identity",
+            path="tests/test_flowpilot_core_runtime.py",
+            command=(
+                "python -m unittest tests.test_flowpilot_core_runtime."
+                "FlowPilotCoreRuntimeTests."
+                "test_staged_effect_same_family_reuses_pending_effect_and_rejects_different_formal_blocker_identity"
+            ),
+            test_kind=NEGATIVE,
+            covers=("current_contract.staged_effect_exact_identity",),
+            code_contracts=("runtime.attach_staged_effect",),
+        ),
+        _evidence(
+            "source.terminal_replay.exact_pass",
+            test_name="test_terminal_replay_rejects_missing_or_unexpected_segments",
+            path="tests/test_flowpilot_core_runtime.py",
+            command=(
+                "python -m unittest tests.test_flowpilot_core_runtime."
+                "FlowPilotCoreRuntimeTests."
+                "test_terminal_replay_rejects_missing_or_unexpected_segments"
+            ),
+            test_kind=HAPPY,
+            covers=("current_contract.terminal_exact_segment_replay",),
+            code_contracts=("runtime.terminal_backward_replay_result_violation",),
+        ),
+        _evidence(
+            "source.terminal_replay.segment_mismatch",
+            test_name="test_terminal_replay_rejects_missing_or_unexpected_segments",
+            path="tests/test_flowpilot_core_runtime.py",
+            command=(
+                "python -m unittest tests.test_flowpilot_core_runtime."
+                "FlowPilotCoreRuntimeTests."
+                "test_terminal_replay_rejects_missing_or_unexpected_segments"
+            ),
+            test_kind=NEGATIVE,
+            covers=("current_contract.terminal_exact_segment_replay",),
+            code_contracts=("runtime.terminal_backward_replay_result_violation",),
+        ),
+        _evidence(
+            "source.workstream.reviewer_compares_artifacts",
+            test_name="test_reviewer_audits_plan_rows_against_actual_artifacts",
+            path="tests/test_flowpilot_complete_workstream_orchestration.py",
+            command=(
+                "python -m unittest tests.test_flowpilot_complete_workstream_orchestration."
+                "FlowPilotCompleteWorkstreamOrchestrationTests."
+                "test_reviewer_audits_plan_rows_against_actual_artifacts"
+            ),
+            test_kind=HAPPY,
+            covers=("current_contract.reviewer_workstream_semantics",),
+            code_contracts=("review_window.stage_challenge_rule",),
+        ),
+        _evidence(
+            "source.workstream.runtime_does_not_score",
+            test_name="test_terminal_replay_uses_the_same_semantic_section_without_mechanical_requirement",
+            path="tests/test_flowpilot_complete_workstream_orchestration.py",
+            command=(
+                "python -m unittest tests.test_flowpilot_complete_workstream_orchestration."
+                "FlowPilotCompleteWorkstreamOrchestrationTests."
+                "test_terminal_replay_uses_the_same_semantic_section_without_mechanical_requirement"
+            ),
+            test_kind=NEGATIVE,
+            covers=("current_contract.reviewer_workstream_semantics",),
+            code_contracts=("packet_result_contracts.workstream_not_mechanical",),
+        ),
+        _evidence(
+            "source.workstream.role_output_projection",
+            test_name="test_role_output_owner_modules_expose_direct_external_contracts",
+            path="tests/test_flowpilot_role_output_runtime.py",
+            command=(
+                "python -m unittest tests.test_flowpilot_role_output_runtime."
+                "FlowPilotRoleOutputRuntimeTests."
+                "test_role_output_owner_modules_expose_direct_external_contracts"
+            ),
+            test_kind=HAPPY,
+            covers=("current_contract.reviewer_workstream_semantics",),
+            code_contracts=("role_output_contracts.workstream_projection",),
+        ),
+        _evidence(
+            "source.descendant_zero.daemon_identity_mismatch",
+            test_name="test_router_daemon_stop_releases_only_after_exact_tree_cleanup",
+            path="tests/router_runtime/startup_daemon.py",
+            command=(
+                "python -m unittest tests.test_flowpilot_router_runtime."
+                "FlowPilotRouterRuntimeTests.test_router_daemon_stop_releases_only_after_exact_tree_cleanup"
+            ),
+            test_kind=EDGE,
+            covers=("current_contract.daemon_descendant_zero_cleanup",),
+            code_contracts=("daemon.stop_router_daemon",),
+            evidence_role="leaf_matrix_cell",
+            evidence_target_id="daemon_identity_mismatch_cleanup",
+        ),
+        _evidence(
+            "source.descendant_zero.daemon_late_child",
+            test_name="test_router_daemon_stop_collects_descendant_created_during_stop_wait",
+            path="tests/router_runtime/startup_daemon.py",
+            command=(
+                "python -m unittest tests.test_flowpilot_router_runtime."
+                "FlowPilotRouterRuntimeTests."
+                "test_router_daemon_stop_collects_descendant_created_during_stop_wait"
+            ),
+            test_kind=EDGE,
+            covers=("current_contract.daemon_descendant_zero_cleanup",),
+            code_contracts=("daemon.stop_router_daemon",),
+            evidence_role="leaf_matrix_cell",
+            evidence_target_id="daemon_late_child_cleanup",
+        ),
+        _evidence(
+            "source.descendant_zero.background_tree",
+            test_name="test_timeout_terminates_descendant_tree_before_writing_terminal_receipt",
+            path="tests/test_flowpilot_test_tiers.py",
+            command=(
+                "python -m unittest tests.test_flowpilot_test_tiers."
+                "FlowPilotTestTierTests."
+                "test_timeout_terminates_descendant_tree_before_writing_terminal_receipt"
+            ),
+            test_kind=NEGATIVE,
+            covers=("current_contract.background_child_descendant_zero_cleanup",),
+            code_contracts=("test_tier.run_background_child",),
+        ),
+        _evidence(
+            "source.descendant_zero.rejects_predating_process",
+            test_name="test_descendant_identity_rejects_process_that_predates_exact_owner",
+            path="tests/test_flowpilot_test_tiers.py",
+            command=(
+                "python -m unittest tests.test_flowpilot_test_tiers."
+                "FlowPilotTestTierTests."
+                "test_descendant_identity_rejects_process_that_predates_exact_owner"
+            ),
+            test_kind=NEGATIVE,
+            covers=("current_contract.process_tree_descendant_lineage",),
+            code_contracts=("process_liveness.descendant_identity_order",),
+        ),
+        _evidence(
+            "source.descendant_zero.bounded_natural_settlement",
+            test_name="test_background_child_allows_exact_descendants_to_exit_within_bounded_settlement",
+            path="tests/test_flowpilot_test_tiers.py",
+            command=(
+                "python -m unittest tests.test_flowpilot_test_tiers."
+                "FlowPilotTestTierTests."
+                "test_background_child_allows_exact_descendants_to_exit_within_bounded_settlement"
+            ),
+            test_kind=EDGE,
+            covers=("current_contract.background_child_descendant_zero_cleanup",),
+            code_contracts=("test_tier.run_background_child",),
+        ),
+        _evidence(
+            "source.descendant_zero.surviving_orphan",
+            test_name="test_background_child_rejects_descendant_surviving_bounded_settlement",
+            path="tests/test_flowpilot_test_tiers.py",
+            command=(
+                "python -m unittest tests.test_flowpilot_test_tiers."
+                "FlowPilotTestTierTests."
+                "test_background_child_rejects_descendant_surviving_bounded_settlement"
+            ),
+            test_kind=NEGATIVE,
+            covers=("current_contract.background_child_descendant_zero_cleanup",),
+            code_contracts=("test_tier.run_background_child",),
+        ),
+        _evidence(
+            "source.descendant_zero.current_interpreter_binding",
+            test_name="test_flowguard_background_binds_literal_python_to_current_interpreter",
+            path="tests/test_flowpilot_test_tiers.py",
+            command=(
+                "python -m unittest tests.test_flowpilot_test_tiers."
+                "FlowPilotTestTierTests."
+                "test_flowguard_background_binds_literal_python_to_current_interpreter"
+            ),
+            test_kind=EDGE,
+            covers=("current_contract.background_toolchain_identity",),
+            code_contracts=("test_tier.flowguard_background_command_binding",),
+            evidence_role="leaf_matrix_cell",
+            evidence_target_id="literal_python_current_interpreter_binding",
+        ),
+        _evidence(
+            "source.descendant_zero.direct_interpreter_process_owner",
+            test_name="test_background_child_binds_windows_venv_to_direct_current_owner",
+            path="tests/test_flowpilot_test_tiers.py",
+            command=(
+                "python -m unittest tests.test_flowpilot_test_tiers."
+                "FlowPilotTestTierTests."
+                "test_background_child_binds_windows_venv_to_direct_current_owner"
+            ),
+            test_kind=EDGE,
+            covers=("current_contract.background_toolchain_identity",),
+            code_contracts=("test_tier.run_background_child",),
+            evidence_role="leaf_matrix_cell",
+            evidence_target_id="windows_venv_direct_process_owner",
+        ),
+        _evidence(
+            "source.same_fingerprint.unchanged_result",
+            test_name="test_background_evidence_compiler_emits_current_fingerprinted_proofs",
+            path="tests/test_flowpilot_acceptance_testmesh.py",
+            command=(
+                "python -m unittest tests.test_flowpilot_acceptance_testmesh."
+                "FlowPilotAcceptanceTestMeshTests."
+                "test_background_evidence_compiler_emits_current_fingerprinted_proofs"
+            ),
+            test_kind=HAPPY,
+            covers=("current_contract.same_source_fingerprint",),
+            code_contracts=("acceptance_evidence.compile_manifest",),
+        ),
+        _evidence(
+            "source.same_fingerprint.changed_source",
+            test_name="test_background_evidence_compiler_rejects_source_changed_during_tier",
+            path="tests/test_flowpilot_acceptance_testmesh.py",
+            command=(
+                "python -m unittest tests.test_flowpilot_acceptance_testmesh."
+                "FlowPilotAcceptanceTestMeshTests."
+                "test_background_evidence_compiler_rejects_source_changed_during_tier"
+            ),
+            test_kind=NEGATIVE,
+            covers=("current_contract.same_source_fingerprint",),
+            code_contracts=("acceptance_evidence.compile_manifest",),
+        ),
+        _evidence(
             "source.startup.waits",
             test_name="test_startup_waits_for_answers_before_banner_or_controller",
             path="tests/router_runtime/startup_bootstrap.py",
@@ -17,6 +303,30 @@ def source_test_evidence() -> tuple[TestEvidence, ...]:
             test_kind=NEGATIVE,
             covers=("startup.questions.pause_before_work",),
             code_contracts=("router.run_until_wait", "router.apply_action"),
+        ),
+        _evidence(
+            "source.unified_repair.historical_direct_entry_happy",
+            test_name="test_historical_intake_requires_evidence_and_creates_no_blocker",
+            path="tests/test_flowpilot_unified_repair_runtime.py",
+            command=(
+                "python -m pytest tests/test_flowpilot_unified_repair_runtime.py::"
+                "test_historical_intake_requires_evidence_and_creates_no_blocker -q"
+            ),
+            test_kind=HAPPY,
+            covers=("unified_repair.pm_historical_direct_entry_no_blocker",),
+            code_contracts=("unified_repair.runtime.pm_historical_direct_entry",),
+        ),
+        _evidence(
+            "source.unified_repair.historical_direct_entry_negative",
+            test_name="test_historical_intake_requires_evidence_and_creates_no_blocker",
+            path="tests/test_flowpilot_unified_repair_runtime.py",
+            command=(
+                "python -m pytest tests/test_flowpilot_unified_repair_runtime.py::"
+                "test_historical_intake_requires_evidence_and_creates_no_blocker -q"
+            ),
+            test_kind=NEGATIVE,
+            covers=("unified_repair.pm_historical_direct_entry_no_blocker",),
+            code_contracts=("unified_repair.runtime.pm_historical_direct_entry",),
         ),
         _evidence(
             "source.startup.native_intake",
@@ -63,6 +373,34 @@ def source_test_evidence() -> tuple[TestEvidence, ...]:
             code_contracts=("router_io_locks.foreground_writer_settlement",),
         ),
         _evidence(
+            "source.startup.writer_acquire_permission_transient",
+            test_name="test_atomic_lock_acquire_retries_transient_windows_permission_error",
+            path="tests/router_runtime/startup_daemon.py",
+            command=(
+                "python -m unittest tests.test_flowpilot_router_runtime."
+                "FlowPilotRouterRuntimeTests."
+                "test_atomic_lock_acquire_retries_transient_windows_permission_error"
+            ),
+            test_kind=EDGE,
+            covers=("startup.runtime_writer_settlement",),
+            code_contracts=("router_io_json.atomic_writer_settlement",),
+            evidence_role="leaf_matrix_cell",
+            evidence_target_id="transient_windows_lock_permission",
+        ),
+        _evidence(
+            "source.startup.writer_acquire_permission_persistent",
+            test_name="test_atomic_lock_acquire_permission_error_fails_as_writer_contention",
+            path="tests/router_runtime/startup_daemon.py",
+            command=(
+                "python -m unittest tests.test_flowpilot_router_runtime."
+                "FlowPilotRouterRuntimeTests."
+                "test_atomic_lock_acquire_permission_error_fails_as_writer_contention"
+            ),
+            test_kind=NEGATIVE,
+            covers=("startup.runtime_writer_settlement",),
+            code_contracts=("router_io_json.atomic_writer_settlement",),
+        ),
+        _evidence(
             "source.startup.daemon_readiness_unavailable_lock",
             test_name="test_formal_daemon_readiness_fails_closed_on_unavailable_lock",
             path="tests/router_runtime/startup_daemon.py",
@@ -74,6 +412,68 @@ def source_test_evidence() -> tuple[TestEvidence, ...]:
             test_kind=EDGE,
             covers=("startup.runtime_writer_settlement",),
             code_contracts=("router_daemon_runtime.formal_readiness",),
+            evidence_role="leaf_matrix_cell",
+            evidence_target_id="daemon_readiness_unavailable_lock",
+        ),
+        _evidence(
+            "source.startup.writer_retry_preserves_completed_actions",
+            test_name="test_foreground_writer_retry_preserves_completed_folded_actions",
+            path="tests/router_runtime/foreground_controller.py",
+            command=(
+                "python -m unittest tests.router_runtime.foreground_controller."
+                "ForegroundControllerRuntimeTests."
+                "test_foreground_writer_retry_preserves_completed_folded_actions"
+            ),
+            test_kind=EDGE,
+            covers=("startup.runtime_writer_settlement",),
+            code_contracts=("router_io_locks.foreground_writer_settlement",),
+            evidence_role="leaf_matrix_cell",
+            evidence_target_id="foreground_retry_receipt_merge",
+        ),
+        _evidence(
+            "source.startup.controller_retry_preserves_completed_actions",
+            test_name="test_foreground_writer_retry_preserves_completed_folded_actions_from_run_until_wait",
+            path="tests/router_runtime/foreground_controller.py",
+            command=(
+                "python -m unittest tests.router_runtime.foreground_controller."
+                "ForegroundControllerRuntimeTests."
+                "test_foreground_writer_retry_preserves_completed_folded_actions_from_run_until_wait"
+            ),
+            test_kind=EDGE,
+            covers=("startup.runtime_writer_settlement",),
+            code_contracts=("router.run_until_wait",),
+            evidence_role="leaf_matrix_cell",
+            evidence_target_id="run_until_wait_completed_action_receipt",
+        ),
+        _evidence(
+            "source.startup.single_bootstrap_allocation_retry",
+            test_name="test_start_writer_retry_allocates_one_bootstrap_and_preserves_actions",
+            path="tests/router_runtime/bootstrap_cli.py",
+            command=(
+                "python -m unittest tests.router_runtime.bootstrap_cli."
+                "BootstrapCliRuntimeTests."
+                "test_start_writer_retry_allocates_one_bootstrap_and_preserves_actions"
+            ),
+            test_kind=EDGE,
+            covers=("startup.runtime_writer_settlement",),
+            code_contracts=("router_cli.start_single_allocation",),
+            evidence_role="leaf_matrix_cell",
+            evidence_target_id="single_bootstrap_allocation_retry",
+        ),
+        _evidence(
+            "source.startup.current_inflight_daemon_reattach",
+            test_name="test_foreground_retry_reattaches_current_inflight_daemon_without_second_spawn",
+            path="tests/router_runtime/startup_daemon.py",
+            command=(
+                "python -m unittest tests.router_runtime.startup_daemon."
+                "StartupDaemonRuntimeTests."
+                "test_foreground_retry_reattaches_current_inflight_daemon_without_second_spawn"
+            ),
+            test_kind=EDGE,
+            covers=("startup.runtime_writer_settlement",),
+            code_contracts=("router_daemon_runtime.current_inflight_startup_owner",),
+            evidence_role="leaf_matrix_cell",
+            evidence_target_id="current_inflight_daemon_reattach",
         ),
         _evidence(
             "source.new_entrypoint.start",
@@ -307,7 +707,10 @@ def source_test_evidence() -> tuple[TestEvidence, ...]:
             path="tests/test_flowpilot_lifecycle_guard.py",
             command="python -m unittest tests.test_flowpilot_lifecycle_guard.FlowPilotLifecycleGuardTests.test_manual_resume_rehydrates_wait_state_from_current_run",
             test_kind=HAPPY,
-            covers=("new_entrypoint.lifecycle_guard_resume_patrol",),
+            covers=(
+                "new_entrypoint.lifecycle_guard_resume_patrol",
+                "current_contract.exact_requested_role_resume",
+            ),
             code_contracts=("flowpilot_new.resume",),
         ),
         _evidence(
@@ -393,6 +796,15 @@ def source_test_evidence() -> tuple[TestEvidence, ...]:
             test_kind=NEGATIVE,
             covers=("route_mutation.topology_and_recheck",),
             code_contracts=("router.record_external_event", "packet.create_packet"),
+        ),
+        _evidence(
+            "source.route.parent_segment_same_authority",
+            test_name="test_parent_backward_non_continue_decision_mutates_route_and_requires_rerun",
+            path="tests/router_runtime/route_mutation_parent_backward.py",
+            command="python -m unittest tests.router_runtime.route_mutation_parent_backward.RouteMutationParentBackwardRuntimeTests.test_parent_backward_non_continue_decision_mutates_route_and_requires_rerun",
+            test_kind=HAPPY,
+            covers=("route_mutation.topology_and_recheck",),
+            code_contracts=("router.record_external_event",),
         ),
         _evidence(
             "source.route.sibling",

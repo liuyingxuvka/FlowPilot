@@ -81,7 +81,7 @@ def apply_node_execution_phase(self, state: State) -> Iterable[FunctionResult]:
             yield _step(
                 state,
                 label="resume_loaded_role_binding_memory",
-                action="continuation turn loads structured role memory packets before restoring or replacing roles",
+                action="continuation turn loads the exact current-obligation role memory packet and current route delta; idle or historical roles remain audit-only",
                 resume_loaded_role_binding_memory=True,
                 active_node="resume_rehydrate_runtime_roles",
             )
@@ -90,7 +90,7 @@ def apply_node_execution_phase(self, state: State) -> Iterable[FunctionResult]:
             yield _step(
                 state,
                 label="resume_host_spawn_or_rehydrate_runtime_roles",
-                action="router asks the host to restore or open all runtime-requested roles before PM resume",
+                action="router asks the host to restore or open only the exact currently requested responsibility before PM resume",
                 resume_host_rehydrate_requested=True,
                 active_node="resume_rehydrate_runtime_roles",
             )
@@ -99,7 +99,7 @@ def apply_node_execution_phase(self, state: State) -> Iterable[FunctionResult]:
             yield _step(
                 state,
                 label="resume_restored_required_role_binding_coverage",
-                action="continuation turn resumes available role bindings or prepares replacements from role memory",
+                action="continuation turn resumes the exact requested binding when current or prepares one memory-seeded replacement for that same responsibility",
                 resume_restored_runtime_roles=True,
                 replacement_roles_seeded_from_memory=True,
                 active_node="resume_rehydrate_runtime_roles",
@@ -109,7 +109,7 @@ def apply_node_execution_phase(self, state: State) -> Iterable[FunctionResult]:
             yield _step(
                 state,
                 label="resume_rehydrated_required_role_binding_coverage",
-                action="continuation turn records full role-binding rehydration status before asking the PM",
+                action="continuation turn records exact requested-role rehydration status before asking the PM",
                 resume_rehydrated_runtime_roles=True,
                 active_node="write_role_binding_recovery_report",
             )
@@ -118,7 +118,7 @@ def apply_node_execution_phase(self, state: State) -> Iterable[FunctionResult]:
             yield _step(
                 state,
                 label="resume_injected_current_run_memory_into_roles",
-                action="host injects each role's current-run memory and PM resume context before PM runway",
+                action="host injects the requested role's current-run memory and current route delta before PM runway",
                 resume_injected_current_run_memory_into_roles=True,
                 active_node="write_role_binding_recovery_report",
             )
@@ -127,7 +127,7 @@ def apply_node_execution_phase(self, state: State) -> Iterable[FunctionResult]:
             yield _step(
                 state,
                 label="role_binding_recovery_report_written",
-                action="write the role-binding rehydration report with restored, replaced, blocked, and memory-seeded role status before any PM resume decision",
+                action="write the requested-role rehydration report with exact target, restored or replaced status, current generation, and route delta before any PM resume decision",
                 role_binding_recovery_report_written=True,
                 active_node="resume_ask_project_manager",
             )

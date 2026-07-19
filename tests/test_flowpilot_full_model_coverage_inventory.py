@@ -22,6 +22,12 @@ def _current_runner_keys() -> set[str]:
 
 
 class FlowPilotFullModelCoverageInventoryTests(unittest.TestCase):
+    def test_unified_repair_integrity_is_strong_coverage(self) -> None:
+        self.assertEqual(
+            coverage_sweep._coverage_tier("flowpilot_unified_repair_integrity"),
+            "coverage_strong",
+        )
+
     def test_inventory_classifies_all_current_flowguard_runners(self) -> None:
         report = inventory.build_inventory()
 

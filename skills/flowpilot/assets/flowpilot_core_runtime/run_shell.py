@@ -113,6 +113,139 @@ def create_run_shell(
     return shell
 
 
+def create_historical_repair_run_shell(
+    root: Path,
+    *,
+    source_run_id: str,
+    defect_summary: str,
+    impact_summary: str,
+    evidence_refs: list[str],
+    source_result_ids: list[str],
+    run_id: str | None = None,
+) -> RunShell:
+    """Create a distinct current run with explicit read-only old-result context."""
+
+    from . import migration
+
+    root = Path(root).resolve()
+    if not source_run_id:
+        raise runtime.BlackBoxRuntimeError("historical repair run requires source_run_id")
+    if not defect_summary.strip():
+        raise runtime.BlackBoxRuntimeError("historical repair run requires defect_summary")
+    if not impact_summary.strip():
+        raise runtime.BlackBoxRuntimeError("historical repair run requires impact_summary")
+    normalized_evidence_refs = [str(item).strip() for item in evidence_refs if str(item).strip()]
+    if not normalized_evidence_refs:
+        raise runtime.BlackBoxRuntimeError("historical repair run requires non-empty evidence_refs")
+    normalized_result_ids = [str(item).strip() for item in source_result_ids if str(item).strip()]
+    if not normalized_result_ids or len(normalized_result_ids) != len(set(normalized_result_ids)):
+        raise runtime.BlackBoxRuntimeError(
+            "historical repair run requires unique non-empty source_result_ids"
+        )
+
+    source_shell = load_run_shell(root, run_id=source_run_id)
+    source_ledger = load_run_ledger(source_shell)
+    source_terminal_status = runtime.terminal_lifecycle_status(source_ledger)
+    source_complete = (
+        isinstance(source_ledger.get("closure"), dict)
+        and source_ledger["closure"].get("decision") == "complete"
+    )
+    if not source_terminal_status and not source_complete:
+        raise runtime.BlackBoxRuntimeError(
+            "historical repair run source must be complete or terminal-stopped"
+        )
+    selected_run_id = run_id or _default_run_id()
+    if selected_run_id == source_run_id:
+        raise runtime.BlackBoxRuntimeError(
+            "historical repair must use a distinct new run_id"
+        )
+    source_results = source_ledger.get("results", {})
+    for result_id in normalized_result_ids:
+        result = source_results.get(result_id)
+        if not isinstance(result, dict):
+            raise runtime.BlackBoxRuntimeError(
+                f"historical repair source result does not exist: {result_id}"
+            )
+        if result.get("status") != "accepted" or result.get("accepted") is not True:
+            raise runtime.BlackBoxRuntimeError(
+                f"historical repair source result is not accepted terminal context: {result_id}"
+            )
+
+    source_ledger_fingerprint = hashlib.sha256(
+        json.dumps(source_ledger, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
+    shell = create_run_shell(
+        root,
+        str(source_ledger.get("goal") or ""),
+        str(source_ledger.get("acceptance_contract") or ""),
+        run_id=selected_run_id,
+    )
+    ledger = load_run_ledger(shell)
+    imported_ids: list[str] = []
+    for result_id in normalized_result_ids:
+        result = source_results[result_id]
+        body_path = source_shell.run_root / "results" / "bodies" / f"{result_id}.md"
+        envelope_path = source_shell.run_root / "results" / "envelopes" / f"{result_id}.json"
+        if not body_path.is_file() or not envelope_path.is_file():
+            raise runtime.BlackBoxRuntimeError(
+                f"historical repair source result projection is missing: {result_id}"
+            )
+        import_id = migration.import_old_artifact(
+            ledger,
+            body_path,
+            disposition="imported_read_only",
+            reason="Selected terminal output is read-only context for a distinct repair run.",
+        )
+        imported = ledger["imported_evidence"][import_id]
+        imported.update(
+            {
+                "source_run_id": source_run_id,
+                "source_result_id": result_id,
+                "source_result_status": str(result.get("status") or ""),
+                "source_result_body_path": str(body_path),
+                "source_result_body_hash": hashlib.sha256(body_path.read_bytes()).hexdigest(),
+                "source_result_envelope_path": str(envelope_path),
+                "source_result_envelope_hash": hashlib.sha256(envelope_path.read_bytes()).hexdigest(),
+                "read_only": True,
+                "current_authority": False,
+            }
+        )
+        imported_ids.append(import_id)
+    ledger["historical_repair_intake"] = {
+        "schema_version": "black_box_flowpilot.historical_repair_intake.v1",
+        "status": "awaiting_current_pm_route",
+        "source_run_id": source_run_id,
+        "source_run_terminal_status": source_terminal_status or "complete",
+        "source_run_ledger_fingerprint": source_ledger_fingerprint,
+        "defect_summary": defect_summary.strip(),
+        "impact_summary": impact_summary.strip(),
+        "evidence_refs": normalized_evidence_refs,
+        "source_result_ids": normalized_result_ids,
+        "imported_evidence_ids": imported_ids,
+        "old_control_state_reactivated": False,
+        "current_authority": True,
+        "created_at": runtime.now_iso(),
+    }
+    runtime._event(
+        ledger,
+        "historical_repair_run_created",
+        source_run_id=source_run_id,
+        current_run_id=selected_run_id,
+        imported_evidence_ids=imported_ids,
+    )
+    save_run_ledger(shell, ledger)
+
+    reloaded_source = load_run_ledger(source_shell)
+    reloaded_source_fingerprint = hashlib.sha256(
+        json.dumps(reloaded_source, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
+    if reloaded_source_fingerprint != source_ledger_fingerprint:
+        raise runtime.BlackBoxRuntimeError(
+            "historical repair creation changed the immutable source run ledger"
+        )
+    return shell
+
+
 def load_run_shell(root: Path, *, run_id: str | None = None) -> RunShell:
     root = Path(root).resolve()
     flowpilot_root = root / ".flowpilot"
@@ -291,6 +424,7 @@ def materialize_run_artifacts(shell: RunShell, ledger: dict[str, Any]) -> None:
         _write_text(shell.run_root / "packets" / "bodies" / f"{packet_id}.md", str(packet.get("body", "")))
     for route_version, route in ledger.get("routes", {}).items():
         _write_json(shell.run_root / "routes" / f"route-v{route_version}.json", route)
+    _write_user_flow_runtime_projection(shell, ledger)
     _write_route_node_projections(shell, ledger.get("route_nodes", {}))
     if isinstance(ledger.get("high_standard_contract"), dict):
         _write_json(shell.run_root / "preplanning" / "high_standard_contract.json", ledger["high_standard_contract"])
@@ -364,6 +498,125 @@ def materialize_run_artifacts(shell: RunShell, ledger: dict[str, Any]) -> None:
     _write_json(
         shell.run_root / "console" / "status.json",
         status_projection if isinstance(status_projection, dict) else runtime.render_console(ledger),
+    )
+
+
+def _user_flow_route_nodes(
+    ledger: dict[str, Any],
+    *,
+    route_version: int,
+    current_node_ids: list[str],
+) -> list[dict[str, Any]]:
+    route_nodes = ledger.get("route_nodes", {})
+    if not isinstance(route_nodes, dict):
+        return []
+    current_set = set(current_node_ids)
+    history_by_replacement: dict[str, list[dict[str, Any]]] = {}
+    for node in route_nodes.values():
+        if not isinstance(node, dict) or str(node.get("status") or "") != "superseded":
+            continue
+        replacement_id = str(node.get("superseded_by") or "")
+        if replacement_id not in current_set:
+            continue
+        history_by_replacement.setdefault(replacement_id, []).append(
+            json.loads(json.dumps(node, sort_keys=True))
+        )
+
+    projected: list[dict[str, Any]] = []
+    for node_id in current_node_ids:
+        for source in sorted(
+            history_by_replacement.get(node_id, []),
+            key=lambda row: int(row.get("repair_generation", 0) or 0),
+        ):
+            projected.append(source)
+        node = route_nodes.get(node_id)
+        if not isinstance(node, dict):
+            raise runtime.BlackBoxRuntimeError(
+                f"current route projection references missing node: {node_id}"
+            )
+        node_route_version = int(node.get("route_version", route_version) or route_version)
+        membership_versions = [
+            int(item)
+            for item in node.get("route_membership_versions") or []
+            if isinstance(item, int) or str(item).isdigit()
+        ]
+        if node_route_version != route_version and route_version not in membership_versions:
+            raise runtime.BlackBoxRuntimeError(
+                f"current route projection node is not a member of route version {route_version}: {node_id}"
+            )
+        projected.append(json.loads(json.dumps(node, sort_keys=True)))
+    return projected
+
+
+def _write_user_flow_runtime_projection(
+    shell: RunShell,
+    ledger: dict[str, Any],
+) -> None:
+    active_route_version = int(ledger.get("active_route_version", 0) or 0)
+    if active_route_version <= 0:
+        return
+    route = ledger.get("routes", {}).get(str(active_route_version))
+    if not isinstance(route, dict):
+        raise runtime.BlackBoxRuntimeError(
+            "active route version is missing from the canonical ledger"
+        )
+    current_node_ids = [
+        str(item)
+        for item in route.get("node_order") or route.get("current_mainline") or []
+        if str(item)
+    ]
+    if not current_node_ids:
+        return
+    route_id = str(route.get("route_id") or f"route-v{active_route_version}")
+    frontier = (
+        json.loads(json.dumps(ledger.get("execution_frontier"), sort_keys=True))
+        if isinstance(ledger.get("execution_frontier"), dict)
+        else {}
+    )
+    frontier.update(
+        {
+            "active_route_id": route_id,
+            "route_version": active_route_version,
+            "active_node_id": str(
+                frontier.get("active_node_id")
+                or route.get("active_node_id")
+                or current_node_ids[0]
+            ),
+            "current_mainline": current_node_ids,
+        }
+    )
+    flow = json.loads(json.dumps(route, sort_keys=True))
+    flow.update(
+        {
+            "schema_version": "flowpilot.runtime_route_projection.v1",
+            "route_id": route_id,
+            "route_version": active_route_version,
+            "status": "active",
+            "active_node_id": frontier["active_node_id"],
+            "node_order": current_node_ids,
+            "current_mainline": current_node_ids,
+            "nodes": _user_flow_route_nodes(
+                ledger,
+                route_version=active_route_version,
+                current_node_ids=current_node_ids,
+            ),
+            "producer_authority": "canonical_run_ledger",
+            "producer_ledger_path": str(shell.ledger_path),
+        }
+    )
+    _write_json(shell.run_root / "routes" / route_id / "flow.json", flow)
+    _write_json(shell.run_root / "execution_frontier.json", frontier)
+    _write_json(
+        shell.run_root / "state.json",
+        {
+            "schema_version": "flowpilot.runtime_state_projection.v1",
+            "run_id": shell.run_id,
+            "active_route_id": route_id,
+            "active_route_version": active_route_version,
+            "active_node_id": frontier["active_node_id"],
+            "status": str(frontier.get("status") or "node_execution"),
+            "producer_authority": "canonical_run_ledger",
+        },
     )
 
 

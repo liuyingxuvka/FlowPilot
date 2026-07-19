@@ -34,6 +34,26 @@ source paths only. Treat the material artifact map the same way: it is a
 run-scoped index of material artifacts and safe refs, not acceptance evidence,
 and it cannot replace reviewer, FlowGuard operator, worker, or PM-owned source files.
 
+After opening the current authoritative sources cited by those indexes,
+reconstruct the whole-project target in unclosed-first order:
+
+- the accepted user/root outcome, non-downgrade constraints, and current route
+  or node contribution;
+- current hard acceptance and realization obligations, active blockers, stale
+  or missing evidence, and required repair or recheck returns;
+- pending generated resources, current role results, upstream inputs,
+  downstream handoffs, parent reattachment, and terminal proof still owed;
+- completed, superseded, experiment-derived, or stopped history only after the
+  current unclosed set is understood.
+
+Recency, completed-node count, and a convenient recent summary never outrank a
+current unclosed hard obligation. In the existing
+`prior_path_context_review.impact_on_decision`, name each relevant current hard
+obligation, its current owner or next gate, and whether this decision continues,
+repairs, reroutes, blocks, waives with authority, or stops it. Keep optional
+improvements separate from hard current work; do not add a new result field for
+this scan.
+
 Every protected PM decision must return `prior_path_context_review` with:
 
 - `reviewed: true`;

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 from pathlib import Path
 from typing import Any
@@ -43,12 +44,21 @@ def _flowguard_report() -> dict[str, Any]:
 
 
 def _target_plan_report() -> dict[str, Any]:
-    state = model.target_state()
-    failures = model.invariant_failures(state)
+    states = {
+        "reviewer_or_system_blocker": model.target_state(),
+        "pm_historical_defect": model.historical_target_state(),
+    }
+    rows = {
+        name: {
+            "ok": not model.invariant_failures(state) and model.is_success(state),
+            "failures": model.invariant_failures(state),
+            "state": model.state_summary(state),
+        }
+        for name, state in states.items()
+    }
     return {
-        "ok": not failures and model.is_success(state),
-        "failures": failures,
-        "state": model.state_summary(state),
+        "ok": all(row["ok"] for row in rows.values()),
+        "triggers": rows,
         "labels": list(model.REQUIRED_SAFE_LABELS),
     }
 
@@ -113,6 +123,10 @@ def _model_test_alignment_report() -> dict[str, Any]:
         "route_redesign_test": "test_pm_redesign_route_repair_is_gated_before_application" in high_standard_test_text,
         "june3_regression_test": "test_june3_same_node_empty_fresh_packet_regression_is_rejected" in core_test_text,
         "pm_disposition_current_name": "repair_current_scope" in high_standard_test_text,
+        "pm_historical_defect_direct_runtime_entry": "pm_historical" in runtime_text
+        and "historical_node_repair" in runtime_text,
+        "pm_historical_defect_direct_runtime_test": "historical_node_repair" in high_standard_test_text
+        or "historical_node_repair" in core_test_text,
     }
     missing = [name for name, ok in obligations.items() if not ok]
     return {
@@ -128,6 +142,25 @@ def _model_test_alignment_report() -> dict[str, Any]:
             "tests/test_flowpilot_break_glass_depth.py",
         ],
     }
+
+
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _source_fingerprints() -> dict[str, str]:
+    paths = (
+        ROOT / "flowpilot_canonical_repair_scope_rotation_model.py",
+        Path(__file__).resolve(),
+        REPO_ROOT / "skills" / "flowpilot" / "assets" / "flowpilot_core_runtime" / "runtime.py",
+        REPO_ROOT / "tests" / "test_flowpilot_core_runtime.py",
+        REPO_ROOT / "tests" / "test_flowpilot_high_standard_control_flow.py",
+    )
+    return {str(path.relative_to(REPO_ROOT)).replace("\\", "/"): _sha256(path) for path in paths}
 
 
 def run_checks() -> dict[str, Any]:
@@ -165,10 +198,15 @@ def run_checks() -> dict[str, Any]:
             "evidence": alignment["evidence"],
         },
     ]
+    model_ok = flowguard["ok"] and target_plan["ok"] and hazards["ok"]
+    runtime_conformance_ok = alignment["ok"]
     return {
         "result_type": "flowpilot_canonical_repair_scope_rotation_checks",
         "model_id": model.MODEL_ID,
-        "ok": flowguard["ok"] and target_plan["ok"] and hazards["ok"] and alignment["ok"],
+        "ok": model_ok and runtime_conformance_ok,
+        "model_ok": model_ok,
+        "runtime_conformance_ok": runtime_conformance_ok,
+        "decision": "current_runtime_gap" if model_ok and not runtime_conformance_ok else ("passed" if model_ok else "model_failed"),
         "flowguard": flowguard,
         "target_plan": target_plan,
         "hazard_detection": hazards,
@@ -177,6 +215,23 @@ def run_checks() -> dict[str, Any]:
             "rows": rows,
             "routine_gate": {"ok": all(row["status"] == "passed" for row in rows)},
         },
+        "source_fingerprints": _source_fingerprints(),
+        "expected_runtime_gaps": [
+            {
+                "finding_id": "repair.pm_historical_direct_entry_missing",
+                "action_id": "runtime.add_pm_historical_node_repair_decision",
+                "status": "open" if not alignment["obligations"]["pm_historical_defect_direct_runtime_entry"] else "closed",
+            },
+            {
+                "finding_id": "repair.pm_historical_direct_test_missing",
+                "action_id": "tests.add_pm_historical_node_repair_matrix",
+                "status": "open" if not alignment["obligations"]["pm_historical_defect_direct_runtime_test"] else "closed",
+            },
+        ],
+        "claim_boundary": (
+            "The FlowGuard state model covers blocker-backed and PM-proactive canonical repair selection. "
+            "Runtime conformance remains failed until the direct historical-repair entry and owner tests exist."
+        ),
     }
 
 

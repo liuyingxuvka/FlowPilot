@@ -4119,7 +4119,7 @@ INVARIANTS = (
     ),
     Invariant(
         name="role_binding_memory_rehydration_required",
-        description="Manual-resume and foreground-patrol recovery must load compact role memory, rehydrate or seed replacements, refresh memory after work, and archive it before role binding closure.",
+        description="Manual-resume and foreground-patrol recovery must load only the exact current-obligation role memory and route delta, rehydrate or seed that same responsibility, refresh memory after work, and archive it before role binding closure.",
         predicate=role_binding_memory_rehydration_required,
     ),
 )

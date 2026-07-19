@@ -5,30 +5,30 @@ It is orientation only; it is not validation evidence.
 
 ## Summary
 
-- Model runners: 164
-- Model-test alignment families: 18
-- Code surfaces: 1083
+- Model runners: 165
+- Model-test alignment families: 19
+- Code surfaces: 1084
 - Test commands: 451
 - Evidence summaries: 5
-- Known-bad/risk labels surfaced: 2715
+- Known-bad/risk labels surfaced: 2787
 
 ## Area Map
 
 | Area | Models | Alignment families | Code surfaces | Test commands | Known-bad labels |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| `closure` | 9 | 1 | 19 | 13 | 128 |
+| `closure` | 9 | 2 | 19 | 13 | 137 |
 | `controller` | 7 | 0 | 91 | 33 | 106 |
 | `install-validation` | 1 | 0 | 19 | 17 | 15 |
 | `material` | 1 | 0 | 10 | 9 | 16 |
-| `model-mesh` | 3 | 0 | 7 | 2 | 86 |
+| `model-mesh` | 3 | 0 | 7 | 2 | 87 |
 | `model-test-alignment` | 5 | 0 | 14 | 8 | 74 |
-| `other` | 94 | 9 | 281 | 37 | 1456 |
+| `other` | 95 | 9 | 282 | 37 | 1504 |
 | `packet` | 10 | 2 | 202 | 173 | 170 |
 | `prompt-card` | 3 | 0 | 4 | 0 | 80 |
 | `review` | 4 | 0 | 4 | 2 | 78 |
-| `route` | 17 | 3 | 353 | 112 | 327 |
+| `route` | 17 | 3 | 353 | 112 | 335 |
 | `startup` | 6 | 1 | 69 | 41 | 129 |
-| `structure` | 4 | 2 | 10 | 4 | 50 |
+| `structure` | 4 | 2 | 10 | 4 | 56 |
 
 ## Evidence Boundaries
 
@@ -81,13 +81,14 @@ Completion and readiness claims still need the owning FlowGuard checks, tests, r
 - `packet/card/ack` (packet): 4 obligations, 7 test evidence rows
 - `packet result family` (packet): 52 obligations, 97 test evidence rows
 - `route mutation` (route): 3 obligations, 6 test evidence rows
+- `unified historical and terminal repair integrity` (closure): 13 obligations, 26 test evidence rows
 - `field lifecycle currentness` (other): 12 obligations, 16 test evidence rows
 - `current-node trunk invariant` (other): 2 obligations, 4 test evidence rows
 - `terminal/closure/resume` (closure): 6 obligations, 22 test evidence rows
 - `role/output contracts` (other): 3 obligations, 5 test evidence rows
 - `router loop/daemon` (route): 14 obligations, 31 test evidence rows
 - `repair transactions` (other): 10 obligations, 11 test evidence rows
-- `test tiering/slow-test contracts` (other): 4 obligations, 7 test evidence rows
+- `test tiering/slow-test contracts` (other): 5 obligations, 9 test evidence rows
 - `rejection/liveness matrix` (other): 5 obligations, 9 test evidence rows
 - `route authority singularity` (route): 5 obligations, 6 test evidence rows
 - `core deliverable non-downgrade` (other): 1 obligations, 2 test evidence rows

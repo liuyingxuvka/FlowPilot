@@ -4,6 +4,7 @@ import time
 
 from tests.router_runtime.common import *  # noqa: F403
 from tests.router_runtime.common import FlowPilotRouterRuntimeTestBase
+import flowpilot_router_controller_runtime_apply as controller_runtime
 import flowpilot_router_io_locks as router_io_locks
 
 
@@ -63,6 +64,26 @@ class ForegroundControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertEqual(action["action_type"], "sync_display_plan")
         self.assertEqual(read_json(history_path), history_before)
         self.assertEqual(read_json(context_path), context_before)
+    def test_route_memory_rejects_changed_current_source_snapshot(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        state = read_json(router.run_state_path(run_root))
+        self.assertTrue(router._route_memory_ready(run_root, state))  # type: ignore[attr-defined]
+
+        frontier_path = run_root / "execution_frontier.json"
+        frontier = read_json(frontier_path)
+        frontier["test_current_source_change"] = True
+        router.write_json(frontier_path, frontier)
+
+        state = read_json(router.run_state_path(run_root))
+        self.assertFalse(router._route_memory_ready(run_root, state))  # type: ignore[attr-defined]
+        with self.assertRaisesRegex(router.RouterError, "current route-memory source snapshot"):
+            router._require_pm_prior_path_context(  # type: ignore[attr-defined]
+                root,
+                run_root,
+                {"prior_path_context_review": self.prior_path_context_review(root, "stale review")},
+                purpose="test",
+            )
     def test_controller_action_summary_separates_done_history_from_active_work(self) -> None:
         root = self.make_project()
         run_root = self.write_minimal_run(root, "run-a")
@@ -294,6 +315,99 @@ class ForegroundControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertEqual(calls, 2)
         self.assertTrue(result["runtime_write_settlement"]["waited"])
         self.assertGreater(wait_for_settlement.call_args.kwargs["timeout_seconds"], 0)
+
+    def test_foreground_writer_retry_preserves_completed_folded_actions(self) -> None:
+        target = self.make_project() / "startup-writer.json"
+        exc = router.RouterLedgerWriteInProgress(
+            target,
+            {"active": True, "classification": "active_writer"},
+            "startup writer is settling",
+        )
+        exc.completed_folded_actions = [
+            {
+                "action_type": "create_run_shell",
+                "result": {"ok": True, "applied": "create_run_shell"},
+            }
+        ]
+        calls = 0
+
+        def operation() -> dict:
+            nonlocal calls
+            calls += 1
+            if calls == 1:
+                raise exc
+            return {
+                "action_type": "open_startup_intake_ui",
+                "folded_applied_count": 1,
+                "folded_applied_actions": [
+                    {
+                        "action_type": "start_router_daemon",
+                        "result": {"ok": True, "applied": "start_router_daemon"},
+                    }
+                ],
+                "folded_stop_reason": "requires_user_host_or_role_boundary",
+            }
+
+        wait_receipt = {
+            "path": str(target),
+            "lock_path": str(router_io_locks._json_write_lock_path(target)),
+            "waited_seconds": 0.001,
+            "poll_count": 1,
+            "progress_count": 1,
+            "initial_liveness": dict(exc.write_lock),
+            "final_liveness": {"active": False},
+        }
+        with mock.patch.object(
+            router_io_locks,
+            "_wait_for_runtime_json_writer_to_settle",
+            return_value=wait_receipt,
+        ):
+            result = router_io_locks._run_foreground_with_runtime_writer_settlement(
+                operation,
+                command_name="start",
+            )
+
+        self.assertEqual(
+            [item["action_type"] for item in result["folded_applied_actions"]],
+            ["create_run_shell", "start_router_daemon"],
+        )
+        self.assertEqual(result["folded_applied_count"], 2)
+
+    def test_foreground_writer_retry_preserves_completed_folded_actions_from_run_until_wait(self) -> None:
+        root = self.make_project()
+        target = root / "run-until-wait-writer.json"
+        contention = router.RouterLedgerWriteInProgress(
+            target,
+            {"active": True, "classification": "active_writer"},
+            "run-until-wait writer is settling",
+        )
+        action = {
+            "action_type": "sync_display_plan",
+            "requires_user": False,
+            "requires_payload": False,
+        }
+
+        with mock.patch.object(
+            controller_runtime.runtime_next,
+            "next_action",
+            side_effect=[action, contention],
+        ), mock.patch.object(
+            controller_runtime,
+            "apply_action",
+            return_value={"ok": True, "applied": "sync_display_plan"},
+        ):
+            with self.assertRaises(router.RouterLedgerWriteInProgress) as raised:
+                controller_runtime.run_until_wait(root, max_steps=2)
+
+        self.assertEqual(
+            raised.exception.completed_folded_actions,
+            [
+                {
+                    "action_type": "sync_display_plan",
+                    "result": {"ok": True, "applied": "sync_display_plan"},
+                }
+            ],
+        )
 
     def test_runtime_writer_settlement_fails_closed_when_live_lock_never_clears(self) -> None:
         root = self.make_project()
@@ -1440,7 +1554,7 @@ class ForegroundControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
             router.record_external_event(root, "pm_writes_child_skill_selection", {"selected_skills": controller_selected_skill})
         safe_selected_skill = [
             {
-                "skill_name": "model-first-function-flow",
+                "skill_name": "flowguard",
                 "decision": "required",
                 "supported_capabilities": ["cap-001"],
                 "gates": [

@@ -32,6 +32,7 @@ def generate(
     mark_ui_displayed: bool,
     reviewer_check: bool,
     include_drafts: bool = False,
+    include_superseded_history: bool = False,
 ) -> dict[str, Any]:
     paths = resolve_flowpilot_paths(root)
     frontier_path = Path(paths["frontier_path"])
@@ -69,6 +70,7 @@ def generate(
         route=route,
         current_stage=current_stage,
         trigger=trigger,
+        include_superseded_history=include_superseded_history,
     )
     active_route = _active_route(frontier, state, route)
     active_node = _active_node(frontier, state, route)
@@ -88,6 +90,7 @@ def generate(
         hidden_leaf_progress=route_sign["hidden_leaf_progress"],
         source_status=source_health["status"],
         source_findings=source_health["findings"],
+        replacement_history=route_sign["replacement_history"],
     )
     mermaid_hash = hashlib.sha256(source.encode("utf-8")).hexdigest()
     canonical_route_available = (
@@ -134,7 +137,7 @@ def generate(
         "simplified_flowpilot_english_mermaid": True,
         "user_visible_display_text": {
             "clean": True,
-            "content": "title_mermaid_current_status_current_path_and_hidden_leaf_progress",
+            "content": "title_mermaid_current_status_current_path_hidden_leaf_progress_and_on_demand_history_control",
             "contains_internal_display_evidence": False,
             "internal_evidence_location": "display_packet_and_user_dialog_display_ledger",
         },
@@ -149,6 +152,7 @@ def generate(
         "active_highlight": route_sign["active_highlight"],
         "graph_labels_surface_neutral": route_sign["graph_labels_surface_neutral"],
         "hidden_leaf_progress": route_sign["hidden_leaf_progress"],
+        "replacement_history": route_sign["replacement_history"],
         "current_stage": current_stage,
         "active_route": active_route,
         "active_node": active_node,
@@ -176,6 +180,7 @@ def generate(
             "must_check_chat_when_cockpit_closed": True,
             "must_check_active_route_node_match": True,
             "must_check_return_edge_when_required": True,
+            "must_check_requested_history_identity": True,
         },
     }
 
@@ -222,6 +227,7 @@ def generate(
         "active_highlight": route_sign["active_highlight"],
         "graph_labels_surface_neutral": route_sign["graph_labels_surface_neutral"],
         "hidden_leaf_progress": route_sign["hidden_leaf_progress"],
+        "replacement_history": route_sign["replacement_history"],
         "route_source_kind": route_source_kind,
         "canonical_route_available": canonical_route_available,
         "route_node_count": route_source_summary["node_count"],

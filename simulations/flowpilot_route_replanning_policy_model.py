@@ -8,15 +8,17 @@ Risk intent brief:
   active nodes that cannot be executed, stale approvals after route mutation,
   and Controller compensation by direct product implementation.
 - Modeled state and side effects: root planning, node-entry replanning,
-  in-progress replanning, review-failure repair, product-scope FlowGuard checks,
-  route-scope FlowGuard checks, Reviewer approval, stale evidence handling, and
-  route activation/use.
+  in-progress replanning, direct PM historical-defect repair,
+  review-failure repair, product-scope FlowGuard checks, route-scope FlowGuard
+  checks, Reviewer approval, stale evidence handling, and route activation/use.
 - Hard invariants: planning issues are fixed by route rewrites or ordinary node
-  additions; repair nodes require reviewed failure evidence; product capability
-  changes run product-scope FlowGuard before route-scope FlowGuard; every structure change
-  runs route-scope FlowGuard; every changed route is reviewed before use; every
-  active node is executable before entry; Controller never substitutes for route
-  gates by doing product work.
+  additions; post-work repair nodes require either a current reviewed failure
+  or a structured PM historical-defect observation, and PM historical repair
+  never fabricates a blocker; product capability changes run product-scope
+  FlowGuard before route-scope FlowGuard; every structure change runs
+  route-scope FlowGuard; every changed route is reviewed before use; every
+  active node is executable before entry; Controller never substitutes for
+  route gates by doing product work.
 - Blindspot: this model checks the abstract policy. Production router/card
   code and ProjectRadar replay evidence must still validate implementation.
 """
@@ -33,6 +35,7 @@ VALID_PLANNING_REPLAN = "valid_planning_replan"
 VALID_PLANNING_CAPABILITY_EXPANSION = "valid_planning_capability_expansion"
 VALID_NODE_ENTRY_REPLAN = "valid_node_entry_replan"
 VALID_IN_PROGRESS_REPLAN = "valid_in_progress_replan"
+VALID_PM_HISTORICAL_DEFECT_REPAIR = "valid_pm_historical_defect_repair"
 VALID_REVIEW_FAILURE_REPAIR = "valid_review_failure_repair"
 VALID_REVIEW_FAILURE_LOCAL_PATCH = "valid_review_failure_local_patch"
 
@@ -45,6 +48,8 @@ STRUCTURE_CHANGE_WITHOUT_PROCESS_CHECK = "structure_change_without_process_check
 CHANGED_ROUTE_WITHOUT_REVIEWER = "changed_route_without_reviewer"
 NODE_ENTRY_REPAIR_BEFORE_WORK = "node_entry_repair_before_work"
 IN_PROGRESS_REPAIR_BEFORE_REVIEW_FAILURE = "in_progress_repair_before_review_failure"
+PM_HISTORICAL_DEFECT_FORCED_THROUGH_BLOCKER = "pm_historical_defect_forced_through_blocker"
+PM_HISTORICAL_DEFECT_WITHOUT_OBSERVATION = "pm_historical_defect_without_observation"
 REPAIR_NODE_MISSING_FIELDS = "repair_node_missing_fields"
 REPAIR_WITHOUT_STALE_RESET = "repair_without_stale_reset"
 REPAIR_WITHOUT_MAINLINE_RETURN = "repair_without_mainline_return"
@@ -57,6 +62,7 @@ VALID_SCENARIOS = (
     VALID_PLANNING_CAPABILITY_EXPANSION,
     VALID_NODE_ENTRY_REPLAN,
     VALID_IN_PROGRESS_REPLAN,
+    VALID_PM_HISTORICAL_DEFECT_REPAIR,
     VALID_REVIEW_FAILURE_REPAIR,
     VALID_REVIEW_FAILURE_LOCAL_PATCH,
 )
@@ -70,6 +76,8 @@ NEGATIVE_SCENARIOS = (
     CHANGED_ROUTE_WITHOUT_REVIEWER,
     NODE_ENTRY_REPAIR_BEFORE_WORK,
     IN_PROGRESS_REPAIR_BEFORE_REVIEW_FAILURE,
+    PM_HISTORICAL_DEFECT_FORCED_THROUGH_BLOCKER,
+    PM_HISTORICAL_DEFECT_WITHOUT_OBSERVATION,
     REPAIR_NODE_MISSING_FIELDS,
     REPAIR_WITHOUT_STALE_RESET,
     REPAIR_WITHOUT_MAINLINE_RETURN,
@@ -104,8 +112,13 @@ class Action:
 class State:
     status: str = "new"  # new | running | accepted | rejected
     scenario: str = "unset"
-    phase: str = "unset"  # planning | node_entry | node_in_progress | review_failure
-    issue_kind: str = "none"  # planning_gap | capability_gap | structure_gap | review_failure
+    phase: str = "unset"  # planning | node_entry | node_in_progress | historical_repair | review_failure
+    issue_kind: str = "none"  # planning_gap | capability_gap | structure_gap | historical_defect | review_failure
+    repair_trigger_origin: str = "none"  # none | pm_historical_defect | reviewer_failure
+    structured_defect_observation_recorded: bool = False
+    blocker_prerequisite_required: bool = False
+    pre_work_decomposition: bool = False
+    post_work_repair: bool = False
     route_started: bool = False
     completed_nodes: int = 0
     current_node_kind: str = "none"  # root | parent | module | leaf | repair
@@ -189,6 +202,7 @@ def _valid_planning_replan() -> State:
         scenario=VALID_PLANNING_REPLAN,
         phase="planning",
         issue_kind="planning_gap",
+        pre_work_decomposition=True,
         route_started=False,
         completed_nodes=0,
         current_node_kind="root",
@@ -207,6 +221,7 @@ def _valid_planning_capability_expansion() -> State:
         scenario=VALID_PLANNING_CAPABILITY_EXPANSION,
         phase="planning",
         issue_kind="capability_gap",
+        pre_work_decomposition=True,
         route_started=False,
         completed_nodes=0,
         current_node_kind="root",
@@ -229,6 +244,7 @@ def _valid_node_entry_replan() -> State:
         scenario=VALID_NODE_ENTRY_REPLAN,
         phase="node_entry",
         issue_kind="capability_gap",
+        pre_work_decomposition=True,
         route_started=True,
         completed_nodes=0,
         current_node_kind="module",
@@ -252,6 +268,7 @@ def _valid_in_progress_replan() -> State:
         scenario=VALID_IN_PROGRESS_REPLAN,
         phase="node_in_progress",
         issue_kind="capability_gap",
+        pre_work_decomposition=True,
         route_started=True,
         completed_nodes=0,
         current_node_kind="leaf",
@@ -272,6 +289,9 @@ def _valid_review_failure_repair() -> State:
         scenario=VALID_REVIEW_FAILURE_REPAIR,
         phase="review_failure",
         issue_kind="review_failure",
+        repair_trigger_origin="reviewer_failure",
+        structured_defect_observation_recorded=True,
+        post_work_repair=True,
         route_started=True,
         completed_nodes=0,
         current_node_kind="leaf",
@@ -297,6 +317,9 @@ def _valid_review_failure_local_patch() -> State:
         scenario=VALID_REVIEW_FAILURE_LOCAL_PATCH,
         phase="review_failure",
         issue_kind="review_failure",
+        repair_trigger_origin="reviewer_failure",
+        structured_defect_observation_recorded=True,
+        post_work_repair=True,
         route_started=True,
         completed_nodes=0,
         current_node_kind="leaf",
@@ -313,6 +336,36 @@ def _valid_review_failure_local_patch() -> State:
     )
 
 
+def _valid_pm_historical_defect_repair() -> State:
+    return State(
+        status="running",
+        scenario=VALID_PM_HISTORICAL_DEFECT_REPAIR,
+        phase="historical_repair",
+        issue_kind="historical_defect",
+        repair_trigger_origin="pm_historical_defect",
+        structured_defect_observation_recorded=True,
+        blocker_prerequisite_required=False,
+        pre_work_decomposition=False,
+        post_work_repair=True,
+        route_started=True,
+        completed_nodes=1,
+        current_node_kind="leaf",
+        target_node_started=True,
+        target_node_result_submitted=True,
+        reviewer_failure_recorded=False,
+        change_kind="repair_node",
+        repair_node_created=True,
+        repair_fields_complete=True,
+        stale_evidence_reset=True,
+        mainline_return_defined=True,
+        rerun_obligations_defined=True,
+        route_scope_flowguard_checked=True,
+        reviewer_approved_changed_route=True,
+        active_node_executable=True,
+        pm_activated_or_used_route=True,
+    )
+
+
 def _scenario_state(scenario: str) -> State:
     if scenario == VALID_PLANNING_REPLAN:
         return _valid_planning_replan()
@@ -322,6 +375,8 @@ def _scenario_state(scenario: str) -> State:
         return _valid_node_entry_replan()
     if scenario == VALID_IN_PROGRESS_REPLAN:
         return _valid_in_progress_replan()
+    if scenario == VALID_PM_HISTORICAL_DEFECT_REPAIR:
+        return _valid_pm_historical_defect_repair()
     if scenario == VALID_REVIEW_FAILURE_REPAIR:
         return _valid_review_failure_repair()
     if scenario == VALID_REVIEW_FAILURE_LOCAL_PATCH:
@@ -374,6 +429,19 @@ def _scenario_state(scenario: str) -> State:
             repair_fields_complete=True,
             reviewer_failure_recorded=False,
         )
+    if scenario == PM_HISTORICAL_DEFECT_FORCED_THROUGH_BLOCKER:
+        return replace(
+            _valid_pm_historical_defect_repair(),
+            scenario=scenario,
+            blocker_prerequisite_required=True,
+            reviewer_failure_recorded=True,
+        )
+    if scenario == PM_HISTORICAL_DEFECT_WITHOUT_OBSERVATION:
+        return replace(
+            _valid_pm_historical_defect_repair(),
+            scenario=scenario,
+            structured_defect_observation_recorded=False,
+        )
     if scenario == REPAIR_NODE_MISSING_FIELDS:
         return replace(_valid_review_failure_repair(), scenario=scenario, repair_fields_complete=False)
     if scenario == REPAIR_WITHOUT_STALE_RESET:
@@ -395,6 +463,21 @@ def _route_structure_changed(state: State) -> bool:
 
 def _changed_route_or_node(state: State) -> bool:
     return state.change_kind != "none" or state.product_capability_changed
+
+
+def _valid_post_work_repair_trigger(state: State) -> bool:
+    if not state.post_work_repair:
+        return False
+    if state.repair_trigger_origin == "reviewer_failure":
+        return state.phase == "review_failure" and state.reviewer_failure_recorded
+    if state.repair_trigger_origin == "pm_historical_defect":
+        return (
+            state.phase == "historical_repair"
+            and state.issue_kind == "historical_defect"
+            and state.structured_defect_observation_recorded
+            and not state.blocker_prerequisite_required
+        )
+    return False
 
 
 def policy_failures(state: State) -> list[str]:
@@ -442,9 +525,25 @@ def policy_failures(state: State) -> list[str]:
         and not state.reviewer_failure_recorded
     ):
         failures.append("in-progress capability gap used a repair node before reviewed failure")
+    if (
+        state.repair_trigger_origin == "pm_historical_defect"
+        and state.blocker_prerequisite_required
+    ):
+        failures.append(
+            "PM historical defect was forced through a fabricated blocker prerequisite"
+        )
+    if (
+        state.repair_trigger_origin == "pm_historical_defect"
+        and not state.structured_defect_observation_recorded
+    ):
+        failures.append(
+            "PM historical defect repair lacks a structured defect observation"
+        )
     if state.repair_node_created:
-        if not (state.reviewer_failure_recorded and state.phase == "review_failure"):
-            failures.append("repair node lacks reviewed failure trigger")
+        if not _valid_post_work_repair_trigger(state):
+            failures.append(
+                "repair node lacks a valid reviewed-failure or PM historical-defect trigger"
+            )
         if not state.repair_fields_complete:
             failures.append("repair node lacks target reason input output evidence return or recheck fields")
         if not state.stale_evidence_reset:
@@ -523,6 +622,22 @@ def repair_nodes_are_post_failure_and_complete(state: State, trace) -> Invariant
     return InvariantResult.pass_()
 
 
+def historical_repairs_do_not_fabricate_blockers(state: State, trace) -> InvariantResult:
+    del trace
+    if (
+        state.status == "accepted"
+        and state.repair_trigger_origin == "pm_historical_defect"
+        and (
+            state.blocker_prerequisite_required
+            or not state.structured_defect_observation_recorded
+        )
+    ):
+        return InvariantResult.fail(
+            "PM historical repair fabricated a blocker or omitted its defect observation"
+        )
+    return InvariantResult.pass_()
+
+
 def route_use_requires_executable_active_node(state: State, trace) -> InvariantResult:
     del trace
     if state.status == "accepted" and state.pm_activated_or_used_route and not state.active_node_executable:
@@ -555,8 +670,13 @@ INVARIANTS = (
     ),
     Invariant(
         name="repair_nodes_are_post_failure_and_complete",
-        description="Repair nodes require reviewed failure evidence and complete repair metadata.",
+        description="Repair nodes require a valid post-work reviewed-failure or PM historical-defect trigger and complete metadata.",
         predicate=repair_nodes_are_post_failure_and_complete,
+    ),
+    Invariant(
+        name="historical_repairs_do_not_fabricate_blockers",
+        description="Direct PM historical-defect repair uses a structured observation and never manufactures a blocker prerequisite.",
+        predicate=historical_repairs_do_not_fabricate_blockers,
     ),
     Invariant(
         name="route_use_requires_executable_active_node",

@@ -249,19 +249,30 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
         contract_families = {str(row["family_id"]) for row in packet_result_contracts.PACKET_RESULT_CONTRACTS}
         self.assertEqual(contract_families, covered_families)
 
-        for packet in packets:
-            with self.subTest(packet=packet["packet_id"]):
-                packet = fake_opened_packet_fixture(packet)
-                family_id = packet_result_contracts.packet_result_family_id(packet["envelope"])
-                body = json.loads(fake_e2e._body_for_packet(packet))
-                self.assertFalse(
-                    packet_result_contracts.undeclared_success_fields_for_family(family_id, body),
-                    (family_id, body),
-                )
-                self.assertFalse(
-                    packet_result_contracts.forbidden_success_fields_for_family(family_id, body),
-                    (family_id, body),
-                )
+        with tempfile.TemporaryDirectory(prefix="flowpilot-fake-e2e-contract-") as temp_root:
+            ledger = {
+                "project_root": temp_root,
+                "route_nodes": {
+                    "node-001": {
+                        "node_id": "node-001",
+                        "node_kind": "leaf",
+                        "repair_generation": 0,
+                    }
+                },
+            }
+            for packet in packets:
+                with self.subTest(packet=packet["packet_id"]):
+                    packet = fake_opened_packet_fixture(packet)
+                    family_id = packet_result_contracts.packet_result_family_id(packet["envelope"])
+                    body = json.loads(fake_e2e._body_for_packet(packet, ledger=ledger))
+                    self.assertFalse(
+                        packet_result_contracts.undeclared_success_fields_for_family(family_id, body),
+                        (family_id, body),
+                    )
+                    self.assertFalse(
+                        packet_result_contracts.forbidden_success_fields_for_family(family_id, body),
+                        (family_id, body),
+                    )
 
     def test_split_entrypoint_modules_are_install_required(self) -> None:
         required = set(install_check_common.REQUIRED_FILES)
@@ -392,6 +403,7 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
                 ),
                 packet_kind="pm_repair_decision",
                 route_scope="pm_repair_decision",
+                repair_trigger_origin="reviewer_or_system_failure",
             )
             run_shell.save_run_ledger(shell, ledger)
 

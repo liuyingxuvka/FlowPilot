@@ -7,6 +7,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from tests.flowpilot_current_authority_test_helpers import raw_current_authority_references
+
 
 ROOT = Path(__file__).resolve().parents[1]
 ASSETS_ROOT = ROOT / "skills" / "flowpilot" / "assets"
@@ -62,6 +64,7 @@ def flowguard_result_payload(summary: str) -> dict[str, object]:
             "empty_required_arrays_explicit": True,
             "runtime_mechanical_validation_passed": True,
             "semantic_sufficiency_reviewed_by_runtime": False,
+            "workstream_plan_and_completion": packet_result_contracts.workstream_plan_and_completion_example(),
         },
     }
 
@@ -678,7 +681,10 @@ class FlowPilotAIContractProjectionTests(unittest.TestCase):
             "node_id": "node-001",
             "purpose": "Provide current starting context.",
             "acceptance_criteria": ["criterion"],
-            "relevant_references": ["reference"],
+            "relevant_references": raw_current_authority_references(
+                ledger,
+                fixture_id="ai-contract-node-context",
+            ),
             "known_risks": ["risk"],
         }
 
@@ -760,7 +766,12 @@ class FlowPilotAIContractProjectionTests(unittest.TestCase):
             with self.subTest(empty_context_list=field_name):
                 package = {**complete_package, field_name: []}
                 result_id = self.node_context_package_result_id(ledger, package)
-                with self.assertRaisesRegex(runtime.BlackBoxRuntimeError, f"missing required list field: {field_name}"):
+                expected_message = (
+                    "node context package relevant_references must be a non-empty array"
+                    if field_name == "relevant_references"
+                    else f"missing required list field: {field_name}"
+                )
+                with self.assertRaisesRegex(runtime.BlackBoxRuntimeError, expected_message):
                     runtime._node_context_package_from_pm_result(
                         ledger,
                         node,

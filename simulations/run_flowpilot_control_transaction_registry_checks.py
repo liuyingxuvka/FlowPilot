@@ -39,6 +39,14 @@ HAZARD_EXPECTED_FAILURES = {
     model.ATOMIC_COMMIT_TARGET_MISSING: "atomic commit target is missing",
     model.CONTROL_PLANE_REISSUE_WITHOUT_DELIVERY_AUTHORITY: "control-plane reissue lacks delivery authority",
     model.PM_PACKAGE_DISPOSITION_PARTIAL_COMMIT: "transaction commit targets are incomplete",
+    model.STAGED_EFFECT_ID_MISSING: "staged_effect identity is missing",
+    model.STAGED_EFFECT_REPAIR_GENERATION_MISMATCH: "staged_effect repair generation does not match the current repair generation",
+    model.STAGED_EFFECT_SOURCE_GENERATION_MISMATCH: "staged_effect source generation does not match the current source generation",
+    model.REJECTED_STAGED_EFFECT_NOT_DISPOSED: "rejected or cancelled staged_effect was not dispositioned",
+    model.CANCELLED_STAGED_EFFECT_NOT_DISPOSED: "rejected or cancelled staged_effect was not dispositioned",
+    model.REJECTED_STAGED_EFFECT_OPENS_WORKER: "rejected or cancelled staged_effect opened Worker or exposed a commit",
+    model.REJECTED_STAGED_EFFECT_CONSUMES_TERMINAL_ROUND: "rejected or cancelled staged_effect consumed a terminal repair round",
+    model.STAGED_EFFECT_COMMIT_NOT_ATOMICALLY_VISIBLE: "staged_effect commit is not atomically visible with Worker opening",
 }
 
 
@@ -55,7 +63,12 @@ def _state_id(state: model.State) -> str:
         f"parent={state.parent_repair},{state.repair_target_is_leaf_event}|"
         f"commit={state.commit_targets}|unsupported_transaction_name={state.unsupported_transaction_name}|"
         f"reissue={state.control_plane_reissue},{state.reissue_delivery_authority_present},"
-        f"{state.original_event_flag_currently_set}|reason={state.terminal_reason}"
+        f"{state.original_event_flag_currently_set}|"
+        f"staged_effect={state.staged_effect_id},{state.staged_effect_operation},"
+        f"{state.decision_gate_status},{state.staged_effect_repair_generation},"
+        f"{state.staged_effect_source_generation},{state.staged_effect_disposition},"
+        f"atomic={state.atomic_commit_visible},worker={state.worker_opened},"
+        f"round={state.terminal_round_consumed}|reason={state.terminal_reason}"
     )
 
 
@@ -189,6 +202,8 @@ def _architecture_candidate() -> dict[str, object]:
             "The registry authorizes commits, not only event names.",
             "Unsupported transaction names are rejected instead of replayed.",
             "Accepted transactions commit required state surfaces together.",
+            "Staged repair effects bind one effect id to the current repair/source generations.",
+            "Accepted effects expose one atomic commit plus Worker opening; rejected or cancelled effects are disposed with no Worker or terminal-round consumption.",
         ],
         "minimum_runtime_change_set": [
             "Add runtime_kit/control_transaction_registry.json.",

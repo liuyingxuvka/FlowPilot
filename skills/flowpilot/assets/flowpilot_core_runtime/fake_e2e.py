@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 from typing import Any, Callable
@@ -45,6 +46,47 @@ def _current_contract_family_id(packet: dict[str, Any]) -> str:
     if not family_id:
         raise runtime.BlackBoxRuntimeError("current submission checklist lacks contract_family_id")
     return family_id
+
+
+def _current_authority_references(
+    ledger: dict[str, Any],
+    *,
+    node_id: str,
+) -> list[dict[str, str]]:
+    """Materialize deterministic current-authority fixtures for the fake run."""
+
+    project_root = runtime._route_deliverable_project_root(ledger)
+    authority_root = project_root / ".flowpilot" / "fake-current-authorities"
+    authority_root.mkdir(parents=True, exist_ok=True)
+    node = ledger.get("route_nodes", {}).get(node_id, {})
+    repair_required = (
+        isinstance(node, dict)
+        and (
+            str(node.get("node_kind") or "") == "repair"
+            or int(node.get("repair_generation", 0) or 0) > 0
+        )
+    )
+    specs = [
+        ("acceptance_authority", "acceptance.md", "Current fake-run acceptance authority.\n"),
+        ("route_authority", "route.md", "Current fake-run route authority.\n"),
+    ]
+    if repair_required:
+        specs.append(("repair_authority", "repair.md", "Current fake-run repair authority.\n"))
+    references: list[dict[str, str]] = []
+    for reference_kind, filename, content in specs:
+        path = authority_root / filename
+        path.write_text(content, encoding="utf-8")
+        references.append(
+            {
+                "reference_kind": reference_kind,
+                "authority_id": f"fake-current-{reference_kind}",
+                "owner": "pm",
+                "path": path.relative_to(project_root).as_posix(),
+                "fingerprint": "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest(),
+                "consumer_scope": "current_route_node",
+            }
+        )
+    return references
 
 
 def _packet_from_public_open_result(opened: dict[str, Any]) -> dict[str, Any]:
@@ -273,6 +315,10 @@ def _body_for_packet(
             sort_keys=True,
         )
     if kind == "task" and scope == "node_acceptance_plan":
+        if ledger is None:
+            raise runtime.BlackBoxRuntimeError(
+                "fake node-acceptance response requires the current run ledger"
+            )
         node_id = envelope.get("route_node_id", "")
         try:
             packet_body = json.loads(packet.get("body") or "{}")
@@ -298,9 +344,12 @@ def _body_for_packet(
                         "worker result satisfies the node packet",
                         "plan-stage review checks current inputs without future-stage evidence",
                         "node-plan Reviewer, post-result FlowGuard, and final Reviewer evidence are current",
-                        "reviewer independently challenges the node outcome",
+                        "reviewer audits obligation, artifact, and current-evidence continuity",
                     ],
-                    "relevant_references": ["route node contract", "high standard contract", "runtime ledger"],
+                    "relevant_references": _current_authority_references(
+                        ledger,
+                        node_id=str(node_id),
+                    ),
                     "known_risks": ["existence-only evidence", "stale generation", "review without active inspection"],
                     "acceptance_item_projection": acceptance_item_projection,
         }

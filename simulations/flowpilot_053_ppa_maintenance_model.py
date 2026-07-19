@@ -15,6 +15,7 @@ from dataclasses import replace
 import hashlib
 import json
 from pathlib import Path
+import re
 
 from flowguard import (
     BehaviorCommitmentLedger,
@@ -107,6 +108,15 @@ FIELD_IDS = (
     "packet.body.conditional_mechanical_fields",
     "reissue.body.mechanical_contract_shape",
     "fake_ai.private_helper_result_shapes",
+    "node_context_package.relevant_references[]",
+    "router.role_memory.source_snapshot",
+    "router.role_memory.generation",
+    "resume.role_rehydration_request[].role_key",
+    "staged_effect.current_identity",
+    "terminal_backward_replay.segment_targets[]",
+    "test_tier.background_receipt.process_identity",
+    "test_tier.background_receipt.cleanup_proof",
+    "test_tier.background_receipt.covered_source_fingerprint",
     "host.retired_role_aliases",
     "execution_source.daemon_replay",
     "task.discovery.packet.body.runtime_local_capability_inventory",
@@ -130,9 +140,13 @@ TEST_RECEIPTS = (
     "test:tests/test_flowpilot_contract_driven_fake_ai_open_packet.py",
     "test:tests/test_flowpilot_formal_ai_contract_execution.py",
     "test:tests/test_flowpilot_acceptance_testmesh.py",
+    "test:tests/test_flowpilot_test_tiers.py",
+    "test:tests/test_flowpilot_router_runtime.py",
     "test:tests/test_flowpilot_complete_workstream_orchestration.py",
     "test:tests/test_flowpilot_ordinary_resource_discovery.py",
     "test:tests/test_flowpilot_complete_workstream_fake_ai.py",
+    "test:tests/test_flowpilot_unified_repair_runtime.py",
+    "native:simulations/run_flowpilot_unified_repair_native_runtime_conformance.py",
 )
 
 
@@ -145,9 +159,9 @@ PRIMARY_PATH_SPECS = {
     },
     "commit.repair_reissue_no_fallback": {
         "entrypoint": "flowpilot_core_runtime.runtime._apply_pm_repair_decision",
-        "code_contract": "repair_transactions.current_repair_requires_concrete_producer",
-        "obligation": "flowpilot_053.repair_reissue_no_fallback",
-        "result_path": "simulations/flowpilot_repair_transaction_results.json",
+        "code_contract": "unified_repair.shared_current_transaction_engine",
+        "obligation": "unified_repair.shared_engine",
+        "result_path": "simulations/flowpilot_unified_repair_native_runtime_conformance_results.json",
     },
     "commit.authorized_result_reads_are_required_material": {
         "entrypoint": "flowpilot_new_role_commands.open_result",
@@ -161,11 +175,11 @@ PRIMARY_PATH_SPECS = {
         "obligation": "packet_result_family.current_handoff_checklist_single_authority",
         "result_path": "simulations/flowpilot_current_contract_cartesian_matrix_results.json",
     },
-    "commit.dynamic_pm_repair_owns_active_acceptance_items": {
-        "entrypoint": "flowpilot_core_runtime.runtime._project_supplemental_repair_ids_onto_route_plan",
-        "code_contract": "packet_result_family.runtime.dynamic_pm_repair_contract",
-        "obligation": "packet_result_family.dynamic_pm_repair_owner_projection",
-        "result_path": "simulations/flowpilot_current_contract_cartesian_matrix_results.json",
+    "commit.resume_exact_current_obligation_roles": {
+        "entrypoint": "flowpilot_new_run_commands.resume",
+        "code_contract": "runtime.exact_requested_role_resume",
+        "obligation": "current_contract.exact_requested_role_resume",
+        "result_path": "simulations/flowpilot_core_runtime_development_results.json",
     },
     "commit.controller_uses_runtime_foreground_ledger_only": {
         "entrypoint": "flowpilot_core_runtime.runtime.preview_foreground_duty",
@@ -211,6 +225,19 @@ def _path_slug(primary_path_id: str) -> str:
     return primary_path_id.replace(".", "_").replace("-", "_")
 
 
+_NONPORTABLE_COMMAND_PATTERNS = (
+    re.compile(r"(?:^|\s|[\"'])[A-Za-z]:[\\/]+"),
+    re.compile(r"(?:^|\s|[\"'])/(?:Users|home)/"),
+)
+
+
+def _portable_proof_command(command: str) -> tuple[str, bool]:
+    text = command.strip()
+    if any(pattern.search(text) for pattern in _NONPORTABLE_COMMAND_PATTERNS):
+        return "<nonportable-command-rejected>", False
+    return text, True
+
+
 def _result_proof(
     *,
     primary_path_id: str,
@@ -226,7 +253,18 @@ def _result_proof(
                 payload = loaded
         except (OSError, UnicodeError, json.JSONDecodeError):
             payload = {}
-    passed = payload.get("ok") is True or (
+    native_owner_passed = (
+        payload.get("schema_version")
+        == "flowpilot.unified_repair_native_owner_result.v1"
+        and payload.get("result_status") == "passed"
+        and payload.get("exit_code") == 0
+        and payload.get("current") is True
+        and payload.get("terminal") is True
+        and payload.get("immutable") is True
+        and payload.get("source_stable_during_execution") is True
+        and not payload.get("missing_obligation_ids")
+    )
+    passed = payload.get("ok") is True or native_owner_passed or (
         payload.get("status") == "passed"
         and payload.get("exit_code") == 0
         and payload.get("source_fingerprint_current") is True
@@ -239,13 +277,23 @@ def _result_proof(
     slug = _path_slug(primary_path_id)
     declared_command = payload.get("command")
     if isinstance(declared_command, list):
-        command = " ".join(str(part) for part in declared_command)
+        declared_command_text = " ".join(str(part) for part in declared_command)
     else:
-        command = str(declared_command or "")
+        declared_command_text = str(declared_command or "")
+    command, command_portable = _portable_proof_command(
+        declared_command_text
+        or f"python {result_path.replace('_results.json', '_checks.py')}"
+    )
+    passed = passed and command_portable
+    route_gap_codes: list[str] = []
+    if not passed:
+        route_gap_codes.append("result_artifact_not_current_pass")
+    if not command_portable:
+        route_gap_codes.append("proof_command_not_repo_portable")
     return ProofArtifactRef(
         artifact_id=f"proof:flowpilot:{slug}",
         producer_route="primary_path_authority",
-        command=command or f"python {result_path.replace('_results.json', '_checks.py')}",
+        command=command,
         result_path=result_path,
         result_status="passed" if passed else "failed",
         exit_code=0 if passed else 1,
@@ -254,7 +302,7 @@ def _result_proof(
         assertion_scope="external_contract",
         current=passed,
         route_evidence_current=passed,
-        route_gap_codes=() if passed else ("result_artifact_not_current_pass",),
+        route_gap_codes=tuple(route_gap_codes),
     )
 
 
@@ -361,12 +409,44 @@ def _fallback_candidates() -> tuple[FallbackPathCandidate, ...]:
             evidence_ref="negative_test:retired_replacement_fields_are_rejected",
         ),
         _fallback_candidate(
+            "commit.repair_reissue_no_fallback",
+            candidate_path_id="fallback.synthetic-blocker-for-historical-defect",
+            source_surface_id="surface.forbidden.synthetic-blocker-for-historical-defect",
+            candidate_surface="helper_route",
+            candidate_trigger="pm_historical_defect",
+            evidence_ref="test:historical_intake_requires_evidence_and_creates_no_blocker",
+        ),
+        _fallback_candidate(
+            "commit.repair_reissue_no_fallback",
+            candidate_path_id="fallback.terminal-reviewer-only-repair",
+            source_surface_id="surface.forbidden.terminal-reviewer-only-repair",
+            candidate_surface="helper_route",
+            candidate_trigger="terminal_backward_replay_failure",
+            evidence_ref="native:terminal_worker_chain",
+        ),
+        _fallback_candidate(
+            "commit.repair_reissue_no_fallback",
+            candidate_path_id="fallback.reactivate-completed-run",
+            source_surface_id="surface.forbidden.reactivate-completed-run",
+            candidate_surface="helper_route",
+            candidate_trigger="completed_or_stopped_run_late_defect",
+            evidence_ref="native:completed_run_bridge",
+        ),
+        _fallback_candidate(
             "commit.current_handoff_checklist_single_authority",
             candidate_path_id="fallback.packet-body-mechanical-contract",
             source_surface_id="surface.forbidden.packet-body-mechanical-contract",
             candidate_surface="old_field",
             candidate_trigger="missing_or_conflicting_handoff",
             evidence_ref="test:open_packet_submission_checklist_rejects_packet_body_as_contract_authority",
+        ),
+        _fallback_candidate(
+            "commit.resume_exact_current_obligation_roles",
+            candidate_path_id="fallback.resume-all-known-role-slots",
+            source_surface_id="surface.forbidden.resume-all-known-role-slots",
+            candidate_surface="helper_route",
+            candidate_trigger="missing_or_ambiguous_current_role_target",
+            evidence_ref="test:resume_ambiguous_state_blocks_continue_without_recovery_evidence",
         ),
     )
 
@@ -655,6 +735,309 @@ def build_field_lifecycle_plan() -> FieldLifecyclePlan:
                 writes=("preplanning_discovery.candidate_skill_inventory",),
                 error_paths=("old_material_field_or_non_list_selection_rejected",),
             ),
+        ),
+        FieldLifecycleRow(
+            field_id="node_context_package.relevant_references[]",
+            field_name="relevant_references",
+            locations=("skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",),
+            group_id="current_authority_and_resume_identity",
+            role="authority_reference",
+            lifecycle="active",
+            behavior_impacts=("external_contract", "schema", "routing", "replay"),
+            reader_ids=("_node_context_package_current", "assigned_substantive_role_agent"),
+            writer_ids=("_node_context_package_from_pm_result",),
+            disposition="same_contract_repaired",
+            disposition_evidence_refs=(
+                "test:node_context_current_authority_references_reject_old_shape_missing_kind_and_stale_fingerprint",
+            ),
+            projection=_projection(
+                "projection.node_context_current_authority_references",
+                field_id="node_context_package.relevant_references[]",
+                obligation="current_contract.structured_authority_references",
+                code_contract="runtime.node_context_current_authority_references",
+                reads=("current_authority_source_files", "current_route_and_packet_identity"),
+                writes=("node_context_package.relevant_references",),
+                error_paths=("missing_duplicate_foreign_or_hash_mismatched_reference",),
+            ),
+            metadata={
+                "item_fields": [
+                    "schema_version",
+                    "reference_kind",
+                    "authority_id",
+                    "owner",
+                    "path",
+                    "fingerprint",
+                    "consumer_scope",
+                    "run_id",
+                    "route_version",
+                    "node_id",
+                    "packet_id",
+                    "result_id",
+                    "source_generation",
+                ],
+                "terminal_disposition": "stale_on_any_identity_or_source_hash_change",
+            },
+        ),
+        FieldLifecycleRow(
+            field_id="router.role_memory.source_snapshot",
+            field_name="source_snapshot",
+            locations=("skills/flowpilot/assets/flowpilot_router_startup_role_context.py",),
+            group_id="current_authority_and_resume_identity",
+            role="freshness_identity",
+            lifecycle="active",
+            behavior_impacts=("routing", "replay"),
+            reader_ids=("_role_memory_currentness",),
+            writer_ids=("_create_empty_role_memory", "_append_role_memory_delta"),
+            disposition="same_contract_repaired",
+            disposition_evidence_refs=("test:route_memory_rejects_changed_current_source_snapshot",),
+            projection=_projection(
+                "projection.role_memory_source_snapshot",
+                field_id="router.role_memory.source_snapshot",
+                obligation="current_contract.exact_requested_role_resume",
+                code_contract="runtime.exact_requested_role_resume",
+                reads=("current_run_route_source_snapshot",),
+                writes=("role_memory.source_snapshot",),
+                error_paths=("stale_source_snapshot_blocks_resume",),
+            ),
+        ),
+        FieldLifecycleRow(
+            field_id="router.role_memory.generation",
+            field_name="generation",
+            locations=(
+                "skills/flowpilot/assets/flowpilot_router_runtime_state.py",
+                "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+            ),
+            group_id="current_authority_and_resume_identity",
+            role="freshness_identity",
+            lifecycle="active",
+            behavior_impacts=("routing", "replay"),
+            reader_ids=("_role_memory_currentness", "role_memory_seed_for_lease"),
+            writer_ids=("_append_role_memory_delta", "_build_role_memory_seed"),
+            disposition="same_contract_repaired",
+            disposition_evidence_refs=(
+                "test:role_memory_seed_prioritizes_exact_current_packet_and_stales_on_generation_change",
+            ),
+            projection=_projection(
+                "projection.role_memory_generation",
+                field_id="router.role_memory.generation",
+                obligation="current_contract.exact_requested_role_resume",
+                code_contract="runtime.exact_requested_role_resume",
+                reads=("current_run_source_generation",),
+                writes=("role_memory.generation",),
+                error_paths=("stale_generation_blocks_resume",),
+            ),
+        ),
+        FieldLifecycleRow(
+            field_id="resume.role_rehydration_request[].role_key",
+            field_name="role_key",
+            locations=(
+                "skills/flowpilot/assets/flowpilot_router_startup_role_context.py",
+                "skills/flowpilot/assets/flowpilot_router_action_handlers_resume.py",
+            ),
+            group_id="current_authority_and_resume_identity",
+            role="routing",
+            lifecycle="active",
+            behavior_impacts=("routing", "permission"),
+            reader_ids=("_resume_role_contexts", "_apply_role_rehydration"),
+            writer_ids=("_current_resume_role_keys",),
+            disposition="same_contract_repaired",
+            disposition_evidence_refs=(
+                "test:mid_run_role_liveness_fault_uses_unified_recovery_before_normal_work",
+                "negative_test:resume_ambiguous_state_blocks_continue_without_recovery_evidence",
+            ),
+            projection=_projection(
+                "projection.exact_resume_role_keys",
+                field_id="resume.role_rehydration_request[].role_key",
+                obligation="current_contract.exact_requested_role_resume",
+                code_contract="runtime.exact_requested_role_resume",
+                reads=("current_unresolved_role_obligations", "foreground_duty_recipient"),
+                writes=("role_rehydration_request",),
+                error_paths=("missing_extra_duplicate_idle_historical_or_foreign_role",),
+            ),
+            metadata={"fixed_role_roster_authority": False},
+        ),
+        FieldLifecycleRow(
+            field_id="staged_effect.current_identity",
+            field_name="staged_effect_current_identity",
+            locations=("skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",),
+            group_id="current_effect_and_terminal_identity",
+            role="commit_identity",
+            lifecycle="active",
+            behavior_impacts=("routing", "replay"),
+            reader_ids=("_staged_effect_currentness_blockers",),
+            writer_ids=("_attach_staged_effect",),
+            disposition="same_contract_repaired",
+            disposition_evidence_refs=(
+                "test:staged_effect_same_family_reuses_pending_effect_and_rejects_different_formal_blocker_identity",
+            ),
+            projection=_projection(
+                "projection.staged_effect_current_identity",
+                field_id="staged_effect.current_identity",
+                obligation="current_contract.staged_effect_exact_identity",
+                code_contract="runtime.staged_effect_exact_identity",
+                reads=("current_packet_result_target_blocker_gate_and_generations",),
+                writes=("staged_effect",),
+                error_paths=("partial_identity_reuse_rejected",),
+            ),
+            metadata={
+                "item_fields": [
+                    "effect_kind",
+                    "source_packet_id",
+                    "source_result_id",
+                    "target_node_id",
+                    "blocker_id",
+                    "repair_trigger_id",
+                    "repair_trigger_origin",
+                    "gate_id",
+                    "route_scope",
+                    "supplemental_contract_id",
+                    "repair_generation",
+                    "source_generation",
+                ]
+            },
+        ),
+        FieldLifecycleRow(
+            field_id="terminal_backward_replay.segment_targets[]",
+            field_name="segment_targets",
+            locations=("skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",),
+            group_id="current_effect_and_terminal_identity",
+            role="replay_identity",
+            lifecycle="active",
+            behavior_impacts=("external_contract", "replay"),
+            reader_ids=("_terminal_backward_replay_result_violation",),
+            writer_ids=("ensure_terminal_backward_replay_packet",),
+            disposition="same_contract_repaired",
+            disposition_evidence_refs=("test:terminal_replay_rejects_missing_or_unexpected_segments",),
+            projection=_projection(
+                "projection.terminal_exact_segment_targets",
+                field_id="terminal_backward_replay.segment_targets[]",
+                obligation="current_contract.terminal_exact_segment_replay",
+                code_contract="runtime.terminal_exact_segment_replay",
+                reads=("current_route_acceptance_and_final_artifact_targets",),
+                writes=("terminal_backward_replay.segment_targets",),
+                error_paths=("missing_duplicate_unexpected_or_unlinked_segment",),
+            ),
+        ),
+        FieldLifecycleRow(
+            field_id="test_tier.background_receipt.process_identity",
+            field_name="process_identity",
+            locations=(
+                "scripts/run_test_tier.py",
+                "skills/flowpilot/assets/flowpilot_process_liveness.py",
+            ),
+            group_id="background_evidence_identity",
+            role="execution_identity",
+            lifecycle="active",
+            behavior_impacts=("testing", "replay"),
+            reader_ids=("verify_background_tier",),
+            writer_ids=("run_background_child",),
+            disposition="same_contract_repaired",
+            disposition_evidence_refs=(
+                "test:timeout_terminates_descendant_tree_before_writing_terminal_receipt",
+                "test:descendant_identity_rejects_process_that_predates_exact_owner",
+            ),
+            projection=_projection(
+                "projection.background_process_identity",
+                field_id="test_tier.background_receipt.process_identity",
+                obligation="current_contract.process_tree_descendant_lineage",
+                code_contract="process_liveness.descendant_identity_order",
+                reads=("spawned_process_pid_and_start_token",),
+                writes=("background_meta.process_identity",),
+                error_paths=("missing_or_reused_process_identity",),
+            ),
+        ),
+        FieldLifecycleRow(
+            field_id="test_tier.background_receipt.cleanup_proof",
+            field_name="cleanup_proof",
+            locations=(
+                "scripts/run_test_tier.py",
+                "scripts/test_tier/background_child.py",
+            ),
+            group_id="background_evidence_identity",
+            role="terminal_evidence",
+            lifecycle="active",
+            behavior_impacts=("testing", "replay"),
+            reader_ids=("verify_background_tier", "compile_manifest"),
+            writer_ids=("run_background_child",),
+            disposition="same_contract_repaired",
+            disposition_evidence_refs=(
+                "test:timeout_terminates_descendant_tree_before_writing_terminal_receipt",
+                "test:background_child_allows_exact_descendants_to_exit_within_bounded_settlement",
+                "test:background_child_rejects_descendant_surviving_bounded_settlement",
+            ),
+            projection=_projection(
+                "projection.background_cleanup_proof",
+                field_id="test_tier.background_receipt.cleanup_proof",
+                obligation="current_contract.background_child_descendant_zero_cleanup",
+                code_contract="test_tier.run_background_child",
+                reads=("observed_descendant_identities",),
+                writes=("background_meta.cleanup_proof",),
+                error_paths=(
+                    "cleanup_unconfirmed_blocks_terminal_receipt",
+                    "descendant_survives_bounded_settlement",
+                ),
+            ),
+        ),
+        FieldLifecycleRow(
+            field_id="test_tier.background_receipt.covered_source_fingerprint",
+            field_name="covered_source_fingerprint",
+            locations=(
+                "scripts/run_test_tier.py",
+                "scripts/compile_flowpilot_acceptance_testmesh_evidence.py",
+            ),
+            group_id="background_evidence_identity",
+            role="freshness_identity",
+            lifecycle="active",
+            behavior_impacts=("testing", "replay"),
+            reader_ids=("compile_manifest", "proof_consumers"),
+            writer_ids=("run_background_child", "run_background_supervisor"),
+            disposition="same_contract_repaired",
+            disposition_evidence_refs=(
+                "test:background_evidence_compiler_rejects_source_changed_during_tier",
+            ),
+            projection=_projection(
+                "projection.background_covered_source_fingerprint",
+                field_id="test_tier.background_receipt.covered_source_fingerprint",
+                obligation="current_contract.same_source_fingerprint",
+                code_contract="acceptance_evidence.compile_manifest",
+                reads=("covered_source_inventory",),
+                writes=("background_meta.covered_source_fingerprint", "acceptance_manifest.source_fingerprint"),
+                error_paths=("mixed_or_changed_source_fingerprint_blocks_manifest",),
+            ),
+        ),
+        FieldLifecycleRow(
+            field_id="test_tier.command.background_exclusive_resource",
+            field_name="background_exclusive_resource",
+            locations=(
+                "scripts/test_tier/command_builders.py",
+                "scripts/test_tier/background_supervisor.py",
+                "scripts/test_tier/fast_commands.py",
+            ),
+            group_id="background_execution_ownership",
+            role="execution_resource_identity",
+            lifecycle="active",
+            behavior_impacts=("testing", "routing"),
+            reader_ids=("next_background_launch_index",),
+            writer_ids=("tier_command_registry",),
+            disposition="same_contract_repaired",
+            disposition_evidence_refs=(
+                "test:background_supervisor_serializes_shared_runtime_resources",
+                "observed:shadow_launcher_shadow_start_orphan_descendant_race",
+            ),
+            projection=_projection(
+                "projection.background_exclusive_resource",
+                field_id="test_tier.command.background_exclusive_resource",
+                obligation="test_tiering.shared_runtime_resource_serialization",
+                code_contract="runtime_path.test_tiering_slow_contracts.test_tiering_shared_runtime_resource_serialization",
+                reads=("pending_and_running_tier_commands",),
+                writes=("next_background_launch_decision",),
+                error_paths=("same_resource_commands_overlap_and_leave_orphan_descendants",),
+            ),
+            metadata={
+                "scope": "development_process_only",
+                "terminal_disposition": "ephemeral_command_plan_metadata",
+                "product_runtime_field": False,
+            },
         ),
         FieldLifecycleRow(
             field_id="packet_result.contract_self_check.workstream_plan_and_completion",
@@ -1037,6 +1420,73 @@ def build_field_lifecycle_plan() -> FieldLifecyclePlan:
                 rationale="One envelope contract owns mechanics; the checklist is its identity-bound projection.",
             ),
             FieldLifecycleGroup(
+                group_id="current_authority_and_resume_identity",
+                boundary_kind="typed_current_authority_and_exact_resume",
+                field_ids=(
+                    "node_context_package.relevant_references[]",
+                    "router.role_memory.source_snapshot",
+                    "router.role_memory.generation",
+                    "resume.role_rehydration_request[].role_key",
+                ),
+                owner_route="field_lifecycle_mesh",
+                evidence_refs=(
+                    "tests/test_flowpilot_core_runtime.py",
+                    "tests/test_flowpilot_router_runtime.py",
+                ),
+                rationale=(
+                    "Current authority references and resume role targets are exact identity-bearing "
+                    "projections; prose, fixed rosters, stale generations, and historical slots have no authority."
+                ),
+            ),
+            FieldLifecycleGroup(
+                group_id="current_effect_and_terminal_identity",
+                boundary_kind="exact_current_effect_and_replay_identity",
+                field_ids=(
+                    "staged_effect.current_identity",
+                    "terminal_backward_replay.segment_targets[]",
+                ),
+                owner_route="field_lifecycle_mesh",
+                evidence_refs=("tests/test_flowpilot_core_runtime.py",),
+                rationale=(
+                    "Pending effects and terminal replay reuse only complete current identities; partial "
+                    "matching and aggregate replay are rejected."
+                ),
+            ),
+            FieldLifecycleGroup(
+                group_id="background_evidence_identity",
+                boundary_kind="execution_cleanup_and_freshness_receipt",
+                field_ids=(
+                    "test_tier.background_receipt.process_identity",
+                    "test_tier.background_receipt.cleanup_proof",
+                    "test_tier.background_receipt.covered_source_fingerprint",
+                ),
+                owner_route="field_lifecycle_mesh",
+                evidence_refs=(
+                    "tests/test_flowpilot_test_tiers.py",
+                    "tests/test_flowpilot_acceptance_testmesh.py",
+                ),
+                rationale=(
+                    "A background receipt is reusable only for the exact process tree, confirmed "
+                    "descendant-zero cleanup, and one unchanged covered-source fingerprint."
+                ),
+            ),
+            FieldLifecycleGroup(
+                group_id="background_execution_ownership",
+                boundary_kind="shared_external_runtime_resource_serialization",
+                field_ids=(
+                    "test_tier.command.background_exclusive_resource",
+                ),
+                owner_route="field_lifecycle_mesh",
+                evidence_refs=(
+                    "scripts/test_tier/background_supervisor.py",
+                    "tests/test_flowpilot_test_tiers.py",
+                ),
+                rationale=(
+                    "Commands that launch the same installed shadow runtime share one ephemeral "
+                    "execution-resource identity and cannot overlap; unrelated model owners remain parallel."
+                ),
+            ),
+            FieldLifecycleGroup(
                 group_id="retired_contract_authorities",
                 boundary_kind="deleted_alternate_contract_authorities",
                 field_ids=(
@@ -1068,8 +1518,9 @@ def build_field_lifecycle_plan() -> FieldLifecyclePlan:
         claim_scope="runtime",
         allow_scoped_confidence=False,
         notes=(
-            "Current handoff/checklist fields have one owner; body mirrors, conditional body mechanics, "
-            "private helper shapes, role aliases, and daemon replay are blocked or deleted old paths."
+            "Current handoff/checklist, typed authority, exact resume, staged-effect, terminal-replay, "
+            "and background-evidence identities have one owner; body mirrors, conditional body mechanics, "
+            "fixed-roster resume, private helper shapes, role aliases, and daemon replay are blocked or deleted old paths."
         ),
     )
 

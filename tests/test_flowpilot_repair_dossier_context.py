@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 import json
 
+from tests.flowpilot_current_authority_test_helpers import raw_current_authority_references
 from tests.flowpilot_repair_test_helpers import runtime, seeded_ledger
 
 
@@ -75,7 +76,11 @@ def test_repair_dossier_does_not_override_node_acceptance_plan_review_window() -
             "node_id": node_id,
             "purpose": "Provide current starting context for the repair node.",
             "acceptance_criteria": ["Produce current evidence."],
-            "relevant_references": ["blocked worker result and reviewer report"],
+            "relevant_references": raw_current_authority_references(
+                ledger,
+                include_repair=True,
+                fixture_id=f"repair-dossier-{node_id}",
+            ),
             "known_risks": ["worker evidence still belongs to result stage"],
             "acceptance_item_projection": [],
         }

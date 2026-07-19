@@ -141,14 +141,67 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     state_parser.add_argument("--json", action="store_true", default=argparse.SUPPRESS, help=argparse.SUPPRESS)
     return parser.parse_args(argv)
 
+
+def _start_fresh_formal_invocation(
+    router: ModuleType,
+    root: Path,
+    *,
+    max_steps: int,
+) -> dict[str, Any]:
+    allocated_bootstrap: dict[str, Any] | None = None
+
+    def allocate_startup_bootstrap_once() -> dict[str, Any]:
+        nonlocal allocated_bootstrap
+        if allocated_bootstrap is None:
+            allocated_bootstrap = router._create_startup_bootstrap_state(root)
+        router.save_bootstrap_state(root, allocated_bootstrap)
+        return {
+            "ok": True,
+            "run_id": allocated_bootstrap["run_id"],
+            "run_root": allocated_bootstrap["run_root"],
+        }
+
+    allocation = router._run_foreground_with_runtime_writer_settlement(
+        allocate_startup_bootstrap_once,
+        command_name="start",
+    )
+    result = router._run_foreground_with_runtime_writer_settlement(
+        lambda: router.run_until_wait(
+            root,
+            max_steps=max_steps,
+            new_invocation=False,
+        ),
+        command_name="start",
+    )
+    allocation_settlement = allocation.get("runtime_write_settlement")
+    if not isinstance(allocation_settlement, dict):
+        return result
+    result = dict(result)
+    advancement_settlement = result.get("runtime_write_settlement")
+    advancement_waits = (
+        list(advancement_settlement.get("waits") or [])
+        if isinstance(advancement_settlement, dict)
+        else []
+    )
+    allocation_waits = list(allocation_settlement.get("waits") or [])
+    result["runtime_write_settlement"] = {
+        "waited": True,
+        "command": "start",
+        "wait_count": len(allocation_waits) + len(advancement_waits),
+        "waits": allocation_waits + advancement_waits,
+    }
+    return result
+
+
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv or sys.argv[1:])
     root = Path(args.root).resolve()
     try:
         if args.command == "start":
-            result = _run_foreground_with_runtime_writer_settlement(
-                lambda: run_until_wait(root, max_steps=int(args.max_steps), new_invocation=True),
-                command_name=args.command,
+            result = sys.modules["flowpilot_router_cli"]._start_fresh_formal_invocation(
+                sys.modules[__name__],
+                root,
+                max_steps=int(args.max_steps),
             )
         elif args.command == "next":
             result = _run_foreground_with_runtime_writer_settlement(

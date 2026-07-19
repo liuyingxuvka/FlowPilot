@@ -21,6 +21,7 @@ from .runtime import (
 )
 from .run_shell import (
     RunShell,
+    create_historical_repair_run_shell,
     create_run_shell,
     load_run_ledger,
     load_run_shell,
@@ -46,6 +47,7 @@ __all__ = [
     "attempt_final_closure",
     "audit_packet_contracts",
     "create_flowguard_work_order",
+    "create_historical_repair_run_shell",
     "create_route",
     "create_run_shell",
     "current_progress_fraction",

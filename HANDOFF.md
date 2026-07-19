@@ -248,8 +248,8 @@ and model-confidence overclaims must also fail.
 - The public project and skill name is `flowpilot`.
 - FlowGuard remains the required modeling engine and technical foundation.
 - The skill is new. It is not a patch to the old heartbeat skill.
-- It is strongly bound to real FlowGuard and the `model-first-function-flow`
-  skill.
+- It is strongly bound to the real FlowGuard check engine and the current
+  `flowguard` agent skill.
 - It absorbs heartbeat rules but does not hard-depend on the old heartbeat
   skill.
 - The project-control directory is `.flowpilot/`.
@@ -393,20 +393,27 @@ and model-confidence overclaims must also fail.
   role must personally probe the relevant sources or state, test failure
   hypotheses, cite concrete files/screenshots/state fields/commands/results,
   record residual blindspots, and write independent validation evidence before
-  approving. Completion-report-only approval is invalid across startup gates,
+  approving. Each closure claim must preserve the triangle from accepted goal
+  or current obligation, to actual artifact or observable state, to current
+  direct evidence. Completion-report-only approval is invalid across startup gates,
   ordinary evidence/research work, product architecture, child-skill manifests, FlowGuard model
   gates, implementation/human review, composite backward review, final product
   replay, and the final route-wide ledger.
-- Human-like reviewer reports now have a concrete Reviewer Independent
-  Challenge Gate. The PM review package is only the minimum checklist.
-  Reviewer report bodies must include `independent_challenge` with scope
-  restatement, explicit and implicit commitments, failure hypotheses,
-  task-specific challenge actions, blocking and nonblocking findings,
-  pass-or-block decision, reroute request, and waivers. A pass is invalid if
-  this object is missing, if the actions are generic instead of task-specific,
-  if direct evidence or approved waiver is absent, or if a hard requirement,
-  frozen contract item, child-skill standard, quality level, exposed product
-  behavior, or core commitment is downgraded into residual risk.
+- Human-like reviewer reports now carry their current-stage challenge through
+  the existing result fields. The PM review package is only the minimum
+  checklist. Reviewer must reconstruct the accepted target and current
+  unclosed obligations from authoritative references, test task-specific
+  failure hypotheses against the actual artifact and current evidence, and
+  separate hard blockers from PM decision-support. The retired
+  `independent_challenge` object remains forbidden in positive current results;
+  it is not a required output field or an alternate review contract.
+- Substantive role work is unclosed-first. PM, Worker, FlowGuard operator, and
+  Reviewer reconstruct their role-scoped global target from current
+  authoritative references before acting, cover every current owned hard
+  obligation in the existing numbered workstream plan, and map completion to
+  actual artifacts and current direct evidence. Completed history, summaries,
+  scores, paths, hashes, and reports cannot displace or close an unresolved hard
+  obligation by themselves.
 - Terminal completion now requires a PM-owned dynamic route-wide gate ledger
   rebuilt from the current route, not the initial route. The ledger resolves
   effective and superseded nodes, child-skill gates, human-review gates,

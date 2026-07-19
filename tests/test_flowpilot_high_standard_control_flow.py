@@ -8,6 +8,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from tests.flowpilot_current_authority_test_helpers import raw_current_authority_references
+
 
 ROOT = Path(__file__).resolve().parents[1]
 ASSETS = ROOT / "skills" / "flowpilot" / "assets"
@@ -145,6 +147,22 @@ def _terminal_backward_replay_body(packet: dict) -> str:
             }
             for index, target in enumerate(targets, start=1)
             if isinstance(target, dict)
+        ]
+    gate_status = body.get("final_route_wide_gate_ledger_status") if isinstance(body, dict) else {}
+    acceptance_rows = (
+        gate_status.get("acceptance_item_closure")
+        if isinstance(gate_status, dict)
+        else []
+    )
+    if isinstance(acceptance_rows, list):
+        payload["acceptance_item_closure"] = [
+            {
+                "id": str(row.get("acceptance_item_id") or ""),
+                "status": "closed",
+                "basis": str(row.get("summary") or row.get("acceptance_item_id") or "current acceptance item"),
+            }
+            for row in acceptance_rows
+            if isinstance(row, dict) and str(row.get("acceptance_item_id") or "")
         ]
     return json.dumps(payload)
 
@@ -571,10 +589,14 @@ def _node_context_body(ledger: dict) -> str:
             "node_context_package": {
                 "purpose": f"Execute and verify {node['title']}",
                 "acceptance_criteria": list(node.get("acceptance_criteria") or []),
-                "relevant_references": [
-                    {"kind": "route_node", "id": node_id},
-                    {"kind": "node_acceptance_plan_packet", "id": _open_packets(ledger, scope="node_acceptance_plan")[0]},
-                ],
+                "relevant_references": raw_current_authority_references(
+                    ledger,
+                    include_repair=(
+                        str(node.get("node_kind") or "") == "repair"
+                        or int(node.get("repair_generation", 0) or 0) > 0
+                    ),
+                    fixture_id=f"node-context-{node_id}",
+                ),
                 "known_risks": ["thin evidence", "wrong FlowGuard target", "stale repair-generation evidence"],
                 "acceptance_item_projection": [
                     {
@@ -2245,6 +2267,7 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         ledger["pm_repair_decisions"][decision_id] = {
             "decision_id": decision_id,
             "blocker_id": blocker_id,
+            "repair_trigger_origin": "reviewer_or_system_failure",
             "packet_id": "packet-decision",
             "result_id": "result-decision",
             "decision": "repair_parent_scope",
@@ -2313,6 +2336,7 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         ledger["pm_repair_decisions"][decision_id] = {
             "decision_id": decision_id,
             "blocker_id": blocker_id,
+            "repair_trigger_origin": "reviewer_or_system_failure",
             "packet_id": "packet-decision",
             "result_id": "result-decision",
             "decision": "repair_parent_scope",
@@ -2613,7 +2637,7 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         self.assertEqual(ledger["active_blockers"][blocker["blocker_id"]]["status"], "repair_packet_open")
         self.assertFalse(_open_packets(ledger, kind="closure"))
 
-    def test_pm_redesign_route_repair_reviewer_block_keeps_staged_effect_pending(self) -> None:
+    def test_pm_redesign_route_repair_reviewer_block_disposes_staged_effect(self) -> None:
         ledger = _ledger()
         _complete_preplanning(ledger)
         _complete_planning(ledger)
@@ -2672,9 +2696,22 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
             ),
         )
 
-        self.assertEqual(gate["status"], "awaiting_review")
-        self.assertEqual(gate["staged_effect"]["status"], "pending")
-        self.assertEqual(ledger["results"][source_result_id]["staged_effect"]["status"], "pending")
+        self.assertEqual(gate["status"], "review_blocked")
+        self.assertEqual(gate["staged_effect"]["status"], "disposed")
+        self.assertEqual(
+            gate["staged_effect"]["disposed_reason"],
+            "review_blocked",
+        )
+        self.assertEqual(
+            ledger["results"][source_result_id]["staged_effect"]["status"],
+            "disposed",
+        )
+        self.assertEqual(
+            ledger["results"][source_result_id]["staged_effect"][
+                "disposed_reason"
+            ],
+            "review_blocked",
+        )
         self.assertEqual(ledger["active_route_version"], old_route_version)
         self.assertNotEqual(ledger["route_nodes"][node_id]["status"], "superseded")
         self.assertEqual(ledger["active_blockers"][blocker["blocker_id"]]["status"], "retired_after_new_current_blocker")
@@ -2685,6 +2722,12 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         ]
         self.assertEqual(len(active_review_blocks), 1)
         self.assertEqual(active_review_blocks[0]["required_recheck_role"], "reviewer")
+        self.assertEqual(
+            ledger["active_blockers"][blocker["blocker_id"]][
+                "retired_by_blocker_id"
+            ],
+            active_review_blocks[0]["blocker_id"],
+        )
 
     def test_pm_redesign_route_disposition_is_gated_before_application(self) -> None:
         ledger = _ledger()

@@ -68,18 +68,18 @@
     "by_attempt_class": {
       "accepted_first_attempt": 4,
       "cartesian_control_plane_ledger_hygiene": 972000,
-      "corrected_second_attempt": 1775,
-      "first_failure": 2591,
+      "corrected_second_attempt": 1823,
+      "first_failure": 2687,
       "integration_decision": 200,
       "runtime_boundary": 3,
       "runtime_hard_gate_escape": 72,
       "runtime_hard_reject": 5,
       "same_failure_attempt_5": 1035,
-      "same_failure_attempts_1_to_4": 2200,
+      "same_failure_attempts_1_to_4": 2296,
       "semantic_review_or_process_block": 3
     },
     "by_expected_runtime_reaction": {
-      "accepted_after_reissue": 1775,
+      "accepted_after_reissue": 1823,
       "accepted_current_contract": 4,
       "accepted_result_id_authority_preserved": 1,
       "allow_terminal_ledger_hygiene": 264,
@@ -92,7 +92,7 @@
       "continue_current_runtime_path": 32832,
       "flowguard_models_against_user_pm_standard_or_reports_gap": 1,
       "hard_reject_before_result_allocation": 5,
-      "mechanical_reject_reissue": 1328,
+      "mechanical_reject_reissue": 1424,
       "mechanical_reject_reissue_with_exact_field": 18,
       "mechanical_reject_reissue_with_missing_ids": 4,
       "mechanical_reject_reissue_with_options": 110,
@@ -117,7 +117,7 @@
       "reviewer_blocks_worker_result_below_user_pm_standard": 1,
       "reviewer_prompt_requires_active_verification_without_new_fields": 1,
       "runtime_mechanical_only_reviewer_boundary": 1,
-      "same_family_repair_or_reissue_without_glassbreak_before_threshold": 1300,
+      "same_family_repair_or_reissue_without_glassbreak_before_threshold": 1396,
       "terminal_composition_block_from_existing_gate": 10
     },
     "by_mutation_kind": {
@@ -134,7 +134,7 @@
       "control_plane_ledger_hygiene.reject_inconsistent_clean_accepted_pointer": 155520,
       "control_plane_ledger_hygiene.reject_repair_identity_discontinuity": 162000,
       "control_plane_ledger_hygiene.require_review_or_validation_before_acceptance": 132,
-      "corrected_second_retry": 650,
+      "corrected_second_retry": 698,
       "corrected_second_reviewer_retry": 180,
       "duplicate_sibling_work": 15,
       "empty_owner_set_extra_id": 2,
@@ -168,13 +168,13 @@
       "missing_allowed_value_options": 91,
       "missing_field_type_requirements": 9,
       "missing_integration_intent": 20,
-      "missing_required_child_field": 474,
+      "missing_required_child_field": 522,
       "missing_required_field": 77,
       "model_miss_not_triggered": 15,
       "optimization_incorrectly_hard_blocked": 15,
       "orphan_output": 15,
       "partial_owner_set_missing_id": 2,
-      "partial_repair_then_corrected": 650,
+      "partial_repair_then_corrected": 698,
       "pm_bypasses_reviewer_blocker": 180,
       "pointer_recovery_infers_invocation_intent": 15,
       "producer_after_consumer": 15,
@@ -199,7 +199,7 @@
       "reviewer_status_only_closure_blocks": 180,
       "reviewer_unauthorized_sealed_body_request": 180,
       "reviewer_weaker_child_skill_output_blocks": 180,
-      "same_payload_retry": 650,
+      "same_payload_retry": 698,
       "same_review_failure_attempt_5_break_glass": 180,
       "same_review_failure_attempts_1_to_4": 180,
       "submit_result.accepted_packet_resubmit": 1,
@@ -208,10 +208,10 @@
       "submit_result.noncurrent_packet_submit": 1,
       "submit_result.stale_route_submit": 1,
       "wrong_allowed_value": 91,
-      "wrong_type": 560
+      "wrong_type": 608
     },
     "by_source_matrix": {
-      "contract_driven_fake_ai_responder": 3645,
+      "contract_driven_fake_ai_responder": 3885,
       "control_plane_ledger_hygiene_cartesian": 972000,
       "global_standard_context_fake_ai_matrix": 3,
       "integration_cartesian_coverage": 200,
@@ -219,7 +219,7 @@
       "review_window_fake_ai_responder": 3960,
       "runtime_owned_bad_ai_submit_and_reviewer_boundary": 8
     },
-    "cell_count": 979888,
+    "cell_count": 980128,
     "cell_sample": [
       {
         "attempt_class": "first_failure",

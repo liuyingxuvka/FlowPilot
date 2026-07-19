@@ -92,7 +92,7 @@
     {
       "id": "packets.output_contract_section",
       "path": "prompts/packets/output_contract_section.md",
-      "sha256": "01a014662a1ddbd4525888e41b8c3991eb31a9bc41bf6e0ae045d1af2cef2a74",
+      "sha256": "35205483d18bba27745be3a1fbae423e1b949d08be72147a8dc74fe387069e5b",
       "strip_trailing_newline": false,
       "template_variables": [
         "allowed_decisions_block",

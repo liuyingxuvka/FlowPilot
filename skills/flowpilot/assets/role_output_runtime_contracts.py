@@ -36,6 +36,40 @@ from role_output_runtime_schema import (
     quality_pack_checks_for_run,
 )
 
+def _workstream_plan_and_completion_skeleton() -> dict[str, Any]:
+    """Return a planning aid, never pre-completed evidence.
+
+    The assigned role must replace the placeholder row with its actual bounded
+    plan and reconcile it for Reviewer inspection. Runtime projects this aid
+    but does not treat its presence or prose as semantic completion proof.
+    """
+
+    return {
+        "plan_written_before_execution": False,
+        "steps": [
+            {
+                "step_number": 1,
+                "plan": _required_placeholder(
+                    "contract_self_check.workstream_plan_and_completion.steps[0].plan"
+                ),
+                "status": "not_started",
+                "evidence_refs": [],
+                "deviation": "",
+                "unresolved": "",
+            }
+        ],
+        "delegation_and_integration": {
+            "delegated": False,
+            "integration_status": "not_applicable",
+            "evidence_refs": [],
+        },
+        "verification": {
+            "status": "not_started",
+            "evidence_refs": [],
+            "repair_rounds": 0,
+        },
+        "remaining_blockers": [],
+    }
 def _default_for_required_field(
     field_path: str,
     *,
@@ -50,7 +84,9 @@ def _default_for_required_field(
     if field_path == "run_id":
         return run_root.name
     if field_path == "contract_self_check":
-        return _contract_self_check(bool(spec.explicit_array_fields))
+        self_check = _contract_self_check(bool(spec.explicit_array_fields))
+        self_check["workstream_plan_and_completion"] = _workstream_plan_and_completion_skeleton()
+        return self_check
     if field_path == "prior_path_context_review":
         return _prior_path_context(project_root, run_root)
     if field_path == "repair_transaction":
@@ -131,7 +167,9 @@ def build_output_skeleton(
                 ),
             )
     if contract.get("contract_self_check_required") and not _has_path(skeleton, "contract_self_check"):
-        _set_path(skeleton, "contract_self_check", _contract_self_check(bool(spec.explicit_array_fields)))
+        self_check = _contract_self_check(bool(spec.explicit_array_fields))
+        self_check["workstream_plan_and_completion"] = _workstream_plan_and_completion_skeleton()
+        _set_path(skeleton, "contract_self_check", self_check)
     quality_pack_checks = quality_pack_checks_for_run(project_root, run_root)
     if quality_pack_checks and not _has_path(skeleton, "quality_pack_checks"):
         _set_path(skeleton, "quality_pack_checks", quality_pack_checks)

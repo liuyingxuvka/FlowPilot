@@ -26,14 +26,26 @@ class State:
     pm_continue_repair_decision_recorded: bool = False
     pm_continue_repair_decision_staged: bool = False
     staged_effect_recorded: bool = False
+    staged_effect_id: str = ""
+    current_repair_generation: int = 0
+    current_source_generation: int = 0
+    staged_effect_repair_generation: int = 0
+    staged_effect_source_generation: int = 0
+    staged_effect_disposition: str = "none"  # none | pending | committed | disposed_rejected | disposed_cancelled
     same_family_staged_effect_repeated: bool = False
     same_family_staged_effect_converged: bool = False
+    same_family_staged_effect_identity_preserved: bool = True
     same_family_staged_effect_parallel_candidate_created: bool = False
     pm_gate_flowguard_passed: bool = False
     pm_gate_reviewer_passed: bool = False
     pm_gate_system_validation_recorded: bool = False
     pm_gate_system_closure_recorded: bool = False
     staged_pm_decision_applied: bool = False
+    staged_effect_commit_atomically_visible: bool = False
+    worker_opened_after_staged_effect_commit: bool = False
+    decision_gate_rejected: bool = False
+    decision_gate_cancelled: bool = False
+    terminal_round_consumed_on_rejected_or_cancelled_gate: bool = False
     old_packet_roles_rejected: bool = False
     validator_ai_required_on_ordinary_path: bool = False
     closure_flowguard_operator_required_on_ordinary_path: bool = False
@@ -80,6 +92,8 @@ REQUIRED_SAFE_LABELS = (
     "stage_pm_continue_repair_decision",
     "converge_same_family_staged_effect",
     "pass_pm_decision_flowguard_gate",
+    "dispose_rejected_staged_effect_without_worker",
+    "dispose_cancelled_staged_effect_without_worker",
     "pass_pm_decision_reviewer_gate",
     "record_pm_decision_system_validation",
     "record_pm_decision_system_closure",
@@ -168,14 +182,27 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
         return (
             Transition(
                 "record_pm_continue_repair_decision",
-                replace(state, pm_continue_repair_decision_recorded=True),
+                replace(
+                    state,
+                    pm_continue_repair_decision_recorded=True,
+                    current_repair_generation=2,
+                    current_source_generation=7,
+                ),
             ),
         )
     if not state.pm_continue_repair_decision_staged:
         return (
             Transition(
                 "stage_pm_continue_repair_decision",
-                replace(state, pm_continue_repair_decision_staged=True, staged_effect_recorded=True),
+                replace(
+                    state,
+                    pm_continue_repair_decision_staged=True,
+                    staged_effect_recorded=True,
+                    staged_effect_id="staged-effect-repair-g2",
+                    staged_effect_repair_generation=state.current_repair_generation,
+                    staged_effect_source_generation=state.current_source_generation,
+                    staged_effect_disposition="pending",
+                ),
             ),
         )
     if not state.same_family_staged_effect_converged:
@@ -186,12 +213,44 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
                     state,
                     same_family_staged_effect_repeated=True,
                     same_family_staged_effect_converged=True,
+                    same_family_staged_effect_identity_preserved=True,
                     same_family_staged_effect_parallel_candidate_created=False,
                 ),
             ),
         )
     if not state.pm_gate_flowguard_passed:
-        return (Transition("pass_pm_decision_flowguard_gate", replace(state, pm_gate_flowguard_passed=True)),)
+        return (
+            Transition(
+                "pass_pm_decision_flowguard_gate",
+                replace(state, pm_gate_flowguard_passed=True),
+            ),
+            Transition(
+                "dispose_rejected_staged_effect_without_worker",
+                replace(
+                    state,
+                    status="complete",
+                    decision_gate_rejected=True,
+                    staged_effect_disposition="disposed_rejected",
+                    staged_effect_commit_atomically_visible=False,
+                    worker_opened_after_staged_effect_commit=False,
+                    terminal_round_consumed_on_rejected_or_cancelled_gate=False,
+                    old_packet_roles_rejected=True,
+                ),
+            ),
+            Transition(
+                "dispose_cancelled_staged_effect_without_worker",
+                replace(
+                    state,
+                    status="complete",
+                    decision_gate_cancelled=True,
+                    staged_effect_disposition="disposed_cancelled",
+                    staged_effect_commit_atomically_visible=False,
+                    worker_opened_after_staged_effect_commit=False,
+                    terminal_round_consumed_on_rejected_or_cancelled_gate=False,
+                    old_packet_roles_rejected=True,
+                ),
+            ),
+        )
     if not state.pm_gate_reviewer_passed:
         return (Transition("pass_pm_decision_reviewer_gate", replace(state, pm_gate_reviewer_passed=True)),)
     if not state.pm_gate_system_validation_recorded:
@@ -212,7 +271,13 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
         return (
             Transition(
                 "apply_staged_pm_decision_after_system_closure",
-                replace(state, staged_pm_decision_applied=True),
+                replace(
+                    state,
+                    staged_pm_decision_applied=True,
+                    staged_effect_disposition="committed",
+                    staged_effect_commit_atomically_visible=True,
+                    worker_opened_after_staged_effect_commit=True,
+                ),
             ),
         )
     if not state.old_packet_roles_rejected:
@@ -243,10 +308,34 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("PM continue-repair decision staged before record")
     if state.pm_continue_repair_decision_staged and not state.staged_effect_recorded:
         failures.append("PM continue-repair decision staged without staged_effect")
+    if state.pm_continue_repair_decision_staged:
+        if not state.staged_effect_id:
+            failures.append("staged_effect identity is missing")
+        if (
+            state.current_repair_generation <= 0
+            or state.current_source_generation <= 0
+            or state.staged_effect_repair_generation
+            != state.current_repair_generation
+            or state.staged_effect_source_generation
+            != state.current_source_generation
+        ):
+            failures.append(
+                "staged_effect repair/source generation does not match the current decision"
+            )
+        if state.staged_effect_disposition == "none":
+            failures.append("staged_effect lacks a current disposition")
     if state.same_family_staged_effect_repeated and not state.same_family_staged_effect_converged:
         failures.append("same-family staged effect did not converge before PM gate")
     if state.same_family_staged_effect_parallel_candidate_created:
         failures.append("same-family staged effect created parallel candidate state")
+    if (
+        state.same_family_staged_effect_converged
+        and not state.same_family_staged_effect_identity_preserved
+    ):
+        failures.append(
+            "same-family staged effect convergence changed the exact source packet/result, "
+            "target, blocker, trigger, gate, scope, or generation identity"
+        )
     if (
         state.pm_gate_flowguard_passed
         and state.pm_continue_repair_decision_staged
@@ -263,6 +352,35 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("PM gate system closure before system validation")
     if state.staged_pm_decision_applied and not state.pm_gate_system_closure_recorded:
         failures.append("staged PM decision applied before system closure")
+    if state.staged_pm_decision_applied and not (
+        state.staged_effect_disposition == "committed"
+        and state.staged_effect_commit_atomically_visible
+        and state.worker_opened_after_staged_effect_commit
+    ):
+        failures.append(
+            "accepted staged_effect commit is not atomically visible with Worker opening"
+        )
+    if (
+        state.worker_opened_after_staged_effect_commit
+        and not state.staged_pm_decision_applied
+    ):
+        failures.append("Worker opened before staged_effect commit")
+    if state.decision_gate_rejected or state.decision_gate_cancelled:
+        expected_disposition = (
+            "disposed_rejected"
+            if state.decision_gate_rejected
+            else "disposed_cancelled"
+        )
+        if state.staged_effect_disposition != expected_disposition:
+            failures.append("rejected or cancelled decision gate left staged_effect undisposed")
+        if (
+            state.staged_pm_decision_applied
+            or state.staged_effect_commit_atomically_visible
+            or state.worker_opened_after_staged_effect_commit
+        ):
+            failures.append("rejected or cancelled decision gate committed effect or opened Worker")
+        if state.terminal_round_consumed_on_rejected_or_cancelled_gate:
+            failures.append("rejected or cancelled decision gate consumed a terminal repair round")
     if state.validator_ai_required_on_ordinary_path:
         failures.append("ordinary path still required validator AI")
     if state.closure_flowguard_operator_required_on_ordinary_path:
@@ -305,7 +423,7 @@ def validation_pm_gate_invariant(state: State, trace) -> InvariantResult:
 
 
 def is_success(state: State) -> bool:
-    return (
+    accepted_path = (
         state.status == "complete"
         and state.system_validation_recorded
         and state.system_closure_applied
@@ -315,8 +433,33 @@ def is_success(state: State) -> bool:
         and state.same_family_staged_effect_converged
         and state.pm_gate_system_closure_recorded
         and state.staged_pm_decision_applied
+        and state.staged_effect_disposition == "committed"
+        and state.staged_effect_commit_atomically_visible
+        and state.worker_opened_after_staged_effect_commit
         and state.old_packet_roles_rejected
     )
+    safe_disposal_path = (
+        state.status == "complete"
+        and state.staged_effect_recorded
+        and bool(state.staged_effect_id)
+        and state.same_family_staged_effect_converged
+        and (
+            (
+                state.decision_gate_rejected
+                and state.staged_effect_disposition == "disposed_rejected"
+            )
+            or (
+                state.decision_gate_cancelled
+                and state.staged_effect_disposition == "disposed_cancelled"
+            )
+        )
+        and not state.staged_pm_decision_applied
+        and not state.staged_effect_commit_atomically_visible
+        and not state.worker_opened_after_staged_effect_commit
+        and not state.terminal_round_consumed_on_rejected_or_cancelled_gate
+        and state.old_packet_roles_rejected
+    )
+    return accepted_path or safe_disposal_path
 
 
 def terminal_predicate(_input_obj: Tick, state: State, _trace) -> bool:
@@ -359,6 +502,62 @@ def hazard_states() -> dict[str, State]:
             base,
             same_family_staged_effect_parallel_candidate_created=True,
         ),
+        "same_family_staged_effect_identity_changed": replace(
+            base,
+            same_family_staged_effect_identity_preserved=False,
+        ),
+        "staged_effect_identity_missing": replace(base, staged_effect_id=""),
+        "staged_effect_repair_generation_mismatch": replace(
+            base,
+            staged_effect_repair_generation=base.current_repair_generation + 1,
+        ),
+        "staged_effect_source_generation_mismatch": replace(
+            base,
+            staged_effect_source_generation=base.current_source_generation + 1,
+        ),
+        "accepted_staged_effect_commit_not_atomic": replace(
+            base,
+            staged_effect_commit_atomically_visible=False,
+        ),
+        "worker_opened_before_staged_effect_commit": replace(
+            base,
+            staged_pm_decision_applied=False,
+            staged_effect_disposition="pending",
+            worker_opened_after_staged_effect_commit=True,
+        ),
+        "rejected_staged_effect_not_disposed": replace(
+            base,
+            staged_pm_decision_applied=False,
+            staged_effect_commit_atomically_visible=False,
+            worker_opened_after_staged_effect_commit=False,
+            decision_gate_rejected=True,
+            staged_effect_disposition="pending",
+        ),
+        "cancelled_staged_effect_not_disposed": replace(
+            base,
+            staged_pm_decision_applied=False,
+            staged_effect_commit_atomically_visible=False,
+            worker_opened_after_staged_effect_commit=False,
+            decision_gate_cancelled=True,
+            staged_effect_disposition="pending",
+        ),
+        "rejected_staged_effect_opens_worker": replace(
+            base,
+            staged_pm_decision_applied=False,
+            decision_gate_rejected=True,
+            staged_effect_disposition="disposed_rejected",
+            staged_effect_commit_atomically_visible=False,
+            worker_opened_after_staged_effect_commit=True,
+        ),
+        "rejected_staged_effect_consumes_terminal_round": replace(
+            base,
+            staged_pm_decision_applied=False,
+            decision_gate_rejected=True,
+            staged_effect_disposition="disposed_rejected",
+            staged_effect_commit_atomically_visible=False,
+            worker_opened_after_staged_effect_commit=False,
+            terminal_round_consumed_on_rejected_or_cancelled_gate=True,
+        ),
         "pm_gate_before_staged_effect_convergence": replace(
             base,
             pm_gate_flowguard_passed=True,
@@ -378,11 +577,19 @@ def state_summary(state: State) -> dict[str, object]:
         "failed_system_validation_routed_to_pm": state.failed_system_validation_routed_to_pm,
         "pm_continue_repair_decision_staged": state.pm_continue_repair_decision_staged,
         "staged_effect_recorded": state.staged_effect_recorded,
+        "staged_effect_id": state.staged_effect_id,
+        "staged_effect_repair_generation": state.staged_effect_repair_generation,
+        "staged_effect_source_generation": state.staged_effect_source_generation,
+        "staged_effect_disposition": state.staged_effect_disposition,
         "same_family_staged_effect_converged": state.same_family_staged_effect_converged,
         "pm_gate_flowguard_passed": state.pm_gate_flowguard_passed,
         "pm_gate_reviewer_passed": state.pm_gate_reviewer_passed,
         "pm_gate_system_closure_recorded": state.pm_gate_system_closure_recorded,
         "staged_pm_decision_applied": state.staged_pm_decision_applied,
+        "staged_effect_commit_atomically_visible": state.staged_effect_commit_atomically_visible,
+        "worker_opened_after_staged_effect_commit": state.worker_opened_after_staged_effect_commit,
+        "decision_gate_rejected": state.decision_gate_rejected,
+        "decision_gate_cancelled": state.decision_gate_cancelled,
         "old_packet_roles_rejected": state.old_packet_roles_rejected,
     }
 
@@ -395,7 +602,12 @@ EXTERNAL_INPUTS = (Tick(),)
 INVARIANTS = (
     Invariant(
         "validation_automation_and_pm_decision_gate_order",
-        "System validation replaces ordinary validator AI, system closure replaces ordinary Closure FlowGuard operator AI, and PM continue-repair decisions apply only after one unified gated system closure.",
+        (
+            "System validation replaces ordinary validator AI, system closure replaces ordinary "
+            "Closure FlowGuard operator AI, PM continue-repair decisions apply only after one "
+            "unified gated system closure, and same-family staged effects converge only when their "
+            "complete current identity is unchanged."
+        ),
         validation_pm_gate_invariant,
     ),
 )
