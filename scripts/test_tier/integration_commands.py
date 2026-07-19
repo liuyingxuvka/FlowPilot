@@ -4,7 +4,45 @@ from __future__ import annotations
 
 from .command_builders import TierCommand, _py
 
+PRECLOSURE_EVIDENCE_MANIFEST = (
+    "tmp/test_results/flowpilot_acceptance_testmesh_preclosure_manifest.json"
+)
+
 INTEGRATION_COMMANDS = (
+    TierCommand(
+        name="packet_control_plane_model",
+        command=_py("skills/flowpilot/assets/run_packet_control_plane_checks.py"),
+        description="Current packet control-plane model and runner contract.",
+        background_recommended=True,
+    ),
+    TierCommand(
+        name="flowguard_route_authority_singularity",
+        command=_py(
+            "simulations/run_flowpilot_route_authority_singularity_checks.py",
+            "--json-out",
+            "simulations/flowpilot_route_authority_singularity_results.json",
+        ),
+        description="Current single-authority and no-fallback route model.",
+        background_recommended=True,
+    ),
+    TierCommand(
+        name="flowguard_rejection_liveness_matrix",
+        command=_py(
+            "simulations/run_flowpilot_rejection_liveness_matrix_checks.py",
+            "--json-out",
+            "simulations/flowpilot_rejection_liveness_matrix_results.json",
+        ),
+        description="Current rejection/liveness model matrix.",
+        background_recommended=True,
+    ),
+    TierCommand(
+        name="flowguard_terminal_supplemental_repair",
+        command=_py(
+            "simulations/run_flowpilot_terminal_supplemental_repair_checks.py",
+        ),
+        description="Current terminal supplemental-repair model.",
+        background_recommended=True,
+    ),
     TierCommand(
         name="refresh_flowguard_project_topology",
         command=_py("scripts/flowguard_project_topology.py", "build"),
@@ -75,11 +113,11 @@ RELEASE_COMMANDS = (
             "python",
             "simulations/run_meta_checks.py",
             "--full",
-            "--force",
         ),
         description=(
-            "Sole layered-full Meta owner; writes the stable run_meta_checks receipt "
-            "that later consumers verify without relaunching."
+            "Declared layered-full Meta owner; the impact plan executes it only "
+            "when its exact applicability inputs changed, otherwise consumers use "
+            "its current owner reuse ticket."
         ),
         release_only=True,
         long_running=True,
@@ -95,11 +133,11 @@ RELEASE_COMMANDS = (
             "python",
             "simulations/run_capability_checks.py",
             "--full",
-            "--force",
         ),
         description=(
-            "Sole layered-full Capability owner; writes the stable run_capability_checks "
-            "receipt that later consumers verify without relaunching."
+            "Declared layered-full Capability owner; the impact plan executes it "
+            "only when its exact applicability inputs changed, otherwise consumers "
+            "use its current owner reuse ticket."
         ),
         release_only=True,
         long_running=True,
@@ -111,6 +149,83 @@ RELEASE_COMMANDS = (
         description="Public release boundary validation with dependency URL probing; tier validation runs separately.",
         release_only=True,
         long_running=True,
+        background_recommended=True,
+        background_stage=2,
+    ),
+)
+
+EVIDENCE_CLOSURE_COMMANDS = (
+    TierCommand(
+        name="contract_exhaustion_current_evidence",
+        command=_py(
+            "simulations/run_flowpilot_contract_exhaustion_mesh_checks.py",
+            "--evidence-manifest",
+            PRECLOSURE_EVIDENCE_MANIFEST,
+            "--evidence-scope",
+            "done",
+            "--json-out",
+            "simulations/flowpilot_contract_exhaustion_mesh_results.json",
+        ),
+        description="Strict contract-exhaustion consumer of the current preclosure owner evidence.",
+        release_only=True,
+        background_recommended=True,
+        background_stage=1,
+    ),
+    TierCommand(
+        name="current_contract_cartesian_current_evidence",
+        command=_py(
+            "simulations/run_flowpilot_current_contract_cartesian_matrix_checks.py",
+            "--evidence-manifest",
+            PRECLOSURE_EVIDENCE_MANIFEST,
+            "--evidence-scope",
+            "done",
+            "--json-out",
+            "simulations/flowpilot_current_contract_cartesian_matrix_results.json",
+        ),
+        description="Strict current-contract Cartesian consumer of the current preclosure owner evidence.",
+        release_only=True,
+        background_recommended=True,
+        background_stage=1,
+    ),
+    TierCommand(
+        name="model_test_alignment_current_evidence",
+        command=_py(
+            "simulations/run_flowpilot_model_test_alignment_checks.py",
+            "--evidence-manifest",
+            PRECLOSURE_EVIDENCE_MANIFEST,
+            "--evidence-scope",
+            "done",
+            "--json-out",
+            "simulations/flowpilot_model_test_alignment_results.json",
+        ),
+        description="Strict MTA consumer of the current preclosure owner evidence.",
+        release_only=True,
+        background_recommended=True,
+        background_stage=1,
+    ),
+    TierCommand(
+        name="acceptance_testmesh_current_evidence",
+        command=_py(
+            "simulations/run_flowpilot_acceptance_testmesh_checks.py",
+            "--evidence-manifest",
+            PRECLOSURE_EVIDENCE_MANIFEST,
+            "--json-out",
+            "simulations/flowpilot_acceptance_testmesh_results.json",
+        ),
+        description="Strict Acceptance TestMesh consumer of the current preclosure owner evidence.",
+        release_only=True,
+        background_recommended=True,
+        background_stage=1,
+    ),
+    TierCommand(
+        name="behavior_commitment_risk_current_evidence",
+        command=_py(
+            "simulations/run_flowpilot_053_ppa_maintenance_checks.py",
+            "--json-out",
+            "simulations/flowpilot_053_ppa_maintenance_results.json",
+        ),
+        description="BCL/PPA and risk evidence runs after the strict MTA owner in the same closure tier.",
+        release_only=True,
         background_recommended=True,
         background_stage=2,
     ),

@@ -7,7 +7,9 @@ import hashlib
 import json
 from pathlib import Path
 import sys
-from typing import Any, Iterable
+from typing import Any, Iterable, Mapping
+
+from flowguard import TestResultReuseTicket
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
@@ -21,11 +23,15 @@ from simulations.flowpilot_evidence_truth import (
     testmesh_receipt_obligation_ids,
 )
 from simulations.run_flowpilot_acceptance_testmesh_checks import BACKGROUND_CHILD_SUITES
-from test_tier.source_fingerprint import source_fingerprint
+from test_tier.checkpoint_manifest import (
+    compile_owner_checkpoint_manifest as _compile_owner_checkpoint_manifest,
+)
+from test_tier.evidence_validation import validated_tier
+from test_tier.source_fingerprint import source_fingerprint, source_snapshot
 
 
 DEFAULT_OUT = ROOT / "simulations" / "flowpilot_acceptance_testmesh_evidence_manifest.json"
-MANIFEST_SCHEMA_VERSION = "flowpilot.acceptance_testmesh_evidence_manifest.v3"
+MANIFEST_SCHEMA_VERSION = "flowpilot.acceptance_testmesh_evidence_manifest.v4"
 
 
 def _portable_path(path: Path) -> str:
@@ -45,84 +51,6 @@ def _sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
-def _json(path: Path) -> dict[str, Any]:
-    value = json.loads(path.read_text(encoding="utf-8"))
-    if not isinstance(value, dict):
-        raise ValueError(f"expected JSON object: {path}")
-    return value
-
-
-def _supervisor_paths(root: Path, tier: str) -> tuple[Path, Path]:
-    base = root / f"{tier}_background_supervisor"
-    return base.with_suffix(".meta.json"), base.with_suffix(".exit.txt")
-
-
-def _validated_tier(
-    root: Path,
-    tier: str,
-    *,
-    expected_source_fingerprint: str,
-) -> dict[str, Any]:
-    meta_path, exit_path = _supervisor_paths(root, tier)
-    if not meta_path.is_file() or not exit_path.is_file():
-        raise ValueError(f"{tier} background supervisor artifacts are incomplete under {root}")
-    meta = _json(meta_path)
-    try:
-        exit_code = int(exit_path.read_text(encoding="utf-8").strip())
-    except ValueError as exc:
-        raise ValueError(f"invalid exit artifact: {exit_path}") from exc
-    if meta.get("status") != "passed" or exit_code != 0 or meta.get("timed_out") is True:
-        raise ValueError(f"{tier} background tier is not a current pass: {meta}")
-    source_start = str(meta.get("covered_source_fingerprint_start") or "")
-    source_end = str(meta.get("covered_source_fingerprint_end") or "")
-    if (
-        not source_start
-        or source_start != source_end
-        or source_end != expected_source_fingerprint
-        or meta.get("source_fingerprint_current") is not True
-    ):
-        raise ValueError(
-            f"{tier} background tier source fingerprint is missing or stale: "
-            f"start={source_start!r} end={source_end!r} "
-            f"expected={expected_source_fingerprint!r}"
-        )
-    child_meta_paths = sorted(
-        path
-        for path in root.glob("*.meta.json")
-        if path != meta_path and "background_supervisor" not in path.name
-    )
-    child_exit_paths = sorted(
-        path
-        for path in root.glob("*.exit.txt")
-        if path != exit_path and "background_supervisor" not in path.name
-    )
-    child_rows = [_json(path) for path in child_meta_paths]
-    failed = [
-        row.get("name")
-        for row in child_rows
-        if row.get("status") != "passed"
-        or row.get("exit_code") != 0
-        or str(row.get("covered_source_fingerprint") or "") != source_start
-    ]
-    if failed:
-        raise ValueError(f"{tier} contains non-passing child artifacts: {failed}")
-    if len(child_meta_paths) != len(child_exit_paths):
-        raise ValueError(f"{tier} child meta/exit cardinality mismatch")
-    return {
-        "tier": tier,
-        "root": root,
-        "meta": meta,
-        "meta_path": meta_path,
-        "exit_path": exit_path,
-        "child_meta_paths": child_meta_paths,
-        "child_exit_paths": child_exit_paths,
-        "selected_count": len(child_meta_paths),
-        "executed_count": len(child_rows),
-        "covered_source_fingerprint_start": source_start,
-        "covered_source_fingerprint_end": source_end,
-    }
-
-
 def _fingerprints(paths: Iterable[Path]) -> dict[str, str]:
     return {
         _portable_path(path): _sha256(path)
@@ -138,7 +66,7 @@ def _proof(
     result_path: str,
     tier_reports: tuple[dict[str, Any], ...],
     covered_ids: tuple[str, ...],
-    source_digest: str,
+    snapshot_fingerprint: str,
 ) -> dict[str, Any]:
     artifacts: list[Path] = []
     for report in tier_reports:
@@ -163,20 +91,105 @@ def _proof(
         "route_evidence_current": True,
         "progress_only": False,
         "metadata": {
-            "source_fingerprint": source_digest,
-            "tier_source_fingerprint_starts": [
-                report["covered_source_fingerprint_start"] for report in tier_reports
+            "snapshot_fingerprint": snapshot_fingerprint,
+            "impact_plan_ids": [
+                report["impact_plan"]["plan_id"] for report in tier_reports
             ],
-            "tier_source_fingerprint_ends": [
-                report["covered_source_fingerprint_end"] for report in tier_reports
-            ],
+            "owner_proof_artifact_ids": sorted(
+                str(row.get("proof_artifact", {}).get("artifact_id") or "")
+                for report in tier_reports
+                for row in report["owners"].values()
+                if isinstance(row, dict)
+            ),
             "selected_child_command_count": sum(report["selected_count"] for report in tier_reports),
             "executed_child_command_count": sum(report["executed_count"] for report in tier_reports),
+            "reused_child_command_count": sum(report["reused_count"] for report in tier_reports),
+            "proof_backed_child_command_count": sum(
+                report["executed_count"] + report["reused_count"]
+                for report in tier_reports
+            ),
             "count_unit": "background_child_commands",
             "tiers": [report["tier"] for report in tier_reports],
             "covered_tiers": [report["tier"] for report in tier_reports],
         },
     }
+
+
+def _aggregate_reuse_ticket(
+    *,
+    evidence_id: str,
+    proof: dict[str, Any],
+    owner_rows: Mapping[str, Any],
+    covered_obligation_ids: tuple[str, ...],
+) -> dict[str, Any] | None:
+    if not owner_rows or any(
+        not isinstance(row, dict) or row.get("result_reused") is not True
+        for row in owner_rows.values()
+    ):
+        return None
+    identities = {
+        owner_id: row["identity"]
+        for owner_id, row in owner_rows.items()
+    }
+    final_receipt = testmesh_final_receipt_fields(
+        proof,
+        covered_obligation_ids=covered_obligation_ids,
+    )
+    ticket = TestResultReuseTicket(
+        evidence_id=evidence_id,
+        previous_evidence_id=str(proof["artifact_id"]),
+        reason="every exact child owner is current through its own reuse ticket",
+        same_output_proof_id=str(proof["artifact_id"]),
+        command_fingerprint=hashlib.sha256(
+            str(proof["command"]).encode("utf-8")
+        ).hexdigest(),
+        test_source_fingerprint=hashlib.sha256(
+            json.dumps(
+                {
+                    owner_id: identity.get("test_source_fingerprint")
+                    for owner_id, identity in identities.items()
+                },
+                sort_keys=True,
+            ).encode("utf-8")
+        ).hexdigest(),
+        tested_artifact_fingerprint=hashlib.sha256(
+            json.dumps(
+                {
+                    owner_id: identity.get("tested_artifact_fingerprint")
+                    for owner_id, identity in identities.items()
+                },
+                sort_keys=True,
+            ).encode("utf-8")
+        ).hexdigest(),
+        dependency_fingerprints={
+            owner_id: str(identity.get("covered_input_fingerprint") or "")
+            for owner_id, identity in identities.items()
+        },
+        environment_fingerprint=hashlib.sha256(
+            json.dumps(
+                {
+                    owner_id: identity.get("environment_fingerprint")
+                    for owner_id, identity in identities.items()
+                },
+                sort_keys=True,
+            ).encode("utf-8")
+        ).hexdigest(),
+        result_fingerprint=str(final_receipt["result_fingerprint"]),
+        covered_obligation_ids=covered_obligation_ids,
+        metadata={"owner_evidence_ids": sorted(owner_rows)},
+    )
+    return ticket.to_dict()
+
+
+def compile_owner_checkpoint_manifest(*, all_root: Path) -> dict[str, Any]:
+    """Public facade for the sole current checkpoint compiler owner."""
+
+    return _compile_owner_checkpoint_manifest(
+        all_root=all_root,
+        schema_version=MANIFEST_SCHEMA_VERSION,
+        portable_path=_portable_path,
+        sha256=_sha256,
+    )
 
 
 def _suite_tier_report(
@@ -185,40 +198,35 @@ def _suite_tier_report(
     suite_id: str,
     expected_names: tuple[str, ...],
 ) -> dict[str, Any]:
-    meta_by_name: dict[str, Path] = {}
-    for meta_path in all_report["child_meta_paths"]:
-        name = str(_json(meta_path).get("name") or "")
-        if not name:
-            raise ValueError(f"all-tier child metadata has no command name: {meta_path}")
-        if name in meta_by_name:
-            raise ValueError(f"all-tier child command name is duplicated: {name}")
-        meta_by_name[name] = meta_path
-    exit_by_name = {
-        path.name[: -len(".exit.txt")]: path
-        for path in all_report["child_exit_paths"]
-        if path.name.endswith(".exit.txt")
-    }
+    owners = all_report["owners"]
     missing = [
         name
         for name in expected_names
-        if name not in meta_by_name or name not in exit_by_name
+        if name not in owners
     ]
     if missing:
         raise ValueError(
             f"{suite_id} is missing current all-tier child evidence: {missing}"
         )
-    nonzero = [
-        name
-        for name in expected_names
-        if int(exit_by_name[name].read_text(encoding="utf-8").strip()) != 0
-    ]
-    if nonzero:
-        raise ValueError(f"{suite_id} contains non-passing exit artifacts: {nonzero}")
     subset = dict(all_report)
-    subset["child_meta_paths"] = [meta_by_name[name] for name in expected_names]
-    subset["child_exit_paths"] = [exit_by_name[name] for name in expected_names]
+    subset["owners"] = {name: owners[name] for name in expected_names}
+    subset["child_meta_paths"] = [
+        all_report["root"] / f"{name}.meta.json"
+        for name in expected_names
+        if (all_report["root"] / f"{name}.meta.json").is_file()
+    ]
+    subset["child_exit_paths"] = [
+        all_report["root"] / f"{name}.exit.txt"
+        for name in expected_names
+        if (all_report["root"] / f"{name}.exit.txt").is_file()
+    ]
     subset["selected_count"] = len(expected_names)
-    subset["executed_count"] = len(expected_names)
+    subset["executed_count"] = sum(
+        1 for name in expected_names if not owners[name].get("result_reused")
+    )
+    subset["reused_count"] = sum(
+        1 for name in expected_names if owners[name].get("result_reused") is True
+    )
     return subset
 
 
@@ -226,7 +234,7 @@ def _compile_routine_evidence(
     *,
     all_report: dict[str, Any],
     plan: Any,
-    source_digest: str,
+    snapshot_fingerprint: str,
     artifact_prefix: str,
 ) -> dict[str, Any]:
     routine: dict[str, Any] = {}
@@ -249,13 +257,20 @@ def _compile_routine_evidence(
             result_path=portable_all_root,
             tier_reports=(proof_report,),
             covered_ids=covered_ids,
-            source_digest=source_digest,
+            snapshot_fingerprint=snapshot_fingerprint,
+        )
+        result_reused = proof_report["executed_count"] == 0
+        aggregate_ticket = _aggregate_reuse_ticket(
+            evidence_id=suite.suite_id,
+            proof=proof,
+            owner_rows=proof_report["owners"],
+            covered_obligation_ids=covered_ids,
         )
         routine[suite.suite_id] = {
             "result_status": "passed",
             "evidence_tier": "external_contract",
             "evidence_current": True,
-            "test_count": int(proof["metadata"]["executed_child_command_count"]),
+            "test_count": int(proof["metadata"]["proof_backed_child_command_count"]),
             "selected_count": int(proof["metadata"]["selected_child_command_count"]),
             "skipped_count": 0,
             "skipped_visible": True,
@@ -266,7 +281,14 @@ def _compile_routine_evidence(
             "has_exit_artifact": True,
             "has_result_artifact": True,
             "progress_only": False,
-            "result_reused": False,
+            "result_reused": result_reused,
+            "reuse_ticket": aggregate_ticket,
+            "owner_evidence_ids": sorted(proof_report["owners"]),
+            "owner_reuse_tickets": {
+                owner_id: row.get("reuse_ticket")
+                for owner_id, row in proof_report["owners"].items()
+                if row.get("result_reused") is True
+            },
             "proof_artifact": proof,
             **testmesh_final_receipt_fields(
                 proof,
@@ -276,39 +298,51 @@ def _compile_routine_evidence(
     return routine
 
 
-def compile_manifest(
+def _compile_release_manifest(
     *,
     all_root: Path,
     adversarial_root: Path,
     release_root: Path,
+    closure_root: Path | None,
+    phase: str,
 ) -> dict[str, Any]:
-    source_digest = source_fingerprint()
-    all_report = _validated_tier(
-        all_root,
-        "all",
-        expected_source_fingerprint=source_digest,
-    )
-    release_report = _validated_tier(
-        release_root,
-        "release",
-        expected_source_fingerprint=source_digest,
-    )
-    adversarial_report = _validated_tier(
+    if phase not in {"preclosure", "final"}:
+        raise ValueError(f"unsupported release manifest phase: {phase}")
+    if (phase == "final") != (closure_root is not None):
+        raise ValueError("final phase requires one evidence-closure root")
+    snapshot = source_snapshot()
+    snapshot_fingerprint = str(snapshot["fingerprint"])
+    all_report = validated_tier(all_root, "all")
+    release_report = validated_tier(release_root, "release")
+    adversarial_report = validated_tier(
         adversarial_root,
         "formal-submit-adversarial",
-        expected_source_fingerprint=source_digest,
     )
-    portable_roots = (
-        _portable_path(all_root),
-        _portable_path(adversarial_root),
-        _portable_path(release_root),
+    closure_report = (
+        validated_tier(closure_root, "evidence-closure")
+        if closure_root is not None
+        else None
+    )
+    tier_reports = tuple(
+        report
+        for report in (
+            all_report,
+            adversarial_report,
+            release_report,
+            closure_report,
+        )
+        if report is not None
+    )
+    portable_roots = tuple(
+        _portable_path(report["root"])
+        for report in tier_reports
     )
     combined_result_path = "; ".join(portable_roots)
     plan = model.build_testmesh_plan()
     routine = _compile_routine_evidence(
         all_report=all_report,
         plan=plan,
-        source_digest=source_digest,
+        snapshot_fingerprint=snapshot_fingerprint,
         artifact_prefix="proof",
     )
     release_proof = _proof(
@@ -317,24 +351,64 @@ def compile_manifest(
             "python scripts/run_test_tier.py --tier all --background; "
             "python scripts/run_test_tier.py --tier formal-submit-adversarial --background; "
             "python scripts/run_test_tier.py --tier release --background"
+            + (
+                "; python scripts/run_test_tier.py --tier evidence-closure --background"
+                if closure_report is not None
+                else ""
+            )
         ),
         result_path=combined_result_path,
-        tier_reports=(all_report, adversarial_report, release_report),
+        tier_reports=tier_reports,
         covered_ids=tuple(model.RELEASE_EVIDENCE_CELLS),
-        source_digest=source_digest,
+        snapshot_fingerprint=snapshot_fingerprint,
+    )
+    owners: dict[str, Any] = {}
+    for report in tier_reports:
+        for owner_id, row in report["owners"].items():
+            if owner_id in owners and owners[owner_id] != row:
+                raise ValueError(f"conflicting owner evidence row: {owner_id}")
+            owners[owner_id] = row
+    release_reused = all(
+        row.get("result_reused") is True for row in owners.values()
+    )
+    release_ticket = _aggregate_reuse_ticket(
+        evidence_id="acceptance_router_release_tiers",
+        proof=release_proof,
+        owner_rows=owners,
+        covered_obligation_ids=tuple(model.RELEASE_EVIDENCE_CELLS),
     )
     return {
         "schema_version": MANIFEST_SCHEMA_VERSION,
-        "phase": "final",
+        "phase": phase,
         "claim_scope": "release",
-        "source_fingerprint": source_digest,
+        "snapshot": snapshot,
+        "impact_plan": {
+            "plan_ids": [
+                report["impact_plan"]["plan_id"]
+                for report in tier_reports
+            ],
+            "decisions": [
+                decision
+                for report in tier_reports
+                for decision in report["impact_plan"].get("decisions", [])
+            ],
+        },
+        "owners": owners,
         "routine": routine,
         "release": {
             "result_status": "passed",
             "evidence_current": True,
-            "test_count": int(release_proof["metadata"]["executed_child_command_count"]),
+            "test_count": int(release_proof["metadata"]["proof_backed_child_command_count"]),
             "selected_count": int(release_proof["metadata"]["selected_child_command_count"]),
             "result_path": combined_result_path,
+            "result_reused": release_reused,
+            "reuse_ticket": release_ticket,
+            "owner_evidence_ids": sorted(owners),
+            "owner_reuse_tickets": {
+                owner_id: row.get("reuse_ticket")
+                for owner_id, row in owners.items()
+                if row.get("result_reused") is True
+            },
             "proof_artifact": release_proof,
             **testmesh_final_receipt_fields(
                 release_proof,
@@ -344,26 +418,57 @@ def compile_manifest(
     }
 
 
+def compile_preclosure_manifest(
+    *,
+    all_root: Path,
+    adversarial_root: Path,
+    release_root: Path,
+) -> dict[str, Any]:
+    """Compile the exact prerequisite evidence consumed by closure owners."""
+
+    return _compile_release_manifest(
+        all_root=all_root,
+        adversarial_root=adversarial_root,
+        release_root=release_root,
+        closure_root=None,
+        phase="preclosure",
+    )
+
+
+def compile_manifest(
+    *,
+    all_root: Path,
+    adversarial_root: Path,
+    release_root: Path,
+    closure_root: Path,
+) -> dict[str, Any]:
+    """Compile final evidence including every exact strict-parent owner."""
+
+    return _compile_release_manifest(
+        all_root=all_root,
+        adversarial_root=adversarial_root,
+        release_root=release_root,
+        closure_root=closure_root,
+        phase="final",
+    )
+
+
 def compile_bootstrap_manifest(*, all_root: Path, adversarial_root: Path) -> dict[str, Any]:
     """Compile Phase-A current routine proof without inventing release evidence."""
 
-    source_digest = source_fingerprint()
-    all_report = _validated_tier(
-        all_root,
-        "all",
-        expected_source_fingerprint=source_digest,
-    )
-    adversarial_report = _validated_tier(
+    snapshot = source_snapshot()
+    snapshot_fingerprint = str(snapshot["fingerprint"])
+    all_report = validated_tier(all_root, "all")
+    adversarial_report = validated_tier(
         adversarial_root,
         "formal-submit-adversarial",
-        expected_source_fingerprint=source_digest,
     )
     portable_adversarial_root = _portable_path(adversarial_root)
     plan = model.build_testmesh_plan()
     routine = _compile_routine_evidence(
         all_report=all_report,
         plan=plan,
-        source_digest=source_digest,
+        snapshot_fingerprint=snapshot_fingerprint,
         artifact_prefix="proof.bootstrap",
     )
     adversarial_proof = _proof(
@@ -372,25 +477,55 @@ def compile_bootstrap_manifest(*, all_root: Path, adversarial_root: Path) -> dic
         result_path=portable_adversarial_root,
         tier_reports=(adversarial_report,),
         covered_ids=("formal-submit-adversarial",),
-        source_digest=source_digest,
+        snapshot_fingerprint=snapshot_fingerprint,
+    )
+    adversarial_reused = adversarial_report["executed_count"] == 0
+    adversarial_ticket = _aggregate_reuse_ticket(
+        evidence_id="formal_submit_adversarial",
+        proof=adversarial_proof,
+        owner_rows=adversarial_report["owners"],
+        covered_obligation_ids=("formal-submit-adversarial",),
     )
     routine["formal_submit_adversarial"] = {
         "result_status": "passed",
         "evidence_current": True,
-        "test_count": int(adversarial_proof["metadata"]["executed_child_command_count"]),
+        "test_count": int(adversarial_proof["metadata"]["proof_backed_child_command_count"]),
         "selected_count": int(adversarial_proof["metadata"]["selected_child_command_count"]),
-        "result_reused": False,
+        "result_reused": adversarial_reused,
+        "reuse_ticket": adversarial_ticket,
+        "owner_evidence_ids": sorted(adversarial_report["owners"]),
+        "owner_reuse_tickets": {
+            owner_id: row.get("reuse_ticket")
+            for owner_id, row in adversarial_report["owners"].items()
+            if row.get("result_reused") is True
+        },
         "proof_artifact": adversarial_proof,
         **testmesh_final_receipt_fields(
             adversarial_proof,
             covered_obligation_ids=("formal-submit-adversarial",),
         ),
     }
+    owners = {
+        **all_report["owners"],
+        **adversarial_report["owners"],
+    }
     return {
         "schema_version": MANIFEST_SCHEMA_VERSION,
         "phase": "bootstrap",
         "claim_scope": "routine",
-        "source_fingerprint": source_digest,
+        "snapshot": snapshot,
+        "impact_plan": {
+            "plan_ids": [
+                all_report["impact_plan"]["plan_id"],
+                adversarial_report["impact_plan"]["plan_id"],
+            ],
+            "decisions": [
+                decision
+                for report in (all_report, adversarial_report)
+                for decision in report["impact_plan"].get("decisions", [])
+            ],
+        },
+        "owners": owners,
         "routine": routine,
         "release": {
             "result_status": "not_run",
@@ -406,26 +541,64 @@ def compile_bootstrap_manifest(*, all_root: Path, adversarial_root: Path) -> dic
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--phase", choices=("bootstrap", "final"), default="final")
+    parser.add_argument(
+        "--phase",
+        choices=("checkpoint", "bootstrap", "preclosure", "final"),
+        default="final",
+    )
     parser.add_argument("--all-root", type=Path, required=True)
     parser.add_argument("--adversarial-root", type=Path)
     parser.add_argument("--release-root", type=Path)
+    parser.add_argument("--closure-root", type=Path)
     parser.add_argument("--json-out", type=Path, default=DEFAULT_OUT)
     args = parser.parse_args()
-    if args.phase == "bootstrap":
+    if args.phase == "checkpoint":
+        if (
+            args.adversarial_root is not None
+            or args.release_root is not None
+            or args.closure_root is not None
+        ):
+            parser.error(
+                "--adversarial-root, --release-root, and --closure-root "
+                "are forbidden for --phase checkpoint"
+            )
+        manifest = compile_owner_checkpoint_manifest(
+            all_root=args.all_root.resolve(),
+        )
+    elif args.phase == "bootstrap":
         if args.adversarial_root is None:
             parser.error("--adversarial-root is required for --phase bootstrap")
         manifest = compile_bootstrap_manifest(
             all_root=args.all_root.resolve(),
             adversarial_root=args.adversarial_root.resolve(),
         )
-    else:
+    elif args.phase == "preclosure":
         if args.adversarial_root is None or args.release_root is None:
-            parser.error("--adversarial-root and --release-root are required for --phase final")
+            parser.error(
+                "--adversarial-root and --release-root are required for --phase preclosure"
+            )
+        if args.closure_root is not None:
+            parser.error("--closure-root is forbidden for --phase preclosure")
+        manifest = compile_preclosure_manifest(
+            all_root=args.all_root.resolve(),
+            adversarial_root=args.adversarial_root.resolve(),
+            release_root=args.release_root.resolve(),
+        )
+    else:
+        if (
+            args.adversarial_root is None
+            or args.release_root is None
+            or args.closure_root is None
+        ):
+            parser.error(
+                "--adversarial-root, --release-root, and --closure-root "
+                "are required for --phase final"
+            )
         manifest = compile_manifest(
             all_root=args.all_root.resolve(),
             adversarial_root=args.adversarial_root.resolve(),
             release_root=args.release_root.resolve(),
+            closure_root=args.closure_root.resolve(),
         )
     output = json.dumps(manifest, indent=2, sort_keys=True) + "\n"
     args.json_out.write_text(output, encoding="utf-8")

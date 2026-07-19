@@ -7,6 +7,8 @@ import sys
 import unittest
 from pathlib import Path
 
+from scripts.test_tier.source_fingerprint import file_fingerprint, source_snapshot
+
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -65,7 +67,57 @@ def compact_fake_ai_failure(report: dict[str, object]) -> dict[str, object]:
 class FlowPilotContractExhaustionMeshTests(unittest.TestCase):
     @staticmethod
     def current_manifest(*, reused_without_ticket: bool = False) -> dict[str, object]:
-        proof = {
+        owner_ids = sorted(
+            {
+                str(definition["execution_owner_id"])
+                for definition in runner.TEST_MESH_CHILD_SUITE_DEFINITIONS.values()
+            }
+        )
+        relative_input = Path(__file__).resolve().relative_to(ROOT).as_posix()
+        input_fingerprint = file_fingerprint(Path(__file__).resolve())
+        owners: dict[str, object] = {}
+        for owner_id in owner_ids:
+            result_fingerprint = __import__("hashlib").sha256(
+                owner_id.encode("utf-8")
+            ).hexdigest()
+            owner_proof = {
+                "artifact_id": f"proof.contract-exhaustion-current.{owner_id}",
+                "producer_route": "flowpilot.test-tier.selective-execution",
+                "command": f"python -m pytest {relative_input} -q",
+                "result_path": f"tmp/test_background/{owner_id}.combined.txt",
+                "result_status": "passed",
+                "exit_code": 0,
+                "artifact_fingerprints": {
+                    f"{owner_id}.combined.txt": result_fingerprint
+                },
+                "covered_obligation_ids": [f"owner:{owner_id}"],
+                "assertion_scope": "external_contract",
+                "current": True,
+                "route_evidence_current": True,
+                "progress_only": False,
+                "metadata": {"result_fingerprint": result_fingerprint},
+            }
+            owners[owner_id] = {
+                "owner_id": owner_id,
+                "result_status": "passed",
+                "result_reused": False,
+                "identity": {
+                    "command_fingerprint": "a" * 64,
+                    "test_source_fingerprint": "b" * 64,
+                    "tested_artifact_fingerprint": "c" * 64,
+                    "dependency_fingerprints": {"fixture": "e" * 64},
+                    "environment_fingerprint": "d" * 64,
+                    "covered_input_fingerprint": input_fingerprint,
+                    "covered_input_fingerprints": {
+                        relative_input: input_fingerprint
+                    },
+                    "covered_obligation_ids": [f"owner:{owner_id}"],
+                },
+                "result_fingerprint": result_fingerprint,
+                "proof_artifact": owner_proof,
+                "reuse_ticket": None,
+            }
+        aggregate_proof = {
             "artifact_id": "proof.contract-exhaustion-current",
             "producer_route": "flowguard-test-mesh",
             "command": "python scripts/run_test_tier.py --tier all --background",
@@ -78,17 +130,26 @@ class FlowPilotContractExhaustionMeshTests(unittest.TestCase):
             "current": True,
             "route_evidence_current": True,
             "progress_only": False,
-            "metadata": {"selected_child_command_count": 23, "executed_child_command_count": 23},
+            "metadata": {
+                "selected_child_command_count": 23,
+                "executed_child_command_count": 23,
+                "reused_child_command_count": 0,
+                "proof_backed_child_command_count": 23,
+            },
         }
         return {
-            "source_fingerprint": runner.source_fingerprint(),
+            "schema_version": "flowpilot.acceptance_testmesh_evidence_manifest.v4",
+            "snapshot": source_snapshot(),
+            "owners": owners,
             "routine": {
                 "all": {
                     "result_status": "passed",
                     "selected_count": 23,
                     "test_count": 23,
                     "result_reused": reused_without_ticket,
-                    "proof_artifact": proof,
+                    "owner_evidence_ids": owner_ids,
+                    "owner_reuse_tickets": {},
+                    "proof_artifact": aggregate_proof,
                 }
             },
         }
@@ -154,6 +215,7 @@ class FlowPilotContractExhaustionMeshTests(unittest.TestCase):
         self.assertIn("real_issue_backfeed_matrix", owners)
         self.assertIn("integration_cartesian_coverage_matrix", owners)
         self.assertIn("complete_workstream_fake_ai_matrix", owners)
+
         self.assertLessEqual(model.SYNTHETIC_MUTATION_KINDS, mutation_kinds)
         self.assertTrue(
             [
@@ -244,6 +306,20 @@ class FlowPilotContractExhaustionMeshTests(unittest.TestCase):
                 *contract_fake_ai.RESOURCE_DISCOVERY_PROFILE_IDS,
             },
         )
+
+    def test_every_semantic_child_suite_names_one_execution_owner(self) -> None:
+        definitions = runner.TEST_MESH_CHILD_SUITE_DEFINITIONS
+        required_owner_ids = {
+            str(cell["required_evidence_owner"])
+            for cell in model.REQUIRED_CONTRACT_EXHAUSTION_CELLS
+        }
+
+        self.assertEqual(set(definitions), required_owner_ids)
+        for semantic_owner_id, definition in definitions.items():
+            with self.subTest(semantic_owner_id=semantic_owner_id):
+                execution_owner_id = definition.get("execution_owner_id")
+                self.assertIsInstance(execution_owner_id, str)
+                self.assertTrue(execution_owner_id)
 
     def test_complete_workstream_and_resource_universes_are_full_cartesian_with_oracles(self) -> None:
         universes = (

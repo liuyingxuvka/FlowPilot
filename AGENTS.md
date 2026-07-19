@@ -141,6 +141,29 @@ report, an in-progress log, or a missing exit artifact is not completion
 evidence. Progress lines are liveness evidence only; pass/fail still comes from
 the executable check result and exit code.
 
+Test execution uses the current v4 owner-impact path:
+
+- the repository snapshot fingerprint is provenance only and never a blanket
+  run-all trigger;
+- after one explicit seed baseline, every background run names the exact prior
+  v4 manifest and its SHA-256;
+- each owner is independently `reuse`, `execute`, or `blocked` from its exact
+  command, inputs, dependencies, environment, obligations, and MTA evidence;
+- `reuse` requires the same owner's terminal passing proof and a current
+  `TestResultReuseTicket`;
+- an unmapped change, stale identity, invalid prior manifest, or interrupted
+  process tree blocks and never falls through to full execution;
+- generated results, receipts, logs, task checkmarks, line-ending-only
+  transport changes, and unrelated FlowGuard package upgrades do not invalidate
+  owners unless they are explicit applicability inputs;
+- shared execution-wrapper imports belong to the exact test-tier
+  infrastructure owner, not to every nested Meta, Capability, model, or test
+  payload; a former over-broad payload identity may reuse proof only through a
+  strict proper-subset ownership transfer with identical retained inputs,
+  command, environment, obligations, and evidence subjects;
+- run focused affected checks while source is changing, and reserve one full
+  validation for the frozen integration or release snapshot.
+
 Before changing behavior-bearing protocol, route, or skill logic, verify:
 
 ```powershell
@@ -195,7 +218,7 @@ Never silently change these without explicit user approval:
 ## FlowGuard Project Rules
 
 This project uses FlowGuard for non-trivial maintenance, feature work, bug
-fixes, refactors, tests, release work, direct current replacement, and evidence-sensitive
+fixes, refactors, tests, release work, project upgrades, and evidence-sensitive
 process changes.
 
 <!-- flowguard-rule:project.repository -->
@@ -206,10 +229,15 @@ https://github.com/liuyingxuvka/FlowGuard
 <!-- flowguard-rule:skill_suite.agent_surface -->
 
 FlowGuard agent skill suite:
-- Primary agent surface: `.agents/skills/`
-- Default entry skill: `.agents/skills/model-first-function-flow/SKILL.md`
+- Primary agent surface: the current clean consumer projection under
+  `$CODEX_HOME/skills/`
+- Default entry skill: `$CODEX_HOME/skills/flowguard/SKILL.md`
 - Complete AI-agent setup means the agent can read `AGENTS.md` and all
-  FlowGuard sibling `SKILL.md` files under `.agents/skills/`.
+  FlowGuard sibling `SKILL.md` files under `$CODEX_HOME/skills/`.
+- An ordinary target project does not copy the FlowGuard suite into its local
+  `.agents/skills/` tree and does not own the canonical suite map.
+- Project audit and upgrade verify the package-owned clean-consumer authority
+  directly against that global projection and its ownership manifest.
 - The Python `flowguard` module/CLI is executable check support, not the
   AI-agent skill installation surface.
 
@@ -223,7 +251,7 @@ Project FlowGuard record:
 <!-- flowguard-rule:project.rendered_versions -->
 
 Current adoption record:
-- FlowGuard check-engine version: `0.55.0`
+- FlowGuard check-engine version: `0.58.5`
 - FlowGuard schema version: `1.0`
 
 <!-- flowguard-rule:project.preflight_version_gate -->
@@ -237,27 +265,25 @@ Before non-trivial work:
    `python -m flowguard project-audit --root .`
 4. Compare the installed version with `.flowguard/project.toml`.
 5. If the installed version is newer, run:
-   `python -m flowguard project-adopt --root .`
-   This directly replaces the managed project record with the one current
-   FlowGuard shape. It does not read, convert, migrate, alias, or preserve an
-   older FlowGuard skill/runtime shape. Then rerun only affected models/tests.
+   `python -m flowguard project-upgrade --root .`
+   This updates the project record and scans existing FlowGuard artifacts,
+   model evidence, tests, docs, and guidance for deterministic upgrades into
+   the current FlowGuard shape. Use `--records-only` only when intentionally
+   scoping out artifact/model/test upgrade scanning.
+   Then rerun affected models/tests before broad confidence and record the result.
 6. If the installed version is older than the project record, stop and connect
    a current FlowGuard check engine before claiming FlowGuard confidence.
 
-<!-- flowguard-rule:runtime.current_authority_only -->
+<!-- flowguard-rule:runtime.latest_schema_first -->
 
-FlowGuard skill and runtime guidance has one current authority only.
-Former FlowGuard skill, model, check, receipt, and project-control shapes are
-blocked and may appear only as exact rejection fixtures. There is no normal
-compatibility reader, migration command, upgrade route, converter, alias,
-renewal route, or fallback success path. Ordinary software may read historical
-documents, data, or interfaces only when an explicit requirement assigns a
-bounded FlowGuard owner, accepted and rejected cases, and a claim boundary.
+FlowGuard runtime guidance is latest-schema-first: old artifacts may be
+detected and upgraded at project/tool boundaries, but normal route logic should
+not keep long-lived old branches for obsolete fields, aliases, or wrappers.
 
 <!-- flowguard-rule:lifecycle.default_replacement -->
 
 Default replacement means dispose the old path, old field, alias, wrapper, or
-alternate success path. Delete, block, delegate, repair, replace, or
+alternate success path. Delete, block, migrate, delegate, repair, replace, or
 scope it out with a concrete reason; do not leave it as a second successful
 route.
 
@@ -346,22 +372,32 @@ default.
 Non-trivial rough-plan discussion, multi-skill/tool workflow setup, staged
 execution, install/sync, release/archive/publish, post-change owner scans, and
 final process claims enter `flowguard-development-process-flow` first as the
-development-process simulator. Record `plan_detailing`, `agent_workflow`, and
-`execution_freshness` modes; delegate to PlanDetailing or
+development-process simulator. Record `plan_detailing`, internal
+`strategy_selection`, `agent_workflow`, and `execution_freshness` modes in that
+order; delegate to PlanDetailing or
 AgentWorkflowRehearsal only when explicit or simulator-selected.
 DevelopmentProcessFlow owns lifecycle order/freshness; AgentWorkflowRehearsal
 owns AI-operation planning. Both may reference product commitments and their
-evidence without copying product behavior into their own steps.
+evidence without copying product behavior into their own steps. Internal
+`strategy_selection` stays inactive unless `explicit_request`,
+`multiple_equivalent_routes`, `material_rework_risk`, or
+`diagnostic_boundary_choice` applies. When active, first prove
+outcome/obligation-evidence/safety/protected-side-effect/dependency-authority/
+execution-owner equivalence, then choose `targeted`, `declared_complete`, or
+`budgeted` diagnosis plus `sequential` or isolation-proven `safe_parallel`
+execution. Hard blockers stop invalid descendants and material evidence stales
+the decision. TestMesh owns diagnostic accounting; relation-backed repair
+groups use ordinary primary-owner evidence and affected revalidation.
+Estimated comparison may support a preference, never a global optimum.
 
-<!-- flowguard-rule:process.spec_work_package_reconciliation -->
+<!-- flowguard-rule:process.spec_context_read_only -->
 
-When OpenSpec, Spec Kit, or another supported specification provider is in
-scope, keep provider tasks native and reconcile them bidirectionally with
-FlowGuard obligations/checks through one development-process Spec Work
-Package. Begin and close one immutable input session, reuse only exact terminal
-receipts within an explicit boundary, and block archive when mappings,
-post-snapshot evidence, provider verification, or receipt freshness is
-missing. Internal work-package fields never become product UI content.
+When official OpenSpec is in scope, FlowGuard may read only the current
+proposal, design, specifications, tasks, and task status as external planning
+context. FlowGuard must not write OpenSpec files, execute provider checks,
+create provider sessions/caches/receipts, claim provider execution ownership,
+or place provider-internal fields in product UI. OpenSpec retains validation
+and archive authority.
 
 <!-- flowguard-rule:process.post_change_scan -->
 
@@ -370,20 +406,6 @@ post-change scan signals for changed artifacts, skipped routes, stale evidence,
 open obligations, or split/reduction pressure. The scan output routes each gap
 to the owning specialist, such as Model-Test Alignment, Architecture
 Reduction, StructureMesh, ModelMesh, TestMesh, or AgentWorkflowRehearsal.
-
-<!-- flowguard-rule:validation.native_owner_receipts -->
-
-Keep every native test with exactly one existing owner. Before validation,
-list the affected native checks, owner, exact functional input components, and
-receipt order. SkillGuard/TestMesh may request a missing owner receipt and
-aggregate current receipts, but a consumer must not copy, wrap, or carry the
-owner command. Only a declared functional input change invalidates that owner;
-reports, receipts, logs, timestamps, task checkmarks, and install bookkeeping
-are outputs and must not trigger native retesting. Run one final full gate only
-after source and tool identities freeze, under one explicit owner, never through
-`--resume`, a scheduled task, a background retry, or an unattended helper. If
-a launcher times out or is interrupted, confirm the whole descendant process
-tree is absent before accepting evidence or starting another validation.
 
 <!-- flowguard-rule:claim.no_fake_adoption -->
 

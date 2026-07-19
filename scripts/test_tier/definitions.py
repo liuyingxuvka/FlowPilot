@@ -5,7 +5,12 @@ from __future__ import annotations
 from .command_builders import TierCommand, _py
 from .fast_commands import FAST_COMMANDS, ROUTER_PARENT_COMMANDS
 from .final_confidence_commands import FINAL_CONFIDENCE_COMMANDS
-from .integration_commands import INTEGRATION_COMMANDS, RELEASE_COMMANDS
+from .integration_commands import (
+    EVIDENCE_CLOSURE_COMMANDS,
+    INTEGRATION_COMMANDS,
+    RELEASE_COMMANDS,
+)
+from .mta_evidence_commands import mta_evidence_commands
 from .router_packet_route_commands import ROUTER_PACKET_COMMANDS, ROUTER_ROUTE_COMMANDS
 from .router_startup_foreground_commands import ROUTER_FOREGROUND_COMMANDS, ROUTER_STARTUP_COMMANDS
 from .router_terminal_commands import (
@@ -176,6 +181,7 @@ def commands_for_tier(tier: str) -> tuple[TierCommand, ...]:
         "router-terminal": ROUTER_TERMINAL_COMMANDS,
         "integration": INTEGRATION_COMMANDS,
         "release": RELEASE_COMMANDS,
+        "evidence-closure": EVIDENCE_CLOSURE_COMMANDS,
         "final-confidence": FINAL_CONFIDENCE_COMMANDS,
         "formal-submit-fast": FORMAL_SUBMIT_FAST_COMMANDS,
         "formal-submit-adversarial": FORMAL_SUBMIT_ADVERSARIAL_COMMANDS,
@@ -190,7 +196,7 @@ def commands_for_tier(tier: str) -> tuple[TierCommand, ...]:
             *ROUTER_TERMINAL_COMMANDS,
         )
     if tier == "all":
-        return (
+        base_commands = (
             *mapping["collect"],
             *FAST_COMMANDS,
             *FORMAL_SUBMIT_FAST_COMMANDS,
@@ -199,6 +205,10 @@ def commands_for_tier(tier: str) -> tuple[TierCommand, ...]:
             # Reusing the integration refresh here would create a second
             # writer for the same generated topology artifacts.
             *ALL_INTEGRATION_COMMANDS,
+        )
+        return (
+            *base_commands,
+            *mta_evidence_commands(base_commands),
         )
     if tier == "release":
         return mapping["release"]
@@ -219,6 +229,7 @@ def tier_names() -> tuple[str, ...]:
         "router",
         "integration",
         "release",
+        "evidence-closure",
         "final-confidence",
         "formal-submit-fast",
         "formal-submit-adversarial",

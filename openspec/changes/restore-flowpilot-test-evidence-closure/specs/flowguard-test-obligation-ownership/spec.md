@@ -47,22 +47,72 @@ receipt can be reused or another owner can start the same check.
 - **AND** no progress, PID, parent-exit, Scheduled Task, unattended retry, or
   background resume record may substitute for the descendant-zero proof
 
-### Requirement: Proof consumers share one frozen source fingerprint
-The final evidence mesh SHALL require all background tier supervisors,
-children, proof artifacts, compiled manifests, model consumers, final-
-confidence checks, and parent checks to bind one frozen covered-source
-fingerprint.
+### Requirement: Proof applicability follows canonical owner inputs
+The final evidence mesh SHALL retain one canonical snapshot fingerprint for
+provenance and mixed-snapshot protection, while owner covered-input identity
+derived from the existing MTA/TestMesh ownership graph SHALL be the sole
+authority for child evidence applicability.
 
-#### Scenario: Required tiers have different fingerprints
-- **WHEN** `all`, `formal-submit-adversarial`, or `release` starts or finishes
-  with a fingerprint different from another required tier or the current
-  compiled manifest
-- **THEN** the manifest MUST fail compilation or remain non-current
-- **AND** no downstream consumer may mix the receipts or select a newer result
+#### Scenario: Controlled text differs only by line endings
+- **WHEN** a controlled UTF-8 text input differs only by CRLF versus LF
+- **THEN** canonical fingerprinting MUST classify the content as equivalent
+- **AND** no child owner may become stale solely because of the transport
+  representation
 
-#### Scenario: Covered input changes after evidence
-- **WHEN** a covered source, toolchain, test inventory, dependency, or
-  verification-plan input changes after a child receipt is produced
-- **THEN** mapped owners and every dependent receipt MUST become stale
-- **AND** only current same-fingerprint revalidation may restore their claim
-  scope
+#### Scenario: An unrelated mapped input changes
+- **WHEN** a governed input changes and the owner graph maps it away from a
+  current child proof
+- **THEN** that child proof MUST remain eligible for a current
+  `TestResultReuseTicket`
+- **AND** parent evaluation MUST consume the ticket without launching the
+  heavyweight child owner
+
+#### Scenario: A mapped owner input changes
+- **WHEN** a source, test, command, dependency, toolchain, environment, or
+  verification-plan input mapped to an owner changes
+- **THEN** that exact owner and its declared dependent receipts MUST become
+  stale
+- **AND** unaffected sibling proof MUST remain eligible for qualified reuse
+
+#### Scenario: A declared shared-global input changes
+- **WHEN** the owner graph explicitly classifies an input as shared-global
+- **THEN** the one declared full owner MUST execute
+- **AND** the runtime MUST NOT infer additional full owners from a global
+  fingerprint mismatch
+
+#### Scenario: Shared execution-wrapper imports change
+- **WHEN** test-tier, impact-planning, or artifact-classification code imported
+  by a shared execution wrapper changes while a nested payload's own command,
+  wrapper, model/test inputs, environment, obligations, and evidence subjects
+  remain unchanged
+- **THEN** the exact infrastructure owner MUST become stale
+- **AND** Meta, Capability, and other nested payload owners MUST remain eligible
+  for qualified reuse rather than inheriting the wrapper's import closure
+- **AND** replacing a former over-broad payload identity MAY reuse its proof
+  only when the current inputs are a proper exact subset and every removed
+  input is an actual wrapper import transferred to the infrastructure owner
+- **AND** no legacy identity reader, compatibility branch, or fallback
+  applicability path may remain
+
+#### Scenario: A logical MTA row needs a supplemental owner
+- **WHEN** the existing owner graph cannot bind one logical evidence row to
+  exactly one existing command
+- **THEN** it MUST generate one owner from that same graph without a second
+  manual owner registry
+- **AND** exact function evidence MUST select one collected `test_` function,
+  while module, class, or fixture evidence MUST execute its declared command
+- **AND** the supplemental owner MUST run after ordinary upstream owners whose
+  current result artifacts it may inspect
+
+#### Scenario: An input has no unambiguous owner mapping
+- **WHEN** impact resolution finds an unmapped or ambiguously mapped input
+- **THEN** the plan MUST block with `impact_mapping_missing`
+- **AND** it MUST NOT fall back to `run all`, select a newest receipt, or
+  approximate equivalence from command text
+
+#### Scenario: Current executed and reused proof is composed
+- **WHEN** every required owner has either a terminal current execution or a
+  valid current reuse ticket under the frozen impact plan
+- **THEN** the manifest and parent gates MAY compose those owner proofs
+- **AND** the canonical snapshot fingerprint MUST record that composition
+  without becoming a second applicability authority

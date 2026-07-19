@@ -155,6 +155,20 @@ runtime/boundary observations.  Observed values come from execution artifacts,
 not copied expected metadata.  ModelMesh parent receipts consume every required
 child receipt through `CompositeHandoffAcceptance` before broad confidence.
 
+The same MTA/TestMesh ownership graph also generates each execution owner's
+covered-input inventory.  This avoids a second manually maintained table or
+167 command-specific fields.  Owner covered-input identity is the sole
+evidence-applicability authority.  One canonical snapshot fingerprint remains
+provenance for the frozen integration snapshot and prevents an illegal
+mixture; it is never a blanket invalidation trigger.
+
+When a logical MTA row has no unique existing command owner, the same graph
+generates one supplemental owner rather than adding another manual registry.
+An exact collected `test_` function is selected by name; module-level,
+class-level, and fixture evidence executes its already-declared unittest
+command.  Supplemental owners run only after ordinary upstream owners finish,
+so a result-dependent assertion cannot inspect a pre-generation artifact.
+
 ### 6. Tiered execution and background evidence
 
 The initial engineering budgets are:
@@ -169,6 +183,12 @@ child writes `.out.txt`, `.err.txt`, `.combined.txt`, `.exit.txt`, and
 `.meta.json`.  Progress is liveness; only final result plus exit status is pass.
 Budgets are gates after an initial 30-80-case public-path benchmark, not assumed
 performance claims.
+
+The exit artifact is the terminal publication marker, not an early status
+hint.  A child computes and atomically writes its final meta first, then
+atomically publishes exit last.  Therefore a supervisor that can read exit can
+also read the matching terminal meta; an exit-before-meta race is a blocked
+protocol defect rather than a child failure.
 
 ### 7. Current execution-source and responsibility policy
 
@@ -202,18 +222,21 @@ boundary.
 
 Source and verification freeze precedes topology rebuild.  Repository-owned
 skill sync runs before install audit/check and must not run concurrently with
-them.  Candidate scope consumes `all`, `release`, and `final-confidence`
-evidence, then updates version/changelog/README, runs local public-boundary
-checks, writes a verified handoff, and creates one exact task-owned local Git
-commit.  The maintainer's latest 2026-07-18 scope update supersedes both the
+them.  Candidate scope consumes `all`, `formal-submit-adversarial`, `release`,
+`evidence-closure`, and `final-confidence` evidence.  The release tier owns
+the one Meta and Capability execution; later consumers inspect those receipts
+without launching either parent again.  Candidate closure then updates
+version/changelog/README, runs local public-boundary checks, writes a verified
+handoff, and creates one exact task-owned local Git commit.  The maintainer's
+latest 2026-07-19 scope update supersedes both the
 earlier no-commit boundary and the later publication deferral: this task must
 commit only the agreed task-owned files, push the task branch, fast-forward
 the GitHub default branch to that exact commit, create annotated tag
-`v0.12.0`, and create a source-only GitHub Release for the same tag and commit.
+`v0.12.1`, and create a source-only GitHub Release for the same tag and commit.
 Any non-fast-forward default-branch update, tag collision, release collision,
 or commit mismatch blocks publication instead of selecting another path.
 
-The intended version is `0.12.0` because this is a public workflow/evidence
+The intended version is `0.12.1` because this is a public workflow/evidence
 contract expansion rather than a narrow patch.
 
 ### 9. Existing workstream structure, semantic Reviewer ownership
@@ -310,28 +333,58 @@ Alternative: accept the supervisor exit and start a new run immediately.
 Rejected because surviving children can mutate shared evidence and invalidate
 both executions.
 
-### 12. One fingerprint and one ordered validation snapshot
+### 12. Canonical impact planning and one ordered validation snapshot
 
-Before broad validation, freeze the covered source, toolchain, test inventory,
-dependencies, verification plan, and one covered-source fingerprint.  The
-`all`, `formal-submit-adversarial`, and `release` supervisors record the same
-fingerprint at start and end; every child record, proof artifact, and compiled
-acceptance manifest binds that fingerprint and terminal exit.
+Before broad validation, canonicalize controlled text to LF, freeze the source,
+toolchain, test inventory, dependencies, verification plan, and one canonical
+snapshot fingerprint, then resolve the changed-input set against the existing
+MTA/TestMesh owner graph.  The resolver emits exactly one frozen decision for
+every required owner:
 
-After the final manifest is compiled, ContractExhaustion, current Cartesian,
-MTA, acceptance TestMesh, and ModelMesh consume that exact manifest.
-`final-confidence` runs only after those consumers pass; Meta and Capability
-parents run afterward.  Topology build/check and installed-skill
-sync/audit/self-check follow only after governed source and evidence are
-stable.  OpenSpec strict validation is the final provider check.
+1. `reuse` when the owner's covered inputs, command, dependencies, toolchain,
+   environment, terminal result, and cleanup proof remain current;
+2. `execute` when a mapped covered input or declared dependency changed; or
+3. `blocked` with `impact_mapping_missing` when an input has no unambiguous
+   owner mapping.
 
-Any covered input change invalidates only mapped owners and all dependent
-receipts, but no consumer may mix fingerprints, choose the newest result,
-infer equivalence from command text, or silently downgrade claim scope.
+Equivalent CRLF/LF transport differences disappear during canonicalization.
+An ordinary mapped input invalidates only its exact owners and declared
+dependents.  An explicitly declared shared-global input selects one declared
+full owner.  No unrecognized input, global fingerprint mismatch, report,
+receipt, log, or generated result may silently expand the plan to `run all`.
 
-Alternative: let each check fingerprint its local inputs independently.
-Rejected because locally current results can describe different source
-snapshots while appearing jointly green.
+Each reused owner produces a current `TestResultReuseTicket` that binds its
+previous `ProofArtifactRef`, owner covered-input identity, command,
+dependencies, toolchain, environment, result, and current canonical snapshot.
+Each executed owner writes the same applicability identities with its new
+terminal result.  Parent acceptance, final-confidence, and release gates
+consume that frozen mixture of current executed and qualified reused owner
+evidence and are re-evaluated cheaply.  Meta and Capability are independently
+selected for execute or reuse by the same impact plan; receipt consumers never
+launch either heavyweight owner.
+
+Execution-wrapper code and payload behavior have separate owners. A Meta or
+Capability payload keeps `run_flowguard_background.py` and its own nested model
+closure, but does not inherit the wrapper's test-tier, impact-resolver, or
+artifact-classifier imports. Those imports are covered by the current
+test-tier infrastructure owner. The direct replacement of a former broad
+payload identity permits proof reuse only when the current input set is a
+proper subset, all retained fingerprints and the command/environment/
+obligation/evidence identities are exact, and every removed input is an actual
+wrapper import transferred to that infrastructure owner. This bounded
+refinement is not a compatibility reader or a second applicability path.
+
+One explicit full release verification is permitted only after the governed
+source and impact plan are stable and only when the release contract declares
+that full owner.  ContractExhaustion, current Cartesian, MTA, acceptance
+TestMesh, ModelMesh, topology, installation checks, and OpenSpec strict
+validation then follow their declared dependencies.  No consumer may choose
+the newest result, infer equivalence from command text, accept an unqualified
+local receipt, or silently downgrade claim scope.
+
+Alternative: keep exact global fingerprint equality as the applicability
+authority.  Rejected because harmless transport differences and unrelated
+changes would stale every child and cause repeated heavyweight reruns.
 
 ### 13. Predecessor changes have explicit dispositions
 
@@ -402,11 +455,13 @@ successor has current terminal evidence for the inherited obligation.
 7. Replace abstract-green TestMesh/MTA/ModelMesh evidence with same-fingerprint
    proof receipts and parent consumption.
 8. Freeze one fingerprint; run focused checks, isolated background
-   all/adversarial/release, manifest consumers, final-confidence, and
-   Meta/Capability parents in order.  Repair failures at their owners and
-   invalidate only mapped descendants.
+   all/adversarial/release, compile and consume the evidence manifest, then run
+   final-confidence in order.  Meta and Capability execute once inside the
+   release owner; subsequent parent checks consume their current receipts
+   without rerunning them.  Repair failures at their owners and invalidate only
+   mapped descendants.
 9. Rebuild topology, sync the installed skill, audit digests, update release
-   metadata to 0.12.0, synchronize the existing verification
+   metadata to 0.12.1, synchronize the existing verification
    contract through its owning workflow, run `openspec validate
    restore-flowpilot-test-evidence-closure --type change --strict
    --no-interactive`, create one exact task-owned local Git commit, push the

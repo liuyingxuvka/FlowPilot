@@ -79,7 +79,6 @@
               "fallback.old-result-summary-field",
               "fallback.alias-submit-result-body"
             ],
-            "legacy_plural_migrated": false,
             "metadata": {},
             "path_sensitive": true,
             "ppa_confidence": "full",
@@ -99,7 +98,6 @@
               "risk_gate:primary_path_authority_cartesian_coverage:flowpilot_053_ppa_maintenance"
             ],
             "primary_path_id": "path.runtime.submit-current-result",
-            "primary_path_migration_ambiguous": false,
             "proof_artifact_ids": [
               "proof:flowpilot:path_runtime_submit_current_result"
             ],
@@ -231,7 +229,6 @@
               "fallback.terminal-reviewer-only-repair",
               "fallback.reactivate-completed-run"
             ],
-            "legacy_plural_migrated": false,
             "metadata": {},
             "path_sensitive": true,
             "ppa_confidence": "full",
@@ -251,7 +248,6 @@
               "risk_gate:primary_path_authority_cartesian_coverage:flowpilot_053_ppa_maintenance"
             ],
             "primary_path_id": "path.runtime.unified-late-defect-repair",
-            "primary_path_migration_ambiguous": false,
             "proof_artifact_ids": [
               "proof:flowpilot:path_runtime_unified_late_defect_repair"
             ],
@@ -363,7 +359,6 @@
             "evidence_current": false,
             "evidence_refs": [],
             "fallback_candidate_ids": [],
-            "legacy_plural_migrated": false,
             "metadata": {},
             "path_sensitive": false,
             "ppa_confidence": "",
@@ -374,7 +369,6 @@
             "ppa_report_id": "",
             "ppa_risk_gate_ids": [],
             "primary_path_id": "",
-            "primary_path_migration_ambiguous": false,
             "proof_artifact_ids": [],
             "runtime_observation_ids": [],
             "scoped_out_reason": ""
@@ -475,7 +469,6 @@
               "simulations/flowpilot_053_ppa_maintenance_results.json"
             ],
             "fallback_candidate_ids": [],
-            "legacy_plural_migrated": false,
             "metadata": {},
             "path_sensitive": true,
             "ppa_confidence": "full",
@@ -495,7 +488,6 @@
               "risk_gate:primary_path_authority_cartesian_coverage:flowpilot_053_ppa_maintenance"
             ],
             "primary_path_id": "path.agent-operation.open-authorized-result-material",
-            "primary_path_migration_ambiguous": false,
             "proof_artifact_ids": [
               "proof:flowpilot:path_agent_operation_open_authorized_result_material"
             ],
@@ -578,10 +570,10 @@
             "test_mesh_state": "shard_current"
           },
           "excluded_behavior_ids": [],
-          "expected_result": "all, adversarial, and release proof compiles before strict parents, with repository final confidence downstream",
-          "expected_terminal": "all, adversarial, and release proof compiles before strict parents, with repository final confidence downstream",
+          "expected_result": "all, adversarial, and release proof compiles from one canonical impact plan whose exact owner rows are either executed with current proof or reused through an exact TestResultReuseTicket; the repository snapshot is provenance only and never blanket-invalidates unrelated owner evidence",
+          "expected_terminal": "every requested owner has one current executed or reused proof, every unmapped or ambiguous changed input is visibly blocked, and strict parents consume the compiled proof without relaunching heavyweight owners",
           "external_differences": [],
-          "failure_boundary": "stale proof, deferred release suites, duplicate run or daemon startup under writer contention, lost completed-action receipts, or a final-confidence/TestMesh/MTA cycle blocks broad claims",
+          "failure_boundary": "stale or identity-mismatched owner proof, missing or invalid reuse ticket, unmapped or ambiguous changed input, deferred release suites, duplicate run or daemon startup under writer contention, lost completed-action receipts, blanket rerun fallback, or a final-confidence/TestMesh/MTA cycle blocks broad claims",
           "in_scope": true,
           "label": "Release and done claims require current model/test/install evidence.",
           "lookup_binding": {
@@ -613,7 +605,6 @@
             "evidence_current": false,
             "evidence_refs": [],
             "fallback_candidate_ids": [],
-            "legacy_plural_migrated": false,
             "metadata": {},
             "path_sensitive": false,
             "ppa_confidence": "",
@@ -624,7 +615,6 @@
             "ppa_report_id": "",
             "ppa_risk_gate_ids": [],
             "primary_path_id": "",
-            "primary_path_migration_ambiguous": false,
             "proof_artifact_ids": [],
             "runtime_observation_ids": [],
             "scoped_out_reason": ""
@@ -731,7 +721,6 @@
             "fallback_candidate_ids": [
               "fallback.packet-body-mechanical-contract"
             ],
-            "legacy_plural_migrated": false,
             "metadata": {},
             "path_sensitive": true,
             "ppa_confidence": "full",
@@ -751,7 +740,6 @@
               "risk_gate:primary_path_authority_cartesian_coverage:flowpilot_053_ppa_maintenance"
             ],
             "primary_path_id": "path.agent-operation.open-current-submission-checklist",
-            "primary_path_migration_ambiguous": false,
             "proof_artifact_ids": [
               "proof:flowpilot:path_agent_operation_open_current_submission_checklist"
             ],
@@ -863,7 +851,6 @@
             "fallback_candidate_ids": [
               "fallback.resume-all-known-role-slots"
             ],
-            "legacy_plural_migrated": false,
             "metadata": {},
             "path_sensitive": true,
             "ppa_confidence": "full",
@@ -883,7 +870,6 @@
               "risk_gate:primary_path_authority_cartesian_coverage:flowpilot_053_ppa_maintenance"
             ],
             "primary_path_id": "path.agent-operation.resume-exact-current-obligation-roles",
-            "primary_path_migration_ambiguous": false,
             "proof_artifact_ids": [
               "proof:flowpilot:path_agent_operation_resume_exact_current_obligation_roles"
             ],
@@ -992,7 +978,6 @@
             "evidence_current": false,
             "evidence_refs": [],
             "fallback_candidate_ids": [],
-            "legacy_plural_migrated": false,
             "metadata": {},
             "path_sensitive": false,
             "ppa_confidence": "",
@@ -1003,7 +988,6 @@
             "ppa_report_id": "",
             "ppa_risk_gate_ids": [],
             "primary_path_id": "",
-            "primary_path_migration_ambiguous": false,
             "proof_artifact_ids": [],
             "runtime_observation_ids": [],
             "scoped_out_reason": ""
@@ -1094,10 +1078,10 @@
             "test_mesh_state": "shard_current"
           },
           "excluded_behavior_ids": [],
-          "expected_result": "the child binds inner Python execution to the current execution-owner interpreter, uses the bound base interpreter as the direct Windows process owner while preserving virtual-environment identity, continuously accumulates exact Router-daemon descendants through the stop window, and supplies final command, exact process identity, bounded natural-exit settlement followed by descendant-zero cleanup proof, result path, exit code, selected/executed counts, covered ids, and the one frozen source fingerprint; commands sharing one external runtime resource are serialized while unrelated owners remain parallel",
-          "expected_terminal": "every required tier and proof consumer is terminal, descendant-zero, resource-safe, and bound to the same covered-source fingerprint",
+          "expected_result": "the child binds inner Python execution to the current execution-owner interpreter, uses the bound base interpreter as the direct Windows process owner while preserving virtual-environment identity, continuously accumulates exact Router-daemon descendants through the stop window, and supplies final command, exact process identity, bounded natural-exit settlement followed by descendant-zero cleanup proof, result path, exit code, selected/executed/reused counts, covered ids, and its exact owner input identity; canonical repository snapshots remain provenance only, commands sharing one external runtime resource are serialized, and unrelated owners retain current evidence",
+          "expected_terminal": "every required owner and proof consumer is terminal, descendant-zero, resource-safe, and current through exactly one executed proof or exact TestResultReuseTicket; any missing input mapping blocks instead of falling back to a blanket run",
           "external_differences": [],
-          "failure_boundary": "not-run, stale, progress-only, failed, missing-exit, cleanup-unconfirmed, interpreter-drift, short-lived-interpreter-shim-owner, daemon-descendant-created-during-stop-untracked, descendant-survives-bounded-settlement, mixed-fingerprint, proof-free, or shared-runtime-resource-overlap rows remain blocking",
+          "failure_boundary": "not-run, stale, progress-only, failed, missing-exit, cleanup-unconfirmed, interpreter-drift, short-lived-interpreter-shim-owner, daemon-descendant-created-during-stop-untracked, descendant-survives-bounded-settlement, owner-input drift, invalid reuse ticket, impact_mapping_missing, proof-free, blanket-rerun fallback, or shared-runtime-resource-overlap rows remain blocking",
           "in_scope": true,
           "label": "TestMesh green requires current fingerprinted proof artifacts.",
           "lookup_binding": {
@@ -1119,7 +1103,6 @@
             "evidence_current": false,
             "evidence_refs": [],
             "fallback_candidate_ids": [],
-            "legacy_plural_migrated": false,
             "metadata": {},
             "path_sensitive": false,
             "ppa_confidence": "",
@@ -1130,7 +1113,6 @@
             "ppa_report_id": "",
             "ppa_risk_gate_ids": [],
             "primary_path_id": "",
-            "primary_path_migration_ambiguous": false,
             "proof_artifact_ids": [],
             "runtime_observation_ids": [],
             "scoped_out_reason": ""
@@ -1232,7 +1214,6 @@
             "evidence_current": false,
             "evidence_refs": [],
             "fallback_candidate_ids": [],
-            "legacy_plural_migrated": false,
             "metadata": {},
             "path_sensitive": false,
             "ppa_confidence": "",
@@ -1243,7 +1224,6 @@
             "ppa_report_id": "",
             "ppa_risk_gate_ids": [],
             "primary_path_id": "",
-            "primary_path_migration_ambiguous": false,
             "proof_artifact_ids": [],
             "runtime_observation_ids": [],
             "scoped_out_reason": ""
@@ -1347,7 +1327,6 @@
               "simulations/flowpilot_053_ppa_maintenance_results.json"
             ],
             "fallback_candidate_ids": [],
-            "legacy_plural_migrated": false,
             "metadata": {},
             "path_sensitive": true,
             "ppa_confidence": "full",
@@ -1367,7 +1346,6 @@
               "risk_gate:primary_path_authority_cartesian_coverage:flowpilot_053_ppa_maintenance"
             ],
             "primary_path_id": "path.agent-operation.controller-runtime-foreground-action",
-            "primary_path_migration_ambiguous": false,
             "proof_artifact_ids": [
               "proof:flowpilot:path_agent_operation_controller_runtime_foreground_action"
             ],
@@ -1474,7 +1452,6 @@
               "simulations/flowpilot_053_ppa_maintenance_results.json"
             ],
             "fallback_candidate_ids": [],
-            "legacy_plural_migrated": false,
             "metadata": {},
             "path_sensitive": true,
             "ppa_confidence": "full",
@@ -1494,7 +1471,6 @@
               "risk_gate:primary_path_authority_cartesian_coverage:flowpilot_053_ppa_maintenance"
             ],
             "primary_path_id": "path.agent-operation.task-discovery-current-result-contract",
-            "primary_path_migration_ambiguous": false,
             "proof_artifact_ids": [
               "proof:flowpilot:path_agent_operation_task_discovery_current_result_contract"
             ],
@@ -1602,7 +1578,6 @@
               "simulations/flowpilot_053_ppa_maintenance_results.json"
             ],
             "fallback_candidate_ids": [],
-            "legacy_plural_migrated": false,
             "metadata": {},
             "path_sensitive": true,
             "ppa_confidence": "full",
@@ -1622,7 +1597,6 @@
               "risk_gate:primary_path_authority_cartesian_coverage:flowpilot_053_ppa_maintenance"
             ],
             "primary_path_id": "path.agent-operation.ordinary-material-role-package",
-            "primary_path_migration_ambiguous": false,
             "proof_artifact_ids": [
               "proof:flowpilot:path_agent_operation_ordinary_material_role_package"
             ],
@@ -1730,7 +1704,6 @@
             "evidence_current": false,
             "evidence_refs": [],
             "fallback_candidate_ids": [],
-            "legacy_plural_migrated": false,
             "metadata": {},
             "path_sensitive": false,
             "ppa_confidence": "",
@@ -1741,7 +1714,6 @@
             "ppa_report_id": "",
             "ppa_risk_gate_ids": [],
             "primary_path_id": "",
-            "primary_path_migration_ambiguous": false,
             "proof_artifact_ids": [],
             "runtime_observation_ids": [],
             "scoped_out_reason": ""
@@ -1842,7 +1814,6 @@
             "evidence_current": false,
             "evidence_refs": [],
             "fallback_candidate_ids": [],
-            "legacy_plural_migrated": false,
             "metadata": {},
             "path_sensitive": false,
             "ppa_confidence": "",
@@ -1853,7 +1824,6 @@
             "ppa_report_id": "",
             "ppa_risk_gate_ids": [],
             "primary_path_id": "",
-            "primary_path_migration_ambiguous": false,
             "proof_artifact_ids": [],
             "runtime_observation_ids": [],
             "scoped_out_reason": ""
@@ -1954,7 +1924,6 @@
               "simulations/flowpilot_053_ppa_maintenance_results.json"
             ],
             "fallback_candidate_ids": [],
-            "legacy_plural_migrated": false,
             "metadata": {},
             "path_sensitive": true,
             "ppa_confidence": "full",
@@ -1974,7 +1943,6 @@
               "risk_gate:primary_path_authority_cartesian_coverage:flowpilot_053_ppa_maintenance"
             ],
             "primary_path_id": "path.agent-operation.material-artifact-map-navigation",
-            "primary_path_migration_ambiguous": false,
             "proof_artifact_ids": [
               "proof:flowpilot:path_agent_operation_material_artifact_map_navigation"
             ],
@@ -2082,7 +2050,6 @@
               "simulations/flowpilot_model_test_alignment_results.json"
             ],
             "fallback_candidate_ids": [],
-            "legacy_plural_migrated": false,
             "metadata": {},
             "path_sensitive": true,
             "ppa_confidence": "full",
@@ -2102,7 +2069,6 @@
               "risk_gate:primary_path_authority_cartesian_coverage:flowpilot_053_ppa_maintenance"
             ],
             "primary_path_id": "path.development-process.model-test-alignment-current-evidence",
-            "primary_path_migration_ambiguous": false,
             "proof_artifact_ids": [
               "proof:flowpilot:path_development_process_model_test_alignment_current_evidence"
             ],
@@ -2136,7 +2102,7 @@
           "variant_of_business_intent_id": ""
         }
       ],
-      "current_revision": "flowguard-0.57-current-authority-exact-resume-evidence-stability",
+      "current_revision": "flowguard-0.58-owner-impact-evidence-reuse",
       "expected_business_intent_ids": [
         "intent:flowpilot.submit-current-packet-result",
         "intent:flowpilot.repair-late-defect-through-current-shared-engine",
@@ -5636,7 +5602,7 @@
       "manifest_matches_current": true,
       "no_execution_failures": true,
       "result_ok": true,
-      "source_current": true
+      "snapshot_fingerprint_matches": true
     },
     "ok": true,
     "path": "simulations/flowpilot_model_test_alignment_results.json",
@@ -6026,7 +5992,7 @@
                 "primary_entrypoint_id": "flowpilot_core_runtime.runtime.submit_result",
                 "proof_artifact": {
                   "artifact_fingerprints": {
-                    "simulations/flowpilot_current_contract_cartesian_matrix_results.json": "sha256:b7db8ac8185f6f8106371e55a8c7a33860283aa8a04c9c3da8898f402ad2bbcf"
+                    "simulations/flowpilot_current_contract_cartesian_matrix_results.json": "sha256:4ccaa0cd7dc98223b5a7413fff2a6e1c87de34025ebffb940431555c9a09a5a3"
                   },
                   "artifact_id": "proof:flowpilot:path_runtime_submit_current_result",
                   "assertion_scope": "external_contract",
@@ -6104,7 +6070,7 @@
                 "primary_entrypoint_id": "flowpilot_core_runtime.runtime.submit_result",
                 "proof_artifact": {
                   "artifact_fingerprints": {
-                    "simulations/flowpilot_current_contract_cartesian_matrix_results.json": "sha256:b7db8ac8185f6f8106371e55a8c7a33860283aa8a04c9c3da8898f402ad2bbcf"
+                    "simulations/flowpilot_current_contract_cartesian_matrix_results.json": "sha256:4ccaa0cd7dc98223b5a7413fff2a6e1c87de34025ebffb940431555c9a09a5a3"
                   },
                   "artifact_id": "proof:flowpilot:path_runtime_submit_current_result",
                   "assertion_scope": "external_contract",
@@ -6390,7 +6356,6 @@
                 "evidence_current": false,
                 "evidence_refs": [],
                 "fallback_candidate_ids": [],
-                "legacy_plural_migrated": false,
                 "metadata": {},
                 "path_sensitive": true,
                 "ppa_confidence": "",
@@ -6401,7 +6366,6 @@
                 "ppa_report_id": "",
                 "ppa_risk_gate_ids": [],
                 "primary_path_id": "",
-                "primary_path_migration_ambiguous": false,
                 "proof_artifact_ids": [],
                 "runtime_observation_ids": [],
                 "scoped_out_reason": ""
@@ -6422,7 +6386,6 @@
                 "evidence_current": false,
                 "evidence_refs": [],
                 "fallback_candidate_ids": [],
-                "legacy_plural_migrated": false,
                 "metadata": {},
                 "path_sensitive": true,
                 "ppa_confidence": "",
@@ -6433,7 +6396,6 @@
                 "ppa_report_id": "",
                 "ppa_risk_gate_ids": [],
                 "primary_path_id": "",
-                "primary_path_migration_ambiguous": false,
                 "proof_artifact_ids": [],
                 "runtime_observation_ids": [],
                 "scoped_out_reason": ""
@@ -6454,7 +6416,6 @@
                 "evidence_current": false,
                 "evidence_refs": [],
                 "fallback_candidate_ids": [],
-                "legacy_plural_migrated": false,
                 "metadata": {},
                 "path_sensitive": true,
                 "ppa_confidence": "",
@@ -6465,7 +6426,6 @@
                 "ppa_report_id": "",
                 "ppa_risk_gate_ids": [],
                 "primary_path_id": "",
-                "primary_path_migration_ambiguous": false,
                 "proof_artifact_ids": [],
                 "runtime_observation_ids": [],
                 "scoped_out_reason": ""
@@ -6540,7 +6500,6 @@
                   "fallback.old-result-summary-field",
                   "fallback.alias-submit-result-body"
                 ],
-                "legacy_plural_migrated": false,
                 "metadata": {},
                 "path_sensitive": true,
                 "ppa_confidence": "full",
@@ -6560,7 +6519,6 @@
                   "risk_gate:primary_path_authority_cartesian_coverage:flowpilot_053_ppa_maintenance"
                 ],
                 "primary_path_id": "",
-                "primary_path_migration_ambiguous": false,
                 "proof_artifact_ids": [
                   "proof:flowpilot:path_runtime_submit_current_result"
                 ],
@@ -6590,7 +6548,6 @@
                   "fallback.old-result-summary-field",
                   "fallback.alias-submit-result-body"
                 ],
-                "legacy_plural_migrated": false,
                 "metadata": {},
                 "path_sensitive": true,
                 "ppa_confidence": "full",
@@ -6610,7 +6567,6 @@
                   "risk_gate:primary_path_authority_cartesian_coverage:flowpilot_053_ppa_maintenance"
                 ],
                 "primary_path_id": "",
-                "primary_path_migration_ambiguous": false,
                 "proof_artifact_ids": [
                   "proof:flowpilot:path_runtime_submit_current_result"
                 ],
@@ -7312,7 +7268,7 @@
         ".flowguard/behavior_commitment_ledger/ledger.json",
         "docs/flowguard_project_topology.json"
       ],
-      "inventory_revision": "flowguard-0.57-current-authority-exact-resume-evidence-stability",
+      "inventory_revision": "flowguard-0.58-owner-impact-evidence-reuse",
       "metadata": {
         "canonical_ledger_path": ".flowguard\\behavior_commitment_ledger\\ledger.json",
         "no_fallback_policy": "current runtime blocks unsupported alternates"
@@ -7362,7 +7318,7 @@
           "primary_entrypoint_id": "flowpilot_core_runtime.runtime.submit_result",
           "proof_artifact": {
             "artifact_fingerprints": {
-              "simulations/flowpilot_current_contract_cartesian_matrix_results.json": "sha256:b7db8ac8185f6f8106371e55a8c7a33860283aa8a04c9c3da8898f402ad2bbcf"
+              "simulations/flowpilot_current_contract_cartesian_matrix_results.json": "sha256:4ccaa0cd7dc98223b5a7413fff2a6e1c87de34025ebffb940431555c9a09a5a3"
             },
             "artifact_id": "proof:flowpilot:path_runtime_submit_current_result",
             "assertion_scope": "external_contract",
@@ -7522,7 +7478,7 @@
           "primary_entrypoint_id": "flowpilot_new_role_commands.open_result",
           "proof_artifact": {
             "artifact_fingerprints": {
-              "simulations/flowpilot_current_contract_cartesian_matrix_results.json": "sha256:b7db8ac8185f6f8106371e55a8c7a33860283aa8a04c9c3da8898f402ad2bbcf"
+              "simulations/flowpilot_current_contract_cartesian_matrix_results.json": "sha256:4ccaa0cd7dc98223b5a7413fff2a6e1c87de34025ebffb940431555c9a09a5a3"
             },
             "artifact_id": "proof:flowpilot:path_agent_operation_open_authorized_result_material",
             "assertion_scope": "external_contract",
@@ -7600,7 +7556,7 @@
           "primary_entrypoint_id": "flowpilot_new_role_commands.open_packet",
           "proof_artifact": {
             "artifact_fingerprints": {
-              "simulations/flowpilot_current_contract_cartesian_matrix_results.json": "sha256:b7db8ac8185f6f8106371e55a8c7a33860283aa8a04c9c3da8898f402ad2bbcf"
+              "simulations/flowpilot_current_contract_cartesian_matrix_results.json": "sha256:4ccaa0cd7dc98223b5a7413fff2a6e1c87de34025ebffb940431555c9a09a5a3"
             },
             "artifact_id": "proof:flowpilot:path_agent_operation_open_current_submission_checklist",
             "assertion_scope": "external_contract",

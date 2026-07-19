@@ -7,6 +7,8 @@ import os
 import re
 import subprocess
 import sys
+import threading
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable
@@ -38,6 +40,8 @@ BACKGROUND_CHILD_ENTRYPOINT = ROOT / "scripts" / "run_test_tier.py"
 DEFAULT_BACKGROUND_CHILD_TIMEOUT_SECONDS = int(
     os.environ.get("FLOWPILOT_BACKGROUND_CHILD_TIMEOUT_SECONDS", "2700")
 )
+ATOMIC_JSON_REPLACE_ATTEMPTS = 50
+ATOMIC_JSON_REPLACE_RETRY_SECONDS = 0.02
 BACKGROUND_CHILD_TIMEOUT_EXIT_CODE = 124
 
 def _safe_base(name: str) -> str:
@@ -115,7 +119,24 @@ def _utc_now() -> str:
 
 def _write_json(path: Path, payload: MappingLike) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    staging_path = path.with_name(
+        f".{path.name}.{os.getpid()}.{threading.get_ident()}.tmp"
+    )
+    try:
+        staging_path.write_text(
+            json.dumps(payload, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+        for attempt in range(ATOMIC_JSON_REPLACE_ATTEMPTS):
+            try:
+                staging_path.replace(path)
+                break
+            except PermissionError:
+                if attempt + 1 == ATOMIC_JSON_REPLACE_ATTEMPTS:
+                    raise
+                time.sleep(ATOMIC_JSON_REPLACE_RETRY_SECONDS)
+    finally:
+        staging_path.unlink(missing_ok=True)
 
 
 MappingLike = dict[str, Any]
@@ -168,13 +189,13 @@ def _launch_background(
     command: TierCommand,
     *,
     log_root: Path,
+    impact_plan_id: str,
+    owner_identity_value: MappingLike,
     timeout_seconds: int | None = None,
-    source_fingerprint_value: str | None = None,
 ) -> dict[str, Any]:
     log_root.mkdir(parents=True, exist_ok=True)
     paths = artifact_paths(log_root, command.name)
     clear_artifacts(paths)
-    covered_source = source_fingerprint_value or source_fingerprint()
     meta = {
         "name": command.name,
         "command": list(command.command),
@@ -185,10 +206,20 @@ def _launch_background(
         "exit_code": None,
         "proof_reused": None,
         "timeout_seconds": _coerce_timeout_seconds(timeout_seconds),
-        "covered_source_fingerprint": covered_source,
+        "impact_plan_id": impact_plan_id,
+        "owner_identity": dict(owner_identity_value),
         "artifacts": {key: str(value) for key, value in paths.items()},
     }
     _write_json(paths["meta"], meta)
+    owner_identity_path = log_root / f"{_safe_base(command.name)}.owner.json"
+    _write_json(
+        owner_identity_path,
+        {
+            "impact_plan_id": impact_plan_id,
+            "owner_id": command.name,
+            "identity": dict(owner_identity_value),
+        },
+    )
     child_args = [
         sys.executable,
         str(BACKGROUND_CHILD_ENTRYPOINT),
@@ -201,8 +232,10 @@ def _launch_background(
         str(log_root),
         "--background-child-timeout-seconds",
         str(meta["timeout_seconds"]),
-        "--covered-source-fingerprint",
-        covered_source,
+        "--impact-plan-id",
+        impact_plan_id,
+        "--owner-identity-path",
+        str(owner_identity_path),
     ]
     proc = subprocess.Popen(
         child_args,
@@ -229,15 +262,17 @@ def launch_background(
     commands: Iterable[TierCommand],
     *,
     log_root: Path,
+    impact_plan_id: str,
+    owner_identities: MappingLike,
     timeout_seconds: int | None = None,
 ) -> list[dict[str, Any]]:
-    covered_source = source_fingerprint()
     return [
         _launch_background(
             command,
             log_root=log_root,
+            impact_plan_id=impact_plan_id,
+            owner_identity_value=owner_identities[command.name],
             timeout_seconds=timeout_seconds,
-            source_fingerprint_value=covered_source,
         )
         for command in commands
     ]

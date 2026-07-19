@@ -82,6 +82,19 @@ evidence, and a `--skip-url-check` public release proof is marked
 `release_local_only`. The current public release proof avoids duplicate nested
 validation with `--skip-validation`, but still performs URL probing.
 
+The current evidence manifest is
+`flowpilot.acceptance_testmesh_evidence_manifest.v4`. Each logical
+`TestEvidence` row is projected from exactly one command owner whose identity
+declares that evidence id. Missing or multiple owners block MTA. A shared
+command may prove several declared evidence subjects, but each subject keeps
+its own projection reuse ticket back to that exact owner proof.
+
+Repository-wide source fingerprints remain visible as provenance only.
+Applicability comes from exact owner identities and current reuse tickets.
+The runner rejects v3 manifests, aggregate-only substitution, unnamed prior
+manifests, stale owner inputs, and missing owner evidence; it never turns those
+conditions into an automatic full rerun.
+
 Structure-split findings distinguish immediate code movement from deliberately
 deferred owner-module work. Fresh or state-ordering-sensitive modules may remain
 above the line threshold, but they are still recorded as actionable

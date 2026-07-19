@@ -8,6 +8,7 @@ against ordinary test evidence by using FlowGuard's Model-Test Alignment API.
 from __future__ import annotations
 
 import argparse
+import copy
 import json
 from pathlib import Path
 import sys
@@ -56,6 +57,65 @@ from scripts.compile_flowpilot_acceptance_testmesh_evidence import source_finger
 from simulations.flowpilot_evidence_truth import load_manifest, proof_bundle_report
 
 RESULTS_PATH = Path(__file__).resolve().parent / "flowpilot_model_test_alignment_results.json"
+
+
+def _single_mta_evidence_owner_bundle(
+    bundle: dict[str, Any],
+) -> dict[str, Any]:
+    """Keep the dedicated MTA owner authoritative for each evidence subject."""
+
+    owners = bundle.get("owners")
+    if not isinstance(owners, dict):
+        return bundle
+    dedicated_by_evidence_id: dict[str, list[str]] = {}
+    for owner_id, owner_row in owners.items():
+        if not str(owner_id).startswith("mta_evidence_"):
+            continue
+        identity = (
+            owner_row.get("identity")
+            if isinstance(owner_row, dict)
+            else None
+        )
+        evidence_ids = (
+            identity.get("covered_evidence_ids")
+            if isinstance(identity, dict)
+            else None
+        )
+        if not isinstance(evidence_ids, list):
+            continue
+        for evidence_id in evidence_ids:
+            dedicated_by_evidence_id.setdefault(str(evidence_id), []).append(
+                str(owner_id)
+            )
+    singular = {
+        evidence_id: owner_ids[0]
+        for evidence_id, owner_ids in dedicated_by_evidence_id.items()
+        if len(owner_ids) == 1
+    }
+    if not singular:
+        return bundle
+    normalized = copy.deepcopy(bundle)
+    normalized_owners = normalized["owners"]
+    for owner_id, owner_row in normalized_owners.items():
+        identity = (
+            owner_row.get("identity")
+            if isinstance(owner_row, dict)
+            else None
+        )
+        evidence_ids = (
+            identity.get("covered_evidence_ids")
+            if isinstance(identity, dict)
+            else None
+        )
+        if not isinstance(evidence_ids, list):
+            continue
+        identity["covered_evidence_ids"] = [
+            evidence_id
+            for evidence_id in evidence_ids
+            if singular.get(str(evidence_id), str(owner_id)) == str(owner_id)
+        ]
+    return normalized
+
 
 def _plan_report(entry: dict[str, Any]) -> dict[str, Any]:
     plan: ModelTestAlignmentPlan = entry["plan"]
@@ -198,6 +258,8 @@ def build_report(
         "test_count": 0,
         "failures": ["declaration_only_execution_not_run"],
     }
+    if not declaration_only:
+        bundle = _single_mta_evidence_owner_bundle(bundle)
     alignment_common.configure_execution_evidence(
         bundle,
         declaration_only=declaration_only,

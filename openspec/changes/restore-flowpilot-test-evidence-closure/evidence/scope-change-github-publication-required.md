@@ -20,8 +20,8 @@ historical scope evidence and no longer authorizes the current closure.
 - Create one exact task-owned local commit after current local evidence passes.
 - Push the task branch.
 - Fast-forward the GitHub default branch to that exact commit; never force it.
-- Create annotated tag `v0.12.0` on that exact commit.
-- Create one source-only GitHub Release for `v0.12.0`.
+- Create annotated tag `v0.12.1` on that exact commit.
+- Create one source-only GitHub Release for `v0.12.1`.
 - Verify the task branch, default branch, tag, version files, and GitHub Release
   all resolve to the same commit and version.
 - Treat any non-fast-forward update, tag collision, release collision, or

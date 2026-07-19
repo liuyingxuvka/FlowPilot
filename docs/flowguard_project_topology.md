@@ -7,28 +7,28 @@ It is orientation only; it is not validation evidence.
 
 - Model runners: 165
 - Model-test alignment families: 19
-- Code surfaces: 1084
-- Test commands: 451
+- Code surfaces: 1146
+- Test commands: 512
 - Evidence summaries: 5
-- Known-bad/risk labels surfaced: 2787
+- Known-bad/risk labels surfaced: 2807
 
 ## Area Map
 
 | Area | Models | Alignment families | Code surfaces | Test commands | Known-bad labels |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| `closure` | 9 | 2 | 19 | 13 | 137 |
-| `controller` | 7 | 0 | 91 | 33 | 106 |
+| `closure` | 9 | 2 | 29 | 22 | 137 |
+| `controller` | 7 | 0 | 93 | 37 | 106 |
 | `install-validation` | 1 | 0 | 19 | 17 | 15 |
-| `material` | 1 | 0 | 10 | 9 | 16 |
+| `material` | 1 | 0 | 11 | 13 | 16 |
 | `model-mesh` | 3 | 0 | 7 | 2 | 87 |
-| `model-test-alignment` | 5 | 0 | 14 | 8 | 74 |
-| `other` | 95 | 9 | 282 | 37 | 1504 |
-| `packet` | 10 | 2 | 202 | 173 | 170 |
+| `model-test-alignment` | 5 | 0 | 16 | 8 | 78 |
+| `other` | 95 | 9 | 314 | 47 | 1520 |
+| `packet` | 10 | 2 | 210 | 199 | 170 |
 | `prompt-card` | 3 | 0 | 4 | 0 | 80 |
-| `review` | 4 | 0 | 4 | 2 | 78 |
-| `route` | 17 | 3 | 353 | 112 | 335 |
-| `startup` | 6 | 1 | 69 | 41 | 129 |
-| `structure` | 4 | 2 | 10 | 4 | 56 |
+| `review` | 4 | 0 | 4 | 3 | 78 |
+| `route` | 17 | 3 | 359 | 116 | 335 |
+| `startup` | 6 | 1 | 69 | 43 | 129 |
+| `structure` | 4 | 2 | 11 | 5 | 56 |
 
 ## Evidence Boundaries
 
@@ -70,7 +70,7 @@ Completion and readiness claims still need the owning FlowGuard checks, tests, r
 - `flowpilot_complete_system_ui` (other, coverage_strong): `simulations/run_flowpilot_complete_system_ui_checks.py` -> `simulations/flowpilot_complete_system_ui_results.json`
 - `flowpilot_complete_workstream_fake_ai` (other, unclassified_model_tier): `simulations/run_flowpilot_complete_workstream_fake_ai_checks.py` -> `simulations/flowpilot_complete_workstream_fake_ai_results.json`
 - `flowpilot_complete_workstream_orchestration` (other, unclassified_model_tier): `simulations/run_flowpilot_complete_workstream_orchestration_checks.py` -> `simulations/flowpilot_complete_workstream_orchestration_results.json`; known-bad: known_bad_count, ok, rows
-- `flowpilot_contract_exhaustion_mesh` (other, coverage_strong): `simulations/run_flowpilot_contract_exhaustion_mesh_checks.py` -> `simulations/flowpilot_contract_exhaustion_mesh_results.json`; known-bad: hazards_ok
+- `flowpilot_contract_exhaustion_mesh` (other, coverage_strong): `simulations/run_flowpilot_contract_exhaustion_mesh_checks.py` -> `simulations/flowpilot_contract_exhaustion_mesh_results.json`; known-bad: execution_evidence.owners.flowguard_model_test_alignment.identity.covered_input_fingerprints.simulations/flowpilot_model_test_alignment_known_bad.py, execution_evidence.owners.mta_evidence_test_flowpilot_full_model_test_gap_closure_ab7a03f947a7.identity.covered_input_fingerprints.simulations/flowpilot_control_plane_friction_model_hazards.py, execution_evidence.owners.mta_evidence_test_flowpilot_full_model_test_gap_closure_ab7a03f947a7.identity.covered_input_fingerprints.simulations/flowpilot_cross_plane_friction_model_hazards.py
 - `flowpilot_control_plane_friction` (other, coverage_strong): `simulations/run_flowpilot_control_plane_friction_checks.py` -> `simulations/flowpilot_control_plane_friction_results.json`; known-bad: hazards, ok, ack_consumed_semantic_wait_lost
 - `flowpilot_control_plane_ledger_consolidation` (closure, supporting_model_owned): `simulations/run_flowpilot_control_plane_ledger_consolidation_checks.py` -> `simulations/flowpilot_control_plane_ledger_consolidation_results.json`; known-bad: failures, hazards, ok
 - `flowpilot_control_plane_state_consistency` (other, supporting_model_owned): `simulations/run_flowpilot_control_plane_state_consistency_checks.py` -> `simulations/flowpilot_control_plane_state_consistency_results.json`; known-bad: failures, hazards, ok

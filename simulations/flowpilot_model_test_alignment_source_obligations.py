@@ -123,11 +123,13 @@ def source_obligations() -> tuple[ModelObligation, ...]:
             required_test_kinds=(EDGE,),
         ),
         _source_obligation(
-            "current_contract.same_source_fingerprint",
+            "current_contract.owner_scoped_evidence_applicability",
             obligation_type="evidence_freshness",
             description=(
-                "Final tier owners, proof artifacts, compiled manifests, and consumers bind one frozen "
-                "covered-source fingerprint and reject changed or mixed snapshots."
+                "The canonical repository snapshot is provenance only. Each tier command has one explicit "
+                "owner input identity; current exact identity reuses one prior v4 proof through a valid "
+                "TestResultReuseTicket, changed identity executes that owner, and any unmapped or ambiguous "
+                "changed input blocks without a blanket-run fallback."
             ),
             required_test_kinds=(HAPPY, NEGATIVE),
             allow_shared_evidence=True,

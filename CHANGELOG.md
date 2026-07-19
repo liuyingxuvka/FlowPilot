@@ -1,5 +1,53 @@
 # Changelog
 
+## v0.12.1 - 2026-07-19
+
+### Fixed
+
+- Removed repository-wide fingerprint equality as test-applicability
+  authority. Canonical LF-normalized source snapshots remain provenance and
+  mixed-snapshot protection only, so CRLF/LF transport changes no longer
+  invalidate otherwise unchanged behavior evidence.
+- Replaced blanket reruns with one current impact resolver whose only outcomes
+  are `reuse`, `execute`, and `blocked`. Unmapped or ambiguous governed inputs
+  fail with `impact_mapping_missing`; they never fall through to run-all.
+- Bound every MTA `TestEvidence` subject to exactly one executable command
+  owner. Missing and duplicate bindings block, while one command may project
+  its proof to several logical evidence subjects through separate current
+  reuse tickets.
+- Removed unconditional Meta and Capability `--force` execution from the
+  release tier. Their existing owner proofs are reused when all declared
+  applicability inputs remain current.
+
+### Changed
+
+- Added the v4 evidence manifest and owner identity contract. Each owner
+  fingerprints its exact command, test source, tested artifacts, dependencies,
+  environment, covered inputs, obligations, and evidence subjects.
+- Added one explicit `--seed-baseline` path for the first v4 release. Every
+  later background execution must name the exact previous v4 manifest and its
+  SHA-256 before an unchanged owner can be reused.
+- Made the background supervisor execute only selected owners, preserve exact
+  prior owner proofs with `TestResultReuseTicket`, recheck inputs at launch and
+  closure, and reject incomplete descendant cleanup.
+- Split preclosure evidence compilation, evidence consumers, and final
+  manifest compilation into one ordered current path. Receipt consumers verify
+  evidence and never relaunch heavyweight owners.
+- Added durable repository guidance explaining that generated results,
+  receipts, logs, task checkmarks, unrelated FlowGuard upgrades, and
+  line-ending-only changes are not blanket invalidation inputs.
+
+### Validation boundary
+
+- The release creates one full v4 seed baseline because no prior v4 owner
+  proofs exist. This first baseline is not a continuing requirement.
+- Subsequent changes are validated by affected owners plus one frozen
+  integration/release gate. A changed global snapshot alone is insufficient to
+  justify rerunning `all`, adversarial, Meta, or Capability owners.
+- Release closure still requires current terminal artifacts, exact owner
+  identities, source/install parity, the annotated `v0.12.1` tag, and a
+  source-only GitHub Release on the same commit.
+
 ## v0.12.0 - 2026-07-18
 
 ### Fixed

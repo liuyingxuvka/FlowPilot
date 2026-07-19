@@ -19,7 +19,11 @@ from scripts.run_test_tier import (  # noqa: E402
     classify_background_artifact,
     clear_artifacts,
     run_background_child,
-    source_fingerprint,
+)
+from scripts.test_tier.command_builders import TierCommand  # noqa: E402
+from scripts.test_tier.impact_resolution import (  # noqa: E402
+    build_owner_contracts,
+    owner_identity,
 )
 
 
@@ -37,14 +41,27 @@ def _command_from_remainder(values: Sequence[str]) -> tuple[str, ...]:
     return tuple(command)
 
 
+def _current_owner_identity(
+    *,
+    name: str,
+    command: Sequence[str],
+) -> dict[str, object]:
+    owner = TierCommand(
+        name=f"flowguard_background_{name}",
+        command=tuple(command),
+        description="Stable FlowGuard background-log owner.",
+    )
+    contract = build_owner_contracts((owner,))[0]
+    return owner_identity(contract).to_dict()
+
+
 def verify_existing_background_command(
     *,
     name: str,
     command: Sequence[str],
     log_root: Path,
-    expected_source_fingerprint: str | None = None,
 ) -> dict[str, object]:
-    expected_source = expected_source_fingerprint or source_fingerprint()
+    expected_identity = _current_owner_identity(name=name, command=command)
     paths = artifact_paths(log_root, name)
     failures: list[str] = []
     missing = [key for key, path in paths.items() if not path.is_file()]
@@ -62,8 +79,15 @@ def verify_existing_background_command(
             failures.append(f"invalid_meta:{type(exc).__name__}")
     if list(meta.get("command") or []) != list(command):
         failures.append("command_mismatch")
-    if str(meta.get("covered_source_fingerprint") or "") != expected_source:
-        failures.append("covered_source_fingerprint_stale")
+    if meta.get("owner_identity") != expected_identity:
+        failures.append("owner_identity_stale")
+    if (
+        meta.get("covered_input_fingerprints_end")
+        != expected_identity["covered_input_fingerprints"]
+    ):
+        failures.append("covered_owner_inputs_stale")
+    if meta.get("inputs_current") is not True:
+        failures.append("owner_inputs_not_current")
     evidence = classify_background_artifact(log_root, name)
     if evidence.get("status") != "passed" or not evidence.get("ok"):
         failures.append(f"evidence_not_passed:{evidence.get('status')}")
@@ -72,7 +96,9 @@ def verify_existing_background_command(
         "name": name,
         "command": list(command),
         "log_root": str(log_root),
-        "source_fingerprint": expected_source,
+        "owner_input_fingerprint": expected_identity[
+            "covered_input_fingerprint"
+        ],
         "status": evidence.get("status"),
         "failures": sorted(set(failures)),
         "artifacts": evidence.get("artifacts"),
@@ -115,12 +141,17 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 0 if report["ok"] else 1
     paths = artifact_paths(log_root, args.name)
     clear_artifacts(paths)
+    identity = _current_owner_identity(name=args.name, command=command)
     return run_background_child(
         args.name,
         command,
         log_root=log_root,
+        impact_plan_id=(
+            f"flowguard-background:{args.name}:"
+            f"{identity['command_fingerprint']}"
+        ),
+        owner_identity_value=identity,
         timeout_seconds=max(0, args.timeout_seconds),
-        source_fingerprint_value=source_fingerprint(),
     )
 
 

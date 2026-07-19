@@ -35,6 +35,16 @@ class State:
     duplicate_child_owner: bool = False
     hidden_skipped_tests: bool = False
     child_evidence_current: bool = True
+    canonical_text_normalized: bool = True
+    snapshot_is_provenance_only: bool = True
+    impact_mapping_complete: bool = True
+    impact_action: str = "execute"  # reuse | execute | blocked
+    reuse_ticket_current: bool = True
+    blanket_rerun_on_snapshot_mismatch: bool = False
+    shared_input_selects_every_owner: bool = False
+    blocked_falls_back_to_run_all: bool = False
+    receipt_consumer_relaunches_heavy_owner: bool = False
+    mta_supplements_after_upstream: bool = True
     pytest_scoped_to_tests: bool = True
     backup_tmp_excluded: bool = True
     fast_tier_foreground_safe: bool = True
@@ -51,6 +61,7 @@ class State:
     background_artifacts_declared: bool = False
     background_exit_artifact_present: bool = False
     background_exit_inspected: bool = False
+    exit_published_before_terminal_meta: bool = False
     background_progress_claimed_as_pass: bool = False
     background_timeout_enforced: bool = True
     background_interpreter_bound_to_owner: bool = True
@@ -170,6 +181,38 @@ SCENARIOS: dict[str, State] = {
         _valid_fast("stale_child_evidence_used"),
         child_evidence_current=False,
     ),
+    "line_ending_transport_forces_execution": replace(
+        _valid_fast("line_ending_transport_forces_execution"),
+        canonical_text_normalized=False,
+    ),
+    "global_snapshot_mismatch_stales_every_owner": replace(
+        _valid_fast("global_snapshot_mismatch_stales_every_owner"),
+        snapshot_is_provenance_only=False,
+        blanket_rerun_on_snapshot_mismatch=True,
+    ),
+    "shared_input_selects_every_owner": replace(
+        _valid_fast("shared_input_selects_every_owner"),
+        shared_input_selects_every_owner=True,
+    ),
+    "unmapped_change_falls_back_to_run_all": replace(
+        _valid_fast("unmapped_change_falls_back_to_run_all"),
+        impact_mapping_complete=False,
+        impact_action="execute",
+        blocked_falls_back_to_run_all=True,
+    ),
+    "reused_owner_has_no_current_ticket": replace(
+        _valid_fast("reused_owner_has_no_current_ticket"),
+        impact_action="reuse",
+        reuse_ticket_current=False,
+    ),
+    "receipt_consumer_relaunches_heavy_owner": replace(
+        _valid_fast("receipt_consumer_relaunches_heavy_owner"),
+        receipt_consumer_relaunches_heavy_owner=True,
+    ),
+    "mta_supplement_runs_before_upstream_owner": replace(
+        _valid_fast("mta_supplement_runs_before_upstream_owner"),
+        mta_supplements_after_upstream=False,
+    ),
     "router_slice_import_broken_counted_green": replace(
         _valid_router("router_slice_import_broken_counted_green"),
         router_slice_import_ok=False,
@@ -197,6 +240,10 @@ SCENARIOS: dict[str, State] = {
     "background_missing_artifact_set": replace(
         _valid_background("background_missing_artifact_set"),
         background_artifacts_declared=False,
+    ),
+    "background_exit_precedes_terminal_meta": replace(
+        _valid_background("background_exit_precedes_terminal_meta"),
+        exit_published_before_terminal_meta=True,
     ),
     "background_running_without_timeout_guard": replace(
         _valid_background("background_running_without_timeout_guard"),
@@ -291,6 +338,25 @@ def test_tier_failures(state: State) -> list[str]:
         failures.append("hidden_skipped_tests")
     if not state.child_evidence_current:
         failures.append("child_evidence_stale")
+    if not state.canonical_text_normalized:
+        failures.append("controlled_text_not_canonicalized")
+    if (
+        not state.snapshot_is_provenance_only
+        or state.blanket_rerun_on_snapshot_mismatch
+    ):
+        failures.append("global_snapshot_used_as_blanket_invalidation_authority")
+    if state.shared_input_selects_every_owner:
+        failures.append("shared_input_selected_blanket_tier_execution")
+    if not state.impact_mapping_complete and state.impact_action != "blocked":
+        failures.append("impact_mapping_missing_not_blocked")
+    if state.blocked_falls_back_to_run_all:
+        failures.append("blocked_impact_falls_back_to_run_all")
+    if state.impact_action == "reuse" and not state.reuse_ticket_current:
+        failures.append("reused_owner_missing_current_ticket")
+    if state.receipt_consumer_relaunches_heavy_owner:
+        failures.append("receipt_consumer_relaunches_heavy_owner")
+    if not state.mta_supplements_after_upstream:
+        failures.append("mta_supplement_precedes_upstream_owner")
     if not state.pytest_scoped_to_tests or not state.backup_tmp_excluded:
         failures.append("pytest_collection_not_scoped")
     if state.long_regression_in_fast_tier or not state.fast_tier_foreground_safe:
@@ -315,6 +381,8 @@ def test_tier_failures(state: State) -> list[str]:
         not state.background_exit_artifact_present or not state.background_exit_inspected
     ):
         failures.append("background_progress_is_not_completion_evidence")
+    if state.exit_published_before_terminal_meta:
+        failures.append("background_exit_precedes_terminal_meta")
     if state.background_requested and not state.background_timeout_enforced:
         failures.append("background_timeout_not_enforced")
     if state.background_requested and not state.background_interpreter_bound_to_owner:

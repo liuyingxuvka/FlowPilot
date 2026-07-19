@@ -62,10 +62,16 @@ owners rather than a new role system or result protocol.
 - Require timeout, cancellation, or interruption cleanup to prove zero live
   descendants before any evidence is accepted or another execution owner
   starts.
-- Bind background tiers, proof manifests, MTA, TestMesh, ModelMesh,
-  final-confidence, and parent checks to one frozen covered-source fingerprint;
-  a covered input change invalidates affected consumers instead of selecting a
-  newest or approximately matching result.
+- Canonicalize controlled text inputs to LF and retain one frozen snapshot
+  fingerprint as provenance and mixed-snapshot protection.  The snapshot
+  fingerprint is not evidence-applicability authority and does not authorize a
+  blanket rerun.
+- Derive each execution owner's covered-input identity from the existing
+  MTA/TestMesh ownership map.  Reuse unaffected terminal proof through a
+  current `TestResultReuseTicket`, execute only mapped affected owners and
+  their declared dependents, execute one declared full owner only for an
+  explicitly mapped shared-global input, and block `impact_mapping_missing`
+  rather than falling back to `run all`.
 - Enforce direct current replacement with zero compatibility, translation,
   legacy alias, fallback authority, or second success path.
 - Supersede the closure claims of earlier incomplete Cartesian/fake-AI changes
@@ -127,7 +133,7 @@ owners rather than a new role system or result protocol.
   bound to one covered-source fingerprint.
 - Local candidate surfaces: installed Codex skill, VERSION, changelog, README
   release statements, final local verification, one exact task-owned local Git
-  commit, fast-forward default-branch publication, one annotated `v0.12.0`
+  commit, fast-forward default-branch publication, one annotated `v0.12.1`
   tag, and one source-only GitHub Release, all bound to the same commit.
 
 The change retains the verified behavior fixes and historical fixtures from

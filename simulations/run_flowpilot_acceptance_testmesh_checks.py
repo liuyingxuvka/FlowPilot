@@ -146,6 +146,7 @@ TIER_OVERRIDE_FIELDS = {
     "stale_reasons",
     "proof_artifact",
     "result_reused",
+    "reuse_ticket",
     "run_id",
     "terminal_status",
     "result_fingerprint",

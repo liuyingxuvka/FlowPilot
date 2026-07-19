@@ -87,7 +87,7 @@ def source_test_evidence() -> tuple[TestEvidence, ...]:
             command=(
                 "python -m unittest tests.test_flowpilot_core_runtime."
                 "FlowPilotCoreRuntimeTests."
-                "test_staged_effect_same_family_reuses_pending_effect_and_rejects_different_formal_blocker_identity"
+                "test_staged_effect_same_family_rejects_different_formal_blocker_identity"
             ),
             test_kind=NEGATIVE,
             covers=("current_contract.staged_effect_exact_identity",),
@@ -270,7 +270,54 @@ def source_test_evidence() -> tuple[TestEvidence, ...]:
             evidence_target_id="windows_venv_direct_process_owner",
         ),
         _evidence(
-            "source.same_fingerprint.unchanged_result",
+            "source.owner_applicability.exact_reuse",
+            test_name="test_exact_owner_identity_reuses_v4_proof_without_execution",
+            path="tests/test_flowpilot_test_tiers.py",
+            command=(
+                "python -m unittest tests.test_flowpilot_test_tiers."
+                "FlowPilotTestTierTests."
+                "test_exact_owner_identity_reuses_v4_proof_without_execution"
+            ),
+            test_kind=HAPPY,
+            covers=("current_contract.owner_scoped_evidence_applicability",),
+            code_contracts=(
+                "test_tier.canonical_source_snapshot",
+                "test_tier.resolve_owner_impact",
+            ),
+        ),
+        _evidence(
+            "source.owner_applicability.unmapped_blocks",
+            test_name="test_unmapped_changed_input_blocks_without_blanket_execution",
+            path="tests/test_flowpilot_test_tiers.py",
+            command=(
+                "python -m unittest tests.test_flowpilot_test_tiers."
+                "FlowPilotTestTierTests."
+                "test_unmapped_changed_input_blocks_without_blanket_execution"
+            ),
+            test_kind=NEGATIVE,
+            covers=("current_contract.owner_scoped_evidence_applicability",),
+            code_contracts=(
+                "test_tier.resolve_owner_impact",
+            ),
+        ),
+        _evidence(
+            "source.owner_applicability.supervisor_and_verify",
+            test_name="test_verify_background_tier_accepts_current_single_command_artifacts",
+            path="tests/test_flowpilot_test_tiers.py",
+            command=(
+                "python -m unittest tests.test_flowpilot_test_tiers."
+                "FlowPilotTestTierTests."
+                "test_verify_background_tier_accepts_current_single_command_artifacts"
+            ),
+            test_kind=HAPPY,
+            covers=("current_contract.owner_scoped_evidence_applicability",),
+            code_contracts=(
+                "test_tier.selective_background_supervisor",
+                "test_tier.verify_current_owner_evidence",
+            ),
+        ),
+        _evidence(
+            "source.owner_applicability.compile_manifest",
             test_name="test_background_evidence_compiler_emits_current_fingerprinted_proofs",
             path="tests/test_flowpilot_acceptance_testmesh.py",
             command=(
@@ -279,20 +326,7 @@ def source_test_evidence() -> tuple[TestEvidence, ...]:
                 "test_background_evidence_compiler_emits_current_fingerprinted_proofs"
             ),
             test_kind=HAPPY,
-            covers=("current_contract.same_source_fingerprint",),
-            code_contracts=("acceptance_evidence.compile_manifest",),
-        ),
-        _evidence(
-            "source.same_fingerprint.changed_source",
-            test_name="test_background_evidence_compiler_rejects_source_changed_during_tier",
-            path="tests/test_flowpilot_acceptance_testmesh.py",
-            command=(
-                "python -m unittest tests.test_flowpilot_acceptance_testmesh."
-                "FlowPilotAcceptanceTestMeshTests."
-                "test_background_evidence_compiler_rejects_source_changed_during_tier"
-            ),
-            test_kind=NEGATIVE,
-            covers=("current_contract.same_source_fingerprint",),
+            covers=("current_contract.owner_scoped_evidence_applicability",),
             code_contracts=("acceptance_evidence.compile_manifest",),
         ),
         _evidence(

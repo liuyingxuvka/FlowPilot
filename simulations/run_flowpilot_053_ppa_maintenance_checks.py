@@ -102,8 +102,10 @@ def _model_test_alignment_evidence_report(
         "done_or_stronger_scope": payload.get("claim_scope") in {"done", "release", "publish"},
         "evidence_passed": payload.get("evidence_status") == "passed",
         "execution_bundle_ok": execution.get("ok") is True,
-        "source_current": execution.get("source_fingerprint_current") is True,
-        "manifest_matches_current": execution.get("manifest_source_fingerprint") == current_fingerprint,
+        "snapshot_fingerprint_matches": execution.get("snapshot_fingerprint_matches")
+        is True,
+        "manifest_matches_current": execution.get("manifest_snapshot_fingerprint")
+        == current_fingerprint,
         "expected_matches_current": execution.get("expected_source_fingerprint") == current_fingerprint,
         "no_execution_failures": not execution.get("failures"),
     }

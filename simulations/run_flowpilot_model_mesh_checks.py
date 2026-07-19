@@ -17,6 +17,7 @@ from flowguard import (
     ModelContractCoverageReceipt,
     ProcessArtifact,
     ProcessEvidence,
+    ProofArtifactRef,
     ValidationRequirement,
     review_development_process_flow,
 )
@@ -116,6 +117,19 @@ CONTRACT_COVERAGE_RESULT_SPECS = (
 )
 
 UNIFIED_REPAIR_MODEL_ID = "flowpilot_unified_repair_integrity"
+CONTRACT_COVERAGE_OWNER_IDS = {
+    "flowpilot_ai_response_execution_closure": "formal_ai_submit_adversarial_runner",
+    "flowpilot_contract_exhaustion_mesh": "contract_exhaustion_current_evidence",
+    "flowpilot_current_contract_cartesian_matrix": "current_contract_cartesian_current_evidence",
+    "flowpilot_fake_ai_runtime_replay": "fake_ai_runtime_replay_full",
+    "flowpilot_field_contracts": "flowguard_field_contracts",
+    "flowpilot_model_test_alignment": "model_test_alignment_current_evidence",
+    "flowpilot_053_ppa_maintenance": "behavior_commitment_risk_current_evidence",
+    "flowpilot_complete_workstream_orchestration": "flowguard_complete_workstream_orchestration",
+    "flowpilot_ordinary_resource_discovery": "flowguard_ordinary_resource_discovery",
+    "flowpilot_complete_workstream_fake_ai_execution": "complete_workstream_fake_ai_execution_receipts",
+    "flowpilot_skillguard_current_contract": "flowguard_skillguard_current_contract",
+}
 UNIFIED_REPAIR_SOURCE_FINGERPRINT_ALGORITHM = (
     "sha256(path_utf8+nul+raw_bytes+nul), ordered:model,runner"
 )
@@ -163,13 +177,31 @@ UNIFIED_REPAIR_REQUIRED_CONFORMANCE_CHECK_IDS = (
 )
 
 DPF_EXACT_EVIDENCE_IDS = (
-    "evidence.bcl.flowpilot_053_behavior_commitments",
+    "evidence.behavior_commitment_risk.flowpilot_053",
     "evidence.dcar.current_contract_cartesian",
     "evidence.mta.packet_result_family",
     "evidence.testmesh.acceptance_execution",
-    "evidence.modelmesh.ai_response_parent",
-    "evidence.risk.flowpilot_053_risk_evidence",
 )
+DPF_REQUIRED_OBLIGATION_BY_EVIDENCE_ID = {
+    "evidence.behavior_commitment_risk.flowpilot_053": (
+        "model-receipt:flowpilot_053_ppa_maintenance"
+    ),
+    "evidence.dcar.current_contract_cartesian": (
+        "model-receipt:flowpilot_current_contract_cartesian_matrix"
+    ),
+    "evidence.mta.packet_result_family": (
+        "model-receipt:flowpilot_model_test_alignment"
+    ),
+    "evidence.testmesh.acceptance_execution": "all_tier_complete",
+}
+if set(DPF_REQUIRED_OBLIGATION_BY_EVIDENCE_ID) != set(DPF_EXACT_EVIDENCE_IDS):
+    raise RuntimeError("development_process_evidence_obligation_binding_incomplete")
+
+DPF_CHILD_RECEIPT_BINDINGS = {
+    "evidence.behavior_commitment_risk.flowpilot_053": "receipt.behavior_commitment_risk",
+    "evidence.dcar.current_contract_cartesian": "receipt.current_contract_cartesian",
+    "evidence.mta.packet_result_family": "receipt.model_test_alignment",
+}
 
 
 def _sha256(path: Path) -> str:
@@ -524,8 +556,12 @@ def _contract_coverage_receipt_report(
     claim_scope: str = "release",
 ) -> dict[str, Any]:
     expected_source = source_fingerprint()
-    manifest_source = str(evidence_manifest.get("source_fingerprint") or "")
-    source_current = bool(manifest_source) and manifest_source == expected_source
+    snapshot = evidence_manifest.get("snapshot")
+    manifest_snapshot = (
+        str(snapshot.get("fingerprint") or "")
+        if isinstance(snapshot, Mapping)
+        else ""
+    )
     bundle = proof_bundle_report(
         evidence_manifest,
         expected_source_fingerprint=expected_source,
@@ -556,9 +592,15 @@ def _contract_coverage_receipt_report(
             )
             passed = bool(unified_contract["ok"])
         else:
+            exact_owner_id = CONTRACT_COVERAGE_OWNER_IDS[model_id]
+            owner_rows = bundle.get("owners")
+            exact_owner_present = (
+                isinstance(owner_rows, Mapping)
+                and exact_owner_id in owner_rows
+            )
             proof, reuse_ticket, reuse_gaps = derived_owner_proof(
                 bundle,
-                owner_id=f"modelmesh:{model_id}",
+                owner_id=exact_owner_id,
                 covered_obligation_ids=(f"model-receipt:{model_id}",),
             )
             passed = (
@@ -568,7 +610,7 @@ def _contract_coverage_receipt_report(
                 and reuse_ticket is not None
                 and not reuse_gaps
             )
-        current = passed and source_current and proof_gate_ok
+        current = passed and proof_gate_ok
         case_ids = _coverage_case_ids(payload, model_id)
         missing = () if passed else (f"case:{model_id}",)
         receipt = ModelContractCoverageReceipt(
@@ -593,8 +635,9 @@ def _contract_coverage_receipt_report(
                             else []
                         ),
                         *(
-                            ["source_fingerprint_stale"]
-                            if not source_current
+                            ["exact_model_owner_missing"]
+                            if model_id != UNIFIED_REPAIR_MODEL_ID
+                            and not exact_owner_present
                             else []
                         ),
                         *(
@@ -615,7 +658,7 @@ def _contract_coverage_receipt_report(
                 "result_sha256": _sha256(path) if path.is_file() else "",
                 "ok_field": ok_field,
                 "parse_error": parse_error,
-                "source_fingerprint": manifest_source,
+                "snapshot_fingerprint": manifest_snapshot,
                 "proof_artifact": proof.to_dict() if proof else None,
                 "reuse_ticket": reuse_ticket.to_dict() if reuse_ticket else None,
                 "unified_repair_contract": unified_contract or None,
@@ -626,7 +669,7 @@ def _contract_coverage_receipt_report(
     required_ids = tuple(receipt.receipt_id for receipt in child_receipts)
     consumed_ids = tuple(receipt.receipt_id for receipt in child_receipts if receipt.current and receipt.status == "covered")
     missing_receipts = tuple(sorted(set(required_ids) - set(consumed_ids)))
-    parent_current = not missing_receipts and source_current and proof_gate_ok
+    parent_current = not missing_receipts and proof_gate_ok
     parent_receipt = ModelContractCoverageReceipt(
         receipt_id="receipt.flowpilot_ai_response_parent_mesh",
         model_id="flowpilot_model_mesh",
@@ -664,21 +707,21 @@ def _contract_coverage_receipt_report(
             "flowguard-test-mesh",
             "flowguard-model-mesh",
         ),
-        description="Contract exhaustion, execution receipts, TestMesh proof, MTA, and ModelMesh must all accept the same current source fingerprint.",
+        description="Contract exhaustion, exact owner execution or reuse receipts, TestMesh, MTA, and ModelMesh must accept one current impact plan.",
         metadata={"required_child_receipt_ids": list(required_ids)},
     )
     dpf = _development_process_report(
         claim_scope=claim_scope,
-        source_fingerprint_value=manifest_source,
         bundle=bundle,
         parent_receipt=parent_receipt,
         child_receipts=child_receipts,
     )
     return {
         "ok": parent_current and dpf["ok"],
-        "source_fingerprint_current": source_current,
-        "expected_source_fingerprint": expected_source,
-        "manifest_source_fingerprint": manifest_source,
+        "snapshot_fingerprint_matches": bool(manifest_snapshot)
+        and manifest_snapshot == expected_source,
+        "expected_snapshot_fingerprint": expected_source,
+        "manifest_snapshot_fingerprint": manifest_snapshot,
         "proof_gate_ok": proof_gate_ok,
         "nonpassing_proofs": nonpassing_proofs,
         "child_receipts": result_rows,
@@ -692,31 +735,100 @@ def _contract_coverage_receipt_report(
 def _development_process_report(
     *,
     claim_scope: str,
-    source_fingerprint_value: str,
     bundle: Mapping[str, Any],
     parent_receipt: ModelContractCoverageReceipt,
     child_receipts: Sequence[ModelContractCoverageReceipt],
 ) -> dict[str, Any]:
-    proof_by_id = {
-        evidence_id: derived_owner_proof(
-            bundle,
-            owner_id=evidence_id,
-            covered_obligation_ids=(evidence_id, "requirement.flowpilot.evidence_mesh"),
+    receipt_by_id = {receipt.receipt_id: receipt for receipt in child_receipts}
+    proof_by_evidence_id: dict[str, tuple[ProofArtifactRef | None, tuple[str, ...]]] = {}
+    for evidence_id, receipt_id in DPF_CHILD_RECEIPT_BINDINGS.items():
+        receipt = receipt_by_id.get(receipt_id)
+        proof_value = (
+            receipt.metadata.get("proof_artifact")
+            if receipt is not None and isinstance(receipt.metadata, Mapping)
+            else None
         )
-        for evidence_id in DPF_EXACT_EVIDENCE_IDS
-    }
-    evidence = []
+        try:
+            proof = (
+                ProofArtifactRef(**dict(proof_value))
+                if isinstance(proof_value, Mapping)
+                else None
+            )
+        except (TypeError, ValueError):
+            proof = None
+        gaps = (
+            ()
+            if receipt is not None
+            and receipt.current
+            and receipt.status == "covered"
+            and proof is not None
+            else ("bound_child_receipt_not_current",)
+        )
+        proof_by_evidence_id[evidence_id] = (proof, gaps)
+
+    testmesh_proofs = bundle.get("proof_artifacts")
+    testmesh_proof: ProofArtifactRef | None = None
+    if isinstance(testmesh_proofs, Sequence) and len(testmesh_proofs) == 1:
+        try:
+            value = testmesh_proofs[0]
+            testmesh_proof = (
+                ProofArtifactRef(**dict(value))
+                if isinstance(value, Mapping)
+                else None
+            )
+        except (TypeError, ValueError):
+            testmesh_proof = None
+    proof_by_evidence_id["evidence.testmesh.acceptance_execution"] = (
+        testmesh_proof,
+        () if testmesh_proof is not None and bundle.get("ok") is True else ("testmesh_proof_not_current",),
+    )
+
+    artifacts: list[ProcessArtifact] = []
+    evidence: list[ProcessEvidence] = []
+    freshness_rules: list[FreshnessRule] = []
+    validation_requirements: list[ValidationRequirement] = []
     for evidence_id in DPF_EXACT_EVIDENCE_IDS:
-        proof, ticket, gaps = proof_by_id[evidence_id]
+        proof, gaps = proof_by_evidence_id.get(
+            evidence_id,
+            (None, ("exact_evidence_binding_missing",)),
+        )
+        artifact_id = f"artifact.flowpilot.owner_proof.{evidence_id.removeprefix('evidence.')}"
+        requirement_id = DPF_REQUIRED_OBLIGATION_BY_EVIDENCE_ID[evidence_id]
+        version = (
+            hashlib.sha256(
+                json.dumps(
+                    proof.to_dict(),
+                    sort_keys=True,
+                    separators=(",", ":"),
+                ).encode("utf-8")
+            ).hexdigest()
+            if proof is not None
+            else ""
+        )
+        artifacts.append(
+            ProcessArtifact(
+                artifact_id=artifact_id,
+                artifact_type="owner_proof",
+                current_version=version,
+                path=proof.result_path if proof else "",
+                owner=evidence_id,
+            )
+        )
         evidence.append(
             ProcessEvidence(
                 evidence_id=evidence_id,
                 evidence_kind="route_report",
                 producer_route=evidence_id.split(".")[1],
-                status="passed" if proof is not None and ticket is not None and not gaps and parent_receipt.current else "not_run",
-                covers_artifacts=("artifact.flowpilot.current_source",),
-                covered_versions={"artifact.flowpilot.current_source": source_fingerprint_value},
-                validation_requirement_ids=("requirement.flowpilot.evidence_mesh",),
+                status=(
+                    "passed"
+                    if proof is not None
+                    and not gaps
+                    and parent_receipt.current
+                    else "not_run"
+                ),
+                covers_artifacts=(artifact_id,),
+                covered_versions={artifact_id: version},
+                validation_requirement_ids=(requirement_id,),
                 command=proof.command if proof else "",
                 result_path=proof.result_path if proof else "",
                 proof_artifact=proof,
@@ -724,37 +836,31 @@ def _development_process_report(
                 stale_reasons=tuple(gaps),
             )
         )
-    plan = DevelopmentProcessPlan(
-        process_id="flowpilot_evidence_mesh_release_closure",
-        artifacts=(
-            ProcessArtifact(
-                artifact_id="artifact.flowpilot.current_source",
-                artifact_type="source_tree",
-                current_version=source_fingerprint_value,
-                path="skills/flowpilot; simulations; tests",
-                owner="FlowPilot",
-            ),
-        ),
-        evidence=tuple(evidence),
-        validation_requirements=(
+        freshness_rules.append(
+            FreshnessRule(
+                rule_id=f"freshness.flowpilot.owner_proof.{evidence_id.removeprefix('evidence.')}",
+                upstream_artifact_id=artifact_id,
+                invalidates_evidence_kinds=("route_report",),
+                description="Only a changed exact owner-proof identity stales this process evidence.",
+            )
+        )
+        validation_requirements.append(
             ValidationRequirement(
-                requirement_id="requirement.flowpilot.evidence_mesh",
-                required_artifact_ids=("artifact.flowpilot.current_source",),
-                evidence_ids=DPF_EXACT_EVIDENCE_IDS,
+                requirement_id=requirement_id,
+                required_artifact_ids=(artifact_id,),
+                evidence_ids=(evidence_id,),
                 scope=claim_scope,
                 release_required=True,
                 v_model_pair=True,
-                description="BCL/DCAR/MTA/TestMesh/ModelMesh/Risk exact current evidence ids are all required.",
-            ),
-        ),
-        freshness_rules=(
-            FreshnessRule(
-                rule_id="freshness.flowpilot.evidence_mesh.source",
-                upstream_artifact_id="artifact.flowpilot.current_source",
-                invalidates_evidence_kinds=("route_report",),
-                description="Any source change stales every exact evidence-mesh id.",
-            ),
-        ),
+                description="One exact owner proof must remain current for this evidence-mesh edge.",
+            )
+        )
+    plan = DevelopmentProcessPlan(
+        process_id="flowpilot_evidence_mesh_release_closure",
+        artifacts=tuple(artifacts),
+        evidence=tuple(evidence),
+        validation_requirements=tuple(validation_requirements),
+        freshness_rules=tuple(freshness_rules),
         decision_scope=claim_scope,
         require_proof_artifacts=True,
         release_deferred_allowed=False,
@@ -764,7 +870,7 @@ def _development_process_report(
         "ok": report.ok and parent_receipt.current and all(receipt.current for receipt in child_receipts),
         "claim_scope": claim_scope,
         "exact_evidence_ids": list(DPF_EXACT_EVIDENCE_IDS),
-        "freshness_rule_ids": ["freshness.flowpilot.evidence_mesh.source"],
+        "freshness_rule_ids": [rule.rule_id for rule in freshness_rules],
         "plan": plan.to_dict(),
         "report": report.to_dict(),
     }

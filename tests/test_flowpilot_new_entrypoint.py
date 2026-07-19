@@ -190,6 +190,48 @@ def fake_opened_packet_fixture(packet: dict[str, object]) -> dict[str, object]:
 
 
 class FlowPilotNewEntrypointTests(unittest.TestCase):
+    def test_fake_reviewer_consumes_only_public_authorized_flowguard_material(self) -> None:
+        packet = {
+            "submission_checklist": {
+                "schema_version": "black_box_flowpilot.submission_checklist.v2",
+                "source": "current_handoff_contract",
+                "contract_family_id": "review.any_current_subject",
+                "result_skeleton": {
+                    "passed": True,
+                    "findings": [],
+                    "blockers": [],
+                    "pm_suggestion_items": [],
+                },
+            },
+            "authorized_input_materials": [
+                {
+                    "schema_version": "black_box_flowpilot.authorized_input_material.v1",
+                    "result_id": "result-flowguard-current",
+                    "purpose": "matching_flowguard_result_for_review",
+                    "sealed_result_body": json.dumps(
+                        {
+                            "passed": True,
+                            "modeled_boundary": "current_contract_shape_only",
+                            "pm_visible_summary": [
+                                "Only the current packet field shape was checked."
+                            ],
+                        }
+                    ),
+                }
+            ],
+        }
+
+        payload = json.loads(fake_e2e._review_body_for_packet(packet))
+
+        self.assertFalse(payload["passed"])
+        self.assertEqual(
+            payload["findings"][0]["evidence_result_ids"],
+            ["result-flowguard-current"],
+        )
+        self.assertEqual(
+            payload["blockers"][0]["blocker_id"],
+            "reviewer-blocker-shallow-flowguard-depth",
+        )
     def test_fake_e2e_high_standard_contract_matches_packet_contract(self) -> None:
         body = json.loads(
             fake_e2e._body_for_packet(

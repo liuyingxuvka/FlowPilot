@@ -30195,3 +30195,183 @@ Evidence supports the local repository and installed FlowPilot skill for the mat
 - python -m flowguard project-audit --root . --json
 - python scripts/verify_skill_suite_markers.py --root . --json
 - Rerun affected FlowGuard model checks and focused tests before broad confidence.
+
+
+## flowguard-project-upgrade - FlowGuard project upgrade record update
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: target project requires current semantic adoption and version records
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-07-19T10:09:25+00:00
+- Ended: 2026-07-19T10:09:25+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- none recorded
+
+### Commands
+- OK (0.000s): `managed adoption rule-set preflight` - generated block contains every required stable rule
+- OK (0.000s): `package-authority/global-consumer validation` - pass
+- OK (0.000s): `post-write project adoption audit` - semantic and version parity after write
+
+### Findings
+- artifact_upgrade_scan_scoped_out: Artifact/model/test upgrade scanning was scoped out by records-only mode.
+- adoption_record_written: FlowGuard project AGENTS block and manifest were written or refreshed.
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- Project adoption does not replace executable model checks, tests, replay, or closure evidence.
+- Artifact/model/test upgrade scanning was scoped out by records-only mode.
+
+### Risk Evidence Summary
+- none recorded
+
+### Next Actions
+- python -m flowguard project-audit --root . --json
+- Rerun affected FlowGuard model checks and focused tests before broad confidence.
+
+
+## flowguard-project-upgrade - FlowGuard project upgrade record update
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: target project requires current semantic adoption and version records
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-07-19T10:09:49+00:00
+- Ended: 2026-07-19T10:09:49+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- none recorded
+
+### Commands
+- OK (0.000s): `managed adoption rule-set preflight` - generated block contains every required stable rule
+- OK (0.000s): `package-authority/global-consumer validation` - pass
+- OK (0.000s): `post-write project adoption audit` - semantic and version parity after write
+
+### Findings
+- adoption_record_written: FlowGuard project AGENTS block and manifest were written or refreshed.
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- Project adoption does not replace executable model checks, tests, replay, or closure evidence.
+
+### Risk Evidence Summary
+- none recorded
+
+### Next Actions
+- python -m flowguard project-audit --root . --json
+- Rerun affected FlowGuard model checks and focused tests before broad confidence.
+
+
+## flowguard-project-upgrade - FlowGuard project upgrade record update
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: target project requires current semantic adoption and version records
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-07-19T20:56:57+00:00
+- Ended: 2026-07-19T20:56:57+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- none recorded
+
+### Commands
+- OK (0.000s): `managed adoption rule-set preflight` - generated block contains every required stable rule
+- OK (0.000s): `package-authority/global-consumer validation` - pass
+- OK (0.000s): `post-write project adoption audit` - semantic and version parity after write
+
+### Findings
+- artifact_upgrade_scan_scoped_out: Artifact/model/test upgrade scanning was scoped out by records-only mode.
+- adoption_record_written: FlowGuard project AGENTS block and manifest were written or refreshed.
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- Project adoption does not replace executable model checks, tests, replay, or closure evidence.
+- Artifact/model/test upgrade scanning was scoped out by records-only mode.
+
+### Risk Evidence Summary
+- none recorded
+
+### Next Actions
+- python -m flowguard project-audit --root . --json
+- Rerun affected FlowGuard model checks and focused tests before broad confidence.
+
+
+## flowpilot-selective-evidence-v4 - Exact affected-owner validation and release closure
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: a repository-wide fingerprint mismatch repeatedly invalidated unaffected FlowPilot test evidence and caused unnecessary all/adversarial/release reruns
+- Status: completed
+- Skill decision: used FlowGuard DevelopmentProcessFlow, TestMesh, Model-Test Alignment, ModelMesh, Model Miss Review, OpenSpec, and SkillGuard
+- Started: 2026-07-19
+- Ended: 2026-07-19T21:22:45Z
+- Commands OK: True
+
+### Model Files
+- `simulations/flowpilot_test_tiering_model.py`
+- `simulations/flowpilot_acceptance_testmesh_model.py`
+- `simulations/flowpilot_model_test_alignment_results.json`
+- `simulations/flowpilot_model_mesh_results.json`
+- `.flowguard/behavior_commitment_ledger/ledger.json`
+
+### Commands
+- PASS: final `all` tier selected 1 affected owner and reused 217 current owners.
+- PASS: final adversarial tier reused all 6 owners without execution.
+- PASS: final release tier reused all 6 owners, including current Meta and Capability receipts, without relaunching those heavyweight owners.
+- PASS: closure executed 4 affected evidence owners and reused 1 current owner.
+- PASS: final-confidence executed its single declared parent owner.
+- PASS: topology build/check, strict OpenSpec validation, SkillGuard contract/depth checks, install sync/audit/self-check, privacy scan, dependency URL validation, and public-boundary checks.
+
+### Findings
+- Replaced repository-wide fingerprint equality as an execution gate with one canonical LF provenance snapshot plus exact per-owner covered-input identity.
+- Added one current impact decision path with exactly `reuse`, `execute`, or `blocked`; ambiguous or unmapped inputs block as `impact_mapping_missing` instead of falling back to run-all.
+- Preserved real-content drift detection while treating CRLF/LF-only differences as equivalent.
+- Bound each closure proof artifact to its exact obligation and made ModelMesh consume the declared proof artifact rather than an aggregate or newest-file search.
+- FlowGuard 0.58.5 records-only project refresh did not invalidate or relaunch unchanged FlowPilot model evidence.
+
+### Counterexamples
+- A stale preclosure manifest path made four closure owners inspect the wrong evidence snapshot; the path was corrected and only those owners were rerun.
+- ModelMesh initially exposed four proof artifacts without exact obligation bindings; explicit owner-owned bindings and negative tests now block missing mappings.
+- A foreground pytest command timed out at the launcher boundary; its result was rejected, the full descendant tree was terminated and verified at zero, and no partial evidence was reused.
+- The first public-release aggregate command timed out because it re-invoked already-current release/install validations. Its descendant tree was terminated and verified at zero; the supported public-boundary-only mode was then used with the existing current validation evidence.
+
+### Friction Points
+- Aggregate release helpers that unconditionally rerun current child validations can recreate the same waste that the impact resolver is designed to prevent.
+- Windows launcher timeout must never be interpreted as the child process having exited.
+
+### Skipped Steps
+- No unchanged heavyweight owner was rerun merely because FlowGuard advanced from 0.58.4 to 0.58.5.
+- The public-release aggregate's duplicate validation phase was intentionally skipped after its child validation evidence had already passed on the same governed source.
+- No compatibility reader, legacy alias, fallback route, newest-result lookup, or global-mismatch-to-run-all path was retained.
+
+### Risk Evidence Summary
+- Frozen governed snapshot: `9c7aaf2cb6e621679fff31c0db47d040046ef5d342e07183ccc42a559bc127d1`.
+- Final acceptance manifest SHA-256: `fc8240b71a4cb1a0ee0e752f7762a425f43ce56b591f489d328c5c3bc06e2c64`.
+- Final manifest owners: 235 total, 5 executed, 230 reused, 0 blocked.
+- Local installed FlowPilot digest equals repository-owned source digest: `e397cd0f6cd014792915810e96e4aeec14f3cad8361afa344bca3d915984dc50`.
+
+### Next Actions
+- Inspect and stage only task-owned files.
+- Publish the exact task commit as branch, default-branch fast-forward, annotated `v0.12.1` tag, and source-only GitHub Release.
+- Verify remote branch, default branch, tag, and release all resolve to the same commit.

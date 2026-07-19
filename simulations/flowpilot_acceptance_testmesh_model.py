@@ -95,6 +95,9 @@ PAYLOAD_CELLS = (
     "integration_cartesian_worker_boundary",
     "integration_cartesian_runtime_no_hard_blocker",
     "integration_cartesian_model_miss",
+    "background_meta_non_atomic_publication",
+    "parametrized_exact_function_counted_as_duplicate",
+    "mechanical_review_reissue_loses_matching_flowguard_result",
     *COMPLETE_WORKSTREAM_PROFILE_CELLS,
     *RESOURCE_DISCOVERY_PROFILE_CELLS,
 )
@@ -338,6 +341,7 @@ def _tier_child(
     stale_reasons: tuple[str, ...] = (),
     proof_artifact: Mapping[str, Any] | None = None,
     result_reused: bool = False,
+    reuse_ticket: Mapping[str, Any] | None = None,
     run_id: str = "",
     terminal_status: str = "",
     result_fingerprint: str = "",
@@ -372,6 +376,7 @@ def _tier_child(
         stale_reasons=stale_reasons,
         proof_artifact=proof_artifact,
         result_reused=result_reused,
+        reuse_ticket=reuse_ticket,
         run_id=run_id,
         terminal_status=terminal_status,
         result_fingerprint=result_fingerprint,
@@ -401,6 +406,8 @@ def _routine_child(
     values = dict(declared)
     if evidence_override:
         values.update(dict(evidence_override))
+        values.pop("owner_evidence_ids", None)
+        values.pop("owner_reuse_tickets", None)
     else:
         values.update(
             {
@@ -573,6 +580,7 @@ def build_testmesh_plan(
                 "pm_disposition_missing_item_closure",
                 "parent_review_single_reviewer_packet",
                 "parent_review_fake_ai_contract_recovery",
+                "mechanical_review_reissue_loses_matching_flowguard_result",
                 "terminal_segment_missing",
                 "terminal_segment_duplicate",
                 "terminal_segment_unexpected",
@@ -704,6 +712,10 @@ def build_testmesh_plan(
             result_path="simulations/flowpilot_model_test_alignment_results.json",
             owns_state=("model_test_alignment",),
             owns_side_effects=("coverage_accounting",),
+            owned_leaf_cell_ids=(
+                "background_meta_non_atomic_publication",
+                "parametrized_exact_function_counted_as_duplicate",
+            ),
         ),
         _routine_child(
             "acceptance_integration_cartesian_coverage",

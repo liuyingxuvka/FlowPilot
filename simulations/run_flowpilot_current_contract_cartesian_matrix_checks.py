@@ -391,6 +391,9 @@ def _test_mesh_report(
         expected_source_fingerprint=source_fingerprint(),
         required_scope=evidence_scope,
     )
+    execution_owner_id = (
+        "mta_evidence_test_flowpilot_current_contract_cartesian_matrix_1a96cfe0a215"
+    )
     child_suites = {}
     for owner in required_owners:
         obligations = (
@@ -399,12 +402,14 @@ def _test_mesh_report(
         )
         proof, reuse_ticket, reuse_gaps = derived_owner_proof(
             bundle,
-            owner_id=owner,
+            owner_id=execution_owner_id,
             covered_obligation_ids=obligations,
+            projected_evidence_id=owner,
         )
         passed = proof is not None and reuse_ticket is not None and not reuse_gaps
         child_suites[owner] = {
             "layer": "current_contract_cartesian_matrix",
+            "execution_owner_id": execution_owner_id,
             "result_status": "passed" if passed else "not_run",
             "evidence_current": passed,
             "coverage_boundary": owner,

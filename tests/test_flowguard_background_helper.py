@@ -44,6 +44,11 @@ class FlowGuardBackgroundHelperTests(unittest.TestCase):
         )
 
     def test_command_writes_complete_current_stable_artifact_set(self) -> None:
+        command = (
+            sys.executable,
+            "scripts/run_test_tier.py",
+            "--list-tiers",
+        )
         with tempfile.TemporaryDirectory(prefix="flowguard-background-helper-") as tmp:
             root = Path(tmp)
             exit_code = helper.main(
@@ -53,9 +58,7 @@ class FlowGuardBackgroundHelperTests(unittest.TestCase):
                     "--log-root",
                     str(root),
                     "--",
-                    sys.executable,
-                    "-c",
-                    "import sys; print('out'); print('err', file=sys.stderr)",
+                    *command,
                 ]
             )
             paths = helper.artifact_paths(root, "fixture")
@@ -72,9 +75,7 @@ class FlowGuardBackgroundHelperTests(unittest.TestCase):
                     str(root),
                     "--verify",
                     "--",
-                    sys.executable,
-                    "-c",
-                    "import sys; print('out'); print('err', file=sys.stderr)",
+                    *command,
                 ]
             )
 
@@ -82,18 +83,23 @@ class FlowGuardBackgroundHelperTests(unittest.TestCase):
         self.assertEqual(verify_exit_code, 0)
         self.assertTrue(all_present)
         self.assertEqual(exit_text, "0")
-        self.assertIn("out", out_text)
-        self.assertIn("err", err_text)
+        self.assertIn("formal-submit-adversarial", out_text)
+        self.assertEqual(err_text, "")
         self.assertEqual(meta["status"], "passed")
-        self.assertTrue(meta["source_fingerprint_current"])
+        self.assertTrue(meta["inputs_current"])
+        self.assertTrue(meta["descendant_zero_confirmed"])
         self.assertFalse(meta["proof_reused"])
         self.assertEqual(
-            meta["covered_source_fingerprint_start"],
-            meta["covered_source_fingerprint_end"],
+            meta["covered_input_fingerprints_start"],
+            meta["covered_input_fingerprints_end"],
         )
 
     def test_verify_rejects_stale_source_without_relaunching(self) -> None:
-        command = (sys.executable, "-c", "print('current')")
+        command = (
+            sys.executable,
+            "scripts/run_test_tier.py",
+            "--list-tiers",
+        )
         with tempfile.TemporaryDirectory(prefix="flowguard-background-helper-stale-") as tmp:
             root = Path(tmp)
             self.assertEqual(
@@ -104,7 +110,9 @@ class FlowGuardBackgroundHelperTests(unittest.TestCase):
             )
             paths = helper.artifact_paths(root, "fixture")
             meta = json.loads(paths["meta"].read_text(encoding="utf-8"))
-            meta["covered_source_fingerprint"] = "stale-source"
+            meta["owner_identity"]["covered_input_fingerprint"] = (
+                "stale-owner-input"
+            )
             paths["meta"].write_text(json.dumps(meta), encoding="utf-8")
 
             exit_code = helper.main(

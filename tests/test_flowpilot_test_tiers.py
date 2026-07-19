@@ -12,6 +12,7 @@ import tempfile
 import unittest
 from collections import Counter
 from pathlib import Path
+from types import SimpleNamespace
 from unittest import mock
 
 
@@ -54,6 +55,12 @@ source_fingerprint_module = load_module(
     "flowpilot_test_tier_source_fingerprint",
     ROOT / "scripts" / "test_tier" / "source_fingerprint.py",
 )
+impact_resolution_module = importlib.import_module(
+    "scripts.test_tier.impact_resolution"
+)
+background_supervisor_module = importlib.import_module(
+    "scripts.test_tier.background_supervisor"
+)
 process_liveness_module = load_module(
     "flowpilot_test_process_liveness",
     ROOT / "skills" / "flowpilot" / "assets" / "flowpilot_process_liveness.py",
@@ -61,6 +68,10 @@ process_liveness_module = load_module(
 run_flowguard_background_module = load_module(
     "flowpilot_test_run_flowguard_background",
     ROOT / "scripts" / "run_flowguard_background.py",
+)
+mta_evidence_owner_module = load_module(
+    "flowpilot_test_mta_evidence_owner",
+    ROOT / "scripts" / "test_tier" / "mta_evidence_owner.py",
 )
 
 
@@ -81,6 +92,19 @@ def unittest_k_matches(test_id: str, pattern: str) -> bool:
 
 
 class FlowPilotTestTierTests(unittest.TestCase):
+    @staticmethod
+    def empty_owner_identity() -> dict[str, object]:
+        return {
+            "command_fingerprint": "test-command",
+            "test_source_fingerprint": "test-source",
+            "tested_artifact_fingerprint": "tested-artifact",
+            "dependency_fingerprints": {},
+            "environment_fingerprint": "test-environment",
+            "covered_input_fingerprint": "empty-inputs",
+            "covered_input_fingerprints": {},
+            "covered_obligation_ids": [],
+        }
+
     def command_text(self, tier: str) -> str:
         plan = run_test_tier.plan_for_tier(
             tier,
@@ -101,12 +125,17 @@ class FlowPilotTestTierTests(unittest.TestCase):
                 summary_path.write_text('{"status":"old"}\n', encoding="utf-8")
                 source_fingerprint_module.ROOT = root
                 first = source_fingerprint_module.source_fingerprint()
+                source_path.write_bytes(b"VALUE = 1\r\n")
+                after_transport_line_ending_change = (
+                    source_fingerprint_module.source_fingerprint()
+                )
                 summary_path.write_text('{"status":"new"}\n', encoding="utf-8")
                 after_result_change = source_fingerprint_module.source_fingerprint()
                 source_path.write_text("VALUE = 2\n", encoding="utf-8")
                 after_source_change = source_fingerprint_module.source_fingerprint()
 
             self.assertEqual(first, after_result_change)
+            self.assertEqual(first, after_transport_line_ending_change)
             self.assertNotEqual(first, after_source_change)
         finally:
             source_fingerprint_module.ROOT = original_root
@@ -411,110 +440,79 @@ class FlowPilotTestTierTests(unittest.TestCase):
     def test_verify_background_tier_accepts_current_single_command_artifacts(self) -> None:
         command = run_test_tier.TierCommand(
             name="single_current",
-            command=(sys.executable, "-c", "pass"),
+            command=(
+                sys.executable,
+                "scripts/test_tier/source_fingerprint.py",
+            ),
             description="single current background command",
         )
         with tempfile.TemporaryDirectory(prefix="flowpilot-tier-verify-single-") as tmp_name:
             root = Path(tmp_name)
-            paths = run_test_tier.artifact_paths(root, command.name)
-            for key in ("out", "err", "combined"):
-                paths[key].write_text("verified\n", encoding="utf-8")
-            paths["exit"].write_text("0\n", encoding="utf-8")
-            paths["meta"].write_text(
-                json.dumps(
-                    {
-                        "name": command.name,
-                        "command": list(command.command),
-                        "status": "passed",
-                        "exit_code": 0,
-                        "covered_source_fingerprint": "source-current",
-                    }
-                ),
-                encoding="utf-8",
+            exit_code = run_test_tier.run_background_supervisor(
+                "single",
+                (command,),
+                log_root=root,
+                max_parallel=1,
+                seed_baseline=True,
+                previous_manifest_path=None,
+                previous_manifest_sha256="",
             )
-
             report = run_test_tier.verify_background_tier(
                 "single",
                 (command,),
                 log_root=root,
-                expected_source_fingerprint="source-current",
             )
 
+        self.assertEqual(exit_code, 0)
         self.assertTrue(report["ok"], report)
-        self.assertFalse(report["supervisor_present"])
         self.assertEqual(report["verified_count"], 1)
 
-    def test_verify_background_tier_rejects_stale_or_incomplete_supervisor_evidence(self) -> None:
+    def test_verify_background_tier_rejects_incomplete_exact_owner_evidence(self) -> None:
         commands = tuple(
             run_test_tier.TierCommand(
                 name=f"child_{index}",
-                command=(sys.executable, "-c", "pass"),
+                command=(
+                    sys.executable,
+                    "scripts/test_tier/source_fingerprint.py",
+                ),
                 description="current child",
             )
             for index in range(2)
         )
         with tempfile.TemporaryDirectory(prefix="flowpilot-tier-verify-supervisor-") as tmp_name:
             root = Path(tmp_name)
-            for command in commands:
-                paths = run_test_tier.artifact_paths(root, command.name)
-                for key in ("out", "err", "combined"):
-                    paths[key].write_text("verified\n", encoding="utf-8")
-                paths["exit"].write_text("0\n", encoding="utf-8")
-                paths["meta"].write_text(
-                    json.dumps(
-                        {
-                            "name": command.name,
-                            "command": list(command.command),
-                            "status": "passed",
-                            "exit_code": 0,
-                            "covered_source_fingerprint": "source-old",
-                        }
-                    ),
-                    encoding="utf-8",
-                )
-            supervisor_paths = run_test_tier.artifact_paths(
-                root,
-                run_test_tier.background_supervisor_name("multi"),
+            exit_code = run_test_tier.run_background_supervisor(
+                "multi",
+                commands,
+                log_root=root,
+                max_parallel=2,
+                seed_baseline=True,
+                previous_manifest_path=None,
+                previous_manifest_sha256="",
             )
-            for key in ("out", "err", "combined"):
-                supervisor_paths[key].write_text("verified\n", encoding="utf-8")
-            supervisor_paths["exit"].write_text("0\n", encoding="utf-8")
-            supervisor_paths["meta"].write_text(
-                json.dumps(
-                    {
-                        "status": "passed",
-                        "command_count": 2,
-                        "running": [],
-                        "completed": [
-                            {"name": command.name, "ok": True} for command in commands
-                        ],
-                        "covered_source_fingerprint_start": "source-old",
-                        "covered_source_fingerprint_end": "source-old",
-                        "source_fingerprint_current": True,
-                    }
-                ),
-                encoding="utf-8",
-            )
+            self.assertEqual(exit_code, 0)
             run_test_tier.artifact_paths(root, commands[1].name)["combined"].unlink()
 
             report = run_test_tier.verify_background_tier(
                 "multi",
                 commands,
                 log_root=root,
-                expected_source_fingerprint="source-current",
             )
 
         self.assertFalse(report["ok"])
-        self.assertIn("supervisor_source_fingerprint_stale", report["failures"])
         self.assertTrue(
-            any("covered_source_fingerprint_stale" in failure for failure in report["failures"])
+            any(
+                "executed_owner_missing_artifacts:combined" in failure
+                for failure in report["failures"]
+            )
         )
-        self.assertTrue(any("missing_artifacts:combined" in failure for failure in report["failures"]))
 
     def test_fast_tier_excludes_release_coverage_and_full_regression(self) -> None:
         command_names = [command.name for command in run_test_tier.commands_for_tier("fast")]
         text = self.command_text("fast")
         self.assertIn("run_flowpilot_slow_test_contract_checks.py", text)
+        self.assertEqual(text.count("run_flowpilot_field_contract_checks.py"), 1)
+        self.assertIn("flowguard_field_contracts", command_names)
         self.assertIn("run_flowpilot_model_test_alignment_checks.py", text)
         self.assertIn("run_flowpilot_contract_exhaustion_mesh_checks.py", text)
         self.assertIn("run_flowpilot_cartesian_control_plane_exhaustion_checks.py", text)
@@ -1012,6 +1010,8 @@ class FlowPilotTestTierTests(unittest.TestCase):
                         description="child entrypoint fixture",
                     ),
                     log_root=Path(tmp_name),
+                    impact_plan_id="test-impact-plan",
+                    owner_identity_value=self.empty_owner_identity(),
                 )
         finally:
             launch_globals["subprocess"].Popen = original_popen
@@ -1021,7 +1021,9 @@ class FlowPilotTestTierTests(unittest.TestCase):
         self.assertEqual(Path(args[1]).resolve(), ROOT / "scripts" / "run_test_tier.py")
         self.assertIn("--background-child", args)
         self.assertIn("--background-child-timeout-seconds", args)
-        self.assertIn("--covered-source-fingerprint", args)
+        self.assertIn("--impact-plan-id", args)
+        self.assertIn("--owner-identity-path", args)
+        self.assertNotIn("--covered-source-fingerprint", args)
 
     def test_unittest_shard_runner_uses_or_semantics_and_rejects_stale_patterns(self) -> None:
         good = subprocess.run(
@@ -1066,6 +1068,8 @@ class FlowPilotTestTierTests(unittest.TestCase):
                 "timeout_fixture",
                 (sys.executable, "-c", "import time; time.sleep(5)"),
                 log_root=Path(tmp_name),
+                impact_plan_id="test-impact-plan",
+                owner_identity_value=self.empty_owner_identity(),
                 timeout_seconds=1,
             )
             paths = run_test_tier.artifact_paths(Path(tmp_name), "timeout_fixture")
@@ -1074,7 +1078,8 @@ class FlowPilotTestTierTests(unittest.TestCase):
             self.assertEqual(exit_code, run_test_tier.BACKGROUND_CHILD_TIMEOUT_EXIT_CODE)
             self.assertEqual(meta["status"], "failed")
             self.assertTrue(meta["timed_out"])
-            self.assertTrue(meta["covered_source_fingerprint"])
+            self.assertEqual(meta["impact_plan_id"], "test-impact-plan")
+            self.assertTrue(meta["inputs_current"])
             self.assertEqual(meta["failure_reason"], "background_child_timeout")
             self.assertTrue(meta["descendant_zero_confirmed"])
             self.assertTrue(meta["cleanup_proof"]["cleanup_confirmed"])
@@ -1082,6 +1087,220 @@ class FlowPilotTestTierTests(unittest.TestCase):
                 paths["exit"].read_text(encoding="utf-8").strip(),
                 str(run_test_tier.BACKGROUND_CHILD_TIMEOUT_EXIT_CODE),
             )
+
+    def test_background_child_publishes_terminal_meta_before_exit_marker(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="flowpilot-tier-terminal-order-") as tmp_name:
+            log_root = Path(tmp_name)
+            paths = run_test_tier.artifact_paths(
+                log_root,
+                "terminal_order_fixture",
+            )
+            implementation_module = sys.modules[
+                run_test_tier._run_background_child_impl.__module__
+            ]
+            original_write_json = implementation_module._write_json
+            exit_seen_during_terminal_meta: list[bool] = []
+
+            def observe_terminal_meta(path, payload):  # type: ignore[no-untyped-def]
+                if (
+                    path == paths["meta"]
+                    and payload.get("status") in {"passed", "failed", "cleanup-unconfirmed"}
+                ):
+                    exit_seen_during_terminal_meta.append(paths["exit"].exists())
+                return original_write_json(path, payload)
+
+            with mock.patch.object(
+                implementation_module,
+                "_write_json",
+                side_effect=observe_terminal_meta,
+            ):
+                exit_code = run_test_tier.run_background_child(
+                    "terminal_order_fixture",
+                    (sys.executable, "-c", "print('terminal-order')"),
+                    log_root=log_root,
+                    impact_plan_id="test-impact-plan",
+                    owner_identity_value=self.empty_owner_identity(),
+                    timeout_seconds=30,
+                )
+
+            self.assertEqual(exit_code, 0)
+            self.assertEqual(exit_seen_during_terminal_meta, [False])
+            self.assertEqual(paths["exit"].read_text(encoding="utf-8"), "0\n")
+
+    def test_background_supervisor_publishes_terminal_meta_before_exit_marker(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="flowpilot-supervisor-terminal-order-") as tmp_name:
+            log_root = Path(tmp_name)
+            paths = run_test_tier.artifact_paths(
+                log_root,
+                run_test_tier.background_supervisor_name("terminal-order"),
+            )
+            meta = {
+                "status": "passed",
+                "end_time": "2026-07-19T00:00:00+00:00",
+                "exit_code": 0,
+                "running": [],
+            }
+            original_publish_exit = background_supervisor_module._publish_exit
+            observed_terminal_meta: list[dict[str, object]] = []
+
+            def observe_exit(path, content):  # type: ignore[no-untyped-def]
+                observed_terminal_meta.append(
+                    json.loads(paths["meta"].read_text(encoding="utf-8"))
+                )
+                return original_publish_exit(path, content)
+
+            with mock.patch.object(
+                background_supervisor_module,
+                "_publish_exit",
+                side_effect=observe_exit,
+            ):
+                background_supervisor_module._finalize_supervisor(
+                    paths,
+                    meta,
+                    exit_code=0,
+                )
+
+            self.assertEqual(observed_terminal_meta, [meta])
+            self.assertEqual(paths["exit"].read_text(encoding="utf-8"), "0\n")
+
+    def test_background_meta_json_is_published_atomically(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="flowpilot-tier-atomic-meta-") as tmp_name:
+            path = Path(tmp_name) / "owner.meta.json"
+            path.write_text('{"status":"old"}\n', encoding="utf-8")
+            implementation_module = sys.modules[
+                run_test_tier._run_background_child_impl.__module__
+            ]
+            original_replace = Path.replace
+            observed: list[dict[str, object]] = []
+
+            def inspect_before_replace(staging_path, destination):  # type: ignore[no-untyped-def]
+                observed.append(
+                    {
+                        "destination": json.loads(
+                            Path(destination).read_text(encoding="utf-8")
+                        ),
+                        "staging": json.loads(
+                            Path(staging_path).read_text(encoding="utf-8")
+                        ),
+                    }
+                )
+                return original_replace(staging_path, destination)
+
+            with mock.patch.object(
+                Path,
+                "replace",
+                autospec=True,
+                side_effect=inspect_before_replace,
+            ):
+                implementation_module._write_json(
+                    path,
+                    {"status": "passed", "completed": 217},
+                )
+
+            self.assertEqual(
+                observed,
+                [
+                    {
+                        "destination": {"status": "old"},
+                        "staging": {"status": "passed", "completed": 217},
+                    }
+                ],
+            )
+            self.assertEqual(
+                json.loads(path.read_text(encoding="utf-8")),
+                {"status": "passed", "completed": 217},
+            )
+
+    def test_background_meta_atomic_replace_retries_windows_reader_collision(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="flowpilot-tier-atomic-retry-") as tmp_name:
+            path = Path(tmp_name) / "owner.meta.json"
+            path.write_text('{"status":"old"}\n', encoding="utf-8")
+            implementation_module = sys.modules[
+                run_test_tier._run_background_child_impl.__module__
+            ]
+            original_replace = Path.replace
+            attempts: list[int] = []
+
+            def collide_once(staging_path, destination):  # type: ignore[no-untyped-def]
+                attempts.append(len(attempts) + 1)
+                if len(attempts) == 1:
+                    self.assertEqual(
+                        json.loads(Path(destination).read_text(encoding="utf-8")),
+                        {"status": "old"},
+                    )
+                    raise PermissionError("simulated Windows reader collision")
+                return original_replace(staging_path, destination)
+
+            with (
+                mock.patch.object(
+                    Path,
+                    "replace",
+                    autospec=True,
+                    side_effect=collide_once,
+                ),
+                mock.patch.object(implementation_module.time, "sleep"),
+            ):
+                implementation_module._write_json(
+                    path,
+                    {"status": "passed", "completed": 217},
+                )
+
+            self.assertEqual(attempts, [1, 2])
+            self.assertEqual(
+                json.loads(path.read_text(encoding="utf-8")),
+                {"status": "passed", "completed": 217},
+            )
+
+    def test_mta_exact_name_selection_accepts_parameter_items_at_one_definition(self) -> None:
+        selector = mta_evidence_owner_module._ExactNameSelection(
+            {"test_parametrized_contract"}
+        )
+        items = [
+            SimpleNamespace(
+                name="test_parametrized_contract[first]",
+                location=("tests/test_contract.py", 41, "test_parametrized_contract[first]"),
+            ),
+            SimpleNamespace(
+                name="test_parametrized_contract[second]",
+                location=("tests/test_contract.py", 41, "test_parametrized_contract[second]"),
+            ),
+        ]
+        config = mock.Mock()
+
+        selector.pytest_collection_modifyitems(None, config, items)
+
+        self.assertEqual(len(items), 2)
+        self.assertEqual(selector.counts["test_parametrized_contract"], 2)
+        self.assertEqual(
+            selector.definition_locations["test_parametrized_contract"],
+            {("tests/test_contract.py", 41)},
+        )
+
+    def test_mta_exact_name_selection_rejects_same_name_at_two_definitions(self) -> None:
+        selector = mta_evidence_owner_module._ExactNameSelection(
+            {"test_duplicate_contract"}
+        )
+        items = [
+            SimpleNamespace(
+                name="test_duplicate_contract",
+                location=("tests/test_contract.py", 41, "test_duplicate_contract"),
+            ),
+            SimpleNamespace(
+                name="test_duplicate_contract",
+                location=("tests/test_contract.py", 77, "test_duplicate_contract"),
+            ),
+        ]
+        config = mock.Mock()
+
+        selector.pytest_collection_modifyitems(None, config, items)
+
+        self.assertEqual(
+            selector.definition_locations["test_duplicate_contract"],
+            {
+                ("tests/test_contract.py", 41),
+                ("tests/test_contract.py", 77),
+            },
+        )
 
     def test_background_child_binds_windows_venv_to_direct_current_owner(self) -> None:
         with tempfile.TemporaryDirectory(prefix="flowpilot-tier-owner-") as tmp_name:
@@ -1093,6 +1312,8 @@ class FlowPilotTestTierTests(unittest.TestCase):
                     "import json,sys;print(json.dumps({'executable':sys.executable}))",
                 ),
                 log_root=Path(tmp_name),
+                impact_plan_id="test-impact-plan",
+                owner_identity_value=self.empty_owner_identity(),
                 timeout_seconds=5,
             )
             paths = run_test_tier.artifact_paths(
@@ -1135,6 +1356,8 @@ class FlowPilotTestTierTests(unittest.TestCase):
                     ),
                 ),
                 log_root=Path(tmp_name),
+                impact_plan_id="test-impact-plan",
+                owner_identity_value=self.empty_owner_identity(),
                 timeout_seconds=1,
             )
             paths = run_test_tier.artifact_paths(
@@ -1201,6 +1424,8 @@ class FlowPilotTestTierTests(unittest.TestCase):
                     ),
                 ),
                 log_root=Path(tmp_name),
+                impact_plan_id="test-impact-plan",
+                owner_identity_value=self.empty_owner_identity(),
                 timeout_seconds=5,
             )
             paths = run_test_tier.artifact_paths(
@@ -1232,6 +1457,8 @@ class FlowPilotTestTierTests(unittest.TestCase):
                     ),
                 ),
                 log_root=Path(tmp_name),
+                impact_plan_id="test-impact-plan",
+                owner_identity_value=self.empty_owner_identity(),
                 timeout_seconds=5,
             )
             paths = run_test_tier.artifact_paths(
@@ -1264,7 +1491,8 @@ class FlowPilotTestTierTests(unittest.TestCase):
                     *,
                     log_root,
                     timeout_seconds=None,
-                    source_fingerprint_value=None,
+                    impact_plan_id=None,
+                    owner_identity_value=None,
                 ):
                     raise RuntimeError(f"artifact locked for {command.name}")
 
@@ -1274,12 +1502,18 @@ class FlowPilotTestTierTests(unittest.TestCase):
                     [
                         run_test_tier.TierCommand(
                             name="locked_child",
-                            command=(sys.executable, "-c", "pass"),
+                            command=(
+                                sys.executable,
+                                "scripts/test_tier/source_fingerprint.py",
+                            ),
                             description="locked child fixture",
                         )
                     ],
                     log_root=Path(tmp_name),
                     max_parallel=1,
+                    seed_baseline=True,
+                    previous_manifest_path=None,
+                    previous_manifest_sha256="",
                 )
 
                 paths = run_test_tier.artifact_paths(
@@ -1296,30 +1530,483 @@ class FlowPilotTestTierTests(unittest.TestCase):
         finally:
             run_test_tier._launch_background = original_launch
 
-    def test_background_supervisor_fails_when_covered_source_changes(self) -> None:
-        original_fingerprint = run_test_tier.source_fingerprint
-        values = iter(("source-at-start", "source-at-end"))
+    def test_unmapped_changed_input_blocks_without_blanket_execution(self) -> None:
+        command = run_test_tier.TierCommand(
+            name="mapped_owner",
+            command=(sys.executable, "scripts/test_tier/source_fingerprint.py"),
+            description="mapped owner",
+        )
+        contract = impact_resolution_module.build_owner_contracts((command,))[0]
+        current_snapshot = source_fingerprint_module.source_snapshot()
+        current_files = dict(current_snapshot["files"])
+        current_files["unmapped/current_contract.py"] = "f" * 64
+        current_snapshot = {
+            **current_snapshot,
+            "files": current_files,
+            "fingerprint": "current-snapshot",
+        }
+        previous_manifest = {
+            "schema_version": impact_resolution_module.EVIDENCE_MANIFEST_SCHEMA_VERSION,
+            "snapshot": {
+                "schema_version": "flowpilot.source_snapshot.v1",
+                "fingerprint": "previous-snapshot",
+                "files": {
+                    key: value
+                    for key, value in current_files.items()
+                    if key != "unmapped/current_contract.py"
+                },
+            },
+            "owners": {},
+        }
+        with mock.patch.object(
+            impact_resolution_module,
+            "source_snapshot",
+            return_value=current_snapshot,
+        ):
+            plan = impact_resolution_module.resolve_impact(
+                requested_scope="mapped",
+                tier_commands=(command,),
+                all_owner_contracts=(contract,),
+                previous_manifest=previous_manifest,
+            )
+
+        self.assertIn(
+            "impact_mapping_missing:unmapped/current_contract.py",
+            plan.blockers,
+        )
+        self.assertEqual(plan.decisions[0].action, "blocked")
+        self.assertEqual(plan.executable_owner_ids, ())
+
+    def test_owner_output_path_is_not_registered_as_covered_input(self) -> None:
+        output_path = ROOT / "tmp" / "test_results" / "owner_output_fixture.json"
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text('{"status":"previous"}\n', encoding="utf-8")
         try:
-            run_test_tier.source_fingerprint = lambda: next(values)
-            with tempfile.TemporaryDirectory(prefix="flowpilot-tier-source-change-") as tmp_name:
-                exit_code = run_test_tier.run_background_supervisor(
-                    "collect",
-                    [],
-                    log_root=Path(tmp_name),
-                    max_parallel=1,
-                )
-
-                paths = run_test_tier.artifact_paths(
-                    Path(tmp_name),
-                    run_test_tier.background_supervisor_name("collect"),
-                )
-                meta = json.loads(paths["meta"].read_text(encoding="utf-8"))
-
-            self.assertEqual(exit_code, 1)
-            self.assertFalse(meta["source_fingerprint_current"])
-            self.assertEqual(meta["failure_reason"], "covered_source_changed_during_tier")
+            command = run_test_tier.TierCommand(
+                name="output_owner",
+                command=(
+                    sys.executable,
+                    "scripts/test_tier/source_fingerprint.py",
+                    "--json-out",
+                    output_path.relative_to(ROOT).as_posix(),
+                ),
+                description="output path exclusion owner",
+            )
+            contract = impact_resolution_module.build_owner_contracts((command,))[0]
         finally:
-            run_test_tier.source_fingerprint = original_fingerprint
+            output_path.unlink(missing_ok=True)
+
+        self.assertIn(
+            "scripts/test_tier/source_fingerprint.py",
+            contract.covered_inputs,
+        )
+        self.assertNotIn(
+            "tmp/test_results/owner_output_fixture.json",
+            contract.covered_inputs,
+        )
+
+    def test_mta_evidence_owner_distinguishes_module_from_exact_method(self) -> None:
+        module_row = mock.Mock(
+            command=(
+                "python -m unittest "
+                "tests.test_flowpilot_router_runtime_route_mutation"
+            ),
+            test_name="TestRouteMutationChildContractFixture",
+        )
+        method_row = mock.Mock(
+            command=(
+                "python -m unittest "
+                "tests.router_runtime.route_mutation_parent_backward."
+                "RouteMutationParentBackwardRuntimeTests."
+                "test_parent_backward_non_continue_decision_mutates_route_and_requires_rerun"
+            ),
+            test_name=(
+                "test_parent_backward_non_continue_decision_mutates_route_and_requires_rerun"
+            ),
+        )
+
+        self.assertIsNone(
+            mta_evidence_owner_module._executable_test_name(module_row)
+        )
+        self.assertEqual(
+            mta_evidence_owner_module._executable_test_name(method_row),
+            "test_parent_backward_non_continue_decision_mutates_route_and_requires_rerun",
+        )
+
+    def test_mta_evidence_supplements_run_after_ordinary_all_owners(self) -> None:
+        commands = run_test_tier.commands_for_tier("all")
+        supplements = [
+            command
+            for command in commands
+            if command.name.startswith("mta_evidence_")
+        ]
+        ordinary = [
+            command
+            for command in commands
+            if not command.name.startswith("mta_evidence_")
+        ]
+
+        self.assertTrue(supplements)
+        self.assertTrue(all(command.background_stage == 4 for command in supplements))
+        self.assertLess(
+            max(command.background_stage for command in ordinary),
+            min(command.background_stage for command in supplements),
+        )
+
+    def test_shared_control_plane_input_selects_only_its_declared_owner(self) -> None:
+        owner = run_test_tier.TierCommand(
+            name="test_tier_runner",
+            command=(
+                sys.executable,
+                "-m",
+                "pytest",
+                "tests/test_flowpilot_test_tiers.py",
+                "-q",
+            ),
+            description="declared control-plane owner",
+        )
+        sibling = run_test_tier.TierCommand(
+            name="unaffected_sibling",
+            command=(sys.executable, "scripts/test_tier/source_fingerprint.py"),
+            description="unaffected sibling",
+        )
+        contracts = {
+            contract.owner_id: contract
+            for contract in impact_resolution_module.build_owner_contracts(
+                (owner, sibling)
+            )
+        }
+
+        self.assertIn(
+            "scripts/run_test_tier.py",
+            contracts["test_tier_runner"].covered_inputs,
+        )
+        self.assertNotIn(
+            "scripts/run_test_tier.py",
+            contracts["unaffected_sibling"].covered_inputs,
+        )
+
+    def test_release_closure_owners_bind_one_exact_model_obligation(self) -> None:
+        contracts = {
+            contract.owner_id: contract
+            for contract in impact_resolution_module.build_owner_contracts(
+                run_test_tier.commands_for_tier("evidence-closure")
+            )
+        }
+        expected = {
+            "behavior_commitment_risk_current_evidence": (
+                "model-receipt:flowpilot_053_ppa_maintenance",
+            ),
+            "current_contract_cartesian_current_evidence": (
+                "model-receipt:flowpilot_current_contract_cartesian_matrix",
+            ),
+            "model_test_alignment_current_evidence": (
+                "model-receipt:flowpilot_model_test_alignment",
+            ),
+        }
+
+        for owner_id, obligation_ids in expected.items():
+            with self.subTest(owner_id=owner_id):
+                self.assertEqual(
+                    contracts[owner_id].covered_obligation_ids,
+                    obligation_ids,
+                )
+
+    def test_package_submodule_import_selects_its_real_adversarial_owner(self) -> None:
+        contracts = {
+            contract.owner_id: contract
+            for contract in impact_resolution_module.build_owner_contracts(
+                run_test_tier.commands_for_tier("formal-submit-adversarial")
+            )
+        }
+        fake_e2e_path = (
+            "skills/flowpilot/assets/flowpilot_core_runtime/fake_e2e.py"
+        )
+        owners = {
+            owner_id
+            for owner_id, contract in contracts.items()
+            if fake_e2e_path in contract.covered_inputs
+        }
+
+        self.assertEqual(
+            owners,
+            {
+                "complete_workstream_fake_ai_execution_receipts",
+                "formal_ai_submit_adversarial_runner",
+                "formal_ai_submit_adversarial_tests",
+            },
+        )
+
+    def test_dynamic_current_contract_inputs_have_exact_non_global_owners(self) -> None:
+        contracts = {
+            contract.owner_id: contract
+            for contract in impact_resolution_module.build_owner_contracts(
+                run_test_tier.commands_for_tier("all")
+            )
+        }
+        expected = {
+            "scripts/test_tier/fast_commands.py": {"test_tier_runner"},
+            "simulations/run_flowpilot_model_mesh_checks.py": {
+                "mta_evidence_test_flowpilot_model_mesh_coverage_receipts_6c11f605fb1c"
+            },
+            "skills/flowpilot/.skillguard/check-manifest.json": {
+                "flowguard_skillguard_current_contract"
+            },
+            "skills/flowpilot/.skillguard/compiled-contract.json": {
+                "flowguard_skillguard_current_contract"
+            },
+        }
+
+        for path, expected_owner_ids in expected.items():
+            with self.subTest(path=path):
+                actual_owner_ids = {
+                    owner_id
+                    for owner_id, contract in contracts.items()
+                    if path in contract.covered_inputs
+                }
+                self.assertEqual(actual_owner_ids, expected_owner_ids)
+
+    def test_background_supervisor_uses_one_cross_tier_owner_graph(self) -> None:
+        contracts = {
+            contract.owner_id: contract
+            for contract in background_supervisor_module._global_owner_contracts()
+        }
+
+        self.assertIn("test_tier_runner", contracts)
+        self.assertIn(
+            "mta_evidence_test_flowpilot_model_mesh_coverage_receipts_6c11f605fb1c",
+            contracts,
+        )
+        self.assertIn("flowguard_skillguard_current_contract", contracts)
+        self.assertIn(
+            "scripts/test_tier/fast_commands.py",
+            contracts["test_tier_runner"].covered_inputs,
+        )
+
+    def test_flowguard_background_wrapper_does_not_pollute_payload_owner(self) -> None:
+        release_contracts = {
+            contract.owner_id: contract
+            for contract in impact_resolution_module.build_owner_contracts(
+                run_test_tier.commands_for_tier("release")
+            )
+        }
+        all_contracts = {
+            contract.owner_id: contract
+            for contract in impact_resolution_module.build_owner_contracts(
+                run_test_tier.commands_for_tier("all")
+            )
+        }
+        infrastructure_paths = {
+            "scripts/run_test_tier.py",
+            "scripts/test_tier/background_supervisor.py",
+            "scripts/test_tier/impact_resolution.py",
+        }
+
+        for owner_id, payload_path in (
+            ("meta_full", "simulations/run_meta_checks.py"),
+            ("capability_full", "simulations/run_capability_checks.py"),
+        ):
+            with self.subTest(owner_id=owner_id):
+                covered = set(release_contracts[owner_id].covered_inputs)
+                self.assertIn(
+                    "scripts/run_flowguard_background.py",
+                    covered,
+                )
+                self.assertIn(payload_path, covered)
+                self.assertTrue(infrastructure_paths.isdisjoint(covered))
+
+        test_tier_inputs = set(all_contracts["test_tier_runner"].covered_inputs)
+        self.assertTrue(infrastructure_paths <= test_tier_inputs)
+        self.assertIn(
+            "scripts/run_flowguard_background.py",
+            test_tier_inputs,
+        )
+        self.assertIn(
+            "tests/test_flowguard_background_helper.py",
+            test_tier_inputs,
+        )
+
+    def test_execution_wrapper_scope_reduction_reuses_payload_proof(self) -> None:
+        release_contracts = {
+            contract.owner_id: contract
+            for contract in impact_resolution_module.build_owner_contracts(
+                run_test_tier.commands_for_tier("release")
+            )
+        }
+        contract = release_contracts["meta_full"]
+        current_identity = impact_resolution_module.owner_identity(contract)
+        former_inputs = set(contract.covered_inputs) | set(
+            impact_resolution_module._flowguard_background_wrapper_import_inputs()
+        )
+        former_contract = impact_resolution_module.OwnerContract(
+            owner_id=contract.owner_id,
+            command=contract.command,
+            covered_inputs=tuple(sorted(former_inputs)),
+            covered_obligation_ids=contract.covered_obligation_ids,
+            covered_evidence_ids=contract.covered_evidence_ids,
+            dependency_owner_ids=contract.dependency_owner_ids,
+        )
+        former_identity = impact_resolution_module.owner_identity(former_contract)
+        proof = impact_resolution_module.ProofArtifactRef(
+            artifact_id="proof.meta_full.current",
+            producer_route="flowpilot.test-tier.selective-execution",
+            command=" ".join(contract.command),
+            result_path="tmp/flowguard_background/run_meta_checks.combined.txt",
+            result_status="passed",
+            exit_code=0,
+            artifact_fingerprints={"combined": "a" * 64},
+            covered_obligation_ids=contract.covered_obligation_ids,
+            assertion_scope="external_contract",
+            current=True,
+            route_evidence_current=True,
+            progress_only=False,
+            metadata={"result_fingerprint": "b" * 64},
+        )
+        snapshot = source_fingerprint_module.source_snapshot()
+        previous_manifest = {
+            "schema_version": (
+                impact_resolution_module.EVIDENCE_MANIFEST_SCHEMA_VERSION
+            ),
+            "snapshot": snapshot,
+            "owners": {
+                contract.owner_id: {
+                    "owner_id": contract.owner_id,
+                    "result_status": "passed",
+                    "result_reused": False,
+                    "identity": former_identity.to_dict(),
+                    "result_fingerprint": "b" * 64,
+                    "proof_artifact": proof.to_dict(),
+                    "reuse_ticket": None,
+                }
+            },
+        }
+        with mock.patch.object(
+            impact_resolution_module,
+            "source_snapshot",
+            return_value=snapshot,
+        ):
+            plan = impact_resolution_module.resolve_impact(
+                requested_scope="release",
+                tier_commands=(
+                    next(
+                        command
+                        for command in run_test_tier.commands_for_tier("release")
+                        if command.name == contract.owner_id
+                    ),
+                ),
+                all_owner_contracts=(contract,),
+                previous_manifest=previous_manifest,
+                previous_manifest_path="evidence.json",
+                previous_manifest_sha256="c" * 64,
+            )
+
+        self.assertFalse(plan.blockers)
+        self.assertEqual(plan.decisions[0].identity, current_identity)
+        self.assertEqual(plan.decisions[0].action, "reuse")
+        self.assertEqual(
+            plan.decisions[0].reason_codes,
+            ("execution_wrapper_scope_reduction_reused",),
+        )
+        self.assertEqual(plan.executable_owner_ids, ())
+
+    def test_exact_owner_identity_reuses_v4_proof_without_execution(self) -> None:
+        command = run_test_tier.TierCommand(
+            name="reusable_owner",
+            command=(sys.executable, "scripts/test_tier/source_fingerprint.py"),
+            description="reusable owner",
+        )
+        contract = impact_resolution_module.build_owner_contracts((command,))[0]
+        identity = impact_resolution_module.owner_identity(contract)
+        snapshot = source_fingerprint_module.source_snapshot()
+        proof = impact_resolution_module.ProofArtifactRef(
+            artifact_id="proof.reusable_owner.current",
+            producer_route="flowpilot.test-tier.selective-execution",
+            command=" ".join(command.command),
+            result_path="tmp/test_background/reusable_owner.combined.txt",
+            result_status="passed",
+            exit_code=0,
+            artifact_fingerprints={"combined": "a" * 64},
+            covered_obligation_ids=contract.covered_obligation_ids,
+            assertion_scope="external_contract",
+            current=True,
+            route_evidence_current=True,
+            progress_only=False,
+            metadata={"result_fingerprint": "b" * 64},
+        )
+        previous_manifest = {
+            "schema_version": impact_resolution_module.EVIDENCE_MANIFEST_SCHEMA_VERSION,
+            "snapshot": snapshot,
+            "owners": {
+                command.name: {
+                    "owner_id": command.name,
+                    "result_status": "passed",
+                    "result_reused": False,
+                    "identity": identity.to_dict(),
+                    "result_fingerprint": "b" * 64,
+                    "proof_artifact": proof.to_dict(),
+                    "reuse_ticket": None,
+                }
+            },
+        }
+        with mock.patch.object(
+            impact_resolution_module,
+            "source_snapshot",
+            return_value=snapshot,
+        ):
+            plan = impact_resolution_module.resolve_impact(
+                requested_scope="reusable",
+                tier_commands=(command,),
+                all_owner_contracts=(contract,),
+                previous_manifest=previous_manifest,
+                previous_manifest_path="evidence.json",
+                previous_manifest_sha256="c" * 64,
+            )
+
+        self.assertFalse(plan.blockers)
+        self.assertEqual(plan.decisions[0].action, "reuse")
+        self.assertIsNotNone(plan.decisions[0].reuse_ticket)
+        self.assertEqual(plan.executable_owner_ids, ())
+        self.assertEqual(plan.reused_owner_ids, (command.name,))
+
+    def test_owner_checkpoint_blocks_cross_tier_missing_owners_instead_of_running_them(self) -> None:
+        owner = run_test_tier.TierCommand(
+            name="checkpoint_owner",
+            command=(sys.executable, "scripts/test_tier/source_fingerprint.py"),
+            description="owner present in the checkpoint",
+        )
+        foreign_tier_owner = run_test_tier.TierCommand(
+            name="foreign_tier_owner",
+            command=(sys.executable, "scripts/test_tier/verification.py"),
+            description="owner outside the checkpoint scope",
+        )
+        all_contracts = impact_resolution_module.build_owner_contracts(
+            (owner, foreign_tier_owner)
+        )
+        checkpoint = {
+            "schema_version": impact_resolution_module.EVIDENCE_MANIFEST_SCHEMA_VERSION,
+            "manifest_kind": "flowpilot.owner_checkpoint",
+            "phase": "checkpoint",
+            "claim_scope": "owner_reuse_only",
+            "snapshot": source_fingerprint_module.source_snapshot(),
+            "owners": {owner.name: {}},
+        }
+
+        plan = impact_resolution_module.resolve_impact(
+            requested_scope="foreign-tier",
+            tier_commands=(foreign_tier_owner,),
+            all_owner_contracts=all_contracts,
+            previous_manifest=checkpoint,
+            previous_manifest_path="checkpoint.json",
+            previous_manifest_sha256="d" * 64,
+        )
+
+        self.assertIn(
+            "checkpoint_owner_out_of_scope:foreign_tier_owner",
+            plan.blockers,
+        )
+        self.assertEqual(plan.executable_owner_ids, ())
+        self.assertEqual(plan.reused_owner_ids, ())
+        self.assertEqual(plan.decisions[0].action, "blocked")
 
     def test_dedicated_material_modeling_tier_is_not_a_current_public_tier(self) -> None:
         self.assertFalse((ROOT / "tests" / "router_runtime" / "material_modeling.py").exists())
@@ -1386,9 +2073,9 @@ class FlowPilotTestTierTests(unittest.TestCase):
             command = list(release_by_name[command_name].command)
             self.assertIn("scripts/run_flowguard_background.py", command)
             self.assertIn(receipt_name, command)
-            self.assertIn("--force", command)
+            self.assertNotIn("--force", command)
             self.assertNotIn("--verify", command)
-            self.assertIn("Sole layered-full", release_by_name[command_name].description)
+            self.assertIn("impact plan", release_by_name[command_name].description)
         verification_contract = (
             ROOT
             / "openspec"
@@ -1397,8 +2084,12 @@ class FlowPilotTestTierTests(unittest.TestCase):
             / "verification-contract.yaml"
         ).read_text(encoding="utf-8")
         for receipt_name in ("run_meta_checks", "run_capability_checks"):
-            self.assertIn(
-                f"--name, {receipt_name}, --verify",
+            self.assertNotIn(
+                f"--name, {receipt_name}, --verify, --, python",
+                verification_contract,
+            )
+            self.assertNotIn(
+                f"{receipt_name}, --verify, --, python",
                 verification_contract,
             )
 

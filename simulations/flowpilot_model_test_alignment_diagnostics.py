@@ -648,10 +648,10 @@ def _bundle_evidence_for_command(
     command: Any,
     *,
     tier: str,
+    bundle: dict[str, Any] | None,
+    scope: str,
 ) -> dict[str, Any] | None:
-    bundle = current_execution_evidence_bundle()
     dependency = str(getattr(command, "evidence_dependency", "upstream") or "upstream")
-    scope = current_execution_evidence_scope()
     if dependency == "terminal_consumer":
         selected = {
             "name": command.name,
@@ -676,54 +676,71 @@ def _bundle_evidence_for_command(
         return {"selected": selected, "inspected": [selected]}
     if not isinstance(bundle, dict):
         return None
-    proof_rows = bundle.get("proof_artifacts")
-    if not isinstance(proof_rows, list) or not proof_rows:
-        return None
-
-    safe_name = run_test_tier._safe_base(command.name)
-    expected_names = {f"{safe_name}.meta.json", f"{safe_name}.exit.txt"}
-    inspected: list[dict[str, Any]] = []
-    for proof in proof_rows:
-        if not isinstance(proof, dict):
-            continue
-        fingerprints = proof.get("artifact_fingerprints")
-        if not isinstance(fingerprints, dict):
-            continue
-        artifact_names = {
-            Path(str(path).replace("\\", "/")).name for path in fingerprints
-        }
-        metadata = proof.get("metadata") if isinstance(proof.get("metadata"), dict) else {}
-        covered_tiers = list(metadata.get("covered_tiers") or metadata.get("tiers") or [])
-        matched = expected_names <= artifact_names
-        row = {
-            "name": command.name,
-            "status": "passed" if matched else "missing_final_artifacts",
-            "execution_status": "passed" if matched else "missing_final_artifacts",
-            "ok": matched,
-            "proof_scope": "current_testmesh_bundle",
-            "reasons": [] if matched else ["command artifacts absent from current TestMesh proof bundle"],
-            "artifacts": {
-                path: digest
-                for path, digest in fingerprints.items()
-                if Path(str(path).replace("\\", "/")).name in expected_names
-            },
-            "proof_artifact_id": proof.get("artifact_id"),
-            "covered_tiers": covered_tiers,
-            "tier": tier,
-        }
-        inspected.append(row)
-        if matched:
-            return {"selected": row, "inspected": inspected}
-    selected = inspected[0] if inspected else {
-        "name": command.name,
-        "status": "missing_final_artifacts",
-        "execution_status": "missing_final_artifacts",
-        "ok": False,
-        "proof_scope": "current_testmesh_bundle",
-        "reasons": ["current TestMesh bundle contains no command artifact rows"],
-        "artifacts": {},
+    owners = bundle.get("owners")
+    owner = owners.get(command.name) if isinstance(owners, dict) else None
+    proof = owner.get("proof_artifact") if isinstance(owner, dict) else None
+    fingerprints = (
+        proof.get("artifact_fingerprints")
+        if isinstance(proof, dict)
+        else None
+    )
+    metadata = (
+        proof.get("metadata")
+        if isinstance(proof, dict) and isinstance(proof.get("metadata"), dict)
+        else {}
+    )
+    checks = {
+        "owner_row_present": isinstance(owner, dict),
+        "owner_id_exact": isinstance(owner, dict)
+        and owner.get("owner_id") == command.name,
+        "owner_result_passed": isinstance(owner, dict)
+        and owner.get("result_status") == "passed",
+        "proof_present": isinstance(proof, dict),
+        "proof_owner_exact": metadata.get("owner_id") == command.name,
+        "proof_result_passed": isinstance(proof, dict)
+        and proof.get("result_status") == "passed",
+        "proof_current": isinstance(proof, dict) and proof.get("current") is True,
+        "proof_route_current": isinstance(proof, dict)
+        and proof.get("route_evidence_current") is True,
+        "proof_terminal_success": isinstance(proof, dict)
+        and proof.get("exit_code") == 0,
+        "proof_not_progress_only": isinstance(proof, dict)
+        and proof.get("progress_only") is False,
+        "proof_artifacts_present": isinstance(fingerprints, dict)
+        and {"combined", "exit"} <= set(fingerprints),
     }
-    return {"selected": selected, "inspected": inspected or [selected]}
+    matched = all(checks.values())
+    selected = {
+        "name": command.name,
+        "status": "passed" if matched else "missing_final_artifacts",
+        "execution_status": "passed" if matched else "missing_final_artifacts",
+        "ok": matched,
+        "proof_scope": "current_owner_testmesh_proof",
+        "reasons": (
+            []
+            if matched
+            else [
+                f"current owner proof check failed: {name}"
+                for name, ok in checks.items()
+                if not ok
+            ]
+        ),
+        "artifacts": dict(fingerprints) if isinstance(fingerprints, dict) else {},
+        "result_path": str(proof.get("result_path") or "")
+        if isinstance(proof, dict)
+        else "",
+        "proof_artifact_id": proof.get("artifact_id")
+        if isinstance(proof, dict)
+        else None,
+        "owner_id": command.name,
+        "owner_result_reused": bool(owner.get("result_reused"))
+        if isinstance(owner, dict)
+        else False,
+        "covered_tiers": [tier],
+        "tier": tier,
+        "checks": checks,
+    }
+    return {"selected": selected, "inspected": [selected]}
 
 
 def _test_tier_command_surfaces(
@@ -731,6 +748,8 @@ def _test_tier_command_surfaces(
     model_text: str,
     test_text: str,
 ) -> list[dict[str, Any]]:
+    execution_bundle = current_execution_evidence_bundle()
+    execution_scope = current_execution_evidence_scope()
     run_test_tier_path = ROOT / "scripts" / "run_test_tier.py"
     run_test_tier = _load_module_from_path(
         "flowpilot_alignment_diagnostic_run_test_tier",
@@ -771,6 +790,8 @@ def _test_tier_command_surfaces(
                     run_test_tier,
                     command,
                     tier=tier,
+                    bundle=execution_bundle,
+                    scope=execution_scope,
                 )
                 if background_evidence is None:
                     background_evidence = _background_evidence_for_command(

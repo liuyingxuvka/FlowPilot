@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import ast
+import copy
 import contextlib
 from dataclasses import replace
+import hashlib
 import importlib.util
 import io
 import json
@@ -19,6 +21,9 @@ from flowguard import (
 )
 from scripts.test_tier.background import _safe_base
 from scripts.test_tier.definitions import commands_for_tier
+from scripts.test_tier import impact_resolution
+from scripts.test_tier.source_fingerprint import source_snapshot
+import scripts.run_test_tier as test_tier_runner
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -48,6 +53,10 @@ alignment_runner = load_module(
     "flowpilot_test_model_test_alignment_runner",
     ROOT / "simulations" / "run_flowpilot_model_test_alignment_checks.py",
 )
+alignment_diagnostics = load_module(
+    "flowpilot_test_model_test_alignment_diagnostics",
+    ROOT / "simulations" / "flowpilot_model_test_alignment_diagnostics.py",
+)
 runtime_path_evidence = load_module(
     "flowpilot_runtime_path_evidence",
     ROOT / "skills" / "flowpilot" / "assets" / "flowpilot_runtime_path_evidence.py",
@@ -55,6 +64,8 @@ runtime_path_evidence = load_module(
 
 
 class FlowPilotModelTestAlignmentTests(unittest.TestCase):
+    _manifest_cache: dict[tuple[str, ...], dict[str, object]] = {}
+
     @staticmethod
     def command_artifact_fingerprints(*tiers: str) -> dict[str, str]:
         fingerprints: dict[str, str] = {}
@@ -65,69 +76,130 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
                 fingerprints[f"tmp/test_background/{tier}/{base}.exit.txt"] = "b" * 64
         return fingerprints
 
-    @staticmethod
-    def current_manifest() -> dict[str, object]:
-        return {
-            "source_fingerprint": alignment_runner.source_fingerprint(),
-            "routine": {
-                "all": {
-                    "result_status": "passed",
-                    "selected_count": 317,
-                    "test_count": 317,
-                    "proof_artifact": {
-                        "artifact_id": "proof.mta-current-all",
-                        "producer_route": "flowguard-test-mesh",
-                        "command": "python scripts/run_test_tier.py --tier all --background",
-                        "result_path": "tmp/test_background/current-all",
-                        "result_status": "passed",
-                        "exit_code": 0,
-                        "artifact_fingerprints": FlowPilotModelTestAlignmentTests.command_artifact_fingerprints("all"),
-                        "covered_obligation_ids": ["all-current-tests"],
-                        "assertion_scope": "external_contract",
-                        "current": True,
-                        "route_evidence_current": True,
-                        "progress_only": False,
-                        "metadata": {
-                            "selected_child_command_count": 317,
-                            "executed_child_command_count": 317,
-                            "covered_tiers": ["all"],
-                        },
-                    },
-                }
-            },
-        }
+    @classmethod
+    def _current_v4_manifest(
+        cls,
+        *,
+        tiers: tuple[str, ...],
+        release: bool,
+    ) -> dict[str, object]:
+        cache_key = (*tiers, "release" if release else "routine")
+        cached = cls._manifest_cache.get(cache_key)
+        if cached is not None:
+            return copy.deepcopy(cached)
 
-    @staticmethod
-    def done_manifest() -> dict[str, object]:
-        tiers = ("all", "formal-submit-adversarial", "release")
-        return {
-            "source_fingerprint": alignment_runner.source_fingerprint(),
-            "routine": {},
-            "release": {
-                "result_status": "passed",
-                "selected_count": 500,
-                "test_count": 500,
-                "proof_artifact": {
-                    "artifact_id": "proof.mta-current-release",
-                    "producer_route": "flowguard-test-mesh",
-                    "command": "all && formal-submit-adversarial && release",
-                    "result_path": "tmp/test_background/current-release",
-                    "result_status": "passed",
-                    "exit_code": 0,
-                    "artifact_fingerprints": FlowPilotModelTestAlignmentTests.command_artifact_fingerprints(*tiers),
-                    "covered_obligation_ids": ["all-current-release-tests"],
-                    "assertion_scope": "external_contract",
-                    "current": True,
-                    "route_evidence_current": True,
-                    "progress_only": False,
-                    "metadata": {
-                        "selected_child_command_count": 500,
-                        "executed_child_command_count": 500,
-                        "covered_tiers": list(tiers),
-                    },
-                },
-            },
+        commands = {
+            command.name: command
+            for tier in tiers
+            for command in commands_for_tier(tier)
         }
+        contracts = {
+            contract.owner_id: contract
+            for contract in impact_resolution.build_owner_contracts(
+                tuple(commands.values())
+            )
+        }
+        owners: dict[str, object] = {}
+        for owner_id, command in commands.items():
+            contract = contracts[owner_id]
+            identity = impact_resolution.owner_identity(contract).to_dict()
+            result_fingerprint = hashlib.sha256(
+                owner_id.encode("utf-8")
+            ).hexdigest()
+            proof = impact_resolution.ProofArtifactRef(
+                artifact_id=f"proof.mta-current.{owner_id}",
+                producer_route="flowpilot.test-tier.selective-execution",
+                command=" ".join(("python", *command.command[1:])),
+                result_path=f"tmp/test_background/{owner_id}.combined.txt",
+                result_status="passed",
+                exit_code=0,
+                artifact_fingerprints={
+                    "combined": result_fingerprint,
+                    "err": "c" * 64,
+                    "exit": "b" * 64,
+                    "out": "d" * 64,
+                },
+                covered_obligation_ids=contract.covered_obligation_ids,
+                assertion_scope="external_contract",
+                current=True,
+                route_evidence_current=True,
+                progress_only=False,
+                metadata={
+                    "owner_id": owner_id,
+                    "result_fingerprint": result_fingerprint,
+                },
+            )
+            owners[owner_id] = {
+                "owner_id": owner_id,
+                "result_status": "passed",
+                "result_reused": False,
+                "identity": identity,
+                "result_fingerprint": result_fingerprint,
+                "proof_artifact": proof.to_dict(),
+                "reuse_ticket": None,
+            }
+
+        scope_id = "release" if release else "all"
+        owner_ids = sorted(owners)
+        aggregate = impact_resolution.ProofArtifactRef(
+            artifact_id=f"proof.mta-current-{scope_id}",
+            producer_route="flowguard-test-mesh",
+            command=" && ".join(tiers),
+            result_path=f"tmp/test_background/current-{scope_id}",
+            result_status="passed",
+            exit_code=0,
+            artifact_fingerprints={
+                "owner-set": hashlib.sha256(
+                    "\n".join(owner_ids).encode("utf-8")
+                ).hexdigest(),
+                **cls.command_artifact_fingerprints(*tiers),
+            },
+            covered_obligation_ids=("current-tests",),
+            assertion_scope="external_contract",
+            current=True,
+            route_evidence_current=True,
+            progress_only=False,
+            metadata={
+                "selected_child_command_count": len(owner_ids),
+                "executed_child_command_count": len(owner_ids),
+                "reused_child_command_count": 0,
+                "proof_backed_child_command_count": len(owner_ids),
+                "covered_tiers": list(tiers),
+            },
+        )
+        row = {
+            "result_status": "passed",
+            "result_reused": False,
+            "selected_count": len(owner_ids),
+            "test_count": len(owner_ids),
+            "proof_artifact": aggregate.to_dict(),
+            "owner_evidence_ids": owner_ids,
+            "owner_reuse_tickets": {},
+        }
+        manifest: dict[str, object] = {
+            "schema_version": impact_resolution.EVIDENCE_MANIFEST_SCHEMA_VERSION,
+            "snapshot": source_snapshot(),
+            "owners": owners,
+            "routine": {} if release else {"all": row},
+        }
+        if release:
+            manifest["release"] = row
+        cls._manifest_cache[cache_key] = manifest
+        return copy.deepcopy(manifest)
+
+    @classmethod
+    def current_manifest(cls) -> dict[str, object]:
+        return cls._current_v4_manifest(
+            tiers=("all", "formal-submit-adversarial"),
+            release=False,
+        )
+
+    @classmethod
+    def done_manifest(cls) -> dict[str, object]:
+        return cls._current_v4_manifest(
+            tiers=("all", "formal-submit-adversarial", "release"),
+            release=True,
+        )
 
     def strict_report(self) -> dict[str, object]:
         return alignment_runner.build_report(evidence_manifest=self.current_manifest())
@@ -176,6 +248,56 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
         )
         self.assertEqual(report["findings"], [])
         self.assertEqual(report["evidence_status"], "passed")
+
+    def test_dedicated_mta_owner_remains_primary_when_release_repeats_file(self) -> None:
+        bundle = {
+            "owners": {
+                "mta_evidence_target": {
+                    "identity": {"covered_evidence_ids": ["evidence.subject"]}
+                },
+                "release_file_check": {
+                    "identity": {"covered_evidence_ids": ["evidence.subject"]}
+                },
+            }
+        }
+
+        normalized = alignment_runner._single_mta_evidence_owner_bundle(
+            bundle
+        )
+
+        self.assertEqual(
+            normalized["owners"]["mta_evidence_target"]["identity"][
+                "covered_evidence_ids"
+            ],
+            ["evidence.subject"],
+        )
+        self.assertEqual(
+            normalized["owners"]["release_file_check"]["identity"][
+                "covered_evidence_ids"
+            ],
+            [],
+        )
+
+    def test_multiple_dedicated_mta_owners_block_evidence_binding(self) -> None:
+        bundle = {
+            "owners": {
+                "mta_evidence_first": {
+                    "identity": {"covered_evidence_ids": ["evidence.subject"]}
+                },
+                "mta_evidence_second": {
+                    "identity": {"covered_evidence_ids": ["evidence.subject"]}
+                },
+            }
+        }
+
+        normalized = alignment_runner._single_mta_evidence_owner_bundle(
+            bundle
+        )
+
+        self.assertEqual(
+            normalized,
+            bundle,
+        )
 
     def test_complete_workstream_report_contract_keeps_one_atomic_error_path(self) -> None:
         entries = alignment_runner.build_alignment_plan_entries()
@@ -815,6 +937,79 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
         final_surface = surfaces["tier-command:final-confidence:flowpilot_final_confidence_gate"]
         self.assertEqual(final_surface["evidence_status"], "downstream_consumer")
         self.assertEqual(final_surface["gap_codes"], [])
+
+    def test_bundle_classification_uses_exact_owner_proof_not_aggregate_summary(
+        self,
+    ) -> None:
+        command = next(
+            row
+            for row in commands_for_tier("release")
+            if row.name == "meta_full"
+        )
+        proof = {
+            "artifact_id": "proof.owner.meta_full",
+            "artifact_fingerprints": {
+                "combined": "a" * 64,
+                "exit": "b" * 64,
+            },
+            "current": True,
+            "exit_code": 0,
+            "metadata": {"owner_id": "meta_full"},
+            "progress_only": False,
+            "result_path": "tmp/test_background/release/meta_full.combined.txt",
+            "result_status": "passed",
+            "route_evidence_current": True,
+        }
+        bundle = {
+            "owners": {
+                "meta_full": {
+                    "owner_id": "meta_full",
+                    "result_status": "passed",
+                    "result_reused": True,
+                    "proof_artifact": proof,
+                }
+            },
+            "proof_artifacts": [
+                {
+                    "artifact_id": "proof.aggregate",
+                    "artifact_fingerprints": {"owner-set": "c" * 64},
+                }
+            ],
+        }
+        evidence = alignment_diagnostics._bundle_evidence_for_command(
+            test_tier_runner,
+            command,
+            tier="release",
+            bundle=bundle,
+            scope="done",
+        )
+
+        self.assertIsNotNone(evidence)
+        assert evidence is not None
+        self.assertTrue(evidence["selected"]["ok"], evidence)
+        self.assertEqual(
+            evidence["selected"]["proof_scope"],
+            "current_owner_testmesh_proof",
+        )
+        self.assertTrue(evidence["selected"]["owner_result_reused"])
+
+        missing = alignment_diagnostics._bundle_evidence_for_command(
+            test_tier_runner,
+            command,
+            tier="release",
+            bundle={
+                "owners": {},
+                "proof_artifacts": bundle["proof_artifacts"],
+            },
+            scope="done",
+        )
+        self.assertIsNotNone(missing)
+        assert missing is not None
+        self.assertFalse(missing["selected"]["ok"])
+        self.assertEqual(
+            missing["selected"]["status"],
+            "missing_final_artifacts",
+        )
 
     def test_source_audit_binds_code_contracts_to_real_python_sources(self) -> None:
         report = self.strict_report()

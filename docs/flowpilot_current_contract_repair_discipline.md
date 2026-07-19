@@ -156,6 +156,59 @@ classified as one of:
 
 Any other hit is contract residue and must be removed before claiming done.
 
+## Test Evidence Applicability
+
+The canonical repository snapshot is provenance, not a blanket invalidation
+switch. A changed snapshot fingerprint, FlowGuard package version, line-ending
+transport, generated result, report, receipt, or progress log must not by
+itself rerun every test owner.
+
+Every background validation owner has one current applicability identity made
+from its exact command, test source, tested artifacts, declared dependencies,
+environment, covered inputs, obligations, and MTA evidence subjects. The
+current impact planner has exactly three outcomes:
+
+- `reuse`: every applicability component still matches and the same owner has
+  a terminal passing proof plus a current `TestResultReuseTicket`;
+- `execute`: the owner's own applicability identity changed or it has no
+  reusable current proof;
+- `blocked`: a changed governed source cannot be mapped unambiguously, the
+  named previous v4 manifest or SHA-256 identity is missing/wrong, or the
+  execution identity became stale.
+
+There is no fourth outcome that converts `blocked` into run-all. The first v4
+release uses one explicit `--seed-baseline`; later executions must name the
+exact previous v4 manifest and its SHA-256. Old manifests, aggregate-only
+proofs, global-fingerprint equality, newest-run discovery, and repo-root
+discovery are not alternate evidence paths.
+
+The background supervisor freezes the impact plan before launching exactly
+the `execute` owners, carries forward exactly the `reuse` owners, and verifies
+owner inputs again at process start, process exit, and supervisor closure.
+Timeout or interruption evidence is invalid until the exact descendant
+process tree is confirmed empty. Generated outputs never refresh source
+authority or recursively invalidate their own producers.
+
+Shared execution infrastructure is owned separately from the behavior payload
+it launches. A payload command that uses `run_flowguard_background.py` keeps
+the wrapper itself and the nested model/test import closure in its owner
+identity, but it does not inherit the wrapper's test-tier, impact-planning, or
+artifact-classification imports. Those imports belong to the current
+`test_tier_runner` proof. When replacing a former over-broad identity, an
+existing payload proof may be retained only by a strict scope-reduction proof:
+the command, environment, obligations, evidence subjects, and every retained
+input fingerprint are identical; the current inputs are a proper subset; and
+every removed input is an actual wrapper import transferred to the exact
+infrastructure owner. This is the single current ownership rule, not a legacy
+identity reader or fallback.
+
+A full validation is reserved for one stable integration/release snapshot or
+for a change to the explicitly declared shared validation control plane. Run
+focused affected checks while code is still changing. Do not repeatedly rerun
+the full `all`, adversarial, Meta, or Capability owners after unrelated edits
+or after a FlowGuard installation upgrade that is not part of their declared
+identity.
+
 ## Historical Baseline
 
 Historical successful runs are process-route evidence, not field-shape

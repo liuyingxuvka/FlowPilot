@@ -5390,9 +5390,9 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
             ),
             _evidence(
                 "route_authority.negative.model_mesh_parent",
-                test_name="run_flowpilot_model_mesh_checks",
-                path="simulations/run_flowpilot_model_mesh_checks.py",
-                command="python simulations/run_flowpilot_model_mesh_checks.py --json-out simulations/flowpilot_model_mesh_results.json",
+                test_name="test_missing_or_failed_child_result_blocks_parent",
+                path="tests/test_flowpilot_model_mesh_coverage_receipts.py",
+                command="python -m pytest tests/test_flowpilot_model_mesh_coverage_receipts.py::FlowPilotModelMeshCoverageReceiptTests::test_missing_or_failed_child_result_blocks_parent -q",
                 test_kind=NEGATIVE,
                 covers=("route_authority.parent_mesh_blocks_missing_or_conflicted_evidence",),
             ),
@@ -5613,8 +5613,8 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 path="simulations/run_flowpilot_ai_response_execution_closure_checks.py",
                 command=(
                     "python simulations/run_flowpilot_ai_response_execution_closure_checks.py "
-                    "--mode adversarial --json-out "
-                    "simulations/flowpilot_ai_response_execution_closure_results.json"
+                    "--mode adversarial --budget-seconds 3600 --json-out "
+                    "tmp/test_results/formal_ai_submit_adversarial.json"
                 ),
                 test_kind=REPLAY,
                 covers=(

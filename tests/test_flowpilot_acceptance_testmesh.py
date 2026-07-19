@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import importlib
 import hashlib
 import json
@@ -7,19 +8,118 @@ import tempfile
 import unittest
 from pathlib import Path
 
+import scripts.compile_flowpilot_acceptance_testmesh_evidence as evidence_compiler
 
 acceptance_model = importlib.import_module("simulations.flowpilot_acceptance_testmesh_model")
 acceptance_runner = importlib.import_module("simulations.run_flowpilot_acceptance_testmesh_checks")
-evidence_compiler = importlib.import_module("scripts.compile_flowpilot_acceptance_testmesh_evidence")
 evidence_truth = importlib.import_module("simulations.flowpilot_evidence_truth")
 test_tier_runner = importlib.import_module("scripts.run_test_tier")
+impact_resolution = importlib.import_module("scripts.test_tier.impact_resolution")
 
 
 class FlowPilotAcceptanceTestMeshTests(unittest.TestCase):
+    _tier_fixture_cache: dict[str, dict[str, object]] = {}
+
     def write_tier_proof_root(self, root: Path, tier: str) -> None:
         root.mkdir(parents=True, exist_ok=True)
-        source_digest = evidence_compiler.source_fingerprint()
-        (root / f"{tier}_background_supervisor.meta.json").write_text(
+        commands = test_tier_runner.commands_for_tier(tier)
+        cached = self._tier_fixture_cache.get(tier)
+        if cached is None:
+            contracts = {
+                contract.owner_id: contract
+                for contract in impact_resolution.build_owner_contracts(commands)
+            }
+            snapshot = evidence_compiler.source_snapshot()
+            decisions = []
+            owners = {}
+            for command in commands:
+                contract = contracts[command.name]
+                identity = impact_resolution.owner_identity(contract).to_dict()
+                decisions.append(
+                    {
+                        "owner_id": command.name,
+                        "action": "execute",
+                        "reason_codes": ["fixture_current_execution"],
+                        "identity": identity,
+                        "previous_proof_artifact_id": "",
+                        "reuse_ticket": None,
+                    }
+                )
+                result_fingerprint = hashlib.sha256(
+                    command.name.encode("utf-8")
+                ).hexdigest()
+                proof = impact_resolution.ProofArtifactRef(
+                    artifact_id=f"proof.fixture.{command.name}",
+                    producer_route="flowpilot.test-tier.selective-execution",
+                    command=" ".join(("python", *command.command[1:])),
+                    result_path=f"tmp/test_background/{command.name}.combined.txt",
+                    result_status="passed",
+                    exit_code=0,
+                    artifact_fingerprints={"combined": result_fingerprint},
+                    covered_obligation_ids=contract.covered_obligation_ids,
+                    assertion_scope="external_contract",
+                    current=True,
+                    route_evidence_current=True,
+                    progress_only=False,
+                    metadata={
+                        "owner_id": command.name,
+                        "result_fingerprint": result_fingerprint,
+                        "descendant_zero_confirmed": True,
+                    },
+                )
+                owners[command.name] = {
+                    "owner_id": command.name,
+                    "result_status": "passed",
+                    "result_reused": False,
+                    "identity": identity,
+                    "result_fingerprint": result_fingerprint,
+                    "proof_artifact": proof.to_dict(),
+                    "reuse_ticket": None,
+                }
+            cached = {
+                "contracts": contracts,
+                "snapshot": snapshot,
+                "decisions": decisions,
+                "owners": owners,
+            }
+            self._tier_fixture_cache[tier] = cached
+        fixture = copy.deepcopy(cached)
+        contracts = fixture["contracts"]
+        snapshot = fixture["snapshot"]
+        decisions = fixture["decisions"]
+        owners = fixture["owners"]
+        plan_id = f"fixture-plan-{tier}"
+        for command in commands:
+            identity = owners[command.name]["identity"]
+            paths = test_tier_runner.artifact_paths(root, command.name)
+            for key in ("out", "err", "combined"):
+                paths[key].write_text("fixture current proof\n", encoding="utf-8")
+            paths["exit"].write_text("0\n", encoding="utf-8")
+            paths["meta"].write_text(
+                json.dumps(
+                    {
+                        "name": command.name,
+                        "command": list(command.command),
+                        "status": "passed",
+                        "exit_code": 0,
+                        "impact_plan_id": plan_id,
+                        "owner_identity": identity,
+                        "inputs_current": True,
+                        "descendant_zero_confirmed": True,
+                    }
+                ),
+                encoding="utf-8",
+            )
+        supervisor_paths = test_tier_runner.artifact_paths(
+            root,
+            test_tier_runner.background_supervisor_name(tier),
+        )
+        for key in ("out", "err", "combined"):
+            supervisor_paths[key].write_text(
+                "fixture supervisor proof\n",
+                encoding="utf-8",
+            )
+        supervisor_paths["meta"].write_text(
             json.dumps(
                 {
                     "status": "passed",
@@ -27,34 +127,34 @@ class FlowPilotAcceptanceTestMeshTests(unittest.TestCase):
                     "timed_out": False,
                     "start_time": "2026-07-10T00:00:00+00:00",
                     "end_time": "2026-07-10T00:00:01+00:00",
-                    "covered_source_fingerprint_start": source_digest,
-                    "covered_source_fingerprint_end": source_digest,
-                    "source_fingerprint_current": True,
+                    "command_count": len(commands),
+                    "execute_count": len(commands),
+                    "reuse_count": 0,
+                    "running": [],
+                    "snapshot_start": snapshot,
+                    "snapshot_end": snapshot,
+                    "impact_plan": {
+                        "schema_version": impact_resolution.IMPACT_PLAN_SCHEMA_VERSION,
+                        "plan_id": plan_id,
+                        "requested_scope": tier,
+                        "snapshot": snapshot,
+                        "previous_manifest": {"path": "", "sha256": ""},
+                        "seed_baseline": True,
+                        "contracts": [
+                            contract.to_dict()
+                            for contract in contracts.values()
+                        ],
+                        "decisions": decisions,
+                        "blockers": [],
+                        "execute_owner_ids": sorted(owners),
+                        "reuse_owner_ids": [],
+                    },
+                    "owners": owners,
                 }
             ),
             encoding="utf-8",
         )
-        (root / f"{tier}_background_supervisor.exit.txt").write_text("0\n", encoding="utf-8")
-        child_names = {"child"}
-        if tier == "all":
-            child_names.update(
-                name
-                for config in acceptance_runner.BACKGROUND_CHILD_SUITES.values()
-                for name in config["expected"]
-            )
-        for name in sorted(child_names):
-            (root / f"{name}.meta.json").write_text(
-                json.dumps(
-                    {
-                        "name": name,
-                        "status": "passed",
-                        "exit_code": 0,
-                        "covered_source_fingerprint": source_digest,
-                    }
-                ),
-                encoding="utf-8",
-            )
-            (root / f"{name}.exit.txt").write_text("0\n", encoding="utf-8")
+        supervisor_paths["exit"].write_text("0\n", encoding="utf-8")
 
     def current_routine_evidence(self, root: Path) -> dict[str, dict[str, object]]:
         root.mkdir(parents=True, exist_ok=True)
@@ -207,14 +307,17 @@ class FlowPilotAcceptanceTestMeshTests(unittest.TestCase):
             all_root = root / "all"
             adversarial_root = root / "adversarial"
             release_root = root / "release"
+            closure_root = root / "closure"
             self.write_tier_proof_root(all_root, "all")
             self.write_tier_proof_root(adversarial_root, "formal-submit-adversarial")
             self.write_tier_proof_root(release_root, "release")
+            self.write_tier_proof_root(closure_root, "evidence-closure")
 
             manifest = evidence_compiler.compile_manifest(
                 all_root=all_root,
                 adversarial_root=adversarial_root,
                 release_root=release_root,
+                closure_root=closure_root,
             )
             strict_result = acceptance_runner.run_checks(
                 release_evidence=True,
@@ -225,7 +328,8 @@ class FlowPilotAcceptanceTestMeshTests(unittest.TestCase):
                 release_selected_count=manifest["release"]["selected_count"],
             )
 
-        self.assertTrue(manifest["source_fingerprint"])
+        self.assertTrue(manifest["snapshot"]["fingerprint"])
+        self.assertEqual(manifest["phase"], "final")
         self.assertEqual(
             manifest["schema_version"],
             evidence_compiler.MANIFEST_SCHEMA_VERSION,
@@ -273,7 +377,7 @@ class FlowPilotAcceptanceTestMeshTests(unittest.TestCase):
         self.assertEqual(manifest["release"]["proof_artifact"]["result_status"], "passed")
         self.assertEqual(
             manifest["release"]["test_count"],
-            manifest["release"]["proof_artifact"]["metadata"]["executed_child_command_count"],
+            manifest["release"]["proof_artifact"]["metadata"]["proof_backed_child_command_count"],
         )
         self.assertEqual(
             manifest["release"]["selected_count"],
@@ -281,12 +385,68 @@ class FlowPilotAcceptanceTestMeshTests(unittest.TestCase):
         )
         self.assertEqual(
             manifest["release"]["proof_artifact"]["metadata"]["covered_tiers"],
-            ["all", "formal-submit-adversarial", "release"],
+            ["all", "formal-submit-adversarial", "release", "evidence-closure"],
         )
         self.assertNotIn(
             "final-confidence",
             manifest["release"]["proof_artifact"]["metadata"]["covered_tiers"],
         )
+
+    def test_owner_checkpoint_retains_current_rows_and_rejects_only_stale_owner(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            all_root = Path(tmp) / "all"
+            self.write_tier_proof_root(all_root, "all")
+            meta_path = all_root / "all_background_supervisor.meta.json"
+            meta = json.loads(meta_path.read_text(encoding="utf-8"))
+            stale_owner_id = "test_tier_runner"
+            meta["owners"][stale_owner_id]["identity"][
+                "covered_input_fingerprint"
+            ] = "stale-owner-input"
+            meta_path.write_text(json.dumps(meta), encoding="utf-8")
+
+            manifest = evidence_compiler.compile_owner_checkpoint_manifest(
+                all_root=all_root,
+            )
+
+        self.assertEqual(
+            manifest["schema_version"],
+            evidence_compiler.MANIFEST_SCHEMA_VERSION,
+        )
+        self.assertEqual(manifest["phase"], "checkpoint")
+        self.assertEqual(manifest["claim_scope"], "owner_reuse_only")
+        self.assertNotIn(stale_owner_id, manifest["owners"])
+        self.assertEqual(
+            set(manifest["rejected_owner_ids"]),
+            {stale_owner_id},
+        )
+        self.assertEqual(
+            manifest["source_supervisor"]["current_owner_count"],
+            len(test_tier_runner.commands_for_tier("all")) - 1,
+        )
+        self.assertEqual(
+            manifest["source_supervisor"]["rejected_owner_count"],
+            1,
+        )
+
+    def test_owner_checkpoint_rejects_nonterminal_supervisor(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            all_root = Path(tmp) / "all"
+            self.write_tier_proof_root(all_root, "all")
+            meta_path = all_root / "all_background_supervisor.meta.json"
+            meta = json.loads(meta_path.read_text(encoding="utf-8"))
+            meta["status"] = "running"
+            meta["running"] = ["test_tier_runner"]
+            meta_path.write_text(json.dumps(meta), encoding="utf-8")
+
+            with self.assertRaisesRegex(
+                ValueError,
+                "not a terminal pass",
+            ):
+                evidence_compiler.compile_owner_checkpoint_manifest(
+                    all_root=all_root,
+                )
 
     def test_final_manifest_missing_receipt_fields_are_rejected_as_one_class(self) -> None:
         expected_codes = {
@@ -302,13 +462,16 @@ class FlowPilotAcceptanceTestMeshTests(unittest.TestCase):
             all_root = root / "all"
             adversarial_root = root / "adversarial"
             release_root = root / "release"
+            closure_root = root / "closure"
             self.write_tier_proof_root(all_root, "all")
             self.write_tier_proof_root(adversarial_root, "formal-submit-adversarial")
             self.write_tier_proof_root(release_root, "release")
+            self.write_tier_proof_root(closure_root, "evidence-closure")
             manifest = evidence_compiler.compile_manifest(
                 all_root=all_root,
                 adversarial_root=adversarial_root,
                 release_root=release_root,
+                closure_root=closure_root,
             )
 
             for field_name, expected_code in expected_codes.items():
@@ -334,14 +497,17 @@ class FlowPilotAcceptanceTestMeshTests(unittest.TestCase):
             all_root = root / "all"
             adversarial_root = root / "adversarial"
             release_root = root / "release"
+            closure_root = root / "closure"
             self.write_tier_proof_root(all_root, "all")
             self.write_tier_proof_root(adversarial_root, "formal-submit-adversarial")
             self.write_tier_proof_root(release_root, "release")
+            self.write_tier_proof_root(closure_root, "evidence-closure")
 
             manifest = evidence_compiler.compile_manifest(
                 all_root=all_root.resolve(),
                 adversarial_root=adversarial_root.resolve(),
                 release_root=release_root.resolve(),
+                closure_root=closure_root.resolve(),
             )
             serialized = json.dumps(manifest, sort_keys=True)
 
@@ -350,6 +516,7 @@ class FlowPilotAcceptanceTestMeshTests(unittest.TestCase):
         self.assertIn("<external>/all", serialized)
         self.assertIn("<external>/adversarial", serialized)
         self.assertIn("<external>/release", serialized)
+        self.assertIn("<external>/closure", serialized)
 
     def test_direct_background_overrides_do_not_persist_machine_absolute_paths(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -367,26 +534,31 @@ class FlowPilotAcceptanceTestMeshTests(unittest.TestCase):
         self.assertIn("<external>/route", serialized)
         self.assertIn("<external>/terminal", serialized)
 
-    def test_background_evidence_compiler_rejects_source_changed_during_tier(self) -> None:
+    def test_background_evidence_compiler_rejects_owner_input_changed_during_tier(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             all_root = root / "all"
             adversarial_root = root / "adversarial"
             release_root = root / "release"
+            closure_root = root / "closure"
             self.write_tier_proof_root(all_root, "all")
             self.write_tier_proof_root(adversarial_root, "formal-submit-adversarial")
             self.write_tier_proof_root(release_root, "release")
+            self.write_tier_proof_root(closure_root, "evidence-closure")
             meta_path = all_root / "all_background_supervisor.meta.json"
             meta = json.loads(meta_path.read_text(encoding="utf-8"))
-            meta["covered_source_fingerprint_end"] = "changed-source"
-            meta["source_fingerprint_current"] = False
+            owner_id = sorted(meta["owners"])[0]
+            meta["owners"][owner_id]["identity"]["covered_input_fingerprint"] = (
+                "changed-owner-input"
+            )
             meta_path.write_text(json.dumps(meta), encoding="utf-8")
 
-            with self.assertRaisesRegex(ValueError, "source fingerprint is missing or stale"):
+            with self.assertRaisesRegex(ValueError, "current owner evidence is invalid"):
                 evidence_compiler.compile_manifest(
                     all_root=all_root,
                     adversarial_root=adversarial_root,
                     release_root=release_root,
+                    closure_root=closure_root,
                 )
 
     def test_background_evidence_compiler_rejects_missing_router_child(self) -> None:
@@ -395,20 +567,23 @@ class FlowPilotAcceptanceTestMeshTests(unittest.TestCase):
             all_root = root / "all"
             adversarial_root = root / "adversarial"
             release_root = root / "release"
+            closure_root = root / "closure"
             self.write_tier_proof_root(all_root, "all")
             self.write_tier_proof_root(adversarial_root, "formal-submit-adversarial")
             self.write_tier_proof_root(release_root, "release")
+            self.write_tier_proof_root(closure_root, "evidence-closure")
             (all_root / "router_packets_generic_ack_mail.meta.json").unlink()
             (all_root / "router_packets_generic_ack_mail.exit.txt").unlink()
 
             with self.assertRaisesRegex(
                 ValueError,
-                "acceptance_router_packet_tier is missing current all-tier child evidence",
+                "current owner evidence is invalid",
             ):
                 evidence_compiler.compile_manifest(
                     all_root=all_root,
                     adversarial_root=adversarial_root,
                     release_root=release_root,
+                    closure_root=closure_root,
                 )
 
     def test_missing_router_background_artifacts_block_broad_routine_gate(self) -> None:

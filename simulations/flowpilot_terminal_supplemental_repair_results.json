@@ -143,11 +143,11 @@
   "source_fingerprints": {
     "simulations/flowpilot_terminal_supplemental_repair_model.py": "377b56d68509ccdf9b0a977364a3bb71e4ea796d0b915070b0386f971e6f712b",
     "simulations/run_flowpilot_terminal_supplemental_repair_checks.py": "a9296da4c3d822020a9aa6701873c2882947986a987e30f2521d2b054e33166e",
-    "simulations/run_flowpilot_unified_repair_native_runtime_conformance.py": "1cd65a0c9643f96c169131997f5129cee3da745551cbd3db67dfdf1afc046c4b",
-    "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py": "28fcb7d24d50bb8c83610b3fc9120983d39f0197a00d43037c2c0cff55c074e8",
-    "tests/test_flowpilot_core_runtime.py": "53512c93d0c258536fbd39d539c291077742494e9749d12f3580b436937120b0",
-    "tests/test_flowpilot_fake_project_rehearsal.py": "d002924dfec175018603baa28a8685470ca9dc9d3ad1c30f7fd3ea09fe29e611",
-    "tests/test_flowpilot_new_entrypoint.py": "8a5a73129c073dcb94e58aa8b1f3d147eacb920e8725e5f5bb61f6019173d569"
+    "simulations/run_flowpilot_unified_repair_native_runtime_conformance.py": "82249a02ed51e4fc7d4523f0632047d6df850149a151174548134e028eaac186",
+    "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py": "37dd2f6bebfa336112de363350097b92a4d2df1b822c00af63e7867693580e3c",
+    "tests/test_flowpilot_core_runtime.py": "d9df671916b2b3bf0c563bc7c7d270544e18a81a67ccac2b7a4fd6d6d66acfd8",
+    "tests/test_flowpilot_fake_project_rehearsal.py": "f1d7e5d7f7c732bbe58c664eb5054fc5f4fe19a7d85fc1d17c39615c129e6dde",
+    "tests/test_flowpilot_new_entrypoint.py": "540e524eebdf83a562730907846e347ddb5d77207d37b55a0efa3063f1181047"
   },
   "state_count": 47
 }

@@ -58,46 +58,57 @@ TEST_MESH_CHILD_SUITE_DEFINITIONS = {
     "contract_exhaustion_runtime_matrix": {
         "layer": "runtime_regression",
         "coverage_boundary": "current_runtime_contract",
+        "execution_owner_id": "mta_evidence_test_flowpilot_contract_exhaustion_mesh_bcdd3c7b83cd",
     },
     "contract_exhaustion_fake_ai_matrix": {
         "layer": "synthetic_non_live_control_flow",
         "coverage_boundary": "synthetic_non_live_control_flow",
+        "execution_owner_id": "mta_evidence_test_flowpilot_contract_exhaustion_mesh_bcdd3c7b83cd",
     },
     "contract_exhaustion_historical_failure_matrix": {
         "layer": "historical_failure_replay",
         "coverage_boundary": "historical_same_class_non_live_control_flow",
+        "execution_owner_id": "mta_evidence_test_flowpilot_contract_exhaustion_mesh_bcdd3c7b83cd",
     },
     "review_window_completeness_matrix": {
         "layer": "runtime_regression",
         "coverage_boundary": "current_runtime_contract",
+        "execution_owner_id": "mta_evidence_test_flowpilot_contract_exhaustion_mesh_bcdd3c7b83cd",
     },
     "review_window_fake_ai_matrix": {
         "layer": "synthetic_non_live_control_flow",
         "coverage_boundary": "synthetic_non_live_control_flow",
+        "execution_owner_id": "mta_evidence_test_flowpilot_contract_exhaustion_mesh_bcdd3c7b83cd",
     },
     "fake_ai_runtime_replay_matrix": {
         "layer": "synthetic_non_live_runtime_replay",
         "coverage_boundary": "synthetic_non_live_runtime_replay",
+        "execution_owner_id": "mta_evidence_test_flowpilot_fake_ai_runtime_replay_833e9a92e4e2",
     },
     "control_plane_ledger_hygiene_fake_ai_matrix": {
         "layer": "synthetic_non_live_runtime_replay",
         "coverage_boundary": "control_plane_ledger_hygiene_cartesian",
+        "execution_owner_id": "mta_evidence_test_flowpilot_fake_ai_runtime_replay_833e9a92e4e2",
     },
     "real_issue_backfeed_matrix": {
         "layer": "historical_failure_backfeed",
         "coverage_boundary": "historical_same_class_non_live_control_flow",
+        "execution_owner_id": "mta_evidence_test_flowpilot_real_issue_backfeed_d955311eab85",
     },
     "integration_cartesian_coverage_matrix": {
         "layer": "executable_flowguard_cartesian",
         "coverage_boundary": "prompt_workflow_integration_coverage",
+        "execution_owner_id": "mta_evidence_test_flowpilot_integration_cartesian_coverage_b37bb8cf5190",
     },
     "complete_workstream_fake_ai_matrix": {
         "layer": "external_current_runtime_replay",
         "coverage_boundary": "finite_declared_semantic_profile_execution",
+        "execution_owner_id": "complete_workstream_fake_ai_tests",
     },
     "complete_workstream_cartesian_matrix": {
         "layer": "executable_full_finite_cartesian_oracle",
         "coverage_boundary": "declared_finite_axes_not_arbitrary_language",
+        "execution_owner_id": "complete_workstream_fake_ai_tests",
     },
 }
 
@@ -272,10 +283,12 @@ def _test_mesh_report(
             f"contract-exhaustion-owner:{owner}",
             *(f"contract-exhaustion-case:{case_id}" for case_id in owned_case_ids),
         )
+        execution_owner_id = str(definition["execution_owner_id"])
         proof, reuse_ticket, reuse_gaps = (None, None, ()) if declaration_only else derived_owner_proof(
             bundle,
-            owner_id=owner,
+            owner_id=execution_owner_id,
             covered_obligation_ids=obligations,
+            projected_evidence_id=owner,
         )
         passed = proof is not None and reuse_ticket is not None and not reuse_gaps
         child_suites[owner] = {

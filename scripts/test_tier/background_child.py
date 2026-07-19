@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 from pathlib import Path
 import subprocess
 import sys
@@ -24,7 +25,7 @@ try:
         _write_json,
         artifact_paths,
     )
-    from .source_fingerprint import source_fingerprint
+    from .source_fingerprint import file_fingerprint
 except ImportError:  # pragma: no cover - direct script import path
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     from background import (
@@ -40,11 +41,17 @@ except ImportError:  # pragma: no cover - direct script import path
         _write_json,
         artifact_paths,
     )
-    from source_fingerprint import source_fingerprint
+    from source_fingerprint import file_fingerprint
 
 
 ROOT = Path(__file__).resolve().parents[2]
 DESCENDANT_SETTLEMENT_GRACE_SECONDS = 15.0
+
+
+def _publish_exit(path: Path, content: bytes) -> None:
+    staging = path.with_name(path.name + ".tmp")
+    staging.write_bytes(content)
+    staging.replace(path)
 
 
 def _describe_live_identities(
@@ -125,13 +132,25 @@ def run_background_child(
     command: Sequence[str],
     *,
     log_root: Path,
+    impact_plan_id: str,
+    owner_identity_value: dict[str, Any],
     timeout_seconds: int = DEFAULT_BACKGROUND_CHILD_TIMEOUT_SECONDS,
-    source_fingerprint_value: str | None = None,
-    fingerprint_fn: Callable[[], str] = source_fingerprint,
 ) -> int:
     paths = artifact_paths(log_root, name)
     log_root.mkdir(parents=True, exist_ok=True)
-    covered_source = source_fingerprint_value or fingerprint_fn()
+    expected_inputs = owner_identity_value.get("covered_input_fingerprints")
+    if not isinstance(expected_inputs, dict):
+        raise ValueError("owner_identity.covered_input_fingerprints is required")
+
+    def current_input_fingerprints() -> dict[str, str]:
+        values: dict[str, str] = {}
+        for relative in sorted(expected_inputs):
+            path = ROOT / str(relative)
+            values[str(relative)] = file_fingerprint(path)
+        return values
+
+    inputs_start = current_input_fingerprints()
+    inputs_current_at_start = inputs_start == expected_inputs
     meta = {
         "name": name,
         "command": list(command),
@@ -143,10 +162,11 @@ def run_background_child(
         "proof_reused": False,
         "timeout_seconds": timeout_seconds,
         "timed_out": False,
-        "covered_source_fingerprint": covered_source,
-        "covered_source_fingerprint_start": covered_source,
-        "covered_source_fingerprint_end": None,
-        "source_fingerprint_current": None,
+        "impact_plan_id": impact_plan_id,
+        "owner_identity": owner_identity_value,
+        "covered_input_fingerprints_start": inputs_start,
+        "covered_input_fingerprints_end": None,
+        "inputs_current": inputs_current_at_start,
         "process_launch_plan": None,
         "process_identity": None,
         "observed_descendant_identities": [],
@@ -156,6 +176,25 @@ def run_background_child(
         "artifacts": {key: str(value) for key, value in paths.items()},
     }
     _write_json(paths["meta"], meta)
+    if not inputs_current_at_start:
+        paths["err"].write_text(
+            "owner inputs changed before execution started\n",
+            encoding="utf-8",
+        )
+        paths["combined"].write_text(
+            "[runner] owner inputs changed before execution started\n",
+            encoding="utf-8",
+        )
+        paths["out"].write_text("", encoding="utf-8")
+        meta.update(
+            status="failed",
+            end_time=_utc_now(),
+            exit_code=1,
+            failure_reason="owner_inputs_changed_before_command",
+        )
+        _write_json(paths["meta"], meta)
+        _publish_exit(paths["exit"], b"1\n")
+        return 1
     flags = {"proof_reused": False}
     try:
         with paths["out"].open("w", encoding="utf-8", errors="replace") as out_file, paths[
@@ -281,16 +320,16 @@ def run_background_child(
             encoding="utf-8",
         )
         returncode = 1
-    covered_source_end = fingerprint_fn()
-    source_current = covered_source == covered_source_end
-    if returncode == 0 and not source_current:
+    inputs_end = current_input_fingerprints()
+    inputs_current = inputs_end == expected_inputs
+    if returncode == 0 and not inputs_current:
         returncode = 1
-        message = "covered source changed while the background child was running\n"
+        message = "covered owner input changed while the background child was running\n"
         with paths["err"].open("a", encoding="utf-8", errors="replace") as err_file:
             err_file.write(message)
         with paths["combined"].open("a", encoding="utf-8", errors="replace") as combined_file:
             combined_file.write(f"[runner] {message}")
-    paths["exit"].write_text(f"{returncode}\n", encoding="utf-8")
+    exit_bytes = f"{returncode}\n".encode("utf-8")
     meta["status"] = (
         "passed"
         if returncode == 0
@@ -303,8 +342,18 @@ def run_background_child(
     meta["end_time"] = _utc_now()
     meta["exit_code"] = returncode
     meta["proof_reused"] = flags["proof_reused"]
-    meta["covered_source_fingerprint_end"] = covered_source_end
-    meta["source_fingerprint_current"] = source_current
+    meta["covered_input_fingerprints_end"] = inputs_end
+    meta["inputs_current"] = inputs_current
+    result_digest = hashlib.sha256()
+    for key in ("out", "err", "combined"):
+        result_digest.update(key.encode("ascii"))
+        result_digest.update(b"\0")
+        result_digest.update(paths[key].read_bytes())
+        result_digest.update(b"\0")
+    result_digest.update(b"exit\0")
+    result_digest.update(exit_bytes)
+    result_digest.update(b"\0")
+    meta["result_fingerprint"] = result_digest.hexdigest()
     if meta["timed_out"]:
         meta["failure_reason"] = (
             "background_child_timeout"
@@ -313,7 +362,8 @@ def run_background_child(
         )
     elif meta.get("process_identity") and not meta.get("descendant_zero_confirmed"):
         meta["failure_reason"] = "background_child_cleanup_unconfirmed"
-    elif not source_current:
-        meta["failure_reason"] = "covered_source_changed_during_command"
+    elif not inputs_current:
+        meta["failure_reason"] = "owner_inputs_changed_during_command"
     _write_json(paths["meta"], meta)
+    _publish_exit(paths["exit"], exit_bytes)
     return returncode

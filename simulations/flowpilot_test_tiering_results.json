@@ -10,6 +10,9 @@
     "background_descendant_settlement_missing": [
       "background_descendant_settlement_not_bounded"
     ],
+    "background_exit_precedes_terminal_meta": [
+      "background_exit_precedes_terminal_meta"
+    ],
     "background_inner_interpreter_follows_external_upgrade": [
       "background_interpreter_not_bound_to_execution_owner"
     ],
@@ -44,6 +47,9 @@
     "foreground_full_regression": [
       "fast_tier_not_foreground_safe"
     ],
+    "global_snapshot_mismatch_stales_every_owner": [
+      "global_snapshot_used_as_blanket_invalidation_authority"
+    ],
     "hidden_skipped_tests": [
       "hidden_skipped_tests"
     ],
@@ -56,11 +62,20 @@
     "json_write_readback_can_hang_control_gate": [
       "json_write_readback_not_bounded"
     ],
+    "line_ending_transport_forces_execution": [
+      "controlled_text_not_canonicalized"
+    ],
     "missing_child_owner": [
       "child_owner_missing"
     ],
+    "mta_supplement_runs_before_upstream_owner": [
+      "mta_supplement_precedes_upstream_owner"
+    ],
     "public_release_in_fast_tier": [
       "public_release_check_in_fast_tier"
+    ],
+    "receipt_consumer_relaunches_heavy_owner": [
+      "receipt_consumer_relaunches_heavy_owner"
     ],
     "release_claim_without_release_suite": [
       "release_scope_missing_release_suite"
@@ -73,6 +88,9 @@
     ],
     "release_public_check_races_model_proofs": [
       "release_public_check_races_model_proofs"
+    ],
+    "reused_owner_has_no_current_ticket": [
+      "reused_owner_missing_current_ticket"
     ],
     "root_pytest_scans_backup_tests": [
       "pytest_collection_not_scoped"
@@ -89,11 +107,18 @@
     "router_slice_import_broken_counted_green": [
       "router_slice_import_failure_counted_green"
     ],
+    "shared_input_selects_every_owner": [
+      "shared_input_selected_blanket_tier_execution"
+    ],
     "stale_child_evidence_used": [
       "child_evidence_stale"
     ],
     "testmesh_mta_final_confidence_dependency_cycle": [
       "testmesh_mta_final_confidence_dependency_cycle"
+    ],
+    "unmapped_change_falls_back_to_run_all": [
+      "blocked_impact_falls_back_to_run_all",
+      "impact_mapping_missing_not_blocked"
     ]
   },
   "flowguard_explorer": {
@@ -102,18 +127,19 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=2 initial_states=1 traces=99",
+    "summary": "sequences=2 initial_states=1 traces=123",
     "violation_count": 0
   },
   "graph": {
     "accepted_state_count": 4,
-    "edge_count": 66,
+    "edge_count": 82,
     "labels_seen": [
       "accept_valid_background_integration_tier",
       "accept_valid_fast_tier",
       "accept_valid_release_background_tier",
       "accept_valid_router_child_tier",
       "reject_background_descendant_settlement_missing",
+      "reject_background_exit_precedes_terminal_meta",
       "reject_background_inner_interpreter_follows_external_upgrade",
       "reject_background_missing_artifact_set",
       "reject_background_predating_process_misclassified_as_descendant",
@@ -125,24 +151,32 @@
       "reject_coverage_sweep_blocks_fast_tier",
       "reject_duplicate_child_owner",
       "reject_foreground_full_regression",
+      "reject_global_snapshot_mismatch_stales_every_owner",
       "reject_hidden_skipped_tests",
       "reject_install_check_races_topology_writers",
       "reject_install_sync_skipped_after_tool_change",
       "reject_json_write_readback_can_hang_control_gate",
+      "reject_line_ending_transport_forces_execution",
       "reject_missing_child_owner",
+      "reject_mta_supplement_runs_before_upstream_owner",
       "reject_public_release_in_fast_tier",
+      "reject_receipt_consumer_relaunches_heavy_owner",
       "reject_release_claim_without_release_suite",
       "reject_release_embeds_final_confidence_consumer",
       "reject_release_obligation_hidden",
       "reject_release_public_check_races_model_proofs",
+      "reject_reused_owner_has_no_current_ticket",
       "reject_root_pytest_scans_backup_tests",
       "reject_router_child_tier_duplicates_k_shards",
       "reject_router_child_tier_keeps_slow_aggregate",
       "reject_router_child_tier_stale_k_pattern",
       "reject_router_slice_import_broken_counted_green",
+      "reject_shared_input_selects_every_owner",
       "reject_stale_child_evidence_used",
       "reject_testmesh_mta_final_confidence_dependency_cycle",
+      "reject_unmapped_change_falls_back_to_run_all",
       "select_background_descendant_settlement_missing",
+      "select_background_exit_precedes_terminal_meta",
       "select_background_inner_interpreter_follows_external_upgrade",
       "select_background_missing_artifact_set",
       "select_background_predating_process_misclassified_as_descendant",
@@ -154,23 +188,30 @@
       "select_coverage_sweep_blocks_fast_tier",
       "select_duplicate_child_owner",
       "select_foreground_full_regression",
+      "select_global_snapshot_mismatch_stales_every_owner",
       "select_hidden_skipped_tests",
       "select_install_check_races_topology_writers",
       "select_install_sync_skipped_after_tool_change",
       "select_json_write_readback_can_hang_control_gate",
+      "select_line_ending_transport_forces_execution",
       "select_missing_child_owner",
+      "select_mta_supplement_runs_before_upstream_owner",
       "select_public_release_in_fast_tier",
+      "select_receipt_consumer_relaunches_heavy_owner",
       "select_release_claim_without_release_suite",
       "select_release_embeds_final_confidence_consumer",
       "select_release_obligation_hidden",
       "select_release_public_check_races_model_proofs",
+      "select_reused_owner_has_no_current_ticket",
       "select_root_pytest_scans_backup_tests",
       "select_router_child_tier_duplicates_k_shards",
       "select_router_child_tier_keeps_slow_aggregate",
       "select_router_child_tier_stale_k_pattern",
       "select_router_slice_import_broken_counted_green",
+      "select_shared_input_selects_every_owner",
       "select_stale_child_evidence_used",
       "select_testmesh_mta_final_confidence_dependency_cycle",
+      "select_unmapped_change_falls_back_to_run_all",
       "select_valid_background_integration_tier",
       "select_valid_fast_tier",
       "select_valid_release_background_tier",
@@ -178,9 +219,9 @@
     ],
     "missing_labels": [],
     "ok": true,
-    "rejected_state_count": 29,
-    "state_count": 67,
-    "terminal_state_count": 33,
+    "rejected_state_count": 37,
+    "state_count": 83,
+    "terminal_state_count": 41,
     "violations": []
   },
   "model": "flowpilot_test_tiering",
@@ -198,6 +239,7 @@
     "bad_rejects": [],
     "hazard_scenarios_rejected": [
       "background_descendant_settlement_missing",
+      "background_exit_precedes_terminal_meta",
       "background_inner_interpreter_follows_external_upgrade",
       "background_missing_artifact_set",
       "background_predating_process_misclassified_as_descendant",
@@ -209,23 +251,30 @@
       "coverage_sweep_blocks_fast_tier",
       "duplicate_child_owner",
       "foreground_full_regression",
+      "global_snapshot_mismatch_stales_every_owner",
       "hidden_skipped_tests",
       "install_check_races_topology_writers",
       "install_sync_skipped_after_tool_change",
       "json_write_readback_can_hang_control_gate",
+      "line_ending_transport_forces_execution",
       "missing_child_owner",
+      "mta_supplement_runs_before_upstream_owner",
       "public_release_in_fast_tier",
+      "receipt_consumer_relaunches_heavy_owner",
       "release_claim_without_release_suite",
       "release_embeds_final_confidence_consumer",
       "release_obligation_hidden",
       "release_public_check_races_model_proofs",
+      "reused_owner_has_no_current_ticket",
       "root_pytest_scans_backup_tests",
       "router_child_tier_duplicates_k_shards",
       "router_child_tier_keeps_slow_aggregate",
       "router_child_tier_stale_k_pattern",
       "router_slice_import_broken_counted_green",
+      "shared_input_selects_every_owner",
       "stale_child_evidence_used",
-      "testmesh_mta_final_confidence_dependency_cycle"
+      "testmesh_mta_final_confidence_dependency_cycle",
+      "unmapped_change_falls_back_to_run_all"
     ],
     "ok": true,
     "valid_scenarios_accepted": [

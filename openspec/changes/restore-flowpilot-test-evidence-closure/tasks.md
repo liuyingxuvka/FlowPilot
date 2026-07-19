@@ -78,11 +78,20 @@
 - [x] 8.1 Add explicit `formal-submit-fast` and `formal-submit-adversarial` TierCommand groups and register them in tier names, `all`, release, and final-confidence ownership as specified.
 - [x] 8.2 Put authority/cardinality, all single faults, focused contract exhaustion, public pairwise, and affected fast shards in the PR lane.
 - [x] 8.3 Put full structural enumeration, fake-AI replay, current-contract matrix, pairwise full set, historical misses, deterministic fuzz, and high-risk interactions in the adversarial/nightly lane.
-- [x] 8.4 Make release consume adversarial, router, integration, Meta/Capability full, public release, and final-confidence evidence; `all` alone is not release proof.
+- [x] 8.4 Make publish closure consume adversarial, router, integration, the release tier's Meta/Capability and public-release evidence, plus the later final-confidence receipt; `all` alone is not release proof.
 - [x] 8.5 Use deterministic shards, compact aggregate results, bounded failure samples, fail/continue policy, and isolated temporary roots; default Windows background parallelism to two after the benchmark.
 - [x] 8.6 Add tier tests proving command ownership, no hidden skip, final background artifact requirements, timeout/failure propagation, and budget reporting.
 - [x] 8.7 Bind every heavyweight launcher to exactly one execution owner and process-tree identity; after timeout, cancellation, interruption, or supervisor failure, invalidate partial evidence and prove descendant count zero before reuse or another owner, with `cleanup-unconfirmed` blocking Scheduled Task, unattended retry, background resume, and parent-exit-only shortcuts.
 - [x] 8.8 Freeze one covered-source fingerprint across all/adversarial/release supervisors and children, the compiled manifest, ContractExhaustion/current Cartesian/MTA/TestMesh/ModelMesh consumers, final-confidence, Meta/Capability parents, topology, install, and final provider validation; reject mixed, newest, approximate, or command-text-equivalent receipts.
+- [x] 8.9 Replace exact global-fingerprint applicability with one canonical LF snapshot fingerprint for provenance plus one MTA/TestMesh-derived covered-input identity per execution owner; do not add a parallel manual owner table.
+- [x] 8.10 Add one impact resolver that emits exactly `reuse`, `execute`, or `blocked`; map affected owners and declared dependents, map explicit shared-global inputs to one declared full owner, and block unmapped or ambiguous inputs as `impact_mapping_missing` without `run all`.
+- [x] 8.11 Persist owner covered-input, command, dependency, toolchain, environment, terminal-result, and cleanup identities in execution proof and issue a real current `TestResultReuseTicket` for unchanged owners.
+- [x] 8.12 Make foreground and background tier entrypoints consume the frozen impact plan, execute only selected owners, preserve unaffected artifacts, and keep receipt consumers read-only.
+- [x] 8.13 Remove unconditional Meta/Capability `--force`; verification and release consume their current owner receipts unless the impact plan explicitly selects those heavyweight owners.
+- [x] 8.14 Keep the canonical snapshot fingerprint as provenance and mixed-snapshot protection only; delete the former global-mismatch-to-all-stale success path and add a negative test that forbids its return.
+- [x] 8.15 Make graph-generated supplemental MTA owners distinguish exact test functions from module/class/fixture evidence, use the existing declared command for non-function evidence, and run only after ordinary upstream owners complete.
+- [x] 8.16 Make terminal metadata publish atomically before the atomic exit marker, and add a regression proving the supervisor cannot observe exit with stale running metadata.
+- [x] 8.17 Separate shared execution-wrapper imports from nested payload applicability, bind them to the current test-tier infrastructure owner, and permit former broad payload proof reuse only through an exact proper-subset ownership-transfer proof.
 
 ## 9. Focused Verification And Failure Backfeed
 
@@ -92,31 +101,37 @@
 - [x] 9.4 Rebuild and check FlowGuard project topology after all model, runner, test, prompt/card, contract, and tier changes.
 - [x] 9.5 After its owning workflow synchronizes the existing verification contract with these new obligations, run that contract and keep the change open until every required check is current, terminal, same-fingerprint, and passing.
 - [x] 9.6 Run focused positive and known-bad tests for authority references, requested-role target equality, compact Reviewer/deleted-field behavior, workstream semantic audit, descendant-zero cleanup, and fingerprint invalidation; backfeed every discrepancy before broad execution.
+- [x] 9.7 Add focused tests for CRLF/LF equivalence, real-content drift, unrelated-owner reuse, exact affected-owner invalidation, declared shared-global ownership, unmapped blocking, real reuse-ticket consumption, no newest/fallback path, and receipt-consumer non-execution.
 
 ## 10. Background Regression Closure
 
 - [x] 10.1 Freeze source, toolchain, test inventory, dependencies, execution owners, verification plan, and one covered-source fingerprint; run `all`, `formal-submit-adversarial`, and `release` in isolated roots with matching start/end fingerprints, final per-child artifacts, and bounded concurrency.
 - [x] 10.2 Compile the final acceptance evidence manifest only from those same-fingerprint terminal tiers; then run ContractExhaustion, current Cartesian, MTA, acceptance TestMesh, and ModelMesh against that exact manifest before starting `final-confidence`.
-- [x] 10.3 After final-confidence and child consumers pass, run Meta and Capability full regressions through the repository background-log contract and verify out/err/combined/exit/meta artifacts, final status, freshness, and any proof reuse.
+- [x] 10.3 Run Meta and Capability full regressions exactly once inside the release tier through the repository background-log contract; verify out/err/combined/exit/meta artifacts, final status, freshness, and any proof reuse, then let later final-confidence and parent consumers inspect those receipts without relaunching either owner.
 - [x] 10.4 Inspect every supervisor/child final exit, result, metadata, fingerprint, and descendant-zero artifact; running, progress-only, stale, skipped, timeout, failed, mixed-fingerprint, or cleanup-unconfirmed evidence remains non-passing.
 - [x] 10.5 Fix all regression failures at their owning code/model/test route and rerun only the invalidated scope plus mandatory release parents.
 - [x] 10.6 Audit the final dependency graph to prove every receipt consumer used the frozen manifest/fingerprint and no receipt consumer reran a heavy owner, selected a newest result, or crossed an invalidated evidence boundary.
+- [x] 10.7 Update the tiering, acceptance TestMesh, MTA, BCL, ModelMesh, and DevelopmentProcessFlow evidence models with the canonical impact-plan states and a known-bad blanket-rerun hazard.
+- [x] 10.8 Run minimum affected validation first, reuse every unchanged current proof, and launch only impact-selected model or test owners in the repository background-log contract.
+- [x] 10.9 After source and the impact plan are stable, run the single declared full release gate, inspect all executed/reused/blocked rows, and prove later tool or unrelated FlowGuard changes do not mechanically invalidate unchanged FlowPilot behavior evidence.
 
 ## 11. Installation, Version, Documentation, And Public Boundary
 
 - [x] 11.1 After source/model/test/evidence freeze, rebuild and check topology, then sync repository-owned FlowPilot into the local Codex skill installation.
 - [x] 11.2 Run install sync, consumer-manifest-aware local digest audit, install check, and installed runtime self-check serially; prove source freshness and matching governed content digests without treating source-only files or the installed consumer manifest as drift.
-- [x] 11.3 Update VERSION, CHANGELOG, README English/Chinese release statements, install/version examples, and release notes for v0.12.0 without overstating arbitrary AI correctness.
+- [x] 11.3 Update VERSION, CHANGELOG, README English/Chinese release statements, install/version examples, and release notes for v0.12.1 without overstating arbitrary AI correctness.
 - [x] 11.4 Run SkillGuard contract/depth/release-facing checks, privacy scans, URL validation, and public-boundary checks; remove or exclude private/local evidence from the release.
 - [x] 11.5 Complete the predecessor change disposition table and finish the retained ledger-hygiene KB/report tasks without using its old coverage report as successor proof.
 - [x] 11.6 Through the workflow that owns the existing `verification-contract.yaml`, add obligations/check owners/dependencies/freshness inputs for structured authority references, exact requested-role resume, compact Reviewer/workstream semantics, descendant-zero cleanup, same-fingerprint sequencing, and predecessor disposition; this update-change task MUST NOT edit that file because OpenSpec status did not return it in `existingOutputPaths`.
+- [x] 11.7 Update AGENTS, verification guidance, HANDOFF, version, changelog, and English/Chinese release statements so future AI treats a raw repository fingerprint mismatch as an impact-audit trigger, never as authority for a heavyweight blanket rerun.
+- [x] 11.8 Through the separate verification-contract owner workflow, replace mandatory all/adversarial/release and Meta/Capability force execution with canonical impact-plan, reuse-ticket, selective-execution, unmapped-block, and cheap parent-consumer checks.
 
 ## 12. OpenSpec, Local Handoff, And Final Audit
 
 - [x] 12.1 Run `openspec validate restore-flowpilot-test-evidence-closure --type change --strict --no-interactive`, inspect every reported requirement/scenario, and archive only after strict validation and every separately owned verification-contract check are current.
-- [ ] 12.2 Inspect the full diff and working tree, preserve unrelated untracked/user files, stage only task-owned paths, create one local Git commit, and do not stage or commit concurrent/user-owned work.
-- [x] 12.3 Record the latest superseding 2026-07-18 user scope: one exact task-owned local commit, task-branch push, fast-forward default-branch update, annotated `v0.12.0` tag, and source-only GitHub Release are required.
-- [ ] 12.4 After all local evidence is current, re-fetch the remote, reject branch/tag/release collisions, push the task branch, fast-forward the default branch, push the annotated tag, create the GitHub Release, and verify every remote identity resolves to the exact task commit.
-- [ ] 12.5 Run a final DevelopmentProcessFlow/Risk Evidence Ledger audit covering every requirement, skipped check, residual risk, install sync, local and remote Git state, publication evidence, and claim boundary.
-- [ ] 12.6 Run predictive KB postflight and record mistake-first, FlowGuard/OpenSpec, delegation, testing, install-sync, and release lessons that are reusable.
-- [ ] 12.7 Mark the active user goal complete only after every in-scope local and remote action-list row has authoritative current evidence.
+- [x] 12.2 Inspect the full diff and working tree, preserve unrelated untracked/user files, stage only task-owned paths, create one local Git commit, and do not stage or commit concurrent/user-owned work.
+- [x] 12.3 Record the latest superseding 2026-07-19 user scope: one exact task-owned local commit, task-branch push, fast-forward default-branch update, annotated `v0.12.1` tag, and source-only GitHub Release are required.
+- [x] 12.4 After all local evidence is current, re-fetch the remote, reject branch/tag/release collisions, push the task branch, fast-forward the default branch, push the annotated tag, create the GitHub Release, and verify every remote identity resolves to the exact task commit.
+- [x] 12.5 Run a final DevelopmentProcessFlow/Risk Evidence Ledger audit covering every requirement, skipped check, residual risk, install sync, local and remote Git state, publication evidence, and claim boundary.
+- [x] 12.6 Run predictive KB postflight and record mistake-first, FlowGuard/OpenSpec, delegation, testing, install-sync, and release lessons that are reusable.
+- [x] 12.7 Mark the active user goal complete only after every in-scope local and remote action-list row has authoritative current evidence.

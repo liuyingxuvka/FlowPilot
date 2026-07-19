@@ -127,6 +127,9 @@ def run_background_supervisor(
     *,
     log_root: Path,
     max_parallel: int,
+    seed_baseline: bool,
+    previous_manifest_path: Path | None,
+    previous_manifest_sha256: str,
     timeout_seconds: int = DEFAULT_BACKGROUND_CHILD_TIMEOUT_SECONDS,
 ) -> int:
     return _run_background_supervisor_impl(
@@ -134,9 +137,11 @@ def run_background_supervisor(
         commands,
         log_root=log_root,
         max_parallel=max_parallel,
+        seed_baseline=seed_baseline,
+        previous_manifest_path=previous_manifest_path,
+        previous_manifest_sha256=previous_manifest_sha256,
         timeout_seconds=timeout_seconds,
         launch_fn=_launch_background,
-        fingerprint_fn=source_fingerprint,
     )
 
 
@@ -145,16 +150,17 @@ def run_background_child(
     command: Sequence[str],
     *,
     log_root: Path,
+    impact_plan_id: str,
+    owner_identity_value: dict[str, Any],
     timeout_seconds: int = DEFAULT_BACKGROUND_CHILD_TIMEOUT_SECONDS,
-    source_fingerprint_value: str | None = None,
 ) -> int:
     return _run_background_child_impl(
         name,
         command,
         log_root=log_root,
+        impact_plan_id=impact_plan_id,
+        owner_identity_value=owner_identity_value,
         timeout_seconds=timeout_seconds,
-        source_fingerprint_value=source_fingerprint_value,
-        fingerprint_fn=source_fingerprint,
     )
 
 
@@ -213,19 +219,55 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--background-supervisor", action="store_true", help=argparse.SUPPRESS)
     parser.add_argument("--name", default="", help=argparse.SUPPRESS)
     parser.add_argument("--command-json", default="", help=argparse.SUPPRESS)
-    parser.add_argument("--covered-source-fingerprint", default="", help=argparse.SUPPRESS)
+    parser.add_argument("--impact-plan-id", default="", help=argparse.SUPPRESS)
+    parser.add_argument(
+        "--owner-identity-path",
+        type=Path,
+        help=argparse.SUPPRESS,
+    )
+    parser.add_argument(
+        "--seed-baseline",
+        action="store_true",
+        help="Execute one explicit first current-contract baseline; no previous evidence is consumed.",
+    )
+    parser.add_argument(
+        "--previous-manifest",
+        type=Path,
+        help="Exact prior v4 evidence manifest used for affected-only planning.",
+    )
+    parser.add_argument(
+        "--previous-manifest-sha256",
+        default="",
+        help="Required exact SHA-256 identity of --previous-manifest.",
+    )
     args = parser.parse_args(argv)
 
     if args.background_child:
         command = json.loads(args.command_json)
-        if not isinstance(command, list) or not args.name:
-            raise SystemExit("background child requires --name and command list")
+        identity_payload = (
+            json.loads(args.owner_identity_path.read_text(encoding="utf-8"))
+            if args.owner_identity_path is not None
+            else None
+        )
+        if (
+            not isinstance(command, list)
+            or not args.name
+            or not args.impact_plan_id
+            or not isinstance(identity_payload, dict)
+            or identity_payload.get("impact_plan_id") != args.impact_plan_id
+            or identity_payload.get("owner_id") != args.name
+            or not isinstance(identity_payload.get("identity"), dict)
+        ):
+            raise SystemExit(
+                "background child requires name, command, impact plan, and owner identity"
+            )
         return run_background_child(
             args.name,
             [str(part) for part in command],
             log_root=args.background_dir,
+            impact_plan_id=args.impact_plan_id,
+            owner_identity_value=dict(identity_payload["identity"]),
             timeout_seconds=_coerce_timeout_seconds(args.background_child_timeout_seconds),
-            source_fingerprint_value=args.covered_source_fingerprint or None,
         )
 
     if args.background_supervisor:
@@ -236,6 +278,9 @@ def main(argv: Sequence[str] | None = None) -> int:
             commands,
             log_root=args.background_dir,
             max_parallel=max_parallel,
+            seed_baseline=args.seed_baseline,
+            previous_manifest_path=args.previous_manifest,
+            previous_manifest_sha256=args.previous_manifest_sha256,
             timeout_seconds=_coerce_timeout_seconds(args.background_child_timeout_seconds),
         )
 
@@ -275,25 +320,29 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 0
 
     if args.background:
+        if args.seed_baseline == bool(args.previous_manifest):
+            raise SystemExit(
+                "background execution requires exactly one of --seed-baseline "
+                "or --previous-manifest"
+            )
+        if args.previous_manifest and not args.previous_manifest_sha256:
+            raise SystemExit(
+                "--previous-manifest-sha256 is required with --previous-manifest"
+            )
         max_parallel = max(1, args.background_max_parallel)
         timeout_seconds = _coerce_timeout_seconds(args.background_child_timeout_seconds)
-        if should_use_background_supervisor(len(commands), max_parallel):
-            launched = [
-                _launch_background_supervisor(
-                    args.tier,
-                    log_root=args.background_dir,
-                    max_parallel=max_parallel,
-                    timeout_seconds=timeout_seconds,
-                )
-            ]
-            supervisor = launched[0]
-        else:
-            launched = launch_background(
-                commands,
+        launched = [
+            _launch_background_supervisor(
+                args.tier,
                 log_root=args.background_dir,
+                max_parallel=max_parallel,
                 timeout_seconds=timeout_seconds,
+                seed_baseline=args.seed_baseline,
+                previous_manifest=args.previous_manifest,
+                previous_manifest_sha256=args.previous_manifest_sha256,
             )
-            supervisor = None
+        ]
+        supervisor = launched[0]
         payload = {
             "ok": True,
             "tier": args.tier,
@@ -302,6 +351,11 @@ def main(argv: Sequence[str] | None = None) -> int:
             "launched": launched,
             "plan": plan,
             "supervisor": supervisor,
+            "evidence_mode": (
+                "current_v4_seed_baseline"
+                if args.seed_baseline
+                else "current_v4_affected_only"
+            ),
         }
         if args.json:
             print(json.dumps(payload, indent=2, sort_keys=True))

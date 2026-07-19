@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
 from typing import Any
 
 from flowpilot_model_test_alignment_common import *
@@ -20,6 +21,40 @@ def _known_bad_cases() -> list[dict[str, Any]]:
         path=path,
         symbol="FlowPilotModelTestAlignmentTests",
         implements_obligations=("known_bad.required_obligation",),
+    )
+    duplicate_first = replace(
+        _evidence(
+            "known_bad.duplicate.first",
+            test_name="synthetic duplicate evidence first owner",
+            path=path,
+            command=command,
+            test_kind=HAPPY,
+            covers=("known_bad.required_obligation",),
+            code_contracts=("known_bad.required_contract",),
+        ),
+        result_status=PASSED,
+        evidence_current=True,
+        proof_artifact=None,
+        result_reused=False,
+        reuse_ticket=None,
+        stale_reasons=(),
+    )
+    duplicate_second = replace(
+        _evidence(
+            "known_bad.duplicate.second",
+            test_name="synthetic duplicate evidence second owner",
+            path=path,
+            command=command,
+            test_kind=HAPPY,
+            covers=("known_bad.required_obligation",),
+            code_contracts=("known_bad.required_contract",),
+        ),
+        result_status=PASSED,
+        evidence_current=True,
+        proof_artifact=None,
+        result_reused=False,
+        reuse_ticket=None,
+        stale_reasons=(),
     )
     return [
         {
@@ -122,26 +157,7 @@ def _known_bad_cases() -> list[dict[str, Any]]:
                 model_id="known_bad_duplicate",
                 obligations=(obligation,),
                 code_contracts=(code_contract,),
-                test_evidence=(
-                    _evidence(
-                        "known_bad.duplicate.first",
-                        test_name="synthetic duplicate evidence first owner",
-                        path=path,
-                        command=command,
-                        test_kind=HAPPY,
-                        covers=("known_bad.required_obligation",),
-                        code_contracts=("known_bad.required_contract",),
-                    ),
-                    _evidence(
-                        "known_bad.duplicate.second",
-                        test_name="synthetic duplicate evidence second owner",
-                        path=path,
-                        command=command,
-                        test_kind=HAPPY,
-                        covers=("known_bad.required_obligation",),
-                        code_contracts=("known_bad.required_contract",),
-                    ),
-                ),
+                test_evidence=(duplicate_first, duplicate_second),
             ),
         },
         {

@@ -15,15 +15,15 @@
 </p>
 
 <p align="center">
-  Source version: <strong>v0.12.0</strong> · MIT License · open-source AI-agent control runtime
+  Source version: <strong>v0.12.1</strong> · MIT License · open-source AI-agent control runtime
 </p>
 <!-- README HERO END -->
 
 English comes first. The second half is a full Chinese mirror.
 
-This source is v0.12.0. Its release closure requires one exact task-owned
+This source is v0.12.1. Its release closure requires one exact task-owned
 commit, a fast-forward update of the GitHub default branch, an annotated
-`v0.12.0` tag, and a source-only GitHub Release that all identify that same
+`v0.12.1` tag, and a source-only GitHub Release that all identify that same
 commit. Until those remote checks pass, the version label is source metadata,
 not a claim that publication has completed.
 
@@ -135,7 +135,7 @@ In plain language:
 
 | Field | Value |
 | --- | --- |
-| Source version | `v0.12.0` |
+| Source version | `v0.12.1` |
 | Public project name | `FlowPilot` |
 | Skill slug | `flowpilot` |
 | Release shape | Source package only, no binary app bundle |
@@ -143,7 +143,16 @@ In plain language:
 | Required core dependency | Real `flowguard` Python package |
 | Current UI surface | Windows WPF startup intake dialog plus chat route signs |
 
-`v0.12.0` makes the opened packet's `submission_checklist.v2` the only role-visible mechanical submission authority, binds it to the current run, packet, lease, route, source generation, and contract fingerprint, and rejects body mirrors, private helpers, retired aliases, and historical execution sources as alternate success paths. Its test mesh registers the finite mechanical contract universe, executes every mandatory single-fault and risk class, and uses deterministic pairwise, three-way, fuzz, replay, and historical-miss coverage for the rest. This is evidence about the declared finite runtime contract; it is not a claim that every possible natural-language AI answer is correct.
+`v0.12.1` removes repository-wide fingerprint equality as test-applicability
+authority. The first current-contract release executes one explicit baseline;
+later runs bind to one exact prior v4 manifest and SHA-256, then independently
+classify each command owner as `reuse`, `execute`, or `blocked` from that
+owner's command, covered inputs, dependencies, environment, obligations, and
+MTA evidence subjects. Unmapped or stale evidence blocks instead of falling
+through to run-all. Line-ending-only transport, generated results, and
+unrelated FlowGuard upgrades no longer invalidate otherwise current owners.
+Each logical MTA evidence row has exactly one command owner and its own reuse
+projection back to that proof.
 
 ## When To Use FlowPilot
 
@@ -247,7 +256,7 @@ MIT. See [`LICENSE`](./LICENSE).
 
 # FlowPilot 中文说明
 
-**Source version:** `v0.12.0`<br />
+**Source version:** `v0.12.1`<br />
 **许可证：** MIT<br />
 **形态：** open-source AI-agent control runtime
 
@@ -359,7 +368,7 @@ startup intake
 
 | 字段 | 值 |
 | --- | --- |
-| Source version | `v0.12.0` |
+| Source version | `v0.12.1` |
 | Public project name | `FlowPilot` |
 | Skill slug | `flowpilot` |
 | Release shape | source package only, no binary app bundle |
@@ -367,12 +376,12 @@ startup intake
 | Required core dependency | real `flowguard` Python package |
 | Current UI surface | Windows WPF startup intake dialog plus chat route signs |
 
-当前源码版本是 `v0.12.0`。本次发布闭环要求：只包含本任务文件的精确 Git commit、
-GitHub 默认分支的 fast-forward 更新、指向同一 commit 的 `v0.12.0` annotated tag，
+当前源码版本是 `v0.12.1`。本次发布闭环要求：只包含本任务文件的精确 Git commit、
+GitHub 默认分支的 fast-forward 更新、指向同一 commit 的 `v0.12.1` annotated tag，
 以及同一版本的 source-only GitHub Release。远端核验完成前，Source version 只是
 源码元数据，不代表发布已经完成。
 
-`v0.12.0` 把当前已打开 packet 返回的 `submission_checklist.v2` 设为角色唯一可见的机械提交权威，并把它绑定到当前 run、packet、lease、route、source generation 和 contract fingerprint。packet body 镜像、private helper、退役 alias、历史 execution source 都不能成为第二条成功路径。测试方面，系统先完整登记有限机械契约空间，再完整执行所有强制单故障与高风险类别；其余声明空间采用确定性的 pairwise、three-way、fuzz、replay 和历史 miss 覆盖。这个结论只针对已声明的有限 runtime contract，并不声称任意自然语言 AI 回答都一定正确。
+`v0.12.1` 不再用“整个仓库指纹必须完全一致”决定测试是否失效。第一次当前合同发布只运行一次明确的基线；以后每次都必须绑定一个精确的 v4 证据清单及其 SHA-256，然后按每个 command owner 自己的命令、输入、依赖、环境、义务和 MTA 证据，分别判定为 `reuse`、`execute` 或 `blocked`。无法映射或已经过期的证据会明确阻塞，不会退回全量重跑。只有换行格式变化、生成结果变化或无关 FlowGuard 升级时，未受影响 owner 的证据可以继续复用。每条逻辑 MTA 证据也必须且只能归属一个 command owner。
 
 ## 什么时候用 FlowPilot
 

@@ -1169,11 +1169,37 @@ def _evidence(
     proof_gaps: tuple[str, ...] = ()
     requested_pass = result_status == PASSED and evidence_current
     if requested_pass and resolved.exists() and not _DECLARATION_ONLY:
-        proof, reuse_ticket, proof_gaps = derived_owner_proof(
-            _EXECUTION_EVIDENCE_BUNDLE or {},
-            owner_id=evidence_id,
-            covered_obligation_ids=tuple(covers),
-        )
+        bundle = _EXECUTION_EVIDENCE_BUNDLE or {}
+        owners = bundle.get("owners")
+        owner_ids = []
+        if isinstance(owners, dict):
+            for owner_id, owner_row in owners.items():
+                identity = (
+                    owner_row.get("identity")
+                    if isinstance(owner_row, dict)
+                    else None
+                )
+                covered_evidence_ids = (
+                    identity.get("covered_evidence_ids")
+                    if isinstance(identity, dict)
+                    else None
+                )
+                if (
+                    isinstance(covered_evidence_ids, list)
+                    and evidence_id in covered_evidence_ids
+                ):
+                    owner_ids.append(str(owner_id))
+        if len(owner_ids) == 1:
+            proof, reuse_ticket, proof_gaps = derived_owner_proof(
+                bundle,
+                owner_id=owner_ids[0],
+                covered_obligation_ids=tuple(covers),
+                projected_evidence_id=evidence_id,
+            )
+        elif not owner_ids:
+            proof_gaps = ("test_evidence_owner_binding_missing",)
+        else:
+            proof_gaps = ("test_evidence_owner_binding_ambiguous",)
     current = requested_pass and resolved.exists() and proof is not None and reuse_ticket is not None and not proof_gaps
     effective_status = PASSED if current else (result_status if result_status != PASSED else "not_run")
     if requested_pass and not current:

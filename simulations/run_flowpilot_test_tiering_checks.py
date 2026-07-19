@@ -38,6 +38,7 @@ REQUIRED_LABELS = {
     "reject_router_child_tier_stale_k_pattern",
     "reject_background_progress_only_claimed_pass",
     "reject_background_missing_artifact_set",
+    "reject_background_exit_precedes_terminal_meta",
     "reject_background_running_without_timeout_guard",
     "reject_background_inner_interpreter_follows_external_upgrade",
     "reject_background_windows_venv_shim_exits_before_process_owner",
@@ -51,6 +52,8 @@ REQUIRED_LABELS = {
     "reject_release_public_check_races_model_proofs",
     "reject_release_embeds_final_confidence_consumer",
     "reject_testmesh_mta_final_confidence_dependency_cycle",
+    "reject_shared_input_selects_every_owner",
+    "reject_mta_supplement_runs_before_upstream_owner",
     "reject_install_check_races_topology_writers",
     "reject_install_sync_skipped_after_tool_change",
 }
@@ -64,6 +67,28 @@ EXPECTED_HAZARD_FAILURES = {
     "duplicate_child_owner": {"duplicate_child_owner"},
     "hidden_skipped_tests": {"hidden_skipped_tests"},
     "stale_child_evidence_used": {"child_evidence_stale"},
+    "line_ending_transport_forces_execution": {
+        "controlled_text_not_canonicalized"
+    },
+    "global_snapshot_mismatch_stales_every_owner": {
+        "global_snapshot_used_as_blanket_invalidation_authority"
+    },
+    "shared_input_selects_every_owner": {
+        "shared_input_selected_blanket_tier_execution"
+    },
+    "unmapped_change_falls_back_to_run_all": {
+        "impact_mapping_missing_not_blocked",
+        "blocked_impact_falls_back_to_run_all",
+    },
+    "reused_owner_has_no_current_ticket": {
+        "reused_owner_missing_current_ticket"
+    },
+    "receipt_consumer_relaunches_heavy_owner": {
+        "receipt_consumer_relaunches_heavy_owner"
+    },
+    "mta_supplement_runs_before_upstream_owner": {
+        "mta_supplement_precedes_upstream_owner"
+    },
     "router_slice_import_broken_counted_green": {
         "router_slice_import_failure_counted_green",
     },
@@ -80,6 +105,9 @@ EXPECTED_HAZARD_FAILURES = {
         "background_progress_is_not_completion_evidence",
     },
     "background_missing_artifact_set": {"background_artifact_set_missing"},
+    "background_exit_precedes_terminal_meta": {
+        "background_exit_precedes_terminal_meta"
+    },
     "background_running_without_timeout_guard": {
         "background_progress_is_not_completion_evidence",
         "background_timeout_not_enforced",

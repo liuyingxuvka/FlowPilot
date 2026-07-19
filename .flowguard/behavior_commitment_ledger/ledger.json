@@ -571,10 +571,10 @@
           "test_mesh_state": "shard_current"
         },
         "excluded_behavior_ids": [],
-        "expected_result": "all, adversarial, and release proof compiles before strict parents, with repository final confidence downstream",
-        "expected_terminal": "all, adversarial, and release proof compiles before strict parents, with repository final confidence downstream",
+        "expected_result": "all, adversarial, and release proof compiles from one canonical impact plan whose exact owner rows are either executed with current proof or reused through an exact TestResultReuseTicket; the repository snapshot is provenance only and never blanket-invalidates unrelated owner evidence",
+        "expected_terminal": "every requested owner has one current executed or reused proof, every unmapped or ambiguous changed input is visibly blocked, and strict parents consume the compiled proof without relaunching heavyweight owners",
         "external_differences": [],
-        "failure_boundary": "stale proof, deferred release suites, duplicate run or daemon startup under writer contention, lost completed-action receipts, or a final-confidence/TestMesh/MTA cycle blocks broad claims",
+        "failure_boundary": "stale or identity-mismatched owner proof, missing or invalid reuse ticket, unmapped or ambiguous changed input, deferred release suites, duplicate run or daemon startup under writer contention, lost completed-action receipts, blanket rerun fallback, or a final-confidence/TestMesh/MTA cycle blocks broad claims",
         "in_scope": true,
         "label": "Release and done claims require current model/test/install evidence.",
         "lookup_binding": {
@@ -1079,10 +1079,10 @@
           "test_mesh_state": "shard_current"
         },
         "excluded_behavior_ids": [],
-        "expected_result": "the child binds inner Python execution to the current execution-owner interpreter, uses the bound base interpreter as the direct Windows process owner while preserving virtual-environment identity, continuously accumulates exact Router-daemon descendants through the stop window, and supplies final command, exact process identity, bounded natural-exit settlement followed by descendant-zero cleanup proof, result path, exit code, selected/executed counts, covered ids, and the one frozen source fingerprint; commands sharing one external runtime resource are serialized while unrelated owners remain parallel",
-        "expected_terminal": "every required tier and proof consumer is terminal, descendant-zero, resource-safe, and bound to the same covered-source fingerprint",
+        "expected_result": "the child binds inner Python execution to the current execution-owner interpreter, uses the bound base interpreter as the direct Windows process owner while preserving virtual-environment identity, continuously accumulates exact Router-daemon descendants through the stop window, and supplies final command, exact process identity, bounded natural-exit settlement followed by descendant-zero cleanup proof, result path, exit code, selected/executed/reused counts, covered ids, and its exact owner input identity; canonical repository snapshots remain provenance only, commands sharing one external runtime resource are serialized, and unrelated owners retain current evidence",
+        "expected_terminal": "every required owner and proof consumer is terminal, descendant-zero, resource-safe, and current through exactly one executed proof or exact TestResultReuseTicket; any missing input mapping blocks instead of falling back to a blanket run",
         "external_differences": [],
-        "failure_boundary": "not-run, stale, progress-only, failed, missing-exit, cleanup-unconfirmed, interpreter-drift, short-lived-interpreter-shim-owner, daemon-descendant-created-during-stop-untracked, descendant-survives-bounded-settlement, mixed-fingerprint, proof-free, or shared-runtime-resource-overlap rows remain blocking",
+        "failure_boundary": "not-run, stale, progress-only, failed, missing-exit, cleanup-unconfirmed, interpreter-drift, short-lived-interpreter-shim-owner, daemon-descendant-created-during-stop-untracked, descendant-survives-bounded-settlement, owner-input drift, invalid reuse ticket, impact_mapping_missing, proof-free, blanket-rerun fallback, or shared-runtime-resource-overlap rows remain blocking",
         "in_scope": true,
         "label": "TestMesh green requires current fingerprinted proof artifacts.",
         "lookup_binding": {
@@ -2103,7 +2103,7 @@
         "variant_of_business_intent_id": ""
       }
     ],
-    "current_revision": "flowguard-0.57-current-authority-exact-resume-evidence-stability",
+    "current_revision": "flowguard-0.58-owner-impact-evidence-reuse",
     "expected_business_intent_ids": [
       "intent:flowpilot.submit-current-packet-result",
       "intent:flowpilot.repair-late-defect-through-current-shared-engine",

@@ -457,12 +457,20 @@ def _terminal_replay_block_body_for_packet(packet: dict[str, Any], ledger: dict[
     payload = json.loads(_body_for_packet(packet, ledger=ledger))
     blocker_text = "Delivered product signposting does not match the current accepted route."
     segments = payload.get("route_segment_replay")
-    if isinstance(segments, list) and segments:
-        first_segment = segments[0]
-        if isinstance(first_segment, dict):
-            first_segment["status"] = "blocked"
-            first_segment["basis"] = blocker_text
+    if not isinstance(segments, list) or not segments or not isinstance(segments[0], dict):
+        raise runtime.BlackBoxRuntimeError(
+            "terminal replay blocker injection requires a current route segment"
+        )
+    first_segment = segments[0]
+    segment_id = str(first_segment.get("segment_id") or "")
+    if not segment_id:
+        raise runtime.BlackBoxRuntimeError(
+            "terminal replay blocker injection requires the current segment_id"
+        )
+    first_segment["status"] = "blocked"
+    first_segment["basis"] = blocker_text
     blocker = {
+        "segment_id": segment_id,
         "blocker_id": "terminal-blocker-delivered-product",
         "blocker_class": "terminal_closure",
         "required_repair": "Repair delivered-product signposting and restart terminal replay.",
@@ -560,25 +568,21 @@ def _shallow_flowguard_body_for_packet(packet: dict[str, Any], ledger: dict[str,
     return json.dumps(payload, sort_keys=True)
 
 
-def _flowguard_result_ids_for_review_packet(packet: dict[str, Any]) -> list[str]:
-    result_ids = [
-        str(row.get("result_id") or "")
-        for row in runtime._packet_authorized_result_reads(packet)
-        if str(row.get("purpose") or "") == "matching_flowguard_result_for_review"
-        and str(row.get("result_id") or "")
+def _flowguard_materials_for_review_packet(
+    packet: dict[str, Any],
+) -> list[dict[str, Any]]:
+    materials = packet.get("authorized_input_materials")
+    if not isinstance(materials, list):
+        return []
+    return [
+        material
+        for material in materials
+        if isinstance(material, dict)
+        and str(material.get("purpose") or "")
+        == "matching_flowguard_result_for_review"
+        and str(material.get("result_id") or "")
+        and isinstance(material.get("sealed_result_body"), str)
     ]
-    try:
-        packet_body = json.loads(packet.get("body") or "{}")
-    except json.JSONDecodeError:
-        return result_ids
-    manifest = packet_body.get("flowguard_evidence_manifest") if isinstance(packet_body, dict) else None
-    entries = manifest.get("entries") if isinstance(manifest, dict) else []
-    manifest_ids = [
-        str(entry.get("flowguard_result_id") or "")
-        for entry in entries
-        if isinstance(entry, dict) and str(entry.get("flowguard_result_id") or "")
-    ]
-    return list(dict.fromkeys(result_ids + manifest_ids))
 
 
 def _payload_is_shallow_flowguard_report(payload: Any) -> bool:
@@ -599,19 +603,14 @@ def _payload_is_shallow_flowguard_report(payload: Any) -> bool:
 
 def _review_body_for_packet(packet: dict[str, Any], ledger: dict[str, Any] | None = None) -> str:
     payload = _current_result_skeleton(packet)
-    if ledger is None:
-        return json.dumps(payload, sort_keys=True)
     shallow_result_ids: list[str] = []
-    for result_id in _flowguard_result_ids_for_review_packet(packet):
-        result = ledger.get("results", {}).get(result_id)
-        if not isinstance(result, dict):
-            continue
+    for material in _flowguard_materials_for_review_packet(packet):
         try:
-            result_payload = json.loads(result.get("body") or "{}")
+            result_payload = json.loads(str(material["sealed_result_body"]))
         except json.JSONDecodeError:
             continue
         if _payload_is_shallow_flowguard_report(result_payload):
-            shallow_result_ids.append(result_id)
+            shallow_result_ids.append(str(material["result_id"]))
     if shallow_result_ids:
         payload["passed"] = False
         payload["findings"] = [

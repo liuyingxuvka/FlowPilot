@@ -5,6 +5,8 @@ import sys
 import unittest
 from pathlib import Path
 
+from scripts.test_tier.source_fingerprint import file_fingerprint, source_snapshot
+
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -40,6 +42,97 @@ class FlowPilotCurrentContractCartesianMatrixTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.report = runner.run_checks(declaration_only=True)
+
+    @staticmethod
+    def current_manifest(
+        owner_ids: list[str],
+        *,
+        selected_count: int,
+        reused_without_ticket: bool = False,
+    ) -> dict[str, object]:
+        relative_input = Path(__file__).resolve().relative_to(ROOT).as_posix()
+        input_fingerprint = file_fingerprint(Path(__file__).resolve())
+        owners: dict[str, object] = {}
+        for owner_id in owner_ids:
+            result_fingerprint = __import__("hashlib").sha256(
+                owner_id.encode("utf-8")
+            ).hexdigest()
+            owner_proof = {
+                "artifact_id": f"proof.current-cartesian.{owner_id}",
+                "producer_route": "flowpilot.test-tier.selective-execution",
+                "command": f"python -m pytest {relative_input} -q",
+                "result_path": f"tmp/test_background/{owner_id}.combined.txt",
+                "result_status": "passed",
+                "exit_code": 0,
+                "artifact_fingerprints": {
+                    f"{owner_id}.combined.txt": result_fingerprint
+                },
+                "covered_obligation_ids": [f"owner:{owner_id}"],
+                "assertion_scope": "external_contract",
+                "current": True,
+                "route_evidence_current": True,
+                "progress_only": False,
+                "metadata": {"result_fingerprint": result_fingerprint},
+            }
+            owners[owner_id] = {
+                "owner_id": owner_id,
+                "result_status": "passed",
+                "result_reused": False,
+                "identity": {
+                    "command_fingerprint": "a" * 64,
+                    "test_source_fingerprint": "b" * 64,
+                    "tested_artifact_fingerprint": "c" * 64,
+                    "dependency_fingerprints": {"fixture": "e" * 64},
+                    "environment_fingerprint": "d" * 64,
+                    "covered_input_fingerprint": input_fingerprint,
+                    "covered_input_fingerprints": {
+                        relative_input: input_fingerprint
+                    },
+                    "covered_obligation_ids": [f"owner:{owner_id}"],
+                },
+                "result_fingerprint": result_fingerprint,
+                "proof_artifact": owner_proof,
+                "reuse_ticket": None,
+            }
+        aggregate_proof = {
+            "artifact_id": "proof.current-cartesian-tests",
+            "producer_route": "flowguard-test-mesh",
+            "command": "python scripts/run_test_tier.py --tier all --background",
+            "result_path": "tmp/test_background/current-all",
+            "result_status": "passed",
+            "exit_code": 0,
+            "artifact_fingerprints": {
+                "all.meta.json": "a" * 64,
+                "all.exit.txt": "b" * 64,
+            },
+            "covered_obligation_ids": ["all-current-tests"],
+            "assertion_scope": "external_contract",
+            "current": True,
+            "route_evidence_current": True,
+            "progress_only": False,
+            "metadata": {
+                "selected_child_command_count": selected_count,
+                "executed_child_command_count": selected_count,
+                "reused_child_command_count": 0,
+                "proof_backed_child_command_count": selected_count,
+            },
+        }
+        return {
+            "schema_version": "flowpilot.acceptance_testmesh_evidence_manifest.v4",
+            "snapshot": source_snapshot(),
+            "owners": owners,
+            "routine": {
+                "all": {
+                    "result_status": "passed",
+                    "selected_count": selected_count,
+                    "test_count": selected_count,
+                    "result_reused": reused_without_ticket,
+                    "owner_evidence_ids": owner_ids,
+                    "owner_reuse_tickets": {},
+                    "proof_artifact": aggregate_proof,
+                }
+            },
+        }
 
     def test_current_contract_cartesian_runner_accepts_full_matrix(self) -> None:
         report = self.report
@@ -279,32 +372,10 @@ class FlowPilotCurrentContractCartesianMatrixTests(unittest.TestCase):
                     self.assertEqual(link_audit["forbidden_legacy_positive_markers"], [])
 
     def test_strict_testmesh_consumes_current_proof_counts_not_model_cells(self) -> None:
-        proof = {
-            "artifact_id": "proof.current-cartesian-tests",
-            "producer_route": "flowguard-test-mesh",
-            "command": "python scripts/run_test_tier.py --tier all --background",
-            "result_path": "tmp/test_background/current-all",
-            "result_status": "passed",
-            "exit_code": 0,
-            "artifact_fingerprints": {"all.meta.json": "a" * 64, "all.exit.txt": "b" * 64},
-            "covered_obligation_ids": ["all-current-tests"],
-            "assertion_scope": "external_contract",
-            "current": True,
-            "route_evidence_current": True,
-            "progress_only": False,
-            "metadata": {"selected_child_command_count": 17, "executed_child_command_count": 17},
-        }
-        manifest = {
-            "source_fingerprint": runner.source_fingerprint(),
-            "routine": {
-                "all": {
-                    "result_status": "passed",
-                    "selected_count": 17,
-                    "test_count": 17,
-                    "proof_artifact": proof,
-                }
-            },
-        }
+        owner_ids = [
+            "mta_evidence_test_flowpilot_current_contract_cartesian_matrix_1a96cfe0a215"
+        ]
+        manifest = self.current_manifest(owner_ids, selected_count=17)
         strict = runner._test_mesh_report(
             self.report["matrix"],
             evidence_manifest=manifest,
@@ -321,31 +392,14 @@ class FlowPilotCurrentContractCartesianMatrixTests(unittest.TestCase):
             self.assertTrue(suite["owned_shard_ids"])
 
     def test_strict_testmesh_rejects_reused_proof_without_ticket(self) -> None:
-        proof = {
-            "artifact_id": "proof.reused-without-ticket",
-            "producer_route": "flowguard-test-mesh",
-            "command": "python scripts/run_test_tier.py --tier all --background",
-            "result_path": "tmp/test_background/current-all",
-            "result_status": "passed",
-            "exit_code": 0,
-            "artifact_fingerprints": {"all.meta.json": "a" * 64},
-            "covered_obligation_ids": ["all-current-tests"],
-            "assertion_scope": "external_contract",
-            "current": True,
-            "metadata": {"selected_child_command_count": 1, "executed_child_command_count": 1},
-        }
-        manifest = {
-            "source_fingerprint": runner.source_fingerprint(),
-            "routine": {
-                "all": {
-                    "result_status": "passed",
-                    "selected_count": 1,
-                    "test_count": 1,
-                    "result_reused": True,
-                    "proof_artifact": proof,
-                }
-            },
-        }
+        owner_ids = [
+            "mta_evidence_test_flowpilot_current_contract_cartesian_matrix_1a96cfe0a215"
+        ]
+        manifest = self.current_manifest(
+            owner_ids,
+            selected_count=17,
+            reused_without_ticket=True,
+        )
         strict = runner._test_mesh_report(
             self.report["matrix"],
             evidence_manifest=manifest,

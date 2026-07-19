@@ -4,6 +4,7 @@ import json
 import sys
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from flowguard import (
     behavior_commitment_ledger_fingerprint,
@@ -117,6 +118,46 @@ class FlowPilot053PPAMaintenanceTests(unittest.TestCase):
         self.assertEqual(
             alignment["path"],
             "simulations/flowpilot_model_test_alignment_results.json",
+        )
+
+    def test_model_test_alignment_evidence_requires_current_v4_snapshot_fields(
+        self,
+    ) -> None:
+        current = runner.source_fingerprint()
+        current_payload = {
+            "ok": True,
+            "claim_scope": "done",
+            "evidence_status": "passed",
+            "execution_evidence": {
+                "ok": True,
+                "snapshot_fingerprint_matches": True,
+                "manifest_snapshot_fingerprint": current,
+                "expected_source_fingerprint": current,
+                "failures": [],
+            },
+        }
+        with patch.object(runner, "_json_object", return_value=current_payload):
+            report = runner._model_test_alignment_evidence_report()
+
+        self.assertTrue(report["ok"], report)
+        self.assertTrue(report["checks"]["snapshot_fingerprint_matches"])
+
+        retired_v3_payload = {
+            **current_payload,
+            "execution_evidence": {
+                "ok": True,
+                "source_fingerprint_current": True,
+                "manifest_source_fingerprint": current,
+                "expected_source_fingerprint": current,
+                "failures": [],
+            },
+        }
+        with patch.object(runner, "_json_object", return_value=retired_v3_payload):
+            retired_report = runner._model_test_alignment_evidence_report()
+
+        self.assertFalse(retired_report["ok"])
+        self.assertFalse(
+            retired_report["checks"]["snapshot_fingerprint_matches"]
         )
 
     def test_primary_path_authority_rejects_old_field_and_duplicate_primary_paths(self) -> None:

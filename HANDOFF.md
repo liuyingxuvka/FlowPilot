@@ -764,6 +764,15 @@ FlowGuard caught and fixed these design issues:
   background children and foreground child commands. Use the background
   artifact files for completion evidence instead of relying on visible console
   windows.
+- Test-tier evidence now uses one v4 owner-impact path. The canonical source
+  snapshot is audit provenance only. After the one explicit seed baseline,
+  every background run must name the exact previous v4 manifest and SHA-256;
+  each owner is then `reuse`, `execute`, or `blocked` from its own command,
+  inputs, dependencies, environment, obligations, and MTA evidence identity.
+  An unmapped change blocks and never falls through to run-all. A FlowGuard
+  package upgrade or line-ending-only transport change does not invalidate
+  owners unless that component is explicitly part of their applicability
+  identity.
 - Child FlowGuard models that still produced high maintenance friction now keep
   facade entrypoints while delegating state, transitions, invariants, hazards,
   and audit helpers to focused modules. This pass covered control-plane

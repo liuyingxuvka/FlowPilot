@@ -256,6 +256,15 @@ FAST_COMMANDS = (
         description="FlowGuard obligation-family parity checks for packet-result durable-envelope reconciliation.",
     ),
     TierCommand(
+        name="flowguard_field_contracts",
+        command=_py(
+            "simulations/run_flowpilot_field_contract_checks.py",
+            "--json-out",
+            "simulations/flowpilot_field_contract_results.json",
+        ),
+        description="Exact FlowGuard field-lifecycle owner whose current result is consumed by ModelMesh.",
+    ),
+    TierCommand(
         name="flowguard_model_test_alignment",
         command=_py(
             "simulations/run_flowpilot_model_test_alignment_checks.py",
@@ -404,7 +413,11 @@ FAST_COMMANDS = (
     _pytest(
         "test_tier_runner",
         "tests/test_flowpilot_test_tiers.py",
-        description="Focused tests for tier command planning and background artifact contracts.",
+        "tests/test_flowguard_background_helper.py",
+        description=(
+            "Focused tests for tier planning, background artifacts, and the shared "
+            "FlowGuard execution-wrapper boundary."
+        ),
     ),
     _pytest_k(
         "synthetic_agent_trace_core_tests",

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+import hashlib
 import importlib
 import json
 import tempfile
@@ -9,6 +10,9 @@ from pathlib import Path
 
 
 runner = importlib.import_module("simulations.run_flowpilot_model_mesh_checks")
+source_snapshot_module = importlib.import_module(
+    "scripts.test_tier.source_fingerprint"
+)
 
 
 class FlowPilotModelMeshCoverageReceiptTests(unittest.TestCase):
@@ -84,25 +88,108 @@ class FlowPilotModelMeshCoverageReceiptTests(unittest.TestCase):
                 }
             path.write_text(json.dumps(payload), encoding="utf-8")
             paths[model_id] = path
+        owner_input = "simulations/run_flowpilot_model_mesh_checks.py"
+        owner_input_fingerprint = source_snapshot_module.file_fingerprint(
+            runner.REPO_ROOT / owner_input
+        )
+        owners: dict[str, object] = {}
+        for _receipt_id, model_id, relative_path, _ok_field in runner.CONTRACT_COVERAGE_RESULT_SPECS:
+            if model_id == runner.UNIFIED_REPAIR_MODEL_ID:
+                continue
+            owner_id = runner.CONTRACT_COVERAGE_OWNER_IDS[model_id]
+            command = (
+                "python "
+                f"simulations/run_{model_id}_checks.py "
+                f"--json-out {relative_path.as_posix()}"
+            )
+            result_fingerprint = hashlib.sha256(
+                f"result:{model_id}".encode("utf-8")
+            ).hexdigest()
+            identity = {
+                "command_fingerprint": hashlib.sha256(
+                    command.encode("utf-8")
+                ).hexdigest(),
+                "test_source_fingerprint": hashlib.sha256(b"").hexdigest(),
+                "tested_artifact_fingerprint": owner_input_fingerprint,
+                "dependency_fingerprints": {
+                    "covered_inputs": owner_input_fingerprint
+                },
+                "environment_fingerprint": hashlib.sha256(
+                    b"model-mesh-fixture"
+                ).hexdigest(),
+                "covered_input_fingerprint": owner_input_fingerprint,
+                "covered_input_fingerprints": {
+                    owner_input: owner_input_fingerprint
+                },
+                "covered_obligation_ids": [f"model-receipt:{model_id}"],
+            }
+            owner_proof = {
+                "artifact_id": f"proof.owner.{model_id}",
+                "producer_route": "flowpilot.test-tier.selective-execution",
+                "command": command,
+                "result_path": f"tmp/test_results/{model_id}.json",
+                "result_status": "passed",
+                "exit_code": 0,
+                "artifact_fingerprints": {
+                    f"{model_id}.json": result_fingerprint
+                },
+                "covered_obligation_ids": [f"model-receipt:{model_id}"],
+                "assertion_scope": "external_contract",
+                "current": True,
+                "route_evidence_current": True,
+                "progress_only": False,
+                "metadata": {"result_fingerprint": result_fingerprint},
+            }
+            owners[owner_id] = {
+                "owner_id": owner_id,
+                "result_status": "passed",
+                "result_reused": False,
+                "identity": identity,
+                "result_fingerprint": result_fingerprint,
+                "proof_artifact": owner_proof,
+                "reuse_ticket": None,
+            }
         proof = {
-            "artifact_id": "proof.current",
+            "artifact_id": "proof.release.current",
             "producer_route": "flowguard-test-mesh",
-            "command": "python scripts/run_test_tier.py --tier all --background",
+            "command": "python scripts/run_test_tier.py --tier evidence-closure --background",
             "result_path": "tmp/test-background/current",
             "result_status": "passed",
             "exit_code": 0,
             "artifact_fingerprints": {"current.meta.json": "a" * 64, "current.exit.txt": "b" * 64},
-            "covered_obligation_ids": ["current-tests"],
+            "covered_obligation_ids": [
+                "all_tier_complete",
+                "formal_submit_adversarial_tier_complete",
+                "release_tier_complete",
+            ],
             "assertion_scope": "external_contract",
             "current": True,
             "route_evidence_current": True,
             "progress_only": False,
-            "metadata": {"selected_child_command_count": 12, "executed_child_command_count": 12},
+            "metadata": {
+                "selected_child_command_count": len(owners),
+                "executed_child_command_count": len(owners),
+                "reused_child_command_count": 0,
+                "proof_backed_child_command_count": len(owners),
+            },
         }
         manifest: dict[str, object] = {
-            "source_fingerprint": runner.source_fingerprint(),
-            "routine": {"suite": {"result_status": "passed", "selected_count": 12, "test_count": 12, "proof_artifact": proof}},
-            "release": {"result_status": "passed", "selected_count": 12, "test_count": 12, "proof_artifact": dict(proof, artifact_id="proof.release")},
+            "schema_version": "flowpilot.acceptance_testmesh_evidence_manifest.v4",
+            "phase": "final",
+            "claim_scope": "release",
+            "snapshot": source_snapshot_module.source_snapshot(),
+            "impact_plan": {"plan_ids": ["fixture-plan"], "decisions": []},
+            "owners": owners,
+            "routine": {},
+            "release": {
+                "result_status": "passed",
+                "result_reused": False,
+                "reuse_ticket": None,
+                "selected_count": len(owners),
+                "test_count": len(owners),
+                "owner_evidence_ids": sorted(owners),
+                "proof_artifact": proof,
+            },
         }
         return manifest, paths
 
@@ -188,6 +275,7 @@ class FlowPilotModelMeshCoverageReceiptTests(unittest.TestCase):
             report["development_process_flow"]["exact_evidence_ids"],
             list(runner.DPF_EXACT_EVIDENCE_IDS),
         )
+        self.assertTrue(report["development_process_flow"]["ok"], report)
         self.assertEqual(report["missing_child_receipt_ids"], [])
         self.assertIn("static:one", parent["covered_case_ids"])
         self.assertIn("execution:one", parent["covered_case_ids"])
@@ -208,6 +296,28 @@ class FlowPilotModelMeshCoverageReceiptTests(unittest.TestCase):
             },
         )
 
+    def test_missing_exact_process_obligation_blocks_release_mesh(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            manifest, paths = self.evidence_fixture(root)
+            owner_id = runner.CONTRACT_COVERAGE_OWNER_IDS[
+                "flowpilot_model_test_alignment"
+            ]
+            owner = manifest["owners"][owner_id]  # type: ignore[index]
+            owner["proof_artifact"]["covered_obligation_ids"] = []  # type: ignore[index]
+            report = runner._contract_coverage_receipt_report(
+                project_root=root,
+                evidence_manifest=manifest,
+                result_path_overrides=paths,
+            )
+
+        self.assertFalse(report["ok"])
+        findings = report["development_process_flow"]["report"]["findings"]
+        self.assertIn(
+            "process_proof_artifact_missing_obligation",
+            {finding["code"] for finding in findings},
+        )
+
     def test_missing_or_failed_child_result_blocks_parent(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -223,20 +333,46 @@ class FlowPilotModelMeshCoverageReceiptTests(unittest.TestCase):
         self.assertFalse(report["ok"])
         self.assertIn("receipt.contract_exhaustion_mesh", report["missing_child_receipt_ids"])
 
-    def test_stale_source_fingerprint_blocks_every_child_receipt(self) -> None:
+    def test_foreign_owner_with_matching_command_cannot_replace_exact_model_owner(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             manifest, paths = self.evidence_fixture(root)
-            manifest["source_fingerprint"] = "stale-source"
+            model_id = "flowpilot_field_contracts"
+            exact_owner_id = runner.CONTRACT_COVERAGE_OWNER_IDS[model_id]
+            foreign_owner_id = "foreign_field_contract_owner"
+            owners = manifest["owners"]
+            owners[foreign_owner_id] = owners.pop(exact_owner_id)  # type: ignore[union-attr]
+            release = manifest["release"]
+            release["owner_evidence_ids"] = [  # type: ignore[index]
+                foreign_owner_id if owner_id == exact_owner_id else owner_id
+                for owner_id in release["owner_evidence_ids"]  # type: ignore[index]
+            ]
+
             report = runner._contract_coverage_receipt_report(
                 project_root=root,
                 evidence_manifest=manifest,
                 result_path_overrides=paths,
             )
 
-        self.assertFalse(report["ok"])
-        self.assertFalse(report["source_fingerprint_current"])
-        self.assertTrue(report["missing_child_receipt_ids"])
+        receipt = self.child_receipt(report, model_id)
+        self.assertFalse(receipt["current"])
+        self.assertIn("exact_model_owner_missing", receipt["finding_codes"])
+        self.assertIn("receipt.field_contract_lifecycle", report["missing_child_receipt_ids"])
+
+    def test_snapshot_mismatch_is_provenance_only_when_owner_proofs_are_current(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            manifest, paths = self.evidence_fixture(root)
+            manifest["snapshot"]["fingerprint"] = "stale-provenance-snapshot"
+            report = runner._contract_coverage_receipt_report(
+                project_root=root,
+                evidence_manifest=manifest,
+                result_path_overrides=paths,
+            )
+
+        self.assertTrue(report["ok"], report)
+        self.assertFalse(report["snapshot_fingerprint_matches"])
+        self.assertEqual(report["missing_child_receipt_ids"], [])
 
     def test_progress_only_or_failed_proof_manifest_blocks_parent(self) -> None:
         for mutation in (

@@ -1,4 +1,4 @@
-contract_version: 1
+contract_version: 2
 change: restore-flowpilot-test-evidence-closure
 obligations:
   - id: req.authority.single_projection
@@ -163,12 +163,12 @@ obligations:
     evidence:
       - check.router.descendant_zero
       - check.tier.cleanup_contract
-  - id: req.execution.same_source_fingerprint
-    source: "specs/flowguard-test-obligation-ownership/spec.md#Requirement: Proof consumers share one frozen source fingerprint"
-    claim: Required tier owners, manifests, and proof consumers use one covered-source fingerprint with no newest-result or mixed-snapshot fallback.
+  - id: req.execution.owner_scoped_evidence_applicability
+    source: "specs/flowguard-test-obligation-ownership/spec.md#Requirement: Proof applicability follows canonical owner inputs"
+    claim: The canonical snapshot is provenance only; exact owner identities decide reuse, execution, or blocking, and an unmapped change never falls back to blanket execution.
     required: true
     evidence:
-      - check.tier.fingerprint_contract
+      - check.tier.owner_applicability_contract
       - check.evidence.final_manifest
   - id: req.tiers.budget
     source: "specs/tiered-flowpilot-test-validation/spec.md#Requirement: Test budgets are measured and enforced without dropping coverage"
@@ -179,7 +179,7 @@ obligations:
       - check.tier.formal_adversarial
   - id: req.release.current_closure
     source: "specs/flowpilot-maintenance-ideal-state/spec.md#Requirement: Candidate closure uses current source, model, test, and install evidence"
-    claim: Topology and installed repository-owned skill are current after final source changes; the exact task commit, GitHub default branch, annotated v0.12.0 tag, and source-only GitHub Release must identify the same commit.
+    claim: Topology and installed repository-owned skill are current after final source changes; the exact task commit, GitHub default branch, annotated v0.12.1 tag, and source-only GitHub Release must identify the same commit.
     required: true
     evidence:
       - check.topology
@@ -247,7 +247,7 @@ checks:
     args: [simulations/run_flowpilot_core_runtime_development_checks.py]
     execution_owner: model.core_runtime_development
     required: true
-    covers: [req.authority.structured_current_reference, req.start.single_invocation_retry, req.resume.exact_current_roles, req.review.workstream_semantics, req.review.compact_challenge, req.execution.descendant_zero, req.execution.same_source_fingerprint]
+    covers: [req.authority.structured_current_reference, req.start.single_invocation_retry, req.resume.exact_current_roles, req.review.workstream_semantics, req.review.compact_challenge, req.execution.descendant_zero, req.execution.owner_scoped_evidence_applicability]
     expected: {exit_code: 0}
   - id: check.formal_ai.execution
     kind: command
@@ -280,7 +280,7 @@ checks:
   - id: check.tier.all.background
     kind: command
     command: python
-    args: [scripts/run_test_tier.py, --tier, all, --verify-background, --background-dir, tmp/test_background/v0.12.0-all-final-r13, --json]
+    args: [scripts/run_test_tier.py, --tier, all, --verify-background, --background-dir, tmp/test_background/v0.12.1-all-v4-seed-r1, --json]
     execution_owner: receipt_consumer.tier.all
     required: true
     covers: [req.testmesh.execution_evidence, req.testmesh.parent_consumption, req.tiers.background_final]
@@ -288,7 +288,7 @@ checks:
   - id: check.tier.adversarial.background
     kind: command
     command: python
-    args: [scripts/run_test_tier.py, --tier, formal-submit-adversarial, --verify-background, --background-dir, tmp/test_background/v0.12.0-adversarial-final-r13, --json]
+    args: [scripts/run_test_tier.py, --tier, formal-submit-adversarial, --verify-background, --background-dir, tmp/test_background/v0.12.1-adversarial-v4-seed-r1, --json]
     execution_owner: receipt_consumer.tier.adversarial
     required: true
     covers: [req.coverage.tiered_execution, req.testmesh.execution_evidence, req.tiers.background_final]
@@ -296,35 +296,52 @@ checks:
   - id: check.tier.release.background
     kind: command
     command: python
-    args: [scripts/run_test_tier.py, --tier, release, --verify-background, --background-dir, tmp/test_background/v0.12.0-release-final-r13b, --json]
+    args: [scripts/run_test_tier.py, --tier, release, --verify-background, --background-dir, tmp/test_background/v0.12.1-release-v4-seed-r1, --json]
     execution_owner: receipt_consumer.tier.release
     required: true
     covers: [req.testmesh.parent_consumption, req.tiers.background_final, req.release.current_closure]
     expected: {exit_code: 0}
+  - id: check.evidence.preclosure_manifest
+    kind: command
+    command: python
+    args: [scripts/compile_flowpilot_acceptance_testmesh_evidence.py, --phase, preclosure, --all-root, tmp/test_background/v0.12.1-all-v4-seed-r1, --adversarial-root, tmp/test_background/v0.12.1-adversarial-v4-seed-r1, --release-root, tmp/test_background/v0.12.1-release-v4-seed-r1, --json-out, tmp/test_results/flowpilot_acceptance_testmesh_preclosure_manifest.json]
+    depends_on_receipts: [check.unified_repair.exact_native_receipt, check.tier.all.background, check.tier.adversarial.background, check.tier.release.background]
+    required: true
+    covers: [req.coverage.parent_receipts, req.testmesh.execution_evidence, req.testmesh.parent_consumption, req.tiers.background_final, req.execution.owner_scoped_evidence_applicability]
+    expected: {exit_code: 0}
+  - id: check.tier.evidence_closure.background
+    kind: command
+    command: python
+    args: [scripts/run_test_tier.py, --tier, evidence-closure, --verify-background, --background-dir, tmp/test_background/v0.12.1-evidence-closure-v4-seed-r1, --json]
+    execution_owner: receipt_consumer.tier.evidence_closure
+    depends_on_receipts: [check.evidence.preclosure_manifest]
+    required: true
+    covers: [req.coverage.universe, req.coverage.oracles, req.mta.binding, req.testmesh.parent_consumption, req.release.current_closure]
+    expected: {exit_code: 0}
   - id: check.evidence.final_manifest
     kind: command
     command: python
-    args: [scripts/compile_flowpilot_acceptance_testmesh_evidence.py, --phase, final, --all-root, tmp/test_background/v0.12.0-all-final-r13, --adversarial-root, tmp/test_background/v0.12.0-adversarial-final-r13, --release-root, tmp/test_background/v0.12.0-release-final-r13b, --json-out, simulations/flowpilot_acceptance_testmesh_evidence_manifest.json]
-    depends_on_receipts: [check.unified_repair.exact_native_receipt, check.tier.all.background, check.tier.adversarial.background, check.tier.release.background]
+    args: [scripts/compile_flowpilot_acceptance_testmesh_evidence.py, --phase, final, --all-root, tmp/test_background/v0.12.1-all-v4-seed-r1, --adversarial-root, tmp/test_background/v0.12.1-adversarial-v4-seed-r1, --release-root, tmp/test_background/v0.12.1-release-v4-seed-r1, --closure-root, tmp/test_background/v0.12.1-evidence-closure-v4-seed-r1, --json-out, simulations/flowpilot_acceptance_testmesh_evidence_manifest.json]
+    depends_on_receipts: [check.tier.evidence_closure.background]
     required: true
-    covers: [req.coverage.parent_receipts, req.testmesh.execution_evidence, req.testmesh.parent_consumption, req.tiers.background_final, req.execution.same_source_fingerprint, req.release.current_closure]
+    covers: [req.coverage.parent_receipts, req.testmesh.execution_evidence, req.testmesh.parent_consumption, req.tiers.background_final, req.execution.owner_scoped_evidence_applicability, req.release.current_closure]
     expected: {exit_code: 0}
   - id: check.contract_exhaustion.model
-    kind: command
-    command: python
-    args: [simulations/run_flowpilot_contract_exhaustion_mesh_checks.py, --evidence-manifest, simulations/flowpilot_acceptance_testmesh_evidence_manifest.json, --evidence-scope, done, --json-out, simulations/flowpilot_contract_exhaustion_mesh_results.json]
-    depends_on_receipts: [check.evidence.final_manifest]
+    kind: receipt
+    execution_owner: test_tier.evidence_closure.contract_exhaustion_current_evidence
+    consumer: restore-test-evidence-closure-contract-exhaustion
+    receipt_path: simulations/flowpilot_contract_exhaustion_mesh_results.json
+    depends_on_receipts: [check.tier.evidence_closure.background, check.evidence.final_manifest]
     required: true
     covers: [req.coverage.universe, req.coverage.oracles]
-    expected: {exit_code: 0}
   - id: check.current_matrix.model
-    kind: command
-    command: python
-    args: [simulations/run_flowpilot_current_contract_cartesian_matrix_checks.py, --evidence-manifest, simulations/flowpilot_acceptance_testmesh_evidence_manifest.json, --evidence-scope, done, --json-out, simulations/flowpilot_current_contract_cartesian_matrix_results.json]
-    depends_on_receipts: [check.evidence.final_manifest]
+    kind: receipt
+    execution_owner: test_tier.evidence_closure.current_contract_cartesian_current_evidence
+    consumer: restore-test-evidence-closure-current-contract-cartesian
+    receipt_path: simulations/flowpilot_current_contract_cartesian_matrix_results.json
+    depends_on_receipts: [check.tier.evidence_closure.background, check.evidence.final_manifest]
     required: true
     covers: [req.authority.current_sources]
-    expected: {exit_code: 0}
   - id: check.fake_ai.replay
     kind: command
     command: python
@@ -333,34 +350,34 @@ checks:
     covers: [req.review.delivered_policy, req.coverage.truthful_counts]
     expected: {exit_code: 0}
   - id: check.model_test_alignment
-    kind: command
-    command: python
-    args: [simulations/run_flowpilot_model_test_alignment_checks.py, --evidence-manifest, simulations/flowpilot_acceptance_testmesh_evidence_manifest.json, --evidence-scope, done, --json-out, simulations/flowpilot_model_test_alignment_results.json]
-    depends_on_receipts: [check.evidence.final_manifest]
+    kind: receipt
+    execution_owner: test_tier.evidence_closure.model_test_alignment_current_evidence
+    consumer: restore-test-evidence-closure-model-test-alignment
+    receipt_path: simulations/flowpilot_model_test_alignment_results.json
+    depends_on_receipts: [check.tier.evidence_closure.background, check.evidence.final_manifest]
     required: true
     covers: [req.mta.binding, req.mta.backfeed]
-    expected: {exit_code: 0}
   - id: check.behavior_commitment_risk.model
-    kind: command
-    command: python
-    args: [simulations/run_flowpilot_053_ppa_maintenance_checks.py, --json-out, simulations/flowpilot_053_ppa_maintenance_results.json]
-    depends_on_receipts: [check.execution_closure.model, check.model_test_alignment]
+    kind: receipt
+    execution_owner: test_tier.evidence_closure.behavior_commitment_risk_current_evidence
+    consumer: restore-test-evidence-closure-behavior-risk
+    receipt_path: simulations/flowpilot_053_ppa_maintenance_results.json
+    depends_on_receipts: [check.tier.evidence_closure.background, check.evidence.final_manifest]
     required: true
     covers: [req.authority.single_projection, req.authority.current_sources, req.coverage.parent_receipts, req.mta.binding, req.release.current_closure]
-    expected: {exit_code: 0}
   - id: check.acceptance_testmesh
-    kind: command
-    command: python
-    args: [simulations/run_flowpilot_acceptance_testmesh_checks.py, --evidence-manifest, simulations/flowpilot_acceptance_testmesh_evidence_manifest.json, --json-out, simulations/flowpilot_acceptance_testmesh_results.json]
-    depends_on_receipts: [check.evidence.final_manifest]
+    kind: receipt
+    execution_owner: test_tier.evidence_closure.acceptance_testmesh_current_evidence
+    consumer: restore-test-evidence-closure-acceptance-testmesh
+    receipt_path: simulations/flowpilot_acceptance_testmesh_results.json
+    depends_on_receipts: [check.tier.evidence_closure.background, check.evidence.final_manifest]
     required: true
     covers: [req.testmesh.execution_evidence, req.testmesh.parent_consumption, req.tiers.background_final]
-    expected: {exit_code: 0}
   - id: check.model_mesh
     kind: command
     command: python
     args: [simulations/run_flowpilot_model_mesh_checks.py, --evidence-manifest, simulations/flowpilot_acceptance_testmesh_evidence_manifest.json, --claim-scope, done, --json-out, simulations/flowpilot_model_mesh_results.json]
-    depends_on_receipts: [check.evidence.final_manifest, check.behavior_commitment_risk.model]
+    depends_on_receipts: [check.evidence.final_manifest, check.behavior_commitment_risk.model, check.model_test_alignment, check.acceptance_testmesh]
     required: true
     covers: [req.coverage.parent_receipts, req.testmesh.parent_consumption]
     expected: {exit_code: 0}
@@ -374,30 +391,28 @@ checks:
   - id: check.tier.final.background
     kind: command
     command: python
-    args: [scripts/run_test_tier.py, --tier, final-confidence, --verify-background, --background-dir, tmp/test_background/v0.12.0-final-confidence-r13, --json]
+    args: [scripts/run_test_tier.py, --tier, final-confidence, --verify-background, --background-dir, tmp/test_background/v0.12.1-final-confidence-v4-seed-r1, --json]
     execution_owner: receipt_consumer.tier.final_confidence
     depends_on_receipts: [check.contract_exhaustion.model, check.current_matrix.model, check.model_test_alignment, check.acceptance_testmesh, check.model_mesh]
     required: true
     covers: [req.testmesh.parent_consumption, req.tiers.background_final, req.release.current_closure]
     expected: {exit_code: 0}
   - id: check.meta.background
-    kind: command
-    command: python
-    args: [scripts/run_flowguard_background.py, --name, run_meta_checks, --verify, --, python, simulations/run_meta_checks.py, --full, --force]
+    kind: receipt
     execution_owner: receipt_consumer.parent.meta
-    depends_on_receipts: [check.tier.release.background]
+    consumer: restore-test-evidence-closure-meta-parent
+    receipt_path: simulations/flowpilot_acceptance_testmesh_evidence_manifest.json
+    depends_on_receipts: [check.tier.release.background, check.evidence.final_manifest]
     required: true
     covers: [req.testmesh.parent_consumption, req.release.current_closure]
-    expected: {exit_code: 0}
   - id: check.capability.background
-    kind: command
-    command: python
-    args: [scripts/run_flowguard_background.py, --name, run_capability_checks, --verify, --, python, simulations/run_capability_checks.py, --full, --force]
+    kind: receipt
     execution_owner: receipt_consumer.parent.capability
-    depends_on_receipts: [check.tier.release.background]
+    consumer: restore-test-evidence-closure-capability-parent
+    receipt_path: simulations/flowpilot_acceptance_testmesh_evidence_manifest.json
+    depends_on_receipts: [check.tier.release.background, check.evidence.final_manifest]
     required: true
     covers: [req.testmesh.parent_consumption, req.release.current_closure]
-    expected: {exit_code: 0}
   - id: check.testmesh.known_bad
     kind: command
     command: python
@@ -428,13 +443,13 @@ checks:
     required: true
     covers: [req.execution.descendant_zero]
     expected: {exit_code: 0}
-  - id: check.tier.fingerprint_contract
+  - id: check.tier.owner_applicability_contract
     kind: command
     command: python
-    args: [-m, unittest, -v, tests.test_flowpilot_test_tiers.FlowPilotTestTierTests.test_covered_source_fingerprint_ignores_generated_results_but_tracks_source]
+    args: [-m, unittest, -v, tests.test_flowpilot_test_tiers.FlowPilotTestTierTests.test_covered_source_fingerprint_ignores_generated_results_but_tracks_source, tests.test_flowpilot_test_tiers.FlowPilotTestTierTests.test_exact_owner_identity_reuses_v4_proof_without_execution, tests.test_flowpilot_test_tiers.FlowPilotTestTierTests.test_unmapped_changed_input_blocks_without_blanket_execution]
     execution_owner: focused.tier_fingerprint_contract
     required: true
-    covers: [req.execution.same_source_fingerprint]
+    covers: [req.execution.owner_scoped_evidence_applicability]
     expected: {exit_code: 0}
   - id: check.predecessor.disposition
     kind: command
@@ -476,7 +491,7 @@ checks:
     kind: receipt
     execution_owner: release.github.same_commit_publication
     consumer: restore-test-evidence-closure-remote-publication
-    receipt_path: tmp/release_evidence/v0.12.0.json
+    receipt_path: tmp/release_evidence/v0.12.1.json
     required: true
     covers: [req.release.current_closure]
 
