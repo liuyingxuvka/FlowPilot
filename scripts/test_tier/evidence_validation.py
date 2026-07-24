@@ -7,6 +7,8 @@ from pathlib import Path
 from typing import Any
 
 from .definitions import commands_for_tier
+from .background_supervisor import supervisor_control_paths
+from .evidence_v5 import load_json_object
 from .verification import verify_background_tier
 
 
@@ -44,12 +46,17 @@ def validated_tier(root: Path, tier: str) -> dict[str, Any]:
         raise ValueError(
             f"{tier} current owner evidence is invalid: {verification['failures']}"
         )
-    owners = meta.get("owners")
-    if not isinstance(owners, dict):
-        raise ValueError(f"{tier} owner evidence rows are missing")
-    impact_plan = meta.get("impact_plan")
-    if not isinstance(impact_plan, dict):
-        raise ValueError(f"{tier} impact plan is missing")
+    control_paths = supervisor_control_paths(root, tier)
+    impact_plan = load_json_object(control_paths["impact_plan"])
+    owner_index = load_json_object(control_paths["owner_index"])
+    owner_rows = owner_index.get("owners")
+    if not isinstance(owner_rows, list):
+        raise ValueError(f"{tier} owner evidence refs are missing")
+    owners = {
+        str(row.get("owner_id") or ""): row
+        for row in owner_rows
+        if isinstance(row, dict)
+    }
     child_meta_paths = sorted(
         path
         for path in root.glob("*.meta.json")
@@ -72,7 +79,13 @@ def validated_tier(root: Path, tier: str) -> dict[str, Any]:
         "executed_count": int(meta.get("execute_count") or 0),
         "reused_count": int(meta.get("reuse_count") or 0),
         "owners": owners,
+        "owner_index": owner_index,
+        "owner_index_path": control_paths["owner_index"],
+        "impact_plan_path": control_paths["impact_plan"],
+        "progress_path": control_paths["progress"],
         "impact_plan": impact_plan,
-        "snapshot_start": meta.get("snapshot_start"),
-        "snapshot_end": meta.get("snapshot_end"),
+        "snapshot_start": impact_plan.get("snapshot"),
+        "snapshot_end": {
+            "fingerprint": meta.get("snapshot_end_fingerprint"),
+        },
     }

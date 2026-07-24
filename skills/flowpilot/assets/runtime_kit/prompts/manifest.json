@@ -23,7 +23,7 @@
     {
       "id": "cards.post_ack_policy",
       "path": "prompts/cards/post_ack_policy.md",
-      "sha256": "58b484c79e2eec0a47f1d99fa7fc1bb712f64d79fc3a110a3b65aa88d3e189ae",
+      "sha256": "ef4318b7befe1b805ea02080dd6459ea079035201bdf0adb01cd7206dac35176",
       "strip_trailing_newline": true,
       "template_variables": []
     },
@@ -72,7 +72,7 @@
     {
       "id": "packets.packet_identity_boundary",
       "path": "prompts/packets/packet_identity_boundary.md",
-      "sha256": "bb72096382c05da7cb02c2c0a1532612fe75128df251fd5eabc78b683232a5be",
+      "sha256": "9dd8ddb05e843c329e208352ec48b85a83f653ba83f9155261a8796aa1787586",
       "strip_trailing_newline": false,
       "template_variables": [
         "packet_identity_marker",
@@ -92,7 +92,7 @@
     {
       "id": "packets.output_contract_section",
       "path": "prompts/packets/output_contract_section.md",
-      "sha256": "35205483d18bba27745be3a1fbae423e1b949d08be72147a8dc74fe387069e5b",
+      "sha256": "ace83b822ea41ef1ba6c48c84b51e91671fd948a773b937ef7e6e36ddf7e7bfc",
       "strip_trailing_newline": false,
       "template_variables": [
         "allowed_decisions_block",

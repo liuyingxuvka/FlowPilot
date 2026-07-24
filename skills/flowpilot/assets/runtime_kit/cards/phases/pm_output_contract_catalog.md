@@ -78,10 +78,15 @@ ordinary package identity when new work is required.
 
 `progress_status`: every formal role-output work item has default
 Controller-visible metadata progress. Use `flowpilot_new.py progress
---lease-id <lease-id> --packet-id <packet-id> --status still_working` while
-working and keep messages brief; do not include sealed body content, findings,
-evidence, recommendations, decisions, or result details. Progress is status
-only and must not be used as pass/fail evidence.
+--lease-id <lease-id> --packet-id <packet-id> --status <finite-status>` with
+exactly one of `started`, `working`, `waiting_external`, `verifying`,
+`repairing`, `blocked`, or `ready_to_submit`. Report only a semantic status
+change, a due liveness reminder, or a material long-command transition into or
+out of waiting, verification, or repair. Reads, polls, small milestones,
+ordinary command boundaries, and unchanged resumes do not create progress;
+repeated identical status inside the liveness window is coalesced. Keep the
+metadata body-free. Progress is status only and must not be used as pass/fail
+evidence.
 
 When a gate can pass, block, waive, skip, repair locally, mutate the route, or
 affect completion, require a file-backed `GateDecision` body using

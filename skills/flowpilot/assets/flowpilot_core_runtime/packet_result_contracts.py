@@ -1388,11 +1388,13 @@ def _minimal_valid_shape_for_family_base(family_id: str) -> dict[str, Any]:
 
 
 def workstream_plan_and_completion_example() -> dict[str, Any]:
-    """Return the shared semantic plan-completion example for role reports.
+    """Return the shared obligation/phase-level plan example for role reports.
 
     Runtime deliberately does not score this section. Reviewer compares these
     role-authored rows with actual artifacts, evidence, delegation and current
-    verification through the existing review/repair path.
+    verification through the existing review/repair path. The same rows are
+    updated through submission; commands, reads, polls, and copied final plans
+    are not separate rows.
     """
 
     return {
@@ -1400,7 +1402,7 @@ def workstream_plan_and_completion_example() -> dict[str, Any]:
         "steps": [
             {
                 "step_number": 1,
-                "plan": "Understand the bounded assignment, current evidence, authority and failure conditions.",
+                "plan": "Close the assignment-understanding and authority obligation.",
                 "status": "completed",
                 "evidence_refs": ["current-packet-and-authorized-inputs"],
                 "deviation": "none",
@@ -1408,7 +1410,7 @@ def workstream_plan_and_completion_example() -> dict[str, Any]:
             },
             {
                 "step_number": 2,
-                "plan": "Execute the role-local work and integrate any bounded delegated outputs.",
+                "plan": "Close the role-local implementation and integration obligation.",
                 "status": "completed",
                 "evidence_refs": ["current-role-artifact"],
                 "deviation": "none",
@@ -1416,7 +1418,7 @@ def workstream_plan_and_completion_example() -> dict[str, Any]:
             },
             {
                 "step_number": 3,
-                "plan": "Verify the actual result and repair every in-scope defect found.",
+                "plan": "Close the verification and in-scope repair obligation.",
                 "status": "completed",
                 "evidence_refs": ["current-verification-receipt"],
                 "deviation": "none",
@@ -1424,7 +1426,7 @@ def workstream_plan_and_completion_example() -> dict[str, Any]:
             },
             {
                 "step_number": 4,
-                "plan": "Reconcile plan status, evidence, deviations and unresolved work before submission.",
+                "plan": "Close the evidence reconciliation and submission-readiness phase.",
                 "status": "completed",
                 "evidence_refs": ["current-report-self-check"],
                 "deviation": "none",

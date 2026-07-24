@@ -150,16 +150,18 @@ def run_background_child(
     command: Sequence[str],
     *,
     log_root: Path,
-    impact_plan_id: str,
-    owner_identity_value: dict[str, Any],
+    impact_plan_path: Path,
+    impact_plan_sha256: str,
+    owner_id: str,
     timeout_seconds: int = DEFAULT_BACKGROUND_CHILD_TIMEOUT_SECONDS,
 ) -> int:
     return _run_background_child_impl(
         name,
         command,
         log_root=log_root,
-        impact_plan_id=impact_plan_id,
-        owner_identity_value=owner_identity_value,
+        impact_plan_path=impact_plan_path,
+        impact_plan_sha256=impact_plan_sha256,
+        owner_id=owner_id,
         timeout_seconds=timeout_seconds,
     )
 
@@ -219,10 +221,15 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--background-supervisor", action="store_true", help=argparse.SUPPRESS)
     parser.add_argument("--name", default="", help=argparse.SUPPRESS)
     parser.add_argument("--command-json", default="", help=argparse.SUPPRESS)
-    parser.add_argument("--impact-plan-id", default="", help=argparse.SUPPRESS)
+    parser.add_argument("--impact-plan", type=Path, help=argparse.SUPPRESS)
     parser.add_argument(
-        "--owner-identity-path",
-        type=Path,
+        "--impact-plan-sha256",
+        default="",
+        help=argparse.SUPPRESS,
+    )
+    parser.add_argument(
+        "--owner-id",
+        default="",
         help=argparse.SUPPRESS,
     )
     parser.add_argument(
@@ -233,7 +240,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument(
         "--previous-manifest",
         type=Path,
-        help="Exact prior v4 evidence manifest used for affected-only planning.",
+        help="Exact prior V5 evidence manifest used for affected-only planning.",
     )
     parser.add_argument(
         "--previous-manifest-sha256",
@@ -244,29 +251,23 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     if args.background_child:
         command = json.loads(args.command_json)
-        identity_payload = (
-            json.loads(args.owner_identity_path.read_text(encoding="utf-8"))
-            if args.owner_identity_path is not None
-            else None
-        )
         if (
             not isinstance(command, list)
             or not args.name
-            or not args.impact_plan_id
-            or not isinstance(identity_payload, dict)
-            or identity_payload.get("impact_plan_id") != args.impact_plan_id
-            or identity_payload.get("owner_id") != args.name
-            or not isinstance(identity_payload.get("identity"), dict)
+            or args.impact_plan is None
+            or not args.impact_plan_sha256
+            or args.owner_id != args.name
         ):
             raise SystemExit(
-                "background child requires name, command, impact plan, and owner identity"
+                "background child requires name, command, exact impact plan path/SHA, and owner id"
             )
         return run_background_child(
             args.name,
             [str(part) for part in command],
             log_root=args.background_dir,
-            impact_plan_id=args.impact_plan_id,
-            owner_identity_value=dict(identity_payload["identity"]),
+            impact_plan_path=args.impact_plan,
+            impact_plan_sha256=args.impact_plan_sha256,
+            owner_id=args.owner_id,
             timeout_seconds=_coerce_timeout_seconds(args.background_child_timeout_seconds),
         )
 
@@ -352,9 +353,9 @@ def main(argv: Sequence[str] | None = None) -> int:
             "plan": plan,
             "supervisor": supervisor,
             "evidence_mode": (
-                "current_v4_seed_baseline"
+                "current_v5_seed_baseline"
                 if args.seed_baseline
-                else "current_v4_affected_only"
+                else "current_v5_affected_only"
             ),
         }
         if args.json:

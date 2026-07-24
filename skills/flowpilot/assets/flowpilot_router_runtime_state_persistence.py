@@ -46,7 +46,13 @@ def _json_clone(value: Any) -> Any:
 
 
 def _public_run_state_snapshot(state: dict[str, Any]) -> dict[str, Any]:
-    return {key: _json_clone(value) for key, value in state.items() if key not in _RUN_STATE_VOLATILE_META_KEYS}
+    snapshot = {key: _json_clone(value) for key, value in state.items() if key not in _RUN_STATE_VOLATILE_META_KEYS}
+    pending = snapshot.get("pending_action")
+    if isinstance(pending, dict):
+        pending.pop("wait_reminder_history", None)
+        pending.pop("seen_count", None)
+        pending.pop("last_seen_at", None)
+    return snapshot
 
 
 def _run_state_snapshot_hash(state: dict[str, Any]) -> str:
@@ -203,15 +209,10 @@ def _merge_pending_wait_reminder_state(existing: dict[str, Any], current: dict[s
     if not _same_pending_wait_identity(existing, current):
         return current
     merged = dict(current)
+    merged.pop("wait_reminder_history", None)
     for field in _RUN_STATE_PENDING_REMINDER_FIELDS:
         if existing.get(field) not in (None, "", []) and merged.get(field) in (None, "", []):
             merged[field] = existing.get(field)
-    existing_history = existing.get("wait_reminder_history")
-    current_history = current.get("wait_reminder_history")
-    if isinstance(existing_history, list) and isinstance(current_history, list):
-        merged["wait_reminder_history"] = _merge_append_only_run_state_list(existing_history, current_history)
-    elif isinstance(existing_history, list) and "wait_reminder_history" not in merged:
-        merged["wait_reminder_history"] = existing_history
     return merged
 
 

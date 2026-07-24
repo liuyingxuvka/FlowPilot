@@ -113,6 +113,10 @@ class FlowPilot053PPAMaintenanceTests(unittest.TestCase):
 
         self.assertEqual(
             formal["path"],
+            "tmp/test_results/formal_ai_submit_adversarial.json",
+        )
+        self.assertNotEqual(
+            formal["path"],
             "simulations/flowpilot_ai_response_execution_closure_results.json",
         )
         self.assertEqual(
@@ -120,7 +124,7 @@ class FlowPilot053PPAMaintenanceTests(unittest.TestCase):
             "simulations/flowpilot_model_test_alignment_results.json",
         )
 
-    def test_model_test_alignment_evidence_requires_current_v4_snapshot_fields(
+    def test_model_test_alignment_evidence_requires_current_v5_snapshot_fields(
         self,
     ) -> None:
         current = runner.source_fingerprint()

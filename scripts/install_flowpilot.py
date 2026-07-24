@@ -17,6 +17,13 @@ import zipfile
 from pathlib import Path
 from typing import Any
 
+from install_checks.consumer_projection import (
+    compare_consumer_projection,
+    consumer_release_manifest,
+    copy_consumer_projection,
+    load_consumer_contract,
+)
+
 
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST_PATH = ROOT / "flowpilot.dependencies.json"
@@ -113,16 +120,32 @@ def check_skill(root: Path, dependency: dict[str, Any]) -> dict[str, Any]:
         source_path = ROOT / dependency["repo_path"]
         result["source_path"] = str(source_path)
         if source_path.exists():
-            source_digest = directory_digest(source_path)
-            installed_digest = directory_digest(path)
+            consumer_status = compare_consumer_projection(source_path, path)
+            if consumer_status is not None:
+                source_digest = str(
+                    consumer_status["expected_release_id"]
+                ).lower()
+                installed_digest = str(consumer_status["release_id"]).lower()
+                source_fresh = bool(consumer_status["current"])
+                result["projection_id"] = consumer_status["projection_id"]
+                result["consumer_release_id"] = consumer_status["release_id"]
+                result["author_control_excluded"] = consumer_status[
+                    "author_control_excluded"
+                ]
+                result["errors"] = list(consumer_status["errors"])
+            else:
+                source_digest = directory_digest(source_path)
+                installed_digest = directory_digest(path)
+                source_fresh = source_digest == installed_digest
             result["source_digest"] = source_digest
             result["installed_digest"] = installed_digest
-            result["source_fresh"] = source_digest == installed_digest
-            if source_digest != installed_digest:
+            result["source_fresh"] = source_fresh
+            if not source_fresh:
                 result["ok"] = False
-                result.setdefault("errors", []).append(
-                    "installed skill content differs from repository source"
-                )
+                if consumer_status is None:
+                    result.setdefault("errors", []).append(
+                        "installed skill content differs from repository source"
+                    )
         else:
             result["ok"] = False
             result.setdefault("errors", []).append(f"missing repository source: {source_path}")
@@ -299,7 +322,10 @@ def copy_repo_skill(dependency: dict[str, Any], destination: Path) -> None:
     source_path = ROOT / dependency["repo_path"]
     if not (source_path / "SKILL.md").exists():
         raise FileNotFoundError(f"missing repository skill source: {source_path}")
-    shutil.copytree(source_path, destination, ignore=SKILL_COPY_IGNORE)
+    if load_consumer_contract(source_path) is not None:
+        copy_consumer_projection(source_path, destination)
+    else:
+        shutil.copytree(source_path, destination, ignore=SKILL_COPY_IGNORE)
 
 
 def install_skill(

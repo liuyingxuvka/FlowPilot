@@ -360,7 +360,7 @@ class ControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.release_startup_daemon_for_explicit_daemon_test(root)
 
         result = router.run_router_daemon(root, max_ticks=1, release_lock_on_exit=True)
-        action_id = result["ticks"][0]["controller_action_id"]
+        action_id = result["last_tick"]["controller_action_id"]
         action_record = read_json(run_root / "runtime" / "controller_actions" / f"{action_id}.json")
         self.assertEqual(action_record["action_type"], "sync_display_plan")
         self.assert_controller_receipt_entry_projection(action_record)

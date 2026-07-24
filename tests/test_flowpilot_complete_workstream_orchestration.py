@@ -60,6 +60,45 @@ class FlowPilotCompleteWorkstreamOrchestrationTests(unittest.TestCase):
                 self.assertIn("repair", normalized)
                 self.assertIn("integration", normalized)
 
+    def test_role_plans_are_obligation_level_and_progress_is_semantically_bounded(self) -> None:
+        progress_surfaces = [
+            ROLE_CARDS["pm"],
+            ROLE_CARDS["worker"],
+            ROLE_CARDS["reviewer"],
+            ROLE_CARDS["flowguard_operator"],
+            ASSETS / "runtime_kit/prompts/packets/packet_identity_boundary.md",
+            ASSETS / "runtime_kit/prompts/cards/post_ack_policy.md",
+            ASSETS / "runtime_kit/cards/phases/pm_output_contract_catalog.md",
+        ]
+        for path in progress_surfaces:
+            with self.subTest(progress_path=path.name):
+                normalized = " ".join(path.read_text(encoding="utf-8").lower().split())
+                for status in runtime.PROGRESS_STATUSES:
+                    self.assertIn(status, normalized)
+                self.assertIn("semantic status change", normalized)
+                self.assertIn("due", normalized)
+                self.assertIn("coalesced", normalized)
+                self.assertNotIn("progress +1", normalized)
+
+        workstream_surfaces = [
+            *ROLE_CARDS.values(),
+            ASSETS / "runtime_kit/prompts/packets/output_contract_section.md",
+        ]
+        for path in workstream_surfaces:
+            with self.subTest(workstream_path=path.name):
+                normalized = " ".join(path.read_text(encoding="utf-8").lower().split())
+                self.assertTrue(
+                    "acceptance-obligation" in normalized
+                    or "acceptance obligation" in normalized
+                )
+                self.assertIn("meaningful", normalized)
+                self.assertTrue("command" in normalized or "microstep" in normalized)
+                self.assertTrue(
+                    "second final plan" in normalized
+                    or "second completion plan" in normalized
+                    or "another authority" in normalized
+                )
+
     def test_runtime_handoff_projects_one_shared_workstream_contract_to_every_role(self) -> None:
         for responsibility in sorted(host.CURRENT_RESPONSIBILITIES):
             with self.subTest(responsibility=responsibility):

@@ -3,6 +3,7 @@ from __future__ import annotations
 import importlib
 import hashlib
 import json
+import os
 import sys
 import tempfile
 import unittest
@@ -284,12 +285,16 @@ class FlowPilotCompleteSystemRuntimeTests(unittest.TestCase):
             host.record_role_memory_seed(ledger, lease_id, memory_packet_id="memory-001", prior_agent_id="old-pm")
             run_shell.save_run_ledger(shell, ledger)
             after_first_save = shell.events_path.read_text(encoding="utf-8").splitlines()
+            role_memory_path = shell.run_root / "role_memory" / f"{lease_id}.json"
+            os.utime(role_memory_path, (1_700_000_000, 1_700_000_000))
+            role_memory_mtime = role_memory_path.stat().st_mtime_ns
             run_shell.save_run_ledger(shell, ledger)
             after_second_save = shell.events_path.read_text(encoding="utf-8").splitlines()
 
             self.assertGreater(len(after_first_save), len(initial_events))
             self.assertEqual(after_first_save, after_second_save)
-            self.assertTrue((shell.run_root / "role_memory" / f"{lease_id}.json").is_file())
+            self.assertTrue(role_memory_path.is_file())
+            self.assertEqual(role_memory_path.stat().st_mtime_ns, role_memory_mtime)
             role_assignment_id = ledger["leases"][lease_id]["role_assignment_id"]
             self.assertTrue((shell.run_root / "role_assignments" / f"{role_assignment_id}.json").is_file())
 

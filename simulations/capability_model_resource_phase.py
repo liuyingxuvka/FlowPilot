@@ -52,6 +52,31 @@ def apply_resource_phase(self, state: State) -> Iterable[FunctionResult]:
         )
         return
 
+    if not state.control_plane_resource_boundedness_child_registered:
+        yield _step(
+            state,
+            label="control_plane_resource_boundedness_child_registered",
+            action="register the focused FlowGuard child that owns no-change writes, idempotent control effects, bounded progress/evidence, and fail-closed retention",
+            control_plane_resource_boundedness_child_registered=True,
+        )
+        return
+    if not state.control_plane_resource_boundedness_child_passed:
+        yield _step(
+            state,
+            label="control_plane_resource_boundedness_child_passed",
+            action="run the focused control-plane resource-boundedness scenario and known-bad matrix",
+            control_plane_resource_boundedness_child_passed=True,
+        )
+        return
+    if not state.control_plane_resource_boundedness_evidence_current:
+        yield _step(
+            state,
+            label="control_plane_resource_boundedness_evidence_current",
+            action="bind the resource-boundedness child result to current runtime, validation, and retention owners",
+            control_plane_resource_boundedness_evidence_current=True,
+        )
+        return
+
     if not state.product_function_architecture_pm_synthesized:
         yield _step(
             state,

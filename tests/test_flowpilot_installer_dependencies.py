@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -149,6 +151,73 @@ class FlowPilotInstallerDependencyTests(unittest.TestCase):
         self.assertTrue(
             (ROOT / "skills" / "flowpilot" / "assets" / "brand" / "flowpilot-icon-default.png").is_file()
         )
+
+    def test_repo_install_uses_clean_consumer_projection(self) -> None:
+        source = ROOT / "skills" / "flowpilot"
+        manifest = install_flowpilot.consumer_release_manifest(source)
+
+        self.assertIsNotNone(manifest)
+        assert manifest is not None
+        self.assertEqual(
+            manifest["projection_id"],
+            "projection:consumer-distribution",
+        )
+        self.assertTrue(manifest["author_control_excluded"])
+        self.assertFalse(
+            any(
+                row["path"] == ".skillguard"
+                or row["path"].startswith(".skillguard/")
+                for row in manifest["files"]
+            )
+        )
+
+        with tempfile.TemporaryDirectory(
+            prefix="flowpilot-consumer-projection-"
+        ) as tmp_name:
+            destination = Path(tmp_name) / "flowpilot"
+            install_flowpilot.copy_consumer_projection(source, destination)
+            status = install_flowpilot.compare_consumer_projection(
+                source,
+                destination,
+            )
+
+            self.assertIsNotNone(status)
+            assert status is not None
+            self.assertTrue(status["current"], status)
+            self.assertTrue(status["author_control_excluded"])
+            self.assertFalse((destination / ".skillguard").exists())
+            installed_manifest = json.loads(
+                (destination / "consumer-release.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+            self.assertEqual(installed_manifest, manifest)
+
+    def test_consumer_projection_detects_installed_drift(self) -> None:
+        source = ROOT / "skills" / "flowpilot"
+        with tempfile.TemporaryDirectory(
+            prefix="flowpilot-consumer-drift-"
+        ) as tmp_name:
+            destination = Path(tmp_name) / "flowpilot"
+            install_flowpilot.copy_consumer_projection(source, destination)
+            skill_file = destination / "SKILL.md"
+            skill_file.write_text(
+                skill_file.read_text(encoding="utf-8") + "\nchanged\n",
+                encoding="utf-8",
+            )
+
+            status = install_flowpilot.compare_consumer_projection(
+                source,
+                destination,
+            )
+
+            self.assertIsNotNone(status)
+            assert status is not None
+            self.assertFalse(status["current"])
+            self.assertIn(
+                "installed consumer file differs: SKILL.md",
+                status["errors"],
+            )
 
 
 if __name__ == "__main__":

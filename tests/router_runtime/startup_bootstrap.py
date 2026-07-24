@@ -462,7 +462,7 @@ class StartupBootstrapRuntimeTests(FlowPilotRouterRuntimeTestBase):
 
         result = router.run_router_daemon(root, max_ticks=1, release_lock_on_exit=True)
 
-        tick = result["ticks"][0]
+        tick = result["last_tick"]
         self.assertGreaterEqual(tick["queued_count"], 1)
         queued_types = [item["action_type"] for item in tick["queued_actions"]]
         self.assertNotIn("write_startup_mechanical_audit", queued_types)

@@ -14,7 +14,12 @@ import hashlib
 import importlib.metadata as importlib_metadata
 import json
 from pathlib import Path
+import sys
 from typing import Any, Mapping, Sequence
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
 import flowguard as flowguard_module
 from flowguard import (
@@ -23,9 +28,11 @@ from flowguard import (
     proof_artifact_gap_codes,
     test_result_reuse_gap_codes,
 )
-
-
-REPO_ROOT = Path(__file__).resolve().parents[1]
+from scripts.test_tier.evidence_v5 import sha256_json
+from scripts.test_tier.impact_resolution import (
+    _current_reuse_ticket,
+    validate_owner_reference,
+)
 TESTMESH_FINAL_RECEIPT_ARTIFACT_VERSION = "flowpilot.testmesh.final_receipt.v1"
 
 
@@ -176,7 +183,13 @@ def proof_bundle_report(
             "failures": ["execution_evidence_manifest_missing"],
         }
 
-    if manifest.get("schema_version") != "flowpilot.acceptance_testmesh_evidence_manifest.v4":
+    if manifest.get("schema_version") != "flowpilot.acceptance_testmesh_evidence_manifest.v5":
+        failure = (
+            "execution_evidence_manifest_v4_rejected"
+            if manifest.get("schema_version")
+            == "flowpilot.acceptance_testmesh_evidence_manifest.v4"
+            else "execution_evidence_manifest_not_current_v5"
+        )
         return {
             "ok": False,
             "snapshot_fingerprint_matches": False,
@@ -189,7 +202,7 @@ def proof_bundle_report(
             "reused_count": 0,
             "test_count": 0,
             "count_unit": "background_child_commands",
-            "failures": ["execution_evidence_manifest_not_current_v4"],
+            "failures": [failure],
         }
     snapshot = manifest.get("snapshot")
     manifest_snapshot = (
@@ -205,12 +218,21 @@ def proof_bundle_report(
     if not isinstance(owners, Mapping):
         owners = {}
     owner_failures: dict[str, list[str]] = {}
+    resolved_owners: dict[str, dict[str, Any]] = {}
     for owner_id, owner_row in owners.items():
         row_failures: list[str] = []
         if not isinstance(owner_row, Mapping):
             owner_failures[str(owner_id)] = ["owner_row_invalid"]
             continue
-        identity = owner_row.get("identity")
+        try:
+            resolved = validate_owner_reference(
+                owner_row,
+                expected_owner_id=str(owner_id),
+            )
+        except (TypeError, ValueError) as exc:
+            owner_failures[str(owner_id)] = [str(exc)]
+            continue
+        identity = resolved.identity
         covered_inputs = (
             identity.get("covered_input_fingerprints")
             if isinstance(identity, Mapping)
@@ -226,7 +248,7 @@ def proof_bundle_report(
                     or canonical_source_file_fingerprint(path) != str(expected)
                 ):
                     row_failures.append(f"owner_input_stale:{relative}")
-        proof = _coerce_proof(owner_row.get("proof_artifact"))
+        proof = resolved.proof
         proof_gaps = proof_artifact_gap_codes(
             proof,
             declared_status=str(owner_row.get("result_status") or ""),
@@ -235,8 +257,50 @@ def proof_bundle_report(
             require_external_scope=True,
         )
         row_failures.extend(code for code, _ in proof_gaps)
+        ticket = None
         if owner_row.get("result_reused") is True:
-            ticket = _coerce_reuse_ticket(owner_row.get("reuse_ticket"))
+            from scripts.test_tier.impact_resolution import OwnerIdentity
+
+            try:
+                current_identity = OwnerIdentity(
+                    command_fingerprint=str(identity["command_fingerprint"]),
+                    test_source_fingerprint=str(
+                        identity["test_source_fingerprint"]
+                    ),
+                    tested_artifact_fingerprint=str(
+                        identity["tested_artifact_fingerprint"]
+                    ),
+                    dependency_fingerprints=dict(
+                        identity["dependency_fingerprints"]
+                    ),
+                    environment_fingerprint=str(
+                        identity["environment_fingerprint"]
+                    ),
+                    covered_input_fingerprint=str(
+                        identity["covered_input_fingerprint"]
+                    ),
+                    covered_input_fingerprints=dict(
+                        identity["covered_input_fingerprints"]
+                    ),
+                    covered_obligation_ids=tuple(
+                        identity.get("covered_obligation_ids") or ()
+                    ),
+                    covered_evidence_ids=tuple(
+                        identity.get("covered_evidence_ids") or ()
+                    ),
+                )
+            except (KeyError, TypeError, ValueError):
+                current_identity = None
+                row_failures.append("owner_identity_invalid")
+            ticket = (
+                _current_reuse_ticket(
+                    str(owner_id),
+                    resolved,
+                    current_identity,
+                )
+                if current_identity is not None
+                else None
+            )
             row_failures.extend(
                 code
                 for code, _ in test_result_reuse_gap_codes(
@@ -247,6 +311,22 @@ def proof_bundle_report(
                     ),
                 )
             )
+            ticket_ref = owner_row.get("reuse_ticket_ref")
+            if not isinstance(ticket_ref, Mapping):
+                row_failures.append("reuse_ticket_ref_missing")
+            elif ticket is not None and ticket_ref.get("identity") != sha256_json(
+                ticket.to_dict()
+            ):
+                row_failures.append("reuse_ticket_ref_stale")
+        resolved_owners[str(owner_id)] = {
+            "owner_id": str(owner_id),
+            "result_status": proof.result_status,
+            "result_reused": owner_row.get("result_reused") is True,
+            "identity": dict(identity),
+            "result_fingerprint": resolved.result_fingerprint,
+            "proof_artifact": proof.to_dict(),
+            "reuse_ticket": ticket.to_dict() if ticket is not None else None,
+        }
         if row_failures:
             owner_failures[str(owner_id)] = sorted(set(row_failures))
     rows = _proof_rows(manifest)
@@ -301,7 +381,7 @@ def proof_bundle_report(
                 failures.append(f"{suite_id}:owner_evidence_ids_missing")
                 owner_ids = []
             for owner_id in owner_ids:
-                if str(owner_id) not in owners:
+                if str(owner_id) not in resolved_owners:
                     failures.append(f"{suite_id}:owner_proof_missing:{owner_id}")
                 for code in owner_failures.get(str(owner_id), ()):
                     failures.append(f"{suite_id}:{owner_id}:{code}")
@@ -323,7 +403,7 @@ def proof_bundle_report(
         "snapshot_fingerprint_matches": snapshot_matches,
         "expected_source_fingerprint": expected_source_fingerprint,
         "manifest_snapshot_fingerprint": manifest_snapshot,
-        "owners": dict(owners),
+        "owners": resolved_owners,
         "owner_failures": owner_failures,
         "proof_artifacts": [proof.to_dict() for proof in proofs],
         "proof_artifact_ids": [proof.artifact_id for proof in proofs],

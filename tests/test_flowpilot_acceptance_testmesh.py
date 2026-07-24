@@ -6,6 +6,7 @@ import hashlib
 import json
 import tempfile
 import unittest
+from unittest import mock
 from pathlib import Path
 
 import scripts.compile_flowpilot_acceptance_testmesh_evidence as evidence_compiler
@@ -15,10 +16,61 @@ acceptance_runner = importlib.import_module("simulations.run_flowpilot_acceptanc
 evidence_truth = importlib.import_module("simulations.flowpilot_evidence_truth")
 test_tier_runner = importlib.import_module("scripts.run_test_tier")
 impact_resolution = importlib.import_module("scripts.test_tier.impact_resolution")
+evidence_v5 = importlib.import_module("scripts.test_tier.evidence_v5")
+background_supervisor = importlib.import_module(
+    "scripts.test_tier.background_supervisor"
+)
+evidence_validation = importlib.import_module(
+    evidence_compiler.validated_tier.__module__
+)
+checkpoint_manifest = importlib.import_module(
+    evidence_compiler._compile_owner_checkpoint_manifest.__module__
+)
+_ORIGINAL_COMMANDS_FOR_TIER = test_tier_runner.commands_for_tier
 
 
 class FlowPilotAcceptanceTestMeshTests(unittest.TestCase):
     _tier_fixture_cache: dict[str, dict[str, object]] = {}
+
+    @staticmethod
+    def fixture_commands_for_tier(tier: str):
+        commands = _ORIGINAL_COMMANDS_FOR_TIER(tier)
+        if tier != "all":
+            return commands
+        required_owner_ids: set[str] = set()
+        for config in acceptance_runner.BACKGROUND_CHILD_SUITES.values():
+            required_owner_ids.update(config["expected"])
+        return tuple(
+            command
+            for command in commands
+            if command.name in required_owner_ids
+        )
+
+    def setUp(self) -> None:
+        # These tests exercise V5 compilation and fail-closed consumption, not
+        # the separate full owner-inventory contract. Keep exactly the owners
+        # consumed by the acceptance mesh so each case does not rebuild 220
+        # unrelated proofs.
+        self._command_patchers = [
+            mock.patch.object(
+                test_tier_runner,
+                "commands_for_tier",
+                side_effect=self.fixture_commands_for_tier,
+            ),
+            mock.patch.object(
+                evidence_validation,
+                "commands_for_tier",
+                side_effect=self.fixture_commands_for_tier,
+            ),
+            mock.patch.object(
+                checkpoint_manifest,
+                "commands_for_tier",
+                side_effect=self.fixture_commands_for_tier,
+            ),
+        ]
+        for patcher in self._command_patchers:
+            patcher.start()
+            self.addCleanup(patcher.stop)
 
     def write_tier_proof_root(self, root: Path, tier: str) -> None:
         root.mkdir(parents=True, exist_ok=True)
@@ -31,7 +83,6 @@ class FlowPilotAcceptanceTestMeshTests(unittest.TestCase):
             }
             snapshot = evidence_compiler.source_snapshot()
             decisions = []
-            owners = {}
             for command in commands:
                 contract = contracts[command.name]
                 identity = impact_resolution.owner_identity(contract).to_dict()
@@ -42,119 +93,227 @@ class FlowPilotAcceptanceTestMeshTests(unittest.TestCase):
                         "reason_codes": ["fixture_current_execution"],
                         "identity": identity,
                         "previous_proof_artifact_id": "",
-                        "reuse_ticket": None,
+                        "previous_proof_ref": None,
+                        "reuse_ticket_identity": "",
                     }
                 )
-                result_fingerprint = hashlib.sha256(
-                    command.name.encode("utf-8")
-                ).hexdigest()
-                proof = impact_resolution.ProofArtifactRef(
-                    artifact_id=f"proof.fixture.{command.name}",
-                    producer_route="flowpilot.test-tier.selective-execution",
-                    command=" ".join(("python", *command.command[1:])),
-                    result_path=f"tmp/test_background/{command.name}.combined.txt",
-                    result_status="passed",
-                    exit_code=0,
-                    artifact_fingerprints={"combined": result_fingerprint},
-                    covered_obligation_ids=contract.covered_obligation_ids,
-                    assertion_scope="external_contract",
-                    current=True,
-                    route_evidence_current=True,
-                    progress_only=False,
-                    metadata={
-                        "owner_id": command.name,
-                        "result_fingerprint": result_fingerprint,
-                        "descendant_zero_confirmed": True,
-                    },
-                )
-                owners[command.name] = {
-                    "owner_id": command.name,
-                    "result_status": "passed",
-                    "result_reused": False,
-                    "identity": identity,
-                    "result_fingerprint": result_fingerprint,
-                    "proof_artifact": proof.to_dict(),
-                    "reuse_ticket": None,
-                }
             cached = {
                 "contracts": contracts,
                 "snapshot": snapshot,
                 "decisions": decisions,
-                "owners": owners,
             }
             self._tier_fixture_cache[tier] = cached
         fixture = copy.deepcopy(cached)
         contracts = fixture["contracts"]
         snapshot = fixture["snapshot"]
         decisions = fixture["decisions"]
-        owners = fixture["owners"]
         plan_id = f"fixture-plan-{tier}"
+        owner_ids = sorted(command.name for command in commands)
+        plan = {
+            "schema_version": impact_resolution.IMPACT_PLAN_SCHEMA_VERSION,
+            "plan_id": plan_id,
+            "requested_scope": tier,
+            "snapshot": snapshot,
+            "previous_manifest": {"path": "", "sha256": ""},
+            "seed_baseline": True,
+            "contracts": [
+                contract.to_dict() for contract in contracts.values()
+            ],
+            "decisions": decisions,
+            "blockers": [],
+            "execute_owner_ids": owner_ids,
+            "reuse_owner_ids": [],
+        }
+        control_paths = background_supervisor.supervisor_control_paths(root, tier)
+        control_paths["impact_plan"].write_text(
+            json.dumps(plan, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+        plan_ref = {
+            **evidence_v5.path_reference(
+                control_paths["impact_plan"],
+                root=evidence_compiler.ROOT,
+            ),
+            "plan_id": plan_id,
+        }
+        owners = {}
         for command in commands:
-            identity = owners[command.name]["identity"]
+            identity = next(
+                row["identity"]
+                for row in decisions
+                if row["owner_id"] == command.name
+            )
             paths = test_tier_runner.artifact_paths(root, command.name)
-            for key in ("out", "err", "combined"):
-                paths[key].write_text("fixture current proof\n", encoding="utf-8")
+            paths["out"].write_text("fixture stdout proof\n", encoding="utf-8")
+            paths["err"].write_text("", encoding="utf-8")
             paths["exit"].write_text("0\n", encoding="utf-8")
-            paths["meta"].write_text(
-                json.dumps(
-                    {
-                        "name": command.name,
-                        "command": list(command.command),
-                        "status": "passed",
-                        "exit_code": 0,
-                        "impact_plan_id": plan_id,
-                        "owner_identity": identity,
-                        "inputs_current": True,
-                        "descendant_zero_confirmed": True,
-                    }
+            stdout = evidence_v5.stream_descriptor(
+                paths["out"],
+                path_value=str(paths["out"].resolve()),
+            )
+            stderr = evidence_v5.stream_descriptor(
+                paths["err"],
+                path_value=str(paths["err"].resolve()),
+            )
+            result_fingerprint = evidence_v5.background_result_fingerprint_v2(
+                stdout=stdout,
+                stderr=stderr,
+                exit_code=0,
+                status="passed",
+                descendant_zero_confirmed=True,
+                cleanup_reason="fixture_no_process",
+            )
+            paths["combined"].write_bytes(
+                evidence_v5.terminal_stream_index_bytes(
+                    name=command.name,
+                    status="passed",
+                    exit_code=0,
+                    start_time="2026-07-10T00:00:00+00:00",
+                    end_time="2026-07-10T00:00:01+00:00",
+                    stdout=stdout,
+                    stderr=stderr,
+                    descendant_zero_confirmed=True,
+                    cleanup_reason="fixture_no_process",
+                    result_fingerprint=result_fingerprint,
+                )
+            )
+            meta = {
+                "schema_version": evidence_v5.BACKGROUND_CHILD_META_SCHEMA_VERSION,
+                "name": command.name,
+                "owner_id": command.name,
+                "command": list(command.command),
+                "status": "passed",
+                "start_time": "2026-07-10T00:00:00+00:00",
+                "end_time": "2026-07-10T00:00:01+00:00",
+                "exit_code": 0,
+                "impact_plan_ref": {
+                    **plan_ref,
+                    "owner_id": command.name,
+                },
+                "owner_identity_sha256": evidence_v5.sha256_json(identity),
+                "inputs_current": True,
+                "descendant_zero_confirmed": True,
+                "cleanup_proof": {
+                    "cleanup_confirmed": True,
+                    "descendant_zero_confirmed": True,
+                    "reason": "fixture_no_process",
+                },
+                "stream_artifacts": {
+                    "stdout": stdout,
+                    "stderr": stderr,
+                },
+                "combined_artifact": {
+                    **evidence_v5.path_reference(
+                        paths["combined"],
+                        root=evidence_compiler.ROOT,
+                    ),
+                    "kind": "terminal_stream_index",
+                    "max_bytes": evidence_v5.COMBINED_INDEX_MAX_BYTES,
+                },
+                "combined_kind": "terminal_stream_index",
+                "result_fingerprint_schema_version": (
+                    evidence_v5.BACKGROUND_RESULT_FINGERPRINT_SCHEMA_VERSION
                 ),
+                "result_fingerprint": result_fingerprint,
+                "artifacts": {
+                    key: str(value) for key, value in paths.items()
+                },
+            }
+            paths["meta"].write_text(
+                json.dumps(meta, indent=2, sort_keys=True) + "\n",
                 encoding="utf-8",
             )
+            owners[command.name] = (
+                impact_resolution.owner_reference_from_child_meta(
+                    owner_id=command.name,
+                    meta_path=paths["meta"],
+                    meta=meta,
+                )
+            )
+        owner_index = {
+            "schema_version": evidence_v5.BACKGROUND_OWNER_INDEX_SCHEMA_VERSION,
+            "tier": tier,
+            "impact_plan_id": plan_id,
+            "impact_plan_sha256": plan_ref["sha256"],
+            "status": "passed",
+            "expected_owner_ids": owner_ids,
+            "owner_count": len(owner_ids),
+            "execute_count": len(owner_ids),
+            "reuse_count": 0,
+            "owners": [owners[owner_id] for owner_id in owner_ids],
+            "snapshot_end_fingerprint": snapshot["fingerprint"],
+            "final_impact_failures": [],
+        }
+        control_paths["owner_index"].write_text(
+            json.dumps(owner_index, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+        progress = {
+            "schema_version": (
+                evidence_v5.BACKGROUND_SUPERVISOR_PROGRESS_SCHEMA_VERSION
+            ),
+            "tier": tier,
+            "impact_plan_id": plan_id,
+            "status": "passed",
+            "updated_at": "2026-07-10T00:00:01+00:00",
+            "counts": {
+                "owner": len(owner_ids),
+                "execute": len(owner_ids),
+                "reuse": 0,
+                "pending": 0,
+                "running": 0,
+                "terminal": len(owner_ids),
+            },
+            "pending_owner_count": 0,
+            "running_owner_ids": [],
+            "recent_terminal": [],
+        }
+        control_paths["progress"].write_text(
+            json.dumps(progress, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
         supervisor_paths = test_tier_runner.artifact_paths(
             root,
             test_tier_runner.background_supervisor_name(tier),
         )
-        for key in ("out", "err", "combined"):
-            supervisor_paths[key].write_text(
-                "fixture supervisor proof\n",
-                encoding="utf-8",
-            )
-        supervisor_paths["meta"].write_text(
-            json.dumps(
-                {
-                    "status": "passed",
-                    "exit_code": 0,
-                    "timed_out": False,
-                    "start_time": "2026-07-10T00:00:00+00:00",
-                    "end_time": "2026-07-10T00:00:01+00:00",
-                    "command_count": len(commands),
-                    "execute_count": len(commands),
-                    "reuse_count": 0,
-                    "running": [],
-                    "snapshot_start": snapshot,
-                    "snapshot_end": snapshot,
-                    "impact_plan": {
-                        "schema_version": impact_resolution.IMPACT_PLAN_SCHEMA_VERSION,
-                        "plan_id": plan_id,
-                        "requested_scope": tier,
-                        "snapshot": snapshot,
-                        "previous_manifest": {"path": "", "sha256": ""},
-                        "seed_baseline": True,
-                        "contracts": [
-                            contract.to_dict()
-                            for contract in contracts.values()
-                        ],
-                        "decisions": decisions,
-                        "blockers": [],
-                        "execute_owner_ids": sorted(owners),
-                        "reuse_owner_ids": [],
-                    },
-                    "owners": owners,
-                }
-            ),
+        supervisor_paths["out"].write_text(
+            "fixture supervisor proof\n",
             encoding="utf-8",
         )
-        supervisor_paths["exit"].write_text("0\n", encoding="utf-8")
+        supervisor_paths["err"].write_text("", encoding="utf-8")
+        supervisor_meta = {
+            "schema_version": evidence_v5.BACKGROUND_SUPERVISOR_META_SCHEMA_VERSION,
+            "name": test_tier_runner.background_supervisor_name(tier),
+            "tier": tier,
+            "status": "passed",
+            "exit_code": 0,
+            "start_time": "2026-07-10T00:00:00+00:00",
+            "end_time": "2026-07-10T00:00:01+00:00",
+            "command_count": len(commands),
+            "execute_count": len(commands),
+            "reuse_count": 0,
+            "running_owner_count": 0,
+            "terminal_owner_count": len(commands),
+            "snapshot_start_fingerprint": snapshot["fingerprint"],
+            "snapshot_end_fingerprint": snapshot["fingerprint"],
+            "impact_plan_ref": plan_ref,
+            "progress_ref": evidence_v5.path_reference(
+                control_paths["progress"],
+                root=evidence_compiler.ROOT,
+            ),
+            "owner_index_ref": evidence_v5.path_reference(
+                control_paths["owner_index"],
+                root=evidence_compiler.ROOT,
+            ),
+            "artifacts": {
+                key: str(value) for key, value in supervisor_paths.items()
+            },
+        }
+        background_supervisor._finalize_supervisor(
+            supervisor_paths,
+            supervisor_meta,
+            exit_code=0,
+        )
 
     def current_routine_evidence(self, root: Path) -> dict[str, dict[str, object]]:
         root.mkdir(parents=True, exist_ok=True)
@@ -398,13 +557,28 @@ class FlowPilotAcceptanceTestMeshTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             all_root = Path(tmp) / "all"
             self.write_tier_proof_root(all_root, "all")
-            meta_path = all_root / "all_background_supervisor.meta.json"
-            meta = json.loads(meta_path.read_text(encoding="utf-8"))
-            stale_owner_id = "test_tier_runner"
-            meta["owners"][stale_owner_id]["identity"][
-                "covered_input_fingerprint"
-            ] = "stale-owner-input"
-            meta_path.write_text(json.dumps(meta), encoding="utf-8")
+            owner_index_path = background_supervisor.supervisor_control_paths(
+                all_root,
+                "all",
+            )["owner_index"]
+            owner_index = json.loads(
+                owner_index_path.read_text(encoding="utf-8")
+            )
+            stale_owner_id = sorted(
+                row["owner_id"] for row in owner_index["owners"]
+            )[0]
+            stale_meta_path = test_tier_runner.artifact_paths(
+                all_root,
+                stale_owner_id,
+            )["meta"]
+            stale_meta = json.loads(
+                stale_meta_path.read_text(encoding="utf-8")
+            )
+            stale_meta["inputs_current"] = False
+            stale_meta_path.write_text(
+                json.dumps(stale_meta),
+                encoding="utf-8",
+            )
 
             manifest = evidence_compiler.compile_owner_checkpoint_manifest(
                 all_root=all_root,
@@ -545,13 +719,28 @@ class FlowPilotAcceptanceTestMeshTests(unittest.TestCase):
             self.write_tier_proof_root(adversarial_root, "formal-submit-adversarial")
             self.write_tier_proof_root(release_root, "release")
             self.write_tier_proof_root(closure_root, "evidence-closure")
-            meta_path = all_root / "all_background_supervisor.meta.json"
-            meta = json.loads(meta_path.read_text(encoding="utf-8"))
-            owner_id = sorted(meta["owners"])[0]
-            meta["owners"][owner_id]["identity"]["covered_input_fingerprint"] = (
-                "changed-owner-input"
+            owner_index_path = background_supervisor.supervisor_control_paths(
+                all_root,
+                "all",
+            )["owner_index"]
+            owner_index = json.loads(
+                owner_index_path.read_text(encoding="utf-8")
             )
-            meta_path.write_text(json.dumps(meta), encoding="utf-8")
+            owner_id = sorted(
+                row["owner_id"] for row in owner_index["owners"]
+            )[0]
+            child_meta_path = test_tier_runner.artifact_paths(
+                all_root,
+                owner_id,
+            )["meta"]
+            child_meta = json.loads(
+                child_meta_path.read_text(encoding="utf-8")
+            )
+            child_meta["inputs_current"] = False
+            child_meta_path.write_text(
+                json.dumps(child_meta),
+                encoding="utf-8",
+            )
 
             with self.assertRaisesRegex(ValueError, "current owner evidence is invalid"):
                 evidence_compiler.compile_manifest(

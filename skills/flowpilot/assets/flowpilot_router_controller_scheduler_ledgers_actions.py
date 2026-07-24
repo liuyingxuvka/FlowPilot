@@ -61,9 +61,26 @@ def _controller_action_ledger_has_prompt_header(router: ModuleType, ledger: dict
     return 'controller_table_prompt' in keys and 'actions' in keys and (keys.index('controller_table_prompt') < keys.index('actions'))
 
 
-def _write_controller_action_ledger(router: ModuleType, path: Path, ledger: dict[str, Any]) -> None:
+def _controller_action_ledger_semantic_payload(ledger: dict[str, Any]) -> dict[str, Any]:
+    payload = json.loads(json.dumps(ledger, sort_keys=True))
+    payload.pop('updated_at', None)
+    return payload
+
+
+def _write_controller_action_ledger(router: ModuleType, path: Path, ledger: dict[str, Any]) -> bool:
     _bind_router(router)
+    existing = read_json_if_exists(path)
+    if (
+        existing.get('schema_version') == CONTROLLER_ACTION_LEDGER_SCHEMA
+        and _controller_action_ledger_semantic_payload(existing)
+        == _controller_action_ledger_semantic_payload(ledger)
+    ):
+        ledger.clear()
+        ledger.update(existing)
+        return False
+    ledger['updated_at'] = utc_now()
     write_json_atomic(path, ledger, sort_keys=False, verify=True)
+    return True
 
 
 def _rebuild_controller_action_ledger(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any]) -> dict[str, Any]:

@@ -30375,3 +30375,43 @@ Evidence supports the local repository and installed FlowPilot skill for the mat
 - Inspect and stage only task-owned files.
 - Publish the exact task commit as branch, default-branch fast-forward, annotated `v0.12.1` tag, and source-only GitHub Release.
 - Verify remote branch, default branch, tag, and release all resolve to the same commit.
+
+
+## flowguard-project-upgrade - FlowGuard project upgrade record update
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: target project requires current semantic adoption and version records
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-07-24T05:20:48+00:00
+- Ended: 2026-07-24T05:20:48+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- none recorded
+
+### Commands
+- OK (0.000s): `managed adoption rule-set preflight` - generated block contains every required stable rule
+- OK (0.000s): `package-authority/global-consumer validation` - pass
+- OK (0.000s): `post-write project adoption audit` - semantic and version parity after write
+
+### Findings
+- model_authority_missing: The project has no authoritative observed model-system snapshot yet.
+- adoption_record_written: FlowGuard project AGENTS block and manifest were written or refreshed.
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- Project adoption does not replace executable model checks, tests, replay, or closure evidence.
+
+### Risk Evidence Summary
+- none recorded
+
+### Next Actions
+- python -m flowguard project-audit --root . --json
+- Rerun affected FlowGuard model checks and focused tests before broad confidence.

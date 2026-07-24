@@ -131,7 +131,7 @@ class ForegroundControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
         result = router.run_router_daemon(root, max_ticks=1, release_lock_on_exit=True)
 
         self.assertEqual(result["tick_count"], 1)
-        action_id = result["ticks"][0]["controller_action_id"]
+        action_id = result["last_tick"]["controller_action_id"]
         self.assertTrue(action_id)
         action_record = read_json(run_root / "runtime" / "controller_actions" / f"{action_id}.json")
         self.assertEqual(action_record["schema_version"], router.CONTROLLER_ACTION_SCHEMA)
@@ -636,7 +636,8 @@ class ForegroundControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertEqual(reminder_action["target_role"], "human_like_reviewer")
         self.assertEqual(reminder_action["wait_class"], "report_result")
         self.assertNotIn("fresh_liveness_probe_required", reminder_action)
-        self.assertIn("progress +1", reminder_action["reminder_text"])
+        self.assertIn("finite progress status", reminder_action["reminder_text"])
+        self.assertNotIn("progress +1", reminder_action["reminder_text"])
         self.assertTrue(reminder_action["controller_must_use_router_authored_text"])
         self.assertFalse(reminder_action["sealed_body_reads_allowed"])
 
@@ -1178,7 +1179,7 @@ class ForegroundControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.boot_to_controller(root)
         self.release_startup_daemon_for_explicit_daemon_test(root)
         result = router.run_router_daemon(root, max_ticks=1, release_lock_on_exit=False)
-        action_id = result["ticks"][0]["controller_action_id"]
+        action_id = result["last_tick"]["controller_action_id"]
         self.assertTrue(action_id)
 
         standby = router.foreground_controller_standby(root, max_seconds=5, poll_seconds=0.01)
@@ -1196,7 +1197,7 @@ class ForegroundControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.boot_to_controller(root)
         self.release_startup_daemon_for_explicit_daemon_test(root)
         result = router.run_router_daemon(root, max_ticks=1, release_lock_on_exit=False)
-        action_id = result["ticks"][0]["controller_action_id"]
+        action_id = result["last_tick"]["controller_action_id"]
 
         patrol = router.controller_patrol_timer(root, seconds=0)
 

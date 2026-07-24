@@ -31,6 +31,9 @@
       "parent_child_lifecycle_replay_skipped",
       "parent_repair_leaf_event",
       "repeated_lifecycle_action_not_absorbed",
+      "resource_boundedness_child_missing",
+      "resource_boundedness_proof_refs_missing",
+      "resource_boundedness_result_stale",
       "route_authority_fallback_accepted",
       "route_authority_model_missing",
       "route_authority_no_delta_repeat_accepted",
@@ -47,7 +50,7 @@
   "coverage": {
     "graph": {
       "accepted_state_count": 4,
-      "edge_count": 70,
+      "edge_count": 76,
       "labels_seen": [
         "accept_valid_blocked_current_state",
         "accept_valid_conformance_can_continue",
@@ -73,6 +76,9 @@
         "reject_parent_child_lifecycle_replay_skipped",
         "reject_parent_repair_leaf_event",
         "reject_repeated_lifecycle_action_not_absorbed",
+        "reject_resource_boundedness_child_missing",
+        "reject_resource_boundedness_proof_refs_missing",
+        "reject_resource_boundedness_result_stale",
         "reject_route_authority_fallback_accepted",
         "reject_route_authority_model_missing",
         "reject_route_authority_no_delta_repeat_accepted",
@@ -104,6 +110,9 @@
         "select_parent_child_lifecycle_replay_skipped",
         "select_parent_repair_leaf_event",
         "select_repeated_lifecycle_action_not_absorbed",
+        "select_resource_boundedness_child_missing",
+        "select_resource_boundedness_proof_refs_missing",
+        "select_resource_boundedness_result_stale",
         "select_route_authority_fallback_accepted",
         "select_route_authority_model_missing",
         "select_route_authority_no_delta_repeat_accepted",
@@ -122,9 +131,9 @@
       ],
       "missing_labels": [],
       "ok": true,
-      "rejected_state_count": 31,
-      "state_count": 71,
-      "terminal_state_count": 35,
+      "rejected_state_count": 34,
+      "state_count": 77,
+      "terminal_state_count": 38,
       "violations": []
     },
     "negative_reject_labels_seen": [
@@ -148,6 +157,9 @@
       "reject_parent_child_lifecycle_replay_skipped",
       "reject_parent_repair_leaf_event",
       "reject_repeated_lifecycle_action_not_absorbed",
+      "reject_resource_boundedness_child_missing",
+      "reject_resource_boundedness_proof_refs_missing",
+      "reject_resource_boundedness_result_stale",
       "reject_route_authority_fallback_accepted",
       "reject_route_authority_model_missing",
       "reject_route_authority_no_delta_repeat_accepted",
@@ -161,7 +173,7 @@
       "reject_unregistered_model_authoritative"
     ],
     "ok": true,
-    "required_negative_count": 31
+    "required_negative_count": 34
   },
   "flowguard_explorer": {
     "dead_branch_count": 0,
@@ -169,12 +181,12 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=2 initial_states=1 traces=105",
+    "summary": "sequences=2 initial_states=1 traces=114",
     "violation_count": 0
   },
   "graph": {
     "accepted_state_count": 4,
-    "edge_count": 70,
+    "edge_count": 76,
     "labels_seen": [
       "accept_valid_blocked_current_state",
       "accept_valid_conformance_can_continue",
@@ -200,6 +212,9 @@
       "reject_parent_child_lifecycle_replay_skipped",
       "reject_parent_repair_leaf_event",
       "reject_repeated_lifecycle_action_not_absorbed",
+      "reject_resource_boundedness_child_missing",
+      "reject_resource_boundedness_proof_refs_missing",
+      "reject_resource_boundedness_result_stale",
       "reject_route_authority_fallback_accepted",
       "reject_route_authority_model_missing",
       "reject_route_authority_no_delta_repeat_accepted",
@@ -231,6 +246,9 @@
       "select_parent_child_lifecycle_replay_skipped",
       "select_parent_repair_leaf_event",
       "select_repeated_lifecycle_action_not_absorbed",
+      "select_resource_boundedness_child_missing",
+      "select_resource_boundedness_proof_refs_missing",
+      "select_resource_boundedness_result_stale",
       "select_route_authority_fallback_accepted",
       "select_route_authority_model_missing",
       "select_route_authority_no_delta_repeat_accepted",
@@ -249,9 +267,9 @@
     ],
     "missing_labels": [],
     "ok": true,
-    "rejected_state_count": 31,
-    "state_count": 71,
-    "terminal_state_count": 35,
+    "rejected_state_count": 34,
+    "state_count": 77,
+    "terminal_state_count": 38,
     "violations": []
   },
   "hazard_review": {
@@ -486,6 +504,39 @@
       },
       {
         "expected_failures": [
+          "resource_boundedness_child_not_registered"
+        ],
+        "missing_expected_failures": [],
+        "observed_failures": [
+          "resource_boundedness_child_not_registered"
+        ],
+        "ok": true,
+        "scenario": "resource_boundedness_child_missing"
+      },
+      {
+        "expected_failures": [
+          "resource_boundedness_proof_refs_incomplete"
+        ],
+        "missing_expected_failures": [],
+        "observed_failures": [
+          "resource_boundedness_proof_refs_incomplete"
+        ],
+        "ok": true,
+        "scenario": "resource_boundedness_proof_refs_missing"
+      },
+      {
+        "expected_failures": [
+          "resource_boundedness_result_not_current"
+        ],
+        "missing_expected_failures": [],
+        "observed_failures": [
+          "resource_boundedness_result_not_current"
+        ],
+        "ok": true,
+        "scenario": "resource_boundedness_result_stale"
+      },
+      {
+        "expected_failures": [
           "route_authority_fallback_not_rejected"
         ],
         "missing_expected_failures": [],
@@ -660,6 +711,9 @@
       "repair_event_node_compatible": true,
       "repeated_lifecycle_action_absorbed": true,
       "required_tier": "live_current_green",
+      "resource_boundedness_child_registered": false,
+      "resource_boundedness_proof_refs_complete": false,
+      "resource_boundedness_result_current": false,
       "role_origin_checked": true,
       "route_authority_conformant": true,
       "route_authority_fallback_rejected": true,
@@ -728,7 +782,7 @@
     "parse_error": "",
     "residual_risk": [],
     "result_path": "simulations/flowpilot_unified_repair_integrity_results.json",
-    "result_sha256": "68ab0db80f7b1a867a5a08c0fa64b9ee06908224328b559ce14a224a968026a8",
+    "result_sha256": "9bbc88dc189277b114773b5722e463ce7c5644c3d15f2eaa29b2fe2b45810029",
     "skipped_checks": [],
     "status": "conformance_green",
     "typed_next_actions": []

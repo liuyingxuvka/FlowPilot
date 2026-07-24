@@ -2,12 +2,14 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import os
 import subprocess
 import sys
 import tempfile
 import unittest
 from unittest import mock
 from pathlib import Path
+import zipfile
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -70,6 +72,84 @@ flowpilot_model_hierarchy_inventory = load_module(
 
 
 class FlowPilotMaintenanceToolTests(unittest.TestCase):
+    def _write_retention_run(
+        self,
+        root: Path,
+        run_id: str,
+        *,
+        terminal: bool = True,
+        active_lease: bool = False,
+        pinned: bool = False,
+    ) -> dict[str, object]:
+        run_root = root / ".flowpilot" / "runs" / run_id
+        run_root.mkdir(parents=True)
+        ledger = {
+            "run_id": run_id,
+            "leases": (
+                {"lease-1": {"status": "active", "packet_id": "packet-1"}}
+                if active_lease
+                else {}
+            ),
+            "packets": (
+                {"packet-1": {"status": "acknowledged", "accepted_result_id": ""}}
+                if active_lease
+                else {}
+            ),
+            "terminal_lifecycle": (
+                {"status": "stopped_by_user", "reason": "fixture terminal"}
+                if terminal
+                else None
+            ),
+            "closure": None,
+            "status_projection": None,
+        }
+        (run_root / "ledger.json").write_text(
+            json.dumps(ledger, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+        return {
+            "run_id": run_id,
+            "created_at": f"2026-05-{run_id[-2:]}T01:01:01Z",
+            "status": "complete" if terminal else "running",
+            "pinned": pinned,
+        }
+
+    def _write_retention_index(
+        self,
+        root: Path,
+        entries: list[dict[str, object]],
+        *,
+        current_run_id: str,
+    ) -> None:
+        flowpilot_root = root / ".flowpilot"
+        flowpilot_root.mkdir(parents=True, exist_ok=True)
+        current_run_root = flowpilot_root / "runs" / current_run_id
+        (flowpilot_root / "current.json").write_text(
+            json.dumps(
+                {
+                    "run_id": current_run_id,
+                    "run_root": str(current_run_root),
+                    "ledger_path": str(current_run_root / "ledger.json"),
+                },
+                indent=2,
+                sort_keys=True,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        (flowpilot_root / "index.json").write_text(
+            json.dumps(
+                {
+                    "schema_version": "black_box_flowpilot_run_shell.v1",
+                    "runs": entries,
+                },
+                indent=2,
+                sort_keys=True,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+
     def test_validation_artifact_audit_reports_duplicate_pairs_without_mutation(self) -> None:
         with tempfile.TemporaryDirectory(prefix="flowpilot-artifact-audit-") as tmp_name:
             tmp = Path(tmp_name)
@@ -135,42 +215,170 @@ class FlowPilotMaintenanceToolTests(unittest.TestCase):
     def test_runtime_retention_report_preserves_current_run_and_reports_excess(self) -> None:
         with tempfile.TemporaryDirectory(prefix="flowpilot-runtime-retention-") as tmp_name:
             root = Path(tmp_name)
-            runs = root / ".flowpilot" / "runs"
-            for run_id in ("run-20260501-010101", "run-20260502-020202", "run-20260503-030303"):
-                run_root = runs / run_id
-                run_root.mkdir(parents=True)
-                (run_root / "state.json").write_text("{}", encoding="utf-8")
-            (root / ".flowpilot" / "current.json").write_text(
-                json.dumps(
-                    {
-                        "run_id": "run-20260503-030303",
-                        "run_root": ".flowpilot/runs/run-20260503-030303",
-                    }
-                ),
-                encoding="utf-8",
-            )
-            (root / ".flowpilot" / "index.json").write_text(
-                json.dumps(
-                    {
-                        "run_id": "run-20260503-030303",
-                        "runs": [
-                            {"run_id": "run-20260501-010101", "created_at": "2026-05-01T01:01:01Z"},
-                            {"run_id": "run-20260502-020202", "created_at": "2026-05-02T02:02:02Z"},
-                            {"run_id": "run-20260503-030303", "created_at": "2026-05-03T03:03:03Z"},
-                        ],
-                    }
-                ),
-                encoding="utf-8",
+            entries = [
+                self._write_retention_run(root, run_id)
+                for run_id in (
+                    "run-20260501-01",
+                    "run-20260502-02",
+                    "run-20260503-03",
+                )
+            ]
+            self._write_retention_index(
+                root,
+                entries,
+                current_run_id="run-20260503-03",
             )
 
             report = flowpilot_runtime_retention.build_report(root, max_runs=2)
 
         self.assertTrue(report["read_only"])
-        self.assertEqual(report["current_run_id"], "run-20260503-030303")
+        self.assertEqual(report["current_run_id"], "run-20260503-03")
         self.assertEqual(report["run_directory_count"], 3)
         self.assertEqual(report["excess_run_directory_count"], 1)
         self.assertEqual(len(report["stale_candidates"]), 1)
         self.assertFalse(report["stale_candidates"][0]["is_current"])
+
+    def test_runtime_retention_fails_closed_for_current_live_referenced_and_pinned_runs(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="flowpilot-runtime-retention-protection-") as tmp_name:
+            root = Path(tmp_name)
+            entries = [
+                self._write_retention_run(root, "run-current-01"),
+                self._write_retention_run(root, "run-live-02"),
+                self._write_retention_run(root, "run-referenced-03"),
+                self._write_retention_run(root, "run-pinned-04", pinned=True),
+                self._write_retention_run(root, "run-eligible-05"),
+                self._write_retention_run(root, "run-reference-owner-06"),
+            ]
+            live_root = root / ".flowpilot" / "runs" / "run-live-02" / "runtime"
+            live_root.mkdir()
+            (live_root / "router_daemon_status.json").write_text(
+                json.dumps({"status": "running", "pid": os.getpid()}),
+                encoding="utf-8",
+            )
+            reference_root = root / ".flowpilot" / "runs" / "run-reference-owner-06" / "evidence"
+            reference_root.mkdir()
+            (reference_root / "proof-reference.json").write_text(
+                json.dumps({"run_ref": "run-referenced-03"}),
+                encoding="utf-8",
+            )
+            self._write_retention_index(
+                root,
+                entries,
+                current_run_id="run-current-01",
+            )
+
+            report = flowpilot_runtime_retention.build_report(root, max_runs=0)
+
+        by_id = {record["entry_id"]: record for record in report["run_records"]}
+        self.assertIn("current_run", by_id["run-current-01"]["protected_reasons"])
+        self.assertIn("live_owner", by_id["run-live-02"]["protected_reasons"])
+        self.assertIn("referenced", by_id["run-referenced-03"]["protected_reasons"])
+        self.assertIn("pinned", by_id["run-pinned-04"]["protected_reasons"])
+        self.assertEqual(by_id["run-eligible-05"]["proposed_action"], "archive")
+        self.assertNotIn("run-current-01", {row["entry_id"] for row in report["stale_candidates"]})
+        self.assertNotIn("run-live-02", {row["entry_id"] for row in report["stale_candidates"]})
+        self.assertNotIn("run-referenced-03", {row["entry_id"] for row in report["stale_candidates"]})
+        self.assertNotIn("run-pinned-04", {row["entry_id"] for row in report["stale_candidates"]})
+
+    def test_runtime_retention_rejects_stale_frozen_plan_before_archive(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="flowpilot-runtime-retention-stale-plan-") as tmp_name:
+            root = Path(tmp_name)
+            entries = [
+                self._write_retention_run(root, "run-current-01"),
+                self._write_retention_run(root, "run-eligible-02"),
+            ]
+            self._write_retention_index(root, entries, current_run_id="run-current-01")
+            plan = flowpilot_runtime_retention.build_plan(root, max_runs=1)
+            plan_path = root / ".flowpilot" / "retention-plans" / "plan.json"
+            receipt = flowpilot_runtime_retention.write_plan(plan_path, plan)
+            candidate = root / ".flowpilot" / "runs" / "run-eligible-02"
+            (candidate / "changed-after-plan.txt").write_text("changed", encoding="utf-8")
+
+            with self.assertRaisesRegex(
+                flowpilot_runtime_retention.RetentionPlanError,
+                "changed after planning",
+            ):
+                flowpilot_runtime_retention.apply_plan(
+                    root,
+                    plan_path=plan_path,
+                    plan_sha256=receipt["plan_sha256"],
+                )
+
+        self.assertFalse((root / ".flowpilot" / "archives" / "run-eligible-02.zip").exists())
+
+    def test_runtime_retention_apply_verifies_archive_updates_index_then_removes_heavy_paths(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="flowpilot-runtime-retention-apply-") as tmp_name:
+            root = Path(tmp_name)
+            entries = [
+                self._write_retention_run(root, "run-current-01"),
+                self._write_retention_run(root, "run-eligible-02"),
+            ]
+            self._write_retention_index(root, entries, current_run_id="run-current-01")
+            candidate = root / ".flowpilot" / "runs" / "run-eligible-02"
+            evidence = candidate / "evidence"
+            evidence.mkdir()
+            (evidence / "large-proof.txt").write_text("proof\n" * 100, encoding="utf-8")
+            plan = flowpilot_runtime_retention.build_plan(root, max_runs=1)
+            plan_path = root / ".flowpilot" / "retention-plans" / "plan.json"
+            receipt = flowpilot_runtime_retention.write_plan(plan_path, plan)
+
+            result = flowpilot_runtime_retention.apply_plan(
+                root,
+                plan_path=plan_path,
+                plan_sha256=receipt["plan_sha256"],
+            )
+            archive_path = root / ".flowpilot" / "archives" / "run-eligible-02.zip"
+            index = json.loads((root / ".flowpilot" / "index.json").read_text(encoding="utf-8"))
+
+            self.assertTrue(result["ok"], result)
+            self.assertTrue(archive_path.is_file())
+            with zipfile.ZipFile(archive_path, "r") as archive:
+                self.assertIsNone(archive.testzip())
+                self.assertIn(
+                    "run-eligible-02/evidence/large-proof.txt",
+                    archive.namelist(),
+                )
+            archived_row = next(row for row in index["runs"] if row["run_id"] == "run-eligible-02")
+            self.assertEqual(archived_row["archive_status"], "verified")
+            self.assertEqual(archived_row["archive_cleanup_status"], "complete")
+            self.assertEqual(
+                archived_row["archive_sha256"],
+                flowpilot_runtime_retention._sha256_file(archive_path),
+            )
+            self.assertFalse(evidence.exists())
+            self.assertTrue((candidate / "ledger.json").is_file())
+
+    def test_runtime_retention_covers_terminal_validation_dirs_without_automatic_cleanup(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="flowpilot-validation-retention-") as tmp_name:
+            root = Path(tmp_name)
+            entries = [self._write_retention_run(root, "run-current-01")]
+            self._write_retention_index(root, entries, current_run_id="run-current-01")
+            candidate = root / "tmp" / "test_background" / "owner-old"
+            candidate.mkdir(parents=True)
+            (candidate / "owner.meta.json").write_text(
+                json.dumps({"status": "completed", "pid": 99999999}),
+                encoding="utf-8",
+            )
+            (candidate / "owner.exit.txt").write_text("0\n", encoding="utf-8")
+            before = {
+                path.relative_to(root).as_posix(): path.read_bytes()
+                for path in root.rglob("*")
+                if path.is_file()
+            }
+
+            report = flowpilot_runtime_retention.build_report(root, max_runs=0)
+            after_report = {
+                path.relative_to(root).as_posix(): path.read_bytes()
+                for path in root.rglob("*")
+                if path.is_file()
+            }
+
+            self.assertEqual(before, after_report)
+            validation = next(
+                row for row in report["validation_records"] if row["entry_id"] == "owner-old"
+            )
+            self.assertTrue(validation["terminal_evidence_ok"])
+            self.assertEqual(validation["proposed_action"], "archive")
 
     def test_script_flowpilot_paths_delegates_to_skill_asset_source(self) -> None:
         self.assertTrue(flowpilot_paths_wrapper.ASSET_PATH.is_file())

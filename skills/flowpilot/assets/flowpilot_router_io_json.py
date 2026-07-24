@@ -114,6 +114,26 @@ def write_json(path: Path, payload: dict[str, Any]) -> None:
     write_json_atomic(path, payload, sort_keys=True, verify=True)
 
 
+def write_json_if_changed(
+    path: Path,
+    payload: dict[str, Any],
+    *,
+    sort_keys: bool = True,
+    verify: bool = True,
+) -> bool:
+    """Atomically write a JSON object only when its canonical value changed."""
+
+    if path.exists():
+        try:
+            existing = read_json(path)
+        except (OSError, json.JSONDecodeError, UnicodeDecodeError, RouterError):
+            existing = None
+        if existing == payload:
+            return False
+    write_json_atomic(path, payload, sort_keys=sort_keys, verify=verify)
+    return True
+
+
 def read_json(path: Path) -> dict[str, Any]:
     payload = json.loads(path.read_text(encoding="utf-8-sig"))
     if not isinstance(payload, dict):

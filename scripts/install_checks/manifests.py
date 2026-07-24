@@ -161,7 +161,7 @@ def run_checks(result: dict[str, object]) -> None:
             "ten minutes without fresh evidence reminds",
             "thirty minutes without",
             "fresh evidence reissues or replaces",
-            "`progress +1`",
+            "`ready_to_submit`",
             "submit-result",
             "Controller does not run a separate host-liveness check",
             "controller_local_action",

@@ -5828,14 +5828,14 @@
             "skills/flowpilot/assets/flowpilot_core_runtime/control_surface.py": "2d1401633228954d7f9f77ae6acf25cf0a2460f7790cd4f8efaf26229e89114a",
             "skills/flowpilot/assets/flowpilot_core_runtime/migration.py": "0bc4d59913032f28b1f450e724c073953eb9d1b0b8ade565c0b633844450c377",
             "skills/flowpilot/assets/flowpilot_core_runtime/pointer_store.py": "2452188cde97481403cf34d78132ead5318076894179b7f46a769926a808ad45",
-            "skills/flowpilot/assets/flowpilot_core_runtime/run_shell.py": "5d40060de8242ef4af278a280897d2b56984910b36c443e4c0ba95e5ac174d11",
-            "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py": "37dd2f6bebfa336112de363350097b92a4d2df1b822c00af63e7867693580e3c",
+            "skills/flowpilot/assets/flowpilot_core_runtime/run_shell.py": "e3d4cf43698debc966f1dbdb69a44895c324723945f6f9c83e891ca1ab808a3f",
+            "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py": "ed5b84a2380372d94f7fa58956ac521500fb7f908113b2a424eb85de4d0440a1",
             "tests/flowpilot_repair_test_helpers.py": "5bbdb26ed492d1568b58cbb496fe0b383b45b210f5cb234a50a917821684806b"
           },
           "receipt_id": "receipt.unified_repair.native_runtime_conformance",
-          "request_identity": "332d08ced691e2bfc312b0436a39929645b1c2fef8831aeb6723e38b56c2b28d",
+          "request_identity": "5774b25b82402e38642832c1d1719e09a463b36c3ab49204a49396b00c23aa0c",
           "result_path": "simulations/flowpilot_unified_repair_native_runtime_conformance_results.json",
-          "result_sha256": "d5f0bcb6e0a4159bda164b0501d1988be7db2c6cc82e628c22b81ca034b0645c"
+          "result_sha256": "de0d36e54a172c54287eaa1b2df7ed9f8ef8b920655bc248df7351fec55f286b"
         },
         {
           "check_id": "exact_native_test_conformance",
@@ -5862,21 +5862,21 @@
             "skills/flowpilot/assets/flowpilot_core_runtime/control_surface.py": "2d1401633228954d7f9f77ae6acf25cf0a2460f7790cd4f8efaf26229e89114a",
             "skills/flowpilot/assets/flowpilot_core_runtime/migration.py": "0bc4d59913032f28b1f450e724c073953eb9d1b0b8ade565c0b633844450c377",
             "skills/flowpilot/assets/flowpilot_core_runtime/pointer_store.py": "2452188cde97481403cf34d78132ead5318076894179b7f46a769926a808ad45",
-            "skills/flowpilot/assets/flowpilot_core_runtime/run_shell.py": "5d40060de8242ef4af278a280897d2b56984910b36c443e4c0ba95e5ac174d11",
-            "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py": "37dd2f6bebfa336112de363350097b92a4d2df1b822c00af63e7867693580e3c",
+            "skills/flowpilot/assets/flowpilot_core_runtime/run_shell.py": "e3d4cf43698debc966f1dbdb69a44895c324723945f6f9c83e891ca1ab808a3f",
+            "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py": "ed5b84a2380372d94f7fa58956ac521500fb7f908113b2a424eb85de4d0440a1",
             "tests/router_runtime/route_mutation_parent_backward.py": "55422a95cb1c67476b9202644fa0d26baca52d81ae9956a91f5a2b8704dd5e85",
             "tests/router_runtime/route_mutation_sibling_replacement.py": "b7e3c140a76009db4c3f576958a10e3434f96b8c9ca8bfbbbe12d42538086c4d",
             "tests/router_runtime/route_mutation_transactions.py": "5fdfa4bf0fab1c0133c76c3767bdfaf57a6a0647b9baf9e9e1944143593c843d",
-            "tests/test_flowpilot_complete_system_runtime.py": "7e0341f8d54df922eacc1c102f5bfd45cb08525e9bc675929768c46b8a0acbf5",
-            "tests/test_flowpilot_core_runtime.py": "d9df671916b2b3bf0c563bc7c7d270544e18a81a67ccac2b7a4fd6d6d66acfd8",
+            "tests/test_flowpilot_complete_system_runtime.py": "e3bca19605ac119aa4c2d6255be4e695a8e1c09b95c2f6664f77ae5a64fc3c65",
+            "tests/test_flowpilot_core_runtime.py": "29a401d8d8d1db886639a0302ab8c4b7e8d8562c0f6af86af1d7405ba9704ff8",
             "tests/test_flowpilot_high_standard_control_flow.py": "106638f8dcbf8da106e20bbf6fe3d5dc4cae6bd09b0b8b00645d420751c29f4e",
             "tests/test_flowpilot_terminal_ledger_source_entries.py": "4fc35b8e4e2fe5bf3f5f7485a0ae8f7aaee3eedc36eacccfb3486ca8658f480b",
             "tests/test_flowpilot_unified_repair_runtime.py": "bd591c182bbd61e2bee463cf9aaeac1ec3d79da3ed1c2ce1689a10755d0c9453"
           },
           "receipt_id": "receipt.unified_repair.exact_native_tests",
-          "request_identity": "32e6c4661037bbca64688dcf7f2f0af56c8639becfd592493753f86618aa6e93",
+          "request_identity": "466597ce08ec2e23f42be9926143f93d556e829e54ac32c5686b2ce272f9f1e4",
           "result_path": "simulations/flowpilot_unified_repair_exact_native_test_owner_results.json",
-          "result_sha256": "8e760db01213ae09e694fc05d09bfc5636f755daa02937fd57574d6001093942"
+          "result_sha256": "808bd62375b8ad25caffac42ce0bbc56a22e01b654289079b67c75c14e1f9aa4"
         }
       ],
       "runtime_evidence_ids": [
@@ -17977,14 +17977,14 @@
           "skills/flowpilot/assets/flowpilot_core_runtime/control_surface.py": "2d1401633228954d7f9f77ae6acf25cf0a2460f7790cd4f8efaf26229e89114a",
           "skills/flowpilot/assets/flowpilot_core_runtime/migration.py": "0bc4d59913032f28b1f450e724c073953eb9d1b0b8ade565c0b633844450c377",
           "skills/flowpilot/assets/flowpilot_core_runtime/pointer_store.py": "2452188cde97481403cf34d78132ead5318076894179b7f46a769926a808ad45",
-          "skills/flowpilot/assets/flowpilot_core_runtime/run_shell.py": "5d40060de8242ef4af278a280897d2b56984910b36c443e4c0ba95e5ac174d11",
-          "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py": "37dd2f6bebfa336112de363350097b92a4d2df1b822c00af63e7867693580e3c",
+          "skills/flowpilot/assets/flowpilot_core_runtime/run_shell.py": "e3d4cf43698debc966f1dbdb69a44895c324723945f6f9c83e891ca1ab808a3f",
+          "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py": "ed5b84a2380372d94f7fa58956ac521500fb7f908113b2a424eb85de4d0440a1",
           "tests/flowpilot_repair_test_helpers.py": "5bbdb26ed492d1568b58cbb496fe0b383b45b210f5cb234a50a917821684806b"
         },
         "receipt_id": "receipt.unified_repair.native_runtime_conformance",
-        "request_identity": "332d08ced691e2bfc312b0436a39929645b1c2fef8831aeb6723e38b56c2b28d",
+        "request_identity": "5774b25b82402e38642832c1d1719e09a463b36c3ab49204a49396b00c23aa0c",
         "result_path": "simulations/flowpilot_unified_repair_native_runtime_conformance_results.json",
-        "result_sha256": "d5f0bcb6e0a4159bda164b0501d1988be7db2c6cc82e628c22b81ca034b0645c"
+        "result_sha256": "de0d36e54a172c54287eaa1b2df7ed9f8ef8b920655bc248df7351fec55f286b"
       },
       {
         "check_id": "exact_native_test_conformance",
@@ -18011,21 +18011,21 @@
           "skills/flowpilot/assets/flowpilot_core_runtime/control_surface.py": "2d1401633228954d7f9f77ae6acf25cf0a2460f7790cd4f8efaf26229e89114a",
           "skills/flowpilot/assets/flowpilot_core_runtime/migration.py": "0bc4d59913032f28b1f450e724c073953eb9d1b0b8ade565c0b633844450c377",
           "skills/flowpilot/assets/flowpilot_core_runtime/pointer_store.py": "2452188cde97481403cf34d78132ead5318076894179b7f46a769926a808ad45",
-          "skills/flowpilot/assets/flowpilot_core_runtime/run_shell.py": "5d40060de8242ef4af278a280897d2b56984910b36c443e4c0ba95e5ac174d11",
-          "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py": "37dd2f6bebfa336112de363350097b92a4d2df1b822c00af63e7867693580e3c",
+          "skills/flowpilot/assets/flowpilot_core_runtime/run_shell.py": "e3d4cf43698debc966f1dbdb69a44895c324723945f6f9c83e891ca1ab808a3f",
+          "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py": "ed5b84a2380372d94f7fa58956ac521500fb7f908113b2a424eb85de4d0440a1",
           "tests/router_runtime/route_mutation_parent_backward.py": "55422a95cb1c67476b9202644fa0d26baca52d81ae9956a91f5a2b8704dd5e85",
           "tests/router_runtime/route_mutation_sibling_replacement.py": "b7e3c140a76009db4c3f576958a10e3434f96b8c9ca8bfbbbe12d42538086c4d",
           "tests/router_runtime/route_mutation_transactions.py": "5fdfa4bf0fab1c0133c76c3767bdfaf57a6a0647b9baf9e9e1944143593c843d",
-          "tests/test_flowpilot_complete_system_runtime.py": "7e0341f8d54df922eacc1c102f5bfd45cb08525e9bc675929768c46b8a0acbf5",
-          "tests/test_flowpilot_core_runtime.py": "d9df671916b2b3bf0c563bc7c7d270544e18a81a67ccac2b7a4fd6d6d66acfd8",
+          "tests/test_flowpilot_complete_system_runtime.py": "e3bca19605ac119aa4c2d6255be4e695a8e1c09b95c2f6664f77ae5a64fc3c65",
+          "tests/test_flowpilot_core_runtime.py": "29a401d8d8d1db886639a0302ab8c4b7e8d8562c0f6af86af1d7405ba9704ff8",
           "tests/test_flowpilot_high_standard_control_flow.py": "106638f8dcbf8da106e20bbf6fe3d5dc4cae6bd09b0b8b00645d420751c29f4e",
           "tests/test_flowpilot_terminal_ledger_source_entries.py": "4fc35b8e4e2fe5bf3f5f7485a0ae8f7aaee3eedc36eacccfb3486ca8658f480b",
           "tests/test_flowpilot_unified_repair_runtime.py": "bd591c182bbd61e2bee463cf9aaeac1ec3d79da3ed1c2ce1689a10755d0c9453"
         },
         "receipt_id": "receipt.unified_repair.exact_native_tests",
-        "request_identity": "32e6c4661037bbca64688dcf7f2f0af56c8639becfd592493753f86618aa6e93",
+        "request_identity": "466597ce08ec2e23f42be9926143f93d556e829e54ac32c5686b2ce272f9f1e4",
         "result_path": "simulations/flowpilot_unified_repair_exact_native_test_owner_results.json",
-        "result_sha256": "8e760db01213ae09e694fc05d09bfc5636f755daa02937fd57574d6001093942"
+        "result_sha256": "808bd62375b8ad25caffac42ce0bbc56a22e01b654289079b67c75c14e1f9aa4"
       }
     ],
     "runtime_evidence_ids": [
@@ -20714,8 +20714,8 @@
       {
         "exists": true,
         "path": "tests/test_flowpilot_core_runtime.py",
-        "sha256": "d9df671916b2b3bf0c563bc7c7d270544e18a81a67ccac2b7a4fd6d6d66acfd8",
-        "size_bytes": 369979
+        "sha256": "29a401d8d8d1db886639a0302ab8c4b7e8d8562c0f6af86af1d7405ba9704ff8",
+        "size_bytes": 369973
       },
       {
         "exists": true,
@@ -20726,8 +20726,8 @@
       {
         "exists": true,
         "path": "tests/test_flowpilot_complete_system_runtime.py",
-        "sha256": "7e0341f8d54df922eacc1c102f5bfd45cb08525e9bc675929768c46b8a0acbf5",
-        "size_bytes": 52251
+        "sha256": "e3bca19605ac119aa4c2d6255be4e695a8e1c09b95c2f6664f77ae5a64fc3c65",
+        "size_bytes": 52531
       },
       {
         "exists": true,
@@ -20782,14 +20782,14 @@
       {
         "exists": true,
         "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
-        "sha256": "37dd2f6bebfa336112de363350097b92a4d2df1b822c00af63e7867693580e3c",
-        "size_bytes": 921214
+        "sha256": "ed5b84a2380372d94f7fa58956ac521500fb7f908113b2a424eb85de4d0440a1",
+        "size_bytes": 923268
       },
       {
         "exists": true,
         "path": "skills/flowpilot/assets/flowpilot_core_runtime/run_shell.py",
-        "sha256": "5d40060de8242ef4af278a280897d2b56984910b36c443e4c0ba95e5ac174d11",
-        "size_bytes": 32135
+        "sha256": "e3d4cf43698debc966f1dbdb69a44895c324723945f6f9c83e891ca1ab808a3f",
+        "size_bytes": 38106
       },
       {
         "exists": true,

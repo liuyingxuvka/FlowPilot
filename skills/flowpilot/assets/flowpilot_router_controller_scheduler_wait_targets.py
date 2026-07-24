@@ -77,7 +77,7 @@ def _wait_target_reminder_text(router: ModuleType, wait_class: str, target_role:
     if wait_class == 'ack':
         return f"Router is still waiting for {target_role or 'the target role'} to acknowledge {wait_reason or 'the assigned card'}. If you received it, submit the ACK through the original runtime path. If you are blocked, submit a blocker."
     if wait_class == 'report_result':
-        return f"Router is still waiting for {target_role or 'the target role'} to finish {wait_reason or 'the assigned work'}. If the final result is complete, submit it through the original runtime path. If you are still working, immediately record progress +1 for the current packet/lease and continue keeping progress fresh. If blocked, submit a blocker. Do not paste sealed report or result bodies into chat."
+        return f"Router is still waiting for {target_role or 'the target role'} to finish {wait_reason or 'the assigned work'}. If the final result is complete, submit it through the original runtime path. If you are still working, record exactly one current finite progress status for the current packet/lease, and record again only for a semantic status change or a due liveness reminder. If blocked, submit a blocker. Do not paste sealed report or result bodies into chat."
     return None
 
 def _wait_target_due_state(router: ModuleType, *, wait_class: str, elapsed_seconds: int | None, last_reminder_elapsed_seconds: int | None, evidence_exists: bool) -> dict[str, Any]:

@@ -32,6 +32,9 @@
     "background_shared_runtime_resource_race": [
       "background_shared_runtime_resource_not_serialized"
     ],
+    "background_sibling_misclassified_through_reused_parent_pid": [
+      "background_sibling_isolation_not_preserved"
+    ],
     "background_surviving_descendant_promoted": [
       "background_surviving_descendants_not_fail_closed"
     ],
@@ -127,12 +130,12 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=2 initial_states=1 traces=123",
+    "summary": "sequences=2 initial_states=1 traces=126",
     "violation_count": 0
   },
   "graph": {
     "accepted_state_count": 4,
-    "edge_count": 82,
+    "edge_count": 84,
     "labels_seen": [
       "accept_valid_background_integration_tier",
       "accept_valid_fast_tier",
@@ -146,6 +149,7 @@
       "reject_background_progress_only_claimed_pass",
       "reject_background_running_without_timeout_guard",
       "reject_background_shared_runtime_resource_race",
+      "reject_background_sibling_misclassified_through_reused_parent_pid",
       "reject_background_surviving_descendant_promoted",
       "reject_background_windows_venv_shim_exits_before_process_owner",
       "reject_coverage_sweep_blocks_fast_tier",
@@ -183,6 +187,7 @@
       "select_background_progress_only_claimed_pass",
       "select_background_running_without_timeout_guard",
       "select_background_shared_runtime_resource_race",
+      "select_background_sibling_misclassified_through_reused_parent_pid",
       "select_background_surviving_descendant_promoted",
       "select_background_windows_venv_shim_exits_before_process_owner",
       "select_coverage_sweep_blocks_fast_tier",
@@ -219,9 +224,9 @@
     ],
     "missing_labels": [],
     "ok": true,
-    "rejected_state_count": 37,
-    "state_count": 83,
-    "terminal_state_count": 41,
+    "rejected_state_count": 38,
+    "state_count": 85,
+    "terminal_state_count": 42,
     "violations": []
   },
   "model": "flowpilot_test_tiering",
@@ -246,6 +251,7 @@
       "background_progress_only_claimed_pass",
       "background_running_without_timeout_guard",
       "background_shared_runtime_resource_race",
+      "background_sibling_misclassified_through_reused_parent_pid",
       "background_surviving_descendant_promoted",
       "background_windows_venv_shim_exits_before_process_owner",
       "coverage_sweep_blocks_fast_tier",

@@ -499,7 +499,7 @@ def _mark_high_standard_node_context_accepted(ledger: dict[str, Any], node_id: s
 def replacement_worker_success() -> dict[str, Any]:
     ledger, packet_id, worker = _base_ledger()
     runtime.ack_lease(ledger, worker, packet_id)
-    runtime.record_progress(ledger, worker, packet_id, "still working")
+    runtime.record_progress(ledger, worker, packet_id, "working")
     runtime.close_lease(ledger, worker, "no final result")
     late_result_rejected_reason = ""
     try:

@@ -1,5 +1,5 @@
 {
-  "created_at": "2026-07-19T21:20:45.626984+00:00",
+  "created_at": "2026-07-24T11:58:38.907769+00:00",
   "graph": {
     "edge_count": 14,
     "invariant_failure_count": 0,
@@ -8,18 +8,18 @@
     "state_count": 8
   },
   "layered_full_regression": {
-    "current": false,
+    "current": true,
     "required_for_release": true,
     "status": {
-      "created_at": "2026-07-19T19:44:06.385228+00:00",
-      "edge_count": 17,
+      "created_at": "2026-07-24T11:58:23.846885+00:00",
+      "edge_count": 16,
       "kind": "layered_full_parent",
       "proof_file": "simulations/capability_layered_full_results.proof.json",
-      "reason": "previous proof was not successful",
-      "release_confidence": "blocked",
+      "reason": "valid proof",
+      "release_confidence": "current_with_layered_full_parent",
       "result_file": "simulations/capability_layered_full_results.json",
-      "state_count": 11,
-      "valid": false
+      "state_count": 10,
+      "valid": true
     }
   },
   "loop": {
@@ -35,7 +35,7 @@
     "ok": true,
     "success_state_count": 1
   },
-  "release_confidence": "requires_full_regression",
+  "release_confidence": "current_with_layered_full_parent",
   "result_type": "thin_parent",
   "routine_confidence": "current",
   "schema_version": "flowpilot.thin_parent_result.v1",
@@ -479,17 +479,17 @@
       {
         "evidence": [
           {
-            "edge_count": 70,
+            "edge_count": 76,
             "failures": [],
             "missing": false,
             "model_id": "flowpilot_model_mesh",
             "ok": true,
             "proof_status": "not_present",
             "result_file": "simulations/flowpilot_model_mesh_results.json",
-            "result_fingerprint": "e334a5dc204b5e521841dc11018b87cf8896e081584b3eeb7240320c3885ac1c",
+            "result_fingerprint": "4ee144b2cad71134032330067eb27c5099d01a64a5e56e69662523302559da62",
             "skipped_required_checks": [],
             "skipped_required_checks_visible": true,
-            "state_count": 71
+            "state_count": 77
           },
           {
             "edge_count": 72,
@@ -538,7 +538,7 @@
             "ok": true,
             "proof_status": "not_present",
             "result_file": "simulations/flowpilot_skillguard_current_contract_results.json",
-            "result_fingerprint": "3be721a359e406efb4c88d68f8e5cfdd12f3641b36852e52446d683e3546c5c8",
+            "result_fingerprint": "bb1af717b4715179df009fc86a8d740f4e0a8eb2e345b1f7fb12f761473192ad",
             "skipped_required_checks": [],
             "skipped_required_checks_visible": true,
             "state_count": null
@@ -594,7 +594,7 @@
           "ok": true,
           "proof_status": "not_present",
           "result_file": "simulations/flowpilot_unified_repair_integrity_results.json",
-          "result_fingerprint": "68ab0db80f7b1a867a5a08c0fa64b9ee06908224328b559ce14a224a968026a8",
+          "result_fingerprint": "9bbc88dc189277b114773b5722e463ce7c5644c3d15f2eaa29b2fe2b45810029",
           "skipped_required_checks": [],
           "skipped_required_checks_visible": true,
           "state_count": null

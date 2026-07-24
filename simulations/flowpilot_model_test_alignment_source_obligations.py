@@ -93,9 +93,9 @@ def source_obligations() -> tuple[ModelObligation, ...]:
             "current_contract.process_tree_descendant_lineage",
             obligation_type="hazard",
             description=(
-                "A process can enter an exact owner's descendant set only when its orderable start "
-                "token is not earlier than that owner; stale Windows parent-PID links cannot authorize "
-                "termination of a pre-existing process."
+                "A process can enter an exact owner's descendant set only when every parent-child edge "
+                "preserves orderable start-token lineage; stale Windows parent-PID links cannot cross an "
+                "older reused process to reach either a pre-existing process or a younger sibling execution owner."
             ),
             required_test_kinds=(NEGATIVE,),
         ),
@@ -127,7 +127,7 @@ def source_obligations() -> tuple[ModelObligation, ...]:
             obligation_type="evidence_freshness",
             description=(
                 "The canonical repository snapshot is provenance only. Each tier command has one explicit "
-                "owner input identity; current exact identity reuses one prior v4 proof through a valid "
+                "owner input identity; current exact identity reuses one prior V5 proof through a valid "
                 "TestResultReuseTicket, changed identity executes that owner, and any unmapped or ambiguous "
                 "changed input blocks without a blanket-run fallback."
             ),

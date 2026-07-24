@@ -935,7 +935,7 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         lease_id = runtime.lease_agent(ledger, "worker", agent_id="worker-1", packet_id=packet_id)
         runtime.assign_packet(ledger, packet_id, lease_id)
         runtime.ack_lease(ledger, lease_id, packet_id)
-        runtime.record_progress(ledger, lease_id, packet_id, "still_working")
+        runtime.record_progress(ledger, lease_id, packet_id, "working")
         progress = runtime.current_progress_fraction(ledger)
 
         self.assertEqual(progress["display"], "0/1")

@@ -10,6 +10,7 @@ from pathlib import Path
 
 helper = importlib.import_module("scripts.run_flowguard_background")
 source_fingerprint = importlib.import_module("scripts.test_tier.source_fingerprint")
+evidence_v5 = importlib.import_module("scripts.test_tier.evidence_v5")
 
 
 class FlowGuardBackgroundHelperTests(unittest.TestCase):
@@ -67,6 +68,7 @@ class FlowGuardBackgroundHelperTests(unittest.TestCase):
             exit_text = paths["exit"].read_text(encoding="utf-8").strip()
             out_text = paths["out"].read_text(encoding="utf-8")
             err_text = paths["err"].read_text(encoding="utf-8")
+            combined_bytes = paths["combined"].stat().st_size
             verify_exit_code = helper.main(
                 [
                     "--name",
@@ -90,8 +92,13 @@ class FlowGuardBackgroundHelperTests(unittest.TestCase):
         self.assertTrue(meta["descendant_zero_confirmed"])
         self.assertFalse(meta["proof_reused"])
         self.assertEqual(
-            meta["covered_input_fingerprints_start"],
-            meta["covered_input_fingerprints_end"],
+            meta["covered_input_fingerprint_start"],
+            meta["covered_input_fingerprint_end"],
+        )
+        self.assertEqual(meta["combined_kind"], "terminal_stream_index")
+        self.assertLessEqual(
+            combined_bytes,
+            evidence_v5.COMBINED_INDEX_MAX_BYTES,
         )
 
     def test_verify_rejects_stale_source_without_relaunching(self) -> None:
@@ -110,9 +117,7 @@ class FlowGuardBackgroundHelperTests(unittest.TestCase):
             )
             paths = helper.artifact_paths(root, "fixture")
             meta = json.loads(paths["meta"].read_text(encoding="utf-8"))
-            meta["owner_identity"]["covered_input_fingerprint"] = (
-                "stale-owner-input"
-            )
+            meta["owner_identity_sha256"] = "stale-owner-input"
             paths["meta"].write_text(json.dumps(meta), encoding="utf-8")
 
             exit_code = helper.main(

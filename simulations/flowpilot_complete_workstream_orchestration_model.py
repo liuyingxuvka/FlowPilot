@@ -17,6 +17,11 @@ from flowguard import FunctionResult, Invariant, InvariantResult, Workflow
 
 MODEL_ID = "flowpilot_complete_workstream_orchestration"
 MAX_SEQUENCE_LENGTH = 24
+RESOURCE_BOUNDEDNESS_CHILD_BINDING = {
+    "model_id": "flowpilot_control_plane_resource_boundedness",
+    "owned_obligation": "one_obligation_level_workstream_plan_without_command_level_copies",
+    "claim_boundary": "workstream orchestration retains completeness and review; the child owns material amplification",
+}
 
 SUBSTANTIVE_ROLES = (
     "pm",
@@ -390,4 +395,3 @@ def hazard_states() -> dict[str, State]:
         ),
         "pm_ignored_sub9": replace(base, pm_disposed_sub9_score=False),
     }
-

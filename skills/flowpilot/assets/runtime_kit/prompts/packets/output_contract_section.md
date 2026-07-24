@@ -42,9 +42,13 @@ This task packet is the source of truth for the result, report, or decision body
 
 Every substantive role must also complete the semantic
 `contract_self_check.workstream_plan_and_completion` section projected in the
-current skeleton. It contains the role's numbered plan written before
-execution, per-step completion status, evidence refs, deviations and unresolved
-work, plus delegation/integration, verification and repair. Runtime does not
+current skeleton. It is the sole role plan: write it before execution, use one
+row per acceptance obligation or meaningful phase, and update those same rows
+through submission with completion status, evidence refs, deviations and unresolved
+work, plus delegation/integration, verification and repair. Do not create rows
+for commands, file reads, polls, or other microsteps, and do not copy a second
+final plan. Reviewer cites this table and reports differences, gaps, and
+judgment rather than reproducing the complete table. Runtime does not
 mechanically score the quality of this section; Reviewer compares it with the
 actual current artifact and evidence through the existing review/repair path.
 Controller is excluded because its Runtime-derived foreground action ledger is

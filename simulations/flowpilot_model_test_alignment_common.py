@@ -321,6 +321,7 @@ SCRIPT_CLI_EXTERNAL_CONTRACT_STEMS = {
     "check_public_release",
     "flowpilot_lifecycle",
     "flowpilot_maintenance_registry",
+    "flowguard_model_system_snapshot",
     "flowpilot_outputs",
     "flowpilot_packets",
     "install_flowpilot",
@@ -353,6 +354,7 @@ SCRIPT_MODEL_BINDING_STEMS = {
     "check_public_release": "public_release_audit",
     "check_runtime_card_capability_reminders": "runtime_card_capability_reminders",
     "flowpilot_defects": "defect_governance_cli",
+    "flowguard_model_system_snapshot": "flowpilot_model_mesh.model_system_snapshot",
     "flowpilot_lifecycle": "lifecycle_cli",
     "flowpilot_maintenance_map": "maintenance_map_cli",
     "flowpilot_maintenance_registry": "maintenance_registry_cli",
@@ -383,6 +385,25 @@ SCRIPT_SURFACE_CONTRACT_TEST_MARKER = "SCRIPT_SURFACE_CONTRACT_TEST_PATH"
 TEST_TIER_COMMAND_CONTRACT_TEST_MARKER = "test_all_tier_commands_have_external_command_contracts"
 
 STRUCTURE_SPLIT_REPAIR_PLAN = {
+    "flowpilot_runtime_retention": {
+        "split_status": "completed_split",
+        "split_reason": (
+            "read_only_inventory_and_shared_identity_helpers_extracted_"
+            "without_changing_the_public_cli_or_import_surface"
+        ),
+        "completed_split_paths": (
+            "scripts/flowpilot_runtime_retention_lib/common.py",
+            "scripts/flowpilot_runtime_retention_lib/scan.py",
+        ),
+        "peer_safety_status": (
+            "claimed_by_bound_flowpilot_runtime_resource_amplification"
+        ),
+        "safe_split_class": "runtime_retention_cli",
+        "recommended_next_action": (
+            "monitor_retention_structure_mesh_and_parity_contracts"
+        ),
+        "structure_split_status": "completed",
+    },
     "flowpilot_new": {
         "split_status": "completed_split",
         "split_reason": "current_flowpilot_entrypoint_command_families_extracted_without_legacy_acceptance",

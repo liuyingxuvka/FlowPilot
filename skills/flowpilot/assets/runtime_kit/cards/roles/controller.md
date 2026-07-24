@@ -140,8 +140,11 @@ Allowed actions:
 - when runtime foreground duty includes a progress reminder, relay the exact
   Router-authored reminder text. The runtime decides from current ACK/progress
   evidence: ten minutes without fresh evidence reminds, thirty minutes without
-  fresh evidence reissues or replaces. The role should immediately record
-  `progress +1` if still working, or submit the final result if complete.
+  fresh evidence reissues or replaces. The role should report its current
+  finite status (`started`, `working`, `waiting_external`, `verifying`,
+  `repairing`, `blocked`, or `ready_to_submit`) when the reminder is due, or
+  submit the final result if complete. Repeated identical status inside the
+  liveness window is coalesced.
   Controller does not infer death, inspect sealed bodies, or use legacy
   liveness fields;
 - when `current_wait.wait_class` is `controller_local_action`, do not remind
@@ -253,7 +256,8 @@ Forbidden actions:
   when Router-ready evidence, a pending router action, a resolved direct ACK,
   a returned result envelope, or `current runtime next-action notice` exists.
   Legacy host-liveness or `timeout_unknown` checks are not current wait
-  authority. Runtime wait decisions use only ACK, `progress +1`, and formal
+  authority. Runtime wait decisions use only ACK, current finite progress
+  status, and formal
   result metadata.
 - do not treat a `controller_aside`, chat note, or self-attested "done" comment
   as wait completion. Only formal Router-visible return metadata and Router's

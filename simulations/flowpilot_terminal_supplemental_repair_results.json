@@ -144,10 +144,10 @@
     "simulations/flowpilot_terminal_supplemental_repair_model.py": "377b56d68509ccdf9b0a977364a3bb71e4ea796d0b915070b0386f971e6f712b",
     "simulations/run_flowpilot_terminal_supplemental_repair_checks.py": "a9296da4c3d822020a9aa6701873c2882947986a987e30f2521d2b054e33166e",
     "simulations/run_flowpilot_unified_repair_native_runtime_conformance.py": "82249a02ed51e4fc7d4523f0632047d6df850149a151174548134e028eaac186",
-    "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py": "37dd2f6bebfa336112de363350097b92a4d2df1b822c00af63e7867693580e3c",
-    "tests/test_flowpilot_core_runtime.py": "d9df671916b2b3bf0c563bc7c7d270544e18a81a67ccac2b7a4fd6d6d66acfd8",
+    "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py": "ed5b84a2380372d94f7fa58956ac521500fb7f908113b2a424eb85de4d0440a1",
+    "tests/test_flowpilot_core_runtime.py": "29a401d8d8d1db886639a0302ab8c4b7e8d8562c0f6af86af1d7405ba9704ff8",
     "tests/test_flowpilot_fake_project_rehearsal.py": "f1d7e5d7f7c732bbe58c664eb5054fc5f4fe19a7d85fc1d17c39615c129e6dde",
-    "tests/test_flowpilot_new_entrypoint.py": "540e524eebdf83a562730907846e347ddb5d77207d37b55a0efa3063f1181047"
+    "tests/test_flowpilot_new_entrypoint.py": "e4c7447c528fd92a8e473ce00c6196b07e7cabaa03a9f0589c730a00c03128fa"
   },
   "state_count": 47
 }

@@ -237,6 +237,15 @@ _WAIT_ACK_REMINDER_SECONDS = 300
 _WAIT_ACK_REPLACE_SECONDS = 600
 _WAIT_PROGRESS_REMINDER_SECONDS = 600
 _WAIT_PROGRESS_REPLACE_SECONDS = 1800
+PROGRESS_STATUSES = (
+    "started",
+    "working",
+    "waiting_external",
+    "verifying",
+    "repairing",
+    "blocked",
+    "ready_to_submit",
+)
 _WAIT_PATROL_DECISIONS = {"wait_for_ack", "wait_for_result"}
 _RECOVERY_DUTY_DECISIONS = {
     "reissue_or_replace_lease",
@@ -10518,6 +10527,7 @@ def lease_agent(
         "ack_received_at": "",
         "progress_count": 0,
         "last_progress_at": "",
+        "last_progress_status": "",
         "created_at": now_iso(),
         "closed_at": None,
         "close_reason": "",
@@ -12423,7 +12433,12 @@ def open_authorized_input_materials_for_role(
     return materials
 
 
-def record_progress(ledger: dict[str, Any], lease_id: str, packet_id: str, status: str) -> None:
+def record_progress(
+    ledger: dict[str, Any],
+    lease_id: str,
+    packet_id: str,
+    status: str,
+) -> dict[str, Any]:
     _assert_not_terminal_lifecycle(ledger)
     lease = _require(ledger["leases"], lease_id, "lease")
     packet = _require(ledger["packets"], packet_id, "packet")
@@ -12433,10 +12448,54 @@ def record_progress(ledger: dict[str, Any], lease_id: str, packet_id: str, statu
         raise BlackBoxRuntimeError("progress packet mismatch")
     if packet.get("accepted_result_id"):
         raise BlackBoxRuntimeError("accepted packet cannot record progress")
+    normalized_status = str(status).strip()
+    if normalized_status not in PROGRESS_STATUSES:
+        raise BlackBoxRuntimeError(
+            "progress status must be one of: " + ", ".join(PROGRESS_STATUSES)
+        )
+    previous_status = str(lease.get("last_progress_status") or "")
+    elapsed_seconds = _elapsed_seconds_since(lease.get("last_progress_at"))
+    liveness_window_seconds = _guard_config_int(
+        ledger,
+        "progress_reminder_seconds",
+        _WAIT_PROGRESS_REMINDER_SECONDS,
+    )
+    same_status = previous_status == normalized_status
+    if (
+        same_status
+        and elapsed_seconds is not None
+        and elapsed_seconds < liveness_window_seconds
+    ):
+        return {
+            "persisted": False,
+            "coalesced": True,
+            "reason": "same_status_inside_liveness_window",
+            "status": normalized_status,
+            "progress_count": int(lease.get("progress_count", 0)),
+            "last_progress_at": str(lease.get("last_progress_at") or ""),
+            "liveness_window_seconds": liveness_window_seconds,
+        }
     lease["progress_count"] = int(lease.get("progress_count", 0)) + 1
-    lease["last_progress_status"] = status
+    lease["last_progress_status"] = normalized_status
     lease["last_progress_at"] = now_iso()
-    _event(ledger, "lease_progress", lease_id=lease_id, packet_id=packet_id, status=status)
+    reason = "due_liveness_reminder" if same_status else "status_changed"
+    _event(
+        ledger,
+        "lease_progress",
+        lease_id=lease_id,
+        packet_id=packet_id,
+        status=normalized_status,
+        reason=reason,
+    )
+    return {
+        "persisted": True,
+        "coalesced": False,
+        "reason": reason,
+        "status": normalized_status,
+        "progress_count": int(lease["progress_count"]),
+        "last_progress_at": str(lease["last_progress_at"]),
+        "liveness_window_seconds": liveness_window_seconds,
+    }
 
 
 def submit_result(
@@ -18616,10 +18675,12 @@ def _foreground_wait_patrol(
     elif reminder_kind == "progress":
         reminder_text = (
             "You have not submitted the final result. If complete, submit the final result now. "
-            "If still working, immediately record progress +1 for this lease and packet, then continue. "
-            "After that, record progress +1 whenever work starts, resumes, reaches a small milestone, "
-            "starts or finishes a long command, or receives another runtime reminder. If unable to continue, "
-            "submit the supported blocker."
+            "If still working, record exactly one current progress status for this lease and packet using "
+            "started, working, waiting_external, verifying, repairing, blocked, or ready_to_submit, then continue. "
+            "Record again only when the semantic status changes, the same status reaches a due runtime liveness "
+            "reminder, or a material long-running command moves into or out of waiting, verification, or repair. "
+            "Do not record reads, polls, small milestones, ordinary command boundaries, or unchanged resumes. "
+            "If unable to continue, submit the supported blocker."
         )
     return {
         "active": True,

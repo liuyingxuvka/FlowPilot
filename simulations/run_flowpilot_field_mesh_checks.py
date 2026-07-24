@@ -318,6 +318,13 @@ def _critical_bindings(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
             validator_terms.add(validator.rsplit(".", 1)[-1])
         if validator in {"current_task_liveness_review"}:
             validator_seen = True
+        elif contract.get("validator_path"):
+            validator_path = ROOT / str(contract["validator_path"])
+            try:
+                validator_text = validator_path.read_text(encoding="utf-8")
+            except (OSError, UnicodeDecodeError):
+                validator_text = ""
+            validator_seen = any(term in validator_text for term in validator_terms)
         else:
             validator_seen = False
             for path in SOURCE_ROOTS[0].rglob("*.py"):

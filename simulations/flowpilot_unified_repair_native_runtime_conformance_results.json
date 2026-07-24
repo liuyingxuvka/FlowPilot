@@ -26,8 +26,8 @@
     "skills/flowpilot/assets/flowpilot_core_runtime/control_surface.py": "2d1401633228954d7f9f77ae6acf25cf0a2460f7790cd4f8efaf26229e89114a",
     "skills/flowpilot/assets/flowpilot_core_runtime/migration.py": "0bc4d59913032f28b1f450e724c073953eb9d1b0b8ade565c0b633844450c377",
     "skills/flowpilot/assets/flowpilot_core_runtime/pointer_store.py": "2452188cde97481403cf34d78132ead5318076894179b7f46a769926a808ad45",
-    "skills/flowpilot/assets/flowpilot_core_runtime/run_shell.py": "5d40060de8242ef4af278a280897d2b56984910b36c443e4c0ba95e5ac174d11",
-    "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py": "37dd2f6bebfa336112de363350097b92a4d2df1b822c00af63e7867693580e3c",
+    "skills/flowpilot/assets/flowpilot_core_runtime/run_shell.py": "e3d4cf43698debc966f1dbdb69a44895c324723945f6f9c83e891ca1ab808a3f",
+    "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py": "ed5b84a2380372d94f7fa58956ac521500fb7f908113b2a424eb85de4d0440a1",
     "tests/flowpilot_repair_test_helpers.py": "5bbdb26ed492d1568b58cbb496fe0b383b45b210f5cb234a50a917821684806b"
   },
   "missing_obligation_ids": [],
@@ -218,8 +218,8 @@
       {
         "exists": true,
         "path": "tests/test_flowpilot_core_runtime.py",
-        "sha256": "d9df671916b2b3bf0c563bc7c7d270544e18a81a67ccac2b7a4fd6d6d66acfd8",
-        "size_bytes": 369979
+        "sha256": "29a401d8d8d1db886639a0302ab8c4b7e8d8562c0f6af86af1d7405ba9704ff8",
+        "size_bytes": 369973
       },
       {
         "exists": true,
@@ -230,8 +230,8 @@
       {
         "exists": true,
         "path": "tests/test_flowpilot_complete_system_runtime.py",
-        "sha256": "7e0341f8d54df922eacc1c102f5bfd45cb08525e9bc675929768c46b8a0acbf5",
-        "size_bytes": 52251
+        "sha256": "e3bca19605ac119aa4c2d6255be4e695a8e1c09b95c2f6664f77ae5a64fc3c65",
+        "size_bytes": 52531
       },
       {
         "exists": true,
@@ -286,14 +286,14 @@
       {
         "exists": true,
         "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
-        "sha256": "37dd2f6bebfa336112de363350097b92a4d2df1b822c00af63e7867693580e3c",
-        "size_bytes": 921214
+        "sha256": "ed5b84a2380372d94f7fa58956ac521500fb7f908113b2a424eb85de4d0440a1",
+        "size_bytes": 923268
       },
       {
         "exists": true,
         "path": "skills/flowpilot/assets/flowpilot_core_runtime/run_shell.py",
-        "sha256": "5d40060de8242ef4af278a280897d2b56984910b36c443e4c0ba95e5ac174d11",
-        "size_bytes": 32135
+        "sha256": "e3d4cf43698debc966f1dbdb69a44895c324723945f6f9c83e891ca1ab808a3f",
+        "size_bytes": 38106
       },
       {
         "exists": true,

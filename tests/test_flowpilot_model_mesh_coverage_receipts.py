@@ -8,6 +8,10 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from tests.v5_evidence_fixtures import (
+    current_v5_manifest,
+    set_owner_covered_obligations,
+)
 
 runner = importlib.import_module("simulations.run_flowpilot_model_mesh_checks")
 source_snapshot_module = importlib.import_module(
@@ -92,22 +96,22 @@ class FlowPilotModelMeshCoverageReceiptTests(unittest.TestCase):
         owner_input_fingerprint = source_snapshot_module.file_fingerprint(
             runner.REPO_ROOT / owner_input
         )
-        owners: dict[str, object] = {}
+        owner_ids: list[str] = []
+        owner_identities: dict[str, dict[str, object]] = {}
+        owner_commands: dict[str, tuple[str, ...]] = {}
         for _receipt_id, model_id, relative_path, _ok_field in runner.CONTRACT_COVERAGE_RESULT_SPECS:
             if model_id == runner.UNIFIED_REPAIR_MODEL_ID:
                 continue
             owner_id = runner.CONTRACT_COVERAGE_OWNER_IDS[model_id]
             command = (
-                "python "
-                f"simulations/run_{model_id}_checks.py "
-                f"--json-out {relative_path.as_posix()}"
+                "python",
+                f"simulations/run_{model_id}_checks.py",
+                "--json-out",
+                relative_path.as_posix(),
             )
-            result_fingerprint = hashlib.sha256(
-                f"result:{model_id}".encode("utf-8")
-            ).hexdigest()
             identity = {
                 "command_fingerprint": hashlib.sha256(
-                    command.encode("utf-8")
+                    " ".join(command).encode("utf-8")
                 ).hexdigest(),
                 "test_source_fingerprint": hashlib.sha256(b"").hexdigest(),
                 "tested_artifact_fingerprint": owner_input_fingerprint,
@@ -122,75 +126,23 @@ class FlowPilotModelMeshCoverageReceiptTests(unittest.TestCase):
                     owner_input: owner_input_fingerprint
                 },
                 "covered_obligation_ids": [f"model-receipt:{model_id}"],
+                "covered_evidence_ids": [],
             }
-            owner_proof = {
-                "artifact_id": f"proof.owner.{model_id}",
-                "producer_route": "flowpilot.test-tier.selective-execution",
-                "command": command,
-                "result_path": f"tmp/test_results/{model_id}.json",
-                "result_status": "passed",
-                "exit_code": 0,
-                "artifact_fingerprints": {
-                    f"{model_id}.json": result_fingerprint
-                },
-                "covered_obligation_ids": [f"model-receipt:{model_id}"],
-                "assertion_scope": "external_contract",
-                "current": True,
-                "route_evidence_current": True,
-                "progress_only": False,
-                "metadata": {"result_fingerprint": result_fingerprint},
-            }
-            owners[owner_id] = {
-                "owner_id": owner_id,
-                "result_status": "passed",
-                "result_reused": False,
-                "identity": identity,
-                "result_fingerprint": result_fingerprint,
-                "proof_artifact": owner_proof,
-                "reuse_ticket": None,
-            }
-        proof = {
-            "artifact_id": "proof.release.current",
-            "producer_route": "flowguard-test-mesh",
-            "command": "python scripts/run_test_tier.py --tier evidence-closure --background",
-            "result_path": "tmp/test-background/current",
-            "result_status": "passed",
-            "exit_code": 0,
-            "artifact_fingerprints": {"current.meta.json": "a" * 64, "current.exit.txt": "b" * 64},
-            "covered_obligation_ids": [
-                "all_tier_complete",
-                "formal_submit_adversarial_tier_complete",
-                "release_tier_complete",
-            ],
-            "assertion_scope": "external_contract",
-            "current": True,
-            "route_evidence_current": True,
-            "progress_only": False,
-            "metadata": {
-                "selected_child_command_count": len(owners),
-                "executed_child_command_count": len(owners),
-                "reused_child_command_count": 0,
-                "proof_backed_child_command_count": len(owners),
-            },
-        }
-        manifest: dict[str, object] = {
-            "schema_version": "flowpilot.acceptance_testmesh_evidence_manifest.v4",
-            "phase": "final",
-            "claim_scope": "release",
-            "snapshot": source_snapshot_module.source_snapshot(),
-            "impact_plan": {"plan_ids": ["fixture-plan"], "decisions": []},
-            "owners": owners,
-            "routine": {},
-            "release": {
-                "result_status": "passed",
-                "result_reused": False,
-                "reuse_ticket": None,
-                "selected_count": len(owners),
-                "test_count": len(owners),
-                "owner_evidence_ids": sorted(owners),
-                "proof_artifact": proof,
-            },
-        }
+            owner_ids.append(owner_id)
+            owner_identities[owner_id] = identity
+            owner_commands[owner_id] = command
+        manifest = current_v5_manifest(
+            owner_ids,
+            source_path=Path(__file__),
+            selected_count=len(owner_ids),
+            release=True,
+            aggregate_artifact_id="proof.release.current-v5",
+            aggregate_obligation_ids=("all_tier_complete",),
+            owner_identities=owner_identities,
+            owner_commands=owner_commands,
+        )
+        manifest["phase"] = "final"
+        manifest["claim_scope"] = "release"
         return manifest, paths
 
     @staticmethod
@@ -303,8 +255,7 @@ class FlowPilotModelMeshCoverageReceiptTests(unittest.TestCase):
             owner_id = runner.CONTRACT_COVERAGE_OWNER_IDS[
                 "flowpilot_model_test_alignment"
             ]
-            owner = manifest["owners"][owner_id]  # type: ignore[index]
-            owner["proof_artifact"]["covered_obligation_ids"] = []  # type: ignore[index]
+            set_owner_covered_obligations(manifest, owner_id, ())
             report = runner._contract_coverage_receipt_report(
                 project_root=root,
                 evidence_manifest=manifest,

@@ -49,6 +49,12 @@ from flowpilot_structure_maintenance_resource_catalog import (
     RESOURCE_PUBLIC_ENTRYPOINTS,
     RESOURCE_STRUCTURE_HAZARDS,
 )
+from flowpilot_structure_maintenance_retention_catalog import (
+    RETENTION_PUBLIC_ENTRYPOINTS,
+    RETENTION_STRUCTURE_HAZARDS,
+    RETENTION_STRUCTURE_MODULES,
+    RETENTION_STRUCTURE_PARTITIONS,
+)
 from flowpilot_structure_maintenance_testmesh_catalog import (
     ROUTER_TEST_PARTITIONS,
     ROUTER_TEST_SUITES,
@@ -500,6 +506,143 @@ def test_tier_structure_hazard_plan(name: str) -> StructureMeshPlan:
         )
         return replace(good, child_modules=modules)
     raise ValueError(f"unknown test-tier structure hazard: {name}")
+
+
+def retention_target_structure() -> CodeStructureRecommendation:
+    return CodeStructureRecommendation(
+        recommendation_id="flowpilot_runtime_retention_structure_target_v1",
+        source_model_id="flowpilot_control_plane_resource_boundedness",
+        source_model_path=(
+            "simulations/flowpilot_control_plane_resource_boundedness_model.py"
+        ),
+        parent_module_id="flowpilot_runtime_retention_structure_split",
+        source_model_evidence_tier=EVIDENCE_CONFORMANCE_GREEN,
+        target_modules=_target_modules_from_structure_evidence(
+            RETENTION_STRUCTURE_MODULES,
+            public_entrypoints_by_module={
+                "retention_cli_facade": (
+                    "flowpilot_runtime_retention_cli",
+                    "flowpilot_runtime_retention_import_api",
+                ),
+            },
+        ),
+        function_block_map=_function_block_map_from_partitions(
+            RETENTION_STRUCTURE_PARTITIONS
+        ),
+        state_owner_map=_state_owner_map(RETENTION_STRUCTURE_MODULES),
+        side_effect_owner_map=_side_effect_owner_map(
+            RETENTION_STRUCTURE_MODULES
+        ),
+        config_owner_map=_config_owner_map(RETENTION_STRUCTURE_MODULES),
+        public_entrypoint_map=(
+            ("flowpilot_runtime_retention_cli", "retention_cli_facade"),
+            (
+                "flowpilot_runtime_retention_import_api",
+                "retention_cli_facade",
+            ),
+        ),
+        facade_module_id="retention_cli_facade",
+        validation_boundaries=(
+            "read-only scan and protection parity",
+            "frozen-plan identity and stale-plan rejection",
+            "archive-before-index-before-removal apply ordering",
+            "public CLI and import facade parity",
+        ),
+        rationale=(
+            "The resource-boundedness model keeps the public retention CLI "
+            "stable while assigning read-only inventory/protection, shared "
+            "identity helpers, and explicit side-effect application to "
+            "single child owners."
+        ),
+        hierarchical_model_used=True,
+    )
+
+
+def retention_structure_plan(
+    *,
+    decision_scope: str = STRUCTURE_SCOPE_RELEASE,
+    required_evidence_tier: str = EVIDENCE_CONFORMANCE_GREEN,
+) -> StructureMeshPlan:
+    return StructureMeshPlan(
+        parent_module_id="flowpilot_runtime_retention_structure_split",
+        decision_scope=decision_scope,
+        required_evidence_tier=required_evidence_tier,
+        partition_items=RETENTION_STRUCTURE_PARTITIONS,
+        child_modules=RETENTION_STRUCTURE_MODULES,
+        public_entrypoints=RETENTION_PUBLIC_ENTRYPOINTS,
+        target_structure=retention_target_structure(),
+    )
+
+
+def retention_structure_hazard_plan(name: str) -> StructureMeshPlan:
+    good = retention_structure_plan()
+    if name == "missing_retention_partition_owner":
+        return replace(
+            good,
+            partition_items=(
+                StructurePartitionItem("build_report", owner_module_id=""),
+            ),
+        )
+    if name == "duplicate_retention_state_owner":
+        modules = tuple(
+            replace(
+                module,
+                owns_state=(
+                    *module.owns_state,
+                    "retention_candidate_inventory",
+                ),
+            )
+            if module.module_id == "retention_common_kernel"
+            else module
+            for module in good.child_modules
+        )
+        return replace(good, child_modules=modules)
+    if name == "missing_retention_facade":
+        modules = tuple(
+            replace(module, facade_retained=False)
+            if module.module_id == "retention_cli_facade"
+            else module
+            for module in good.child_modules
+        )
+        return replace(good, child_modules=modules)
+    if name == "removed_retention_entrypoint":
+        entrypoints = tuple(
+            replace(
+                entrypoint,
+                compatibility_preserved=False,
+                facade_available=False,
+            )
+            for entrypoint in good.public_entrypoints
+        )
+        return replace(good, public_entrypoints=entrypoints)
+    if name == "retention_dependency_cycle":
+        modules = tuple(
+            replace(
+                module,
+                dependency_cycles=("facade->scan->common->facade",),
+            )
+            if module.module_id == "retention_common_kernel"
+            else module
+            for module in good.child_modules
+        )
+        return replace(good, child_modules=modules)
+    if name == "stale_retention_parity":
+        modules = tuple(
+            replace(module, behavior_parity_current=False)
+            if module.module_id == "retention_scan_owner"
+            else module
+            for module in good.child_modules
+        )
+        return replace(good, child_modules=modules)
+    if name == "insufficient_retention_release_evidence":
+        modules = tuple(
+            replace(module, behavior_parity_tier=EVIDENCE_ABSTRACT_GREEN)
+            if module.module_id == "retention_cli_facade"
+            else module
+            for module in good.child_modules
+        )
+        return replace(good, child_modules=modules)
+    raise ValueError(f"unknown retention structure hazard: {name}")
 
 
 def resource_facade_target_structure() -> CodeStructureRecommendation:

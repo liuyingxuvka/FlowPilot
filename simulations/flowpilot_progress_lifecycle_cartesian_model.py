@@ -26,6 +26,11 @@ from flowguard import (
 
 
 MODEL_ID = "flowpilot_progress_lifecycle_cartesian"
+RESOURCE_BOUNDEDNESS_CHILD_BINDING = {
+    "model_id": "flowpilot_control_plane_resource_boundedness",
+    "owned_obligation": "finite_status_and_repeated_progress_coalescing",
+    "claim_boundary": "progress lifecycle retains reminder thresholds; the child owns no-op persistence",
+}
 INTERACTION_GROUP_ID = "progress_lifecycle_full_product"
 FLOWGUARD_NATIVE_RECEIPT_ID = f"contract_coverage:{MODEL_ID}"
 MAX_SEQUENCE_LENGTH = 2

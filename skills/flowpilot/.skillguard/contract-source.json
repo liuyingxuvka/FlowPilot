@@ -105,6 +105,51 @@
       "timeout_seconds": 180
     },
     {
+      "check_id": "check:flowpilot-control-plane-resource-boundedness",
+      "semantic_check_id": "semantic:flowpilot-control-plane-resource-boundedness",
+      "maintenance_unit_id": "unit:flowpilot",
+      "member_skill_id": "flowpilot",
+      "evidence_subject_id": "subject:check:flowpilot-control-plane-resource-boundedness",
+      "execution_owner_id": "owner:flowpilot-control-plane-resource-boundedness",
+      "kind": "command",
+      "command": "python",
+      "args": [
+        "simulations/run_flowpilot_control_plane_resource_boundedness_checks.py"
+      ],
+      "cwd_token": "repository_root",
+      "evidence_class": "hard",
+      "covers_obligation_ids": [
+        "obligation:flowpilot-no-change-zero-authoritative-write",
+        "obligation:flowpilot-bounded-runtime-evidence"
+      ],
+      "input_selectors": [
+        {
+          "kind": "path",
+          "path": "simulations/flowpilot_control_plane_resource_boundedness_model.py"
+        },
+        {
+          "kind": "path",
+          "path": "simulations/run_flowpilot_control_plane_resource_boundedness_checks.py"
+        },
+        {
+          "kind": "path",
+          "path": "tests/test_flowpilot_control_plane_resource_boundedness_model.py"
+        },
+        {
+          "kind": "path",
+          "path": "tests/test_flowpilot_router_resource_bounds.py"
+        },
+        {
+          "kind": "path",
+          "path": "scripts/flowpilot_runtime_retention.py"
+        }
+      ],
+      "expected": {
+        "exit_code": 0
+      },
+      "timeout_seconds": 180
+    },
+    {
       "check_id": "check:flowpilot-workstream-model",
       "semantic_check_id": "semantic:flowpilot-workstream-model",
       "maintenance_unit_id": "unit:flowpilot",
@@ -236,7 +281,7 @@
         "final-confidence",
         "--verify-background",
         "--background-dir",
-        "tmp/test_background/v0.12.0-final",
+        "tmp/test_background/v0.13.0-final-v5-r3",
         "--json"
       ],
       "cwd_token": "repository_root",
@@ -277,6 +322,8 @@
         "obligation:flowpilot-integrate-verify-repair",
         "obligation:flowpilot-numbered-completion-report",
         "obligation:flowpilot-independent-flowguard-review",
+        "obligation:flowpilot-no-change-zero-authoritative-write",
+        "obligation:flowpilot-bounded-runtime-evidence",
         "obligation:flowpilot-current-final-receipts"
       ]
     }
@@ -299,6 +346,7 @@
       "check:flowpilot-contract-model",
       "check:flowpilot-skillguard-current-authority",
       "check:flowpilot-resource-model",
+      "check:flowpilot-control-plane-resource-boundedness",
       "check:flowpilot-workstream-model",
       "check:flowpilot-workstream-report",
       "check:flowpilot-tier-ownership",
@@ -336,12 +384,17 @@
     "simulations/run_flowpilot_complete_workstream_orchestration_checks.py",
     "simulations/flowpilot_ordinary_resource_discovery_model.py",
     "simulations/run_flowpilot_ordinary_resource_discovery_checks.py",
+    "simulations/flowpilot_control_plane_resource_boundedness_model.py",
+    "simulations/run_flowpilot_control_plane_resource_boundedness_checks.py",
+    "scripts/flowpilot_runtime_retention.py",
     "scripts/refresh_flowpilot_skillguard_contract.py",
     "scripts/run_test_tier.py",
     "scripts/test_tier",
     "tests/test_flowpilot_skillguard_deep_contract.py",
     "tests/test_flowpilot_complete_workstream_orchestration.py",
     "tests/test_flowpilot_ordinary_resource_discovery.py",
+    "tests/test_flowpilot_control_plane_resource_boundedness_model.py",
+    "tests/test_flowpilot_router_resource_bounds.py",
     "tests/test_flowpilot_test_tiers.py"
   ],
   "integration_mode": "native-integrated",
@@ -367,6 +420,12 @@
       "binding_id": "native-check:flowpilot-resource-model",
       "evidence_source": "simulations/run_flowpilot_ordinary_resource_discovery_checks.py",
       "native_check_id": "check:flowpilot-resource-model",
+      "required": true
+    },
+    {
+      "binding_id": "native-check:flowpilot-control-plane-resource-boundedness",
+      "evidence_source": "simulations/run_flowpilot_control_plane_resource_boundedness_checks.py",
+      "native_check_id": "check:flowpilot-control-plane-resource-boundedness",
       "required": true
     },
     {
@@ -461,7 +520,8 @@
         "summary": "Bind the shallow local skill inventory and PM-owned project route plan."
       },
       "check_ids": [
-        "check:flowpilot-resource-model"
+        "check:flowpilot-resource-model",
+        "check:flowpilot-control-plane-resource-boundedness"
       ],
       "output_artifact_ids": []
     },
@@ -485,6 +545,7 @@
       },
       "check_ids": [
         "check:flowpilot-workstream-report",
+        "check:flowpilot-control-plane-resource-boundedness",
         "check:flowpilot-tier-ownership",
         "check:flowpilot-final-receipt"
       ],

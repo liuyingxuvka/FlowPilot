@@ -1,5 +1,49 @@
 # Changelog
 
+## v0.13.0 - 2026-07-24
+
+### Fixed
+
+- Stopped no-change router observation from rewriting authoritative run state,
+  actions, scheduler projections, reminder history, and derived ledgers.
+- Made controller receipt, action, wait-reminder, progress, JSON, and text
+  projection paths content-aware and idempotent while retaining the existing
+  one-second observation cadence and 5/10/30-minute liveness thresholds.
+- Replaced unbounded daemon tick evidence with aggregate counts, terminal tick
+  data, and a bounded anomaly sample.
+- Replaced copied raw validation streams and repeated owner proof bodies with
+  exact V5 stream, impact-plan, owner-index, and proof references.
+
+### Changed
+
+- Kept one obligation-level workstream table and narrowed role progress prompts
+  to semantic state changes, due reminders, and material long-command
+  transitions.
+- Made stdout and stderr the sole complete raw validation bodies.
+  `combined.txt` is now a terminal stream index capped at 32 KiB, and failure
+  excerpts are capped at 200 lines or 64 KiB.
+- Made `flowpilot.acceptance_testmesh_evidence_manifest.v5` the sole normal
+  runtime contract. V4 input, newest-manifest discovery, repo-root discovery,
+  conversion, dual read, and dual emission are rejected.
+- Extended the existing retention report into a fail-closed read-only plan and
+  explicit plan-SHA-bound archive/apply lifecycle with archive read-back,
+  index-first commit, and honest cleanup status.
+- Added the FlowGuard control-plane resource-boundedness child model and
+  integrated its obligations with existing friction, idempotency, daemon,
+  progress, workstream, evidence, TestMesh, ModelMesh, Meta, and Capability
+  owners.
+
+### Validation boundary
+
+- The full opt-in PM, Worker, FlowGuard, Reviewer, repair, replay, and release
+  gates remain in force; this release changes physical persistence and
+  evidence representation, not completion standards.
+- Historical runtime or validation data is never deleted automatically.
+  Retention apply requires an explicit frozen plan path and exact SHA-256.
+- Release closure requires current V5 owner evidence, FlowGuard model-system
+  activation, clean consumer installation, SkillGuard closure, the annotated
+  `v0.13.0` tag, and a source-only GitHub Release on the same commit.
+
 ## v0.12.1 - 2026-07-19
 
 ### Fixed

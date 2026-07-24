@@ -6,7 +6,7 @@ forbidden_scope: Do not treat this card as authority for Controller, another Flo
 required_return: System-card ACKs go through the current runtime card check-in command; this is the current-runtime return path for card ACKs. Current work-package ACKs and completion outputs go through the assigned current packet lease when present. For formal role outputs, write the body only to a run-scoped packet, result, report, decision, or blocker file, then submit it with `flowpilot_new.py submit-result --lease-id <lease-id> --packet-id <packet-id> --body-file <sealed_result_body_file>` so the current runtime ledger records the event and later exposes only controller-visible envelope metadata with status, paths, and hashes. A local file write is only local storage and must not be treated as wait completion until the current runtime records the packet result. Do not include report bodies, blockers, evidence details, recommendations, commands, or repair instructions in chat.
 post_ack: ACK is receipt only; ACK is not completion. After role-card ACK, wait for a phase card, event card, work packet, current packet lease, or runtime-authorized output contract before task work.
 work_authority: Identity/system cards may ACK or explain routing, but they do not by themselves authorize formal report work. Any card that asks a role to produce a formal output must carry current runtime wait authority, PM role-work packet/result contract, or current packet lease; otherwise stop and return a protocol blocker.
-progress_status: Every packet or formal role-output work item has default Controller-visible metadata progress. If the final output is not ready, record `progress +1` through the current runtime for this same lease and packet whenever work starts, resumes, reaches a small milestone, starts or finishes a long command, or receives a runtime progress reminder. On a progress reminder, immediately record `progress +1` before continuing work. Progress is liveness evidence only, not completion or quality evidence; keep messages brief and do not include sealed body content, findings, evidence, recommendations, decisions, approvals, or result details.
+progress_status: Every packet or formal role-output work item has Controller-visible metadata progress. Use only `started`, `working`, `waiting_external`, `verifying`, `repairing`, `blocked`, or `ready_to_submit`. Record progress when that semantic status changes, when the same status reaches the runtime's due liveness reminder, or when a material long-running command moves the work into or out of waiting, verification, or repair. Do not record progress for file reads, polls, small milestones, an ordinary command start/finish, or an unchanged resume. Repeated identical status inside the liveness window is coalesced. Progress is liveness evidence only, not completion or quality evidence; keep it body-free.
 next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Controller must follow the `flowpilot_new.py` lifecycle guard and foreground duty; no unsupported command text, stale runtime state, chat history, or historical artifact authorizes current-run progress.
 runtime_context: Treat the runtime delivery envelope as the live source for the current run, current task, current card, current phase, current node/frontier, user_request_path, and source paths. If that live context is missing or stale, do not continue from memory; submit a protocol blocker through the current runtime path.
 -->
@@ -25,13 +25,15 @@ Treat each substantive PM packet as one independently accountable complete
 workstream inside that whole project.
 
 For every substantive PM packet, first understand the bounded decision and
-write a specific numbered plan before executing it. Then assess risk and
+write one specific numbered plan at the acceptance-obligation or meaningful
+phase level before executing it. Then assess risk and
 whether role-local FlowGuard will help, execute or delegate bounded work,
 integrate all returned material, inspect current evidence, verify the decision,
 self-repair in-scope defects, and submit. In
-`contract_self_check.workstream_plan_and_completion`, list each numbered step
+`contract_self_check.workstream_plan_and_completion`, update those same rows
 with status, evidence refs, deviations and unresolved work, plus delegation,
-integration, verification and repair. This semantic report is visible to
+integration, verification and repair. Do not add command, file-read, poll, or
+other microstep rows, and do not copy a second final plan. This semantic report is visible to
 Reviewer; it is not a second Runtime plan ledger or a mechanical quality gate.
 
 PM may require the same complete-workstream discipline from every substantive

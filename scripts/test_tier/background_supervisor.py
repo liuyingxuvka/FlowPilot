@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 from pathlib import Path
 import subprocess
@@ -25,13 +26,27 @@ try:
         clear_artifacts,
     )
     from .definitions import TierCommand, commands_for_tier
+    from .evidence_v5 import (
+        BACKGROUND_OWNER_INDEX_SCHEMA_VERSION,
+        BACKGROUND_RESULT_FINGERPRINT_SCHEMA_VERSION,
+        BACKGROUND_SUPERVISOR_META_SCHEMA_VERSION,
+        BACKGROUND_SUPERVISOR_PROGRESS_SCHEMA_VERSION,
+        COMBINED_INDEX_MAX_BYTES,
+        RECENT_PROGRESS_OWNER_LIMIT,
+        background_result_fingerprint_v2,
+        canonical_json_bytes,
+        path_reference,
+        sha256_json,
+        stream_descriptor,
+        terminal_stream_index_bytes,
+    )
     from .impact_resolution import (
         build_owner_contracts,
         load_previous_manifest,
+        owner_reference_from_child_meta,
+        owner_reference_from_reuse_decision,
         owner_identity,
-        proof_row_from_child_meta,
         resolve_impact,
-        sha256_file,
     )
     from .source_fingerprint import source_snapshot
 except ImportError:  # pragma: no cover - direct script import path
@@ -50,13 +65,27 @@ except ImportError:  # pragma: no cover - direct script import path
         clear_artifacts,
     )
     from definitions import TierCommand, commands_for_tier
+    from evidence_v5 import (
+        BACKGROUND_OWNER_INDEX_SCHEMA_VERSION,
+        BACKGROUND_RESULT_FINGERPRINT_SCHEMA_VERSION,
+        BACKGROUND_SUPERVISOR_META_SCHEMA_VERSION,
+        BACKGROUND_SUPERVISOR_PROGRESS_SCHEMA_VERSION,
+        COMBINED_INDEX_MAX_BYTES,
+        RECENT_PROGRESS_OWNER_LIMIT,
+        background_result_fingerprint_v2,
+        canonical_json_bytes,
+        path_reference,
+        sha256_json,
+        stream_descriptor,
+        terminal_stream_index_bytes,
+    )
     from impact_resolution import (
         build_owner_contracts,
         load_previous_manifest,
+        owner_reference_from_child_meta,
+        owner_reference_from_reuse_decision,
         owner_identity,
-        proof_row_from_child_meta,
         resolve_impact,
-        sha256_file,
     )
     from source_fingerprint import source_snapshot
 
@@ -64,12 +93,119 @@ except ImportError:  # pragma: no cover - direct script import path
 ROOT = Path(__file__).resolve().parents[2]
 BACKGROUND_CHILD_ENTRYPOINT = ROOT / "scripts" / "run_test_tier.py"
 BACKGROUND_SUPERVISOR_POLL_SECONDS = 2.0
+SUPERVISOR_PROGRESS_MAX_BYTES = 32 * 1024
 
 
 def _publish_exit(path: Path, content: bytes) -> None:
     staging = path.with_name(path.name + ".tmp")
     staging.write_bytes(content)
     staging.replace(path)
+
+
+def _publish_bytes(path: Path, content: bytes) -> None:
+    staging = path.with_name(path.name + ".tmp")
+    staging.write_bytes(content)
+    staging.replace(path)
+
+
+def supervisor_control_paths(log_root: Path, tier: str) -> dict[str, Path]:
+    base = background_supervisor_name(tier)
+    return {
+        "impact_plan": log_root / f"{base}.impact-plan.json",
+        "progress": log_root / f"{base}.progress.json",
+        "owner_index": log_root / f"{base}.owner-index.json",
+    }
+
+
+def _write_immutable_json(path: Path, payload: dict[str, Any]) -> None:
+    if path.exists():
+        raise ValueError(f"immutable artifact already exists: {path}")
+    _write_json(path, payload)
+
+
+def _write_progress(
+    path: Path,
+    *,
+    tier: str,
+    impact_plan_id: str,
+    owner_count: int,
+    execute_count: int,
+    reuse_count: int,
+    pending_owner_ids: Sequence[str],
+    running_owner_ids: Sequence[str],
+    recent_terminal: Sequence[dict[str, Any]],
+    status: str,
+) -> None:
+    payload = {
+        "schema_version": BACKGROUND_SUPERVISOR_PROGRESS_SCHEMA_VERSION,
+        "tier": tier,
+        "impact_plan_id": impact_plan_id,
+        "status": status,
+        "updated_at": _utc_now(),
+        "counts": {
+            "owner": owner_count,
+            "execute": execute_count,
+            "reuse": reuse_count,
+            "pending": len(pending_owner_ids),
+            "running": len(running_owner_ids),
+            "terminal": owner_count
+            - len(pending_owner_ids)
+            - len(running_owner_ids),
+        },
+        "pending_owner_count": len(pending_owner_ids),
+        "running_owner_ids": list(running_owner_ids),
+        "recent_terminal": list(recent_terminal)[-RECENT_PROGRESS_OWNER_LIMIT:],
+    }
+    encoded = canonical_json_bytes(payload)
+    if len(encoded) > SUPERVISOR_PROGRESS_MAX_BYTES:
+        raise ValueError("supervisor progress exceeds bounded current contract")
+    _write_json(path, payload)
+
+
+def _finalize_stream_index(
+    paths: dict[str, Path],
+    meta: dict[str, Any],
+    *,
+    exit_code: int,
+) -> None:
+    for key in ("out", "err"):
+        if not paths[key].exists():
+            paths[key].write_text("", encoding="utf-8")
+    stdout = stream_descriptor(paths["out"], path_value=str(paths["out"].resolve()))
+    stderr = stream_descriptor(paths["err"], path_value=str(paths["err"].resolve()))
+    cleanup_reason = "supervisor_no_descendant_ownership"
+    result_fingerprint = background_result_fingerprint_v2(
+        stdout=stdout,
+        stderr=stderr,
+        exit_code=exit_code,
+        status=str(meta.get("status") or ""),
+        descendant_zero_confirmed=True,
+        cleanup_reason=cleanup_reason,
+    )
+    combined = terminal_stream_index_bytes(
+        name=str(meta.get("name") or ""),
+        status=str(meta.get("status") or ""),
+        exit_code=exit_code,
+        start_time=str(meta.get("start_time") or ""),
+        end_time=str(meta.get("end_time") or ""),
+        stdout=stdout,
+        stderr=stderr,
+        descendant_zero_confirmed=True,
+        cleanup_reason=cleanup_reason,
+        result_fingerprint=result_fingerprint,
+    )
+    _publish_bytes(paths["combined"], combined)
+    meta["stream_artifacts"] = {"stdout": stdout, "stderr": stderr}
+    meta["combined_artifact"] = {
+        **path_reference(paths["combined"], root=ROOT),
+        "kind": "terminal_stream_index",
+        "max_bytes": COMBINED_INDEX_MAX_BYTES,
+    }
+    meta["combined_kind"] = "terminal_stream_index"
+    meta["result_fingerprint_schema_version"] = (
+        BACKGROUND_RESULT_FINGERPRINT_SCHEMA_VERSION
+    )
+    meta["result_fingerprint"] = result_fingerprint
 
 
 def _finalize_supervisor(
@@ -80,6 +216,7 @@ def _finalize_supervisor(
 ) -> None:
     """Publish one terminal receipt before making its exit marker observable."""
 
+    _finalize_stream_index(paths, meta, exit_code=exit_code)
     _write_json(paths["meta"], meta)
     _publish_exit(paths["exit"], f"{exit_code}\n".encode("utf-8"))
 
@@ -209,6 +346,7 @@ def run_background_supervisor(
 ) -> int:
     name = background_supervisor_name(tier)
     paths = artifact_paths(log_root, name)
+    control_paths = supervisor_control_paths(log_root, tier)
     log_root.mkdir(parents=True, exist_ok=True)
     previous_manifest, actual_previous_sha256, manifest_blockers = load_previous_manifest(
         previous_manifest_path,
@@ -226,7 +364,14 @@ def run_background_supervisor(
         seed_baseline=seed_baseline,
         preexisting_blockers=manifest_blockers,
     )
+    impact_plan_payload = plan.to_dict()
+    _write_immutable_json(control_paths["impact_plan"], impact_plan_payload)
+    impact_plan_ref = {
+        **path_reference(control_paths["impact_plan"], root=ROOT),
+        "plan_id": plan.plan_id,
+    }
     meta: dict[str, Any] = {
+        "schema_version": BACKGROUND_SUPERVISOR_META_SCHEMA_VERSION,
         "name": name,
         "tier": tier,
         "cwd": str(ROOT),
@@ -240,30 +385,64 @@ def run_background_supervisor(
         "command_count": len(commands),
         "execute_count": len(plan.executable_owner_ids),
         "reuse_count": len(plan.reused_owner_ids),
-        "impact_plan": plan.to_dict(),
-        "snapshot_start": dict(plan.snapshot),
-        "snapshot_end": None,
-        "running": [],
-        "completed": [],
-        "owners": {},
+        "impact_plan_ref": impact_plan_ref,
+        "progress_ref": {
+            "path": str(control_paths["progress"].resolve()),
+        },
+        "owner_index_ref": None,
+        "snapshot_start_fingerprint": plan.snapshot.get("fingerprint"),
+        "snapshot_end_fingerprint": None,
+        "terminal_owner_count": 0,
+        "running_owner_count": 0,
         "artifacts": {key: str(value) for key, value in paths.items()},
     }
     _write_json(paths["meta"], meta)
+    _write_progress(
+        control_paths["progress"],
+        tier=tier,
+        impact_plan_id=plan.plan_id,
+        owner_count=len(commands),
+        execute_count=len(plan.executable_owner_ids),
+        reuse_count=len(plan.reused_owner_ids),
+        pending_owner_ids=plan.executable_owner_ids,
+        running_owner_ids=(),
+        recent_terminal=(
+            {
+                "owner_id": owner_id,
+                "state": "reused",
+                "at": _utc_now(),
+            }
+            for owner_id in plan.reused_owner_ids
+        ),
+        status="blocked" if plan.blockers else "running",
+    )
     if plan.blockers:
         paths["out"].write_text("", encoding="utf-8")
         paths["err"].write_text(
             "\n".join(plan.blockers) + "\n",
             encoding="utf-8",
         )
-        paths["combined"].write_text(
-            "\n".join(f"[supervisor] blocked {item}" for item in plan.blockers) + "\n",
-            encoding="utf-8",
-        )
+        owner_index = {
+            "schema_version": BACKGROUND_OWNER_INDEX_SCHEMA_VERSION,
+            "tier": tier,
+            "impact_plan_id": plan.plan_id,
+            "impact_plan_sha256": impact_plan_ref["sha256"],
+            "status": "blocked",
+            "expected_owner_ids": [command.name for command in commands],
+            "owners": [],
+            "blockers": list(plan.blockers),
+        }
+        _write_immutable_json(control_paths["owner_index"], owner_index)
         meta.update(
             status="blocked",
             end_time=_utc_now(),
             exit_code=1,
             blockers=list(plan.blockers),
+            owner_index_ref=path_reference(
+                control_paths["owner_index"],
+                root=ROOT,
+            ),
+            progress_ref=path_reference(control_paths["progress"], root=ROOT),
         )
         _finalize_supervisor(paths, meta, exit_code=1)
         return 1
@@ -287,35 +466,27 @@ def run_background_supervisor(
         for decision in plan.decisions
         if decision.action == "reuse"
     ]
-    previous_owners = (
-        previous_manifest.get("owners")
-        if isinstance(previous_manifest, dict)
-        and isinstance(previous_manifest.get("owners"), dict)
-        else {}
-    )
     owners: dict[str, Any] = {}
     for decision in plan.decisions:
         if decision.action != "reuse":
             continue
-        previous_row = previous_owners.get(decision.owner_id)
-        assert isinstance(previous_row, dict)
-        owners[decision.owner_id] = {
-            **previous_row,
-            "identity": decision.identity.to_dict(),
-            "result_reused": True,
-            "reuse_ticket": decision.reuse_ticket.to_dict()
-            if decision.reuse_ticket is not None
-            else None,
+        owners[decision.owner_id] = owner_reference_from_reuse_decision(
+            decision
+        )
+    recent_terminal = [
+        {
+            "owner_id": item["name"],
+            "state": item["evidence_status"],
+            "at": _utc_now(),
         }
-    meta["completed"] = completed
-    meta["owners"] = owners
-    _write_json(paths["meta"], meta)
+        for item in completed
+    ]
     try:
-        with paths["out"].open("w", encoding="utf-8", errors="replace") as out_file, paths[
-            "err"
-        ].open("w", encoding="utf-8", errors="replace") as err_file, paths["combined"].open(
+        with paths["out"].open(
             "w", encoding="utf-8", errors="replace"
-        ) as combined_file:
+        ) as out_file, paths["err"].open(
+            "w", encoding="utf-8", errors="replace"
+        ) as err_file:
             while pending or running:
                 while pending and len(running) < max_parallel:
                     launch_index = next_background_launch_index(pending, running)
@@ -325,18 +496,14 @@ def run_background_supervisor(
                     launched = launch_fn(
                         command,
                         log_root=log_root,
-                        impact_plan_id=plan.plan_id,
-                        owner_identity_value=decision_by_name[
-                            command.name
-                        ].identity.to_dict(),
+                        impact_plan_path=control_paths["impact_plan"],
+                        impact_plan_sha256=str(impact_plan_ref["sha256"]),
                         timeout_seconds=timeout_seconds,
                     )
                     running.append(command)
                     line = f"launched {command.name} pid={launched['child_pid']}\n"
                     out_file.write(line)
                     out_file.flush()
-                    combined_file.write(f"[supervisor] {line}")
-                    combined_file.flush()
                 still_running: list[TierCommand] = []
                 for command in running:
                     exit_code = _read_exit_code(artifact_paths(log_root, command.name)["exit"])
@@ -369,16 +536,11 @@ def run_background_supervisor(
                             child_meta_error or "missing_meta",
                         ]
                     else:
-                        proof_fingerprints = {
-                            key: sha256_file(child_paths[key])
-                            for key in ("out", "err", "combined", "exit")
-                            if child_paths[key].is_file()
-                        }
                         try:
-                            owners[command.name] = proof_row_from_child_meta(
+                            owners[command.name] = owner_reference_from_child_meta(
                                 owner_id=command.name,
+                                meta_path=child_paths["meta"],
                                 meta=child_meta,
-                                artifact_fingerprints=proof_fingerprints,
                             )
                         except ValueError as exc:
                             result["ok"] = False
@@ -386,29 +548,74 @@ def run_background_supervisor(
                     line = f"completed {command.name} exit={exit_code} evidence={evidence['status']}\n"
                     out_file.write(line)
                     out_file.flush()
-                    combined_file.write(f"[supervisor] {line}")
-                    combined_file.flush()
                     if not result["ok"]:
                         err_file.write(line)
                         err_file.flush()
+                    recent_terminal.append(
+                        {
+                            "owner_id": command.name,
+                            "state": evidence["status"],
+                            "at": _utc_now(),
+                        }
+                    )
                 running = still_running
-                meta["running"] = [command.name for command in running]
-                meta["completed"] = completed
-                meta["owners"] = owners
-                _write_json(paths["meta"], meta)
+                _write_progress(
+                    control_paths["progress"],
+                    tier=tier,
+                    impact_plan_id=plan.plan_id,
+                    owner_count=len(commands),
+                    execute_count=len(plan.executable_owner_ids),
+                    reuse_count=len(plan.reused_owner_ids),
+                    pending_owner_ids=[command.name for command in pending],
+                    running_owner_ids=[command.name for command in running],
+                    recent_terminal=recent_terminal,
+                    status="running",
+                )
                 if pending or running:
                     time.sleep(BACKGROUND_SUPERVISOR_POLL_SECONDS)
     except Exception as exc:
         details = traceback.format_exc()
-        paths["err"].write_text(details, encoding="utf-8", errors="replace")
-        paths["combined"].write_text(f"[supervisor-error] {details}", encoding="utf-8", errors="replace")
+        with paths["err"].open(
+            "a", encoding="utf-8", errors="replace"
+        ) as err_file:
+            err_file.write(details)
+        if not paths["out"].exists():
+            paths["out"].write_text("", encoding="utf-8")
+        owner_index = {
+            "schema_version": BACKGROUND_OWNER_INDEX_SCHEMA_VERSION,
+            "tier": tier,
+            "impact_plan_id": plan.plan_id,
+            "impact_plan_sha256": impact_plan_ref["sha256"],
+            "status": "failed",
+            "expected_owner_ids": [command.name for command in commands],
+            "owners": [owners[key] for key in sorted(owners)],
+            "error": str(exc),
+        }
+        _write_immutable_json(control_paths["owner_index"], owner_index)
+        _write_progress(
+            control_paths["progress"],
+            tier=tier,
+            impact_plan_id=plan.plan_id,
+            owner_count=len(commands),
+            execute_count=len(plan.executable_owner_ids),
+            reuse_count=len(plan.reused_owner_ids),
+            pending_owner_ids=[command.name for command in pending],
+            running_owner_ids=[command.name for command in running],
+            recent_terminal=recent_terminal,
+            status="failed",
+        )
         meta.update(
             status="failed",
             end_time=_utc_now(),
             exit_code=1,
             error=str(exc),
-            running=[command.name for command in running],
-            completed=completed,
+            running_owner_count=len(running),
+            terminal_owner_count=len(owners),
+            owner_index_ref=path_reference(
+                control_paths["owner_index"],
+                root=ROOT,
+            ),
+            progress_ref=path_reference(control_paths["progress"], root=ROOT),
         )
         _finalize_supervisor(paths, meta, exit_code=1)
         return 1
@@ -431,8 +638,12 @@ def run_background_supervisor(
         for path in sorted(changed_during_run)
         if path not in globally_mapped
     )
+    fingerprint_cache: dict[str, str] = {}
     for decision in plan.decisions:
-        current_identity = owner_identity(contract_by_name[decision.owner_id])
+        current_identity = owner_identity(
+            contract_by_name[decision.owner_id],
+            fingerprint_cache=fingerprint_cache,
+        )
         if current_identity.to_dict() != decision.identity.to_dict():
             final_failures.append(
                 f"{decision.owner_id}:owner_inputs_changed_after_plan"
@@ -451,13 +662,44 @@ def run_background_supervisor(
         status="passed" if ok else "failed",
         end_time=_utc_now(),
         exit_code=exit_code,
-        completed=completed,
-        owners=owners,
-        running=[],
-        snapshot_end=snapshot_end,
+        terminal_owner_count=len(owners),
+        running_owner_count=0,
+        snapshot_end_fingerprint=snapshot_end.get("fingerprint"),
         final_impact_failures=final_failures,
     )
     if final_failures:
         meta["failure_reason"] = "impact_plan_stale_or_unmapped"
+    owner_index = {
+        "schema_version": BACKGROUND_OWNER_INDEX_SCHEMA_VERSION,
+        "tier": tier,
+        "impact_plan_id": plan.plan_id,
+        "impact_plan_sha256": impact_plan_ref["sha256"],
+        "status": meta["status"],
+        "expected_owner_ids": [command.name for command in commands],
+        "owner_count": len(owners),
+        "execute_count": len(plan.executable_owner_ids),
+        "reuse_count": len(plan.reused_owner_ids),
+        "owners": [owners[key] for key in sorted(owners)],
+        "snapshot_end_fingerprint": snapshot_end.get("fingerprint"),
+        "final_impact_failures": final_failures,
+    }
+    _write_immutable_json(control_paths["owner_index"], owner_index)
+    _write_progress(
+        control_paths["progress"],
+        tier=tier,
+        impact_plan_id=plan.plan_id,
+        owner_count=len(commands),
+        execute_count=len(plan.executable_owner_ids),
+        reuse_count=len(plan.reused_owner_ids),
+        pending_owner_ids=(),
+        running_owner_ids=(),
+        recent_terminal=recent_terminal,
+        status=str(meta["status"]),
+    )
+    meta["owner_index_ref"] = path_reference(
+        control_paths["owner_index"],
+        root=ROOT,
+    )
+    meta["progress_ref"] = path_reference(control_paths["progress"], root=ROOT)
     _finalize_supervisor(paths, meta, exit_code=exit_code)
     return exit_code

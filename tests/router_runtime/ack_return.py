@@ -113,7 +113,7 @@ class AckReturnRuntimeTests(FlowPilotRouterRuntimeTestBase):
 
         result = router.run_router_daemon(root, max_ticks=1, release_lock_on_exit=True)
 
-        self.assertEqual(result["ticks"][0]["action_type"], "await_card_bundle_return_event")
+        self.assertEqual(result["last_tick"]["action_type"], "await_card_bundle_return_event")
         state = read_json(router.run_state_path(run_root))
         self.assertEqual(state["pending_action"]["action_type"], "await_card_bundle_return_event")
         self.assertTrue(state["pending_action"]["bundle_ack_incomplete"])

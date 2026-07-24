@@ -44,15 +44,15 @@
         "alignment_ok": true,
         "claim_scope": "done",
         "coverage_claim": "release_convergence_deferred_structure_only",
-        "deferred_structure_split_count": 8,
+        "deferred_structure_split_count": 10,
         "evidence_status": "passed",
         "execution_evidence_ok": true,
         "full_coverage_ok": false,
         "full_diagnostic_ok": true,
         "gap_counts": {
-          "needs_structure_split": 8
+          "needs_structure_split": 10
         },
-        "gap_surface_count": 8,
+        "gap_surface_count": 10,
         "release_convergence_ok": true,
         "subcheck_exit_code": 0,
         "subcheck_stderr_path": "tmp/final_confidence_gate/model_test_alignment.err.txt",

@@ -2,7 +2,7 @@
   "claim_boundary": "These checks prove the finite current FlowPilot-to-SkillGuard contract projection, its single native owner, declared negative cases, and read-only final receipt binding. They do not execute FlowPilot work or license SkillGuard execution-depth claims.",
   "contract_conformance": {
     "findings": [],
-    "obligation_count": 10,
+    "obligation_count": 12,
     "ok": true,
     "owners": [
       "flowpilot_runtime_router"
@@ -11,11 +11,11 @@
     "step_count": 12
   },
   "contract_refinement": {
-    "covered_obligation_count": 10,
-    "declared_obligation_count": 10,
+    "covered_obligation_count": 12,
+    "declared_obligation_count": 12,
     "findings": [],
-    "native_check_binding_count": 7,
-    "native_evaluator_hash": "14BC1F266FF21BE400AAB9DD8508DFB0B1CFAC7DCD9681C822993B8EFBADBD00",
+    "native_check_binding_count": 8,
+    "native_evaluator_hash": "72A44F7F9A1285FFFF13D28F69E546342B7F83A3E77AFA8CF28120D4A5A65791",
     "native_route_binding_count": 4,
     "ok": true
   },
@@ -85,9 +85,10 @@
       "ordinary_small_task": "complex_long_project_boundary_missing",
       "parallel_skillguard_route": "parallel_skillguard_route_forbidden",
       "stale_final_receipts": "final_parent_receipts_missing",
+      "unbounded_control_plane": "control_plane_resource_boundedness_missing",
       "unintegrated_delegation": "delegated_outputs_not_integrated"
     },
-    "known_bad_count": 11,
+    "known_bad_count": 12,
     "mismatches": {},
     "ok": true,
     "positive_blocker": "",

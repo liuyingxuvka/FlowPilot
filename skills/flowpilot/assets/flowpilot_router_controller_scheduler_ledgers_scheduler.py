@@ -27,6 +27,17 @@ def _bind_router(router: ModuleType) -> None:
         current[name] = value
 
 
+def _router_scheduler_ledger_semantic_payload(ledger: dict[str, Any]) -> dict[str, Any]:
+    payload = json.loads(json.dumps(ledger, sort_keys=True))
+    payload.pop('updated_at', None)
+    rows = payload.get('rows')
+    if isinstance(rows, list):
+        for row in rows:
+            if isinstance(row, dict):
+                row.pop('updated_at', None)
+    return payload
+
+
 def _empty_router_scheduler_ledger(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any]) -> dict[str, Any]:
     _bind_router(router)
     return {'schema_version': ROUTER_SCHEDULER_LEDGER_SCHEMA, 'run_id': run_state.get('run_id'), 'run_root': project_relative(project_root, run_root), 'updated_at': utc_now(), 'rows': [], 'counts': _router_scheduler_row_counts([]), 'router_is_only_scheduler_writer': True, 'controller_table_is_simple_work_board': True, 'controller_may_write_only_receipts': True}
@@ -47,8 +58,19 @@ def _read_router_scheduler_ledger(router: ModuleType, project_root: Path, run_ro
 def _write_router_scheduler_ledger(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any], ledger: dict[str, Any]) -> dict[str, Any]:
     _bind_router(router)
     rows = ledger.get('rows') if isinstance(ledger.get('rows'), list) else []
-    ledger.update({'schema_version': ROUTER_SCHEDULER_LEDGER_SCHEMA, 'run_id': run_state.get('run_id'), 'run_root': project_relative(project_root, run_root), 'updated_at': utc_now(), 'rows': [row for row in rows if isinstance(row, dict)], 'router_is_only_scheduler_writer': True, 'controller_table_is_simple_work_board': True, 'controller_may_write_only_receipts': True})
+    ledger.update({'schema_version': ROUTER_SCHEDULER_LEDGER_SCHEMA, 'run_id': run_state.get('run_id'), 'run_root': project_relative(project_root, run_root), 'rows': [row for row in rows if isinstance(row, dict)], 'router_is_only_scheduler_writer': True, 'controller_table_is_simple_work_board': True, 'controller_may_write_only_receipts': True})
     ledger['counts'] = _router_scheduler_row_counts(ledger['rows'])
+    existing = read_json_if_exists(_router_scheduler_ledger_path(run_root))
+    if (
+        existing.get('schema_version') == ROUTER_SCHEDULER_LEDGER_SCHEMA
+        and _router_scheduler_ledger_semantic_payload(existing)
+        == _router_scheduler_ledger_semantic_payload(ledger)
+    ):
+        ledger.clear()
+        ledger.update(existing)
+        run_state['router_scheduler_ledger_path'] = project_relative(project_root, _router_scheduler_ledger_path(run_root))
+        return ledger
+    ledger['updated_at'] = utc_now()
     write_json(_router_scheduler_ledger_path(run_root), ledger)
     run_state['router_scheduler_ledger_path'] = project_relative(project_root, _router_scheduler_ledger_path(run_root))
     return ledger
@@ -152,6 +174,8 @@ def _record_router_scheduler_row(router: ModuleType, project_root: Path, run_roo
             row['router_state'] = 'reconciled'
             row['reconciled_at'] = existing.get('reconciled_at')
             row['reconciliation'] = existing.get('reconciliation')
+        if _router_scheduler_ledger_semantic_payload({'rows': [existing]}) == _router_scheduler_ledger_semantic_payload({'rows': [row]}):
+            return existing
     rows = [item for item in existing_ledger.get('rows', []) if isinstance(item, dict) and item.get('row_id') != row_id]
     rows.append(row)
     existing_ledger['rows'] = rows

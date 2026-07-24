@@ -707,7 +707,8 @@ def _bundle_evidence_for_command(
         "proof_not_progress_only": isinstance(proof, dict)
         and proof.get("progress_only") is False,
         "proof_artifacts_present": isinstance(fingerprints, dict)
-        and {"combined", "exit"} <= set(fingerprints),
+        and {"stdout", "stderr", "combined", "child_meta"}
+        <= set(fingerprints),
     }
     matched = all(checks.values())
     selected = {

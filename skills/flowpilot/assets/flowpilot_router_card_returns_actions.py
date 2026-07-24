@@ -88,9 +88,6 @@ def _pending_return_wait_reminder_extra(router: ModuleType, record: dict[str, An
     for key in ('last_wait_reminder_at', 'last_wait_reminder_sha256', 'wait_reminder_text', 'wait_reminder_text_sha256'):
         if record.get(key) not in (None, '', []):
             extra[key] = record.get(key)
-    history = record.get('wait_reminder_history')
-    if isinstance(history, list):
-        extra['wait_reminder_history'] = history
     return extra
 
 def _next_pending_card_return_action(router: ModuleType, project_root: Path, run_state: dict[str, Any], run_root: Path, pending_records: list[dict[str, Any]] | None=None, *, clearance_reason: str='router_progress') -> dict[str, Any] | None:

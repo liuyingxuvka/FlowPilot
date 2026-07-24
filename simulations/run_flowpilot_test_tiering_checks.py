@@ -45,6 +45,7 @@ REQUIRED_LABELS = {
     "reject_background_shared_runtime_resource_race",
     "reject_background_descendant_settlement_missing",
     "reject_background_predating_process_misclassified_as_descendant",
+    "reject_background_sibling_misclassified_through_reused_parent_pid",
     "reject_background_surviving_descendant_promoted",
     "reject_json_write_readback_can_hang_control_gate",
     "reject_release_obligation_hidden",
@@ -127,6 +128,9 @@ EXPECTED_HAZARD_FAILURES = {
     "background_predating_process_misclassified_as_descendant": {
         "background_descendant_lineage_not_ordered",
     },
+    "background_sibling_misclassified_through_reused_parent_pid": {
+        "background_sibling_isolation_not_preserved",
+    },
     "background_surviving_descendant_promoted": {
         "background_surviving_descendants_not_fail_closed",
     },
@@ -167,6 +171,7 @@ def _state_id(state: model.State) -> str:
         f"{state.shared_runtime_resources_serialized},"
         f"{state.background_descendant_settlement_bounded},"
         f"{state.background_descendant_lineage_ordered},"
+        f"{state.background_sibling_isolation_preserved},"
         f"{state.background_surviving_descendants_fail_closed},"
         f"{state.json_write_readback_bounded}|"
         f"release={state.release_required},{state.release_obligation_visible},"

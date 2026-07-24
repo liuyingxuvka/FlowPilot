@@ -947,6 +947,12 @@ REQUIRED_LABELS = {
     "reject_repeated_lifecycle_action_not_absorbed",
     "select_lifecycle_guard_stuck_claimed_safe",
     "reject_lifecycle_guard_stuck_claimed_safe",
+    "select_resource_boundedness_child_missing",
+    "reject_resource_boundedness_child_missing",
+    "select_resource_boundedness_result_stale",
+    "reject_resource_boundedness_result_stale",
+    "select_resource_boundedness_proof_refs_missing",
+    "reject_resource_boundedness_proof_refs_missing",
 }
 
 HAZARD_EXPECTED_FAILURES = {
@@ -998,6 +1004,9 @@ HAZARD_EXPECTED_FAILURES = {
     "route_authority_no_delta_repeat_accepted": {"route_authority_no_delta_repeat_not_absorbed"},
     "repeated_lifecycle_action_not_absorbed": {"repeated_lifecycle_action_must_block_mesh_green"},
     "lifecycle_guard_stuck_claimed_safe": {"lifecycle_guard_stuck_must_block_mesh_green"},
+    "resource_boundedness_child_missing": {"resource_boundedness_child_not_registered"},
+    "resource_boundedness_result_stale": {"resource_boundedness_result_not_current"},
+    "resource_boundedness_proof_refs_missing": {"resource_boundedness_proof_refs_incomplete"},
 }
 
 
@@ -1030,7 +1039,10 @@ def _state_id(state: model.State) -> str:
         f"{state.route_authority_conformant},{state.route_authority_owner_unique},"
         f"{state.route_authority_wrong_path_rejected},{state.route_authority_repair_feedback_present},"
         f"{state.route_authority_fallback_rejected},{state.route_authority_no_delta_repeat_absorbed}|"
-        f"repeat={state.repeated_lifecycle_action_absorbed}|stuck={state.lifecycle_guard_control_plane_stuck}"
+        f"repeat={state.repeated_lifecycle_action_absorbed}|stuck={state.lifecycle_guard_control_plane_stuck}|"
+        f"resource_bound={state.resource_boundedness_child_registered},"
+        f"{state.resource_boundedness_result_current},"
+        f"{state.resource_boundedness_proof_refs_complete}"
     )
 
 

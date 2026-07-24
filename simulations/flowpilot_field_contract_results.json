@@ -1597,6 +1597,149 @@
       "status": "mechanical_runtime_owned",
       "unlocks": "direct_router_card_ack",
       "validator": "_system_card_target_agent_id"
+    },
+    {
+      "field": "pending_action.last_wait_reminder_at",
+      "layer": "leaf",
+      "logical_field": "compact_wait_reminder_time",
+      "owner": "flowpilot_router",
+      "required_value": "current_matching_reminder_delivery_time",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "wait_liveness_without_copied_reminder_history",
+      "validator": "_apply_wait_target_reminder_receipt",
+      "validator_path": "skills/flowpilot/assets/flowpilot_router_controller_scheduler_receipts_effects.py"
+    },
+    {
+      "field": "pending_action.last_wait_reminder_sha256",
+      "layer": "leaf",
+      "logical_field": "compact_wait_reminder_identity",
+      "owner": "flowpilot_router",
+      "required_value": "current_matching_reminder_sha256",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "idempotent_wait_reminder_reconciliation",
+      "validator": "_apply_wait_target_reminder_receipt",
+      "validator_path": "skills/flowpilot/assets/flowpilot_router_controller_scheduler_receipts_effects.py"
+    },
+    {
+      "field": "daemon_result.tick_count",
+      "layer": "leaf",
+      "logical_field": "bounded_daemon_tick_count",
+      "owner": "flowpilot_router_daemon",
+      "required_value": "aggregate_count_without_tick_body_array",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "bounded_daemon_terminal_evidence",
+      "validator": "run_router_daemon",
+      "validator_path": "skills/flowpilot/assets/flowpilot_router_daemon_runtime.py"
+    },
+    {
+      "field": "daemon_result.anomalies[]",
+      "layer": "leaf",
+      "logical_field": "bounded_daemon_anomaly_sample",
+      "owner": "flowpilot_router_daemon",
+      "required_value": "at_most_router_daemon_anomaly_sample_limit",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "bounded_daemon_terminal_evidence",
+      "validator": "_compact_router_daemon_tick",
+      "validator_path": "skills/flowpilot/assets/flowpilot_router_daemon_runtime.py"
+    },
+    {
+      "field": "lease.last_progress_status",
+      "layer": "middle",
+      "logical_field": "finite_progress_status",
+      "owner": "flowpilot_core_runtime",
+      "required_value": "one_of_current_progress_statuses",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "semantic_or_due_progress_liveness",
+      "validator": "record_progress",
+      "validator_path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py"
+    },
+    {
+      "field": "background_child_meta.stdout",
+      "layer": "leaf",
+      "logical_field": "v5_stdout_stream_descriptor",
+      "owner": "flowpilot_test_tier",
+      "required_value": "path_sha256_bytes_lines",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "v5_owner_result_fingerprint",
+      "validator": "stream_descriptor",
+      "validator_path": "scripts/test_tier/evidence_v5.py"
+    },
+    {
+      "field": "background_child_meta.stderr",
+      "layer": "leaf",
+      "logical_field": "v5_stderr_stream_descriptor",
+      "owner": "flowpilot_test_tier",
+      "required_value": "path_sha256_bytes_lines",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "v5_owner_result_fingerprint",
+      "validator": "stream_descriptor",
+      "validator_path": "scripts/test_tier/evidence_v5.py"
+    },
+    {
+      "field": "background_child_meta.combined_kind",
+      "layer": "leaf",
+      "logical_field": "bounded_combined_terminal_index_kind",
+      "owner": "flowpilot_test_tier",
+      "required_value": "terminal_stream_index",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "bounded_human_readable_validation_index",
+      "validator": "terminal_stream_index_bytes",
+      "validator_path": "scripts/test_tier/evidence_v5.py"
+    },
+    {
+      "field": "acceptance_testmesh_evidence_manifest.owners[].proof_ref",
+      "layer": "middle",
+      "logical_field": "v5_owner_proof_reference",
+      "owner": "flowpilot_test_tier",
+      "required_value": "exact_current_owner_meta_path_sha_and_result_fingerprint",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "v5_owner_reuse_or_execution_evidence",
+      "validator": "validate_owner_reference",
+      "validator_path": "scripts/test_tier/impact_resolution.py"
+    },
+    {
+      "field": "runtime_retention_plan.plan_id",
+      "layer": "middle",
+      "logical_field": "frozen_retention_plan_identity",
+      "owner": "flowpilot_runtime_retention",
+      "required_value": "content_derived_current_plan_identity",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "explicit_retention_apply_authorization",
+      "validator": "build_plan",
+      "validator_path": "scripts/flowpilot_runtime_retention.py"
+    },
+    {
+      "field": "runtime_retention_apply.plan_sha256",
+      "layer": "middle",
+      "logical_field": "retention_apply_plan_hash_binding",
+      "owner": "flowpilot_runtime_retention",
+      "required_value": "exact_supplied_frozen_plan_sha256",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "current_candidate_revalidation_and_archive_creation",
+      "validator": "apply_plan",
+      "validator_path": "scripts/flowpilot_runtime_retention.py"
+    },
+    {
+      "field": "run_index.runs[].archive_sha256",
+      "layer": "middle",
+      "logical_field": "verified_retention_archive_identity",
+      "owner": "flowpilot_runtime_retention",
+      "required_value": "readback_verified_archive_sha256",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "archive_index_commit_before_heavy_path_cleanup",
+      "validator": "_create_verified_archive",
+      "validator_path": "scripts/flowpilot_runtime_retention.py"
+    },
+    {
+      "field": "run_index.runs[].archive_cleanup_status",
+      "layer": "middle",
+      "logical_field": "retention_cleanup_terminal_disposition",
+      "owner": "flowpilot_runtime_retention",
+      "required_value": "pending_complete_or_incomplete_with_errors",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "honest_retention_completion_claim",
+      "validator": "_mark_cleanup",
+      "validator_path": "scripts/flowpilot_runtime_retention.py"
     }
   ],
   "edge_count": 41,
@@ -1827,6 +1970,21 @@
     "violation_count": 0
   },
   "forbidden_legacy_field_contracts": [
+    {
+      "disposition": "observation_liveness_belongs_to_bounded_daemon_status",
+      "field": "controller_action.seen_count",
+      "status": "forbidden_legacy"
+    },
+    {
+      "disposition": "semantic_updated_at_and_receipt_identity_are_current_authority",
+      "field": "controller_action.last_seen_at",
+      "status": "forbidden_legacy"
+    },
+    {
+      "disposition": "current_wait_receipt_and_compact_reminder_state_are_single_authority",
+      "field": "router_state.wait_reminder_history[]",
+      "status": "forbidden_legacy"
+    },
     {
       "disposition": "reject_as_old_startup_fact_gate",
       "field": "startup_fact_report.external_fact_review.reviewer_checked_requirement_ids",

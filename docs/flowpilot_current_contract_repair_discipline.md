@@ -173,12 +173,13 @@ current impact planner has exactly three outcomes:
 - `execute`: the owner's own applicability identity changed or it has no
   reusable current proof;
 - `blocked`: a changed governed source cannot be mapped unambiguously, the
-  named previous v4 manifest or SHA-256 identity is missing/wrong, or the
+  named previous V5 manifest or SHA-256 identity is missing/wrong, or the
   execution identity became stale.
 
-There is no fourth outcome that converts `blocked` into run-all. The first v4
-release uses one explicit `--seed-baseline`; later executions must name the
-exact previous v4 manifest and its SHA-256. Old manifests, aggregate-only
+There is no fourth outcome that converts `blocked` into run-all. The V4
+evidence family has been replaced directly: the first V5 release uses one
+explicit `--seed-baseline`; later executions must name the exact previous V5
+manifest and its SHA-256. V4 or older manifests, aggregate-only
 proofs, global-fingerprint equality, newest-run discovery, and repo-root
 discovery are not alternate evidence paths.
 

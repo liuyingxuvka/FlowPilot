@@ -103,7 +103,82 @@ class FlowPilotTestTierTests(unittest.TestCase):
             "covered_input_fingerprint": "empty-inputs",
             "covered_input_fingerprints": {},
             "covered_obligation_ids": [],
+            "covered_evidence_ids": [],
         }
+
+    @classmethod
+    def write_impact_plan(
+        cls,
+        root: Path,
+        owner_id: str,
+        *,
+        identity: dict[str, object] | None = None,
+    ) -> tuple[Path, str]:
+        path = root / "fixture.impact-plan.json"
+        payload = {
+            "schema_version": impact_resolution_module.IMPACT_PLAN_SCHEMA_VERSION,
+            "plan_id": "test-impact-plan",
+            "requested_scope": "fixture",
+            "snapshot": {
+                "schema_version": "flowpilot.source_snapshot.v1",
+                "fingerprint": "fixture",
+                "files": {},
+            },
+            "previous_manifest": {"path": "", "sha256": ""},
+            "seed_baseline": True,
+            "contracts": [],
+            "decisions": [
+                {
+                    "owner_id": owner_id,
+                    "action": "execute",
+                    "reason_codes": ["fixture"],
+                    "identity": identity or cls.empty_owner_identity(),
+                    "previous_proof_artifact_id": "",
+                    "previous_proof_ref": None,
+                    "reuse_ticket_identity": "",
+                }
+            ],
+            "blockers": [],
+            "execute_owner_ids": [owner_id],
+            "reuse_owner_ids": [],
+        }
+        path.write_text(
+            json.dumps(payload, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+        return path, impact_resolution_module.sha256_file(path)
+
+    @classmethod
+    def write_v5_owner_reference(
+        cls,
+        root: Path,
+        owner_id: str,
+        *,
+        identity: dict[str, object],
+    ) -> dict[str, object]:
+        impact_plan_path, impact_plan_sha256 = cls.write_impact_plan(
+            root,
+            owner_id,
+            identity=identity,
+        )
+        exit_code = run_test_tier.run_background_child(
+            owner_id,
+            (sys.executable, "-c", "print('v5-owner-proof')"),
+            log_root=root,
+            impact_plan_path=impact_plan_path,
+            impact_plan_sha256=impact_plan_sha256,
+            owner_id=owner_id,
+            timeout_seconds=30,
+        )
+        if exit_code != 0:
+            raise AssertionError(f"fixture child failed: {owner_id}:{exit_code}")
+        meta_path = run_test_tier.artifact_paths(root, owner_id)["meta"]
+        meta = json.loads(meta_path.read_text(encoding="utf-8"))
+        return impact_resolution_module.owner_reference_from_child_meta(
+            owner_id=owner_id,
+            meta_path=meta_path,
+            meta=meta,
+        )
 
     def command_text(self, tier: str) -> str:
         plan = run_test_tier.plan_for_tier(
@@ -1002,6 +1077,11 @@ class FlowPilotTestTierTests(unittest.TestCase):
 
         try:
             with tempfile.TemporaryDirectory(prefix="flowpilot-tier-launch-") as tmp_name:
+                log_root = Path(tmp_name)
+                impact_plan_path, impact_plan_sha256 = self.write_impact_plan(
+                    log_root,
+                    "child_entrypoint_fixture",
+                )
                 launch_globals["subprocess"].Popen = fake_popen
                 run_test_tier._launch_background(
                     run_test_tier.TierCommand(
@@ -1009,9 +1089,9 @@ class FlowPilotTestTierTests(unittest.TestCase):
                         command=(sys.executable, "-c", "pass"),
                         description="child entrypoint fixture",
                     ),
-                    log_root=Path(tmp_name),
-                    impact_plan_id="test-impact-plan",
-                    owner_identity_value=self.empty_owner_identity(),
+                    log_root=log_root,
+                    impact_plan_path=impact_plan_path,
+                    impact_plan_sha256=impact_plan_sha256,
                 )
         finally:
             launch_globals["subprocess"].Popen = original_popen
@@ -1021,8 +1101,10 @@ class FlowPilotTestTierTests(unittest.TestCase):
         self.assertEqual(Path(args[1]).resolve(), ROOT / "scripts" / "run_test_tier.py")
         self.assertIn("--background-child", args)
         self.assertIn("--background-child-timeout-seconds", args)
-        self.assertIn("--impact-plan-id", args)
-        self.assertIn("--owner-identity-path", args)
+        self.assertIn("--impact-plan", args)
+        self.assertIn("--impact-plan-sha256", args)
+        self.assertIn("--owner-id", args)
+        self.assertFalse(any(str(value).endswith(".owner.json") for value in args))
         self.assertNotIn("--covered-source-fingerprint", args)
 
     def test_unittest_shard_runner_uses_or_semantics_and_rejects_stale_patterns(self) -> None:
@@ -1064,21 +1146,30 @@ class FlowPilotTestTierTests(unittest.TestCase):
 
     def test_background_child_timeout_writes_failed_artifact(self) -> None:
         with tempfile.TemporaryDirectory(prefix="flowpilot-tier-timeout-") as tmp_name:
+            log_root = Path(tmp_name)
+            impact_plan_path, impact_plan_sha256 = self.write_impact_plan(
+                log_root,
+                "timeout_fixture",
+            )
             exit_code = run_test_tier.run_background_child(
                 "timeout_fixture",
                 (sys.executable, "-c", "import time; time.sleep(5)"),
-                log_root=Path(tmp_name),
-                impact_plan_id="test-impact-plan",
-                owner_identity_value=self.empty_owner_identity(),
+                log_root=log_root,
+                impact_plan_path=impact_plan_path,
+                impact_plan_sha256=impact_plan_sha256,
+                owner_id="timeout_fixture",
                 timeout_seconds=1,
             )
-            paths = run_test_tier.artifact_paths(Path(tmp_name), "timeout_fixture")
+            paths = run_test_tier.artifact_paths(log_root, "timeout_fixture")
             meta = json.loads(paths["meta"].read_text(encoding="utf-8"))
 
             self.assertEqual(exit_code, run_test_tier.BACKGROUND_CHILD_TIMEOUT_EXIT_CODE)
             self.assertEqual(meta["status"], "failed")
             self.assertTrue(meta["timed_out"])
-            self.assertEqual(meta["impact_plan_id"], "test-impact-plan")
+            self.assertEqual(
+                meta["impact_plan_ref"]["plan_id"],
+                "test-impact-plan",
+            )
             self.assertTrue(meta["inputs_current"])
             self.assertEqual(meta["failure_reason"], "background_child_timeout")
             self.assertTrue(meta["descendant_zero_confirmed"])
@@ -1091,6 +1182,10 @@ class FlowPilotTestTierTests(unittest.TestCase):
     def test_background_child_publishes_terminal_meta_before_exit_marker(self) -> None:
         with tempfile.TemporaryDirectory(prefix="flowpilot-tier-terminal-order-") as tmp_name:
             log_root = Path(tmp_name)
+            impact_plan_path, impact_plan_sha256 = self.write_impact_plan(
+                log_root,
+                "terminal_order_fixture",
+            )
             paths = run_test_tier.artifact_paths(
                 log_root,
                 "terminal_order_fixture",
@@ -1118,8 +1213,9 @@ class FlowPilotTestTierTests(unittest.TestCase):
                     "terminal_order_fixture",
                     (sys.executable, "-c", "print('terminal-order')"),
                     log_root=log_root,
-                    impact_plan_id="test-impact-plan",
-                    owner_identity_value=self.empty_owner_identity(),
+                    impact_plan_path=impact_plan_path,
+                    impact_plan_sha256=impact_plan_sha256,
+                    owner_id="terminal_order_fixture",
                     timeout_seconds=30,
                 )
 
@@ -1304,6 +1400,11 @@ class FlowPilotTestTierTests(unittest.TestCase):
 
     def test_background_child_binds_windows_venv_to_direct_current_owner(self) -> None:
         with tempfile.TemporaryDirectory(prefix="flowpilot-tier-owner-") as tmp_name:
+            log_root = Path(tmp_name)
+            impact_plan_path, impact_plan_sha256 = self.write_impact_plan(
+                log_root,
+                "direct_current_owner_fixture",
+            )
             exit_code = run_test_tier.run_background_child(
                 "direct_current_owner_fixture",
                 (
@@ -1311,13 +1412,14 @@ class FlowPilotTestTierTests(unittest.TestCase):
                     "-c",
                     "import json,sys;print(json.dumps({'executable':sys.executable}))",
                 ),
-                log_root=Path(tmp_name),
-                impact_plan_id="test-impact-plan",
-                owner_identity_value=self.empty_owner_identity(),
+                log_root=log_root,
+                impact_plan_path=impact_plan_path,
+                impact_plan_sha256=impact_plan_sha256,
+                owner_id="direct_current_owner_fixture",
                 timeout_seconds=5,
             )
             paths = run_test_tier.artifact_paths(
-                Path(tmp_name),
+                log_root,
                 "direct_current_owner_fixture",
             )
             meta = json.loads(paths["meta"].read_text(encoding="utf-8"))
@@ -1344,6 +1446,11 @@ class FlowPilotTestTierTests(unittest.TestCase):
 
     def test_timeout_terminates_descendant_tree_before_writing_terminal_receipt(self) -> None:
         with tempfile.TemporaryDirectory(prefix="flowpilot-tier-descendants-") as tmp_name:
+            log_root = Path(tmp_name)
+            impact_plan_path, impact_plan_sha256 = self.write_impact_plan(
+                log_root,
+                "descendant_timeout_fixture",
+            )
             exit_code = run_test_tier.run_background_child(
                 "descendant_timeout_fixture",
                 (
@@ -1355,13 +1462,14 @@ class FlowPilotTestTierTests(unittest.TestCase):
                         "time.sleep(30)"
                     ),
                 ),
-                log_root=Path(tmp_name),
-                impact_plan_id="test-impact-plan",
-                owner_identity_value=self.empty_owner_identity(),
+                log_root=log_root,
+                impact_plan_path=impact_plan_path,
+                impact_plan_sha256=impact_plan_sha256,
+                owner_id="descendant_timeout_fixture",
                 timeout_seconds=1,
             )
             paths = run_test_tier.artifact_paths(
-                Path(tmp_name),
+                log_root,
                 "descendant_timeout_fixture",
             )
             meta = json.loads(paths["meta"].read_text(encoding="utf-8"))
@@ -1389,8 +1497,11 @@ class FlowPilotTestTierTests(unittest.TestCase):
             return_value=True,
         ), mock.patch.object(
             process_liveness_module,
-            "_descendant_pids",
-            return_value=[older_process["pid"], current_child["pid"]],
+            "_process_parent_map",
+            return_value={
+                older_process["pid"]: owner["pid"],
+                current_child["pid"]: owner["pid"],
+            },
         ), mock.patch.object(
             process_liveness_module,
             "process_identity",
@@ -1410,8 +1521,46 @@ class FlowPilotTestTierTests(unittest.TestCase):
             )
         )
 
+    def test_descendant_identity_does_not_cross_older_pid_reuse_bridge_to_sibling(
+        self,
+    ) -> None:
+        owner = {"pid": 2100, "start_token": "win-filetime:200"}
+        current_child = {"pid": 2101, "start_token": "win-filetime:201"}
+        older_reused_bridge = {"pid": 2000, "start_token": "win-filetime:100"}
+        younger_sibling = {"pid": 2102, "start_token": "win-filetime:202"}
+        with mock.patch.object(
+            process_liveness_module,
+            "process_identity_is_live",
+            return_value=True,
+        ), mock.patch.object(
+            process_liveness_module,
+            "_process_parent_map",
+            return_value={
+                current_child["pid"]: owner["pid"],
+                older_reused_bridge["pid"]: current_child["pid"],
+                younger_sibling["pid"]: older_reused_bridge["pid"],
+            },
+        ), mock.patch.object(
+            process_liveness_module,
+            "process_identity",
+            side_effect={
+                current_child["pid"]: current_child,
+                older_reused_bridge["pid"]: older_reused_bridge,
+                younger_sibling["pid"]: younger_sibling,
+            }.get,
+        ):
+            self.assertEqual(
+                process_liveness_module.process_descendant_identities(owner),
+                [current_child],
+            )
+
     def test_background_child_allows_exact_descendants_to_exit_within_bounded_settlement(self) -> None:
         with tempfile.TemporaryDirectory(prefix="flowpilot-tier-settlement-") as tmp_name:
+            log_root = Path(tmp_name)
+            impact_plan_path, impact_plan_sha256 = self.write_impact_plan(
+                log_root,
+                "descendant_settlement_fixture",
+            )
             exit_code = run_test_tier.run_background_child(
                 "descendant_settlement_fixture",
                 (
@@ -1423,13 +1572,14 @@ class FlowPilotTestTierTests(unittest.TestCase):
                         "time.sleep(0.15)"
                     ),
                 ),
-                log_root=Path(tmp_name),
-                impact_plan_id="test-impact-plan",
-                owner_identity_value=self.empty_owner_identity(),
+                log_root=log_root,
+                impact_plan_path=impact_plan_path,
+                impact_plan_sha256=impact_plan_sha256,
+                owner_id="descendant_settlement_fixture",
                 timeout_seconds=5,
             )
             paths = run_test_tier.artifact_paths(
-                Path(tmp_name),
+                log_root,
                 "descendant_settlement_fixture",
             )
             meta = json.loads(paths["meta"].read_text(encoding="utf-8"))
@@ -1445,6 +1595,11 @@ class FlowPilotTestTierTests(unittest.TestCase):
 
     def test_background_child_rejects_descendant_surviving_bounded_settlement(self) -> None:
         with tempfile.TemporaryDirectory(prefix="flowpilot-tier-orphan-") as tmp_name:
+            log_root = Path(tmp_name)
+            impact_plan_path, impact_plan_sha256 = self.write_impact_plan(
+                log_root,
+                "descendant_orphan_fixture",
+            )
             exit_code = run_test_tier.run_background_child(
                 "descendant_orphan_fixture",
                 (
@@ -1456,13 +1611,14 @@ class FlowPilotTestTierTests(unittest.TestCase):
                         "time.sleep(0.15)"
                     ),
                 ),
-                log_root=Path(tmp_name),
-                impact_plan_id="test-impact-plan",
-                owner_identity_value=self.empty_owner_identity(),
+                log_root=log_root,
+                impact_plan_path=impact_plan_path,
+                impact_plan_sha256=impact_plan_sha256,
+                owner_id="descendant_orphan_fixture",
                 timeout_seconds=5,
             )
             paths = run_test_tier.artifact_paths(
-                Path(tmp_name),
+                log_root,
                 "descendant_orphan_fixture",
             )
             meta = json.loads(paths["meta"].read_text(encoding="utf-8"))
@@ -1491,8 +1647,8 @@ class FlowPilotTestTierTests(unittest.TestCase):
                     *,
                     log_root,
                     timeout_seconds=None,
-                    impact_plan_id=None,
-                    owner_identity_value=None,
+                    impact_plan_path=None,
+                    impact_plan_sha256="",
                 ):
                     raise RuntimeError(f"artifact locked for {command.name}")
 
@@ -1755,6 +1911,10 @@ class FlowPilotTestTierTests(unittest.TestCase):
             "skills/flowpilot/.skillguard/compiled-contract.json": {
                 "flowguard_skillguard_current_contract"
             },
+            "skills/flowpilot/.skillguard/contract-source.json": {
+                "flowguard_skillguard_current_contract",
+                "skillguard_deep_contract_tests",
+            },
         }
 
         for path, expected_owner_ids in expected.items():
@@ -1847,58 +2007,39 @@ class FlowPilotTestTierTests(unittest.TestCase):
             dependency_owner_ids=contract.dependency_owner_ids,
         )
         former_identity = impact_resolution_module.owner_identity(former_contract)
-        proof = impact_resolution_module.ProofArtifactRef(
-            artifact_id="proof.meta_full.current",
-            producer_route="flowpilot.test-tier.selective-execution",
-            command=" ".join(contract.command),
-            result_path="tmp/flowguard_background/run_meta_checks.combined.txt",
-            result_status="passed",
-            exit_code=0,
-            artifact_fingerprints={"combined": "a" * 64},
-            covered_obligation_ids=contract.covered_obligation_ids,
-            assertion_scope="external_contract",
-            current=True,
-            route_evidence_current=True,
-            progress_only=False,
-            metadata={"result_fingerprint": "b" * 64},
-        )
         snapshot = source_fingerprint_module.source_snapshot()
-        previous_manifest = {
-            "schema_version": (
-                impact_resolution_module.EVIDENCE_MANIFEST_SCHEMA_VERSION
-            ),
-            "snapshot": snapshot,
-            "owners": {
-                contract.owner_id: {
-                    "owner_id": contract.owner_id,
-                    "result_status": "passed",
-                    "result_reused": False,
-                    "identity": former_identity.to_dict(),
-                    "result_fingerprint": "b" * 64,
-                    "proof_artifact": proof.to_dict(),
-                    "reuse_ticket": None,
-                }
-            },
-        }
-        with mock.patch.object(
-            impact_resolution_module,
-            "source_snapshot",
-            return_value=snapshot,
-        ):
-            plan = impact_resolution_module.resolve_impact(
-                requested_scope="release",
-                tier_commands=(
-                    next(
-                        command
-                        for command in run_test_tier.commands_for_tier("release")
-                        if command.name == contract.owner_id
-                    ),
-                ),
-                all_owner_contracts=(contract,),
-                previous_manifest=previous_manifest,
-                previous_manifest_path="evidence.json",
-                previous_manifest_sha256="c" * 64,
+        with tempfile.TemporaryDirectory(prefix="flowpilot-v5-wrapper-reuse-") as tmp_name:
+            owner_row = self.write_v5_owner_reference(
+                Path(tmp_name),
+                contract.owner_id,
+                identity=former_identity.to_dict(),
             )
+            previous_manifest = {
+                "schema_version": (
+                    impact_resolution_module.EVIDENCE_MANIFEST_SCHEMA_VERSION
+                ),
+                "snapshot": snapshot,
+                "owners": {contract.owner_id: owner_row},
+            }
+            with mock.patch.object(
+                impact_resolution_module,
+                "source_snapshot",
+                return_value=snapshot,
+            ):
+                plan = impact_resolution_module.resolve_impact(
+                    requested_scope="release",
+                    tier_commands=(
+                        next(
+                            command
+                            for command in run_test_tier.commands_for_tier("release")
+                            if command.name == contract.owner_id
+                        ),
+                    ),
+                    all_owner_contracts=(contract,),
+                    previous_manifest=previous_manifest,
+                    previous_manifest_path="evidence.json",
+                    previous_manifest_sha256="c" * 64,
+                )
 
         self.assertFalse(plan.blockers)
         self.assertEqual(plan.decisions[0].identity, current_identity)
@@ -1909,7 +2050,7 @@ class FlowPilotTestTierTests(unittest.TestCase):
         )
         self.assertEqual(plan.executable_owner_ids, ())
 
-    def test_exact_owner_identity_reuses_v4_proof_without_execution(self) -> None:
+    def test_exact_owner_identity_reuses_v5_proof_without_execution(self) -> None:
         command = run_test_tier.TierCommand(
             name="reusable_owner",
             command=(sys.executable, "scripts/test_tier/source_fingerprint.py"),
@@ -1918,49 +2059,32 @@ class FlowPilotTestTierTests(unittest.TestCase):
         contract = impact_resolution_module.build_owner_contracts((command,))[0]
         identity = impact_resolution_module.owner_identity(contract)
         snapshot = source_fingerprint_module.source_snapshot()
-        proof = impact_resolution_module.ProofArtifactRef(
-            artifact_id="proof.reusable_owner.current",
-            producer_route="flowpilot.test-tier.selective-execution",
-            command=" ".join(command.command),
-            result_path="tmp/test_background/reusable_owner.combined.txt",
-            result_status="passed",
-            exit_code=0,
-            artifact_fingerprints={"combined": "a" * 64},
-            covered_obligation_ids=contract.covered_obligation_ids,
-            assertion_scope="external_contract",
-            current=True,
-            route_evidence_current=True,
-            progress_only=False,
-            metadata={"result_fingerprint": "b" * 64},
-        )
-        previous_manifest = {
-            "schema_version": impact_resolution_module.EVIDENCE_MANIFEST_SCHEMA_VERSION,
-            "snapshot": snapshot,
-            "owners": {
-                command.name: {
-                    "owner_id": command.name,
-                    "result_status": "passed",
-                    "result_reused": False,
-                    "identity": identity.to_dict(),
-                    "result_fingerprint": "b" * 64,
-                    "proof_artifact": proof.to_dict(),
-                    "reuse_ticket": None,
-                }
-            },
-        }
-        with mock.patch.object(
-            impact_resolution_module,
-            "source_snapshot",
-            return_value=snapshot,
-        ):
-            plan = impact_resolution_module.resolve_impact(
-                requested_scope="reusable",
-                tier_commands=(command,),
-                all_owner_contracts=(contract,),
-                previous_manifest=previous_manifest,
-                previous_manifest_path="evidence.json",
-                previous_manifest_sha256="c" * 64,
+        with tempfile.TemporaryDirectory(prefix="flowpilot-v5-exact-reuse-") as tmp_name:
+            owner_row = self.write_v5_owner_reference(
+                Path(tmp_name),
+                command.name,
+                identity=identity.to_dict(),
             )
+            previous_manifest = {
+                "schema_version": (
+                    impact_resolution_module.EVIDENCE_MANIFEST_SCHEMA_VERSION
+                ),
+                "snapshot": snapshot,
+                "owners": {command.name: owner_row},
+            }
+            with mock.patch.object(
+                impact_resolution_module,
+                "source_snapshot",
+                return_value=snapshot,
+            ):
+                plan = impact_resolution_module.resolve_impact(
+                    requested_scope="reusable",
+                    tier_commands=(command,),
+                    all_owner_contracts=(contract,),
+                    previous_manifest=previous_manifest,
+                    previous_manifest_path="evidence.json",
+                    previous_manifest_sha256="c" * 64,
+                )
 
         self.assertFalse(plan.blockers)
         self.assertEqual(plan.decisions[0].action, "reuse")
@@ -2213,6 +2337,10 @@ class FlowPilotTestTierTests(unittest.TestCase):
         self.assertIn("background_shared_runtime_resource_race", rejected)
         self.assertIn("background_descendant_settlement_missing", rejected)
         self.assertIn("background_predating_process_misclassified_as_descendant", rejected)
+        self.assertIn(
+            "background_sibling_misclassified_through_reused_parent_pid",
+            rejected,
+        )
         self.assertIn("background_surviving_descendant_promoted", rejected)
         self.assertIn("json_write_readback_can_hang_control_gate", rejected)
         self.assertIn("root_pytest_scans_backup_tests", rejected)

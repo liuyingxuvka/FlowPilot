@@ -69,6 +69,7 @@ class State:
     shared_runtime_resources_serialized: bool = True
     background_descendant_settlement_bounded: bool = True
     background_descendant_lineage_ordered: bool = True
+    background_sibling_isolation_preserved: bool = True
     background_surviving_descendants_fail_closed: bool = True
     json_write_readback_bounded: bool = True
     release_obligation_visible: bool = True
@@ -272,6 +273,12 @@ SCENARIOS: dict[str, State] = {
         _valid_background("background_predating_process_misclassified_as_descendant"),
         background_descendant_lineage_ordered=False,
     ),
+    "background_sibling_misclassified_through_reused_parent_pid": replace(
+        _valid_background(
+            "background_sibling_misclassified_through_reused_parent_pid"
+        ),
+        background_sibling_isolation_preserved=False,
+    ),
     "background_surviving_descendant_promoted": replace(
         _valid_background("background_surviving_descendant_promoted"),
         background_surviving_descendants_fail_closed=False,
@@ -395,6 +402,8 @@ def test_tier_failures(state: State) -> list[str]:
         failures.append("background_descendant_settlement_not_bounded")
     if state.background_requested and not state.background_descendant_lineage_ordered:
         failures.append("background_descendant_lineage_not_ordered")
+    if state.background_requested and not state.background_sibling_isolation_preserved:
+        failures.append("background_sibling_isolation_not_preserved")
     if state.background_requested and not state.background_surviving_descendants_fail_closed:
         failures.append("background_surviving_descendants_not_fail_closed")
     if state.background_requested and not state.json_write_readback_bounded:
@@ -471,6 +480,7 @@ class TestTierStep:
         "background_exclusive_resource",
         "background_interpreter_launch_plan",
         "background_process_tree_identity",
+        "background_process_tree_sibling_isolation",
         "install_sync_plan",
     )
     writes = ("tier_confidence", "deferred_release_obligation")
@@ -551,6 +561,14 @@ def background_completion_requires_exit_evidence(
     ):
         return InvariantResult.fail(
             "accepted background tier that could terminate a process predating its owner"
+        )
+    if (
+        state.status == "accepted"
+        and state.background_requested
+        and not state.background_sibling_isolation_preserved
+    ):
+        return InvariantResult.fail(
+            "accepted background tier that could classify a sibling owner as a descendant"
         )
     if (
         state.status == "accepted"

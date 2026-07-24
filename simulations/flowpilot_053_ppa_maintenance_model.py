@@ -935,15 +935,19 @@ def build_field_lifecycle_plan() -> FieldLifecyclePlan:
             disposition_evidence_refs=(
                 "test:timeout_terminates_descendant_tree_before_writing_terminal_receipt",
                 "test:descendant_identity_rejects_process_that_predates_exact_owner",
+                "test:descendant_identity_does_not_cross_older_pid_reuse_bridge_to_sibling",
             ),
             projection=_projection(
                 "projection.background_process_identity",
                 field_id="test_tier.background_receipt.process_identity",
                 obligation="current_contract.process_tree_descendant_lineage",
-                code_contract="process_liveness.descendant_identity_order",
+                code_contract="process_liveness.descendant_identity_edge_order_and_sibling_isolation",
                 reads=("spawned_process_pid_and_start_token",),
                 writes=("background_meta.process_identity",),
-                error_paths=("missing_or_reused_process_identity",),
+                error_paths=(
+                    "missing_or_reused_process_identity",
+                    "older_pid_reuse_bridge_reaches_sibling_owner",
+                ),
             ),
         ),
         FieldLifecycleRow(
@@ -962,6 +966,7 @@ def build_field_lifecycle_plan() -> FieldLifecyclePlan:
             disposition="same_contract_repaired",
             disposition_evidence_refs=(
                 "test:timeout_terminates_descendant_tree_before_writing_terminal_receipt",
+                "test:descendant_identity_does_not_cross_older_pid_reuse_bridge_to_sibling",
                 "test:background_child_allows_exact_descendants_to_exit_within_bounded_settlement",
                 "test:background_child_rejects_descendant_surviving_bounded_settlement",
             ),
@@ -973,6 +978,7 @@ def build_field_lifecycle_plan() -> FieldLifecyclePlan:
                 reads=("observed_descendant_identities",),
                 writes=("background_meta.cleanup_proof",),
                 error_paths=(
+                    "sibling_owner_misclassified_for_cleanup",
                     "cleanup_unconfirmed_blocks_terminal_receipt",
                     "descendant_survives_bounded_settlement",
                 ),
@@ -1673,7 +1679,7 @@ def build_risk_evidence_ledger_plan(
                 command=(
                     "python simulations/run_flowpilot_ai_response_execution_closure_checks.py "
                     "--mode adversarial --json-out "
-                    "simulations/flowpilot_ai_response_execution_closure_results.json"
+                    "tmp/test_results/formal_ai_submit_adversarial.json"
                 ),
                 summary=str(formal_ai_evidence.get("summary") or "formal AI execution evidence is missing"),
             ),

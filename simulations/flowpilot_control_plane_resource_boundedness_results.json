@@ -1,0 +1,347 @@
+{
+  "checks": {
+    "flowguard_explorer": {
+      "dead_branch_count": 0,
+      "exception_branch_count": 0,
+      "ok": true,
+      "reachability_failure_count": 0,
+      "summary": "sequences=17 initial_states=1 traces=17",
+      "violation_count": 0
+    },
+    "known_bad": {
+      "ok": true,
+      "rows": {
+        "combined_stream_copies_raw_output": {
+          "detected": true,
+          "failures": [
+            "combined evidence copied raw output",
+            "combined terminal index exceeded its byte bound"
+          ]
+        },
+        "daemon_result_accumulates_ticks": {
+          "detected": true,
+          "failures": [
+            "daemon terminal evidence accumulated per-tick bodies",
+            "daemon anomaly evidence exceeded its bound"
+          ]
+        },
+        "legacy_action_observation_fields_return": {
+          "detected": true,
+          "failures": [
+            "retired action observation fields regained current authority"
+          ]
+        },
+        "repeated_progress_appends_events": {
+          "detected": true,
+          "failures": [
+            "repeated unchanged progress was persisted"
+          ]
+        },
+        "retention_applies_without_frozen_plan": {
+          "detected": true,
+          "failures": [
+            "retention apply lacks a frozen plan identity"
+          ]
+        },
+        "retention_selects_protected_entry": {
+          "detected": true,
+          "failures": [
+            "retention selected an ineligible or protected entry"
+          ]
+        },
+        "same_receipt_duplicates_effects": {
+          "detected": true,
+          "failures": [
+            "same receipt produced duplicate control-plane effects"
+          ]
+        },
+        "unchanged_tick_rewrites_state": {
+          "detected": true,
+          "failures": [
+            "durable state commit count does not match semantic delta"
+          ]
+        },
+        "v5_owner_proof_reference_missing": {
+          "detected": true,
+          "failures": [
+            "V5 owner proof reference is incomplete"
+          ]
+        },
+        "wait_reminder_body_is_copied": {
+          "detected": true,
+          "failures": [
+            "wait reminder body was copied into a second authority"
+          ]
+        }
+      }
+    },
+    "scenario_matrix": {
+      "missing_labels": [],
+      "ok": true,
+      "rows": {
+        "combined_stream_copies_raw_output": {
+          "actual_status": "rejected",
+          "contract_failures": [
+            "combined evidence copied raw output",
+            "combined terminal index exceeded its byte bound"
+          ],
+          "expected_status": "rejected",
+          "labels": [
+            "observe:combined_stream_copies_raw_output",
+            "reconcile:combined_stream_copies_raw_output",
+            "persist:combined_stream_copies_raw_output",
+            "record_progress:combined_stream_copies_raw_output",
+            "store_evidence:combined_stream_copies_raw_output",
+            "retain:combined_stream_copies_raw_output:rejected"
+          ],
+          "ok": true
+        },
+        "daemon_result_accumulates_ticks": {
+          "actual_status": "rejected",
+          "contract_failures": [
+            "daemon terminal evidence accumulated per-tick bodies",
+            "daemon anomaly evidence exceeded its bound"
+          ],
+          "expected_status": "rejected",
+          "labels": [
+            "observe:daemon_result_accumulates_ticks",
+            "reconcile:daemon_result_accumulates_ticks",
+            "persist:daemon_result_accumulates_ticks",
+            "record_progress:daemon_result_accumulates_ticks",
+            "store_evidence:daemon_result_accumulates_ticks",
+            "retain:daemon_result_accumulates_ticks:rejected"
+          ],
+          "ok": true
+        },
+        "explicit_retention_archives_eligible_entry": {
+          "actual_status": "accepted",
+          "contract_failures": [],
+          "expected_status": "accepted",
+          "labels": [
+            "observe:explicit_retention_archives_eligible_entry",
+            "reconcile:explicit_retention_archives_eligible_entry",
+            "persist:explicit_retention_archives_eligible_entry",
+            "record_progress:explicit_retention_archives_eligible_entry",
+            "store_evidence:explicit_retention_archives_eligible_entry",
+            "retain:explicit_retention_archives_eligible_entry:accepted"
+          ],
+          "ok": true
+        },
+        "legacy_action_observation_fields_return": {
+          "actual_status": "rejected",
+          "contract_failures": [
+            "retired action observation fields regained current authority"
+          ],
+          "expected_status": "rejected",
+          "labels": [
+            "observe:legacy_action_observation_fields_return",
+            "reconcile:legacy_action_observation_fields_return",
+            "persist:legacy_action_observation_fields_return",
+            "record_progress:legacy_action_observation_fields_return",
+            "store_evidence:legacy_action_observation_fields_return",
+            "retain:legacy_action_observation_fields_return:rejected"
+          ],
+          "ok": true
+        },
+        "one_semantic_delta_commits_once": {
+          "actual_status": "accepted",
+          "contract_failures": [],
+          "expected_status": "accepted",
+          "labels": [
+            "observe:one_semantic_delta_commits_once",
+            "reconcile:one_semantic_delta_commits_once",
+            "persist:one_semantic_delta_commits_once",
+            "record_progress:one_semantic_delta_commits_once",
+            "store_evidence:one_semantic_delta_commits_once",
+            "retain:one_semantic_delta_commits_once:accepted"
+          ],
+          "ok": true
+        },
+        "progress_status_change_is_recorded": {
+          "actual_status": "accepted",
+          "contract_failures": [],
+          "expected_status": "accepted",
+          "labels": [
+            "observe:progress_status_change_is_recorded",
+            "reconcile:progress_status_change_is_recorded",
+            "persist:progress_status_change_is_recorded",
+            "record_progress:progress_status_change_is_recorded",
+            "store_evidence:progress_status_change_is_recorded",
+            "retain:progress_status_change_is_recorded:accepted"
+          ],
+          "ok": true
+        },
+        "repeated_progress_appends_events": {
+          "actual_status": "rejected",
+          "contract_failures": [
+            "repeated unchanged progress was persisted"
+          ],
+          "expected_status": "rejected",
+          "labels": [
+            "observe:repeated_progress_appends_events",
+            "reconcile:repeated_progress_appends_events",
+            "persist:repeated_progress_appends_events",
+            "record_progress:repeated_progress_appends_events",
+            "store_evidence:repeated_progress_appends_events",
+            "retain:repeated_progress_appends_events:rejected"
+          ],
+          "ok": true
+        },
+        "repeated_progress_is_coalesced": {
+          "actual_status": "accepted",
+          "contract_failures": [],
+          "expected_status": "accepted",
+          "labels": [
+            "observe:repeated_progress_is_coalesced",
+            "reconcile:repeated_progress_is_coalesced",
+            "persist:repeated_progress_is_coalesced",
+            "record_progress:repeated_progress_is_coalesced",
+            "store_evidence:repeated_progress_is_coalesced",
+            "retain:repeated_progress_is_coalesced:accepted"
+          ],
+          "ok": true
+        },
+        "retention_applies_without_frozen_plan": {
+          "actual_status": "rejected",
+          "contract_failures": [
+            "retention apply lacks a frozen plan identity"
+          ],
+          "expected_status": "rejected",
+          "labels": [
+            "observe:retention_applies_without_frozen_plan",
+            "reconcile:retention_applies_without_frozen_plan",
+            "persist:retention_applies_without_frozen_plan",
+            "record_progress:retention_applies_without_frozen_plan",
+            "store_evidence:retention_applies_without_frozen_plan",
+            "retain:retention_applies_without_frozen_plan:rejected"
+          ],
+          "ok": true
+        },
+        "retention_selects_protected_entry": {
+          "actual_status": "rejected",
+          "contract_failures": [
+            "retention selected an ineligible or protected entry"
+          ],
+          "expected_status": "rejected",
+          "labels": [
+            "observe:retention_selects_protected_entry",
+            "reconcile:retention_selects_protected_entry",
+            "persist:retention_selects_protected_entry",
+            "record_progress:retention_selects_protected_entry",
+            "store_evidence:retention_selects_protected_entry",
+            "retain:retention_selects_protected_entry:rejected"
+          ],
+          "ok": true
+        },
+        "same_receipt_duplicates_effects": {
+          "actual_status": "rejected",
+          "contract_failures": [
+            "same receipt produced duplicate control-plane effects"
+          ],
+          "expected_status": "rejected",
+          "labels": [
+            "observe:same_receipt_duplicates_effects",
+            "reconcile:same_receipt_duplicates_effects",
+            "persist:same_receipt_duplicates_effects",
+            "record_progress:same_receipt_duplicates_effects",
+            "store_evidence:same_receipt_duplicates_effects",
+            "retain:same_receipt_duplicates_effects:rejected"
+          ],
+          "ok": true
+        },
+        "same_receipt_reconciles_once": {
+          "actual_status": "accepted",
+          "contract_failures": [],
+          "expected_status": "accepted",
+          "labels": [
+            "observe:same_receipt_reconciles_once",
+            "reconcile:same_receipt_reconciles_once",
+            "persist:same_receipt_reconciles_once",
+            "record_progress:same_receipt_reconciles_once",
+            "store_evidence:same_receipt_reconciles_once",
+            "retain:same_receipt_reconciles_once:accepted"
+          ],
+          "ok": true
+        },
+        "unchanged_tick_is_write_free": {
+          "actual_status": "accepted",
+          "contract_failures": [],
+          "expected_status": "accepted",
+          "labels": [
+            "observe:unchanged_tick_is_write_free",
+            "reconcile:unchanged_tick_is_write_free",
+            "persist:unchanged_tick_is_write_free",
+            "record_progress:unchanged_tick_is_write_free",
+            "store_evidence:unchanged_tick_is_write_free",
+            "retain:unchanged_tick_is_write_free:accepted"
+          ],
+          "ok": true
+        },
+        "unchanged_tick_rewrites_state": {
+          "actual_status": "rejected",
+          "contract_failures": [
+            "durable state commit count does not match semantic delta"
+          ],
+          "expected_status": "rejected",
+          "labels": [
+            "observe:unchanged_tick_rewrites_state",
+            "reconcile:unchanged_tick_rewrites_state",
+            "persist:unchanged_tick_rewrites_state",
+            "record_progress:unchanged_tick_rewrites_state",
+            "store_evidence:unchanged_tick_rewrites_state",
+            "retain:unchanged_tick_rewrites_state:rejected"
+          ],
+          "ok": true
+        },
+        "v5_evidence_uses_bounded_references": {
+          "actual_status": "accepted",
+          "contract_failures": [],
+          "expected_status": "accepted",
+          "labels": [
+            "observe:v5_evidence_uses_bounded_references",
+            "reconcile:v5_evidence_uses_bounded_references",
+            "persist:v5_evidence_uses_bounded_references",
+            "record_progress:v5_evidence_uses_bounded_references",
+            "store_evidence:v5_evidence_uses_bounded_references",
+            "retain:v5_evidence_uses_bounded_references:accepted"
+          ],
+          "ok": true
+        },
+        "v5_owner_proof_reference_missing": {
+          "actual_status": "rejected",
+          "contract_failures": [
+            "V5 owner proof reference is incomplete"
+          ],
+          "expected_status": "rejected",
+          "labels": [
+            "observe:v5_owner_proof_reference_missing",
+            "reconcile:v5_owner_proof_reference_missing",
+            "persist:v5_owner_proof_reference_missing",
+            "record_progress:v5_owner_proof_reference_missing",
+            "store_evidence:v5_owner_proof_reference_missing",
+            "retain:v5_owner_proof_reference_missing:rejected"
+          ],
+          "ok": true
+        },
+        "wait_reminder_body_is_copied": {
+          "actual_status": "rejected",
+          "contract_failures": [
+            "wait reminder body was copied into a second authority"
+          ],
+          "expected_status": "rejected",
+          "labels": [
+            "observe:wait_reminder_body_is_copied",
+            "reconcile:wait_reminder_body_is_copied",
+            "persist:wait_reminder_body_is_copied",
+            "record_progress:wait_reminder_body_is_copied",
+            "store_evidence:wait_reminder_body_is_copied",
+            "retain:wait_reminder_body_is_copied:rejected"
+          ],
+          "ok": true
+        }
+      }
+    }
+  },
+  "model": "flowpilot_control_plane_resource_boundedness",
+  "ok": true
+}

@@ -94,7 +94,7 @@ def main(argv: list[str] | None = None) -> int:
     progress_parser = sub.add_parser("progress", help="Record current-run lease progress without completing the packet")
     progress_parser.add_argument("--lease-id", required=True)
     progress_parser.add_argument("--packet-id", required=True)
-    progress_parser.add_argument("--status", required=True)
+    progress_parser.add_argument("--status", required=True, choices=runtime.PROGRESS_STATUSES)
 
     stop_parser = sub.add_parser("stop", help="Stop the current run as an explicit terminal lifecycle event")
     stop_parser.add_argument("--reason", default="manual_stop")

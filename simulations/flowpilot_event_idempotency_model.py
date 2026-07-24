@@ -30,6 +30,12 @@ from typing import Iterable, NamedTuple
 
 from flowguard import FunctionResult, Invariant, InvariantResult, Workflow
 
+RESOURCE_BOUNDEDNESS_CHILD_BINDING = {
+    "model_id": "flowpilot_control_plane_resource_boundedness",
+    "owned_obligation": "same_receipt_one_action_one_scheduler_effect_one_history_fact",
+    "claim_boundary": "event idempotency retains event identity semantics; the child owns repetition bounds",
+}
+
 
 PACKAGE_DISPOSITION_EVENT = "pm_records_research_result_disposition"
 RETIRED_MATERIAL_EXTERNAL_EVENTS = frozenset(

@@ -21,6 +21,12 @@ from flowguard import (
     TestTargetSplitDerivation,
 )
 
+RESOURCE_BOUNDEDNESS_CHILD_BINDING = {
+    "model_id": "flowpilot_control_plane_resource_boundedness",
+    "owned_obligation": "v5_reference_only_owner_proof_and_bounded_failure_excerpt",
+    "claim_boundary": "acceptance TestMesh retains obligation closure; the child owns proof-body duplication bounds",
+}
+
 try:  # pragma: no cover
     from .flowpilot_evidence_truth import testmesh_final_receipt_fields
 except ImportError:  # pragma: no cover
@@ -408,6 +414,8 @@ def _routine_child(
         values.update(dict(evidence_override))
         values.pop("owner_evidence_ids", None)
         values.pop("owner_reuse_tickets", None)
+        values.pop("owner_ref_count", None)
+        values.pop("reused_owner_ref_count", None)
     else:
         values.update(
             {

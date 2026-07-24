@@ -175,15 +175,17 @@ def _mark_pending_return_wait_reminded(router: ModuleType, run_root: Path, run_i
             continue
         if not router._pending_return_matches_wait_target_reminder(record, action):
             continue
+        previous_status = record.get('status')
+        previous_at = str(record.get('last_wait_reminder_at') or '')
+        previous_hash = str(record.get('last_wait_reminder_sha256') or '')
+        removed_history = 'wait_reminder_history' in record
+        record.pop('wait_reminder_history', None)
         if record.get('status') in {None, 'pending', 'awaiting_return', 'returned'}:
             record['status'] = 'reminded'
         record['last_wait_reminder_at'] = delivered_at
         record['last_wait_reminder_sha256'] = reminder_hash
-        history = record.setdefault('wait_reminder_history', [])
-        if isinstance(history, list):
-            history.append({'at': delivered_at, 'reminder_text_sha256': reminder_hash, 'controller_action_id': action.get('controller_action_id'), 'delivered_to_role': receipt_payload.get('delivered_to_role')})
         reminded_ids.append(str(record.get('return_id') or record.get('card_bundle_id') or record.get('delivery_attempt_id') or ''))
-        changed = True
+        changed = changed or removed_history or previous_status != record.get('status') or previous_at != delivered_at or previous_hash != reminder_hash
     if changed:
         ledger['updated_at'] = utc_now()
         write_json(_return_event_ledger_path(run_root), ledger)
@@ -228,18 +230,19 @@ def _apply_wait_target_reminder_receipt(router: ModuleType, project_root: Path, 
             stale_replay = bool(current_last_reminder_at and delivered_at <= current_last_reminder_at)
             if not stale_replay:
                 pending['last_wait_reminder_at'] = delivered_at
+                pending['last_wait_reminder_sha256'] = expected_hash
                 pending['wait_reminder_text'] = action.get('reminder_text')
                 pending['wait_reminder_text_sha256'] = expected_hash
-                reminder_history = pending.setdefault('wait_reminder_history', [])
-                if isinstance(reminder_history, list):
-                    reminder_history.append({'at': delivered_at, 'target_role': target_role, 'reminder_text_sha256': expected_hash, 'controller_action_id': action.get('controller_action_id')})
+                pending.pop('wait_reminder_history', None)
                 run_state['pending_action'] = pending
                 pending_updated = True
     return_update = {'changed': False, 'reminded_return_ids': []}
     if str(action.get('wait_class') or '') == 'ack':
         return_update = router._mark_pending_return_wait_reminded(run_root, str(run_state['run_id']), action, delivered_at=delivered_at, reminder_hash=expected_hash, receipt_payload=receipt_payload)
-    append_history(run_state, 'router_recorded_wait_target_reminder_receipt', {'target_role': target_role, 'wait_class': action.get('wait_class'), 'source_wait_action_type': action.get('source_wait_action_type'), 'pending_wait_updated': pending_updated, 'return_event_ledger_updated': return_update.get('changed')})
-    return {'applied': True, 'source': 'wait_target_reminder_receipt', 'target_role': target_role, 'wait_class': action.get('wait_class'), 'delivered_at': delivered_at, 'pending_wait_updated': pending_updated, 'return_event_ledger_update': return_update}
+    changed = bool(pending_updated or return_update.get('changed'))
+    if changed:
+        append_history(run_state, 'router_recorded_wait_target_reminder_receipt', {'target_role': target_role, 'wait_class': action.get('wait_class'), 'source_wait_action_type': action.get('source_wait_action_type'), 'pending_wait_updated': pending_updated, 'return_event_ledger_updated': return_update.get('changed')})
+    return {'applied': True, 'changed': changed, 'already_current': not changed, 'source': 'wait_target_reminder_receipt', 'target_role': target_role, 'wait_class': action.get('wait_class'), 'delivered_at': delivered_at, 'pending_wait_updated': pending_updated, 'return_event_ledger_update': return_update}
 
 def _boot_action_meta(router: ModuleType, action_type: str) -> dict[str, Any] | None:
     return bootloader_receipts._boot_action_meta(router, action_type)

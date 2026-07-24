@@ -7,6 +7,8 @@ from pathlib import Path
 from typing import Any, Callable
 
 from .definitions import commands_for_tier
+from .background_supervisor import supervisor_control_paths
+from .evidence_v5 import load_json_object
 from .source_fingerprint import source_snapshot
 from .verification import verify_background_tier
 
@@ -54,9 +56,16 @@ def compile_owner_checkpoint_manifest(
             "all background supervisor evidence is structurally invalid: "
             + ",".join(supervisor_failures)
         )
-    source_owners = meta_value.get("owners")
-    if not isinstance(source_owners, dict):
-        raise ValueError("all background supervisor owner rows are missing")
+    control_paths = supervisor_control_paths(all_root, "all")
+    owner_index = load_json_object(control_paths["owner_index"])
+    owner_rows = owner_index.get("owners")
+    if not isinstance(owner_rows, list):
+        raise ValueError("all background supervisor owner refs are missing")
+    source_owners = {
+        str(row.get("owner_id") or ""): row
+        for row in owner_rows
+        if isinstance(row, dict)
+    }
     current_owner_ids = {
         str(row["name"])
         for row in verification["children"]
@@ -90,6 +99,8 @@ def compile_owner_checkpoint_manifest(
             "exit_path": portable_path(exit_path),
             "exit_sha256": sha256(exit_path),
             "impact_plan_id": verification["impact_plan_id"],
+            "impact_plan_ref": verification["impact_plan_ref"],
+            "owner_index_ref": verification["owner_index_ref"],
             "source_snapshot_fingerprint": verification["snapshot_fingerprint"],
             "current_owner_count": len(owners),
             "rejected_owner_count": len(rejected),

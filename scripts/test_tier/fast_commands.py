@@ -205,6 +205,25 @@ FAST_COMMANDS = (
         description="Focused FlowGuard lifecycle for mandatory shallow skill inventory, PM selection, ordinary material work, and optional navigation maps.",
     ),
     TierCommand(
+        name="flowguard_control_plane_resource_boundedness",
+        command=_py(
+            "simulations/run_flowpilot_control_plane_resource_boundedness_checks.py",
+            "--json-out",
+            "simulations/flowpilot_control_plane_resource_boundedness_results.json",
+        ),
+        description="Focused FlowGuard model for write-free no-change ticks, idempotent effects, bounded evidence, and explicit fail-closed retention.",
+    ),
+    TierCommand(
+        name="control_plane_resource_boundedness_contract_tests",
+        command=_py(
+            "-m",
+            "pytest",
+            "tests/test_flowpilot_control_plane_resource_boundedness_model.py",
+            "-q",
+        ),
+        description="Current ordinary tests for the resource-boundedness FunctionBlocks and known-bad matrix.",
+    ),
+    TierCommand(
         name="flowguard_skillguard_current_contract",
         command=_py(
             "simulations/run_flowpilot_skillguard_contract_checks.py",

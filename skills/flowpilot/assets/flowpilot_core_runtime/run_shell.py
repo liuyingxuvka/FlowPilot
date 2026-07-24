@@ -269,6 +269,7 @@ def save_run_ledger(
     guard_trigger: str = "save",
     resume_source: str = "",
 ) -> None:
+    previous_ledger = runtime.load_ledger(shell.ledger_path) if shell.ledger_path.exists() else None
     record_guard_progress = guard_trigger != "save"
     runtime.refresh_lifecycle_guard(
         ledger,
@@ -278,9 +279,19 @@ def save_run_ledger(
         record_event=record_guard_progress,
     )
     runtime.refresh_status_projection(ledger)
+    changed_categories = _changed_top_level_categories(previous_ledger, ledger)
     runtime.save_ledger(ledger, shell.ledger_path)
-    _write_events_jsonl(ledger, shell.events_path)
-    materialize_run_artifacts(shell, ledger)
+    prior_event_count = None
+    if isinstance(previous_ledger, dict):
+        previous_events = previous_ledger.get("events")
+        if isinstance(previous_events, list):
+            prior_event_count = len(previous_events)
+    _write_events_jsonl(
+        ledger,
+        shell.events_path,
+        prior_event_count=prior_event_count,
+    )
+    materialize_run_artifacts(shell, ledger, changed_categories=changed_categories)
     _refresh_current_pointer_status(shell, ledger)
 
 
@@ -416,89 +427,144 @@ def record_startup_intake_result(shell: RunShell, result_path: Path) -> dict[str
     return record
 
 
-def materialize_run_artifacts(shell: RunShell, ledger: dict[str, Any]) -> None:
+def materialize_run_artifacts(
+    shell: RunShell,
+    ledger: dict[str, Any],
+    *,
+    changed_categories: set[str] | None = None,
+) -> None:
     """Project the canonical ledger into current-run envelope/body files."""
 
-    for packet_id, packet in ledger.get("packets", {}).items():
-        _write_json(shell.run_root / "packets" / "envelopes" / f"{packet_id}.json", packet["envelope"])
-        _write_text(shell.run_root / "packets" / "bodies" / f"{packet_id}.md", str(packet.get("body", "")))
-    for route_version, route in ledger.get("routes", {}).items():
-        _write_json(shell.run_root / "routes" / f"route-v{route_version}.json", route)
-    _write_user_flow_runtime_projection(shell, ledger)
-    _write_route_node_projections(shell, ledger.get("route_nodes", {}))
-    if isinstance(ledger.get("high_standard_contract"), dict):
+    if _projection_needed(changed_categories, "packets"):
+        for packet_id, packet in ledger.get("packets", {}).items():
+            _write_json(shell.run_root / "packets" / "envelopes" / f"{packet_id}.json", packet["envelope"])
+            _write_text(shell.run_root / "packets" / "bodies" / f"{packet_id}.md", str(packet.get("body", "")))
+    if _projection_needed(changed_categories, "routes"):
+        for route_version, route in ledger.get("routes", {}).items():
+            _write_json(shell.run_root / "routes" / f"route-v{route_version}.json", route)
+    if _projection_needed(
+        changed_categories,
+        "routes",
+        "active_route_version",
+        "execution_frontier",
+        "route_nodes",
+        "run_id",
+    ):
+        _write_user_flow_runtime_projection(shell, ledger)
+    if _projection_needed(changed_categories, "route_nodes"):
+        _write_route_node_projections(shell, ledger.get("route_nodes", {}))
+    if _projection_needed(changed_categories, "high_standard_contract") and isinstance(
+        ledger.get("high_standard_contract"), dict
+    ):
         _write_json(shell.run_root / "preplanning" / "high_standard_contract.json", ledger["high_standard_contract"])
-    if isinstance(ledger.get("preplanning_discovery"), dict):
+    if _projection_needed(changed_categories, "preplanning_discovery") and isinstance(
+        ledger.get("preplanning_discovery"), dict
+    ):
         _write_json(shell.run_root / "preplanning" / "discovery.json", ledger["preplanning_discovery"])
-    if isinstance(ledger.get("skill_standard_contract"), dict):
+    if _projection_needed(changed_categories, "skill_standard_contract") and isinstance(
+        ledger.get("skill_standard_contract"), dict
+    ):
         _write_json(shell.run_root / "preplanning" / "skill_standard_contract.json", ledger["skill_standard_contract"])
-    for plan_id, plan in ledger.get("node_acceptance_plans", {}).items():
-        _write_json(shell.run_root / "node_acceptance_plans" / f"{plan_id}.json", plan)
-    for replay_id, replay in ledger.get("parent_backward_replays", {}).items():
-        _write_json(shell.run_root / "parent_backward_replays" / f"{replay_id}.json", replay)
-    if isinstance(ledger.get("execution_frontier"), dict):
+    if _projection_needed(changed_categories, "node_acceptance_plans"):
+        for plan_id, plan in ledger.get("node_acceptance_plans", {}).items():
+            _write_json(shell.run_root / "node_acceptance_plans" / f"{plan_id}.json", plan)
+    if _projection_needed(changed_categories, "parent_backward_replays"):
+        for replay_id, replay in ledger.get("parent_backward_replays", {}).items():
+            _write_json(shell.run_root / "parent_backward_replays" / f"{replay_id}.json", replay)
+    if _projection_needed(changed_categories, "execution_frontier") and isinstance(
+        ledger.get("execution_frontier"), dict
+    ):
         _write_json(shell.run_root / "frontier" / "execution_frontier.json", ledger["execution_frontier"])
-    for result_id, result in ledger.get("results", {}).items():
-        _write_json(shell.run_root / "results" / "envelopes" / f"{result_id}.json", result["envelope"])
-        _write_text(shell.run_root / "results" / "bodies" / f"{result_id}.md", str(result.get("body", "")))
-    for lease_id, lease in ledger.get("leases", {}).items():
-        _write_json(shell.run_root / "leases" / f"{lease_id}.json", lease)
-    for assignment_id, assignment in ledger.get("role_assignments", {}).items():
-        _write_json(shell.run_root / "role_assignments" / f"{assignment_id}.json", assignment)
-    for lease_id, memory in ledger.get("role_memory", {}).items():
-        _write_json(shell.run_root / "role_memory" / f"{lease_id}.json", memory)
-    if isinstance(ledger.get("role_continuity"), dict):
+    if _projection_needed(changed_categories, "results"):
+        for result_id, result in ledger.get("results", {}).items():
+            _write_json(shell.run_root / "results" / "envelopes" / f"{result_id}.json", result["envelope"])
+            _write_text(shell.run_root / "results" / "bodies" / f"{result_id}.md", str(result.get("body", "")))
+    if _projection_needed(changed_categories, "leases"):
+        for lease_id, lease in ledger.get("leases", {}).items():
+            _write_json(shell.run_root / "leases" / f"{lease_id}.json", lease)
+    if _projection_needed(changed_categories, "role_assignments"):
+        for assignment_id, assignment in ledger.get("role_assignments", {}).items():
+            _write_json(shell.run_root / "role_assignments" / f"{assignment_id}.json", assignment)
+    if _projection_needed(changed_categories, "role_memory"):
+        for lease_id, memory in ledger.get("role_memory", {}).items():
+            _write_json(shell.run_root / "role_memory" / f"{lease_id}.json", memory)
+    if _projection_needed(changed_categories, "role_continuity") and isinstance(
+        ledger.get("role_continuity"), dict
+    ):
         _write_json(shell.run_root / "role_continuity" / "role_continuity.json", ledger["role_continuity"])
-    for order_id, order in ledger.get("flowguard_work_orders", {}).items():
-        _write_json(shell.run_root / "flowguard" / "work_orders" / f"{order_id}.json", order)
-        envelope = {
-            "order_id": order["order_id"],
-            "modeled_target": order["modeled_target"],
-            "risk_type": order["risk_type"],
-            "selected_skill": order["selected_skill"],
-            "subject_id": order["subject_id"],
-            "status": order["status"],
-            "source_generation": order["source_generation"],
-        }
-        _write_json(shell.run_root / "flowguard" / "work_orders" / "envelopes" / f"{order_id}.json", envelope)
-        _write_json(shell.run_root / "flowguard" / "work_orders" / "reports" / f"{order_id}.json", order)
-    for review_id, review in ledger.get("reviews", {}).items():
-        _write_json(shell.run_root / "reviews" / f"{review_id}.json", review)
-    for import_id, imported in ledger.get("imported_evidence", {}).items():
-        _write_json(shell.run_root / "imports" / f"{import_id}.json", imported)
-    for evidence_id, evidence in ledger.get("validation_evidence", {}).items():
-        safe_id = evidence_id.replace("/", "_").replace("\\", "_")
-        _write_json(shell.run_root / "evidence" / f"{safe_id}.json", evidence)
-    if isinstance(ledger.get("cutover_gate"), dict):
+    if _projection_needed(changed_categories, "flowguard_work_orders"):
+        for order_id, order in ledger.get("flowguard_work_orders", {}).items():
+            _write_json(shell.run_root / "flowguard" / "work_orders" / f"{order_id}.json", order)
+            envelope = {
+                "order_id": order["order_id"],
+                "modeled_target": order["modeled_target"],
+                "risk_type": order["risk_type"],
+                "selected_skill": order["selected_skill"],
+                "subject_id": order["subject_id"],
+                "status": order["status"],
+                "source_generation": order["source_generation"],
+            }
+            _write_json(shell.run_root / "flowguard" / "work_orders" / "envelopes" / f"{order_id}.json", envelope)
+            _write_json(shell.run_root / "flowguard" / "work_orders" / "reports" / f"{order_id}.json", order)
+    if _projection_needed(changed_categories, "reviews"):
+        for review_id, review in ledger.get("reviews", {}).items():
+            _write_json(shell.run_root / "reviews" / f"{review_id}.json", review)
+    if _projection_needed(changed_categories, "imported_evidence"):
+        for import_id, imported in ledger.get("imported_evidence", {}).items():
+            _write_json(shell.run_root / "imports" / f"{import_id}.json", imported)
+    if _projection_needed(changed_categories, "validation_evidence"):
+        for evidence_id, evidence in ledger.get("validation_evidence", {}).items():
+            safe_id = evidence_id.replace("/", "_").replace("\\", "_")
+            _write_json(shell.run_root / "evidence" / f"{safe_id}.json", evidence)
+    if _projection_needed(changed_categories, "cutover_gate") and isinstance(ledger.get("cutover_gate"), dict):
         _write_json(shell.run_root / "closure" / "cutover_gate.json", ledger["cutover_gate"])
-    if isinstance(ledger.get("closure"), dict):
+    if _projection_needed(
+        changed_categories,
+        "closure",
+        "terminal_lifecycle",
+        "status_projection",
+        "run_id",
+    ) and isinstance(ledger.get("closure"), dict):
         _write_json(shell.run_root / "closure" / "final_closure.json", runtime.render_final_closure_projection(ledger))
-    if isinstance(ledger.get("lifecycle_guard"), dict):
+    if _projection_needed(changed_categories, "lifecycle_guard") and isinstance(
+        ledger.get("lifecycle_guard"), dict
+    ):
         _write_json(shell.run_root / "lifecycle" / "guard.json", ledger["lifecycle_guard"])
-    if isinstance(ledger.get("terminal_lifecycle"), dict):
+    if _projection_needed(changed_categories, "terminal_lifecycle") and isinstance(
+        ledger.get("terminal_lifecycle"), dict
+    ):
         _write_json(shell.run_root / "lifecycle" / "terminal_lifecycle.json", ledger["terminal_lifecycle"])
-    if ledger.get("lifecycle_guard_history"):
+    if _projection_needed(changed_categories, "lifecycle_guard_history") and ledger.get("lifecycle_guard_history"):
         _write_json(shell.run_root / "lifecycle" / "guard_history.json", ledger["lifecycle_guard_history"])
-    if isinstance(ledger.get("foreground_duty"), dict):
+    if _projection_needed(changed_categories, "foreground_duty") and isinstance(
+        ledger.get("foreground_duty"), dict
+    ):
         _write_json(shell.run_root / "lifecycle" / "foreground_duty.json", ledger["foreground_duty"])
-    if ledger.get("foreground_duty_history"):
+    if _projection_needed(changed_categories, "foreground_duty_history") and ledger.get("foreground_duty_history"):
         _write_json(shell.run_root / "lifecycle" / "foreground_duty_history.json", ledger["foreground_duty_history"])
-    if isinstance(ledger.get("flowpilot_runtime_self_check"), dict):
+    if _projection_needed(changed_categories, "flowpilot_runtime_self_check") and isinstance(
+        ledger.get("flowpilot_runtime_self_check"), dict
+    ):
         _write_json(
             shell.run_root / "runtime" / "flowpilot_runtime_self_check_receipt.json",
             ledger["flowpilot_runtime_self_check"],
         )
-    if isinstance(ledger.get("final_route_wide_gate_ledger"), dict):
+    if _projection_needed(changed_categories, "final_route_wide_gate_ledger") and isinstance(
+        ledger.get("final_route_wide_gate_ledger"), dict
+    ):
         _write_json(shell.run_root / "closure" / "final_route_wide_gate_ledger.json", ledger["final_route_wide_gate_ledger"])
-    if isinstance(ledger.get("final_requirement_evidence_matrix"), dict):
+    if _projection_needed(changed_categories, "final_requirement_evidence_matrix") and isinstance(
+        ledger.get("final_requirement_evidence_matrix"), dict
+    ):
         _write_json(shell.run_root / "closure" / "final_requirement_evidence_matrix.json", ledger["final_requirement_evidence_matrix"])
-    if ledger.get("orphan_evidence"):
+    if _projection_needed(changed_categories, "orphan_evidence") and ledger.get("orphan_evidence"):
         _write_json(shell.run_root / "evidence" / "orphan_evidence.json", ledger["orphan_evidence"])
-    status_projection = ledger.get("status_projection")
-    _write_json(
-        shell.run_root / "console" / "status.json",
-        status_projection if isinstance(status_projection, dict) else runtime.render_console(ledger),
-    )
+    if _projection_needed(changed_categories, "status_projection"):
+        status_projection = ledger.get("status_projection")
+        _write_json(
+            shell.run_root / "console" / "status.json",
+            status_projection if isinstance(status_projection, dict) else runtime.render_console(ledger),
+        )
 
 
 def _user_flow_route_nodes(
@@ -649,25 +715,44 @@ def _refresh_current_pointer_status(shell: RunShell, ledger: dict[str, Any]) -> 
     _append_index(shell.flowpilot_root / "index.json", current)
 
 
-def _write_events_jsonl(ledger: dict[str, Any], events_path: Path) -> None:
+def _write_events_jsonl(
+    ledger: dict[str, Any],
+    events_path: Path,
+    *,
+    prior_event_count: int | None = None,
+) -> None:
     events_path.parent.mkdir(parents=True, exist_ok=True)
-    existing_ids: set[str] = set()
-    if events_path.exists():
-        for line in events_path.read_text(encoding="utf-8").splitlines():
-            if not line.strip():
-                continue
-            try:
-                payload = json.loads(line)
-            except json.JSONDecodeError:
-                continue
-            event_id = payload.get("event_id")
-            if isinstance(event_id, str):
-                existing_ids.add(event_id)
-    new_lines = [
-        json.dumps(event, sort_keys=True)
-        for event in ledger.get("events", [])
-        if event.get("event_id") not in existing_ids
-    ]
+    events = [event for event in ledger.get("events", []) if isinstance(event, dict)]
+    start_index = 0
+    if events_path.exists() and events_path.stat().st_size:
+        terminal = _read_terminal_jsonl_record(events_path)
+        terminal_event_id = terminal.get("event_id")
+        if not isinstance(terminal_event_id, str) or not terminal_event_id:
+            raise runtime.BlackBoxRuntimeError("events.jsonl terminal record is missing event_id")
+        if prior_event_count is not None:
+            if prior_event_count <= 0 or prior_event_count > len(events):
+                raise runtime.BlackBoxRuntimeError(
+                    "events.jsonl terminal identity is inconsistent with the prior event count"
+                )
+            if events[prior_event_count - 1].get("event_id") != terminal_event_id:
+                raise runtime.BlackBoxRuntimeError(
+                    "events.jsonl terminal event does not match the prior ledger boundary"
+                )
+            start_index = prior_event_count
+        else:
+            matching_indexes = [
+                index for index, event in enumerate(events) if event.get("event_id") == terminal_event_id
+            ]
+            if len(matching_indexes) != 1:
+                raise runtime.BlackBoxRuntimeError(
+                    "events.jsonl terminal event identity does not resolve exactly once in the current ledger"
+                )
+            start_index = matching_indexes[0] + 1
+        if start_index > len(events):
+            raise runtime.BlackBoxRuntimeError(
+                "events.jsonl prior event boundary exceeds the current ledger"
+            )
+    new_lines = [json.dumps(event, sort_keys=True) for event in events[start_index:]]
     if new_lines:
         with events_path.open("a", encoding="utf-8") as handle:
             handle.write("\n".join(new_lines) + "\n")
@@ -713,12 +798,55 @@ def _filename_safe_stem(raw_id: str) -> str:
     return "".join(ch if ch.isalnum() or ch in "._-" else "_" for ch in raw_id)
 
 
-def _write_json(path: Path, payload: Any) -> None:
-    _write_text(path, json.dumps(payload, indent=2, sort_keys=True) + "\n")
+def _changed_top_level_categories(
+    previous: dict[str, Any] | None,
+    current: dict[str, Any],
+) -> set[str] | None:
+    if previous is None:
+        return None
+    keys = set(previous) | set(current)
+    return {key for key in keys if previous.get(key) != current.get(key)}
 
 
-def _write_text(path: Path, text: str) -> None:
+def _projection_needed(changed_categories: set[str] | None, *keys: str) -> bool:
+    return changed_categories is None or any(key in changed_categories for key in keys)
+
+
+def _read_terminal_jsonl_record(path: Path) -> dict[str, Any]:
+    with path.open("rb") as handle:
+        handle.seek(0, 2)
+        position = handle.tell()
+        buffer = b""
+        while position > 0:
+            block_size = min(8192, position)
+            position -= block_size
+            handle.seek(position)
+            buffer = handle.read(block_size) + buffer
+            lines = buffer.rstrip(b"\r\n").splitlines()
+            if len(lines) > 1 or position == 0:
+                raw = lines[-1] if lines else b""
+                break
+        else:
+            raw = b""
+    if not raw:
+        raise runtime.BlackBoxRuntimeError("events.jsonl has no terminal record")
+    try:
+        payload = json.loads(raw.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise runtime.BlackBoxRuntimeError("events.jsonl terminal record is invalid JSON") from exc
+    if not isinstance(payload, dict):
+        raise runtime.BlackBoxRuntimeError("events.jsonl terminal record must be a JSON object")
+    return payload
+
+
+def _write_json(path: Path, payload: Any) -> bool:
+    return _write_text(path, json.dumps(payload, indent=2, sort_keys=True) + "\n")
+
+
+def _write_text(path: Path, text: str) -> bool:
     path.parent.mkdir(parents=True, exist_ok=True)
+    if path.exists() and path.read_text(encoding="utf-8") == text:
+        return False
     tmp_path = None
     try:
         with tempfile.NamedTemporaryFile(
@@ -732,6 +860,7 @@ def _write_text(path: Path, text: str) -> None:
             handle.write(text)
             tmp_path = Path(handle.name)
         tmp_path.replace(path)
+        return True
     finally:
         if tmp_path is not None and tmp_path.exists():
             tmp_path.unlink()

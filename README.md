@@ -15,15 +15,15 @@
 </p>
 
 <p align="center">
-  Source version: <strong>v0.12.1</strong> · MIT License · open-source AI-agent control runtime
+  Source version: <strong>v0.13.0</strong> · MIT License · open-source AI-agent control runtime
 </p>
 <!-- README HERO END -->
 
 English comes first. The second half is a full Chinese mirror.
 
-This source is v0.12.1. Its release closure requires one exact task-owned
+This source is v0.13.0. Its release closure requires one exact task-owned
 commit, a fast-forward update of the GitHub default branch, an annotated
-`v0.12.1` tag, and a source-only GitHub Release that all identify that same
+`v0.13.0` tag, and a source-only GitHub Release that all identify that same
 commit. Until those remote checks pass, the version label is source metadata,
 not a claim that publication has completed.
 
@@ -135,7 +135,7 @@ In plain language:
 
 | Field | Value |
 | --- | --- |
-| Source version | `v0.12.1` |
+| Source version | `v0.13.0` |
 | Public project name | `FlowPilot` |
 | Skill slug | `flowpilot` |
 | Release shape | Source package only, no binary app bundle |
@@ -143,16 +143,17 @@ In plain language:
 | Required core dependency | Real `flowguard` Python package |
 | Current UI surface | Windows WPF startup intake dialog plus chat route signs |
 
-`v0.12.1` removes repository-wide fingerprint equality as test-applicability
-authority. The first current-contract release executes one explicit baseline;
-later runs bind to one exact prior v4 manifest and SHA-256, then independently
-classify each command owner as `reuse`, `execute`, or `blocked` from that
-owner's command, covered inputs, dependencies, environment, obligations, and
-MTA evidence subjects. Unmapped or stale evidence blocks instead of falling
-through to run-all. Line-ending-only transport, generated results, and
-unrelated FlowGuard upgrades no longer invalidate otherwise current owners.
-Each logical MTA evidence row has exactly one command owner and its own reuse
-projection back to that proof.
+`v0.13.0` keeps the full opt-in PM, Worker, FlowGuard, Reviewer, repair, and
+terminal-replay workflow while removing control-plane write amplification.
+No-change daemon observation performs no authoritative state write; repeated
+receipts, reminders, progress, and projections are content-aware and
+idempotent. Validation evidence now uses one current V5 reference contract:
+stdout and stderr remain the complete raw bodies, while the bounded
+`combined.txt`, supervisor receipt, owner index, verification views, and reuse
+rows point to exact hashed proof instead of copying it. The existing retention
+tool also gains a fail-closed, read-only plan followed by explicit
+plan-hash-bound archive/apply; release and installation never clean historical
+data automatically.
 
 ## When To Use FlowPilot
 
@@ -256,7 +257,7 @@ MIT. See [`LICENSE`](./LICENSE).
 
 # FlowPilot 中文说明
 
-**Source version:** `v0.12.1`<br />
+**Source version:** `v0.13.0`<br />
 **许可证：** MIT<br />
 **形态：** open-source AI-agent control runtime
 
@@ -368,7 +369,7 @@ startup intake
 
 | 字段 | 值 |
 | --- | --- |
-| Source version | `v0.12.1` |
+| Source version | `v0.13.0` |
 | Public project name | `FlowPilot` |
 | Skill slug | `flowpilot` |
 | Release shape | source package only, no binary app bundle |
@@ -376,12 +377,12 @@ startup intake
 | Required core dependency | real `flowguard` Python package |
 | Current UI surface | Windows WPF startup intake dialog plus chat route signs |
 
-当前源码版本是 `v0.12.1`。本次发布闭环要求：只包含本任务文件的精确 Git commit、
-GitHub 默认分支的 fast-forward 更新、指向同一 commit 的 `v0.12.1` annotated tag，
+当前源码版本是 `v0.13.0`。本次发布闭环要求：只包含本任务文件的精确 Git commit、
+GitHub 默认分支的 fast-forward 更新、指向同一 commit 的 `v0.13.0` annotated tag，
 以及同一版本的 source-only GitHub Release。远端核验完成前，Source version 只是
 源码元数据，不代表发布已经完成。
 
-`v0.12.1` 不再用“整个仓库指纹必须完全一致”决定测试是否失效。第一次当前合同发布只运行一次明确的基线；以后每次都必须绑定一个精确的 v4 证据清单及其 SHA-256，然后按每个 command owner 自己的命令、输入、依赖、环境、义务和 MTA 证据，分别判定为 `reuse`、`execute` 或 `blocked`。无法映射或已经过期的证据会明确阻塞，不会退回全量重跑。只有换行格式变化、生成结果变化或无关 FlowGuard 升级时，未受影响 owner 的证据可以继续复用。每条逻辑 MTA 证据也必须且只能归属一个 command owner。
+`v0.13.0` 不削减完整的 opt-in PM、Worker、FlowGuard、Reviewer、repair 和 terminal replay 流程，修的是控制面写入放大：没有语义变化的 daemon 观察不再重写权威状态，重复 receipt、reminder、progress 和投影会按内容幂等合并。验证证据改成唯一的 V5 引用合同：stdout/stderr 仍保留完整原文，但有大小上限的 `combined.txt`、supervisor receipt、owner index、verification view 和 reuse row 只引用精确哈希证明，不再复制正文。现有 retention 工具也升级为 fail-closed 的只读 plan，再由明确的 plan SHA 绑定 archive/apply；安装和发布不会自动清理历史资料。
 
 ## 什么时候用 FlowPilot
 

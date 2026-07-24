@@ -3698,7 +3698,8 @@
           "disposition_closed": true,
           "disposition_evidence_refs": [
             "test:timeout_terminates_descendant_tree_before_writing_terminal_receipt",
-            "test:descendant_identity_rejects_process_that_predates_exact_owner"
+            "test:descendant_identity_rejects_process_that_predates_exact_owner",
+            "test:descendant_identity_does_not_cross_older_pid_reuse_bridge_to_sibling"
           ],
           "field_id": "test_tier.background_receipt.process_identity",
           "field_name": "process_identity",
@@ -3712,9 +3713,10 @@
           "old_field_ids": [],
           "old_or_replacement_like": false,
           "projection": {
-            "code_contract_id": "process_liveness.descendant_identity_order",
+            "code_contract_id": "process_liveness.descendant_identity_edge_order_and_sibling_isolation",
             "error_paths": [
-              "missing_or_reused_process_identity"
+              "missing_or_reused_process_identity",
+              "older_pid_reuse_bridge_reaches_sibling_owner"
             ],
             "evidence_refs": [
               "gate:flowpilot_053_field_lifecycle",
@@ -3770,6 +3772,7 @@
           "disposition_closed": true,
           "disposition_evidence_refs": [
             "test:timeout_terminates_descendant_tree_before_writing_terminal_receipt",
+            "test:descendant_identity_does_not_cross_older_pid_reuse_bridge_to_sibling",
             "test:background_child_allows_exact_descendants_to_exit_within_bounded_settlement",
             "test:background_child_rejects_descendant_surviving_bounded_settlement"
           ],
@@ -3787,6 +3790,7 @@
           "projection": {
             "code_contract_id": "test_tier.run_background_child",
             "error_paths": [
+              "sibling_owner_misclassified_for_cleanup",
               "cleanup_unconfirmed_blocks_terminal_receipt",
               "descendant_survives_bounded_settlement"
             ],
@@ -5303,9 +5307,10 @@
           "transition_cell_id": ""
         },
         {
-          "code_contract_id": "process_liveness.descendant_identity_order",
+          "code_contract_id": "process_liveness.descendant_identity_edge_order_and_sibling_isolation",
           "error_paths": [
-            "missing_or_reused_process_identity"
+            "missing_or_reused_process_identity",
+            "older_pid_reuse_bridge_reaches_sibling_owner"
           ],
           "evidence_refs": [
             "gate:flowpilot_053_field_lifecycle",
@@ -5341,6 +5346,7 @@
         {
           "code_contract_id": "test_tier.run_background_child",
           "error_paths": [
+            "sibling_owner_misclassified_for_cleanup",
             "cleanup_unconfirmed_blocks_terminal_receipt",
             "descendant_survives_bounded_settlement"
           ],
@@ -5578,7 +5584,7 @@
       "stale_zero": true
     },
     "ok": true,
-    "path": "simulations/flowpilot_ai_response_execution_closure_results.json",
+    "path": "tmp/test_results/formal_ai_submit_adversarial.json",
     "summary": "Formal adversarial AI execution is current and proof-backed (441 passed)."
   },
   "gates": {
@@ -5992,7 +5998,7 @@
                 "primary_entrypoint_id": "flowpilot_core_runtime.runtime.submit_result",
                 "proof_artifact": {
                   "artifact_fingerprints": {
-                    "simulations/flowpilot_current_contract_cartesian_matrix_results.json": "sha256:4ccaa0cd7dc98223b5a7413fff2a6e1c87de34025ebffb940431555c9a09a5a3"
+                    "simulations/flowpilot_current_contract_cartesian_matrix_results.json": "sha256:1192ec7e438ef5dc5acac2f89ecc6212065422157168249d90dd88f4246a236a"
                   },
                   "artifact_id": "proof:flowpilot:path_runtime_submit_current_result",
                   "assertion_scope": "external_contract",
@@ -6070,7 +6076,7 @@
                 "primary_entrypoint_id": "flowpilot_core_runtime.runtime.submit_result",
                 "proof_artifact": {
                   "artifact_fingerprints": {
-                    "simulations/flowpilot_current_contract_cartesian_matrix_results.json": "sha256:4ccaa0cd7dc98223b5a7413fff2a6e1c87de34025ebffb940431555c9a09a5a3"
+                    "simulations/flowpilot_current_contract_cartesian_matrix_results.json": "sha256:1192ec7e438ef5dc5acac2f89ecc6212065422157168249d90dd88f4246a236a"
                   },
                   "artifact_id": "proof:flowpilot:path_runtime_submit_current_result",
                   "assertion_scope": "external_contract",
@@ -7318,7 +7324,7 @@
           "primary_entrypoint_id": "flowpilot_core_runtime.runtime.submit_result",
           "proof_artifact": {
             "artifact_fingerprints": {
-              "simulations/flowpilot_current_contract_cartesian_matrix_results.json": "sha256:4ccaa0cd7dc98223b5a7413fff2a6e1c87de34025ebffb940431555c9a09a5a3"
+              "simulations/flowpilot_current_contract_cartesian_matrix_results.json": "sha256:1192ec7e438ef5dc5acac2f89ecc6212065422157168249d90dd88f4246a236a"
             },
             "artifact_id": "proof:flowpilot:path_runtime_submit_current_result",
             "assertion_scope": "external_contract",
@@ -7396,7 +7402,7 @@
           "primary_entrypoint_id": "flowpilot_core_runtime.runtime._apply_pm_repair_decision",
           "proof_artifact": {
             "artifact_fingerprints": {
-              "simulations/flowpilot_unified_repair_native_runtime_conformance_results.json": "sha256:d5f0bcb6e0a4159bda164b0501d1988be7db2c6cc82e628c22b81ca034b0645c"
+              "simulations/flowpilot_unified_repair_native_runtime_conformance_results.json": "sha256:de0d36e54a172c54287eaa1b2df7ed9f8ef8b920655bc248df7351fec55f286b"
             },
             "artifact_id": "proof:flowpilot:path_runtime_unified_late_defect_repair",
             "assertion_scope": "external_contract",
@@ -7478,7 +7484,7 @@
           "primary_entrypoint_id": "flowpilot_new_role_commands.open_result",
           "proof_artifact": {
             "artifact_fingerprints": {
-              "simulations/flowpilot_current_contract_cartesian_matrix_results.json": "sha256:4ccaa0cd7dc98223b5a7413fff2a6e1c87de34025ebffb940431555c9a09a5a3"
+              "simulations/flowpilot_current_contract_cartesian_matrix_results.json": "sha256:1192ec7e438ef5dc5acac2f89ecc6212065422157168249d90dd88f4246a236a"
             },
             "artifact_id": "proof:flowpilot:path_agent_operation_open_authorized_result_material",
             "assertion_scope": "external_contract",
@@ -7556,7 +7562,7 @@
           "primary_entrypoint_id": "flowpilot_new_role_commands.open_packet",
           "proof_artifact": {
             "artifact_fingerprints": {
-              "simulations/flowpilot_current_contract_cartesian_matrix_results.json": "sha256:4ccaa0cd7dc98223b5a7413fff2a6e1c87de34025ebffb940431555c9a09a5a3"
+              "simulations/flowpilot_current_contract_cartesian_matrix_results.json": "sha256:1192ec7e438ef5dc5acac2f89ecc6212065422157168249d90dd88f4246a236a"
             },
             "artifact_id": "proof:flowpilot:path_agent_operation_open_current_submission_checklist",
             "assertion_scope": "external_contract",
@@ -8265,7 +8271,7 @@
         },
         {
           "assertion_scope": "external_contract",
-          "command": "python simulations/run_flowpilot_ai_response_execution_closure_checks.py --mode adversarial --json-out simulations/flowpilot_ai_response_execution_closure_results.json",
+          "command": "python simulations/run_flowpilot_ai_response_execution_closure_checks.py --mode adversarial --json-out tmp/test_results/formal_ai_submit_adversarial.json",
           "current": true,
           "evidence_id": "evidence.formal_ai_execution_closure",
           "metadata": {},

@@ -36,6 +36,7 @@ class ContractInput:
     numbered_completion_report_current: bool = True
     independent_flowguard_current: bool = True
     reviewer_and_pm_disposition_current: bool = True
+    control_plane_resource_boundedness_current: bool = True
     final_parent_receipts_current: bool = True
     parallel_skillguard_route: bool = False
     former_contract_authority_present: bool = False
@@ -193,6 +194,7 @@ class BindIndependentClosure:
         "workstream_bound",
         "independent_flowguard_current",
         "reviewer_and_pm_disposition_current",
+        "control_plane_resource_boundedness_current",
         "final_parent_receipts_current",
     )
     writes = ("closure_bound",)
@@ -209,6 +211,10 @@ class BindIndependentClosure:
             (
                 input_obj.reviewer_and_pm_disposition_current,
                 "reviewer_or_pm_disposition_missing",
+            ),
+            (
+                input_obj.control_plane_resource_boundedness_current,
+                "control_plane_resource_boundedness_missing",
             ),
             (input_obj.final_parent_receipts_current, "final_parent_receipts_missing"),
         )
@@ -358,6 +364,8 @@ def export_contract_model() -> dict[str, object]:
         ("obligation:flowpilot-integrate-verify-repair", "step:flowpilot-complete-workstream", "monotonic_closure"),
         ("obligation:flowpilot-numbered-completion-report", "step:flowpilot-complete-workstream", "monotonic_closure"),
         ("obligation:flowpilot-independent-flowguard-review", "step:flowpilot-independent-closure", "monotonic_closure"),
+        ("obligation:flowpilot-no-change-zero-authoritative-write", "step:flowpilot-independent-closure", "monotonic_closure"),
+        ("obligation:flowpilot-bounded-runtime-evidence", "step:flowpilot-independent-closure", "monotonic_closure"),
         ("obligation:flowpilot-current-final-receipts", "step:flowpilot-independent-closure", "monotonic_closure"),
     )
     return {
@@ -414,6 +422,9 @@ def main() -> int:
         "missing_numbered_plan": ContractInput(numbered_role_plan_current=False),
         "unintegrated_delegation": ContractInput(delegated_outputs_integrated=False),
         "missing_independent_flowguard": ContractInput(independent_flowguard_current=False),
+        "unbounded_control_plane": ContractInput(
+            control_plane_resource_boundedness_current=False
+        ),
         "stale_final_receipts": ContractInput(final_parent_receipts_current=False),
     }
     blocked = {name: _run(case)[1] for name, case in known_bad.items()}

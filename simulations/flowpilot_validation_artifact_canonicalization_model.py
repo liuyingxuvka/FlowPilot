@@ -14,6 +14,12 @@ from typing import Iterable, NamedTuple
 
 from flowguard import FunctionResult, Invariant, InvariantResult, Workflow
 
+RESOURCE_BOUNDEDNESS_CHILD_BINDING = {
+    "model_id": "flowpilot_control_plane_resource_boundedness",
+    "owned_obligation": "stdout_stderr_single_raw_authority_and_bounded_combined_index",
+    "claim_boundary": "artifact canonicalization retains current evidence selection; the child owns physical duplication bounds",
+}
+
 
 CANONICAL_PAIR_CURRENT = "canonical_pair_current"
 SHADOW_ONLY_CURRENT = "shadow_only_current"

@@ -18,6 +18,7 @@ from flowpilot_router_io_json import (
     read_json_if_valid,
     write_json,
     write_json_atomic,
+    write_json_if_changed,
 )
 from flowpilot_router_io_locks import (
     RUNTIME_JSON_WRITE_LOCK_CLEANUP_RETRY_SECONDS,
@@ -100,4 +101,5 @@ __all__ = (
     "utc_now",
     "write_json",
     "write_json_atomic",
+    "write_json_if_changed",
 )

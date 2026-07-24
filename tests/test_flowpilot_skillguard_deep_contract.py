@@ -140,7 +140,7 @@ class FlowPilotSkillGuardDeepContractTests(unittest.TestCase):
                 "route:flowpilot-independent-closure",
             },
         )
-        self.assertEqual(len(exported["obligations"]), 10)
+        self.assertEqual(len(exported["obligations"]), 12)
         self.assertEqual(module.main(), 0)
 
     def test_every_required_model_obligation_has_a_check_and_monotonic_closure(self) -> None:
@@ -195,7 +195,7 @@ class FlowPilotSkillGuardDeepContractTests(unittest.TestCase):
         self.assertNotIn("--resume", check["args"])
         self.assertTrue(
             any(
-                str(value).endswith("/v0.12.0-final")
+                str(value).endswith("/v0.13.0-final-v5-r3")
                 for value in check["args"]
             )
         )

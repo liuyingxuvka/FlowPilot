@@ -134,6 +134,86 @@
       "summary": "OK: parent=flowpilot_resource_facade_structure scope=release decision=structure_mesh_green_can_continue findings=0"
     }
   },
+  "retention_structure_mesh": {
+    "hazards": [
+      {
+        "blocked": true,
+        "blocker_count": 2,
+        "decision": "coverage_gap_blocked",
+        "finding_codes": [
+          "coverage_gap",
+          "target_function_owner_mismatch"
+        ],
+        "name": "missing_retention_partition_owner"
+      },
+      {
+        "blocked": true,
+        "blocker_count": 2,
+        "decision": "ownership_conflict",
+        "finding_codes": [
+          "duplicate_state_owner",
+          "target_state_owner_mismatch"
+        ],
+        "name": "duplicate_retention_state_owner"
+      },
+      {
+        "blocked": true,
+        "blocker_count": 1,
+        "decision": "facade_compatibility_blocked",
+        "finding_codes": [
+          "facade_missing"
+        ],
+        "name": "missing_retention_facade"
+      },
+      {
+        "blocked": true,
+        "blocker_count": 4,
+        "decision": "entrypoint_compatibility_blocked",
+        "finding_codes": [
+          "entrypoint_removed",
+          "facade_missing"
+        ],
+        "name": "removed_retention_entrypoint"
+      },
+      {
+        "blocked": true,
+        "blocker_count": 1,
+        "decision": "dependency_cycle_blocked",
+        "finding_codes": [
+          "dependency_cycle"
+        ],
+        "name": "retention_dependency_cycle"
+      },
+      {
+        "blocked": true,
+        "blocker_count": 1,
+        "decision": "missing_release_evidence",
+        "finding_codes": [
+          "release_parity_not_current"
+        ],
+        "name": "stale_retention_parity"
+      },
+      {
+        "blocked": true,
+        "blocker_count": 1,
+        "decision": "insufficient_evidence",
+        "finding_codes": [
+          "insufficient_evidence_tier"
+        ],
+        "name": "insufficient_retention_release_evidence"
+      }
+    ],
+    "ok": true,
+    "report": {
+      "decision": "structure_mesh_green_can_continue",
+      "decision_scope": "release",
+      "findings": [],
+      "ok": true,
+      "parent_module_id": "flowpilot_runtime_retention_structure_split",
+      "release_obligations": [],
+      "summary": "OK: parent=flowpilot_runtime_retention_structure_split scope=release decision=structure_mesh_green_can_continue findings=0"
+    }
+  },
   "structure_mesh": {
     "hazards": [
       {

@@ -14,16 +14,19 @@ runtime_context: Treat the runtime delivery envelope as the live source for the 
 ## Complete Evidence Workstream
 
 Treat the research/evidence packet as one independently accountable complete
-workstream. Before gathering evidence, write a numbered plan that covers the
+workstream. Before gathering evidence, write one numbered plan at the
+acceptance-obligation or meaningful-phase level that covers the
 decision question, source/experiment strategy, negative checks, bounded
 delegation, evidence integration, verification and report self-repair. Execute
 that plan fully and integrate all delegated findings yourself. Do not invent
 new product scope, route structure or acceptance rules.
 
 In `Contract Self-Check`, include
-`workstream_plan_and_completion` with every numbered step, status, evidence
+`workstream_plan_and_completion` and update those same obligation/phase rows
+with status, evidence
 refs, deviation and unresolved item, plus delegation/integration, verification
-and repair. Correct defects or contradictions in your own evidence report
+and repair. Do not add rows for individual commands, reads, polls, or
+microsteps, and do not copy a second final plan. Correct defects or contradictions in your own evidence report
 before submission. Role-local FlowGuard may help test the evidence plan but
 cannot approve the report or replace independent Reviewer/FlowGuard gates.
 

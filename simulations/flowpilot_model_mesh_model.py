@@ -93,6 +93,9 @@ class State:
     route_authority_no_delta_repeat_absorbed: bool = True
     repeated_lifecycle_action_absorbed: bool = True
     lifecycle_guard_control_plane_stuck: bool = False
+    resource_boundedness_child_registered: bool = False
+    resource_boundedness_result_current: bool = False
+    resource_boundedness_proof_refs_complete: bool = False
 
 
 @dataclass(frozen=True)
@@ -127,6 +130,9 @@ def _valid_live_state(name: str) -> State:
         completed_agent_id_belongs_to_role=True,
         known_hazard_live_projection_available=True,
         installed_skill_matches_repo=True,
+        resource_boundedness_child_registered=True,
+        resource_boundedness_result_current=True,
+        resource_boundedness_proof_refs_complete=True,
     )
 
 
@@ -246,6 +252,18 @@ SCENARIOS: Dict[str, State] = {
     "parent_child_lifecycle_replay_skipped": replace(
         _valid_live_state("parent_child_lifecycle_replay_skipped"),
         parent_child_lifecycle_replayed=False,
+    ),
+    "resource_boundedness_child_missing": replace(
+        _valid_live_state("resource_boundedness_child_missing"),
+        resource_boundedness_child_registered=False,
+    ),
+    "resource_boundedness_result_stale": replace(
+        _valid_live_state("resource_boundedness_result_stale"),
+        resource_boundedness_result_current=False,
+    ),
+    "resource_boundedness_proof_refs_missing": replace(
+        _valid_live_state("resource_boundedness_proof_refs_missing"),
+        resource_boundedness_proof_refs_complete=False,
     ),
     "legal_next_action_policy_missing": replace(
         _valid_live_state("legal_next_action_policy_missing"),
@@ -391,6 +409,12 @@ def mesh_failures(state: State) -> List[str]:
             failures.append("repeated_lifecycle_action_must_block_mesh_green")
         if state.lifecycle_guard_control_plane_stuck:
             failures.append("lifecycle_guard_stuck_must_block_mesh_green")
+        if not state.resource_boundedness_child_registered:
+            failures.append("resource_boundedness_child_not_registered")
+        if not state.resource_boundedness_result_current:
+            failures.append("resource_boundedness_result_not_current")
+        if not state.resource_boundedness_proof_refs_complete:
+            failures.append("resource_boundedness_proof_refs_incomplete")
 
     if state.decision in BLOCKING_DECISIONS:
         if state.safe_to_continue_claimed:
@@ -452,6 +476,7 @@ class ModelMeshStep:
         "control_transaction_registry_status",
         "coverage_status",
         "install_status",
+        "resource_boundedness_child_result",
     )
     writes = ("mesh_authority_decision", "classified_blocking_decision")
     idempotency = "pure evidence classification keyed by run_id and model fingerprint"

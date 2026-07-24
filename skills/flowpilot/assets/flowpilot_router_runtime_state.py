@@ -170,8 +170,8 @@ def load_run_state(router: ModuleType, project_root: Path, bootstrap_state: dict
 def load_run_state_from_run_root(router: ModuleType, project_root: Path, run_root: Path) -> tuple[dict[str, Any], Path] | tuple[None, Path]:
     return runtime_state_persistence.load_run_state_from_run_root(router, project_root, run_root)
 
-def save_run_state(router: ModuleType, run_root: Path, state: dict[str, Any]) -> None:
-    runtime_state_persistence.save_run_state(router, run_root, state)
+def save_run_state(router: ModuleType, run_root: Path, state: dict[str, Any]) -> bool:
+    return runtime_state_persistence.save_run_state(router, run_root, state)
 
 def _create_run_id(router: ModuleType) -> str:
     _bind_router(router)

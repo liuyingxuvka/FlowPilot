@@ -33,7 +33,9 @@ from scripts.test_tier.source_fingerprint import source_fingerprint
 
 
 RESULTS_PATH = ROOT / "flowpilot_053_ppa_maintenance_results.json"
-FORMAL_AI_RESULTS_PATH = ROOT / "flowpilot_ai_response_execution_closure_results.json"
+FORMAL_AI_RESULTS_PATH = (
+    REPO_ROOT / "tmp" / "test_results" / "formal_ai_submit_adversarial.json"
+)
 MODEL_TEST_ALIGNMENT_RESULTS_PATH = ROOT / "flowpilot_model_test_alignment_results.json"
 
 

@@ -98,6 +98,9 @@ class State:
     ordinary_resource_discovery_child_registered: bool = False
     ordinary_resource_discovery_child_passed: bool = False
     ordinary_resource_discovery_evidence_current: bool = False
+    control_plane_resource_boundedness_child_registered: bool = False
+    control_plane_resource_boundedness_child_passed: bool = False
+    control_plane_resource_boundedness_evidence_current: bool = False
     product_function_architecture_pm_synthesized: bool = False
     product_function_high_standard_posture_written: bool = False
     product_function_target_and_failure_bar_written: bool = False
@@ -842,6 +845,7 @@ def _self_interrogation_index_final_ready(state: State) -> bool:
 def _product_function_architecture_ready(state: State) -> bool:
     return (
         _ordinary_resource_discovery_child_ready(state)
+        and _control_plane_resource_boundedness_child_ready(state)
         and state.product_function_architecture_pm_synthesized
         and state.product_function_high_standard_posture_written
         and state.product_function_target_and_failure_bar_written
@@ -870,6 +874,14 @@ def _ordinary_resource_discovery_child_ready(state: State) -> bool:
         and state.ordinary_resource_discovery_child_registered
         and state.ordinary_resource_discovery_child_passed
         and state.ordinary_resource_discovery_evidence_current
+    )
+
+
+def _control_plane_resource_boundedness_child_ready(state: State) -> bool:
+    return (
+        state.control_plane_resource_boundedness_child_registered
+        and state.control_plane_resource_boundedness_child_passed
+        and state.control_plane_resource_boundedness_evidence_current
     )
 
 
@@ -1541,6 +1553,9 @@ class CapabilityRouterStep:
         "ordinary_resource_discovery_child_registered",
         "ordinary_resource_discovery_child_passed",
         "ordinary_resource_discovery_evidence_current",
+        "control_plane_resource_boundedness_child_registered",
+        "control_plane_resource_boundedness_child_passed",
+        "control_plane_resource_boundedness_evidence_current",
         "product_function_architecture_pm_synthesized",
         "product_function_high_standard_posture_written",
         "product_function_target_and_failure_bar_written",
@@ -1893,6 +1908,9 @@ class CapabilityRouterStep:
         "ordinary_resource_discovery_child_registered",
         "ordinary_resource_discovery_child_passed",
         "ordinary_resource_discovery_evidence_current",
+        "control_plane_resource_boundedness_child_registered",
+        "control_plane_resource_boundedness_child_passed",
+        "control_plane_resource_boundedness_evidence_current",
         "product_function_architecture_pm_synthesized",
         "product_function_high_standard_posture_written",
         "product_function_target_and_failure_bar_written",
@@ -3960,6 +3978,34 @@ def actor_authority_gates_require_correct_role(
     return InvariantResult.pass_()
 
 
+def control_plane_resource_boundedness_child_before_capability_route_design(
+    state: State, trace
+) -> InvariantResult:
+    del trace
+    if (
+        state.control_plane_resource_boundedness_child_passed
+        and not state.control_plane_resource_boundedness_child_registered
+    ):
+        return InvariantResult.fail(
+            "control-plane resource-boundedness child passed without parent registration"
+        )
+    if (
+        state.control_plane_resource_boundedness_evidence_current
+        and not state.control_plane_resource_boundedness_child_passed
+    ):
+        return InvariantResult.fail(
+            "control-plane resource-boundedness evidence became current before the child passed"
+        )
+    if (
+        state.product_function_architecture_pm_synthesized
+        or state.pm_initial_capability_decision_recorded
+    ) and not _control_plane_resource_boundedness_child_ready(state):
+        return InvariantResult.fail(
+            "capability route design advanced without current control-plane resource-boundedness evidence"
+        )
+    return InvariantResult.pass_()
+
+
 def role_binding_memory_rehydration_required(state: State, trace) -> InvariantResult:
     del trace
     if state.self_interrogation_pm_ratified and not (
@@ -4111,6 +4157,11 @@ INVARIANTS = (
         name="ordinary_resource_discovery_child_before_capability_route_design",
         description="The current focused resource-discovery child proves shallow skill inventory, PM selection, ordinary evidence work, and optional-map behavior before capability route design.",
         predicate=ordinary_resource_discovery_child_before_capability_route_design,
+    ),
+    Invariant(
+        name="control_plane_resource_boundedness_child_before_capability_route_design",
+        description="The focused resource-boundedness child proves no-change, idempotency, bounded evidence, and fail-closed retention before capability route design.",
+        predicate=control_plane_resource_boundedness_child_before_capability_route_design,
     ),
     Invariant(
         name="actor_authority_gates_require_correct_role",

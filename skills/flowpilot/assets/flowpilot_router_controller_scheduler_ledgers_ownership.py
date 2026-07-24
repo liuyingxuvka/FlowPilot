@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from types import ModuleType
 from typing import Any
@@ -53,8 +54,26 @@ def _read_router_ownership_ledger(router: ModuleType, project_root: Path, run_ro
 def _write_router_ownership_ledger(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any], ledger: dict[str, Any]) -> dict[str, Any]:
     _bind_router(router)
     entries = ledger.get('entries') if isinstance(ledger.get('entries'), list) else []
-    ledger.update({'schema_version': ROUTER_OWNERSHIP_LEDGER_SCHEMA, 'run_id': run_state.get('run_id'), 'run_root': project_relative(project_root, run_root), 'updated_at': utc_now(), 'entries': [item for item in entries if isinstance(item, dict)]})
+    ledger.update({'schema_version': ROUTER_OWNERSHIP_LEDGER_SCHEMA, 'run_id': run_state.get('run_id'), 'run_root': project_relative(project_root, run_root), 'entries': [item for item in entries if isinstance(item, dict)]})
     ledger['counts'] = router._router_ownership_counts(ledger['entries'])
+    existing = read_json_if_exists(_router_ownership_ledger_path(run_root))
+    existing_semantic = json.loads(json.dumps(existing, sort_keys=True)) if existing else {}
+    candidate_semantic = json.loads(json.dumps(ledger, sort_keys=True))
+    existing_semantic.pop('updated_at', None)
+    candidate_semantic.pop('updated_at', None)
+    for payload in (existing_semantic, candidate_semantic):
+        for entry in payload.get('entries', []) if isinstance(payload.get('entries'), list) else []:
+            if isinstance(entry, dict):
+                entry.pop('updated_at', None)
+    if (
+        existing.get('schema_version') == ROUTER_OWNERSHIP_LEDGER_SCHEMA
+        and existing_semantic == candidate_semantic
+    ):
+        ledger.clear()
+        ledger.update(existing)
+        run_state['router_ownership_ledger_path'] = project_relative(project_root, _router_ownership_ledger_path(run_root))
+        return ledger
+    ledger['updated_at'] = utc_now()
     write_json(_router_ownership_ledger_path(run_root), ledger)
     run_state['router_ownership_ledger_path'] = project_relative(project_root, _router_ownership_ledger_path(run_root))
     return ledger

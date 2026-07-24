@@ -47,9 +47,9 @@ class FlowPilotControlPlaneFailureCanaryReplayTests(FlowPilotRouterRuntimeTestBa
         thread.join(timeout=1.0)
 
         self.assertEqual(result["tick_count"], 2)
-        self.assertTrue(result["ticks"][0]["deferred"])
-        self.assertEqual(result["ticks"][0]["defer_reason"], "runtime_ledger_write_in_progress")
-        self.assertFalse(result["ticks"][1].get("deferred", False))
+        self.assertTrue(result["anomalies"][0]["deferred"])
+        self.assertEqual(result["anomalies"][0]["defer_reason"], "runtime_ledger_write_in_progress")
+        self.assertFalse(result["last_tick"].get("deferred", False))
         self.assertEqual(read_json(scheduler_path)["schema_version"], router.ROUTER_SCHEDULER_LEDGER_SCHEMA)
         self.assertFalse(write_lock.exists())
 

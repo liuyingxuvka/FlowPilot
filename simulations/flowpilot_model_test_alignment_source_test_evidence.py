@@ -271,12 +271,12 @@ def source_test_evidence() -> tuple[TestEvidence, ...]:
         ),
         _evidence(
             "source.owner_applicability.exact_reuse",
-            test_name="test_exact_owner_identity_reuses_v4_proof_without_execution",
+            test_name="test_exact_owner_identity_reuses_v5_proof_without_execution",
             path="tests/test_flowpilot_test_tiers.py",
             command=(
                 "python -m unittest tests.test_flowpilot_test_tiers."
                 "FlowPilotTestTierTests."
-                "test_exact_owner_identity_reuses_v4_proof_without_execution"
+                "test_exact_owner_identity_reuses_v5_proof_without_execution"
             ),
             test_kind=HAPPY,
             covers=("current_contract.owner_scoped_evidence_applicability",),

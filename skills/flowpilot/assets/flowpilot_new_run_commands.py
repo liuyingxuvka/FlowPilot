@@ -22,9 +22,15 @@ from flowpilot_new_shared import (
 def progress(root: Path, *, lease_id: str, packet_id: str, status: str) -> dict[str, Any]:
     shell = run_shell.load_run_shell(root)
     ledger = run_shell.load_run_ledger(shell)
-    runtime.record_progress(ledger, lease_id, packet_id, status)
-    run_shell.save_run_ledger(shell, ledger, guard_trigger="progress")
-    return {"ok": True, **_runtime_state(ledger)}
+    progress_update = runtime.record_progress(ledger, lease_id, packet_id, status)
+    if progress_update["persisted"]:
+        run_shell.save_run_ledger(shell, ledger, guard_trigger="progress")
+    return {
+        "ok": True,
+        "coalesced": progress_update["coalesced"],
+        "progress_update": progress_update,
+        **_runtime_state(ledger),
+    }
 
 
 def stop_run(root: Path, *, reason: str = "manual_stop") -> dict[str, Any]:

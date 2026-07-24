@@ -28,6 +28,12 @@ from flowpilot_control_plane_friction_model_transitions import (
     next_safe_states,
 )
 
+RESOURCE_BOUNDEDNESS_CHILD_BINDING = {
+    "model_id": "flowpilot_control_plane_resource_boundedness",
+    "owned_obligation": "no_change_persistence_and_bounded_control_plane_effects",
+    "claim_boundary": "control-plane friction retains handoff safety; the child owns byte/write bounds",
+}
+
 
 def build_workflow() -> Workflow:
     return Workflow((ControlPlaneStep(),), name="flowpilot_control_plane_friction")

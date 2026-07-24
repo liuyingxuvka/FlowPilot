@@ -5,6 +5,7 @@ import json
 import sys
 import tempfile
 import unittest
+from unittest import mock
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -204,7 +205,7 @@ class FlowPilotLifecycleGuardTests(unittest.TestCase):
             flowpilot_new.ack(root, lease_id=lease_id, packet_id=packet_id)
 
             shell = run_shell.load_run_shell(root, run_id="run-progress-grace")
-            progress = flowpilot_new.progress(root, lease_id=lease_id, packet_id=packet_id, status="still_working")
+            progress = flowpilot_new.progress(root, lease_id=lease_id, packet_id=packet_id, status="working")
 
             self.assertEqual(progress["next_action"]["action_type"], "wait_for_result")
             self.assertEqual(progress["lifecycle_guard"]["decision"], "wait_for_result")
@@ -213,6 +214,109 @@ class FlowPilotLifecycleGuardTests(unittest.TestCase):
             ledger = run_shell.load_run_ledger(shell)
             self.assertEqual(ledger["leases"][lease_id]["progress_count"], 1)
             self.assertEqual(ledger["packets"][packet_id]["status"], "acknowledged")
+
+    def test_progress_coalesces_same_status_but_persists_change_and_due_reminder(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            started = flowpilot_new.start_run(
+                root,
+                run_id="run-progress-coalescing",
+                headless_startup_text="Exercise bounded progress persistence.",
+                require_formal_ui=False,
+            )
+            packet_id = started["next_action"]["subject_id"]
+            lease_id = self._lease_packet(
+                root,
+                packet_id=packet_id,
+                responsibility="pm",
+                agent_id="fake-pm-progress-coalescing",
+            )
+            flowpilot_new.ack(root, lease_id=lease_id, packet_id=packet_id)
+            shell = run_shell.load_run_shell(root, run_id="run-progress-coalescing")
+
+            first = flowpilot_new.progress(
+                root,
+                lease_id=lease_id,
+                packet_id=packet_id,
+                status="working",
+            )
+            first_ledger = run_shell.load_run_ledger(shell)
+            first_progress_events = [
+                event for event in first_ledger["events"] if event["event_type"] == "lease_progress"
+            ]
+            ledger_mtime = shell.ledger_path.stat().st_mtime_ns
+
+            with mock.patch.object(run_shell, "save_run_ledger", wraps=run_shell.save_run_ledger) as save_mock:
+                repeated = flowpilot_new.progress(
+                    root,
+                    lease_id=lease_id,
+                    packet_id=packet_id,
+                    status="working",
+                )
+
+            repeated_ledger = run_shell.load_run_ledger(shell)
+            self.assertFalse(first["coalesced"])
+            self.assertTrue(repeated["coalesced"])
+            self.assertFalse(repeated["progress_update"]["persisted"])
+            save_mock.assert_not_called()
+            self.assertEqual(shell.ledger_path.stat().st_mtime_ns, ledger_mtime)
+            self.assertEqual(repeated_ledger["leases"][lease_id]["progress_count"], 1)
+            self.assertEqual(
+                len([event for event in repeated_ledger["events"] if event["event_type"] == "lease_progress"]),
+                len(first_progress_events),
+            )
+
+            changed = flowpilot_new.progress(
+                root,
+                lease_id=lease_id,
+                packet_id=packet_id,
+                status="verifying",
+            )
+            self.assertFalse(changed["coalesced"])
+            self.assertEqual(changed["progress_update"]["reason"], "status_changed")
+            changed_ledger = run_shell.load_run_ledger(shell)
+            self.assertEqual(changed_ledger["leases"][lease_id]["progress_count"], 2)
+
+            changed_ledger["leases"][lease_id]["last_progress_at"] = (
+                datetime.now(timezone.utc) - timedelta(minutes=10)
+            ).isoformat()
+            run_shell.save_run_ledger(shell, changed_ledger, guard_trigger="test_progress_due")
+            due = flowpilot_new.progress(
+                root,
+                lease_id=lease_id,
+                packet_id=packet_id,
+                status="verifying",
+            )
+            due_ledger = run_shell.load_run_ledger(shell)
+            self.assertFalse(due["coalesced"])
+            self.assertEqual(due["progress_update"]["reason"], "due_liveness_reminder")
+            self.assertEqual(due_ledger["leases"][lease_id]["progress_count"], 3)
+
+    def test_progress_rejects_status_outside_current_finite_vocabulary(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            started = flowpilot_new.start_run(
+                root,
+                run_id="run-progress-invalid-status",
+                headless_startup_text="Exercise finite progress status rejection.",
+                require_formal_ui=False,
+            )
+            packet_id = started["next_action"]["subject_id"]
+            lease_id = self._lease_packet(
+                root,
+                packet_id=packet_id,
+                responsibility="pm",
+                agent_id="fake-pm-progress-invalid",
+            )
+            flowpilot_new.ack(root, lease_id=lease_id, packet_id=packet_id)
+
+            with self.assertRaisesRegex(runtime.BlackBoxRuntimeError, "progress status must be one of"):
+                flowpilot_new.progress(
+                    root,
+                    lease_id=lease_id,
+                    packet_id=packet_id,
+                    status="still_working",
+                )
 
     def test_ack_wait_uses_five_and_ten_minute_thresholds(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -293,7 +397,7 @@ class FlowPilotLifecycleGuardTests(unittest.TestCase):
             self.assertFalse(patrol["lifecycle_guard"]["wait_recovery"]["replacement_eligible"])
             self.assertEqual(patrol["foreground_duty"]["wait_patrol"]["reminder"]["kind"], "progress")
 
-            recovered = flowpilot_new.progress(root, lease_id=lease_id, packet_id=packet_id, status="still_working")
+            recovered = flowpilot_new.progress(root, lease_id=lease_id, packet_id=packet_id, status="working")
             self.assertEqual(recovered["lifecycle_guard"]["decision"], "wait_for_result")
             self.assertEqual(recovered["lifecycle_guard"]["wait_recovery"]["state"], "grace_wait")
 
@@ -334,7 +438,7 @@ class FlowPilotLifecycleGuardTests(unittest.TestCase):
             ledger["leases"][lease_id]["last_liveness_status"] = "lost"
             run_shell.save_run_ledger(shell, ledger, guard_trigger="test_legacy_residue")
 
-            recovered = flowpilot_new.progress(root, lease_id=lease_id, packet_id=packet_id, status="still_working")
+            recovered = flowpilot_new.progress(root, lease_id=lease_id, packet_id=packet_id, status="working")
 
             self.assertEqual(recovered["lifecycle_guard"]["decision"], "wait_for_result")
             self.assertEqual(recovered["lifecycle_guard"]["wait_recovery"]["state"], "grace_wait")
@@ -509,6 +613,8 @@ class FlowPilotLifecycleGuardTests(unittest.TestCase):
             )["result_id"]
             shell = run_shell.load_run_shell(root, run_id="run-accepted-race-repair")
             ledger = run_shell.load_run_ledger(shell)
+            ledger["results"][result_id]["status"] = "accepted"
+            ledger["results"][result_id]["accepted"] = True
             ledger["packets"][packet_id]["status"] = "acknowledged"
             ledger["packets"][packet_id]["accepted_result_id"] = ""
             assignment = runtime.resolve_role_assignment(ledger, "pm", packet_id=packet_id, host_kind="fake")

@@ -15,10 +15,12 @@ from typing import Any, Iterable
 
 try:
     from .definitions import TierCommand, commands_for_tier
+    from .evidence_v5 import path_reference
     from .source_fingerprint import source_fingerprint
 except ImportError:  # pragma: no cover - script execution path
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     from definitions import TierCommand, commands_for_tier
+    from evidence_v5 import path_reference
     from source_fingerprint import source_fingerprint
 
 
@@ -189,13 +191,16 @@ def _launch_background(
     command: TierCommand,
     *,
     log_root: Path,
-    impact_plan_id: str,
-    owner_identity_value: MappingLike,
+    impact_plan_path: Path,
+    impact_plan_sha256: str,
     timeout_seconds: int | None = None,
 ) -> dict[str, Any]:
     log_root.mkdir(parents=True, exist_ok=True)
     paths = artifact_paths(log_root, command.name)
     clear_artifacts(paths)
+    impact_plan_ref = path_reference(impact_plan_path, root=ROOT)
+    if impact_plan_ref["sha256"] != impact_plan_sha256:
+        raise ValueError("impact plan changed before child launch")
     meta = {
         "name": command.name,
         "command": list(command.command),
@@ -206,20 +211,13 @@ def _launch_background(
         "exit_code": None,
         "proof_reused": None,
         "timeout_seconds": _coerce_timeout_seconds(timeout_seconds),
-        "impact_plan_id": impact_plan_id,
-        "owner_identity": dict(owner_identity_value),
+        "impact_plan_ref": {
+            **impact_plan_ref,
+            "owner_id": command.name,
+        },
         "artifacts": {key: str(value) for key, value in paths.items()},
     }
     _write_json(paths["meta"], meta)
-    owner_identity_path = log_root / f"{_safe_base(command.name)}.owner.json"
-    _write_json(
-        owner_identity_path,
-        {
-            "impact_plan_id": impact_plan_id,
-            "owner_id": command.name,
-            "identity": dict(owner_identity_value),
-        },
-    )
     child_args = [
         sys.executable,
         str(BACKGROUND_CHILD_ENTRYPOINT),
@@ -232,10 +230,12 @@ def _launch_background(
         str(log_root),
         "--background-child-timeout-seconds",
         str(meta["timeout_seconds"]),
-        "--impact-plan-id",
-        impact_plan_id,
-        "--owner-identity-path",
-        str(owner_identity_path),
+        "--impact-plan",
+        str(impact_plan_path),
+        "--impact-plan-sha256",
+        impact_plan_sha256,
+        "--owner-id",
+        command.name,
     ]
     proc = subprocess.Popen(
         child_args,
@@ -262,16 +262,16 @@ def launch_background(
     commands: Iterable[TierCommand],
     *,
     log_root: Path,
-    impact_plan_id: str,
-    owner_identities: MappingLike,
+    impact_plan_path: Path,
+    impact_plan_sha256: str,
     timeout_seconds: int | None = None,
 ) -> list[dict[str, Any]]:
     return [
         _launch_background(
             command,
             log_root=log_root,
-            impact_plan_id=impact_plan_id,
-            owner_identity_value=owner_identities[command.name],
+            impact_plan_path=impact_plan_path,
+            impact_plan_sha256=impact_plan_sha256,
             timeout_seconds=timeout_seconds,
         )
         for command in commands

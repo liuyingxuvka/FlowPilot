@@ -7,6 +7,7 @@ from types import ModuleType
 from typing import Any
 
 import flowpilot_router_runtime_state_persistence as _parent
+from flowpilot_router_io_json import write_json_if_changed
 
 
 for _name, _value in vars(_parent).items():
@@ -139,7 +140,7 @@ def load_run_state_from_run_root(router: ModuleType, project_root: Path, run_roo
     _attach_run_state_load_metadata(state)
     return (state, run_root)
 
-def save_run_state(router: ModuleType, run_root: Path, state: dict[str, Any]) -> None:
+def save_run_state(router: ModuleType, run_root: Path, state: dict[str, Any]) -> bool:
     _bind_router(router)
     path = router.run_state_path(run_root)
     payload = _public_run_state_snapshot(state)
@@ -147,7 +148,8 @@ def save_run_state(router: ModuleType, run_root: Path, state: dict[str, Any]) ->
     existing = read_json_if_exists(path)
     if loaded_hash and existing and _run_state_snapshot_hash(existing) != loaded_hash:
         payload = _merge_stale_run_state_save(existing, state)
-    write_json(path, payload)
+    written = write_json_if_changed(path, payload)
     state.clear()
     state.update(payload)
     _attach_run_state_load_metadata(state)
+    return written

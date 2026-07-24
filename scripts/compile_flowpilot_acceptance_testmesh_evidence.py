@@ -7,9 +7,7 @@ import hashlib
 import json
 from pathlib import Path
 import sys
-from typing import Any, Iterable, Mapping
-
-from flowguard import TestResultReuseTicket
+from typing import Any, Iterable
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
@@ -31,7 +29,7 @@ from test_tier.source_fingerprint import source_fingerprint, source_snapshot
 
 
 DEFAULT_OUT = ROOT / "simulations" / "flowpilot_acceptance_testmesh_evidence_manifest.json"
-MANIFEST_SCHEMA_VERSION = "flowpilot.acceptance_testmesh_evidence_manifest.v4"
+MANIFEST_SCHEMA_VERSION = "flowpilot.acceptance_testmesh_evidence_manifest.v5"
 
 
 def _portable_path(path: Path) -> str:
@@ -41,6 +39,24 @@ def _portable_path(path: Path) -> str:
         return resolved.relative_to(ROOT.resolve()).as_posix()
     except ValueError:
         return f"<external>/{resolved.parent.name}/{resolved.name}"
+
+
+def _portable_artifact_ref(value: Any) -> Any:
+    if not isinstance(value, dict):
+        return value
+    portable = dict(value)
+    path = portable.get("path")
+    if isinstance(path, str) and path:
+        portable["path"] = _portable_path(Path(path))
+    return portable
+
+
+def _portable_owner_row(value: dict[str, Any]) -> dict[str, Any]:
+    portable = dict(value)
+    for field_name in ("proof_ref", "reuse_ticket_ref"):
+        if field_name in portable:
+            portable[field_name] = _portable_artifact_ref(portable[field_name])
+    return portable
 
 
 def _sha256(path: Path) -> str:
@@ -70,9 +86,14 @@ def _proof(
 ) -> dict[str, Any]:
     artifacts: list[Path] = []
     for report in tier_reports:
-        artifacts.extend((report["meta_path"], report["exit_path"]))
-        artifacts.extend(report["child_meta_paths"])
-        artifacts.extend(report["child_exit_paths"])
+        artifacts.extend(
+            (
+                report["meta_path"],
+                report["exit_path"],
+                report["impact_plan_path"],
+                report["owner_index_path"],
+            )
+        )
     started = min(str(report["meta"].get("start_time") or "") for report in tier_reports)
     finished = max(str(report["meta"].get("end_time") or "") for report in tier_reports)
     return {
@@ -96,7 +117,7 @@ def _proof(
                 report["impact_plan"]["plan_id"] for report in tier_reports
             ],
             "owner_proof_artifact_ids": sorted(
-                str(row.get("proof_artifact", {}).get("artifact_id") or "")
+                str(row.get("proof_ref", {}).get("artifact_id") or "")
                 for report in tier_reports
                 for row in report["owners"].values()
                 if isinstance(row, dict)
@@ -113,72 +134,6 @@ def _proof(
             "covered_tiers": [report["tier"] for report in tier_reports],
         },
     }
-
-
-def _aggregate_reuse_ticket(
-    *,
-    evidence_id: str,
-    proof: dict[str, Any],
-    owner_rows: Mapping[str, Any],
-    covered_obligation_ids: tuple[str, ...],
-) -> dict[str, Any] | None:
-    if not owner_rows or any(
-        not isinstance(row, dict) or row.get("result_reused") is not True
-        for row in owner_rows.values()
-    ):
-        return None
-    identities = {
-        owner_id: row["identity"]
-        for owner_id, row in owner_rows.items()
-    }
-    final_receipt = testmesh_final_receipt_fields(
-        proof,
-        covered_obligation_ids=covered_obligation_ids,
-    )
-    ticket = TestResultReuseTicket(
-        evidence_id=evidence_id,
-        previous_evidence_id=str(proof["artifact_id"]),
-        reason="every exact child owner is current through its own reuse ticket",
-        same_output_proof_id=str(proof["artifact_id"]),
-        command_fingerprint=hashlib.sha256(
-            str(proof["command"]).encode("utf-8")
-        ).hexdigest(),
-        test_source_fingerprint=hashlib.sha256(
-            json.dumps(
-                {
-                    owner_id: identity.get("test_source_fingerprint")
-                    for owner_id, identity in identities.items()
-                },
-                sort_keys=True,
-            ).encode("utf-8")
-        ).hexdigest(),
-        tested_artifact_fingerprint=hashlib.sha256(
-            json.dumps(
-                {
-                    owner_id: identity.get("tested_artifact_fingerprint")
-                    for owner_id, identity in identities.items()
-                },
-                sort_keys=True,
-            ).encode("utf-8")
-        ).hexdigest(),
-        dependency_fingerprints={
-            owner_id: str(identity.get("covered_input_fingerprint") or "")
-            for owner_id, identity in identities.items()
-        },
-        environment_fingerprint=hashlib.sha256(
-            json.dumps(
-                {
-                    owner_id: identity.get("environment_fingerprint")
-                    for owner_id, identity in identities.items()
-                },
-                sort_keys=True,
-            ).encode("utf-8")
-        ).hexdigest(),
-        result_fingerprint=str(final_receipt["result_fingerprint"]),
-        covered_obligation_ids=covered_obligation_ids,
-        metadata={"owner_evidence_ids": sorted(owner_rows)},
-    )
-    return ticket.to_dict()
 
 
 def compile_owner_checkpoint_manifest(*, all_root: Path) -> dict[str, Any]:
@@ -259,13 +214,6 @@ def _compile_routine_evidence(
             covered_ids=covered_ids,
             snapshot_fingerprint=snapshot_fingerprint,
         )
-        result_reused = proof_report["executed_count"] == 0
-        aggregate_ticket = _aggregate_reuse_ticket(
-            evidence_id=suite.suite_id,
-            proof=proof,
-            owner_rows=proof_report["owners"],
-            covered_obligation_ids=covered_ids,
-        )
         routine[suite.suite_id] = {
             "result_status": "passed",
             "evidence_tier": "external_contract",
@@ -281,14 +229,11 @@ def _compile_routine_evidence(
             "has_exit_artifact": True,
             "has_result_artifact": True,
             "progress_only": False,
-            "result_reused": result_reused,
-            "reuse_ticket": aggregate_ticket,
+            "result_reused": False,
+            "reuse_ticket": None,
             "owner_evidence_ids": sorted(proof_report["owners"]),
-            "owner_reuse_tickets": {
-                owner_id: row.get("reuse_ticket")
-                for owner_id, row in proof_report["owners"].items()
-                if row.get("result_reused") is True
-            },
+            "owner_ref_count": len(proof_report["owners"]),
+            "reused_owner_ref_count": proof_report["reused_count"],
             "proof_artifact": proof,
             **testmesh_final_receipt_fields(
                 proof,
@@ -365,34 +310,19 @@ def _compile_release_manifest(
     owners: dict[str, Any] = {}
     for report in tier_reports:
         for owner_id, row in report["owners"].items():
-            if owner_id in owners and owners[owner_id] != row:
+            portable_row = _portable_owner_row(row)
+            if owner_id in owners and owners[owner_id] != portable_row:
                 raise ValueError(f"conflicting owner evidence row: {owner_id}")
-            owners[owner_id] = row
-    release_reused = all(
-        row.get("result_reused") is True for row in owners.values()
-    )
-    release_ticket = _aggregate_reuse_ticket(
-        evidence_id="acceptance_router_release_tiers",
-        proof=release_proof,
-        owner_rows=owners,
-        covered_obligation_ids=tuple(model.RELEASE_EVIDENCE_CELLS),
-    )
+            owners[owner_id] = portable_row
     return {
         "schema_version": MANIFEST_SCHEMA_VERSION,
         "phase": phase,
         "claim_scope": "release",
         "snapshot": snapshot,
-        "impact_plan": {
-            "plan_ids": [
-                report["impact_plan"]["plan_id"]
-                for report in tier_reports
-            ],
-            "decisions": [
-                decision
-                for report in tier_reports
-                for decision in report["impact_plan"].get("decisions", [])
-            ],
-        },
+        "impact_plan_refs": [
+            _portable_artifact_ref(report["meta"].get("impact_plan_ref") or {})
+            for report in tier_reports
+        ],
         "owners": owners,
         "routine": routine,
         "release": {
@@ -401,14 +331,13 @@ def _compile_release_manifest(
             "test_count": int(release_proof["metadata"]["proof_backed_child_command_count"]),
             "selected_count": int(release_proof["metadata"]["selected_child_command_count"]),
             "result_path": combined_result_path,
-            "result_reused": release_reused,
-            "reuse_ticket": release_ticket,
+            "result_reused": False,
+            "reuse_ticket": None,
             "owner_evidence_ids": sorted(owners),
-            "owner_reuse_tickets": {
-                owner_id: row.get("reuse_ticket")
-                for owner_id, row in owners.items()
-                if row.get("result_reused") is True
-            },
+            "owner_ref_count": len(owners),
+            "reused_owner_ref_count": sum(
+                1 for row in owners.values() if row.get("result_reused") is True
+            ),
             "proof_artifact": release_proof,
             **testmesh_final_receipt_fields(
                 release_proof,
@@ -479,26 +408,16 @@ def compile_bootstrap_manifest(*, all_root: Path, adversarial_root: Path) -> dic
         covered_ids=("formal-submit-adversarial",),
         snapshot_fingerprint=snapshot_fingerprint,
     )
-    adversarial_reused = adversarial_report["executed_count"] == 0
-    adversarial_ticket = _aggregate_reuse_ticket(
-        evidence_id="formal_submit_adversarial",
-        proof=adversarial_proof,
-        owner_rows=adversarial_report["owners"],
-        covered_obligation_ids=("formal-submit-adversarial",),
-    )
     routine["formal_submit_adversarial"] = {
         "result_status": "passed",
         "evidence_current": True,
         "test_count": int(adversarial_proof["metadata"]["proof_backed_child_command_count"]),
         "selected_count": int(adversarial_proof["metadata"]["selected_child_command_count"]),
-        "result_reused": adversarial_reused,
-        "reuse_ticket": adversarial_ticket,
+        "result_reused": False,
+        "reuse_ticket": None,
         "owner_evidence_ids": sorted(adversarial_report["owners"]),
-        "owner_reuse_tickets": {
-            owner_id: row.get("reuse_ticket")
-            for owner_id, row in adversarial_report["owners"].items()
-            if row.get("result_reused") is True
-        },
+        "owner_ref_count": len(adversarial_report["owners"]),
+        "reused_owner_ref_count": adversarial_report["reused_count"],
         "proof_artifact": adversarial_proof,
         **testmesh_final_receipt_fields(
             adversarial_proof,
@@ -506,25 +425,24 @@ def compile_bootstrap_manifest(*, all_root: Path, adversarial_root: Path) -> dic
         ),
     }
     owners = {
-        **all_report["owners"],
-        **adversarial_report["owners"],
+        **{
+            owner_id: _portable_owner_row(row)
+            for owner_id, row in all_report["owners"].items()
+        },
+        **{
+            owner_id: _portable_owner_row(row)
+            for owner_id, row in adversarial_report["owners"].items()
+        },
     }
     return {
         "schema_version": MANIFEST_SCHEMA_VERSION,
         "phase": "bootstrap",
         "claim_scope": "routine",
         "snapshot": snapshot,
-        "impact_plan": {
-            "plan_ids": [
-                all_report["impact_plan"]["plan_id"],
-                adversarial_report["impact_plan"]["plan_id"],
-            ],
-            "decisions": [
-                decision
-                for report in (all_report, adversarial_report)
-                for decision in report["impact_plan"].get("decisions", [])
-            ],
-        },
+        "impact_plan_refs": [
+            _portable_artifact_ref(report["meta"].get("impact_plan_ref") or {})
+            for report in (all_report, adversarial_report)
+        ],
         "owners": owners,
         "routine": routine,
         "release": {

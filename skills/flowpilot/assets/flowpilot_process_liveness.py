@@ -303,31 +303,70 @@ def _process_parent_map() -> dict[int, int]:
 
 
 def _descendant_pids(pid: int) -> list[int]:
+    """Return the raw PID-only descendant projection for diagnostics.
+
+    PID-only ancestry is never termination authority. On Windows an exited
+    process ID can be reused while another owner is still running, so a raw
+    parent map can contain an apparent cycle through an older supervisor and
+    then reach a younger sibling process.
+    """
+
     parent_map = _process_parent_map()
     descendants: list[int] = []
+    visited = {pid}
     frontier = [pid]
     while frontier:
         parent = frontier.pop(0)
-        children = sorted(child for child, candidate_parent in parent_map.items() if candidate_parent == parent)
+        children = sorted(
+            child
+            for child, candidate_parent in parent_map.items()
+            if candidate_parent == parent
+        )
         for child in children:
-            if child not in descendants:
-                descendants.append(child)
-                frontier.append(child)
+            if child in visited:
+                continue
+            visited.add(child)
+            descendants.append(child)
+            frontier.append(child)
     return descendants
 
 
 def process_descendant_identities(identity: Any) -> list[dict[str, Any]]:
     if not process_identity_is_live(identity):
         return []
-    pid = int(identity["pid"])
+    root = dict(identity)
+    root_pid = int(root["pid"])
+    parent_map = _process_parent_map()
     descendants: list[dict[str, Any]] = []
-    for child_pid in _descendant_pids(pid):
-        child_identity = process_identity(child_pid)
-        if (
-            child_identity is not None
-            and process_identity_started_not_before(child_identity, identity)
-        ):
+    visited = {root_pid}
+    frontier = [root]
+    while frontier:
+        parent_identity = frontier.pop(0)
+        parent_pid = int(parent_identity["pid"])
+        child_pids = sorted(
+            child_pid
+            for child_pid, candidate_parent in parent_map.items()
+            if candidate_parent == parent_pid
+        )
+        for child_pid in child_pids:
+            if child_pid in visited:
+                continue
+            child_identity = process_identity(child_pid)
+            if child_identity is None:
+                continue
+            # Every edge must preserve creation order. Checking only the final
+            # child against the root lets traversal cross an older, PID-reused
+            # supervisor link and then misclassify a newer sibling as a child.
+            if not process_identity_started_not_before(
+                child_identity,
+                parent_identity,
+            ):
+                continue
+            if not process_identity_started_not_before(child_identity, root):
+                continue
+            visited.add(child_pid)
             descendants.append(child_identity)
+            frontier.append(child_identity)
     return descendants
 
 

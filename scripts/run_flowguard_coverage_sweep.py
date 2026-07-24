@@ -21,6 +21,7 @@ SIMULATIONS = ROOT / "simulations"
 
 STRONG_COVERAGE = {
     "flowpilot_control_plane_friction",
+    "flowpilot_control_plane_resource_boundedness",
     "flowpilot_complete_system_alignment",
     "flowpilot_complete_system_development",
     "flowpilot_complete_system_historical_replay",

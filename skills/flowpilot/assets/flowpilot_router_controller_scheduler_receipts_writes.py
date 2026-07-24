@@ -64,6 +64,37 @@ def _next_controller_action_created_sequence(run_root: Path, run_state: dict[str
     return current
 
 
+def _controller_action_entry_semantic_payload(entry: dict[str, Any]) -> dict[str, Any]:
+    payload = json.loads(json.dumps(entry, sort_keys=True))
+    payload.pop('updated_at', None)
+    payload.pop('seen_count', None)
+    payload.pop('last_seen_at', None)
+    action = payload.get('action')
+    if isinstance(action, dict):
+        action.pop('updated_at', None)
+        action.pop('seen_count', None)
+        action.pop('last_seen_at', None)
+        action.pop('wait_reminder_history', None)
+        action.pop('action_id', None)
+        action.pop('created_at', None)
+        action.pop('controller_action_id', None)
+        action.pop('controller_action_path', None)
+        action.pop('controller_receipt_path', None)
+    return payload
+
+
+def _controller_receipt_semantic_payload(receipt: dict[str, Any]) -> dict[str, Any]:
+    payload = json.loads(json.dumps(receipt, sort_keys=True))
+    payload.pop('recorded_at', None)
+    return payload
+
+
+def _controller_receipt_sha256(receipt: dict[str, Any]) -> str:
+    return hashlib.sha256(
+        json.dumps(receipt, sort_keys=True, separators=(',', ':')).encode('utf-8')
+    ).hexdigest()
+
+
 def _write_controller_action_entry(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any], action: dict[str, Any]) -> dict[str, Any]:
     _bind_router(router)
     action = router._prepare_router_scheduled_action(project_root, run_root, run_state, action)
@@ -76,6 +107,7 @@ def _write_controller_action_entry(router: ModuleType, project_root: Path, run_r
     controller_receipt_required = not passive_wait_status and action.get('action_type') not in {'await_card_return_event', 'await_card_bundle_return_event', 'await_role_decision'}
     created = False
     existing = read_json_if_exists(action_path)
+    existing_snapshot = json.loads(json.dumps(existing, sort_keys=True)) if existing else {}
     action_identity = control_plane_action_identity_fingerprint(action)
     now = utc_now()
     if existing.get('schema_version') == CONTROLLER_ACTION_SCHEMA:
@@ -87,14 +119,13 @@ def _write_controller_action_entry(router: ModuleType, project_root: Path, run_r
                 f"existing={existing_identity} new={action_identity}"
             )
         entry = existing
-        entry['seen_count'] = int(entry.get('seen_count') or 0) + 1
+        entry.pop('seen_count', None)
+        entry.pop('last_seen_at', None)
         if entry.get('status') not in CONTROLLER_ACTION_CLOSED_STATUSES:
             entry['status'] = entry.get('status') or _controller_action_initial_status(action)
     else:
         created = True
-        entry = {'schema_version': CONTROLLER_ACTION_SCHEMA, 'action_id': action_id, 'run_id': run_state.get('run_id'), 'action_type': action.get('action_type'), 'label': action.get('label'), 'summary': action.get('summary'), 'status': _controller_action_initial_status(action), 'created_at': now, 'created_sequence': _next_controller_action_created_sequence(run_root, run_state), 'seen_count': 1, 'source_action_id': action.get('action_id'), 'to_role': action.get('to_role'), 'allowed_reads': action.get('allowed_reads') or [], 'allowed_writes': action.get('allowed_writes') or [], 'allowed_external_events': action.get('allowed_external_events') or [], 'dependencies': [], 'router_scheduler_row_id': action.get('router_scheduler_row_id'), 'scope_kind': action.get('scope_kind'), 'scope_id': action.get('scope_id'), 'controller_visibility': 'router_action_metadata_only', 'sealed_body_reads_allowed': bool(action.get('sealed_body_reads_allowed', False)), 'action_path': project_relative(project_root, action_path), 'expected_receipt_path': receipt_rel, 'controller_receipt_required': controller_receipt_required, 'controller_projection_kind': projection_kind, 'ordinary_controller_work_row': not passive_wait_status, 'router_must_not_mark_done_without_controller_receipt': controller_receipt_required, 'action': action}
-    entry['updated_at'] = now
-    entry['last_seen_at'] = now
+        entry = {'schema_version': CONTROLLER_ACTION_SCHEMA, 'action_id': action_id, 'run_id': run_state.get('run_id'), 'action_type': action.get('action_type'), 'label': action.get('label'), 'summary': action.get('summary'), 'status': _controller_action_initial_status(action), 'created_at': now, 'created_sequence': _next_controller_action_created_sequence(run_root, run_state), 'source_action_id': action.get('action_id'), 'to_role': action.get('to_role'), 'allowed_reads': action.get('allowed_reads') or [], 'allowed_writes': action.get('allowed_writes') or [], 'allowed_external_events': action.get('allowed_external_events') or [], 'dependencies': [], 'router_scheduler_row_id': action.get('router_scheduler_row_id'), 'scope_kind': action.get('scope_kind'), 'scope_id': action.get('scope_id'), 'controller_visibility': 'router_action_metadata_only', 'sealed_body_reads_allowed': bool(action.get('sealed_body_reads_allowed', False)), 'action_path': project_relative(project_root, action_path), 'expected_receipt_path': receipt_rel, 'controller_receipt_required': controller_receipt_required, 'controller_projection_kind': projection_kind, 'ordinary_controller_work_row': not passive_wait_status, 'router_must_not_mark_done_without_controller_receipt': controller_receipt_required, 'action': action}
     entry['action_identity'] = action_identity
     required_deliverables = _controller_action_required_deliverables(project_root, run_root, run_state, action)
     deliverable_contract = _controller_deliverable_contract(required_deliverables)
@@ -115,6 +146,16 @@ def _write_controller_action_entry(router: ModuleType, project_root: Path, run_r
         if action.get(replacement_field) not in (None, '', []):
             entry[replacement_field] = action.get(replacement_field)
     controller_action_view = _controller_ledger_action_view(action, action_id=action_id, receipt_path=receipt_rel, controller_receipt_required=controller_receipt_required)
+    controller_action_view.pop('seen_count', None)
+    controller_action_view.pop('last_seen_at', None)
+    controller_action_view.pop('wait_reminder_history', None)
+    existing_action_view = existing_snapshot.get('action') if isinstance(existing_snapshot.get('action'), dict) else {}
+    if (
+        existing_action_view
+        and _controller_action_entry_semantic_payload({'action': existing_action_view})
+        == _controller_action_entry_semantic_payload({'action': controller_action_view})
+    ):
+        controller_action_view = existing_action_view
     entry['router_scheduler_row_id'] = action.get('router_scheduler_row_id')
     entry['scope_kind'] = action.get('scope_kind')
     entry['scope_id'] = action.get('scope_id')
@@ -127,8 +168,15 @@ def _write_controller_action_entry(router: ModuleType, project_root: Path, run_r
     entry['router_pending_apply_required'] = controller_action_view.get('router_pending_apply_required')
     entry['action'] = controller_action_view
     entry['expected_receipt_path'] = receipt_rel
-    write_json(action_path, entry)
-    router._record_router_scheduler_row(project_root, run_root, run_state, action, entry)
+    changed = (
+        created
+        or _controller_action_entry_semantic_payload(existing_snapshot)
+        != _controller_action_entry_semantic_payload(entry)
+    )
+    if changed:
+        entry['updated_at'] = now
+        write_json(action_path, entry)
+        router._record_router_scheduler_row(project_root, run_root, run_state, action, entry)
     action['controller_action_id'] = action_id
     action['controller_action_path'] = project_relative(project_root, action_path)
     action['controller_receipt_path'] = project_relative(project_root, receipt_path)
@@ -136,7 +184,8 @@ def _write_controller_action_entry(router: ModuleType, project_root: Path, run_r
         pending = run_state['pending_action']
         if pending.get('action_id') == action.get('action_id') or pending.get('label') == action.get('label'):
             pending.update({'controller_action_id': action_id, 'controller_action_path': project_relative(project_root, action_path), 'controller_receipt_path': project_relative(project_root, receipt_path)})
-    router._rebuild_controller_action_ledger(project_root, run_root, run_state)
+    if changed:
+        router._rebuild_controller_action_ledger(project_root, run_root, run_state)
     if created:
         append_history(run_state, 'router_recorded_controller_action_entry', {'controller_action_id': action_id, 'action_type': action.get('action_type'), 'status': entry.get('status')})
     return entry
@@ -194,7 +243,75 @@ def _write_controller_receipt(router: ModuleType, project_root: Path, run_root: 
             f"use status=blocked or recover the target first ({delivery_failure})"
         )
     receipt = {'schema_version': CONTROLLER_RECEIPT_SCHEMA, 'run_id': run_state.get('run_id'), 'action_id': action_id, 'action_type': action.get('action_type'), 'status': status, 'recorded_by': 'controller', 'recorded_at': utc_now(), 'controller_visibility': 'receipt_metadata_only', 'payload': payload or {}}
-    write_json(_controller_receipt_path(run_root, action_id), receipt)
+    receipt_path = _controller_receipt_path(run_root, action_id)
+    existing_receipt = read_json_if_exists(receipt_path)
+    if existing_receipt.get('schema_version') == CONTROLLER_RECEIPT_SCHEMA:
+        if _controller_receipt_semantic_payload(existing_receipt) != _controller_receipt_semantic_payload(receipt):
+            raise RouterError(
+                f'controller receipt content conflicts with current immutable receipt for action {action_id}'
+            )
+        receipt_sha256 = _controller_receipt_sha256(existing_receipt)
+        receipt_rel = project_relative(project_root, receipt_path)
+        current_action = read_json_if_exists(action_path)
+        previous_status = str(current_action.get('status') or '')
+        preserve_router_status = status == 'done' and previous_status in CONTROLLER_ACTION_RECEIPT_PRESERVED_STATUSES
+        action_effect_current = bool(
+            current_action.get('receipt_sha256') == receipt_sha256
+            and current_action.get('receipt_path') == receipt_rel
+            and current_action.get('receipt_recorded_at') == existing_receipt.get('recorded_at')
+            and (
+                current_action.get('receipt_status') == status
+                if preserve_router_status
+                else current_action.get('status') == status
+            )
+        )
+        row_id = str(current_action.get('router_scheduler_row_id') or '')
+        scheduler_effect_current = not row_id
+        if row_id:
+            desired_router_state = (
+                'waiting'
+                if preserve_router_status and previous_status == 'repair_pending'
+                else 'superseded'
+                if preserve_router_status and previous_status == 'superseded'
+                else 'reconciled'
+                if preserve_router_status and previous_status == 'resolved'
+                else 'receipt_done'
+                if status == 'done'
+                else 'blocked'
+                if status == 'blocked'
+                else 'skipped'
+                if status == 'skipped'
+                else 'waiting'
+            )
+            scheduler_fold_allowed, scheduler_fold_reason = _controller_receipt_scheduler_fold_allowed(
+                router,
+                run_root,
+                run_state,
+                scheduler_fold_owner='foreground_receipt',
+            )
+            if scheduler_fold_allowed:
+                scheduler_effect_current = _scheduler_receipt_effect_is_current(
+                    router,
+                    run_root,
+                    current_action,
+                    desired_router_state,
+                )
+            else:
+                scheduler_effect_current = bool(
+                    current_action.get('router_scheduler_fold_deferred') is True
+                    and current_action.get('router_scheduler_fold_deferred_reason') == scheduler_fold_reason
+                    and current_action.get('router_scheduler_fold_owner') == 'daemon'
+                )
+        if action_effect_current and scheduler_effect_current:
+            return existing_receipt
+        router._reconcile_controller_receipts(
+            project_root,
+            run_root,
+            run_state,
+            scheduler_fold_owner='foreground_receipt',
+        )
+        return existing_receipt
+    write_json(receipt_path, receipt)
     _append_router_daemon_event(run_root, 'controller_receipt_recorded', {'action_id': action_id, 'status': status, 'receipt_path': project_relative(project_root, _controller_receipt_path(run_root, action_id))})
     router._reconcile_controller_receipts(project_root, run_root, run_state, scheduler_fold_owner='foreground_receipt')
     return receipt
@@ -226,6 +343,27 @@ def _controller_receipt_scheduler_fold_allowed(router: ModuleType, run_root: Pat
         return (True, 'daemon_liveness_unknown')
     return (True, 'daemon_not_live')
 
+
+def _scheduler_receipt_effect_is_current(
+    router: ModuleType,
+    run_root: Path,
+    action: dict[str, Any],
+    desired_state: str,
+) -> bool:
+    row_id = str(action.get('router_scheduler_row_id') or '')
+    if not row_id:
+        return True
+    row = router._router_scheduler_row_for_controller_entry(run_root, action)
+    current_state = str(row.get('router_state') or '')
+    accepted_states = {
+        'receipt_done': {'receipt_done', 'reconciled', 'superseded'},
+        'waiting': {'waiting', 'reconciled', 'superseded'},
+        'blocked': {'blocked', 'reconciled', 'superseded'},
+        'skipped': {'skipped', 'reconciled', 'superseded'},
+    }
+    return current_state in accepted_states.get(desired_state, {desired_state})
+
+
 def _reconcile_controller_receipts(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any], *, scheduler_fold_owner: str) -> dict[str, Any]:
     _bind_router(router)
     receipt_dir = _controller_receipts_dir(run_root)
@@ -233,6 +371,8 @@ def _reconcile_controller_receipts(router: ModuleType, project_root: Path, run_r
     blocked = 0
     scheduler_folds = 0
     deferred_scheduler_folds = 0
+    already_current = 0
+    action_inventory_changed = False
     scheduler_fold_allowed, scheduler_fold_reason = _controller_receipt_scheduler_fold_allowed(
         router,
         run_root,
@@ -254,23 +394,51 @@ def _reconcile_controller_receipts(router: ModuleType, project_root: Path, run_r
                 continue
             previous_status = str(action.get('status') or '')
             preserve_router_status = status == 'done' and previous_status in CONTROLLER_ACTION_RECEIPT_PRESERVED_STATUSES
+            receipt_rel = project_relative(project_root, receipt_path)
+            receipt_sha256 = _controller_receipt_sha256(receipt)
+            row_id = str(action.get('router_scheduler_row_id') or '')
+            router_state = None
+            if row_id:
+                router_state = 'waiting' if preserve_router_status and previous_status == 'repair_pending' else 'superseded' if preserve_router_status and previous_status == 'superseded' else 'reconciled' if preserve_router_status and previous_status == 'resolved' else 'receipt_done' if status == 'done' else 'blocked' if status == 'blocked' else 'skipped' if status == 'skipped' else 'waiting'
+            action_receipt_current = bool(
+                action.get('receipt_sha256') == receipt_sha256
+                and action.get('receipt_path') == receipt_rel
+                and action.get('receipt_recorded_at') == receipt.get('recorded_at')
+                and (
+                    action.get('receipt_status') == status
+                    if preserve_router_status
+                    else action.get('status') == status
+                )
+            )
+            if row_id and not scheduler_fold_allowed:
+                scheduler_effect_current = bool(
+                    action.get('router_scheduler_fold_deferred') is True
+                    and action.get('router_scheduler_fold_deferred_reason') == scheduler_fold_reason
+                    and action.get('router_scheduler_fold_owner') == 'daemon'
+                )
+            else:
+                scheduler_effect_current = bool(
+                    not row_id
+                    or (router_state and _scheduler_receipt_effect_is_current(router, run_root, action, router_state))
+                )
+            if action_receipt_current and scheduler_effect_current:
+                already_current += 1
+                continue
+            action_changed = not action_receipt_current
             if preserve_router_status:
                 action['receipt_status'] = status
             else:
                 action['status'] = status
-            action['receipt_path'] = project_relative(project_root, receipt_path)
+            action['receipt_path'] = receipt_rel
             action['receipt_recorded_at'] = receipt.get('recorded_at')
-            action['updated_at'] = utc_now()
+            action['receipt_sha256'] = receipt_sha256
             if status == 'done' and (not preserve_router_status):
                 action['completed_at'] = receipt.get('recorded_at')
             if status == 'blocked':
                 blocked += 1
                 action['blocked_at'] = receipt.get('recorded_at')
                 action['blocked_payload'] = receipt.get('payload') or {}
-            row_id = str(action.get('router_scheduler_row_id') or '')
-            router_state = None
             if row_id:
-                router_state = 'waiting' if preserve_router_status and previous_status == 'repair_pending' else 'superseded' if preserve_router_status and previous_status == 'superseded' else 'reconciled' if preserve_router_status and previous_status == 'resolved' else 'receipt_done' if status == 'done' else 'blocked' if status == 'blocked' else 'skipped' if status == 'skipped' else 'waiting'
                 if scheduler_fold_allowed:
                     for key in (
                         'router_scheduler_fold_deferred',
@@ -278,33 +446,47 @@ def _reconcile_controller_receipts(router: ModuleType, project_root: Path, run_r
                         'router_scheduler_fold_deferred_reason',
                         'router_scheduler_fold_owner',
                     ):
-                        action.pop(key, None)
+                        if key in action:
+                            action.pop(key, None)
+                            action_changed = True
                 else:
+                    deferred_changed = not scheduler_effect_current
                     action['router_scheduler_fold_deferred'] = True
-                    action['router_scheduler_fold_deferred_at'] = utc_now()
+                    action.pop('router_scheduler_fold_deferred_at', None)
                     action['router_scheduler_fold_deferred_reason'] = scheduler_fold_reason
                     action['router_scheduler_fold_owner'] = 'daemon'
-            write_json(action_path, action)
+                    action_changed = action_changed or deferred_changed
+            if action_changed:
+                action['updated_at'] = utc_now()
+                write_json(action_path, action)
+                action_inventory_changed = True
             if row_id and router_state:
                 if scheduler_fold_allowed:
-                    scheduler_folds += 1
-                    router._update_router_scheduler_row(project_root, run_root, run_state, row_id=row_id, router_state=router_state, reconciliation={'receipt_status': status, 'receipt_path': project_relative(project_root, receipt_path), 'receipt_recorded_at': receipt.get('recorded_at')})
+                    if not scheduler_effect_current:
+                        scheduler_folds += 1
+                        router._update_router_scheduler_row(project_root, run_root, run_state, row_id=row_id, router_state=router_state, reconciliation={'receipt_status': status, 'receipt_path': receipt_rel, 'receipt_recorded_at': receipt.get('recorded_at'), 'receipt_sha256': receipt_sha256})
                 else:
-                    deferred_scheduler_folds += 1
-                    append_history(
-                        run_state,
-                        'router_deferred_controller_receipt_scheduler_fold_to_daemon',
-                        {
-                            'controller_action_id': action_id,
-                            'router_scheduler_row_id': row_id,
-                            'receipt_status': status,
-                            'reason': scheduler_fold_reason,
-                        },
-                    )
+                    if not scheduler_effect_current:
+                        deferred_scheduler_folds += 1
+                        append_history(
+                            run_state,
+                            'router_deferred_controller_receipt_scheduler_fold_to_daemon',
+                            {
+                                'controller_action_id': action_id,
+                                'router_scheduler_row_id': row_id,
+                                'receipt_status': status,
+                                'reason': scheduler_fold_reason,
+                            },
+                        )
             reconciled += 1
-    ledger = router._rebuild_controller_action_ledger(project_root, run_root, run_state)
+    ledger = (
+        router._rebuild_controller_action_ledger(project_root, run_root, run_state)
+        if action_inventory_changed
+        else router._ensure_controller_action_ledger(project_root, run_root, run_state)
+    )
     return {
         'reconciled_receipts': reconciled,
+        'already_current_receipts': already_current,
         'blocked_receipts': blocked,
         'scheduler_folds': scheduler_folds,
         'deferred_scheduler_folds': deferred_scheduler_folds,

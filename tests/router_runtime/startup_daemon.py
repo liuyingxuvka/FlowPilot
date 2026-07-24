@@ -834,9 +834,9 @@ class StartupDaemonRuntimeTests(FlowPilotRouterRuntimeTestBase):
         thread.join(timeout=1.0)
 
         self.assertEqual(result["tick_count"], 2)
-        self.assertTrue(result["ticks"][0]["deferred"])
-        self.assertEqual(result["ticks"][0]["defer_reason"], "runtime_ledger_write_in_progress")
-        self.assertFalse(result["ticks"][1].get("deferred", False))
+        self.assertTrue(result["anomalies"][0]["deferred"])
+        self.assertEqual(result["anomalies"][0]["defer_reason"], "runtime_ledger_write_in_progress")
+        self.assertFalse(result["last_tick"].get("deferred", False))
         self.assertEqual(read_json(scheduler_path)["schema_version"], router.ROUTER_SCHEDULER_LEDGER_SCHEMA)
     def test_atomic_replace_permission_error_becomes_runtime_write_wait(self) -> None:
         root = self.make_project()
@@ -1143,9 +1143,9 @@ class StartupDaemonRuntimeTests(FlowPilotRouterRuntimeTestBase):
             result = router.run_router_daemon(root, max_ticks=1, observe_only=True, release_lock_on_exit=True)
 
         self.assertEqual(result["tick_count"], 1)
-        self.assertTrue(result["ticks"][0]["deferred"])
-        self.assertEqual(result["ticks"][0]["defer_reason"], "runtime_ledger_write_in_progress")
-        self.assertEqual(result["ticks"][0]["nested_defer_reason"], "runtime_ledger_write_status_save_in_progress")
+        self.assertTrue(result["anomalies"][0]["deferred"])
+        self.assertEqual(result["anomalies"][0]["defer_reason"], "runtime_ledger_write_in_progress")
+        self.assertEqual(result["anomalies"][0]["nested_defer_reason"], "runtime_ledger_write_status_save_in_progress")
         lock = read_json(run_root / "runtime" / "router_daemon.lock")
         self.assertNotEqual(lock.get("status"), "error")
     def test_terminal_startup_daemon_schedule_does_not_append_boot_rows(self) -> None:

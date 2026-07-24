@@ -7,6 +7,7 @@ shared state writers, controller scheduling, and startup-driver decisions.
 
 from __future__ import annotations
 
+import hashlib
 import uuid
 from pathlib import Path
 from types import ModuleType
@@ -24,6 +25,127 @@ from flowpilot_router_daemon_runtime_lock import (
     _release_router_daemon_lock,
     _resolve_run_root_target,
 )
+from flowpilot_router_io_json import write_json_if_changed as _write_json_if_changed
+from flowpilot_router_runtime_state_persistence import _run_state_snapshot_hash
+
+_ROUTER_DAEMON_ANOMALY_SAMPLE_LIMIT = 16
+_ROUTER_DAEMON_TICK_RESULT_FIELDS = (
+    'tick_at',
+    'observe_only',
+    'action_type',
+    'controller_action_id',
+    'waiting_for_controller_core',
+    'startup_driver_active',
+    'queued_count',
+    'queued_actions',
+    'queue_stop_reason',
+    'lock_status',
+    'release_reason',
+    'terminal',
+    'terminal_fence_observed',
+    'stop_requested',
+    'stop_reason',
+    'deferred',
+    'defer_reason',
+    'ledger_path',
+    'nested_defer_reason',
+    'nested_ledger_path',
+    'semantic_state_changed',
+    'projection_changed',
+    'frontier_advanced',
+    'semantic_changed',
+    'state_written',
+    'change_reasons',
+)
+
+
+def _router_daemon_semantic_fingerprint(
+    router: ModuleType,
+    run_root: Path,
+    run_state: dict[str, Any],
+) -> dict[str, str]:
+    fingerprint = {'run_state': _run_state_snapshot_hash(run_state)}
+    paths = {
+        'controller_action_ledger': router._controller_action_ledger_path(run_root),
+        'router_scheduler_ledger': router._router_scheduler_ledger_path(run_root),
+        'router_ownership_ledger': router._router_ownership_ledger_path(run_root),
+        'execution_frontier': run_root / 'execution_frontier.json',
+    }
+    for name, path in paths.items():
+        try:
+            body = path.read_bytes()
+        except OSError:
+            body = b''
+        fingerprint[name] = hashlib.sha256(body).hexdigest()
+    return fingerprint
+
+
+def _classify_router_daemon_tick(
+    router: ModuleType,
+    run_root: Path,
+    run_state: dict[str, Any],
+    tick: dict[str, Any],
+    *,
+    before: dict[str, str],
+    state_written: bool,
+) -> dict[str, Any]:
+    after = _router_daemon_semantic_fingerprint(router, run_root, run_state)
+    changed = [name for name, digest in after.items() if digest != before.get(name)]
+    tick['semantic_state_changed'] = 'run_state' in changed
+    tick['projection_changed'] = any(
+        name in changed
+        for name in (
+            'controller_action_ledger',
+            'router_scheduler_ledger',
+            'router_ownership_ledger',
+        )
+    )
+    tick['frontier_advanced'] = 'execution_frontier' in changed
+    tick['semantic_changed'] = bool(changed)
+    tick['state_written'] = bool(state_written)
+    tick['change_reasons'] = changed
+    return tick
+
+
+def _compact_router_daemon_tick(tick: dict[str, Any] | None) -> dict[str, Any] | None:
+    if not isinstance(tick, dict):
+        return None
+    return {field: tick.get(field) for field in _ROUTER_DAEMON_TICK_RESULT_FIELDS if field in tick}
+
+
+def _compact_router_daemon_status(status: dict[str, Any]) -> dict[str, Any]:
+    lock = status.get('lock') if isinstance(status.get('lock'), dict) else {}
+    control = status.get('control_projection') if isinstance(status.get('control_projection'), dict) else {}
+    current_action = status.get('current_action') if isinstance(status.get('current_action'), dict) else {}
+    return {
+        'schema_version': status.get('schema_version'),
+        'run_id': status.get('run_id'),
+        'lifecycle_status': status.get('lifecycle_status'),
+        'run_lifecycle_status': status.get('run_lifecycle_status'),
+        'tick_interval_seconds': status.get('tick_interval_seconds'),
+        'last_tick_at': status.get('last_tick_at'),
+        'daemon_live': status.get('daemon_live'),
+        'lock': {
+            'status': lock.get('status'),
+            'last_tick_at': lock.get('last_tick_at'),
+            'live': lock.get('live'),
+            'process_live': lock.get('process_live'),
+            'fresh': lock.get('fresh'),
+        },
+        'control_projection': {
+            'projection_kind': control.get('projection_kind'),
+            'terminal_lifecycle_status': control.get('terminal_lifecycle_status'),
+            'daemon_live': control.get('daemon_live'),
+            'controller_stop_allowed': control.get('controller_stop_allowed'),
+            'current_action_type': control.get('current_action_type'),
+        },
+        'current_action': {
+            'action_type': current_action.get('action_type'),
+            'controller_action_id': current_action.get('controller_action_id'),
+            'controller_projection_kind': current_action.get('controller_projection_kind'),
+        } if current_action else None,
+        'error': bool(status.get('error')),
+    }
 
 def _router_daemon_control_projection(router: ModuleType, run_state: dict[str, Any], *, daemon_live: bool, current_wait: dict[str, Any], current_action: dict[str, Any] | None, controller_ledger: dict[str, Any] | None=None) -> dict[str, Any]:
     terminal_mode = router._terminal_lifecycle_mode(run_state)
@@ -96,7 +218,7 @@ def _write_router_daemon_status(router: ModuleType, project_root: Path, run_root
     daemon_live = bool(bool(run_state.get('daemon_mode_enabled')) and lock_liveness['live'])
     control_projection = _router_daemon_control_projection(router, run_state, daemon_live=daemon_live, current_wait=current_wait, current_action=current_action if isinstance(current_action, dict) else None, controller_ledger=controller_ledger_summary)
     status = {'schema_version': router.ROUTER_DAEMON_STATUS_SCHEMA, 'run_id': run_state.get('run_id'), 'run_root': router.project_relative(project_root, run_root), 'daemon_mode_enabled': bool(run_state.get('daemon_mode_enabled')), 'lifecycle_status': 'terminal_stopped' if terminal_mode else effective_lifecycle_status, 'run_lifecycle_status': terminal_mode, 'tick_interval_seconds': router.ROUTER_DAEMON_TICK_SECONDS, 'last_tick_at': router.utc_now(), 'process': lock_owner or router._router_daemon_owner(), 'lock': {'path': router.project_relative(project_root, router._router_daemon_lock_path(run_root)), 'status': lock_payload.get('status'), 'last_tick_at': lock_payload.get('last_tick_at'), 'live': lock_liveness['live'], 'process_live': lock_liveness['process_live'], 'fresh': lock_liveness['fresh'], 'age_seconds': lock_liveness['age_seconds'], 'reasons': lock_liveness['reasons']}, 'daemon_patrol': patrol_monitor, 'daemon_live': daemon_live, 'control_projection': control_projection, 'current_work': current_work, 'current_wait': current_wait, 'continuous_standby_task': (standby_entry.get('action') or {}).get('continuous_standby_task') if isinstance(standby_entry, dict) else router._continuous_standby_task_payload(project_root, run_root, current_wait) if standby_required else None, 'current_action': {'action_type': current_action.get('action_type'), 'label': current_action.get('label'), 'controller_action_id': current_action.get('controller_action_id'), 'controller_projection_kind': router._controller_action_projection_kind(current_action), 'ordinary_controller_work_row': not router._action_is_passive_wait_status(current_action), 'apply_required': current_action.get('apply_required'), 'relay_allowed': current_action.get('relay_allowed')} if isinstance(current_action, dict) else None, 'controller_action_ledger': controller_ledger_summary, 'router_scheduler_ledger': router_scheduler_summary, 'break_glass_reminder': router._controller_break_glass_reminder(), 'router_internal_ownership_ledger_visible_to_controller': False, 'recovery_hints': recovery_hints or [], 'error': error, 'controller_should_watch_action_ledger': True, 'router_owns_waiting': True}
-    router.write_json(router._router_daemon_status_path(run_root), status)
+    _write_json_if_changed(router._router_daemon_status_path(run_root), status)
     run_state['router_daemon_status_path'] = router.project_relative(project_root, router._router_daemon_status_path(run_root))
     return status
 
@@ -399,8 +521,15 @@ def _router_daemon_fill_action_queue(router: ModuleType, project_root: Path, run
         projection_kind = router._controller_action_projection_kind(current_action)
         queued_actions.append({'action_type': current_action.get('action_type'), 'controller_action_id': entry.get('action_id'), 'controller_projection_kind': projection_kind, 'ordinary_controller_work_row': not router._action_is_passive_wait_status(current_action), 'router_scheduler_row_id': current_action.get('router_scheduler_row_id'), 'barrier_kind': current_action.get('router_scheduler_barrier_kind'), 'scope_kind': current_action.get('scope_kind'), 'scope_id': current_action.get('scope_id')})
         if router._action_is_passive_wait_status(current_action):
-            router.append_history(run_state, 'router_projected_passive_wait_status_without_controller_work_row', {'action_type': current_action.get('action_type'), 'controller_action_id': entry.get('action_id'), 'router_scheduler_row_id': current_action.get('router_scheduler_row_id'), 'scope_kind': current_action.get('scope_kind'), 'scope_id': current_action.get('scope_id')})
-            router.save_run_state(run_root, run_state)
+            passive_wait_fact = {'action_type': current_action.get('action_type'), 'controller_action_id': entry.get('action_id'), 'router_scheduler_row_id': current_action.get('router_scheduler_row_id'), 'scope_kind': current_action.get('scope_kind'), 'scope_id': current_action.get('scope_id')}
+            if not any(
+                isinstance(item, dict)
+                and item.get('label') == 'router_projected_passive_wait_status_without_controller_work_row'
+                and item.get('details') == passive_wait_fact
+                for item in run_state.get('history', [])
+            ):
+                router.append_history(run_state, 'router_projected_passive_wait_status_without_controller_work_row', passive_wait_fact)
+                router.save_run_state(run_root, run_state)
             stop_reason = 'passive_wait_status'
             break
         if not router._router_daemon_can_continue_after_enqueued_action(current_action):
@@ -427,24 +556,26 @@ def _router_daemon_tick_requests_immediate_next_tick(router: ModuleType, tick: d
 
 
 def _router_daemon_tick(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any], *, observe_only: bool) -> dict[str, Any]:
+    semantic_before = _router_daemon_semantic_fingerprint(router, run_root, run_state)
     lock = router._refresh_router_daemon_lock(project_root, run_root)
     if lock.get('status') != 'active':
         run_state['daemon_mode_enabled'] = False
         status = router._write_router_daemon_status(project_root, run_root, run_state, lifecycle_status='daemon_stopped', current_action=run_state.get('pending_action') if isinstance(run_state.get('pending_action'), dict) else None, lock=lock)
-        router.save_run_state(run_root, run_state)
-        return {'tick_at': status['last_tick_at'], 'observe_only': observe_only, 'lock_status': lock.get('status'), 'release_reason': lock.get('release_reason'), 'terminal': True}
+        state_written = router.save_run_state(run_root, run_state)
+        return _classify_router_daemon_tick(router, run_root, run_state, {'tick_at': status['last_tick_at'], 'observe_only': observe_only, 'lock_status': lock.get('status'), 'release_reason': lock.get('release_reason'), 'terminal': True}, before=semantic_before, state_written=state_written)
     latest_state, latest_root = router.load_run_state_from_run_root(project_root, run_root)
     if latest_state is None or latest_root is None:
         raise router.RouterError('router daemon tick requires bound run state')
     run_root = latest_root
     run_state.clear()
     run_state.update(latest_state)
+    semantic_before = _router_daemon_semantic_fingerprint(router, run_root, run_state)
     if router._terminal_lifecycle_mode(run_state):
         run_state['daemon_mode_enabled'] = False
         lock = router._release_router_daemon_lock(project_root, run_root, reason='terminal_lifecycle_observed_by_daemon_tick', status='terminal_stopped')
         status = router._write_router_daemon_status(project_root, run_root, run_state, lifecycle_status='terminal_stopped', current_action=None, lock=lock)
-        router.save_run_state(run_root, run_state)
-        return {'tick_at': status['last_tick_at'], 'observe_only': observe_only, 'lock_status': lock.get('status'), 'terminal': True, 'terminal_fence_observed': True}
+        state_written = router.save_run_state(run_root, run_state)
+        return _classify_router_daemon_tick(router, run_root, run_state, {'tick_at': status['last_tick_at'], 'observe_only': observe_only, 'lock_status': lock.get('status'), 'terminal': True, 'terminal_fence_observed': True}, before=semantic_before, state_written=state_written)
     run_state['daemon_mode_enabled'] = True
     router._ensure_daemon_runtime_state(project_root, run_root, run_state, lifecycle_status='daemon_active')
     startup_flag_fold = router._fold_stable_startup_role_flags_from_bootstrap(project_root, run_root, run_state)
@@ -456,19 +587,19 @@ def _router_daemon_tick(router: ModuleType, project_root: Path, run_root: Path, 
     if not observe_only and router._startup_daemon_controls_bootstrap(bootstrap):
         startup_schedule = router._startup_daemon_schedule_bootloader_action(project_root, run_root, run_state, lock=lock, source='router_daemon_tick')
         action = startup_schedule.get('action') if isinstance(startup_schedule.get('action'), dict) else None
-        router.save_run_state(run_root, run_state)
-        return {'tick_at': startup_schedule.get('tick_at') or router.utc_now(), 'observe_only': False, 'action_type': action.get('action_type') if isinstance(action, dict) else None, 'controller_action_id': startup_schedule.get('controller_action_id'), 'waiting_for_controller_core': False, 'startup_driver_active': True, 'startup_flag_fold': startup_flag_fold, 'receipt_summary': receipt_summary, 'scheduled_reconciliation': scheduled_reconciliation, 'boundary_projection': boundary_projection, 'startup_schedule': startup_schedule, 'queue_stop_reason': startup_schedule.get('queue_stop_reason'), 'terminal': bool(startup_schedule.get('terminal'))}
+        state_written = router.save_run_state(run_root, run_state)
+        return _classify_router_daemon_tick(router, run_root, run_state, {'tick_at': startup_schedule.get('tick_at') or router.utc_now(), 'observe_only': False, 'action_type': action.get('action_type') if isinstance(action, dict) else None, 'controller_action_id': startup_schedule.get('controller_action_id'), 'waiting_for_controller_core': False, 'startup_driver_active': True, 'startup_flag_fold': startup_flag_fold, 'receipt_summary': receipt_summary, 'scheduled_reconciliation': scheduled_reconciliation, 'boundary_projection': boundary_projection, 'startup_schedule': startup_schedule, 'queue_stop_reason': startup_schedule.get('queue_stop_reason'), 'terminal': bool(startup_schedule.get('terminal'))}, before=semantic_before, state_written=state_written)
     if observe_only:
         if isinstance(current_action, dict):
             router._write_controller_action_entry(project_root, run_root, run_state, current_action)
         status = router._write_router_daemon_status(project_root, run_root, run_state, lifecycle_status='daemon_observing', current_action=current_action, lock=lock)
-        router.save_run_state(run_root, run_state)
-        return {'tick_at': status['last_tick_at'], 'observe_only': True, 'action_type': current_action.get('action_type') if isinstance(current_action, dict) else None, 'controller_action_id': current_action.get('controller_action_id') if isinstance(current_action, dict) else None, 'startup_flag_fold': startup_flag_fold, 'receipt_summary': receipt_summary, 'scheduled_reconciliation': scheduled_reconciliation, 'boundary_projection': boundary_projection, 'terminal': bool(status.get('run_lifecycle_status'))}
+        state_written = router.save_run_state(run_root, run_state)
+        return _classify_router_daemon_tick(router, run_root, run_state, {'tick_at': status['last_tick_at'], 'observe_only': True, 'action_type': current_action.get('action_type') if isinstance(current_action, dict) else None, 'controller_action_id': current_action.get('controller_action_id') if isinstance(current_action, dict) else None, 'startup_flag_fold': startup_flag_fold, 'receipt_summary': receipt_summary, 'scheduled_reconciliation': scheduled_reconciliation, 'boundary_projection': boundary_projection, 'terminal': bool(status.get('run_lifecycle_status'))}, before=semantic_before, state_written=state_written)
     queue_result = router._router_daemon_fill_action_queue(project_root, run_root, run_state)
     current_action = queue_result.get('current_action') if isinstance(queue_result.get('current_action'), dict) else None
     status = router._write_router_daemon_status(project_root, run_root, run_state, lifecycle_status='daemon_active', current_action=current_action, lock=lock)
-    router.save_run_state(run_root, run_state)
-    return {'tick_at': status['last_tick_at'], 'observe_only': False, 'action_type': current_action.get('action_type') if isinstance(current_action, dict) else None, 'controller_action_id': current_action.get('controller_action_id') if isinstance(current_action, dict) else None, 'startup_flag_fold': startup_flag_fold, 'receipt_summary': receipt_summary, 'scheduled_reconciliation': scheduled_reconciliation, 'boundary_projection': boundary_projection, 'queued_count': queue_result.get('queued_count'), 'queued_actions': queue_result.get('queued_actions'), 'queue_stop_reason': queue_result.get('stop_reason'), 'terminal': bool(status.get('run_lifecycle_status'))}
+    state_written = router.save_run_state(run_root, run_state)
+    return _classify_router_daemon_tick(router, run_root, run_state, {'tick_at': status['last_tick_at'], 'observe_only': False, 'action_type': current_action.get('action_type') if isinstance(current_action, dict) else None, 'controller_action_id': current_action.get('controller_action_id') if isinstance(current_action, dict) else None, 'startup_flag_fold': startup_flag_fold, 'receipt_summary': receipt_summary, 'scheduled_reconciliation': scheduled_reconciliation, 'boundary_projection': boundary_projection, 'queued_count': queue_result.get('queued_count'), 'queued_actions': queue_result.get('queued_actions'), 'queue_stop_reason': queue_result.get('stop_reason'), 'terminal': bool(status.get('run_lifecycle_status'))}, before=semantic_before, state_written=state_written)
 
 
 def run_router_daemon(router: ModuleType, project_root: Path, *, max_ticks: int | None=None, observe_only: bool=False, replace_stale_lock: bool=False, release_lock_on_exit: bool=False, run_id: str | None=None, run_root: str | Path | None=None) -> dict[str, Any]:
@@ -486,7 +617,7 @@ def run_router_daemon(router: ModuleType, project_root: Path, *, max_ticks: int 
         run_state['daemon_mode_enabled'] = False
         status = router._mark_router_daemon_terminal(project_root, run_root, run_state, reason='daemon_start_saw_terminal_lifecycle')
         router.save_run_state(run_root, run_state)
-        return {'ok': True, 'command': 'daemon', 'run_id': run_state.get('run_id'), 'run_root': router.project_relative(project_root, run_root), 'tick_interval_seconds': router.ROUTER_DAEMON_TICK_SECONDS, 'tick_count': 0, 'ticks': [], 'observe_only': observe_only, 'lock_path': router.project_relative(project_root, router._router_daemon_lock_path(run_root)), 'lock_status': (router.read_json_if_exists(router._router_daemon_lock_path(run_root)) or {}).get('status'), 'status_path': router.project_relative(project_root, router._router_daemon_status_path(run_root)), 'daemon_status': status, 'terminal': True}
+        return {'ok': True, 'command': 'daemon', 'run_id': run_state.get('run_id'), 'run_root': router.project_relative(project_root, run_root), 'tick_interval_seconds': router.ROUTER_DAEMON_TICK_SECONDS, 'tick_count': 0, 'semantic_change_count': 0, 'no_change_tick_count': 0, 'last_tick': None, 'anomalies': [], 'observe_only': observe_only, 'lock_path': router.project_relative(project_root, router._router_daemon_lock_path(run_root)), 'lock_status': (router.read_json_if_exists(router._router_daemon_lock_path(run_root)) or {}).get('status'), 'status_path': router.project_relative(project_root, router._router_daemon_status_path(run_root)), 'daemon_status': _compact_router_daemon_status(status), 'terminal': True}
     run_state['daemon_mode_enabled'] = True
     daemon_process_kind = 'dedicated_daemon' if max_ticks is None else 'bounded_inline'
     lock = router._acquire_router_daemon_lock(
@@ -497,7 +628,11 @@ def run_router_daemon(router: ModuleType, project_root: Path, *, max_ticks: int 
         process_kind=daemon_process_kind,
         daemon_instance_id=router.os.environ.get('FLOWPILOT_ROUTER_DAEMON_INSTANCE_ID'),
     )
-    ticks: list[dict[str, Any]] = []
+    tick_count = 0
+    semantic_change_count = 0
+    no_change_tick_count = 0
+    last_tick: dict[str, Any] | None = None
+    anomalies: list[dict[str, Any]] = []
     error: Exception | None = None
     runtime_initialized = False
     try:
@@ -511,7 +646,9 @@ def run_router_daemon(router: ModuleType, project_root: Path, *, max_ticks: int 
                     'stop_reason': stop_lock.get('stop_reason'),
                     'terminal': False,
                 }
-                ticks.append(stop_tick)
+                tick_count += 1
+                last_tick = _compact_router_daemon_tick(stop_tick)
+                no_change_tick_count += 1
                 router._append_router_daemon_event(
                     run_root,
                     'router_daemon_stop_acknowledged',
@@ -536,10 +673,21 @@ def run_router_daemon(router: ModuleType, project_root: Path, *, max_ticks: int 
                 tick = {'tick_at': (status or {}).get('last_tick_at') or router.utc_now(), 'observe_only': observe_only, 'deferred': True, 'defer_reason': 'runtime_ledger_write_in_progress', 'ledger_path': router.project_relative(project_root, exc.path), 'write_lock': exc.write_lock, 'terminal': False}
                 if isinstance(nested_exc, router.RouterLedgerWriteInProgress):
                     tick.update({'nested_defer_reason': 'runtime_ledger_write_status_save_in_progress', 'nested_ledger_path': router.project_relative(project_root, nested_exc.path), 'nested_write_lock': nested_exc.write_lock})
-            ticks.append(tick)
+            tick_count += 1
+            last_tick = _compact_router_daemon_tick(tick)
+            if tick.get('semantic_changed'):
+                semantic_change_count += 1
+            else:
+                no_change_tick_count += 1
+            if (
+                tick.get('deferred')
+                or tick.get('nested_defer_reason')
+                or tick.get('stop_requested')
+            ) and len(anomalies) < _ROUTER_DAEMON_ANOMALY_SAMPLE_LIMIT:
+                anomalies.append(last_tick or {})
             if tick.get('terminal'):
                 break
-            if max_ticks is not None and len(ticks) >= max_ticks:
+            if max_ticks is not None and tick_count >= max_ticks:
                 break
             if router._router_daemon_tick_requests_immediate_next_tick(tick):
                 continue
@@ -556,10 +704,10 @@ def run_router_daemon(router: ModuleType, project_root: Path, *, max_ticks: int 
             pass
         raise
     finally:
-        if error is None and (release_lock_on_exit or (ticks and ticks[-1].get('terminal'))):
+        if error is None and (release_lock_on_exit or bool(last_tick and last_tick.get('terminal'))):
             existing_lock = router.read_json_if_exists(router._router_daemon_lock_path(run_root))
             if existing_lock.get('status') == 'active':
-                final_status = 'terminal_stopped' if ticks and ticks[-1].get('terminal') else 'released'
+                final_status = 'terminal_stopped' if last_tick and last_tick.get('terminal') else 'released'
                 lock = router._release_router_daemon_lock(project_root, run_root, reason='daemon_loop_exit', status=final_status)
             else:
                 lock = existing_lock
@@ -570,7 +718,7 @@ def run_router_daemon(router: ModuleType, project_root: Path, *, max_ticks: int 
             except router.RouterLedgerWriteInProgress:
                 pass
     status = router.read_json_if_exists(router._router_daemon_status_path(run_root))
-    return {'ok': True, 'command': 'daemon', 'run_id': run_state.get('run_id'), 'run_root': router.project_relative(project_root, run_root), 'tick_interval_seconds': router.ROUTER_DAEMON_TICK_SECONDS, 'tick_count': len(ticks), 'ticks': ticks, 'observe_only': observe_only, 'lock_path': router.project_relative(project_root, router._router_daemon_lock_path(run_root)), 'lock_status': (router.read_json_if_exists(router._router_daemon_lock_path(run_root)) or {}).get('status'), 'status_path': router.project_relative(project_root, router._router_daemon_status_path(run_root)), 'daemon_status': status}
+    return {'ok': True, 'command': 'daemon', 'run_id': run_state.get('run_id'), 'run_root': router.project_relative(project_root, run_root), 'tick_interval_seconds': router.ROUTER_DAEMON_TICK_SECONDS, 'tick_count': tick_count, 'semantic_change_count': semantic_change_count, 'no_change_tick_count': no_change_tick_count, 'last_tick': last_tick, 'anomalies': anomalies, 'observe_only': observe_only, 'lock_path': router.project_relative(project_root, router._router_daemon_lock_path(run_root)), 'lock_status': (router.read_json_if_exists(router._router_daemon_lock_path(run_root)) or {}).get('status'), 'status_path': router.project_relative(project_root, router._router_daemon_status_path(run_root)), 'daemon_status': _compact_router_daemon_status(status), 'terminal': bool(last_tick and last_tick.get('terminal'))}
 
 
 def stop_router_daemon(router: ModuleType, project_root: Path, *, reason: str='manual_stop', run_id: str | None=None, run_root: str | Path | None=None) -> dict[str, Any]:

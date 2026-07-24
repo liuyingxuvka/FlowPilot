@@ -24,12 +24,24 @@ from flowguard import (
 )
 
 from .command_builders import TierCommand
+from .evidence_v5 import (
+    BACKGROUND_CHILD_META_SCHEMA_VERSION,
+    BACKGROUND_RESULT_FINGERPRINT_SCHEMA_VERSION,
+    BACKGROUND_STREAM_INDEX_SCHEMA_VERSION,
+    COMBINED_INDEX_MAX_BYTES,
+    background_result_fingerprint_v2,
+    load_json_object,
+    path_reference,
+    resolve_artifact_path,
+    sha256_json,
+    stream_descriptor,
+)
 from .source_fingerprint import file_fingerprint, fingerprint_set, source_snapshot
 
 
 ROOT = Path(__file__).resolve().parents[2]
-IMPACT_PLAN_SCHEMA_VERSION = "flowpilot.test_impact_plan.v1"
-EVIDENCE_MANIFEST_SCHEMA_VERSION = "flowpilot.acceptance_testmesh_evidence_manifest.v4"
+IMPACT_PLAN_SCHEMA_VERSION = "flowpilot.test_impact_plan.v2"
+EVIDENCE_MANIFEST_SCHEMA_VERSION = "flowpilot.acceptance_testmesh_evidence_manifest.v5"
 FLOWGUARD_BACKGROUND_WRAPPER = (
     ROOT / "scripts" / "run_flowguard_background.py"
 ).resolve()
@@ -77,6 +89,12 @@ EXPLICIT_DYNAMIC_INPUT_OWNERS = {
     "skills/flowpilot/.skillguard/compiled-contract.json": frozenset(
         {
             "flowguard_skillguard_current_contract",
+        }
+    ),
+    "skills/flowpilot/.skillguard/contract-source.json": frozenset(
+        {
+            "flowguard_skillguard_current_contract",
+            "skillguard_deep_contract_tests",
         }
     ),
 }
@@ -172,6 +190,7 @@ class OwnerDecision:
     reason_codes: tuple[str, ...]
     identity: OwnerIdentity
     previous_proof_artifact_id: str = ""
+    previous_proof_ref: Mapping[str, Any] | None = None
     reuse_ticket: TestResultReuseTicket | None = None
 
     def to_dict(self) -> dict[str, Any]:
@@ -181,8 +200,15 @@ class OwnerDecision:
             "reason_codes": list(self.reason_codes),
             "identity": self.identity.to_dict(),
             "previous_proof_artifact_id": self.previous_proof_artifact_id,
-            "reuse_ticket": (
-                self.reuse_ticket.to_dict() if self.reuse_ticket is not None else None
+            "previous_proof_ref": (
+                dict(self.previous_proof_ref)
+                if self.previous_proof_ref is not None
+                else None
+            ),
+            "reuse_ticket_identity": (
+                sha256_json(self.reuse_ticket.to_dict())
+                if self.reuse_ticket is not None
+                else ""
             ),
         }
 
@@ -234,6 +260,15 @@ class ImpactPlan:
         }
 
 
+@dataclass(frozen=True, slots=True)
+class ResolvedOwnerProof:
+    owner_id: str
+    proof: ProofArtifactRef
+    identity: Mapping[str, Any]
+    result_fingerprint: str
+    proof_ref: Mapping[str, Any]
+
+
 def _relative(path: Path) -> str:
     return path.resolve().relative_to(ROOT.resolve()).as_posix()
 
@@ -256,6 +291,229 @@ def _portable_command(values: Sequence[Any]) -> str:
         except OSError:
             pass
     return " ".join(parts)
+
+
+def _descriptor_path(value: Mapping[str, Any]) -> Path:
+    path_value = str(value.get("path") or "")
+    if not path_value:
+        raise ValueError("artifact_ref_path_missing")
+    return resolve_artifact_path(ROOT, path_value)
+
+
+def _validated_descriptor(
+    value: Mapping[str, Any],
+    *,
+    require_lines: bool,
+) -> Path:
+    path = _descriptor_path(value)
+    if not path.is_file():
+        raise ValueError("artifact_ref_missing")
+    if str(value.get("sha256") or "") != sha256_file(path):
+        raise ValueError("artifact_ref_sha256_mismatch")
+    expected_bytes = value.get("bytes")
+    if (
+        not isinstance(expected_bytes, int)
+        or expected_bytes != path.stat().st_size
+    ):
+        raise ValueError("artifact_ref_bytes_mismatch")
+    if require_lines:
+        current = stream_descriptor(path, path_value=str(value.get("path") or ""))
+        expected_lines = value.get("lines")
+        if (
+            not isinstance(expected_lines, int)
+            or expected_lines != int(current["lines"])
+        ):
+            raise ValueError("artifact_ref_lines_mismatch")
+    return path
+
+
+def _identity_from_child_meta(
+    meta: Mapping[str, Any],
+    *,
+    owner_id: str,
+) -> Mapping[str, Any]:
+    impact_ref = meta.get("impact_plan_ref")
+    if not isinstance(impact_ref, Mapping):
+        raise ValueError("child_impact_plan_ref_missing")
+    impact_path = _descriptor_path(impact_ref)
+    if not impact_path.is_file():
+        raise ValueError("child_impact_plan_missing")
+    expected_bytes = impact_ref.get("bytes")
+    if (
+        not isinstance(expected_bytes, int)
+        or expected_bytes != impact_path.stat().st_size
+    ):
+        raise ValueError("child_impact_plan_bytes_mismatch")
+    stat = impact_path.stat()
+    impact_plan = _cached_impact_plan(
+        str(impact_path),
+        str(impact_ref.get("sha256") or ""),
+        stat.st_size,
+        stat.st_mtime_ns,
+    )
+    if impact_plan.get("schema_version") != IMPACT_PLAN_SCHEMA_VERSION:
+        raise ValueError("child_impact_plan_not_current")
+    if impact_plan.get("plan_id") != impact_ref.get("plan_id"):
+        raise ValueError("child_impact_plan_id_mismatch")
+    if impact_ref.get("owner_id") != owner_id:
+        raise ValueError("child_impact_plan_owner_mismatch")
+    decisions = [
+        row
+        for row in impact_plan.get("decisions") or ()
+        if isinstance(row, Mapping) and row.get("owner_id") == owner_id
+    ]
+    if len(decisions) != 1:
+        raise ValueError("child_impact_plan_owner_lookup_not_exact")
+    identity = decisions[0].get("identity")
+    if not isinstance(identity, Mapping):
+        raise ValueError("child_owner_identity_missing")
+    if sha256_json(dict(identity)) != str(meta.get("owner_identity_sha256") or ""):
+        raise ValueError("child_owner_identity_sha256_mismatch")
+    return dict(identity)
+
+
+@lru_cache(maxsize=32)
+def _cached_impact_plan(
+    path_value: str,
+    expected_sha256: str,
+    size: int,
+    mtime_ns: int,
+) -> dict[str, Any]:
+    del size, mtime_ns
+    path = Path(path_value)
+    if sha256_file(path) != expected_sha256:
+        raise ValueError("child_impact_plan_sha256_mismatch")
+    return load_json_object(path)
+
+
+def validate_owner_reference(
+    row: Mapping[str, Any],
+    *,
+    expected_owner_id: str,
+) -> ResolvedOwnerProof:
+    """Resolve one exact V5 owner ref and validate all immutable child proof."""
+
+    if row.get("owner_id") != expected_owner_id:
+        raise ValueError("owner_ref_id_mismatch")
+    proof_ref = row.get("proof_ref")
+    if not isinstance(proof_ref, Mapping):
+        raise ValueError("owner_proof_ref_missing")
+    meta_path = _validated_descriptor(proof_ref, require_lines=False)
+    meta = load_json_object(meta_path)
+    if meta.get("schema_version") != BACKGROUND_CHILD_META_SCHEMA_VERSION:
+        raise ValueError("owner_child_meta_not_v2")
+    if meta.get("owner_id") != expected_owner_id or meta.get("name") != expected_owner_id:
+        raise ValueError("owner_child_meta_identity_mismatch")
+    if meta.get("status") != proof_ref.get("result_status"):
+        raise ValueError("owner_proof_status_mismatch")
+    result_fingerprint = str(meta.get("result_fingerprint") or "")
+    if (
+        not result_fingerprint
+        or result_fingerprint != proof_ref.get("result_fingerprint")
+    ):
+        raise ValueError("owner_result_fingerprint_mismatch")
+    if (
+        meta.get("result_fingerprint_schema_version")
+        != BACKGROUND_RESULT_FINGERPRINT_SCHEMA_VERSION
+        or proof_ref.get("result_fingerprint_schema_version")
+        != BACKGROUND_RESULT_FINGERPRINT_SCHEMA_VERSION
+    ):
+        raise ValueError("owner_result_fingerprint_not_v2")
+
+    streams = meta.get("stream_artifacts")
+    if not isinstance(streams, Mapping):
+        raise ValueError("owner_stream_refs_missing")
+    stdout = streams.get("stdout")
+    stderr = streams.get("stderr")
+    if not isinstance(stdout, Mapping) or not isinstance(stderr, Mapping):
+        raise ValueError("owner_stream_ref_missing")
+    _validated_descriptor(stdout, require_lines=True)
+    _validated_descriptor(stderr, require_lines=True)
+    combined = meta.get("combined_artifact")
+    if not isinstance(combined, Mapping):
+        raise ValueError("owner_combined_ref_missing")
+    combined_path = _validated_descriptor(combined, require_lines=False)
+    if (
+        combined.get("kind") != "terminal_stream_index"
+        or meta.get("combined_kind") != "terminal_stream_index"
+        or combined_path.stat().st_size > COMBINED_INDEX_MAX_BYTES
+    ):
+        raise ValueError("owner_combined_index_invalid")
+    combined_value = load_json_object(combined_path)
+    if (
+        combined_value.get("schema_version")
+        != BACKGROUND_STREAM_INDEX_SCHEMA_VERSION
+        or combined_value.get("kind") != "terminal_stream_index"
+    ):
+        raise ValueError("owner_combined_index_not_current")
+    cleanup = meta.get("cleanup_proof")
+    cleanup_reason = (
+        str(cleanup.get("reason") or "") if isinstance(cleanup, Mapping) else ""
+    )
+    recomputed = background_result_fingerprint_v2(
+        stdout=stdout,
+        stderr=stderr,
+        exit_code=int(meta.get("exit_code") or 0),
+        status=str(meta.get("status") or ""),
+        descendant_zero_confirmed=meta.get("descendant_zero_confirmed") is True,
+        cleanup_reason=cleanup_reason,
+    )
+    if recomputed != result_fingerprint:
+        raise ValueError("owner_result_fingerprint_recompute_mismatch")
+    if combined_value.get("result_fingerprint") != result_fingerprint:
+        raise ValueError("owner_combined_result_fingerprint_mismatch")
+    identity = _identity_from_child_meta(meta, owner_id=expected_owner_id)
+    proof_artifact_id = str(proof_ref.get("artifact_id") or "")
+    expected_artifact_id = (
+        f"proof.test-tier-owner.{expected_owner_id}.{result_fingerprint[:16]}"
+    )
+    if proof_artifact_id != expected_artifact_id:
+        raise ValueError("owner_proof_artifact_id_mismatch")
+    proof = ProofArtifactRef(
+        artifact_id=proof_artifact_id,
+        producer_route="flowpilot.test-tier.selective-execution",
+        command=_portable_command(meta.get("command") or ()),
+        result_path=_portable_path(str(combined.get("path") or "")),
+        result_status=str(meta.get("status") or "not_run"),
+        exit_code=meta.get("exit_code"),
+        started_at=str(meta.get("start_time") or ""),
+        finished_at=str(meta.get("end_time") or ""),
+        artifact_fingerprints={
+            "stdout": str(stdout.get("sha256") or ""),
+            "stderr": str(stderr.get("sha256") or ""),
+            "combined": str(combined.get("sha256") or ""),
+            "child_meta": str(proof_ref.get("sha256") or ""),
+        },
+        covered_obligation_ids=tuple(
+            identity.get("covered_obligation_ids") or ()
+        ),
+        assertion_scope="external_contract",
+        current=meta.get("inputs_current") is True,
+        route_evidence_current=meta.get("inputs_current") is True,
+        progress_only=str(meta.get("status") or "") == "running",
+        stale_reasons=(
+            ()
+            if meta.get("inputs_current") is True
+            else ("owner_inputs_changed_during_execution",)
+        ),
+        metadata={
+            "owner_id": expected_owner_id,
+            "result_fingerprint": result_fingerprint,
+            "result_fingerprint_schema_version": (
+                BACKGROUND_RESULT_FINGERPRINT_SCHEMA_VERSION
+            ),
+            "descendant_zero_confirmed": (
+                meta.get("descendant_zero_confirmed") is True
+            ),
+        },
+    )
+    return ResolvedOwnerProof(
+        owner_id=expected_owner_id,
+        proof=proof,
+        identity=identity,
+        result_fingerprint=result_fingerprint,
+        proof_ref=dict(proof_ref),
+    )
 
 
 def _existing_repo_file(value: str) -> Path | None:
@@ -623,7 +881,11 @@ def build_owner_contracts(
     return _build_owner_contracts_cached(tuple(tier_commands))
 
 
-def owner_identity(contract: OwnerContract) -> OwnerIdentity:
+def owner_identity(
+    contract: OwnerContract,
+    *,
+    fingerprint_cache: dict[str, str] | None = None,
+) -> OwnerIdentity:
     covered: dict[str, str] = {}
     missing: list[str] = []
     for relative in contract.covered_inputs:
@@ -631,7 +893,12 @@ def owner_identity(contract: OwnerContract) -> OwnerIdentity:
         if not path.is_file():
             missing.append(relative)
             continue
-        covered[relative] = file_fingerprint(path)
+        if fingerprint_cache is not None and relative in fingerprint_cache:
+            covered[relative] = fingerprint_cache[relative]
+        else:
+            covered[relative] = file_fingerprint(path)
+            if fingerprint_cache is not None:
+                fingerprint_cache[relative] = covered[relative]
     if missing:
         raise FileNotFoundError("owner_inputs_missing:" + ",".join(sorted(missing)))
     tests = {path: value for path, value in covered.items() if path.startswith("tests/")}
@@ -656,39 +923,35 @@ def owner_identity(contract: OwnerContract) -> OwnerIdentity:
     )
 
 
-def _proof_from_row(row: Mapping[str, Any]) -> ProofArtifactRef | None:
-    value = row.get("proof_artifact")
-    if not isinstance(value, Mapping):
-        return None
+def _resolved_proof_from_row(
+    owner_id: str,
+    row: Mapping[str, Any],
+) -> ResolvedOwnerProof | None:
     try:
-        return ProofArtifactRef(**dict(value))
+        return validate_owner_reference(row, expected_owner_id=owner_id)
     except (TypeError, ValueError):
         return None
 
 
 def _identity_matches(row: Mapping[str, Any], current: OwnerIdentity) -> bool:
-    value = row.get("identity")
-    return isinstance(value, Mapping) and dict(value) == current.to_dict()
+    return str(row.get("identity_sha256") or "") == sha256_json(current.to_dict())
 
 
 def _execution_wrapper_scope_reduction(
-    row: Mapping[str, Any],
+    previous_identity: Mapping[str, Any],
     current: OwnerIdentity,
 ) -> tuple[str, ...]:
     """Prove that a former wrapper-import superset can reuse payload evidence."""
 
-    previous = row.get("identity")
-    if not isinstance(previous, Mapping):
-        return ()
     for key in (
         "command_fingerprint",
         "environment_fingerprint",
         "covered_obligation_ids",
         "covered_evidence_ids",
     ):
-        if previous.get(key) != current.to_dict()[key]:
+        if previous_identity.get(key) != current.to_dict()[key]:
             return ()
-    previous_inputs = previous.get("covered_input_fingerprints")
+    previous_inputs = previous_identity.get("covered_input_fingerprints")
     if not isinstance(previous_inputs, Mapping):
         return ()
     current_inputs = current.covered_input_fingerprints
@@ -707,18 +970,16 @@ def _execution_wrapper_scope_reduction(
 
 def _current_reuse_ticket(
     owner_id: str,
-    row: Mapping[str, Any],
+    resolved: ResolvedOwnerProof,
     current: OwnerIdentity,
     *,
     reason: str = "all exact owner applicability identities remain current",
     metadata: Mapping[str, Any] | None = None,
 ) -> TestResultReuseTicket | None:
-    proof = _proof_from_row(row)
-    if proof is None:
-        return None
+    proof = resolved.proof
     proof_gaps = proof_artifact_gap_codes(
         proof,
-        declared_status=str(row.get("result_status") or ""),
+        declared_status=proof.result_status,
         required_obligation_ids=current.covered_obligation_ids,
         require_result_path=True,
         require_fingerprints=True,
@@ -734,11 +995,7 @@ def _current_reuse_ticket(
         or proof.stale_reasons
     ):
         return None
-    result_fingerprint = str(
-        row.get("result_fingerprint")
-        or proof.metadata.get("result_fingerprint")
-        or ""
-    )
+    result_fingerprint = resolved.result_fingerprint
     if not result_fingerprint:
         return None
     return TestResultReuseTicket(
@@ -785,7 +1042,11 @@ def load_previous_manifest(
     if not isinstance(value, dict):
         return None, actual, ("previous_manifest_not_object",)
     if value.get("schema_version") != EVIDENCE_MANIFEST_SCHEMA_VERSION:
-        return None, actual, ("previous_manifest_not_current_v4",)
+        if value.get("schema_version") == (
+            "flowpilot.acceptance_testmesh_evidence_manifest.v4"
+        ):
+            return None, actual, ("previous_manifest_v4_rejected",)
+        return None, actual, ("previous_manifest_not_current_v5",)
     return value, actual, ()
 
 
@@ -835,7 +1096,12 @@ def resolve_impact(
     )
     if isinstance(previous_owners_for_mapping, Mapping):
         for owner_id, row in previous_owners_for_mapping.items():
-            identity = row.get("identity") if isinstance(row, Mapping) else None
+            resolved = (
+                _resolved_proof_from_row(str(owner_id), row)
+                if isinstance(row, Mapping)
+                else None
+            )
+            identity = resolved.identity if resolved is not None else None
             covered_inputs = (
                 identity.get("covered_input_fingerprints")
                 if isinstance(identity, Mapping)
@@ -878,41 +1144,61 @@ def resolve_impact(
         )
 
     decisions: list[OwnerDecision] = []
+    fingerprint_cache: dict[str, str] = {}
     for contract in contracts:
-        identity = owner_identity(contract)
+        identity = owner_identity(
+            contract,
+            fingerprint_cache=fingerprint_cache,
+        )
         reasons: list[str] = []
         action: Literal["reuse", "execute", "blocked"]
         ticket: TestResultReuseTicket | None = None
         previous_proof_id = ""
+        previous_proof_ref: Mapping[str, Any] | None = None
         if blockers:
             action = "blocked"
             reasons.extend(blockers)
         elif seed_baseline:
             action = "execute"
-            reasons.append("current_v4_baseline_seed")
+            reasons.append("current_v5_baseline_seed")
         else:
             previous_row = previous_owners.get(contract.owner_id)
             if not isinstance(previous_row, Mapping):
                 action = "execute"
                 reasons.append("current_owner_proof_missing")
             else:
-                proof = _proof_from_row(previous_row)
-                previous_proof_id = proof.artifact_id if proof is not None else ""
-                dropped_wrapper_inputs = _execution_wrapper_scope_reduction(
+                resolved = _resolved_proof_from_row(
+                    contract.owner_id,
                     previous_row,
-                    identity,
+                )
+                proof = resolved.proof if resolved is not None else None
+                previous_proof_id = proof.artifact_id if proof is not None else ""
+                previous_proof_ref = (
+                    resolved.proof_ref if resolved is not None else None
+                )
+                dropped_wrapper_inputs = (
+                    _execution_wrapper_scope_reduction(
+                        resolved.identity,
+                        identity,
+                    )
+                    if resolved is not None
+                    else ()
                 )
                 if _identity_matches(previous_row, identity):
-                    ticket = _current_reuse_ticket(
-                        contract.owner_id,
-                        previous_row,
-                        identity,
+                    ticket = (
+                        _current_reuse_ticket(
+                            contract.owner_id,
+                            resolved,
+                            identity,
+                        )
+                        if resolved is not None
+                        else None
                     )
                     reuse_reason = "exact_owner_proof_reused"
                 elif dropped_wrapper_inputs:
                     ticket = _current_reuse_ticket(
                         contract.owner_id,
-                        previous_row,
+                        resolved,
                         identity,
                         reason=(
                             "payload inputs are unchanged after transferring shared "
@@ -947,6 +1233,11 @@ def resolve_impact(
                 reason_codes=tuple(sorted(set(reasons))),
                 identity=identity,
                 previous_proof_artifact_id=previous_proof_id,
+                previous_proof_ref=(
+                    dict(previous_proof_ref)
+                    if previous_proof_ref is not None
+                    else None
+                ),
                 reuse_ticket=ticket,
             )
         )
@@ -980,54 +1271,69 @@ def resolve_impact(
     )
 
 
-def proof_row_from_child_meta(
+def owner_reference_from_child_meta(
     *,
     owner_id: str,
+    meta_path: Path,
     meta: Mapping[str, Any],
-    artifact_fingerprints: Mapping[str, str],
 ) -> dict[str, Any]:
-    identity = meta.get("owner_identity")
-    if not isinstance(identity, Mapping):
-        raise ValueError(f"{owner_id}:owner_identity_missing")
+    if meta.get("schema_version") != BACKGROUND_CHILD_META_SCHEMA_VERSION:
+        raise ValueError(f"{owner_id}:child_meta_not_v2")
+    if meta.get("owner_id") != owner_id:
+        raise ValueError(f"{owner_id}:child_meta_owner_mismatch")
     result_fingerprint = str(meta.get("result_fingerprint") or "")
     if not result_fingerprint:
         raise ValueError(f"{owner_id}:result_fingerprint_missing")
-    proof = ProofArtifactRef(
-        artifact_id=f"proof.test-tier-owner.{owner_id}.{result_fingerprint[:16]}",
-        producer_route="flowpilot.test-tier.selective-execution",
-        command=_portable_command(meta.get("command") or ()),
-        result_path=_portable_path(
-            str(meta.get("artifacts", {}).get("combined") or "")
-        ),
-        result_status=str(meta.get("status") or "not_run"),
-        exit_code=meta.get("exit_code"),
-        started_at=str(meta.get("start_time") or ""),
-        finished_at=str(meta.get("end_time") or ""),
-        artifact_fingerprints=dict(artifact_fingerprints),
-        covered_obligation_ids=tuple(identity.get("covered_obligation_ids") or ()),
-        assertion_scope="external_contract",
-        current=meta.get("inputs_current") is True,
-        route_evidence_current=meta.get("inputs_current") is True,
-        progress_only=str(meta.get("status") or "") == "running",
-        stale_reasons=(
-            ()
-            if meta.get("inputs_current") is True
-            else ("owner_inputs_changed_during_execution",)
-        ),
-        metadata={
-            "owner_id": owner_id,
-            "result_fingerprint": result_fingerprint,
-            "descendant_zero_confirmed": meta.get("descendant_zero_confirmed") is True,
-        },
-    )
+    if (
+        meta.get("result_fingerprint_schema_version")
+        != BACKGROUND_RESULT_FINGERPRINT_SCHEMA_VERSION
+    ):
+        raise ValueError(f"{owner_id}:result_fingerprint_not_v2")
+    meta_ref = path_reference(meta_path, root=ROOT)
     return {
         "owner_id": owner_id,
-        "result_status": proof.result_status,
+        "action": "execute",
+        "result_status": str(meta.get("status") or "not_run"),
         "result_reused": False,
-        "identity": dict(identity),
-        "result_fingerprint": result_fingerprint,
-        "proof_artifact": proof.to_dict(),
-        "reuse_ticket": None,
+        "identity_sha256": str(meta.get("owner_identity_sha256") or ""),
+        "proof_ref": {
+            **meta_ref,
+            "artifact_id": (
+                f"proof.test-tier-owner.{owner_id}.{result_fingerprint[:16]}"
+            ),
+            "result_fingerprint": result_fingerprint,
+            "result_fingerprint_schema_version": (
+                BACKGROUND_RESULT_FINGERPRINT_SCHEMA_VERSION
+            ),
+            "result_status": str(meta.get("status") or "not_run"),
+        },
+        "reuse_ticket_ref": None,
+    }
+
+
+def owner_reference_from_reuse_decision(
+    decision: OwnerDecision,
+) -> dict[str, Any]:
+    if (
+        decision.action != "reuse"
+        or decision.reuse_ticket is None
+        or decision.previous_proof_ref is None
+    ):
+        raise ValueError(f"{decision.owner_id}:reuse_reference_incomplete")
+    ticket = decision.reuse_ticket.to_dict()
+    return {
+        "owner_id": decision.owner_id,
+        "action": "reuse",
+        "result_status": "passed",
+        "result_reused": True,
+        "identity_sha256": sha256_json(decision.identity.to_dict()),
+        "proof_ref": dict(decision.previous_proof_ref),
+        "reuse_ticket_ref": {
+            "identity": sha256_json(ticket),
+            "evidence_id": decision.owner_id,
+            "previous_evidence_id": decision.previous_proof_artifact_id,
+            "same_output_proof_id": decision.previous_proof_artifact_id,
+        },
     }
 
 
@@ -1040,12 +1346,15 @@ __all__ = [
     "OwnerContract",
     "OwnerDecision",
     "OwnerIdentity",
+    "ResolvedOwnerProof",
     "SHARED_CONTROL_PLANE_INPUTS",
     "SHARED_CONTROL_PLANE_OWNER",
     "build_owner_contracts",
     "load_previous_manifest",
+    "owner_reference_from_child_meta",
+    "owner_reference_from_reuse_decision",
     "owner_identity",
-    "proof_row_from_child_meta",
     "resolve_impact",
     "sha256_file",
+    "validate_owner_reference",
 ]

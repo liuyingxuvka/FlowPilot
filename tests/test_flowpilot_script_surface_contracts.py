@@ -72,6 +72,7 @@ class FlowPilotScriptSurfaceContractTests(unittest.TestCase):
             "audit_local_install_sync.py",
             "audit_validation_artifacts.py",
             "check_public_release.py",
+            "flowguard_model_system_snapshot.py",
             "flowpilot_lifecycle.py",
             "install_flowpilot.py",
             "run_test_tier.py",

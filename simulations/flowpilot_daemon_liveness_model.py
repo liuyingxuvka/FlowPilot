@@ -17,6 +17,12 @@ from flowguard import FunctionResult, Invariant, InvariantResult, Workflow
 
 PATROL_CHECK_SECONDS = 30
 
+RESOURCE_BOUNDEDNESS_CHILD_BINDING = {
+    "model_id": "flowpilot_control_plane_resource_boundedness",
+    "owned_obligation": "bounded_terminal_tick_and_anomaly_evidence",
+    "claim_boundary": "daemon liveness retains heartbeat and recovery semantics; the child owns evidence growth bounds",
+}
+
 
 @dataclass(frozen=True)
 class Tick:
