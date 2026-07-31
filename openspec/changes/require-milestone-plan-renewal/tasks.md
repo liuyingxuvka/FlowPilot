@@ -63,5 +63,5 @@
 - [x] 7.5 Run one final SkillGuard-supervised full validation for maintenance unit `unit:flowpilot` and inspect its immutable terminal receipts.
 - [x] 7.6 Sync the validated clean consumer projection and run installed currentness plus target-owned installed smoke checks separately.
 - [x] 7.7 Run OpenSpec strict validation and record final source, model, SkillGuard, and installation identities without release or publication claims.
-- [ ] 7.8 Perform the predictive-KB postflight check and record one structured observation only if this work exposed a reusable lesson or route gap.
+- [x] 7.8 Perform the predictive-KB postflight check and record one structured observation only if this work exposed a reusable lesson or route gap (event `7275fb7d-a98f-41e1-bda7-40dc2710e23a`, terminal receipt verified).
 - [x] 7.9 Collect the background model regressions under one frozen source snapshot and preserve their immutable logs without overwriting parallel results.
