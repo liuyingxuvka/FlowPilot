@@ -24,6 +24,16 @@ runtime_context: Treat the runtime delivery envelope as the live source for the 
 
 Draft the route from reviewed material and product understanding.
 
+The initial canonical route must extend all the way to the final user goal,
+while treating every top-level node as a hard milestone boundary. Model the
+single mandatory loop explicitly: accept the milestone, freshly audit
+completed work, deviations, and remaining obligations, re-emit the complete
+remaining route through the final goal, then pass FlowGuard, PM absorption,
+independent Reviewer, system validation, and atomic route renewal before the
+next top-level frontier is visible. This is not an optional planning mode and
+does not create a second route authority. Nested child nodes keep their local
+parent-composition loop and do not trigger route-wide renewal.
+
 Before drafting, read the latest
 `.flowpilot/runs/<run-id>/route_memory/pm_prior_path_context.json` and
 `route_history_index.json`. If this is a fresh route, cite that the context

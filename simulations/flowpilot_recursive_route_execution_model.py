@@ -9,7 +9,7 @@ from flowguard import FunctionResult, Invariant, InvariantResult, Workflow
 
 
 MODEL_ID = "flowpilot_recursive_route_execution"
-MAX_SEQUENCE_LENGTH = 19
+MAX_SEQUENCE_LENGTH = 25
 
 
 @dataclass(frozen=True)
@@ -24,12 +24,19 @@ class State:
     frontier_ready: bool = False
     node_1_acceptance_plan: bool = False
     node_1_packet_loop_closed: bool = False
+    node_1_milestone_audit_and_plan: bool = False
+    node_1_milestone_review_accepted: bool = False
     node_1_pm_disposition: bool = False
     node_2_acceptance_plan: bool = False
     node_2_packet_loop_closed: bool = False
+    node_2_milestone_audit_and_plan: bool = False
+    node_2_milestone_review_accepted: bool = False
     node_2_pm_disposition: bool = False
     node_3_acceptance_plan: bool = False
     node_3_packet_loop_closed: bool = False
+    node_3_milestone_audit_and_plan: bool = False
+    node_3_milestone_review_accepted: bool = False
+    node_3_empty_remaining_plan: bool = False
     node_3_pm_disposition: bool = False
     final_route_wide_ledger_built: bool = False
     final_requirement_evidence_matrix_built: bool = False
@@ -49,6 +56,10 @@ class State:
     stale_node_evidence_accepted: bool = False
     dead_lease_advances_node: bool = False
     mutation_without_frontier_rewrite: bool = False
+    next_node_started_without_milestone_renewal: bool = False
+    milestone_disposition_without_audit: bool = False
+    milestone_disposition_without_review: bool = False
+    terminal_without_reviewed_empty_plan: bool = False
 
 
 @dataclass(frozen=True)
@@ -76,12 +87,18 @@ REQUIRED_SAFE_LABELS = (
     "initialize_execution_frontier",
     "accept_node_1_acceptance_plan",
     "complete_node_1_packet_loop",
+    "submit_node_1_milestone_audit_and_plan",
+    "accept_node_1_milestone_review",
     "record_node_1_pm_disposition",
     "accept_node_2_acceptance_plan",
     "complete_node_2_packet_loop",
+    "submit_node_2_milestone_audit_and_plan",
+    "accept_node_2_milestone_review",
     "record_node_2_pm_disposition",
     "accept_node_3_acceptance_plan",
     "complete_node_3_packet_loop",
+    "submit_node_3_terminal_milestone_audit_and_empty_plan",
+    "accept_node_3_milestone_review",
     "record_node_3_pm_disposition",
     "build_final_route_wide_ledger",
     "build_final_requirement_evidence_matrix",
@@ -105,6 +122,9 @@ class RecursiveRouteExecutionStep:
         "execution_frontier",
         "node_acceptance_plans",
         "node_packet_loops",
+        "milestone_audits",
+        "remaining_route_plans",
+        "milestone_plan_reviews",
         "pm_dispositions",
         "route_wide_ledger",
         "final_requirement_evidence_matrix",
@@ -115,6 +135,7 @@ class RecursiveRouteExecutionStep:
         "frontier_state",
         "node_acceptance_plans",
         "node_acceptance",
+        "milestone_plan_renewal",
         "repair_or_mutation_records",
         "terminal_closure",
     )
@@ -152,18 +173,64 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
         return (Transition("accept_node_1_acceptance_plan", replace(state, node_1_acceptance_plan=True)),)
     if not state.node_1_packet_loop_closed:
         return (Transition("complete_node_1_packet_loop", replace(state, node_1_packet_loop_closed=True)),)
+    if not state.node_1_milestone_audit_and_plan:
+        return (
+            Transition(
+                "submit_node_1_milestone_audit_and_plan",
+                replace(state, node_1_milestone_audit_and_plan=True),
+            ),
+        )
+    if not state.node_1_milestone_review_accepted:
+        return (
+            Transition(
+                "accept_node_1_milestone_review",
+                replace(state, node_1_milestone_review_accepted=True),
+            ),
+        )
     if not state.node_1_pm_disposition:
         return (Transition("record_node_1_pm_disposition", replace(state, node_1_pm_disposition=True)),)
     if not state.node_2_acceptance_plan:
         return (Transition("accept_node_2_acceptance_plan", replace(state, node_2_acceptance_plan=True)),)
     if not state.node_2_packet_loop_closed:
         return (Transition("complete_node_2_packet_loop", replace(state, node_2_packet_loop_closed=True)),)
+    if not state.node_2_milestone_audit_and_plan:
+        return (
+            Transition(
+                "submit_node_2_milestone_audit_and_plan",
+                replace(state, node_2_milestone_audit_and_plan=True),
+            ),
+        )
+    if not state.node_2_milestone_review_accepted:
+        return (
+            Transition(
+                "accept_node_2_milestone_review",
+                replace(state, node_2_milestone_review_accepted=True),
+            ),
+        )
     if not state.node_2_pm_disposition:
         return (Transition("record_node_2_pm_disposition", replace(state, node_2_pm_disposition=True)),)
     if not state.node_3_acceptance_plan:
         return (Transition("accept_node_3_acceptance_plan", replace(state, node_3_acceptance_plan=True)),)
     if not state.node_3_packet_loop_closed:
         return (Transition("complete_node_3_packet_loop", replace(state, node_3_packet_loop_closed=True)),)
+    if not state.node_3_milestone_audit_and_plan:
+        return (
+            Transition(
+                "submit_node_3_terminal_milestone_audit_and_empty_plan",
+                replace(
+                    state,
+                    node_3_milestone_audit_and_plan=True,
+                    node_3_empty_remaining_plan=True,
+                ),
+            ),
+        )
+    if not state.node_3_milestone_review_accepted:
+        return (
+            Transition(
+                "accept_node_3_milestone_review",
+                replace(state, node_3_milestone_review_accepted=True),
+            ),
+        )
     if not state.node_3_pm_disposition:
         return (Transition("record_node_3_pm_disposition", replace(state, node_3_pm_disposition=True)),)
     if not state.final_route_wide_ledger_built:
@@ -200,18 +267,42 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("node 1 task started before acceptance plan")
     if state.node_1_pm_disposition and not state.node_1_packet_loop_closed:
         failures.append("node 1 PM disposition recorded before node packet loop closed")
+    if state.node_1_milestone_audit_and_plan and not state.node_1_packet_loop_closed:
+        failures.append("node 1 milestone audit and remaining plan submitted before node packet loop closed")
+    if state.node_1_milestone_review_accepted and not state.node_1_milestone_audit_and_plan:
+        failures.append("node 1 milestone plan review passed before current audit and remaining plan")
+    if state.node_1_pm_disposition and not state.node_1_milestone_review_accepted:
+        failures.append("node 1 PM disposition committed before milestone plan review")
+    if state.node_2_acceptance_plan and not state.node_1_pm_disposition:
+        failures.append("node 2 acceptance plan started before node 1 milestone renewal committed")
     if state.node_2_packet_loop_closed and not state.node_1_pm_disposition:
         failures.append("node 2 started before node 1 PM disposition")
     if state.node_2_packet_loop_closed and not state.node_2_acceptance_plan:
         failures.append("node 2 task started before acceptance plan")
     if state.node_2_pm_disposition and not state.node_2_packet_loop_closed:
         failures.append("node 2 PM disposition recorded before node packet loop closed")
+    if state.node_2_milestone_audit_and_plan and not state.node_2_packet_loop_closed:
+        failures.append("node 2 milestone audit and remaining plan submitted before node packet loop closed")
+    if state.node_2_milestone_review_accepted and not state.node_2_milestone_audit_and_plan:
+        failures.append("node 2 milestone plan review passed before current audit and remaining plan")
+    if state.node_2_pm_disposition and not state.node_2_milestone_review_accepted:
+        failures.append("node 2 PM disposition committed before milestone plan review")
+    if state.node_3_acceptance_plan and not state.node_2_pm_disposition:
+        failures.append("node 3 acceptance plan started before node 2 milestone renewal committed")
     if state.node_3_packet_loop_closed and not state.node_2_pm_disposition:
         failures.append("node 3 started before node 2 PM disposition")
     if state.node_3_packet_loop_closed and not state.node_3_acceptance_plan:
         failures.append("node 3 task started before acceptance plan")
     if state.node_3_pm_disposition and not state.node_3_packet_loop_closed:
         failures.append("node 3 PM disposition recorded before node packet loop closed")
+    if state.node_3_milestone_audit_and_plan and not state.node_3_packet_loop_closed:
+        failures.append("node 3 milestone audit and remaining plan submitted before node packet loop closed")
+    if state.node_3_milestone_review_accepted and not state.node_3_milestone_audit_and_plan:
+        failures.append("node 3 milestone plan review passed before current audit and remaining plan")
+    if state.node_3_pm_disposition and not state.node_3_milestone_review_accepted:
+        failures.append("node 3 PM disposition committed before milestone plan review")
+    if state.node_3_pm_disposition and not state.node_3_empty_remaining_plan:
+        failures.append("final node PM disposition committed without a reviewed empty remaining plan")
     if state.final_route_wide_ledger_built and not state.node_3_pm_disposition:
         failures.append("final route-wide ledger built before all node dispositions")
     if state.terminal_complete and not state.final_route_wide_ledger_built:
@@ -242,6 +333,14 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("dead or inactive lease advanced a node")
     if state.mutation_without_frontier_rewrite:
         failures.append("route mutation did not rewrite execution frontier")
+    if state.next_node_started_without_milestone_renewal:
+        failures.append("next node started before the prior milestone renewal committed")
+    if state.milestone_disposition_without_audit:
+        failures.append("milestone disposition committed without a current audit and complete remaining plan")
+    if state.milestone_disposition_without_review:
+        failures.append("milestone disposition committed without independent plan review")
+    if state.terminal_without_reviewed_empty_plan:
+        failures.append("terminal closure proceeded without the final reviewed empty remaining plan")
     return failures
 
 
@@ -270,6 +369,26 @@ def hazard_states() -> dict[str, State]:
         "stale_node_evidence_accepted": replace(target, stale_node_evidence_accepted=True),
         "dead_lease_advances_node": replace(target, dead_lease_advances_node=True),
         "mutation_without_frontier_rewrite": replace(target, mutation_without_frontier_rewrite=True),
+        "next_node_started_without_milestone_renewal": replace(
+            target,
+            node_1_pm_disposition=False,
+            next_node_started_without_milestone_renewal=True,
+        ),
+        "milestone_disposition_without_audit": replace(
+            target,
+            node_2_milestone_audit_and_plan=False,
+            milestone_disposition_without_audit=True,
+        ),
+        "milestone_disposition_without_review": replace(
+            target,
+            node_2_milestone_review_accepted=False,
+            milestone_disposition_without_review=True,
+        ),
+        "terminal_without_reviewed_empty_plan": replace(
+            target,
+            node_3_empty_remaining_plan=False,
+            terminal_without_reviewed_empty_plan=True,
+        ),
     }
 
 

@@ -542,6 +542,79 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
                 break
             runtime.repair_accepted_packet_assignment(ledger, action.subject_id)
 
+    def _complete_milestone_plan_renewal_gate(
+        self,
+        ledger: dict[str, object],
+    ) -> None:
+        flowguard_packet = runtime_runner._open_packet_by_kind(
+            ledger,
+            "flowguard_check",
+        )
+        flowguard_lease = self._lease_ack_and_open_packet(
+            ledger,
+            flowguard_packet,
+            "flowguard_operator",
+        )
+        write_flowguard_evidence_artifact(ledger, flowguard_packet)
+        flowguard_payload = copy.deepcopy(
+            ledger["packets"][flowguard_packet]["envelope"][
+                "current_handoff_contract"
+            ]["required_report_contract"]["minimal_valid_shape"]
+        )
+        flowguard_payload["pm_visible_summary"] = [
+            "FlowGuard accepted the current milestone audit and complete remaining route."
+        ]
+        flowguard_result_id = runtime.submit_result(
+            ledger,
+            flowguard_lease,
+            flowguard_packet,
+            json.dumps(flowguard_payload),
+        )
+
+        pm_packet = runtime_runner._open_packet_by_kind(
+            ledger,
+            "pm_flowguard_acceptance",
+        )
+        pm_lease = self._lease_ack_and_open_packet(ledger, pm_packet, "pm")
+        payload = packet_result_contracts.minimal_valid_shape_for_family(
+            "pm_flowguard_acceptance.pm_flowguard_acceptance"
+        )
+        payload.update(
+            {
+                "reason": "PM absorbed the current milestone FlowGuard report.",
+                "flowguard_absorption": (
+                    "PM accepted the current FlowGuard report before independent milestone review."
+                ),
+                "accepted_flowguard_result_id": flowguard_result_id,
+            }
+        )
+        runtime.submit_result(
+            ledger,
+            pm_lease,
+            pm_packet,
+            json.dumps(payload),
+        )
+
+        review_packet = runtime_runner._open_packet_by_kind(ledger, "review")
+        review_lease = self._lease_ack_and_open_packet(
+            ledger,
+            review_packet,
+            "reviewer",
+        )
+        runtime.submit_result(
+            ledger,
+            review_lease,
+            review_packet,
+            review_result_body(
+                "Reviewer independently accepted the current milestone plan renewal."
+            ),
+        )
+        for _ in range(5):
+            action = runtime.router_next_action(ledger)
+            if action.action_type != "repair_accepted_packet":
+                break
+            runtime.repair_accepted_packet_assignment(ledger, action.subject_id)
+
     def _complete_repair_node_worker_chain(
         self,
         ledger: dict[str, object],
@@ -680,18 +753,26 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         node_acceptance_item_ids = list(
             ledger["route_nodes"][replacement_node_id].get("acceptance_item_ids") or []
         )
-        pm_shape = {
-            "decision": "accept",
-            "reason": pm_reason,
-            "acceptance_item_disposition": [
-                {
-                    "acceptance_item_id": acceptance_item_id,
-                    "disposition": "accepted",
-                    "basis": "Fresh Worker, FlowGuard, Reviewer, and validation evidence.",
-                }
-                for acceptance_item_id in node_acceptance_item_ids
-            ],
-        }
+        pm_packet = ledger["packets"][pm_disposition_packet_id]
+        pm_shape = copy.deepcopy(
+            pm_packet["envelope"]["current_handoff_contract"][
+                "required_report_contract"
+            ]["minimal_valid_shape"]
+        )
+        pm_shape.update(
+            {
+                "decision": "accept",
+                "reason": pm_reason,
+                "acceptance_item_disposition": [
+                    {
+                        "acceptance_item_id": acceptance_item_id,
+                        "disposition": "accepted",
+                        "basis": "Fresh Worker, FlowGuard, Reviewer, and validation evidence.",
+                    }
+                    for acceptance_item_id in node_acceptance_item_ids
+                ],
+            }
+        )
         pm_lease = self._lease_ack_and_open_packet(
             ledger,
             pm_disposition_packet_id,
@@ -703,6 +784,13 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
             pm_disposition_packet_id,
             json.dumps(pm_shape),
         )
+        staged_effect = ledger["results"][pm_result_id].get("staged_effect")
+        if (
+            isinstance(staged_effect, dict)
+            and staged_effect.get("effect_kind")
+            == "commit_milestone_plan_renewal"
+        ):
+            self._complete_milestone_plan_renewal_gate(ledger)
         return {
             "replacement_node_id": replacement_node_id,
             "worker_packet_id": worker_packet_id,

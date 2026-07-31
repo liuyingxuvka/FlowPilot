@@ -38,6 +38,12 @@ VALID_IN_PROGRESS_REPLAN = "valid_in_progress_replan"
 VALID_PM_HISTORICAL_DEFECT_REPAIR = "valid_pm_historical_defect_repair"
 VALID_REVIEW_FAILURE_REPAIR = "valid_review_failure_repair"
 VALID_REVIEW_FAILURE_LOCAL_PATCH = "valid_review_failure_local_patch"
+VALID_MILESTONE_UNCHANGED_PLAN_RENEWAL = "valid_milestone_unchanged_plan_renewal"
+VALID_MILESTONE_CHANGED_SUFFIX_RENEWAL = "valid_milestone_changed_suffix_renewal"
+VALID_NESTED_CHILD_LOCAL_CLOSURE = "valid_nested_child_local_closure"
+VALID_TERMINAL_EMPTY_PLAN_RENEWAL = "valid_terminal_empty_plan_renewal"
+VALID_RESUME_CURRENT_MILESTONE_GATE = "valid_resume_current_milestone_gate"
+VALID_MILESTONE_REVIEW_BLOCK_HOLDS_FRONTIER = "valid_milestone_review_block_holds_frontier"
 
 PLANNING_REPAIR_NODE_CREATED = "planning_repair_node_created"
 ROOT_REPAIR_BEFORE_CHILD_EXECUTION = "root_repair_before_child_execution"
@@ -56,6 +62,26 @@ REPAIR_WITHOUT_MAINLINE_RETURN = "repair_without_mainline_return"
 ACTIVE_NODE_NOT_EXECUTABLE = "active_node_not_executable"
 CONTROLLER_DIRECT_IMPLEMENTATION = "controller_direct_implementation"
 STALE_APPROVAL_REUSED_AFTER_CHANGE = "stale_approval_reused_after_change"
+MILESTONE_ADVANCED_WITHOUT_RENEWAL = "milestone_advanced_without_renewal"
+MILESTONE_AUDIT_MISSING = "milestone_audit_missing"
+MILESTONE_REMAINING_PLAN_INCOMPLETE = "milestone_remaining_plan_incomplete"
+MILESTONE_REMAINING_OBLIGATION_UNOWNED = "milestone_remaining_obligation_unowned"
+MILESTONE_AUDIT_CONTRACT_HASH_MISSING = "milestone_audit_contract_hash_missing"
+MILESTONE_COMPLETED_PREFIX_UNBOUND = "milestone_completed_prefix_unbound"
+MILESTONE_REMAINING_OWNER_NODE_UNBOUND = "milestone_remaining_owner_node_unbound"
+MILESTONE_CHECKER_IDENTITY_REUSED = "milestone_checker_identity_reused"
+MILESTONE_FLOWGUARD_BYPASSED = "milestone_flowguard_bypassed"
+MILESTONE_PM_ABSORPTION_BYPASSED = "milestone_pm_absorption_bypassed"
+MILESTONE_REVIEWER_BYPASSED = "milestone_reviewer_bypassed"
+MILESTONE_SYSTEM_VALIDATION_BYPASSED = "milestone_system_validation_bypassed"
+UNCHANGED_PLAN_BUMPED_ROUTE_VERSION = "unchanged_plan_bumped_route_version"
+CHANGED_PLAN_KEPT_OLD_ROUTE_VERSION = "changed_plan_kept_old_route_version"
+CHANGED_PLAN_LOST_COMPLETED_PREFIX = "changed_plan_lost_completed_prefix"
+PREMATURE_TERMINAL_EMPTY_PLAN = "premature_terminal_empty_plan"
+RESUME_REUSED_HISTORICAL_MILESTONE_REVIEW = "resume_reused_historical_milestone_review"
+NESTED_CHILD_FORCED_GLOBAL_RENEWAL = "nested_child_forced_global_renewal"
+MILESTONE_REUSED_OLD_PLAN_WITHOUT_FRESH_WRITE = "milestone_reused_old_plan_without_fresh_write"
+REVIEWER_BLOCKED_MILESTONE_ADVANCED = "reviewer_blocked_milestone_advanced"
 
 VALID_SCENARIOS = (
     VALID_PLANNING_REPLAN,
@@ -65,6 +91,12 @@ VALID_SCENARIOS = (
     VALID_PM_HISTORICAL_DEFECT_REPAIR,
     VALID_REVIEW_FAILURE_REPAIR,
     VALID_REVIEW_FAILURE_LOCAL_PATCH,
+    VALID_MILESTONE_UNCHANGED_PLAN_RENEWAL,
+    VALID_MILESTONE_CHANGED_SUFFIX_RENEWAL,
+    VALID_NESTED_CHILD_LOCAL_CLOSURE,
+    VALID_TERMINAL_EMPTY_PLAN_RENEWAL,
+    VALID_RESUME_CURRENT_MILESTONE_GATE,
+    VALID_MILESTONE_REVIEW_BLOCK_HOLDS_FRONTIER,
 )
 NEGATIVE_SCENARIOS = (
     PLANNING_REPAIR_NODE_CREATED,
@@ -84,6 +116,26 @@ NEGATIVE_SCENARIOS = (
     ACTIVE_NODE_NOT_EXECUTABLE,
     CONTROLLER_DIRECT_IMPLEMENTATION,
     STALE_APPROVAL_REUSED_AFTER_CHANGE,
+    MILESTONE_ADVANCED_WITHOUT_RENEWAL,
+    MILESTONE_AUDIT_MISSING,
+    MILESTONE_REMAINING_PLAN_INCOMPLETE,
+    MILESTONE_REMAINING_OBLIGATION_UNOWNED,
+    MILESTONE_AUDIT_CONTRACT_HASH_MISSING,
+    MILESTONE_COMPLETED_PREFIX_UNBOUND,
+    MILESTONE_REMAINING_OWNER_NODE_UNBOUND,
+    MILESTONE_CHECKER_IDENTITY_REUSED,
+    MILESTONE_FLOWGUARD_BYPASSED,
+    MILESTONE_PM_ABSORPTION_BYPASSED,
+    MILESTONE_REVIEWER_BYPASSED,
+    MILESTONE_SYSTEM_VALIDATION_BYPASSED,
+    UNCHANGED_PLAN_BUMPED_ROUTE_VERSION,
+    CHANGED_PLAN_KEPT_OLD_ROUTE_VERSION,
+    CHANGED_PLAN_LOST_COMPLETED_PREFIX,
+    PREMATURE_TERMINAL_EMPTY_PLAN,
+    RESUME_REUSED_HISTORICAL_MILESTONE_REVIEW,
+    NESTED_CHILD_FORCED_GLOBAL_RENEWAL,
+    MILESTONE_REUSED_OLD_PLAN_WITHOUT_FRESH_WRITE,
+    REVIEWER_BLOCKED_MILESTONE_ADVANCED,
 )
 SCENARIOS = VALID_SCENARIOS + NEGATIVE_SCENARIOS
 
@@ -112,7 +164,7 @@ class Action:
 class State:
     status: str = "new"  # new | running | accepted | rejected
     scenario: str = "unset"
-    phase: str = "unset"  # planning | node_entry | node_in_progress | historical_repair | review_failure
+    phase: str = "unset"  # planning | node_entry | node_in_progress | milestone_renewal | historical_repair | review_failure
     issue_kind: str = "none"  # planning_gap | capability_gap | structure_gap | historical_defect | review_failure
     repair_trigger_origin: str = "none"  # none | pm_historical_defect | reviewer_failure
     structured_defect_observation_recorded: bool = False
@@ -145,6 +197,31 @@ class State:
     active_node_executable: bool = False
     pm_activated_or_used_route: bool = False
     controller_direct_product_work: bool = False
+    top_level_milestone: bool = False
+    milestone_result_current: bool = False
+    milestone_audit_complete: bool = False
+    prior_plan_assessed: bool = False
+    remaining_plan_complete: bool = False
+    fresh_remaining_plan_written: bool = False
+    remaining_obligations_owned: bool = False
+    milestone_contract_current: bool = False
+    completed_prefix_bound: bool = False
+    remaining_owner_nodes_bound: bool = False
+    checker_identities_independent: bool = True
+    remaining_plan_changed: bool = False
+    milestone_flowguard_checked: bool = False
+    milestone_pm_absorbed_flowguard: bool = False
+    milestone_reviewer_approved: bool = False
+    milestone_reviewer_blocked: bool = False
+    milestone_system_validation_passed: bool = False
+    route_version_changed: bool = False
+    completed_prefix_preserved: bool = True
+    empty_remaining_plan: bool = False
+    all_hard_obligations_closed: bool = False
+    frontier_advanced: bool = False
+    global_milestone_renewal_started: bool = False
+    resume_current_gate: bool = False
+    historical_milestone_review_reused: bool = False
     terminal_reason: str = "none"
 
 
@@ -178,6 +255,10 @@ class RouteReplanningPolicyStep:
         "reviewer_approved_changed_route",
         "active_node_executable",
         "repair_fields_complete",
+        "milestone_contract_current",
+        "completed_prefix_bound",
+        "remaining_owner_nodes_bound",
+        "checker_identities_independent",
     )
     writes = ("terminal_route_policy_decision",)
     idempotency = "monotonic route policy evaluation"
@@ -366,6 +447,111 @@ def _valid_pm_historical_defect_repair() -> State:
     )
 
 
+def _valid_milestone_unchanged_plan_renewal() -> State:
+    return State(
+        status="running",
+        scenario=VALID_MILESTONE_UNCHANGED_PLAN_RENEWAL,
+        phase="milestone_renewal",
+        issue_kind="none",
+        route_started=True,
+        completed_nodes=1,
+        current_node_kind="leaf",
+        target_node_started=True,
+        target_node_result_submitted=True,
+        change_kind="none",
+        active_node_executable=True,
+        pm_activated_or_used_route=True,
+        top_level_milestone=True,
+        milestone_result_current=True,
+        milestone_audit_complete=True,
+        prior_plan_assessed=True,
+        remaining_plan_complete=True,
+        fresh_remaining_plan_written=True,
+        remaining_obligations_owned=True,
+        milestone_contract_current=True,
+        completed_prefix_bound=True,
+        remaining_owner_nodes_bound=True,
+        checker_identities_independent=True,
+        remaining_plan_changed=False,
+        milestone_flowguard_checked=True,
+        milestone_pm_absorbed_flowguard=True,
+        milestone_reviewer_approved=True,
+        milestone_system_validation_passed=True,
+        route_version_changed=False,
+        completed_prefix_preserved=True,
+        empty_remaining_plan=False,
+        all_hard_obligations_closed=False,
+        frontier_advanced=True,
+        global_milestone_renewal_started=True,
+    )
+
+
+def _valid_milestone_changed_suffix_renewal() -> State:
+    return replace(
+        _valid_milestone_unchanged_plan_renewal(),
+        scenario=VALID_MILESTONE_CHANGED_SUFFIX_RENEWAL,
+        change_kind="route_rewrite",
+        added_node_fields_complete=True,
+        remaining_plan_changed=True,
+        route_scope_flowguard_checked=True,
+        reviewer_approved_changed_route=True,
+        route_version_changed=True,
+    )
+
+
+def _valid_nested_child_local_closure() -> State:
+    return State(
+        status="running",
+        scenario=VALID_NESTED_CHILD_LOCAL_CLOSURE,
+        phase="node_in_progress",
+        issue_kind="none",
+        route_started=True,
+        completed_nodes=1,
+        current_node_kind="leaf",
+        target_node_started=True,
+        target_node_result_submitted=True,
+        active_node_executable=True,
+        pm_activated_or_used_route=True,
+        top_level_milestone=False,
+        frontier_advanced=True,
+        global_milestone_renewal_started=False,
+    )
+
+
+def _valid_terminal_empty_plan_renewal() -> State:
+    return replace(
+        _valid_milestone_unchanged_plan_renewal(),
+        scenario=VALID_TERMINAL_EMPTY_PLAN_RENEWAL,
+        remaining_obligations_owned=True,
+        empty_remaining_plan=True,
+        all_hard_obligations_closed=True,
+    )
+
+
+def _valid_resume_current_milestone_gate() -> State:
+    return replace(
+        _valid_milestone_unchanged_plan_renewal(),
+        scenario=VALID_RESUME_CURRENT_MILESTONE_GATE,
+        pm_activated_or_used_route=False,
+        milestone_reviewer_approved=False,
+        milestone_system_validation_passed=False,
+        frontier_advanced=False,
+        resume_current_gate=True,
+    )
+
+
+def _valid_milestone_review_block_holds_frontier() -> State:
+    return replace(
+        _valid_milestone_unchanged_plan_renewal(),
+        scenario=VALID_MILESTONE_REVIEW_BLOCK_HOLDS_FRONTIER,
+        pm_activated_or_used_route=False,
+        milestone_reviewer_approved=False,
+        milestone_reviewer_blocked=True,
+        milestone_system_validation_passed=False,
+        frontier_advanced=False,
+    )
+
+
 def _scenario_state(scenario: str) -> State:
     if scenario == VALID_PLANNING_REPLAN:
         return _valid_planning_replan()
@@ -381,6 +567,18 @@ def _scenario_state(scenario: str) -> State:
         return _valid_review_failure_repair()
     if scenario == VALID_REVIEW_FAILURE_LOCAL_PATCH:
         return _valid_review_failure_local_patch()
+    if scenario == VALID_MILESTONE_UNCHANGED_PLAN_RENEWAL:
+        return _valid_milestone_unchanged_plan_renewal()
+    if scenario == VALID_MILESTONE_CHANGED_SUFFIX_RENEWAL:
+        return _valid_milestone_changed_suffix_renewal()
+    if scenario == VALID_NESTED_CHILD_LOCAL_CLOSURE:
+        return _valid_nested_child_local_closure()
+    if scenario == VALID_TERMINAL_EMPTY_PLAN_RENEWAL:
+        return _valid_terminal_empty_plan_renewal()
+    if scenario == VALID_RESUME_CURRENT_MILESTONE_GATE:
+        return _valid_resume_current_milestone_gate()
+    if scenario == VALID_MILESTONE_REVIEW_BLOCK_HOLDS_FRONTIER:
+        return _valid_milestone_review_block_holds_frontier()
 
     state = _valid_planning_capability_expansion()
     if scenario == PLANNING_REPAIR_NODE_CREATED:
@@ -454,6 +652,133 @@ def _scenario_state(scenario: str) -> State:
         return replace(state, scenario=scenario, controller_direct_product_work=True)
     if scenario == STALE_APPROVAL_REUSED_AFTER_CHANGE:
         return replace(state, scenario=scenario, old_approval_reused_after_change=True)
+    if scenario == MILESTONE_ADVANCED_WITHOUT_RENEWAL:
+        return replace(
+            _valid_milestone_unchanged_plan_renewal(),
+            scenario=scenario,
+            milestone_audit_complete=False,
+            prior_plan_assessed=False,
+            remaining_plan_complete=False,
+            global_milestone_renewal_started=False,
+        )
+    if scenario == MILESTONE_AUDIT_MISSING:
+        return replace(
+            _valid_milestone_unchanged_plan_renewal(),
+            scenario=scenario,
+            milestone_audit_complete=False,
+        )
+    if scenario == MILESTONE_REMAINING_PLAN_INCOMPLETE:
+        return replace(
+            _valid_milestone_unchanged_plan_renewal(),
+            scenario=scenario,
+            remaining_plan_complete=False,
+        )
+    if scenario == MILESTONE_REMAINING_OBLIGATION_UNOWNED:
+        return replace(
+            _valid_milestone_unchanged_plan_renewal(),
+            scenario=scenario,
+            remaining_obligations_owned=False,
+        )
+    if scenario == MILESTONE_AUDIT_CONTRACT_HASH_MISSING:
+        return replace(
+            _valid_milestone_unchanged_plan_renewal(),
+            scenario=scenario,
+            milestone_contract_current=False,
+        )
+    if scenario == MILESTONE_COMPLETED_PREFIX_UNBOUND:
+        return replace(
+            _valid_milestone_unchanged_plan_renewal(),
+            scenario=scenario,
+            completed_prefix_bound=False,
+        )
+    if scenario == MILESTONE_REMAINING_OWNER_NODE_UNBOUND:
+        return replace(
+            _valid_milestone_unchanged_plan_renewal(),
+            scenario=scenario,
+            remaining_owner_nodes_bound=False,
+        )
+    if scenario == MILESTONE_CHECKER_IDENTITY_REUSED:
+        return replace(
+            _valid_milestone_unchanged_plan_renewal(),
+            scenario=scenario,
+            checker_identities_independent=False,
+        )
+    if scenario == MILESTONE_FLOWGUARD_BYPASSED:
+        return replace(
+            _valid_milestone_unchanged_plan_renewal(),
+            scenario=scenario,
+            milestone_flowguard_checked=False,
+        )
+    if scenario == MILESTONE_PM_ABSORPTION_BYPASSED:
+        return replace(
+            _valid_milestone_unchanged_plan_renewal(),
+            scenario=scenario,
+            milestone_pm_absorbed_flowguard=False,
+        )
+    if scenario == MILESTONE_REVIEWER_BYPASSED:
+        return replace(
+            _valid_milestone_unchanged_plan_renewal(),
+            scenario=scenario,
+            milestone_reviewer_approved=False,
+        )
+    if scenario == MILESTONE_SYSTEM_VALIDATION_BYPASSED:
+        return replace(
+            _valid_milestone_unchanged_plan_renewal(),
+            scenario=scenario,
+            milestone_system_validation_passed=False,
+        )
+    if scenario == UNCHANGED_PLAN_BUMPED_ROUTE_VERSION:
+        return replace(
+            _valid_milestone_unchanged_plan_renewal(),
+            scenario=scenario,
+            route_version_changed=True,
+        )
+    if scenario == CHANGED_PLAN_KEPT_OLD_ROUTE_VERSION:
+        return replace(
+            _valid_milestone_changed_suffix_renewal(),
+            scenario=scenario,
+            route_version_changed=False,
+        )
+    if scenario == CHANGED_PLAN_LOST_COMPLETED_PREFIX:
+        return replace(
+            _valid_milestone_changed_suffix_renewal(),
+            scenario=scenario,
+            completed_prefix_preserved=False,
+        )
+    if scenario == PREMATURE_TERMINAL_EMPTY_PLAN:
+        return replace(
+            _valid_terminal_empty_plan_renewal(),
+            scenario=scenario,
+            all_hard_obligations_closed=False,
+        )
+    if scenario == RESUME_REUSED_HISTORICAL_MILESTONE_REVIEW:
+        return replace(
+            _valid_resume_current_milestone_gate(),
+            scenario=scenario,
+            historical_milestone_review_reused=True,
+            milestone_reviewer_approved=True,
+            milestone_system_validation_passed=True,
+            frontier_advanced=True,
+        )
+    if scenario == NESTED_CHILD_FORCED_GLOBAL_RENEWAL:
+        return replace(
+            _valid_nested_child_local_closure(),
+            scenario=scenario,
+            global_milestone_renewal_started=True,
+        )
+    if scenario == MILESTONE_REUSED_OLD_PLAN_WITHOUT_FRESH_WRITE:
+        return replace(
+            _valid_milestone_unchanged_plan_renewal(),
+            scenario=scenario,
+            fresh_remaining_plan_written=False,
+        )
+    if scenario == REVIEWER_BLOCKED_MILESTONE_ADVANCED:
+        return replace(
+            _valid_milestone_review_block_holds_frontier(),
+            scenario=scenario,
+            frontier_advanced=True,
+            pm_activated_or_used_route=True,
+        )
     return state
 
 
@@ -478,6 +803,14 @@ def _valid_post_work_repair_trigger(state: State) -> bool:
             and not state.blocker_prerequisite_required
         )
     return False
+
+
+def _milestone_route_is_used(state: State) -> bool:
+    return (
+        state.phase == "milestone_renewal"
+        and state.top_level_milestone
+        and state.frontier_advanced
+    )
 
 
 def policy_failures(state: State) -> list[str]:
@@ -558,6 +891,70 @@ def policy_failures(state: State) -> list[str]:
         failures.append("Controller performed product work before route gate")
     if state.old_approval_reused_after_change and _changed_route_or_node(state):
         failures.append("old approval was reused after route or product change")
+    if _milestone_route_is_used(state):
+        if not state.global_milestone_renewal_started:
+            failures.append("top-level milestone advanced without mandatory plan renewal")
+        if not state.milestone_result_current:
+            failures.append("top-level milestone renewal used a noncurrent milestone result")
+        if not state.milestone_audit_complete:
+            failures.append("top-level milestone renewal lacks a complete current audit")
+        if not state.prior_plan_assessed:
+            failures.append("top-level milestone renewal did not assess the prior remaining plan")
+        if not state.remaining_plan_complete:
+            failures.append("top-level milestone renewal lacks a complete route to the final goal")
+        if not state.fresh_remaining_plan_written:
+            failures.append("top-level milestone renewal reused the old plan without freshly writing the complete remainder")
+        if not state.remaining_obligations_owned:
+            failures.append("top-level milestone renewal leaves a remaining hard obligation without an owner")
+        if not state.milestone_contract_current:
+            failures.append("top-level milestone renewal is not bound to the frozen final-goal contract")
+        if not state.completed_prefix_bound:
+            failures.append("top-level milestone renewal does not bind the cumulative completed prefix")
+        if not state.remaining_owner_nodes_bound:
+            failures.append("top-level milestone renewal leaves a remaining gap without a submitted owner node")
+        if not state.checker_identities_independent:
+            failures.append("top-level milestone renewal reuses a checker identity for required evidence")
+        if not state.milestone_flowguard_checked:
+            failures.append("top-level milestone renewal bypassed current FlowGuard review")
+        if not state.milestone_pm_absorbed_flowguard:
+            failures.append("top-level milestone renewal bypassed PM absorption of FlowGuard")
+        if not state.milestone_reviewer_approved:
+            failures.append("top-level milestone renewal bypassed independent Reviewer approval")
+        if not state.milestone_system_validation_passed:
+            failures.append("top-level milestone renewal bypassed system validation")
+    if (
+        state.phase == "milestone_renewal"
+        and state.top_level_milestone
+        and not state.remaining_plan_changed
+        and state.route_version_changed
+    ):
+        failures.append("unchanged remaining plan created a gratuitous route version")
+    if (
+        state.phase == "milestone_renewal"
+        and state.top_level_milestone
+        and state.remaining_plan_changed
+        and state.pm_activated_or_used_route
+        and not state.route_version_changed
+    ):
+        failures.append("changed remaining plan kept the old active route version")
+    if (
+        state.phase == "milestone_renewal"
+        and state.top_level_milestone
+        and state.remaining_plan_changed
+        and not state.completed_prefix_preserved
+    ):
+        failures.append("changed remaining plan discarded accepted milestone history")
+    if state.empty_remaining_plan and not state.all_hard_obligations_closed:
+        failures.append("empty remaining plan was accepted before every hard obligation closed")
+    if state.resume_current_gate and state.historical_milestone_review_reused:
+        failures.append("resume reused a historical milestone review for the current gate")
+    if state.milestone_reviewer_blocked and state.frontier_advanced:
+        failures.append("Reviewer-blocked milestone renewal advanced the frontier")
+    if (
+        not state.top_level_milestone
+        and state.global_milestone_renewal_started
+    ):
+        failures.append("nested child closure started an unnecessary global milestone renewal")
     return failures
 
 
@@ -652,6 +1049,22 @@ def controller_remains_relay_only(state: State, trace) -> InvariantResult:
     return InvariantResult.pass_()
 
 
+def milestone_renewal_gates_route_use(state: State, trace) -> InvariantResult:
+    del trace
+    if state.status != "accepted":
+        return InvariantResult.pass_()
+    milestone_failures = [
+        failure
+        for failure in policy_failures(state)
+        if "milestone renewal" in failure
+        or "remaining plan" in failure
+        or "historical milestone review" in failure
+    ]
+    if milestone_failures:
+        return InvariantResult.fail("; ".join(milestone_failures))
+    return InvariantResult.pass_()
+
+
 INVARIANTS = (
     Invariant(
         name="accepts_only_valid_route_policies",
@@ -687,6 +1100,14 @@ INVARIANTS = (
         name="controller_remains_relay_only",
         description="Controller cannot compensate for route gate problems by doing product work.",
         predicate=controller_remains_relay_only,
+    ),
+    Invariant(
+        name="milestone_renewal_gates_route_use",
+        description=(
+            "Every top-level milestone uses one current audit, complete remaining plan, "
+            "FlowGuard/PM/Reviewer/validation chain, equality-aware versioning, and preserved completed history."
+        ),
+        predicate=milestone_renewal_gates_route_use,
     ),
 )
 

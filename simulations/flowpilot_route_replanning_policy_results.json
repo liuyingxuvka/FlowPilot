@@ -5,7 +5,7 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=3 initial_states=1 traces=144",
+    "summary": "sequences=3 initial_states=1 traces=276",
     "violation_count": 0
   },
   "hazard_checks": {
@@ -23,6 +23,20 @@
         "expected_failure": "product capability change lacks product-scope FlowGuard check",
         "failures": [
           "product capability change lacks product-scope FlowGuard check"
+        ]
+      },
+      "changed_plan_kept_old_route_version": {
+        "detected": true,
+        "expected_failure": "changed remaining plan kept the old active route version",
+        "failures": [
+          "changed remaining plan kept the old active route version"
+        ]
+      },
+      "changed_plan_lost_completed_prefix": {
+        "detected": true,
+        "expected_failure": "changed remaining plan discarded accepted milestone history",
+        "failures": [
+          "changed remaining plan discarded accepted milestone history"
         ]
       },
       "changed_route_without_reviewer": {
@@ -48,6 +62,79 @@
           "repair node lacks stale evidence reset",
           "repair node lacks mainline return",
           "repair node lacks rerun obligations"
+        ]
+      },
+      "milestone_advanced_without_renewal": {
+        "detected": true,
+        "expected_failure": "top-level milestone advanced without mandatory plan renewal",
+        "failures": [
+          "top-level milestone advanced without mandatory plan renewal",
+          "top-level milestone renewal lacks a complete current audit",
+          "top-level milestone renewal did not assess the prior remaining plan",
+          "top-level milestone renewal lacks a complete route to the final goal"
+        ]
+      },
+      "milestone_audit_missing": {
+        "detected": true,
+        "expected_failure": "top-level milestone renewal lacks a complete current audit",
+        "failures": [
+          "top-level milestone renewal lacks a complete current audit"
+        ]
+      },
+      "milestone_flowguard_bypassed": {
+        "detected": true,
+        "expected_failure": "top-level milestone renewal bypassed current FlowGuard review",
+        "failures": [
+          "top-level milestone renewal bypassed current FlowGuard review"
+        ]
+      },
+      "milestone_pm_absorption_bypassed": {
+        "detected": true,
+        "expected_failure": "top-level milestone renewal bypassed PM absorption of FlowGuard",
+        "failures": [
+          "top-level milestone renewal bypassed PM absorption of FlowGuard"
+        ]
+      },
+      "milestone_remaining_obligation_unowned": {
+        "detected": true,
+        "expected_failure": "top-level milestone renewal leaves a remaining hard obligation without an owner",
+        "failures": [
+          "top-level milestone renewal leaves a remaining hard obligation without an owner"
+        ]
+      },
+      "milestone_remaining_plan_incomplete": {
+        "detected": true,
+        "expected_failure": "top-level milestone renewal lacks a complete route to the final goal",
+        "failures": [
+          "top-level milestone renewal lacks a complete route to the final goal"
+        ]
+      },
+      "milestone_reused_old_plan_without_fresh_write": {
+        "detected": true,
+        "expected_failure": "top-level milestone renewal reused the old plan without freshly writing the complete remainder",
+        "failures": [
+          "top-level milestone renewal reused the old plan without freshly writing the complete remainder"
+        ]
+      },
+      "milestone_reviewer_bypassed": {
+        "detected": true,
+        "expected_failure": "top-level milestone renewal bypassed independent Reviewer approval",
+        "failures": [
+          "top-level milestone renewal bypassed independent Reviewer approval"
+        ]
+      },
+      "milestone_system_validation_bypassed": {
+        "detected": true,
+        "expected_failure": "top-level milestone renewal bypassed system validation",
+        "failures": [
+          "top-level milestone renewal bypassed system validation"
+        ]
+      },
+      "nested_child_forced_global_renewal": {
+        "detected": true,
+        "expected_failure": "nested child closure started an unnecessary global milestone renewal",
+        "failures": [
+          "nested child closure started an unnecessary global milestone renewal"
         ]
       },
       "node_entry_repair_before_work": {
@@ -94,6 +181,13 @@
           "repair node lacks a valid reviewed-failure or PM historical-defect trigger"
         ]
       },
+      "premature_terminal_empty_plan": {
+        "detected": true,
+        "expected_failure": "empty remaining plan was accepted before every hard obligation closed",
+        "failures": [
+          "empty remaining plan was accepted before every hard obligation closed"
+        ]
+      },
       "process_before_product_for_capability_change": {
         "detected": true,
         "expected_failure": "route-scope FlowGuard ran before product-scope FlowGuard for a product capability change",
@@ -122,6 +216,22 @@
           "repair node lacks stale evidence reset"
         ]
       },
+      "resume_reused_historical_milestone_review": {
+        "detected": true,
+        "expected_failure": "resume reused a historical milestone review for the current gate",
+        "failures": [
+          "resume reused a historical milestone review for the current gate"
+        ]
+      },
+      "reviewer_blocked_milestone_advanced": {
+        "detected": true,
+        "expected_failure": "Reviewer-blocked milestone renewal advanced the frontier",
+        "failures": [
+          "top-level milestone renewal bypassed independent Reviewer approval",
+          "top-level milestone renewal bypassed system validation",
+          "Reviewer-blocked milestone renewal advanced the frontier"
+        ]
+      },
       "root_repair_before_child_execution": {
         "detected": true,
         "expected_failure": "root planning created a repair node before any child execution",
@@ -148,6 +258,13 @@
         "failures": [
           "route structure change lacks route-scope FlowGuard check"
         ]
+      },
+      "unchanged_plan_bumped_route_version": {
+        "detected": true,
+        "expected_failure": "unchanged remaining plan created a gratuitous route version",
+        "failures": [
+          "unchanged remaining plan created a gratuitous route version"
+        ]
       }
     },
     "ok": true
@@ -162,18 +279,24 @@
   "safe_graph": {
     "accepted_scenarios": [
       "valid_in_progress_replan",
+      "valid_milestone_changed_suffix_renewal",
+      "valid_milestone_review_block_holds_frontier",
+      "valid_milestone_unchanged_plan_renewal",
+      "valid_nested_child_local_closure",
       "valid_node_entry_replan",
       "valid_planning_capability_expansion",
       "valid_planning_replan",
       "valid_pm_historical_defect_repair",
+      "valid_resume_current_milestone_gate",
       "valid_review_failure_local_patch",
-      "valid_review_failure_repair"
+      "valid_review_failure_repair",
+      "valid_terminal_empty_plan_renewal"
     ],
-    "edge_count": 48,
+    "edge_count": 92,
     "invariant_failures": [],
     "missing_labels": [],
     "ok": true,
-    "rejected_state_count": 17,
-    "state_count": 49
+    "rejected_state_count": 33,
+    "state_count": 93
   }
 }

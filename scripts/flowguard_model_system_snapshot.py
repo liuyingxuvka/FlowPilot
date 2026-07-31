@@ -146,7 +146,6 @@ def build_snapshot(
             model_path=model_path,
             runner_path=runner_path,
             purpose_closure_fingerprint=purpose_fingerprint,
-            subject_revision=subject_revision,
             input_paths=(model_path, runner_path),
         )
         instances.append(instance)

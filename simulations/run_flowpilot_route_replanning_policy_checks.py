@@ -39,6 +39,22 @@ HAZARD_EXPECTED_FAILURES = {
     model.ACTIVE_NODE_NOT_EXECUTABLE: "active node is not executable before route use",
     model.CONTROLLER_DIRECT_IMPLEMENTATION: "Controller performed product work before route gate",
     model.STALE_APPROVAL_REUSED_AFTER_CHANGE: "old approval was reused after route or product change",
+    model.MILESTONE_ADVANCED_WITHOUT_RENEWAL: "top-level milestone advanced without mandatory plan renewal",
+    model.MILESTONE_AUDIT_MISSING: "top-level milestone renewal lacks a complete current audit",
+    model.MILESTONE_REMAINING_PLAN_INCOMPLETE: "top-level milestone renewal lacks a complete route to the final goal",
+    model.MILESTONE_REMAINING_OBLIGATION_UNOWNED: "top-level milestone renewal leaves a remaining hard obligation without an owner",
+    model.MILESTONE_FLOWGUARD_BYPASSED: "top-level milestone renewal bypassed current FlowGuard review",
+    model.MILESTONE_PM_ABSORPTION_BYPASSED: "top-level milestone renewal bypassed PM absorption of FlowGuard",
+    model.MILESTONE_REVIEWER_BYPASSED: "top-level milestone renewal bypassed independent Reviewer approval",
+    model.MILESTONE_SYSTEM_VALIDATION_BYPASSED: "top-level milestone renewal bypassed system validation",
+    model.UNCHANGED_PLAN_BUMPED_ROUTE_VERSION: "unchanged remaining plan created a gratuitous route version",
+    model.CHANGED_PLAN_KEPT_OLD_ROUTE_VERSION: "changed remaining plan kept the old active route version",
+    model.CHANGED_PLAN_LOST_COMPLETED_PREFIX: "changed remaining plan discarded accepted milestone history",
+    model.PREMATURE_TERMINAL_EMPTY_PLAN: "empty remaining plan was accepted before every hard obligation closed",
+    model.RESUME_REUSED_HISTORICAL_MILESTONE_REVIEW: "resume reused a historical milestone review for the current gate",
+    model.NESTED_CHILD_FORCED_GLOBAL_RENEWAL: "nested child closure started an unnecessary global milestone renewal",
+    model.MILESTONE_REUSED_OLD_PLAN_WITHOUT_FRESH_WRITE: "top-level milestone renewal reused the old plan without freshly writing the complete remainder",
+    model.REVIEWER_BLOCKED_MILESTONE_ADVANCED: "Reviewer-blocked milestone renewal advanced the frontier",
 }
 
 
@@ -56,6 +72,16 @@ def _state_id(state: model.State) -> str:
         f"process_fg={state.route_scope_flowguard_checked}|"
         f"reviewer={state.reviewer_approved_changed_route}|"
         f"active_exec={state.active_node_executable}|reason={state.terminal_reason}"
+        f"|top_level={state.top_level_milestone}|audit={state.milestone_audit_complete}"
+        f"|remaining_plan={state.remaining_plan_complete}|fresh_plan={state.fresh_remaining_plan_written}"
+        f"|remaining_owned={state.remaining_obligations_owned}"
+        f"|plan_changed={state.remaining_plan_changed}|milestone_fg={state.milestone_flowguard_checked}"
+        f"|milestone_pm_absorb={state.milestone_pm_absorbed_flowguard}"
+        f"|milestone_review={state.milestone_reviewer_approved}"
+        f"|milestone_validation={state.milestone_system_validation_passed}"
+        f"|route_version_changed={state.route_version_changed}"
+        f"|prefix_preserved={state.completed_prefix_preserved}|empty_plan={state.empty_remaining_plan}"
+        f"|all_closed={state.all_hard_obligations_closed}|frontier_advanced={state.frontier_advanced}"
     )
 
 

@@ -5,7 +5,7 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=19 initial_states=1 traces=190",
+    "summary": "sequences=25 initial_states=1 traces=325",
     "violation_count": 0
   },
   "hazard_detection": {
@@ -13,14 +13,18 @@
       "dead_lease_advances_node",
       "final_without_requirement_matrix",
       "manifest_only_skill_evidence",
+      "milestone_disposition_without_audit",
+      "milestone_disposition_without_review",
       "missing_node_terminal_complete",
       "mutation_without_frontier_rewrite",
+      "next_node_started_without_milestone_renewal",
       "node_task_without_acceptance_plan",
       "parent_without_backward_replay_accepted",
       "planning_without_high_standard_gates",
       "pm_plan_terminal_complete",
       "quality_gap_mutated_route_by_default",
       "stale_node_evidence_accepted",
+      "terminal_without_reviewed_empty_plan",
       "wrong_flowguard_target_accepted"
     ],
     "hazards": {
@@ -34,12 +38,25 @@
       "manifest_only_skill_evidence": [
         "manifest-only child skill evidence accepted"
       ],
+      "milestone_disposition_without_audit": [
+        "node 2 milestone plan review passed before current audit and remaining plan",
+        "milestone disposition committed without a current audit and complete remaining plan"
+      ],
+      "milestone_disposition_without_review": [
+        "node 2 PM disposition committed before milestone plan review",
+        "milestone disposition committed without independent plan review"
+      ],
       "missing_node_terminal_complete": [
         "final route-wide ledger built before all node dispositions",
         "terminal closure passed with an incomplete effective node"
       ],
       "mutation_without_frontier_rewrite": [
         "route mutation did not rewrite execution frontier"
+      ],
+      "next_node_started_without_milestone_renewal": [
+        "node 2 acceptance plan started before node 1 milestone renewal committed",
+        "node 2 started before node 1 PM disposition",
+        "next node started before the prior milestone renewal committed"
       ],
       "node_task_without_acceptance_plan": [
         "node 2 task started before acceptance plan",
@@ -60,6 +77,10 @@
       ],
       "stale_node_evidence_accepted": [
         "stale node evidence was accepted after route/source change"
+      ],
+      "terminal_without_reviewed_empty_plan": [
+        "final node PM disposition committed without a reviewed empty remaining plan",
+        "terminal closure proceeded without the final reviewed empty remaining plan"
       ],
       "wrong_flowguard_target_accepted": [
         "wrong FlowGuard modeled target satisfied a node"
@@ -82,12 +103,18 @@
       "initialize_execution_frontier",
       "accept_node_1_acceptance_plan",
       "complete_node_1_packet_loop",
+      "submit_node_1_milestone_audit_and_plan",
+      "accept_node_1_milestone_review",
       "record_node_1_pm_disposition",
       "accept_node_2_acceptance_plan",
       "complete_node_2_packet_loop",
+      "submit_node_2_milestone_audit_and_plan",
+      "accept_node_2_milestone_review",
       "record_node_2_pm_disposition",
       "accept_node_3_acceptance_plan",
       "complete_node_3_packet_loop",
+      "submit_node_3_terminal_milestone_audit_and_empty_plan",
+      "accept_node_3_milestone_review",
       "record_node_3_pm_disposition",
       "build_final_route_wide_ledger",
       "build_final_requirement_evidence_matrix",
@@ -103,15 +130,25 @@
       "frontier_ready": true,
       "high_standard_contract_accepted": true,
       "manifest_only_skill_evidence": false,
+      "milestone_disposition_without_audit": false,
+      "milestone_disposition_without_review": false,
       "missing_node_terminal_complete": false,
       "mutation_without_frontier_rewrite": false,
+      "next_node_started_without_milestone_renewal": false,
       "node_1_acceptance_plan": true,
+      "node_1_milestone_audit_and_plan": true,
+      "node_1_milestone_review_accepted": true,
       "node_1_packet_loop_closed": true,
       "node_1_pm_disposition": true,
       "node_2_acceptance_plan": true,
+      "node_2_milestone_audit_and_plan": true,
+      "node_2_milestone_review_accepted": true,
       "node_2_packet_loop_closed": true,
       "node_2_pm_disposition": true,
       "node_3_acceptance_plan": true,
+      "node_3_empty_remaining_plan": true,
+      "node_3_milestone_audit_and_plan": true,
+      "node_3_milestone_review_accepted": true,
       "node_3_packet_loop_closed": true,
       "node_3_pm_disposition": true,
       "node_task_without_acceptance_plan": false,
@@ -129,6 +166,7 @@
       "startup_recorded": true,
       "status": "complete",
       "terminal_complete": true,
+      "terminal_without_reviewed_empty_plan": false,
       "wrong_flowguard_target_accepted": false
     }
   },

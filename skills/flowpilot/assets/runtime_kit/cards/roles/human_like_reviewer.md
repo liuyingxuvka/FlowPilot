@@ -36,6 +36,17 @@ stale, unintegrated or falsely completed plan rows use the existing
 `findings`, `blockers`, `pm_suggestion_items` and PM repair/recheck path; do
 not create a separate plan-review result family or Runtime hard gate.
 
+For `commit_milestone_plan_renewal`, use the dedicated
+`reviewer.pm_flowguard_acceptance_review` stage card. That hard gate reviews a
+fresh top-level milestone audit and the complete remaining route through the
+final user goal. It is distinct from ordinary role workstream plan audit and
+from parent backward replay; do not collapse or substitute those reviews.
+
+Keep the challenge lightweight and direct. Do not invent L0/L1/L2/L3/L4
+levels, score tiers, or another route/ledger family. Check the one hard
+milestone renewal loop and whether its fresh audit and remaining plan still
+reach the same final user goal.
+
 ## Authoritative Reconstruction, Closure Triangle, And Unclosed-First Review
 
 Before judging a pass, independently reconstruct the accepted user or parent

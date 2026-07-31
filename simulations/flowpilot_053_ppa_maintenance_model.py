@@ -40,6 +40,16 @@ PPA_PLAN_ID = "flowpilot_055_primary_path_authority"
 BCL_LEDGER_ID = "flowpilot_behavior_commitments"
 FIELD_MESH_ID = "flowpilot_053_field_lifecycle"
 RISK_LEDGER_ID = "flowpilot_053_risk_evidence"
+MILESTONE_PLAN_RENEWAL_COMMITMENT_ID = (
+    "commit.top_level_milestone_plan_renewal_is_mandatory"
+)
+MILESTONE_PLAN_RENEWAL_FORBIDDEN_CANDIDATE_IDS = (
+    "fallback.direct-top-level-frontier-advance",
+    "fallback.old-remaining-route-auto-continuation",
+    "fallback.bare-unchanged-plan-marker",
+    "fallback.reviewer-blocked-plan-activation",
+    "fallback.historical-milestone-review-reuse",
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 LEDGER_PATH = ROOT / ".flowguard" / "behavior_commitment_ledger" / "ledger.json"
@@ -211,6 +221,24 @@ PRIMARY_PATH_SPECS = {
         "obligation": "flowpilot_model_test_alignment.current_runtime_path_evidence",
         "result_path": "tmp/flowguard_background/targeted_mta_tests_current.meta.json",
     },
+    MILESTONE_PLAN_RENEWAL_COMMITMENT_ID: {
+        "entrypoint": "flowpilot_core_runtime.runtime._apply_staged_pm_decision_gate",
+        "code_contract": "pm_disposition.milestone_plan_renewal_required",
+        "obligation": (
+            "flowpilot_route_replanning_policy."
+            "milestone_renewal_gates_route_use"
+        ),
+        "result_path": "simulations/flowpilot_route_replanning_policy_results.json",
+        "proof_command": (
+            "python simulations/"
+            "run_flowpilot_route_replanning_policy_checks.py"
+        ),
+        "evidence_ids": (
+            "test:tests/test_flowpilot_milestone_plan_renewal_contracts.py",
+            "test:tests/test_flowpilot_recursive_route_execution_runtime.py",
+            "native:simulations/run_flowpilot_route_replanning_policy_checks.py",
+        ),
+    },
 }
 
 
@@ -243,6 +271,7 @@ def _result_proof(
     primary_path_id: str,
     obligation_id: str,
     result_path: str,
+    proof_command: str = "",
 ) -> ProofArtifactRef:
     absolute = ROOT / result_path
     payload = {}
@@ -281,7 +310,8 @@ def _result_proof(
     else:
         declared_command_text = str(declared_command or "")
     command, command_portable = _portable_proof_command(
-        declared_command_text
+        proof_command
+        or declared_command_text
         or f"python {result_path.replace('_results.json', '_checks.py')}"
     )
     passed = passed and command_portable
@@ -316,6 +346,7 @@ def _primary_path(commitment_id: str) -> PrimaryPathContract:
         primary_path_id=authority.primary_path_id,
         obligation_id=spec["obligation"],
         result_path=spec["result_path"],
+        proof_command=str(spec.get("proof_command") or ""),
     )
     return PrimaryPathContract(
         business_path_id=authority.primary_path_id,
@@ -333,7 +364,10 @@ def _primary_path(commitment_id: str) -> PrimaryPathContract:
             "missing_required_material_blocker",
             "current_evidence_blocked",
         ),
-        evidence_ids=TEST_RECEIPTS,
+        evidence_ids=(
+            *TEST_RECEIPTS,
+            *tuple(str(value) for value in spec.get("evidence_ids", ())),
+        ),
         runtime_evidence_state="current_pass" if proof.has_current_pass() else "failed",
         runtime_observation_ids=(
             f"runtime:{_path_slug(authority.primary_path_id)}",
@@ -447,6 +481,60 @@ def _fallback_candidates() -> tuple[FallbackPathCandidate, ...]:
             candidate_surface="helper_route",
             candidate_trigger="missing_or_ambiguous_current_role_target",
             evidence_ref="test:resume_ambiguous_state_blocks_continue_without_recovery_evidence",
+        ),
+        _fallback_candidate(
+            MILESTONE_PLAN_RENEWAL_COMMITMENT_ID,
+            candidate_path_id=MILESTONE_PLAN_RENEWAL_FORBIDDEN_CANDIDATE_IDS[0],
+            source_surface_id="surface.forbidden.direct-top-level-frontier-advance",
+            candidate_surface="helper_route",
+            candidate_trigger="top_level_acceptance_before_current_renewal",
+            evidence_ref="negative_model:milestone_advanced_without_renewal",
+        ),
+        _fallback_candidate(
+            MILESTONE_PLAN_RENEWAL_COMMITMENT_ID,
+            candidate_path_id=MILESTONE_PLAN_RENEWAL_FORBIDDEN_CANDIDATE_IDS[1],
+            source_surface_id="surface.forbidden.old-remaining-route-auto-continuation",
+            candidate_surface="helper_route",
+            candidate_trigger="top_level_acceptance_reuses_old_unfinished_suffix",
+            evidence_ref=(
+                "negative_model:"
+                "milestone_reused_old_plan_without_fresh_write"
+            ),
+        ),
+        _fallback_candidate(
+            MILESTONE_PLAN_RENEWAL_COMMITMENT_ID,
+            candidate_path_id=MILESTONE_PLAN_RENEWAL_FORBIDDEN_CANDIDATE_IDS[2],
+            source_surface_id="surface.forbidden.bare-unchanged-plan-marker",
+            candidate_surface="alias",
+            candidate_trigger="top_level_acceptance_submits_bare_unchanged_marker",
+            evidence_ref=(
+                "test:tests/test_flowpilot_recursive_route_execution_runtime.py::"
+                "FlowPilotRecursiveRouteExecutionRuntimeTests::"
+                "test_bare_unchanged_marker_is_rejected_without_frontier_advance"
+            ),
+        ),
+        _fallback_candidate(
+            MILESTONE_PLAN_RENEWAL_COMMITMENT_ID,
+            candidate_path_id=MILESTONE_PLAN_RENEWAL_FORBIDDEN_CANDIDATE_IDS[3],
+            source_surface_id="surface.forbidden.reviewer-blocked-plan-activation",
+            candidate_surface="helper_route",
+            candidate_trigger="reviewer_blocks_current_milestone_renewal",
+            evidence_ref=(
+                "test:tests/test_flowpilot_recursive_route_execution_runtime.py::"
+                "FlowPilotRecursiveRouteExecutionRuntimeTests::"
+                "test_reviewer_block_keeps_milestone_and_frontier_uncommitted"
+            ),
+        ),
+        _fallback_candidate(
+            MILESTONE_PLAN_RENEWAL_COMMITMENT_ID,
+            candidate_path_id=MILESTONE_PLAN_RENEWAL_FORBIDDEN_CANDIDATE_IDS[4],
+            source_surface_id="surface.forbidden.historical-milestone-review-reuse",
+            candidate_surface="helper_route",
+            candidate_trigger="resume_current_milestone_gate",
+            evidence_ref=(
+                "negative_model:"
+                "resume_reused_historical_milestone_review"
+            ),
         ),
     )
 

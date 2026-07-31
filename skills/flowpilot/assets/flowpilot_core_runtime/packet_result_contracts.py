@@ -20,6 +20,9 @@ SUPPLEMENTAL_REPAIR_CONTRACT_SCHEMA_VERSION = "flowpilot.terminal_supplemental_r
 PARENT_REPAIR_SCOPE_CONTRACT_SCHEMA_VERSION = "flowpilot.parent_repair_scope_contract.v1"
 NODE_PREWORK_FLOWGUARD_SCOPE = "node_prework_flowguard"
 PM_FLOWGUARD_ACCEPTANCE_SCOPE = "pm_flowguard_acceptance"
+MILESTONE_PLAN_RENEWAL_RESULT_CONTRACT_PROFILE_ID = (
+    packet_stage_evidence_matrix.MILESTONE_PLAN_RENEWAL_RESULT_CONTRACT_PROFILE_ID
+)
 
 REVIEW_REPORT_REQUIRED_FIELDS = (
     "pm_visible_summary",
@@ -532,7 +535,11 @@ PACKET_RESULT_CONTRACTS: tuple[dict[str, Any], ...] = (
             "validation_evidence_ids",
             "waived_requirement_ids",
         ),
-        "fake_ai_success_fields": PM_DISPOSITION_REQUIRED_FIELDS,
+        "fake_ai_success_fields": (
+            *PM_DISPOSITION_REQUIRED_FIELDS,
+            "milestone_audit",
+            "remaining_route_plan",
+        ),
         "unlocks": "node_frontier_disposition_or_staged_route_gate",
     },
     {
@@ -683,6 +690,42 @@ def _profile_binding(profile_bindings: Mapping[str, Any] | None, profile_id: str
 
 
 def _profile_minimal_shape(profile_id: str, binding: Mapping[str, Any]) -> dict[str, Any]:
+    if profile_id == MILESTONE_PLAN_RENEWAL_RESULT_CONTRACT_PROFILE_ID:
+        evidence_refs = (
+            [
+                str(item)
+                for item in binding.get("current_milestone_evidence_refs", [])
+                if str(item)
+            ]
+            if isinstance(binding.get("current_milestone_evidence_refs"), list)
+            else []
+        )
+        raw_remaining_acceptance_item_ids = binding.get("remaining_acceptance_item_ids")
+        remaining_acceptance_item_ids = (
+            [
+                str(item)
+                for item in raw_remaining_acceptance_item_ids
+                if str(item)
+            ]
+            if isinstance(raw_remaining_acceptance_item_ids, list)
+            else None
+        )
+        return milestone_plan_renewal_minimal_shape(
+            current_milestone_evidence_refs=evidence_refs or None,
+            remaining_acceptance_item_ids=remaining_acceptance_item_ids,
+            completed_milestone_bindings=(
+                binding.get("completed_milestone_bindings")
+                if isinstance(binding.get("completed_milestone_bindings"), list)
+                else None
+            ),
+            contract_hash=str(binding.get("contract_hash") or "") or None,
+            remaining_owner_node_ids=(
+                binding.get("remaining_owner_node_ids")
+                if isinstance(binding.get("remaining_owner_node_ids"), list)
+                else None
+            ),
+            terminal_remaining_plan=binding.get("terminal_remaining_plan") is True,
+        )
     if profile_id == "flowguard.semantic_recheck_required":
         coverage_boundary = str(binding.get("coverage_boundary") or "subject_bound_semantic")
         authorized_read_ids = [
@@ -756,6 +799,20 @@ def _profile_allowed_value_options(
         ) if isinstance(binding.get("artifact_ids"), list) else ()
         if artifact_ids:
             options["subject_artifacts_consumed[].artifact_id"] = artifact_ids
+    if profile_id == MILESTONE_PLAN_RENEWAL_RESULT_CONTRACT_PROFILE_ID:
+        remaining_acceptance_item_ids = (
+            tuple(
+                str(item)
+                for item in binding.get("remaining_acceptance_item_ids", [])
+                if str(item)
+            )
+            if isinstance(binding.get("remaining_acceptance_item_ids"), list)
+            else ()
+        )
+        if remaining_acceptance_item_ids:
+            options["remaining_route_plan.nodes[].acceptance_item_ids[]"] = (
+                remaining_acceptance_item_ids
+            )
     return options
 
 
@@ -924,6 +981,122 @@ def strict_route_plan_minimal_shape() -> dict[str, Any]:
     }
 
 
+def milestone_plan_renewal_minimal_shape(
+    *,
+    current_milestone_evidence_refs: list[str] | tuple[str, ...] | None = None,
+    remaining_acceptance_item_ids: list[str] | tuple[str, ...] | None = None,
+    completed_milestone_bindings: list[Mapping[str, Any]] | tuple[Mapping[str, Any], ...] | None = None,
+    contract_hash: str | None = None,
+    remaining_owner_node_ids: list[str] | tuple[str, ...] | None = None,
+    terminal_remaining_plan: bool = False,
+) -> dict[str, Any]:
+    """Return the one current top-level milestone audit and remaining-plan shape.
+
+    Runtime attaches the milestone result-contract profile only to a top-level
+    PM disposition. Nested child dispositions therefore retain the base
+    lightweight family contract instead of inheriting a whole-goal audit.
+    """
+
+    evidence_refs = [
+        str(item)
+        for item in (current_milestone_evidence_refs or ("result-current-milestone",))
+        if str(item)
+    ]
+    if not evidence_refs:
+        evidence_refs = ["result-current-milestone"]
+    remaining_item_source = (
+        ("acc-remaining-001",)
+        if remaining_acceptance_item_ids is None
+        else remaining_acceptance_item_ids
+    )
+    remaining_item_ids = [str(item) for item in remaining_item_source if str(item)]
+    bindings = [
+        {
+            "node_id": str(row.get("node_id") or "current-top-level-milestone"),
+            "outcome": str(
+                row.get("outcome")
+                or "The top-level milestone reached its acceptance boundary."
+            ),
+            "evidence_refs": [str(item) for item in (row.get("evidence_refs") or evidence_refs) if str(item)],
+        }
+        for row in (completed_milestone_bindings or ())
+        if isinstance(row, Mapping)
+    ]
+    if not bindings:
+        bindings = [
+            {
+                "node_id": "current-top-level-milestone",
+                "outcome": "The current top-level milestone reached its acceptance boundary.",
+                "evidence_refs": evidence_refs,
+            }
+        ]
+    owner_node_ids = [
+        str(item)
+        for item in (
+            remaining_owner_node_ids
+            if remaining_owner_node_ids is not None
+            else (("next-top-level-milestone",) if not terminal_remaining_plan else ())
+        )
+        if str(item)
+    ]
+    remaining_gaps = (
+        []
+        if terminal_remaining_plan
+        else [
+            {
+                "obligation": "Complete the remaining accepted user goal.",
+                "gap": "The next accepted goal outcome is not closed yet.",
+                "owner_node_ids": owner_node_ids,
+            }
+        ]
+    )
+    remaining_nodes = (
+        []
+        if terminal_remaining_plan
+        else [
+            {
+                "node_id": "next-top-level-milestone",
+                "title": "Complete the next remaining milestone",
+                "node_kind": "leaf",
+                "parent_node_id": "",
+                "child_node_ids": [],
+                "responsibility": "worker",
+                "modeled_target": "development_process",
+                "acceptance_criteria": [
+                    "The next milestone outcome is complete and supported by current direct evidence."
+                ],
+                "required_outputs": [],
+                "deliverable_checks": [],
+                "validation_checks": ["Verify the current next-milestone deliverable directly."],
+                "high_standard_requirement_ids": [],
+                "acceptance_item_ids": remaining_item_ids,
+                "skill_standard_obligation_ids": [],
+                "supplemental_repair_contract_ids": [],
+                "supplemental_repair_item_ids": [],
+            }
+        ]
+    )
+    return {
+        "milestone_audit": {
+            "completed": bindings,
+            "contract_hash": contract_hash or "<current ledger contract_hash>",
+            "deviations": [],
+            "remaining": remaining_gaps,
+            "prior_plan_assessment": (
+                "Current evidence was compared with the prior unfinished route and its premises."
+            ),
+            "replan_rationale": (
+                "This freshly submitted complete remaining route follows from the audited current state "
+                "and still reaches the accepted final user goal."
+            ),
+        },
+        "remaining_route_plan": {
+            "schema_version": ROUTE_PLAN_SCHEMA_VERSION,
+            "nodes": remaining_nodes,
+        },
+    }
+
+
 def terminal_supplemental_repair_contract_minimal_shape(round_number: int = 1) -> dict[str, Any]:
     return {
         "schema_version": SUPPLEMENTAL_REPAIR_CONTRACT_SCHEMA_VERSION,
@@ -1030,6 +1203,16 @@ def branch_valid_shapes_for_family(family_id: str) -> dict[str, Any]:
                 "blocker_class": "missing_required_information",
                 "recommended_resolution": "Provide the missing route or node context.",
             },
+        }
+    if family_id == "pm_disposition.node_pm_disposition":
+        nested_accept = _minimal_valid_shape_for_family_base(family_id)
+        milestone_accept = {
+            **_minimal_valid_shape_for_family_base(family_id),
+            **milestone_plan_renewal_minimal_shape(),
+        }
+        return {
+            "decision=accept,nested_child": nested_accept,
+            "decision=accept,top_level_milestone": milestone_accept,
         }
     if family_id == "pm_repair_decision.pm_repair_decision":
         return {

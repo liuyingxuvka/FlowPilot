@@ -41,6 +41,15 @@ For each active route node:
 9. complete the leaf/repair node only after reviewer pass or repair pass, then
    let Router trigger parent/module backward review when all children complete.
 
+After a nested child closes, continue only through its parent composition and
+backward-replay path. After a top-level node closes, do not expose or dispatch
+the next top-level node from the old remainder. The runtime must hold
+`awaiting_milestone_plan_renewal` while PM freshly audits completed work,
+deviations, remaining obligations, and the final goal, then submits the
+complete remaining route. An unchanged remainder is valid only as a fresh,
+fully re-emitted plan with current rationale. A bare `continue` or `unchanged`
+marker is invalid, and an empty remainder is terminal-only.
+
 Before assigning a worker packet, consider worker balance and packet shape. Keep worker opportunities roughly balanced across the current run. When scope naturally splits, use bounded separate packets for disjoint work without overlapping files, evidence duties, or review ownership.
 
 Register current-node work as one router-owned packet batch with `batch_id` and

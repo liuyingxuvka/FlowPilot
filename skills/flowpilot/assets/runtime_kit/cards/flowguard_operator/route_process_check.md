@@ -67,6 +67,18 @@ model:
 - the canonical process model is serial: every effective root, parent/module,
   child, leaf, and repair segment has a definite ordered predecessor/successor
   path, and all required nodes are reachable before completion;
+- model every top-level node as a hard milestone boundary:
+  top-level acceptance -> fresh PM audit of completed work, deviations, and
+  remaining obligations -> complete remaining-route re-emission through the
+  final user goal -> FlowGuard report -> PM absorption -> independent Reviewer
+  -> system validation -> atomic renewal -> next top-level frontier. Reject
+  direct top-level frontier advance, automatic reuse of the old remainder, a
+  bare `continue`/`unchanged` plan marker, Reviewer-blocked activation,
+  historical milestone-review reuse, or a nonterminal empty remainder. An
+  evidence-justified identical full plan may renew without a route-version
+  change. A changed renewal must retain the accepted prefix and replace only
+  the unfinished suffix. Resume must return to the same incomplete milestone
+  gate. Nested child closure remains local and does not enter this global loop;
 - model the route against PM's `system_integration_intent` when present. Check
   that the route has a whole-output composition path, not only local node
   touchpoints. Parent/module children must combine into parent outcomes,

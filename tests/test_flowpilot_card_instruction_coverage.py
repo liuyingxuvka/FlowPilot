@@ -1471,6 +1471,72 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
         self.assertIn("python scripts/flowguard_project_topology.py build", agents_text)
         self.assertIn("python scripts/flowguard_project_topology.py check", agents_text)
 
+    def test_top_level_milestone_plan_renewal_is_mandatory_and_role_scoped(self) -> None:
+        def normalized(card_id: str) -> str:
+            return " ".join(
+                _card_path_by_id(card_id).read_text(encoding="utf-8").lower().split()
+            )
+
+        skill_text = " ".join(
+            (ROOT / "skills" / "flowpilot" / "SKILL.md")
+            .read_text(encoding="utf-8")
+            .lower()
+            .split()
+        )
+        pm_core = normalized("pm.core")
+        pm_route = normalized("pm.route_skeleton")
+        pm_node = normalized("pm.current_node_loop")
+        pm_parent_targets = normalized("pm.parent_backward_targets")
+        pm_parent_decision = normalized("pm.parent_segment_decision")
+        reviewer_parent = normalized("reviewer.parent_backward_replay")
+        reviewer_milestone = normalized("reviewer.pm_flowguard_acceptance_review")
+        reviewer_route = normalized("reviewer.route_challenge")
+        reviewer_core = normalized("reviewer.core")
+        flowguard_route = normalized("flowguard_operator.route_process_check")
+        flowguard_core = normalized("flowguard_operator.core")
+
+        for text in (skill_text, pm_core, pm_node):
+            self.assertIn("top-level", text)
+            self.assertIn("complete remaining", text)
+            self.assertIn("bare `continue` or `unchanged` marker is invalid", text)
+        self.assertIn("final user goal", skill_text)
+        self.assertIn("final user goal", pm_core)
+        self.assertIn("final goal", pm_node)
+        self.assertIn("empty remainder", skill_text)
+        self.assertIn("empty remaining plan", pm_core)
+        self.assertIn("empty remainder", pm_node)
+
+        self.assertIn("single mandatory loop", pm_route)
+        self.assertIn("nested child nodes", pm_route)
+        self.assertIn("do not trigger route-wide renewal", pm_route)
+
+        for text in (pm_parent_targets, pm_parent_decision, reviewer_parent):
+            self.assertIn("parent backward", text)
+            self.assertIn("top-level", text)
+            self.assertTrue(
+                "does not authorize automatic continuation" in text
+                or "do not authorize automatic continuation" in text
+                or "never means continue the old remaining route" in text
+                or "does not authorize the next top-level frontier" in text
+            )
+
+        self.assertIn("commit_milestone_plan_renewal", reviewer_milestone)
+        self.assertIn("a renewed plan may be identical", reviewer_milestone)
+        self.assertIn("changed plan preserves the accepted prefix", reviewer_milestone)
+        self.assertIn("empty remainder may pass only", reviewer_milestone)
+
+        self.assertIn("single mandatory milestone renewal loop", reviewer_route)
+        self.assertIn("initial remainder as automatic continuation", reviewer_route)
+        self.assertIn("nested child closure remains local", reviewer_route)
+
+        self.assertIn("top-level acceptance -> fresh pm audit", flowguard_route)
+        self.assertIn("identical full plan may renew without a route-version change", flowguard_route)
+        self.assertIn("changed renewal must retain the accepted prefix", flowguard_route)
+        self.assertIn("resume must return to the same incomplete milestone gate", flowguard_route)
+
+        self.assertIn("dedicated `reviewer.pm_flowguard_acceptance_review` stage card", reviewer_core)
+        self.assertIn("dedicated hard-gate path", flowguard_core)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -28,17 +28,17 @@ class FlowPilot053PPAMaintenanceTests(unittest.TestCase):
     def _current_evidence(summary: str) -> dict[str, object]:
         return {"ok": True, "summary": summary}
 
-    def test_runner_consumes_real_flowguard_053_routes(self) -> None:
+    def test_runner_exposes_current_milestone_authority_blocker(self) -> None:
         report = runner.build_report(
             formal_ai_evidence=self._current_evidence("current formal AI execution"),
             model_test_alignment_evidence=self._current_evidence("current strict MTA"),
         )
 
-        self.assertTrue(report["ok"], report)
+        self.assertFalse(report["ok"], report)
         self.assertTrue(report["gates"]["ppa"])
-        self.assertTrue(report["gates"]["behavior_commitments"])
+        self.assertFalse(report["gates"]["behavior_commitments"])
         self.assertTrue(report["gates"]["field_lifecycle"])
-        self.assertTrue(report["gates"]["risk_evidence"])
+        self.assertFalse(report["gates"]["risk_evidence"])
         self.assertTrue(report["gates"]["pm_visible_summary_existing_runner"])
         self.assertTrue(report["gates"]["negative_cases"])
         self.assertTrue(report["gates"]["formal_ai_execution_evidence"])
@@ -48,7 +48,27 @@ class FlowPilot053PPAMaintenanceTests(unittest.TestCase):
         bcl_report = report["behavior_commitment_ledger"]["report"]
         field_report = report["field_lifecycle"]["report"]
         self.assertEqual(ppa_report["decision"], "primary_path_authority_green")
-        self.assertEqual(bcl_report["decision"], "behavior_commitment_coverage_green")
+        self.assertEqual(
+            bcl_report["decision"],
+            "behavior_commitment_coverage_blocked",
+        )
+        milestone_codes = {
+            finding["code"]
+            for finding in bcl_report["findings"]
+            if finding.get("commitment_id")
+            == model.MILESTONE_PLAN_RENEWAL_COMMITMENT_ID
+        }
+        self.assertTrue(
+            {
+                "commitment_current_evidence_missing",
+                "commitment_model_sync_not_current",
+                "commitment_test_mesh_not_current",
+                "commitment_primary_path_blocked",
+                "commitment_primary_path_material_evidence_missing",
+                "commitment_primary_path_risk_gate_missing",
+            }.issubset(milestone_codes),
+            milestone_codes,
+        )
         self.assertEqual(field_report["decision"], "field_lifecycle_full")
         self.assertEqual(
             set(report["coverage"]["primary_path_intents"]),
@@ -68,6 +88,7 @@ class FlowPilot053PPAMaintenanceTests(unittest.TestCase):
                 "commit.role_local_flowguard_cannot_self_approve",
                 "commit.material_map_is_optional_navigation_only",
                 "commit.model_test_alignment_uses_current_runtime_path_evidence",
+                model.MILESTONE_PLAN_RENEWAL_COMMITMENT_ID,
             }.issubset(set(report["coverage"]["commitment_ids"]))
         )
         self.assertTrue(
@@ -189,13 +210,32 @@ class FlowPilot053PPAMaintenanceTests(unittest.TestCase):
 
     def test_behavior_commitment_ledger_requires_ppa_and_current_evidence(self) -> None:
         ppa = review_primary_path_authority(model.build_primary_path_plan())
-        good = review_behavior_commitment_ledger(model.build_behavior_commitment_ledger(ppa))
-        self.assertTrue(good.ok, good.to_dict())
-        self.assertEqual(set(good.covered_commitment_ids), set(model.COMMITMENT_IDS))
+        current = review_behavior_commitment_ledger(
+            model.build_behavior_commitment_ledger(ppa)
+        )
+        self.assertFalse(current.ok, current.to_dict())
         self.assertEqual(
-            set(good.path_sensitive_commitment_ids),
+            set(current.covered_commitment_ids),
+            set(model.COMMITMENT_IDS)
+            - {model.MILESTONE_PLAN_RENEWAL_COMMITMENT_ID},
+        )
+        self.assertEqual(
+            set(current.ppa_blocked_commitment_ids),
+            {model.MILESTONE_PLAN_RENEWAL_COMMITMENT_ID},
+        )
+        self.assertEqual(
+            set(current.path_sensitive_commitment_ids),
             set(model.PATH_SENSITIVE_COMMITMENT_IDS),
         )
+        milestone_codes = {
+            finding.code
+            for finding in current.findings
+            if finding.commitment_id
+            == model.MILESTONE_PLAN_RENEWAL_COMMITMENT_ID
+        }
+        self.assertIn("commitment_primary_path_blocked", milestone_codes)
+        self.assertIn("commitment_test_mesh_not_current", milestone_codes)
+        self.assertIn("commitment_current_evidence_missing", milestone_codes)
 
         missing_ppa = review_behavior_commitment_ledger(model.build_broken_missing_ppa_ledger())
         missing_ppa_codes = {finding.code for finding in missing_ppa.findings}
@@ -219,7 +259,7 @@ class FlowPilot053PPAMaintenanceTests(unittest.TestCase):
             encoding="utf-8"
         )
 
-        self.assertEqual(len(ledger.commitments), 17)
+        self.assertEqual(len(ledger.commitments), 18)
         self.assertEqual(
             behavior_commitment_ledger_fingerprint(ledger),
             behavior_commitment_ledger_fingerprint(reloaded),
@@ -242,7 +282,7 @@ class FlowPilot053PPAMaintenanceTests(unittest.TestCase):
             "primary_path_migration_ambiguous",
         }
 
-        self.assertEqual(len(commitments), 17)
+        self.assertEqual(len(commitments), 18)
         for commitment in commitments:
             authority = commitment["path_authority"]
             self.assertFalse(
@@ -255,6 +295,124 @@ class FlowPilot053PPAMaintenanceTests(unittest.TestCase):
                     authority["primary_path_id"],
                     commitment["commitment_id"],
                 )
+
+    def test_top_level_milestone_renewal_has_one_blocked_ledger_owner_and_one_ppa_path(
+        self,
+    ) -> None:
+        payload = json.loads(model.LEDGER_PATH.read_text(encoding="utf-8"))[
+            "ledger"
+        ]
+        intent_id = (
+            "intent:flowpilot."
+            "renew-complete-remaining-plan-after-top-level-milestone"
+        )
+        commitments = [
+            row
+            for row in payload["commitments"]
+            if row["business_intent_id"] == intent_id
+        ]
+        surfaces = [
+            row
+            for row in payload["source_surfaces"]
+            if intent_id in row["business_intent_ids"]
+        ]
+
+        self.assertEqual(len(commitments), 1)
+        self.assertEqual(len(surfaces), 1)
+        commitment = commitments[0]
+        surface = surfaces[0]
+        self.assertEqual(
+            commitment["commitment_id"],
+            model.MILESTONE_PLAN_RENEWAL_COMMITMENT_ID,
+        )
+        self.assertEqual(
+            commitment["primary_owner_model_id"],
+            "flowpilot_route_replanning_policy",
+        )
+        self.assertEqual(
+            commitment["path_authority"]["primary_path_id"],
+            "path.runtime.top-level-milestone-plan-renewal",
+        )
+        self.assertFalse(commitment["path_authority"]["ppa_ok"])
+        self.assertFalse(commitment["path_authority"]["evidence_current"])
+        self.assertEqual(
+            commitment["path_authority"]["ppa_decision"],
+            "primary_path_authority_blocked",
+        )
+        self.assertEqual(
+            commitment["model_sync_state"],
+            "owner_model_stale",
+        )
+        self.assertFalse(commitment["evidence"]["current"])
+        self.assertEqual(commitment["evidence"]["evidence_state"], "blocked")
+        self.assertEqual(
+            commitment["evidence"]["test_mesh_state"],
+            "shard_missing",
+        )
+        self.assertEqual(
+            surface["primary_path_id"],
+            "path.runtime.top-level-milestone-plan-renewal",
+        )
+        self.assertFalse(surface["delegates_to_primary_path"])
+
+        plan = model.build_primary_path_plan()
+        primary_paths = [
+            path
+            for path in plan.primary_paths
+            if path.behavior_commitment_id
+            == model.MILESTONE_PLAN_RENEWAL_COMMITMENT_ID
+        ]
+        candidates = [
+            candidate
+            for candidate in plan.fallback_candidates
+            if candidate.behavior_commitment_id
+            == model.MILESTONE_PLAN_RENEWAL_COMMITMENT_ID
+        ]
+        self.assertEqual(len(primary_paths), 1)
+        primary_path = primary_paths[0]
+        self.assertEqual(
+            primary_path.primary_entrypoint_id,
+            "flowpilot_core_runtime.runtime._apply_staged_pm_decision_gate",
+        )
+        self.assertEqual(
+            primary_path.owner_code_contract_id,
+            "pm_disposition.milestone_plan_renewal_required",
+        )
+        self.assertTrue(primary_path.proof_artifact.has_current_pass())
+        self.assertEqual(
+            primary_path.proof_artifact.command,
+            "python simulations/run_flowpilot_route_replanning_policy_checks.py",
+        )
+        self.assertEqual(
+            {candidate.candidate_path_id for candidate in candidates},
+            set(model.MILESTONE_PLAN_RENEWAL_FORBIDDEN_CANDIDATE_IDS),
+        )
+        self.assertTrue(
+            all(candidate.disposition == "block" for candidate in candidates)
+        )
+        self.assertTrue(
+            all(
+                not candidate.invokes_on_primary_failure
+                and not candidate.returns_success_after_primary_failure
+                for candidate in candidates
+            )
+        )
+
+        ppa_report = review_primary_path_authority(plan)
+        self.assertTrue(ppa_report.ok, ppa_report.to_dict())
+        ledger_report = review_behavior_commitment_ledger(
+            model.build_behavior_commitment_ledger(ppa_report)
+        )
+        self.assertFalse(ledger_report.ok, ledger_report.to_dict())
+        milestone_codes = {
+            finding.code
+            for finding in ledger_report.findings
+            if finding.commitment_id
+            == model.MILESTONE_PLAN_RENEWAL_COMMITMENT_ID
+        }
+        self.assertIn("commitment_primary_path_blocked", milestone_codes)
+        self.assertIn("commitment_test_mesh_not_current", milestone_codes)
+        self.assertIn("commitment_current_evidence_missing", milestone_codes)
 
     def test_unified_late_defect_repair_has_one_commitment_and_primary_path(self) -> None:
         payload = json.loads(model.LEDGER_PATH.read_text(encoding="utf-8"))[

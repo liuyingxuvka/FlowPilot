@@ -38,12 +38,15 @@ RELEVANT_TEST_PATHS = (
 
 REQUIRED_LABELS = (
     "reviewer_block_records_route_mutation_need",
+    "milestone_plan_renewal_records_changed_remaining_suffix",
     "pm_proposes_return_repair_candidate_route",
     "pm_proposes_supersede_replacement_candidate_route",
     "pm_proposes_branch_then_continue_candidate_route",
     "pm_proposes_sibling_branch_replacement_candidate_route",
+    "pm_proposes_changed_remaining_suffix_candidate_route",
     "controller_records_stale_evidence_before_route_recheck",
     "controller_supersedes_old_current_node_packet_for_route_mutation",
+    "controller_invalidates_superseded_pending_suffix_packets",
     "flowguard_operator_route_scope_simulates_candidate_route",
     "flowguard_operator_product_scope_checks_candidate_route",
     "human_like_reviewer_challenges_candidate_route",
@@ -80,12 +83,19 @@ HAZARD_EXPECTED_FAILURES = {
     "activated_route_version_mismatch": "activated route version disagrees with the replacement route version",
     "final_ledger_effective_members_mismatch": "final ledger effective members disagree with activated effective route members",
     "terminal_targets_effective_members_mismatch": "terminal replay targets disagree with activated effective route members",
+    "changed_suffix_drops_completed_prefix": "changed remaining plan did not preserve completed prefix plus candidate suffix",
+    "changed_suffix_discards_completed_prefix_evidence": "remaining suffix replacement discarded completed prefix evidence",
+    "changed_suffix_reopens_completed_prefix": "remaining suffix replacement reopened a completed prefix node",
+    "changed_suffix_keeps_old_pending_member_effective": "changed remaining plan did not supersede the entire old pending suffix",
+    "changed_suffix_keeps_old_pending_packets_current": "changed remaining plan rechecked before old pending suffix packets were invalidated",
+    "changed_suffix_keeps_old_pending_evidence_current": "changed remaining plan kept old pending suffix evidence current",
 }
 
 
 def _state_id(state: model.State) -> str:
     return (
         f"status={state.status}|holder={state.holder}|block={state.reviewer_block_recorded}|"
+        f"milestone_change={state.milestone_plan_change_recorded},{state.mutation_trigger_kind}|"
         f"proposal={state.pm_mutation_proposed},{state.topology_strategy}|"
         f"authority=validated:{state.route_memory_authority_validated_before_event_write},"
         f"same:{state.route_mutation_consumed_same_authority},"
@@ -95,7 +105,14 @@ def _state_id(state: model.State) -> str:
         f"continue:{state.continue_target_declared},affected_siblings:{state.affected_sibling_nodes_declared},"
         f"replay_scope:{state.replay_scope_declared}|members=before:{state.before_effective_member_ids},"
         f"superseded:{state.superseded_effective_member_ids},replacement:{state.replacement_effective_member_id},"
+        f"replacements:{state.replacement_effective_member_ids},"
         f"after:{state.after_effective_member_ids},unaffected:{state.unaffected_sibling_node_ids},"
+        f"prefix:{state.completed_prefix_node_ids},prefix_evidence:{state.completed_prefix_evidence_ids},"
+        f"prefix_retained:{state.completed_prefix_evidence_retained},prefix_reopened:{state.completed_prefix_reopened},"
+        f"old_suffix:{state.prior_pending_suffix_node_ids},new_suffix:{state.candidate_remaining_suffix_node_ids},"
+        f"old_suffix_packets_invalid:{state.old_pending_suffix_packets_invalidated},"
+        f"old_suffix_evidence_invalid:{state.old_pending_suffix_evidence_invalidated},"
+        f"prefix_packets_untouched:{state.completed_prefix_packets_untouched},"
         f"rebound:{state.unaffected_siblings_rebound},versions:{state.active_route_version}/"
         f"{state.candidate_route_version}:{state.after_member_route_versions},"
         f"ledger:{state.final_ledger_effective_member_ids},terminal:{state.terminal_target_member_ids}|"

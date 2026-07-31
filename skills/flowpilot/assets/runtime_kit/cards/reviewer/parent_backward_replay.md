@@ -52,6 +52,13 @@ blocker for this packet only. The runtime will not issue a second
 `review.any_current_subject` packet over this packet before parent closure.
 Do not create or request a second reviewer packet for the same parent gate.
 
+When this parent/module is top-level, keep this local composition review
+distinct from the later milestone renewal review. Passing parent backward
+replay proves that current children compose into the parent; it does not prove
+that the old remaining route still fits current reality and does not authorize
+the next top-level frontier. The later independent milestone review must
+inspect the fresh audit and complete remaining route.
+
 Do not approve from worker reports alone. Start with a neutral observation,
 probe the current artifact or behavior directly when applicable, compare child
 evidence to the parent goal, and record blocking findings.

@@ -1,8 +1,9 @@
 {
   "artifact_type": "flowguard_behavior_commitment_ledger",
+  "schema_version": "1.0",
   "format_version": "1",
   "ledger": {
-    "change_mode": "change_behavior",
+    "change_mode": "add_behavior",
     "claim_scope": "release",
     "commitments": [
       {
@@ -2101,9 +2102,148 @@
         "trigger": "a FlowPilot model-test alignment family is reviewed",
         "validation_boundary": "diagnostic execution identity only; compared product obligations remain unchanged",
         "variant_of_business_intent_id": ""
+      },
+      {
+        "actor": "FlowPilot runtime/router with project manager, FlowGuard operator, and human-like reviewer",
+        "actor_kind": "ai_agent",
+        "behavior_plane": "product_runtime",
+        "business_intent_id": "intent:flowpilot.renew-complete-remaining-plan-after-top-level-milestone",
+        "child_model_ids": [],
+        "commitment_id": "commit.top_level_milestone_plan_renewal_is_mandatory",
+        "commitment_kind": "workflow",
+        "evidence": {
+          "code_contract_ids": [
+            "pm_disposition.milestone_plan_renewal_required"
+          ],
+          "coverage_case_ids": [],
+          "coverage_receipt_ids": [],
+          "coverage_shard_ids": [],
+          "current": false,
+          "evidence_state": "blocked",
+          "metadata": {
+            "authority_blocker": "current FlowGuard 0.66 PPA and TestMesh receipts are not frozen",
+            "targeted_tests_are_not_testmesh_receipts": true
+          },
+          "model_obligation_ids": [
+            "flowpilot_route_replanning_policy.milestone_renewal_gates_route_use"
+          ],
+          "proof_artifact_ids": [
+            "simulations/flowpilot_route_replanning_policy_results.json"
+          ],
+          "risk_gate_ids": [],
+          "test_evidence_ids": [
+            "test:tests/test_flowpilot_milestone_plan_renewal_contracts.py",
+            "test:tests/test_flowpilot_recursive_route_execution_runtime.py",
+            "native:simulations/run_flowpilot_route_replanning_policy_checks.py"
+          ],
+          "test_mesh_state": "shard_missing"
+        },
+        "excluded_behavior_ids": [],
+        "expected_result": "the current top-level milestone audit and one complete remaining route to the final user goal pass the existing FlowGuard, PM absorption, Reviewer, and system-validation chain before any frontier advance",
+        "expected_terminal": "milestone acceptance and the reviewed remaining plan commit atomically, preserving accepted history and either releasing the next top-level node or entering genuine final closure; otherwise the current gate remains visibly blocked",
+        "external_differences": [],
+        "failure_boundary": "direct top-level frontier advance, automatic old-suffix continuation, a bare unchanged marker, missing audit or remaining-obligation owner, premature empty plan, Reviewer-blocked activation, or historical review reuse cannot authorize continuation",
+        "in_scope": true,
+        "label": "Every accepted top-level milestone renews the complete remaining route before frontier advance.",
+        "lookup_binding": {
+          "error_signatures": [
+            "top_level_milestone_plan_renewal_required",
+            "awaiting_milestone_plan_renewal"
+          ],
+          "metadata": {},
+          "path_patterns": [
+            "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+            "skills/flowpilot/assets/flowpilot_core_runtime/packet_stage_evidence_matrix.py",
+            "skills/flowpilot/assets/flowpilot_core_runtime/review_window_contracts.py"
+          ],
+          "task_terms": [
+            "top-level milestone",
+            "complete remaining plan",
+            "milestone plan renewal"
+          ],
+          "tool_ids": [],
+          "workflow_families": [
+            "top_level_milestone_plan_renewal"
+          ]
+        },
+        "metadata": {
+          "change_mode": "add_behavior",
+          "one_current_mode": true,
+          "top_level_rule": "parent_node_id_empty"
+        },
+        "miss_origin_state": "no_miss",
+        "model_sync_state": "owner_model_stale",
+        "owner": "FlowPilot runtime/router",
+        "path_authority": {
+          "behavior_commitment_id": "commit.top_level_milestone_plan_renewal_is_mandatory",
+          "business_intent": "Every accepted top-level milestone renews the complete remaining route before frontier advance.",
+          "business_intent_id": "intent:flowpilot.renew-complete-remaining-plan-after-top-level-milestone",
+          "evidence_current": false,
+          "evidence_refs": [],
+          "fallback_candidate_ids": [
+            "fallback.direct-top-level-frontier-advance",
+            "fallback.old-remaining-route-auto-continuation",
+            "fallback.bare-unchanged-plan-marker",
+            "fallback.reviewer-blocked-plan-activation",
+            "fallback.historical-milestone-review-reuse"
+          ],
+          "metadata": {
+            "authority_blocker": "current FlowGuard 0.66 PPA receipt is not frozen"
+          },
+          "path_sensitive": true,
+          "ppa_confidence": "blocked",
+          "ppa_coverage_receipt_ids": [],
+          "ppa_coverage_shard_ids": [],
+          "ppa_decision": "primary_path_authority_blocked",
+          "ppa_ok": false,
+          "ppa_report_id": "",
+          "ppa_risk_gate_ids": [],
+          "primary_path_id": "path.runtime.top-level-milestone-plan-renewal",
+          "proof_artifact_ids": [],
+          "runtime_observation_ids": [],
+          "scoped_out_reason": ""
+        },
+        "preconditions": [
+          "the current route node is top-level and ready for project-manager acceptance"
+        ],
+        "primary_owner_model_id": "flowpilot_route_replanning_policy",
+        "rationale": "A hard topology-derived replanning gate turns completed work into mandatory new planning evidence without creating a second route authority, optional mode, compatibility reader, fallback continuation, or experiment.",
+        "relations": [],
+        "replacement_state": "active",
+        "scoped_out_reason": "",
+        "side_effects": [
+          "preserve the accepted milestone prefix and its current evidence",
+          "supersede or quarantine only changed unfinished suffix material"
+        ],
+        "similarity_obligation_ids": [],
+        "similarity_relation_ids": [],
+        "source_refs": [
+          "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+          "skills/flowpilot/assets/flowpilot_core_runtime/packet_stage_evidence_matrix.py",
+          "skills/flowpilot/assets/flowpilot_core_runtime/review_window_contracts.py",
+          "skills/flowpilot/assets/runtime_kit/cards/reviewer/pm_flowguard_acceptance_review.md"
+        ],
+        "source_surface_ids": [
+          "surface.runtime.top_level_milestone_plan_renewal"
+        ],
+        "state_writes": [
+          "route_nodes[top_level].status",
+          "execution_frontier",
+          "active_route_version",
+          "milestone_plan_renewals"
+        ],
+        "supporting_model_ids": [
+          "flowpilot_recursive_route_execution",
+          "flowpilot_route_mutation_activation",
+          "flowpilot_resume"
+        ],
+        "surface_delegation_only": false,
+        "trigger": "project manager proposes acceptance of the current top-level route node",
+        "validation_boundary": "top-level topology detection, current audit, complete final-goal route, existing independent challenge chain, equality-aware suffix activation, preserved completed history, recovery, and terminal-only empty plan",
+        "variant_of_business_intent_id": ""
       }
     ],
-    "current_revision": "flowguard-0.58-owner-impact-evidence-reuse",
+    "current_revision": "flowguard-0.66-top-level-milestone-plan-renewal-authority-blocked",
     "expected_business_intent_ids": [
       "intent:flowpilot.submit-current-packet-result",
       "intent:flowpilot.repair-late-defect-through-current-shared-engine",
@@ -2121,7 +2261,8 @@
       "intent:flowpilot.audit-role-plan-completion-and-record-pm-disposition",
       "intent:flowpilot.keep-role-local-flowguard-advisory",
       "intent:flowpilot.navigate-current-material-artifact-map",
-      "intent:flowpilot.validate-model-test-alignment-with-current-runtime-evidence"
+      "intent:flowpilot.validate-model-test-alignment-with-current-runtime-evidence",
+      "intent:flowpilot.renew-complete-remaining-plan-after-top-level-milestone"
     ],
     "expected_commitment_ids": [
       "commit.result_submission_current_contract_only",
@@ -2140,7 +2281,8 @@
       "commit.reviewer_audits_plan_completion_and_pm_disposition",
       "commit.role_local_flowguard_cannot_self_approve",
       "commit.material_map_is_optional_navigation_only",
-      "commit.model_test_alignment_uses_current_runtime_path_evidence"
+      "commit.model_test_alignment_uses_current_runtime_path_evidence",
+      "commit.top_level_milestone_plan_renewal_is_mandatory"
     ],
     "ledger_id": "flowpilot_behavior_commitments",
     "metadata": {
@@ -2175,7 +2317,18 @@
         "source_ref": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
         "surface_id": "surface.runtime.submit_result",
         "surface_kind": "code",
-        "validation_boundary": "current FlowPilot runtime contract"
+        "validation_boundary": "current FlowPilot runtime contract",
+        "source_system_id": "",
+        "native_artifact_id": "",
+        "content_fingerprint": "",
+        "inventory_revision": "",
+        "discovery_evidence_ids": [],
+        "source_authority_role": "normative",
+        "declared_semantics_fingerprint": "",
+        "coverage_disposition": "modeled",
+        "delegated_owner_inventory_id": "",
+        "delegation_relation_type": "",
+        "native_evidence_ids": []
       },
       {
         "business_intent_ids": [
@@ -2200,7 +2353,18 @@
         "source_ref": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
         "surface_id": "surface.runtime.unified_late_defect_repair_engine",
         "surface_kind": "code",
-        "validation_boundary": "shared current repair transaction, replacement lineage, causal evidence, replay, and closure"
+        "validation_boundary": "shared current repair transaction, replacement lineage, causal evidence, replay, and closure",
+        "source_system_id": "",
+        "native_artifact_id": "",
+        "content_fingerprint": "",
+        "inventory_revision": "",
+        "discovery_evidence_ids": [],
+        "source_authority_role": "normative",
+        "declared_semantics_fingerprint": "",
+        "coverage_disposition": "modeled",
+        "delegated_owner_inventory_id": "",
+        "delegation_relation_type": "",
+        "native_evidence_ids": []
       },
       {
         "business_intent_ids": [
@@ -2226,7 +2390,18 @@
         "source_ref": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
         "surface_id": "surface.runtime.pm_historical_defect_intake",
         "surface_kind": "code",
-        "validation_boundary": "structured defect observation and exact historical source-node identity"
+        "validation_boundary": "structured defect observation and exact historical source-node identity",
+        "source_system_id": "",
+        "native_artifact_id": "",
+        "content_fingerprint": "",
+        "inventory_revision": "",
+        "discovery_evidence_ids": [],
+        "source_authority_role": "normative",
+        "declared_semantics_fingerprint": "",
+        "coverage_disposition": "modeled",
+        "delegated_owner_inventory_id": "",
+        "delegation_relation_type": "",
+        "native_evidence_ids": []
       },
       {
         "business_intent_ids": [
@@ -2251,7 +2426,18 @@
         "source_ref": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
         "surface_id": "surface.runtime.blocker_repair_intake",
         "surface_kind": "code",
-        "validation_boundary": "current blocker identity, repair target, and required recheck"
+        "validation_boundary": "current blocker identity, repair target, and required recheck",
+        "source_system_id": "",
+        "native_artifact_id": "",
+        "content_fingerprint": "",
+        "inventory_revision": "",
+        "discovery_evidence_ids": [],
+        "source_authority_role": "normative",
+        "declared_semantics_fingerprint": "",
+        "coverage_disposition": "modeled",
+        "delegated_owner_inventory_id": "",
+        "delegation_relation_type": "",
+        "native_evidence_ids": []
       },
       {
         "business_intent_ids": [
@@ -2276,7 +2462,18 @@
         "source_ref": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
         "surface_id": "surface.runtime.parent_subtree_repair_intake",
         "surface_kind": "code",
-        "validation_boundary": "parent/subtree scope contract, child ownership, and affected dependency cone"
+        "validation_boundary": "parent/subtree scope contract, child ownership, and affected dependency cone",
+        "source_system_id": "",
+        "native_artifact_id": "",
+        "content_fingerprint": "",
+        "inventory_revision": "",
+        "discovery_evidence_ids": [],
+        "source_authority_role": "normative",
+        "declared_semantics_fingerprint": "",
+        "coverage_disposition": "modeled",
+        "delegated_owner_inventory_id": "",
+        "delegation_relation_type": "",
+        "native_evidence_ids": []
       },
       {
         "business_intent_ids": [
@@ -2302,7 +2499,18 @@
         "source_ref": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
         "surface_id": "surface.runtime.terminal_repair_intake",
         "surface_kind": "code",
-        "validation_boundary": "supplemental contract, causal generation binding, Worker/FlowGuard/Reviewer chain, and terminal replay"
+        "validation_boundary": "supplemental contract, causal generation binding, Worker/FlowGuard/Reviewer chain, and terminal replay",
+        "source_system_id": "",
+        "native_artifact_id": "",
+        "content_fingerprint": "",
+        "inventory_revision": "",
+        "discovery_evidence_ids": [],
+        "source_authority_role": "normative",
+        "declared_semantics_fingerprint": "",
+        "coverage_disposition": "modeled",
+        "delegated_owner_inventory_id": "",
+        "delegation_relation_type": "",
+        "native_evidence_ids": []
       },
       {
         "business_intent_ids": [
@@ -2325,7 +2533,18 @@
         "source_ref": "simulations/flowpilot_pm_visible_summary_model.py",
         "surface_id": "surface.pm_visible_summary",
         "surface_kind": "code",
-        "validation_boundary": "current FlowPilot runtime contract"
+        "validation_boundary": "current FlowPilot runtime contract",
+        "source_system_id": "",
+        "native_artifact_id": "",
+        "content_fingerprint": "",
+        "inventory_revision": "",
+        "discovery_evidence_ids": [],
+        "source_authority_role": "normative",
+        "declared_semantics_fingerprint": "",
+        "coverage_disposition": "modeled",
+        "delegated_owner_inventory_id": "",
+        "delegation_relation_type": "",
+        "native_evidence_ids": []
       },
       {
         "business_intent_ids": [
@@ -2348,7 +2567,18 @@
         "source_ref": "skills/flowpilot/assets/flowpilot_core_runtime/packet_stage_evidence_matrix.py",
         "surface_id": "surface.authorized_result_reads",
         "surface_kind": "code",
-        "validation_boundary": "current FlowPilot runtime contract"
+        "validation_boundary": "current FlowPilot runtime contract",
+        "source_system_id": "",
+        "native_artifact_id": "",
+        "content_fingerprint": "",
+        "inventory_revision": "",
+        "discovery_evidence_ids": [],
+        "source_authority_role": "normative",
+        "declared_semantics_fingerprint": "",
+        "coverage_disposition": "modeled",
+        "delegated_owner_inventory_id": "",
+        "delegation_relation_type": "",
+        "native_evidence_ids": []
       },
       {
         "business_intent_ids": [
@@ -2371,7 +2601,18 @@
         "source_ref": "scripts/compile_flowpilot_acceptance_testmesh_evidence.py",
         "surface_id": "surface.release_evidence",
         "surface_kind": "process",
-        "validation_boundary": "current FlowPilot runtime contract"
+        "validation_boundary": "current FlowPilot runtime contract",
+        "source_system_id": "",
+        "native_artifact_id": "",
+        "content_fingerprint": "",
+        "inventory_revision": "",
+        "discovery_evidence_ids": [],
+        "source_authority_role": "normative",
+        "declared_semantics_fingerprint": "",
+        "coverage_disposition": "modeled",
+        "delegated_owner_inventory_id": "",
+        "delegation_relation_type": "",
+        "native_evidence_ids": []
       },
       {
         "business_intent_ids": [
@@ -2394,7 +2635,18 @@
         "source_ref": "skills/flowpilot/assets/flowpilot_new_role_commands.py",
         "surface_id": "surface.current_handoff_checklist",
         "surface_kind": "code",
-        "validation_boundary": "current FlowPilot runtime contract"
+        "validation_boundary": "current FlowPilot runtime contract",
+        "source_system_id": "",
+        "native_artifact_id": "",
+        "content_fingerprint": "",
+        "inventory_revision": "",
+        "discovery_evidence_ids": [],
+        "source_authority_role": "normative",
+        "declared_semantics_fingerprint": "",
+        "coverage_disposition": "modeled",
+        "delegated_owner_inventory_id": "",
+        "delegation_relation_type": "",
+        "native_evidence_ids": []
       },
       {
         "business_intent_ids": [
@@ -2419,7 +2671,18 @@
         "source_ref": "skills/flowpilot/assets/flowpilot_new_run_commands.py",
         "surface_id": "surface.resume_exact_current_obligation_roles",
         "surface_kind": "code",
-        "validation_boundary": "exact current requested-role set and current role-memory identity"
+        "validation_boundary": "exact current requested-role set and current role-memory identity",
+        "source_system_id": "",
+        "native_artifact_id": "",
+        "content_fingerprint": "",
+        "inventory_revision": "",
+        "discovery_evidence_ids": [],
+        "source_authority_role": "normative",
+        "declared_semantics_fingerprint": "",
+        "coverage_disposition": "modeled",
+        "delegated_owner_inventory_id": "",
+        "delegation_relation_type": "",
+        "native_evidence_ids": []
       },
       {
         "business_intent_ids": [
@@ -2442,7 +2705,18 @@
         "source_ref": "simulations/flowpilot_ai_response_execution_closure_model.py",
         "surface_id": "surface.fake_ai_execution_closure",
         "surface_kind": "code",
-        "validation_boundary": "current FlowPilot runtime contract"
+        "validation_boundary": "current FlowPilot runtime contract",
+        "source_system_id": "",
+        "native_artifact_id": "",
+        "content_fingerprint": "",
+        "inventory_revision": "",
+        "discovery_evidence_ids": [],
+        "source_authority_role": "normative",
+        "declared_semantics_fingerprint": "",
+        "coverage_disposition": "modeled",
+        "delegated_owner_inventory_id": "",
+        "delegation_relation_type": "",
+        "native_evidence_ids": []
       },
       {
         "business_intent_ids": [
@@ -2465,7 +2739,18 @@
         "source_ref": "simulations/flowpilot_acceptance_testmesh_model.py",
         "surface_id": "surface.acceptance_testmesh_proofs",
         "surface_kind": "process",
-        "validation_boundary": "current FlowPilot runtime contract"
+        "validation_boundary": "current FlowPilot runtime contract",
+        "source_system_id": "",
+        "native_artifact_id": "",
+        "content_fingerprint": "",
+        "inventory_revision": "",
+        "discovery_evidence_ids": [],
+        "source_authority_role": "normative",
+        "declared_semantics_fingerprint": "",
+        "coverage_disposition": "modeled",
+        "delegated_owner_inventory_id": "",
+        "delegation_relation_type": "",
+        "native_evidence_ids": []
       },
       {
         "business_intent_ids": [
@@ -2488,7 +2773,18 @@
         "source_ref": "skills/flowpilot/assets/flowpilot_core_runtime/role_handoff.py",
         "surface_id": "surface.complete_role_workstream",
         "surface_kind": "code",
-        "validation_boundary": "current FlowPilot runtime contract"
+        "validation_boundary": "current FlowPilot runtime contract",
+        "source_system_id": "",
+        "native_artifact_id": "",
+        "content_fingerprint": "",
+        "inventory_revision": "",
+        "discovery_evidence_ids": [],
+        "source_authority_role": "normative",
+        "declared_semantics_fingerprint": "",
+        "coverage_disposition": "modeled",
+        "delegated_owner_inventory_id": "",
+        "delegation_relation_type": "",
+        "native_evidence_ids": []
       },
       {
         "business_intent_ids": [
@@ -2511,7 +2807,18 @@
         "source_ref": "skills/flowpilot/assets/runtime_kit/cards/roles/controller.md",
         "surface_id": "surface.controller_foreground_ledger",
         "surface_kind": "skill",
-        "validation_boundary": "current FlowPilot runtime contract"
+        "validation_boundary": "current FlowPilot runtime contract",
+        "source_system_id": "",
+        "native_artifact_id": "",
+        "content_fingerprint": "",
+        "inventory_revision": "",
+        "discovery_evidence_ids": [],
+        "source_authority_role": "normative",
+        "declared_semantics_fingerprint": "",
+        "coverage_disposition": "modeled",
+        "delegated_owner_inventory_id": "",
+        "delegation_relation_type": "",
+        "native_evidence_ids": []
       },
       {
         "business_intent_ids": [
@@ -2534,7 +2841,18 @@
         "source_ref": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
         "surface_id": "surface.local_capability_inventory",
         "surface_kind": "code",
-        "validation_boundary": "current FlowPilot runtime contract"
+        "validation_boundary": "current FlowPilot runtime contract",
+        "source_system_id": "",
+        "native_artifact_id": "",
+        "content_fingerprint": "",
+        "inventory_revision": "",
+        "discovery_evidence_ids": [],
+        "source_authority_role": "normative",
+        "declared_semantics_fingerprint": "",
+        "coverage_disposition": "modeled",
+        "delegated_owner_inventory_id": "",
+        "delegation_relation_type": "",
+        "native_evidence_ids": []
       },
       {
         "business_intent_ids": [
@@ -2557,7 +2875,18 @@
         "source_ref": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_research_package.md",
         "surface_id": "surface.ordinary_material_work",
         "surface_kind": "skill",
-        "validation_boundary": "current FlowPilot runtime contract"
+        "validation_boundary": "current FlowPilot runtime contract",
+        "source_system_id": "",
+        "native_artifact_id": "",
+        "content_fingerprint": "",
+        "inventory_revision": "",
+        "discovery_evidence_ids": [],
+        "source_authority_role": "normative",
+        "declared_semantics_fingerprint": "",
+        "coverage_disposition": "modeled",
+        "delegated_owner_inventory_id": "",
+        "delegation_relation_type": "",
+        "native_evidence_ids": []
       },
       {
         "business_intent_ids": [
@@ -2580,7 +2909,18 @@
         "source_ref": "skills/flowpilot/assets/flowpilot_core_runtime/review_window_contracts.py",
         "surface_id": "surface.reviewer_plan_completion_audit",
         "surface_kind": "code",
-        "validation_boundary": "current FlowPilot runtime contract"
+        "validation_boundary": "current FlowPilot runtime contract",
+        "source_system_id": "",
+        "native_artifact_id": "",
+        "content_fingerprint": "",
+        "inventory_revision": "",
+        "discovery_evidence_ids": [],
+        "source_authority_role": "normative",
+        "declared_semantics_fingerprint": "",
+        "coverage_disposition": "modeled",
+        "delegated_owner_inventory_id": "",
+        "delegation_relation_type": "",
+        "native_evidence_ids": []
       },
       {
         "business_intent_ids": [
@@ -2603,7 +2943,18 @@
         "source_ref": "skills/flowpilot/assets/flowpilot_core_runtime/role_handoff.py",
         "surface_id": "surface.role_local_flowguard_boundary",
         "surface_kind": "code",
-        "validation_boundary": "current FlowPilot runtime contract"
+        "validation_boundary": "current FlowPilot runtime contract",
+        "source_system_id": "",
+        "native_artifact_id": "",
+        "content_fingerprint": "",
+        "inventory_revision": "",
+        "discovery_evidence_ids": [],
+        "source_authority_role": "normative",
+        "declared_semantics_fingerprint": "",
+        "coverage_disposition": "modeled",
+        "delegated_owner_inventory_id": "",
+        "delegation_relation_type": "",
+        "native_evidence_ids": []
       },
       {
         "business_intent_ids": [
@@ -2626,7 +2977,18 @@
         "source_ref": "skills/flowpilot/assets/flowpilot_material_artifact_map.py",
         "surface_id": "surface.optional_material_artifact_map",
         "surface_kind": "skill",
-        "validation_boundary": "safe current navigation projection only"
+        "validation_boundary": "safe current navigation projection only",
+        "source_system_id": "",
+        "native_artifact_id": "",
+        "content_fingerprint": "",
+        "inventory_revision": "",
+        "discovery_evidence_ids": [],
+        "source_authority_role": "normative",
+        "declared_semantics_fingerprint": "",
+        "coverage_disposition": "modeled",
+        "delegated_owner_inventory_id": "",
+        "delegation_relation_type": "",
+        "native_evidence_ids": []
       },
       {
         "business_intent_ids": [
@@ -2649,10 +3011,63 @@
         "source_ref": "skills/flowpilot/assets/flowpilot_runtime_path_evidence.py",
         "surface_id": "surface.model_test_alignment_runtime_path",
         "surface_kind": "process",
-        "validation_boundary": "contract, observation, and run share one process authority"
+        "validation_boundary": "contract, observation, and run share one process authority",
+        "source_system_id": "",
+        "native_artifact_id": "",
+        "content_fingerprint": "",
+        "inventory_revision": "",
+        "discovery_evidence_ids": [],
+        "source_authority_role": "normative",
+        "declared_semantics_fingerprint": "",
+        "coverage_disposition": "modeled",
+        "delegated_owner_inventory_id": "",
+        "delegation_relation_type": "",
+        "native_evidence_ids": []
+      },
+      {
+        "business_intent_ids": [
+          "intent:flowpilot.renew-complete-remaining-plan-after-top-level-milestone"
+        ],
+        "commitment_ids": [
+          "commit.top_level_milestone_plan_renewal_is_mandatory"
+        ],
+        "delegates_to_primary_path": false,
+        "freshness_state": "current",
+        "in_scope": true,
+        "label": "Top-level milestone plan-renewal runtime authority",
+        "metadata": {
+          "surface_role": "primary_runtime_authority",
+          "top_level_rule": "parent_node_id_empty"
+        },
+        "owner": "FlowPilot runtime/router",
+        "primary_path_id": "path.runtime.top-level-milestone-plan-renewal",
+        "rationale": "The runtime hard gate and atomic staged-effect commit are the only continuation authority after a top-level milestone.",
+        "scoped_out_reason": "",
+        "similarity_obligation_ids": [],
+        "similarity_relation_ids": [],
+        "source_ref": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+        "surface_id": "surface.runtime.top_level_milestone_plan_renewal",
+        "surface_kind": "code",
+        "validation_boundary": "top-level milestone detection, audit/plan staging, independent challenge chain, atomic activation, frontier hold, and recovery",
+        "source_system_id": "flowpilot_runtime",
+        "native_artifact_id": "",
+        "content_fingerprint": "",
+        "inventory_revision": "flowguard-0.66-top-level-milestone-plan-renewal-authority-blocked",
+        "discovery_evidence_ids": [],
+        "source_authority_role": "normative",
+        "declared_semantics_fingerprint": "",
+        "coverage_disposition": "modeled",
+        "delegated_owner_inventory_id": "",
+        "delegation_relation_type": "",
+        "native_evidence_ids": []
       }
     ],
-    "validation_boundary": "FlowGuard 0.55 canonical behavior inventory plus executable PPA/MTA/TestMesh evidence"
-  },
-  "schema_version": "1.0"
+    "validation_boundary": "FlowGuard 0.66 canonical behavior inventory; milestone owner-model, PPA, and TestMesh authority remain blocked until current immutable receipts are frozen",
+    "subject_lane": "normative_target",
+    "expected_source_surface_ids": [],
+    "source_inventory_revision": "",
+    "source_inventory_fingerprint": "",
+    "source_inventory_evidence_ids": [],
+    "require_complete_source_inventory": false
+  }
 }

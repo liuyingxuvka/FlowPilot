@@ -63,6 +63,21 @@ Before any final answer, done claim, or Controller shutdown, invoke `assets/flow
 
 If a user-facing status update is needed and public runtime output includes `progress_fraction.display`, Controller should normally relay that exact current expanded node fraction. A changed active node or changed runtime-owned expanded-node fraction can justify a short progress note, while quiet patrol, receipts, ACK bookkeeping, ledger cleanup, relay bookkeeping, and process-only asides remain silent by default. Do not calculate progress, convert it to a percent, read sealed bodies for progress, or treat the fraction as authority for completion, stop, gate, route advance, or final return. If absent, do not invent progress.
 
+Every accepted top-level route node enters the runtime-owned
+`awaiting_milestone_plan_renewal` hard gate before another top-level node can
+become the frontier. PM must freshly audit completed work, deviations,
+remaining obligations, and the final user goal, then re-emit the complete
+remaining route through that goal. The renewed route may be identical to the
+prior remainder, but a bare `continue` or `unchanged` marker is invalid; an
+empty remainder is valid only at the true terminal goal. Nested child-node
+closure remains local and does not trigger this route-wide renewal.
+
+This renewal is one direct loop, not a tiered or leveled planning system. Do
+not introduce L0/L1/L2/L3/L4 modes, separate planning levels, score bands, or
+another route/ledger family. The initial route may be coarse; every completed
+top-level milestone is the hard point where current evidence is folded back
+into one freshly written route to the same final goal.
+
 ## Startup And Packet Work
 
 Formal startup must use the interactive native startup intake UI result. Do not satisfy startup with headless auto-confirmation, scripted synthesis, chat-text substitution, direct JSON creation, or cancelled UI output.

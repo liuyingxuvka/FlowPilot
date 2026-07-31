@@ -28,6 +28,8 @@ REQUIRED_LABELS = (
     "prompt_ledger_loaded",
     "execution_frontier_loaded",
     "visible_plan_restored_from_current_run",
+    "current_run_has_no_pending_milestone_renewal_gate",
+    "current_pending_milestone_renewal_gate_loaded",
     "role_binding_memory_loaded",
     "controller_relay_boundary_confirmed",
     "runtime_role_binding_evidence_batch_started",
@@ -52,6 +54,9 @@ REQUIRED_LABELS = (
     "pm_decision_card_delivered_with_controller_reminder",
     "pm_resume_decision_returned",
     "active_control_blocker_handled_after_pm_resume_decision",
+    "pending_milestone_renewal_gate_restored_to_current_reviewer",
+    "current_milestone_renewal_review_passed",
+    "current_milestone_renewal_gate_satisfied",
     "reviewer_dispatch_card_delivered",
     "reviewer_dispatch_allowed",
     "existing_worker_result_envelope_found",
@@ -94,6 +99,14 @@ def _state_id(state: model.State) -> str:
         f"packet={state.packet_ledger_loaded}|"
         f"prompt={state.prompt_ledger_loaded}|frontier={state.frontier_loaded}|"
         f"visible_plan={state.visible_plan_restored_from_run}|"
+        f"milestone_gate=loaded:{state.milestone_renewal_gate_loaded},"
+        f"pending:{state.milestone_renewal_gate_pending},"
+        f"run_bound:{state.milestone_renewal_gate_bound_to_current_run},"
+        f"subject_current:{state.milestone_renewal_gate_subject_current},"
+        f"restored:{state.milestone_renewal_gate_restored},"
+        f"review_current:{state.milestone_renewal_current_review_passed},"
+        f"historical:{state.milestone_renewal_historical_review_reused},"
+        f"satisfied:{state.milestone_renewal_gate_satisfied}|"
         f"runtime_roles={state.role_binding_memory_loaded},{state.host_role_rehydrate_requested},"
         f"{state.runtime_responsibilities_ready},restored={state.runtime_roles_restored},"
         f"replaced={state.runtime_roles_replaced},memory_injected={state.run_memory_injected_into_roles},"
@@ -276,4 +289,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

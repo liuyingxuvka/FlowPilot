@@ -10,7 +10,7 @@ It is orientation only; it is not validation evidence.
 - Code surfaces: 1152
 - Test commands: 516
 - Evidence summaries: 5
-- Known-bad/risk labels surfaced: 2818
+- Known-bad/risk labels surfaced: 2844
 
 ## Area Map
 
@@ -26,7 +26,7 @@ It is orientation only; it is not validation evidence.
 | `packet` | 10 | 2 | 210 | 199 | 170 |
 | `prompt-card` | 3 | 0 | 4 | 0 | 80 |
 | `review` | 4 | 0 | 4 | 3 | 78 |
-| `route` | 17 | 3 | 359 | 116 | 335 |
+| `route` | 17 | 3 | 359 | 116 | 361 |
 | `startup` | 6 | 1 | 69 | 43 | 129 |
 | `structure` | 4 | 2 | 11 | 5 | 63 |
 

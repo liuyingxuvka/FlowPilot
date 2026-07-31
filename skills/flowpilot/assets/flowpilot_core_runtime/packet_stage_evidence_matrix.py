@@ -127,9 +127,15 @@ TERMINAL_SUPPLEMENTAL_REPAIR_GAP_KIND_OPTIONS: tuple[str, ...] = (
 )
 
 
+MILESTONE_PLAN_RENEWAL_RESULT_CONTRACT_PROFILE_ID = (
+    "pm_disposition.milestone_plan_renewal_required"
+)
+
+
 RESULT_CONTRACT_PROFILE_IDS: tuple[str, ...] = (
     "flowguard.semantic_recheck_required",
     "flowguard.subject_artifacts_consumed_required",
+    MILESTONE_PLAN_RENEWAL_RESULT_CONTRACT_PROFILE_ID,
 )
 
 
@@ -193,6 +199,74 @@ RESULT_CONTRACT_PROFILES: dict[str, dict[str, Any]] = {
         "forbidden_aliases": {
             "consumed_subject_artifacts": "subject_artifacts_consumed",
             "subject_artifact_consumption": "subject_artifacts_consumed",
+        },
+    },
+    MILESTONE_PLAN_RENEWAL_RESULT_CONTRACT_PROFILE_ID: {
+        "family_id": "pm_disposition.node_pm_disposition",
+        "required_fields": (
+            "milestone_audit",
+            "remaining_route_plan",
+        ),
+        "required_child_fields": (
+            "milestone_audit.completed[]",
+            "milestone_audit.completed[].node_id",
+            "milestone_audit.completed[].outcome",
+            "milestone_audit.completed[].evidence_refs[]",
+            "milestone_audit.contract_hash",
+            "milestone_audit.deviations",
+            "milestone_audit.remaining",
+            "milestone_audit.prior_plan_assessment",
+            "milestone_audit.replan_rationale",
+            "remaining_route_plan.schema_version",
+            "remaining_route_plan.nodes",
+        ),
+        "explicit_array_fields": (
+            "milestone_audit.completed",
+            "milestone_audit.completed[].evidence_refs",
+            "milestone_audit.deviations",
+            "milestone_audit.remaining",
+            "remaining_route_plan.nodes",
+        ),
+        "non_empty_array_fields": (
+            "milestone_audit.completed",
+            "milestone_audit.completed[].evidence_refs",
+        ),
+        "allowed_value_options": {
+            "remaining_route_plan.schema_version": ("flowpilot.route_plan.v1",),
+            "remaining_route_plan.nodes[].node_kind": NODE_KIND_OPTIONS,
+            "remaining_route_plan.nodes[].responsibility": RESPONSIBILITY_OPTIONS,
+        },
+        "field_type_requirements": {
+            "milestone_audit": "object",
+            "milestone_audit.completed": "array:object",
+            "milestone_audit.completed[].node_id": "string",
+            "milestone_audit.completed[].outcome": "string",
+            "milestone_audit.completed[].evidence_refs": "array:string",
+            "milestone_audit.contract_hash": "string",
+            "milestone_audit.deviations": "array:object",
+            "milestone_audit.remaining": "array:object",
+            "milestone_audit.remaining[].owner_node_ids": "array:string",
+            "milestone_audit.prior_plan_assessment": "string",
+            "milestone_audit.replan_rationale": "string",
+            "remaining_route_plan": "object",
+            "remaining_route_plan.schema_version": "string:flowpilot.route_plan.v1",
+            "remaining_route_plan.nodes": "array:object",
+            "remaining_route_plan.nodes[].node_id": "string",
+            "remaining_route_plan.nodes[].title": "string",
+            "remaining_route_plan.nodes[].node_kind": "string",
+            "remaining_route_plan.nodes[].parent_node_id": "string",
+            "remaining_route_plan.nodes[].child_node_ids": "array:string",
+            "remaining_route_plan.nodes[].responsibility": "string",
+            "remaining_route_plan.nodes[].acceptance_criteria": "array:string",
+            "remaining_route_plan.nodes[].acceptance_item_ids": "array:string",
+        },
+        "forbidden_aliases": {
+            "completed_work": "milestone_audit.completed",
+            "deviation_summary": "milestone_audit.deviations",
+            "remaining_gaps": "milestone_audit.remaining",
+            "old_plan_assessment": "milestone_audit.prior_plan_assessment",
+            "new_plan_rationale": "milestone_audit.replan_rationale",
+            "remaining_plan": "remaining_route_plan",
         },
     },
 }

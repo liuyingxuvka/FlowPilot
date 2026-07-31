@@ -65,6 +65,14 @@ Check:
   authority to lower that target;
 - the process route is a single ordered execution line, including ordered
   children for every parent/module and ordered deeper children as needed;
+- every top-level route node is followed by the single mandatory milestone
+  renewal loop before another top-level frontier: fresh PM audit, complete
+  remaining-route re-emission through the final goal, FlowGuard check, PM
+  absorption, independent Reviewer, system validation, and atomic commit.
+  Block any route that models the initial remainder as automatic continuation,
+  treats renewal as an optional mode, or uses a bare `continue`/`unchanged`
+  marker instead of a complete current plan. Nested child closure remains
+  local and must not create a route-wide renewal gate;
 - the ordered route satisfies producer-before-consumer dependency direction.
   Challenge whether any node artifact, acceptance criterion, required output,
   deliverable check, or validation check consumes output or evidence that is

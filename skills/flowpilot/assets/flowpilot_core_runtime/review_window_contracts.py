@@ -183,12 +183,23 @@ REVIEW_FLOW_STAGE_CHALLENGE_BINDINGS = {
     },
     "pm_flowguard_acceptance_review": {
         "reviewer_card_id": "reviewer.pm_flowguard_acceptance_review",
-        "stage_focus": "PM FlowGuard absorption",
+        "stage_focus": "PM FlowGuard absorption and milestone-plan renewal",
         "challenge_rule": (
             "Challenge whether PM absorbed the actual current FlowGuard report, structural decision, "
             "residual risks, skipped/progress-only evidence, and route-effect scope before Reviewer "
-            "approval. Name the weakest FlowGuard-absorption evidence, test a PM-absorption failure "
-            "hypothesis, and give PM a concrete absorption repair, route rework, or no-action rationale."
+            "approval. When the structural PM decision is a top-level milestone acceptance, inspect "
+            "milestone_audit and remaining_route_plan as one continuity claim: completed outcomes must "
+            "cite current evidence; deviations must be explicit and honest; remaining goal gaps must be "
+            "complete and owned; the prior remaining plan must be assessed; and the replan rationale must "
+            "ground one complete current route through the accepted final user goal. An unchanged route is "
+            "allowed only when current completed work, deviations, remaining gaps, premises, ordering, "
+            "coverage, and final-goal connection freshly justify it; never demand artificial plan churn. "
+            "The first remaining node must be execution-ready with an executable outcome, acceptance "
+            "boundary, dependency boundary, and current proof path, while farther nodes may remain coarser "
+            "but explicit and goal-connected. A nested child disposition does not require this global "
+            "milestone audit. Name the weakest FlowGuard-absorption or plan-renewal evidence, test a "
+            "PM-absorption or goal-continuity failure hypothesis, and give PM a concrete audit repair, "
+            "route rework, or no-action rationale."
         ),
     },
     "terminal_backward_replay_review": {

@@ -35,12 +35,14 @@ RETURN_TO_ORIGINAL = "return_to_original"
 SUPERSEDE_ORIGINAL = "supersede_original"
 BRANCH_THEN_CONTINUE = "branch_then_continue"
 SIBLING_BRANCH_REPLACEMENT = "sibling_branch_replacement"
+REPLACE_REMAINING_SUFFIX = "replace_remaining_suffix"
 TOPOLOGY_STRATEGIES = frozenset(
     {
         RETURN_TO_ORIGINAL,
         SUPERSEDE_ORIGINAL,
         BRANCH_THEN_CONTINUE,
         SIBLING_BRANCH_REPLACEMENT,
+        REPLACE_REMAINING_SUFFIX,
     }
 )
 
@@ -61,6 +63,8 @@ class State:
     holder: str = "controller"
 
     reviewer_block_recorded: bool = False
+    milestone_plan_change_recorded: bool = False
+    mutation_trigger_kind: str = "none"  # none | reviewer_block | milestone_plan_renewal
     pm_mutation_proposed: bool = False
     route_memory_authority_validated_before_event_write: bool = False
     route_mutation_consumed_same_authority: bool = False
@@ -73,11 +77,21 @@ class State:
     continue_target_declared: bool = False
     affected_sibling_nodes_declared: bool = False
     replay_scope_declared: bool = False
+    completed_prefix_node_ids: tuple[str, ...] = ()
+    completed_prefix_evidence_ids: tuple[str, ...] = ()
+    completed_prefix_evidence_retained: bool = False
+    completed_prefix_reopened: bool = False
+    prior_pending_suffix_node_ids: tuple[str, ...] = ()
+    candidate_remaining_suffix_node_ids: tuple[str, ...] = ()
+    old_pending_suffix_packets_invalidated: bool = False
+    old_pending_suffix_evidence_invalidated: bool = False
+    completed_prefix_packets_untouched: bool = False
 
     effective_member_inventory_recorded: bool = False
     before_effective_member_ids: tuple[str, ...] = ()
     superseded_effective_member_ids: tuple[str, ...] = ()
     replacement_effective_member_id: str = ""
+    replacement_effective_member_ids: tuple[str, ...] = ()
     after_effective_member_ids: tuple[str, ...] = ()
     unaffected_sibling_node_ids: tuple[str, ...] = ()
     unaffected_siblings_rebound: bool = False
@@ -166,12 +180,52 @@ def _proposal(
         before_effective_member_ids=before_members,
         superseded_effective_member_ids=superseded_members,
         replacement_effective_member_id="node-repair",
+        replacement_effective_member_ids=("node-repair",),
         after_effective_member_ids=after_members,
         unaffected_sibling_node_ids=("node-before", "node-sibling"),
         unaffected_siblings_rebound=True,
         candidate_route_version=candidate_route_version,
         active_route_version=1,
         after_member_route_versions=tuple((node_id, candidate_route_version) for node_id in after_members),
+        final_ledger_effective_member_ids=after_members,
+        terminal_target_member_ids=after_members,
+    )
+
+
+def _remaining_suffix_proposal(state: State) -> State:
+    completed_prefix = ("node-completed-1", "node-completed-2")
+    prior_pending_suffix = ("node-pending-1", "node-pending-2")
+    candidate_remaining_suffix = ("node-renewed-1", "node-renewed-2", "node-renewed-3")
+    before_members = completed_prefix + prior_pending_suffix
+    after_members = completed_prefix + candidate_remaining_suffix
+    candidate_route_version = 2
+    return _running(
+        state,
+        holder="project_manager",
+        pm_mutation_proposed=True,
+        route_memory_authority_validated_before_event_write=True,
+        route_mutation_consumed_same_authority=True,
+        topology_strategy=REPLACE_REMAINING_SUFFIX,
+        affected_sibling_nodes_declared=True,
+        replay_scope_declared=True,
+        completed_prefix_node_ids=completed_prefix,
+        completed_prefix_evidence_ids=("evidence-completed-1", "evidence-completed-2"),
+        completed_prefix_evidence_retained=True,
+        completed_prefix_packets_untouched=True,
+        prior_pending_suffix_node_ids=prior_pending_suffix,
+        candidate_remaining_suffix_node_ids=candidate_remaining_suffix,
+        effective_member_inventory_recorded=True,
+        before_effective_member_ids=before_members,
+        superseded_effective_member_ids=prior_pending_suffix,
+        replacement_effective_member_ids=candidate_remaining_suffix,
+        after_effective_member_ids=after_members,
+        unaffected_sibling_node_ids=completed_prefix,
+        unaffected_siblings_rebound=True,
+        candidate_route_version=candidate_route_version,
+        active_route_version=1,
+        after_member_route_versions=tuple(
+            (node_id, candidate_route_version) for node_id in after_members
+        ),
         final_ledger_effective_member_ids=after_members,
         terminal_target_member_ids=after_members,
     )
@@ -231,14 +285,34 @@ def next_safe_states(state: State) -> Iterable[Transition]:
     if state.status == "complete":
         return
 
-    if not state.reviewer_block_recorded:
+    if state.mutation_trigger_kind == "none":
         yield Transition(
             "reviewer_block_records_route_mutation_need",
-            _running(state, holder="human_like_reviewer", reviewer_block_recorded=True),
+            _running(
+                state,
+                holder="human_like_reviewer",
+                reviewer_block_recorded=True,
+                mutation_trigger_kind="reviewer_block",
+            ),
+        )
+        yield Transition(
+            "milestone_plan_renewal_records_changed_remaining_suffix",
+            _running(
+                state,
+                holder="project_manager",
+                milestone_plan_change_recorded=True,
+                mutation_trigger_kind="milestone_plan_renewal",
+            ),
         )
         return
 
     if not state.pm_mutation_proposed:
+        if state.mutation_trigger_kind == "milestone_plan_renewal":
+            yield Transition(
+                "pm_proposes_changed_remaining_suffix_candidate_route",
+                _remaining_suffix_proposal(state),
+            )
+            return
         yield Transition(
             "pm_proposes_return_repair_candidate_route",
             _proposal(
@@ -281,11 +355,35 @@ def next_safe_states(state: State) -> Iterable[Transition]:
     if not state.stale_evidence_invalidated:
         yield Transition(
             "controller_records_stale_evidence_before_route_recheck",
-            _running(state, holder="controller", stale_evidence_invalidated=True),
+            _running(
+                state,
+                holder="controller",
+                stale_evidence_invalidated=True,
+                old_pending_suffix_evidence_invalidated=(
+                    state.topology_strategy == REPLACE_REMAINING_SUFFIX
+                ),
+            ),
         )
         return
 
-    if not state.old_current_node_packet_superseded:
+    if (
+        state.topology_strategy == REPLACE_REMAINING_SUFFIX
+        and not state.old_pending_suffix_packets_invalidated
+    ):
+        yield Transition(
+            "controller_invalidates_superseded_pending_suffix_packets",
+            _running(
+                state,
+                holder="controller",
+                old_pending_suffix_packets_invalidated=True,
+            ),
+        )
+        return
+
+    if (
+        state.topology_strategy != REPLACE_REMAINING_SUFFIX
+        and not state.old_current_node_packet_superseded
+    ):
         yield Transition(
             "controller_supersedes_old_current_node_packet_for_route_mutation",
             _running(state, holder="controller", old_current_node_packet_superseded=True),
@@ -374,9 +472,15 @@ def invariant_failures(state: State) -> list[str]:
             failures.append("route mutation revalidated route memory after its own parent-decision write")
         if state.topology_strategy not in TOPOLOGY_STRATEGIES:
             failures.append("route mutation proposal lacks an explicit topology strategy")
-        if not state.repair_node_id_declared:
+        if (
+            state.topology_strategy != REPLACE_REMAINING_SUFFIX
+            and not state.repair_node_id_declared
+        ):
             failures.append("route mutation proposal lacks repair_node_id")
-        if not state.repair_of_node_id_declared:
+        if (
+            state.topology_strategy != REPLACE_REMAINING_SUFFIX
+            and not state.repair_of_node_id_declared
+        ):
             failures.append("route mutation proposal lacks repair_of_node_id")
         if state.topology_strategy == RETURN_TO_ORIGINAL and not state.return_target_declared:
             failures.append("return_to_original mutation lacks repair_return_to_node_id")
@@ -392,13 +496,61 @@ def invariant_failures(state: State) -> list[str]:
                 failures.append("sibling_branch_replacement mutation lacks affected sibling nodes")
             if not state.replay_scope_declared:
                 failures.append("sibling_branch_replacement mutation lacks replay scope")
+        if state.topology_strategy == REPLACE_REMAINING_SUFFIX:
+            completed_prefix = tuple(state.completed_prefix_node_ids)
+            completed_prefix_set = set(completed_prefix)
+            prior_pending_suffix = tuple(state.prior_pending_suffix_node_ids)
+            prior_pending_suffix_set = set(prior_pending_suffix)
+            candidate_suffix = tuple(state.candidate_remaining_suffix_node_ids)
+            candidate_suffix_set = set(candidate_suffix)
+            if state.mutation_trigger_kind != "milestone_plan_renewal":
+                failures.append("remaining suffix replacement lacks milestone plan renewal trigger")
+            if not state.milestone_plan_change_recorded:
+                failures.append("remaining suffix replacement lacks a recorded changed milestone plan")
+            if not completed_prefix:
+                failures.append("remaining suffix replacement lacks completed prefix inventory")
+            if not state.completed_prefix_evidence_ids:
+                failures.append("remaining suffix replacement lacks completed prefix evidence inventory")
+            if not state.completed_prefix_evidence_retained:
+                failures.append("remaining suffix replacement discarded completed prefix evidence")
+            if state.completed_prefix_reopened:
+                failures.append("remaining suffix replacement reopened a completed prefix node")
+            if not state.completed_prefix_packets_untouched:
+                failures.append("remaining suffix replacement modified completed prefix packets")
+            if not prior_pending_suffix:
+                failures.append("remaining suffix replacement lacks prior pending suffix inventory")
+            if not candidate_suffix:
+                failures.append("remaining suffix replacement lacks candidate remaining suffix")
+            if completed_prefix_set & prior_pending_suffix_set:
+                failures.append("completed prefix overlaps prior pending suffix")
+            if completed_prefix_set & candidate_suffix_set:
+                failures.append("candidate remaining suffix overlaps completed prefix")
+            if set(state.before_effective_member_ids) != (
+                completed_prefix_set | prior_pending_suffix_set
+            ):
+                failures.append("before-route inventory does not equal completed prefix plus prior pending suffix")
+            if set(state.superseded_effective_member_ids) != prior_pending_suffix_set:
+                failures.append("changed remaining plan did not supersede the entire old pending suffix")
+            if set(state.replacement_effective_member_ids) != candidate_suffix_set:
+                failures.append("replacement member inventory does not equal candidate remaining suffix")
+            if set(state.after_effective_member_ids) != (
+                completed_prefix_set | candidate_suffix_set
+            ):
+                failures.append("changed remaining plan did not preserve completed prefix plus candidate suffix")
+            if state.stale_evidence_invalidated and not state.old_pending_suffix_evidence_invalidated:
+                failures.append("changed remaining plan kept old pending suffix evidence current")
+            if state.process_recheck_passed and not state.old_pending_suffix_packets_invalidated:
+                failures.append("changed remaining plan rechecked before old pending suffix packets were invalidated")
         if not state.effective_member_inventory_recorded:
             failures.append("route mutation lacks before/after effective member inventory")
         before_members = set(state.before_effective_member_ids)
         superseded_members = set(state.superseded_effective_member_ids)
         after_members = set(state.after_effective_member_ids)
         retained_members = before_members - superseded_members
-        expected_after_members = retained_members | ({state.replacement_effective_member_id} if state.replacement_effective_member_id else set())
+        replacement_members = set(state.replacement_effective_member_ids)
+        if not replacement_members and state.replacement_effective_member_id:
+            replacement_members = {state.replacement_effective_member_id}
+        expected_after_members = retained_members | replacement_members
         missing_unaffected = set(state.unaffected_sibling_node_ids) - after_members
         if missing_unaffected:
             failures.append("route replacement lost unaffected effective siblings")
@@ -417,7 +569,15 @@ def invariant_failures(state: State) -> list[str]:
     if state.pm_activation_recorded:
         if not state.stale_evidence_invalidated:
             failures.append("PM activated candidate route before stale evidence was invalidated")
-        if not state.old_current_node_packet_superseded:
+        if (
+            state.topology_strategy == REPLACE_REMAINING_SUFFIX
+            and not state.old_pending_suffix_packets_invalidated
+        ):
+            failures.append("PM activated changed suffix while old pending suffix packets remained current")
+        if (
+            state.topology_strategy != REPLACE_REMAINING_SUFFIX
+            and not state.old_current_node_packet_superseded
+        ):
             failures.append("PM activated candidate route while the old current-node packet still blocked recheck")
         if not state.process_recheck_passed:
             failures.append("PM activated candidate route before process FlowGuard recheck")
@@ -452,7 +612,11 @@ def invariant_failures(state: State) -> list[str]:
 
     if state.old_sibling_evidence_reused_as_current:
         failures.append("old sibling evidence was reused as current proof after replacement")
-    if state.process_recheck_passed and not state.old_current_node_packet_superseded:
+    if (
+        state.process_recheck_passed
+        and state.topology_strategy != REPLACE_REMAINING_SUFFIX
+        and not state.old_current_node_packet_superseded
+    ):
         failures.append("route recheck started while the old current-node packet still blocked PM work")
     if state.final_ledger_started and not state.same_scope_replay_rerun_after_mutation:
         failures.append("final ledger started before same-scope replay after route mutation")
@@ -499,7 +663,10 @@ INVARIANTS = (
 
 def _proposal_state(strategy: str, **changes: object) -> State:
     base = _proposal(
-        State(reviewer_block_recorded=True),
+        State(
+            reviewer_block_recorded=True,
+            mutation_trigger_kind="reviewer_block",
+        ),
         label_holder="project_manager",
         strategy=strategy,
         return_target=strategy == RETURN_TO_ORIGINAL,
@@ -510,6 +677,37 @@ def _proposal_state(strategy: str, **changes: object) -> State:
     )
     if changes.get("pm_activation_recorded") is True and "active_route_version" not in changes:
         changes["active_route_version"] = base.candidate_route_version
+    return replace(base, **changes)
+
+
+def _remaining_suffix_proposal_state(**changes: object) -> State:
+    base = _remaining_suffix_proposal(
+        State(
+            milestone_plan_change_recorded=True,
+            mutation_trigger_kind="milestone_plan_renewal",
+        )
+    )
+    if changes.get("pm_activation_recorded") is True and "active_route_version" not in changes:
+        changes["active_route_version"] = base.candidate_route_version
+    return replace(base, **changes)
+
+
+def _activated_remaining_suffix_state(**changes: object) -> State:
+    base = _remaining_suffix_proposal_state(
+        stale_evidence_invalidated=True,
+        old_pending_suffix_evidence_invalidated=True,
+        old_pending_suffix_packets_invalidated=True,
+        process_recheck_passed=True,
+        product_recheck_passed=True,
+        reviewer_recheck_passed=True,
+        pm_activation_recorded=True,
+        active_route_version=2,
+        candidate_node_entry_recorded=True,
+        same_scope_replay_rerun_after_mutation=True,
+        route_visible_as_current=True,
+        display_receipt_recorded=True,
+        mermaid_topology_projected=True,
+    )
     return replace(base, **changes)
 
 
@@ -661,6 +859,51 @@ def hazard_states() -> dict[str, State]:
             SUPERSEDE_ORIGINAL,
             terminal_target_member_ids=("node-before", "node-repair"),
         ),
+        "changed_suffix_drops_completed_prefix": _activated_remaining_suffix_state(
+            after_effective_member_ids=(
+                "node-completed-1",
+                "node-renewed-1",
+                "node-renewed-2",
+                "node-renewed-3",
+            ),
+            after_member_route_versions=(
+                ("node-completed-1", 2),
+                ("node-renewed-1", 2),
+                ("node-renewed-2", 2),
+                ("node-renewed-3", 2),
+            ),
+            final_ledger_effective_member_ids=(
+                "node-completed-1",
+                "node-renewed-1",
+                "node-renewed-2",
+                "node-renewed-3",
+            ),
+            terminal_target_member_ids=(
+                "node-completed-1",
+                "node-renewed-1",
+                "node-renewed-2",
+                "node-renewed-3",
+            ),
+        ),
+        "changed_suffix_discards_completed_prefix_evidence": _activated_remaining_suffix_state(
+            completed_prefix_evidence_retained=False,
+        ),
+        "changed_suffix_reopens_completed_prefix": _activated_remaining_suffix_state(
+            completed_prefix_reopened=True,
+        ),
+        "changed_suffix_keeps_old_pending_member_effective": _activated_remaining_suffix_state(
+            superseded_effective_member_ids=("node-pending-1",),
+        ),
+        "changed_suffix_keeps_old_pending_packets_current": _remaining_suffix_proposal_state(
+            stale_evidence_invalidated=True,
+            old_pending_suffix_evidence_invalidated=True,
+            old_pending_suffix_packets_invalidated=False,
+            process_recheck_passed=True,
+        ),
+        "changed_suffix_keeps_old_pending_evidence_current": _remaining_suffix_proposal_state(
+            stale_evidence_invalidated=True,
+            old_pending_suffix_evidence_invalidated=False,
+        ),
     }
 
 
@@ -689,6 +932,7 @@ __all__ = [
     "EXTERNAL_INPUTS",
     "INVARIANTS",
     "MAX_SEQUENCE_LENGTH",
+    "REPLACE_REMAINING_SUFFIX",
     "RETURN_TO_ORIGINAL",
     "SIBLING_BRANCH_REPLACEMENT",
     "SUPERSEDE_ORIGINAL",

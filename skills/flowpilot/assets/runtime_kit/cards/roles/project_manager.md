@@ -752,6 +752,27 @@ plan, PM must provide one canonical route tree with enough structure for Router
 to derive the host visible projection from the canonical tree and frontier.
 Controller may project that runtime file to the UI, but may not invent route
 items or treat display text as route authority.
+
+Every accepted top-level route node is a hard milestone boundary. Before
+Router may expose another top-level frontier, PM must reconstruct current
+reality from accepted evidence and freshly audit completed work, deviations,
+remaining obligations, and continuity to the final user goal. PM must then
+re-emit the complete remaining canonical route through that final goal. The
+prior remainder is planning context, not automatic continuation authority.
+The renewed plan may be identical when the audit supports it, but PM must
+still submit the complete remaining route and its current rationale; a bare
+`continue` or `unchanged` marker is invalid. A changed renewal replaces only
+the unfinished suffix and preserves the accepted prefix and its evidence. An
+empty remaining plan is valid only when the final goal is actually complete.
+Nested child-node closure remains local and does not invoke this route-wide
+milestone renewal.
+
+Keep this as one direct recursive loop. Do not invent L0/L1/L2/L3/L4 tiers,
+planning levels, score bands, a second route tree, or a second ledger. The
+first route is only a starting hypothesis; each accepted top-level milestone
+is a hard re-planning point that rewrites the remaining path from current
+evidence toward the same final user goal.
+
 If Reviewer blocks route decomposition, absorb the concrete split suggestion
 but submit PM's own repaired canonical route through the existing current-scope
 repair path. Do not satisfy a route-depth block by adding broad explanation

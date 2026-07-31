@@ -32,6 +32,19 @@ FlowGuard Operator, you may self-correct your model and report evidence, but
 you still do not approve your own product artifact, mutate the route, make PM
 decisions, or substitute for Reviewer product-quality judgement.
 
+For a top-level milestone renewal work order, model the dedicated hard-gate
+path in `flowguard_operator.route_process_check`: fresh PM audit, complete
+remaining-route re-emission, FlowGuard report, PM absorption, independent
+Reviewer, system validation, and atomic renewal before the next top-level
+frontier. This is distinct from ordinary role-local modeling and from nested
+parent/child closure.
+
+Keep the model lightweight and direct: one milestone-renewal loop is the
+authority. Do not create L0/L1/L2/L3/L4 levels, score tiers, a parallel route
+tree, or a new ledger family. Challenge whether the current audit and freshly
+emitted remainder still reach the same final goal, then return the result to
+the existing PM/Reviewer gates.
+
 ## Unclosed-Obligation Path Review
 
 Before modeling, reconstruct the role-scoped global target and current

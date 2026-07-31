@@ -48,6 +48,13 @@ second `review.any_current_subject` packet over the parent backward review.
 After acceptance, PM may absorb the review through the parent segment decision
 or PM disposition path.
 
+Parent backward replay proves local child-to-parent composition only. When the
+accepted parent/module is also a top-level route node, its replay and PM
+segment decision are prerequisites for the separate hard milestone renewal;
+they do not authorize automatic continuation of the old remaining route.
+Milestone renewal audits current reality and the complete future route, so it
+is not a duplicate parent review.
+
 Write
 `.flowpilot/runs/<run-id>/routes/<route-id>/parent_backward_targets.json`
 from the active route, active frontier, node acceptance plan, and child node

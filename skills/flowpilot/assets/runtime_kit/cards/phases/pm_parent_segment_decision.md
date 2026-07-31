@@ -47,6 +47,14 @@ Only `continue` can close the active parent node. Other decisions require route
 mutation, stale evidence marking, and rerun of the same parent replay after
 repair.
 
+For a nested parent, `continue` closes only that local composition segment.
+For a top-level parent/module, `continue` is only prerequisite evidence for
+entering `awaiting_milestone_plan_renewal`; it never means continue the old
+remaining route. The next top-level frontier stays hidden until PM has freshly
+audited the milestone and re-emitted the complete remaining route through the
+final goal, followed by the required FlowGuard, PM absorption, independent
+Reviewer, system validation, and atomic renewal gates.
+
 If repair affects sibling, ancestor, child-skill, or terminal evidence, record
 those stale scopes now so the final ledger cannot count old passes as current.
 The `decision_rationale` must include a composition impact review: whether

@@ -86,6 +86,14 @@ class State:
     prompt_ledger_loaded: bool = False
     frontier_loaded: bool = False
     visible_plan_restored_from_run: bool = False
+    milestone_renewal_gate_loaded: bool = False
+    milestone_renewal_gate_pending: bool = False
+    milestone_renewal_gate_bound_to_current_run: bool = False
+    milestone_renewal_gate_subject_current: bool = False
+    milestone_renewal_gate_restored: bool = False
+    milestone_renewal_current_review_passed: bool = False
+    milestone_renewal_historical_review_reused: bool = False
+    milestone_renewal_gate_satisfied: bool = False
     role_binding_memory_loaded: bool = False
     role_binding_evidence_batch_started: bool = False
     role_binding_evidence_batch_concurrent: bool = False
@@ -260,6 +268,9 @@ def _loaded_current_run_state(state: State) -> bool:
         and state.prompt_ledger_loaded
         and state.frontier_loaded
         and state.visible_plan_restored_from_run
+        and state.milestone_renewal_gate_loaded
+        and state.milestone_renewal_gate_bound_to_current_run
+        and state.milestone_renewal_gate_subject_current
         and state.role_binding_memory_loaded
     )
 
@@ -286,13 +297,17 @@ def _lifecycle_flags_current(state: State) -> bool:
 
 
 def _resume_replay_allows_normal_work(state: State) -> bool:
-    return bool(
+    replay_ready = bool(
         state.pm_decision_returned
         or (
             state.resume_obligation_replay_completed
             and state.resume_mechanical_replay_skipped_pm
             and not state.resume_obligation_replay_pm_escalation_required
         )
+    )
+    return replay_ready and (
+        not state.milestone_renewal_gate_pending
+        or state.milestone_renewal_gate_satisfied
     )
 
 
@@ -306,9 +321,19 @@ def _next_required_prompt(state: State) -> str:
         and not state.pm_decision_prompt_delivered
     ):
         return "prompt"
-    if _resume_replay_allows_normal_work(state) and not state.reviewer_dispatch_prompt_delivered:
+    if (
+        _resume_replay_allows_normal_work(state)
+        and not state.milestone_renewal_gate_pending
+        and not state.reviewer_dispatch_prompt_delivered
+    ):
         return "prompt"
-    if state.reviewer_result_passed and not state.pm_node_decision_prompt_delivered:
+    if (
+        (
+            state.reviewer_result_passed
+            or state.milestone_renewal_gate_satisfied
+        )
+        and not state.pm_node_decision_prompt_delivered
+    ):
         return "prompt"
     return "none"
 
@@ -489,6 +514,28 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             replace(state, visible_plan_restored_from_run=True),
         )
         return
+    if not state.milestone_renewal_gate_loaded:
+        yield Transition(
+            "current_run_has_no_pending_milestone_renewal_gate",
+            replace(
+                state,
+                milestone_renewal_gate_loaded=True,
+                milestone_renewal_gate_pending=False,
+                milestone_renewal_gate_bound_to_current_run=True,
+                milestone_renewal_gate_subject_current=True,
+            ),
+        )
+        yield Transition(
+            "current_pending_milestone_renewal_gate_loaded",
+            replace(
+                state,
+                milestone_renewal_gate_loaded=True,
+                milestone_renewal_gate_pending=True,
+                milestone_renewal_gate_bound_to_current_run=True,
+                milestone_renewal_gate_subject_current=True,
+            ),
+        )
+        return
     if not state.role_binding_memory_loaded:
         yield Transition("role_binding_memory_loaded", replace(state, role_binding_memory_loaded=True))
         return
@@ -626,15 +673,16 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         )
         return
     if not state.resume_obligation_replay_scanned:
-        yield Transition(
-            "resume_rehydration_obligations_replayed_mechanically",
-            replace(
-                state,
-                resume_obligation_replay_scanned=True,
-                resume_obligation_replay_completed=True,
-                resume_mechanical_replay_skipped_pm=True,
-            ),
-        )
+        if not state.milestone_renewal_gate_pending:
+            yield Transition(
+                "resume_rehydration_obligations_replayed_mechanically",
+                replace(
+                    state,
+                    resume_obligation_replay_scanned=True,
+                    resume_obligation_replay_completed=True,
+                    resume_mechanical_replay_skipped_pm=True,
+                ),
+            )
         yield Transition(
             "resume_rehydration_replay_escalates_to_pm",
             replace(
@@ -671,7 +719,14 @@ def next_safe_states(state: State) -> Iterable[Transition]:
     if (
         state.active_control_blocker_present
         and not state.control_blocker_handled
-        and _resume_replay_allows_normal_work(state)
+        and (
+            state.pm_decision_returned
+            or (
+                state.resume_obligation_replay_completed
+                and state.resume_mechanical_replay_skipped_pm
+                and not state.resume_obligation_replay_pm_escalation_required
+            )
+        )
     ):
         yield Transition(
             "active_control_blocker_handled_after_pm_resume_decision",
@@ -681,6 +736,56 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 control_blocker_handled_after_pm_resume_decision=state.pm_decision_returned,
             ),
         )
+        return
+    if state.milestone_renewal_gate_pending:
+        if not state.milestone_renewal_gate_restored:
+            yield Transition(
+                "pending_milestone_renewal_gate_restored_to_current_reviewer",
+                replace(
+                    state,
+                    milestone_renewal_gate_restored=True,
+                    holder="reviewer",
+                ),
+            )
+            return
+        if not state.milestone_renewal_current_review_passed:
+            yield Transition(
+                "current_milestone_renewal_review_passed",
+                replace(
+                    state,
+                    milestone_renewal_current_review_passed=True,
+                    holder="controller",
+                ),
+            )
+            return
+        if not state.milestone_renewal_gate_satisfied:
+            yield Transition(
+                "current_milestone_renewal_gate_satisfied",
+                replace(
+                    state,
+                    milestone_renewal_gate_satisfied=True,
+                    holder="controller",
+                ),
+            )
+            return
+        if not state.pm_node_decision_prompt_delivered:
+            yield Transition(
+                "pm_node_decision_card_delivered",
+                _prompt(state, pm_node_decision_prompt_delivered=True, holder="pm"),
+            )
+            return
+        if not state.route_progress_recorded:
+            yield Transition(
+                "pm_records_progress_from_reviewed_packet",
+                replace(
+                    state,
+                    route_progress_recorded=True,
+                    route_progress_source="reviewed_packet",
+                    holder="controller",
+                ),
+            )
+            return
+        yield Transition("reentry_loop_complete", replace(state, status="complete"))
         return
     if not state.reviewer_dispatch_prompt_delivered:
         yield Transition(
@@ -838,7 +943,14 @@ def invariant_failures(state: State) -> list[str]:
         and state.role_binding_recovery_report_written
     ):
         failures.append("active control blocker handled before role rehydration")
-    if state.control_blocker_handled and not _resume_replay_allows_normal_work(state):
+    if state.control_blocker_handled and not (
+        state.pm_decision_returned
+        or (
+            state.resume_obligation_replay_completed
+            and state.resume_mechanical_replay_skipped_pm
+            and not state.resume_obligation_replay_pm_escalation_required
+        )
+    ):
         failures.append("active control blocker handled before resume replay or PM decision allowed normal work")
     if (
         state.control_blocker_handled_after_pm_resume_decision
@@ -884,10 +996,63 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("frontier loaded before prompt ledger")
     if state.visible_plan_restored_from_run and not state.frontier_loaded:
         failures.append("visible plan restored before execution frontier")
-    if state.role_binding_memory_loaded and not (
+    if state.milestone_renewal_gate_loaded and not (
         state.frontier_loaded and state.visible_plan_restored_from_run
     ):
-        failures.append("role-binding memory loaded before execution frontier and visible plan restoration")
+        failures.append("milestone renewal gate loaded before current frontier and visible plan")
+    if state.milestone_renewal_gate_loaded and not (
+        state.milestone_renewal_gate_bound_to_current_run
+        and state.milestone_renewal_gate_subject_current
+    ):
+        failures.append("milestone renewal gate was not bound to the current run and current subject")
+    if state.milestone_renewal_gate_pending and not state.milestone_renewal_gate_loaded:
+        failures.append("pending milestone renewal gate was not loaded from current-run state")
+    if state.milestone_renewal_historical_review_reused:
+        failures.append("resume reused a historical milestone renewal review")
+    if (
+        state.milestone_renewal_gate_restored
+        or state.milestone_renewal_current_review_passed
+        or state.milestone_renewal_gate_satisfied
+    ) and not (
+        state.milestone_renewal_gate_pending
+        and state.milestone_renewal_gate_bound_to_current_run
+        and state.milestone_renewal_gate_subject_current
+    ):
+        failures.append("milestone renewal review proceeded without the current pending gate")
+    if (
+        state.milestone_renewal_current_review_passed
+        and not state.milestone_renewal_gate_restored
+    ):
+        failures.append("current milestone renewal review passed before its gate was restored")
+    if state.milestone_renewal_gate_satisfied and not (
+        state.milestone_renewal_gate_restored
+        and state.milestone_renewal_current_review_passed
+        and not state.milestone_renewal_historical_review_reused
+    ):
+        failures.append("pending milestone renewal gate was satisfied without current Reviewer evidence")
+    if state.milestone_renewal_gate_pending and (
+        state.reviewer_dispatch_prompt_delivered
+        or state.reviewer_dispatch_allowed
+        or state.existing_worker_result_routed_to_pm
+        or state.fresh_worker_packet_sent
+        or state.worker_result_routed_to_pm
+        or state.pm_result_disposition_recorded
+        or state.pm_formal_gate_released_to_reviewer
+        or state.reviewer_result_passed
+    ):
+        failures.append("resume dispatched ordinary worker-result flow while milestone renewal gate was pending")
+    if (
+        state.milestone_renewal_gate_pending
+        and (state.route_progress_recorded or state.status == "complete")
+        and not state.milestone_renewal_gate_satisfied
+    ):
+        failures.append("resume advanced before the current milestone renewal gate was satisfied")
+    if state.role_binding_memory_loaded and not (
+        state.frontier_loaded
+        and state.visible_plan_restored_from_run
+        and state.milestone_renewal_gate_loaded
+    ):
+        failures.append("role-binding memory loaded before execution frontier, visible plan, and milestone gate restoration")
     if state.controller_relay_boundary_confirmed and not _loaded_current_run_state(state):
         failures.append("Controller relay boundary confirmed before loading current-run state")
 
@@ -1123,7 +1288,10 @@ def invariant_failures(state: State) -> list[str]:
     ):
         failures.append("reviewer passed resume gate before PM disposition and formal gate release")
     if state.route_progress_recorded and not (
-        state.reviewer_result_passed
+        (
+            state.reviewer_result_passed
+            or state.milestone_renewal_gate_satisfied
+        )
         and state.pm_node_decision_prompt_delivered
         and state.route_progress_source == "reviewed_packet"
     ):
@@ -1161,7 +1329,7 @@ INVARIANTS = (
 )
 
 EXTERNAL_INPUTS = (Tick(),)
-MAX_SEQUENCE_LENGTH = 50
+MAX_SEQUENCE_LENGTH = 56
 
 
 def build_workflow() -> Workflow:
@@ -1208,6 +1376,9 @@ def _ready_for_pm(**changes: object) -> State:
         prompt_ledger_loaded=True,
         frontier_loaded=True,
         visible_plan_restored_from_run=True,
+        milestone_renewal_gate_loaded=True,
+        milestone_renewal_gate_bound_to_current_run=True,
+        milestone_renewal_gate_subject_current=True,
         role_binding_memory_loaded=True,
         controller_relay_boundary_confirmed=True,
         role_binding_evidence_batch_started=True,
@@ -1637,6 +1808,33 @@ def hazard_states() -> dict[str, State]:
         "pm_decision_from_chat_history": _ready_for_pm(
             pm_decision_requested=True,
             pm_decision_from_chat_history=True,
+        ),
+        "pending_milestone_gate_not_current_run_bound": _ready_for_pm(
+            milestone_renewal_gate_pending=True,
+            milestone_renewal_gate_bound_to_current_run=False,
+        ),
+        "historical_milestone_review_reused": _with_pm_decision(
+            milestone_renewal_gate_pending=True,
+            milestone_renewal_gate_restored=True,
+            milestone_renewal_historical_review_reused=True,
+            milestone_renewal_gate_satisfied=True,
+        ),
+        "pending_milestone_gate_dispatches_ordinary_worker_flow": _with_pm_decision(
+            milestone_renewal_gate_pending=True,
+            reviewer_dispatch_prompt_delivered=True,
+            reviewer_dispatch_allowed=True,
+            work_branch="fresh_worker",
+            fresh_worker_packet_sent=True,
+            mail_deliveries=1,
+            ledger_check_requests=1,
+            ledger_checks=1,
+        ),
+        "pending_milestone_gate_advances_without_current_review": _with_pm_decision(
+            milestone_renewal_gate_pending=True,
+            pm_node_decision_prompt_delivered=True,
+            route_progress_recorded=True,
+            route_progress_source="reviewed_packet",
+            status="complete",
         ),
     }
 

@@ -43,6 +43,20 @@ structural route effect advances. Treat FlowGuard reports as evidence surfaces
 that PM must absorb; PM prose alone is not a substitute for the report,
 decision scope, or required evidence.
 
+When the staged effect is `commit_milestone_plan_renewal`, independently
+challenge the entire milestone audit and renewed remainder, not just the
+existence of PM acceptance. Verify that accepted evidence supports the stated
+completed work; deviations and unresolved gaps are explicit; every remaining
+acceptance item has an owner; the prior remainder was treated as context rather
+than automatic authority; and the newly submitted canonical route still
+reaches the final user goal. A renewed plan may be identical when current
+evidence justifies it, but it must be fully re-emitted with a current rationale;
+a bare `continue` or `unchanged` marker must block. An empty remainder may pass
+only when terminal evidence proves the final goal is complete. Check that a
+changed plan preserves the accepted prefix and replaces only the unfinished
+suffix, and that no next top-level frontier can become visible before the
+milestone gate commits atomically.
+
 Check:
 
 - the PM acceptance cites the same current FlowGuard result and structural PM

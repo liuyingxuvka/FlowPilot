@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib
+import copy
 import json
 import os
 import sys
@@ -278,6 +279,42 @@ def _pm_disposition_body_from_checklist(
 ) -> str:
     decision = str(fields.get("decision") or "accept")
     payload = _checklist_payload(ledger, packet_id, decision=decision)
+    packet = ledger["packets"][packet_id]
+    handoff = packet["envelope"]["current_handoff_contract"]
+    contract = handoff["required_report_contract"]
+    if (
+        decision == "accept"
+        and packet_result_contracts.MILESTONE_PLAN_RENEWAL_RESULT_CONTRACT_PROFILE_ID
+        in contract.get("result_contract_profile_ids", [])
+    ):
+        packet_body = json.loads(packet["body"])
+        raw_remaining_route_plan = copy.deepcopy(
+            fields.get(
+                "remaining_route_plan",
+                packet_body["prior_remaining_route_plan_context"]["plan"],
+            )
+        )
+        if isinstance(raw_remaining_route_plan, dict):
+            for raw_node in raw_remaining_route_plan.get("nodes") or []:
+                if isinstance(raw_node, dict):
+                    raw_node.setdefault("parent_node_id", "")
+                    raw_node.setdefault("child_node_ids", [])
+        remaining_route_plan = runtime._canonical_remaining_route_plan(
+            raw_remaining_route_plan
+        )
+        payload["remaining_route_plan"] = remaining_route_plan
+        payload["milestone_audit"]["contract_hash"] = ledger.get("contract_hash", "")
+        if remaining_route_plan["nodes"]:
+            payload["milestone_audit"]["remaining"] = [
+                {
+                    "obligation": "Complete every still-open part of the accepted final user goal.",
+                    "gap": "The freshly emitted remaining route has not executed yet.",
+                    "owner_node_ids": [str(node.get("node_id") or "") for node in remaining_route_plan["nodes"]],
+                }
+            ]
+        else:
+            payload["milestone_audit"]["remaining"] = []
+        fields["remaining_route_plan"] = remaining_route_plan
     payload["reason"] = summary
     payload.update(fields)
     return json.dumps(payload)
@@ -675,6 +712,24 @@ def _complete_pm_flowguard_acceptance(ledger: dict, *, decision: str = "accept",
     )
 
 
+def _complete_milestone_plan_renewal_gate(ledger: dict) -> dict:
+    gate = _latest_pm_decision_gate(ledger)
+    if gate.get("milestone_plan_renewal_required") is not True:
+        raise AssertionError("current PM decision gate is not a milestone plan-renewal gate")
+    _complete_open_packet(
+        ledger,
+        _open_packets(ledger, kind="flowguard_check")[0],
+        _flowguard_pass_body("FlowGuard accepted the current milestone audit and complete remaining route."),
+    )
+    _complete_pm_flowguard_acceptance(ledger)
+    _complete_open_packet(
+        ledger,
+        _open_packets(ledger, kind="review")[0],
+        _review_pass_body("Reviewer independently accepted the current milestone plan renewal."),
+    )
+    return gate
+
+
 def _complete_active_node_packet_loop(ledger: dict) -> str:
     node_id = ledger["execution_frontier"]["active_node_id"]
     _complete_task_chain(
@@ -858,6 +913,7 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
                 "PM accepted node after role evidence absorption.",
             ),
         )
+        _complete_milestone_plan_renewal_gate(ledger)
         boundary = runtime.run_until_wait(ledger)
         packet_id = boundary["next_action"]["subject_id"]
 
@@ -1007,6 +1063,7 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
                 "PM accepted node after evidence absorption.",
             ),
         )
+        _complete_milestone_plan_renewal_gate(ledger)
 
         self.assertEqual(ledger["route_nodes"][node_id]["status"], "accepted")
         boundary = runtime.run_until_wait(ledger)
@@ -2915,7 +2972,13 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         _complete_node_acceptance_plan(ledger)
         _complete_active_node_packet_loop(ledger)
         packet_id = _open_packets(ledger, kind="pm_disposition")[0]
-        payload = json.loads(_pm_disposition_body())
+        payload = json.loads(
+            _pm_disposition_body_from_checklist(
+                ledger,
+                packet_id,
+                "PM attempted incomplete acceptance-item closure.",
+            )
+        )
         payload["acceptance_item_disposition"] = [
             {
                 "acceptance_item_id": "acc-001",
@@ -2929,6 +2992,54 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         result = ledger["results"][ledger["packets"][packet_id]["superseded_by_result_id"]]
         self.assertEqual(result["status"], "mechanical_contract_blocked")
         self.assertIn("acc-002", result["quarantine_reason"])
+
+    def test_changed_milestone_route_retains_completed_prefix_context_package(self) -> None:
+        ledger = _ledger()
+        _complete_preplanning(ledger)
+        _complete_planning(ledger)
+        _complete_node_acceptance_plan(ledger)
+        node_id = _complete_active_node_packet_loop(ledger)
+        pm_packet_id = _open_packets(ledger, kind="pm_disposition")[0]
+        changed_remaining_plan = json.loads(
+            _route_plan_body(
+                [
+                    {
+                        "node_id": "node-002-replanned",
+                        "title": "Execute the audited remaining high-standard work",
+                        "responsibility": "worker",
+                        "modeled_target": "development_process",
+                        "acceptance_criteria": ["The audited remaining work is accepted."],
+                        "high_standard_requirement_ids": ["hsr-001"],
+                        "acceptance_item_ids": ["acc-001", "acc-002"],
+                        "skill_standard_obligation_ids": ["skill-std-001"],
+                    }
+                ]
+            )
+        )
+        _complete_open_packet(
+            ledger,
+            pm_packet_id,
+            _pm_disposition_body_from_checklist(
+                ledger,
+                pm_packet_id,
+                "PM accepted the milestone and rewrote the complete unfinished suffix.",
+                remaining_route_plan=changed_remaining_plan,
+            ),
+        )
+        _complete_milestone_plan_renewal_gate(ledger)
+
+        self.assertEqual(ledger["active_route_version"], 2)
+        self.assertEqual(ledger["route_nodes"][node_id]["status"], "accepted")
+        self.assertTrue(runtime._node_context_package_current(ledger, node_id))
+        final_gate = runtime.build_final_route_wide_gate_ledger(ledger)
+        self.assertNotIn(
+            f"node_context_package_missing:{node_id}",
+            final_gate["unresolved"],
+        )
+        self.assertNotIn(
+            f"node_entry_gate_missing:{node_id}:node_context_package_not_current",
+            final_gate["unresolved"],
+        )
 
     def test_route_deliverable_checks_cover_semantic_and_forbidden_artifacts(self) -> None:
         ledger = _ledger()
@@ -3009,6 +3120,7 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
                 "PM accepted node after role evidence absorption.",
             ),
         )
+        _complete_milestone_plan_renewal_gate(ledger)
         self.assertEqual(ledger["execution_frontier"]["status"], "ready_for_final_closure")
 
         boundary = runtime.run_until_wait(ledger)
@@ -3051,6 +3163,7 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
                     f"PM accepted {expected_node_id} after absorbing role evidence.",
                 ),
             )
+            _complete_milestone_plan_renewal_gate(ledger)
 
         self.assertEqual(ledger["execution_frontier"]["status"], "ready_for_final_closure")
         self.assertEqual(ledger["closure"]["decision"], "blocked")
@@ -3146,6 +3259,7 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
                 "PM accepted parent composition.",
             ),
         )
+        _complete_milestone_plan_renewal_gate(ledger)
         self.assertEqual(ledger["route_nodes"]["parent-001"]["status"], "accepted")
 
     def test_leaf_with_child_node_ids_is_rejected_by_strict_route_plan(self) -> None:
