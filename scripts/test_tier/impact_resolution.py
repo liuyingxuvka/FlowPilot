@@ -7,7 +7,7 @@ is decided exclusively from each owner's explicit command and covered inputs.
 from __future__ import annotations
 
 import ast
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from functools import lru_cache
 import hashlib
 import json
@@ -369,6 +369,26 @@ def _portable_command(values: Sequence[Any]) -> str:
         except OSError:
             pass
     return " ".join(parts)
+
+
+def _declared_output_paths(command: TierCommand) -> frozenset[str]:
+    """Return command-owned runtime outputs, never source-authority inputs."""
+
+    outputs: set[str] = set()
+    for index, value in enumerate(command.command[:-1]):
+        if value != "--json-out":
+            continue
+        candidate = Path(str(command.command[index + 1]))
+        resolved = (
+            candidate.resolve()
+            if candidate.is_absolute()
+            else (ROOT / candidate).resolve()
+        )
+        try:
+            outputs.add(resolved.relative_to(ROOT.resolve()).as_posix())
+        except ValueError:
+            continue
+    return frozenset(outputs)
 
 
 def _descriptor_path(value: Mapping[str, Any]) -> Path:
@@ -932,12 +952,36 @@ def _build_owner_contracts_cached(
         for owner_id in owner_ids:
             if owner_id in closure_by_owner:
                 closure_by_owner[owner_id].add(path)
+    outputs_by_owner = {
+        owner_id: _declared_output_paths(command)
+        for owner_id, command in command_by_owner.items()
+    }
+    dependency_outputs_by_owner: dict[str, set[str]] = {}
+    for owner_id, command in command_by_owner.items():
+        dependency_outputs: set[str] = set()
+        for dependency_owner_id in command.dependency_owner_ids:
+            if dependency_owner_id == owner_id:
+                raise ValueError(f"self_dependency_owner:{owner_id}")
+            dependency = command_by_owner.get(dependency_owner_id)
+            if dependency is None:
+                raise ValueError(
+                    f"dependency_owner_missing:{owner_id}:{dependency_owner_id}"
+                )
+            if dependency.background_stage >= command.background_stage:
+                raise ValueError(
+                    f"dependency_stage_not_earlier:{owner_id}:{dependency_owner_id}"
+                )
+            dependency_outputs.update(outputs_by_owner[dependency_owner_id])
+        dependency_outputs_by_owner[owner_id] = dependency_outputs
     return tuple(
         OwnerContract(
             owner_id=owner_id,
             command=command_by_owner[owner_id].command,
             covered_inputs=tuple(
-                sorted(closure_by_owner[owner_id] | mta_paths[owner_id])
+                sorted(
+                    (closure_by_owner[owner_id] | mta_paths[owner_id])
+                    - dependency_outputs_by_owner[owner_id]
+                )
             ),
             covered_obligation_ids=tuple(
                 sorted(
@@ -946,6 +990,9 @@ def _build_owner_contracts_cached(
                 )
             ),
             covered_evidence_ids=tuple(sorted(mta_evidence_ids[owner_id])),
+            dependency_owner_ids=tuple(
+                sorted(command_by_owner[owner_id].dependency_owner_ids)
+            ),
         )
         for owner_id in sorted(command_by_owner)
     )
@@ -992,7 +1039,10 @@ def owner_identity(
         command_fingerprint=_sha256_json(list(contract.command)),
         test_source_fingerprint=fingerprint_set(tests),
         tested_artifact_fingerprint=fingerprint_set(artifacts),
-        dependency_fingerprints={"covered_inputs": fingerprint_set(covered)},
+        dependency_fingerprints={
+            "covered_inputs": fingerprint_set(covered),
+            "owner_graph": _sha256_json(list(contract.dependency_owner_ids)),
+        },
         environment_fingerprint=_sha256_json(environment),
         covered_input_fingerprint=fingerprint_set(covered),
         covered_input_fingerprints=covered,
@@ -1319,6 +1369,49 @@ def resolve_impact(
                 reuse_ticket=ticket,
             )
         )
+
+    decision_by_owner = {decision.owner_id: decision for decision in decisions}
+    changed = True
+    while changed:
+        changed = False
+        for contract in contracts:
+            decision = decision_by_owner[contract.owner_id]
+            dependency_decisions = [
+                decision_by_owner[owner_id]
+                for owner_id in contract.dependency_owner_ids
+            ]
+            if any(item.action == "blocked" for item in dependency_decisions):
+                updated = replace(
+                    decision,
+                    action="blocked",
+                    reason_codes=tuple(
+                        sorted(
+                            set(decision.reason_codes)
+                            | {"dependency_owner_blocked"}
+                        )
+                    ),
+                    reuse_ticket=None,
+                )
+            elif decision.action == "reuse" and any(
+                item.action == "execute" for item in dependency_decisions
+            ):
+                updated = replace(
+                    decision,
+                    action="execute",
+                    reason_codes=tuple(
+                        sorted(
+                            set(decision.reason_codes)
+                            | {"dependency_owner_executes"}
+                        )
+                    ),
+                    reuse_ticket=None,
+                )
+            else:
+                updated = decision
+            if updated != decision:
+                decision_by_owner[contract.owner_id] = updated
+                changed = True
+    decisions = [decision_by_owner[contract.owner_id] for contract in contracts]
 
     plan_payload = {
         "requested_scope": requested_scope,

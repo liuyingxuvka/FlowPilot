@@ -45,6 +45,8 @@ class State:
     blocked_falls_back_to_run_all: bool = False
     receipt_consumer_relaunches_heavy_owner: bool = False
     mta_supplements_after_upstream: bool = True
+    runtime_evidence_dependencies_declared: bool = True
+    runtime_evidence_outputs_excluded_from_source_identity: bool = True
     pytest_scoped_to_tests: bool = True
     backup_tmp_excluded: bool = True
     fast_tier_foreground_safe: bool = True
@@ -262,6 +264,13 @@ SCENARIOS: dict[str, State] = {
         background_exit_inspected=False,
         background_supervisor_detects_missing_terminal_owner=False,
     ),
+    "runtime_evidence_consumer_planned_against_mutable_producer_output": replace(
+        _valid_background(
+            "runtime_evidence_consumer_planned_against_mutable_producer_output"
+        ),
+        runtime_evidence_dependencies_declared=False,
+        runtime_evidence_outputs_excluded_from_source_identity=False,
+    ),
     "background_inner_interpreter_follows_external_upgrade": replace(
         _valid_background("background_inner_interpreter_follows_external_upgrade"),
         background_interpreter_bound_to_owner=False,
@@ -373,6 +382,10 @@ def test_tier_failures(state: State) -> list[str]:
         failures.append("receipt_consumer_relaunches_heavy_owner")
     if not state.mta_supplements_after_upstream:
         failures.append("mta_supplement_precedes_upstream_owner")
+    if not state.runtime_evidence_dependencies_declared:
+        failures.append("runtime_evidence_dependency_owner_missing")
+    if not state.runtime_evidence_outputs_excluded_from_source_identity:
+        failures.append("runtime_evidence_output_used_as_source_identity")
     if not state.pytest_scoped_to_tests or not state.backup_tmp_excluded:
         failures.append("pytest_collection_not_scoped")
     if state.long_regression_in_fast_tier or not state.fast_tier_foreground_safe:

@@ -16,6 +16,7 @@ class TierCommand:
     background_stage: int = 0
     background_exclusive_resource: str = ""
     evidence_dependency: str = "upstream"
+    dependency_owner_ids: tuple[str, ...] = ()
 
 
 def _py(*args: str) -> tuple[str, ...]:

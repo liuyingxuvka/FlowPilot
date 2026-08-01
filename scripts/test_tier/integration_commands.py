@@ -101,6 +101,10 @@ INTEGRATION_COMMANDS = (
         description="Read-only assembly of the two current unified-repair native receipts.",
         background_recommended=True,
         background_stage=5,
+        dependency_owner_ids=(
+            "unified_repair_native_runtime_conformance",
+            "unified_repair_exact_native_test_owner",
+        ),
     ),
     TierCommand(
         name="unified_repair_integrity",
@@ -115,6 +119,7 @@ INTEGRATION_COMMANDS = (
         long_running=True,
         background_recommended=True,
         background_stage=6,
+        dependency_owner_ids=("unified_repair_native_evidence_manifest",),
     ),
     TierCommand(
         name="smoke_flowpilot_fast",

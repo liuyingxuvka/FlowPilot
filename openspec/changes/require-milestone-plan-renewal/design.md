@@ -249,6 +249,18 @@ sole owner of live PPA evidence and reads the current matrix and MTA results
 after their producer stages complete. This keeps the existing tier structure,
 avoids a producer/consumer cycle, and preserves fail-closed currentness.
 
+### 17. Bind runtime evidence through producer owners, not source identity
+
+The frozen source plan excludes current-run JSON reports and receipts from a
+consumer's source-currentness fingerprint. Each such consumer instead names
+its exact producer owners. The background supervisor admits the consumer only
+after all named producers have successful terminal receipts; a failed or
+unresolved producer blocks launch rather than allowing a historical result to
+stand in. Dependency ids remain part of the owner graph identity, and a reused
+consumer is forced to execute whenever one of its producer owners executes.
+This extends the existing stage barriers with explicit evidence semantics
+without adding another validation runner or authority.
+
 ## Risks / Trade-offs
 
 - **More review work at major milestones** → The gate applies only to

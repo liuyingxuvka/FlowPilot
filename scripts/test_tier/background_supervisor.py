@@ -241,6 +241,8 @@ def _global_owner_contracts():
 def next_background_launch_index(
     pending: Sequence[TierCommand],
     running: Sequence[TierCommand],
+    *,
+    completed_ok_owner_ids: Sequence[str] = (),
 ) -> int | None:
     if not pending:
         return None
@@ -253,10 +255,12 @@ def next_background_launch_index(
         for command in running
         if command.background_exclusive_resource
     }
+    completed_ok = set(completed_ok_owner_ids)
     for index, command in enumerate(pending):
         if (
             command.background_stage == active_stage
             and command.background_exclusive_resource not in active_resources
+            and set(command.dependency_owner_ids) <= completed_ok
         ):
             return index
     return None
@@ -629,9 +633,37 @@ def run_background_supervisor(
             "w", encoding="utf-8", errors="replace"
         ) as err_file:
             while pending or running:
+                completed_by_name = {item["name"]: item for item in completed}
+                dependency_failures = [
+                    (command.name, dependency_owner_id)
+                    for command in pending
+                    for dependency_owner_id in command.dependency_owner_ids
+                    if dependency_owner_id in completed_by_name
+                    and not completed_by_name[dependency_owner_id]["ok"]
+                ]
+                if dependency_failures:
+                    consumer, producer = dependency_failures[0]
+                    raise RuntimeError(
+                        f"dependency_owner_failed:{consumer}:{producer}"
+                    )
                 while pending and len(running) < max_parallel:
-                    launch_index = next_background_launch_index(pending, running)
+                    launch_index = next_background_launch_index(
+                        pending,
+                        running,
+                        completed_ok_owner_ids=[
+                            item["name"] for item in completed if item["ok"]
+                        ],
+                    )
                     if launch_index is None:
+                        if not running:
+                            unresolved = ",".join(
+                                f"{command.name}<-{'+'.join(command.dependency_owner_ids)}"
+                                for command in pending
+                                if command.dependency_owner_ids
+                            )
+                            raise RuntimeError(
+                                "dependency_owner_unresolved:" + unresolved
+                            )
                         break
                     command = pending.pop(launch_index)
                     launched = launch_fn(

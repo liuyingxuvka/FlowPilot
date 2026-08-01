@@ -355,6 +355,35 @@ class FlowPilotTestTierTests(unittest.TestCase):
             unified_integrity.background_stage,
             native_manifest.background_stage,
         )
+        self.assertEqual(
+            set(native_manifest.dependency_owner_ids),
+            {
+                "unified_repair_native_runtime_conformance",
+                "unified_repair_exact_native_test_owner",
+            },
+        )
+        self.assertEqual(
+            unified_integrity.dependency_owner_ids,
+            ("unified_repair_native_evidence_manifest",),
+        )
+        contracts = {
+            contract.owner_id: contract
+            for contract in impact_resolution_module.build_owner_contracts(
+                run_test_tier.commands_for_tier("all")
+            )
+        }
+        self.assertNotIn(
+            "simulations/flowpilot_unified_repair_exact_native_test_owner_results.json",
+            contracts[native_manifest.name].covered_inputs,
+        )
+        self.assertNotIn(
+            "simulations/flowpilot_unified_repair_native_runtime_conformance_results.json",
+            contracts[native_manifest.name].covered_inputs,
+        )
+        self.assertNotIn(
+            "simulations/flowpilot_unified_repair_native_evidence_manifest.json",
+            contracts[unified_integrity.name].covered_inputs,
+        )
         self.assertGreater(
             all_commands_by_name["smoke_flowpilot_fast"].background_stage,
             unified_integrity.background_stage,
@@ -447,6 +476,32 @@ class FlowPilotTestTierTests(unittest.TestCase):
         self.assertEqual(
             final_confidence_commands["flowpilot_final_confidence_gate"].evidence_dependency,
             "terminal_consumer",
+        )
+
+    def test_background_scheduler_waits_for_declared_evidence_producers(self) -> None:
+        producer = run_test_tier.TierCommand(
+            name="producer",
+            command=(sys.executable, "producer.py"),
+            description="producer",
+            background_stage=1,
+        )
+        consumer = run_test_tier.TierCommand(
+            name="consumer",
+            command=(sys.executable, "consumer.py"),
+            description="consumer",
+            background_stage=2,
+            dependency_owner_ids=("producer",),
+        )
+        self.assertIsNone(
+            background_supervisor_module.next_background_launch_index(
+                [consumer], [], completed_ok_owner_ids=[]
+            )
+        )
+        self.assertEqual(
+            background_supervisor_module.next_background_launch_index(
+                [consumer], [], completed_ok_owner_ids=[producer.name]
+            ),
+            0,
         )
 
     def test_complete_workstream_and_resource_checks_participate_in_parent_tiers(self) -> None:

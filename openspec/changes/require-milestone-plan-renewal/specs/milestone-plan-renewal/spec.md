@@ -298,3 +298,24 @@ cleanup SHALL remain visibly blocked.
 - **THEN** the supervisor SHALL publish a non-success terminal result
 - **AND** it SHALL NOT wait forever or promote prior progress as evidence
 - **AND** cleanup-unconfirmed status SHALL block every release claim.
+
+### Requirement: Runtime evidence consumers bind successful producer owners
+Runtime-generated reports and receipts SHALL remain evidence outputs rather
+than source-authority inputs. A consumer that reads such an output SHALL
+declare the exact producer owner and SHALL start only after that producer has
+published a current successful terminal receipt. A failed, blocked, missing,
+or unresolved producer SHALL keep the consumer unlaunched and the parent
+validation non-successful.
+
+#### Scenario: Producer refreshes a result during one frozen validation
+- **WHEN** a producer writes its current runtime evidence result after the
+  all-tier impact plan is frozen
+- **THEN** the result file SHALL NOT make the consumer's source identity stale
+- **AND** the consumer SHALL bind the producer-owner dependency and read the
+  newly produced result only after producer success.
+
+#### Scenario: Required evidence producer fails
+- **WHEN** a declared runtime evidence producer is failed, blocked, missing, or
+  unresolved
+- **THEN** its consumer SHALL NOT launch against a historical result file
+- **AND** the parent validation SHALL remain visibly non-successful.

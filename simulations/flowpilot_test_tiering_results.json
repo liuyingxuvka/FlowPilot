@@ -113,6 +113,10 @@
     "router_slice_import_broken_counted_green": [
       "router_slice_import_failure_counted_green"
     ],
+    "runtime_evidence_consumer_planned_against_mutable_producer_output": [
+      "runtime_evidence_dependency_owner_missing",
+      "runtime_evidence_output_used_as_source_identity"
+    ],
     "shared_input_selects_every_owner": [
       "shared_input_selected_blanket_tier_execution"
     ],
@@ -133,12 +137,12 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=2 initial_states=1 traces=129",
+    "summary": "sequences=2 initial_states=1 traces=132",
     "violation_count": 0
   },
   "graph": {
     "accepted_state_count": 4,
-    "edge_count": 86,
+    "edge_count": 88,
     "labels_seen": [
       "accept_valid_background_integration_tier",
       "accept_valid_fast_tier",
@@ -179,6 +183,7 @@
       "reject_router_child_tier_keeps_slow_aggregate",
       "reject_router_child_tier_stale_k_pattern",
       "reject_router_slice_import_broken_counted_green",
+      "reject_runtime_evidence_consumer_planned_against_mutable_producer_output",
       "reject_shared_input_selects_every_owner",
       "reject_stale_child_evidence_used",
       "reject_testmesh_mta_final_confidence_dependency_cycle",
@@ -218,6 +223,7 @@
       "select_router_child_tier_keeps_slow_aggregate",
       "select_router_child_tier_stale_k_pattern",
       "select_router_slice_import_broken_counted_green",
+      "select_runtime_evidence_consumer_planned_against_mutable_producer_output",
       "select_shared_input_selects_every_owner",
       "select_stale_child_evidence_used",
       "select_testmesh_mta_final_confidence_dependency_cycle",
@@ -229,9 +235,9 @@
     ],
     "missing_labels": [],
     "ok": true,
-    "rejected_state_count": 39,
-    "state_count": 87,
-    "terminal_state_count": 43,
+    "rejected_state_count": 40,
+    "state_count": 89,
+    "terminal_state_count": 44,
     "violations": []
   },
   "model": "flowpilot_test_tiering",
@@ -283,6 +289,7 @@
       "router_child_tier_keeps_slow_aggregate",
       "router_child_tier_stale_k_pattern",
       "router_slice_import_broken_counted_green",
+      "runtime_evidence_consumer_planned_against_mutable_producer_output",
       "shared_input_selects_every_owner",
       "stale_child_evidence_used",
       "testmesh_mta_final_confidence_dependency_cycle",
