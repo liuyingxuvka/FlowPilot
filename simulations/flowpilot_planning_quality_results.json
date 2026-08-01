@@ -5,7 +5,7 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=3 initial_states=1 traces=474",
+    "summary": "sequences=3 initial_states=1 traces=498",
     "violation_count": 0
   },
   "hazard_checks": {
@@ -104,6 +104,34 @@
         "expected_failure": "hard low-quality-success risk lacks an existing route or node owner",
         "failures": [
           "hard low-quality-success risk lacks an existing route or node owner"
+        ]
+      },
+      "initial_route_far_route_overdetailed": {
+        "detected": true,
+        "expected_failure": "initial route over-specifies distant work instead of preserving proportionate uncertainty",
+        "failures": [
+          "initial route over-specifies distant work instead of preserving proportionate uncertainty"
+        ]
+      },
+      "initial_route_mega_root": {
+        "detected": true,
+        "expected_failure": "initial route collapsed the project into one top-level mega-root that defers useful decomposition",
+        "failures": [
+          "initial route collapsed the project into one top-level mega-root that defers useful decomposition"
+        ]
+      },
+      "initial_route_micro_gate_bloat": {
+        "detected": true,
+        "expected_failure": "initial route expanded mechanical handoffs into top-level micro-gates without independent outcomes",
+        "failures": [
+          "initial route expanded mechanical handoffs into top-level micro-gates without independent outcomes"
+        ]
+      },
+      "initial_route_near_term_vague": {
+        "detected": true,
+        "expected_failure": "initial route leaves the nearest nodes too vague to execute and verify",
+        "failures": [
+          "initial route leaves the nearest nodes too vague to execute and verify"
         ]
       },
       "loop_verify_artifact_not_inherited": {
@@ -597,11 +625,11 @@
     "accepted_scenarios": [
       "valid_ui_route"
     ],
-    "edge_count": 158,
+    "edge_count": 166,
     "invariant_failures": [],
     "missing_labels": [],
     "ok": true,
-    "rejected_state_count": 78,
-    "state_count": 159
+    "rejected_state_count": 82,
+    "state_count": 167
   }
 }

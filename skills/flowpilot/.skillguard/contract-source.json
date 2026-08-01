@@ -281,7 +281,7 @@
         "final-confidence",
         "--verify-background",
         "--background-dir",
-        "tmp/test_background/v0.13.0-final-v5-r3",
+        "tmp/test_background/v0.14.0-milestone-renewal-final",
         "--json"
       ],
       "cwd_token": "repository_root",
@@ -290,6 +290,10 @@
         "check:flowpilot-tier-ownership"
       ],
       "covers_obligation_ids": [
+        "obligation:flowpilot-milestone-renewal-model",
+        "obligation:flowpilot-milestone-renewal-conformance",
+        "obligation:flowpilot-milestone-renewal-affected-tests",
+        "obligation:flowpilot-milestone-renewal-evidence-closure",
         "obligation:flowpilot-current-final-receipts"
       ],
       "input_selectors": [
@@ -300,6 +304,74 @@
         {
           "kind": "subtree",
           "path": "scripts/test_tier"
+        },
+        {
+          "kind": "path",
+          "path": "simulations/run_flowpilot_milestone_renewal_affected_checks.py"
+        },
+        {
+          "kind": "path",
+          "path": "simulations/flowpilot_acceptance_testmesh_model.py"
+        },
+        {
+          "kind": "path",
+          "path": "simulations/flowpilot_model_test_alignment_family_plans.py"
+        },
+        {
+          "kind": "path",
+          "path": "simulations/flowpilot_053_ppa_maintenance_model.py"
+        },
+        {
+          "kind": "path",
+          "path": "tests/test_flowpilot_recursive_route_execution_runtime.py"
+        },
+        {
+          "kind": "path",
+          "path": "simulations/flowpilot_planning_quality_model.py"
+        },
+        {
+          "kind": "path",
+          "path": "simulations/flowpilot_route_mutation_activation_model.py"
+        },
+        {
+          "kind": "path",
+          "path": "simulations/flowpilot_route_replanning_policy_model.py"
+        },
+        {
+          "kind": "path",
+          "path": "simulations/run_flowpilot_milestone_renewal_budget_checks.py"
+        },
+        {
+          "kind": "path",
+          "path": "simulations/run_flowpilot_milestone_renewal_longitudinal_rehearsal.py"
+        },
+        {
+          "kind": "path",
+          "path": "simulations/run_flowpilot_planning_quality_checks.py"
+        },
+        {
+          "kind": "path",
+          "path": "simulations/run_flowpilot_route_mutation_activation_checks.py"
+        },
+        {
+          "kind": "path",
+          "path": "simulations/run_flowpilot_route_replanning_policy_checks.py"
+        },
+        {
+          "kind": "path",
+          "path": "tests/test_flowpilot_high_standard_control_flow.py"
+        },
+        {
+          "kind": "path",
+          "path": "tests/test_flowpilot_milestone_plan_renewal_contracts.py"
+        },
+        {
+          "kind": "path",
+          "path": "tests/test_flowpilot_milestone_renewal_budget.py"
+        },
+        {
+          "kind": "path",
+          "path": "tests/test_flowpilot_parent_entry_return_path.py"
         }
       ],
       "expected": {
@@ -324,6 +396,10 @@
         "obligation:flowpilot-independent-flowguard-review",
         "obligation:flowpilot-no-change-zero-authoritative-write",
         "obligation:flowpilot-bounded-runtime-evidence",
+        "obligation:flowpilot-milestone-renewal-model",
+        "obligation:flowpilot-milestone-renewal-conformance",
+        "obligation:flowpilot-milestone-renewal-affected-tests",
+        "obligation:flowpilot-milestone-renewal-evidence-closure",
         "obligation:flowpilot-current-final-receipts"
       ]
     }
@@ -386,6 +462,18 @@
     "simulations/run_flowpilot_ordinary_resource_discovery_checks.py",
     "simulations/flowpilot_control_plane_resource_boundedness_model.py",
     "simulations/run_flowpilot_control_plane_resource_boundedness_checks.py",
+    "simulations/flowpilot_route_replanning_policy_model.py",
+    "simulations/run_flowpilot_route_replanning_policy_checks.py",
+    "simulations/flowpilot_planning_quality_model.py",
+    "simulations/run_flowpilot_planning_quality_checks.py",
+    "simulations/flowpilot_route_mutation_activation_model.py",
+    "simulations/run_flowpilot_route_mutation_activation_checks.py",
+    "simulations/run_flowpilot_milestone_renewal_longitudinal_rehearsal.py",
+    "simulations/run_flowpilot_milestone_renewal_budget_checks.py",
+    "simulations/run_flowpilot_milestone_renewal_affected_checks.py",
+    "simulations/flowpilot_model_test_alignment_family_plans.py",
+    "simulations/flowpilot_acceptance_testmesh_model.py",
+    "simulations/flowpilot_053_ppa_maintenance_model.py",
     "scripts/flowpilot_runtime_retention.py",
     "scripts/refresh_flowpilot_skillguard_contract.py",
     "scripts/run_test_tier.py",
@@ -395,6 +483,11 @@
     "tests/test_flowpilot_ordinary_resource_discovery.py",
     "tests/test_flowpilot_control_plane_resource_boundedness_model.py",
     "tests/test_flowpilot_router_resource_bounds.py",
+    "tests/test_flowpilot_milestone_plan_renewal_contracts.py",
+    "tests/test_flowpilot_recursive_route_execution_runtime.py",
+    "tests/test_flowpilot_parent_entry_return_path.py",
+    "tests/test_flowpilot_high_standard_control_flow.py",
+    "tests/test_flowpilot_milestone_renewal_budget.py",
     "tests/test_flowpilot_test_tiers.py"
   ],
   "integration_mode": "native-integrated",

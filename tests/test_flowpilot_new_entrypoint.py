@@ -926,6 +926,7 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
             self.assertTrue(result["ok"], result)
             self.assertEqual(result["closure"]["decision"], "complete")
             self.assertEqual(result["next_action"]["action_type"], "terminal_complete")
+            self.assertEqual(result["mechanical_contract_blocks"], [])
             shell = run_shell.load_run_shell(root, run_id="run-e2e")
             ledger = run_shell.load_run_ledger(shell)
             self.assertEqual(next(iter(ledger["reviews"].values()))["decision"], "accept")

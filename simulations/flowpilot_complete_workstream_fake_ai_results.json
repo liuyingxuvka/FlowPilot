@@ -476,6 +476,6 @@
   "schema_version": "flowpilot.complete_workstream_fake_ai_execution.v1",
   "selection_policy": "full_finite_profile_enumeration",
   "source_fingerprint_current": true,
-  "source_fingerprint_end": "b82d0e98f8d3ba4455f8b38482b946123842569af7dfccfe25357fc06a230918",
-  "source_fingerprint_start": "b82d0e98f8d3ba4455f8b38482b946123842569af7dfccfe25357fc06a230918"
+  "source_fingerprint_end": "92ec87c1ed5f58391adee0cf652bdc15465d28cedd3c1ff1f0e8fcdfe817c1b2",
+  "source_fingerprint_start": "92ec87c1ed5f58391adee0cf652bdc15465d28cedd3c1ff1f0e8fcdfe817c1b2"
 }

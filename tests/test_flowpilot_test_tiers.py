@@ -316,6 +316,10 @@ class FlowPilotTestTierTests(unittest.TestCase):
             [command.name for command in all_topology_writers],
             ["flowguard_project_topology_build"],
         )
+        self.assertEqual(
+            all_commands_by_name["project_topology_tests"].background_stage,
+            all_commands_by_name["flowguard_project_topology_build"].background_stage,
+        )
         self.assertLess(
             all_commands_by_name["flowguard_project_topology_build"].background_stage,
             all_commands_by_name["check_install"].background_stage,
@@ -331,6 +335,34 @@ class FlowPilotTestTierTests(unittest.TestCase):
         self.assertIn("flowguard_coverage_sweep", integration_commands)
         self.assertTrue(integration_commands["smoke_flowpilot_fast"].background_recommended)
         self.assertTrue(integration_commands["flowguard_coverage_sweep"].background_recommended)
+        native_runtime = all_commands_by_name[
+            "unified_repair_native_runtime_conformance"
+        ]
+        native_tests = all_commands_by_name[
+            "unified_repair_exact_native_test_owner"
+        ]
+        native_manifest = all_commands_by_name[
+            "unified_repair_native_evidence_manifest"
+        ]
+        unified_integrity = all_commands_by_name["unified_repair_integrity"]
+        self.assertEqual(native_runtime.background_stage, native_tests.background_stage)
+        self.assertGreater(native_runtime.background_stage, cli_entrypoints.background_stage)
+        self.assertGreater(
+            native_manifest.background_stage,
+            native_runtime.background_stage,
+        )
+        self.assertGreater(
+            unified_integrity.background_stage,
+            native_manifest.background_stage,
+        )
+        self.assertGreater(
+            all_commands_by_name["smoke_flowpilot_fast"].background_stage,
+            unified_integrity.background_stage,
+        )
+        self.assertGreater(
+            all_commands_by_name["thin_parent_tests"].background_stage,
+            all_commands_by_name["smoke_flowpilot_fast"].background_stage,
+        )
         self.assertEqual(
             list(integration_commands["flowguard_coverage_sweep"].command)[-2:],
             ["--timeout-seconds", "300"],
@@ -433,6 +465,7 @@ class FlowPilotTestTierTests(unittest.TestCase):
         }
 
         focused_owners = {
+            "flowpilot_milestone_renewal_affected_owner",
             "flowguard_complete_workstream_orchestration",
             "flowguard_ordinary_resource_discovery",
             "flowguard_skillguard_current_contract",
@@ -1803,7 +1836,7 @@ class FlowPilotTestTierTests(unittest.TestCase):
         ]
 
         self.assertTrue(supplements)
-        self.assertTrue(all(command.background_stage == 4 for command in supplements))
+        self.assertTrue(all(command.background_stage == 9 for command in supplements))
         self.assertLess(
             max(command.background_stage for command in ordinary),
             min(command.background_stage for command in supplements),
@@ -1902,6 +1935,49 @@ class FlowPilotTestTierTests(unittest.TestCase):
         }
         expected = {
             "scripts/test_tier/fast_commands.py": {"test_tier_runner"},
+            "scripts/test_tier/integration_commands.py": {"test_tier_runner"},
+            "simulations/flowpilot_fake_project_rehearsal_cli.py": {
+                "flowpilot_milestone_renewal_affected_owner"
+            },
+            "simulations/flowpilot_fake_project_rehearsal_scenarios.py": {
+                "flowpilot_milestone_renewal_affected_owner"
+            },
+            "simulations/flowpilot_planning_quality_model.py": {
+                "flowpilot_milestone_renewal_affected_owner"
+            },
+            "simulations/flowpilot_route_mutation_activation_model.py": {
+                "flowpilot_milestone_renewal_affected_owner"
+            },
+            "simulations/flowpilot_route_replanning_policy_model.py": {
+                "flowpilot_milestone_renewal_affected_owner"
+            },
+            "simulations/run_flowpilot_milestone_renewal_budget_checks.py": {
+                "flowpilot_milestone_renewal_affected_owner"
+            },
+            "simulations/run_flowpilot_milestone_renewal_longitudinal_rehearsal.py": {
+                "flowpilot_milestone_renewal_affected_owner"
+            },
+            "simulations/run_flowpilot_planning_quality_checks.py": {
+                "flowpilot_milestone_renewal_affected_owner"
+            },
+            "simulations/run_flowpilot_route_mutation_activation_checks.py": {
+                "flowpilot_milestone_renewal_affected_owner"
+            },
+            "simulations/run_flowpilot_route_replanning_policy_checks.py": {
+                "flowpilot_milestone_renewal_affected_owner"
+            },
+            "skills/flowpilot/assets/flowpilot_core_runtime/packet_stage_evidence_matrix.py": {
+                "flowpilot_milestone_renewal_affected_owner"
+            },
+            "skills/flowpilot/assets/runtime_kit/cards/phases/pm_route_skeleton.md": {
+                "flowpilot_milestone_renewal_affected_owner"
+            },
+            "skills/flowpilot/assets/runtime_kit/cards/reviewer/pm_flowguard_acceptance_review.md": {
+                "flowpilot_milestone_renewal_affected_owner"
+            },
+            "skills/flowpilot/assets/runtime_kit/cards/reviewer/route_challenge.md": {
+                "flowpilot_milestone_renewal_affected_owner"
+            },
             "simulations/run_flowpilot_model_mesh_checks.py": {
                 "mta_evidence_test_flowpilot_model_mesh_coverage_receipts_6c11f605fb1c"
             },

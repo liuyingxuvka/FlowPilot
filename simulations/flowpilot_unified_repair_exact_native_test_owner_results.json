@@ -27,13 +27,13 @@
     "skills/flowpilot/assets/flowpilot_core_runtime/migration.py": "0bc4d59913032f28b1f450e724c073953eb9d1b0b8ade565c0b633844450c377",
     "skills/flowpilot/assets/flowpilot_core_runtime/pointer_store.py": "2452188cde97481403cf34d78132ead5318076894179b7f46a769926a808ad45",
     "skills/flowpilot/assets/flowpilot_core_runtime/run_shell.py": "e3d4cf43698debc966f1dbdb69a44895c324723945f6f9c83e891ca1ab808a3f",
-    "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py": "ed5b84a2380372d94f7fa58956ac521500fb7f908113b2a424eb85de4d0440a1",
+    "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py": "e0605be6fa2d547ee377356237d96c022f153fd11a5b41b3bd2a551cda79c2bf",
     "tests/router_runtime/route_mutation_parent_backward.py": "55422a95cb1c67476b9202644fa0d26baca52d81ae9956a91f5a2b8704dd5e85",
     "tests/router_runtime/route_mutation_sibling_replacement.py": "b7e3c140a76009db4c3f576958a10e3434f96b8c9ca8bfbbbe12d42538086c4d",
     "tests/router_runtime/route_mutation_transactions.py": "5fdfa4bf0fab1c0133c76c3767bdfaf57a6a0647b9baf9e9e1944143593c843d",
     "tests/test_flowpilot_complete_system_runtime.py": "e3bca19605ac119aa4c2d6255be4e695a8e1c09b95c2f6664f77ae5a64fc3c65",
-    "tests/test_flowpilot_core_runtime.py": "29a401d8d8d1db886639a0302ab8c4b7e8d8562c0f6af86af1d7405ba9704ff8",
-    "tests/test_flowpilot_high_standard_control_flow.py": "106638f8dcbf8da106e20bbf6fe3d5dc4cae6bd09b0b8b00645d420751c29f4e",
+    "tests/test_flowpilot_core_runtime.py": "991312616284a651189ebbc14d9e3df522645e68aff721366b943c20b5375e30",
+    "tests/test_flowpilot_high_standard_control_flow.py": "15a885826afc9329f09e4ac59a9e2894bd24bac2751a5d664ab77d37a8a010b3",
     "tests/test_flowpilot_terminal_ledger_source_entries.py": "4fc35b8e4e2fe5bf3f5f7485a0ae8f7aaee3eedc36eacccfb3486ca8658f480b",
     "tests/test_flowpilot_unified_repair_runtime.py": "bd591c182bbd61e2bee463cf9aaeac1ec3d79da3ed1c2ce1689a10755d0c9453"
   },
@@ -67,14 +67,14 @@
       {
         "exists": true,
         "path": "tests/test_flowpilot_core_runtime.py",
-        "sha256": "29a401d8d8d1db886639a0302ab8c4b7e8d8562c0f6af86af1d7405ba9704ff8",
-        "size_bytes": 369973
+        "sha256": "991312616284a651189ebbc14d9e3df522645e68aff721366b943c20b5375e30",
+        "size_bytes": 373191
       },
       {
         "exists": true,
         "path": "tests/test_flowpilot_high_standard_control_flow.py",
-        "sha256": "106638f8dcbf8da106e20bbf6fe3d5dc4cae6bd09b0b8b00645d420751c29f4e",
-        "size_bytes": 149970
+        "sha256": "15a885826afc9329f09e4ac59a9e2894bd24bac2751a5d664ab77d37a8a010b3",
+        "size_bytes": 155495
       },
       {
         "exists": true,
@@ -122,8 +122,8 @@
     "native_runtime_owner": {
       "exists": true,
       "path": "simulations/run_flowpilot_unified_repair_native_runtime_conformance.py",
-      "sha256": "82249a02ed51e4fc7d4523f0632047d6df850149a151174548134e028eaac186",
-      "size_bytes": 48021
+      "sha256": "13cc807cfd902d82b935d2dcef5dafa82c4c748971b25716d10c832e1386ed99",
+      "size_bytes": 53346
     },
     "runner": {
       "exists": true,
@@ -135,8 +135,8 @@
       {
         "exists": true,
         "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
-        "sha256": "ed5b84a2380372d94f7fa58956ac521500fb7f908113b2a424eb85de4d0440a1",
-        "size_bytes": 923268
+        "sha256": "e0605be6fa2d547ee377356237d96c022f153fd11a5b41b3bd2a551cda79c2bf",
+        "size_bytes": 1035645
       },
       {
         "exists": true,

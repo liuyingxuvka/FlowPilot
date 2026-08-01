@@ -15,15 +15,15 @@
 </p>
 
 <p align="center">
-  Source version: <strong>v0.13.0</strong> · MIT License · open-source AI-agent control runtime
+  Source version: <strong>v0.14.0</strong> · MIT License · open-source AI-agent control runtime
 </p>
 <!-- README HERO END -->
 
 English comes first. The second half is a full Chinese mirror.
 
-This source is v0.13.0. Its release closure requires one exact task-owned
+This source is v0.14.0. Its release closure requires one exact task-owned
 commit, a fast-forward update of the GitHub default branch, an annotated
-`v0.13.0` tag, and a source-only GitHub Release that all identify that same
+`v0.14.0` tag, and a source-only GitHub Release that all identify that same
 commit. Until those remote checks pass, the version label is source metadata,
 not a claim that publication has completed.
 
@@ -135,7 +135,7 @@ In plain language:
 
 | Field | Value |
 | --- | --- |
-| Source version | `v0.13.0` |
+| Source version | `v0.14.0` |
 | Public project name | `FlowPilot` |
 | Skill slug | `flowpilot` |
 | Release shape | Source package only, no binary app bundle |
@@ -143,17 +143,15 @@ In plain language:
 | Required core dependency | Real `flowguard` Python package |
 | Current UI surface | Windows WPF startup intake dialog plus chat route signs |
 
-`v0.13.0` keeps the full opt-in PM, Worker, FlowGuard, Reviewer, repair, and
-terminal-replay workflow while removing control-plane write amplification.
-No-change daemon observation performs no authoritative state write; repeated
-receipts, reminders, progress, and projections are content-aware and
-idempotent. Validation evidence now uses one current V5 reference contract:
-stdout and stderr remain the complete raw bodies, while the bounded
-`combined.txt`, supervisor receipt, owner index, verification views, and reuse
-rows point to exact hashed proof instead of copying it. The existing retention
-tool also gains a fail-closed, read-only plan followed by explicit
-plan-hash-bound archive/apply; release and installation never clean historical
-data automatically.
+`v0.14.0` makes route planning deliberately adaptive. After every completed
+top-level milestone, PM must audit what is complete, what deviated, what
+remains, and whether the old unfinished plan still fits current evidence. It
+then freshly emits the complete route from the current state to the final user
+goal. The route may remain semantically identical, but it cannot continue by
+an old-plan marker. FlowGuard challenges the renewal, PM absorbs that review,
+Reviewer challenges the whole claim, and Runtime validates and commits it
+atomically. Nested child completion stays local, so the hard gate does not turn
+every leaf into a heavyweight whole-goal review.
 
 ## When To Use FlowPilot
 
@@ -257,7 +255,7 @@ MIT. See [`LICENSE`](./LICENSE).
 
 # FlowPilot 中文说明
 
-**Source version:** `v0.13.0`<br />
+**Source version:** `v0.14.0`<br />
 **许可证：** MIT<br />
 **形态：** open-source AI-agent control runtime
 
@@ -369,7 +367,7 @@ startup intake
 
 | 字段 | 值 |
 | --- | --- |
-| Source version | `v0.13.0` |
+| Source version | `v0.14.0` |
 | Public project name | `FlowPilot` |
 | Skill slug | `flowpilot` |
 | Release shape | source package only, no binary app bundle |
@@ -377,12 +375,12 @@ startup intake
 | Required core dependency | real `flowguard` Python package |
 | Current UI surface | Windows WPF startup intake dialog plus chat route signs |
 
-当前源码版本是 `v0.13.0`。本次发布闭环要求：只包含本任务文件的精确 Git commit、
-GitHub 默认分支的 fast-forward 更新、指向同一 commit 的 `v0.13.0` annotated tag，
+当前源码版本是 `v0.14.0`。本次发布闭环要求：只包含本任务文件的精确 Git commit、
+GitHub 默认分支的 fast-forward 更新、指向同一 commit 的 `v0.14.0` annotated tag，
 以及同一版本的 source-only GitHub Release。远端核验完成前，Source version 只是
 源码元数据，不代表发布已经完成。
 
-`v0.13.0` 不削减完整的 opt-in PM、Worker、FlowGuard、Reviewer、repair 和 terminal replay 流程，修的是控制面写入放大：没有语义变化的 daemon 观察不再重写权威状态，重复 receipt、reminder、progress 和投影会按内容幂等合并。验证证据改成唯一的 V5 引用合同：stdout/stderr 仍保留完整原文，但有大小上限的 `combined.txt`、supervisor receipt、owner index、verification view 和 reuse row 只引用精确哈希证明，不再复制正文。现有 retention 工具也升级为 fail-closed 的只读 plan，再由明确的 plan SHA 绑定 archive/apply；安装和发布不会自动清理历史资料。
+`v0.14.0` 让 route planning 变成持续校准的过程：每完成一个顶层 milestone，PM 都必须重新审计已经完成的结果、偏差、仍未闭合的目标差距，以及旧的未完成计划是否还符合当前证据，然后从当前状态重新写出一条完整通向最终用户目标的 route。新 route 可以和旧 route 语义上一样，但不能只写“继续旧计划”。这份 renewal 依次经过 FlowGuard 挑战、PM 吸收、Reviewer 挑战和 Runtime 机械验证，再原子提交。嵌套 child 仍只做本地闭合，因此不会把每个 leaf 都变成一次沉重的全目标审查。
 
 ## 什么时候用 FlowPilot
 

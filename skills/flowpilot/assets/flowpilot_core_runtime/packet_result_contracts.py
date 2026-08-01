@@ -692,15 +692,6 @@ def _profile_binding(profile_bindings: Mapping[str, Any] | None, profile_id: str
 
 def _profile_minimal_shape(profile_id: str, binding: Mapping[str, Any]) -> dict[str, Any]:
     if profile_id == MILESTONE_PLAN_RENEWAL_RESULT_CONTRACT_PROFILE_ID:
-        evidence_refs = (
-            [
-                str(item)
-                for item in binding.get("current_milestone_evidence_refs", [])
-                if str(item)
-            ]
-            if isinstance(binding.get("current_milestone_evidence_refs"), list)
-            else []
-        )
         raw_remaining_acceptance_item_ids = binding.get("remaining_acceptance_item_ids")
         remaining_acceptance_item_ids = (
             [
@@ -722,7 +713,6 @@ def _profile_minimal_shape(profile_id: str, binding: Mapping[str, Any]) -> dict[
             else None
         )
         return milestone_plan_renewal_minimal_shape(
-            current_milestone_evidence_refs=evidence_refs or None,
             remaining_acceptance_item_ids=remaining_acceptance_item_ids,
             remaining_obligation_ids=remaining_obligation_ids,
             completed_milestone_bindings=(
@@ -730,7 +720,6 @@ def _profile_minimal_shape(profile_id: str, binding: Mapping[str, Any]) -> dict[
                 if isinstance(binding.get("completed_milestone_bindings"), list)
                 else None
             ),
-            contract_hash=str(binding.get("contract_hash") or "") or None,
             remaining_owner_node_ids=(
                 binding.get("remaining_owner_node_ids")
                 if isinstance(binding.get("remaining_owner_node_ids"), list)
@@ -995,11 +984,9 @@ def strict_route_plan_minimal_shape() -> dict[str, Any]:
 
 def milestone_plan_renewal_minimal_shape(
     *,
-    current_milestone_evidence_refs: list[str] | tuple[str, ...] | None = None,
     remaining_acceptance_item_ids: list[str] | tuple[str, ...] | None = None,
     remaining_obligation_ids: Mapping[str, list[str] | tuple[str, ...]] | None = None,
     completed_milestone_bindings: list[Mapping[str, Any]] | tuple[Mapping[str, Any], ...] | None = None,
-    contract_hash: str | None = None,
     remaining_owner_node_ids: list[str] | tuple[str, ...] | None = None,
     terminal_remaining_plan: bool = False,
 ) -> dict[str, Any]:
@@ -1010,13 +997,6 @@ def milestone_plan_renewal_minimal_shape(
     lightweight family contract instead of inheriting a whole-goal audit.
     """
 
-    evidence_refs = [
-        str(item)
-        for item in (current_milestone_evidence_refs or ("result-current-milestone",))
-        if str(item)
-    ]
-    if not evidence_refs:
-        evidence_refs = ["result-current-milestone"]
     remaining_item_source = (
         ("acc-remaining-001",)
         if remaining_acceptance_item_ids is None
@@ -1030,7 +1010,6 @@ def milestone_plan_renewal_minimal_shape(
                 row.get("outcome")
                 or "The top-level milestone reached its acceptance boundary."
             ),
-            "evidence_refs": [str(item) for item in (row.get("evidence_refs") or evidence_refs) if str(item)],
         }
         for row in (completed_milestone_bindings or ())
         if isinstance(row, Mapping)
@@ -1040,7 +1019,6 @@ def milestone_plan_renewal_minimal_shape(
             {
                 "node_id": "current-top-level-milestone",
                 "outcome": "The current top-level milestone reached its acceptance boundary.",
-                "evidence_refs": evidence_refs,
             }
         ]
     owner_node_ids = [
@@ -1127,7 +1105,6 @@ def milestone_plan_renewal_minimal_shape(
     return {
         "milestone_audit": {
             "completed": bindings,
-            "contract_hash": contract_hash or "<current ledger contract_hash>",
             "deviations": [],
             "remaining": remaining_gaps,
             "prior_plan_assessment": (

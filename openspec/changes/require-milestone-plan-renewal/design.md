@@ -30,7 +30,9 @@ that chain rather than introducing a checkpoint subsystem.
   flag, A/B experiment, compatibility reader, or fallback continuation.
 - No new role, checkpoint ledger, replan ledger, goal-gap ledger, or alternate
   display-plan authority.
-- No release, tag, or publication work in this change.
+- No mutable tag, moving release, publication before frozen validation, or
+  release claim that conflates source, model, test, install, Git, and GitHub
+  identities.
 
 ## Decisions
 
@@ -54,12 +56,10 @@ requires:
 ```json
 {
   "milestone_audit": {
-    "contract_hash": "<current frozen final-goal contract hash>",
     "completed": [
       {
         "node_id": "<accepted top-level node id>",
-        "outcome": "Current milestone outcome",
-        "evidence_refs": ["current-evidence-id", "current-review-id"]
+        "outcome": "Current milestone outcome"
       }
     ],
     "deviations": [],
@@ -115,13 +115,16 @@ FlowGuard and Reviewer own the substantive questions: whether completed claims
 are true, deviations are honest, the list of gaps is complete, the next
 milestone is detailed enough, and the whole route reaches the final goal.
 
-The completed audit is cumulative for the active top-level prefix. Each row is
-bound to one current top-level `node_id` and its complete runtime-issued
-evidence set; the current frozen `contract_hash` is repeated in the audit so a
-renewal cannot silently drift to another final goal. Every non-empty remaining
-gap names one or more `owner_node_ids`, and the owner set must equal the
-submitted remaining-plan node set. These are extensions of the existing PM
-disposition contract, not a new ledger or packet family.
+The completed audit is cumulative for the active top-level prefix. PM writes
+each row's current top-level `node_id` and semantic outcome. At the staging and
+commit boundary, the runtime binds every row to its complete runtime-issued
+evidence set and binds the current frozen `contract_hash`; PM-supplied copies of
+those machine fields are rejected. This prevents silent final-goal drift while
+keeping semantic output small and avoiding a second ledger. Every non-empty
+remaining gap names one or more `owner_node_ids`, and every named owner must
+belong to the submitted remaining-plan node set. Every current hard obligation
+must be covered, but helper nodes whose work is already covered by a parent
+milestone do not need fabricated gap rows.
 
 ### 5. Equality renews evidence without route churn
 
@@ -226,10 +229,12 @@ runtime feature flag.
 ### 15. Budget the loop without adding a second control system
 
 The direct loop has one audit/remaining-plan pair per top-level milestone and
-keeps machine bindings in the runtime projection. A lightweight envelope is
-recorded in `docs/flowpilot_milestone_renewal_budget.md`: six normal gate
-handoffs, one current packet per repair, and an observed serialized audit
-envelope up to 5.2 KB for sixteen remaining nodes. These are review and
+keeps machine bindings in the runtime projection. The normal gate consists of
+four AI submissions (PM audit, FlowGuard challenge, PM absorption, and
+Reviewer challenge) plus two local system steps (mechanical validation and
+atomic commit). `docs/flowpilot_milestone_renewal_budget.md` records full
+packet/context growth, authorized evidence reads, retries, and stage/total
+latency separately from minimal serialized result shape. These are review and
 observability limits, not L0-L4 modes, scores, or alternate authorities.
 
 ### 16. Separate structural unit proof from live closure evidence
@@ -268,8 +273,10 @@ avoids a producer/consumer cycle, and preserves fail-closed currentness.
 - **Renewal-specific route mutation can strand old blockers** → Delegate common
   retirement and quarantine to the existing route-mutation primitive and test
   an active blocker on the replaced suffix.
-- **PM can cite but not inspect evidence** → Issue bounded authorized reads and
-  require read receipts before formal renewal submission.
+- **Repeated cumulative evidence transport can grow quadratically** → Give PM
+  bounded reads for the current milestone delta and the immediately previous
+  accepted milestone audit, while the runtime-owned accepted-prefix projection
+  supplies exact historical bindings at commit.
 
 ## Migration Plan
 
@@ -285,3 +292,7 @@ avoids a producer/consumer cycle, and preserves fail-closed currentness.
 7. Close the post-implementation correctness findings, refresh current model
    authority and TestMesh/MTA/PPA/BCL evidence, then run one real longitudinal
    multi-milestone rehearsal before enabling the final consumer projection.
+8. After one frozen final validation and consumer-install currentness pass,
+   update the immutable release version and notes, commit only owned integrated
+   paths, push the current branch and `main`, create a new annotated tag and
+   GitHub Release, and verify all remote identities without rerunning producers.

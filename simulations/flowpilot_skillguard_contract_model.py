@@ -37,6 +37,10 @@ class ContractInput:
     independent_flowguard_current: bool = True
     reviewer_and_pm_disposition_current: bool = True
     control_plane_resource_boundedness_current: bool = True
+    milestone_renewal_model_current: bool = True
+    milestone_renewal_conformance_current: bool = True
+    milestone_renewal_affected_tests_current: bool = True
+    milestone_renewal_evidence_closure_current: bool = True
     final_parent_receipts_current: bool = True
     parallel_skillguard_route: bool = False
     former_contract_authority_present: bool = False
@@ -195,6 +199,10 @@ class BindIndependentClosure:
         "independent_flowguard_current",
         "reviewer_and_pm_disposition_current",
         "control_plane_resource_boundedness_current",
+        "milestone_renewal_model_current",
+        "milestone_renewal_conformance_current",
+        "milestone_renewal_affected_tests_current",
+        "milestone_renewal_evidence_closure_current",
         "final_parent_receipts_current",
     )
     writes = ("closure_bound",)
@@ -215,6 +223,22 @@ class BindIndependentClosure:
             (
                 input_obj.control_plane_resource_boundedness_current,
                 "control_plane_resource_boundedness_missing",
+            ),
+            (
+                input_obj.milestone_renewal_model_current,
+                "milestone_renewal_model_missing",
+            ),
+            (
+                input_obj.milestone_renewal_conformance_current,
+                "milestone_renewal_conformance_missing",
+            ),
+            (
+                input_obj.milestone_renewal_affected_tests_current,
+                "milestone_renewal_affected_tests_missing",
+            ),
+            (
+                input_obj.milestone_renewal_evidence_closure_current,
+                "milestone_renewal_evidence_closure_missing",
             ),
             (input_obj.final_parent_receipts_current, "final_parent_receipts_missing"),
         )
@@ -366,6 +390,10 @@ def export_contract_model() -> dict[str, object]:
         ("obligation:flowpilot-independent-flowguard-review", "step:flowpilot-independent-closure", "monotonic_closure"),
         ("obligation:flowpilot-no-change-zero-authoritative-write", "step:flowpilot-independent-closure", "monotonic_closure"),
         ("obligation:flowpilot-bounded-runtime-evidence", "step:flowpilot-independent-closure", "monotonic_closure"),
+        ("obligation:flowpilot-milestone-renewal-model", "step:flowpilot-independent-closure", "monotonic_closure"),
+        ("obligation:flowpilot-milestone-renewal-conformance", "step:flowpilot-independent-closure", "monotonic_closure"),
+        ("obligation:flowpilot-milestone-renewal-affected-tests", "step:flowpilot-independent-closure", "monotonic_closure"),
+        ("obligation:flowpilot-milestone-renewal-evidence-closure", "step:flowpilot-independent-closure", "monotonic_closure"),
         ("obligation:flowpilot-current-final-receipts", "step:flowpilot-independent-closure", "monotonic_closure"),
     )
     return {
@@ -424,6 +452,18 @@ def main() -> int:
         "missing_independent_flowguard": ContractInput(independent_flowguard_current=False),
         "unbounded_control_plane": ContractInput(
             control_plane_resource_boundedness_current=False
+        ),
+        "missing_milestone_renewal_model": ContractInput(
+            milestone_renewal_model_current=False
+        ),
+        "missing_milestone_renewal_conformance": ContractInput(
+            milestone_renewal_conformance_current=False
+        ),
+        "missing_milestone_renewal_affected_tests": ContractInput(
+            milestone_renewal_affected_tests_current=False
+        ),
+        "missing_milestone_renewal_evidence_closure": ContractInput(
+            milestone_renewal_evidence_closure_current=False
         ),
         "stale_final_receipts": ContractInput(final_parent_receipts_current=False),
     }

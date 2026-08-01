@@ -3139,7 +3139,8 @@
         "repair_restart_policy",
         "final_artifact_hygiene_review",
         "independent_challenge",
-        "recommended_resolution"
+        "recommended_resolution",
+        "contract_self_check"
       ],
       "non_empty_array_fields": [
         "final_artifact_refs",
@@ -3259,7 +3260,9 @@
       "fake_ai_success_fields": [
         "decision",
         "reason",
-        "acceptance_item_disposition"
+        "acceptance_item_disposition",
+        "milestone_audit",
+        "remaining_route_plan"
       ],
       "family_id": "pm_disposition.node_pm_disposition",
       "forbidden_fields": [

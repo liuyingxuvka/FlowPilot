@@ -454,11 +454,20 @@ def _body_for_packet(
                 if isinstance(packet_body, dict)
                 else None
             )
+            context_remaining_route_plan = (
+                context.get("plan") if isinstance(context, dict) else None
+            )
             raw_remaining_route_plan = (
-                context.get("plan") if isinstance(context, dict) else {}
+                context_remaining_route_plan
+                if isinstance(context_remaining_route_plan, dict)
+                and context_remaining_route_plan.get("schema_version")
+                == runtime.ROUTE_PLAN_SCHEMA_VERSION
+                else payload.get("remaining_route_plan")
             )
             if not isinstance(raw_remaining_route_plan, dict):
-                raw_remaining_route_plan = {}
+                raise runtime.BlackBoxRuntimeError(
+                    "fake milestone PM response requires a current-contract remaining_route_plan"
+                )
             for raw_node in raw_remaining_route_plan.get("nodes") or []:
                 if isinstance(raw_node, dict):
                     raw_node.setdefault("parent_node_id", "")
@@ -467,9 +476,6 @@ def _body_for_packet(
                 raw_remaining_route_plan
             )
             payload["remaining_route_plan"] = remaining_route_plan
-            payload.setdefault("milestone_audit", {})["contract_hash"] = ledger.get(
-                "contract_hash", ""
-            )
             if remaining_route_plan["nodes"]:
                 remaining_obligation_ids = runtime._milestone_remaining_obligation_ids(
                     ledger,

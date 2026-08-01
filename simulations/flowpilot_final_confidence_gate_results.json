@@ -1,7 +1,42 @@
 {
-  "blockers": [],
+  "blockers": [
+    {
+      "codes": [
+        "ok_false",
+        "alignment_ok_false",
+        "model_test_alignment_evidence_not_passed",
+        "model_test_alignment_execution_evidence_not_current",
+        "full_coverage_ok_false",
+        "release_convergence_ok_false",
+        "subcheck_failed"
+      ],
+      "details": {
+        "alignment_ok": false,
+        "claim_scope": "done",
+        "coverage_claim": "blocked",
+        "deferred_structure_split_count": 10,
+        "evidence_status": "not_run",
+        "execution_evidence_ok": false,
+        "full_coverage_ok": false,
+        "full_diagnostic_ok": true,
+        "gap_counts": {
+          "needs_structure_split": 10,
+          "stale_evidence": 13
+        },
+        "gap_surface_count": 23,
+        "release_convergence_ok": false,
+        "subcheck_exit_code": 1,
+        "subcheck_stderr_path": "tmp/final_confidence_gate/model_test_alignment.err.txt",
+        "subcheck_stdout_path": "tmp/final_confidence_gate/model_test_alignment.out.txt",
+        "top_level_ok": false,
+        "unresolved_non_deferred_gap_count": 13
+      },
+      "evidence": "model_test_alignment",
+      "path": "tmp/final_confidence_gate/flowpilot_model_test_alignment_results.json"
+    }
+  ],
   "claim_scope": "repository_only",
-  "decision": "repository_confidence_only",
+  "decision": "blocked",
   "evidence_manifest_path": "simulations/flowpilot_acceptance_testmesh_evidence_manifest.json",
   "evidence_rows": [
     {
@@ -39,31 +74,40 @@
       "status": "full_confidence"
     },
     {
-      "blockers": [],
+      "blockers": [
+        "ok_false",
+        "alignment_ok_false",
+        "model_test_alignment_evidence_not_passed",
+        "model_test_alignment_execution_evidence_not_current",
+        "full_coverage_ok_false",
+        "release_convergence_ok_false",
+        "subcheck_failed"
+      ],
       "details": {
-        "alignment_ok": true,
+        "alignment_ok": false,
         "claim_scope": "done",
-        "coverage_claim": "release_convergence_deferred_structure_only",
+        "coverage_claim": "blocked",
         "deferred_structure_split_count": 10,
-        "evidence_status": "passed",
-        "execution_evidence_ok": true,
+        "evidence_status": "not_run",
+        "execution_evidence_ok": false,
         "full_coverage_ok": false,
         "full_diagnostic_ok": true,
         "gap_counts": {
-          "needs_structure_split": 10
+          "needs_structure_split": 10,
+          "stale_evidence": 13
         },
-        "gap_surface_count": 10,
-        "release_convergence_ok": true,
-        "subcheck_exit_code": 0,
+        "gap_surface_count": 23,
+        "release_convergence_ok": false,
+        "subcheck_exit_code": 1,
         "subcheck_stderr_path": "tmp/final_confidence_gate/model_test_alignment.err.txt",
         "subcheck_stdout_path": "tmp/final_confidence_gate/model_test_alignment.out.txt",
-        "top_level_ok": true,
-        "unresolved_non_deferred_gap_count": 0
+        "top_level_ok": false,
+        "unresolved_non_deferred_gap_count": 13
       },
       "name": "model_test_alignment",
-      "ok": true,
+      "ok": false,
       "path": "tmp/final_confidence_gate/flowpilot_model_test_alignment_results.json",
-      "status": "release_convergence_with_deferred_structure_splits"
+      "status": "blocked"
     },
     {
       "blockers": [],
@@ -97,7 +141,7 @@
     }
   ],
   "formal_exit_authority": false,
-  "ok": true,
+  "ok": false,
   "result_paths": {
     "control_plane": "tmp/final_confidence_gate/flowpilot_control_plane_friction_results.json",
     "event_idempotency": "tmp/final_confidence_gate/flowpilot_event_idempotency_results.json",
@@ -140,11 +184,11 @@
         "--json-out",
         "tmp\\final_confidence_gate\\flowpilot_model_test_alignment_results.json",
         "--evidence-manifest",
-        "simulations\\flowpilot_acceptance_testmesh_evidence_manifest.json",
+        "simulations/flowpilot_acceptance_testmesh_evidence_manifest.json",
         "--evidence-scope",
         "done"
       ],
-      "exit_code": 0,
+      "exit_code": 1,
       "json_path": "tmp/final_confidence_gate/flowpilot_model_test_alignment_results.json",
       "name": "model_test_alignment",
       "stderr_path": "tmp/final_confidence_gate/model_test_alignment.err.txt",
@@ -164,6 +208,6 @@
       "stdout_path": "tmp/final_confidence_gate/known_friction.out.txt"
     }
   ],
-  "summary": "REPOSITORY_ONLY: repository evidence is current; terminal-return authority was scoped out",
+  "summary": "BLOCKED: 1 required evidence source(s) are not full confidence",
   "terminal_return_required": false
 }

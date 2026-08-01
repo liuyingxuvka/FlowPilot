@@ -134,7 +134,11 @@ REVIEW_FLOW_STAGE_CHALLENGE_BINDINGS = {
         "stage_focus": "route planning",
         "challenge_rule": (
             "Challenge route depth, order, producer-before-consumer direction, under/over-decomposition, "
-            "owned proof paths, and thin-success risks before activation. Name the weakest route proof "
+            "owned proof paths, and thin-success risks before activation. The nearest top-level nodes must "
+            "be execution-ready, while farther nodes may remain progressively coarser but explicit and "
+            "goal-connected. Reject one top-level mega-root that postpones useful decomposition until "
+            "execution, and reject mechanical top-level micro-gates without independent phase outcomes, "
+            "evidence, authority, failure isolation, or user-visible milestone value. Name the weakest route proof "
             "boundary, test a route-failure hypothesis, and give PM a concrete route repair, merge/split "
             "suggestion, or no-action rationale."
         ),
@@ -199,7 +203,8 @@ REVIEW_FLOW_STAGE_CHALLENGE_BINDINGS = {
             "but explicit and goal-connected. A nested child disposition does not require this global "
             "milestone audit. Review each submitted top-level node at the granularity needed to execute "
             "the renewed route: reject a single vague mega-parent that hides the real next frontier, and "
-            "reject a leaf-only list that does not preserve the final-goal path. Name the weakest "
+            "reject mechanical top-level micro-gates that add handoffs without independent phase outcomes; "
+            "also reject a leaf-only list that does not preserve the final-goal path. Name the weakest "
             "FlowGuard-absorption or plan-renewal evidence, test a "
             "PM-absorption or goal-continuity failure hypothesis, and give PM a concrete audit repair, "
             "route rework, or no-action rationale."

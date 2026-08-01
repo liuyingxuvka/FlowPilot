@@ -64,11 +64,69 @@ INTEGRATION_COMMANDS = (
         description="Local installed-skill freshness and source sync audit.",
     ),
     TierCommand(
+        name="unified_repair_native_runtime_conformance",
+        command=_py(
+            "simulations/run_flowpilot_unified_repair_native_runtime_conformance.py",
+            "--json-out",
+            "simulations/flowpilot_unified_repair_native_runtime_conformance_results.json",
+        ),
+        description="Current direct production-runtime evidence for the unified repair model.",
+        long_running=True,
+        background_recommended=True,
+        background_stage=4,
+    ),
+    TierCommand(
+        name="unified_repair_exact_native_test_owner",
+        command=_py(
+            "simulations/run_flowpilot_unified_repair_exact_native_test_owner.py",
+            "--json-out",
+            "simulations/flowpilot_unified_repair_exact_native_test_owner_results.json",
+        ),
+        description="Frozen exact native-test evidence for the unified repair model.",
+        long_running=True,
+        background_recommended=True,
+        background_stage=4,
+    ),
+    TierCommand(
+        name="unified_repair_native_evidence_manifest",
+        command=_py(
+            "simulations/build_flowpilot_unified_repair_native_evidence_manifest.py",
+            "--runtime-owner-result",
+            "simulations/flowpilot_unified_repair_native_runtime_conformance_results.json",
+            "--exact-test-owner-result",
+            "simulations/flowpilot_unified_repair_exact_native_test_owner_results.json",
+            "--json-out",
+            "simulations/flowpilot_unified_repair_native_evidence_manifest.json",
+        ),
+        description="Read-only assembly of the two current unified-repair native receipts.",
+        background_recommended=True,
+        background_stage=5,
+    ),
+    TierCommand(
+        name="unified_repair_integrity",
+        command=_py(
+            "simulations/run_flowpilot_unified_repair_integrity_checks.py",
+            "--evidence-manifest",
+            "simulations/flowpilot_unified_repair_native_evidence_manifest.json",
+            "--json-out",
+            "simulations/flowpilot_unified_repair_integrity_results.json",
+        ),
+        description="Current unified repair model consuming the exact native receipts.",
+        long_running=True,
+        background_recommended=True,
+        background_stage=6,
+    ),
+    TierCommand(
         name="smoke_flowpilot_fast",
         command=_py("scripts/smoke_flowpilot.py", "--fast"),
         description="Smoke checks with reusable thin-parent slow-model proofs.",
         long_running=True,
         background_recommended=True,
+        # The smoke aggregate reads and refreshes canonical model results. Run
+        # it only after ordinary writers, topology/install gates, the CLI
+        # entrypoint checks, and the current unified-repair evidence chain have
+        # reached terminal state.
+        background_stage=7,
     ),
     TierCommand(
         name="flowguard_coverage_sweep",

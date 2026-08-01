@@ -30054,6 +30054,67 @@ Evidence supports the local repository and installed FlowPilot skill for the mat
 - Rerun affected FlowGuard model checks and focused tests before broad confidence.
 
 
+## flowpilot-milestone-renewal-evidence-model-miss - Current unified-repair owner closure
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: a frozen all-tier run exposed that smoke consumed a stale
+  unified-repair result, and the newly scheduled native owner then rejected
+  the terminal repair scenario under the current milestone-renewal contract
+- Status: completed for the affected evidence family; broad release evidence
+  remains owned by the final frozen validation sequence
+- Skill decision: used FlowGuard Existing Model Preflight, Model Miss Review,
+  ModelMesh reattachment, TestMesh staging, and DevelopmentProcessFlow
+- Date: 2026-08-01
+
+### Miss Classification And Backpropagation
+- Behavior plane: validation and evidence process.
+- Primary owner: `native.unified_repair.runtime_conformance`, scenario
+  `terminal_worker_chain`.
+- Miss type: `evidence_overclaimed` with an evidence-owner
+  `code_boundary_mismatch`; the product runtime correctly enforced the
+  current contract.
+- Previous claim: the checked-in unified-repair parent result appeared green.
+- Observed failure: a current native execution reported
+  `terminal repair PM disposition was not accepted` and left three unified
+  obligations uncovered.
+- Supported cause: the all-tier plan did not execute the two native producers,
+  their manifest builder, or the unified parent before smoke. Once executed,
+  the terminal scenario was shown to copy runtime-owned `contract_hash` and
+  completed-row `evidence_refs` into PM semantic prose.
+- Would have failed if: the prior all-tier had scheduled the existing native
+  evidence chain before ModelMesh and smoke instead of reusing the historical
+  result file.
+
+### Generalized Case And Owner Repair
+- The existing milestone contract already rejects both same-class machine
+  fields and its generated minimal shape omits them. Those contract-exhaustion
+  cases remain the canonical same-family boundary.
+- The native scenario now submits only PM-owned completed-prefix `node_id` and
+  `outcome` rows. Runtime remains the only owner that binds the contract hash
+  and exact evidence refs into staged commit material.
+- An analogous search found no second positive native scenario that copied
+  those fields. The remaining test occurrences are deliberate known-bad
+  rejection cases.
+- Old-field disposition: blocked as PM input and retained only as
+  runtime-owned commit material. No compatibility reader, alias, fallback, or
+  dual authority was added.
+
+### Closure Evidence
+- PASS: current native unified-repair runtime owner; 9 scenarios and all 13
+  declared unified-repair obligations passed.
+- PASS: milestone contract and machine-owned-field rejection regression; 8
+  tests and 2 subtests passed.
+- PASS: exact eight-file native-test owner from the unchanged product/test
+  snapshot; 303 tests and 201 subtests passed.
+- PASS: native evidence manifest, unified-repair integrity parent, ModelMesh
+  reattachment through fast smoke, and thin-parent checks; 11 thin-parent
+  tests passed.
+- Claim boundary: this closes the affected evidence-owner mismatch and its
+  same-class PM/runtime field boundary. It does not substitute for the final
+  all-tier, release, adversarial, closure, SkillGuard, installation, Git, tag,
+  or publication receipts.
+
+
 ## flowpilot-complete-workstream-focused-fixpoint - Current-contract FlowPilot orchestration upgrade focused fixpoint
 
 > Historical pre-global-route-smoke milestone. The later native-binding
@@ -30408,6 +30469,220 @@ Evidence supports the local repository and installed FlowPilot skill for the mat
 
 ### Skipped Steps
 - Project adoption does not replace executable model checks, tests, replay, or closure evidence.
+
+### Risk Evidence Summary
+- none recorded
+
+### Next Actions
+- python -m flowguard project-audit --root . --json
+- Rerun affected FlowGuard model checks and focused tests before broad confidence.
+
+
+## flowguard-project-upgrade - FlowGuard project upgrade record update
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: target project requires current semantic adoption and version records
+- Status: blocked
+- Skill decision: used_flowguard
+- Started: 2026-07-31T06:26:35+00:00
+- Ended: 2026-07-31T06:26:35+00:00
+- Duration seconds: 0.000
+- Commands OK: False
+
+### Model Files
+- none recorded
+
+### Commands
+- OK (0.000s): `managed adoption rule-set preflight` - generated block contains every required stable rule
+- OK (0.000s): `package-authority/global-consumer validation` - pass
+- FAIL (0.000s): `post-write project adoption audit` - semantic and version parity after write
+
+### Findings
+- model_authority_invalid: The project model-authority pointer or snapshot is invalid.
+- artifact_upgrade_scan_scoped_out: Artifact/model/test upgrade scanning was scoped out by records-only mode.
+- adoption_record_written: FlowGuard project AGENTS block and manifest were written or refreshed.
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- Project adoption does not replace executable model checks, tests, replay, or closure evidence.
+- Artifact/model/test upgrade scanning was scoped out by records-only mode.
+
+### Risk Evidence Summary
+- none recorded
+
+### Next Actions
+- python -m flowguard project-audit --root . --json
+- Rerun affected FlowGuard model checks and focused tests before broad confidence.
+## flowpilot-top-level-milestone-plan-renewal - Mandatory route renewal after every top-level milestone
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: long-running AI work must turn every completed major
+  milestone into fresh planning evidence instead of continuing an old
+  unfinished suffix automatically
+- Status: partial / model_authority_blocked
+- Skill decision: used OpenSpec, FlowGuard existing-model preflight,
+  DevelopmentProcessFlow, ArchitectureReduction, Behavior Commitment Ledger,
+  and SkillGuard
+- Started: 2026-07-31
+- Ended: 2026-07-31T08:13:00Z
+
+### Model Files
+- `simulations/flowpilot_route_replanning_policy_model.py`
+- `simulations/flowpilot_recursive_route_execution_model.py`
+- `simulations/flowpilot_route_mutation_activation_model.py`
+- `simulations/flowpilot_resume_model.py`
+- `.flowguard/behavior_commitment_ledger/ledger.json`
+
+### Commands
+- PASS: route-replanning policy, recursive route execution, route mutation,
+  resume, and card-instruction model runners.
+- PASS: 179 core-runtime tests and 28 lifecycle tests.
+- PASS: 218 supporting runtime, packet, role-output, recursive,
+  high-standard, card, and PPA tests.
+- PASS: strict OpenSpec validation, project topology build/check, repository
+  install check, and local consumer parity audit.
+- PASS: one frozen SkillGuard supervision run
+  `run-aca37fad83ccca3e0ddd`, including all eight declared checks, execution
+  depth, closure `closure-86e99156ba008a5e1f61c35b`, and current replay.
+- PASS: transactional consumer installation
+  `target-install-41836d3d6afb4da5a876c12bdc75c4aa`; installed release
+  `7D1E42F89A311DD5E77650EB78AD0A80215AE520E04DC270FD2D91F95A9AD0BF`
+  and installed runtime self-check are current.
+- BLOCKED: contract-exhaustion evidence tests remain 20/22; seven directly
+  related evidence-consumer tests remain 4/7.
+
+### Findings
+- Every top-level node (`parent_node_id == ""`) now enters one mandatory
+  milestone audit and complete remaining-plan renewal before frontier advance.
+- An unchanged plan is accepted only as a fresh justified submission. A
+  changed plan preserves the accepted prefix and replaces only unfinished
+  work. An empty plan is terminal-only.
+- The staged candidate now passes FlowGuard, PM absorption, independent
+  Reviewer challenge, system validation, and one atomic commit. Recovery
+  re-exposes the exact missing gate instead of continuing the old route.
+- Nested child acceptance stays local. `node_acceptance_plan` remains the
+  distinct pre-execution node contract and was not aliased to route renewal.
+- No risk levels, feature flag, experiment, compatibility reader, or fallback
+  continuation were introduced.
+
+### Counterexamples
+- Independent review found that failed application could leave a false closed
+  system record, evidence IDs were not exact-bound, old suffix leases could
+  remain active, and accepted-prefix packets could be discarded. The runtime
+  now rejects or atomically repairs each case.
+- Terminal-repair replay exposed lost repair-chain identity through the new PM
+  absorption packet. The exact identity now propagates through PM acceptance,
+  Reviewer, validation, and closure.
+- The former official minimal remaining-plan shape could enter the gate but
+  could never close. Its generic node now uses a genuinely satisfiable empty
+  check list while the semantic gate still rejects uncovered real
+  obligations.
+
+### Friction Points
+- The repository's FlowGuard 0.66 model-authority pointer/snapshot remains
+  invalid.
+- Historical evidence helpers still emit an older TestResultReuseTicket shape
+  without producer receipt, terminal-pass, execution-owner, and verifier
+  fingerprint bindings. Acceptance TestMesh coverage also still uses a former
+  partial inventory rule.
+
+### Skipped Steps
+- The FlowGuard authority/evidence migration was not expanded into this
+  FlowPilot behavior change.
+- No compatibility reader, alias, dual authority, fallback, A/B experiment,
+  release, publication, commit, or push was performed.
+
+### Risk Evidence Summary
+- Feature runtime, recovery, prompt/card, model, SkillGuard, installation, and
+  installed-smoke evidence are current.
+- Broad project model/PPA/TestMesh confidence remains blocked until the
+  explicit FlowGuard 0.66 authority and evidence-ticket migration is completed.
+
+### Next Actions
+- Treat the FlowGuard 0.66 authority/evidence repair as a separate direct
+  current-format maintenance change.
+- Regenerate current PPA, TestMesh, ModelMesh, and Behavior Commitment Ledger
+  evidence only after that authority is repaired.
+
+
+## flowguard-project-upgrade - FlowGuard project upgrade record update
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: target project requires current semantic adoption and version records
+- Status: blocked
+- Skill decision: used_flowguard
+- Started: 2026-07-31T12:28:17+00:00
+- Ended: 2026-07-31T12:28:17+00:00
+- Duration seconds: 0.000
+- Commands OK: False
+
+### Model Files
+- none recorded
+
+### Commands
+- OK (0.000s): `managed adoption rule-set preflight` - generated block contains every required stable rule
+- OK (0.000s): `package-authority/global-consumer validation` - pass
+- FAIL (0.000s): `post-write project adoption audit` - semantic and version parity after write
+
+### Findings
+- model_authority_invalid: The project model-authority pointer or snapshot is invalid.
+- adoption_record_written: FlowGuard project AGENTS block and manifest were written or refreshed.
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- Project adoption does not replace executable model checks, tests, replay, or closure evidence.
+
+### Risk Evidence Summary
+- none recorded
+
+### Next Actions
+- python -m flowguard project-audit --root . --json
+- Rerun affected FlowGuard model checks and focused tests before broad confidence.
+
+
+## flowguard-project-upgrade - FlowGuard project upgrade record update
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: target project requires current semantic adoption and version records
+- Status: blocked
+- Skill decision: used_flowguard
+- Started: 2026-08-01T02:15:14+00:00
+- Ended: 2026-08-01T02:15:14+00:00
+- Duration seconds: 0.000
+- Commands OK: False
+
+### Model Files
+- none recorded
+
+### Commands
+- OK (0.000s): `managed adoption rule-set preflight` - generated block contains every required stable rule
+- OK (0.000s): `package-authority/global-consumer validation` - pass
+- FAIL (0.000s): `post-write project adoption audit` - semantic and version parity after write
+
+### Findings
+- model_authority_invalid: The project model-authority pointer or snapshot is invalid.
+- artifact_upgrade_scan_scoped_out: Artifact/model/test upgrade scanning was scoped out by records-only mode.
+- adoption_record_written: FlowGuard project AGENTS block and manifest were written or refreshed.
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- Project adoption does not replace executable model checks, tests, replay, or closure evidence.
+- Artifact/model/test upgrade scanning was scoped out by records-only mode.
 
 ### Risk Evidence Summary
 - none recorded

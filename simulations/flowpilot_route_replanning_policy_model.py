@@ -74,6 +74,9 @@ MILESTONE_FLOWGUARD_BYPASSED = "milestone_flowguard_bypassed"
 MILESTONE_PM_ABSORPTION_BYPASSED = "milestone_pm_absorption_bypassed"
 MILESTONE_REVIEWER_BYPASSED = "milestone_reviewer_bypassed"
 MILESTONE_SYSTEM_VALIDATION_BYPASSED = "milestone_system_validation_bypassed"
+MILESTONE_LOWEST_ACCEPTANCE_BYPASSED_GATE = "milestone_lowest_acceptance_bypassed_gate"
+TERMINAL_EMPTY_PLAN_BYPASSED_CHALLENGE = "terminal_empty_plan_bypassed_challenge"
+MILESTONE_CURRENTNESS_RECOVERY_USED_TEXT_MATCH = "milestone_currentness_recovery_used_text_match"
 UNCHANGED_PLAN_BUMPED_ROUTE_VERSION = "unchanged_plan_bumped_route_version"
 CHANGED_PLAN_KEPT_OLD_ROUTE_VERSION = "changed_plan_kept_old_route_version"
 CHANGED_PLAN_LOST_COMPLETED_PREFIX = "changed_plan_lost_completed_prefix"
@@ -128,6 +131,9 @@ NEGATIVE_SCENARIOS = (
     MILESTONE_PM_ABSORPTION_BYPASSED,
     MILESTONE_REVIEWER_BYPASSED,
     MILESTONE_SYSTEM_VALIDATION_BYPASSED,
+    MILESTONE_LOWEST_ACCEPTANCE_BYPASSED_GATE,
+    TERMINAL_EMPTY_PLAN_BYPASSED_CHALLENGE,
+    MILESTONE_CURRENTNESS_RECOVERY_USED_TEXT_MATCH,
     UNCHANGED_PLAN_BUMPED_ROUTE_VERSION,
     CHANGED_PLAN_KEPT_OLD_ROUTE_VERSION,
     CHANGED_PLAN_LOST_COMPLETED_PREFIX,
@@ -214,6 +220,8 @@ class State:
     milestone_reviewer_approved: bool = False
     milestone_reviewer_blocked: bool = False
     milestone_system_validation_passed: bool = False
+    milestone_commit_owned_by_current_gate: bool = False
+    typed_currentness_recovery_only: bool = False
     route_version_changed: bool = False
     completed_prefix_preserved: bool = True
     empty_remaining_plan: bool = False
@@ -259,6 +267,8 @@ class RouteReplanningPolicyStep:
         "completed_prefix_bound",
         "remaining_owner_nodes_bound",
         "checker_identities_independent",
+        "milestone_commit_owned_by_current_gate",
+        "typed_currentness_recovery_only",
     )
     writes = ("terminal_route_policy_decision",)
     idempotency = "monotonic route policy evaluation"
@@ -477,6 +487,8 @@ def _valid_milestone_unchanged_plan_renewal() -> State:
         milestone_pm_absorbed_flowguard=True,
         milestone_reviewer_approved=True,
         milestone_system_validation_passed=True,
+        milestone_commit_owned_by_current_gate=True,
+        typed_currentness_recovery_only=True,
         route_version_changed=False,
         completed_prefix_preserved=True,
         empty_remaining_plan=False,
@@ -727,6 +739,24 @@ def _scenario_state(scenario: str) -> State:
             scenario=scenario,
             milestone_system_validation_passed=False,
         )
+    if scenario == MILESTONE_LOWEST_ACCEPTANCE_BYPASSED_GATE:
+        return replace(
+            _valid_milestone_unchanged_plan_renewal(),
+            scenario=scenario,
+            milestone_commit_owned_by_current_gate=False,
+        )
+    if scenario == TERMINAL_EMPTY_PLAN_BYPASSED_CHALLENGE:
+        return replace(
+            _valid_terminal_empty_plan_renewal(),
+            scenario=scenario,
+            milestone_pm_absorbed_flowguard=False,
+        )
+    if scenario == MILESTONE_CURRENTNESS_RECOVERY_USED_TEXT_MATCH:
+        return replace(
+            _valid_milestone_unchanged_plan_renewal(),
+            scenario=scenario,
+            typed_currentness_recovery_only=False,
+        )
     if scenario == UNCHANGED_PLAN_BUMPED_ROUTE_VERSION:
         return replace(
             _valid_milestone_unchanged_plan_renewal(),
@@ -922,6 +952,10 @@ def policy_failures(state: State) -> list[str]:
             failures.append("top-level milestone renewal bypassed independent Reviewer approval")
         if not state.milestone_system_validation_passed:
             failures.append("top-level milestone renewal bypassed system validation")
+        if not state.milestone_commit_owned_by_current_gate:
+            failures.append("top-level milestone acceptance bypassed the current staged gate commit owner")
+        if not state.typed_currentness_recovery_only:
+            failures.append("top-level milestone recovery relied on error text instead of typed currentness drift")
     if (
         state.phase == "milestone_renewal"
         and state.top_level_milestone

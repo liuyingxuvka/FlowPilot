@@ -60,6 +60,10 @@ NODE_PLAN_MISSING_PROJECTION = "node_plan_missing_projection"
 WORK_PACKET_MISSING_PROJECTION = "work_packet_missing_projection"
 REVIEWER_PASSES_HARD_BLINDSPOT = "reviewer_passes_hard_blindspot"
 OVERMERGED_COMPLEX_IMPLEMENTATION_NODE = "overmerged_complex_implementation_node"
+INITIAL_ROUTE_MEGA_ROOT = "initial_route_mega_root"
+INITIAL_ROUTE_MICRO_GATE_BLOAT = "initial_route_micro_gate_bloat"
+INITIAL_ROUTE_NEAR_TERM_VAGUE = "initial_route_near_term_vague"
+INITIAL_ROUTE_FAR_ROUTE_OVERDETAILED = "initial_route_far_route_overdetailed"
 ARTIFACTLESS_MAJOR_NODE = "artifactless_major_node"
 SIMPLE_TASK_OVERTEMPLATED = "simple_task_overtemplated"
 PRODUCT_MODEL_MISSING = "product_model_missing"
@@ -141,6 +145,10 @@ NEGATIVE_SCENARIOS = (
     WORK_PACKET_MISSING_PROJECTION,
     REVIEWER_PASSES_HARD_BLINDSPOT,
     OVERMERGED_COMPLEX_IMPLEMENTATION_NODE,
+    INITIAL_ROUTE_MEGA_ROOT,
+    INITIAL_ROUTE_MICRO_GATE_BLOAT,
+    INITIAL_ROUTE_NEAR_TERM_VAGUE,
+    INITIAL_ROUTE_FAR_ROUTE_OVERDETAILED,
     ARTIFACTLESS_MAJOR_NODE,
     SIMPLE_TASK_OVERTEMPLATED,
     PRODUCT_MODEL_MISSING,
@@ -266,6 +274,10 @@ class State:
     required_convergence_loop_planned: bool = False
     route_nodes_have_stage_artifacts: bool = False
     major_node_overmerged: bool = False
+    top_level_route_is_single_mega_root: bool = False
+    top_level_route_is_micro_gate_sequence: bool = False
+    near_term_nodes_execution_ready: bool = False
+    farther_route_progressively_coarse: bool = False
     product_behavior_model_written: bool = False
     product_model_risk_boundary_checked: bool = False
     pm_implementation_intent_written: bool = False
@@ -440,6 +452,8 @@ def _valid_ui_state() -> State:
         route_complexity_matches_profile=True,
         required_convergence_loop_planned=True,
         route_nodes_have_stage_artifacts=True,
+        near_term_nodes_execution_ready=True,
+        farther_route_progressively_coarse=True,
         product_behavior_model_written=True,
         product_model_risk_boundary_checked=True,
         pm_implementation_intent_written=True,
@@ -578,6 +592,14 @@ def _scenario_state(scenario: str) -> State:
         )
     if scenario == OVERMERGED_COMPLEX_IMPLEMENTATION_NODE:
         return replace(state, major_node_overmerged=True, route_complexity_matches_profile=False)
+    if scenario == INITIAL_ROUTE_MEGA_ROOT:
+        return replace(state, top_level_route_is_single_mega_root=True)
+    if scenario == INITIAL_ROUTE_MICRO_GATE_BLOAT:
+        return replace(state, top_level_route_is_micro_gate_sequence=True)
+    if scenario == INITIAL_ROUTE_NEAR_TERM_VAGUE:
+        return replace(state, near_term_nodes_execution_ready=False)
+    if scenario == INITIAL_ROUTE_FAR_ROUTE_OVERDETAILED:
+        return replace(state, farther_route_progressively_coarse=False)
     if scenario == ARTIFACTLESS_MAJOR_NODE:
         return replace(state, route_nodes_have_stage_artifacts=False)
     if scenario == SIMPLE_TASK_OVERTEMPLATED:
@@ -900,6 +922,14 @@ def planning_failures(state: State) -> list[str]:
         failures.append("interactive UI route lacks required convergence loop")
     if complex_task and state.major_node_overmerged:
         failures.append("complex implementation work was overmerged into one unverifiable node")
+    if complex_task and state.top_level_route_is_single_mega_root:
+        failures.append("initial route collapsed the project into one top-level mega-root that defers useful decomposition")
+    if complex_task and state.top_level_route_is_micro_gate_sequence:
+        failures.append("initial route expanded mechanical handoffs into top-level micro-gates without independent outcomes")
+    if complex_task and not state.near_term_nodes_execution_ready:
+        failures.append("initial route leaves the nearest nodes too vague to execute and verify")
+    if complex_task and not state.farther_route_progressively_coarse:
+        failures.append("initial route over-specifies distant work instead of preserving proportionate uncertainty")
     if complex_task and not state.route_nodes_have_stage_artifacts:
         failures.append("major route node lacks a concrete acceptance artifact")
     if complex_task and not (

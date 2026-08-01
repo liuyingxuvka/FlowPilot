@@ -140,7 +140,7 @@ class FlowPilotSkillGuardDeepContractTests(unittest.TestCase):
                 "route:flowpilot-independent-closure",
             },
         )
-        self.assertEqual(len(exported["obligations"]), 12)
+        self.assertEqual(len(exported["obligations"]), 16)
         self.assertEqual(module.main(), 0)
 
     def test_every_required_model_obligation_has_a_check_and_monotonic_closure(self) -> None:
@@ -195,9 +195,25 @@ class FlowPilotSkillGuardDeepContractTests(unittest.TestCase):
         self.assertNotIn("--resume", check["args"])
         self.assertTrue(
             any(
-                str(value).endswith("/v0.13.0-final-v5-r3")
+                str(value).endswith("/v0.14.0-milestone-renewal-final")
                 for value in check["args"]
             )
+        )
+
+    def test_final_receipt_owns_milestone_renewal_current_evidence_closure(self) -> None:
+        check = next(
+            row
+            for row in self.contract["checks"]
+            if row["check_id"] == "check:flowpilot-final-receipt"
+        )
+        self.assertTrue(
+            {
+                "obligation:flowpilot-milestone-renewal-model",
+                "obligation:flowpilot-milestone-renewal-conformance",
+                "obligation:flowpilot-milestone-renewal-affected-tests",
+                "obligation:flowpilot-milestone-renewal-evidence-closure",
+            }
+            <= set(check["covers_obligation_ids"])
         )
 
     def test_focused_flowguard_runner_closes_scenarios_progress_and_refinement(self) -> None:

@@ -34,6 +34,7 @@ RELEVANT_TEST_PATHS = (
     REPO_ROOT / "tests" / "test_flowpilot_user_flow_diagram.py",
     REPO_ROOT / "tests" / "test_flowpilot_unified_repair_runtime.py",
     REPO_ROOT / "tests" / "test_flowpilot_milestone_plan_renewal_contracts.py",
+    REPO_ROOT / "tests" / "test_flowpilot_recursive_route_execution_runtime.py",
 )
 
 
@@ -90,6 +91,7 @@ HAZARD_EXPECTED_FAILURES = {
     "changed_suffix_keeps_old_pending_member_effective": "changed remaining plan did not supersede the entire old pending suffix",
     "changed_suffix_keeps_old_pending_packets_current": "changed remaining plan rechecked before old pending suffix packets were invalidated",
     "changed_suffix_keeps_old_pending_evidence_current": "changed remaining plan kept old pending suffix evidence current",
+    "changed_suffix_keeps_old_pending_blocker_active": "changed remaining plan rechecked before old pending suffix blockers were retired",
 }
 
 
@@ -113,6 +115,7 @@ def _state_id(state: model.State) -> str:
         f"old_suffix:{state.prior_pending_suffix_node_ids},new_suffix:{state.candidate_remaining_suffix_node_ids},"
         f"old_suffix_packets_invalid:{state.old_pending_suffix_packets_invalidated},"
         f"old_suffix_evidence_invalid:{state.old_pending_suffix_evidence_invalidated},"
+        f"old_suffix_blockers_retired:{state.old_pending_suffix_open_blockers_retired},"
         f"prefix_packets_untouched:{state.completed_prefix_packets_untouched},"
         f"rebound:{state.unaffected_siblings_rebound},versions:{state.active_route_version}/"
         f"{state.candidate_route_version}:{state.after_member_route_versions},"
@@ -320,6 +323,11 @@ def _production_conformance_report() -> dict[str, object]:
             "test_milestone_profile_projects_complete_dynamic_contract_and_shape" in milestone_contract_tests
             and "milestone_audit" in milestone_contract_tests
             and "remaining_route_plan" in milestone_contract_tests
+        ),
+        "milestone_changed_suffix_retires_open_blocker_behavior_test": (
+            "test_changed_milestone_plan_retires_open_suffix_blocker" in test_texts[
+                "tests/test_flowpilot_recursive_route_execution_runtime.py"
+            ]
         ),
     }
     missing = [name for name, covered in obligations.items() if not covered]

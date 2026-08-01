@@ -5,7 +5,7 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=3 initial_states=1 traces=276",
+    "summary": "sequences=3 initial_states=1 traces=318",
     "violation_count": 0
   },
   "hazard_checks": {
@@ -74,6 +74,13 @@
           "top-level milestone renewal lacks a complete route to the final goal"
         ]
       },
+      "milestone_audit_contract_hash_missing": {
+        "detected": true,
+        "expected_failure": "top-level milestone renewal is not bound to the frozen final-goal contract",
+        "failures": [
+          "top-level milestone renewal is not bound to the frozen final-goal contract"
+        ]
+      },
       "milestone_audit_missing": {
         "detected": true,
         "expected_failure": "top-level milestone renewal lacks a complete current audit",
@@ -81,11 +88,39 @@
           "top-level milestone renewal lacks a complete current audit"
         ]
       },
+      "milestone_checker_identity_reused": {
+        "detected": true,
+        "expected_failure": "top-level milestone renewal reuses a checker identity for required evidence",
+        "failures": [
+          "top-level milestone renewal reuses a checker identity for required evidence"
+        ]
+      },
+      "milestone_completed_prefix_unbound": {
+        "detected": true,
+        "expected_failure": "top-level milestone renewal does not bind the cumulative completed prefix",
+        "failures": [
+          "top-level milestone renewal does not bind the cumulative completed prefix"
+        ]
+      },
+      "milestone_currentness_recovery_used_text_match": {
+        "detected": true,
+        "expected_failure": "top-level milestone recovery relied on error text instead of typed currentness drift",
+        "failures": [
+          "top-level milestone recovery relied on error text instead of typed currentness drift"
+        ]
+      },
       "milestone_flowguard_bypassed": {
         "detected": true,
         "expected_failure": "top-level milestone renewal bypassed current FlowGuard review",
         "failures": [
           "top-level milestone renewal bypassed current FlowGuard review"
+        ]
+      },
+      "milestone_lowest_acceptance_bypassed_gate": {
+        "detected": true,
+        "expected_failure": "top-level milestone acceptance bypassed the current staged gate commit owner",
+        "failures": [
+          "top-level milestone acceptance bypassed the current staged gate commit owner"
         ]
       },
       "milestone_pm_absorption_bypassed": {
@@ -100,6 +135,13 @@
         "expected_failure": "top-level milestone renewal leaves a remaining hard obligation without an owner",
         "failures": [
           "top-level milestone renewal leaves a remaining hard obligation without an owner"
+        ]
+      },
+      "milestone_remaining_owner_node_unbound": {
+        "detected": true,
+        "expected_failure": "top-level milestone renewal leaves a remaining gap without a submitted owner node",
+        "failures": [
+          "top-level milestone renewal leaves a remaining gap without a submitted owner node"
         ]
       },
       "milestone_remaining_plan_incomplete": {
@@ -259,6 +301,13 @@
           "route structure change lacks route-scope FlowGuard check"
         ]
       },
+      "terminal_empty_plan_bypassed_challenge": {
+        "detected": true,
+        "expected_failure": "top-level milestone renewal bypassed PM absorption of FlowGuard",
+        "failures": [
+          "top-level milestone renewal bypassed PM absorption of FlowGuard"
+        ]
+      },
       "unchanged_plan_bumped_route_version": {
         "detected": true,
         "expected_failure": "unchanged remaining plan created a gratuitous route version",
@@ -292,11 +341,11 @@
       "valid_review_failure_repair",
       "valid_terminal_empty_plan_renewal"
     ],
-    "edge_count": 92,
+    "edge_count": 106,
     "invariant_failures": [],
     "missing_labels": [],
     "ok": true,
-    "rejected_state_count": 33,
-    "state_count": 93
+    "rejected_state_count": 40,
+    "state_count": 107
   }
 }

@@ -176,6 +176,7 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
                 "packet/card/ack",
                 "packet result family",
                 "route mutation",
+                "top-level milestone renewal",
                 "unified historical and terminal repair integrity",
                 "field lifecycle currentness",
                 "current-node trunk invariant",

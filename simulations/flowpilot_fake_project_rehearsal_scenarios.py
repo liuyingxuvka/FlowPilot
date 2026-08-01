@@ -24,6 +24,7 @@ try:  # pragma: no cover
         reset_scenario_root,
         run_cli,
         run_raw_cli,
+        seed_current_recursive_route,
         start_rehearsal,
         status_projection,
         write_flowguard_evidence_artifact_for_packet,
@@ -44,6 +45,7 @@ except ImportError:  # pragma: no cover
         reset_scenario_root,
         run_cli,
         run_raw_cli,
+        seed_current_recursive_route,
         start_rehearsal,
         status_projection,
         write_flowguard_evidence_artifact_for_packet,
@@ -158,6 +160,166 @@ def scenario_route_mutation_recovery(work_root: Path) -> dict[str, Any]:
             "terminal": chain["terminal_action"].get("action_type"),
             "superseded_node_ids": [node.get("node_id") for node in superseded],
             "accepted_route_nodes": [node.get("node_id") for node in accepted],
+        },
+        "commands": command_log,
+    }
+
+
+def scenario_milestone_changed_suffix(work_root: Path) -> dict[str, Any]:
+    command_log: list[dict[str, Any]] = []
+    root = reset_scenario_root(work_root, "milestone_changed_suffix")
+    seed_current_recursive_route(
+        root,
+        run_id="run-milestone-changed-suffix",
+        node_count=2,
+    )
+    start_payload = run_cli(root, command_log, "status")
+    chain = complete_full_packet_chain(
+        root,
+        command_log,
+        start_payload,
+        change_first_milestone_suffix=True,
+        min_accepted_route_nodes=2,
+        route_node_count=2,
+    )
+    projection = status_projection(root, command_log)
+    superseded_ids = [
+        str(node.get("node_id") or "")
+        for node in projection.get("route_nodes", [])
+        if node.get("status") == "superseded"
+    ]
+    accepted_ids = [
+        str(node.get("node_id") or "")
+        for node in projection.get("route_nodes", [])
+        if node.get("status") == "accepted"
+    ]
+    ensure(
+        {"node-002"}.issubset(superseded_ids),
+        f"changed milestone suffix did not supersede the old unfinished nodes: {superseded_ids}",
+    )
+    ensure(
+        {"node-002-renewed"}.issubset(accepted_ids),
+        f"changed milestone suffix did not accept fresh replacement identities: {accepted_ids}",
+    )
+    ensure(
+        "node-001" in accepted_ids,
+        f"changed milestone suffix lost the accepted prefix: {accepted_ids}",
+    )
+    return {
+        "name": "milestone_changed_suffix",
+        "ok": True,
+        "root": str(root),
+        "observations": {
+            "terminal": chain["terminal_action"].get("action_type"),
+            "superseded_unfinished_nodes": superseded_ids,
+            "accepted_prefix_and_replacements": accepted_ids,
+        },
+        "commands": command_log,
+    }
+
+
+def scenario_milestone_nested_child(work_root: Path) -> dict[str, Any]:
+    command_log: list[dict[str, Any]] = []
+    root = reset_scenario_root(work_root, "milestone_nested_child")
+    seed_current_recursive_route(
+        root,
+        run_id="run-milestone-nested-child",
+        route_shape="nested",
+        node_count=2,
+    )
+    start_payload = run_cli(root, command_log, "status")
+    chain = complete_full_packet_chain(
+        root,
+        command_log,
+        start_payload,
+        route_shape="nested",
+        min_accepted_route_nodes=2,
+        stop_after_nested_child_accept=True,
+    )
+    dispositions = [
+        row
+        for row in chain["completed_packets"]
+        if row.get("packet_kind") == "pm_disposition"
+    ]
+    child_rows = [
+        row for row in dispositions if row.get("route_node_id") == "node-child"
+    ]
+    ensure(
+        child_rows
+        and all(
+            row.get("milestone_plan_renewal_required") is False
+            for row in child_rows
+        ),
+        f"nested child incorrectly entered the global milestone gate: {child_rows}",
+    )
+    return {
+        "name": "milestone_nested_child",
+        "ok": True,
+        "root": str(root),
+        "observations": {
+            "nested_child_global_gate_count": sum(
+                1
+                for row in child_rows
+                if row.get("milestone_plan_renewal_required") is True
+            ),
+            "next_action_after_local_acceptance": chain["next_action"].get(
+                "action_type"
+            ),
+            "nested_child_id": chain["nested_child_id"],
+        },
+        "commands": command_log,
+    }
+
+
+def scenario_milestone_unchanged_resume_terminal(work_root: Path) -> dict[str, Any]:
+    command_log: list[dict[str, Any]] = []
+    root = reset_scenario_root(work_root, "milestone_unchanged_resume_terminal")
+    seed_current_recursive_route(
+        root,
+        run_id="run-milestone-unchanged-resume-terminal",
+        node_count=1,
+    )
+    before_interrupt = run_cli(root, command_log, "status")
+    before_action = before_interrupt.get("next_action") or {}
+    close_cli_worker(root)
+    resumed = run_cli(
+        root,
+        command_log,
+        "resume",
+        "--reason",
+        "milestone_longitudinal_process_restart",
+    )
+    resumed_action = resumed.get("next_action") or {}
+    ensure(
+        resumed_action.get("subject_id") == before_action.get("subject_id"),
+        f"resume did not preserve the exact current packet: before={before_action} after={resumed_action}",
+    )
+    chain = complete_full_packet_chain(
+        root,
+        command_log,
+        resumed,
+        route_node_count=1,
+        min_accepted_route_nodes=1,
+    )
+    milestone_rows = [
+        row
+        for row in chain["completed_packets"]
+        if row.get("packet_kind") == "pm_disposition"
+        and row.get("milestone_plan_renewal_required") is True
+    ]
+    ensure(
+        len(milestone_rows) == 1,
+        f"unchanged longitudinal route did not traverse its hard milestone gate: {milestone_rows}",
+    )
+    return {
+        "name": "milestone_unchanged_resume_terminal",
+        "ok": True,
+        "root": str(root),
+        "observations": {
+            "resume_preserved_subject_id": resumed_action.get("subject_id"),
+            "unchanged_hard_gate_count": len(milestone_rows),
+            "terminal": chain["terminal_action"].get("action_type"),
+            "accepted_route_nodes": chain["accepted_route_nodes"],
         },
         "commands": command_log,
     }

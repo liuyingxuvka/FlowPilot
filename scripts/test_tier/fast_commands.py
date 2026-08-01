@@ -187,6 +187,17 @@ SHADOW_LAUNCHER_CHAOS_REPLAY_SHARDS = (
 
 FAST_COMMANDS = (
     TierCommand(
+        name="flowpilot_milestone_renewal_affected_owner",
+        command=_py(
+            "simulations/run_flowpilot_milestone_renewal_affected_checks.py",
+        ),
+        description=(
+            "Single current producer for the milestone-renewal models, affected ordinary tests, "
+            "public-CLI longitudinal rehearsal, and 10/50/100 lightweight budget."
+        ),
+        background_recommended=True,
+    ),
+    TierCommand(
         name="flowguard_complete_workstream_orchestration",
         command=_py(
             "simulations/run_flowpilot_complete_workstream_orchestration_checks.py",
@@ -428,6 +439,7 @@ FAST_COMMANDS = (
         "project_topology_tests",
         "tests/test_flowguard_project_topology.py",
         description="Focused tests for FlowGuard project topology generation, stale detection, and required layers.",
+        background_stage=1,
     ),
     _pytest(
         "test_tier_runner",
@@ -540,6 +552,10 @@ FAST_COMMANDS = (
         "thin_parent_tests",
         "tests/test_flowpilot_thin_parent_checks.py",
         description="Thin-parent proof and hierarchy helper tests.",
+        # These tests consume the parent proofs refreshed by the aggregate
+        # smoke owner, so they must not observe its in-flight intermediate
+        # results.
+        background_stage=8,
     ),
     _pytest(
         "maintenance_tool_tests",

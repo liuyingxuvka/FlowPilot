@@ -718,8 +718,10 @@ def _scenario_terminal_worker_chain() -> dict[str, Any]:
         ledger["packets"][pm_disposition_packet_id]["body"]
     )
     # A repaired top-level node still crosses the current milestone hard gate.
-    # Reuse the runtime-issued binding and context-only prior plan rather than
-    # fabricating a second route authority for this historical-repair scenario.
+    # Reuse the runtime-issued completed-prefix node identities and semantic
+    # outcomes, but never copy the runtime-owned evidence refs or contract hash
+    # back into PM prose. Runtime binds those fields only when it stages the
+    # accepted milestone commit.
     pm_disposition_payload = {
         "decision": "accept",
         "reason": "PM accepts the fresh Worker, FlowGuard, and Reviewer evidence.",
@@ -734,14 +736,15 @@ def _scenario_terminal_worker_chain() -> dict[str, Any]:
             for item_id in acceptance_item_ids
         ],
         "milestone_audit": {
-            "completed": list(
-                pm_packet_body.get("completed_milestone_bindings") or []
-            ),
-            "contract_hash": str(
-                pm_packet_body.get("contract_hash")
-                or ledger.get("contract_hash")
-                or ""
-            ),
+            "completed": [
+                {
+                    "node_id": str(row.get("node_id") or ""),
+                    "outcome": str(row.get("outcome") or ""),
+                }
+                for row in (
+                    pm_packet_body.get("completed_milestone_bindings") or []
+                )
+            ],
             "deviations": [],
             "remaining": [],
             "prior_plan_assessment": (
@@ -766,7 +769,13 @@ def _scenario_terminal_worker_chain() -> dict[str, Any]:
     )
     _require(
         ledger["results"][pm_disposition_result_id]["status"] == "accepted",
-        "terminal repair PM disposition was not accepted",
+        "terminal repair PM disposition was not accepted: "
+        + str(ledger["results"][pm_disposition_result_id].get("status") or "")
+        + " / "
+        + str(
+            ledger["results"][pm_disposition_result_id].get("blocked_reason")
+            or ""
+        ),
     )
     # The PM disposition above stages the current top-level milestone gate;
     # complete its existing FlowGuard -> PM absorption -> Reviewer chain before

@@ -37,18 +37,23 @@ Every top-level milestone acceptance SHALL include a structured current audit
 that accounts for completed outcomes and evidence, deviations from prior
 expectations, remaining goal gaps, the prior remaining plan's fitness, and the
 rationale for the freshly submitted remaining plan.
-The audit SHALL repeat the frozen final-goal `contract_hash`, identify every
-completed top-level prefix row by `node_id`, and bind each remaining gap to one
-or more submitted remaining-plan `owner_node_ids`.
+The PM-authored audit SHALL identify every completed top-level prefix row by
+`node_id` and bind each remaining gap to one or more submitted remaining-plan
+`owner_node_ids`. The runtime SHALL bind the current frozen final-goal
+`contract_hash` and each completed row's exact current evidence set when it
+stages the commit material; PM SHALL NOT copy those machine-owned fields into
+semantic prose.
 
 #### Scenario: Milestone audit is complete
 - **WHEN** PM submits a top-level milestone acceptance
 - **THEN** the audit SHALL explicitly include `completed`, `deviations`,
   `remaining`, `prior_plan_assessment`, and `replan_rationale`
 - **AND** each completed claim SHALL include its current top-level `node_id`
-  and cite its complete runtime-issued evidence set
-- **AND** `milestone_audit.contract_hash` SHALL match the frozen final-goal
-  contract.
+  and semantic outcome
+- **AND** the staged commit material SHALL bind the frozen final-goal contract
+  hash and each row's complete runtime-issued evidence set
+- **AND** PM-supplied `contract_hash` or completed-row `evidence_refs` SHALL be
+  rejected as machine-owned fields.
 
 #### Scenario: No deviation occurred
 - **WHEN** current evidence reveals no material deviation from the prior plan
@@ -57,9 +62,22 @@ or more submitted remaining-plan `owner_node_ids`.
 
 #### Scenario: Audit omits a required surface
 - **WHEN** a top-level milestone acceptance omits completed work, deviations,
-  remaining gaps, prior-plan assessment, replan rationale, or current evidence
+  remaining gaps, prior-plan assessment, or replan rationale
 - **THEN** FlowPilot SHALL reject the result mechanically
 - **AND** the execution frontier SHALL remain at the current milestone.
+
+### Requirement: Renewal evidence reads stay bounded to the current delta
+The PM renewal packet SHALL authorize the current milestone evidence and, when
+present, the immediately previous accepted milestone audit result. It SHALL NOT
+reopen every historical evidence body merely to restate the accepted prefix;
+the runtime-owned accepted-prefix projection remains the machine authority.
+
+#### Scenario: A later milestone opens its renewal packet
+- **WHEN** one or more earlier top-level milestones have already completed
+- **THEN** PM SHALL receive the current milestone evidence plus the immediately
+  previous accepted milestone audit result
+- **AND** older completed evidence bodies SHALL remain represented by the
+  runtime-owned accepted-prefix projection rather than being reopened.
 
 ### Requirement: Every major milestone rewrites the complete remaining route
 Every top-level milestone acceptance SHALL submit one current remaining route

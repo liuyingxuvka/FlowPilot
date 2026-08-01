@@ -313,7 +313,13 @@ class FlowPilotParentEntryReturnPathTests(unittest.TestCase):
 
     def test_frontier_enters_next_parent_plan_before_child_after_prior_node_acceptance(self) -> None:
         ledger = _base_ledger()
-        _add_node(ledger, "done", status="accepted", accepted_result_id="result-done")
+        _add_node(
+            ledger,
+            "done",
+            status="accepted",
+            accepted_result_id="result-done",
+            parent_node_id="completed-scope",
+        )
         _add_node(ledger, "parent", node_kind="module", child_node_ids=["child"])
         _add_node(ledger, "child", parent_node_id="parent")
 
@@ -340,7 +346,13 @@ class FlowPilotParentEntryReturnPathTests(unittest.TestCase):
 
     def test_frontier_reclaims_awaiting_children_parent_missing_entry_before_child(self) -> None:
         ledger = _base_ledger()
-        _add_node(ledger, "done", status="accepted", accepted_result_id="result-done")
+        _add_node(
+            ledger,
+            "done",
+            status="accepted",
+            accepted_result_id="result-done",
+            parent_node_id="completed-scope",
+        )
         _add_node(ledger, "parent", status="awaiting_children", node_kind="module", child_node_ids=["child"])
         _add_node(ledger, "child", parent_node_id="parent")
 

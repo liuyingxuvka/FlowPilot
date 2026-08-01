@@ -12,6 +12,7 @@ python simulations/run_flowpilot_acceptance_testmesh_checks.py --json-out simula
 
 from __future__ import annotations
 
+import dataclasses
 from typing import Any, Mapping
 
 from flowguard import (
@@ -62,6 +63,13 @@ RESOURCE_DISCOVERY_PROFILE_CELLS = (
 )
 
 PAYLOAD_CELLS = (
+    "milestone_renewal_contract",
+    "milestone_reviewer_block",
+    "milestone_changed_suffix",
+    "milestone_nested_child",
+    "milestone_interruption_resume",
+    "milestone_terminal_empty_plan",
+    "milestone_budget_bounds",
     "registry_missing",
     "registry_orphan_item",
     "route_owner_missing",
@@ -115,6 +123,7 @@ RELEASE_EVIDENCE_CELLS = (
 )
 
 CHILD_SUITE_IDS = (
+    "acceptance_milestone_renewal",
     "acceptance_contract_runtime_tests",
     "acceptance_planning_quality_model",
     "acceptance_fake_ai_payload_chaos",
@@ -201,6 +210,21 @@ def _partition_items() -> tuple[TestPartitionItem, ...]:
             "child",
             "Every active acceptance item has a route-node owner.",
             ("simulations/flowpilot_planning_quality_model.py",),
+        ),
+        TestPartitionItem(
+            "milestone_renewal_hard_gate",
+            "workflow",
+            "acceptance_milestone_renewal",
+            "child",
+            (
+                "Every top-level milestone performs a fresh semantic audit and emits one complete "
+                "remaining route before reviewed atomic continuation."
+            ),
+            (
+                "simulations/flowpilot_route_replanning_policy_model.py",
+                "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+                "tests/test_flowpilot_recursive_route_execution_runtime.py",
+            ),
         ),
         TestPartitionItem(
             "node_packet_projection",
@@ -455,6 +479,7 @@ def _release_child(
     test_count: int,
     selected_count: int,
     owned_leaf_cell_ids: tuple[str, ...] = (),
+    owned_obligation_ids: tuple[str, ...] = (),
     proof_artifact: Mapping[str, Any] | None = None,
 ) -> TestSuiteEvidence:
     status = result_status or ("passed" if release_evidence else "not_run")
@@ -463,7 +488,9 @@ def _release_child(
     receipt_fields = (
         testmesh_final_receipt_fields(
             proof_artifact,
-            covered_obligation_ids=owned_leaf_cell_ids,
+            covered_obligation_ids=tuple(
+                dict.fromkeys((*owned_obligation_ids, *owned_leaf_cell_ids))
+            ),
         )
         if proof_artifact is not None
         else {}
@@ -515,6 +542,36 @@ def build_testmesh_plan(
     tier_overrides = router_tier_overrides or {}
     evidence_overrides = routine_evidence_overrides or {}
     child_suites = (
+        _routine_child(
+            "acceptance_milestone_renewal",
+            evidence_override=evidence_overrides.get("acceptance_milestone_renewal"),
+            command="python simulations/run_flowpilot_milestone_renewal_affected_checks.py",
+            result_status="passed",
+            evidence_tier="executable_flowguard",
+            test_count=119,
+            exit_code=0,
+            result_path="simulations/flowpilot_milestone_renewal_affected_results.json",
+            owns_state=(
+                "milestone_audit",
+                "remaining_route_plan",
+                "staged_milestone_gate",
+                "accepted_route_prefix",
+            ),
+            owns_side_effects=(
+                "reviewed_route_commit",
+                "unfinished_suffix_supersession",
+                "frontier_release",
+            ),
+            owned_leaf_cell_ids=(
+                "milestone_renewal_contract",
+                "milestone_reviewer_block",
+                "milestone_changed_suffix",
+                "milestone_nested_child",
+                "milestone_interruption_resume",
+                "milestone_terminal_empty_plan",
+                "milestone_budget_bounds",
+            ),
+        ),
         _routine_child(
             "acceptance_contract_runtime_tests",
             evidence_override=evidence_overrides.get("acceptance_contract_runtime_tests"),
@@ -813,8 +870,35 @@ def build_testmesh_plan(
                 int(release_selected_count or 0),
             ) if release_evidence else 0,
             owned_leaf_cell_ids=RELEASE_EVIDENCE_CELLS,
+            owned_obligation_ids=("release_router_tiers",),
             proof_artifact=release_proof_artifact,
         ),
+    )
+    # FlowGuard TestMesh treats the partition boundary as part of a suite's
+    # final receipt inventory.  Bind those boundary ids into the suite-owned
+    # obligation projection as well, so background-complete checks (which do
+    # not receive the parent partition list) apply the same requirement as
+    # the parent receipt review.
+    partition_ids_by_suite: dict[str, tuple[str, ...]] = {}
+    for item in _partition_items():
+        partition_ids_by_suite.setdefault(item.owner_suite_id, ())
+        partition_ids_by_suite[item.owner_suite_id] = (
+            *partition_ids_by_suite[item.owner_suite_id],
+            item.item_id,
+        )
+    child_suites = tuple(
+        dataclasses.replace(
+            suite,
+            owned_obligation_ids=tuple(
+                dict.fromkeys(
+                    (
+                        *suite.owned_obligation_ids,
+                        *partition_ids_by_suite.get(suite.suite_id, ()),
+                    )
+                )
+            ),
+        )
+        for suite in child_suites
     )
     return TestMeshPlan(
         parent_suite_id=TESTMESH_ID,
@@ -837,6 +921,9 @@ def build_testmesh_plan(
                 "final_artifact_hygiene_closure",
                 "supplemental_repair_contracts.repair_items",
                 "integration_cartesian_coverage.expected_outcome",
+                "milestone_audit.completed",
+                "milestone_audit.remaining",
+                "remaining_route_plan.nodes",
             ),
             side_effect_owner_fields=(
                 "repair_transaction",
@@ -849,8 +936,9 @@ def build_testmesh_plan(
                 "formal_exit_terminal_return_missing",
                 "formal_exit_startup_intake_blocks",
                 "prompt_authority_boundary_coverage",
+                "milestone_plan_renewal_commit",
             ),
-            rationale="Acceptance-registry validation is split by current-contract ownership, payload cell, route mutation, and release evidence boundary.",
+            rationale="Acceptance-registry validation is split by current-contract ownership, milestone renewal, payload cell, route mutation, and release evidence boundary.",
             derived_from_flowguard_model=True,
         ),
         required_leaf_cell_ids=PAYLOAD_CELLS,

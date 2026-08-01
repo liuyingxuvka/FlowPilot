@@ -1,0 +1,186 @@
+{
+  "budgets": {
+    "max_10_to_100_transport_growth_ratio": 15.0,
+    "max_authorized_read_count": 4,
+    "scripted_gate_p95_ms": 500.0,
+    "stage_p95_ms": 250.0
+  },
+  "checks": {
+    "authorized_evidence_reads_are_bounded": true,
+    "baseline_retry_count_is_zero": true,
+    "exactly_four_ai_role_submissions": true,
+    "exactly_two_local_system_steps": true,
+    "one_challenge_adds_one_candidate_retry_without_mutating_old_route": true,
+    "scripted_gate_latency_within_budget": true,
+    "stage_latency_within_budget": true,
+    "transport_growth_is_bounded_linear": true
+  },
+  "evidence_role": "scripted_local_transport_and_conformance_not_live_ai_latency_or_quality",
+  "execution_shape": {
+    "ai_role_submissions_per_gate": 4,
+    "baseline_retry_count": 0,
+    "challenge_retry_count": 1,
+    "local_steps": [
+      "validate_and_bind_commit_material",
+      "atomic_route_commit_projection"
+    ],
+    "local_system_steps_per_gate": 2,
+    "old_route_mutated_by_retry": false,
+    "roles": [
+      "pm",
+      "flowguard",
+      "pm_absorption",
+      "reviewer"
+    ],
+    "trials_per_sampled_gate": 40
+  },
+  "observed_10_to_100_transport_growth_ratio": 7.226840292044629,
+  "ok": true,
+  "schema_version": "flowpilot.milestone_renewal_budget.v1",
+  "sizes": [
+    {
+      "largest_authorized_read_count": 4,
+      "largest_total_transport_bytes": 31639,
+      "sampled_gate_positions": [
+        {
+          "authorized_evidence_body_bytes": 387,
+          "authorized_read_count": 3,
+          "completed_count": 1,
+          "packet_context_bytes": 22482,
+          "remaining_count": 9,
+          "role_submission_bytes": 8770,
+          "scripted_gate_median_ms": 7.18835,
+          "scripted_gate_p95_ms": 10.0536,
+          "stage_median_ms": 0.8000499999999999,
+          "stage_p95_ms": 1.3735,
+          "total_transport_bytes": 31639
+        },
+        {
+          "authorized_evidence_body_bytes": 1111,
+          "authorized_read_count": 4,
+          "completed_count": 5,
+          "packet_context_bytes": 17829,
+          "remaining_count": 5,
+          "role_submission_bytes": 6378,
+          "scripted_gate_median_ms": 4.08475,
+          "scripted_gate_p95_ms": 5.3582,
+          "stage_median_ms": 0.6565,
+          "stage_p95_ms": 1.0326,
+          "total_transport_bytes": 25318
+        },
+        {
+          "authorized_evidence_body_bytes": 1579,
+          "authorized_read_count": 4,
+          "completed_count": 9,
+          "packet_context_bytes": 13069,
+          "remaining_count": 1,
+          "role_submission_bytes": 3986,
+          "scripted_gate_median_ms": 1.16375,
+          "scripted_gate_p95_ms": 1.7814,
+          "stage_median_ms": 0.5097,
+          "stage_p95_ms": 0.8502,
+          "total_transport_bytes": 18634
+        }
+      ],
+      "top_level_milestone_count": 10,
+      "worst_scripted_gate_p95_ms": 10.0536,
+      "worst_stage_p95_ms": 1.3735
+    },
+    {
+      "largest_authorized_read_count": 4,
+      "largest_total_transport_bytes": 119199,
+      "sampled_gate_positions": [
+        {
+          "authorized_evidence_body_bytes": 387,
+          "authorized_read_count": 3,
+          "completed_count": 1,
+          "packet_context_bytes": 82242,
+          "remaining_count": 49,
+          "role_submission_bytes": 36570,
+          "scripted_gate_median_ms": 35.283100000000005,
+          "scripted_gate_p95_ms": 41.8307,
+          "stage_median_ms": 2.5627500000000003,
+          "stage_p95_ms": 3.9785,
+          "total_transport_bytes": 119199
+        },
+        {
+          "authorized_evidence_body_bytes": 3451,
+          "authorized_read_count": 4,
+          "completed_count": 25,
+          "packet_context_bytes": 53790,
+          "remaining_count": 25,
+          "role_submission_bytes": 22219,
+          "scripted_gate_median_ms": 18.1174,
+          "scripted_gate_p95_ms": 21.8699,
+          "stage_median_ms": 1.8505500000000001,
+          "stage_p95_ms": 2.9528,
+          "total_transport_bytes": 79460
+        },
+        {
+          "authorized_evidence_body_bytes": 6259,
+          "authorized_read_count": 4,
+          "completed_count": 49,
+          "packet_context_bytes": 25230,
+          "remaining_count": 1,
+          "role_submission_bytes": 7867,
+          "scripted_gate_median_ms": 2.0576999999999996,
+          "scripted_gate_p95_ms": 3.2032,
+          "stage_median_ms": 1.15205,
+          "stage_p95_ms": 1.8446,
+          "total_transport_bytes": 39356
+        }
+      ],
+      "top_level_milestone_count": 50,
+      "worst_scripted_gate_p95_ms": 41.8307,
+      "worst_stage_p95_ms": 3.9785
+    },
+    {
+      "largest_authorized_read_count": 4,
+      "largest_total_transport_bytes": 228650,
+      "sampled_gate_positions": [
+        {
+          "authorized_evidence_body_bytes": 387,
+          "authorized_read_count": 3,
+          "completed_count": 1,
+          "packet_context_bytes": 156943,
+          "remaining_count": 99,
+          "role_submission_bytes": 71320,
+          "scripted_gate_median_ms": 74.17269999999999,
+          "scripted_gate_p95_ms": 94.0002,
+          "stage_median_ms": 5.6675,
+          "stage_p95_ms": 9.7363,
+          "total_transport_bytes": 228650
+        },
+        {
+          "authorized_evidence_body_bytes": 6376,
+          "authorized_read_count": 4,
+          "completed_count": 50,
+          "packet_context_bytes": 98741,
+          "remaining_count": 50,
+          "role_submission_bytes": 42019,
+          "scripted_gate_median_ms": 44.6002,
+          "scripted_gate_p95_ms": 63.931,
+          "stage_median_ms": 4.5405999999999995,
+          "stage_p95_ms": 7.1602,
+          "total_transport_bytes": 147136
+        },
+        {
+          "authorized_evidence_body_bytes": 12109,
+          "authorized_read_count": 4,
+          "completed_count": 99,
+          "packet_context_bytes": 40431,
+          "remaining_count": 1,
+          "role_submission_bytes": 12717,
+          "scripted_gate_median_ms": 3.51545,
+          "scripted_gate_p95_ms": 4.6348,
+          "stage_median_ms": 2.17305,
+          "stage_p95_ms": 3.2698,
+          "total_transport_bytes": 65257
+        }
+      ],
+      "top_level_milestone_count": 100,
+      "worst_scripted_gate_p95_ms": 94.0002,
+      "worst_stage_p95_ms": 9.7363
+    }
+  ]
+}

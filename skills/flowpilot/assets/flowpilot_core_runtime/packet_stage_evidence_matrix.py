@@ -211,8 +211,6 @@ RESULT_CONTRACT_PROFILES: dict[str, dict[str, Any]] = {
             "milestone_audit.completed[]",
             "milestone_audit.completed[].node_id",
             "milestone_audit.completed[].outcome",
-            "milestone_audit.completed[].evidence_refs[]",
-            "milestone_audit.contract_hash",
             "milestone_audit.deviations",
             "milestone_audit.remaining",
             "milestone_audit.remaining[].obligation_ids[]",
@@ -223,7 +221,6 @@ RESULT_CONTRACT_PROFILES: dict[str, dict[str, Any]] = {
         ),
         "explicit_array_fields": (
             "milestone_audit.completed",
-            "milestone_audit.completed[].evidence_refs",
             "milestone_audit.deviations",
             "milestone_audit.remaining",
             "milestone_audit.remaining[].obligation_ids",
@@ -231,7 +228,6 @@ RESULT_CONTRACT_PROFILES: dict[str, dict[str, Any]] = {
         ),
         "non_empty_array_fields": (
             "milestone_audit.completed",
-            "milestone_audit.completed[].evidence_refs",
         ),
         "allowed_value_options": {
             "remaining_route_plan.schema_version": ("flowpilot.route_plan.v1",),
@@ -243,8 +239,6 @@ RESULT_CONTRACT_PROFILES: dict[str, dict[str, Any]] = {
             "milestone_audit.completed": "array:object",
             "milestone_audit.completed[].node_id": "string",
             "milestone_audit.completed[].outcome": "string",
-            "milestone_audit.completed[].evidence_refs": "array:string",
-            "milestone_audit.contract_hash": "string",
             "milestone_audit.deviations": "array:object",
             "milestone_audit.remaining": "array:object",
             "milestone_audit.remaining[].obligation_ids": "array:string",

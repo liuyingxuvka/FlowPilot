@@ -61,6 +61,17 @@ ordered work. Keep the structure as simple as possible, but do not omit
 necessary discovery, implementation, integration, verification, or cleanup work
 just because the user phrased the request briefly.
 
+Choose top-level milestone granularity semantically, not by node count. The
+nearest top-level node or nodes must be detailed enough to execute and verify
+now; farther nodes may remain progressively coarser, but each must stay
+explicitly connected to the final goal. Do not collapse the project into one
+top-level mega-root whose real stages are postponed until execution. Do not
+turn mechanical handoffs, local checks, or tiny implementation steps into
+top-level micro-gates unless they own an independent phase outcome, evidence
+boundary, authority boundary, failure-isolation boundary, or user-visible
+milestone. This is progressive planning depth inside one route, not an L0-L4
+plan system and not a second planning mode.
+
 Also read the accepted implementation-intent bridge:
 
 - `.flowpilot/runs/<run-id>/implementation_intent/pm_implementation_intent.json`;

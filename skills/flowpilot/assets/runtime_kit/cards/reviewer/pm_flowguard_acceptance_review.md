@@ -57,6 +57,14 @@ changed plan preserves the accepted prefix and replaces only the unfinished
 suffix, and that no next top-level frontier can become visible before the
 milestone gate commits atomically.
 
+Judge renewed top-level granularity semantically. The nearest node or nodes
+must be execution-ready; farther nodes may remain progressively coarser but
+must remain explicit and connected to the final goal. Block a vague
+mega-parent that hides the real next frontier. Also block mechanical
+top-level micro-gates that add handoffs without an independent phase outcome,
+evidence, authority, failure-isolation, or user-visible milestone boundary.
+Do not use a node-count threshold or invent an L0-L4 planning system.
+
 Check:
 
 - the PM acceptance cites the same current FlowGuard result and structural PM

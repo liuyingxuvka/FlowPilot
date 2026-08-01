@@ -92,6 +92,12 @@ Check:
   not add broad explanatory route-node fields. Instead, inspect whether the
   existing route shape, acceptance criteria, outputs, checks, and requirement
   or skill ids make the scope reviewable;
+- the nearest top-level node or nodes are execution-ready now, while farther
+  nodes may be progressively coarser only when they remain explicit and
+  connected to the final goal. Block one top-level mega-root that defers all
+  meaningful stage decomposition until execution. Also block mechanical
+  top-level micro-gates that add process but have no independent phase outcome,
+  evidence, authority, failure-isolation, or user-visible milestone value;
 - the route is not artificially capped at two levels. Complex parent/module
   nodes must be recursively decomposed until every executable leaf is one
   independently accountable bounded workstream, and the route must still provide a shallow

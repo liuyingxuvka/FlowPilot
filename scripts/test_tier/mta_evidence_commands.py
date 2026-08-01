@@ -105,7 +105,9 @@ def mta_evidence_commands(
                 ),
                 long_running=True,
                 background_recommended=True,
-                background_stage=4,
+                # MTA receipts close the frozen all-tier snapshot after the
+                # canonical smoke and thin-parent consumers have completed.
+                background_stage=9,
             )
         )
     return tuple(commands)

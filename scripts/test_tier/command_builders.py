@@ -22,8 +22,18 @@ def _py(*args: str) -> tuple[str, ...]:
     return (sys.executable, *args)
 
 
-def _pytest(name: str, *paths: str, description: str) -> TierCommand:
-    return TierCommand(name=name, command=_py("-m", "pytest", *paths, "-q"), description=description)
+def _pytest(
+    name: str,
+    *paths: str,
+    description: str,
+    background_stage: int = 0,
+) -> TierCommand:
+    return TierCommand(
+        name=name,
+        command=_py("-m", "pytest", *paths, "-q"),
+        description=description,
+        background_stage=background_stage,
+    )
 
 
 def _pytest_k(

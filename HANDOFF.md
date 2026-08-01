@@ -641,6 +641,25 @@ FlowGuard caught and fixed these design issues:
   activation also rejects active nodes that are not present in the reviewed
   route draft. The policy is modeled in
   `simulations/flowpilot_route_replanning_policy_model.py`.
+- Every accepted top-level route node is now a hard milestone-plan-renewal
+  boundary. PM must submit a fresh audit of completed evidence, deviations,
+  remaining gaps, and prior-plan fitness together with the complete remaining
+  route through the final user goal. An unchanged remaining route is valid only
+  as a fresh, explicitly justified submission; an empty route is valid only at
+  genuine terminal closure. The runtime stages this submission and permits no
+  frontier advance until the exact FlowGuard report, PM absorption,
+  independent Reviewer decision, system validation, and atomic commit all
+  succeed. Changed plans replace only the unfinished suffix while preserving
+  accepted history and evidence. Nested child acceptance remains local to its
+  parent composition. This is the sole current continuation path: there is no
+  risk-level selection, optional replanning mode, experiment, compatibility
+  reader, or fallback to the old unfinished plan.
+- The existing `node_acceptance_plan` gate remains a separate pre-execution,
+  node-local owner for executable outcomes, deliverable checks, verification
+  commands, evidence requirements, and context binding. Milestone renewal is a
+  post-completion, route-wide continuation decision. Their staged effects and
+  acceptance subjects are distinct, so this change does not contract or alias
+  either gate.
 - `docs/flowpilot_clean_rebuild_plan.md` is retained as historical planning
   context. Current install readiness no longer depends on old-protocol
   equivalence checklists; `scripts/check_install.py` verifies the current

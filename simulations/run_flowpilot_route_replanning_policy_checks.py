@@ -51,6 +51,9 @@ HAZARD_EXPECTED_FAILURES = {
     model.MILESTONE_PM_ABSORPTION_BYPASSED: "top-level milestone renewal bypassed PM absorption of FlowGuard",
     model.MILESTONE_REVIEWER_BYPASSED: "top-level milestone renewal bypassed independent Reviewer approval",
     model.MILESTONE_SYSTEM_VALIDATION_BYPASSED: "top-level milestone renewal bypassed system validation",
+    model.MILESTONE_LOWEST_ACCEPTANCE_BYPASSED_GATE: "top-level milestone acceptance bypassed the current staged gate commit owner",
+    model.TERMINAL_EMPTY_PLAN_BYPASSED_CHALLENGE: "top-level milestone renewal bypassed PM absorption of FlowGuard",
+    model.MILESTONE_CURRENTNESS_RECOVERY_USED_TEXT_MATCH: "top-level milestone recovery relied on error text instead of typed currentness drift",
     model.UNCHANGED_PLAN_BUMPED_ROUTE_VERSION: "unchanged remaining plan created a gratuitous route version",
     model.CHANGED_PLAN_KEPT_OLD_ROUTE_VERSION: "changed remaining plan kept the old active route version",
     model.CHANGED_PLAN_LOST_COMPLETED_PREFIX: "changed remaining plan discarded accepted milestone history",
@@ -85,6 +88,8 @@ def _state_id(state: model.State) -> str:
         f"|milestone_pm_absorb={state.milestone_pm_absorbed_flowguard}"
         f"|milestone_review={state.milestone_reviewer_approved}"
         f"|milestone_validation={state.milestone_system_validation_passed}"
+        f"|milestone_commit_owner={state.milestone_commit_owned_by_current_gate}"
+        f"|typed_currentness={state.typed_currentness_recovery_only}"
         f"|route_version_changed={state.route_version_changed}"
         f"|prefix_preserved={state.completed_prefix_preserved}|empty_plan={state.empty_remaining_plan}"
         f"|all_closed={state.all_hard_obligations_closed}|frontier_advanced={state.frontier_advanced}"

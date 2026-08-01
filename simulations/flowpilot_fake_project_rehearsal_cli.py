@@ -487,6 +487,71 @@ def reset_scenario_root(work_root: Path, name: str) -> Path:
     return root
 
 
+def seed_current_recursive_route(
+    root: Path,
+    *,
+    run_id: str,
+    route_shape: str = "flat",
+    node_count: int = MIN_ACCEPTED_ROUTE_NODES,
+) -> None:
+    """Seed only pre-milestone authority, then leave all live work to the public CLI."""
+
+    if str(ASSETS) not in sys.path:
+        sys.path.insert(0, str(ASSETS))
+    from flowpilot_core_runtime import run_shell, runtime
+
+    shell = run_shell.create_run_shell(
+        root,
+        "Complete the seeded multi-milestone rehearsal.",
+        "Every top-level milestone must pass the current renewal gate before continuation.",
+        run_id=run_id,
+    )
+    ledger = run_shell.load_run_ledger(shell)
+    ledger["startup_intake"] = {
+        "sealed": True,
+        "startup_answers": {
+            runtime.BACKGROUND_COLLABORATION_ACK_FIELD: True,
+        },
+    }
+    ledger["recursive_route_execution_required"] = True
+    runtime.create_route(
+        ledger,
+        "Seeded milestone renewal rehearsal",
+        ["execute", "challenge", "renew", "continue"],
+    )
+    plan = _route_plan_payload(
+        node_count=node_count,
+        route_shape=route_shape,
+    )
+    if route_shape == "nested" and node_count == 2:
+        plan["nodes"] = [
+            node
+            for node in plan["nodes"]
+            if node.get("node_id") in {"node-parent", "node-child"}
+        ]
+    for node in plan["nodes"]:
+        node["acceptance_item_ids"] = []
+    planning_result_id = "result-seeded-planning-authority"
+    planning_body = json.dumps(plan, sort_keys=True)
+    ledger["results"][planning_result_id] = {
+        "result_id": planning_result_id,
+        "packet_id": "seeded-pre-milestone-planning",
+        "body": planning_body,
+        "status": "accepted",
+        "accepted": True,
+        "review_id": "",
+        "producer_lease_id": "",
+        "envelope": {
+            "body_hash": runtime.hash_text(planning_body),
+            "evidence_generation": ledger["source_generation"],
+        },
+        "created_at": runtime.now_iso(),
+    }
+    runtime.materialize_route_from_planning_result(ledger, planning_result_id)
+    runtime.run_until_wait(ledger)
+    run_shell.save_run_ledger(shell, ledger, guard_trigger="seeded_milestone_rehearsal")
+
+
 def status_projection(root: Path, command_log: list[dict[str, Any]]) -> dict[str, Any]:
     payload = run_cli(root, command_log, "status")
     projection = payload.get("status")
@@ -510,7 +575,57 @@ def assert_public_projection_is_sealed(projection: dict[str, Any]) -> None:
         ensure(packet.get("sealed_body_hidden") is True, f"packet body is not marked hidden: {packet}")
 
 
-def _route_plan_payload(*, node_count: int = MIN_ACCEPTED_ROUTE_NODES) -> dict[str, Any]:
+def _route_plan_payload(
+    *,
+    node_count: int = MIN_ACCEPTED_ROUTE_NODES,
+    route_shape: str = "flat",
+) -> dict[str, Any]:
+    if route_shape == "nested":
+        return {
+            "schema_version": ROUTE_PLAN_SCHEMA_VERSION,
+            "nodes": [
+                {
+                    "node_id": "node-parent",
+                    "title": "Assemble the calculator capability",
+                    "node_kind": "module",
+                    "parent_node_id": "",
+                    "child_node_ids": ["node-child"],
+                    "responsibility": "pm",
+                    "modeled_target": "development_process",
+                    "acceptance_criteria": [
+                        "The child capability composes into one accepted parent milestone."
+                    ],
+                    "acceptance_item_ids": [],
+                },
+                {
+                    "node_id": "node-child",
+                    "title": "Implement the calculator child capability",
+                    "node_kind": "leaf",
+                    "parent_node_id": "node-parent",
+                    "child_node_ids": [],
+                    "responsibility": "worker",
+                    "modeled_target": "development_process",
+                    "acceptance_criteria": [
+                        "The nested child capability is accepted with current evidence."
+                    ],
+                    "acceptance_item_ids": ["acc-001"],
+                },
+                {
+                    "node_id": "node-final",
+                    "title": "Verify the complete calculator result",
+                    "node_kind": "leaf",
+                    "parent_node_id": "",
+                    "child_node_ids": [],
+                    "responsibility": "worker",
+                    "modeled_target": "model_test_alignment",
+                    "acceptance_criteria": [
+                        "The final result and all current evidence are independently verified."
+                    ],
+                    "acceptance_item_ids": ["acc-002"],
+                },
+            ],
+        }
+    ensure(route_shape == "flat", f"unsupported fake route shape: {route_shape}")
     node_templates = [
         {
             "node_id": "node-001",
@@ -556,10 +671,60 @@ def _route_plan_payload(*, node_count: int = MIN_ACCEPTED_ROUTE_NODES) -> dict[s
     }
 
 
-def _apply_route_plan_semantics(payload: dict[str, Any], *, node_count: int) -> dict[str, Any]:
+def _apply_route_plan_semantics(
+    payload: dict[str, Any],
+    *,
+    node_count: int,
+    route_shape: str,
+) -> dict[str, Any]:
     payload["decision"] = "pass"
-    payload.update(_route_plan_payload(node_count=node_count))
+    payload.update(_route_plan_payload(node_count=node_count, route_shape=route_shape))
     return payload
+
+
+def _change_milestone_remaining_suffix(payload: dict[str, Any]) -> None:
+    route_plan = payload.get("remaining_route_plan")
+    audit = payload.get("milestone_audit")
+    if not isinstance(route_plan, dict) or not isinstance(audit, dict):
+        return
+    nodes = route_plan.get("nodes")
+    if not isinstance(nodes, list) or not nodes:
+        return
+    id_map = {
+        str(node.get("node_id") or ""): f"{node.get('node_id')}-renewed"
+        for node in nodes
+        if isinstance(node, dict) and str(node.get("node_id") or "")
+    }
+    for node in nodes:
+        if not isinstance(node, dict):
+            continue
+        node_id = str(node.get("node_id") or "")
+        node["node_id"] = id_map.get(node_id, node_id)
+        parent_node_id = str(node.get("parent_node_id") or "")
+        node["parent_node_id"] = id_map.get(parent_node_id, parent_node_id)
+        child_node_ids = node.get("child_node_ids")
+        if isinstance(child_node_ids, list):
+            node["child_node_ids"] = [
+                id_map.get(str(child_id), str(child_id))
+                for child_id in child_node_ids
+            ]
+    remaining = audit.get("remaining")
+    if isinstance(remaining, list):
+        for row in remaining:
+            if not isinstance(row, dict):
+                continue
+            owner_node_ids = row.get("owner_node_ids")
+            if isinstance(owner_node_ids, list):
+                row["owner_node_ids"] = [
+                    id_map.get(str(owner_id), str(owner_id))
+                    for owner_id in owner_node_ids
+                ]
+    audit["prior_plan_assessment"] = (
+        "Current evidence requires a fresh unfinished suffix with new node identities."
+    )
+    audit["replan_rationale"] = (
+        "The accepted prefix is preserved while every unfinished node is re-emitted as current work."
+    )
 
 
 def _acceptance_item_ids_for_packet(packet: dict[str, Any]) -> list[str]:
@@ -922,6 +1087,8 @@ def current_contract_body_from_open_result(
     expected_run_id: str | None = None,
     pm_disposition_decision: str = "accept",
     route_node_count: int = MIN_ACCEPTED_ROUTE_NODES,
+    route_shape: str = "flat",
+    change_milestone_suffix: bool = False,
     pm_repair_decision: str | None = None,
 ) -> str:
     if expected_run_id is not None and str(opened_packet.get("run_id") or "") != expected_run_id:
@@ -941,7 +1108,11 @@ def current_contract_body_from_open_result(
     elif packet_kind == "task" and route_scope == "skill_standard":
         payload = _apply_skill_standard_semantics(payload)
     elif packet_kind == "task" and route_scope == "planning":
-        payload = _apply_route_plan_semantics(payload, node_count=route_node_count)
+        payload = _apply_route_plan_semantics(
+            payload,
+            node_count=route_node_count,
+            route_shape=route_shape,
+        )
     elif packet_kind == "task" and route_scope == "node_acceptance_plan":
         ensure(
             project_root is not None,
@@ -975,7 +1146,12 @@ def current_contract_body_from_open_result(
             for item_id in acceptance_item_ids
         ]
         if pm_disposition_decision == "redesign_route":
-            payload["route_plan"] = _route_plan_payload(node_count=route_node_count)
+            payload["route_plan"] = _route_plan_payload(
+                node_count=route_node_count,
+                route_shape=route_shape,
+            )
+        if pm_disposition_decision == "accept" and change_milestone_suffix:
+            _change_milestone_remaining_suffix(payload)
     elif packet_kind == "pm_repair_decision":
         payload = _apply_pm_repair_semantics(payload, packet, decision=pm_repair_decision)
     else:
@@ -1020,8 +1196,11 @@ def complete_full_packet_chain(
     min_accepted_route_nodes: int = MIN_ACCEPTED_ROUTE_NODES,
     block_terminal_replay_once: bool = False,
     pm_repair_decision: str | None = None,
+    route_shape: str = "flat",
+    change_first_milestone_suffix: bool = False,
+    stop_after_nested_child_accept: bool = False,
 ) -> dict[str, Any]:
-    completed_packets: list[dict[str, str]] = []
+    completed_packets: list[dict[str, Any]] = []
     completed_accepted_packet_repairs: list[dict[str, str]] = []
     pm_disposition_count = 0
     terminal_replay_blocked = False
@@ -1097,6 +1276,12 @@ def complete_full_packet_chain(
                 project_root=root,
                 pm_disposition_decision=decision,
                 route_node_count=route_node_count,
+                route_shape=route_shape,
+                change_milestone_suffix=(
+                    change_first_milestone_suffix
+                    and packet_kind == "pm_disposition"
+                    and pm_disposition_count == 1
+                ),
                 pm_repair_decision=pm_repair_decision,
             )
             body_payload = json.loads(body)
@@ -1146,7 +1331,46 @@ def complete_full_packet_chain(
             "--body",
             body,
         )
-        completed_packets.append({"packet_id": packet_id, "packet_kind": packet_kind, "lease_id": lease_id})
+        packet_body = _packet_body_payload(packet)
+        completed_packets.append(
+            {
+                "packet_id": packet_id,
+                "packet_kind": packet_kind,
+                "route_scope": str(packet.get("route_scope") or ""),
+                "route_node_id": str(packet.get("route_node_id") or ""),
+                "milestone_plan_renewal_required": (
+                    packet_body.get("milestone_plan_renewal_required") is True
+                ),
+                "lease_id": lease_id,
+            }
+        )
+        if (
+            stop_after_nested_child_accept
+            and packet_kind == "pm_disposition"
+            and packet_body.get("milestone_plan_renewal_required") is False
+        ):
+            projection = status_projection(root, command_log)
+            child_id = str(packet.get("route_node_id") or "")
+            child_rows = [
+                node
+                for node in projection.get("route_nodes", [])
+                if str(node.get("node_id") or "") == child_id
+            ]
+            ensure(
+                child_rows and child_rows[0].get("status") == "accepted",
+                f"nested child did not close locally: {child_rows}",
+            )
+            ensure(
+                current_payload.get("next_action", {}).get("action_type")
+                != "terminal_complete",
+                "nested child local acceptance incorrectly completed the whole route",
+            )
+            return {
+                "nested_child_local_acceptance": True,
+                "nested_child_id": child_id,
+                "completed_packets": completed_packets,
+                "next_action": current_payload.get("next_action", {}),
+            }
     else:
         raise RehearsalFailure(
             f"packet chain exceeded recursive route budget={FULL_PACKET_CHAIN_BUDGET}; "

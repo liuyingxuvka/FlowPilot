@@ -303,7 +303,6 @@ def _pm_disposition_body_from_checklist(
             raw_remaining_route_plan
         )
         payload["remaining_route_plan"] = remaining_route_plan
-        payload["milestone_audit"]["contract_hash"] = ledger.get("contract_hash", "")
         if remaining_route_plan["nodes"]:
             remaining_obligation_ids = runtime._milestone_remaining_obligation_ids(
                 ledger,

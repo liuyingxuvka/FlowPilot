@@ -34,6 +34,10 @@ EXPECTED_BLOCKERS = {
     "unintegrated_delegation": "delegated_outputs_not_integrated",
     "missing_independent_flowguard": "independent_flowguard_missing",
     "unbounded_control_plane": "control_plane_resource_boundedness_missing",
+    "missing_milestone_renewal_model": "milestone_renewal_model_missing",
+    "missing_milestone_renewal_conformance": "milestone_renewal_conformance_missing",
+    "missing_milestone_renewal_affected_tests": "milestone_renewal_affected_tests_missing",
+    "missing_milestone_renewal_evidence_closure": "milestone_renewal_evidence_closure_missing",
     "stale_final_receipts": "final_parent_receipts_missing",
 }
 
@@ -76,6 +80,18 @@ def _scenario_report() -> dict[str, Any]:
         ),
         "unbounded_control_plane": model.ContractInput(
             control_plane_resource_boundedness_current=False
+        ),
+        "missing_milestone_renewal_model": model.ContractInput(
+            milestone_renewal_model_current=False
+        ),
+        "missing_milestone_renewal_conformance": model.ContractInput(
+            milestone_renewal_conformance_current=False
+        ),
+        "missing_milestone_renewal_affected_tests": model.ContractInput(
+            milestone_renewal_affected_tests_current=False
+        ),
+        "missing_milestone_renewal_evidence_closure": model.ContractInput(
+            milestone_renewal_evidence_closure_current=False
         ),
         "stale_final_receipts": model.ContractInput(
             final_parent_receipts_current=False
@@ -164,8 +180,8 @@ def _conformance_report(exported: Mapping[str, Any]) -> dict[str, Any]:
         findings.append("route_identity_not_exactly_four_unique")
     if len(step_ids) != len(set(step_ids)):
         findings.append("duplicate_step_identity")
-    if len(obligation_ids) != 12 or len(obligation_ids) != len(set(obligation_ids)):
-        findings.append("obligation_identity_not_exactly_twelve_unique")
+    if len(obligation_ids) != 16 or len(obligation_ids) != len(set(obligation_ids)):
+        findings.append("obligation_identity_not_exactly_sixteen_unique")
     if owners != {"flowpilot_runtime_router"}:
         findings.append("native_owner_not_singular")
     known_steps = set(step_ids)
@@ -280,10 +296,10 @@ def _contract_refinement_report(exported: Mapping[str, Any]) -> dict[str, Any]:
     if "--background" in final_args or "--resume" in final_args:
         findings.append("final_receipt_consumer_can_execute_owner")
     if "--verify-background" not in final_args or not any(
-        value.replace("\\", "/").endswith("/v0.13.0-final-v5-r3")
+        value.replace("\\", "/").endswith("/v0.14.0-milestone-renewal-final")
         for value in final_args
     ):
-        findings.append("final_receipt_identity_not_v0_13_0_read_only")
+        findings.append("final_receipt_identity_not_v0_14_0_read_only")
     depth_profile = source.get("depth_profile") or {}
     if depth_profile.get("enforcement_level") != "enforced":
         findings.append("declared_check_supervision_not_enforced")

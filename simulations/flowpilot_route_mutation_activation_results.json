@@ -75,6 +75,7 @@
           "mutation_trigger_kind": "reviewer_block",
           "old_current_node_packet_superseded": true,
           "old_pending_suffix_evidence_invalidated": false,
+          "old_pending_suffix_open_blockers_retired": false,
           "old_pending_suffix_packets_invalidated": false,
           "old_sibling_evidence_reused_as_current": false,
           "pm_activation_recorded": true,
@@ -186,6 +187,7 @@
           "mutation_trigger_kind": "reviewer_block",
           "old_current_node_packet_superseded": true,
           "old_pending_suffix_evidence_invalidated": false,
+          "old_pending_suffix_open_blockers_retired": false,
           "old_pending_suffix_packets_invalidated": false,
           "old_sibling_evidence_reused_as_current": false,
           "pm_activation_recorded": true,
@@ -297,6 +299,7 @@
           "mutation_trigger_kind": "reviewer_block",
           "old_current_node_packet_superseded": true,
           "old_pending_suffix_evidence_invalidated": false,
+          "old_pending_suffix_open_blockers_retired": false,
           "old_pending_suffix_packets_invalidated": false,
           "old_sibling_evidence_reused_as_current": false,
           "pm_activation_recorded": true,
@@ -407,6 +410,7 @@
           "mutation_trigger_kind": "reviewer_block",
           "old_current_node_packet_superseded": false,
           "old_pending_suffix_evidence_invalidated": false,
+          "old_pending_suffix_open_blockers_retired": false,
           "old_pending_suffix_packets_invalidated": false,
           "old_sibling_evidence_reused_as_current": false,
           "pm_activation_recorded": false,
@@ -517,6 +521,7 @@
           "mutation_trigger_kind": "reviewer_block",
           "old_current_node_packet_superseded": false,
           "old_pending_suffix_evidence_invalidated": false,
+          "old_pending_suffix_open_blockers_retired": false,
           "old_pending_suffix_packets_invalidated": false,
           "old_sibling_evidence_reused_as_current": false,
           "pm_activation_recorded": false,
@@ -644,6 +649,7 @@
           "mutation_trigger_kind": "milestone_plan_renewal",
           "old_current_node_packet_superseded": false,
           "old_pending_suffix_evidence_invalidated": true,
+          "old_pending_suffix_open_blockers_retired": true,
           "old_pending_suffix_packets_invalidated": true,
           "old_sibling_evidence_reused_as_current": false,
           "pm_activation_recorded": true,
@@ -777,6 +783,7 @@
           "mutation_trigger_kind": "milestone_plan_renewal",
           "old_current_node_packet_superseded": false,
           "old_pending_suffix_evidence_invalidated": true,
+          "old_pending_suffix_open_blockers_retired": true,
           "old_pending_suffix_packets_invalidated": true,
           "old_sibling_evidence_reused_as_current": false,
           "pm_activation_recorded": true,
@@ -816,6 +823,143 @@
           "superseded_nodes_declared": false,
           "terminal_target_member_ids": [
             "node-completed-1",
+            "node-renewed-1",
+            "node-renewed-2",
+            "node-renewed-3"
+          ],
+          "topology_strategy": "replace_remaining_suffix",
+          "unaffected_sibling_node_ids": [
+            "node-completed-1",
+            "node-completed-2"
+          ],
+          "unaffected_siblings_rebound": true
+        }
+      },
+      "changed_suffix_keeps_old_pending_blocker_active": {
+        "detected": true,
+        "expected_failure": "changed remaining plan rechecked before old pending suffix blockers were retired",
+        "failures": [
+          "changed remaining plan rechecked before old pending suffix blockers were retired"
+        ],
+        "state": {
+          "active_route_overwritten_before_activation": false,
+          "active_route_version": 1,
+          "affected_sibling_nodes_declared": true,
+          "after_effective_member_ids": [
+            "node-completed-1",
+            "node-completed-2",
+            "node-renewed-1",
+            "node-renewed-2",
+            "node-renewed-3"
+          ],
+          "after_member_route_versions": [
+            [
+              "node-completed-1",
+              2
+            ],
+            [
+              "node-completed-2",
+              2
+            ],
+            [
+              "node-renewed-1",
+              2
+            ],
+            [
+              "node-renewed-2",
+              2
+            ],
+            [
+              "node-renewed-3",
+              2
+            ]
+          ],
+          "before_effective_member_ids": [
+            "node-completed-1",
+            "node-completed-2",
+            "node-pending-1",
+            "node-pending-2"
+          ],
+          "candidate_node_entry_recorded": false,
+          "candidate_remaining_suffix_node_ids": [
+            "node-renewed-1",
+            "node-renewed-2",
+            "node-renewed-3"
+          ],
+          "candidate_route_displayed_as_current": false,
+          "candidate_route_version": 2,
+          "completed_prefix_evidence_ids": [
+            "evidence-completed-1",
+            "evidence-completed-2"
+          ],
+          "completed_prefix_evidence_retained": true,
+          "completed_prefix_node_ids": [
+            "node-completed-1",
+            "node-completed-2"
+          ],
+          "completed_prefix_packets_untouched": true,
+          "completed_prefix_reopened": false,
+          "continue_target_declared": false,
+          "display_receipt_recorded": false,
+          "effective_member_inventory_recorded": true,
+          "final_ledger_effective_member_ids": [
+            "node-completed-1",
+            "node-completed-2",
+            "node-renewed-1",
+            "node-renewed-2",
+            "node-renewed-3"
+          ],
+          "final_ledger_started": false,
+          "forced_return_for_supersede": false,
+          "frontier_entered_candidate_before_activation": false,
+          "generated_files_only_display": false,
+          "holder": "project_manager",
+          "mermaid_topology_projected": false,
+          "milestone_plan_change_recorded": true,
+          "mutation_trigger_kind": "milestone_plan_renewal",
+          "old_current_node_packet_superseded": false,
+          "old_pending_suffix_evidence_invalidated": true,
+          "old_pending_suffix_open_blockers_retired": false,
+          "old_pending_suffix_packets_invalidated": true,
+          "old_sibling_evidence_reused_as_current": false,
+          "pm_activation_recorded": false,
+          "pm_mutation_proposed": true,
+          "prior_pending_suffix_node_ids": [
+            "node-pending-1",
+            "node-pending-2"
+          ],
+          "process_recheck_passed": true,
+          "product_recheck_passed": false,
+          "repair_node_id_declared": false,
+          "repair_of_node_id_declared": false,
+          "repair_rendered_as_final_mainline": false,
+          "replacement_effective_member_id": "",
+          "replacement_effective_member_ids": [
+            "node-renewed-1",
+            "node-renewed-2",
+            "node-renewed-3"
+          ],
+          "replay_scope_declared": true,
+          "return_target_declared": false,
+          "reviewer_block_recorded": false,
+          "reviewer_recheck_passed": false,
+          "route_memory_authority_validated_before_event_write": true,
+          "route_memory_revalidated_after_parent_decision_write": false,
+          "route_mutation_consumed_same_authority": true,
+          "route_visible_as_current": false,
+          "same_scope_replay_rerun_after_mutation": false,
+          "sealed_body_boundary_preserved": true,
+          "stale_evidence_invalidated": true,
+          "status": "running",
+          "superseded_effective_member_ids": [
+            "node-pending-1",
+            "node-pending-2"
+          ],
+          "superseded_node_shown_as_pending": false,
+          "superseded_nodes_declared": false,
+          "terminal_target_member_ids": [
+            "node-completed-1",
+            "node-completed-2",
             "node-renewed-1",
             "node-renewed-2",
             "node-renewed-3"
@@ -912,6 +1056,7 @@
           "mutation_trigger_kind": "milestone_plan_renewal",
           "old_current_node_packet_superseded": false,
           "old_pending_suffix_evidence_invalidated": false,
+          "old_pending_suffix_open_blockers_retired": false,
           "old_pending_suffix_packets_invalidated": false,
           "old_sibling_evidence_reused_as_current": false,
           "pm_activation_recorded": false,
@@ -1049,6 +1194,7 @@
           "mutation_trigger_kind": "milestone_plan_renewal",
           "old_current_node_packet_superseded": false,
           "old_pending_suffix_evidence_invalidated": true,
+          "old_pending_suffix_open_blockers_retired": true,
           "old_pending_suffix_packets_invalidated": true,
           "old_sibling_evidence_reused_as_current": false,
           "pm_activation_recorded": true,
@@ -1104,7 +1250,8 @@
         "detected": true,
         "expected_failure": "changed remaining plan rechecked before old pending suffix packets were invalidated",
         "failures": [
-          "changed remaining plan rechecked before old pending suffix packets were invalidated"
+          "changed remaining plan rechecked before old pending suffix packets were invalidated",
+          "changed remaining plan rechecked before old pending suffix blockers were retired"
         ],
         "state": {
           "active_route_overwritten_before_activation": false,
@@ -1184,6 +1331,7 @@
           "mutation_trigger_kind": "milestone_plan_renewal",
           "old_current_node_packet_superseded": false,
           "old_pending_suffix_evidence_invalidated": true,
+          "old_pending_suffix_open_blockers_retired": false,
           "old_pending_suffix_packets_invalidated": false,
           "old_sibling_evidence_reused_as_current": false,
           "pm_activation_recorded": false,
@@ -1320,6 +1468,7 @@
           "mutation_trigger_kind": "milestone_plan_renewal",
           "old_current_node_packet_superseded": false,
           "old_pending_suffix_evidence_invalidated": true,
+          "old_pending_suffix_open_blockers_retired": true,
           "old_pending_suffix_packets_invalidated": true,
           "old_sibling_evidence_reused_as_current": false,
           "pm_activation_recorded": true,
@@ -1433,6 +1582,7 @@
           "mutation_trigger_kind": "reviewer_block",
           "old_current_node_packet_superseded": true,
           "old_pending_suffix_evidence_invalidated": false,
+          "old_pending_suffix_open_blockers_retired": false,
           "old_pending_suffix_packets_invalidated": false,
           "old_sibling_evidence_reused_as_current": false,
           "pm_activation_recorded": true,
@@ -1544,6 +1694,7 @@
           "mutation_trigger_kind": "reviewer_block",
           "old_current_node_packet_superseded": true,
           "old_pending_suffix_evidence_invalidated": false,
+          "old_pending_suffix_open_blockers_retired": false,
           "old_pending_suffix_packets_invalidated": false,
           "old_sibling_evidence_reused_as_current": false,
           "pm_activation_recorded": true,
@@ -1654,6 +1805,7 @@
           "mutation_trigger_kind": "reviewer_block",
           "old_current_node_packet_superseded": false,
           "old_pending_suffix_evidence_invalidated": false,
+          "old_pending_suffix_open_blockers_retired": false,
           "old_pending_suffix_packets_invalidated": false,
           "old_sibling_evidence_reused_as_current": false,
           "pm_activation_recorded": false,
@@ -1764,6 +1916,7 @@
           "mutation_trigger_kind": "reviewer_block",
           "old_current_node_packet_superseded": true,
           "old_pending_suffix_evidence_invalidated": false,
+          "old_pending_suffix_open_blockers_retired": false,
           "old_pending_suffix_packets_invalidated": false,
           "old_sibling_evidence_reused_as_current": false,
           "pm_activation_recorded": true,
@@ -1874,6 +2027,7 @@
           "mutation_trigger_kind": "reviewer_block",
           "old_current_node_packet_superseded": false,
           "old_pending_suffix_evidence_invalidated": false,
+          "old_pending_suffix_open_blockers_retired": false,
           "old_pending_suffix_packets_invalidated": false,
           "old_sibling_evidence_reused_as_current": false,
           "pm_activation_recorded": false,
@@ -1978,6 +2132,7 @@
           "mutation_trigger_kind": "reviewer_block",
           "old_current_node_packet_superseded": true,
           "old_pending_suffix_evidence_invalidated": false,
+          "old_pending_suffix_open_blockers_retired": false,
           "old_pending_suffix_packets_invalidated": false,
           "old_sibling_evidence_reused_as_current": true,
           "pm_activation_recorded": true,
@@ -2090,6 +2245,7 @@
           "mutation_trigger_kind": "reviewer_block",
           "old_current_node_packet_superseded": false,
           "old_pending_suffix_evidence_invalidated": false,
+          "old_pending_suffix_open_blockers_retired": false,
           "old_pending_suffix_packets_invalidated": false,
           "old_sibling_evidence_reused_as_current": false,
           "pm_activation_recorded": false,
@@ -2200,6 +2356,7 @@
           "mutation_trigger_kind": "reviewer_block",
           "old_current_node_packet_superseded": true,
           "old_pending_suffix_evidence_invalidated": false,
+          "old_pending_suffix_open_blockers_retired": false,
           "old_pending_suffix_packets_invalidated": false,
           "old_sibling_evidence_reused_as_current": false,
           "pm_activation_recorded": true,
@@ -2300,6 +2457,7 @@
           "mutation_trigger_kind": "reviewer_block",
           "old_current_node_packet_superseded": true,
           "old_pending_suffix_evidence_invalidated": false,
+          "old_pending_suffix_open_blockers_retired": false,
           "old_pending_suffix_packets_invalidated": false,
           "old_sibling_evidence_reused_as_current": false,
           "pm_activation_recorded": true,
@@ -2410,6 +2568,7 @@
           "mutation_trigger_kind": "reviewer_block",
           "old_current_node_packet_superseded": false,
           "old_pending_suffix_evidence_invalidated": false,
+          "old_pending_suffix_open_blockers_retired": false,
           "old_pending_suffix_packets_invalidated": false,
           "old_sibling_evidence_reused_as_current": false,
           "pm_activation_recorded": false,
@@ -2520,6 +2679,7 @@
           "mutation_trigger_kind": "reviewer_block",
           "old_current_node_packet_superseded": false,
           "old_pending_suffix_evidence_invalidated": false,
+          "old_pending_suffix_open_blockers_retired": false,
           "old_pending_suffix_packets_invalidated": false,
           "old_sibling_evidence_reused_as_current": false,
           "pm_activation_recorded": false,
@@ -2630,6 +2790,7 @@
           "mutation_trigger_kind": "reviewer_block",
           "old_current_node_packet_superseded": true,
           "old_pending_suffix_evidence_invalidated": false,
+          "old_pending_suffix_open_blockers_retired": false,
           "old_pending_suffix_packets_invalidated": false,
           "old_sibling_evidence_reused_as_current": false,
           "pm_activation_recorded": true,
@@ -2734,6 +2895,7 @@
           "mutation_trigger_kind": "reviewer_block",
           "old_current_node_packet_superseded": false,
           "old_pending_suffix_evidence_invalidated": false,
+          "old_pending_suffix_open_blockers_retired": false,
           "old_pending_suffix_packets_invalidated": false,
           "old_sibling_evidence_reused_as_current": false,
           "pm_activation_recorded": false,
@@ -2839,6 +3001,7 @@
           "mutation_trigger_kind": "reviewer_block",
           "old_current_node_packet_superseded": false,
           "old_pending_suffix_evidence_invalidated": false,
+          "old_pending_suffix_open_blockers_retired": false,
           "old_pending_suffix_packets_invalidated": false,
           "old_sibling_evidence_reused_as_current": false,
           "pm_activation_recorded": false,
@@ -2950,6 +3113,7 @@
           "mutation_trigger_kind": "reviewer_block",
           "old_current_node_packet_superseded": true,
           "old_pending_suffix_evidence_invalidated": false,
+          "old_pending_suffix_open_blockers_retired": false,
           "old_pending_suffix_packets_invalidated": false,
           "old_sibling_evidence_reused_as_current": false,
           "pm_activation_recorded": true,
@@ -3054,6 +3218,7 @@
           "mutation_trigger_kind": "reviewer_block",
           "old_current_node_packet_superseded": false,
           "old_pending_suffix_evidence_invalidated": false,
+          "old_pending_suffix_open_blockers_retired": false,
           "old_pending_suffix_packets_invalidated": false,
           "old_sibling_evidence_reused_as_current": false,
           "pm_activation_recorded": false,
@@ -3159,6 +3324,7 @@
           "mutation_trigger_kind": "reviewer_block",
           "old_current_node_packet_superseded": true,
           "old_pending_suffix_evidence_invalidated": false,
+          "old_pending_suffix_open_blockers_retired": false,
           "old_pending_suffix_packets_invalidated": false,
           "old_sibling_evidence_reused_as_current": false,
           "pm_activation_recorded": true,
@@ -3265,6 +3431,7 @@
           "mutation_trigger_kind": "reviewer_block",
           "old_current_node_packet_superseded": true,
           "old_pending_suffix_evidence_invalidated": false,
+          "old_pending_suffix_open_blockers_retired": false,
           "old_pending_suffix_packets_invalidated": false,
           "old_sibling_evidence_reused_as_current": false,
           "pm_activation_recorded": true,
@@ -3370,6 +3537,7 @@
           "mutation_trigger_kind": "reviewer_block",
           "old_current_node_packet_superseded": true,
           "old_pending_suffix_evidence_invalidated": false,
+          "old_pending_suffix_open_blockers_retired": false,
           "old_pending_suffix_packets_invalidated": false,
           "old_sibling_evidence_reused_as_current": false,
           "pm_activation_recorded": true,
@@ -3430,12 +3598,17 @@
       "tests/router_runtime/route_mutation_sibling_replacement.py",
       "tests/router_runtime/route_mutation_parent_backward.py",
       "tests/test_flowpilot_user_flow_diagram.py",
-      "tests/test_flowpilot_unified_repair_runtime.py"
+      "tests/test_flowpilot_unified_repair_runtime.py",
+      "tests/test_flowpilot_milestone_plan_renewal_contracts.py",
+      "tests/test_flowpilot_recursive_route_execution_runtime.py"
     ],
     "missing": [],
     "obligations": {
       "existing_replacement_activation_baseline_tests_present": true,
       "final_ledger_and_terminal_targets_match_effective_members_test": true,
+      "milestone_changed_suffix_retires_open_blocker_behavior_test": true,
+      "milestone_changed_suffix_uses_current_mutation_primitive": true,
+      "milestone_contract_tests_cover_dynamic_shape_and_profile": true,
       "parent_segment_same_authority_success_test": true,
       "parent_segment_validates_route_memory_before_event_local_write": true,
       "route_mutation_rejects_unvalidated_authority_dict_test": true,
@@ -3465,15 +3638,17 @@
     "state_count": 58
   },
   "source_fingerprints": {
-    "simulations/flowpilot_route_mutation_activation_model.py": "67622214877fe704814af639a32045adcff23f17f3d4ebe92af7c18a5a9af729",
-    "simulations/run_flowpilot_route_mutation_activation_checks.py": "7269b19063ca5b1763784fae0b45925b4e4ee26ec58174645a3f193397b5fbf6",
-    "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py": "7188eab0eceade27bdd5499beaf7d0ae8401f6cc38a81b0f5552ff03c0ceff9b",
+    "simulations/flowpilot_route_mutation_activation_model.py": "7acf661b152ac017a2685722f1e96987721d115a334efc038b1b7785f72b32f5",
+    "simulations/run_flowpilot_route_mutation_activation_checks.py": "9f09cdefb098edecfac056e47324ee351bef1d5f6f18931d0eb32416ffb5029c",
+    "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py": "e0605be6fa2d547ee377356237d96c022f153fd11a5b41b3bd2a551cda79c2bf",
     "skills/flowpilot/assets/flowpilot_router_route.py": "fcbddcd4bdc24bcafdb0716bcc81eef0de490dbf14e671fd10343b6380f86e22",
     "skills/flowpilot/assets/flowpilot_router_route_artifacts_nodes_parent.py": "1b40cc8867cb62313bc1418e3905fee1fb8446dece86a31e353305c6e631fb19",
     "tests/router_runtime/route_mutation_parent_backward.py": "55422a95cb1c67476b9202644fa0d26baca52d81ae9956a91f5a2b8704dd5e85",
     "tests/router_runtime/route_mutation_sibling_replacement.py": "b7e3c140a76009db4c3f576958a10e3434f96b8c9ca8bfbbbe12d42538086c4d",
     "tests/test_flowpilot_core_runtime.py": "991312616284a651189ebbc14d9e3df522645e68aff721366b943c20b5375e30",
-    "tests/test_flowpilot_high_standard_control_flow.py": "a678789b2917580e3cbed5941bd0b8d656bec290e0687be961673f8a328bda24",
+    "tests/test_flowpilot_high_standard_control_flow.py": "15a885826afc9329f09e4ac59a9e2894bd24bac2751a5d664ab77d37a8a010b3",
+    "tests/test_flowpilot_milestone_plan_renewal_contracts.py": "ecda11758fa2b424c945a9a96bdba83a61b18741968518d09af54c6a08297005",
+    "tests/test_flowpilot_recursive_route_execution_runtime.py": "3f2b25e1b1ce8e4a503daf88f11732f0ed1c10a1154b4c608f78c80de4fe0caf",
     "tests/test_flowpilot_unified_repair_runtime.py": "bd591c182bbd61e2bee463cf9aaeac1ec3d79da3ed1c2ce1689a10755d0c9453",
     "tests/test_flowpilot_user_flow_diagram.py": "8565a1cbe8a98845a7a8e0b7576c4b3443171faa783aba4eba2c33971f505050"
   }

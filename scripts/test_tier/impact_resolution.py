@@ -54,6 +54,7 @@ SHARED_CONTROL_PLANE_INPUTS = frozenset(
         "scripts/run_test_tier.py",
         "scripts/test_tier/command_builders.py",
         "scripts/test_tier/fast_commands.py",
+        "scripts/test_tier/integration_commands.py",
         "scripts/test_tier/mta_evidence_commands.py",
     }
 )
@@ -61,6 +62,7 @@ SHARED_CONTROL_PLANE_OWNER = {
     "scripts/run_test_tier.py": "test_tier_runner",
     "scripts/test_tier/command_builders.py": "test_tier_runner",
     "scripts/test_tier/fast_commands.py": "test_tier_runner",
+    "scripts/test_tier/integration_commands.py": "test_tier_runner",
     "scripts/test_tier/mta_evidence_commands.py": "model_test_alignment_tests",
 }
 
@@ -69,6 +71,82 @@ SHARED_CONTROL_PLANE_OWNER = {
 # Keep those exceptions explicit and bind each input only to commands that
 # actually execute or test it.
 EXPLICIT_DYNAMIC_INPUT_OWNERS = {
+    **{
+        path: frozenset(
+            {
+                "smoke_flowpilot_fast",
+                "thin_parent_tests",
+                "unified_repair_integrity",
+                "unified_repair_native_evidence_manifest",
+                "unified_repair_native_runtime_conformance",
+            }
+        )
+        for path in (
+            "skills/flowpilot/assets/flowpilot_core_runtime/control_surface.py",
+            "skills/flowpilot/assets/flowpilot_core_runtime/migration.py",
+            "skills/flowpilot/assets/flowpilot_core_runtime/pointer_store.py",
+            "skills/flowpilot/assets/flowpilot_core_runtime/run_shell.py",
+            "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+            "tests/flowpilot_repair_test_helpers.py",
+        )
+    },
+    **{
+        path: frozenset(
+            {
+                "smoke_flowpilot_fast",
+                "thin_parent_tests",
+                "unified_repair_exact_native_test_owner",
+                "unified_repair_integrity",
+                "unified_repair_native_evidence_manifest",
+            }
+        )
+        for path in (
+            "tests/router_runtime/route_mutation_parent_backward.py",
+            "tests/router_runtime/route_mutation_sibling_replacement.py",
+            "tests/router_runtime/route_mutation_transactions.py",
+            "tests/test_flowpilot_complete_system_runtime.py",
+            "tests/test_flowpilot_core_runtime.py",
+            "tests/test_flowpilot_high_standard_control_flow.py",
+            "tests/test_flowpilot_terminal_ledger_source_entries.py",
+            "tests/test_flowpilot_unified_repair_runtime.py",
+        )
+    },
+    **{
+        path: frozenset(
+            {
+                "smoke_flowpilot_fast",
+                "thin_parent_tests",
+                "unified_repair_integrity",
+                "unified_repair_native_evidence_manifest",
+            }
+        )
+        for path in (
+            "simulations/build_flowpilot_unified_repair_native_evidence_manifest.py",
+            "simulations/flowpilot_unified_repair_integrity_model.py",
+            "simulations/run_flowpilot_unified_repair_exact_native_test_owner.py",
+            "simulations/run_flowpilot_unified_repair_integrity_checks.py",
+            "simulations/run_flowpilot_unified_repair_native_runtime_conformance.py",
+        )
+    },
+    **{
+        path: frozenset({"flowpilot_milestone_renewal_affected_owner"})
+        for path in (
+            "simulations/flowpilot_fake_project_rehearsal_cli.py",
+            "simulations/flowpilot_fake_project_rehearsal_scenarios.py",
+            "simulations/flowpilot_planning_quality_model.py",
+            "simulations/flowpilot_route_mutation_activation_model.py",
+            "simulations/flowpilot_route_replanning_policy_model.py",
+            "simulations/run_flowpilot_milestone_renewal_budget_checks.py",
+            "simulations/run_flowpilot_milestone_renewal_longitudinal_rehearsal.py",
+            "simulations/run_flowpilot_planning_quality_checks.py",
+            "simulations/run_flowpilot_route_mutation_activation_checks.py",
+            "simulations/run_flowpilot_route_replanning_policy_checks.py",
+            "skills/flowpilot/assets/flowpilot_core_runtime/packet_stage_evidence_matrix.py",
+            "skills/flowpilot/assets/runtime_kit/cards/phases/pm_route_skeleton.md",
+            "skills/flowpilot/assets/runtime_kit/cards/reviewer/pm_flowguard_acceptance_review.md",
+            "skills/flowpilot/assets/runtime_kit/cards/reviewer/route_challenge.md",
+        )
+    },
     "skills/flowpilot/assets/flowpilot_core_runtime/fake_e2e.py": frozenset(
         {
             "complete_workstream_fake_ai_execution_receipts",

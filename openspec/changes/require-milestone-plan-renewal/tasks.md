@@ -9,13 +9,13 @@
 ## 2. Current PM Disposition Contract
 
 - [x] 2.1 Add the topology-derived `milestone_plan_renewal_required` projection to current PM-disposition packets.
-- [x] 2.2 Add the structured `milestone_audit` contract with completed evidence, deviations, remaining gaps, prior-plan assessment, and replan rationale.
+- [x] 2.2 Add the structured `milestone_audit` semantic contract with completed outcomes, deviations, remaining gaps, prior-plan assessment, and replan rationale; keep exact evidence binding runtime-owned.
 - [x] 2.3 Add the strict `remaining_route_plan` contract and terminal-only empty-plan validation.
 - [x] 2.4 Validate that every currently unclosed acceptance item retains an owner in a non-empty remaining plan.
 - [x] 2.5 Update minimal shapes, branch shapes, field types, allowed values, repair feedback, and fake-AI contract projection from the same owner.
 - [x] 2.6 Add negative tests for missing audit fields, missing evidence, uncovered obligations, premature empty plans, and unsupported old continuation fields.
 - [x] 2.7 Bind the cumulative completed top-level prefix by `completed[].node_id` and complete runtime-issued evidence refs.
-- [x] 2.8 Bind every renewal audit to the frozen final-goal `contract_hash` and every remaining gap to `owner_node_ids` in the newly emitted suffix.
+- [x] 2.8 Bind every renewal audit to the runtime-owned frozen final-goal `contract_hash` at commit and every remaining gap to `owner_node_ids` in the newly emitted suffix.
 
 ## 3. Staged Milestone Hard Gate
 
@@ -60,11 +60,11 @@
 - [x] 7.2 Add review-window, staged-effect, fake-AI, recovery, and final-closure conformance tests.
 - [x] 7.3 Run the minimum affected unit, model, review-window, and contract checks while source is changing and fix all failures.
 - [x] 7.4 Refresh FlowPilot's SkillGuard contract source, compiled contract, and exact check manifest after source and check identities are frozen.
-- [x] 7.5 Run one final SkillGuard-supervised full validation for maintenance unit `unit:flowpilot` and inspect its immutable terminal receipts.
-- [x] 7.6 Sync the validated clean consumer projection and run installed currentness plus target-owned installed smoke checks separately.
-- [x] 7.7 Run OpenSpec strict validation and record final source, model, SkillGuard, and installation identities without release or publication claims.
+- [ ] 7.5 Run one final SkillGuard-supervised full validation for maintenance unit `unit:flowpilot` and inspect its immutable terminal receipts.
+- [ ] 7.6 Sync the validated clean consumer projection and run installed currentness plus target-owned installed smoke checks separately.
+- [ ] 7.7 Run OpenSpec strict validation and record final source, model, SkillGuard, installation, Git, tag, and publication identities separately.
 - [x] 7.8 Perform the predictive-KB postflight check and record one structured observation only if this work exposed a reusable lesson or route gap (event `7275fb7d-a98f-41e1-bda7-40dc2710e23a`, terminal receipt verified).
-- [x] 7.9 Collect the background model regressions under one frozen source snapshot and preserve their immutable logs without overwriting parallel results.
+- [ ] 7.9 Collect the background model regressions under one frozen source snapshot and preserve their immutable logs without overwriting parallel results.
 
 ## 8. Post-implementation Correctness Closure
 
@@ -74,21 +74,24 @@
 - [x] 8.4 Bind `milestone_audit.remaining` rows to current obligation ids or an equivalent existing projection and keep owner ids within the submitted route.
 - [x] 8.5 Give PM bounded authorized reads for required milestone evidence and reject submission without the corresponding current read receipts.
 - [x] 8.6 Replace currentness recovery text matching with a typed currentness-drift disposition and keep invariant failures explicit.
-- [x] 8.7 Add Reviewer-owned top-level milestone granularity checks without introducing levels, scores, flags, or a second route authority.
+- [x] 8.7 Add Reviewer-owned top-level milestone granularity checks for both initial and renewed routes without introducing levels, scores, flags, or a second route authority.
+- [x] 8.8 Enforce milestone-renewal currentness in the lowest top-level acceptance/commit owner and frontier-advance boundary; add a direct internal-call bypass regression.
+- [x] 8.9 Prove terminal empty-plan closure traverses FlowGuard, PM absorption, Reviewer, system validation, and atomic commit before final closure; remove any test shortcut that permits a missing gate packet.
 
 ## 9. Current Model and Evidence Closure
 
-- [x] 9.1 Add the four renewal hazards already present in the model to the runner state identity and expected-failure map; regenerate the result for all current negative scenarios.
-- [x] 9.2 Bind the changed-suffix implementation and gate-to-commit path to production conformance and affected tests instead of the historical repair slice only.
-- [x] 9.3 Update the current FlowGuard model-regression manifest and activate one accepted current ModelRevisionSet without a compatibility reader or fallback.
-- [x] 9.4 Regenerate current TestMesh/MTA, formal AI, PPA, BCL, and Risk evidence from one frozen source/toolchain snapshot; closure-only MTA consumers must run after their current producers.
-- [x] 9.5 Expand the FlowPilot SkillGuard declared checks to own the new renewal model, production conformance, affected tests, and current evidence closure; run the final supervised validation.
+- [x] 9.1 Add the audit-discovered renewal hazards to the runner state identity and expected-failure map; regenerate the result for all current negative scenarios.
+- [x] 9.2 Bind the changed-suffix implementation and gate-to-commit path to runtime production conformance and affected tests instead of source-string presence checks or the historical repair slice only.
+- [ ] 9.3 Update the current FlowGuard model-regression manifest and activate one accepted current ModelRevisionSet without a compatibility reader or fallback.
+- [ ] 9.4 Regenerate current TestMesh/MTA, formal AI, PPA, BCL, Risk, release-scope parent, and final-confidence evidence from one frozen source/toolchain snapshot; closure-only consumers must run after their current producers.
+- [ ] 9.5 Expand the FlowPilot SkillGuard declared checks to own the new renewal model, production conformance, affected tests, and current evidence closure; run the final supervised validation under the current contract identity.
 
 ## 10. Lightweight Execution and Enablement
 
-- [x] 10.1 Keep runtime-owned machine bindings out of PM semantic prose and reduce repeated audit transport through the existing accepted-prefix projection.
-- [x] 10.2 Consolidate route mutation lifecycle primitives and repeated milestone prompt/card instructions without removing the hard gate.
-- [x] 10.3 Run one current-version longitudinal rehearsal covering unchanged renewal, changed suffix, nested child, Reviewer block, interruption/resume, and terminal empty plan; this is not an A/B experiment.
-- [x] 10.4 Measure milestone role turns, retries, audit payload growth, and gate latency; record the accepted lightweight budget in `docs/flowpilot_milestone_renewal_budget.md`.
-- [x] 10.5 Refresh the validated consumer installation, confirm the milestone renewal path is enabled as the sole current behavior, and verify source/install parity.
-- [x] 10.6 Preserve peer work, commit only owned integrated files locally, rerun OpenSpec/FlowGuard/SkillGuard closure, and report remote/tag/publication status separately.
+- [x] 10.1 Keep runtime-owned machine bindings out of PM semantic prose and reduce repeated audit transport through the existing accepted-prefix projection and current milestone delta without creating a second ledger.
+- [x] 10.2 Consolidate route mutation lifecycle primitives and repeated milestone prompt/card instructions without removing the hard gate, PM absorption, Reviewer, or distinct node-acceptance-plan duties.
+- [x] 10.3 Run one current-version public-launcher longitudinal rehearsal covering unchanged renewal, changed suffix, nested child, Reviewer block, interruption/resume, and terminal empty plan; this is not an A/B experiment.
+- [x] 10.4 Measure four AI submissions, two local system steps, retries, full packet/context and evidence-read growth, and stage/total gate latency at 10/50/100 top-level milestones; record the accepted lightweight budget in `docs/flowpilot_milestone_renewal_budget.md`.
+- [ ] 10.5 Refresh the validated consumer installation, confirm the milestone renewal path is enabled as the sole current behavior, and verify source/install parity.
+- [ ] 10.6 Preserve peer work, commit only owned integrated files locally, rerun OpenSpec/FlowGuard/SkillGuard closure, and report source/install/model/test/Git identities separately.
+- [ ] 10.7 Update `VERSION`, `CHANGELOG.md`, and public release notes; create an immutable new commit/tag/GitHub Release, push the current branch and `main`, and verify remote branch, tag, and Release identities.

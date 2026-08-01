@@ -37,6 +37,9 @@ replanning heuristics, or an experimental old/new mode.
   results, and Reviewer-blocked plan activation.
 - Keep one current behavior. Do not add L0-L4 classification, a feature flag, a
   compatibility reader, a fallback route, or an A/B experiment.
+- After the current behavior, model, validation, SkillGuard, and consumer
+  installation identities are frozen and current, publish the integrated
+  source as one new immutable FlowPilot version without moving the prior tag.
 
 ## Capabilities
 
@@ -67,3 +70,5 @@ replanning heuristics, or an experimental old/new mode.
   contract.
 - SkillGuard contract-source/check-manifest refresh and installed consumer
   projection after source validation.
+- Version, changelog, Git tag, remote branch, and GitHub Release closure after
+  the single frozen final validation.

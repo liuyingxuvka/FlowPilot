@@ -1,43 +1,60 @@
-# FlowPilot Milestone-Renewal Lightweight Budget
+# FlowPilot milestone-renewal budget
 
-This is an execution-shape budget for the current direct renewal loop. It is
-not a second route authority, a score, or a planning level.
+This budget keeps the mandatory top-level milestone audit visible without
+turning every route node into a heavyweight global review.
 
-## Accepted shape
+## Gate shape
 
-- One top-level milestone boundary creates one fresh audit and one fresh
-  remaining route plan.
-- The normal gate path has six role handoffs: PM, FlowGuard review, PM
-  absorption, Reviewer, system validation, and commit.
-- A failed gate reopens the same current obligation with a fresh packet. It
-  does not copy the old plan forward or create another plan hierarchy.
-- Nested child work stays on the existing parent-composition path and does not
-  trigger the global renewal gate.
+Every completed top-level milestone has one hard renewal gate:
 
-## Measured local envelope
+1. PM audits the completed prefix, deviations, remaining gaps, and emits the
+   complete remaining route to the final goal.
+2. FlowGuard challenges the renewed route against the current model.
+3. PM absorbs the FlowGuard findings into one current candidate.
+4. Reviewer accepts or blocks the whole renewal claim.
+5. The local runtime validates and binds machine-owned commit material.
+6. The local runtime atomically activates the accepted route.
 
-The current contract projection was measured with compact JSON encoding:
+That is exactly four AI-role submissions and two local mechanical steps. A
+clean pass has zero retries. A challenge creates one new candidate cycle; it
+does not edit the already accepted route in place.
 
-| remaining nodes | serialized renewal shape |
-| ---: | ---: |
-| 1 | 903 bytes |
-| 3 | 1,473 bytes |
-| 8 | 2,898 bytes |
-| 16 | 5,202 bytes |
+Nested child completion is deliberately outside this global gate. It closes
+locally and returns control to its parent route. This is what prevents a deep
+tree from multiplying whole-goal audits at every leaf.
 
-The 16-node row is an observation boundary for review, not a new runtime
-hard gate. A reviewer should request decomposition when the audit transport
-becomes materially larger than this envelope instead of adding another plan
-level.
+## Evidence window
 
-The focused PPA maintenance proof completed in 10.33 seconds locally (14
-tests passed). This is test-run latency, not a promise about model-provider
-latency. Provider latency remains governed by the existing liveness and
-current-receipt rules.
+The PM may see the semantic completed-prefix projection, but it is authorized
+to read only the current milestone evidence plus the immediately previous
+accepted milestone audit. It does not reopen every historical result body.
+The runtime, not PM, binds the current contract hash and the completed rows'
+evidence references during commit.
 
-## Regression guard
+The executable budget check uses three current evidence bodies and at most one
+previous audit body, so the authorized read count remains at four for 10, 50,
+and 100 top-level milestones. The previous audit and packet naturally grow
+with the semantic completed prefix; the count of separately reopened evidence
+bodies does not.
 
-The budget is considered preserved when the current model and affected tests
-continue to show: one direct renewal loop, no L0-L4 language or modes, one
-current audit/plan pair, exact owner bindings for remaining obligations, and
-no fallback or historical-plan continuation.
+## Accepted budgets
+
+- Route sizes: 10, 50, and 100 top-level milestones.
+- Sampled hard gates: first, middle, and penultimate milestone.
+- Contract/packet staging p95: at most 250 ms locally.
+- Four-role payload plus two mechanical-step p95: at most 500 ms locally.
+- Authorized evidence-result reads: at most four per hard gate.
+- Largest 100-milestone transport payload: at most 15 times the largest
+  10-milestone payload, which admits bounded linear semantic growth but rejects
+  runaway super-linear expansion.
+
+Run:
+
+```text
+python simulations/run_flowpilot_milestone_renewal_budget_checks.py
+```
+
+The result is a deterministic local transport and conformance measurement. It
+does not include provider/network latency and is not evidence that a live AI
+will produce a high-quality plan; model regressions, prompt contracts, and the
+longitudinal public-CLI rehearsal own those separate claims.

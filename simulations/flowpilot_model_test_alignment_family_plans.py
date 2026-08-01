@@ -2632,6 +2632,226 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
         ),
     )
 
+    milestone_renewal = ModelTestAlignmentPlan(
+        model_id="milestone_renewal",
+        obligations=(
+            _obligation(
+                "milestone_renewal.top_level_gate_cannot_bypass_review_chain",
+                obligation_type="invariant",
+                description=(
+                    "Every top-level acceptance is staged and traverses FlowGuard, PM absorption, "
+                    "Reviewer, system validation, and atomic commit before frontier advance."
+                ),
+                required_test_kinds=(NEGATIVE, REPLAY),
+                allow_shared_evidence=True,
+                allow_shared_implementation=True,
+            ),
+            _obligation(
+                "milestone_renewal.complete_current_audit_and_final_goal_route",
+                obligation_type="contract",
+                description=(
+                    "PM semantically audits the exact completed prefix, deviations, and remaining gaps, "
+                    "then freshly emits one complete remaining route through the final goal while runtime "
+                    "alone binds contract hashes and evidence references."
+                ),
+                required_test_kinds=(HAPPY, NEGATIVE),
+                allow_shared_evidence=True,
+                allow_shared_implementation=True,
+            ),
+            _obligation(
+                "milestone_renewal.changed_suffix_preserves_prefix_and_retires_old_authority",
+                obligation_type="transition",
+                description=(
+                    "A changed suffix preserves accepted history and atomically supersedes old unfinished "
+                    "nodes, leases, blockers, and stale evidence through the existing mutation lifecycle."
+                ),
+                required_test_kinds=(HAPPY, NEGATIVE),
+                allow_shared_evidence=True,
+                allow_shared_implementation=True,
+            ),
+            _obligation(
+                "milestone_renewal.nested_child_local_and_terminal_empty_plan_exact",
+                obligation_type="refinement",
+                description=(
+                    "Nested child closure stays local, while an empty remaining plan is legal only at the "
+                    "terminal top-level gate after the complete challenge chain."
+                ),
+                required_test_kinds=(EDGE, REPLAY),
+                allow_shared_evidence=True,
+                allow_shared_implementation=True,
+            ),
+            _obligation(
+                "milestone_renewal.bounded_current_evidence_and_control_plane_budget",
+                obligation_type="resource",
+                description=(
+                    "The gate reads current milestone evidence plus at most the previous accepted audit, "
+                    "uses four AI-role submissions and two local steps, and grows no faster than the declared "
+                    "linear 10/50/100 milestone budget."
+                ),
+                required_test_kinds=(HAPPY, EDGE),
+                allow_shared_evidence=True,
+                allow_shared_implementation=True,
+            ),
+            _obligation(
+                "milestone_renewal.typed_currentness_drift_only",
+                obligation_type="hazard",
+                description=(
+                    "Only the typed currentness-drift disposition may reopen a fresh renewal packet; error "
+                    "text and invariant failures cannot be reclassified as recoverable drift."
+                ),
+                required_test_kinds=(NEGATIVE,),
+                allow_shared_evidence=True,
+                allow_shared_implementation=True,
+            ),
+        ),
+        code_contracts=(
+            _contract(
+                "milestone_renewal.runtime.public_disposition_boundary",
+                path="skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+                symbol="record_pm_disposition",
+                implements=("milestone_renewal.top_level_gate_cannot_bypass_review_chain",),
+                external_inputs=("ledger", "packet_id", "decision"),
+                external_outputs=("pm_disposition_id",),
+                error_paths=("top_level_public_accept_bypass",),
+            ),
+            _contract(
+                "milestone_renewal.runtime.commit_material_binding",
+                path="skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+                symbol="_canonical_milestone_audit_commit_material",
+                implements=("milestone_renewal.complete_current_audit_and_final_goal_route",),
+                external_inputs=("ledger", "packet", "semantic_milestone_audit"),
+                external_outputs=("runtime_bound_milestone_audit",),
+                state_reads=("contract_hash", "completed_milestone_bindings"),
+            ),
+            _contract(
+                "milestone_renewal.runtime.atomic_gate_commit",
+                path="skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+                symbol="_commit_milestone_plan_renewal_disposition",
+                implements=(
+                    "milestone_renewal.top_level_gate_cannot_bypass_review_chain",
+                    "milestone_renewal.changed_suffix_preserves_prefix_and_retires_old_authority",
+                    "milestone_renewal.nested_child_local_and_terminal_empty_plan_exact",
+                ),
+                external_inputs=("ledger", "staged_gate"),
+                external_outputs=("committed_disposition_id",),
+                state_reads=("flowguard_order", "pm_absorption", "review", "system_validation"),
+                state_writes=("route_nodes", "route_versions", "frontier", "blockers"),
+            ),
+            _contract(
+                "milestone_renewal.runtime.bounded_authorized_reads",
+                path="skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+                symbol="_milestone_pm_authorized_result_reads",
+                implements=("milestone_renewal.bounded_current_evidence_and_control_plane_budget",),
+                external_inputs=("current_milestone_evidence_refs", "prior_accepted_audit_result_id"),
+                external_outputs=("authorized_result_reads",),
+            ),
+            _contract(
+                "milestone_renewal.runtime.typed_currentness_recovery",
+                path="skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+                symbol="CurrentnessDriftError",
+                implements=("milestone_renewal.typed_currentness_drift_only",),
+                external_inputs=("typed_apply_failure",),
+                external_outputs=("fresh_renewal_packet_or_hard_failure",),
+                error_paths=("untyped_invariant_failure",),
+            ),
+        ),
+        test_evidence=(
+            _evidence(
+                "milestone_renewal.negative.public_top_level_bypass",
+                test_name="test_public_pm_disposition_cannot_accept_top_level_recursive_node",
+                path="tests/test_flowpilot_recursive_route_execution_runtime.py",
+                command="python simulations/run_flowpilot_milestone_renewal_affected_checks.py",
+                test_kind=NEGATIVE,
+                covers=("milestone_renewal.top_level_gate_cannot_bypass_review_chain",),
+                code_contracts=("milestone_renewal.runtime.public_disposition_boundary",),
+            ),
+            _evidence(
+                "milestone_renewal.replay.terminal_complete_chain",
+                test_name="test_terminal_empty_plan_runs_the_complete_milestone_challenge_chain",
+                path="tests/test_flowpilot_recursive_route_execution_runtime.py",
+                command="python simulations/run_flowpilot_milestone_renewal_affected_checks.py",
+                test_kind=REPLAY,
+                covers=(
+                    "milestone_renewal.top_level_gate_cannot_bypass_review_chain",
+                    "milestone_renewal.nested_child_local_and_terminal_empty_plan_exact",
+                ),
+                code_contracts=("milestone_renewal.runtime.atomic_gate_commit",),
+            ),
+            _evidence(
+                "milestone_renewal.happy.dynamic_semantic_contract",
+                test_name="test_milestone_profile_projects_complete_dynamic_contract_and_shape",
+                path="tests/test_flowpilot_milestone_plan_renewal_contracts.py",
+                command="python simulations/run_flowpilot_milestone_renewal_affected_checks.py",
+                test_kind=HAPPY,
+                covers=("milestone_renewal.complete_current_audit_and_final_goal_route",),
+                code_contracts=("milestone_renewal.runtime.commit_material_binding",),
+            ),
+            _evidence(
+                "milestone_renewal.negative.pm_machine_binding_rejected",
+                test_name="test_pm_cannot_copy_runtime_owned_milestone_commit_fields",
+                path="tests/test_flowpilot_recursive_route_execution_runtime.py",
+                command="python simulations/run_flowpilot_milestone_renewal_affected_checks.py",
+                test_kind=NEGATIVE,
+                covers=("milestone_renewal.complete_current_audit_and_final_goal_route",),
+                code_contracts=("milestone_renewal.runtime.commit_material_binding",),
+            ),
+            _evidence(
+                "milestone_renewal.happy.changed_suffix",
+                test_name="test_changed_milestone_plan_preserves_prefix_and_rewrites_unfinished_suffix",
+                path="tests/test_flowpilot_recursive_route_execution_runtime.py",
+                command="python simulations/run_flowpilot_milestone_renewal_affected_checks.py",
+                test_kind=HAPPY,
+                covers=("milestone_renewal.changed_suffix_preserves_prefix_and_retires_old_authority",),
+                code_contracts=("milestone_renewal.runtime.atomic_gate_commit",),
+            ),
+            _evidence(
+                "milestone_renewal.negative.changed_suffix_blocker_retirement",
+                test_name="test_changed_milestone_plan_retires_open_suffix_blocker",
+                path="tests/test_flowpilot_recursive_route_execution_runtime.py",
+                command="python simulations/run_flowpilot_milestone_renewal_affected_checks.py",
+                test_kind=NEGATIVE,
+                covers=("milestone_renewal.changed_suffix_preserves_prefix_and_retires_old_authority",),
+                code_contracts=("milestone_renewal.runtime.atomic_gate_commit",),
+            ),
+            _evidence(
+                "milestone_renewal.edge.nested_child_local",
+                test_name="test_nested_child_acceptance_stays_lightweight_and_does_not_open_global_gate",
+                path="tests/test_flowpilot_recursive_route_execution_runtime.py",
+                command="python simulations/run_flowpilot_milestone_renewal_affected_checks.py",
+                test_kind=EDGE,
+                covers=("milestone_renewal.nested_child_local_and_terminal_empty_plan_exact",),
+                code_contracts=("milestone_renewal.runtime.atomic_gate_commit",),
+            ),
+            _evidence(
+                "milestone_renewal.happy.bounded_authorized_reads",
+                test_name="test_later_milestone_reads_only_current_delta_and_previous_accepted_audit",
+                path="tests/test_flowpilot_recursive_route_execution_runtime.py",
+                command="python simulations/run_flowpilot_milestone_renewal_affected_checks.py",
+                test_kind=HAPPY,
+                covers=("milestone_renewal.bounded_current_evidence_and_control_plane_budget",),
+                code_contracts=("milestone_renewal.runtime.bounded_authorized_reads",),
+            ),
+            _evidence(
+                "milestone_renewal.edge.lightweight_budget",
+                test_name="test_reduced_trial_budget_stays_within_declared_bounds",
+                path="tests/test_flowpilot_milestone_renewal_budget.py",
+                command="python simulations/run_flowpilot_milestone_renewal_affected_checks.py",
+                test_kind=EDGE,
+                covers=("milestone_renewal.bounded_current_evidence_and_control_plane_budget",),
+                code_contracts=("milestone_renewal.runtime.bounded_authorized_reads",),
+            ),
+            _evidence(
+                "milestone_renewal.negative.text_currentness_reclassification",
+                test_name="test_error_text_cannot_reclassify_hard_apply_failure_as_currentness_drift",
+                path="tests/test_flowpilot_recursive_route_execution_runtime.py",
+                command="python simulations/run_flowpilot_milestone_renewal_affected_checks.py",
+                test_kind=NEGATIVE,
+                covers=("milestone_renewal.typed_currentness_drift_only",),
+                code_contracts=("milestone_renewal.runtime.typed_currentness_recovery",),
+            ),
+        ),
+    )
+
     unified_repair_integrity = ModelTestAlignmentPlan(
         model_id="flowpilot_unified_repair_integrity",
         obligations=(
@@ -6064,6 +6284,10 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
     packet_card_ack = _with_runtime_path(packet_card_ack, "packet/card/ack")
     packet_result_family = _with_runtime_path(packet_result_family, "packet result family")
     route_mutation = _with_runtime_path(route_mutation, "route mutation")
+    milestone_renewal = _with_runtime_path(
+        milestone_renewal,
+        "top-level milestone renewal",
+    )
     unified_repair_integrity = _with_runtime_path(
         unified_repair_integrity,
         "unified historical and terminal repair integrity",
@@ -6128,6 +6352,22 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
             route_mutation,
             model_checks=("python simulations/run_flowpilot_route_mutation_activation_checks.py",),
             coverage_boundary="Route-mutation alignment covers activation preconditions, sibling replacement, stale evidence, and route-sign projection for ordinary tests.",
+        ),
+        _plan_entry(
+            "top-level milestone renewal",
+            milestone_renewal,
+            model_checks=(
+                "python simulations/run_flowpilot_route_replanning_policy_checks.py --json-out simulations/flowpilot_route_replanning_policy_results.json",
+                "python simulations/run_flowpilot_planning_quality_checks.py --json-out simulations/flowpilot_planning_quality_results.json",
+                "python simulations/run_flowpilot_route_mutation_activation_checks.py --json-out simulations/flowpilot_route_mutation_activation_results.json",
+                "python simulations/run_flowpilot_milestone_renewal_affected_checks.py",
+            ),
+            coverage_boundary=(
+                "Milestone-renewal alignment covers the mandatory top-level audit/replan gate, "
+                "bounded evidence reads, changed-suffix lifecycle, nested local closure, typed "
+                "currentness, and exact terminal chain. The scripted rehearsal and local budget "
+                "do not claim live-AI quality or provider latency."
+            ),
         ),
         _plan_entry(
             "unified historical and terminal repair integrity",

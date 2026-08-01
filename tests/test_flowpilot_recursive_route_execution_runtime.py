@@ -122,7 +122,6 @@ def _milestone_pm_accept_body(
     payload["decision"] = "accept"
     payload["reason"] = reason
     payload["remaining_route_plan"] = canonical_plan
-    payload["milestone_audit"]["contract_hash"] = ledger.get("contract_hash", "")
     if canonical_plan["nodes"]:
         obligations = runtime._milestone_remaining_obligation_ids(
             ledger,
@@ -314,10 +313,10 @@ def _advance_active_node_to_pm_disposition(ledger: dict) -> tuple[str, str]:
 
 def _complete_milestone_decision_gate(ledger: dict, node_id: str) -> None:
     flowguard_packets = _open_packets(ledger, "flowguard_check")
-    if not flowguard_packets:
-        # The final top-level node may enter terminal closure directly; there
-        # is no remaining route to renew after an explicit empty-plan result.
-        return
+    if len(flowguard_packets) != 1:
+        raise AssertionError(
+            f"milestone renewal requires exactly one current FlowGuard packet; found {flowguard_packets}"
+        )
     flowguard_packet = flowguard_packets[0]
     _complete_open_packet(
         ledger,
@@ -399,6 +398,58 @@ def _mark_node_ready_for_final_closure(ledger: dict, node_id: str) -> None:
 
 
 class FlowPilotRecursiveRouteExecutionRuntimeTests(unittest.TestCase):
+    def test_public_pm_disposition_cannot_accept_top_level_recursive_node(self) -> None:
+        ledger, pm_packet = _recursive_ledger()
+        _complete_foundation_planning_chain(ledger, pm_packet)
+        node_id, _disposition_packet_id = _advance_active_node_to_pm_disposition(ledger)
+        result_id = ledger["route_nodes"][node_id]["accepted_result_id"]
+        frontier_before = copy.deepcopy(ledger["execution_frontier"])
+        dispositions_before = copy.deepcopy(ledger["pm_dispositions"])
+
+        with self.assertRaisesRegex(
+            runtime.BlackBoxRuntimeError,
+            "current staged milestone gate commit owner",
+        ):
+            runtime.record_pm_disposition(
+                ledger,
+                node_id,
+                result_id,
+                decision="accept",
+            )
+
+        self.assertEqual(ledger["execution_frontier"], frontier_before)
+        self.assertEqual(ledger["pm_dispositions"], dispositions_before)
+
+    def test_public_pm_disposition_has_no_forged_milestone_material_escape(self) -> None:
+        ledger, pm_packet = _recursive_ledger()
+        _complete_foundation_planning_chain(ledger, pm_packet)
+        node_id, _disposition_packet_id = _advance_active_node_to_pm_disposition(ledger)
+        result_id = ledger["route_nodes"][node_id]["accepted_result_id"]
+
+        with self.assertRaises(TypeError):
+            runtime.record_pm_disposition(
+                ledger,
+                node_id,
+                result_id,
+                decision="accept",
+                milestone_renewal={"milestone_plan_renewal": True},
+            )
+
+    def test_frontier_rejects_top_level_acceptance_without_committed_gate(self) -> None:
+        ledger, pm_packet = _recursive_ledger()
+        _complete_foundation_planning_chain(ledger, pm_packet)
+        node_id = ledger["execution_frontier"]["active_node_id"]
+        ledger["route_nodes"][node_id]["status"] = "accepted"
+        frontier_before = copy.deepcopy(ledger["execution_frontier"])
+
+        with self.assertRaisesRegex(
+            runtime.BlackBoxRuntimeError,
+            "exact committed milestone gate",
+        ):
+            runtime._advance_frontier_after_node_acceptance(ledger, node_id)
+
+        self.assertEqual(ledger["execution_frontier"], frontier_before)
+
     def test_pm_planning_chain_materializes_nodes_instead_of_terminal_completion(self) -> None:
         ledger, pm_packet = _recursive_ledger()
         _complete_foundation_planning_chain(ledger, pm_packet)
@@ -428,6 +479,73 @@ class FlowPilotRecursiveRouteExecutionRuntimeTests(unittest.TestCase):
         self.assertEqual(packet_body["major_milestone_rule"], "top_level_route_node_parent_node_id_empty")
         self.assertIn("milestone_audit", contract["required_result_body_fields"])
         self.assertIn("remaining_route_plan", contract["required_result_body_fields"])
+
+    def test_pm_cannot_copy_runtime_owned_milestone_commit_fields(self) -> None:
+        for forbidden_field in ("contract_hash", "completed_evidence_refs"):
+            with self.subTest(forbidden_field=forbidden_field):
+                ledger, pm_packet = _recursive_ledger()
+                _complete_foundation_planning_chain(ledger, pm_packet)
+                node_id, disposition_packet_id = _advance_active_node_to_pm_disposition(ledger)
+                payload = json.loads(
+                    _milestone_pm_accept_body(ledger, disposition_packet_id)
+                )
+                if forbidden_field == "contract_hash":
+                    payload["milestone_audit"]["contract_hash"] = ledger["contract_hash"]
+                else:
+                    payload["milestone_audit"]["completed"][0]["evidence_refs"] = [
+                        "pm-copied-evidence"
+                    ]
+
+                result_id = _complete_open_packet(
+                    ledger,
+                    disposition_packet_id,
+                    json.dumps(payload),
+                )
+
+                result = ledger["results"][result_id]
+                self.assertEqual(result["status"], "mechanical_contract_blocked")
+                self.assertIn("runtime-owned", result["blocked_reason"])
+                self.assertEqual(ledger["execution_frontier"]["active_node_id"], node_id)
+                self.assertEqual(ledger["pm_decision_gates"], {})
+
+    def test_later_milestone_reads_only_current_delta_and_previous_accepted_audit(self) -> None:
+        ledger, pm_packet = _recursive_ledger()
+        _complete_foundation_planning_chain(ledger, pm_packet)
+        first_node_id = _complete_active_node(ledger)
+        first_disposition_id = ledger["route_nodes"][first_node_id][
+            "milestone_plan_renewal_disposition_id"
+        ]
+        first_disposition = ledger["pm_dispositions"][first_disposition_id]
+        prior_audit_result_id = first_disposition["result_id"]
+        old_evidence_ids = {
+            str(item)
+            for row in first_disposition["completed_milestone_bindings"]
+            for item in row.get("evidence_refs") or []
+            if str(item)
+        }
+
+        _second_node_id, second_pm_packet_id = _advance_active_node_to_pm_disposition(ledger)
+        second_packet = ledger["packets"][second_pm_packet_id]
+        second_body = json.loads(second_packet["body"])
+        authorized_ids = {
+            str(row["result_id"])
+            for row in second_packet["envelope"].get("authorized_result_reads") or []
+        }
+        current_authorizable_ids = {
+            str(result_id)
+            for result_id in second_body["current_milestone_evidence_refs"]
+            if runtime._result_body_is_authorizable(ledger, str(result_id))
+        }
+
+        self.assertEqual(
+            second_body["prior_accepted_milestone_audit_result_id"],
+            prior_audit_result_id,
+        )
+        self.assertEqual(
+            authorized_ids,
+            current_authorizable_ids | {prior_audit_result_id},
+        )
+        self.assertTrue(old_evidence_ids - authorized_ids)
 
     def test_bare_unchanged_marker_is_rejected_without_frontier_advance(self) -> None:
         ledger, pm_packet = _recursive_ledger()
@@ -723,6 +841,152 @@ class FlowPilotRecursiveRouteExecutionRuntimeTests(unittest.TestCase):
         self.assertEqual(ledger["closure"]["decision"], "complete")
         self.assertEqual(runtime.router_next_action(ledger).action_type, "terminal_complete")
 
+    def test_terminal_empty_plan_runs_the_complete_milestone_challenge_chain(self) -> None:
+        ledger, pm_packet = _recursive_ledger()
+        _complete_open_packet(
+            ledger,
+            pm_packet,
+            _route_plan_body(
+                [
+                    {
+                        "node_id": "node-terminal",
+                        "title": "Complete the final milestone",
+                        "responsibility": "worker",
+                        "modeled_target": "development_process",
+                        "acceptance_criteria": ["The final milestone is accepted."],
+                    }
+                ]
+            ),
+        )
+        for kind in ("flowguard_check", "review"):
+            packet_id = _open_packets(ledger, kind)[0]
+            _complete_open_packet(
+                ledger,
+                packet_id,
+                _role_pass_body(kind, f"{kind} accepted the one-node route."),
+            )
+
+        node_id, disposition_packet = _advance_active_node_to_pm_disposition(ledger)
+        _complete_open_packet(
+            ledger,
+            disposition_packet,
+            _milestone_pm_accept_body(
+                ledger,
+                disposition_packet,
+                remaining_route_plan={
+                    "schema_version": runtime.ROUTE_PLAN_SCHEMA_VERSION,
+                    "nodes": [],
+                },
+            ),
+        )
+        gate = list(ledger["pm_decision_gates"].values())[-1]
+        self.assertEqual(ledger["route_nodes"][node_id]["status"], "awaiting_milestone_plan_renewal")
+        self.assertEqual(ledger["execution_frontier"]["active_node_id"], node_id)
+        self.assertEqual(gate["status"], "awaiting_flowguard")
+
+        flowguard_packet = _open_packets(ledger, "flowguard_check")[0]
+        _complete_open_packet(
+            ledger,
+            flowguard_packet,
+            _flowguard_pass_body("FlowGuard accepted the terminal empty plan."),
+        )
+        self.assertTrue(gate["flowguard_order_id"])
+        pm_acceptance_packet = _open_packets(ledger, "pm_flowguard_acceptance")[0]
+        _complete_open_packet(
+            ledger,
+            pm_acceptance_packet,
+            _pm_flowguard_acceptance_body(ledger),
+        )
+        self.assertTrue(gate["pm_flowguard_acceptance_result_id"])
+        review_packet = _open_packets(ledger, "review")[0]
+        _complete_open_packet(
+            ledger,
+            review_packet,
+            _review_pass_body("Reviewer accepted the terminal empty plan."),
+        )
+
+        disposition_id = ledger["route_nodes"][node_id]["milestone_plan_renewal_disposition_id"]
+        disposition = ledger["pm_dispositions"][disposition_id]
+        source_payload = json.loads(
+            ledger["results"][gate["source_result_id"]]["body"]
+        )
+        self.assertEqual(gate["status"], "applied")
+        self.assertTrue(gate["validation_evidence_id"])
+        self.assertTrue(gate["system_closure_id"])
+        self.assertEqual(disposition["milestone_gate_id"], gate["gate_id"])
+        self.assertTrue(disposition["milestone_plan_renewal"])
+        self.assertNotIn("contract_hash", source_payload["milestone_audit"])
+        self.assertTrue(
+            all(
+                "evidence_refs" not in row
+                for row in source_payload["milestone_audit"]["completed"]
+            )
+        )
+        self.assertEqual(disposition["milestone_contract_hash"], ledger["contract_hash"])
+        self.assertTrue(disposition["completed_milestone_bindings"])
+        self.assertTrue(
+            all(
+                row["evidence_refs"]
+                for row in disposition["completed_milestone_bindings"]
+            )
+        )
+        self.assertEqual(ledger["route_nodes"][node_id]["status"], "accepted")
+        self.assertEqual(ledger["execution_frontier"]["status"], "complete")
+        self.assertEqual(ledger["closure"]["decision"], "complete")
+
+    def test_error_text_cannot_reclassify_hard_apply_failure_as_currentness_drift(self) -> None:
+        ledger, pm_packet = _recursive_ledger()
+        _complete_foundation_planning_chain(ledger, pm_packet)
+        node_id, disposition_packet = _advance_active_node_to_pm_disposition(ledger)
+        _complete_open_packet(
+            ledger,
+            disposition_packet,
+            _milestone_pm_accept_body(ledger, disposition_packet),
+        )
+        flowguard_packet = _open_packets(ledger, "flowguard_check")[0]
+        _complete_open_packet(
+            ledger,
+            flowguard_packet,
+            _flowguard_pass_body("FlowGuard accepted the renewal."),
+        )
+        pm_acceptance_packet = _open_packets(ledger, "pm_flowguard_acceptance")[0]
+        _complete_open_packet(
+            ledger,
+            pm_acceptance_packet,
+            _pm_flowguard_acceptance_body(ledger),
+        )
+        review_packet = _open_packets(ledger, "review")[0]
+        with mock.patch.object(
+            runtime,
+            "_auto_close_packet_after_system_validation",
+            return_value="",
+        ):
+            _complete_open_packet(
+                ledger,
+                review_packet,
+                _review_pass_body("Reviewer accepted the renewal."),
+            )
+        gate = list(ledger["pm_decision_gates"].values())[-1]
+
+        with mock.patch.object(
+            runtime,
+            "_preflight_milestone_plan_renewal_apply",
+            side_effect=runtime.BlackBoxRuntimeError(
+                "hard invariant is not current but is not typed drift"
+            ),
+        ):
+            with self.assertRaisesRegex(runtime.BlackBoxRuntimeError, "hard invariant"):
+                runtime._apply_staged_pm_decision_gate(
+                    ledger,
+                    gate,
+                    system_closure_id="system-closure-hard-failure",
+                )
+
+        self.assertEqual(gate["status"], "apply_failed")
+        self.assertNotIn("recovery_packet_id", gate)
+        self.assertNotEqual(gate["status"], "renewal_rewrite_required")
+        self.assertEqual(ledger["execution_frontier"]["active_node_id"], node_id)
+
     def test_missing_node_blocks_final_route_wide_closure(self) -> None:
         ledger, pm_packet = _recursive_ledger()
         _complete_foundation_planning_chain(ledger, pm_packet)
@@ -832,6 +1096,96 @@ class FlowPilotRecursiveRouteExecutionRuntimeTests(unittest.TestCase):
             ledger["leases"][suffix_lease_id]["close_reason"],
             "milestone_plan_renewal_superseded_unfinished_suffix",
         )
+
+    def test_changed_milestone_plan_retires_open_suffix_blocker(self) -> None:
+        ledger, pm_packet = _recursive_ledger()
+        _complete_foundation_planning_chain(ledger, pm_packet)
+        node_id, disposition_packet = _advance_active_node_to_pm_disposition(ledger)
+
+        suffix_packet_id = runtime.issue_task_packet(
+            ledger,
+            "worker",
+            "Repair the old pending suffix",
+            "SEALED_OLD_SUFFIX_REPAIR_PACKET",
+            route_node_id="node-002",
+            route_scope="node",
+            repair_blocker_id="blocker-old-suffix",
+        )
+        ledger["route_nodes"]["node-002"]["packet_ids"].append(suffix_packet_id)
+        suffix_lease_id = host.lease_responsibility(
+            ledger,
+            "worker",
+            host_kind="fake",
+            agent_id="worker-old-suffix-repair",
+            packet_id=suffix_packet_id,
+            scope="recursive-route-test",
+        )
+        runtime.assign_packet(ledger, suffix_packet_id, suffix_lease_id)
+        runtime.ack_lease(ledger, suffix_lease_id, suffix_packet_id)
+        blocker_id = "blocker-old-suffix"
+        ledger["active_blockers"][blocker_id] = {
+            "blocker_id": blocker_id,
+            "status": "repair_packet_open",
+            "outcome_id": "outcome-old-suffix",
+            "packet_id": suffix_packet_id,
+            "packet_kind": "task",
+            "subject_packet_id": suffix_packet_id,
+            "repair_target_packet_id": suffix_packet_id,
+            "repair_packet_id": suffix_packet_id,
+            "owner_role": "worker",
+            "required_recheck_role": "worker",
+            "gate_kind": "task",
+            "blocker_class": "local_artifact",
+            "recommended_resolution": "repair the old suffix",
+            "route_version": ledger["active_route_version"],
+            "route_node_id": "node-002",
+            "route_scope": "node",
+            "repair_generation": 0,
+            "stale_evidence_ids": [],
+            "created_at": runtime.now_iso(),
+            "pm_repair_packet_id": "",
+            "pm_repair_decision_id": "",
+            "cleared_by_outcome_id": "",
+        }
+        ledger["packets"][suffix_packet_id]["active_blocker_id"] = blocker_id
+
+        _complete_open_packet(
+            ledger,
+            disposition_packet,
+            _milestone_pm_accept_body(
+                ledger,
+                disposition_packet,
+                remaining_route_plan={
+                    "schema_version": runtime.ROUTE_PLAN_SCHEMA_VERSION,
+                    "nodes": [
+                        {
+                            "node_id": "node-002-replanned",
+                            "title": "Execute the renewed suffix",
+                            "responsibility": "worker",
+                            "modeled_target": "development_process",
+                            "acceptance_criteria": ["The renewed suffix is accepted."],
+                        }
+                    ],
+                },
+            ),
+        )
+        _complete_milestone_decision_gate(ledger, node_id)
+
+        mutation = ledger["route_mutations"][-1]
+        disposition_id = ledger["route_nodes"][node_id]["milestone_plan_renewal_disposition_id"]
+        blocker = ledger["active_blockers"][blocker_id]
+        self.assertEqual(ledger["packets"][suffix_packet_id]["status"], "quarantined_after_route_mutation")
+        self.assertEqual(ledger["packets"][suffix_packet_id]["active_blocker_id"], "")
+        self.assertEqual(ledger["leases"][suffix_lease_id]["status"], "closed")
+        self.assertEqual(blocker["status"], "superseded_by_route_mutation")
+        self.assertEqual(blocker["superseded_by_route_mutation_id"], mutation["mutation_id"])
+        self.assertEqual(blocker["superseded_by_route_mutation_disposition_id"], disposition_id)
+        self.assertEqual(blocker["superseded_replacement_node_id"], "node-002-replanned")
+        self.assertFalse(runtime.render_console(ledger)["active_blockers"])
+
+        while ledger["execution_frontier"].get("active_node_id"):
+            _complete_active_node(ledger)
+        self.assertEqual(ledger["closure"]["decision"], "complete")
 
     def test_milestone_preflight_rejects_unbound_challenge_evidence_ids(self) -> None:
         ledger, pm_packet = _recursive_ledger()

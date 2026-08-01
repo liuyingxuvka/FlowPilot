@@ -4190,7 +4190,7 @@ def _activate_changed_milestone_remaining_route(
     return mutation
 
 
-def record_pm_disposition(
+def _record_pm_disposition_core(
     ledger: dict[str, Any],
     node_id: str,
     result_id: str,
@@ -4230,6 +4230,13 @@ def record_pm_disposition(
         disposition.update(
             {
                 "milestone_plan_renewal": True,
+                "milestone_gate_id": str(milestone_renewal.get("gate_id") or ""),
+                "milestone_contract_hash": str(
+                    milestone_renewal.get("milestone_contract_hash") or ""
+                ),
+                "completed_milestone_bindings": _copy_jsonable(
+                    milestone_renewal.get("completed_milestone_bindings") or []
+                ),
                 "milestone_audit_fingerprint": str(
                     milestone_renewal.get("milestone_audit_fingerprint") or ""
                 ),
@@ -4335,6 +4342,45 @@ def record_pm_disposition(
         _frontier_update(ledger, node_id, node["status"], reason or f"pm_disposition_{normalized}")
     _event(ledger, "pm_disposition_recorded", node_id=node_id, disposition_id=disposition_id, decision=normalized)
     return disposition_id
+
+
+def record_pm_disposition(
+    ledger: dict[str, Any],
+    node_id: str,
+    result_id: str,
+    *,
+    decision: str = "accept",
+    reason: str = "",
+) -> str:
+    """Record an ordinary PM disposition.
+
+    Recursive top-level acceptance is intentionally not available through this
+    public owner.  It can be committed only by the current staged milestone
+    gate after the complete challenge chain has passed.
+    """
+
+    node = _require(ledger.setdefault("route_nodes", {}), node_id, "route node")
+    if high_standard_flow_required(ledger):
+        entry_reason = _node_entry_gate_missing_reason(ledger, node_id)
+        if entry_reason:
+            raise BlackBoxRuntimeError(
+                _control_plane_hard_gate_escape(entry_reason, node_id)
+            )
+    if (
+        recursive_route_required(ledger)
+        and decision == "accept"
+        and _node_requires_milestone_plan_renewal(node)
+    ):
+        raise BlackBoxRuntimeError(
+            "top-level recursive-route acceptance requires the current staged milestone gate commit owner"
+        )
+    return _record_pm_disposition_core(
+        ledger,
+        node_id,
+        result_id,
+        decision=decision,
+        reason=reason,
+    )
 
 
 def _converge_node_closure_after_pm_disposition(
@@ -5597,7 +5643,7 @@ def _milestone_pm_authorized_result_reads(
     ledger: Mapping[str, Any],
     *,
     current_milestone_evidence_refs: list[str],
-    completed_milestone_bindings: list[Mapping[str, Any]],
+    prior_accepted_milestone_audit_result_id: str = "",
 ) -> list[dict[str, Any]]:
     """Expose only the sealed result bodies needed for the PM milestone audit.
 
@@ -5620,11 +5666,7 @@ def _milestone_pm_authorized_result_reads(
 
     for result_id in current_milestone_evidence_refs:
         add(result_id)
-    for binding in completed_milestone_bindings:
-        if not isinstance(binding, Mapping):
-            continue
-        for result_id in binding.get("evidence_refs") or []:
-            add(result_id)
+    add(prior_accepted_milestone_audit_result_id)
     return [
         _authorized_read_for_result(
             ledger,
@@ -5635,6 +5677,23 @@ def _milestone_pm_authorized_result_reads(
         )
         for result_id in result_ids
     ]
+
+
+def _latest_accepted_milestone_audit_result_id(
+    ledger: Mapping[str, Any],
+) -> str:
+    for disposition in reversed(list(ledger.get("pm_dispositions", {}).values())):
+        if not isinstance(disposition, Mapping):
+            continue
+        if (
+            disposition.get("decision") != "accept"
+            or disposition.get("milestone_plan_renewal") is not True
+        ):
+            continue
+        result_id = str(disposition.get("result_id") or "")
+        if _result_body_is_authorizable(ledger, result_id):
+            return result_id
+    return ""
 
 
 def _candidate_acceptance_ledger(
@@ -6114,6 +6173,7 @@ def _ensure_pm_disposition_packet_for_node(ledger: dict[str, Any], node_id: str,
     prior_remaining_plan_fingerprint = ""
     current_milestone_evidence_refs: list[str] = []
     completed_milestone_bindings: list[dict[str, Any]] = []
+    prior_accepted_milestone_audit_result_id = ""
     remaining_owner_node_ids: list[str] = []
     remaining_obligation_ids: dict[str, list[str]] = {}
     if milestone_renewal_required:
@@ -6135,6 +6195,9 @@ def _ensure_pm_disposition_packet_for_node(ledger: dict[str, Any], node_id: str,
             ledger,
             current_node_id=node_id,
             current_subject_packet_id=subject_packet_id,
+        )
+        prior_accepted_milestone_audit_result_id = (
+            _latest_accepted_milestone_audit_result_id(ledger)
         )
         remaining_owner_node_ids = [
             str(spec.get("node_id") or "")
@@ -6161,7 +6224,7 @@ def _ensure_pm_disposition_packet_for_node(ledger: dict[str, Any], node_id: str,
         result_contract_profile_bindings[profile_id] = {
             "current_milestone_evidence_refs": current_milestone_evidence_refs,
             "completed_milestone_bindings": completed_milestone_bindings,
-            "contract_hash": str(ledger.get("contract_hash") or ""),
+            "prior_accepted_milestone_audit_result_id": prior_accepted_milestone_audit_result_id,
             "remaining_owner_node_ids": remaining_owner_node_ids or None,
             "remaining_obligation_ids": remaining_obligation_ids,
             "remaining_acceptance_item_ids": remaining_obligation_ids.get(
@@ -6184,7 +6247,7 @@ def _ensure_pm_disposition_packet_for_node(ledger: dict[str, Any], node_id: str,
             "major_milestone_rule": "top_level_route_node_parent_node_id_empty",
             "current_milestone_evidence_refs": current_milestone_evidence_refs,
             "completed_milestone_bindings": completed_milestone_bindings,
-            "contract_hash": str(ledger.get("contract_hash") or ""),
+            "prior_accepted_milestone_audit_result_id": prior_accepted_milestone_audit_result_id,
             "final_goal_contract": _final_goal_contract_projection(ledger),
             "remaining_obligation_ids": remaining_obligation_ids,
             "prior_remaining_route_plan_context": {
@@ -6202,7 +6265,8 @@ def _ensure_pm_disposition_packet_for_node(ledger: dict[str, Any], node_id: str,
     )
     milestone_instruction = (
         " This is a top-level milestone hard gate. In the same accept result, audit current completed outcomes "
-        "with runtime-issued evidence refs, state deviations explicitly (an empty list is valid), state every "
+        "semantically; do not copy runtime-owned contract hashes or evidence refs. State deviations explicitly "
+        "(an empty list is valid), state every "
         "remaining goal gap, assess the prior context-only plan, and freshly emit one complete remaining_route_plan "
         "from the audited current state through the final user goal. The nearest node must be execution-ready; later "
         "nodes may be coarser but must remain explicit and goal-connected. A fully re-emitted unchanged plan is valid "
@@ -6215,7 +6279,7 @@ def _ensure_pm_disposition_packet_for_node(ledger: dict[str, Any], node_id: str,
         _milestone_pm_authorized_result_reads(
             ledger,
             current_milestone_evidence_refs=current_milestone_evidence_refs,
-            completed_milestone_bindings=completed_milestone_bindings,
+            prior_accepted_milestone_audit_result_id=prior_accepted_milestone_audit_result_id,
         )
         if milestone_renewal_required
         else []
@@ -8428,6 +8492,49 @@ def _record_pm_repair_decision_from_packet_result(
     return decision_id
 
 
+def _canonical_milestone_audit_commit_material(
+    ledger: Mapping[str, Any],
+    packet: Mapping[str, Any],
+    milestone_audit: Mapping[str, Any],
+) -> dict[str, Any]:
+    profile_binding = _packet_result_contract_profile_binding(
+        packet,
+        packet_result_contracts.MILESTONE_PLAN_RENEWAL_RESULT_CONTRACT_PROFILE_ID,
+    )
+    expected_rows = [
+        row
+        for row in profile_binding.get("completed_milestone_bindings") or []
+        if isinstance(row, Mapping) and str(row.get("node_id") or "")
+    ]
+    source_rows = {
+        str(row.get("node_id") or ""): row
+        for row in milestone_audit.get("completed") or []
+        if isinstance(row, Mapping) and str(row.get("node_id") or "")
+    }
+    if set(source_rows) != {
+        str(row.get("node_id") or "") for row in expected_rows
+    }:
+        raise BlackBoxRuntimeError(
+            "milestone audit commit material does not match the current completed prefix"
+        )
+    canonical = _copy_jsonable(milestone_audit)
+    canonical["contract_hash"] = str(ledger.get("contract_hash") or "")
+    canonical["completed"] = [
+        {
+            "node_id": node_id,
+            "outcome": str(source_rows[node_id].get("outcome") or ""),
+            "evidence_refs": [
+                str(item)
+                for item in expected_row.get("evidence_refs") or []
+                if str(item)
+            ],
+        }
+        for expected_row in expected_rows
+        for node_id in (str(expected_row.get("node_id") or ""),)
+    ]
+    return canonical
+
+
 def _stage_pm_decision_gate(
     ledger: dict[str, Any],
     *,
@@ -8450,6 +8557,8 @@ def _stage_pm_decision_gate(
     remaining_plan_fingerprint = ""
     prior_remaining_plan_fingerprint = ""
     milestone_audit_fingerprint = ""
+    milestone_source_audit_fingerprint = ""
+    completed_milestone_bindings: list[dict[str, Any]] = []
     milestone_contract_hash = ""
     route_plan_changed = False
     target_node = ledger.get("route_nodes", {}).get(node_id)
@@ -8484,15 +8593,35 @@ def _stage_pm_decision_gate(
             raise BlackBoxRuntimeError(
                 "top-level PM acceptance requires milestone_audit commit material"
             )
-        milestone_contract_hash = str(milestone_audit.get("contract_hash") or "").strip()
-        expected_contract_hash = str(ledger.get("contract_hash") or "").strip()
-        if not milestone_contract_hash or milestone_contract_hash != expected_contract_hash:
+        milestone_contract_hash = str(ledger.get("contract_hash") or "").strip()
+        if not milestone_contract_hash:
             raise BlackBoxRuntimeError(
-                "top-level PM acceptance must cite the current frozen final-goal contract hash"
+                "top-level PM acceptance requires the current frozen final-goal contract hash"
             )
-        milestone_audit_fingerprint = hash_text(
+        profile_binding = _packet_result_contract_profile_binding(
+            packet,
+            packet_result_contracts.MILESTONE_PLAN_RENEWAL_RESULT_CONTRACT_PROFILE_ID,
+        )
+        completed_milestone_bindings = [
+            _copy_jsonable(row)
+            for row in profile_binding.get("completed_milestone_bindings") or []
+            if isinstance(row, Mapping)
+        ]
+        milestone_source_audit_fingerprint = hash_text(
             json.dumps(
                 _copy_jsonable(milestone_audit),
+                sort_keys=True,
+                separators=(",", ":"),
+            )
+        )
+        canonical_milestone_audit = _canonical_milestone_audit_commit_material(
+            ledger,
+            packet,
+            milestone_audit,
+        )
+        milestone_audit_fingerprint = hash_text(
+            json.dumps(
+                canonical_milestone_audit,
                 sort_keys=True,
                 separators=(",", ":"),
             )
@@ -8524,6 +8653,8 @@ def _stage_pm_decision_gate(
         else None,
         "milestone_plan_renewal_required": milestone_renewal,
         "milestone_audit_fingerprint": milestone_audit_fingerprint,
+        "milestone_source_audit_fingerprint": milestone_source_audit_fingerprint,
+        "completed_milestone_bindings": completed_milestone_bindings,
         "milestone_contract_hash": milestone_contract_hash,
         "remaining_plan_fingerprint": remaining_plan_fingerprint,
         "prior_remaining_plan_fingerprint": prior_remaining_plan_fingerprint,
@@ -9489,34 +9620,52 @@ def _preflight_milestone_plan_renewal_apply(
         str(source_result.get("body", ""))
     )
     if not isinstance(source_payload, Mapping):
-        raise BlackBoxRuntimeError(
+        raise CurrentnessDriftError(
             "milestone renewal source result body is not current JSON"
         )
     milestone_audit = source_payload.get("milestone_audit")
     if not isinstance(milestone_audit, Mapping):
-        raise BlackBoxRuntimeError(
+        raise CurrentnessDriftError(
             "milestone renewal source result lacks milestone_audit"
         )
-    source_contract_hash = str(milestone_audit.get("contract_hash") or "").strip()
     current_contract_hash = str(ledger.get("contract_hash") or "").strip()
-    if not source_contract_hash or source_contract_hash != current_contract_hash:
-        raise BlackBoxRuntimeError(
-            "milestone renewal source audit is bound to a stale or missing final-goal contract"
-        )
     if str(gate.get("milestone_contract_hash") or "") != current_contract_hash:
-        raise BlackBoxRuntimeError(
+        raise CurrentnessDriftError(
             "milestone renewal gate final-goal contract hash is not current"
         )
-    audit_fingerprint = hash_text(
+    source_audit_fingerprint = hash_text(
         json.dumps(
             _copy_jsonable(milestone_audit),
             sort_keys=True,
             separators=(",", ":"),
         )
     )
-    if audit_fingerprint != str(gate.get("milestone_audit_fingerprint") or ""):
+    if source_audit_fingerprint != str(
+        gate.get("milestone_source_audit_fingerprint") or ""
+    ):
+        raise CurrentnessDriftError(
+            "milestone renewal source audit fingerprint changed before commit"
+        )
+    source_packet = ledger.get("packets", {}).get(
+        str(gate.get("source_packet_id") or "")
+    )
+    if not isinstance(source_packet, Mapping):
         raise BlackBoxRuntimeError(
-            "milestone renewal audit fingerprint changed before commit"
+            "milestone renewal source packet is missing"
+        )
+    canonical_audit = _canonical_milestone_audit_commit_material(
+        ledger,
+        source_packet,
+        milestone_audit,
+    )
+    canonical_audit_fingerprint = hash_text(
+        json.dumps(canonical_audit, sort_keys=True, separators=(",", ":"))
+    )
+    if canonical_audit_fingerprint != str(
+        gate.get("milestone_audit_fingerprint") or ""
+    ):
+        raise CurrentnessDriftError(
+            "milestone renewal runtime-bound audit fingerprint changed before commit"
         )
     route_plan = gate.get("route_plan")
     if not isinstance(route_plan, Mapping):
@@ -9527,7 +9676,7 @@ def _preflight_milestone_plan_renewal_apply(
     if remaining_fingerprint != str(
         gate.get("remaining_plan_fingerprint") or ""
     ):
-        raise BlackBoxRuntimeError(
+        raise CurrentnessDriftError(
             "milestone renewal remaining-plan fingerprint changed before commit"
         )
     source_route_plan = source_payload.get("remaining_route_plan")
@@ -9535,7 +9684,7 @@ def _preflight_milestone_plan_renewal_apply(
         _remaining_route_plan_fingerprint(source_route_plan)
         != remaining_fingerprint
     ):
-        raise BlackBoxRuntimeError(
+        raise CurrentnessDriftError(
             "milestone renewal source result and staged remaining plan do not match"
         )
     prior_plan = _current_unfinished_route_plan(
@@ -9546,13 +9695,13 @@ def _preflight_milestone_plan_renewal_apply(
     if prior_fingerprint != str(
         gate.get("prior_remaining_plan_fingerprint") or ""
     ):
-        raise BlackBoxRuntimeError(
+        raise CurrentnessDriftError(
             "milestone renewal prior unfinished route changed before commit"
         )
     if (remaining_fingerprint != prior_fingerprint) != (
         gate.get("route_plan_changed") is True
     ):
-        raise BlackBoxRuntimeError(
+        raise CurrentnessDriftError(
             "milestone renewal route equality decision is not current"
         )
     if (
@@ -9560,7 +9709,7 @@ def _preflight_milestone_plan_renewal_apply(
         and _node_requires_parent_backward_replay(node)
         and not _parent_backward_replay_accepted(ledger, node_id)
     ):
-        raise BlackBoxRuntimeError(
+        raise CurrentnessDriftError(
             "milestone renewal gate lost its current parent backward replay"
         )
     evidence_blockers = _milestone_plan_renewal_gate_evidence_blockers(
@@ -9573,6 +9722,58 @@ def _preflight_milestone_plan_renewal_apply(
             "milestone renewal gate evidence is not current and exactly bound: "
             + ", ".join(evidence_blockers)
         )
+
+
+def _commit_milestone_plan_renewal_disposition(
+    ledger: dict[str, Any],
+    *,
+    gate_id: str,
+    system_closure_id: str,
+) -> str:
+    """Commit one top-level milestone only from its live staged gate owner."""
+
+    gate = _require(
+        ledger.setdefault("pm_decision_gates", {}),
+        gate_id,
+        "PM decision gate",
+    )
+    if (
+        gate.get("gate_kind") != "pm_disposition"
+        or gate.get("milestone_plan_renewal_required") is not True
+        or gate.get("decision") != "accept"
+        or gate.get("status") != "awaiting_system_closure"
+    ):
+        raise BlackBoxRuntimeError(
+            "milestone commit owner requires the current accepting gate at awaiting_system_closure"
+        )
+    if not system_closure_id:
+        raise BlackBoxRuntimeError(
+            "milestone commit owner requires a preallocated system closure identity"
+        )
+
+    _preflight_milestone_plan_renewal_apply(ledger, gate)
+    _mark_staged_effect_committed(gate, system_closure_id=system_closure_id)
+    source_result = _require(
+        ledger.setdefault("results", {}),
+        str(gate.get("source_result_id") or ""),
+        "milestone renewal source result",
+    )
+    _mark_staged_effect_committed(
+        source_result,
+        system_closure_id=system_closure_id,
+    )
+    commit_material = {
+        **_copy_jsonable(gate),
+        "system_closure_id": system_closure_id,
+    }
+    return _record_pm_disposition_core(
+        ledger,
+        str(gate.get("node_id") or ""),
+        str(gate.get("source_result_id") or ""),
+        decision="accept",
+        reason=str(gate.get("reason") or "milestone_plan_renewal_committed"),
+        milestone_renewal=commit_material,
+    )
 
 
 def _apply_staged_pm_decision_gate(
@@ -9601,13 +9802,6 @@ def _apply_staged_pm_decision_gate(
             _preflight_milestone_plan_renewal_apply(ledger, gate)
         except Exception as exc:
             failure_text = str(exc)
-            recoverable_markers = (
-                "not current",
-                "changed before commit",
-                "do not match",
-                "evidence is not current",
-                "route equality decision is not current",
-            )
             source_packet_id = str(gate.get("source_packet_id") or "")
             absorption_packet_id = str(
                 gate.get("pm_flowguard_acceptance_packet_id") or ""
@@ -9618,10 +9812,7 @@ def _apply_staged_pm_decision_gate(
             absorption_packet = ledger.get("packets", {}).get(absorption_packet_id)
             absorption_result = ledger.get("results", {}).get(absorption_result_id)
             if (
-                (
-                    isinstance(exc, CurrentnessDriftError)
-                    or any(marker in failure_text for marker in recoverable_markers)
-                )
+                isinstance(exc, CurrentnessDriftError)
                 and isinstance(absorption_packet, Mapping)
                 and isinstance(absorption_result, Mapping)
                 and absorption_packet.get("status") == "accepted"
@@ -9662,10 +9853,15 @@ def _apply_staged_pm_decision_gate(
     snapshot = json.loads(json.dumps(ledger))
     gate_id = str(gate.get("gate_id") or "")
     try:
-        _mark_staged_effect_committed(gate, system_closure_id=system_closure_id)
-        source_result = ledger.get("results", {}).get(str(gate.get("source_result_id") or ""))
-        if isinstance(source_result, dict):
-            _mark_staged_effect_committed(source_result, system_closure_id=system_closure_id)
+        milestone_gate = (
+            gate_kind == "pm_disposition"
+            and gate.get("milestone_plan_renewal_required") is True
+        )
+        if not milestone_gate:
+            _mark_staged_effect_committed(gate, system_closure_id=system_closure_id)
+            source_result = ledger.get("results", {}).get(str(gate.get("source_result_id") or ""))
+            if isinstance(source_result, dict):
+                _mark_staged_effect_committed(source_result, system_closure_id=system_closure_id)
         if gate_kind == "pm_repair_decision":
             route_plan = gate.get("route_plan")
             decision_id = str(gate.get("decision_id") or "")
@@ -9724,22 +9920,12 @@ def _apply_staged_pm_decision_gate(
                 blocker=blocker if isinstance(blocker, Mapping) else None,
             )
         elif gate_kind == "pm_disposition":
-            committed_disposition_id = record_pm_disposition(
-                ledger,
-                str(gate.get("node_id") or ""),
-                str(gate.get("source_result_id") or system_closure_id),
-                decision=str(gate.get("decision") or "accept"),
-                reason=str(gate.get("reason") or "pm_decision_gate_applied"),
-                milestone_renewal=(
-                    {
-                        **_copy_jsonable(gate),
-                        "system_closure_id": system_closure_id,
-                    }
-                    if gate.get("milestone_plan_renewal_required") is True
-                    else None
-                ),
-            )
             if gate.get("milestone_plan_renewal_required") is True:
+                committed_disposition_id = _commit_milestone_plan_renewal_disposition(
+                    ledger,
+                    gate_id=gate_id,
+                    system_closure_id=system_closure_id,
+                )
                 committed_node = ledger.get("route_nodes", {}).get(
                     str(gate.get("node_id") or "")
                 )
@@ -9765,6 +9951,14 @@ def _apply_staged_pm_decision_gate(
                     raise BlackBoxRuntimeError(
                         "milestone renewal atomic commit did not accept the exact current milestone"
                     )
+            else:
+                record_pm_disposition(
+                    ledger,
+                    str(gate.get("node_id") or ""),
+                    str(gate.get("source_result_id") or system_closure_id),
+                    decision=str(gate.get("decision") or "accept"),
+                    reason=str(gate.get("reason") or "pm_decision_gate_applied"),
+                )
         else:
             raise BlackBoxRuntimeError(f"unknown PM decision gate kind: {gate_kind}")
     except Exception as exc:
@@ -10432,19 +10626,39 @@ def _materialize_route_redesign(
     fresh_packet_id = _latest_open_packet_for_repair(ledger, route_node_id=opened_node_id, before_ids=before_packets)
     if not fresh_packet_id:
         raise BlackBoxRuntimeError("redesign_route did not create a fresh executable packet")
-    if blocker is not None:
-        blocker_id = str(blocker.get("blocker_id") or "")
-        if blocker_id:
-            _bind_packet_repair_blocker_identity(ledger, fresh_packet_id, blocker_id)
-            _attach_repair_obligation_context_to_packet(ledger, fresh_packet_id, blocker, disposition_id)
-            _record_repair_transaction(
-                ledger,
-                blocker,
-                disposition_id,
-                source_id=f"route-v{old_version}",
-                fresh_packet_id=fresh_packet_id,
-            )
-            _mark_repair_target_noncurrent_after_current_reissue(ledger, blocker, disposition_id)
+    blocker_id = str(blocker.get("blocker_id") or "") if isinstance(blocker, Mapping) else ""
+    repair_context = blocker is not None or disposition_id in ledger.get("pm_repair_decisions", {})
+    if blocker_id:
+        _bind_packet_repair_blocker_identity(ledger, fresh_packet_id, blocker_id)
+        for node_id in materialized_ids:
+            _bind_route_node_repair_dossier_identity(ledger, node_id, blocker_id)
+        _attach_repair_obligation_context_to_packet(
+            ledger,
+            fresh_packet_id,
+            blocker,
+            disposition_id,
+        )
+    if repair_context:
+        _record_repair_transaction(
+            ledger,
+            blocker if blocker_id else None,
+            disposition_id,
+            source_id=f"route-v{old_version}",
+            fresh_packet_id=fresh_packet_id,
+            replacement_node_id=first_node_id,
+        )
+        transaction = ledger.get("repair_transactions", {}).get(disposition_id, {})
+        if isinstance(transaction, Mapping):
+            for node_id in materialized_ids:
+                node = ledger.get("route_nodes", {}).get(node_id)
+                if isinstance(node, dict):
+                    node.update(_repair_chain_identity_from_mapping(transaction))
+    if blocker_id:
+        _mark_repair_target_noncurrent_after_current_reissue(
+            ledger,
+            blocker,
+            disposition_id,
+        )
     return materialized_ids, fresh_packet_id
 
 
@@ -10459,168 +10673,14 @@ def _redesign_route_from_pm_decision(
     route_plan = row.get("route_plan") if isinstance(row, Mapping) else None
     if not isinstance(route_plan, Mapping):
         raise BlackBoxRuntimeError("redesign_route requires a strict route_plan")
-    route_plan = _parse_strict_route_plan(json.dumps(route_plan, sort_keys=True))
-    node_specs = _normalize_strict_route_plan_nodes(route_plan)
-    _validate_route_plan_acceptance_item_coverage(ledger, node_specs)
-    old_version = int(ledger.get("active_route_version") or 0)
-    new_version = old_version + 1
-    old_node_ids = [
-        str(node_id)
-        for node_id, node in ledger.get("route_nodes", {}).items()
-        if isinstance(node, Mapping) and int(node.get("route_version") or 0) == old_version
-    ]
-    affected_packets: list[str] = []
-    for packet in ledger.get("packets", {}).values():
-        if not isinstance(packet, dict):
-            continue
-        envelope = packet.get("envelope", {}) if isinstance(packet.get("envelope"), Mapping) else {}
-        if envelope.get("route_version") != old_version:
-            continue
-        if packet.get("status") == "accepted":
-            continue
-        packet["status"] = "quarantined_after_route_mutation"
-        packet["old_route_disposition"] = "quarantined"
-        affected_packets.append(str(packet.get("packet_id") or ""))
-    for node_id in old_node_ids:
-        node = ledger.get("route_nodes", {}).get(node_id)
-        if isinstance(node, dict):
-            node["status"] = "superseded"
-            node["superseded_by"] = f"route-v{new_version}"
-            node.setdefault("stale_evidence", []).append(decision_id)
-    if str(old_version) in ledger.get("routes", {}):
-        ledger["routes"][str(old_version)]["status"] = "superseded"
-        ledger["routes"][str(old_version)]["superseded_by_route_version"] = new_version
-
-    materialized_ids: list[str] = []
-    route_nodes = ledger.setdefault("route_nodes", {})
-    for spec in node_specs:
-        node_id = str(spec["node_id"])
-        if node_id in route_nodes:
-            raise BlackBoxRuntimeError(f"redesign_route node_id already exists: {node_id}")
-        criteria = spec.get("acceptance_criteria")
-        route_nodes[node_id] = {
-            "node_id": node_id,
-            "route_version": new_version,
-            "title": str(spec["title"]),
-            "node_kind": str(spec.get("node_kind") or "leaf"),
-            "parent_node_id": str(spec.get("parent_node_id") or ""),
-            "child_node_ids": list(spec.get("child_node_ids") or []),
-            "responsibility": _normalize_node_responsibility(str(spec.get("responsibility") or "")),
-            "modeled_target": _normalize_modeled_target(str(spec.get("modeled_target") or ""), str(spec["title"])),
-            "acceptance_criteria": [str(item) for item in criteria],
-            "required_outputs": list(spec.get("required_outputs") or []),
-            "deliverable_checks": list(spec.get("deliverable_checks") or []),
-            "validation_checks": list(spec.get("validation_checks") or []),
-            "status": "pending",
-            "repair_generation": 0,
-            "packet_ids": [],
-            "accepted_result_id": "",
-            "accepted_repair_generation": None,
-            "flowguard_order_ids": [],
-            "review_ids": [],
-            "validation_evidence_ids": [],
-            "closure_id": "",
-            "pm_disposition_id": "",
-            "node_acceptance_plan_id": "",
-            "node_context_package_id": "",
-            "node_context_package_repair_generation": None,
-            "parent_backward_replay_id": "",
-            "parent_backward_waiver": "",
-            "high_standard_requirement_ids": [str(item) for item in spec.get("high_standard_requirement_ids") or []],
-            "acceptance_item_ids": [str(item) for item in spec.get("acceptance_item_ids") or []],
-            "skill_standard_obligation_ids": [str(item) for item in spec.get("skill_standard_obligation_ids") or []],
-            "supplemental_repair_contract_ids": [str(item) for item in spec.get("supplemental_repair_contract_ids") or []],
-            "supplemental_repair_item_ids": [str(item) for item in spec.get("supplemental_repair_item_ids") or []],
-            "superseded_by": "",
-            "stale_evidence": [],
-            "created_from_result_id": str(row.get("result_id") or ""),
-            "route_plan_schema_version": route_plan.get("schema_version", ""),
-            "created_at": now_iso(),
-        }
-        materialized_ids.append(node_id)
-
-    ledger.setdefault("routes", {})[str(new_version)] = {
-        "route_version": new_version,
-        "route_id": f"route-v{new_version}",
-        "title": "Redesigned repair route",
-        "status": "active",
-        "nodes": [str(spec["title"]) for spec in node_specs],
-        "node_order": materialized_ids,
-        "created_at": now_iso(),
-        "redesigned_from_route_version": old_version,
-        "redesign_decision_id": decision_id,
-        "redesign_reason": reason,
-    }
-    ledger["active_route_version"] = new_version
-    first_node_id = materialized_ids[0] if materialized_ids else ""
-    ledger["execution_frontier"] = {
-        "active_route_version": new_version,
-        "active_node_id": first_node_id,
-        "completed_nodes": [],
-        "status": "node_execution" if first_node_id else "blocked",
-        "pending_route_mutation": {
-            "mutation_id": _next_id(ledger, "mutation"),
-            "old_route_version": old_version,
-            "new_route_version": new_version,
-            "reason": reason,
-            "disposition_id": decision_id,
-            "superseded_node_ids": old_node_ids,
-            "replacement_node_id": first_node_id,
-            "affected_packets": affected_packets,
-            "requires_replay_or_rebinding": True,
-            "created_at": now_iso(),
-        },
-        "blocked_reason": "" if first_node_id else "route_redesign_empty",
-        "updated_at": now_iso(),
-    }
-    ledger.setdefault("route_mutations", []).append(ledger["execution_frontier"]["pending_route_mutation"])
-    _supersede_repair_open_blockers_for_route_mutation(
+    return _materialize_route_redesign(
         ledger,
-        affected_packets=affected_packets,
-        mutation_id=str(ledger["execution_frontier"]["pending_route_mutation"]["mutation_id"]),
+        route_plan=route_plan,
+        source_result_id=str(row.get("result_id") or ""),
         disposition_id=decision_id,
-        replacement_node_id=first_node_id,
-        new_route_version=new_version,
+        reason=reason,
+        blocker=blocker,
     )
-    _event(ledger, "route_created", route_version=new_version, old_route_version=old_version)
-    _event(ledger, "execution_frontier_updated", status=ledger["execution_frontier"]["status"], active_node_id=first_node_id)
-    if first_node_id:
-        before_packets = set(ledger.get("packets", {}))
-        opened_node_id = first_node_id
-        if high_standard_flow_required(ledger):
-            ensure_node_acceptance_plan_packet(ledger, first_node_id)
-        else:
-            if _enter_nonworker_route_scope(ledger, first_node_id, reason="nonworker_route_scope_after_route_redesign"):
-                opened_node_id = str((ledger.get("execution_frontier") or {}).get("active_node_id") or first_node_id)
-            else:
-                ensure_next_node_task_packet(ledger)
-        fresh_packet_id = _latest_open_packet_for_repair(ledger, route_node_id=opened_node_id, before_ids=before_packets)
-        if not fresh_packet_id:
-            raise BlackBoxRuntimeError("redesign_route did not create a fresh executable packet")
-        blocker_id = str(blocker.get("blocker_id") or "") if isinstance(blocker, Mapping) else ""
-        if blocker_id:
-            _bind_packet_repair_blocker_identity(ledger, fresh_packet_id, blocker_id)
-            for node_id in materialized_ids:
-                _bind_route_node_repair_dossier_identity(ledger, node_id, blocker_id)
-            _attach_repair_obligation_context_to_packet(ledger, fresh_packet_id, blocker, decision_id)
-        _record_repair_transaction(
-            ledger,
-            blocker if blocker_id else None,
-            decision_id,
-            source_id=f"route-v{old_version}",
-            fresh_packet_id=fresh_packet_id,
-            replacement_node_id=first_node_id,
-        )
-        transaction = ledger.get("repair_transactions", {}).get(decision_id, {})
-        if isinstance(transaction, Mapping):
-            for node_id in materialized_ids:
-                node = ledger.get("route_nodes", {}).get(node_id)
-                if isinstance(node, dict):
-                    node.update(_repair_chain_identity_from_mapping(transaction))
-        if blocker_id:
-            _mark_repair_target_noncurrent_after_current_reissue(ledger, blocker, decision_id)
-        return materialized_ids, fresh_packet_id
-    return materialized_ids, ""
 
 
 def _apply_pm_repair_decision(ledger: dict[str, Any], blocker_id: str, decision_id: str) -> None:
@@ -10816,7 +10876,96 @@ def _apply_pm_repair_decision(ledger: dict[str, Any], blocker_id: str, decision_
         return
 
 
+def _milestone_disposition_commit_blockers(
+    ledger: Mapping[str, Any],
+    *,
+    node_id: str,
+    disposition: Mapping[str, Any],
+) -> list[str]:
+    blockers: list[str] = []
+    gate_id = str(disposition.get("milestone_gate_id") or "")
+    if disposition.get("decision") != "accept":
+        blockers.append("milestone_disposition_not_accept")
+    if disposition.get("milestone_plan_renewal") is not True:
+        blockers.append("milestone_disposition_missing_renewal_marker")
+    if str(disposition.get("milestone_contract_hash") or "") != str(
+        ledger.get("contract_hash") or ""
+    ):
+        blockers.append("milestone_disposition_contract_hash_not_current")
+    completed_bindings = disposition.get("completed_milestone_bindings")
+    if not isinstance(completed_bindings, list) or not completed_bindings:
+        blockers.append("milestone_disposition_completed_bindings_missing")
+    elif any(
+        not isinstance(row, Mapping)
+        or not str(row.get("node_id") or "")
+        or not [str(item) for item in row.get("evidence_refs") or [] if str(item)]
+        for row in completed_bindings
+    ):
+        blockers.append("milestone_disposition_completed_bindings_incomplete")
+    if not gate_id:
+        blockers.append("milestone_disposition_gate_missing")
+        return blockers
+    gate = ledger.get("pm_decision_gates", {}).get(gate_id)
+    if not isinstance(gate, Mapping):
+        blockers.append("milestone_disposition_gate_unknown")
+        return blockers
+    if str(gate.get("node_id") or "") != node_id:
+        blockers.append("milestone_disposition_gate_node_mismatch")
+    if gate.get("milestone_plan_renewal_required") is not True:
+        blockers.append("milestone_disposition_gate_not_renewal")
+    if gate.get("status") not in {"awaiting_system_closure", "applied"}:
+        blockers.append("milestone_disposition_gate_not_committing")
+    if str(gate.get("source_result_id") or "") != str(disposition.get("result_id") or ""):
+        blockers.append("milestone_disposition_result_mismatch")
+    for field in (
+        "flowguard_order_id",
+        "pm_flowguard_acceptance_result_id",
+        "review_id",
+        "validation_evidence_id",
+        "system_closure_id",
+    ):
+        value = str(disposition.get(field) or "")
+        if not value:
+            blockers.append(f"milestone_disposition_{field}_missing")
+        elif str(gate.get(field) or "") not in {"", value}:
+            blockers.append(f"milestone_disposition_{field}_mismatch")
+    effect = gate.get("staged_effect")
+    if not isinstance(effect, Mapping) or effect.get("status") != "committed":
+        blockers.append("milestone_disposition_staged_effect_not_committed")
+    elif str(effect.get("system_closure_id") or "") != str(
+        disposition.get("system_closure_id") or ""
+    ):
+        blockers.append("milestone_disposition_staged_effect_closure_mismatch")
+    return list(dict.fromkeys(blockers))
+
+
 def _advance_frontier_after_node_acceptance(ledger: dict[str, Any], node_id: str) -> None:
+    accepted_node = _require(
+        ledger.setdefault("route_nodes", {}),
+        node_id,
+        "accepted route node",
+    )
+    if recursive_route_required(ledger) and _node_requires_milestone_plan_renewal(
+        accepted_node
+    ):
+        disposition_id = str(
+            accepted_node.get("milestone_plan_renewal_disposition_id") or ""
+        )
+        disposition = ledger.get("pm_dispositions", {}).get(disposition_id)
+        blockers = (
+            _milestone_disposition_commit_blockers(
+                ledger,
+                node_id=node_id,
+                disposition=disposition,
+            )
+            if isinstance(disposition, Mapping)
+            else ["milestone_disposition_missing"]
+        )
+        if blockers:
+            raise BlackBoxRuntimeError(
+                "top-level recursive-route frontier advance requires the exact committed milestone gate: "
+                + ", ".join(blockers)
+            )
     frontier = ledger.get("execution_frontier") or {}
     completed = list(frontier.get("completed_nodes") or [])
     if node_id not in completed:
@@ -16718,19 +16867,6 @@ def _pm_disposition_result_violation(
                 "top-level milestone acceptance requires milestone_audit",
                 missing_required_fields=("milestone_audit",),
             )
-        allowed_evidence_refs = {
-            str(item)
-            for item in (
-                list(profile_binding.get("current_milestone_evidence_refs") or [])
-                + [
-                    evidence_ref
-                    for row in profile_binding.get("completed_milestone_bindings") or []
-                    if isinstance(row, Mapping)
-                    for evidence_ref in row.get("evidence_refs") or []
-                ]
-            )
-            if str(item)
-        }
         expected_completed_bindings = [
             row
             for row in profile_binding.get("completed_milestone_bindings") or []
@@ -16740,23 +16876,11 @@ def _pm_disposition_result_violation(
             str(row.get("node_id") or "").strip(): row
             for row in expected_completed_bindings
         }
-        audit_contract_hash = str(milestone_audit.get("contract_hash") or "").strip()
-        expected_contract_hash = str(
-            profile_binding.get("contract_hash")
-            or (ledger.get("contract_hash") if ledger is not None else "")
-            or ""
-        ).strip()
-        if not audit_contract_hash:
+        if "contract_hash" in milestone_audit:
             return _contract_block(
                 packet,
-                "milestone_audit.contract_hash must cite the frozen final-goal contract",
-                missing_required_fields=("milestone_audit.contract_hash",),
-            )
-        if expected_contract_hash and audit_contract_hash != expected_contract_hash:
-            return _contract_block(
-                packet,
-                "milestone_audit.contract_hash must match the current frozen final-goal contract",
-                missing_required_fields=("milestone_audit.contract_hash",),
+                "milestone_audit.contract_hash is runtime-owned commit material and must not be copied by PM",
+                forbidden_fields_seen=("milestone_audit.contract_hash",),
             )
         completed_rows = milestone_audit.get("completed")
         assert isinstance(completed_rows, list)
@@ -16797,39 +16921,11 @@ def _pm_disposition_result_violation(
                         f"milestone_audit.completed[{index}].node_id",
                     ),
                 )
-            evidence_refs = [
-                str(item)
-                for item in row.get("evidence_refs") or []
-                if str(item)
-            ]
-            expected_refs = [
-                str(item)
-                for item in expected_row.get("evidence_refs") or []
-                if str(item)
-            ]
-            if not evidence_refs:
+            if "evidence_refs" in row:
                 return _contract_block(
                     packet,
-                    "milestone_audit.completed rows require non-empty runtime evidence_refs",
-                    missing_required_fields=(
-                        f"milestone_audit.completed[{index}].evidence_refs",
-                    ),
-                )
-            if set(evidence_refs) != set(expected_refs):
-                return _contract_block(
-                    packet,
-                    "milestone_audit.completed evidence_refs must preserve the complete bound evidence set for each node",
-                    missing_required_fields=(
-                        f"milestone_audit.completed[{index}].evidence_refs",
-                    ),
-                )
-            unknown_refs = sorted(set(evidence_refs) - allowed_evidence_refs)
-            if unknown_refs:
-                return _contract_block(
-                    packet,
-                    "milestone completed evidence_refs must use current runtime-issued evidence: "
-                    + ", ".join(unknown_refs),
-                    missing_required_fields=(
+                    "milestone_audit.completed.evidence_refs are runtime-owned commit material and must not be copied by PM",
+                    forbidden_fields_seen=(
                         f"milestone_audit.completed[{index}].evidence_refs",
                     ),
                 )

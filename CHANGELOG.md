@@ -1,5 +1,53 @@
 # Changelog
 
+## v0.14.0 - 2026-08-01
+
+### Changed
+
+- Made every completed top-level route node enter one mandatory milestone
+  renewal gate. PM must audit the exact completed prefix, deviations, current
+  remaining gaps, and the prior unfinished plan, then freshly emit one
+  complete remaining route through the accepted final user goal.
+- Kept nested child completion local. It returns to its parent route without
+  multiplying whole-goal audits at each leaf.
+- Preserved the existing FlowGuard -> PM absorption -> Reviewer -> system
+  validation chain and made the reviewed renewal plus route activation one
+  atomic commit. A semantically unchanged re-emitted route is valid and does
+  not increase the route version; a changed suffix preserves the accepted
+  prefix and retires stale unfinished nodes, leases, blockers, and evidence.
+- Kept machine-owned contract hashes and evidence references out of PM prose.
+  Runtime binds them at commit and authorizes only the current milestone
+  evidence plus the immediately previous accepted audit body.
+
+### Fixed
+
+- Closed public and internal top-level acceptance/frontier bypasses that could
+  otherwise advance without a committed milestone renewal.
+- Required terminal `nodes=[]` closure to traverse FlowGuard, PM absorption,
+  Reviewer, system validation, and atomic commit before terminal return.
+- Replaced error-text-based currentness recovery with a typed currentness-drift
+  disposition so invariant failures remain hard failures.
+- Reused the current route-mutation lifecycle for changed-suffix blocker,
+  lease, packet, and evidence retirement instead of creating a second route
+  authority.
+
+### Validation boundary
+
+- Added executable route-replanning, planning-granularity, and route-mutation
+  hazards; Model-Test Alignment, Acceptance TestMesh, PPA/BCL, SkillGuard, and
+  final-confidence consume the same current hard-gate owner.
+- Added a public-CLI longitudinal conformance rehearsal for unchanged renewal,
+  changed suffix, nested child closure, Reviewer block, interruption/resume,
+  and terminal empty plan. It is scripted conformance evidence, not a live-AI
+  quality experiment.
+- Added a 10/50/100 top-level-milestone budget covering four AI submissions,
+  two local system steps, bounded evidence reads, payload growth, and local
+  gate latency. Provider latency and future AI plan quality remain outside
+  that measurement.
+- Release closure requires the current frozen model/test receipts, clean
+  consumer installation, SkillGuard closure, annotated `v0.14.0` tag, and a
+  source-only GitHub Release on the same commit.
+
 ## v0.13.0 - 2026-07-24
 
 ### Fixed

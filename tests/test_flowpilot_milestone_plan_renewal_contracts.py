@@ -59,7 +59,6 @@ class FlowPilotMilestonePlanRenewalContractTests(unittest.TestCase):
         for field_path in (
             "milestone_audit.completed[]",
             "milestone_audit.completed[].outcome",
-            "milestone_audit.completed[].evidence_refs[]",
             "milestone_audit.remaining[].obligation_ids[]",
             "milestone_audit.deviations",
             "milestone_audit.remaining",
@@ -71,7 +70,6 @@ class FlowPilotMilestonePlanRenewalContractTests(unittest.TestCase):
             self.assertIn(field_path, contract["required_child_fields"])
         for field_path in (
             "milestone_audit.completed",
-            "milestone_audit.completed[].evidence_refs",
             "milestone_audit.remaining[].obligation_ids",
             "milestone_audit.deviations",
             "milestone_audit.remaining",
@@ -80,10 +78,8 @@ class FlowPilotMilestonePlanRenewalContractTests(unittest.TestCase):
             self.assertIn(field_path, contract["explicit_array_fields"])
 
         shape = contract["minimal_valid_shape"]
-        self.assertEqual(
-            shape["milestone_audit"]["completed"][0]["evidence_refs"],
-            ["result-current-accepted-node"],
-        )
+        self.assertNotIn("evidence_refs", shape["milestone_audit"]["completed"][0])
+        self.assertNotIn("contract_hash", shape["milestone_audit"])
         self.assertEqual(
             shape["remaining_route_plan"]["schema_version"],
             packet_result_contracts.ROUTE_PLAN_SCHEMA_VERSION,
@@ -188,6 +184,7 @@ class FlowPilotMilestonePlanRenewalContractTests(unittest.TestCase):
             "execution-ready",
             "nested child disposition",
             "vague mega-parent",
+            "mechanical top-level micro-gates",
             "leaf-only list",
         ):
             self.assertIn(phrase, rule)
@@ -203,6 +200,24 @@ class FlowPilotMilestonePlanRenewalContractTests(unittest.TestCase):
             "structural_pm_decision_result",
             row["required_material_classes"],
         )
+
+    def test_initial_route_reviewer_enforces_progressive_granularity_without_levels(self) -> None:
+        rule = review_window_contracts.review_flow_stage_challenge_rule(
+            "route_planning_review"
+        ).lower()
+
+        for phrase in (
+            "nearest top-level nodes",
+            "execution-ready",
+            "farther nodes",
+            "progressively coarser",
+            "top-level mega-root",
+            "top-level micro-gates",
+            "independent phase outcomes",
+        ):
+            self.assertIn(phrase, rule)
+        self.assertNotIn("l0", rule)
+        self.assertNotIn("node count threshold", rule)
 
 
 if __name__ == "__main__":

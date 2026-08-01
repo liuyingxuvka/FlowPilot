@@ -85,6 +85,7 @@ class State:
     candidate_remaining_suffix_node_ids: tuple[str, ...] = ()
     old_pending_suffix_packets_invalidated: bool = False
     old_pending_suffix_evidence_invalidated: bool = False
+    old_pending_suffix_open_blockers_retired: bool = False
     completed_prefix_packets_untouched: bool = False
 
     effective_member_inventory_recorded: bool = False
@@ -376,6 +377,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 state,
                 holder="controller",
                 old_pending_suffix_packets_invalidated=True,
+                old_pending_suffix_open_blockers_retired=True,
             ),
         )
         return
@@ -541,6 +543,8 @@ def invariant_failures(state: State) -> list[str]:
                 failures.append("changed remaining plan kept old pending suffix evidence current")
             if state.process_recheck_passed and not state.old_pending_suffix_packets_invalidated:
                 failures.append("changed remaining plan rechecked before old pending suffix packets were invalidated")
+            if state.process_recheck_passed and not state.old_pending_suffix_open_blockers_retired:
+                failures.append("changed remaining plan rechecked before old pending suffix blockers were retired")
         if not state.effective_member_inventory_recorded:
             failures.append("route mutation lacks before/after effective member inventory")
         before_members = set(state.before_effective_member_ids)
@@ -574,6 +578,11 @@ def invariant_failures(state: State) -> list[str]:
             and not state.old_pending_suffix_packets_invalidated
         ):
             failures.append("PM activated changed suffix while old pending suffix packets remained current")
+        if (
+            state.topology_strategy == REPLACE_REMAINING_SUFFIX
+            and not state.old_pending_suffix_open_blockers_retired
+        ):
+            failures.append("PM activated changed suffix while old pending suffix blockers remained active")
         if (
             state.topology_strategy != REPLACE_REMAINING_SUFFIX
             and not state.old_current_node_packet_superseded
@@ -697,6 +706,7 @@ def _activated_remaining_suffix_state(**changes: object) -> State:
         stale_evidence_invalidated=True,
         old_pending_suffix_evidence_invalidated=True,
         old_pending_suffix_packets_invalidated=True,
+        old_pending_suffix_open_blockers_retired=True,
         process_recheck_passed=True,
         product_recheck_passed=True,
         reviewer_recheck_passed=True,
@@ -903,6 +913,13 @@ def hazard_states() -> dict[str, State]:
         "changed_suffix_keeps_old_pending_evidence_current": _remaining_suffix_proposal_state(
             stale_evidence_invalidated=True,
             old_pending_suffix_evidence_invalidated=False,
+        ),
+        "changed_suffix_keeps_old_pending_blocker_active": _remaining_suffix_proposal_state(
+            stale_evidence_invalidated=True,
+            old_pending_suffix_evidence_invalidated=True,
+            old_pending_suffix_packets_invalidated=True,
+            old_pending_suffix_open_blockers_retired=False,
+            process_recheck_passed=True,
         ),
     }
 
