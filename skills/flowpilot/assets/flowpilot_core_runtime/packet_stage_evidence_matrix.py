@@ -215,6 +215,7 @@ RESULT_CONTRACT_PROFILES: dict[str, dict[str, Any]] = {
             "milestone_audit.contract_hash",
             "milestone_audit.deviations",
             "milestone_audit.remaining",
+            "milestone_audit.remaining[].obligation_ids[]",
             "milestone_audit.prior_plan_assessment",
             "milestone_audit.replan_rationale",
             "remaining_route_plan.schema_version",
@@ -225,6 +226,7 @@ RESULT_CONTRACT_PROFILES: dict[str, dict[str, Any]] = {
             "milestone_audit.completed[].evidence_refs",
             "milestone_audit.deviations",
             "milestone_audit.remaining",
+            "milestone_audit.remaining[].obligation_ids",
             "remaining_route_plan.nodes",
         ),
         "non_empty_array_fields": (
@@ -245,6 +247,7 @@ RESULT_CONTRACT_PROFILES: dict[str, dict[str, Any]] = {
             "milestone_audit.contract_hash": "string",
             "milestone_audit.deviations": "array:object",
             "milestone_audit.remaining": "array:object",
+            "milestone_audit.remaining[].obligation_ids": "array:string",
             "milestone_audit.remaining[].owner_node_ids": "array:string",
             "milestone_audit.prior_plan_assessment": "string",
             "milestone_audit.replan_rationale": "string",

@@ -43,6 +43,8 @@ def current_v5_manifest(
     aggregate_artifact_id: str = "proof.fixture.current-v5",
     aggregate_obligation_ids: Sequence[str] = ("current-tests",),
     owner_identities: Mapping[str, Mapping[str, Any]] | None = None,
+    owner_obligation_ids: Mapping[str, Sequence[str]] | None = None,
+    owner_evidence_ids: Mapping[str, Sequence[str]] | None = None,
     owner_commands: Mapping[str, Sequence[str]] | None = None,
 ) -> dict[str, object]:
     """Build compact owner refs backed by real plan, stream, index, and meta files."""
@@ -83,10 +85,23 @@ def current_v5_manifest(
                 "covered_input_fingerprints": {
                     relative_input: input_fingerprint,
                 },
-                "covered_obligation_ids": [f"owner:{owner_id}"],
-                "covered_evidence_ids": [],
+                "covered_obligation_ids": list(
+                    owner_obligation_ids.get(owner_id, (f"owner:{owner_id}",))
+                    if owner_obligation_ids is not None
+                    else (f"owner:{owner_id}",)
+                ),
+                "covered_evidence_ids": list(
+                    owner_evidence_ids.get(owner_id, ())
+                    if owner_evidence_ids is not None
+                    else ()
+                ),
             }
         )
+        if owner_evidence_ids is not None and isinstance(identity, Mapping):
+            identity = dict(identity)
+            identity["covered_evidence_ids"] = list(
+                owner_evidence_ids.get(owner_id, ())
+            )
         identities[owner_id] = identity
         decisions.append(
             {

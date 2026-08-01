@@ -304,7 +304,14 @@ def _compile_release_manifest(
         ),
         result_path=combined_result_path,
         tier_reports=tier_reports,
-        covered_ids=tuple(model.RELEASE_EVIDENCE_CELLS),
+        covered_ids=testmesh_receipt_obligation_ids(
+            plan,
+            next(
+                suite
+                for suite in plan.child_suites
+                if suite.suite_id == "acceptance_router_release_tiers"
+            ),
+        ),
         snapshot_fingerprint=snapshot_fingerprint,
     )
     owners: dict[str, Any] = {}
@@ -341,7 +348,7 @@ def _compile_release_manifest(
             "proof_artifact": release_proof,
             **testmesh_final_receipt_fields(
                 release_proof,
-                covered_obligation_ids=tuple(model.RELEASE_EVIDENCE_CELLS),
+                covered_obligation_ids=release_proof["covered_obligation_ids"],
             ),
         },
     }

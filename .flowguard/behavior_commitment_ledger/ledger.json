@@ -109,7 +109,7 @@
           "scoped_out_reason": ""
         },
         "preconditions": [],
-        "primary_owner_model_id": "flowpilot_053_ppa_maintenance",
+        "primary_owner_model_id": ".flowguard/flowpilot_053_ppa_maintenance/model.py",
         "rationale": "Runtime must fail closed on unsupported result shapes.",
         "relations": [],
         "replacement_state": "active",
@@ -259,7 +259,7 @@
           "scoped_out_reason": ""
         },
         "preconditions": [],
-        "primary_owner_model_id": "flowpilot_053_ppa_maintenance",
+        "primary_owner_model_id": ".flowguard/flowpilot_053_ppa_maintenance/model.py",
         "rationale": "Trigger origin changes intake evidence and scope, not the success authority; replacement, causal evidence, replay, and closure remain one runtime-owned path.",
         "relations": [],
         "replacement_state": "active",
@@ -376,7 +376,7 @@
           "scoped_out_reason": ""
         },
         "preconditions": [],
-        "primary_owner_model_id": "flowpilot_053_ppa_maintenance",
+        "primary_owner_model_id": ".flowguard/flowpilot_053_ppa_maintenance/model.py",
         "rationale": "Runtime can require the field but cannot perform semantic reviewer quality checks.",
         "relations": [],
         "replacement_state": "active",
@@ -499,7 +499,7 @@
           "scoped_out_reason": ""
         },
         "preconditions": [],
-        "primary_owner_model_id": "flowpilot_053_ppa_maintenance",
+        "primary_owner_model_id": ".flowguard/flowpilot_053_ppa_maintenance/model.py",
         "rationale": "This keeps summary navigation separate from formal evidence consumption.",
         "relations": [],
         "replacement_state": "active",
@@ -622,7 +622,7 @@
           "scoped_out_reason": ""
         },
         "preconditions": [],
-        "primary_owner_model_id": "flowpilot_053_ppa_maintenance",
+        "primary_owner_model_id": ".flowguard/flowpilot_053_ppa_maintenance/model.py",
         "rationale": "A project upgrade record is not itself validation proof.",
         "relations": [],
         "replacement_state": "active",
@@ -751,7 +751,7 @@
           "scoped_out_reason": ""
         },
         "preconditions": [],
-        "primary_owner_model_id": "flowpilot_053_ppa_maintenance",
+        "primary_owner_model_id": ".flowguard/flowpilot_053_ppa_maintenance/model.py",
         "rationale": "A role must never choose between body, envelope, registry, or remembered contract shapes.",
         "relations": [],
         "replacement_state": "active",
@@ -881,7 +881,7 @@
           "scoped_out_reason": ""
         },
         "preconditions": [],
-        "primary_owner_model_id": "flowpilot_053_ppa_maintenance",
+        "primary_owner_model_id": ".flowguard/flowpilot_053_ppa_maintenance/model.py",
         "rationale": "Role continuity is useful context, but only unresolved current obligations authorize resumed work.",
         "relations": [],
         "replacement_state": "active",
@@ -995,7 +995,7 @@
           "scoped_out_reason": ""
         },
         "preconditions": [],
-        "primary_owner_model_id": "flowpilot_053_ppa_maintenance",
+        "primary_owner_model_id": ".flowguard/flowpilot_053_ppa_maintenance/model.py",
         "rationale": "The coverage claim is bounded but every selected cell must be observed, not inferred.",
         "relations": [],
         "replacement_state": "active",
@@ -1120,7 +1120,7 @@
           "scoped_out_reason": ""
         },
         "preconditions": [],
-        "primary_owner_model_id": "flowpilot_053_ppa_maintenance",
+        "primary_owner_model_id": ".flowguard/flowpilot_053_ppa_maintenance/model.py",
         "rationale": "A model-authored green label cannot substitute for an executed child proof. Inner Python execution stays bound to the current execution owner, a short-lived Windows virtual-environment shim cannot impersonate the real process owner, exact descendants receive one bounded natural-exit settlement window, survivors still fail closed, and bounded concurrency cannot authorize two children to own the same external runtime resource at once.",
         "relations": [],
         "replacement_state": "active",
@@ -1231,7 +1231,7 @@
           "scoped_out_reason": ""
         },
         "preconditions": [],
-        "primary_owner_model_id": "flowpilot_053_ppa_maintenance",
+        "primary_owner_model_id": ".flowguard/flowpilot_053_ppa_maintenance/model.py",
         "rationale": "A FlowPilot node is a complete accountable AI workstream inside the PM-owned route boundary.",
         "relations": [],
         "replacement_state": "active",
@@ -1357,7 +1357,7 @@
           "scoped_out_reason": ""
         },
         "preconditions": [],
-        "primary_owner_model_id": "flowpilot_053_ppa_maintenance",
+        "primary_owner_model_id": ".flowguard/flowpilot_053_ppa_maintenance/model.py",
         "rationale": "Controller remains an execution shell while substantive roles receive full workstream autonomy.",
         "relations": [],
         "replacement_state": "active",
@@ -1482,7 +1482,7 @@
           "scoped_out_reason": ""
         },
         "preconditions": [],
-        "primary_owner_model_id": "flowpilot_053_ppa_maintenance",
+        "primary_owner_model_id": ".flowguard/flowpilot_053_ppa_maintenance/model.py",
         "rationale": "Local skill discovery remains mandatory but its semantic relevance decision stays with PM.",
         "relations": [],
         "replacement_state": "active",
@@ -1608,7 +1608,7 @@
           "scoped_out_reason": ""
         },
         "preconditions": [],
-        "primary_owner_model_id": "flowpilot_053_ppa_maintenance",
+        "primary_owner_model_id": ".flowguard/flowpilot_053_ppa_maintenance/model.py",
         "rationale": "Material work varies by project and should not be a universal special stage.",
         "relations": [],
         "replacement_state": "active",
@@ -1721,7 +1721,7 @@
           "scoped_out_reason": ""
         },
         "preconditions": [],
-        "primary_owner_model_id": "flowpilot_053_ppa_maintenance",
+        "primary_owner_model_id": ".flowguard/flowpilot_053_ppa_maintenance/model.py",
         "rationale": "The report makes plan discipline auditable without turning prose quality into a brittle Runtime schema gate.",
         "relations": [],
         "replacement_state": "active",
@@ -1831,7 +1831,7 @@
           "scoped_out_reason": ""
         },
         "preconditions": [],
-        "primary_owner_model_id": "flowpilot_053_ppa_maintenance",
+        "primary_owner_model_id": ".flowguard/flowpilot_053_ppa_maintenance/model.py",
         "rationale": "FlowGuard can be used by every role without collapsing independent oversight.",
         "relations": [],
         "replacement_state": "active",
@@ -1954,7 +1954,7 @@
           "scoped_out_reason": ""
         },
         "preconditions": [],
-        "primary_owner_model_id": "flowpilot_optional_material_artifact_map",
+        "primary_owner_model_id": ".flowguard/flowpilot_optional_material_artifact_map/model.py",
         "rationale": "The optional map has a distinct agent-operation terminal and cannot borrow ordinary material-work authority.",
         "relations": [],
         "replacement_state": "active",
@@ -2080,7 +2080,7 @@
           "scoped_out_reason": ""
         },
         "preconditions": [],
-        "primary_owner_model_id": "flowpilot_model_test_alignment",
+        "primary_owner_model_id": ".flowguard/flowpilot_model_test_alignment/model.py",
         "rationale": "FlowGuard 0.55 requires stable authority for diagnostic runtime evidence, which is distinct from the product behavior being compared.",
         "relations": [],
         "replacement_state": "active",
@@ -2115,28 +2115,39 @@
           "code_contract_ids": [
             "pm_disposition.milestone_plan_renewal_required"
           ],
-          "coverage_case_ids": [],
-          "coverage_receipt_ids": [],
-          "coverage_shard_ids": [],
-          "current": false,
-          "evidence_state": "blocked",
-          "metadata": {
-            "authority_blocker": "current FlowGuard 0.66 PPA and TestMesh receipts are not frozen",
-            "targeted_tests_are_not_testmesh_receipts": true
-          },
+          "coverage_case_ids": [
+            "case:flowpilot.synthetic_agent_global_d_card_matrix",
+            "case:flowpilot.current_contract_cartesian_matrix",
+            "case:flowpilot.contract_exhaustion_mesh",
+            "case:flowpilot.ai_response_execution_closure"
+          ],
+          "coverage_receipt_ids": [
+            "contract_coverage:flowpilot_053_ppa_maintenance",
+            "contract_coverage:flowpilot_053_bcl_maintenance"
+          ],
+          "coverage_shard_ids": [
+            "contract_shard:flowpilot_053_ppa_maintenance:no_fallback_cartesian",
+            "contract_shard:flowpilot_053_bcl_maintenance:behavior_commitment_cartesian"
+          ],
+          "current": true,
+          "evidence_state": "current_pass",
+          "metadata": {},
           "model_obligation_ids": [
             "flowpilot_route_replanning_policy.milestone_renewal_gates_route_use"
           ],
           "proof_artifact_ids": [
             "simulations/flowpilot_route_replanning_policy_results.json"
           ],
-          "risk_gate_ids": [],
+          "risk_gate_ids": [
+            "risk_gate:behavior_commitment_coverage:flowpilot_053_behavior_commitments",
+            "risk_gate:behavior_commitment_cartesian_coverage:flowpilot_053_behavior_commitments"
+          ],
           "test_evidence_ids": [
             "test:tests/test_flowpilot_milestone_plan_renewal_contracts.py",
             "test:tests/test_flowpilot_recursive_route_execution_runtime.py",
             "native:simulations/run_flowpilot_route_replanning_policy_checks.py"
           ],
-          "test_mesh_state": "shard_missing"
+          "test_mesh_state": "shard_current"
         },
         "excluded_behavior_ids": [],
         "expected_result": "the current top-level milestone audit and one complete remaining route to the final user goal pass the existing FlowGuard, PM absorption, Reviewer, and system-validation chain before any frontier advance",
@@ -2172,14 +2183,16 @@
           "top_level_rule": "parent_node_id_empty"
         },
         "miss_origin_state": "no_miss",
-        "model_sync_state": "owner_model_stale",
+  "model_sync_state": "owner_model_current",
         "owner": "FlowPilot runtime/router",
         "path_authority": {
           "behavior_commitment_id": "commit.top_level_milestone_plan_renewal_is_mandatory",
           "business_intent": "Every accepted top-level milestone renews the complete remaining route before frontier advance.",
           "business_intent_id": "intent:flowpilot.renew-complete-remaining-plan-after-top-level-milestone",
-          "evidence_current": false,
-          "evidence_refs": [],
+    "evidence_current": true,
+    "evidence_refs": [
+      "simulations/flowpilot_053_ppa_maintenance_results.json"
+    ],
           "fallback_candidate_ids": [
             "fallback.direct-top-level-frontier-advance",
             "fallback.old-remaining-route-auto-continuation",
@@ -2187,26 +2200,37 @@
             "fallback.reviewer-blocked-plan-activation",
             "fallback.historical-milestone-review-reuse"
           ],
-          "metadata": {
-            "authority_blocker": "current FlowGuard 0.66 PPA receipt is not frozen"
-          },
+    "metadata": {},
           "path_sensitive": true,
-          "ppa_confidence": "blocked",
-          "ppa_coverage_receipt_ids": [],
-          "ppa_coverage_shard_ids": [],
-          "ppa_decision": "primary_path_authority_blocked",
-          "ppa_ok": false,
-          "ppa_report_id": "",
-          "ppa_risk_gate_ids": [],
+    "ppa_confidence": "full",
+    "ppa_coverage_receipt_ids": [
+      "contract_coverage:flowpilot_053_ppa_maintenance",
+      "contract_coverage:flowpilot_053_bcl_maintenance"
+    ],
+    "ppa_coverage_shard_ids": [
+      "contract_shard:flowpilot_053_ppa_maintenance:no_fallback_cartesian",
+      "contract_shard:flowpilot_053_bcl_maintenance:behavior_commitment_cartesian"
+    ],
+    "ppa_decision": "primary_path_authority_green",
+    "ppa_ok": true,
+    "ppa_report_id": "flowpilot_055_primary_path_authority",
+    "ppa_risk_gate_ids": [
+      "risk_gate:primary_path_authority:flowpilot_053_ppa_maintenance",
+      "risk_gate:primary_path_authority_cartesian_coverage:flowpilot_053_ppa_maintenance"
+    ],
           "primary_path_id": "path.runtime.top-level-milestone-plan-renewal",
-          "proof_artifact_ids": [],
-          "runtime_observation_ids": [],
+    "proof_artifact_ids": [
+      "proof:flowpilot:path_runtime_top_level_milestone_plan_renewal"
+    ],
+    "runtime_observation_ids": [
+      "runtime:path_runtime_top_level_milestone_plan_renewal"
+    ],
           "scoped_out_reason": ""
         },
         "preconditions": [
           "the current route node is top-level and ready for project-manager acceptance"
         ],
-        "primary_owner_model_id": "flowpilot_route_replanning_policy",
+        "primary_owner_model_id": ".flowguard/flowpilot_route_replanning_policy/model.py",
         "rationale": "A hard topology-derived replanning gate turns completed work into mandatory new planning evidence without creating a second route authority, optional mode, compatibility reader, fallback continuation, or experiment.",
         "relations": [],
         "replacement_state": "active",
@@ -3064,7 +3088,30 @@
     ],
     "validation_boundary": "FlowGuard 0.66 canonical behavior inventory; milestone owner-model, PPA, and TestMesh authority remain blocked until current immutable receipts are frozen",
     "subject_lane": "normative_target",
-    "expected_source_surface_ids": [],
+    "expected_source_surface_ids": [
+      "surface.runtime.submit_result",
+      "surface.runtime.unified_late_defect_repair_engine",
+      "surface.runtime.pm_historical_defect_intake",
+      "surface.runtime.blocker_repair_intake",
+      "surface.runtime.parent_subtree_repair_intake",
+      "surface.runtime.terminal_repair_intake",
+      "surface.pm_visible_summary",
+      "surface.authorized_result_reads",
+      "surface.release_evidence",
+      "surface.current_handoff_checklist",
+      "surface.resume_exact_current_obligation_roles",
+      "surface.fake_ai_execution_closure",
+      "surface.acceptance_testmesh_proofs",
+      "surface.complete_role_workstream",
+      "surface.controller_foreground_ledger",
+      "surface.local_capability_inventory",
+      "surface.ordinary_material_work",
+      "surface.reviewer_plan_completion_audit",
+      "surface.role_local_flowguard_boundary",
+      "surface.optional_material_artifact_map",
+      "surface.model_test_alignment_runtime_path",
+      "surface.runtime.top_level_milestone_plan_renewal"
+    ],
     "source_inventory_revision": "",
     "source_inventory_fingerprint": "",
     "source_inventory_evidence_ids": [],

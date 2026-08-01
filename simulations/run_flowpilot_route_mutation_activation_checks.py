@@ -33,6 +33,7 @@ RELEVANT_TEST_PATHS = (
     REPO_ROOT / "tests" / "router_runtime" / "route_mutation_parent_backward.py",
     REPO_ROOT / "tests" / "test_flowpilot_user_flow_diagram.py",
     REPO_ROOT / "tests" / "test_flowpilot_unified_repair_runtime.py",
+    REPO_ROOT / "tests" / "test_flowpilot_milestone_plan_renewal_contracts.py",
 )
 
 
@@ -251,11 +252,17 @@ def _production_conformance_report() -> dict[str, object]:
         "def _replace_route_node_for_repair(",
         "def _role_continuity_table(",
     )
+    milestone_source = _source_slice(
+        runtime_text,
+        "def _activate_changed_milestone_remaining_route(",
+        "def record_pm_disposition(",
+    )
     core_tests = test_texts["tests/test_flowpilot_core_runtime.py"]
     high_standard_tests = test_texts["tests/test_flowpilot_high_standard_control_flow.py"]
     sibling_tests = test_texts["tests/router_runtime/route_mutation_sibling_replacement.py"]
     parent_tests = test_texts["tests/router_runtime/route_mutation_parent_backward.py"]
     unified_repair_tests = test_texts["tests/test_flowpilot_unified_repair_runtime.py"]
+    milestone_contract_tests = test_texts["tests/test_flowpilot_milestone_plan_renewal_contracts.py"]
     route_mutation_text = ROUTE_MUTATION_PATH.read_text(encoding="utf-8")
     parent_segment_text = PARENT_SEGMENT_PATH.read_text(encoding="utf-8")
     obligations = {
@@ -303,6 +310,16 @@ def _production_conformance_report() -> dict[str, object]:
         "runtime_uses_active_route_version_for_effective_member_selection": (
             "def _active_route_node_records(" in runtime_text
             and 'ledger.get("active_route_version")' in runtime_text
+        ),
+        "milestone_changed_suffix_uses_current_mutation_primitive": (
+            "def _activate_changed_milestone_remaining_route(" in milestone_source
+            and "_supersede_repair_open_blockers_for_route_mutation(" in milestone_source
+            and '"milestone_plan_renewal"' in milestone_source
+        ),
+        "milestone_contract_tests_cover_dynamic_shape_and_profile": (
+            "test_milestone_profile_projects_complete_dynamic_contract_and_shape" in milestone_contract_tests
+            and "milestone_audit" in milestone_contract_tests
+            and "remaining_route_plan" in milestone_contract_tests
         ),
     }
     missing = [name for name, covered in obligations.items() if not covered]

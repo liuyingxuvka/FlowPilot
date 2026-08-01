@@ -152,6 +152,13 @@ class FlowPilotCompleteWorkstreamOrchestrationTests(unittest.TestCase):
             with self.subTest(family_id=family_id):
                 shape = packet_result_contracts.minimal_valid_shape_for_family(family_id)
                 self_check = shape.get("contract_self_check")
+                if family_id == "review.terminal_backward_replay":
+                    self.assertIsNone(self_check)
+                    self.assertIn(
+                        "contract_self_check",
+                        packet_result_contracts.forbidden_fields_for_family(family_id),
+                    )
+                    continue
                 self.assertIsInstance(self_check, dict)
                 plan = self_check.get("workstream_plan_and_completion")
                 self.assertIsInstance(plan, dict)
@@ -175,7 +182,7 @@ class FlowPilotCompleteWorkstreamOrchestrationTests(unittest.TestCase):
 
     def test_terminal_replay_uses_the_same_semantic_section_without_mechanical_requirement(self) -> None:
         family_id = "review.terminal_backward_replay"
-        self.assertNotIn(
+        self.assertIn(
             "contract_self_check",
             packet_result_contracts.forbidden_fields_for_family(family_id),
         )
@@ -184,10 +191,7 @@ class FlowPilotCompleteWorkstreamOrchestrationTests(unittest.TestCase):
             packet_result_contracts.required_fields_for_family(family_id),
         )
         shape = packet_result_contracts.minimal_valid_shape_for_family(family_id)
-        self.assertIn(
-            "workstream_plan_and_completion",
-            shape["contract_self_check"],
-        )
+        self.assertNotIn("contract_self_check", shape)
 
     def test_reviewer_audits_plan_rows_against_actual_artifacts(self) -> None:
         challenge = review_window_contracts.review_flow_stage_challenge_rule(

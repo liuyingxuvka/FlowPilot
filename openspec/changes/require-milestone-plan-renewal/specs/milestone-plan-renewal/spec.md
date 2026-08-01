@@ -187,3 +187,79 @@ old/new routing.
 - **THEN** the marker SHALL NOT satisfy the current milestone gate
 - **AND** FlowPilot SHALL require the current structured audit and remaining
   plan.
+
+### Requirement: Renewal bindings are current and exhaustive
+The renewal contract SHALL bind machine-owned route, contract, evidence, and
+obligation identities from the current runtime projection while requiring PM
+to provide the semantic audit and complete route.
+
+#### Scenario: Runtime supplies concrete remaining owners
+- **WHEN** the current PM packet contains concrete remaining owner node ids
+- **THEN** its minimal valid shape SHALL use the same node identities
+- **AND** the shape SHALL not contain a fixed example owner that the current
+  validator would reject.
+
+#### Scenario: A non-route gap remains open
+- **WHEN** unresolved artifact hygiene, open-resource, residual-risk, or
+  legacy-evidence gaps remain in the current obligation projection
+- **THEN** the renewal SHALL require those gaps to be represented by current
+  route owners or an explicit current disposition
+- **AND** an empty or otherwise unowned route SHALL be rejected.
+
+#### Scenario: A nested helper node has no distinct goal gap
+- **WHEN** a valid remaining route contains an implementation child whose work
+  is covered by its parent milestone gap
+- **THEN** the renewal SHALL permit the child to remain in the route
+- **AND** SHALL not require PM to invent a separate artificial user-goal gap
+  solely for that child.
+
+#### Scenario: PM cites evidence without reading it
+- **WHEN** PM submits a milestone audit that cites sealed result ids but has not
+  consumed the required authorized result reads
+- **THEN** the renewal SHALL remain blocked
+- **AND** a summary or evidence id alone SHALL not count as formal evidence.
+
+### Requirement: Changed-suffix renewal closes the old lifecycle
+Changed-suffix activation SHALL reuse the current route-mutation lifecycle for
+quarantine, evidence invalidation, version activation, and repair-blocker
+retirement.
+
+#### Scenario: Replaced suffix has an open repair blocker
+- **WHEN** a changed renewal replaces an unfinished suffix containing an open
+  repair blocker
+- **THEN** the blocker SHALL be explicitly superseded or retired with the
+  mutation
+- **AND** it SHALL not remain an active blocker at terminal closure.
+
+### Requirement: Top-level milestone quality remains review-owned
+The runtime SHALL use topology alone to identify the hard gate, while Reviewer
+quality checks SHALL challenge unreasonable top-level granularity.
+
+#### Scenario: One top-level parent swallows the whole project
+- **WHEN** the initial route puts all meaningful work below one non-terminal
+  top-level parent
+- **THEN** Reviewer SHALL be able to block the route as an unsuitable global
+  milestone decomposition
+- **AND** FlowPilot SHALL not add a risk tier or runtime scoring field.
+
+### Requirement: Structural PPA tests remain distinct from live closure evidence
+The existing TestMesh/MTA execution tiers SHALL keep the exact PPA
+maintenance unit in the all-tier supplement. Contract-shape assertions MAY
+use an explicit repository-relative proof artifact marked
+`structural_shape_only` for the contract-matrix paths, but that artifact SHALL
+not be accepted as live matrix evidence. The closure runner SHALL remain the
+sole owner of live PPA evidence and SHALL consume current matrix and MTA
+results after their producer stages complete.
+
+#### Scenario: Fresh source snapshot has no prior current matrix result
+- **WHEN** a new source snapshot starts the all-tier validation
+- **AND** the PPA contract-shape unit tests inspect a contract-matrix path
+- **THEN** those tests SHALL use only their explicit structural proof projection
+- **AND** the all-tier bundle SHALL still include the exact PPA unit owner.
+
+#### Scenario: Closure runner sees stale or failed live evidence
+- **WHEN** the current matrix or MTA result is missing, stale, or failed at
+  closure
+- **THEN** the live PPA runner SHALL fail closed
+- **AND** the structural unit proof SHALL not be promoted to current runtime
+  evidence.

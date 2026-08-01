@@ -73,12 +73,31 @@ class FlowPilotContractExhaustionMeshTests(unittest.TestCase):
                 for definition in runner.TEST_MESH_CHILD_SUITE_DEFINITIONS.values()
             }
         )
+        owner_obligation_values: dict[str, list[str]] = {}
+        for owner, definition in runner.TEST_MESH_CHILD_SUITE_DEFINITIONS.items():
+            execution_owner_id = str(definition["execution_owner_id"])
+            owned_cells = tuple(
+                cell
+                for cell in model.REQUIRED_CONTRACT_EXHAUSTION_CELLS
+                if cell["required_evidence_owner"] == owner
+            )
+            owner_obligation_values.setdefault(execution_owner_id, []).extend(
+                (
+                    f"contract-exhaustion-owner:{owner}",
+                    *(f"contract-exhaustion-case:{cell['cell_id']}" for cell in owned_cells),
+                )
+            )
+        owner_obligations = {
+            owner_id: tuple(dict.fromkeys(values))
+            for owner_id, values in owner_obligation_values.items()
+        }
         return current_v5_manifest(
             owner_ids,
             source_path=Path(__file__),
             selected_count=23,
             reused_without_ticket=reused_without_ticket,
             aggregate_artifact_id="proof.contract-exhaustion-current-v5",
+            owner_obligation_ids=owner_obligations,
         )
 
     def test_contract_exhaustion_mesh_accepts_valid_and_rejects_hazards(self) -> None:

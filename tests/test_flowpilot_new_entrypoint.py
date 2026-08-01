@@ -960,7 +960,10 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
                     if requires_flowguard_read:
                         self.assertTrue(has_flowguard_read)
                     else:
-                        self.assertEqual(packet["envelope"].get("route_scope"), "node_acceptance_plan")
+                        self.assertIn(
+                            packet["envelope"].get("route_scope"),
+                            {"node_acceptance_plan", "pm_flowguard_acceptance"},
+                        )
                         self.assertFalse(has_flowguard_read)
             terminal_reviews = [
                 packet

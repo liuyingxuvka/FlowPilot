@@ -140,11 +140,18 @@ def _cartesian_risk_shard_evidence() -> tuple[TestEvidence, ...]:
 
 
 def _with_runtime_path(plan: ModelTestAlignmentPlan, family: str) -> ModelTestAlignmentPlan:
-    return attach_runtime_path_evidence_to_plan(
+    projected = attach_runtime_path_evidence_to_plan(
         plan,
         family=family,
         authority=MTA_RUNTIME_PATH_AUTHORITY,
         code_contract_prefix=f"runtime_path.{plan.model_id}",
+    )
+    return replace(
+        projected,
+        test_evidence=tuple(
+            refresh_projected_receipt_evidence(evidence)
+            for evidence in projected.test_evidence
+        ),
     )
 
 

@@ -10,6 +10,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from typing import Sequence
 
 from flowguard import (
     ModelObligation,
@@ -63,6 +64,33 @@ runtime_path_evidence = load_module(
 class FlowPilotModelTestAlignmentTests(unittest.TestCase):
     _manifest_cache: dict[tuple[str, ...], dict[str, object]] = {}
 
+    @staticmethod
+    def _fixture_evidence_owner_ids(owner_ids: Sequence[str]) -> dict[str, tuple[str, ...]]:
+        """Bind every synthetic MTA evidence row to one exact fixture owner.
+
+        The fixture is intentionally compact: it models one current TestMesh
+        owner projection, while the real background manifest binds each row to
+        its native execution owner.  FlowGuard 0.67 requires the evidence
+        subject-to-owner binding to be explicit in either case.
+        """
+
+        if not owner_ids:
+            return {}
+        evidence_ids: list[str] = []
+        for entry in alignment_runner.build_alignment_plan_entries():
+            plan = entry["plan"]
+            evidence_ids.extend(
+                evidence.evidence_id for evidence in plan.test_evidence
+            )
+        # The strict report also audits the separate source-contract plan;
+        # bind those rows to the same single fixture owner so FlowGuard 0.67
+        # can verify their projected receipts as well.
+        source_plan = alignment_runner.build_source_contract_alignment_plan()
+        evidence_ids.extend(
+            evidence.evidence_id for evidence in source_plan.test_evidence
+        )
+        return {str(owner_ids[0]): tuple(dict.fromkeys(evidence_ids))}
+
     @classmethod
     def _current_v5_manifest(
         cls,
@@ -97,6 +125,7 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
                 ).to_dict()
                 for owner_id in owner_ids
             },
+            owner_evidence_ids=cls._fixture_evidence_owner_ids(owner_ids),
             owner_commands={
                 owner_id: commands[owner_id].command
                 for owner_id in owner_ids

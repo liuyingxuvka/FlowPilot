@@ -177,6 +177,73 @@ authorities. The initial route may be coarse; the hard gate is the repeated
 audit-and-rewrite point where new evidence makes the next route more detailed
 without changing the final-goal contract.
 
+### 10. Keep machine bindings runtime-owned
+
+The milestone result contract may show a minimal shape, but the shape must be
+derived from the current route binding. When the runtime supplies concrete
+remaining owner node ids, the example nodes and their owner ids must agree;
+the packet must never present a copyable shape that the current validator will
+reject. Contract hash, completed-prefix evidence, route identity, and owner
+bindings remain runtime-owned facts. PM supplies the semantic audit and the
+complete route, not a second machine ledger.
+
+### 11. Cover every real gap without manufacturing gaps
+
+The renewal audit must cover the exact current hard-obligation projection,
+including non-route hygiene, open-resource, residual-risk, and legacy-evidence
+gaps when they are unresolved. Every real gap needs at least one submitted
+owner, and every owner must belong to the submitted route. Nested implementation
+nodes do not each need a fabricated user-goal gap; a top-level milestone must
+be traceable to one or more real gaps. Existing obligation ids and projections
+remain the authority; no second gap ledger is introduced.
+
+### 12. Reuse the current route-mutation lifecycle
+
+Changed-suffix renewal uses the existing route-mutation lifecycle for node
+materialization, packet quarantine, evidence invalidation, route versioning,
+and repair-blocker retirement. A new renewal-specific mutation helper may bind
+the milestone decision, but it must delegate shared lifecycle effects to the
+current primitive so an old open repair blocker cannot survive as a false
+terminal blocker.
+
+### 13. Formal review requires formal evidence access
+
+Milestone summaries and evidence ids are navigation only. The PM renewal
+packet receives the minimum current authorized result reads needed to inspect
+completed milestone evidence and current deviations, and submission requires
+the corresponding read receipts. No summary may substitute for a sealed result
+body, and no broad unrestricted evidence channel is added.
+
+### 14. Route topology remains mechanical, route quality remains reviewed
+
+`parent_node_id == ""` remains the only runtime definition of a global renewal
+boundary. Initial-route and renewal review additionally challenge whether each
+top-level node is an independently acceptable phase outcome, whether one
+parent swallows the entire project, or whether the route is fragmented into
+trivial gates. This is a Reviewer quality check, not a new level, score, or
+runtime feature flag.
+
+### 15. Budget the loop without adding a second control system
+
+The direct loop has one audit/remaining-plan pair per top-level milestone and
+keeps machine bindings in the runtime projection. A lightweight envelope is
+recorded in `docs/flowpilot_milestone_renewal_budget.md`: six normal gate
+handoffs, one current packet per repair, and an observed serialized audit
+envelope up to 5.2 KB for sixteen remaining nodes. These are review and
+observability limits, not L0-L4 modes, scores, or alternate authorities.
+
+### 16. Separate structural unit proof from live closure evidence
+
+The existing TestMesh/MTA tier remains the owner of exact test evidence, and
+the exact PPA maintenance unit stays in the all-tier supplement so the frozen
+bundle is complete. Its contract-shape unit tests use an explicit,
+repository-relative `ProofArtifactRef` marked `structural_shape_only` for the
+contract-matrix paths; that proof is limited to the unit's own assertions and
+does not stand in for a live matrix result. The closure runner remains the
+sole owner of live PPA evidence and reads the current matrix and MTA results
+after their producer stages complete. This keeps the existing tier structure,
+avoids a producer/consumer cycle, and preserves fail-closed currentness.
+
 ## Risks / Trade-offs
 
 - **More review work at major milestones** → The gate applies only to
@@ -192,6 +259,17 @@ without changing the final-goal contract.
 - **Existing recovery assumes ordinary PM disposition applies immediately** →
   Add exact staged-gate recovery profiles and negative tests for old automatic
   continuation.
+- **Contract examples can drift from current route bindings** → Build the
+  example from the same runtime owner projection and test a real multi-node
+  packet shape through the validator.
+- **Gap ownership can become formalism or omit non-route gaps** → Bind exact
+  current obligation ids, require real-gap coverage, and do not require every
+  nested helper node to invent a gap.
+- **Renewal-specific route mutation can strand old blockers** → Delegate common
+  retirement and quarantine to the existing route-mutation primitive and test
+  an active blocker on the replaced suffix.
+- **PM can cite but not inspect evidence** → Issue bounded authorized reads and
+  require read receipts before formal renewal submission.
 
 ## Migration Plan
 
@@ -204,3 +282,6 @@ without changing the final-goal contract.
 6. Rollback, if required before release, removes the new source changes and
    restores the prior installed projection; no persisted run is translated or
    accepted through a compatibility path.
+7. Close the post-implementation correctness findings, refresh current model
+   authority and TestMesh/MTA/PPA/BCL evidence, then run one real longitudinal
+   multi-milestone rehearsal before enabling the final consumer projection.

@@ -197,7 +197,10 @@ REVIEW_FLOW_STAGE_CHALLENGE_BINDINGS = {
             "The first remaining node must be execution-ready with an executable outcome, acceptance "
             "boundary, dependency boundary, and current proof path, while farther nodes may remain coarser "
             "but explicit and goal-connected. A nested child disposition does not require this global "
-            "milestone audit. Name the weakest FlowGuard-absorption or plan-renewal evidence, test a "
+            "milestone audit. Review each submitted top-level node at the granularity needed to execute "
+            "the renewed route: reject a single vague mega-parent that hides the real next frontier, and "
+            "reject a leaf-only list that does not preserve the final-goal path. Name the weakest "
+            "FlowGuard-absorption or plan-renewal evidence, test a "
             "PM-absorption or goal-continuity failure hypothesis, and give PM a concrete audit repair, "
             "route rework, or no-action rationale."
         ),

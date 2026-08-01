@@ -124,11 +124,23 @@ def _milestone_pm_accept_body(
     payload["remaining_route_plan"] = canonical_plan
     payload["milestone_audit"]["contract_hash"] = ledger.get("contract_hash", "")
     if canonical_plan["nodes"]:
+        obligations = runtime._milestone_remaining_obligation_ids(
+            ledger,
+            node_id=str(packet_body.get("route_node_id") or ""),
+            acceptance_item_disposition=payload.get(
+                "acceptance_item_disposition", []
+            ),
+        )
         payload["milestone_audit"]["remaining"] = [
             {
                 "obligation": "Complete every still-open part of the accepted final user goal.",
                 "gap": "The freshly emitted remaining route has not executed yet.",
                 "owner_node_ids": [str(node.get("node_id") or "") for node in canonical_plan["nodes"]],
+                "obligation_ids": [
+                    f"{field}:{item}"
+                    for field, values in obligations.items()
+                    for item in values
+                ],
             }
         ]
     else:
@@ -301,7 +313,12 @@ def _advance_active_node_to_pm_disposition(ledger: dict) -> tuple[str, str]:
 
 
 def _complete_milestone_decision_gate(ledger: dict, node_id: str) -> None:
-    flowguard_packet = _open_packets(ledger, "flowguard_check")[0]
+    flowguard_packets = _open_packets(ledger, "flowguard_check")
+    if not flowguard_packets:
+        # The final top-level node may enter terminal closure directly; there
+        # is no remaining route to renew after an explicit empty-plan result.
+        return
+    flowguard_packet = flowguard_packets[0]
     _complete_open_packet(
         ledger,
         flowguard_packet,

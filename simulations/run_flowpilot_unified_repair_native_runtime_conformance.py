@@ -25,7 +25,7 @@ if str(unified.REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(unified.REPO_ROOT))
 
 from tests.flowpilot_repair_test_helpers import runtime, seeded_ledger  # noqa: E402
-from flowpilot_core_runtime import run_shell  # noqa: E402
+from flowpilot_core_runtime import packet_result_contracts, run_shell  # noqa: E402
 
 
 RESULT_SCHEMA = "flowpilot.unified_repair_native_owner_result.v1"
@@ -714,31 +714,153 @@ def _scenario_terminal_worker_chain() -> dict[str, Any]:
         pm_disposition_packet_id,
         "pm",
     )
+    pm_packet_body = json.loads(
+        ledger["packets"][pm_disposition_packet_id]["body"]
+    )
+    # A repaired top-level node still crosses the current milestone hard gate.
+    # Reuse the runtime-issued binding and context-only prior plan rather than
+    # fabricating a second route authority for this historical-repair scenario.
+    pm_disposition_payload = {
+        "decision": "accept",
+        "reason": "PM accepts the fresh Worker, FlowGuard, and Reviewer evidence.",
+        "acceptance_item_disposition": [
+            {
+                "acceptance_item_id": item_id,
+                "disposition": "accepted",
+                "basis": (
+                    "Fresh Worker, FlowGuard, Reviewer, and validation evidence."
+                ),
+            }
+            for item_id in acceptance_item_ids
+        ],
+        "milestone_audit": {
+            "completed": list(
+                pm_packet_body.get("completed_milestone_bindings") or []
+            ),
+            "contract_hash": str(
+                pm_packet_body.get("contract_hash")
+                or ledger.get("contract_hash")
+                or ""
+            ),
+            "deviations": [],
+            "remaining": [],
+            "prior_plan_assessment": (
+                "The context-only prior plan is empty and remains complete after "
+                "the fresh terminal repair evidence."
+            ),
+            "replan_rationale": (
+                "Re-audited Worker, FlowGuard, Reviewer, and validation evidence "
+                "closes the terminal gap; no remaining route is required."
+            ),
+        },
+        "remaining_route_plan": {
+            "schema_version": "flowpilot.route_plan.v1",
+            "nodes": [],
+        },
+    }
     pm_disposition_result_id = runtime.submit_result(
         ledger,
         pm_disposition_lease_id,
         pm_disposition_packet_id,
-        json.dumps(
-            {
-                "decision": "accept",
-                "reason": "PM accepts the fresh Worker, FlowGuard, and Reviewer evidence.",
-                "acceptance_item_disposition": [
-                    {
-                        "acceptance_item_id": item_id,
-                        "disposition": "accepted",
-                        "basis": (
-                            "Fresh Worker, FlowGuard, Reviewer, and validation evidence."
-                        ),
-                    }
-                    for item_id in acceptance_item_ids
-                ],
-            },
-            sort_keys=True,
-        ),
+        json.dumps(pm_disposition_payload, sort_keys=True),
     )
     _require(
         ledger["results"][pm_disposition_result_id]["status"] == "accepted",
         "terminal repair PM disposition was not accepted",
+    )
+    # The PM disposition above stages the current top-level milestone gate;
+    # complete its existing FlowGuard -> PM absorption -> Reviewer chain before
+    # checking terminal ledgers.  This keeps the native repair scenario on the
+    # same hard-gate path as ordinary top-level node acceptance.
+    milestone_flowguard_packet_id = next(
+        packet_id
+        for packet_id, packet in ledger["packets"].items()
+        if packet["status"] == "open"
+        and packet["envelope"].get("packet_kind") == "flowguard_check"
+        and packet["envelope"].get("subject_id") == pm_disposition_packet_id
+    )
+    milestone_flowguard_lease_id = _lease_ack_and_open(
+        ledger,
+        milestone_flowguard_packet_id,
+        "flowguard_operator",
+    )
+    _write_flowguard_evidence(ledger, milestone_flowguard_packet_id)
+    milestone_flowguard_result_id = runtime.submit_result(
+        ledger,
+        milestone_flowguard_lease_id,
+        milestone_flowguard_packet_id,
+        _flowguard_result(ledger, milestone_flowguard_packet_id, blocker_id),
+    )
+    _require(
+        ledger["results"][milestone_flowguard_result_id]["status"] == "accepted",
+        "terminal milestone FlowGuard recheck was not accepted",
+    )
+    absorption_packet_id = next(
+        packet_id
+        for packet_id, packet in ledger["packets"].items()
+        if packet["status"] == "open"
+        and packet["envelope"].get("packet_kind") == "pm_flowguard_acceptance"
+    )
+    absorption_lease_id = _lease_ack_and_open(
+        ledger,
+        absorption_packet_id,
+        "pm",
+    )
+    latest_milestone_gate = next(
+        gate
+        for gate in reversed(list(ledger.get("pm_decision_gates", {}).values()))
+        if gate.get("milestone_plan_renewal_required") is True
+    )
+    flowguard_order = ledger["flowguard_work_orders"][
+        str(latest_milestone_gate["flowguard_order_id"])
+    ]
+    absorption_payload = packet_result_contracts.minimal_valid_shape_for_family(
+        "pm_flowguard_acceptance.pm_flowguard_acceptance"
+    )
+    absorption_payload.update(
+        {
+            "decision": "accept",
+            "reason": "PM absorbed the current milestone FlowGuard report.",
+            "flowguard_absorption": (
+                "PM accepted the current milestone audit and complete remaining "
+                "route evidence."
+            ),
+            "accepted_flowguard_result_id": flowguard_order["proof_result_id"],
+        }
+    )
+    absorption_result_id = runtime.submit_result(
+        ledger,
+        absorption_lease_id,
+        absorption_packet_id,
+        json.dumps(absorption_payload, sort_keys=True),
+    )
+    absorption_result = ledger["results"][absorption_result_id]
+    _require(
+        absorption_result.get("semantic_decision") == "pass"
+        and absorption_result.get("status") in {"accepted", "mechanically_valid"},
+        "terminal milestone PM FlowGuard absorption did not pass its semantic gate",
+    )
+    milestone_review_packet_id = next(
+        packet_id
+        for packet_id, packet in ledger["packets"].items()
+        if packet["status"] == "open"
+        and packet["envelope"].get("packet_kind") == "review"
+        and packet["envelope"].get("route_node_id") == replacement_node_id
+    )
+    milestone_review_lease_id = _lease_ack_and_open(
+        ledger,
+        milestone_review_packet_id,
+        "reviewer",
+    )
+    milestone_review_result_id = runtime.submit_result(
+        ledger,
+        milestone_review_lease_id,
+        milestone_review_packet_id,
+        _review_result("Reviewer accepted the current milestone plan renewal."),
+    )
+    _require(
+        ledger["results"][milestone_review_result_id]["status"] == "accepted",
+        "terminal milestone Reviewer renewal was not accepted",
     )
     node = ledger["route_nodes"][replacement_node_id]
     _require(

@@ -45,6 +45,11 @@ class FlowPilotMilestonePlanRenewalContractTests(unittest.TestCase):
                 profile_id: {
                     "current_milestone_evidence_refs": ["result-current-accepted-node"],
                     "remaining_acceptance_item_ids": ["acc-next"],
+                    "remaining_owner_node_ids": ["future-parent", "future-helper"],
+                    "remaining_obligation_ids": {
+                        "acceptance_item_ids": ["acc-next"],
+                        "non_route_gap_ids": ["unresolved_resources"],
+                    },
                 }
             },
         )
@@ -55,6 +60,7 @@ class FlowPilotMilestonePlanRenewalContractTests(unittest.TestCase):
             "milestone_audit.completed[]",
             "milestone_audit.completed[].outcome",
             "milestone_audit.completed[].evidence_refs[]",
+            "milestone_audit.remaining[].obligation_ids[]",
             "milestone_audit.deviations",
             "milestone_audit.remaining",
             "milestone_audit.prior_plan_assessment",
@@ -66,6 +72,7 @@ class FlowPilotMilestonePlanRenewalContractTests(unittest.TestCase):
         for field_path in (
             "milestone_audit.completed",
             "milestone_audit.completed[].evidence_refs",
+            "milestone_audit.remaining[].obligation_ids",
             "milestone_audit.deviations",
             "milestone_audit.remaining",
             "remaining_route_plan.nodes",
@@ -84,6 +91,17 @@ class FlowPilotMilestonePlanRenewalContractTests(unittest.TestCase):
         self.assertEqual(
             shape["remaining_route_plan"]["nodes"][0]["acceptance_item_ids"],
             ["acc-next"],
+        )
+        self.assertEqual(
+            [node["node_id"] for node in shape["remaining_route_plan"]["nodes"]],
+            ["future-parent", "future-helper"],
+        )
+        self.assertEqual(
+            shape["milestone_audit"]["remaining"][0]["obligation_ids"],
+            [
+                "acceptance_item_ids:acc-next",
+                "non_route_gap_ids:unresolved_resources",
+            ],
         )
         self.assertTrue(
             shape["remaining_route_plan"]["nodes"][0]["acceptance_criteria"]
@@ -169,6 +187,8 @@ class FlowPilotMilestonePlanRenewalContractTests(unittest.TestCase):
             "first remaining node",
             "execution-ready",
             "nested child disposition",
+            "vague mega-parent",
+            "leaf-only list",
         ):
             self.assertIn(phrase, rule)
 

@@ -381,7 +381,10 @@ class FlowPilotAcceptanceTestMeshTests(unittest.TestCase):
             "result_status": "passed",
             "exit_code": 0,
             "artifact_fingerprints": {str(artifact): hashlib.sha256(artifact.read_bytes()).hexdigest()},
-            "covered_obligation_ids": list(acceptance_model.RELEASE_EVIDENCE_CELLS),
+            "covered_obligation_ids": [
+                "release_router_tiers",
+                *acceptance_model.RELEASE_EVIDENCE_CELLS,
+            ],
             "assertion_scope": "external_contract",
             "current": True,
             "route_evidence_current": True,

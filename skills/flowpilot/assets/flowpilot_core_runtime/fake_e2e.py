@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 from typing import Any, Callable
 
-from . import cockpit, router, run_shell, runtime
+from . import cockpit, packet_result_contracts, router, run_shell, runtime
 
 
 StartRun = Callable[..., dict[str, Any]]
@@ -440,6 +440,67 @@ def _body_for_packet(
         payload["flowguard_absorption"] = "fake PM absorbed the current FlowGuard report before Reviewer review"
         return json.dumps(payload, sort_keys=True)
     if kind == "pm_disposition":
+        if (
+            ledger is not None
+            and packet_result_contracts.MILESTONE_PLAN_RENEWAL_RESULT_CONTRACT_PROFILE_ID
+            in (envelope.get("result_contract_profile_ids") or [])
+        ):
+            try:
+                packet_body = json.loads(packet.get("body") or "{}")
+            except json.JSONDecodeError:
+                packet_body = {}
+            context = (
+                packet_body.get("prior_remaining_route_plan_context")
+                if isinstance(packet_body, dict)
+                else None
+            )
+            raw_remaining_route_plan = (
+                context.get("plan") if isinstance(context, dict) else {}
+            )
+            if not isinstance(raw_remaining_route_plan, dict):
+                raw_remaining_route_plan = {}
+            for raw_node in raw_remaining_route_plan.get("nodes") or []:
+                if isinstance(raw_node, dict):
+                    raw_node.setdefault("parent_node_id", "")
+                    raw_node.setdefault("child_node_ids", [])
+            remaining_route_plan = runtime._canonical_remaining_route_plan(
+                raw_remaining_route_plan
+            )
+            payload["remaining_route_plan"] = remaining_route_plan
+            payload.setdefault("milestone_audit", {})["contract_hash"] = ledger.get(
+                "contract_hash", ""
+            )
+            if remaining_route_plan["nodes"]:
+                remaining_obligation_ids = runtime._milestone_remaining_obligation_ids(
+                    ledger,
+                    node_id=str(
+                        (packet_body if isinstance(packet_body, dict) else {}).get(
+                            "route_node_id"
+                        )
+                        or ledger.get("execution_frontier", {}).get("active_node_id")
+                        or ""
+                    ),
+                    acceptance_item_disposition=payload.get(
+                        "acceptance_item_disposition", []
+                    ),
+                )
+                payload["milestone_audit"]["remaining"] = [
+                    {
+                        "obligation": "Complete every still-open part of the accepted final user goal.",
+                        "gap": "The freshly emitted remaining route has not executed yet.",
+                        "owner_node_ids": [
+                            str(node.get("node_id") or "")
+                            for node in remaining_route_plan["nodes"]
+                        ],
+                        "obligation_ids": [
+                            f"{field}:{item}"
+                            for field, values in sorted(remaining_obligation_ids.items())
+                            for item in values
+                        ],
+                    }
+                ]
+            else:
+                payload["milestone_audit"]["remaining"] = []
         payload["reason"] = "fake PM accepts current node after absorbing current evidence"
         return json.dumps(payload, sort_keys=True)
     if family_id == "task.node":

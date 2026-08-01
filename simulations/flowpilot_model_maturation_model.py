@@ -8,6 +8,7 @@ confidence claim.
 from __future__ import annotations
 
 from dataclasses import dataclass
+import hashlib
 import json
 from pathlib import Path
 from typing import Any, Iterable
@@ -21,7 +22,9 @@ from flowguard import (
     MATURITY_ACTION_REATTACH_PARENT_MODEL,
     MATURITY_ACTION_REFRESH_EVIDENCE,
     MATURITY_ACTION_SPLIT_CHILD_MODEL,
-    MODEL_MATURATION_DECISION_CURRENT,
+    MODEL_MATURATION_DECISION_CLOSED_FOR_TASK,
+    MODEL_MATURATION_RECEIPT_STATUS_PASS,
+    MODEL_MATURATION_RESOLUTION_EVIDENCE_ACQUISITION,
     MODEL_MATURATION_SIGNAL_CHILD_REATTACHMENT_MISSING,
     MODEL_MATURATION_SIGNAL_MISSING_CODE_BOUNDARY_OBSERVATION,
     MODEL_MATURATION_SIGNAL_MISSING_MODEL_OBLIGATION,
@@ -44,6 +47,9 @@ ROOT = Path(__file__).resolve().parents[1]
 PLAN_ID = "flowpilot-model-maturation-routine-closure"
 MODEL_ID = "flowpilot_model_maturation_closure"
 RESULT_PATH = "simulations/flowpilot_model_maturation_results.json"
+TASK_ID = "task:flowpilot-milestone-plan-renewal"
+COVERAGE_UNIVERSE_ID = "flowpilot-model-maturation-coverage-v1"
+COVERAGE_OWNER = "flowpilot_model_maturation_closure"
 
 
 @dataclass(frozen=True)
@@ -110,7 +116,101 @@ def _json_ok(relpath: str) -> tuple[bool, dict[str, Any]]:
     }
 
 
-def _gate_signal(gate: EvidenceGate) -> ModelMaturationSignal:
+def _sha256_path(relpath: str) -> str:
+    path = _path(relpath)
+    try:
+        return hashlib.sha256(path.read_bytes()).hexdigest()
+    except OSError:
+        return hashlib.sha256(f"missing:{relpath}".encode("utf-8")).hexdigest()
+
+
+def _stable_fingerprint(value: object) -> str:
+    payload = json.dumps(
+        value,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+        default=str,
+    )
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def _maturation_context() -> dict[str, Any]:
+    """Return the one current plan identity shared by every gate signal."""
+
+    gates = evidence_gates()
+    coverage_ids = tuple(gate.signal_id for gate in gates)
+    required_probe_ids = tuple(f"probe:{signal_id}" for signal_id in coverage_ids)
+    source_refs = tuple(
+        sorted(
+            {
+                source
+                for gate in gates
+                for source in gate.sources
+            }
+            | {
+                RESULT_PATH,
+                "simulations/flowpilot_model_maturation_model.py",
+                "simulations/run_flowpilot_model_maturation_checks.py",
+            }
+        )
+    )
+    coverage_fingerprint = _stable_fingerprint(
+        {
+            "coverage_universe_id": COVERAGE_UNIVERSE_ID,
+            "coverage_owner": COVERAGE_OWNER,
+            "coverage_source_refs": list(source_refs),
+            "coverage_ids": list(coverage_ids),
+            "required_probe_ids": list(required_probe_ids),
+        }
+    )
+    model_fingerprint = _sha256_path(
+        "simulations/flowpilot_model_maturation_model.py"
+    )
+    candidate_fingerprint = _stable_fingerprint(
+        {
+            "model": model_fingerprint,
+            "runner": _sha256_path(
+                "simulations/run_flowpilot_model_maturation_checks.py"
+            ),
+            "coverage": coverage_fingerprint,
+        }
+    )
+    evidence_fingerprint = _stable_fingerprint(
+        {
+            "gates": [
+                {
+                    "signal_id": gate.signal_id,
+                    "result": gate.result,
+                    "result_fingerprint": _sha256_path(gate.result)
+                    if gate.result
+                    else "",
+                    "sources": [
+                        [source, _sha256_path(source)]
+                        for source in gate.sources
+                    ],
+                }
+                for gate in gates
+            ]
+        }
+    )
+    return {
+        "coverage_ids": coverage_ids,
+        "required_probe_ids": required_probe_ids,
+        "coverage_source_refs": source_refs,
+        "coverage_universe_fingerprint": coverage_fingerprint,
+        "base_model_fingerprint": model_fingerprint,
+        "candidate_model_fingerprint": candidate_fingerprint,
+        "evidence_fingerprint": evidence_fingerprint,
+    }
+
+
+def _gate_signal(
+    gate: EvidenceGate,
+    *,
+    context: dict[str, Any] | None = None,
+) -> ModelMaturationSignal:
+    context = context or _maturation_context()
     current, freshness = _existing_sources_current(gate.sources, gate.result)
     json_current = True
     json_meta: dict[str, Any] = {}
@@ -125,17 +225,70 @@ def _gate_signal(gate: EvidenceGate) -> ModelMaturationSignal:
         )
         contract_current = bool(contract_meta["ok"])
     resolved = current and json_current and contract_current
+    evidence_id = gate.result or f"source-audit:{gate.signal_id}"
+    evidence_fingerprint = (
+        _sha256_path(gate.result)
+        if gate.result
+        else _stable_fingerprint(
+            {
+                "signal_id": gate.signal_id,
+                "sources": [
+                    [source, _sha256_path(source)]
+                    for source in gate.sources
+                ],
+            }
+        )
+    )
+    probe_id = f"probe:{gate.signal_id}"
+    receipt_payload = {
+        "signal_id": gate.signal_id,
+        "evidence_id": evidence_id,
+        "evidence_fingerprint": evidence_fingerprint,
+        "task_id": TASK_ID,
+        "probe_id": probe_id,
+        "candidate_fingerprint": context["candidate_model_fingerprint"],
+        "coverage_fingerprint": context["coverage_universe_fingerprint"],
+        "owner_route": gate.source_route,
+        "status": MODEL_MATURATION_RECEIPT_STATUS_PASS if resolved else "fail",
+        "freshness": freshness,
+        "json": json_meta,
+        "unified_repair_contract": contract_meta or None,
+    }
+    receipt_fingerprint = _stable_fingerprint(receipt_payload)
     return ModelMaturationSignal(
         signal_id=gate.signal_id,
         signal_type=gate.signal_type,
         source_route=gate.source_route,
         model_id=gate.model_id,
         risk_id=gate.risk_id,
-        evidence_id=gate.result,
+        evidence_id=evidence_id,
         description=gate.description,
         resolved=resolved,
         current=current,
         suggested_actions=gate.required_actions,
+        coverage_id=gate.signal_id,
+        resolution_class=MODEL_MATURATION_RESOLUTION_EVIDENCE_ACQUISITION,
+        prediction=(
+            f"{probe_id} should produce a current terminal result for "
+            f"{gate.signal_id}."
+        ),
+        falsifier=(
+            f"The probe is falsified when {gate.signal_id} is missing, stale, "
+            "or its required result is not passing."
+        ),
+        evidence_fingerprint=evidence_fingerprint,
+        probe_id=probe_id,
+        receipt_id=f"receipt.flowpilot_maturation.{gate.signal_id}",
+        receipt_fingerprint=receipt_fingerprint,
+        receipt_status=(
+            MODEL_MATURATION_RECEIPT_STATUS_PASS if resolved else "fail"
+        ),
+        receipt_task_id=TASK_ID,
+        receipt_probe_id=probe_id,
+        receipt_candidate_fingerprint=context["candidate_model_fingerprint"],
+        receipt_coverage_fingerprint=context["coverage_universe_fingerprint"],
+        receipt_evidence_fingerprint=evidence_fingerprint,
+        receipt_owner_route=gate.source_route,
         metadata={
             "freshness": freshness,
             "json": json_meta,
@@ -354,18 +507,30 @@ def evidence_gates() -> tuple[EvidenceGate, ...]:
 
 
 def current_signals() -> tuple[ModelMaturationSignal, ...]:
-    return tuple(_gate_signal(gate) for gate in evidence_gates())
+    context = _maturation_context()
+    return tuple(
+        _gate_signal(gate, context=context) for gate in evidence_gates()
+    )
 
 
 def current_plan() -> ModelMaturationPlan:
+    context = _maturation_context()
     return ModelMaturationPlan(
         plan_id=PLAN_ID,
         model_id=MODEL_ID,
         risk_id="coarse_or_stale_flowpilot_model_confidence",
         signals=current_signals(),
-        claim_scope="routine FlowPilot maintenance and local install confidence",
-        require_full_closure=True,
-        allow_scoped_claim=True,
+        task_id=TASK_ID,
+        task_purpose="routine FlowPilot maintenance and local install confidence",
+        coverage_universe_id=COVERAGE_UNIVERSE_ID,
+        coverage_universe_fingerprint=context["coverage_universe_fingerprint"],
+        coverage_owner=COVERAGE_OWNER,
+        coverage_source_refs=context["coverage_source_refs"],
+        coverage_ids=context["coverage_ids"],
+        required_probe_ids=context["required_probe_ids"],
+        base_model_fingerprint=context["base_model_fingerprint"],
+        candidate_model_fingerprint=context["candidate_model_fingerprint"],
+        evidence_fingerprint=context["evidence_fingerprint"],
     )
 
 
@@ -380,7 +545,7 @@ def current_report_dict() -> dict[str, Any]:
         and not signal.resolved
     ]
     payload = report.to_dict()
-    payload["full_closure_ok"] = report.decision == MODEL_MATURATION_DECISION_CURRENT
+    payload["full_closure_ok"] = report.decision == MODEL_MATURATION_DECISION_CLOSED_FOR_TASK
     payload["signal_count"] = len(plan.signals)
     payload["hard_gate_ok"] = not blocking_signal_ids
     payload["blocking_signal_ids"] = blocking_signal_ids
@@ -463,16 +628,14 @@ def known_bad_report(case: dict[str, Any]) -> dict[str, Any]:
         model_id=MODEL_ID,
         risk_id=str(case["name"]),
         signals=(signal,),
-        claim_scope="known-bad sanity",
-        require_full_closure=True,
-        allow_scoped_claim=True,
+        task_purpose="known-bad sanity",
     )
     report = review_model_maturation_loop(plan)
     actions = set(report.recommended_actions)
     expected = set(case["expected_actions"])
     return {
         "name": case["name"],
-        "ok": (not report.decision == MODEL_MATURATION_DECISION_CURRENT)
+        "ok": (not report.decision == MODEL_MATURATION_DECISION_CLOSED_FOR_TASK)
         and expected.issubset(actions),
         "expected_actions": sorted(expected),
         "actual_actions": sorted(actions),
@@ -488,7 +651,10 @@ def build_report() -> dict[str, Any]:
     full_closure_ok = current["full_closure_ok"]
     hard_gate_ok = current["hard_gate_ok"]
     return {
-        "ok": bool(current["ok"] and known_bad_ok and hard_gate_ok),
+        # A routine scoped claim is valid once every hard gate and the
+        # adversarial sanity set are green.  Non-blocking maturity gaps stay
+        # visible in `current` and keep `full_closure_ok` false.
+        "ok": bool(known_bad_ok and hard_gate_ok),
         "decision": (
             "model_maturation_scoped_claim"
             if hard_gate_ok

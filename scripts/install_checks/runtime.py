@@ -565,6 +565,90 @@ def run_checks(result: dict[str, object]) -> None:
             )
             if not user_perspective_ok:
                 result["ok"] = False
+            milestone_plan_renewal_card_markers = {
+                "skills/flowpilot/SKILL.md": [
+                    "Every accepted top-level route node",
+                    "re-emit the complete",
+                    "bare `continue` or `unchanged` marker is invalid",
+                    "Nested child-node",
+                ],
+                "skills/flowpilot/assets/runtime_kit/cards/roles/project_manager.md": [
+                    "Every accepted top-level route node is a hard milestone boundary",
+                    "complete remaining canonical route",
+                    "A changed renewal replaces only",
+                    "empty remaining plan is valid only",
+                ],
+                "skills/flowpilot/assets/runtime_kit/cards/phases/pm_route_skeleton.md": [
+                    "single mandatory loop explicitly",
+                    "re-emit the complete",
+                    "Nested child nodes keep their local",
+                ],
+                "skills/flowpilot/assets/runtime_kit/cards/phases/pm_current_node_loop.md": [
+                    "awaiting_milestone_plan_renewal",
+                    "do not expose or dispatch",
+                    "unchanged remainder is valid only as a fresh",
+                ],
+                "skills/flowpilot/assets/runtime_kit/cards/phases/pm_parent_backward_targets.md": [
+                    "proves local child-to-parent composition only",
+                    "do not authorize automatic continuation",
+                ],
+                "skills/flowpilot/assets/runtime_kit/cards/phases/pm_parent_segment_decision.md": [
+                    "it never means continue the old",
+                    "entering `awaiting_milestone_plan_renewal`",
+                ],
+                "skills/flowpilot/assets/runtime_kit/cards/reviewer/parent_backward_replay.md": [
+                    "distinct from the later milestone renewal review",
+                    "does not authorize",
+                ],
+                "skills/flowpilot/assets/runtime_kit/cards/reviewer/pm_flowguard_acceptance_review.md": [
+                    "commit_milestone_plan_renewal",
+                    "A renewed plan may be identical",
+                    "changed plan preserves the accepted prefix",
+                    "An empty remainder may pass",
+                ],
+                "skills/flowpilot/assets/runtime_kit/cards/reviewer/route_challenge.md": [
+                    "single mandatory milestone",
+                    "initial remainder as automatic continuation",
+                    "Nested child closure remains",
+                ],
+                "skills/flowpilot/assets/runtime_kit/cards/flowguard_operator/route_process_check.md": [
+                    "top-level acceptance -> fresh PM audit",
+                    "identical full plan may renew",
+                    "changed renewal must retain the accepted prefix",
+                    "Resume must return to the same incomplete milestone",
+                ],
+                "skills/flowpilot/assets/runtime_kit/cards/roles/human_like_reviewer.md": [
+                    "`reviewer.pm_flowguard_acceptance_review` stage card",
+                    "distinct from ordinary role workstream plan audit",
+                ],
+                "skills/flowpilot/assets/runtime_kit/cards/roles/flowguard_operator.md": [
+                    "top-level milestone renewal work order",
+                    "dedicated hard-gate",
+                ],
+            }
+            milestone_plan_renewal_failures = []
+            for relative_path, markers in milestone_plan_renewal_card_markers.items():
+                card_path = ROOT / relative_path
+                text = card_path.read_text(encoding="utf-8") if card_path.exists() else ""
+                missing = [marker for marker in markers if marker not in text]
+                if missing or not card_path.exists():
+                    milestone_plan_renewal_failures.append(
+                        {
+                            "path": relative_path,
+                            "missing_file": not card_path.exists(),
+                            "missing_markers": missing,
+                        }
+                    )
+            milestone_plan_renewal_ok = not milestone_plan_renewal_failures
+            result["checks"].append(
+                {
+                    "name": "flowpilot_top_level_milestone_plan_renewal_card_projection_valid",
+                    "ok": milestone_plan_renewal_ok,
+                    "failures": milestone_plan_renewal_failures,
+                }
+            )
+            if not milestone_plan_renewal_ok:
+                result["ok"] = False
         except Exception as exc:  # pragma: no cover - diagnostic script
             result["ok"] = False
             result["checks"].append(

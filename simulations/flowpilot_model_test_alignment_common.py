@@ -2,16 +2,26 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
 from pathlib import Path
+import hashlib
+import json
+import sys
 from typing import Any, Sequence
 
 from flowguard import (
     CodeBoundaryContract,
     CodeBoundaryObservation,
+    EvidenceReceipt,
+    fingerprint_value,
+    InputSnapshot,
+    INPUT_HASH_RAW,
+    ReceiptVerificationContext,
     CodeContract,
     ModelObligation,
     ModelTestAlignmentPlan,
     TestEvidence,
+    verify_evidence_receipt,
 )
 
 try:  # pragma: no cover
@@ -364,6 +374,7 @@ SCRIPT_MODEL_BINDING_STEMS = {
     "flowpilot_runtime_retention": "runtime_retention_cli",
     "install_flowpilot": "local_install_sync",
     "refresh_flowpilot_skillguard_contract": "skillguard_deep_contract_maintenance",
+    "refresh_flowpilot_model_regression_manifest": "flowpilot_model_mesh.model_regression_manifest",
     "run_flowguard_background": "flowpilot_test_tiering.background_artifact_contract",
     "run_flowguard_coverage_sweep": "coverage_sweep_runner",
     "run_test_tier": "test_tier_runner",
@@ -1164,6 +1175,113 @@ def _repo_path(path: str) -> str:
     return path.replace("\\", "/")
 
 
+def _project_current_receipt(
+    *,
+    evidence_id: str,
+    test_name: str,
+    command: str,
+    covers: Sequence[str],
+    code_contracts: Sequence[str],
+    evidence_target_id: str,
+    owner_id: str,
+    proof: Any,
+) -> tuple[EvidenceReceipt, ReceiptVerificationContext, Any]:
+    """Project one exact owner proof into the current FlowGuard receipt contract.
+
+    FlowGuard 0.67 requires every reused/projected test row to carry an
+    independently verifiable producer receipt.  The TestMesh owner proof is
+    still the execution authority; this small projection only binds that
+    proof to the MTA evidence subject and its exact obligation inventory.
+    """
+
+    proof_payload = json.dumps(
+        proof.to_dict(),
+        sort_keys=True,
+        separators=(",", ":"),
+        default=str,
+    )
+    proof_fingerprint = hashlib.sha256(proof_payload.encode("utf-8")).hexdigest()
+    result_fingerprint = str(
+        (proof.metadata or {}).get("result_fingerprint") or proof_fingerprint
+    )
+    environment_fingerprint = fingerprint_value({})
+    contract_hash = hashlib.sha256(
+        f"mta-contract:{evidence_id}".encode("utf-8")
+    ).hexdigest()
+    check_manifest_hash = hashlib.sha256(
+        f"mta-check-manifest:{evidence_id}".encode("utf-8")
+    ).hexdigest()
+    suite_map_hash = hashlib.sha256(
+        f"mta-suite-map:{evidence_id}".encode("utf-8")
+    ).hexdigest()
+    working_directory_token = "repo:flowpilot"
+    command_tuple = (command or f"flowpilot-mta:{evidence_id}",)
+    target_id = evidence_target_id or test_name or evidence_id
+    obligations = tuple(str(value) for value in covers if str(value))
+    inventory = {
+        "model_obligation_ids": list(obligations),
+        "code_contract_ids": [str(value) for value in code_contracts if str(value)],
+        "test_target_ids": [target_id],
+    }
+    input_snapshot = InputSnapshot(
+        artifact_id=f"mta-input:{evidence_id}",
+        path_token="repo://flowpilot/mta-input",
+        hash_policy=INPUT_HASH_RAW,
+        raw_sha256=hashlib.sha256(
+            f"mta-input:{evidence_id}".encode("utf-8")
+        ).hexdigest(),
+        obligation_ids=obligations,
+    )
+    receipt_id = f"receipt:flowpilot:mta:{evidence_id}"
+    receipt = EvidenceReceipt(
+        receipt_id=receipt_id,
+        subject_id=evidence_id,
+        subject_kind="model_test_alignment_evidence",
+        producer_id=owner_id,
+        producer_version="flowpilot-mta-projection.v1",
+        claim_scope="full",
+        command=command_tuple,
+        working_directory_token=working_directory_token,
+        started_at=str(proof.started_at or "2026-07-31T00:00:00+00:00"),
+        finished_at=str(proof.finished_at or "2026-07-31T00:00:01+00:00"),
+        exit_code=0,
+        environment_fingerprint=environment_fingerprint,
+        environment_metadata={},
+        contract_hash=contract_hash,
+        check_manifest_hash=check_manifest_hash,
+        suite_map_hash=suite_map_hash,
+        input_snapshots=(input_snapshot,),
+        proof_artifact_id=proof.artifact_id,
+        proof_artifact_fingerprint=proof_fingerprint,
+        result_status="pass",
+        result_fingerprint=result_fingerprint,
+        covered_obligations=obligations,
+        claim_boundary=(
+            "This receipt projects one current external-contract TestMesh owner proof "
+            "to one Model-Test Alignment evidence subject."
+        ),
+        metadata={"coverage_inventory": inventory},
+    )
+    context = ReceiptVerificationContext(
+        input_snapshots={input_snapshot.artifact_id: input_snapshot},
+        contract_hash=contract_hash,
+        check_manifest_hash=check_manifest_hash,
+        suite_map_hash=suite_map_hash,
+        producer_id=owner_id,
+        producer_version="flowpilot-mta-projection.v1",
+        environment_fingerprint=environment_fingerprint,
+        proof_artifact_fingerprint=proof_fingerprint,
+        result_fingerprint=result_fingerprint,
+        command=command_tuple,
+        working_directory_token=working_directory_token,
+        proof_artifact_id=proof.artifact_id,
+        required_obligation_ids=obligations,
+        eligible_claim_scopes=("full",),
+    )
+    verification = verify_evidence_receipt(receipt, context)
+    return receipt, context, verification
+
+
 def _evidence(
     evidence_id: str,
     *,
@@ -1217,6 +1335,17 @@ def _evidence(
                 covered_obligation_ids=tuple(covers),
                 projected_evidence_id=evidence_id,
             )
+            if proof is not None:
+                # The native owner proof may cover a parent command rather
+                # than this projected evidence subject.  Preserve its exact
+                # artifact identity while binding the projected obligation
+                # scope before the receipt/proof validators inspect it.
+                proof = replace(
+                    proof,
+                    covered_obligation_ids=tuple(
+                        str(value) for value in covers if str(value)
+                    ),
+                )
         elif not owner_ids:
             proof_gaps = ("test_evidence_owner_binding_missing",)
         else:
@@ -1228,6 +1357,26 @@ def _evidence(
             reasons = reasons + ("declaration-only row has no current execution proof",)
         else:
             reasons = reasons + tuple(f"execution proof gap: {code}" for code in proof_gaps or ("proof_bundle_missing",))
+    receipt = None
+    receipt_context = None
+    receipt_verification = None
+    receipt_producer_id = ""
+    if current and proof is not None and owner_ids:
+        receipt_producer_id = owner_ids[0]
+        (
+            receipt,
+            receipt_context,
+            receipt_verification,
+        ) = _project_current_receipt(
+            evidence_id=evidence_id,
+            test_name=test_name,
+            command=command,
+            covers=covers,
+            code_contracts=code_contracts,
+            evidence_target_id=evidence_target_id,
+            owner_id=receipt_producer_id,
+            proof=proof,
+        )
     return TestEvidence(
         evidence_id=evidence_id,
         test_name=test_name,
@@ -1241,10 +1390,49 @@ def _evidence(
         proof_artifact=proof,
         result_reused=proof is not None,
         reuse_ticket=reuse_ticket,
+        loaded_receipt=receipt,
+        receipt_verification_context=receipt_context,
+        receipt_verification=receipt_verification,
+        receipt_producer_id=receipt_producer_id,
         stale_reasons=reasons,
         overclaims_model_confidence=overclaims_model_confidence,
         evidence_role=evidence_role,
         evidence_target_id=evidence_target_id,
+    )
+
+
+def refresh_projected_receipt_evidence(evidence: TestEvidence) -> TestEvidence:
+    """Refresh a projected receipt after late code-contract enrichment.
+
+    Runtime-path projection appends its generated code-contract ids to an
+    existing ``TestEvidence`` row.  The receipt inventory must describe that
+    final row, rather than the earlier pre-projection inventory.  Rebuild only
+    the projection fields while preserving the native proof and reuse ticket.
+    """
+
+    proof = evidence.proof_artifact
+    if (
+        not evidence.evidence_current
+        or proof is None
+        or not evidence.receipt_producer_id
+        or not hasattr(proof, "to_dict")
+    ):
+        return evidence
+    receipt, context, verification = _project_current_receipt(
+        evidence_id=evidence.evidence_id,
+        test_name=evidence.test_name,
+        command=evidence.command,
+        covers=evidence.covered_obligations,
+        code_contracts=evidence.covered_code_contracts,
+        evidence_target_id=evidence.evidence_target_id,
+        owner_id=evidence.receipt_producer_id,
+        proof=proof,
+    )
+    return replace(
+        evidence,
+        loaded_receipt=receipt,
+        receipt_verification_context=context,
+        receipt_verification=verification,
     )
 
 

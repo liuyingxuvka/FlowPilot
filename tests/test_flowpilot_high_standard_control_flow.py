@@ -305,10 +305,21 @@ def _pm_disposition_body_from_checklist(
         payload["remaining_route_plan"] = remaining_route_plan
         payload["milestone_audit"]["contract_hash"] = ledger.get("contract_hash", "")
         if remaining_route_plan["nodes"]:
+            remaining_obligation_ids = runtime._milestone_remaining_obligation_ids(
+                ledger,
+                node_id=str(ledger["execution_frontier"].get("active_node_id") or ""),
+                acceptance_item_disposition=payload.get("acceptance_item_disposition", []),
+            )
+            obligation_keys = [
+                f"{field}:{item}"
+                for field, values in sorted(remaining_obligation_ids.items())
+                for item in values
+            ]
             payload["milestone_audit"]["remaining"] = [
                 {
                     "obligation": "Complete every still-open part of the accepted final user goal.",
                     "gap": "The freshly emitted remaining route has not executed yet.",
+                    "obligation_ids": obligation_keys,
                     "owner_node_ids": [str(node.get("node_id") or "") for node in remaining_route_plan["nodes"]],
                 }
             ]

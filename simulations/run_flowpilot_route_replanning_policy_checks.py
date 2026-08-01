@@ -43,6 +43,10 @@ HAZARD_EXPECTED_FAILURES = {
     model.MILESTONE_AUDIT_MISSING: "top-level milestone renewal lacks a complete current audit",
     model.MILESTONE_REMAINING_PLAN_INCOMPLETE: "top-level milestone renewal lacks a complete route to the final goal",
     model.MILESTONE_REMAINING_OBLIGATION_UNOWNED: "top-level milestone renewal leaves a remaining hard obligation without an owner",
+    model.MILESTONE_AUDIT_CONTRACT_HASH_MISSING: "top-level milestone renewal is not bound to the frozen final-goal contract",
+    model.MILESTONE_COMPLETED_PREFIX_UNBOUND: "top-level milestone renewal does not bind the cumulative completed prefix",
+    model.MILESTONE_REMAINING_OWNER_NODE_UNBOUND: "top-level milestone renewal leaves a remaining gap without a submitted owner node",
+    model.MILESTONE_CHECKER_IDENTITY_REUSED: "top-level milestone renewal reuses a checker identity for required evidence",
     model.MILESTONE_FLOWGUARD_BYPASSED: "top-level milestone renewal bypassed current FlowGuard review",
     model.MILESTONE_PM_ABSORPTION_BYPASSED: "top-level milestone renewal bypassed PM absorption of FlowGuard",
     model.MILESTONE_REVIEWER_BYPASSED: "top-level milestone renewal bypassed independent Reviewer approval",
@@ -75,6 +79,8 @@ def _state_id(state: model.State) -> str:
         f"|top_level={state.top_level_milestone}|audit={state.milestone_audit_complete}"
         f"|remaining_plan={state.remaining_plan_complete}|fresh_plan={state.fresh_remaining_plan_written}"
         f"|remaining_owned={state.remaining_obligations_owned}"
+        f"|contract_current={state.milestone_contract_current}|prefix_bound={state.completed_prefix_bound}"
+        f"|owner_nodes_bound={state.remaining_owner_nodes_bound}|checker_independent={state.checker_identities_independent}"
         f"|plan_changed={state.remaining_plan_changed}|milestone_fg={state.milestone_flowguard_checked}"
         f"|milestone_pm_absorb={state.milestone_pm_absorbed_flowguard}"
         f"|milestone_review={state.milestone_reviewer_approved}"

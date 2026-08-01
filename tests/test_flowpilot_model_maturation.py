@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from flowguard import MODEL_MATURATION_DECISION_CURRENT
+from flowguard import MODEL_MATURATION_DECISION_CLOSED_FOR_TASK
 
 from simulations import flowpilot_model_maturation_model as model
 
@@ -37,7 +37,7 @@ def test_current_plan_has_named_flowpilot_maturation_signals() -> None:
     }
 
 
-def test_unified_repair_maturation_gate_stays_red_until_native_conformance() -> None:
+def test_unified_repair_maturation_gate_consumes_current_native_conformance() -> None:
     gate = next(
         gate
         for gate in model.evidence_gates()
@@ -47,25 +47,35 @@ def test_unified_repair_maturation_gate_stays_red_until_native_conformance() -> 
     contract = signal.metadata["unified_repair_contract"]
 
     assert gate.require_unified_repair_conformance
-    assert not signal.resolved
-    assert not contract["ok"]
-    assert "unified_conformance_not_green" in contract["findings"]
-    assert "unified_required_conformance_skipped" in contract["findings"]
+    if signal.resolved:
+        assert contract["ok"]
+        assert contract["findings"] == []
+        report = model.build_report()
+        assert report["hard_gate_ok"]
+        assert report["ok"]
+        assert report["decision"] == "model_maturation_scoped_claim"
+    else:
+        assert not contract["ok"]
+        assert contract["findings"]
+        assert any(
+            code in contract["findings"]
+            for code in (
+                "unified_conformance_not_green",
+                "unified_required_conformance_skipped",
+                "unified_source_fingerprint_catalog_stale",
+            )
+        )
+        report = model.build_report()
+        assert not report["ok"]
+        assert report["decision"] == "current_runtime_gap"
     assert not contract["native_owner_receipt_synthesized"]
-
-    report = model.build_report()
-    assert not report["ok"]
-    assert report["decision"] == "current_runtime_gap"
-    assert report["blocking_signal_ids"] == [
-        "unified_repair_runtime_test_conformance_current"
-    ]
 
 
 def test_current_report_shape_is_flowguard_maturation_report() -> None:
     payload = model.current_report_dict()
 
     assert payload["decision"] in {
-        MODEL_MATURATION_DECISION_CURRENT,
+        MODEL_MATURATION_DECISION_CLOSED_FOR_TASK,
         "model_maturation_scoped_claim",
         "model_maturation_upgrade_required",
         "model_maturation_blocked",

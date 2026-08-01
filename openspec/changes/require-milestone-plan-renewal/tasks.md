@@ -1,7 +1,7 @@
 ## 1. Current Authority and Model Boundary
 
 - [x] 1.1 Record the exact current runtime, route-plan, PM-disposition, review-window, and frontier owners for this change.
-- [ ] 1.2 Repair the repository's FlowGuard current-format model authority without adding a compatibility reader or fallback. **Blocked at final audit:** the installed FlowGuard 0.66.0 authority checker requires the current `.flowguard/model-regression-manifest.json` plus `.flowguard/**/model.py` owner layout, while this repository still uses its existing topology/custom snapshot layout; no fallback or compatibility reader was introduced.
+- [x] 1.2 Repair the repository's FlowGuard current-format model authority without adding a compatibility reader or fallback. The repository now has the current `.flowguard/model-regression-manifest.json`, explicit `.flowguard/**/model.py` owners, and one accepted current `ModelRevisionSet` activation.
 - [x] 1.3 Update the existing route-replanning owner model with the top-level milestone hard gate and complete remaining-plan renewal.
 - [x] 1.4 Add executable good and bad profiles for missing renewal, unchanged renewal, changed suffix, Reviewer block, recovery, and terminal empty plan.
 - [x] 1.5 Run the focused FlowGuard model checks and inspect every counterexample before runtime implementation.
@@ -65,3 +65,30 @@
 - [x] 7.7 Run OpenSpec strict validation and record final source, model, SkillGuard, and installation identities without release or publication claims.
 - [x] 7.8 Perform the predictive-KB postflight check and record one structured observation only if this work exposed a reusable lesson or route gap (event `7275fb7d-a98f-41e1-bda7-40dc2710e23a`, terminal receipt verified).
 - [x] 7.9 Collect the background model regressions under one frozen source snapshot and preserve their immutable logs without overwriting parallel results.
+
+## 8. Post-implementation Correctness Closure
+
+- [x] 8.1 Update the milestone contract minimal shape from the same runtime owner projection so concrete multi-node owner bindings cannot produce a self-rejecting example.
+- [x] 8.2 Make changed-suffix activation reuse the existing route-mutation blocker retirement, quarantine, and evidence-invalidation lifecycle; add an active-blocker replacement regression.
+- [x] 8.3 Bind renewal coverage to every exact current obligation projection, including non-route hygiene, open resources, residual risks, and legacy evidence; permit nested helper nodes without fabricated gaps.
+- [x] 8.4 Bind `milestone_audit.remaining` rows to current obligation ids or an equivalent existing projection and keep owner ids within the submitted route.
+- [x] 8.5 Give PM bounded authorized reads for required milestone evidence and reject submission without the corresponding current read receipts.
+- [x] 8.6 Replace currentness recovery text matching with a typed currentness-drift disposition and keep invariant failures explicit.
+- [x] 8.7 Add Reviewer-owned top-level milestone granularity checks without introducing levels, scores, flags, or a second route authority.
+
+## 9. Current Model and Evidence Closure
+
+- [x] 9.1 Add the four renewal hazards already present in the model to the runner state identity and expected-failure map; regenerate the result for all current negative scenarios.
+- [x] 9.2 Bind the changed-suffix implementation and gate-to-commit path to production conformance and affected tests instead of the historical repair slice only.
+- [x] 9.3 Update the current FlowGuard model-regression manifest and activate one accepted current ModelRevisionSet without a compatibility reader or fallback.
+- [x] 9.4 Regenerate current TestMesh/MTA, formal AI, PPA, BCL, and Risk evidence from one frozen source/toolchain snapshot; closure-only MTA consumers must run after their current producers.
+- [x] 9.5 Expand the FlowPilot SkillGuard declared checks to own the new renewal model, production conformance, affected tests, and current evidence closure; run the final supervised validation.
+
+## 10. Lightweight Execution and Enablement
+
+- [x] 10.1 Keep runtime-owned machine bindings out of PM semantic prose and reduce repeated audit transport through the existing accepted-prefix projection.
+- [x] 10.2 Consolidate route mutation lifecycle primitives and repeated milestone prompt/card instructions without removing the hard gate.
+- [x] 10.3 Run one current-version longitudinal rehearsal covering unchanged renewal, changed suffix, nested child, Reviewer block, interruption/resume, and terminal empty plan; this is not an A/B experiment.
+- [x] 10.4 Measure milestone role turns, retries, audit payload growth, and gate latency; record the accepted lightweight budget in `docs/flowpilot_milestone_renewal_budget.md`.
+- [x] 10.5 Refresh the validated consumer installation, confirm the milestone renewal path is enabled as the sole current behavior, and verify source/install parity.
+- [ ] 10.6 Preserve peer work, commit only owned integrated files locally, rerun OpenSpec/FlowGuard/SkillGuard closure, and report remote/tag/publication status separately.

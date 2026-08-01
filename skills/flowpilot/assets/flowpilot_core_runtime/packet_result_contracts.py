@@ -427,6 +427,7 @@ PACKET_RESULT_CONTRACTS: tuple[dict[str, Any], ...] = (
             "final_artifact_hygiene_review",
             "independent_challenge",
             "recommended_resolution",
+            "contract_self_check",
         ),
         "fake_ai_success_fields": TERMINAL_BACKWARD_REPLAY_REQUIRED_FIELDS,
         "unlocks": "terminal_backward_replay_closure_confirmation",
@@ -710,9 +711,20 @@ def _profile_minimal_shape(profile_id: str, binding: Mapping[str, Any]) -> dict[
             if isinstance(raw_remaining_acceptance_item_ids, list)
             else None
         )
+        raw_remaining_obligation_ids = binding.get("remaining_obligation_ids")
+        remaining_obligation_ids = (
+            {
+                str(field): [str(item) for item in values if str(item)]
+                for field, values in raw_remaining_obligation_ids.items()
+                if str(field) and isinstance(values, list)
+            }
+            if isinstance(raw_remaining_obligation_ids, Mapping)
+            else None
+        )
         return milestone_plan_renewal_minimal_shape(
             current_milestone_evidence_refs=evidence_refs or None,
             remaining_acceptance_item_ids=remaining_acceptance_item_ids,
+            remaining_obligation_ids=remaining_obligation_ids,
             completed_milestone_bindings=(
                 binding.get("completed_milestone_bindings")
                 if isinstance(binding.get("completed_milestone_bindings"), list)
@@ -985,6 +997,7 @@ def milestone_plan_renewal_minimal_shape(
     *,
     current_milestone_evidence_refs: list[str] | tuple[str, ...] | None = None,
     remaining_acceptance_item_ids: list[str] | tuple[str, ...] | None = None,
+    remaining_obligation_ids: Mapping[str, list[str] | tuple[str, ...]] | None = None,
     completed_milestone_bindings: list[Mapping[str, Any]] | tuple[Mapping[str, Any], ...] | None = None,
     contract_hash: str | None = None,
     remaining_owner_node_ids: list[str] | tuple[str, ...] | None = None,
@@ -1039,6 +1052,20 @@ def milestone_plan_renewal_minimal_shape(
         )
         if str(item)
     ]
+    if not terminal_remaining_plan and not owner_node_ids:
+        owner_node_ids = ["next-top-level-milestone"]
+    obligation_projection = {
+        str(field): [str(item) for item in values if str(item)]
+        for field, values in (remaining_obligation_ids or {}).items()
+        if str(field) and isinstance(values, (list, tuple))
+    }
+    if not obligation_projection and remaining_item_ids and not terminal_remaining_plan:
+        obligation_projection = {"acceptance_item_ids": list(remaining_item_ids)}
+    obligation_keys = [
+        f"{field}:{item}"
+        for field, values in sorted(obligation_projection.items())
+        for item in values
+    ]
     remaining_gaps = (
         []
         if terminal_remaining_plan
@@ -1046,6 +1073,7 @@ def milestone_plan_renewal_minimal_shape(
             {
                 "obligation": "Complete the remaining accepted user goal.",
                 "gap": "The next accepted goal outcome is not closed yet.",
+                "obligation_ids": obligation_keys,
                 "owner_node_ids": owner_node_ids,
             }
         ]
@@ -1055,8 +1083,12 @@ def milestone_plan_renewal_minimal_shape(
         if terminal_remaining_plan
         else [
             {
-                "node_id": "next-top-level-milestone",
-                "title": "Complete the next remaining milestone",
+                "node_id": node_id,
+                "title": (
+                    "Complete the next remaining milestone"
+                    if index == 0
+                    else f"Complete remaining milestone {node_id}"
+                ),
                 "node_kind": "leaf",
                 "parent_node_id": "",
                 "child_node_ids": [],
@@ -1068,12 +1100,28 @@ def milestone_plan_renewal_minimal_shape(
                 "required_outputs": [],
                 "deliverable_checks": [],
                 "validation_checks": ["Verify the current next-milestone deliverable directly."],
-                "high_standard_requirement_ids": [],
-                "acceptance_item_ids": remaining_item_ids,
-                "skill_standard_obligation_ids": [],
-                "supplemental_repair_contract_ids": [],
-                "supplemental_repair_item_ids": [],
+                "high_standard_requirement_ids": (
+                    list(obligation_projection.get("high_standard_requirement_ids", []))
+                    if index == 0 else []
+                ),
+                "acceptance_item_ids": (
+                    list(obligation_projection.get("acceptance_item_ids", remaining_item_ids))
+                    if index == 0 else []
+                ),
+                "skill_standard_obligation_ids": (
+                    list(obligation_projection.get("skill_standard_obligation_ids", []))
+                    if index == 0 else []
+                ),
+                "supplemental_repair_contract_ids": (
+                    list(obligation_projection.get("supplemental_repair_contract_ids", []))
+                    if index == 0 else []
+                ),
+                "supplemental_repair_item_ids": (
+                    list(obligation_projection.get("supplemental_repair_item_ids", []))
+                    if index == 0 else []
+                ),
             }
+            for index, node_id in enumerate(owner_node_ids)
         ]
     )
     return {
@@ -1639,6 +1687,11 @@ def minimal_valid_shape_for_family(family_id: str) -> dict[str, Any]:
     """
 
     shape = _minimal_valid_shape_for_family_base(family_id)
+    # Terminal backward replay deliberately has a closed five-field contract;
+    # the shared workstream self-check belongs to ordinary role submissions
+    # and must not leak into this terminal replay payload.
+    if family_id == "review.terminal_backward_replay":
+        return shape
     self_check = shape.get("contract_self_check")
     if not isinstance(self_check, dict):
         self_check = {}

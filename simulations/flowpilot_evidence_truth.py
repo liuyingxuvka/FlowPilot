@@ -100,20 +100,33 @@ def _coerce_proof(value: Any) -> ProofArtifactRef | None:
 def testmesh_receipt_obligation_ids(plan: Any, suite: Any) -> tuple[str, ...]:
     """Return the exact final-receipt coverage set used by FlowGuard TestMesh."""
 
-    direct = (
-        tuple(suite.owned_inventory_item_ids)
-        or tuple(suite.owned_leaf_cell_ids)
-        or tuple(suite.owned_coverage_shard_ids)
-    )
-    if direct:
-        return tuple(dict.fromkeys(str(value) for value in direct if str(value)))
-    return tuple(
-        dict.fromkeys(
-            str(item.item_id)
-            for item in plan.partition_items
-            if item.owner_suite_id == suite.suite_id and str(item.item_id)
+    # TestMesh final receipts cover the complete receipt inventory, not only
+    # the leaf payload cells.  In particular, the partition item that names a
+    # suite's owned boundary remains part of the required receipt even when
+    # that suite also declares leaf/transition/payload cells.  Keep this
+    # projection in lock-step with ``TestSuiteEvidence.owned_receipt_inventory``
+    # so compiler-produced evidence and the native reviewer use one set.
+    values: list[str] = []
+    for field_name in (
+        "owned_inventory_item_ids",
+        "owned_leaf_cell_ids",
+        "owned_transition_cell_ids",
+        "owned_payload_case_ids",
+        "owned_generated_case_ids",
+        "owned_coverage_shard_ids",
+        "owned_obligation_ids",
+    ):
+        values.extend(
+            str(value)
+            for value in tuple(getattr(suite, field_name, ()))
+            if str(value)
         )
+    values.extend(
+        str(item.item_id)
+        for item in getattr(plan, "partition_items", ())
+        if item.owner_suite_id == suite.suite_id and str(item.item_id)
     )
+    return tuple(dict.fromkeys(values))
 
 
 def testmesh_final_receipt_fields(
@@ -461,6 +474,25 @@ def derived_owner_proof(
     result_fingerprint = str(owner_row.get("result_fingerprint") or "")
     source_ticket = _coerce_reuse_ticket(owner_row.get("reuse_ticket"))
     target_evidence_id = projected_evidence_id or owner_id
+    identity_dependency_fingerprint = sha256_text(
+        json.dumps(
+            dict(identity.get("dependency_fingerprints") or {}),
+            sort_keys=True,
+            separators=(",", ":"),
+        )
+    )
+    coverage_scope_fingerprint = sha256_text(
+        json.dumps(list(obligations), sort_keys=False, separators=(",", ":"))
+    )
+    producer_fingerprints = {
+        "command": str(identity.get("command_fingerprint") or ""),
+        "test_source": str(identity.get("test_source_fingerprint") or ""),
+        "tested_artifact": str(identity.get("tested_artifact_fingerprint") or ""),
+        "dependencies": identity_dependency_fingerprint,
+        "environment": str(identity.get("environment_fingerprint") or ""),
+        "result": result_fingerprint,
+        "coverage_scope": coverage_scope_fingerprint,
+    }
     ticket = TestResultReuseTicket(
         evidence_id=target_evidence_id,
         previous_evidence_id=proof.artifact_id,
@@ -473,6 +505,41 @@ def derived_owner_proof(
         environment_fingerprint=str(identity.get("environment_fingerprint") or ""),
         result_fingerprint=result_fingerprint,
         covered_obligation_ids=obligations,
+        producer_receipt_id=(
+            source_ticket.producer_receipt_id
+            if source_ticket is not None and source_ticket.producer_receipt_id
+            else proof.artifact_id
+        ),
+        producer_terminal=(
+            source_ticket.producer_terminal
+            if source_ticket is not None
+            else True
+        ),
+        producer_status=(
+            source_ticket.producer_status
+            if source_ticket is not None and source_ticket.producer_status
+            else "pass"
+        ),
+        producer_execution_owner_id=(
+            source_ticket.producer_execution_owner_id
+            if source_ticket is not None and source_ticket.producer_execution_owner_id
+            else owner_id
+        ),
+        current_execution_owner_id=(
+            source_ticket.current_execution_owner_id
+            if source_ticket is not None and source_ticket.current_execution_owner_id
+            else owner_id
+        ),
+        producer_fingerprints=(
+            dict(source_ticket.producer_fingerprints)
+            if source_ticket is not None and source_ticket.producer_fingerprints
+            else producer_fingerprints
+        ),
+        current_fingerprints=(
+            dict(source_ticket.current_fingerprints)
+            if source_ticket is not None and source_ticket.current_fingerprints
+            else producer_fingerprints
+        ),
         metadata={
             "source_owner_id": owner_id,
             "source_proof_artifact_id": proof.artifact_id,

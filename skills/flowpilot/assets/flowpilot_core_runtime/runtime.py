@@ -307,6 +307,10 @@ class BlackBoxRuntimeError(ValueError):
     """Raised when a caller asks for an impossible runtime transition."""
 
 
+class CurrentnessDriftError(BlackBoxRuntimeError):
+    """Raised when a staged gate no longer matches the live execution state."""
+
+
 @dataclass(frozen=True)
 class RuntimeAction:
     """Router-selected next action."""
@@ -4168,6 +4172,14 @@ def _activate_changed_milestone_remaining_route(
         "committed_at": now_iso(),
     }
     ledger.setdefault("route_mutations", []).append(mutation)
+    _supersede_repair_open_blockers_for_route_mutation(
+        ledger,
+        affected_packets=affected_packets,
+        mutation_id=str(mutation["mutation_id"]),
+        disposition_id=disposition_id,
+        replacement_node_id=(submitted_ids[0] if submitted_ids else completed_milestone_node_id),
+        new_route_version=new_route_version,
+    )
     _event(
         ledger,
         "route_created",
@@ -5581,6 +5593,50 @@ def _milestone_completed_audit_bindings(
     return rows
 
 
+def _milestone_pm_authorized_result_reads(
+    ledger: Mapping[str, Any],
+    *,
+    current_milestone_evidence_refs: list[str],
+    completed_milestone_bindings: list[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    """Expose only the sealed result bodies needed for the PM milestone audit.
+
+    The audit still receives navigation summaries and stable IDs, but a PM
+    acceptance cannot claim evidence review without opening these bounded,
+    current result bodies through the normal authorized-read receipt path.
+    """
+
+    result_ids: list[str] = []
+    seen: set[str] = set()
+
+    def add(value: Any) -> None:
+        result_id = str(value or "")
+        if not result_id or result_id in seen:
+            return
+        if not _result_body_is_authorizable(ledger, result_id):
+            return
+        seen.add(result_id)
+        result_ids.append(result_id)
+
+    for result_id in current_milestone_evidence_refs:
+        add(result_id)
+    for binding in completed_milestone_bindings:
+        if not isinstance(binding, Mapping):
+            continue
+        for result_id in binding.get("evidence_refs") or []:
+            add(result_id)
+    return [
+        _authorized_read_for_result(
+            ledger,
+            result_id,
+            allowed_roles=["pm"],
+            purpose="milestone_audit_evidence_body",
+            required_before_submit=True,
+        )
+        for result_id in result_ids
+    ]
+
+
 def _candidate_acceptance_ledger(
     ledger: Mapping[str, Any],
     *,
@@ -5695,6 +5751,11 @@ def _milestone_remaining_obligation_ids(
             else []
         ),
     ]
+    if _current_unfinished_route_plan(
+        candidate,
+        completed_milestone_node_id=node_id,
+    ).get("nodes"):
+        non_route_gap_ids.append("remaining_route_plan:nodes")
     return {
         "high_standard_requirement_ids": sorted(set(requirement_ids)),
         "acceptance_item_ids": sorted(set(acceptance_item_ids)),
@@ -5747,6 +5808,25 @@ def _validate_milestone_remaining_plan_coverage(
                 f"{field}: {', '.join(unknown)}"
             )
     return remaining
+
+
+def _milestone_obligation_keys(
+    obligations: Mapping[str, Any],
+) -> set[str]:
+    """Return the exact current obligation keys used by milestone audit rows.
+
+    Route nodes own the route-shaped obligation fields.  Hygiene, open-resource,
+    residual-risk, and legacy-evidence gaps intentionally stay outside that
+    route shape, so the audit row is the single current projection for them.
+    """
+
+    return {
+        f"{field}:{item}"
+        for field, values in obligations.items()
+        if isinstance(values, (list, tuple))
+        for item in values
+        if str(field) and str(item)
+    }
 
 
 def _all_current_obligation_ids(
@@ -6083,6 +6163,7 @@ def _ensure_pm_disposition_packet_for_node(ledger: dict[str, Any], node_id: str,
             "completed_milestone_bindings": completed_milestone_bindings,
             "contract_hash": str(ledger.get("contract_hash") or ""),
             "remaining_owner_node_ids": remaining_owner_node_ids or None,
+            "remaining_obligation_ids": remaining_obligation_ids,
             "remaining_acceptance_item_ids": remaining_obligation_ids.get(
                 "acceptance_item_ids",
                 [],
@@ -6130,6 +6211,15 @@ def _ensure_pm_disposition_packet_for_node(ledger: dict[str, Any], node_id: str,
         if milestone_renewal_required
         else " This is a nested child closure; do not perform a separate global milestone-plan renewal."
     )
+    milestone_authorized_reads = (
+        _milestone_pm_authorized_result_reads(
+            ledger,
+            current_milestone_evidence_refs=current_milestone_evidence_refs,
+            completed_milestone_bindings=completed_milestone_bindings,
+        )
+        if milestone_renewal_required
+        else []
+    )
     packet_id = issue_task_packet(
         ledger,
         "pm",
@@ -6172,6 +6262,7 @@ def _ensure_pm_disposition_packet_for_node(ledger: dict[str, Any], node_id: str,
         acceptance_criteria=list(node.get("acceptance_criteria") or []),
         result_contract_profile_ids=result_contract_profile_ids,
         result_contract_profile_bindings=result_contract_profile_bindings,
+        authorized_result_reads=milestone_authorized_reads or None,
     )
     node_repair_identity = _repair_chain_identity_for_node(ledger, node_id)
     if node_repair_identity:
@@ -9383,7 +9474,7 @@ def _preflight_milestone_plan_renewal_apply(
         expected_gate_id=str(gate.get("gate_id") or ""),
     )
     if blockers:
-        raise BlackBoxRuntimeError(
+        raise CurrentnessDriftError(
             "milestone renewal staged effect is not current: "
             + ", ".join(blockers)
         )
@@ -9478,7 +9569,7 @@ def _preflight_milestone_plan_renewal_apply(
         node_id=node_id,
     )
     if evidence_blockers:
-        raise BlackBoxRuntimeError(
+        raise CurrentnessDriftError(
             "milestone renewal gate evidence is not current and exactly bound: "
             + ", ".join(evidence_blockers)
         )
@@ -9527,7 +9618,10 @@ def _apply_staged_pm_decision_gate(
             absorption_packet = ledger.get("packets", {}).get(absorption_packet_id)
             absorption_result = ledger.get("results", {}).get(absorption_result_id)
             if (
-                any(marker in failure_text for marker in recoverable_markers)
+                (
+                    isinstance(exc, CurrentnessDriftError)
+                    or any(marker in failure_text for marker in recoverable_markers)
+                )
                 and isinstance(absorption_packet, Mapping)
                 and isinstance(absorption_result, Mapping)
                 and absorption_packet.get("status") == "accepted"
@@ -14758,8 +14852,8 @@ def _top_level_forbidden_fields(payload: Mapping[str, Any], forbidden_fields: tu
     present: list[str] = []
     for field in forbidden_fields:
         if "[]" in field:
-            exists, _values = _payload_path_values(payload, field)
-            if exists:
+            exists, values = _payload_path_values(payload, field)
+            if exists and values:
                 present.append(field)
             continue
         if "." in field:
@@ -14783,8 +14877,10 @@ def _payload_path_value(payload: Mapping[str, Any], field_path: str) -> tuple[bo
 
 def _payload_path_values(payload: Mapping[str, Any], field_path: str) -> tuple[bool, list[Any]]:
     parts = field_path.split(".")
+    empty_array_seen = False
 
     def visit(current: Any, index: int) -> list[Any] | None:
+        nonlocal empty_array_seen
         if index >= len(parts):
             return [current]
         part = parts[index]
@@ -14793,8 +14889,11 @@ def _payload_path_values(payload: Mapping[str, Any], field_path: str) -> tuple[b
             if not isinstance(current, Mapping) or key not in current:
                 return None
             value = current[key]
-            if not isinstance(value, list) or not value:
+            if not isinstance(value, list):
                 return None
+            if not value:
+                empty_array_seen = True
+                return []
             values: list[Any] = []
             for item in value:
                 nested = visit(item, index + 1)
@@ -14806,7 +14905,9 @@ def _payload_path_values(payload: Mapping[str, Any], field_path: str) -> tuple[b
         return visit(current[part], index + 1)
 
     values = visit(payload, 0)
-    if not values:
+    if values is None:
+        return False, []
+    if not values and not empty_array_seen:
         return False, []
     return True, values
 
@@ -14823,8 +14924,15 @@ def _payload_path_missing(payload: Any, field_path: str) -> bool:
             if not isinstance(current, Mapping) or key not in current:
                 return True
             value = current[key]
-            if not isinstance(value, list) or not value:
+            if not isinstance(value, list):
                 return True
+            # An explicitly present empty array has no child rows to validate.
+            # Row-level obligations (for example milestone renewal gaps) are
+            # enforced by the family validator when rows are present; treating
+            # an empty array as a missing child would incorrectly block a
+            # terminal milestone with an explicit empty remaining audit.
+            if not value:
+                return False
             return any(visit(item, index + 1) for item in value)
         if not isinstance(current, Mapping) or part not in current:
             return True
@@ -16751,6 +16859,7 @@ def _pm_disposition_result_violation(
         remaining_rows = milestone_audit.get("remaining")
         assert isinstance(remaining_rows, list)
         owner_node_ids: list[str] = []
+        audited_obligation_keys: list[str] = []
         for index, row in enumerate(remaining_rows, start=1):
             if not isinstance(row, Mapping) or any(
                 not str(row.get(field) or "").strip()
@@ -16791,6 +16900,35 @@ def _pm_disposition_result_violation(
                     ),
                 )
             owner_node_ids.extend(row_owner_ids)
+            raw_obligation_ids = row.get("obligation_ids")
+            if not isinstance(raw_obligation_ids, list):
+                return _contract_block(
+                    packet,
+                    "milestone_audit.remaining rows require obligation_ids list",
+                    missing_required_fields=(
+                        f"milestone_audit.remaining[{index}].obligation_ids",
+                    ),
+                )
+            row_obligation_keys = [
+                str(item).strip() for item in raw_obligation_ids if str(item).strip()
+            ]
+            if not row_obligation_keys:
+                return _contract_block(
+                    packet,
+                    "milestone_audit.remaining rows require at least one obligation_id",
+                    missing_required_fields=(
+                        f"milestone_audit.remaining[{index}].obligation_ids[]",
+                    ),
+                )
+            if len(row_obligation_keys) != len(set(row_obligation_keys)):
+                return _contract_block(
+                    packet,
+                    "milestone_audit.remaining obligation_ids must be unique within each gap row",
+                    missing_required_fields=(
+                        f"milestone_audit.remaining[{index}].obligation_ids[]",
+                    ),
+                )
+            audited_obligation_keys.extend(row_obligation_keys)
         try:
             canonical_plan = _canonical_remaining_route_plan(
                 remaining_route_plan
@@ -16836,12 +16974,6 @@ def _pm_disposition_result_violation(
                 "milestone_audit.remaining owner_node_ids must point to submitted remaining_route_plan nodes",
                 missing_required_fields=("milestone_audit.remaining[].owner_node_ids[]",),
             )
-        if submitted_node_ids - submitted_owner_node_ids:
-            return _contract_block(
-                packet,
-                "every submitted remaining_route_plan node must own at least one audited remaining gap",
-                missing_required_fields=("milestone_audit.remaining[].owner_node_ids[]",),
-            )
         if ledger is not None and decision == "accept":
             envelope = (
                 packet.get("envelope", {})
@@ -16871,6 +17003,32 @@ def _pm_disposition_result_violation(
                     acceptance_item_disposition=disposition_rows,
                     node_specs=node_specs,
                 )
+                expected_obligation_keys = _milestone_obligation_keys(
+                    remaining_obligations
+                )
+                actual_obligation_keys = set(audited_obligation_keys)
+                unknown_obligation_keys = sorted(
+                    actual_obligation_keys - expected_obligation_keys
+                )
+                missing_obligation_keys = sorted(
+                    expected_obligation_keys - actual_obligation_keys
+                )
+                if unknown_obligation_keys or missing_obligation_keys:
+                    details: list[str] = []
+                    if missing_obligation_keys:
+                        details.append(
+                            "missing current obligation_ids: "
+                            + ", ".join(missing_obligation_keys)
+                        )
+                    if unknown_obligation_keys:
+                        details.append(
+                            "unknown obligation_ids: "
+                            + ", ".join(unknown_obligation_keys)
+                        )
+                    raise BlackBoxRuntimeError(
+                        "milestone_audit.remaining obligation_ids must exactly cover "
+                        + "; ".join(details)
+                    )
                 prior_plan = _current_unfinished_route_plan(
                     ledger,
                     completed_milestone_node_id=node_id,
