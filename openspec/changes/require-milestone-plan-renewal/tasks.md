@@ -91,4 +91,4 @@
 - [x] 10.3 Run one current-version longitudinal rehearsal covering unchanged renewal, changed suffix, nested child, Reviewer block, interruption/resume, and terminal empty plan; this is not an A/B experiment.
 - [x] 10.4 Measure milestone role turns, retries, audit payload growth, and gate latency; record the accepted lightweight budget in `docs/flowpilot_milestone_renewal_budget.md`.
 - [x] 10.5 Refresh the validated consumer installation, confirm the milestone renewal path is enabled as the sole current behavior, and verify source/install parity.
-- [ ] 10.6 Preserve peer work, commit only owned integrated files locally, rerun OpenSpec/FlowGuard/SkillGuard closure, and report remote/tag/publication status separately.
+- [x] 10.6 Preserve peer work, commit only owned integrated files locally, rerun OpenSpec/FlowGuard/SkillGuard closure, and report remote/tag/publication status separately.
