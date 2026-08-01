@@ -16,8 +16,12 @@ try:
         DEFAULT_BACKGROUND_CHILD_TIMEOUT_SECONDS,
         _hidden_process_kwargs,
         _launch_background,
+        _process_descendant_identities,
+        _process_identity,
+        _process_identity_is_live,
         _read_background_meta,
         _read_exit_code,
+        _terminate_process_tree,
         _utc_now,
         _write_json,
         artifact_paths,
@@ -55,8 +59,12 @@ except ImportError:  # pragma: no cover - direct script import path
         DEFAULT_BACKGROUND_CHILD_TIMEOUT_SECONDS,
         _hidden_process_kwargs,
         _launch_background,
+        _process_descendant_identities,
+        _process_identity,
+        _process_identity_is_live,
         _read_background_meta,
         _read_exit_code,
+        _terminate_process_tree,
         _utc_now,
         _write_json,
         artifact_paths,
@@ -93,6 +101,9 @@ except ImportError:  # pragma: no cover - direct script import path
 ROOT = Path(__file__).resolve().parents[2]
 BACKGROUND_CHILD_ENTRYPOINT = ROOT / "scripts" / "run_test_tier.py"
 BACKGROUND_SUPERVISOR_POLL_SECONDS = 2.0
+BACKGROUND_SUPERVISOR_IDENTITY_GRACE_SECONDS = 2.0
+BACKGROUND_SUPERVISOR_TERMINAL_RECEIPT_GRACE_SECONDS = 5.0
+BACKGROUND_SUPERVISOR_TIMEOUT_CLEANUP_GRACE_SECONDS = 15.0
 SUPERVISOR_PROGRESS_MAX_BYTES = 32 * 1024
 
 
@@ -249,6 +260,135 @@ def next_background_launch_index(
         ):
             return index
     return None
+
+
+def _new_launch_watch(launched: dict[str, Any]) -> dict[str, Any]:
+    child_pid = int(launched["child_pid"])
+    return {
+        "child_pid": child_pid,
+        "process_identity": _process_identity(child_pid),
+        "started_monotonic": time.monotonic(),
+        "dead_since_monotonic": None,
+        "observed_descendants": {},
+        "forced_cleanup_proof": None,
+    }
+
+
+def _refresh_launch_watch(
+    owner_id: str,
+    watch: dict[str, Any],
+    *,
+    timeout_seconds: int,
+    now: float | None = None,
+) -> str | None:
+    """Return a fail-closed anomaly when a child cannot produce a receipt."""
+
+    current = time.monotonic() if now is None else now
+    started = float(watch["started_monotonic"])
+    identity = watch.get("process_identity")
+    if identity is None:
+        identity = _process_identity(watch["child_pid"])
+        watch["process_identity"] = identity
+    if identity is None:
+        if current - started >= BACKGROUND_SUPERVISOR_IDENTITY_GRACE_SECONDS:
+            return (
+                "background child process identity unavailable before terminal receipt: "
+                f"{owner_id} pid={watch['child_pid']}"
+            )
+        return None
+
+    if _process_identity_is_live(identity):
+        watch["dead_since_monotonic"] = None
+        observed = watch["observed_descendants"]
+        for descendant in _process_descendant_identities(identity):
+            key = (int(descendant["pid"]), str(descendant["start_token"]))
+            observed[key] = descendant
+        if (
+            timeout_seconds > 0
+            and current - started
+            >= timeout_seconds + BACKGROUND_SUPERVISOR_TIMEOUT_CLEANUP_GRACE_SECONDS
+        ):
+            cleanup = _terminate_process_tree(identity)
+            watch["forced_cleanup_proof"] = cleanup
+            return (
+                "background child exceeded terminal-receipt deadline: "
+                f"{owner_id} pid={watch['child_pid']} timeout={timeout_seconds}"
+            )
+        return None
+
+    dead_since = watch.get("dead_since_monotonic")
+    if dead_since is None:
+        watch["dead_since_monotonic"] = current
+        return None
+    if current - float(dead_since) >= BACKGROUND_SUPERVISOR_TERMINAL_RECEIPT_GRACE_SECONDS:
+        return (
+            "background child exited without terminal receipt: "
+            f"{owner_id} pid={watch['child_pid']}"
+        )
+    return None
+
+
+def _cleanup_supervisor_launches(
+    watches: dict[str, dict[str, Any]],
+) -> dict[str, Any]:
+    owner_proofs: list[dict[str, Any]] = []
+    cleanup_confirmed = True
+    for owner_id, watch in sorted(watches.items()):
+        identity = watch.get("process_identity")
+        observed = list(watch.get("observed_descendants", {}).values())
+        proofs: list[dict[str, Any]] = []
+        forced = watch.get("forced_cleanup_proof")
+        if isinstance(forced, dict):
+            proofs.append(forced)
+        elif identity is None:
+            proofs.append(
+                {
+                    "cleanup_confirmed": False,
+                    "descendant_zero_confirmed": False,
+                    "reason": "launcher_identity_unavailable",
+                }
+            )
+        elif _process_identity_is_live(identity):
+            proofs.append(_terminate_process_tree(identity))
+        else:
+            # A wrapper that vanished before publishing its receipt cannot prove
+            # that it left no unobserved/reparented descendant behind.
+            proofs.append(
+                {
+                    "target_identity": identity,
+                    "cleanup_confirmed": False,
+                    "descendant_zero_confirmed": False,
+                    "reason": "launcher_exited_before_descendant_zero_confirmation",
+                }
+            )
+        for descendant in reversed(observed):
+            if _process_identity_is_live(descendant):
+                proofs.append(_terminate_process_tree(descendant))
+        owner_confirmed = all(
+            proof.get("cleanup_confirmed") is True
+            and proof.get("descendant_zero_confirmed") is True
+            for proof in proofs
+        )
+        cleanup_confirmed = cleanup_confirmed and owner_confirmed
+        owner_proofs.append(
+            {
+                "owner_id": owner_id,
+                "process_identity": identity,
+                "observed_descendant_identities": observed,
+                "cleanup_confirmed": owner_confirmed,
+                "proofs": proofs,
+            }
+        )
+    return {
+        "cleanup_confirmed": cleanup_confirmed,
+        "descendant_zero_confirmed": cleanup_confirmed,
+        "owner_proofs": owner_proofs,
+        "reason": (
+            "supervisor_launches_terminated"
+            if cleanup_confirmed
+            else "cleanup_unconfirmed"
+        ),
+    }
 
 
 def launch_background_supervisor(
@@ -467,6 +607,7 @@ def run_background_supervisor(
         if decision.action == "reuse"
     ]
     owners: dict[str, Any] = {}
+    launch_watches: dict[str, dict[str, Any]] = {}
     for decision in plan.decisions:
         if decision.action != "reuse":
             continue
@@ -500,6 +641,7 @@ def run_background_supervisor(
                         impact_plan_sha256=str(impact_plan_ref["sha256"]),
                         timeout_seconds=timeout_seconds,
                     )
+                    launch_watches[command.name] = _new_launch_watch(launched)
                     running.append(command)
                     line = f"launched {command.name} pid={launched['child_pid']}\n"
                     out_file.write(line)
@@ -508,8 +650,16 @@ def run_background_supervisor(
                 for command in running:
                     exit_code = _read_exit_code(artifact_paths(log_root, command.name)["exit"])
                     if exit_code is None:
+                        anomaly = _refresh_launch_watch(
+                            command.name,
+                            launch_watches[command.name],
+                            timeout_seconds=timeout_seconds,
+                        )
+                        if anomaly:
+                            raise RuntimeError(anomaly)
                         still_running.append(command)
                         continue
+                    launch_watches.pop(command.name, None)
                     evidence = classify_background_artifact(
                         log_root,
                         command.name,
@@ -575,6 +725,12 @@ def run_background_supervisor(
                     time.sleep(BACKGROUND_SUPERVISOR_POLL_SECONDS)
     except Exception as exc:
         details = traceback.format_exc()
+        cleanup_proof = _cleanup_supervisor_launches(launch_watches)
+        terminal_status = (
+            "failed"
+            if cleanup_proof["cleanup_confirmed"]
+            else "cleanup-unconfirmed"
+        )
         with paths["err"].open(
             "a", encoding="utf-8", errors="replace"
         ) as err_file:
@@ -586,7 +742,7 @@ def run_background_supervisor(
             "tier": tier,
             "impact_plan_id": plan.plan_id,
             "impact_plan_sha256": impact_plan_ref["sha256"],
-            "status": "failed",
+            "status": terminal_status,
             "expected_owner_ids": [command.name for command in commands],
             "owners": [owners[key] for key in sorted(owners)],
             "error": str(exc),
@@ -602,13 +758,15 @@ def run_background_supervisor(
             pending_owner_ids=[command.name for command in pending],
             running_owner_ids=[command.name for command in running],
             recent_terminal=recent_terminal,
-            status="failed",
+            status=terminal_status,
         )
         meta.update(
-            status="failed",
+            status=terminal_status,
             end_time=_utc_now(),
             exit_code=1,
             error=str(exc),
+            cleanup_proof=cleanup_proof,
+            descendant_zero_confirmed=cleanup_proof["descendant_zero_confirmed"],
             running_owner_count=len(running),
             terminal_owner_count=len(owners),
             owner_index_ref=path_reference(

@@ -1719,6 +1719,74 @@ class FlowPilotTestTierTests(unittest.TestCase):
         finally:
             run_test_tier._launch_background = original_launch
 
+    def test_background_supervisor_fails_closed_when_child_exits_without_receipt(
+        self,
+    ) -> None:
+        identity = {"pid": 4242, "start_token": "test-start:4242"}
+
+        def vanished_launch(command, **_kwargs):  # type: ignore[no-untyped-def]
+            return {
+                "name": command.name,
+                "status": "running",
+                "child_pid": identity["pid"],
+                "artifacts": {},
+            }
+
+        with tempfile.TemporaryDirectory(
+            prefix="flowpilot-tier-supervisor-vanished-child-"
+        ) as tmp_name, mock.patch.object(
+            background_supervisor_module,
+            "_process_identity",
+            return_value=identity,
+        ), mock.patch.object(
+            background_supervisor_module,
+            "_process_identity_is_live",
+            return_value=False,
+        ), mock.patch.object(
+            background_supervisor_module,
+            "BACKGROUND_SUPERVISOR_TERMINAL_RECEIPT_GRACE_SECONDS",
+            0.0,
+        ), mock.patch.object(
+            background_supervisor_module,
+            "BACKGROUND_SUPERVISOR_POLL_SECONDS",
+            0.0,
+        ):
+            root = Path(tmp_name)
+            exit_code = background_supervisor_module.run_background_supervisor(
+                "vanished-child",
+                [
+                    run_test_tier.TierCommand(
+                        name="vanished_child",
+                        command=(
+                            sys.executable,
+                            "scripts/test_tier/source_fingerprint.py",
+                        ),
+                        description="child exits without immutable receipt",
+                    )
+                ],
+                log_root=root,
+                max_parallel=1,
+                seed_baseline=True,
+                previous_manifest_path=None,
+                previous_manifest_sha256="",
+                timeout_seconds=30,
+                launch_fn=vanished_launch,
+            )
+            paths = run_test_tier.artifact_paths(
+                root,
+                run_test_tier.background_supervisor_name("vanished-child"),
+            )
+            meta = json.loads(paths["meta"].read_text(encoding="utf-8"))
+
+        self.assertEqual(exit_code, 1)
+        self.assertEqual(meta["status"], "cleanup-unconfirmed")
+        self.assertIn(
+            "background child exited without terminal receipt",
+            meta["error"],
+        )
+        self.assertFalse(meta["cleanup_proof"]["cleanup_confirmed"])
+        self.assertFalse(meta["descendant_zero_confirmed"])
+
     def test_unmapped_changed_input_blocks_without_blanket_execution(self) -> None:
         command = run_test_tier.TierCommand(
             name="mapped_owner",
@@ -2409,6 +2477,10 @@ class FlowPilotTestTierTests(unittest.TestCase):
         rejected = set(report["scenario_review"]["hazard_scenarios_rejected"])
         self.assertIn("background_progress_only_claimed_pass", rejected)
         self.assertIn("background_running_without_timeout_guard", rejected)
+        self.assertIn(
+            "background_child_launcher_disappears_without_terminal_receipt",
+            rejected,
+        )
         self.assertIn("background_inner_interpreter_follows_external_upgrade", rejected)
         self.assertIn("background_shared_runtime_resource_race", rejected)
         self.assertIn("background_descendant_settlement_missing", rejected)
@@ -2441,4 +2513,3 @@ class FlowPilotTestTierTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

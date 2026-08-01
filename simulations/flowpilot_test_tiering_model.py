@@ -64,6 +64,7 @@ class State:
     exit_published_before_terminal_meta: bool = False
     background_progress_claimed_as_pass: bool = False
     background_timeout_enforced: bool = True
+    background_supervisor_detects_missing_terminal_owner: bool = True
     background_interpreter_bound_to_owner: bool = True
     background_interpreter_is_direct_process_owner: bool = True
     shared_runtime_resources_serialized: bool = True
@@ -253,6 +254,14 @@ SCENARIOS: dict[str, State] = {
         background_progress_claimed_as_pass=True,
         background_timeout_enforced=False,
     ),
+    "background_child_launcher_disappears_without_terminal_receipt": replace(
+        _valid_background(
+            "background_child_launcher_disappears_without_terminal_receipt"
+        ),
+        background_exit_artifact_present=False,
+        background_exit_inspected=False,
+        background_supervisor_detects_missing_terminal_owner=False,
+    ),
     "background_inner_interpreter_follows_external_upgrade": replace(
         _valid_background("background_inner_interpreter_follows_external_upgrade"),
         background_interpreter_bound_to_owner=False,
@@ -392,6 +401,11 @@ def test_tier_failures(state: State) -> list[str]:
         failures.append("background_exit_precedes_terminal_meta")
     if state.background_requested and not state.background_timeout_enforced:
         failures.append("background_timeout_not_enforced")
+    if (
+        state.background_requested
+        and not state.background_supervisor_detects_missing_terminal_owner
+    ):
+        failures.append("background_missing_terminal_owner_not_detected")
     if state.background_requested and not state.background_interpreter_bound_to_owner:
         failures.append("background_interpreter_not_bound_to_execution_owner")
     if state.background_requested and not state.background_interpreter_is_direct_process_owner:
@@ -480,6 +494,7 @@ class TestTierStep:
         "background_exclusive_resource",
         "background_interpreter_launch_plan",
         "background_process_tree_identity",
+        "background_terminal_owner_liveness",
         "background_process_tree_sibling_isolation",
         "install_sync_plan",
     )

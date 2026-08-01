@@ -5165,6 +5165,12 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 required_test_kinds=(NEGATIVE,),
             ),
             _obligation(
+                "test_tiering.supervisor_terminal_owner_liveness",
+                obligation_type="hazard",
+                description="The bounded supervisor fails closed when a launched child disappears or exceeds its deadline without publishing an immutable terminal receipt, and it never treats the stale running slot as liveness evidence.",
+                required_test_kinds=(NEGATIVE,),
+            ),
+            _obligation(
                 "test_tiering.shared_runtime_resource_serialization",
                 obligation_type="hazard",
                 description="Background commands that launch the same installed shadow runtime declare one exclusive resource and cannot overlap, while unrelated model checks remain parallel.",
@@ -5184,6 +5190,26 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
             ),
         ),
         code_contracts=(
+            _contract(
+                "runtime_path.test_tiering_slow_contracts.test_tiering_supervisor_terminal_owner_liveness",
+                path="scripts/test_tier/background_supervisor.py",
+                symbol="run_background_supervisor",
+                implements=("test_tiering.supervisor_terminal_owner_liveness",),
+                external_inputs=(
+                    "launched_child_process_identity",
+                    "terminal_exit_artifact",
+                    "timeout_seconds",
+                ),
+                external_outputs=("terminal_supervisor_receipt_or_visible_failure",),
+                state_reads=("running_owner_ids", "observed_descendant_identities"),
+                error_paths=(
+                    "child_exited_without_terminal_receipt",
+                    "child_exceeded_terminal_receipt_deadline",
+                    "cleanup_unconfirmed",
+                ),
+                behavior_plane="development_process",
+                behavior_commitment_id="commit.testmesh_pass_requires_current_proof",
+            ),
             _contract(
                 "runtime_path.test_tiering_slow_contracts.test_tiering_shared_runtime_resource_serialization",
                 path="scripts/test_tier/background_supervisor.py",
@@ -5224,6 +5250,15 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 command="python -m unittest tests.test_flowpilot_test_tiers.FlowPilotTestTierTests.test_tiering_flowguard_model_rejects_known_bad_hazards",
                 test_kind=NEGATIVE,
                 covers=("test_tiering.background_artifact_contract",),
+            ),
+            _evidence(
+                "tiering.negative.supervisor_terminal_owner_liveness",
+                test_name="test_background_supervisor_fails_closed_when_child_exits_without_receipt",
+                path="tests/test_flowpilot_test_tiers.py",
+                command="python -m unittest tests.test_flowpilot_test_tiers.FlowPilotTestTierTests.test_background_supervisor_fails_closed_when_child_exits_without_receipt",
+                test_kind=NEGATIVE,
+                covers=("test_tiering.supervisor_terminal_owner_liveness",),
+                code_contracts=("runtime_path.test_tiering_slow_contracts.test_tiering_supervisor_terminal_owner_liveness",),
             ),
             _evidence(
                 "tiering.happy.shared_runtime_resource_serialization",

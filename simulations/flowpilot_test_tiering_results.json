@@ -7,6 +7,9 @@
     "meta"
   ],
   "expected_hazard_failures": {
+    "background_child_launcher_disappears_without_terminal_receipt": [
+      "background_missing_terminal_owner_not_detected"
+    ],
     "background_descendant_settlement_missing": [
       "background_descendant_settlement_not_bounded"
     ],
@@ -130,17 +133,18 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=2 initial_states=1 traces=126",
+    "summary": "sequences=2 initial_states=1 traces=129",
     "violation_count": 0
   },
   "graph": {
     "accepted_state_count": 4,
-    "edge_count": 84,
+    "edge_count": 86,
     "labels_seen": [
       "accept_valid_background_integration_tier",
       "accept_valid_fast_tier",
       "accept_valid_release_background_tier",
       "accept_valid_router_child_tier",
+      "reject_background_child_launcher_disappears_without_terminal_receipt",
       "reject_background_descendant_settlement_missing",
       "reject_background_exit_precedes_terminal_meta",
       "reject_background_inner_interpreter_follows_external_upgrade",
@@ -179,6 +183,7 @@
       "reject_stale_child_evidence_used",
       "reject_testmesh_mta_final_confidence_dependency_cycle",
       "reject_unmapped_change_falls_back_to_run_all",
+      "select_background_child_launcher_disappears_without_terminal_receipt",
       "select_background_descendant_settlement_missing",
       "select_background_exit_precedes_terminal_meta",
       "select_background_inner_interpreter_follows_external_upgrade",
@@ -224,9 +229,9 @@
     ],
     "missing_labels": [],
     "ok": true,
-    "rejected_state_count": 38,
-    "state_count": 85,
-    "terminal_state_count": 42,
+    "rejected_state_count": 39,
+    "state_count": 87,
+    "terminal_state_count": 43,
     "violations": []
   },
   "model": "flowpilot_test_tiering",
@@ -243,6 +248,7 @@
     "bad_accepts": [],
     "bad_rejects": [],
     "hazard_scenarios_rejected": [
+      "background_child_launcher_disappears_without_terminal_receipt",
       "background_descendant_settlement_missing",
       "background_exit_precedes_terminal_meta",
       "background_inner_interpreter_follows_external_upgrade",

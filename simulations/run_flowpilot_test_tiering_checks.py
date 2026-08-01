@@ -40,6 +40,7 @@ REQUIRED_LABELS = {
     "reject_background_missing_artifact_set",
     "reject_background_exit_precedes_terminal_meta",
     "reject_background_running_without_timeout_guard",
+    "reject_background_child_launcher_disappears_without_terminal_receipt",
     "reject_background_inner_interpreter_follows_external_upgrade",
     "reject_background_windows_venv_shim_exits_before_process_owner",
     "reject_background_shared_runtime_resource_race",
@@ -112,6 +113,9 @@ EXPECTED_HAZARD_FAILURES = {
     "background_running_without_timeout_guard": {
         "background_progress_is_not_completion_evidence",
         "background_timeout_not_enforced",
+    },
+    "background_child_launcher_disappears_without_terminal_receipt": {
+        "background_missing_terminal_owner_not_detected",
     },
     "background_inner_interpreter_follows_external_upgrade": {
         "background_interpreter_not_bound_to_execution_owner",

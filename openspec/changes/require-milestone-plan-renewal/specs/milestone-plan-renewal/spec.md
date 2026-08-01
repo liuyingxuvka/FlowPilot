@@ -281,3 +281,20 @@ results after their producer stages complete.
 - **THEN** the live PPA runner SHALL fail closed
 - **AND** the structural unit proof SHALL not be promoted to current runtime
   evidence.
+
+### Requirement: Frozen validation fails closed when an execution owner disappears
+The bounded background supervisor SHALL track each launched validation owner's
+exact process identity and immutable terminal receipt. A child that exits or
+exceeds its bounded deadline without publishing that receipt SHALL make the
+supervisor terminally fail. A stale `running` slot, PID, progress line, or empty
+stream SHALL NOT count as completion or reusable evidence. Any remaining exact
+validation processes SHALL be cleaned up, and unconfirmed descendant-zero
+cleanup SHALL remain visibly blocked.
+
+#### Scenario: A validation child disappears before terminal publication
+- **WHEN** an all-tier child process is no longer live
+- **AND** its immutable terminal exit artifact is absent after the bounded
+  publication grace window
+- **THEN** the supervisor SHALL publish a non-success terminal result
+- **AND** it SHALL NOT wait forever or promote prior progress as evidence
+- **AND** cleanup-unconfirmed status SHALL block every release claim.

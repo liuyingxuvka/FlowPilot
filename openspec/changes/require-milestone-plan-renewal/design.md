@@ -292,6 +292,9 @@ avoids a producer/consumer cycle, and preserves fail-closed currentness.
 7. Close the post-implementation correctness findings, refresh current model
    authority and TestMesh/MTA/PPA/BCL evidence, then run one real longitudinal
    multi-milestone rehearsal before enabling the final consumer projection.
+   The bounded validation supervisor also treats a vanished child without an
+   immutable terminal receipt as a visible failure and never lets a stale
+   `running` slot stand in for liveness or completion.
 8. After one frozen final validation and consumer-install currentness pass,
    update the immutable release version and notes, commit only owned integrated
    paths, push the current branch and `main`, create a new annotated tag and
