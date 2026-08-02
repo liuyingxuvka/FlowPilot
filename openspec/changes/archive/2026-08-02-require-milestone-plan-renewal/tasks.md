@@ -61,10 +61,10 @@
 - [x] 7.3 Run the minimum affected unit, model, review-window, and contract checks while source is changing and fix all failures.
 - [x] 7.4 Refresh FlowPilot's SkillGuard contract source, compiled contract, and exact check manifest after source and check identities are frozen.
 - [x] 7.5 Preserve the existing terminal 228/228 runtime baseline and validate the current test-reuse repair with focused cases only; per the explicit release decision, do not launch a second full suite and keep that evidence boundary visible.
-- [ ] 7.6 Sync the validated clean consumer projection and run installed currentness plus target-owned installed smoke checks separately.
+- [x] 7.6 Sync the validated clean consumer projection and run installed currentness plus target-owned installed smoke checks separately.
 - [ ] 7.7 Run OpenSpec strict validation and record final source, model, SkillGuard, installation, Git, tag, and publication identities separately.
 - [x] 7.8 Perform the predictive-KB postflight check and record one structured observation only if this work exposed a reusable lesson or route gap (event `7275fb7d-a98f-41e1-bda7-40dc2710e23a`, terminal receipt verified).
-- [ ] 7.9 Collect the background model regressions under one frozen source snapshot and preserve their immutable logs without overwriting parallel results.
+- [x] 7.9 Preserve the accepted frozen model-regression baseline and its immutable logs without overwriting parallel results; per the explicit release decision, do not relaunch those model owners for the later test-reuse repair.
 
 ## 8. Post-implementation Correctness Closure
 
@@ -82,7 +82,7 @@
 
 - [x] 9.1 Add the audit-discovered renewal hazards to the runner state identity and expected-failure map; regenerate the result for all current negative scenarios.
 - [x] 9.2 Bind the changed-suffix implementation and gate-to-commit path to runtime production conformance and affected tests instead of source-string presence checks or the historical repair slice only.
-- [ ] 9.3 Update the current FlowGuard model-regression manifest and activate one accepted current ModelRevisionSet without a compatibility reader or fallback.
+- [x] 9.3 Update the current FlowGuard model-regression manifest and bootstrap one observed current ModelRevisionSet from the accepted frozen baseline without a compatibility reader, fallback, or claim that a new model regression executed.
 - [x] 9.4 Preserve the previously frozen runtime TestMesh/MTA, formal AI, PPA, BCL, Risk, release-scope parent, and final-confidence baseline; treat the later test-infrastructure repair as a separate focused scope rather than relaunching runtime producers.
 - [x] 9.5 Expand the FlowPilot SkillGuard declared checks to own the renewal model, production conformance, affected tests, and evidence closure; refresh current contract/depth parity and record that execution evidence remains the prior full baseline plus focused current repair checks.
 - [x] 9.6 Make the bounded background supervisor fail closed when a child disappears or exceeds its deadline without an immutable terminal receipt; preserve cleanup-unconfirmed as a release blocker and add model plus unit regressions.
@@ -97,6 +97,6 @@
 - [x] 10.2 Consolidate route mutation lifecycle primitives and repeated milestone prompt/card instructions without removing the hard gate, PM absorption, Reviewer, or distinct node-acceptance-plan duties.
 - [x] 10.3 Run one current-version public-launcher longitudinal rehearsal covering unchanged renewal, changed suffix, nested child, Reviewer block, interruption/resume, and terminal empty plan; this is not an A/B experiment.
 - [x] 10.4 Measure four AI submissions, two local system steps, retries, full packet/context and evidence-read growth, and stage/total gate latency at 10/50/100 top-level milestones; record the accepted lightweight budget in `docs/flowpilot_milestone_renewal_budget.md`.
-- [ ] 10.5 Refresh the validated consumer installation, confirm the milestone renewal path is enabled as the sole current behavior, and verify source/install parity.
+- [x] 10.5 Refresh the validated consumer installation, confirm the milestone renewal path is enabled as the sole current behavior, and verify source/install parity.
 - [ ] 10.6 Preserve peer work, commit only owned integrated files locally, rerun OpenSpec/FlowGuard/SkillGuard closure, and report source/install/model/test/Git identities separately.
 - [ ] 10.7 Update `VERSION`, `CHANGELOG.md`, and public release notes; create an immutable new commit/tag/GitHub Release, push the current branch and `main`, and verify remote branch, tag, and Release identities.
