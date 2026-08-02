@@ -3316,7 +3316,7 @@
       "evidence_role": "focused_direct_runtime_regression",
       "name": "milestone_reviewer_block",
       "ok": true,
-      "output": ".                                                                        [100%]\n1 passed in 0.32s"
+      "output": ".                                                                        [100%]\n1 passed in 0.50s"
     }
   ],
   "schema_version": "flowpilot.milestone_renewal_longitudinal_rehearsal.v1"

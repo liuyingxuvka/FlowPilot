@@ -9,8 +9,8 @@
     "coverage_universe_fingerprint": "e0e44db52d184a7efd9993619b5dc1d1ee9b66b88893b4213fa344cea0e7c67b",
     "coverage_universe_id": "flowpilot-model-maturation-coverage-v1",
     "decision": "model_maturation_upgrade_required",
-    "evidence_fingerprint": "ef58f6d9e50c6c50a391d6a77d2eedd6da9d92c7cf72ee03a72b60976a941a5c",
-    "evidence_id": "model-maturation:flowpilot-model-maturation-routine-closure:1d7cf98e01d33c1b8fe955296c92ec20832da12cb74d9c58ee42eb25f82b7909",
+    "evidence_fingerprint": "efe0de89d2215d760578f8f223caa47b67a3f6a6374c6eb28510cd91107e5772",
+    "evidence_id": "model-maturation:flowpilot-model-maturation-routine-closure:e739ad66329188e68bcbfc42a500c2a71ef5bcd98f3c70cc69681e8fc0671a07",
     "findings": [
       {
         "action": "refresh_evidence",
@@ -885,13 +885,13 @@
     ],
     "full_closure_ok": false,
     "hard_gate_ok": true,
-    "input_fingerprint": "1d7cf98e01d33c1b8fe955296c92ec20832da12cb74d9c58ee42eb25f82b7909",
+    "input_fingerprint": "e739ad66329188e68bcbfc42a500c2a71ef5bcd98f3c70cc69681e8fc0671a07",
     "iteration": 0,
     "iteration_record": {
       "base_model_fingerprint": "29e48cfd482a1a28ff1b2dec5501af2eaf70dc315ef4498448314a864f5ea587",
       "candidate_model_fingerprint": "77303346b23a923815acca4908ed1f6f0201d76a42ee18aca381721faffb615a",
       "coverage_fingerprint": "e0e44db52d184a7efd9993619b5dc1d1ee9b66b88893b4213fa344cea0e7c67b",
-      "input_fingerprint": "1d7cf98e01d33c1b8fe955296c92ec20832da12cb74d9c58ee42eb25f82b7909",
+      "input_fingerprint": "e739ad66329188e68bcbfc42a500c2a71ef5bcd98f3c70cc69681e8fc0671a07",
       "introduced_gap_fingerprints": [
         "1040cec39f41d29439c85c9eb49a0bb9f1e279b3a1c35129ea4c22e3729139b7",
         "380ce4f9f32aaab61d69a19000c46a0cd199b9b470bb1714856651d54a58c863",
@@ -900,15 +900,15 @@
         "fada110d471f32319536cc1ef02e55e7f12c46386913e930002e35619e165064"
       ],
       "iteration": 0,
-      "iteration_fingerprint": "1e2fd680c03dd499c630fd2d0d67f7824da343d2afa1525b6c0fa0f9d5bd7cae",
+      "iteration_fingerprint": "6c325e672ccc3af5c677dbc18045656aff237785607e13d8f42e0d8b191d8ab3",
       "iteration_id": "flowpilot-model-maturation-routine-closure:0",
       "native_receipt_fingerprints": [
         "03237bcd85c748860e38a5247a8941e8d37a0e87aa0128aade79f13f5ef56283",
-        "144c4c29a81b9d93a59c944bc7db2fee7f8df573c42981f7bb66540adc066256",
-        "1fac9ebf8e171360ef8781045219a89527edf2ca4fd3b5113f9802993bf9e9ff",
-        "5c2e7752d97647a36bfdd4910bebad1a7965a2afcf8dfd4234b4fd9ba03f5e8d",
-        "c80256422f2343ec3c38345b98a91029db30263a19bdbf96aceb8437c3b8c331",
-        "f98541b0fff87c752f01c1f7ce87291d752aa93d369600fb9ddcdaa470ff3a19"
+        "5476286d998e64a7666009fc05918ea781b1c095fa584715ff5b2e749b6c6b8a",
+        "76cafbca6721fd9ae8ae6100a6e1a662bc520cefd8381ec6295f9c14d58c0126",
+        "8e08980718bafea365a239df1bd8c51182a8f2b9470ac50f0391ab322f5cc5b1",
+        "b230ea78af90aee4fce13137bb4dbf2fa1b1a1b8d05987e3e756ebd1ba14572c",
+        "eaa9347db427d8a8dc2ddc2e6331156dc6ea2c19ddb184b68a6d00cccb5ec2e5"
       ],
       "next_actions": [
         "refresh_evidence",
