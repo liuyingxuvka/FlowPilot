@@ -43,6 +43,32 @@ SCENARIOS = (
 )
 
 
+def _portableize(value: Any, *, work_root: Path) -> Any:
+    """Remove machine-local roots from a tracked rehearsal result."""
+
+    if isinstance(value, dict):
+        return {
+            key: _portableize(item, work_root=work_root)
+            for key, item in value.items()
+        }
+    if isinstance(value, list):
+        return [_portableize(item, work_root=work_root) for item in value]
+    if isinstance(value, tuple):
+        return tuple(_portableize(item, work_root=work_root) for item in value)
+    if not isinstance(value, str):
+        return value
+
+    portable = value
+    replacements = (
+        (work_root.resolve(), "<work-root>"),
+        (REPO_ROOT.resolve(), "."),
+    )
+    for path, replacement in replacements:
+        for prefix in (str(path), path.as_posix()):
+            portable = portable.replace(prefix, replacement)
+    return portable
+
+
 def _public_cli_in_process(
     root: Path,
     args: tuple[str, ...],
@@ -138,44 +164,49 @@ def run_rehearsal(work_root: Path) -> dict[str, Any]:
         str(row.get("name") or ""): row.get("ok") is True
         for row in rows
     }
-    return {
-        "schema_version": "flowpilot.milestone_renewal_longitudinal_rehearsal.v1",
-        "ok": all(row.get("ok") is True for row in rows),
-        "evidence_role": "scripted_current_runtime_conformance_not_live_ai_quality",
-        "public_entrypoint": str(rehearsal_cli.ENTRYPOINT.relative_to(REPO_ROOT)).replace("\\", "/"),
-        "execution_boundary": {
-            "public_cli_parser_and_dispatcher_used": True,
-            "current_run_resolution_used": True,
-            "packet_lease_ack_authorized_read_submit_used": True,
-            "runtime_state_and_ledger_persistence_used": True,
-            "repeated_run_artifact_projection_suppressed": True,
-            "suppression_reason": (
-                "Artifact projection is independently covered; suppressing it keeps this behavior rehearsal "
-                "bounded without changing packet, gate, route, or ledger state transitions."
-            ),
+    return _portableize(
+        {
+            "schema_version": "flowpilot.milestone_renewal_longitudinal_rehearsal.v1",
+            "ok": all(row.get("ok") is True for row in rows),
+            "evidence_role": "scripted_current_runtime_conformance_not_live_ai_quality",
+            "public_entrypoint": str(
+                rehearsal_cli.ENTRYPOINT.relative_to(REPO_ROOT)
+            ).replace("\\", "/"),
+            "execution_boundary": {
+                "public_cli_parser_and_dispatcher_used": True,
+                "current_run_resolution_used": True,
+                "packet_lease_ack_authorized_read_submit_used": True,
+                "runtime_state_and_ledger_persistence_used": True,
+                "repeated_run_artifact_projection_suppressed": True,
+                "suppression_reason": (
+                    "Artifact projection is independently covered; suppressing it keeps this behavior rehearsal "
+                    "bounded without changing packet, gate, route, or ledger state transitions."
+                ),
+            },
+            "required_coverage": {
+                "unchanged_renewal": status_by_name.get(
+                    "milestone_unchanged_resume_terminal", False
+                ),
+                "interruption_resume": status_by_name.get(
+                    "milestone_unchanged_resume_terminal", False
+                ),
+                "terminal_empty_plan": status_by_name.get(
+                    "milestone_unchanged_resume_terminal", False
+                ),
+                "changed_suffix": status_by_name.get(
+                    "milestone_changed_suffix", False
+                ),
+                "nested_child_local_closure": status_by_name.get(
+                    "milestone_nested_child", False
+                ),
+                "reviewer_block_prevents_commit": status_by_name.get(
+                    "milestone_reviewer_block", False
+                ),
+            },
+            "scenarios": rows,
         },
-        "required_coverage": {
-            "unchanged_renewal": status_by_name.get(
-                "milestone_unchanged_resume_terminal", False
-            ),
-            "interruption_resume": status_by_name.get(
-                "milestone_unchanged_resume_terminal", False
-            ),
-            "terminal_empty_plan": status_by_name.get(
-                "milestone_unchanged_resume_terminal", False
-            ),
-            "changed_suffix": status_by_name.get(
-                "milestone_changed_suffix", False
-            ),
-            "nested_child_local_closure": status_by_name.get(
-                "milestone_nested_child", False
-            ),
-            "reviewer_block_prevents_commit": status_by_name.get(
-                "milestone_reviewer_block", False
-            ),
-        },
-        "scenarios": rows,
-    }
+        work_root=work_root,
+    )
 
 
 def main() -> int:

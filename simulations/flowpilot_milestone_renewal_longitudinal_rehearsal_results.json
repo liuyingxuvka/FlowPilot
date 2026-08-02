@@ -1001,7 +1001,7 @@
         "unchanged_hard_gate_count": 1
       },
       "ok": true,
-      "root": "C:\\Users\\liu_y\\AppData\\Local\\Temp\\flowpilot_milestone_longitudinal_q8hiil3v\\milestone_unchanged_resume_terminal"
+      "root": "<work-root>\\milestone_unchanged_resume_terminal"
     },
     {
       "commands": [
@@ -2622,7 +2622,7 @@
         "terminal": "terminal_complete"
       },
       "ok": true,
-      "root": "C:\\Users\\liu_y\\AppData\\Local\\Temp\\flowpilot_milestone_longitudinal_q8hiil3v\\milestone_changed_suffix"
+      "root": "<work-root>\\milestone_changed_suffix"
     },
     {
       "commands": [
@@ -3309,14 +3309,14 @@
         "next_action_after_local_acceptance": "dispatch_current_role"
       },
       "ok": true,
-      "root": "C:\\Users\\liu_y\\AppData\\Local\\Temp\\flowpilot_milestone_longitudinal_q8hiil3v\\milestone_nested_child"
+      "root": "<work-root>\\milestone_nested_child"
     },
     {
       "command": "python -m pytest tests/test_flowpilot_recursive_route_execution_runtime.py::FlowPilotRecursiveRouteExecutionRuntimeTests::test_reviewer_block_keeps_milestone_and_frontier_uncommitted -q",
       "evidence_role": "focused_direct_runtime_regression",
       "name": "milestone_reviewer_block",
       "ok": true,
-      "output": ".                                                                        [100%]\n1 passed in 0.46s"
+      "output": ".                                                                        [100%]\n1 passed in 0.32s"
     }
   ],
   "schema_version": "flowpilot.milestone_renewal_longitudinal_rehearsal.v1"

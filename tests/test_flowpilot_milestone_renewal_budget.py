@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import importlib
+import json
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -12,9 +14,31 @@ if str(SIMULATIONS) not in sys.path:
     sys.path.insert(0, str(SIMULATIONS))
 
 budget = importlib.import_module("run_flowpilot_milestone_renewal_budget_checks")
+longitudinal = importlib.import_module(
+    "run_flowpilot_milestone_renewal_longitudinal_rehearsal"
+)
 
 
 class FlowPilotMilestoneRenewalBudgetTests(unittest.TestCase):
+    def test_longitudinal_result_removes_machine_local_roots(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="flowpilot_longitudinal_portable_") as tmp:
+            work_root = Path(tmp)
+            result = longitudinal._portableize(
+                {
+                    "root": str(work_root / "milestone_changed_suffix"),
+                    "repo": str(ROOT / "simulations"),
+                },
+                work_root=work_root,
+            )
+
+        serialized = json.dumps(result, sort_keys=True)
+        self.assertEqual(
+            result["root"],
+            str(Path("<work-root>") / "milestone_changed_suffix"),
+        )
+        self.assertNotIn(str(work_root.resolve()), serialized)
+        self.assertNotIn(str(ROOT.resolve()), serialized)
+
     def test_large_gate_keeps_authorized_result_reads_bounded(self) -> None:
         case = budget._build_case(100, 99)
 
