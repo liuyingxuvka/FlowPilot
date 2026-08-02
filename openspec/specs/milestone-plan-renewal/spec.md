@@ -352,4 +352,3 @@ validation non-successful.
   unresolved
 - **THEN** its consumer SHALL NOT launch against a historical result file
 - **AND** the parent validation SHALL remain visibly non-successful.
-
