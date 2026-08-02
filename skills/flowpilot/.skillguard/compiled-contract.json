@@ -1,6 +1,6 @@
 {
   "artifacts": [],
-  "check_declarations_hash": "0A9C53804C453C2999D3C1F4A6EC0D6A16E36553DE1B690BFF476C843A87CE42",
+  "check_declarations_hash": "52636E30DA879D6CAD249BDA303B1FA68A40DC438D26F4343AD11F63A897E6A4",
   "checks": [
     {
       "args": [
@@ -480,7 +480,7 @@
       "maintenance_unit_id": "unit:flowpilot",
       "member_skill_id": "flowpilot",
       "owner_declaration_hash": "sha256:474dfaf907aeb855ed79b469fd37eb332d5b352b8bb7d4390c8fe4a255cb1bf5",
-      "owner_input_projection_hash": "sha256:d8f9588aa64472770489b831bb01b50abafed4f470812763975b0e4a62b23cc8",
+      "owner_input_projection_hash": "sha256:5dba42066632a0196f91e5e7484b8812045d028c4dd9e4e6159affcacdcc9685",
       "projection_declaration_hash": "sha256:df7d32c61937165116a6f8c4b76c847bb14ebdec6ac6b4a93c92b8b6f194b7c1",
       "semantic_check_id": "semantic:flowpilot-final-receipt",
       "target_input_role_ids": [],
@@ -1357,7 +1357,7 @@
         "classification_rule_ids": [
           "skillguard.content_role_classifier.current:runtime_source"
         ],
-        "component_hash": "sha256:30e548dd9af11bc9e2e67f576c135b6f452de10516b25a31c6b56c7c32be27b1",
+        "component_hash": "sha256:1fdbf807c9781a2e81c9ce1b0fa05cc14f4a97d05500cb58d31a3d4102c57f94",
         "component_id": "component:runtime_source:20e9d92c6d12b1bf",
         "consumer_ids": [
           "owner:flowpilot-final-receipt"
@@ -1484,7 +1484,7 @@
         "classification_rule_ids": [
           "skillguard.content_role_classifier.current:test_dev"
         ],
-        "component_hash": "sha256:996089b39709072210975cf9c9ad447bff3ba0d0fac1b197d6518d9272757566",
+        "component_hash": "sha256:49a1f168289f5def2f21566770cb68cb236a54e0b1f437f47721e5987548e4d6",
         "component_id": "component:test_dev:ad253480b32e859b",
         "consumer_ids": [
           "owner:flowpilot-final-receipt"
@@ -1576,7 +1576,7 @@
       "owner_cycles": [],
       "unmapped_paths": []
     },
-    "impact_graph_hash": "sha256:08396727d795da2b404891008bfa839425fc2eb523809541153bb57e9be4d75d",
+    "impact_graph_hash": "sha256:447a766a8d27731f4673e6c63619ec262be35718c9588da5e31b6acc601c0918",
     "inventory": [
       {
         "classification_rule_id": "skillguard.content_role_classifier.current:runtime_source",
@@ -1853,7 +1853,7 @@
       },
       {
         "classification_rule_id": "skillguard.content_role_classifier.current:runtime_source",
-        "content_hash": "sha256:b2ad91e93e9e904206e922aaa557a0bc51eabe03c756f37c3961254ca8cee6bc",
+        "content_hash": "sha256:e50c1cbbb310221964cebdf3cac386ea86dc2eb5b711efdb7b543f436ab1a65d",
         "install_disposition": "source_only",
         "path": "simulations/run_flowpilot_milestone_renewal_longitudinal_rehearsal.py",
         "role": "runtime_source"
@@ -5640,7 +5640,7 @@
       },
       {
         "classification_rule_id": "skillguard.content_role_classifier.current:test_dev",
-        "content_hash": "sha256:d65f2718b5d73f5780616069a16fd34435399c42a375039ae022b964f8e4e5bd",
+        "content_hash": "sha256:1e6962f2ee2e34b621208a8974c3da0a63ef18aee91d96bc53926324f2513e2d",
         "install_disposition": "source_only",
         "path": "tests/test_flowpilot_milestone_renewal_budget.py",
         "role": "test_dev"
@@ -5688,7 +5688,7 @@
         "role": "test_dev"
       }
     ],
-    "inventory_hash": "sha256:0162b712a15aae85d233cc15ab1b582b4673ce5593ba2afcd18f9ce69f365487",
+    "inventory_hash": "sha256:0fe378b6b403a17c2cb4537ed0a30aefb62ef0caccd7b1aa8e61911c8f9077f8",
     "member_root_path": "skills/flowpilot",
     "owner_receipt_root_ref": {
       "path_token": "owner_evidence_root",
@@ -5846,7 +5846,7 @@
           }
         ],
         "owner_declaration_hash": "sha256:474dfaf907aeb855ed79b469fd37eb332d5b352b8bb7d4390c8fe4a255cb1bf5",
-        "owner_input_projection_hash": "sha256:d8f9588aa64472770489b831bb01b50abafed4f470812763975b0e4a62b23cc8",
+        "owner_input_projection_hash": "sha256:5dba42066632a0196f91e5e7484b8812045d028c4dd9e4e6159affcacdcc9685",
         "target_input_role_ids": []
       },
       {
@@ -6084,7 +6084,7 @@
     "schema_version": "skillguard.content_impact_plan.current",
     "unknown_mapping_disposition": "block"
   },
-  "contract_hash": "8563200D91F23A2F99A674B717437056D309AB3DDFED97EE30A5BE689942B741",
+  "contract_hash": "880F140CA2BAEFA68E97F0EC3843D3642A93B2657BDB6BD3CD5B1DB178901818",
   "depth_profile": {
     "claim_boundary": "FlowPilot owns the meaning and execution of every declared check. SkillGuard only enforces inventory equality, single execution ownership, current terminal receipt reconciliation, and consumption by the one enforced maintenance closure; it does not execute or reinterpret the FlowPilot workflow.",
     "enforcement_level": "enforced",
@@ -6521,7 +6521,7 @@
     "implementation:simulations/run_flowpilot_control_plane_resource_boundedness_checks.py": "E10971A4FF7A1679CD227452FC86C668D6E7C2064CEDAF1AE8823CFF7CA6214E",
     "implementation:simulations/run_flowpilot_milestone_renewal_affected_checks.py": "7E8574ACD44B1DA76D1131A09B5D0808FF3FD299CF33335D9C330F947D2ACDC4",
     "implementation:simulations/run_flowpilot_milestone_renewal_budget_checks.py": "3F633EA23188230DA25DB411667C4F9E6A51939AB3244650B091C65DE0953C22",
-    "implementation:simulations/run_flowpilot_milestone_renewal_longitudinal_rehearsal.py": "B2AD91E93E9E904206E922AAA557A0BC51EABE03C756F37C3961254CA8CEE6BC",
+    "implementation:simulations/run_flowpilot_milestone_renewal_longitudinal_rehearsal.py": "E50C1CBBB310221964CEBDF3CAC386EA86DC2EB5B711EFDB7B543F436AB1A65D",
     "implementation:simulations/run_flowpilot_ordinary_resource_discovery_checks.py": "595210F698A31F66A4F53A60494114258B0947FA2012663B9A8BFC7343AA01D4",
     "implementation:simulations/run_flowpilot_planning_quality_checks.py": "AA2556840477A02337F3013068758F788413FABB764B2C92466466302A0FB878",
     "implementation:simulations/run_flowpilot_route_mutation_activation_checks.py": "9F09CDEFB098EDECFAC056E47324EE351BEF1D5F6F18931D0EB32416FFB5029C",
@@ -6531,7 +6531,7 @@
     "implementation:tests/test_flowpilot_control_plane_resource_boundedness_model.py": "D0E7D9301DFAC36C0529BB478A180C6EFA38BAA8553B743FC2D60DFAC4A5DE0B",
     "implementation:tests/test_flowpilot_high_standard_control_flow.py": "15A885826AFC9329F09E4AC59A9E2894BD24BAC2751A5D664AB77D37A8A010B3",
     "implementation:tests/test_flowpilot_milestone_plan_renewal_contracts.py": "ECDA11758FA2B424C945A9A96BDBA83A61B18741968518D09AF54C6A08297005",
-    "implementation:tests/test_flowpilot_milestone_renewal_budget.py": "D65F2718B5D73F5780616069A16FD34435399C42A375039AE022B964F8E4E5BD",
+    "implementation:tests/test_flowpilot_milestone_renewal_budget.py": "1E6962F2EE2E34B621208A8974C3DA0A63EF18AEE91D96BC53926324F2513E2D",
     "implementation:tests/test_flowpilot_ordinary_resource_discovery.py": "52206652E2F07596C19D51F4C5B45AED745B86FF76472E37A9F1E373E439F0E0",
     "implementation:tests/test_flowpilot_parent_entry_return_path.py": "B9D4C84516D7B827B4875DF799B1AB5F950F8AB41C5EBAA0B5BA962A1F61E228",
     "implementation:tests/test_flowpilot_recursive_route_execution_runtime.py": "3F2B25E1B1CE8E4A503DAF88F11732F0ED1C10A1154B4C608F78C80DE4FE0CAF",
