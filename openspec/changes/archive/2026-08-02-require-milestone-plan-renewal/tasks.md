@@ -62,7 +62,7 @@
 - [x] 7.4 Refresh FlowPilot's SkillGuard contract source, compiled contract, and exact check manifest after source and check identities are frozen.
 - [x] 7.5 Preserve the existing terminal 228/228 runtime baseline and validate the current test-reuse repair with focused cases only; per the explicit release decision, do not launch a second full suite and keep that evidence boundary visible.
 - [x] 7.6 Sync the validated clean consumer projection and run installed currentness plus target-owned installed smoke checks separately.
-- [ ] 7.7 Run OpenSpec strict validation and record final source, model, SkillGuard, installation, Git, tag, and publication identities separately.
+- [x] 7.7 Run OpenSpec strict validation and record final source, model, SkillGuard, installation, Git, tag, and publication identities separately.
 - [x] 7.8 Perform the predictive-KB postflight check and record one structured observation only if this work exposed a reusable lesson or route gap (event `7275fb7d-a98f-41e1-bda7-40dc2710e23a`, terminal receipt verified).
 - [x] 7.9 Preserve the accepted frozen model-regression baseline and its immutable logs without overwriting parallel results; per the explicit release decision, do not relaunch those model owners for the later test-reuse repair.
 
@@ -98,5 +98,7 @@
 - [x] 10.3 Run one current-version public-launcher longitudinal rehearsal covering unchanged renewal, changed suffix, nested child, Reviewer block, interruption/resume, and terminal empty plan; this is not an A/B experiment.
 - [x] 10.4 Measure four AI submissions, two local system steps, retries, full packet/context and evidence-read growth, and stage/total gate latency at 10/50/100 top-level milestones; record the accepted lightweight budget in `docs/flowpilot_milestone_renewal_budget.md`.
 - [x] 10.5 Refresh the validated consumer installation, confirm the milestone renewal path is enabled as the sole current behavior, and verify source/install parity.
-- [ ] 10.6 Preserve peer work, commit only owned integrated files locally, rerun OpenSpec/FlowGuard/SkillGuard closure, and report source/install/model/test/Git identities separately.
-- [ ] 10.7 Update `VERSION`, `CHANGELOG.md`, and public release notes; create an immutable new commit/tag/GitHub Release, push the current branch and `main`, and verify remote branch, tag, and Release identities.
+- [x] 10.6 Preserve peer work, commit only owned integrated files locally, rerun OpenSpec/FlowGuard/SkillGuard closure, and report source/install/model/test/Git identities separately.
+- [x] 10.7 Update `VERSION`, `CHANGELOG.md`, and public release notes; create an immutable new commit/tag/GitHub Release, push the current branch and `main`, and verify remote branch, tag, and Release identities.
+
+Release identity: source/tag commit `d9d2880d6ff5ada81b3f022e7bfa29bd197baa04`; tag `v0.14.0`; GitHub Release `https://github.com/liuyingxuvka/FlowPilot/releases/tag/v0.14.0`. The accepted frozen runtime baseline remains 228/228 passed; the later reuse-policy repair used 4 focused tests and did not launch a second full suite.
