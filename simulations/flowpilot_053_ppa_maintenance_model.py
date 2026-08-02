@@ -16,6 +16,7 @@ import hashlib
 import json
 from pathlib import Path
 import re
+from typing import Any, Mapping
 
 from flowguard import (
     BehaviorCommitmentLedger,
@@ -219,7 +220,15 @@ PRIMARY_PATH_SPECS = {
         "entrypoint": "run_flowpilot_model_test_alignment_checks.main",
         "code_contract": "flowpilot_model_test_alignment.runtime_path_evidence",
         "obligation": "flowpilot_model_test_alignment.current_runtime_path_evidence",
-        "result_path": "tmp/flowguard_background/targeted_mta_tests_current.meta.json",
+        "result_path": "simulations/flowpilot_model_test_alignment_results.json",
+        "proof_kind": "strict_model_test_alignment_result",
+        "proof_command": (
+            "python simulations/run_flowpilot_model_test_alignment_checks.py "
+            "--evidence-manifest "
+            "tmp/test_results/flowpilot_acceptance_testmesh_preclosure_manifest.json "
+            "--evidence-scope done --json-out "
+            "simulations/flowpilot_model_test_alignment_results.json"
+        ),
     },
     MILESTONE_PLAN_RENEWAL_COMMITMENT_ID: {
         "entrypoint": "flowpilot_core_runtime.runtime._apply_staged_pm_decision_gate",
@@ -266,12 +275,48 @@ def _portable_proof_command(command: str) -> tuple[str, bool]:
     return text, True
 
 
+def strict_model_test_alignment_result_checks(
+    payload: Mapping[str, Any],
+    *,
+    current_fingerprint: str,
+) -> dict[str, bool]:
+    """Return the shared fail-closed checks for live strict MTA evidence."""
+
+    execution = payload.get("execution_evidence")
+    execution = execution if isinstance(execution, Mapping) else {}
+    return {
+        "result_ok": payload.get("ok") is True,
+        "done_or_stronger_scope": payload.get("claim_scope")
+        in {"done", "release", "publish"},
+        "evidence_passed": payload.get("evidence_status") == "passed",
+        "execution_bundle_ok": execution.get("ok") is True,
+        "snapshot_fingerprint_matches": execution.get(
+            "snapshot_fingerprint_matches"
+        )
+        is True,
+        "manifest_matches_current": execution.get("manifest_snapshot_fingerprint")
+        == current_fingerprint,
+        "expected_matches_current": execution.get("expected_source_fingerprint")
+        == current_fingerprint,
+        "no_execution_failures": not execution.get("failures"),
+    }
+
+
+def _current_source_fingerprint() -> str:
+    # Import lazily so structural unit proof never needs to materialize or read
+    # live closure evidence.
+    from scripts.test_tier.source_fingerprint import source_fingerprint
+
+    return source_fingerprint()
+
+
 def _result_proof(
     *,
     primary_path_id: str,
     obligation_id: str,
     result_path: str,
     proof_command: str = "",
+    proof_kind: str = "",
 ) -> ProofArtifactRef:
     absolute = ROOT / result_path
     payload = {}
@@ -293,11 +338,19 @@ def _result_proof(
         and payload.get("source_stable_during_execution") is True
         and not payload.get("missing_obligation_ids")
     )
-    passed = payload.get("ok") is True or native_owner_passed or (
-        payload.get("status") == "passed"
-        and payload.get("exit_code") == 0
-        and payload.get("source_fingerprint_current") is True
-    )
+    strict_checks: dict[str, bool] = {}
+    if proof_kind == "strict_model_test_alignment_result":
+        strict_checks = strict_model_test_alignment_result_checks(
+            payload,
+            current_fingerprint=_current_source_fingerprint(),
+        )
+        passed = all(strict_checks.values())
+    else:
+        passed = payload.get("ok") is True or native_owner_passed or (
+            payload.get("status") == "passed"
+            and payload.get("exit_code") == 0
+            and payload.get("source_fingerprint_current") is True
+        )
     fingerprints = {}
     if absolute.is_file():
         fingerprints[result_path] = "sha256:" + hashlib.sha256(
@@ -333,6 +386,12 @@ def _result_proof(
         current=passed,
         route_evidence_current=passed,
         route_gap_codes=tuple(route_gap_codes),
+        metadata={
+            "proof_kind": proof_kind,
+            "strict_checks": strict_checks,
+        }
+        if proof_kind
+        else {},
     )
 
 
@@ -347,6 +406,7 @@ def _primary_path(commitment_id: str) -> PrimaryPathContract:
         obligation_id=spec["obligation"],
         result_path=spec["result_path"],
         proof_command=str(spec.get("proof_command") or ""),
+        proof_kind=str(spec.get("proof_kind") or ""),
     )
     return PrimaryPathContract(
         business_path_id=authority.primary_path_id,

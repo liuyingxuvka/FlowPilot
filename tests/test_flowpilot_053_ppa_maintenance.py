@@ -29,15 +29,19 @@ class FlowPilot053PPAMaintenanceTests(unittest.TestCase):
         """Keep structural unit proof separate from live closure evidence.
 
         The exact PPA maintenance owner is part of the all-tier evidence
-        bundle, while its live matrix result is produced later by the closure
-        runner.  These unit tests exercise the PPA contract shape and must not
-        manufacture that live result or depend on a stale workspace artifact.
+        bundle, while its live matrix and strict-MTA results are produced later
+        by the closure runner.  These unit tests exercise the PPA contract shape
+        and must not manufacture those live results or depend on stale workspace
+        artifacts.
         """
         real_result_proof = model._result_proof
 
         def structural_result_proof(**kwargs: object) -> ProofArtifactRef:
             result_path = str(kwargs.get("result_path", ""))
-            if result_path != "simulations/flowpilot_current_contract_cartesian_matrix_results.json":
+            if result_path not in {
+                "simulations/flowpilot_current_contract_cartesian_matrix_results.json",
+                "simulations/flowpilot_model_test_alignment_results.json",
+            }:
                 return real_result_proof(**kwargs)
             obligation_id = str(kwargs.get("obligation_id", ""))
             return ProofArtifactRef(
@@ -211,6 +215,13 @@ class FlowPilot053PPAMaintenanceTests(unittest.TestCase):
 
         self.assertTrue(report["ok"], report)
         self.assertTrue(report["checks"]["snapshot_fingerprint_matches"])
+        self.assertEqual(
+            report["checks"],
+            model.strict_model_test_alignment_result_checks(
+                current_payload,
+                current_fingerprint=current,
+            ),
+        )
 
         retired_v3_payload = {
             **current_payload,
@@ -228,6 +239,59 @@ class FlowPilot053PPAMaintenanceTests(unittest.TestCase):
         self.assertFalse(retired_report["ok"])
         self.assertFalse(
             retired_report["checks"]["snapshot_fingerprint_matches"]
+        )
+
+        stale_payload = {
+            **current_payload,
+            "execution_evidence": {
+                **current_payload["execution_evidence"],
+                "manifest_snapshot_fingerprint": "stale",
+                "expected_source_fingerprint": "stale",
+            },
+        }
+        stale_checks = model.strict_model_test_alignment_result_checks(
+            stale_payload,
+            current_fingerprint=current,
+        )
+        self.assertFalse(all(stale_checks.values()))
+        self.assertFalse(stale_checks["manifest_matches_current"])
+        self.assertFalse(stale_checks["expected_matches_current"])
+
+    def test_mta_primary_path_uses_canonical_strict_result_not_orphan_tmp_receipt(
+        self,
+    ) -> None:
+        spec = model.PRIMARY_PATH_SPECS[
+            "commit.model_test_alignment_uses_current_runtime_path_evidence"
+        ]
+
+        self.assertEqual(
+            spec["result_path"],
+            "simulations/flowpilot_model_test_alignment_results.json",
+        )
+        self.assertEqual(spec["proof_kind"], "strict_model_test_alignment_result")
+        self.assertIn("--evidence-scope done", spec["proof_command"])
+        self.assertNotIn("targeted_mta_tests_current", json.dumps(spec, sort_keys=True))
+
+    def test_primary_path_result_family_has_no_ephemeral_or_missing_member(
+        self,
+    ) -> None:
+        result_paths = {
+            str(spec["result_path"])
+            for spec in model.PRIMARY_PATH_SPECS.values()
+        }
+
+        self.assertTrue(result_paths)
+        self.assertTrue(
+            all(path.startswith("simulations/") for path in result_paths),
+            result_paths,
+        )
+        self.assertFalse(
+            any("tmp/flowguard_background" in path for path in result_paths),
+            result_paths,
+        )
+        self.assertEqual(
+            [],
+            sorted(path for path in result_paths if not (ROOT / path).is_file()),
         )
 
     def test_primary_path_authority_rejects_old_field_and_duplicate_primary_paths(self) -> None:

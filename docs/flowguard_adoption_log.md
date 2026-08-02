@@ -30690,3 +30690,63 @@ Evidence supports the local repository and installed FlowPilot skill for the mat
 ### Next Actions
 - python -m flowguard project-audit --root . --json
 - Rerun affected FlowGuard model checks and focused tests before broad confidence.
+## flowpilot-v0140-ppa-mta-proof-owner-model-miss - Canonical strict-MTA PPA evidence
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: the frozen v0.14.0 all-tier run terminated all 228 owners but
+  one exact MTA evidence owner failed because PPA attempted to read an orphan
+  `tmp/flowguard_background/targeted_mta_tests_current.meta.json` proof.
+- Status: focused model-miss closure complete; broad release evidence remains
+  owned by the restarted frozen validation sequence.
+- Skill decision: used Predictive KB Preflight, FlowGuard Existing Model
+  Preflight, Model Miss Review, Model-Test Alignment, and TestMesh ownership.
+- Date: 2026-08-02
+
+### Miss Classification And Backpropagation
+
+- Behavior plane: validation and evidence process.
+- Primary owner: `.flowguard/flowpilot_053_ppa_maintenance`, commitment
+  `commit.model_test_alignment_uses_current_runtime_path_evidence`.
+- Miss type: `evidence_overclaimed` with a `code_boundary_mismatch` in the
+  structural/live proof split. The product milestone-renewal runtime was not
+  implicated.
+- Previous claim: PPA structural tests were described as independent of stale
+  workspace artifacts while one PPA path still depended on an undeclared
+  machine-local targeted-MTA receipt.
+- Observed failure: all-tier owner
+  `mta_evidence_test_flowpilot_053_ppa_maintenance_552a6ce2355c` failed two PPA
+  assertions; the other 227 owners terminated successfully and the supervisor
+  reported no final source-currentness failure.
+- Supported cause: the structural fixture projected only the current-contract
+  matrix path, while the MTA primary path named an ephemeral result with no
+  repository producer. A clean worktree therefore had no valid proof.
+- Would have failed if: the same PPA owner executed from any clean worktree
+  without a historical targeted-MTA receipt, which the release worktree did.
+
+### Generalized Case And Owner Repair
+
+- The MTA primary path now consumes the canonical
+  `simulations/flowpilot_model_test_alignment_results.json` owner result.
+- PPA and its closure runner share one fail-closed predicate for done-or-stronger
+  scope, passing evidence, current execution fingerprints, snapshot match, and
+  zero execution failures.
+- Structural all-tier tests project both live matrix and strict-MTA paths as
+  `structural_shape_only`; those projections cannot become live PPA evidence.
+- Same-class scan: every declared PPA result path must be a present canonical
+  `simulations/` member, and no `tmp/flowguard_background` path is permitted.
+- Old-path disposition: the orphan targeted-MTA path is directly replaced by
+  the current canonical owner. No alias, fallback, compatibility reader, or
+  dual authority is retained.
+
+### Focused Closure Evidence
+
+- PASS: all 16 PPA maintenance tests, including current/stale strict-MTA
+  predicate parity and the same-class result-family scan.
+- PASS: the exact four-test MTA evidence-owner command that failed in the
+  frozen run.
+- PASS: all eleven PPA primary-path result members are present and none uses an
+  ephemeral background-run path.
+- Claim boundary: this closes the PPA/MTA evidence-owner miss and same-class
+  orphan-path family. It does not replace the restarted all-tier, adversarial,
+  release, closure, final-confidence, model-authority, SkillGuard,
+  installation, Git, tag, or publication receipts.

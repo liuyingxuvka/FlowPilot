@@ -10,7 +10,7 @@ It is orientation only; it is not validation evidence.
 - Code surfaces: 1153
 - Test commands: 529
 - Evidence summaries: 5
-- Known-bad/risk labels surfaced: 2859
+- Known-bad/risk labels surfaced: 2861
 
 ## Area Map
 
@@ -22,7 +22,7 @@ It is orientation only; it is not validation evidence.
 | `material` | 1 | 0 | 11 | 13 | 16 |
 | `model-mesh` | 3 | 0 | 7 | 2 | 87 |
 | `model-test-alignment` | 5 | 0 | 16 | 8 | 79 |
-| `other` | 98 | 9 | 321 | 59 | 1530 |
+| `other` | 98 | 9 | 321 | 59 | 1532 |
 | `packet` | 10 | 2 | 210 | 199 | 170 |
 | `prompt-card` | 3 | 0 | 4 | 0 | 80 |
 | `review` | 4 | 0 | 4 | 3 | 78 |
@@ -43,7 +43,7 @@ Completion and readiness claims still need the owning FlowGuard checks, tests, r
 | --- | --- | --- | --- | --- | ---: |
 | `model_test_alignment` | `simulations/flowpilot_model_test_alignment_results.json` | True | `` | `` | 0 |
 | `coverage_sweep` | `simulations/flowpilot_full_model_coverage_sweep_results.json` | True | `` | `` | 135 |
-| `model_maturation` | `simulations/flowpilot_model_maturation_results.json` | True | `model_maturation_scoped_claim` | `full` | None |
+| `model_maturation` | `simulations/flowpilot_model_maturation_results.json` | False | `current_runtime_gap` | `blocked` | None |
 | `model_mesh` | `simulations/flowpilot_model_mesh_results.json` | True | `` | `` | None |
 | `model_hierarchy` | `simulations/flowpilot_model_hierarchy_results.json` | True | `` | `` | None |
 

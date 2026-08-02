@@ -87,6 +87,7 @@
 - [ ] 9.5 Expand the FlowPilot SkillGuard declared checks to own the new renewal model, production conformance, affected tests, and current evidence closure; run the final supervised validation under the current contract identity.
 - [x] 9.6 Make the bounded background supervisor fail closed when a child disappears or exceeds its deadline without an immutable terminal receipt; preserve cleanup-unconfirmed as a release blocker and add model plus unit regressions.
 - [x] 9.7 Bind runtime evidence consumers to their exact successful producer owners, exclude producer result files from source-currentness identity, and reject unresolved or failed producer dependencies before consumer launch.
+- [x] 9.8 Replace the orphan PPA targeted-MTA receipt path with the canonical strict MTA result, share one fail-closed currentness predicate between PPA and its runner, and keep all-tier structural proof explicitly separate from closure evidence.
 
 ## 10. Lightweight Execution and Enablement
 
