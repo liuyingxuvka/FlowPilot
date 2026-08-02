@@ -192,6 +192,43 @@ def run_foreground(commands: Iterable[TierCommand]) -> list[dict[str, Any]]:
     return results
 
 
+def _check_skillguard_contract_currentness() -> dict[str, Any]:
+    """Fail before an all-tier launch when its governed contract is stale."""
+
+    command = [
+        sys.executable,
+        str(ROOT / "scripts" / "refresh_flowpilot_skillguard_contract.py"),
+        "--check",
+    ]
+    try:
+        completed = subprocess.run(
+            command,
+            cwd=ROOT,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=180,
+            **_hidden_process_kwargs(),
+        )
+    except subprocess.TimeoutExpired:
+        return {
+            "ok": False,
+            "failure": "skillguard_contract_preflight_timeout",
+        }
+    try:
+        report = json.loads(completed.stdout) if completed.stdout.strip() else {}
+    except json.JSONDecodeError:
+        report = {}
+    ok = completed.returncode == 0 and report.get("ok") is True
+    return {
+        "ok": ok,
+        "failure": "" if ok else "skillguard_contract_not_current_before_all",
+        "exit_code": completed.returncode,
+        "report": report,
+        "stderr": completed.stderr.strip(),
+    }
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--tier", choices=tier_names(), default="fast")
@@ -293,6 +330,25 @@ def main(argv: Sequence[str] | None = None) -> int:
             for tier in tier_names():
                 print(tier)
         return 0
+
+    if not args.verify_background and not args.dry_run and args.tier == "all":
+        contract_preflight = _check_skillguard_contract_currentness()
+        if not contract_preflight["ok"]:
+            payload = {
+                "ok": False,
+                "tier": args.tier,
+                "phase": "preflight",
+                "failures": [contract_preflight["failure"]],
+                "skillguard_contract": contract_preflight,
+            }
+            if args.json:
+                print(json.dumps(payload, indent=2, sort_keys=True))
+            else:
+                print(
+                    "All-tier launch blocked before test execution: "
+                    + str(contract_preflight["failure"])
+                )
+            return 1
 
     commands = commands_for_tier(args.tier)
     plan = plan_for_tier(args.tier, background_dir=args.background_dir)

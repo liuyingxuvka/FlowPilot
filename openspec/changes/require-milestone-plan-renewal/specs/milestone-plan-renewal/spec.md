@@ -299,6 +299,39 @@ cleanup SHALL remain visibly blocked.
 - **AND** it SHALL NOT wait forever or promote prior progress as evidence
 - **AND** cleanup-unconfirmed status SHALL block every release claim.
 
+### Requirement: One frozen baseline remains selectively reusable
+The current impact planner and final verifier SHALL use the same strict
+FlowGuard reuse-ticket validity rule. An unchanged owner SHALL be reusable only
+when its immutable producer receipt is a terminal pass with confirmed cleanup,
+its producer and current execution owners match, and its complete verifier
+fingerprints match. A rejected ticket SHALL be classified before execution as
+an affected owner and SHALL NOT trigger an automatic full-suite fallback.
+
+#### Scenario: Exact unchanged owner follows a successful 228-owner baseline
+- **WHEN** an earlier frozen baseline contains a current terminal proof for the
+  same execution owner and all verifier fingerprints still match
+- **THEN** the impact plan SHALL reuse that owner without executing it again
+- **AND** final verification SHALL accept the same ticket with the same rule.
+
+#### Scenario: Reuse proof is incomplete or its identity changed
+- **WHEN** the producer receipt, terminal status, cleanup proof, execution
+  owner, or any required verifier fingerprint is missing or changed
+- **THEN** the planner SHALL select only that owner and its affected dependency
+  closure for execution
+- **AND** it SHALL NOT convert the condition into a run-all fallback.
+
+### Requirement: All-tier execution checks contract authority before launch
+A real `all`-tier execution SHALL check FlowPilot's current SkillGuard contract
+and depth authority before the 228 command owners are built or launched. A
+stale or blocked contract SHALL stop in preflight. Dry-run planning and
+read-only receipt verification SHALL remain non-executing.
+
+#### Scenario: SkillGuard contract changed after the prior baseline
+- **WHEN** a caller requests a real `all`-tier launch and the current contract
+  check does not pass
+- **THEN** FlowPilot SHALL return a visible preflight failure before launching
+  any validation owner.
+
 ### Requirement: Runtime evidence consumers bind successful producer owners
 Runtime-generated reports and receipts SHALL remain evidence outputs rather
 than source-authority inputs. A consumer that reads such an output SHALL

@@ -33,6 +33,14 @@
 
 ### Validation boundary
 
+- Upgraded selective-result reuse to the current FlowGuard producer-receipt,
+  terminal-cleanup, execution-owner, and verifier-fingerprint contract. The
+  planner and final verifier now use the same rule, so an exact prior pass is
+  reused instead of being rejected only after a second suite starts.
+- Added an all-tier startup preflight that blocks before the 228 validation
+  owners are built or launched when the SkillGuard contract is stale. Later
+  changes execute only their mapped affected-owner closure; there is no
+  automatic run-all fallback.
 - Added executable route-replanning, planning-granularity, and route-mutation
   hazards; Model-Test Alignment, Acceptance TestMesh, PPA/BCL, SkillGuard, and
   final-confidence consume the same current hard-gate owner.

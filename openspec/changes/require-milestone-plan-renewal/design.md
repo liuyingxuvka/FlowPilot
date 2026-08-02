@@ -261,6 +261,19 @@ consumer is forced to execute whenever one of its producer owners executes.
 This extends the existing stage barriers with explicit evidence semantics
 without adding another validation runner or authority.
 
+### 18. Reuse one frozen baseline without late validation disagreement
+
+The impact planner and final verifier call the same current FlowGuard
+`TestResultReuseTicket` gap validator. Exact unchanged owner evidence carries
+its immutable producer receipt, terminal-pass and cleanup status, identical
+producer/current execution owner, and the complete verifier fingerprint set.
+Any ticket rejected by that validator is classified as `execute` during
+planning, never first accepted and then rejected after the suite. A real
+`all`-tier launch also checks the current SkillGuard contract before building
+or launching the 228 command owners. Therefore one successful frozen baseline
+remains reusable and later source changes run only their exact affected owner
+closure.
+
 ## Risks / Trade-offs
 
 - **More review work at major milestones** → The gate applies only to

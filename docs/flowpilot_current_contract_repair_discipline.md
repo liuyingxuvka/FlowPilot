@@ -190,25 +190,38 @@ Timeout or interruption evidence is invalid until the exact descendant
 process tree is confirmed empty. Generated outputs never refresh source
 authority or recursively invalidate their own producers.
 
+Planning and final verification apply the same current FlowGuard reuse-ticket
+validator. A reusable ticket names the immutable producer receipt, proves a
+terminal pass and confirmed descendant cleanup, keeps the producer and current
+execution owner identical, and compares the command, test source, tested
+artifact, dependency, environment, result, and coverage fingerprints. If that
+single validator rejects a ticket, the planner never labels it reusable and
+the exact affected owner executes instead. This prevents a late verifier
+failure from turning an otherwise valid 228-owner baseline into a second
+full-suite run.
+
 Shared execution infrastructure is owned separately from the behavior payload
 it launches. A payload command that uses `run_flowguard_background.py` keeps
 the wrapper itself and the nested model/test import closure in its owner
 identity, but it does not inherit the wrapper's test-tier, impact-planning, or
 artifact-classification imports. Those imports belong to the current
-`test_tier_runner` proof. When replacing a former over-broad identity, an
-existing payload proof may be retained only by a strict scope-reduction proof:
-the command, environment, obligations, evidence subjects, and every retained
-input fingerprint are identical; the current inputs are a proper subset; and
-every removed input is an actual wrapper import transferred to the exact
-infrastructure owner. This is the single current ownership rule, not a legacy
-identity reader or fallback.
+`test_tier_runner` proof. A former over-broad identity is not silently
+projected into a current producer identity: that exact affected payload owner
+executes once under its corrected identity, while every already-exact sibling
+proof remains reusable.
 
-A full validation is reserved for one stable integration/release snapshot or
-for a change to the explicitly declared shared validation control plane. Run
-focused affected checks while code is still changing. Do not repeatedly rerun
-the full `all`, adversarial, Meta, or Capability owners after unrelated edits
-or after a FlowGuard installation upgrade that is not part of their declared
-identity.
+Before a real `all`-tier launch, the public runner checks the current
+SkillGuard contract and depth authority. A stale contract blocks before the
+228 commands are even built or launched. Dry-run planning and read-only
+verification remain read-only and do not invoke this execution preflight.
+
+A full baseline is run once for a stable integration/release snapshot. Later
+changes, including shared validation-control changes, consume that exact
+baseline and execute only owners whose declared identities or producer
+dependencies changed. Run focused affected checks while code is still
+changing. Do not repeatedly rerun the full `all`, adversarial, Meta, or
+Capability owners after unrelated edits or after a FlowGuard installation
+upgrade that is not part of their declared identity.
 
 ## Historical Baseline
 

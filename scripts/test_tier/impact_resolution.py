@@ -21,6 +21,7 @@ from flowguard import (
     ProofArtifactRef,
     TestResultReuseTicket,
     proof_artifact_gap_codes,
+    test_result_reuse_gap_codes,
 )
 
 from .command_builders import TierCommand
@@ -1121,12 +1122,41 @@ def _current_reuse_ticket(
         or not proof.route_evidence_current
         or proof.progress_only
         or proof.stale_reasons
+        or proof.metadata.get("descendant_zero_confirmed") is not True
     ):
         return None
     result_fingerprint = resolved.result_fingerprint
     if not result_fingerprint:
         return None
-    return TestResultReuseTicket(
+
+    def verifier_fingerprints(
+        identity: OwnerIdentity | Mapping[str, Any],
+    ) -> dict[str, str]:
+        value = identity.to_dict() if isinstance(identity, OwnerIdentity) else identity
+        dependencies = value.get("dependency_fingerprints")
+        obligations = value.get("covered_obligation_ids")
+        return {
+            "command": str(value.get("command_fingerprint") or ""),
+            "test_source": str(value.get("test_source_fingerprint") or ""),
+            "tested_artifact": str(
+                value.get("tested_artifact_fingerprint") or ""
+            ),
+            "dependencies": sha256_json(
+                dict(sorted(dependencies.items()))
+                if isinstance(dependencies, Mapping)
+                else {}
+            ),
+            "environment": str(value.get("environment_fingerprint") or ""),
+            "result": result_fingerprint,
+            "coverage_scope": sha256_json(
+                sorted(str(item) for item in obligations)
+                if isinstance(obligations, Sequence)
+                and not isinstance(obligations, (str, bytes))
+                else []
+            ),
+        }
+
+    ticket = TestResultReuseTicket(
         evidence_id=owner_id,
         previous_evidence_id=proof.artifact_id,
         reason=reason,
@@ -1138,12 +1168,26 @@ def _current_reuse_ticket(
         environment_fingerprint=current.environment_fingerprint,
         result_fingerprint=result_fingerprint,
         covered_obligation_ids=current.covered_obligation_ids,
+        producer_receipt_id=proof.artifact_id,
+        producer_terminal=True,
+        producer_status="pass",
+        producer_execution_owner_id=resolved.owner_id,
+        current_execution_owner_id=owner_id,
+        producer_fingerprints=verifier_fingerprints(resolved.identity),
+        current_fingerprints=verifier_fingerprints(current),
         metadata={
             "covered_input_fingerprint": current.covered_input_fingerprint,
             "previous_proof_artifact_id": proof.artifact_id,
             **dict(metadata or {}),
         },
     )
+    if test_result_reuse_gap_codes(
+        ticket,
+        expected_evidence_id=owner_id,
+        required_obligation_ids=current.covered_obligation_ids,
+    ):
+        return None
+    return ticket
 
 
 def load_previous_manifest(

@@ -2185,7 +2185,7 @@ class FlowPilotTestTierTests(unittest.TestCase):
             test_tier_inputs,
         )
 
-    def test_execution_wrapper_scope_reduction_reuses_payload_proof(self) -> None:
+    def test_execution_wrapper_scope_reduction_executes_without_exact_current_proof(self) -> None:
         release_contracts = {
             contract.owner_id: contract
             for contract in impact_resolution_module.build_owner_contracts(
@@ -2242,12 +2242,12 @@ class FlowPilotTestTierTests(unittest.TestCase):
 
         self.assertFalse(plan.blockers)
         self.assertEqual(plan.decisions[0].identity, current_identity)
-        self.assertEqual(plan.decisions[0].action, "reuse")
+        self.assertEqual(plan.decisions[0].action, "execute")
         self.assertEqual(
             plan.decisions[0].reason_codes,
-            ("execution_wrapper_scope_reduction_reused",),
+            ("current_owner_reuse_proof_invalid",),
         )
-        self.assertEqual(plan.executable_owner_ids, ())
+        self.assertEqual(plan.executable_owner_ids, (contract.owner_id,))
 
     def test_exact_owner_identity_reuses_v5_proof_without_execution(self) -> None:
         command = run_test_tier.TierCommand(
@@ -2287,9 +2287,97 @@ class FlowPilotTestTierTests(unittest.TestCase):
 
         self.assertFalse(plan.blockers)
         self.assertEqual(plan.decisions[0].action, "reuse")
-        self.assertIsNotNone(plan.decisions[0].reuse_ticket)
+        ticket = plan.decisions[0].reuse_ticket
+        self.assertIsNotNone(ticket)
+        assert ticket is not None
+        self.assertEqual(ticket.producer_receipt_id, ticket.previous_evidence_id)
+        self.assertTrue(ticket.producer_terminal)
+        self.assertEqual(ticket.producer_status, "pass")
+        self.assertEqual(ticket.producer_execution_owner_id, command.name)
+        self.assertEqual(ticket.current_execution_owner_id, command.name)
+        self.assertEqual(ticket.producer_fingerprints, ticket.current_fingerprints)
+        self.assertFalse(
+            impact_resolution_module.test_result_reuse_gap_codes(
+                ticket,
+                expected_evidence_id=command.name,
+                required_obligation_ids=contract.covered_obligation_ids,
+            )
+        )
         self.assertEqual(plan.executable_owner_ids, ())
         self.assertEqual(plan.reused_owner_ids, (command.name,))
+
+    def test_reuse_planner_rejects_any_ticket_rejected_by_strict_verifier(self) -> None:
+        command = run_test_tier.TierCommand(
+            name="strict_reuse_owner",
+            command=(sys.executable, "scripts/test_tier/source_fingerprint.py"),
+            description="strict reuse owner",
+        )
+        contract = impact_resolution_module.build_owner_contracts((command,))[0]
+        identity = impact_resolution_module.owner_identity(contract)
+        snapshot = source_fingerprint_module.source_snapshot()
+        with tempfile.TemporaryDirectory(prefix="flowpilot-v5-strict-reuse-") as tmp_name:
+            owner_row = self.write_v5_owner_reference(
+                Path(tmp_name),
+                command.name,
+                identity=identity.to_dict(),
+            )
+            previous_manifest = {
+                "schema_version": impact_resolution_module.EVIDENCE_MANIFEST_SCHEMA_VERSION,
+                "snapshot": snapshot,
+                "owners": {command.name: owner_row},
+            }
+            with (
+                mock.patch.object(
+                    impact_resolution_module,
+                    "source_snapshot",
+                    return_value=snapshot,
+                ),
+                mock.patch.object(
+                    impact_resolution_module,
+                    "test_result_reuse_gap_codes",
+                    return_value=(("fixture_gap", "fixture gap"),),
+                ),
+            ):
+                plan = impact_resolution_module.resolve_impact(
+                    requested_scope="strict-reuse",
+                    tier_commands=(command,),
+                    all_owner_contracts=(contract,),
+                    previous_manifest=previous_manifest,
+                    previous_manifest_path="evidence.json",
+                    previous_manifest_sha256="c" * 64,
+                )
+
+        self.assertEqual(plan.decisions[0].action, "execute")
+        self.assertEqual(
+            plan.decisions[0].reason_codes,
+            ("current_owner_reuse_proof_invalid",),
+        )
+
+    def test_all_tier_stale_contract_blocks_before_commands_are_built(self) -> None:
+        with (
+            mock.patch.object(
+                run_test_tier,
+                "_check_skillguard_contract_currentness",
+                return_value={
+                    "ok": False,
+                    "failure": "skillguard_contract_not_current_before_all",
+                },
+            ),
+            mock.patch.object(run_test_tier, "commands_for_tier") as commands_for_tier,
+            mock.patch.object(
+                run_test_tier,
+                "_launch_background_supervisor",
+            ) as launch_supervisor,
+            contextlib.redirect_stdout(io.StringIO()) as stdout,
+        ):
+            exit_code = run_test_tier.main(
+                ["--tier", "all", "--background", "--seed-baseline", "--json"]
+            )
+
+        self.assertEqual(exit_code, 1)
+        self.assertEqual(json.loads(stdout.getvalue())["phase"], "preflight")
+        commands_for_tier.assert_not_called()
+        launch_supervisor.assert_not_called()
 
     def test_owner_checkpoint_blocks_cross_tier_missing_owners_instead_of_running_them(self) -> None:
         owner = run_test_tier.TierCommand(

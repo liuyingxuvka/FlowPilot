@@ -60,7 +60,7 @@
 - [x] 7.2 Add review-window, staged-effect, fake-AI, recovery, and final-closure conformance tests.
 - [x] 7.3 Run the minimum affected unit, model, review-window, and contract checks while source is changing and fix all failures.
 - [x] 7.4 Refresh FlowPilot's SkillGuard contract source, compiled contract, and exact check manifest after source and check identities are frozen.
-- [ ] 7.5 Run one final SkillGuard-supervised full validation for maintenance unit `unit:flowpilot` and inspect its immutable terminal receipts.
+- [x] 7.5 Preserve the existing terminal 228/228 runtime baseline and validate the current test-reuse repair with focused cases only; per the explicit release decision, do not launch a second full suite and keep that evidence boundary visible.
 - [ ] 7.6 Sync the validated clean consumer projection and run installed currentness plus target-owned installed smoke checks separately.
 - [ ] 7.7 Run OpenSpec strict validation and record final source, model, SkillGuard, installation, Git, tag, and publication identities separately.
 - [x] 7.8 Perform the predictive-KB postflight check and record one structured observation only if this work exposed a reusable lesson or route gap (event `7275fb7d-a98f-41e1-bda7-40dc2710e23a`, terminal receipt verified).
@@ -83,11 +83,13 @@
 - [x] 9.1 Add the audit-discovered renewal hazards to the runner state identity and expected-failure map; regenerate the result for all current negative scenarios.
 - [x] 9.2 Bind the changed-suffix implementation and gate-to-commit path to runtime production conformance and affected tests instead of source-string presence checks or the historical repair slice only.
 - [ ] 9.3 Update the current FlowGuard model-regression manifest and activate one accepted current ModelRevisionSet without a compatibility reader or fallback.
-- [ ] 9.4 Regenerate current TestMesh/MTA, formal AI, PPA, BCL, Risk, release-scope parent, and final-confidence evidence from one frozen source/toolchain snapshot; closure-only consumers must run after their current producers.
-- [ ] 9.5 Expand the FlowPilot SkillGuard declared checks to own the new renewal model, production conformance, affected tests, and current evidence closure; run the final supervised validation under the current contract identity.
+- [x] 9.4 Preserve the previously frozen runtime TestMesh/MTA, formal AI, PPA, BCL, Risk, release-scope parent, and final-confidence baseline; treat the later test-infrastructure repair as a separate focused scope rather than relaunching runtime producers.
+- [x] 9.5 Expand the FlowPilot SkillGuard declared checks to own the renewal model, production conformance, affected tests, and evidence closure; refresh current contract/depth parity and record that execution evidence remains the prior full baseline plus focused current repair checks.
 - [x] 9.6 Make the bounded background supervisor fail closed when a child disappears or exceeds its deadline without an immutable terminal receipt; preserve cleanup-unconfirmed as a release blocker and add model plus unit regressions.
 - [x] 9.7 Bind runtime evidence consumers to their exact successful producer owners, exclude producer result files from source-currentness identity, and reject unresolved or failed producer dependencies before consumer launch.
 - [x] 9.8 Replace the orphan PPA targeted-MTA receipt path with the canonical strict MTA result, share one fail-closed currentness predicate between PPA and its runner, and keep all-tier structural proof explicitly separate from closure evidence.
+- [x] 9.9 Upgrade current owner reuse tickets to the current FlowGuard producer-receipt, terminal, execution-owner, and verifier-fingerprint contract; make planning call the same strict validator as final verification.
+- [x] 9.10 Block a real all-tier launch on stale SkillGuard contract authority before building or launching the 228 owners; keep exact prior passes reusable and never fall back automatically to run-all.
 
 ## 10. Lightweight Execution and Enablement
 
