@@ -2,6 +2,23 @@
   "blockers": [
     {
       "codes": [
+        "live_run_audit_skipped"
+      ],
+      "details": {
+        "live_finding_codes": [],
+        "live_run_audit_ok": true,
+        "live_run_audit_skipped": true,
+        "live_run_id": "",
+        "subcheck_exit_code": 0,
+        "subcheck_stderr_path": "tmp/final_confidence_gate/control_plane.err.txt",
+        "subcheck_stdout_path": "tmp/final_confidence_gate/control_plane.out.txt",
+        "top_level_ok": true
+      },
+      "evidence": "control_plane",
+      "path": "tmp/final_confidence_gate/flowpilot_control_plane_friction_results.json"
+    },
+    {
+      "codes": [
         "ok_false",
         "alignment_ok_false",
         "model_test_alignment_evidence_not_passed",
@@ -21,15 +38,15 @@
         "full_diagnostic_ok": true,
         "gap_counts": {
           "needs_structure_split": 10,
-          "stale_evidence": 13
+          "stale_evidence": 94
         },
-        "gap_surface_count": 23,
+        "gap_surface_count": 104,
         "release_convergence_ok": false,
         "subcheck_exit_code": 1,
         "subcheck_stderr_path": "tmp/final_confidence_gate/model_test_alignment.err.txt",
         "subcheck_stdout_path": "tmp/final_confidence_gate/model_test_alignment.out.txt",
         "top_level_ok": false,
-        "unresolved_non_deferred_gap_count": 13
+        "unresolved_non_deferred_gap_count": 94
       },
       "evidence": "model_test_alignment",
       "path": "tmp/final_confidence_gate/flowpilot_model_test_alignment_results.json"
@@ -40,21 +57,23 @@
   "evidence_manifest_path": "simulations/flowpilot_acceptance_testmesh_evidence_manifest.json",
   "evidence_rows": [
     {
-      "blockers": [],
+      "blockers": [
+        "live_run_audit_skipped"
+      ],
       "details": {
         "live_finding_codes": [],
         "live_run_audit_ok": true,
-        "live_run_audit_skipped": false,
-        "live_run_id": "run-20260614-184920",
+        "live_run_audit_skipped": true,
+        "live_run_id": "",
         "subcheck_exit_code": 0,
         "subcheck_stderr_path": "tmp/final_confidence_gate/control_plane.err.txt",
         "subcheck_stdout_path": "tmp/final_confidence_gate/control_plane.out.txt",
         "top_level_ok": true
       },
       "name": "control_plane",
-      "ok": true,
+      "ok": false,
       "path": "tmp/final_confidence_gate/flowpilot_control_plane_friction_results.json",
-      "status": "full_confidence"
+      "status": "blocked"
     },
     {
       "blockers": [],
@@ -94,15 +113,15 @@
         "full_diagnostic_ok": true,
         "gap_counts": {
           "needs_structure_split": 10,
-          "stale_evidence": 13
+          "stale_evidence": 94
         },
-        "gap_surface_count": 23,
+        "gap_surface_count": 104,
         "release_convergence_ok": false,
         "subcheck_exit_code": 1,
         "subcheck_stderr_path": "tmp/final_confidence_gate/model_test_alignment.err.txt",
         "subcheck_stdout_path": "tmp/final_confidence_gate/model_test_alignment.out.txt",
         "top_level_ok": false,
-        "unresolved_non_deferred_gap_count": 13
+        "unresolved_non_deferred_gap_count": 94
       },
       "name": "model_test_alignment",
       "ok": false,
@@ -208,6 +227,6 @@
       "stdout_path": "tmp/final_confidence_gate/known_friction.out.txt"
     }
   ],
-  "summary": "BLOCKED: 1 required evidence source(s) are not full confidence",
+  "summary": "BLOCKED: 2 required evidence source(s) are not full confidence",
   "terminal_return_required": false
 }

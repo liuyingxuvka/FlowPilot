@@ -3642,7 +3642,7 @@
     "simulations/run_flowpilot_route_mutation_activation_checks.py": "9f09cdefb098edecfac056e47324ee351bef1d5f6f18931d0eb32416ffb5029c",
     "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py": "e0605be6fa2d547ee377356237d96c022f153fd11a5b41b3bd2a551cda79c2bf",
     "skills/flowpilot/assets/flowpilot_router_route.py": "fcbddcd4bdc24bcafdb0716bcc81eef0de490dbf14e671fd10343b6380f86e22",
-    "skills/flowpilot/assets/flowpilot_router_route_artifacts_nodes_parent.py": "1b40cc8867cb62313bc1418e3905fee1fb8446dece86a31e353305c6e631fb19",
+    "skills/flowpilot/assets/flowpilot_router_route_artifacts_nodes_parent.py": "497600a2addcdae03afba158a9e637ce51332a0793c855b86dc0757698d73e81",
     "tests/router_runtime/route_mutation_parent_backward.py": "55422a95cb1c67476b9202644fa0d26baca52d81ae9956a91f5a2b8704dd5e85",
     "tests/router_runtime/route_mutation_sibling_replacement.py": "b7e3c140a76009db4c3f576958a10e3434f96b8c9ca8bfbbbe12d42538086c4d",
     "tests/test_flowpilot_core_runtime.py": "991312616284a651189ebbc14d9e3df522645e68aff721366b943c20b5375e30",
@@ -3650,6 +3650,6 @@
     "tests/test_flowpilot_milestone_plan_renewal_contracts.py": "ecda11758fa2b424c945a9a96bdba83a61b18741968518d09af54c6a08297005",
     "tests/test_flowpilot_recursive_route_execution_runtime.py": "3f2b25e1b1ce8e4a503daf88f11732f0ed1c10a1154b4c608f78c80de4fe0caf",
     "tests/test_flowpilot_unified_repair_runtime.py": "bd591c182bbd61e2bee463cf9aaeac1ec3d79da3ed1c2ce1689a10755d0c9453",
-    "tests/test_flowpilot_user_flow_diagram.py": "8565a1cbe8a98845a7a8e0b7576c4b3443171faa783aba4eba2c33971f505050"
+    "tests/test_flowpilot_user_flow_diagram.py": "a8e108f5ba9175566b712d3429e57490f75bd655a44ccb82705cfecb7f5c56c1"
   }
 }

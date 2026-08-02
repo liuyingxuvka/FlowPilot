@@ -2,69 +2,2226 @@
   "blocking_signal_ids": [],
   "claim_scope": "routine FlowPilot maintenance and local install confidence",
   "current": {
+    "base_model_fingerprint": "29e48cfd482a1a28ff1b2dec5501af2eaf70dc315ef4498448314a864f5ea587",
     "blocking_signal_ids": [],
-    "confidence": "full",
-    "decision": "model_maturation_closed_for_task",
-    "findings": [],
-    "full_closure_ok": true,
+    "candidate_model_fingerprint": "77303346b23a923815acca4908ed1f6f0201d76a42ee18aca381721faffb615a",
+    "confidence": "blocked",
+    "coverage_universe_fingerprint": "e0e44db52d184a7efd9993619b5dc1d1ee9b66b88893b4213fa344cea0e7c67b",
+    "coverage_universe_id": "flowpilot-model-maturation-coverage-v1",
+    "decision": "model_maturation_upgrade_required",
+    "evidence_fingerprint": "ef58f6d9e50c6c50a391d6a77d2eedd6da9d92c7cf72ee03a72b60976a941a5c",
+    "evidence_id": "model-maturation:flowpilot-model-maturation-routine-closure:1d7cf98e01d33c1b8fe955296c92ec20832da12cb74d9c58ee42eb25f82b7909",
+    "findings": [
+      {
+        "action": "refresh_evidence",
+        "code": "model_maturation_signal_stale",
+        "message": "required signal lacks current evidence and cannot support task closure",
+        "metadata": {
+          "affected_claim_scope": "",
+          "coverage_id": "prompt_assets_are_contract_inputs",
+          "current": false,
+          "description": "Prompt assets and manifests must be model-visible contract inputs.",
+          "evidence_fingerprint": "9cee99bc50c36e6329a1336e61f8afba94ad6894d6b29c9acb429d18534ccd60",
+          "evidence_id": "simulations/flowpilot_prompt_boundary_results.json",
+          "falsifier": "The probe is falsified when prompt_assets_are_contract_inputs is missing, stale, or its required result is not passing.",
+          "gap_fingerprint": "1040cec39f41d29439c85c9eb49a0bb9f1e279b3a1c35129ea4c22e3729139b7",
+          "in_scope": true,
+          "metadata": {
+            "freshness": {
+              "max_source_mtime": 1785610760.300434,
+              "missing_sources": [],
+              "result": "simulations/flowpilot_prompt_boundary_results.json",
+              "result_missing": false,
+              "result_mtime": 1785610758.9895358,
+              "sources": [
+                "simulations\\flowpilot_prompt_boundary_model.py",
+                "simulations\\run_flowpilot_prompt_boundary_checks.py",
+                "skills\\flowpilot\\assets\\runtime_kit\\prompts\\manifest.json",
+                "openspec\\changes\\adopt-flowguard-model-maturation\\specs\\flowpilot-prompt-boundary-policy\\spec.md"
+              ]
+            },
+            "json": {
+              "confidence": "",
+              "decision": "",
+              "ok": true,
+              "result": "simulations/flowpilot_prompt_boundary_results.json",
+              "result_type": ""
+            },
+            "unified_repair_contract": null
+          },
+          "model_id": "flowpilot_prompt_boundary",
+          "owner_boundary": "",
+          "prediction": "probe:prompt_assets_are_contract_inputs should produce a current terminal result for prompt_assets_are_contract_inputs.",
+          "probe_id": "probe:prompt_assets_are_contract_inputs",
+          "receipt_candidate_fingerprint": "77303346b23a923815acca4908ed1f6f0201d76a42ee18aca381721faffb615a",
+          "receipt_coverage_fingerprint": "e0e44db52d184a7efd9993619b5dc1d1ee9b66b88893b4213fa344cea0e7c67b",
+          "receipt_evidence_fingerprint": "9cee99bc50c36e6329a1336e61f8afba94ad6894d6b29c9acb429d18534ccd60",
+          "receipt_fingerprint": "8a9e098c63690e3f67494984d1d6520bfb683a2dc15cdd10a5c713b3d515b900",
+          "receipt_id": "receipt.flowpilot_maturation.prompt_assets_are_contract_inputs",
+          "receipt_owner_route": "flowpilot_prompt_boundary_policy",
+          "receipt_probe_id": "probe:prompt_assets_are_contract_inputs",
+          "receipt_status": "fail",
+          "receipt_task_id": "task:flowpilot-milestone-plan-renewal",
+          "required": true,
+          "required_input": "",
+          "resolution_class": "evidence_acquisition",
+          "resolved": false,
+          "risk_id": "prompt_asset_drift_not_seen_by_code_scan",
+          "signal_id": "prompt_assets_are_contract_inputs",
+          "signal_type": "missing_code_boundary_observation",
+          "source_route": "flowpilot_prompt_boundary_policy",
+          "suggested_actions": [
+            "add_code_boundary_observation",
+            "add_model_obligation"
+          ]
+        },
+        "model_id": "flowpilot_prompt_boundary",
+        "risk_id": "prompt_asset_drift_not_seen_by_code_scan",
+        "severity": "blocker",
+        "signal_id": "prompt_assets_are_contract_inputs"
+      },
+      {
+        "action": "add_code_boundary_observation",
+        "code": "model_upgrade_required",
+        "message": "an unresolved addressable signal requires another model/evidence iteration",
+        "metadata": {
+          "affected_claim_scope": "",
+          "coverage_id": "prompt_assets_are_contract_inputs",
+          "current": false,
+          "description": "Prompt assets and manifests must be model-visible contract inputs.",
+          "evidence_fingerprint": "9cee99bc50c36e6329a1336e61f8afba94ad6894d6b29c9acb429d18534ccd60",
+          "evidence_id": "simulations/flowpilot_prompt_boundary_results.json",
+          "falsifier": "The probe is falsified when prompt_assets_are_contract_inputs is missing, stale, or its required result is not passing.",
+          "gap_fingerprint": "1040cec39f41d29439c85c9eb49a0bb9f1e279b3a1c35129ea4c22e3729139b7",
+          "in_scope": true,
+          "metadata": {
+            "freshness": {
+              "max_source_mtime": 1785610760.300434,
+              "missing_sources": [],
+              "result": "simulations/flowpilot_prompt_boundary_results.json",
+              "result_missing": false,
+              "result_mtime": 1785610758.9895358,
+              "sources": [
+                "simulations\\flowpilot_prompt_boundary_model.py",
+                "simulations\\run_flowpilot_prompt_boundary_checks.py",
+                "skills\\flowpilot\\assets\\runtime_kit\\prompts\\manifest.json",
+                "openspec\\changes\\adopt-flowguard-model-maturation\\specs\\flowpilot-prompt-boundary-policy\\spec.md"
+              ]
+            },
+            "json": {
+              "confidence": "",
+              "decision": "",
+              "ok": true,
+              "result": "simulations/flowpilot_prompt_boundary_results.json",
+              "result_type": ""
+            },
+            "unified_repair_contract": null
+          },
+          "model_id": "flowpilot_prompt_boundary",
+          "owner_boundary": "",
+          "prediction": "probe:prompt_assets_are_contract_inputs should produce a current terminal result for prompt_assets_are_contract_inputs.",
+          "probe_id": "probe:prompt_assets_are_contract_inputs",
+          "receipt_candidate_fingerprint": "77303346b23a923815acca4908ed1f6f0201d76a42ee18aca381721faffb615a",
+          "receipt_coverage_fingerprint": "e0e44db52d184a7efd9993619b5dc1d1ee9b66b88893b4213fa344cea0e7c67b",
+          "receipt_evidence_fingerprint": "9cee99bc50c36e6329a1336e61f8afba94ad6894d6b29c9acb429d18534ccd60",
+          "receipt_fingerprint": "8a9e098c63690e3f67494984d1d6520bfb683a2dc15cdd10a5c713b3d515b900",
+          "receipt_id": "receipt.flowpilot_maturation.prompt_assets_are_contract_inputs",
+          "receipt_owner_route": "flowpilot_prompt_boundary_policy",
+          "receipt_probe_id": "probe:prompt_assets_are_contract_inputs",
+          "receipt_status": "fail",
+          "receipt_task_id": "task:flowpilot-milestone-plan-renewal",
+          "required": true,
+          "required_input": "",
+          "resolution_class": "evidence_acquisition",
+          "resolved": false,
+          "risk_id": "prompt_asset_drift_not_seen_by_code_scan",
+          "signal_id": "prompt_assets_are_contract_inputs",
+          "signal_type": "missing_code_boundary_observation",
+          "source_route": "flowpilot_prompt_boundary_policy",
+          "suggested_actions": [
+            "add_code_boundary_observation",
+            "add_model_obligation"
+          ]
+        },
+        "model_id": "flowpilot_prompt_boundary",
+        "risk_id": "prompt_asset_drift_not_seen_by_code_scan",
+        "severity": "blocker",
+        "signal_id": "prompt_assets_are_contract_inputs"
+      },
+      {
+        "action": "add_model_obligation",
+        "code": "model_upgrade_required",
+        "message": "an unresolved addressable signal requires another model/evidence iteration",
+        "metadata": {
+          "affected_claim_scope": "",
+          "coverage_id": "prompt_assets_are_contract_inputs",
+          "current": false,
+          "description": "Prompt assets and manifests must be model-visible contract inputs.",
+          "evidence_fingerprint": "9cee99bc50c36e6329a1336e61f8afba94ad6894d6b29c9acb429d18534ccd60",
+          "evidence_id": "simulations/flowpilot_prompt_boundary_results.json",
+          "falsifier": "The probe is falsified when prompt_assets_are_contract_inputs is missing, stale, or its required result is not passing.",
+          "gap_fingerprint": "1040cec39f41d29439c85c9eb49a0bb9f1e279b3a1c35129ea4c22e3729139b7",
+          "in_scope": true,
+          "metadata": {
+            "freshness": {
+              "max_source_mtime": 1785610760.300434,
+              "missing_sources": [],
+              "result": "simulations/flowpilot_prompt_boundary_results.json",
+              "result_missing": false,
+              "result_mtime": 1785610758.9895358,
+              "sources": [
+                "simulations\\flowpilot_prompt_boundary_model.py",
+                "simulations\\run_flowpilot_prompt_boundary_checks.py",
+                "skills\\flowpilot\\assets\\runtime_kit\\prompts\\manifest.json",
+                "openspec\\changes\\adopt-flowguard-model-maturation\\specs\\flowpilot-prompt-boundary-policy\\spec.md"
+              ]
+            },
+            "json": {
+              "confidence": "",
+              "decision": "",
+              "ok": true,
+              "result": "simulations/flowpilot_prompt_boundary_results.json",
+              "result_type": ""
+            },
+            "unified_repair_contract": null
+          },
+          "model_id": "flowpilot_prompt_boundary",
+          "owner_boundary": "",
+          "prediction": "probe:prompt_assets_are_contract_inputs should produce a current terminal result for prompt_assets_are_contract_inputs.",
+          "probe_id": "probe:prompt_assets_are_contract_inputs",
+          "receipt_candidate_fingerprint": "77303346b23a923815acca4908ed1f6f0201d76a42ee18aca381721faffb615a",
+          "receipt_coverage_fingerprint": "e0e44db52d184a7efd9993619b5dc1d1ee9b66b88893b4213fa344cea0e7c67b",
+          "receipt_evidence_fingerprint": "9cee99bc50c36e6329a1336e61f8afba94ad6894d6b29c9acb429d18534ccd60",
+          "receipt_fingerprint": "8a9e098c63690e3f67494984d1d6520bfb683a2dc15cdd10a5c713b3d515b900",
+          "receipt_id": "receipt.flowpilot_maturation.prompt_assets_are_contract_inputs",
+          "receipt_owner_route": "flowpilot_prompt_boundary_policy",
+          "receipt_probe_id": "probe:prompt_assets_are_contract_inputs",
+          "receipt_status": "fail",
+          "receipt_task_id": "task:flowpilot-milestone-plan-renewal",
+          "required": true,
+          "required_input": "",
+          "resolution_class": "evidence_acquisition",
+          "resolved": false,
+          "risk_id": "prompt_asset_drift_not_seen_by_code_scan",
+          "signal_id": "prompt_assets_are_contract_inputs",
+          "signal_type": "missing_code_boundary_observation",
+          "source_route": "flowpilot_prompt_boundary_policy",
+          "suggested_actions": [
+            "add_code_boundary_observation",
+            "add_model_obligation"
+          ]
+        },
+        "model_id": "flowpilot_prompt_boundary",
+        "risk_id": "prompt_asset_drift_not_seen_by_code_scan",
+        "severity": "blocker",
+        "signal_id": "prompt_assets_are_contract_inputs"
+      },
+      {
+        "action": "refresh_evidence",
+        "code": "model_maturation_signal_stale",
+        "message": "required signal lacks current evidence and cannot support task closure",
+        "metadata": {
+          "affected_claim_scope": "",
+          "coverage_id": "protocol_contract_conformance_fresh",
+          "current": false,
+          "description": "Protocol contract conformance result must be current for the model and checker.",
+          "evidence_fingerprint": "d5d072fc212887a06f7ed2f4b4a6098fe1be4a294c76a97fc7cc519b82daae38",
+          "evidence_id": "simulations/protocol_contract_conformance_results.json",
+          "falsifier": "The probe is falsified when protocol_contract_conformance_fresh is missing, stale, or its required result is not passing.",
+          "gap_fingerprint": "fada110d471f32319536cc1ef02e55e7f12c46386913e930002e35619e165064",
+          "in_scope": true,
+          "metadata": {
+            "freshness": {
+              "max_source_mtime": 1785610759.5180807,
+              "missing_sources": [],
+              "result": "simulations/protocol_contract_conformance_results.json",
+              "result_missing": false,
+              "result_mtime": 1785610759.281691,
+              "sources": [
+                "simulations\\flowpilot_protocol_contract_conformance_model.py",
+                "simulations\\run_protocol_contract_conformance_checks.py"
+              ]
+            },
+            "json": {
+              "confidence": "",
+              "decision": "",
+              "ok": true,
+              "result": "simulations/protocol_contract_conformance_results.json",
+              "result_type": ""
+            },
+            "unified_repair_contract": null
+          },
+          "model_id": "flowpilot_protocol_contract_conformance",
+          "owner_boundary": "",
+          "prediction": "probe:protocol_contract_conformance_fresh should produce a current terminal result for protocol_contract_conformance_fresh.",
+          "probe_id": "probe:protocol_contract_conformance_fresh",
+          "receipt_candidate_fingerprint": "77303346b23a923815acca4908ed1f6f0201d76a42ee18aca381721faffb615a",
+          "receipt_coverage_fingerprint": "e0e44db52d184a7efd9993619b5dc1d1ee9b66b88893b4213fa344cea0e7c67b",
+          "receipt_evidence_fingerprint": "d5d072fc212887a06f7ed2f4b4a6098fe1be4a294c76a97fc7cc519b82daae38",
+          "receipt_fingerprint": "702da439a67b45a3b2cd5b7ba310a33417e26abaa0c212d6bae66a4c7e9b610e",
+          "receipt_id": "receipt.flowpilot_maturation.protocol_contract_conformance_fresh",
+          "receipt_owner_route": "existing_model_preflight",
+          "receipt_probe_id": "probe:protocol_contract_conformance_fresh",
+          "receipt_status": "fail",
+          "receipt_task_id": "task:flowpilot-milestone-plan-renewal",
+          "required": true,
+          "required_input": "",
+          "resolution_class": "evidence_acquisition",
+          "resolved": false,
+          "risk_id": "protocol_contract_result_stale",
+          "signal_id": "protocol_contract_conformance_fresh",
+          "signal_type": "stale_evidence",
+          "source_route": "existing_model_preflight",
+          "suggested_actions": [
+            "refresh_evidence"
+          ]
+        },
+        "model_id": "flowpilot_protocol_contract_conformance",
+        "risk_id": "protocol_contract_result_stale",
+        "severity": "blocker",
+        "signal_id": "protocol_contract_conformance_fresh"
+      },
+      {
+        "action": "refresh_evidence",
+        "code": "model_upgrade_required",
+        "message": "an unresolved addressable signal requires another model/evidence iteration",
+        "metadata": {
+          "affected_claim_scope": "",
+          "coverage_id": "protocol_contract_conformance_fresh",
+          "current": false,
+          "description": "Protocol contract conformance result must be current for the model and checker.",
+          "evidence_fingerprint": "d5d072fc212887a06f7ed2f4b4a6098fe1be4a294c76a97fc7cc519b82daae38",
+          "evidence_id": "simulations/protocol_contract_conformance_results.json",
+          "falsifier": "The probe is falsified when protocol_contract_conformance_fresh is missing, stale, or its required result is not passing.",
+          "gap_fingerprint": "fada110d471f32319536cc1ef02e55e7f12c46386913e930002e35619e165064",
+          "in_scope": true,
+          "metadata": {
+            "freshness": {
+              "max_source_mtime": 1785610759.5180807,
+              "missing_sources": [],
+              "result": "simulations/protocol_contract_conformance_results.json",
+              "result_missing": false,
+              "result_mtime": 1785610759.281691,
+              "sources": [
+                "simulations\\flowpilot_protocol_contract_conformance_model.py",
+                "simulations\\run_protocol_contract_conformance_checks.py"
+              ]
+            },
+            "json": {
+              "confidence": "",
+              "decision": "",
+              "ok": true,
+              "result": "simulations/protocol_contract_conformance_results.json",
+              "result_type": ""
+            },
+            "unified_repair_contract": null
+          },
+          "model_id": "flowpilot_protocol_contract_conformance",
+          "owner_boundary": "",
+          "prediction": "probe:protocol_contract_conformance_fresh should produce a current terminal result for protocol_contract_conformance_fresh.",
+          "probe_id": "probe:protocol_contract_conformance_fresh",
+          "receipt_candidate_fingerprint": "77303346b23a923815acca4908ed1f6f0201d76a42ee18aca381721faffb615a",
+          "receipt_coverage_fingerprint": "e0e44db52d184a7efd9993619b5dc1d1ee9b66b88893b4213fa344cea0e7c67b",
+          "receipt_evidence_fingerprint": "d5d072fc212887a06f7ed2f4b4a6098fe1be4a294c76a97fc7cc519b82daae38",
+          "receipt_fingerprint": "702da439a67b45a3b2cd5b7ba310a33417e26abaa0c212d6bae66a4c7e9b610e",
+          "receipt_id": "receipt.flowpilot_maturation.protocol_contract_conformance_fresh",
+          "receipt_owner_route": "existing_model_preflight",
+          "receipt_probe_id": "probe:protocol_contract_conformance_fresh",
+          "receipt_status": "fail",
+          "receipt_task_id": "task:flowpilot-milestone-plan-renewal",
+          "required": true,
+          "required_input": "",
+          "resolution_class": "evidence_acquisition",
+          "resolved": false,
+          "risk_id": "protocol_contract_result_stale",
+          "signal_id": "protocol_contract_conformance_fresh",
+          "signal_type": "stale_evidence",
+          "source_route": "existing_model_preflight",
+          "suggested_actions": [
+            "refresh_evidence"
+          ]
+        },
+        "model_id": "flowpilot_protocol_contract_conformance",
+        "risk_id": "protocol_contract_result_stale",
+        "severity": "blocker",
+        "signal_id": "protocol_contract_conformance_fresh"
+      },
+      {
+        "action": "refresh_evidence",
+        "code": "model_maturation_signal_stale",
+        "message": "required signal lacks current evidence and cannot support task closure",
+        "metadata": {
+          "affected_claim_scope": "",
+          "coverage_id": "singleton_identity_authority_current",
+          "current": false,
+          "description": "Singleton-vs-plural authority gaps must be model-visible before broad confidence.",
+          "evidence_fingerprint": "4f1ada1f8f590119aeca05d6d7a14ba2ad47fe8fb8c0135e6b4ffd76f24b78ed",
+          "evidence_id": "simulations/flowpilot_singleton_identity_results.json",
+          "falsifier": "The probe is falsified when singleton_identity_authority_current is missing, stale, or its required result is not passing.",
+          "gap_fingerprint": "a5334abad6106147c10c92efc3d31da7f899269c7df7c34b5de2eab2fc3e6ed3",
+          "in_scope": true,
+          "metadata": {
+            "freshness": {
+              "max_source_mtime": 1785610760.7930782,
+              "missing_sources": [],
+              "result": "simulations/flowpilot_singleton_identity_results.json",
+              "result_missing": false,
+              "result_mtime": 1785610759.1263075,
+              "sources": [
+                "docs\\flowpilot_singleton_identity_authority.md",
+                "simulations\\flowpilot_singleton_identity_model.py",
+                "simulations\\run_flowpilot_singleton_identity_checks.py",
+                "tests\\test_flowpilot_singleton_identity.py"
+              ]
+            },
+            "json": {
+              "confidence": "scoped",
+              "decision": "",
+              "ok": true,
+              "result": "simulations/flowpilot_singleton_identity_results.json",
+              "result_type": "flowpilot_singleton_identity"
+            },
+            "unified_repair_contract": null
+          },
+          "model_id": "flowpilot_singleton_identity_authority",
+          "owner_boundary": "",
+          "prediction": "probe:singleton_identity_authority_current should produce a current terminal result for singleton_identity_authority_current.",
+          "probe_id": "probe:singleton_identity_authority_current",
+          "receipt_candidate_fingerprint": "77303346b23a923815acca4908ed1f6f0201d76a42ee18aca381721faffb615a",
+          "receipt_coverage_fingerprint": "e0e44db52d184a7efd9993619b5dc1d1ee9b66b88893b4213fa344cea0e7c67b",
+          "receipt_evidence_fingerprint": "4f1ada1f8f590119aeca05d6d7a14ba2ad47fe8fb8c0135e6b4ffd76f24b78ed",
+          "receipt_fingerprint": "4627ede23ca4719289c94ef5a632ed1b2c1e3fe4ef867f1339b1f97242f3009c",
+          "receipt_id": "receipt.flowpilot_maturation.singleton_identity_authority_current",
+          "receipt_owner_route": "singleton_identity_authority",
+          "receipt_probe_id": "probe:singleton_identity_authority_current",
+          "receipt_status": "fail",
+          "receipt_task_id": "task:flowpilot-milestone-plan-renewal",
+          "required": true,
+          "required_input": "",
+          "resolution_class": "evidence_acquisition",
+          "resolved": false,
+          "risk_id": "singleton_duplicate_authority_gap",
+          "signal_id": "singleton_identity_authority_current",
+          "signal_type": "missing_model_obligation",
+          "source_route": "singleton_identity_authority",
+          "suggested_actions": [
+            "add_model_obligation",
+            "add_code_boundary_observation",
+            "refresh_evidence"
+          ]
+        },
+        "model_id": "flowpilot_singleton_identity_authority",
+        "risk_id": "singleton_duplicate_authority_gap",
+        "severity": "blocker",
+        "signal_id": "singleton_identity_authority_current"
+      },
+      {
+        "action": "add_model_obligation",
+        "code": "model_upgrade_required",
+        "message": "an unresolved addressable signal requires another model/evidence iteration",
+        "metadata": {
+          "affected_claim_scope": "",
+          "coverage_id": "singleton_identity_authority_current",
+          "current": false,
+          "description": "Singleton-vs-plural authority gaps must be model-visible before broad confidence.",
+          "evidence_fingerprint": "4f1ada1f8f590119aeca05d6d7a14ba2ad47fe8fb8c0135e6b4ffd76f24b78ed",
+          "evidence_id": "simulations/flowpilot_singleton_identity_results.json",
+          "falsifier": "The probe is falsified when singleton_identity_authority_current is missing, stale, or its required result is not passing.",
+          "gap_fingerprint": "a5334abad6106147c10c92efc3d31da7f899269c7df7c34b5de2eab2fc3e6ed3",
+          "in_scope": true,
+          "metadata": {
+            "freshness": {
+              "max_source_mtime": 1785610760.7930782,
+              "missing_sources": [],
+              "result": "simulations/flowpilot_singleton_identity_results.json",
+              "result_missing": false,
+              "result_mtime": 1785610759.1263075,
+              "sources": [
+                "docs\\flowpilot_singleton_identity_authority.md",
+                "simulations\\flowpilot_singleton_identity_model.py",
+                "simulations\\run_flowpilot_singleton_identity_checks.py",
+                "tests\\test_flowpilot_singleton_identity.py"
+              ]
+            },
+            "json": {
+              "confidence": "scoped",
+              "decision": "",
+              "ok": true,
+              "result": "simulations/flowpilot_singleton_identity_results.json",
+              "result_type": "flowpilot_singleton_identity"
+            },
+            "unified_repair_contract": null
+          },
+          "model_id": "flowpilot_singleton_identity_authority",
+          "owner_boundary": "",
+          "prediction": "probe:singleton_identity_authority_current should produce a current terminal result for singleton_identity_authority_current.",
+          "probe_id": "probe:singleton_identity_authority_current",
+          "receipt_candidate_fingerprint": "77303346b23a923815acca4908ed1f6f0201d76a42ee18aca381721faffb615a",
+          "receipt_coverage_fingerprint": "e0e44db52d184a7efd9993619b5dc1d1ee9b66b88893b4213fa344cea0e7c67b",
+          "receipt_evidence_fingerprint": "4f1ada1f8f590119aeca05d6d7a14ba2ad47fe8fb8c0135e6b4ffd76f24b78ed",
+          "receipt_fingerprint": "4627ede23ca4719289c94ef5a632ed1b2c1e3fe4ef867f1339b1f97242f3009c",
+          "receipt_id": "receipt.flowpilot_maturation.singleton_identity_authority_current",
+          "receipt_owner_route": "singleton_identity_authority",
+          "receipt_probe_id": "probe:singleton_identity_authority_current",
+          "receipt_status": "fail",
+          "receipt_task_id": "task:flowpilot-milestone-plan-renewal",
+          "required": true,
+          "required_input": "",
+          "resolution_class": "evidence_acquisition",
+          "resolved": false,
+          "risk_id": "singleton_duplicate_authority_gap",
+          "signal_id": "singleton_identity_authority_current",
+          "signal_type": "missing_model_obligation",
+          "source_route": "singleton_identity_authority",
+          "suggested_actions": [
+            "add_model_obligation",
+            "add_code_boundary_observation",
+            "refresh_evidence"
+          ]
+        },
+        "model_id": "flowpilot_singleton_identity_authority",
+        "risk_id": "singleton_duplicate_authority_gap",
+        "severity": "blocker",
+        "signal_id": "singleton_identity_authority_current"
+      },
+      {
+        "action": "add_code_boundary_observation",
+        "code": "model_upgrade_required",
+        "message": "an unresolved addressable signal requires another model/evidence iteration",
+        "metadata": {
+          "affected_claim_scope": "",
+          "coverage_id": "singleton_identity_authority_current",
+          "current": false,
+          "description": "Singleton-vs-plural authority gaps must be model-visible before broad confidence.",
+          "evidence_fingerprint": "4f1ada1f8f590119aeca05d6d7a14ba2ad47fe8fb8c0135e6b4ffd76f24b78ed",
+          "evidence_id": "simulations/flowpilot_singleton_identity_results.json",
+          "falsifier": "The probe is falsified when singleton_identity_authority_current is missing, stale, or its required result is not passing.",
+          "gap_fingerprint": "a5334abad6106147c10c92efc3d31da7f899269c7df7c34b5de2eab2fc3e6ed3",
+          "in_scope": true,
+          "metadata": {
+            "freshness": {
+              "max_source_mtime": 1785610760.7930782,
+              "missing_sources": [],
+              "result": "simulations/flowpilot_singleton_identity_results.json",
+              "result_missing": false,
+              "result_mtime": 1785610759.1263075,
+              "sources": [
+                "docs\\flowpilot_singleton_identity_authority.md",
+                "simulations\\flowpilot_singleton_identity_model.py",
+                "simulations\\run_flowpilot_singleton_identity_checks.py",
+                "tests\\test_flowpilot_singleton_identity.py"
+              ]
+            },
+            "json": {
+              "confidence": "scoped",
+              "decision": "",
+              "ok": true,
+              "result": "simulations/flowpilot_singleton_identity_results.json",
+              "result_type": "flowpilot_singleton_identity"
+            },
+            "unified_repair_contract": null
+          },
+          "model_id": "flowpilot_singleton_identity_authority",
+          "owner_boundary": "",
+          "prediction": "probe:singleton_identity_authority_current should produce a current terminal result for singleton_identity_authority_current.",
+          "probe_id": "probe:singleton_identity_authority_current",
+          "receipt_candidate_fingerprint": "77303346b23a923815acca4908ed1f6f0201d76a42ee18aca381721faffb615a",
+          "receipt_coverage_fingerprint": "e0e44db52d184a7efd9993619b5dc1d1ee9b66b88893b4213fa344cea0e7c67b",
+          "receipt_evidence_fingerprint": "4f1ada1f8f590119aeca05d6d7a14ba2ad47fe8fb8c0135e6b4ffd76f24b78ed",
+          "receipt_fingerprint": "4627ede23ca4719289c94ef5a632ed1b2c1e3fe4ef867f1339b1f97242f3009c",
+          "receipt_id": "receipt.flowpilot_maturation.singleton_identity_authority_current",
+          "receipt_owner_route": "singleton_identity_authority",
+          "receipt_probe_id": "probe:singleton_identity_authority_current",
+          "receipt_status": "fail",
+          "receipt_task_id": "task:flowpilot-milestone-plan-renewal",
+          "required": true,
+          "required_input": "",
+          "resolution_class": "evidence_acquisition",
+          "resolved": false,
+          "risk_id": "singleton_duplicate_authority_gap",
+          "signal_id": "singleton_identity_authority_current",
+          "signal_type": "missing_model_obligation",
+          "source_route": "singleton_identity_authority",
+          "suggested_actions": [
+            "add_model_obligation",
+            "add_code_boundary_observation",
+            "refresh_evidence"
+          ]
+        },
+        "model_id": "flowpilot_singleton_identity_authority",
+        "risk_id": "singleton_duplicate_authority_gap",
+        "severity": "blocker",
+        "signal_id": "singleton_identity_authority_current"
+      },
+      {
+        "action": "refresh_evidence",
+        "code": "model_upgrade_required",
+        "message": "an unresolved addressable signal requires another model/evidence iteration",
+        "metadata": {
+          "affected_claim_scope": "",
+          "coverage_id": "singleton_identity_authority_current",
+          "current": false,
+          "description": "Singleton-vs-plural authority gaps must be model-visible before broad confidence.",
+          "evidence_fingerprint": "4f1ada1f8f590119aeca05d6d7a14ba2ad47fe8fb8c0135e6b4ffd76f24b78ed",
+          "evidence_id": "simulations/flowpilot_singleton_identity_results.json",
+          "falsifier": "The probe is falsified when singleton_identity_authority_current is missing, stale, or its required result is not passing.",
+          "gap_fingerprint": "a5334abad6106147c10c92efc3d31da7f899269c7df7c34b5de2eab2fc3e6ed3",
+          "in_scope": true,
+          "metadata": {
+            "freshness": {
+              "max_source_mtime": 1785610760.7930782,
+              "missing_sources": [],
+              "result": "simulations/flowpilot_singleton_identity_results.json",
+              "result_missing": false,
+              "result_mtime": 1785610759.1263075,
+              "sources": [
+                "docs\\flowpilot_singleton_identity_authority.md",
+                "simulations\\flowpilot_singleton_identity_model.py",
+                "simulations\\run_flowpilot_singleton_identity_checks.py",
+                "tests\\test_flowpilot_singleton_identity.py"
+              ]
+            },
+            "json": {
+              "confidence": "scoped",
+              "decision": "",
+              "ok": true,
+              "result": "simulations/flowpilot_singleton_identity_results.json",
+              "result_type": "flowpilot_singleton_identity"
+            },
+            "unified_repair_contract": null
+          },
+          "model_id": "flowpilot_singleton_identity_authority",
+          "owner_boundary": "",
+          "prediction": "probe:singleton_identity_authority_current should produce a current terminal result for singleton_identity_authority_current.",
+          "probe_id": "probe:singleton_identity_authority_current",
+          "receipt_candidate_fingerprint": "77303346b23a923815acca4908ed1f6f0201d76a42ee18aca381721faffb615a",
+          "receipt_coverage_fingerprint": "e0e44db52d184a7efd9993619b5dc1d1ee9b66b88893b4213fa344cea0e7c67b",
+          "receipt_evidence_fingerprint": "4f1ada1f8f590119aeca05d6d7a14ba2ad47fe8fb8c0135e6b4ffd76f24b78ed",
+          "receipt_fingerprint": "4627ede23ca4719289c94ef5a632ed1b2c1e3fe4ef867f1339b1f97242f3009c",
+          "receipt_id": "receipt.flowpilot_maturation.singleton_identity_authority_current",
+          "receipt_owner_route": "singleton_identity_authority",
+          "receipt_probe_id": "probe:singleton_identity_authority_current",
+          "receipt_status": "fail",
+          "receipt_task_id": "task:flowpilot-milestone-plan-renewal",
+          "required": true,
+          "required_input": "",
+          "resolution_class": "evidence_acquisition",
+          "resolved": false,
+          "risk_id": "singleton_duplicate_authority_gap",
+          "signal_id": "singleton_identity_authority_current",
+          "signal_type": "missing_model_obligation",
+          "source_route": "singleton_identity_authority",
+          "suggested_actions": [
+            "add_model_obligation",
+            "add_code_boundary_observation",
+            "refresh_evidence"
+          ]
+        },
+        "model_id": "flowpilot_singleton_identity_authority",
+        "risk_id": "singleton_duplicate_authority_gap",
+        "severity": "blocker",
+        "signal_id": "singleton_identity_authority_current"
+      },
+      {
+        "action": "refresh_evidence",
+        "code": "model_maturation_signal_stale",
+        "message": "required signal lacks current evidence and cannot support task closure",
+        "metadata": {
+          "affected_claim_scope": "",
+          "coverage_id": "startup_control_evidence_fresh",
+          "current": false,
+          "description": "Startup-control evidence must be current after model or checker edits.",
+          "evidence_fingerprint": "46421a649f6ff10ec38c74f49a02e96b085544ca9ae848d4fd18d105aed27783",
+          "evidence_id": "simulations/flowpilot_startup_control_results.json",
+          "falsifier": "The probe is falsified when startup_control_evidence_fresh is missing, stale, or its required result is not passing.",
+          "gap_fingerprint": "380ce4f9f32aaab61d69a19000c46a0cd199b9b470bb1714856651d54a58c863",
+          "in_scope": true,
+          "metadata": {
+            "freshness": {
+              "max_source_mtime": 1785610759.4792888,
+              "missing_sources": [],
+              "result": "simulations/flowpilot_startup_control_results.json",
+              "result_missing": false,
+              "result_mtime": 1785610759.137372,
+              "sources": [
+                "simulations\\flowpilot_startup_control_model.py",
+                "simulations\\run_flowpilot_startup_control_checks.py"
+              ]
+            },
+            "json": {
+              "confidence": "",
+              "decision": "",
+              "ok": true,
+              "result": "simulations/flowpilot_startup_control_results.json",
+              "result_type": ""
+            },
+            "unified_repair_contract": null
+          },
+          "model_id": "flowpilot_startup_control",
+          "owner_boundary": "",
+          "prediction": "probe:startup_control_evidence_fresh should produce a current terminal result for startup_control_evidence_fresh.",
+          "probe_id": "probe:startup_control_evidence_fresh",
+          "receipt_candidate_fingerprint": "77303346b23a923815acca4908ed1f6f0201d76a42ee18aca381721faffb615a",
+          "receipt_coverage_fingerprint": "e0e44db52d184a7efd9993619b5dc1d1ee9b66b88893b4213fa344cea0e7c67b",
+          "receipt_evidence_fingerprint": "46421a649f6ff10ec38c74f49a02e96b085544ca9ae848d4fd18d105aed27783",
+          "receipt_fingerprint": "1151d4ad0287e9021cb19cc3ed1e518b3453026017a1968cd2d04d2304d42f0f",
+          "receipt_id": "receipt.flowpilot_maturation.startup_control_evidence_fresh",
+          "receipt_owner_route": "development_process_flow",
+          "receipt_probe_id": "probe:startup_control_evidence_fresh",
+          "receipt_status": "fail",
+          "receipt_task_id": "task:flowpilot-milestone-plan-renewal",
+          "required": true,
+          "required_input": "",
+          "resolution_class": "evidence_acquisition",
+          "resolved": false,
+          "risk_id": "startup_control_result_stale",
+          "signal_id": "startup_control_evidence_fresh",
+          "signal_type": "stale_evidence",
+          "source_route": "development_process_flow",
+          "suggested_actions": [
+            "refresh_evidence"
+          ]
+        },
+        "model_id": "flowpilot_startup_control",
+        "risk_id": "startup_control_result_stale",
+        "severity": "blocker",
+        "signal_id": "startup_control_evidence_fresh"
+      },
+      {
+        "action": "refresh_evidence",
+        "code": "model_upgrade_required",
+        "message": "an unresolved addressable signal requires another model/evidence iteration",
+        "metadata": {
+          "affected_claim_scope": "",
+          "coverage_id": "startup_control_evidence_fresh",
+          "current": false,
+          "description": "Startup-control evidence must be current after model or checker edits.",
+          "evidence_fingerprint": "46421a649f6ff10ec38c74f49a02e96b085544ca9ae848d4fd18d105aed27783",
+          "evidence_id": "simulations/flowpilot_startup_control_results.json",
+          "falsifier": "The probe is falsified when startup_control_evidence_fresh is missing, stale, or its required result is not passing.",
+          "gap_fingerprint": "380ce4f9f32aaab61d69a19000c46a0cd199b9b470bb1714856651d54a58c863",
+          "in_scope": true,
+          "metadata": {
+            "freshness": {
+              "max_source_mtime": 1785610759.4792888,
+              "missing_sources": [],
+              "result": "simulations/flowpilot_startup_control_results.json",
+              "result_missing": false,
+              "result_mtime": 1785610759.137372,
+              "sources": [
+                "simulations\\flowpilot_startup_control_model.py",
+                "simulations\\run_flowpilot_startup_control_checks.py"
+              ]
+            },
+            "json": {
+              "confidence": "",
+              "decision": "",
+              "ok": true,
+              "result": "simulations/flowpilot_startup_control_results.json",
+              "result_type": ""
+            },
+            "unified_repair_contract": null
+          },
+          "model_id": "flowpilot_startup_control",
+          "owner_boundary": "",
+          "prediction": "probe:startup_control_evidence_fresh should produce a current terminal result for startup_control_evidence_fresh.",
+          "probe_id": "probe:startup_control_evidence_fresh",
+          "receipt_candidate_fingerprint": "77303346b23a923815acca4908ed1f6f0201d76a42ee18aca381721faffb615a",
+          "receipt_coverage_fingerprint": "e0e44db52d184a7efd9993619b5dc1d1ee9b66b88893b4213fa344cea0e7c67b",
+          "receipt_evidence_fingerprint": "46421a649f6ff10ec38c74f49a02e96b085544ca9ae848d4fd18d105aed27783",
+          "receipt_fingerprint": "1151d4ad0287e9021cb19cc3ed1e518b3453026017a1968cd2d04d2304d42f0f",
+          "receipt_id": "receipt.flowpilot_maturation.startup_control_evidence_fresh",
+          "receipt_owner_route": "development_process_flow",
+          "receipt_probe_id": "probe:startup_control_evidence_fresh",
+          "receipt_status": "fail",
+          "receipt_task_id": "task:flowpilot-milestone-plan-renewal",
+          "required": true,
+          "required_input": "",
+          "resolution_class": "evidence_acquisition",
+          "resolved": false,
+          "risk_id": "startup_control_result_stale",
+          "signal_id": "startup_control_evidence_fresh",
+          "signal_type": "stale_evidence",
+          "source_route": "development_process_flow",
+          "suggested_actions": [
+            "refresh_evidence"
+          ]
+        },
+        "model_id": "flowpilot_startup_control",
+        "risk_id": "startup_control_result_stale",
+        "severity": "blocker",
+        "signal_id": "startup_control_evidence_fresh"
+      },
+      {
+        "action": "refresh_evidence",
+        "code": "model_maturation_signal_stale",
+        "message": "required signal lacks current evidence and cannot support task closure",
+        "metadata": {
+          "affected_claim_scope": "",
+          "coverage_id": "dispatch_recipient_gate_evidence_fresh",
+          "current": false,
+          "description": "Dispatch-recipient gate evidence must be current after model or checker edits.",
+          "evidence_fingerprint": "97cb3505e73e599253084f29a1644be58c6fc925ee330a172768dbc8ff8f0545",
+          "evidence_id": "simulations/flowpilot_dispatch_recipient_gate_results.json",
+          "falsifier": "The probe is falsified when dispatch_recipient_gate_evidence_fresh is missing, stale, or its required result is not passing.",
+          "gap_fingerprint": "4bb5ee7220365104d072c3f8814d7197d652f5daba9f3894a26cd7b4daeaa871",
+          "in_scope": true,
+          "metadata": {
+            "freshness": {
+              "max_source_mtime": 1785610759.3632464,
+              "missing_sources": [],
+              "result": "simulations/flowpilot_dispatch_recipient_gate_results.json",
+              "result_missing": false,
+              "result_mtime": 1785610758.3663533,
+              "sources": [
+                "simulations\\flowpilot_dispatch_recipient_gate_model.py",
+                "simulations\\run_flowpilot_dispatch_recipient_gate_checks.py"
+              ]
+            },
+            "json": {
+              "confidence": "",
+              "decision": "",
+              "ok": true,
+              "result": "simulations/flowpilot_dispatch_recipient_gate_results.json",
+              "result_type": ""
+            },
+            "unified_repair_contract": null
+          },
+          "model_id": "flowpilot_dispatch_recipient_gate",
+          "owner_boundary": "",
+          "prediction": "probe:dispatch_recipient_gate_evidence_fresh should produce a current terminal result for dispatch_recipient_gate_evidence_fresh.",
+          "probe_id": "probe:dispatch_recipient_gate_evidence_fresh",
+          "receipt_candidate_fingerprint": "77303346b23a923815acca4908ed1f6f0201d76a42ee18aca381721faffb615a",
+          "receipt_coverage_fingerprint": "e0e44db52d184a7efd9993619b5dc1d1ee9b66b88893b4213fa344cea0e7c67b",
+          "receipt_evidence_fingerprint": "97cb3505e73e599253084f29a1644be58c6fc925ee330a172768dbc8ff8f0545",
+          "receipt_fingerprint": "ef322a49093f526a656c5c467a1796f64e73418dc315fc0a2d58a5c65c052729",
+          "receipt_id": "receipt.flowpilot_maturation.dispatch_recipient_gate_evidence_fresh",
+          "receipt_owner_route": "development_process_flow",
+          "receipt_probe_id": "probe:dispatch_recipient_gate_evidence_fresh",
+          "receipt_status": "fail",
+          "receipt_task_id": "task:flowpilot-milestone-plan-renewal",
+          "required": true,
+          "required_input": "",
+          "resolution_class": "evidence_acquisition",
+          "resolved": false,
+          "risk_id": "dispatch_recipient_result_stale",
+          "signal_id": "dispatch_recipient_gate_evidence_fresh",
+          "signal_type": "stale_evidence",
+          "source_route": "development_process_flow",
+          "suggested_actions": [
+            "refresh_evidence"
+          ]
+        },
+        "model_id": "flowpilot_dispatch_recipient_gate",
+        "risk_id": "dispatch_recipient_result_stale",
+        "severity": "blocker",
+        "signal_id": "dispatch_recipient_gate_evidence_fresh"
+      },
+      {
+        "action": "refresh_evidence",
+        "code": "model_upgrade_required",
+        "message": "an unresolved addressable signal requires another model/evidence iteration",
+        "metadata": {
+          "affected_claim_scope": "",
+          "coverage_id": "dispatch_recipient_gate_evidence_fresh",
+          "current": false,
+          "description": "Dispatch-recipient gate evidence must be current after model or checker edits.",
+          "evidence_fingerprint": "97cb3505e73e599253084f29a1644be58c6fc925ee330a172768dbc8ff8f0545",
+          "evidence_id": "simulations/flowpilot_dispatch_recipient_gate_results.json",
+          "falsifier": "The probe is falsified when dispatch_recipient_gate_evidence_fresh is missing, stale, or its required result is not passing.",
+          "gap_fingerprint": "4bb5ee7220365104d072c3f8814d7197d652f5daba9f3894a26cd7b4daeaa871",
+          "in_scope": true,
+          "metadata": {
+            "freshness": {
+              "max_source_mtime": 1785610759.3632464,
+              "missing_sources": [],
+              "result": "simulations/flowpilot_dispatch_recipient_gate_results.json",
+              "result_missing": false,
+              "result_mtime": 1785610758.3663533,
+              "sources": [
+                "simulations\\flowpilot_dispatch_recipient_gate_model.py",
+                "simulations\\run_flowpilot_dispatch_recipient_gate_checks.py"
+              ]
+            },
+            "json": {
+              "confidence": "",
+              "decision": "",
+              "ok": true,
+              "result": "simulations/flowpilot_dispatch_recipient_gate_results.json",
+              "result_type": ""
+            },
+            "unified_repair_contract": null
+          },
+          "model_id": "flowpilot_dispatch_recipient_gate",
+          "owner_boundary": "",
+          "prediction": "probe:dispatch_recipient_gate_evidence_fresh should produce a current terminal result for dispatch_recipient_gate_evidence_fresh.",
+          "probe_id": "probe:dispatch_recipient_gate_evidence_fresh",
+          "receipt_candidate_fingerprint": "77303346b23a923815acca4908ed1f6f0201d76a42ee18aca381721faffb615a",
+          "receipt_coverage_fingerprint": "e0e44db52d184a7efd9993619b5dc1d1ee9b66b88893b4213fa344cea0e7c67b",
+          "receipt_evidence_fingerprint": "97cb3505e73e599253084f29a1644be58c6fc925ee330a172768dbc8ff8f0545",
+          "receipt_fingerprint": "ef322a49093f526a656c5c467a1796f64e73418dc315fc0a2d58a5c65c052729",
+          "receipt_id": "receipt.flowpilot_maturation.dispatch_recipient_gate_evidence_fresh",
+          "receipt_owner_route": "development_process_flow",
+          "receipt_probe_id": "probe:dispatch_recipient_gate_evidence_fresh",
+          "receipt_status": "fail",
+          "receipt_task_id": "task:flowpilot-milestone-plan-renewal",
+          "required": true,
+          "required_input": "",
+          "resolution_class": "evidence_acquisition",
+          "resolved": false,
+          "risk_id": "dispatch_recipient_result_stale",
+          "signal_id": "dispatch_recipient_gate_evidence_fresh",
+          "signal_type": "stale_evidence",
+          "source_route": "development_process_flow",
+          "suggested_actions": [
+            "refresh_evidence"
+          ]
+        },
+        "model_id": "flowpilot_dispatch_recipient_gate",
+        "risk_id": "dispatch_recipient_result_stale",
+        "severity": "blocker",
+        "signal_id": "dispatch_recipient_gate_evidence_fresh"
+      }
+    ],
+    "full_closure_ok": false,
     "hard_gate_ok": true,
-    "input_fingerprint": "efb2c17e4d8c8cc3bc8414bdd3e8518534db2efa16bd7188dcfa3cbeb520c502",
+    "input_fingerprint": "1d7cf98e01d33c1b8fe955296c92ec20832da12cb74d9c58ee42eb25f82b7909",
     "iteration": 0,
     "iteration_record": {
       "base_model_fingerprint": "29e48cfd482a1a28ff1b2dec5501af2eaf70dc315ef4498448314a864f5ea587",
       "candidate_model_fingerprint": "77303346b23a923815acca4908ed1f6f0201d76a42ee18aca381721faffb615a",
       "coverage_fingerprint": "e0e44db52d184a7efd9993619b5dc1d1ee9b66b88893b4213fa344cea0e7c67b",
-      "input_fingerprint": "efb2c17e4d8c8cc3bc8414bdd3e8518534db2efa16bd7188dcfa3cbeb520c502",
-      "introduced_gap_fingerprints": [],
+      "input_fingerprint": "1d7cf98e01d33c1b8fe955296c92ec20832da12cb74d9c58ee42eb25f82b7909",
+      "introduced_gap_fingerprints": [
+        "1040cec39f41d29439c85c9eb49a0bb9f1e279b3a1c35129ea4c22e3729139b7",
+        "380ce4f9f32aaab61d69a19000c46a0cd199b9b470bb1714856651d54a58c863",
+        "4bb5ee7220365104d072c3f8814d7197d652f5daba9f3894a26cd7b4daeaa871",
+        "a5334abad6106147c10c92efc3d31da7f899269c7df7c34b5de2eab2fc3e6ed3",
+        "fada110d471f32319536cc1ef02e55e7f12c46386913e930002e35619e165064"
+      ],
       "iteration": 0,
-      "iteration_fingerprint": "a6534c3ff729d7fe607ce64ac398a3f9cf87478630099c25e44d786a30276b67",
+      "iteration_fingerprint": "1e2fd680c03dd499c630fd2d0d67f7824da343d2afa1525b6c0fa0f9d5bd7cae",
       "iteration_id": "flowpilot-model-maturation-routine-closure:0",
       "native_receipt_fingerprints": [
-        "12866b99903a2b8491ca69ef121b56ee506ffd091d91525dee8d4886940a196d",
-        "1b809c3afc0fd2340b78bb088f2433873471cccfd95e3149793cbfef603e8e05",
-        "45b8cd019e3a883f1d9570b4618901e08c09baeac59411c3772d83a866035611",
-        "60c416d5cdfd0101329aee3c590470f7342655b94f3e1252001d3a615d6331dc",
-        "6d6a371d87a448db9df16c9a2bd27a98e27a2eceb070caa63e5c5957d7b5b09e",
-        "7ba77343cc91abd33d7d07cf1669d48c4678ea91212a147b13603fa1008fc20d",
-        "8cc5290fcd7af03f88755c43b6306ddf686716c6413c58e93f3ffd8b663151d5",
-        "b43b2ed31a2085d985be72ffa988ec0b216d6ab44acbf8163d19a8efbdbc03aa",
-        "cff885c496854c5d123932abf6346117e31ef663dbe6a27be18b336c887f13f4",
-        "d00143ec8831188e9c7ddb89260ea3d0f75acdd74557a8cb808f571194953e2b",
-        "eccc9e5460da504f4b81e73d024bd2fa67af68cc8c42b1985b0289e1d19c2f7e"
+        "03237bcd85c748860e38a5247a8941e8d37a0e87aa0128aade79f13f5ef56283",
+        "144c4c29a81b9d93a59c944bc7db2fee7f8df573c42981f7bb66540adc066256",
+        "1fac9ebf8e171360ef8781045219a89527edf2ca4fd3b5113f9802993bf9e9ff",
+        "5c2e7752d97647a36bfdd4910bebad1a7965a2afcf8dfd4234b4fd9ba03f5e8d",
+        "c80256422f2343ec3c38345b98a91029db30263a19bdbf96aceb8437c3b8c331",
+        "f98541b0fff87c752f01c1f7ce87291d752aa93d369600fb9ddcdaa470ff3a19"
       ],
       "next_actions": [
-        "no_model_change_needed"
+        "refresh_evidence",
+        "add_code_boundary_observation",
+        "add_model_obligation"
       ],
-      "open_gap_fingerprints": [],
+      "open_gap_fingerprints": [
+        "1040cec39f41d29439c85c9eb49a0bb9f1e279b3a1c35129ea4c22e3729139b7",
+        "380ce4f9f32aaab61d69a19000c46a0cd199b9b470bb1714856651d54a58c863",
+        "4bb5ee7220365104d072c3f8814d7197d652f5daba9f3894a26cd7b4daeaa871",
+        "a5334abad6106147c10c92efc3d31da7f899269c7df7c34b5de2eab2fc3e6ed3",
+        "fada110d471f32319536cc1ef02e55e7f12c46386913e930002e35619e165064"
+      ],
       "persisted_gap_fingerprints": [],
       "plan_id": "flowpilot-model-maturation-routine-closure",
       "predecessor_iteration_fingerprint": "",
       "progressed": true,
       "resolved_gap_fingerprints": [],
       "task_id": "task:flowpilot-milestone-plan-renewal",
-      "terminal_reason": "model_maturation_closed_for_task"
+      "terminal_reason": ""
     },
-    "maintenance_obligations": [],
+    "maintenance_obligations": [
+      {
+        "anchor_paths": [],
+        "anchor_symbols": [],
+        "artifact_ids": [],
+        "claim_effect": "",
+        "code_contract_ids": [],
+        "current": true,
+        "evidence_ids": [],
+        "message": "required signal lacks current evidence and cannot support task closure",
+        "metadata": {
+          "maturation_finding": {
+            "action": "refresh_evidence",
+            "code": "model_maturation_signal_stale",
+            "message": "required signal lacks current evidence and cannot support task closure",
+            "metadata": {
+              "affected_claim_scope": "",
+              "coverage_id": "prompt_assets_are_contract_inputs",
+              "current": false,
+              "description": "Prompt assets and manifests must be model-visible contract inputs.",
+              "evidence_fingerprint": "9cee99bc50c36e6329a1336e61f8afba94ad6894d6b29c9acb429d18534ccd60",
+              "evidence_id": "simulations/flowpilot_prompt_boundary_results.json",
+              "falsifier": "The probe is falsified when prompt_assets_are_contract_inputs is missing, stale, or its required result is not passing.",
+              "gap_fingerprint": "1040cec39f41d29439c85c9eb49a0bb9f1e279b3a1c35129ea4c22e3729139b7",
+              "in_scope": true,
+              "metadata": {
+                "freshness": {
+                  "max_source_mtime": 1785610760.300434,
+                  "missing_sources": [],
+                  "result": "simulations/flowpilot_prompt_boundary_results.json",
+                  "result_missing": false,
+                  "result_mtime": 1785610758.9895358,
+                  "sources": [
+                    "simulations\\flowpilot_prompt_boundary_model.py",
+                    "simulations\\run_flowpilot_prompt_boundary_checks.py",
+                    "skills\\flowpilot\\assets\\runtime_kit\\prompts\\manifest.json",
+                    "openspec\\changes\\adopt-flowguard-model-maturation\\specs\\flowpilot-prompt-boundary-policy\\spec.md"
+                  ]
+                },
+                "json": {
+                  "confidence": "",
+                  "decision": "",
+                  "ok": true,
+                  "result": "simulations/flowpilot_prompt_boundary_results.json",
+                  "result_type": ""
+                },
+                "unified_repair_contract": null
+              },
+              "model_id": "flowpilot_prompt_boundary",
+              "owner_boundary": "",
+              "prediction": "probe:prompt_assets_are_contract_inputs should produce a current terminal result for prompt_assets_are_contract_inputs.",
+              "probe_id": "probe:prompt_assets_are_contract_inputs",
+              "receipt_candidate_fingerprint": "77303346b23a923815acca4908ed1f6f0201d76a42ee18aca381721faffb615a",
+              "receipt_coverage_fingerprint": "e0e44db52d184a7efd9993619b5dc1d1ee9b66b88893b4213fa344cea0e7c67b",
+              "receipt_evidence_fingerprint": "9cee99bc50c36e6329a1336e61f8afba94ad6894d6b29c9acb429d18534ccd60",
+              "receipt_fingerprint": "8a9e098c63690e3f67494984d1d6520bfb683a2dc15cdd10a5c713b3d515b900",
+              "receipt_id": "receipt.flowpilot_maturation.prompt_assets_are_contract_inputs",
+              "receipt_owner_route": "flowpilot_prompt_boundary_policy",
+              "receipt_probe_id": "probe:prompt_assets_are_contract_inputs",
+              "receipt_status": "fail",
+              "receipt_task_id": "task:flowpilot-milestone-plan-renewal",
+              "required": true,
+              "required_input": "",
+              "resolution_class": "evidence_acquisition",
+              "resolved": false,
+              "risk_id": "prompt_asset_drift_not_seen_by_code_scan",
+              "signal_id": "prompt_assets_are_contract_inputs",
+              "signal_type": "missing_code_boundary_observation",
+              "source_route": "flowpilot_prompt_boundary_policy",
+              "suggested_actions": [
+                "add_code_boundary_observation",
+                "add_model_obligation"
+              ]
+            },
+            "model_id": "flowpilot_prompt_boundary",
+            "risk_id": "prompt_asset_drift_not_seen_by_code_scan",
+            "severity": "blocker",
+            "signal_id": "prompt_assets_are_contract_inputs"
+          },
+          "recommended_action": "refresh_evidence"
+        },
+        "model_ids": [
+          "flowpilot_prompt_boundary"
+        ],
+        "obligation_id": "model-maturation:prompt-assets-are-contract-inputs",
+        "owner_route": "model_maturation_loop",
+        "proof_gap_codes": [],
+        "public_entrypoint_ids": [],
+        "reason_code": "model_maturation_signal_stale",
+        "required_input_kinds": [],
+        "risk_ids": [
+          "prompt_asset_drift_not_seen_by_code_scan"
+        ],
+        "scope_reason": "",
+        "source_route": "model_maturation_loop",
+        "status": "open",
+        "strength": "required",
+        "suggested_commands": []
+      },
+      {
+        "anchor_paths": [],
+        "anchor_symbols": [],
+        "artifact_ids": [],
+        "claim_effect": "",
+        "code_contract_ids": [],
+        "current": true,
+        "evidence_ids": [],
+        "message": "an unresolved addressable signal requires another model/evidence iteration",
+        "metadata": {
+          "maturation_finding": {
+            "action": "add_code_boundary_observation",
+            "code": "model_upgrade_required",
+            "message": "an unresolved addressable signal requires another model/evidence iteration",
+            "metadata": {
+              "affected_claim_scope": "",
+              "coverage_id": "prompt_assets_are_contract_inputs",
+              "current": false,
+              "description": "Prompt assets and manifests must be model-visible contract inputs.",
+              "evidence_fingerprint": "9cee99bc50c36e6329a1336e61f8afba94ad6894d6b29c9acb429d18534ccd60",
+              "evidence_id": "simulations/flowpilot_prompt_boundary_results.json",
+              "falsifier": "The probe is falsified when prompt_assets_are_contract_inputs is missing, stale, or its required result is not passing.",
+              "gap_fingerprint": "1040cec39f41d29439c85c9eb49a0bb9f1e279b3a1c35129ea4c22e3729139b7",
+              "in_scope": true,
+              "metadata": {
+                "freshness": {
+                  "max_source_mtime": 1785610760.300434,
+                  "missing_sources": [],
+                  "result": "simulations/flowpilot_prompt_boundary_results.json",
+                  "result_missing": false,
+                  "result_mtime": 1785610758.9895358,
+                  "sources": [
+                    "simulations\\flowpilot_prompt_boundary_model.py",
+                    "simulations\\run_flowpilot_prompt_boundary_checks.py",
+                    "skills\\flowpilot\\assets\\runtime_kit\\prompts\\manifest.json",
+                    "openspec\\changes\\adopt-flowguard-model-maturation\\specs\\flowpilot-prompt-boundary-policy\\spec.md"
+                  ]
+                },
+                "json": {
+                  "confidence": "",
+                  "decision": "",
+                  "ok": true,
+                  "result": "simulations/flowpilot_prompt_boundary_results.json",
+                  "result_type": ""
+                },
+                "unified_repair_contract": null
+              },
+              "model_id": "flowpilot_prompt_boundary",
+              "owner_boundary": "",
+              "prediction": "probe:prompt_assets_are_contract_inputs should produce a current terminal result for prompt_assets_are_contract_inputs.",
+              "probe_id": "probe:prompt_assets_are_contract_inputs",
+              "receipt_candidate_fingerprint": "77303346b23a923815acca4908ed1f6f0201d76a42ee18aca381721faffb615a",
+              "receipt_coverage_fingerprint": "e0e44db52d184a7efd9993619b5dc1d1ee9b66b88893b4213fa344cea0e7c67b",
+              "receipt_evidence_fingerprint": "9cee99bc50c36e6329a1336e61f8afba94ad6894d6b29c9acb429d18534ccd60",
+              "receipt_fingerprint": "8a9e098c63690e3f67494984d1d6520bfb683a2dc15cdd10a5c713b3d515b900",
+              "receipt_id": "receipt.flowpilot_maturation.prompt_assets_are_contract_inputs",
+              "receipt_owner_route": "flowpilot_prompt_boundary_policy",
+              "receipt_probe_id": "probe:prompt_assets_are_contract_inputs",
+              "receipt_status": "fail",
+              "receipt_task_id": "task:flowpilot-milestone-plan-renewal",
+              "required": true,
+              "required_input": "",
+              "resolution_class": "evidence_acquisition",
+              "resolved": false,
+              "risk_id": "prompt_asset_drift_not_seen_by_code_scan",
+              "signal_id": "prompt_assets_are_contract_inputs",
+              "signal_type": "missing_code_boundary_observation",
+              "source_route": "flowpilot_prompt_boundary_policy",
+              "suggested_actions": [
+                "add_code_boundary_observation",
+                "add_model_obligation"
+              ]
+            },
+            "model_id": "flowpilot_prompt_boundary",
+            "risk_id": "prompt_asset_drift_not_seen_by_code_scan",
+            "severity": "blocker",
+            "signal_id": "prompt_assets_are_contract_inputs"
+          },
+          "recommended_action": "add_code_boundary_observation"
+        },
+        "model_ids": [
+          "flowpilot_prompt_boundary"
+        ],
+        "obligation_id": "model-maturation:prompt-assets-are-contract-inputs",
+        "owner_route": "model_maturation_loop",
+        "proof_gap_codes": [],
+        "public_entrypoint_ids": [],
+        "reason_code": "model_upgrade_required",
+        "required_input_kinds": [],
+        "risk_ids": [
+          "prompt_asset_drift_not_seen_by_code_scan"
+        ],
+        "scope_reason": "",
+        "source_route": "model_maturation_loop",
+        "status": "open",
+        "strength": "required",
+        "suggested_commands": []
+      },
+      {
+        "anchor_paths": [],
+        "anchor_symbols": [],
+        "artifact_ids": [],
+        "claim_effect": "",
+        "code_contract_ids": [],
+        "current": true,
+        "evidence_ids": [],
+        "message": "an unresolved addressable signal requires another model/evidence iteration",
+        "metadata": {
+          "maturation_finding": {
+            "action": "add_model_obligation",
+            "code": "model_upgrade_required",
+            "message": "an unresolved addressable signal requires another model/evidence iteration",
+            "metadata": {
+              "affected_claim_scope": "",
+              "coverage_id": "prompt_assets_are_contract_inputs",
+              "current": false,
+              "description": "Prompt assets and manifests must be model-visible contract inputs.",
+              "evidence_fingerprint": "9cee99bc50c36e6329a1336e61f8afba94ad6894d6b29c9acb429d18534ccd60",
+              "evidence_id": "simulations/flowpilot_prompt_boundary_results.json",
+              "falsifier": "The probe is falsified when prompt_assets_are_contract_inputs is missing, stale, or its required result is not passing.",
+              "gap_fingerprint": "1040cec39f41d29439c85c9eb49a0bb9f1e279b3a1c35129ea4c22e3729139b7",
+              "in_scope": true,
+              "metadata": {
+                "freshness": {
+                  "max_source_mtime": 1785610760.300434,
+                  "missing_sources": [],
+                  "result": "simulations/flowpilot_prompt_boundary_results.json",
+                  "result_missing": false,
+                  "result_mtime": 1785610758.9895358,
+                  "sources": [
+                    "simulations\\flowpilot_prompt_boundary_model.py",
+                    "simulations\\run_flowpilot_prompt_boundary_checks.py",
+                    "skills\\flowpilot\\assets\\runtime_kit\\prompts\\manifest.json",
+                    "openspec\\changes\\adopt-flowguard-model-maturation\\specs\\flowpilot-prompt-boundary-policy\\spec.md"
+                  ]
+                },
+                "json": {
+                  "confidence": "",
+                  "decision": "",
+                  "ok": true,
+                  "result": "simulations/flowpilot_prompt_boundary_results.json",
+                  "result_type": ""
+                },
+                "unified_repair_contract": null
+              },
+              "model_id": "flowpilot_prompt_boundary",
+              "owner_boundary": "",
+              "prediction": "probe:prompt_assets_are_contract_inputs should produce a current terminal result for prompt_assets_are_contract_inputs.",
+              "probe_id": "probe:prompt_assets_are_contract_inputs",
+              "receipt_candidate_fingerprint": "77303346b23a923815acca4908ed1f6f0201d76a42ee18aca381721faffb615a",
+              "receipt_coverage_fingerprint": "e0e44db52d184a7efd9993619b5dc1d1ee9b66b88893b4213fa344cea0e7c67b",
+              "receipt_evidence_fingerprint": "9cee99bc50c36e6329a1336e61f8afba94ad6894d6b29c9acb429d18534ccd60",
+              "receipt_fingerprint": "8a9e098c63690e3f67494984d1d6520bfb683a2dc15cdd10a5c713b3d515b900",
+              "receipt_id": "receipt.flowpilot_maturation.prompt_assets_are_contract_inputs",
+              "receipt_owner_route": "flowpilot_prompt_boundary_policy",
+              "receipt_probe_id": "probe:prompt_assets_are_contract_inputs",
+              "receipt_status": "fail",
+              "receipt_task_id": "task:flowpilot-milestone-plan-renewal",
+              "required": true,
+              "required_input": "",
+              "resolution_class": "evidence_acquisition",
+              "resolved": false,
+              "risk_id": "prompt_asset_drift_not_seen_by_code_scan",
+              "signal_id": "prompt_assets_are_contract_inputs",
+              "signal_type": "missing_code_boundary_observation",
+              "source_route": "flowpilot_prompt_boundary_policy",
+              "suggested_actions": [
+                "add_code_boundary_observation",
+                "add_model_obligation"
+              ]
+            },
+            "model_id": "flowpilot_prompt_boundary",
+            "risk_id": "prompt_asset_drift_not_seen_by_code_scan",
+            "severity": "blocker",
+            "signal_id": "prompt_assets_are_contract_inputs"
+          },
+          "recommended_action": "add_model_obligation"
+        },
+        "model_ids": [
+          "flowpilot_prompt_boundary"
+        ],
+        "obligation_id": "model-maturation:prompt-assets-are-contract-inputs",
+        "owner_route": "model_maturation_loop",
+        "proof_gap_codes": [],
+        "public_entrypoint_ids": [],
+        "reason_code": "model_upgrade_required",
+        "required_input_kinds": [],
+        "risk_ids": [
+          "prompt_asset_drift_not_seen_by_code_scan"
+        ],
+        "scope_reason": "",
+        "source_route": "model_maturation_loop",
+        "status": "open",
+        "strength": "required",
+        "suggested_commands": []
+      },
+      {
+        "anchor_paths": [],
+        "anchor_symbols": [],
+        "artifact_ids": [],
+        "claim_effect": "",
+        "code_contract_ids": [],
+        "current": true,
+        "evidence_ids": [],
+        "message": "required signal lacks current evidence and cannot support task closure",
+        "metadata": {
+          "maturation_finding": {
+            "action": "refresh_evidence",
+            "code": "model_maturation_signal_stale",
+            "message": "required signal lacks current evidence and cannot support task closure",
+            "metadata": {
+              "affected_claim_scope": "",
+              "coverage_id": "protocol_contract_conformance_fresh",
+              "current": false,
+              "description": "Protocol contract conformance result must be current for the model and checker.",
+              "evidence_fingerprint": "d5d072fc212887a06f7ed2f4b4a6098fe1be4a294c76a97fc7cc519b82daae38",
+              "evidence_id": "simulations/protocol_contract_conformance_results.json",
+              "falsifier": "The probe is falsified when protocol_contract_conformance_fresh is missing, stale, or its required result is not passing.",
+              "gap_fingerprint": "fada110d471f32319536cc1ef02e55e7f12c46386913e930002e35619e165064",
+              "in_scope": true,
+              "metadata": {
+                "freshness": {
+                  "max_source_mtime": 1785610759.5180807,
+                  "missing_sources": [],
+                  "result": "simulations/protocol_contract_conformance_results.json",
+                  "result_missing": false,
+                  "result_mtime": 1785610759.281691,
+                  "sources": [
+                    "simulations\\flowpilot_protocol_contract_conformance_model.py",
+                    "simulations\\run_protocol_contract_conformance_checks.py"
+                  ]
+                },
+                "json": {
+                  "confidence": "",
+                  "decision": "",
+                  "ok": true,
+                  "result": "simulations/protocol_contract_conformance_results.json",
+                  "result_type": ""
+                },
+                "unified_repair_contract": null
+              },
+              "model_id": "flowpilot_protocol_contract_conformance",
+              "owner_boundary": "",
+              "prediction": "probe:protocol_contract_conformance_fresh should produce a current terminal result for protocol_contract_conformance_fresh.",
+              "probe_id": "probe:protocol_contract_conformance_fresh",
+              "receipt_candidate_fingerprint": "77303346b23a923815acca4908ed1f6f0201d76a42ee18aca381721faffb615a",
+              "receipt_coverage_fingerprint": "e0e44db52d184a7efd9993619b5dc1d1ee9b66b88893b4213fa344cea0e7c67b",
+              "receipt_evidence_fingerprint": "d5d072fc212887a06f7ed2f4b4a6098fe1be4a294c76a97fc7cc519b82daae38",
+              "receipt_fingerprint": "702da439a67b45a3b2cd5b7ba310a33417e26abaa0c212d6bae66a4c7e9b610e",
+              "receipt_id": "receipt.flowpilot_maturation.protocol_contract_conformance_fresh",
+              "receipt_owner_route": "existing_model_preflight",
+              "receipt_probe_id": "probe:protocol_contract_conformance_fresh",
+              "receipt_status": "fail",
+              "receipt_task_id": "task:flowpilot-milestone-plan-renewal",
+              "required": true,
+              "required_input": "",
+              "resolution_class": "evidence_acquisition",
+              "resolved": false,
+              "risk_id": "protocol_contract_result_stale",
+              "signal_id": "protocol_contract_conformance_fresh",
+              "signal_type": "stale_evidence",
+              "source_route": "existing_model_preflight",
+              "suggested_actions": [
+                "refresh_evidence"
+              ]
+            },
+            "model_id": "flowpilot_protocol_contract_conformance",
+            "risk_id": "protocol_contract_result_stale",
+            "severity": "blocker",
+            "signal_id": "protocol_contract_conformance_fresh"
+          },
+          "recommended_action": "refresh_evidence"
+        },
+        "model_ids": [
+          "flowpilot_protocol_contract_conformance"
+        ],
+        "obligation_id": "model-maturation:protocol-contract-conformance-fresh",
+        "owner_route": "model_maturation_loop",
+        "proof_gap_codes": [],
+        "public_entrypoint_ids": [],
+        "reason_code": "model_maturation_signal_stale",
+        "required_input_kinds": [],
+        "risk_ids": [
+          "protocol_contract_result_stale"
+        ],
+        "scope_reason": "",
+        "source_route": "model_maturation_loop",
+        "status": "open",
+        "strength": "required",
+        "suggested_commands": []
+      },
+      {
+        "anchor_paths": [],
+        "anchor_symbols": [],
+        "artifact_ids": [],
+        "claim_effect": "",
+        "code_contract_ids": [],
+        "current": true,
+        "evidence_ids": [],
+        "message": "an unresolved addressable signal requires another model/evidence iteration",
+        "metadata": {
+          "maturation_finding": {
+            "action": "refresh_evidence",
+            "code": "model_upgrade_required",
+            "message": "an unresolved addressable signal requires another model/evidence iteration",
+            "metadata": {
+              "affected_claim_scope": "",
+              "coverage_id": "protocol_contract_conformance_fresh",
+              "current": false,
+              "description": "Protocol contract conformance result must be current for the model and checker.",
+              "evidence_fingerprint": "d5d072fc212887a06f7ed2f4b4a6098fe1be4a294c76a97fc7cc519b82daae38",
+              "evidence_id": "simulations/protocol_contract_conformance_results.json",
+              "falsifier": "The probe is falsified when protocol_contract_conformance_fresh is missing, stale, or its required result is not passing.",
+              "gap_fingerprint": "fada110d471f32319536cc1ef02e55e7f12c46386913e930002e35619e165064",
+              "in_scope": true,
+              "metadata": {
+                "freshness": {
+                  "max_source_mtime": 1785610759.5180807,
+                  "missing_sources": [],
+                  "result": "simulations/protocol_contract_conformance_results.json",
+                  "result_missing": false,
+                  "result_mtime": 1785610759.281691,
+                  "sources": [
+                    "simulations\\flowpilot_protocol_contract_conformance_model.py",
+                    "simulations\\run_protocol_contract_conformance_checks.py"
+                  ]
+                },
+                "json": {
+                  "confidence": "",
+                  "decision": "",
+                  "ok": true,
+                  "result": "simulations/protocol_contract_conformance_results.json",
+                  "result_type": ""
+                },
+                "unified_repair_contract": null
+              },
+              "model_id": "flowpilot_protocol_contract_conformance",
+              "owner_boundary": "",
+              "prediction": "probe:protocol_contract_conformance_fresh should produce a current terminal result for protocol_contract_conformance_fresh.",
+              "probe_id": "probe:protocol_contract_conformance_fresh",
+              "receipt_candidate_fingerprint": "77303346b23a923815acca4908ed1f6f0201d76a42ee18aca381721faffb615a",
+              "receipt_coverage_fingerprint": "e0e44db52d184a7efd9993619b5dc1d1ee9b66b88893b4213fa344cea0e7c67b",
+              "receipt_evidence_fingerprint": "d5d072fc212887a06f7ed2f4b4a6098fe1be4a294c76a97fc7cc519b82daae38",
+              "receipt_fingerprint": "702da439a67b45a3b2cd5b7ba310a33417e26abaa0c212d6bae66a4c7e9b610e",
+              "receipt_id": "receipt.flowpilot_maturation.protocol_contract_conformance_fresh",
+              "receipt_owner_route": "existing_model_preflight",
+              "receipt_probe_id": "probe:protocol_contract_conformance_fresh",
+              "receipt_status": "fail",
+              "receipt_task_id": "task:flowpilot-milestone-plan-renewal",
+              "required": true,
+              "required_input": "",
+              "resolution_class": "evidence_acquisition",
+              "resolved": false,
+              "risk_id": "protocol_contract_result_stale",
+              "signal_id": "protocol_contract_conformance_fresh",
+              "signal_type": "stale_evidence",
+              "source_route": "existing_model_preflight",
+              "suggested_actions": [
+                "refresh_evidence"
+              ]
+            },
+            "model_id": "flowpilot_protocol_contract_conformance",
+            "risk_id": "protocol_contract_result_stale",
+            "severity": "blocker",
+            "signal_id": "protocol_contract_conformance_fresh"
+          },
+          "recommended_action": "refresh_evidence"
+        },
+        "model_ids": [
+          "flowpilot_protocol_contract_conformance"
+        ],
+        "obligation_id": "model-maturation:protocol-contract-conformance-fresh",
+        "owner_route": "model_maturation_loop",
+        "proof_gap_codes": [],
+        "public_entrypoint_ids": [],
+        "reason_code": "model_upgrade_required",
+        "required_input_kinds": [],
+        "risk_ids": [
+          "protocol_contract_result_stale"
+        ],
+        "scope_reason": "",
+        "source_route": "model_maturation_loop",
+        "status": "open",
+        "strength": "required",
+        "suggested_commands": []
+      },
+      {
+        "anchor_paths": [],
+        "anchor_symbols": [],
+        "artifact_ids": [],
+        "claim_effect": "",
+        "code_contract_ids": [],
+        "current": true,
+        "evidence_ids": [],
+        "message": "required signal lacks current evidence and cannot support task closure",
+        "metadata": {
+          "maturation_finding": {
+            "action": "refresh_evidence",
+            "code": "model_maturation_signal_stale",
+            "message": "required signal lacks current evidence and cannot support task closure",
+            "metadata": {
+              "affected_claim_scope": "",
+              "coverage_id": "singleton_identity_authority_current",
+              "current": false,
+              "description": "Singleton-vs-plural authority gaps must be model-visible before broad confidence.",
+              "evidence_fingerprint": "4f1ada1f8f590119aeca05d6d7a14ba2ad47fe8fb8c0135e6b4ffd76f24b78ed",
+              "evidence_id": "simulations/flowpilot_singleton_identity_results.json",
+              "falsifier": "The probe is falsified when singleton_identity_authority_current is missing, stale, or its required result is not passing.",
+              "gap_fingerprint": "a5334abad6106147c10c92efc3d31da7f899269c7df7c34b5de2eab2fc3e6ed3",
+              "in_scope": true,
+              "metadata": {
+                "freshness": {
+                  "max_source_mtime": 1785610760.7930782,
+                  "missing_sources": [],
+                  "result": "simulations/flowpilot_singleton_identity_results.json",
+                  "result_missing": false,
+                  "result_mtime": 1785610759.1263075,
+                  "sources": [
+                    "docs\\flowpilot_singleton_identity_authority.md",
+                    "simulations\\flowpilot_singleton_identity_model.py",
+                    "simulations\\run_flowpilot_singleton_identity_checks.py",
+                    "tests\\test_flowpilot_singleton_identity.py"
+                  ]
+                },
+                "json": {
+                  "confidence": "scoped",
+                  "decision": "",
+                  "ok": true,
+                  "result": "simulations/flowpilot_singleton_identity_results.json",
+                  "result_type": "flowpilot_singleton_identity"
+                },
+                "unified_repair_contract": null
+              },
+              "model_id": "flowpilot_singleton_identity_authority",
+              "owner_boundary": "",
+              "prediction": "probe:singleton_identity_authority_current should produce a current terminal result for singleton_identity_authority_current.",
+              "probe_id": "probe:singleton_identity_authority_current",
+              "receipt_candidate_fingerprint": "77303346b23a923815acca4908ed1f6f0201d76a42ee18aca381721faffb615a",
+              "receipt_coverage_fingerprint": "e0e44db52d184a7efd9993619b5dc1d1ee9b66b88893b4213fa344cea0e7c67b",
+              "receipt_evidence_fingerprint": "4f1ada1f8f590119aeca05d6d7a14ba2ad47fe8fb8c0135e6b4ffd76f24b78ed",
+              "receipt_fingerprint": "4627ede23ca4719289c94ef5a632ed1b2c1e3fe4ef867f1339b1f97242f3009c",
+              "receipt_id": "receipt.flowpilot_maturation.singleton_identity_authority_current",
+              "receipt_owner_route": "singleton_identity_authority",
+              "receipt_probe_id": "probe:singleton_identity_authority_current",
+              "receipt_status": "fail",
+              "receipt_task_id": "task:flowpilot-milestone-plan-renewal",
+              "required": true,
+              "required_input": "",
+              "resolution_class": "evidence_acquisition",
+              "resolved": false,
+              "risk_id": "singleton_duplicate_authority_gap",
+              "signal_id": "singleton_identity_authority_current",
+              "signal_type": "missing_model_obligation",
+              "source_route": "singleton_identity_authority",
+              "suggested_actions": [
+                "add_model_obligation",
+                "add_code_boundary_observation",
+                "refresh_evidence"
+              ]
+            },
+            "model_id": "flowpilot_singleton_identity_authority",
+            "risk_id": "singleton_duplicate_authority_gap",
+            "severity": "blocker",
+            "signal_id": "singleton_identity_authority_current"
+          },
+          "recommended_action": "refresh_evidence"
+        },
+        "model_ids": [
+          "flowpilot_singleton_identity_authority"
+        ],
+        "obligation_id": "model-maturation:singleton-identity-authority-current",
+        "owner_route": "model_maturation_loop",
+        "proof_gap_codes": [],
+        "public_entrypoint_ids": [],
+        "reason_code": "model_maturation_signal_stale",
+        "required_input_kinds": [],
+        "risk_ids": [
+          "singleton_duplicate_authority_gap"
+        ],
+        "scope_reason": "",
+        "source_route": "model_maturation_loop",
+        "status": "open",
+        "strength": "required",
+        "suggested_commands": []
+      },
+      {
+        "anchor_paths": [],
+        "anchor_symbols": [],
+        "artifact_ids": [],
+        "claim_effect": "",
+        "code_contract_ids": [],
+        "current": true,
+        "evidence_ids": [],
+        "message": "an unresolved addressable signal requires another model/evidence iteration",
+        "metadata": {
+          "maturation_finding": {
+            "action": "add_model_obligation",
+            "code": "model_upgrade_required",
+            "message": "an unresolved addressable signal requires another model/evidence iteration",
+            "metadata": {
+              "affected_claim_scope": "",
+              "coverage_id": "singleton_identity_authority_current",
+              "current": false,
+              "description": "Singleton-vs-plural authority gaps must be model-visible before broad confidence.",
+              "evidence_fingerprint": "4f1ada1f8f590119aeca05d6d7a14ba2ad47fe8fb8c0135e6b4ffd76f24b78ed",
+              "evidence_id": "simulations/flowpilot_singleton_identity_results.json",
+              "falsifier": "The probe is falsified when singleton_identity_authority_current is missing, stale, or its required result is not passing.",
+              "gap_fingerprint": "a5334abad6106147c10c92efc3d31da7f899269c7df7c34b5de2eab2fc3e6ed3",
+              "in_scope": true,
+              "metadata": {
+                "freshness": {
+                  "max_source_mtime": 1785610760.7930782,
+                  "missing_sources": [],
+                  "result": "simulations/flowpilot_singleton_identity_results.json",
+                  "result_missing": false,
+                  "result_mtime": 1785610759.1263075,
+                  "sources": [
+                    "docs\\flowpilot_singleton_identity_authority.md",
+                    "simulations\\flowpilot_singleton_identity_model.py",
+                    "simulations\\run_flowpilot_singleton_identity_checks.py",
+                    "tests\\test_flowpilot_singleton_identity.py"
+                  ]
+                },
+                "json": {
+                  "confidence": "scoped",
+                  "decision": "",
+                  "ok": true,
+                  "result": "simulations/flowpilot_singleton_identity_results.json",
+                  "result_type": "flowpilot_singleton_identity"
+                },
+                "unified_repair_contract": null
+              },
+              "model_id": "flowpilot_singleton_identity_authority",
+              "owner_boundary": "",
+              "prediction": "probe:singleton_identity_authority_current should produce a current terminal result for singleton_identity_authority_current.",
+              "probe_id": "probe:singleton_identity_authority_current",
+              "receipt_candidate_fingerprint": "77303346b23a923815acca4908ed1f6f0201d76a42ee18aca381721faffb615a",
+              "receipt_coverage_fingerprint": "e0e44db52d184a7efd9993619b5dc1d1ee9b66b88893b4213fa344cea0e7c67b",
+              "receipt_evidence_fingerprint": "4f1ada1f8f590119aeca05d6d7a14ba2ad47fe8fb8c0135e6b4ffd76f24b78ed",
+              "receipt_fingerprint": "4627ede23ca4719289c94ef5a632ed1b2c1e3fe4ef867f1339b1f97242f3009c",
+              "receipt_id": "receipt.flowpilot_maturation.singleton_identity_authority_current",
+              "receipt_owner_route": "singleton_identity_authority",
+              "receipt_probe_id": "probe:singleton_identity_authority_current",
+              "receipt_status": "fail",
+              "receipt_task_id": "task:flowpilot-milestone-plan-renewal",
+              "required": true,
+              "required_input": "",
+              "resolution_class": "evidence_acquisition",
+              "resolved": false,
+              "risk_id": "singleton_duplicate_authority_gap",
+              "signal_id": "singleton_identity_authority_current",
+              "signal_type": "missing_model_obligation",
+              "source_route": "singleton_identity_authority",
+              "suggested_actions": [
+                "add_model_obligation",
+                "add_code_boundary_observation",
+                "refresh_evidence"
+              ]
+            },
+            "model_id": "flowpilot_singleton_identity_authority",
+            "risk_id": "singleton_duplicate_authority_gap",
+            "severity": "blocker",
+            "signal_id": "singleton_identity_authority_current"
+          },
+          "recommended_action": "add_model_obligation"
+        },
+        "model_ids": [
+          "flowpilot_singleton_identity_authority"
+        ],
+        "obligation_id": "model-maturation:singleton-identity-authority-current",
+        "owner_route": "model_maturation_loop",
+        "proof_gap_codes": [],
+        "public_entrypoint_ids": [],
+        "reason_code": "model_upgrade_required",
+        "required_input_kinds": [],
+        "risk_ids": [
+          "singleton_duplicate_authority_gap"
+        ],
+        "scope_reason": "",
+        "source_route": "model_maturation_loop",
+        "status": "open",
+        "strength": "required",
+        "suggested_commands": []
+      },
+      {
+        "anchor_paths": [],
+        "anchor_symbols": [],
+        "artifact_ids": [],
+        "claim_effect": "",
+        "code_contract_ids": [],
+        "current": true,
+        "evidence_ids": [],
+        "message": "an unresolved addressable signal requires another model/evidence iteration",
+        "metadata": {
+          "maturation_finding": {
+            "action": "add_code_boundary_observation",
+            "code": "model_upgrade_required",
+            "message": "an unresolved addressable signal requires another model/evidence iteration",
+            "metadata": {
+              "affected_claim_scope": "",
+              "coverage_id": "singleton_identity_authority_current",
+              "current": false,
+              "description": "Singleton-vs-plural authority gaps must be model-visible before broad confidence.",
+              "evidence_fingerprint": "4f1ada1f8f590119aeca05d6d7a14ba2ad47fe8fb8c0135e6b4ffd76f24b78ed",
+              "evidence_id": "simulations/flowpilot_singleton_identity_results.json",
+              "falsifier": "The probe is falsified when singleton_identity_authority_current is missing, stale, or its required result is not passing.",
+              "gap_fingerprint": "a5334abad6106147c10c92efc3d31da7f899269c7df7c34b5de2eab2fc3e6ed3",
+              "in_scope": true,
+              "metadata": {
+                "freshness": {
+                  "max_source_mtime": 1785610760.7930782,
+                  "missing_sources": [],
+                  "result": "simulations/flowpilot_singleton_identity_results.json",
+                  "result_missing": false,
+                  "result_mtime": 1785610759.1263075,
+                  "sources": [
+                    "docs\\flowpilot_singleton_identity_authority.md",
+                    "simulations\\flowpilot_singleton_identity_model.py",
+                    "simulations\\run_flowpilot_singleton_identity_checks.py",
+                    "tests\\test_flowpilot_singleton_identity.py"
+                  ]
+                },
+                "json": {
+                  "confidence": "scoped",
+                  "decision": "",
+                  "ok": true,
+                  "result": "simulations/flowpilot_singleton_identity_results.json",
+                  "result_type": "flowpilot_singleton_identity"
+                },
+                "unified_repair_contract": null
+              },
+              "model_id": "flowpilot_singleton_identity_authority",
+              "owner_boundary": "",
+              "prediction": "probe:singleton_identity_authority_current should produce a current terminal result for singleton_identity_authority_current.",
+              "probe_id": "probe:singleton_identity_authority_current",
+              "receipt_candidate_fingerprint": "77303346b23a923815acca4908ed1f6f0201d76a42ee18aca381721faffb615a",
+              "receipt_coverage_fingerprint": "e0e44db52d184a7efd9993619b5dc1d1ee9b66b88893b4213fa344cea0e7c67b",
+              "receipt_evidence_fingerprint": "4f1ada1f8f590119aeca05d6d7a14ba2ad47fe8fb8c0135e6b4ffd76f24b78ed",
+              "receipt_fingerprint": "4627ede23ca4719289c94ef5a632ed1b2c1e3fe4ef867f1339b1f97242f3009c",
+              "receipt_id": "receipt.flowpilot_maturation.singleton_identity_authority_current",
+              "receipt_owner_route": "singleton_identity_authority",
+              "receipt_probe_id": "probe:singleton_identity_authority_current",
+              "receipt_status": "fail",
+              "receipt_task_id": "task:flowpilot-milestone-plan-renewal",
+              "required": true,
+              "required_input": "",
+              "resolution_class": "evidence_acquisition",
+              "resolved": false,
+              "risk_id": "singleton_duplicate_authority_gap",
+              "signal_id": "singleton_identity_authority_current",
+              "signal_type": "missing_model_obligation",
+              "source_route": "singleton_identity_authority",
+              "suggested_actions": [
+                "add_model_obligation",
+                "add_code_boundary_observation",
+                "refresh_evidence"
+              ]
+            },
+            "model_id": "flowpilot_singleton_identity_authority",
+            "risk_id": "singleton_duplicate_authority_gap",
+            "severity": "blocker",
+            "signal_id": "singleton_identity_authority_current"
+          },
+          "recommended_action": "add_code_boundary_observation"
+        },
+        "model_ids": [
+          "flowpilot_singleton_identity_authority"
+        ],
+        "obligation_id": "model-maturation:singleton-identity-authority-current",
+        "owner_route": "model_maturation_loop",
+        "proof_gap_codes": [],
+        "public_entrypoint_ids": [],
+        "reason_code": "model_upgrade_required",
+        "required_input_kinds": [],
+        "risk_ids": [
+          "singleton_duplicate_authority_gap"
+        ],
+        "scope_reason": "",
+        "source_route": "model_maturation_loop",
+        "status": "open",
+        "strength": "required",
+        "suggested_commands": []
+      },
+      {
+        "anchor_paths": [],
+        "anchor_symbols": [],
+        "artifact_ids": [],
+        "claim_effect": "",
+        "code_contract_ids": [],
+        "current": true,
+        "evidence_ids": [],
+        "message": "an unresolved addressable signal requires another model/evidence iteration",
+        "metadata": {
+          "maturation_finding": {
+            "action": "refresh_evidence",
+            "code": "model_upgrade_required",
+            "message": "an unresolved addressable signal requires another model/evidence iteration",
+            "metadata": {
+              "affected_claim_scope": "",
+              "coverage_id": "singleton_identity_authority_current",
+              "current": false,
+              "description": "Singleton-vs-plural authority gaps must be model-visible before broad confidence.",
+              "evidence_fingerprint": "4f1ada1f8f590119aeca05d6d7a14ba2ad47fe8fb8c0135e6b4ffd76f24b78ed",
+              "evidence_id": "simulations/flowpilot_singleton_identity_results.json",
+              "falsifier": "The probe is falsified when singleton_identity_authority_current is missing, stale, or its required result is not passing.",
+              "gap_fingerprint": "a5334abad6106147c10c92efc3d31da7f899269c7df7c34b5de2eab2fc3e6ed3",
+              "in_scope": true,
+              "metadata": {
+                "freshness": {
+                  "max_source_mtime": 1785610760.7930782,
+                  "missing_sources": [],
+                  "result": "simulations/flowpilot_singleton_identity_results.json",
+                  "result_missing": false,
+                  "result_mtime": 1785610759.1263075,
+                  "sources": [
+                    "docs\\flowpilot_singleton_identity_authority.md",
+                    "simulations\\flowpilot_singleton_identity_model.py",
+                    "simulations\\run_flowpilot_singleton_identity_checks.py",
+                    "tests\\test_flowpilot_singleton_identity.py"
+                  ]
+                },
+                "json": {
+                  "confidence": "scoped",
+                  "decision": "",
+                  "ok": true,
+                  "result": "simulations/flowpilot_singleton_identity_results.json",
+                  "result_type": "flowpilot_singleton_identity"
+                },
+                "unified_repair_contract": null
+              },
+              "model_id": "flowpilot_singleton_identity_authority",
+              "owner_boundary": "",
+              "prediction": "probe:singleton_identity_authority_current should produce a current terminal result for singleton_identity_authority_current.",
+              "probe_id": "probe:singleton_identity_authority_current",
+              "receipt_candidate_fingerprint": "77303346b23a923815acca4908ed1f6f0201d76a42ee18aca381721faffb615a",
+              "receipt_coverage_fingerprint": "e0e44db52d184a7efd9993619b5dc1d1ee9b66b88893b4213fa344cea0e7c67b",
+              "receipt_evidence_fingerprint": "4f1ada1f8f590119aeca05d6d7a14ba2ad47fe8fb8c0135e6b4ffd76f24b78ed",
+              "receipt_fingerprint": "4627ede23ca4719289c94ef5a632ed1b2c1e3fe4ef867f1339b1f97242f3009c",
+              "receipt_id": "receipt.flowpilot_maturation.singleton_identity_authority_current",
+              "receipt_owner_route": "singleton_identity_authority",
+              "receipt_probe_id": "probe:singleton_identity_authority_current",
+              "receipt_status": "fail",
+              "receipt_task_id": "task:flowpilot-milestone-plan-renewal",
+              "required": true,
+              "required_input": "",
+              "resolution_class": "evidence_acquisition",
+              "resolved": false,
+              "risk_id": "singleton_duplicate_authority_gap",
+              "signal_id": "singleton_identity_authority_current",
+              "signal_type": "missing_model_obligation",
+              "source_route": "singleton_identity_authority",
+              "suggested_actions": [
+                "add_model_obligation",
+                "add_code_boundary_observation",
+                "refresh_evidence"
+              ]
+            },
+            "model_id": "flowpilot_singleton_identity_authority",
+            "risk_id": "singleton_duplicate_authority_gap",
+            "severity": "blocker",
+            "signal_id": "singleton_identity_authority_current"
+          },
+          "recommended_action": "refresh_evidence"
+        },
+        "model_ids": [
+          "flowpilot_singleton_identity_authority"
+        ],
+        "obligation_id": "model-maturation:singleton-identity-authority-current",
+        "owner_route": "model_maturation_loop",
+        "proof_gap_codes": [],
+        "public_entrypoint_ids": [],
+        "reason_code": "model_upgrade_required",
+        "required_input_kinds": [],
+        "risk_ids": [
+          "singleton_duplicate_authority_gap"
+        ],
+        "scope_reason": "",
+        "source_route": "model_maturation_loop",
+        "status": "open",
+        "strength": "required",
+        "suggested_commands": []
+      },
+      {
+        "anchor_paths": [],
+        "anchor_symbols": [],
+        "artifact_ids": [],
+        "claim_effect": "",
+        "code_contract_ids": [],
+        "current": true,
+        "evidence_ids": [],
+        "message": "required signal lacks current evidence and cannot support task closure",
+        "metadata": {
+          "maturation_finding": {
+            "action": "refresh_evidence",
+            "code": "model_maturation_signal_stale",
+            "message": "required signal lacks current evidence and cannot support task closure",
+            "metadata": {
+              "affected_claim_scope": "",
+              "coverage_id": "startup_control_evidence_fresh",
+              "current": false,
+              "description": "Startup-control evidence must be current after model or checker edits.",
+              "evidence_fingerprint": "46421a649f6ff10ec38c74f49a02e96b085544ca9ae848d4fd18d105aed27783",
+              "evidence_id": "simulations/flowpilot_startup_control_results.json",
+              "falsifier": "The probe is falsified when startup_control_evidence_fresh is missing, stale, or its required result is not passing.",
+              "gap_fingerprint": "380ce4f9f32aaab61d69a19000c46a0cd199b9b470bb1714856651d54a58c863",
+              "in_scope": true,
+              "metadata": {
+                "freshness": {
+                  "max_source_mtime": 1785610759.4792888,
+                  "missing_sources": [],
+                  "result": "simulations/flowpilot_startup_control_results.json",
+                  "result_missing": false,
+                  "result_mtime": 1785610759.137372,
+                  "sources": [
+                    "simulations\\flowpilot_startup_control_model.py",
+                    "simulations\\run_flowpilot_startup_control_checks.py"
+                  ]
+                },
+                "json": {
+                  "confidence": "",
+                  "decision": "",
+                  "ok": true,
+                  "result": "simulations/flowpilot_startup_control_results.json",
+                  "result_type": ""
+                },
+                "unified_repair_contract": null
+              },
+              "model_id": "flowpilot_startup_control",
+              "owner_boundary": "",
+              "prediction": "probe:startup_control_evidence_fresh should produce a current terminal result for startup_control_evidence_fresh.",
+              "probe_id": "probe:startup_control_evidence_fresh",
+              "receipt_candidate_fingerprint": "77303346b23a923815acca4908ed1f6f0201d76a42ee18aca381721faffb615a",
+              "receipt_coverage_fingerprint": "e0e44db52d184a7efd9993619b5dc1d1ee9b66b88893b4213fa344cea0e7c67b",
+              "receipt_evidence_fingerprint": "46421a649f6ff10ec38c74f49a02e96b085544ca9ae848d4fd18d105aed27783",
+              "receipt_fingerprint": "1151d4ad0287e9021cb19cc3ed1e518b3453026017a1968cd2d04d2304d42f0f",
+              "receipt_id": "receipt.flowpilot_maturation.startup_control_evidence_fresh",
+              "receipt_owner_route": "development_process_flow",
+              "receipt_probe_id": "probe:startup_control_evidence_fresh",
+              "receipt_status": "fail",
+              "receipt_task_id": "task:flowpilot-milestone-plan-renewal",
+              "required": true,
+              "required_input": "",
+              "resolution_class": "evidence_acquisition",
+              "resolved": false,
+              "risk_id": "startup_control_result_stale",
+              "signal_id": "startup_control_evidence_fresh",
+              "signal_type": "stale_evidence",
+              "source_route": "development_process_flow",
+              "suggested_actions": [
+                "refresh_evidence"
+              ]
+            },
+            "model_id": "flowpilot_startup_control",
+            "risk_id": "startup_control_result_stale",
+            "severity": "blocker",
+            "signal_id": "startup_control_evidence_fresh"
+          },
+          "recommended_action": "refresh_evidence"
+        },
+        "model_ids": [
+          "flowpilot_startup_control"
+        ],
+        "obligation_id": "model-maturation:startup-control-evidence-fresh",
+        "owner_route": "model_maturation_loop",
+        "proof_gap_codes": [],
+        "public_entrypoint_ids": [],
+        "reason_code": "model_maturation_signal_stale",
+        "required_input_kinds": [],
+        "risk_ids": [
+          "startup_control_result_stale"
+        ],
+        "scope_reason": "",
+        "source_route": "model_maturation_loop",
+        "status": "open",
+        "strength": "required",
+        "suggested_commands": []
+      },
+      {
+        "anchor_paths": [],
+        "anchor_symbols": [],
+        "artifact_ids": [],
+        "claim_effect": "",
+        "code_contract_ids": [],
+        "current": true,
+        "evidence_ids": [],
+        "message": "an unresolved addressable signal requires another model/evidence iteration",
+        "metadata": {
+          "maturation_finding": {
+            "action": "refresh_evidence",
+            "code": "model_upgrade_required",
+            "message": "an unresolved addressable signal requires another model/evidence iteration",
+            "metadata": {
+              "affected_claim_scope": "",
+              "coverage_id": "startup_control_evidence_fresh",
+              "current": false,
+              "description": "Startup-control evidence must be current after model or checker edits.",
+              "evidence_fingerprint": "46421a649f6ff10ec38c74f49a02e96b085544ca9ae848d4fd18d105aed27783",
+              "evidence_id": "simulations/flowpilot_startup_control_results.json",
+              "falsifier": "The probe is falsified when startup_control_evidence_fresh is missing, stale, or its required result is not passing.",
+              "gap_fingerprint": "380ce4f9f32aaab61d69a19000c46a0cd199b9b470bb1714856651d54a58c863",
+              "in_scope": true,
+              "metadata": {
+                "freshness": {
+                  "max_source_mtime": 1785610759.4792888,
+                  "missing_sources": [],
+                  "result": "simulations/flowpilot_startup_control_results.json",
+                  "result_missing": false,
+                  "result_mtime": 1785610759.137372,
+                  "sources": [
+                    "simulations\\flowpilot_startup_control_model.py",
+                    "simulations\\run_flowpilot_startup_control_checks.py"
+                  ]
+                },
+                "json": {
+                  "confidence": "",
+                  "decision": "",
+                  "ok": true,
+                  "result": "simulations/flowpilot_startup_control_results.json",
+                  "result_type": ""
+                },
+                "unified_repair_contract": null
+              },
+              "model_id": "flowpilot_startup_control",
+              "owner_boundary": "",
+              "prediction": "probe:startup_control_evidence_fresh should produce a current terminal result for startup_control_evidence_fresh.",
+              "probe_id": "probe:startup_control_evidence_fresh",
+              "receipt_candidate_fingerprint": "77303346b23a923815acca4908ed1f6f0201d76a42ee18aca381721faffb615a",
+              "receipt_coverage_fingerprint": "e0e44db52d184a7efd9993619b5dc1d1ee9b66b88893b4213fa344cea0e7c67b",
+              "receipt_evidence_fingerprint": "46421a649f6ff10ec38c74f49a02e96b085544ca9ae848d4fd18d105aed27783",
+              "receipt_fingerprint": "1151d4ad0287e9021cb19cc3ed1e518b3453026017a1968cd2d04d2304d42f0f",
+              "receipt_id": "receipt.flowpilot_maturation.startup_control_evidence_fresh",
+              "receipt_owner_route": "development_process_flow",
+              "receipt_probe_id": "probe:startup_control_evidence_fresh",
+              "receipt_status": "fail",
+              "receipt_task_id": "task:flowpilot-milestone-plan-renewal",
+              "required": true,
+              "required_input": "",
+              "resolution_class": "evidence_acquisition",
+              "resolved": false,
+              "risk_id": "startup_control_result_stale",
+              "signal_id": "startup_control_evidence_fresh",
+              "signal_type": "stale_evidence",
+              "source_route": "development_process_flow",
+              "suggested_actions": [
+                "refresh_evidence"
+              ]
+            },
+            "model_id": "flowpilot_startup_control",
+            "risk_id": "startup_control_result_stale",
+            "severity": "blocker",
+            "signal_id": "startup_control_evidence_fresh"
+          },
+          "recommended_action": "refresh_evidence"
+        },
+        "model_ids": [
+          "flowpilot_startup_control"
+        ],
+        "obligation_id": "model-maturation:startup-control-evidence-fresh",
+        "owner_route": "model_maturation_loop",
+        "proof_gap_codes": [],
+        "public_entrypoint_ids": [],
+        "reason_code": "model_upgrade_required",
+        "required_input_kinds": [],
+        "risk_ids": [
+          "startup_control_result_stale"
+        ],
+        "scope_reason": "",
+        "source_route": "model_maturation_loop",
+        "status": "open",
+        "strength": "required",
+        "suggested_commands": []
+      },
+      {
+        "anchor_paths": [],
+        "anchor_symbols": [],
+        "artifact_ids": [],
+        "claim_effect": "",
+        "code_contract_ids": [],
+        "current": true,
+        "evidence_ids": [],
+        "message": "required signal lacks current evidence and cannot support task closure",
+        "metadata": {
+          "maturation_finding": {
+            "action": "refresh_evidence",
+            "code": "model_maturation_signal_stale",
+            "message": "required signal lacks current evidence and cannot support task closure",
+            "metadata": {
+              "affected_claim_scope": "",
+              "coverage_id": "dispatch_recipient_gate_evidence_fresh",
+              "current": false,
+              "description": "Dispatch-recipient gate evidence must be current after model or checker edits.",
+              "evidence_fingerprint": "97cb3505e73e599253084f29a1644be58c6fc925ee330a172768dbc8ff8f0545",
+              "evidence_id": "simulations/flowpilot_dispatch_recipient_gate_results.json",
+              "falsifier": "The probe is falsified when dispatch_recipient_gate_evidence_fresh is missing, stale, or its required result is not passing.",
+              "gap_fingerprint": "4bb5ee7220365104d072c3f8814d7197d652f5daba9f3894a26cd7b4daeaa871",
+              "in_scope": true,
+              "metadata": {
+                "freshness": {
+                  "max_source_mtime": 1785610759.3632464,
+                  "missing_sources": [],
+                  "result": "simulations/flowpilot_dispatch_recipient_gate_results.json",
+                  "result_missing": false,
+                  "result_mtime": 1785610758.3663533,
+                  "sources": [
+                    "simulations\\flowpilot_dispatch_recipient_gate_model.py",
+                    "simulations\\run_flowpilot_dispatch_recipient_gate_checks.py"
+                  ]
+                },
+                "json": {
+                  "confidence": "",
+                  "decision": "",
+                  "ok": true,
+                  "result": "simulations/flowpilot_dispatch_recipient_gate_results.json",
+                  "result_type": ""
+                },
+                "unified_repair_contract": null
+              },
+              "model_id": "flowpilot_dispatch_recipient_gate",
+              "owner_boundary": "",
+              "prediction": "probe:dispatch_recipient_gate_evidence_fresh should produce a current terminal result for dispatch_recipient_gate_evidence_fresh.",
+              "probe_id": "probe:dispatch_recipient_gate_evidence_fresh",
+              "receipt_candidate_fingerprint": "77303346b23a923815acca4908ed1f6f0201d76a42ee18aca381721faffb615a",
+              "receipt_coverage_fingerprint": "e0e44db52d184a7efd9993619b5dc1d1ee9b66b88893b4213fa344cea0e7c67b",
+              "receipt_evidence_fingerprint": "97cb3505e73e599253084f29a1644be58c6fc925ee330a172768dbc8ff8f0545",
+              "receipt_fingerprint": "ef322a49093f526a656c5c467a1796f64e73418dc315fc0a2d58a5c65c052729",
+              "receipt_id": "receipt.flowpilot_maturation.dispatch_recipient_gate_evidence_fresh",
+              "receipt_owner_route": "development_process_flow",
+              "receipt_probe_id": "probe:dispatch_recipient_gate_evidence_fresh",
+              "receipt_status": "fail",
+              "receipt_task_id": "task:flowpilot-milestone-plan-renewal",
+              "required": true,
+              "required_input": "",
+              "resolution_class": "evidence_acquisition",
+              "resolved": false,
+              "risk_id": "dispatch_recipient_result_stale",
+              "signal_id": "dispatch_recipient_gate_evidence_fresh",
+              "signal_type": "stale_evidence",
+              "source_route": "development_process_flow",
+              "suggested_actions": [
+                "refresh_evidence"
+              ]
+            },
+            "model_id": "flowpilot_dispatch_recipient_gate",
+            "risk_id": "dispatch_recipient_result_stale",
+            "severity": "blocker",
+            "signal_id": "dispatch_recipient_gate_evidence_fresh"
+          },
+          "recommended_action": "refresh_evidence"
+        },
+        "model_ids": [
+          "flowpilot_dispatch_recipient_gate"
+        ],
+        "obligation_id": "model-maturation:dispatch-recipient-gate-evidence-fresh",
+        "owner_route": "model_maturation_loop",
+        "proof_gap_codes": [],
+        "public_entrypoint_ids": [],
+        "reason_code": "model_maturation_signal_stale",
+        "required_input_kinds": [],
+        "risk_ids": [
+          "dispatch_recipient_result_stale"
+        ],
+        "scope_reason": "",
+        "source_route": "model_maturation_loop",
+        "status": "open",
+        "strength": "required",
+        "suggested_commands": []
+      },
+      {
+        "anchor_paths": [],
+        "anchor_symbols": [],
+        "artifact_ids": [],
+        "claim_effect": "",
+        "code_contract_ids": [],
+        "current": true,
+        "evidence_ids": [],
+        "message": "an unresolved addressable signal requires another model/evidence iteration",
+        "metadata": {
+          "maturation_finding": {
+            "action": "refresh_evidence",
+            "code": "model_upgrade_required",
+            "message": "an unresolved addressable signal requires another model/evidence iteration",
+            "metadata": {
+              "affected_claim_scope": "",
+              "coverage_id": "dispatch_recipient_gate_evidence_fresh",
+              "current": false,
+              "description": "Dispatch-recipient gate evidence must be current after model or checker edits.",
+              "evidence_fingerprint": "97cb3505e73e599253084f29a1644be58c6fc925ee330a172768dbc8ff8f0545",
+              "evidence_id": "simulations/flowpilot_dispatch_recipient_gate_results.json",
+              "falsifier": "The probe is falsified when dispatch_recipient_gate_evidence_fresh is missing, stale, or its required result is not passing.",
+              "gap_fingerprint": "4bb5ee7220365104d072c3f8814d7197d652f5daba9f3894a26cd7b4daeaa871",
+              "in_scope": true,
+              "metadata": {
+                "freshness": {
+                  "max_source_mtime": 1785610759.3632464,
+                  "missing_sources": [],
+                  "result": "simulations/flowpilot_dispatch_recipient_gate_results.json",
+                  "result_missing": false,
+                  "result_mtime": 1785610758.3663533,
+                  "sources": [
+                    "simulations\\flowpilot_dispatch_recipient_gate_model.py",
+                    "simulations\\run_flowpilot_dispatch_recipient_gate_checks.py"
+                  ]
+                },
+                "json": {
+                  "confidence": "",
+                  "decision": "",
+                  "ok": true,
+                  "result": "simulations/flowpilot_dispatch_recipient_gate_results.json",
+                  "result_type": ""
+                },
+                "unified_repair_contract": null
+              },
+              "model_id": "flowpilot_dispatch_recipient_gate",
+              "owner_boundary": "",
+              "prediction": "probe:dispatch_recipient_gate_evidence_fresh should produce a current terminal result for dispatch_recipient_gate_evidence_fresh.",
+              "probe_id": "probe:dispatch_recipient_gate_evidence_fresh",
+              "receipt_candidate_fingerprint": "77303346b23a923815acca4908ed1f6f0201d76a42ee18aca381721faffb615a",
+              "receipt_coverage_fingerprint": "e0e44db52d184a7efd9993619b5dc1d1ee9b66b88893b4213fa344cea0e7c67b",
+              "receipt_evidence_fingerprint": "97cb3505e73e599253084f29a1644be58c6fc925ee330a172768dbc8ff8f0545",
+              "receipt_fingerprint": "ef322a49093f526a656c5c467a1796f64e73418dc315fc0a2d58a5c65c052729",
+              "receipt_id": "receipt.flowpilot_maturation.dispatch_recipient_gate_evidence_fresh",
+              "receipt_owner_route": "development_process_flow",
+              "receipt_probe_id": "probe:dispatch_recipient_gate_evidence_fresh",
+              "receipt_status": "fail",
+              "receipt_task_id": "task:flowpilot-milestone-plan-renewal",
+              "required": true,
+              "required_input": "",
+              "resolution_class": "evidence_acquisition",
+              "resolved": false,
+              "risk_id": "dispatch_recipient_result_stale",
+              "signal_id": "dispatch_recipient_gate_evidence_fresh",
+              "signal_type": "stale_evidence",
+              "source_route": "development_process_flow",
+              "suggested_actions": [
+                "refresh_evidence"
+              ]
+            },
+            "model_id": "flowpilot_dispatch_recipient_gate",
+            "risk_id": "dispatch_recipient_result_stale",
+            "severity": "blocker",
+            "signal_id": "dispatch_recipient_gate_evidence_fresh"
+          },
+          "recommended_action": "refresh_evidence"
+        },
+        "model_ids": [
+          "flowpilot_dispatch_recipient_gate"
+        ],
+        "obligation_id": "model-maturation:dispatch-recipient-gate-evidence-fresh",
+        "owner_route": "model_maturation_loop",
+        "proof_gap_codes": [],
+        "public_entrypoint_ids": [],
+        "reason_code": "model_upgrade_required",
+        "required_input_kinds": [],
+        "risk_ids": [
+          "dispatch_recipient_result_stale"
+        ],
+        "scope_reason": "",
+        "source_route": "model_maturation_loop",
+        "status": "open",
+        "strength": "required",
+        "suggested_commands": []
+      }
+    ],
     "model_id": "flowpilot_model_maturation_closure",
     "next_actions": [
-      "no_model_change_needed"
+      "refresh_evidence",
+      "add_code_boundary_observation",
+      "add_model_obligation"
     ],
-    "ok": true,
-    "open_gap_fingerprints": [],
+    "ok": false,
+    "open_gap_fingerprints": [
+      "1040cec39f41d29439c85c9eb49a0bb9f1e279b3a1c35129ea4c22e3729139b7",
+      "380ce4f9f32aaab61d69a19000c46a0cd199b9b470bb1714856651d54a58c863",
+      "4bb5ee7220365104d072c3f8814d7197d652f5daba9f3894a26cd7b4daeaa871",
+      "a5334abad6106147c10c92efc3d31da7f899269c7df7c34b5de2eab2fc3e6ed3",
+      "fada110d471f32319536cc1ef02e55e7f12c46386913e930002e35619e165064"
+    ],
     "plan_id": "flowpilot-model-maturation-routine-closure",
     "progressed": true,
     "recommended_actions": [
-      "no_model_change_needed"
+      "refresh_evidence",
+      "add_code_boundary_observation",
+      "add_model_obligation"
     ],
     "risk_id": "coarse_or_stale_flowpilot_model_confidence",
     "scoped_signal_ids": [],
     "signal_count": 11,
-    "summary": "All independently declared task coverage is closed by exact current native receipts.",
+    "summary": "Addressable gaps require another model/evidence iteration; they cannot be scoped away.",
     "task_id": "task:flowpilot-milestone-plan-renewal",
-    "terminal_reason": "model_maturation_closed_for_task"
+    "terminal_reason": ""
   },
   "decision": "model_maturation_scoped_claim",
-  "full_closure_ok": true,
+  "full_closure_ok": false,
   "hard_gate_ok": true,
   "known_bad_ok": true,
   "known_bad_sanity_checks": [

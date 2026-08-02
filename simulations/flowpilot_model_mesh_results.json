@@ -666,14 +666,26 @@
     "ok": true
   },
   "live_run_projection": {
-    "blocking_reasons": [],
+    "blocking_reasons": [
+      "no_current_run_id"
+    ],
     "classification_ok": true,
     "current_run_can_continue": false,
-    "decision": "terminal_not_continuable",
-    "findings": [],
+    "decision": "model_coverage_insufficient",
+    "findings": [
+      {
+        "current_run_can_continue": false,
+        "decision": "model_coverage_insufficient",
+        "id": "flowpilot_model_mesh.no_current_run_id",
+        "message": "Current FlowPilot run is not permitted to continue: no_current_run_id",
+        "reason": "no_current_run_id",
+        "run_id": null,
+        "severity": "blocking"
+      }
+    ],
     "metadata_only": true,
     "ok": true,
-    "permission": "terminal",
+    "permission": "blocked_or_insufficient",
     "projected_failures": [],
     "projected_state": {
       "active_blocker_present": false,
@@ -687,8 +699,8 @@
       "coverage_parse_errors_ignored": false,
       "current_authorities_agree": true,
       "current_state_classified": true,
-      "decision": "terminal_not_continuable",
-      "evidence_tier": "live_current_green",
+      "decision": "model_coverage_insufficient",
+      "evidence_tier": "none",
       "install_requires_safe_to_continue": false,
       "installed_skill_matches_repo": true,
       "known_hazard_live_projection_available": true,
@@ -700,10 +712,10 @@
       "live_required": true,
       "local_sync_required": false,
       "missing_conformance_adapter": false,
-      "model_registered": true,
-      "model_result_fresh": true,
-      "model_result_ok": true,
-      "model_result_run_matches_current": true,
+      "model_registered": false,
+      "model_result_fresh": false,
+      "model_result_ok": false,
+      "model_result_run_matches_current": false,
       "packet_evidence_accepted": false,
       "parent_child_lifecycle_conformant": true,
       "parent_child_lifecycle_replayed": true,
@@ -729,13 +741,8 @@
       "status": "selected",
       "status_summary_reports_blocked": false
     },
-    "run_id": "run-20260614-184920",
-    "run_root": ".flowpilot\\runs\\run-20260614-184920",
-    "sealed_body_opened_by_mesh": false,
-    "terminal_disposition": {
-      "packet_authority_unchecked_disposed_by_terminal_state": false,
-      "terminal_run": true
-    }
+    "run_id": null,
+    "sealed_body_opened_by_mesh": false
   },
   "model": "flowpilot_model_mesh",
   "ok": true,
@@ -782,7 +789,7 @@
     "parse_error": "",
     "residual_risk": [],
     "result_path": "simulations/flowpilot_unified_repair_integrity_results.json",
-    "result_sha256": "c49f0a2209f1a2f62a13e6522a885d9c0bdac401952c7b922c711e4717aa23fb",
+    "result_sha256": "7ca886943b1657f89d043af114efd8e0d8cd80653d28756cd63a007551bbb345",
     "skipped_checks": [],
     "status": "conformance_green",
     "typed_next_actions": []

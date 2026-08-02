@@ -49,10 +49,10 @@
           "packet_context_bytes": 22482,
           "remaining_count": 9,
           "role_submission_bytes": 8770,
-          "scripted_gate_median_ms": 7.18835,
-          "scripted_gate_p95_ms": 10.0536,
-          "stage_median_ms": 0.8000499999999999,
-          "stage_p95_ms": 1.3735,
+          "scripted_gate_median_ms": 7.93365,
+          "scripted_gate_p95_ms": 10.29,
+          "stage_median_ms": 0.88615,
+          "stage_p95_ms": 1.5448,
           "total_transport_bytes": 31639
         },
         {
@@ -62,10 +62,10 @@
           "packet_context_bytes": 17829,
           "remaining_count": 5,
           "role_submission_bytes": 6378,
-          "scripted_gate_median_ms": 4.08475,
-          "scripted_gate_p95_ms": 5.3582,
-          "stage_median_ms": 0.6565,
-          "stage_p95_ms": 1.0326,
+          "scripted_gate_median_ms": 6.2951,
+          "scripted_gate_p95_ms": 7.0545,
+          "stage_median_ms": 1.1037,
+          "stage_p95_ms": 1.3088,
           "total_transport_bytes": 25318
         },
         {
@@ -75,16 +75,16 @@
           "packet_context_bytes": 13069,
           "remaining_count": 1,
           "role_submission_bytes": 3986,
-          "scripted_gate_median_ms": 1.16375,
-          "scripted_gate_p95_ms": 1.7814,
-          "stage_median_ms": 0.5097,
-          "stage_p95_ms": 0.8502,
+          "scripted_gate_median_ms": 1.8352,
+          "scripted_gate_p95_ms": 2.1356,
+          "stage_median_ms": 0.77555,
+          "stage_p95_ms": 0.9973,
           "total_transport_bytes": 18634
         }
       ],
       "top_level_milestone_count": 10,
-      "worst_scripted_gate_p95_ms": 10.0536,
-      "worst_stage_p95_ms": 1.3735
+      "worst_scripted_gate_p95_ms": 10.29,
+      "worst_stage_p95_ms": 1.5448
     },
     {
       "largest_authorized_read_count": 4,
@@ -97,10 +97,10 @@
           "packet_context_bytes": 82242,
           "remaining_count": 49,
           "role_submission_bytes": 36570,
-          "scripted_gate_median_ms": 35.283100000000005,
-          "scripted_gate_p95_ms": 41.8307,
-          "stage_median_ms": 2.5627500000000003,
-          "stage_p95_ms": 3.9785,
+          "scripted_gate_median_ms": 55.3719,
+          "scripted_gate_p95_ms": 59.9557,
+          "stage_median_ms": 4.7267,
+          "stage_p95_ms": 6.1175,
           "total_transport_bytes": 119199
         },
         {
@@ -110,10 +110,10 @@
           "packet_context_bytes": 53790,
           "remaining_count": 25,
           "role_submission_bytes": 22219,
-          "scripted_gate_median_ms": 18.1174,
-          "scripted_gate_p95_ms": 21.8699,
-          "stage_median_ms": 1.8505500000000001,
-          "stage_p95_ms": 2.9528,
+          "scripted_gate_median_ms": 28.14675,
+          "scripted_gate_p95_ms": 33.9591,
+          "stage_median_ms": 3.3198,
+          "stage_p95_ms": 4.1784,
           "total_transport_bytes": 79460
         },
         {
@@ -123,16 +123,16 @@
           "packet_context_bytes": 25230,
           "remaining_count": 1,
           "role_submission_bytes": 7867,
-          "scripted_gate_median_ms": 2.0576999999999996,
-          "scripted_gate_p95_ms": 3.2032,
-          "stage_median_ms": 1.15205,
-          "stage_p95_ms": 1.8446,
+          "scripted_gate_median_ms": 2.7512,
+          "scripted_gate_p95_ms": 3.8686,
+          "stage_median_ms": 1.6883,
+          "stage_p95_ms": 2.152,
           "total_transport_bytes": 39356
         }
       ],
       "top_level_milestone_count": 50,
-      "worst_scripted_gate_p95_ms": 41.8307,
-      "worst_stage_p95_ms": 3.9785
+      "worst_scripted_gate_p95_ms": 59.9557,
+      "worst_stage_p95_ms": 6.1175
     },
     {
       "largest_authorized_read_count": 4,
@@ -145,10 +145,10 @@
           "packet_context_bytes": 156943,
           "remaining_count": 99,
           "role_submission_bytes": 71320,
-          "scripted_gate_median_ms": 74.17269999999999,
-          "scripted_gate_p95_ms": 94.0002,
-          "stage_median_ms": 5.6675,
-          "stage_p95_ms": 9.7363,
+          "scripted_gate_median_ms": 104.00444999999999,
+          "scripted_gate_p95_ms": 128.6693,
+          "stage_median_ms": 7.903449999999999,
+          "stage_p95_ms": 10.6942,
           "total_transport_bytes": 228650
         },
         {
@@ -158,10 +158,10 @@
           "packet_context_bytes": 98741,
           "remaining_count": 50,
           "role_submission_bytes": 42019,
-          "scripted_gate_median_ms": 44.6002,
-          "scripted_gate_p95_ms": 63.931,
-          "stage_median_ms": 4.5405999999999995,
-          "stage_p95_ms": 7.1602,
+          "scripted_gate_median_ms": 56.0248,
+          "scripted_gate_p95_ms": 62.767,
+          "stage_median_ms": 5.854100000000001,
+          "stage_p95_ms": 7.2824,
           "total_transport_bytes": 147136
         },
         {
@@ -171,16 +171,16 @@
           "packet_context_bytes": 40431,
           "remaining_count": 1,
           "role_submission_bytes": 12717,
-          "scripted_gate_median_ms": 3.51545,
-          "scripted_gate_p95_ms": 4.6348,
-          "stage_median_ms": 2.17305,
-          "stage_p95_ms": 3.2698,
+          "scripted_gate_median_ms": 4.0653500000000005,
+          "scripted_gate_p95_ms": 5.5137,
+          "stage_median_ms": 3.0054499999999997,
+          "stage_p95_ms": 3.8793,
           "total_transport_bytes": 65257
         }
       ],
       "top_level_milestone_count": 100,
-      "worst_scripted_gate_p95_ms": 94.0002,
-      "worst_stage_p95_ms": 9.7363
+      "worst_scripted_gate_p95_ms": 128.6693,
+      "worst_stage_p95_ms": 10.6942
     }
   ]
 }
